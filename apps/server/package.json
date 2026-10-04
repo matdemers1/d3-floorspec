@@ -38,6 +38,7 @@
     "zod": "^4.6.2"
   },
   "devDependencies": {
+    "@floorspec/mcp-stdio": "workspace:*",
     "@modelcontextprotocol/client": "2.1.0",
     "@types/express": "^5.0.6",
     "@types/express-serve-static-core": "^5.1.3",

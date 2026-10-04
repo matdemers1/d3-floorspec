@@ -49,7 +49,8 @@ export interface Committed {
   readonly resolved: readonly Op[];
   readonly created: readonly string[];
   readonly removed: readonly string[];
-  readonly changeset: ChangesetView | null;
+  /** The changeset the batch went into; null (or absent) when it was committed to main. */
+  readonly changeset?: ChangesetView | null;
 }
 
 export interface Model {

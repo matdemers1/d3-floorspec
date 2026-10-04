@@ -112,7 +112,7 @@ async function connect(client: FloorspecClient, era: 'legacy' | 'modern' = 'mode
   const handler = createFloorspecMcpHandler(() => client);
   const fetchLike = (url: string | URL, init?: RequestInit) => handler.fetch(new Request(url, init));
   const mcp = new Client({ name: 'test', version: '1' }, era === 'modern' ? { versionNegotiation: { mode: { pin: '2026-07-28' } } } : {});
-  await mcp.connect(new StreamableHTTPClientTransport(new URL('http://floorspec.test/mcp'), { fetch: fetchLike as never }));
+  await mcp.connect(new StreamableHTTPClientTransport(new URL('http://floorspec.test/mcp'), { fetch: fetchLike }));
   return mcp;
 }
 
@@ -132,10 +132,10 @@ describe('the MCP server', () => {
     const mcp = await connect(new MemoryClient());
     const { tools } = await mcp.listTools();
     for (const name of ['floorspec_apply', 'floorspec_propose']) {
-      const schema = tools.find((t) => t.name === name)?.inputSchema as { properties: { batch: { items: { oneOf: { properties: { op: { const: string } }; additionalProperties: boolean }[] } } } };
+      const schema = tools.find((t) => t.name === name)?.inputSchema as unknown as { properties: { batch: { items: { oneOf: { properties: { op: { const: string } }; additionalProperties: boolean }[] } } } };
       const variants = schema.properties.batch.items.oneOf;
       expect(variants.map((v) => v.properties.op.const).sort()).toEqual([...OP_NAMES].sort());
-      expect(variants.every((v) => v.additionalProperties === false)).toBe(true);
+      expect(variants.every((v) => !v.additionalProperties)).toBe(true);
     }
     expect(OP_NAMES).toEqual(expect.arrayContaining(['resizeRoom', 'addOpening', 'drawWall', 'moveWall', 'removeWall', 'setProperty']));
   });
@@ -152,7 +152,7 @@ describe('the MCP server', () => {
     const offers = /\b(run|execute|evaluate|eval)\b[^.]*\b(code|script|javascript|python|program|command)\b/i;
     const names: string[] = [];
     const walk = (schema: unknown, path: string) => {
-      if (Array.isArray(schema)) schema.forEach((s, i) => walk(s, `${path}[${String(i)}]`));
+      if (Array.isArray(schema)) schema.forEach((s, i) => { walk(s, `${path}[${String(i)}]`); });
       else if (schema !== null && typeof schema === 'object') {
         const record = schema as Record<string, unknown>;
         if (record['properties'] !== undefined && typeof record['properties'] === 'object') {
@@ -193,9 +193,9 @@ describe('the MCP server', () => {
     const north = structured.elements.find((e) => e.id === 'W2');
     expect(north).toMatchObject({ direction: 'east', rooms: ['R1'], length: { units: 5120000, ftIn: formatFeetInches(5120000) } });
     const openings = await mcp.callTool({ name: 'floorspec_query', arguments: { wall: 'W3' } });
-    expect((openings.structuredContent as { elements: { id: string; width: { ftIn: string } }[] }).elements).toEqual([
-      expect.objectContaining({ id: 'O1', width: expect.objectContaining({ ftIn: `3' 0"` }) }),
-    ]);
+    const hosted = (openings.structuredContent as { elements: { id: string; width: { ftIn: string } }[] }).elements;
+    expect(hosted.map((e) => e.id)).toEqual(['O1']);
+    expect(hosted[0]?.width.ftIn).toBe(`3' 0"`);
   });
 
   it('applies a typed batch, says where it landed, and refuses an op the standard does not define before calling the API', async () => {

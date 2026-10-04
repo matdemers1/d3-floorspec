@@ -1,4 +1,5 @@
-import { join } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -207,7 +208,8 @@ describe('the MCP endpoint', () => {
 
   it('is reachable from Claude Code through the stdio shim', async () => {
     const token = await tokenFor(operator, project.id, 'agent', 'Claude Code');
-    const shim = join(import.meta.dirname, '../../../../packages/mcp-stdio/dist/floorspec-mcp.js');
+    // The built bin, resolved through the workspace dependency so turbo builds it before this suite.
+    const shim = join(dirname(createRequire(import.meta.url).resolve('@floorspec/mcp-stdio')), 'floorspec-mcp.js');
     const client = new Client({ name: 'claude-code', version: '1' });
     await client.connect(
       new StdioClientTransport({ command: process.execPath, args: [shim], env: { FLOORSPEC_URL: running.url, FLOORSPEC_TOKEN: token, PATH: process.env['PATH'] ?? '' } }),
