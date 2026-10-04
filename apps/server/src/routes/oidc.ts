@@ -104,7 +104,7 @@ export function oidcRoutes(db: Db, config: Config, client: OidcClient | null): R
 
       // Linking from settings keeps the session the person already has; anything else signs in.
       const session =
-        resolution.outcome === 'linked' && resolution.by === 'settings'
+        resolution.outcome === 'linked'
           ? null
           : await sessions.issue(tx, resolution.accountId, 'oidc', {
               ip: req.ip ?? 'unknown',

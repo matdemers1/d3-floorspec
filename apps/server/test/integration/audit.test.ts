@@ -90,14 +90,10 @@ const EXERCISES: Record<string, Exercise> = {
     };
   },
   'GET /auth/oidc/callback': async ({ running, d3auth }) => {
-    await setupOperator(running);
+    // Linking from Account settings: the only way a D3 Auth identity becomes attached to an account.
+    const operator = await setupOperator(running);
     return {
-      reply: await d3auth.signIn(new Browser(running.url), {
-        iss: ISSUER,
-        sub: 'operator-sub',
-        email: OPERATOR.email,
-        emailVerified: true,
-      }),
+      reply: await d3auth.signIn(operator, { iss: ISSUER, sub: 'operator-sub', emailVerified: false }, true),
       action: 'identity.link',
     };
   },

@@ -55,33 +55,25 @@ describe('Sign in with D3 Auth', () => {
     expect(await db.identity.count()).toBe(0);
   });
 
-  it('links by verified email on first use, then by the stored link', async () => {
+  it('never links by email, even one the issuer has verified', async () => {
     await setupOperator(running);
-    const browser = new Browser(running.url);
-    const first = await d3auth.signIn(browser, { iss: ISSUER, sub: 'op-sub', email: 'Operator@Example.test', emailVerified: true });
-    expect(location(first)).toBe('/');
-    expect((await browser.get('/auth/session')).body).toMatchObject({
-      account: { email: OPERATOR.email },
-      d3auth: { iss: ISSUER },
-    });
-    expect(await db.identity.count({ where: { sub: 'op-sub' } })).toBe(1);
+    const res = await d3auth.signIn(new Browser(running.url), { iss: ISSUER, sub: 'op-sub', email: OPERATOR.email, emailVerified: true });
+    expect(location(res)).toMatch(/^\/signin\?d3auth_error=/);
+    expect(await db.identity.count()).toBe(0);
+    expect(await db.account.count()).toBe(1);
+  });
 
-    // The link is what counts from now on: a changed email at the issuer does not matter.
+  it('signs in by the stored link once linked, whatever email the issuer now reports', async () => {
+    const operator = await setupOperator(running);
+    await d3auth.signIn(operator, { iss: ISSUER, sub: 'op-sub', emailVerified: false }, true);
     const again = await d3auth.signIn(new Browser(running.url), { iss: ISSUER, sub: 'op-sub', email: 'renamed@example.test', emailVerified: true });
     expect(location(again)).toBe('/');
     expect(await db.account.count()).toBe(1);
   });
 
-  it('does not link by an email the issuer has not verified', async () => {
-    await setupOperator(running);
-    const res = await d3auth.signIn(new Browser(running.url), { iss: ISSUER, sub: 'op-sub', email: OPERATOR.email, emailVerified: false });
-    expect(location(res)).toMatch(/^\/signin\?d3auth_error=/);
-    expect(await db.identity.count()).toBe(0);
-  });
-
   it('does not take over an account already linked to another D3 Auth identity', async () => {
-    await setupOperator(running);
-    await d3auth.signIn(new Browser(running.url), { iss: ISSUER, sub: 'op-sub', email: OPERATOR.email, emailVerified: true });
+    const operator = await setupOperator(running);
+    await d3auth.signIn(operator, { iss: ISSUER, sub: 'op-sub', emailVerified: false }, true);
     const res = await d3auth.signIn(new Browser(running.url), { iss: ISSUER, sub: 'someone-else', email: OPERATOR.email, emailVerified: true });
     expect(location(res)).toMatch(/^\/signin\?d3auth_error=/);
     expect(await db.identity.count()).toBe(1);

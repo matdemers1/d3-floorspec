@@ -3,7 +3,6 @@ import { createAuthClient, type AuthClient } from '@d3cloudio/auth-client';
 import type { Config } from '../config.js';
 import type { Tx } from '../db.js';
 import { logger } from '../logger.js';
-import { normaliseEmail } from './native.js';
 
 /**
  * Sign in with D3 Auth — the second of the two login paths (FLR-REQ-004), on the shared relying-
@@ -11,8 +10,8 @@ import { normaliseEmail } from './native.js';
  * checks, all inside `@d3cloudio/auth-client`.
  *
  * **It links to an existing account and never creates one** (FLR-T-0.5, FLR-REQ-009: accounts
- * come from first-run setup and invites only). See `resolveIdentity` for the three ways a D3 Auth
- * identity reaches an account, and the one way it is refused.
+ * come from first-run setup and invites only). See `resolveIdentity` for the two ways a D3 Auth
+ * identity reaches an account; everything else is refused.
  *
  * Nothing here is load-bearing for the password path. Discovery happens once at boot and is
  * allowed to fail: with D3 Auth unset or unreachable, the sign-in screen shows one button.
@@ -150,7 +149,7 @@ export async function createOidcClient(
 
 export type Resolution =
   | { readonly outcome: 'signed_in'; readonly accountId: string }
-  | { readonly outcome: 'linked'; readonly accountId: string; readonly by: 'settings' | 'verified_email' };
+  | { readonly outcome: 'linked'; readonly accountId: string; readonly by: 'settings' };
 
 /**
  * Resolve a completed D3 Auth sign-in to an existing account, or refuse. In order:
@@ -158,15 +157,12 @@ export type Resolution =
  *   1. **An explicit link** — an identity row for this `(iss, sub)` — signs that account in.
  *   2. **Linking from Account settings**: a signed-in person started this sign-in to attach their
  *      D3 Auth identity, so it is attached to *that* account.
- *   3. **First use, by verified email**: the issuer asserts `email_verified: true` for an address
- *      that an account here already holds, and that account has no D3 Auth link yet. The link is
- *      recorded, so every later sign-in is case 1 and the email is never consulted again.
- *   4. Anything else is refused with a message saying how to link. **No account is ever created**,
+ *   3. Anything else is refused with a message saying how to link. **No account is ever created**,
  *      which is what keeps invites the only way in (FLR-REQ-009).
  *
- * Case 3 is the lead's specification for FLR-T-0.5. Foreman (FRM-ADR-004) and Postroom
- * (PST-ADR-015) do not match by email at all; it is narrowed here to a verified address, an
- * account with no existing link from this issuer, and one link per account per issuer.
+ * Email is never used to find an account, verified or not — the ecosystem rule (FRM-ADR-004,
+ * PST-ADR-015, and the SDK's own contract: claims are for display, never for identity). Someone
+ * who controls an address at the issuer does not thereby own the account here that uses it.
  */
 export async function resolveIdentity(tx: Tx, completed: CompletedSignIn): Promise<Resolution> {
   const linked = await tx.identity.findUnique({
@@ -186,17 +182,6 @@ export async function resolveIdentity(tx: Tx, completed: CompletedSignIn): Promi
   if (completed.linkToAccountId !== undefined) {
     await link(tx, completed.linkToAccountId, completed);
     return { outcome: 'linked', accountId: completed.linkToAccountId, by: 'settings' };
-  }
-
-  if (completed.email !== undefined && completed.emailVerified) {
-    const account = await tx.account.findUnique({
-      where: { email: normaliseEmail(completed.email) },
-      include: { identities: { where: { iss: completed.iss } } },
-    });
-    if (account !== null && account.disabledAt === null && account.identities.length === 0) {
-      await link(tx, account.id, completed);
-      return { outcome: 'linked', accountId: account.id, by: 'verified_email' };
-    }
   }
 
   throw new NotLinked(
