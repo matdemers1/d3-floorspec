@@ -1,0 +1,6 @@
+{
+  "description": "A type nothing refers to is removed.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

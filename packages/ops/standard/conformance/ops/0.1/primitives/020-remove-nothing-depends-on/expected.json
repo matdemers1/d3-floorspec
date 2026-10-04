@@ -1,0 +1,57 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "861048a4ba51f2cb085162862a01b100f3a7b449a00e52e54f038bfba67e3d05",
+  "created": [],
+  "removed": ["O1", "R2", "SL1"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "O1"
+    },
+    {
+      "op": "removeElement",
+      "id": "SL1",
+      "cascade": true
+    },
+    {
+      "op": "removeElement",
+      "id": "R2",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "slabs",
+      "id": "SL1",
+      "element": {
+        "level": "L2",
+        "boundary": [[0, 0], [3121152, 0], [3121152, -1560576]],
+        "thickness": 256000
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R2",
+      "element": {
+        "level": "L2",
+        "anchor": [1560576, 1560576],
+        "name": "Loft"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "height": 1560576,
+        "offset": 780288,
+        "sill": 1170432,
+        "wall": "V1",
+        "width": 1170432
+      }
+    }
+  ]
+}

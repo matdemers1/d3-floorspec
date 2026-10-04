@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "rotateWall",
+      "wall": "W8",
+      "by": 90
+    }
+  ]
+}

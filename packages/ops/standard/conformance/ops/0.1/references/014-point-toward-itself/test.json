@@ -1,0 +1,6 @@
+{
+  "description": "\"1' from J1 toward J1\" has no direction: the oracle's reading is that it resolves to nothing, FS-OPS-003.",
+  "covers": [
+    "FS-OPS-3.2.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A room named \"R3\" and the room whose ID is R3: the string matches both, so it is ambiguous.",
+  "covers": [
+    "FS-OPS-3.3.1"
+  ]
+}

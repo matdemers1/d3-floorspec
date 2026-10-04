@@ -1,0 +1,6 @@
+{
+  "description": "A room whose ID is J20: every ID in the working copy that matches ^J[0-9]+$ counts, whatever its collection, so the next junction is J21.",
+  "covers": [
+    "FS-OPS-1.5.1"
+  ]
+}

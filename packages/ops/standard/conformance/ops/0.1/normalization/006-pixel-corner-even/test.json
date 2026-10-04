@@ -1,0 +1,6 @@
+{
+  "description": "A post P at (2000000, 2000000) and a wall drawn along x + y = 4000001, which touches P's pixel only at its corner (2000000.5, 2000000.5). Both coordinates of P are even, so its pixel includes its edges and corners: the wall passes through it and is split at P.",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

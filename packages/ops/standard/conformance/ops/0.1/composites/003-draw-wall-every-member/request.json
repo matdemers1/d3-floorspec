@@ -1,0 +1,26 @@
+{
+  "batch": [
+    {
+      "op": "drawWall",
+      "id": "W9",
+      "level": "L1",
+      "from": "2' north of J1",
+      "to": "2' north of J4",
+      "type": "WT",
+      "layers": [
+        {
+          "thickness": 64000,
+          "function": "core"
+        }
+      ],
+      "justification": "interiorFace",
+      "base": {
+        "offset": 12800
+      },
+      "top": {
+        "level": "L2"
+      },
+      "name": "Low wall"
+    }
+  ]
+}

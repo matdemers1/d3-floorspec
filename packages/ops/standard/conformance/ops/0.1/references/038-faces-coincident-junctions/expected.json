@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-OPS-007",
+      "severity": "error",
+      "elements": ["L1"]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "addOpening names O1, already an opening: FS-OPS-005.",
+  "covers": [
+    "FS-OPS-1.5.2",
+    "FS-OPS-4.5.1"
+  ]
+}

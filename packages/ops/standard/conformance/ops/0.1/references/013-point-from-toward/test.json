@@ -1,0 +1,6 @@
+{
+  "description": "\"1' from J1 toward Q\", with Q at (3', 4'): one foot along a 3-4-5 line, (0.6', 0.8') = (234086.4, 312115.2), rounded once per coordinate to [234086, 312115].",
+  "covers": [
+    "FS-OPS-3.2.1"
+  ]
+}

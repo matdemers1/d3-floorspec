@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "addJunction",
+      "level": "L1",
+      "position": "J8"
+    },
+    {
+      "op": "moveRoom",
+      "room": "Pantry",
+      "by": "1' north"
+    }
+  ]
+}

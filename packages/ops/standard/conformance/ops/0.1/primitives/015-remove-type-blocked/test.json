@@ -1,0 +1,6 @@
+{
+  "description": "A type is blocked by every element that refers to it.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

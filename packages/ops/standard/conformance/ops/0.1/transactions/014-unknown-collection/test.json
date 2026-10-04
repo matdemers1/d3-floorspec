@@ -1,0 +1,6 @@
+{
+  "description": "addElement's collection is one of the collections of Core 1.1; \"roofs\" is reserved, not a collection of 0.1.",
+  "covers": [
+    "FS-OPS-1.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "Document A is not well-formed JSON (FS-JSON-001): FS-OPS-002.",
+  "covers": [
+    "FS-OPS-1.2.1"
+  ]
+}

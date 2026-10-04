@@ -2,7 +2,7 @@
   "name": "@floorspec/ops",
   "private": true,
   "version": "0.1.0",
-  "description": "Floorspec Ops: reference grammar, transactions, atomic batches, locks.",
+  "description": "Floorspec Ops 0.1 reference applier: reference grammar, primitives, composites, normalization, locks, atomic transactions. Isomorphic, exact, deterministic.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
@@ -18,7 +18,20 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit && tsc -p test && tsc -p scripts",
+    "test": "vitest run --project node",
+    "test:browser": "vitest run --project browser",
+    "conformance": "vitest run --project node test/conformance.node.test.ts",
+    "sync-standard": "tsx scripts/sync-standard.ts"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/browser": "5.0.2",
+    "@vitest/browser-playwright": "5.0.2",
+    "ajv": "^8.20.0",
+    "playwright": "^1.63.0",
+    "tsx": "^4.23.15"
   }
 }

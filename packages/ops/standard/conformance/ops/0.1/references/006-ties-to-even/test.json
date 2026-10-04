@@ -1,0 +1,7 @@
+{
+  "description": "1/65024 in is exactly half a base unit, rounded to the even 0; 3/65024\" is 1.5, rounded to 2. (5/65024 in, 2.5, would also round to 2.) (The Office is moved by them, as a vector.)",
+  "covers": [
+    "FS-OPS-3.1.1",
+    "FS-OPS-3.2.1"
+  ]
+}

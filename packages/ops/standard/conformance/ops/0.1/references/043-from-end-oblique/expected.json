@@ -1,0 +1,26 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "1e2caa2ded1ca09d5b8ad79dea7fb12f3ad8f8c7ed8396475d3f9c66651d57eb",
+  "created": ["O1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "height": 2340864,
+        "offset": 909407,
+        "wall": "W5",
+        "width": 975360
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "O1"
+    }
+  ]
+}

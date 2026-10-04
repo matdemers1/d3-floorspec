@@ -1,0 +1,6 @@
+{
+  "description": "Moving the Pantry 1'6\" north moves the four junctions of its cycle - J2 and J8 included, which it shares with the Kitchen - so the Kitchen grows and the Dining room changes shape.",
+  "covers": [
+    "FS-OPS-4.3.1"
+  ]
+}

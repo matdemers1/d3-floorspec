@@ -1,0 +1,25 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "1dba8acbb9922433eb6279c5d1f73eb9e30834fa1467732ed39425f03003f930",
+  "created": [],
+  "removed": ["T-door-36"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "T-door-36"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "types",
+      "id": "T-door-36",
+      "element": {
+        "height": 2600960,
+        "kind": "doorType",
+        "width": 1170432
+      }
+    }
+  ]
+}

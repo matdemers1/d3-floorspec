@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "types",
+      "element": {
+        "kind": "windowType",
+        "width": 1170432,
+        "height": 1560576
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "addOpening",
+      "wall": "W2",
+      "at": "centered",
+      "width": "30\"",
+      "height": "4'",
+      "sill": "3'",
+      "name": "Window"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "moveJunction",
+      "id": "J8",
+      "to": ["13'", "13'"]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J8",
+      "to": ["12'", "8'"]
+    }
+  ]
+}

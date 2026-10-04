@@ -1,0 +1,6 @@
+{
+  "description": "unsetProperty of a member the room does not have: FS-OPS-003.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

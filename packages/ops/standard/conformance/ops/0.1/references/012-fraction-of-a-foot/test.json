@@ -1,0 +1,6 @@
+{
+  "description": "Feet take a decimal, not a fraction: 1 1/2' is FS-OPS-012.",
+  "covers": [
+    "FS-OPS-3.1.1"
+  ]
+}

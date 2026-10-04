@@ -1,0 +1,7 @@
+{
+  "description": "removeElement of an ID that does not exist: FS-OPS-003.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-7.1.1"
+  ]
+}

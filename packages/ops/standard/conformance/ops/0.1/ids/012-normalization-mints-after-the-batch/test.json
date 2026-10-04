@@ -1,0 +1,7 @@
+{
+  "description": "A wall drawn across the box mints J5, J6 and W5; normalization then mints the crossing junctions J7, J8 and the pieces W6 to W9 after them - never reusing a number the batch minted.",
+  "covers": [
+    "FS-OPS-1.5.1",
+    "FS-OPS-5.2.1"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "removeWall",
+      "wall": "wall between Kitchen and Dining",
+      "keep": "Kitchen"
+    }
+  ]
+}

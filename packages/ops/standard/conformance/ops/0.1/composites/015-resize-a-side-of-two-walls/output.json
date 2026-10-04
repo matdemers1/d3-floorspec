@@ -1,0 +1,181 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.1",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3121152
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        0,
+        4681728
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        3901440,
+        4681728
+      ]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [
+        9363456,
+        4681728
+      ]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [
+        9363456,
+        0
+      ]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [
+        3901440,
+        0
+      ]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [
+        3901440,
+        3121152
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        1950720,
+        1560576
+      ],
+      "function": "kitchen",
+      "level": "L1",
+      "name": "Kitchen"
+    },
+    "R2": {
+      "anchor": [
+        1950720,
+        3901440
+      ],
+      "function": "storage",
+      "level": "L1",
+      "name": "Pantry"
+    },
+    "R3": {
+      "anchor": [
+        6632448,
+        2340864
+      ],
+      "function": "dining",
+      "level": "L1",
+      "name": "Dining"
+    }
+  },
+  "types": {
+    "T-door-36": {
+      "height": 2600960,
+      "kind": "doorType",
+      "width": 1170432
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W10": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J5",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    },
+    "W5": {
+      "end": "J6",
+      "level": "L1",
+      "start": "J5",
+      "type": "WT"
+    },
+    "W6": {
+      "end": "J7",
+      "level": "L1",
+      "start": "J6",
+      "type": "WT"
+    },
+    "W7": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    },
+    "W8": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    },
+    "W9": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J8",
+      "type": "WT"
+    }
+  }
+}

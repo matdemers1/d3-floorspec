@@ -1,0 +1,7 @@
+{
+  "description": "W5 from (2', 2') to (5', 7') moved 6\" to its left: the displacement 195072 * (-5, 3) / sqrt(34) = (-167272.86, 100363.72) is rounded once per coordinate to [-167273, 100364].",
+  "covers": [
+    "FS-OPS-4.2.1",
+    "FS-OPS-1.3.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of /base/offset on a wall with no base creates the base object on the way.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

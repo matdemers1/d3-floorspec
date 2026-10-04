@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "2e09b3a2e096473c26b209cbccf3309d2d300413ccfc9c77389f989a6a1f7ae1",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W6",
+      "path": "/name",
+      "value": "Dining south"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "W6",
+      "path": "/name"
+    }
+  ]
+}

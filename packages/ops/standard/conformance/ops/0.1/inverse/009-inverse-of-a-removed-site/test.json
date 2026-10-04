@@ -1,0 +1,6 @@
+{
+  "description": "The batch removes the site; the inverse sets it back.",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

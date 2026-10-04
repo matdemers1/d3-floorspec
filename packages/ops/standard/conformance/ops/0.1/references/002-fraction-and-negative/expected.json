@@ -1,0 +1,67 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "df2a6d5dfbb88df5f99be3584f788071c02c3845a4ce9f63e785020b405479a7",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "moveJunction",
+      "id": "J5",
+      "to": [7827264, -780288]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J6",
+      "to": [7827264, 3121152]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J7",
+      "to": [11728704, 3121152]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J8",
+      "to": [11728704, -780288]
+    },
+    {
+      "op": "setProperty",
+      "id": "R2",
+      "path": "/anchor",
+      "value": [9777984, 1170432]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R2",
+      "path": "/anchor",
+      "value": [9753600, 1950720]
+    },
+    {
+      "op": "setProperty",
+      "id": "J5",
+      "path": "/position",
+      "value": [7802880, 0]
+    },
+    {
+      "op": "setProperty",
+      "id": "J6",
+      "path": "/position",
+      "value": [7802880, 3901440]
+    },
+    {
+      "op": "setProperty",
+      "id": "J7",
+      "path": "/position",
+      "value": [11704320, 3901440]
+    },
+    {
+      "op": "setProperty",
+      "id": "J8",
+      "path": "/position",
+      "value": [11704320, 0]
+    }
+  ]
+}

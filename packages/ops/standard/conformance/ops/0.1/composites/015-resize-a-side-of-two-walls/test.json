@@ -1,0 +1,6 @@
+{
+  "description": "The Dining room's west side is a run of two walls, W9 and W8 (J4 -> J8 -> J7 as its cycle walks them). Resizing it 2' west moves all three junctions; the anchors of the Dining room and of both rooms across the run - Kitchen and Pantry - move 1' west.",
+  "covers": [
+    "FS-OPS-4.4.1"
+  ]
+}
