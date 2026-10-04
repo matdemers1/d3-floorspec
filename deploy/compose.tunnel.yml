@@ -1,0 +1,12 @@
+# Host-only overlay: the Cloudflare Tunnel that is floorspec.d3cloud.io's only ingress. Never used in
+# development. Literal values only, like compose.yml: the token comes from an env file.
+#   docker compose -f compose.yml -f compose.tunnel.yml up -d
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2026.9.0
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    env_file:
+      - /DATA/floorspec/tunnel.env
+    depends_on:
+      - api

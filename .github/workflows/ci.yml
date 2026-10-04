@@ -1,6 +1,7 @@
 name: CI
 
-# A gated pipeline, cheapest first: lint → conformance → unit → integration → python → images.
+# A gated pipeline, cheapest first: lint → conformance → unit → integration → python → compose →
+# images.
 # Every job needs the one before it, so a type error never spends minutes waiting for a database,
 # and only a push to main that passed all of them publishes `sha-` images to GHCR.
 #
@@ -123,12 +124,44 @@ jobs:
         working-directory: workers/ifc
         run: python -m pytest -q
 
+  # Compose is what runs on the host, so the images are built the way they will be built there and
+  # the stack is booted on an empty database: the api migrates on boot and answers /health with
+  # the schema revision Shipyard will check.
+  compose:
+    needs: python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - name: No host ports and no interpolation in the production compose files
+        run: |
+          if grep -nE '^\s+(ports|published):' deploy/compose.yml deploy/compose.tunnel.yml; then
+            echo 'deploy/compose.yml publishes a port; ingress is the Cloudflare Tunnel only' >&2
+            exit 1
+          fi
+          if grep -n '\${' deploy/compose.yml deploy/compose.tunnel.yml; then
+            echo 'deploy/compose.yml interpolates a variable; ZimaOS and Shipyard need literals' >&2
+            exit 1
+          fi
+      - name: Boot the stack on an empty database
+        run: |
+          ./deploy/dev-env.sh
+          docker compose -f deploy/compose.yml -f deploy/compose.dev.yml up -d --build --wait
+          curl -fsS http://127.0.0.1:3400/health | tee health.json
+          grep -q '"schemaRevision":"[0-9]\{14\}_' health.json
+      - name: Show the logs when something failed
+        if: failure()
+        run: docker compose -f deploy/compose.yml -f deploy/compose.dev.yml logs
+      - name: Stop
+        if: always()
+        run: docker compose -f deploy/compose.yml -f deploy/compose.dev.yml down -v
+
   # The only job that publishes, and only from main once everything above is green. Tagged by long
   # SHA (`sha-<40 hex>`, the tag Shipyard resolves), labelled with the revision, schema and
   # migration kind Shipyard verifies before and after a swap. The web editor is not its own image:
   # the api serves it, as Foreman's server serves its console (one origin, one cookie, no CORS).
   images:
-    needs: python
+    needs: compose
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

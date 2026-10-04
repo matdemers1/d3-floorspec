@@ -1,0 +1,30 @@
+# Local overlay: builds the images from this checkout, reads env files written by dev-env.sh, and
+# publishes the api on loopback only. Never used on the Zima.
+#   ./deploy/dev-env.sh
+#   docker compose -f deploy/compose.yml -f deploy/compose.dev.yml up -d --build --wait
+#   open http://127.0.0.1:3400
+services:
+  postgres:
+    env_file: !override
+      - .env.postgres.dev
+  api:
+    image: !override d3-floorspec/api:local
+    build:
+      context: ..
+      dockerfile: apps/server/Dockerfile
+    env_file: !override
+      - .env.dev
+    ports:
+      - "127.0.0.1:3400:3400"
+  worker:
+    image: !override d3-floorspec/worker:local
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+    env_file: !override
+      - .env.dev
+  ifc-worker:
+    image: !override d3-floorspec/ifc-worker:local
+    build:
+      context: ../workers/ifc
+      dockerfile: Dockerfile

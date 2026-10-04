@@ -1,16 +1,74 @@
-# Skeleton — services are filled in by FLR-T-0.7.
-name: d3-floorspec
+# D3 Floorspec — the production stack on the Zima, deployed by Shipyard (deploy/shipyard.yml).
+#
+# Literal values only: no `${…}` anywhere. ZimaOS cannot read interpolation, and Shipyard rewrites
+# each mapped service's `image:` line to `<repo>:sha-<40 hex>` itself and refuses to reason about a
+# value it did not put there. The `sha-0000…` tags below are placeholders: at onboarding they are
+# replaced with the SHA actually running (shipyard docs/runbooks/onboard-app.md §3).
+#
+# No host ports: ingress is the Cloudflare Tunnel overlay (compose.tunnel.yml) only. Secrets come
+# from env files at absolute paths on the host, never from this file:
+#   /DATA/floorspec/postgres.env  POSTGRES_USER=floorspec, POSTGRES_PASSWORD=<random>, POSTGRES_DB=floorspec
+#   /DATA/floorspec/api.env       PUBLIC_URL=https://floorspec.d3cloud.io
+#                                 DATABASE_URL=postgresql://floorspec:<same password>@postgres:5432/floorspec
+#                                 KEK=<openssl rand -base64 32>   PEPPER=<openssl rand -base64 32>
+#                                 D3AUTH_ISSUER=https://auth.d3cloud.io  D3AUTH_CLIENT_ID=…  D3AUTH_CLIENT_SECRET=…
+#   /DATA/floorspec/tunnel.env    TUNNEL_TOKEN=<the floorspec tunnel's token>
+#
+# The api migrates on boot, after a pre-migration pg_dump into the backups volume. The editor is
+# served by the api: there is no separate web container.
+name: floorspec
+
 services:
   postgres:
     image: postgres:16
-    environment:
-      POSTGRES_USER: floorspec
-      POSTGRES_PASSWORD: floorspec
-      POSTGRES_DB: floorspec
-    volumes: [pgdata:/var/lib/postgresql/data]
-  # api:        Node 22 — REST, SSE, /mcp
-  # web:        React 19 SPA on @d3cloud/ui
-  # worker:     Postgres job queue — render-back, PDF/DXF/glTF/USDZ
-  # ifc-worker: Python 3.13 + IfcOpenShell
+    restart: unless-stopped
+    env_file:
+      - /DATA/floorspec/postgres.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U floorspec -d floorspec"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ghcr.io/matdemers1/d3-floorspec/api:sha-0000000000000000000000000000000000000000
+    restart: unless-stopped
+    env_file:
+      - /DATA/floorspec/api.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - backups:/backups
+    healthcheck:
+      test: ["CMD", "node", "dist/healthcheck.js"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  worker:
+    image: ghcr.io/matdemers1/d3-floorspec/worker:sha-0000000000000000000000000000000000000000
+    restart: unless-stopped
+    env_file:
+      - /DATA/floorspec/api.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Its healthcheck is the image's own: the heartbeat file must be younger than two minutes.
+
+  ifc-worker:
+    image: ghcr.io/matdemers1/d3-floorspec/ifc-worker:sha-0000000000000000000000000000000000000000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-m", "floorspec_ifc", "health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
 volumes:
   pgdata: {}
+  backups: {}

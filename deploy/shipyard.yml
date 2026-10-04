@@ -1,0 +1,43 @@
+# Shipyard manifest for D3 Floorspec — a DRAFT kept in the repo. The copy that counts is the one on
+# the host, /DATA/shipyard/apps/floorspec.yml (SHP-D-017); onboarding follows shipyard
+# docs/runbooks/onboard-app.md: dry run, then adopt-live, before any real deploy. FLR-T-0.7 names
+# this file deploy/shipyard.json; Shipyard reads YAML, so it is YAML.
+name: floorspec
+repo: matdemers1/d3-floorspec
+workflow: ci.yml
+compose:
+  files:
+    - /DATA/floorspec/compose.yml
+    - /DATA/floorspec/compose.tunnel.yml
+  project: floorspec
+services:
+  api:
+    image: ghcr.io/matdemers1/d3-floorspec/api
+  worker:
+    image: ghcr.io/matdemers1/d3-floorspec/worker
+  ifc-worker:
+    image: ghcr.io/matdemers1/d3-floorspec/ifc-worker
+# /health answers {status, schemaRevision}; the api applies its own migrations on boot, after its
+# own pre-migration dump, so there is no separate migrate step. The api image carries the
+# dev.d3cloud.shipyard.schema label, so no expectSchema here.
+health:
+  service: api
+  port: 3400
+  path: /health
+soakSeconds: 120
+steps:
+  # One pg_dump into the stack's `backups` volume, which the agent mounts read-only at this path.
+  backup:
+    service: api
+    argv: [node, dist/cli/backup.js]
+    artifactsDir: /var/lib/docker/volumes/floorspec_backups/_data
+requiredEnv:
+  - PUBLIC_URL
+  - DATABASE_URL
+  - KEK
+  - PEPPER
+envFiles:
+  - /DATA/floorspec/api.env
+foreman:
+  project: FLR
+  environment: production
