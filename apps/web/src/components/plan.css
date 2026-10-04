@@ -1,0 +1,50 @@
+/* The plan picture (components/PlanThumbnail). Colours are tokens, so the plan follows the theme:
+   walls in the foreground colour, rooms on the card surface, windows in info blue, door gaps cut
+   back to the room colour (FLR-REQ-160). d3-check-usage holds it to tokens only. */
+.fs-plan {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.fs-plan__rooms {
+  fill: var(--color-surface-card);
+}
+.fs-plan__separators {
+  stroke: var(--color-fg-faint);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.fs-plan__walls {
+  fill: var(--color-fg);
+}
+.fs-plan__window {
+  stroke: var(--color-info);
+  stroke-linecap: butt;
+}
+.fs-plan__door {
+  stroke: var(--color-surface-card);
+  stroke-linecap: butt;
+}
+.fs-plan__labels {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+}
+.fs-plan__name {
+  fill: var(--color-fg);
+}
+.fs-plan__area {
+  fill: var(--color-fg-faint);
+  font-family: var(--font-mono);
+}
+
+/* A recessed well a plan sits in: the sunken background, in both themes. */
+.fs-plan-well {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-sunken);
+  overflow: hidden;
+  color: var(--color-fg-faint);
+}
+

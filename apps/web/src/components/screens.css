@@ -1,0 +1,343 @@
+/* The projects list, the project dashboard and the editor placeholder (FLR-T-3.2). Everything else
+   is @d3cloud/ui; tokens only (d3-check-usage). Imported by the screens that use it. */
+
+/* Button icons at the system's sizes: lucide draws 24px at stroke 2 unless told otherwise, and the
+   Button leaves its icon slot unsized. md buttons carry 16px icons, sm buttons 14px (icon.css). */
+.fs-screen .d3-btn--md .d3-btn__icon > svg,
+.fs-screen .d3-btn--lg .d3-btn__icon > svg {
+  width: var(--icon-16);
+  height: var(--icon-16);
+  stroke-width: var(--icon-stroke-16);
+}
+.fs-screen .d3-btn--sm .d3-btn__icon > svg,
+.fs-dialog .d3-btn--sm .d3-btn__icon > svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+  stroke-width: var(--icon-stroke-14);
+}
+.fs-well-note > svg,
+.fs-import-drop > svg {
+  width: var(--icon-20);
+  height: var(--icon-20);
+  stroke-width: var(--icon-stroke-20);
+}
+
+/* ─── Projects (screens/Projects, projects/*) ───────────────────────────────────────────────── */
+.fs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-12);
+}
+.fs-toolbar__search {
+  flex: 0 1 360px;
+  min-width: 200px;
+}
+.fs-spacer {
+  flex: 1 1 0;
+}
+
+.fs-project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: var(--space-24);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fs-project-card.d3-crd {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+.fs-project-card .fs-plan-well {
+  height: 210px;
+  padding: var(--space-8) var(--space-20);
+}
+.fs-project-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-16) var(--space-20) var(--space-20);
+}
+.fs-project-card__name {
+  margin: 0;
+  font-size: var(--text-16);
+  line-height: var(--leading-16);
+  font-weight: var(--weight-semibold);
+  color: var(--color-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-caption {
+  margin: 0;
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  color: var(--color-fg-faint);
+}
+.fs-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+}
+.fs-well-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--text-12);
+  color: var(--color-fg-faint);
+}
+
+.fs-templates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.fs-heading-14 {
+  margin: 0;
+  font-size: var(--text-14);
+  line-height: var(--leading-14);
+  font-weight: var(--weight-semibold);
+  color: var(--color-fg);
+}
+.fs-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-template-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: 100%;
+}
+.fs-template-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-14);
+  font-weight: var(--weight-semibold);
+  color: var(--color-fg);
+}
+.fs-template-card[data-unavailable='true'] .fs-template-card__title {
+  color: var(--color-fg-muted);
+}
+
+.fs-empty-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-24);
+  padding-block: var(--space-64);
+}
+.fs-empty-wrap > .d3-es {
+  width: min(100%, 520px);
+}
+.fs-empty-wrap > .d3-alrt {
+  width: min(100%, 420px);
+}
+
+.fs-import-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-24);
+  border: var(--border-width) dashed var(--color-border-field);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+}
+.fs-import-drop[data-over='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-muted);
+}
+.fs-import-preview {
+  height: 180px;
+  border-radius: var(--radius-md);
+  padding: var(--space-8);
+}
+.fs-diagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-diagnostics li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ─── Project dashboard (dashboard/*) ─────────────────────────────────────────────────────────── */
+.fs-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin: 0 0 calc(-1 * var(--space-4));
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  color: var(--color-fg-muted);
+}
+.fs-breadcrumb [aria-current='page'] {
+  color: var(--color-fg);
+}
+.fs-breadcrumb svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+  color: var(--color-fg-faint);
+}
+
+.fs-dashboard-wrap {
+  container-type: inline-size;
+}
+.fs-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: var(--space-20);
+  align-items: start;
+}
+.fs-dashboard__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+.fs-dashboard__col--main {
+  gap: var(--space-20);
+}
+/* One column when the page is narrow (1024 with the sidebar open): the columns dissolve and the
+   cards take the tablet board's order — the plan, then what needs you, then the rest. */
+@container (max-width: 880px) {
+  .fs-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+  }
+  .fs-dashboard__col {
+    display: contents;
+  }
+  .fs-dashboard [data-region='plan'] { order: 1; }
+  .fs-dashboard .fs-dashboard__stats { order: 2; }
+  .fs-dashboard [data-region='changesets'] { order: 3; }
+  .fs-dashboard [data-region='findings'] { order: 4; }
+  .fs-dashboard [data-region='brief'] { order: 5; }
+  .fs-dashboard [data-region='versions'] { order: 6; }
+  .fs-dashboard [data-region='options'] { order: 7; }
+  .fs-dashboard [data-region='exports'] { order: 8; }
+  .fs-dashboard [data-region='share'] { order: 9; }
+}
+
+.fs-card.d3-crd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16) var(--space-20) var(--space-20);
+}
+.fs-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 28px;
+}
+.fs-card-head > svg {
+  flex: none;
+  width: var(--icon-16);
+  height: var(--icon-16);
+  color: var(--color-fg-muted);
+}
+.fs-card-head__title {
+  margin: 0;
+  font-size: var(--text-14);
+  line-height: var(--leading-14);
+  font-weight: var(--weight-semibold);
+  color: var(--color-fg);
+}
+.fs-card-text {
+  margin: 0;
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  color: var(--color-fg-muted);
+}
+
+.fs-dashboard-plan {
+  height: 412px;
+  border-radius: var(--radius-md);
+  padding: var(--space-16) var(--space-24);
+}
+.fs-dashboard-plan > .d3-es {
+  background: none;
+}
+.fs-plan-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  color: var(--color-fg-muted);
+}
+
+.fs-change {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  color: var(--color-fg-muted);
+}
+.fs-change__what {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-change__when {
+  margin-left: auto;
+  flex: none;
+  color: var(--color-fg-faint);
+}
+.fs-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-export {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 28px;
+  font-size: var(--text-13);
+  color: var(--color-fg-muted);
+}
+.fs-export > :last-child {
+  margin-left: auto;
+}
+
+/* Template cards sit a step up from the page without an edge, as the design draws them. */
+.fs-template-card.d3-crd:not(.d3-crd--selected) {
+  background: var(--color-surface-hover);
+  border-color: transparent;
+}
