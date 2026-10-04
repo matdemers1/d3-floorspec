@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "floorspec": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/floorspec-mcp.mjs"],
+      "env": {
+        "FLOORSPEC_URL": "${FLOORSPEC_URL:-https://floorspec.d3cloud.io}",
+        "FLOORSPEC_TOKEN": "${FLOORSPEC_TOKEN}"
+      }
+    }
+  }
+}

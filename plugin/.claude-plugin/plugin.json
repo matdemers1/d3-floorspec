@@ -1,0 +1,11 @@
+{
+  "name": "floorspec",
+  "version": "0.1.0",
+  "description": "Design a house as code with D3 Floorspec: the MCP tools (describe, query, apply, propose, render, validate, findings) and a design-partner skill that reads before it edits, proposes typed Floorspec Ops, and never claims a change without a committed result and a render.",
+  "author": { "name": "Matthew Demers", "url": "https://d3cloud.io" },
+  "homepage": "https://d3cloud.io/floorspec",
+  "repository": "https://github.com/matdemers1/d3-floorspec",
+  "license": "Apache-2.0",
+  "keywords": ["floorspec", "architecture", "house", "floor plan", "mcp"],
+  "mcpServers": "./.mcp.json"
+}
