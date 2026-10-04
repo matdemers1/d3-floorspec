@@ -1,0 +1,16 @@
+{
+  "name": "d3-floorspec",
+  "private": true,
+  "version": "0.0.0",
+  "description": "D3 Floorspec — the reference implementation of the Floorspec house-as-code standard: engine, editor, API, MCP server, workers and CLI",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=22.13.0", "pnpm": ">=10" },
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
+  }
+}

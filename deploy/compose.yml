@@ -1,0 +1,16 @@
+# Skeleton — services are filled in by FLR-T-0.7.
+name: d3-floorspec
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: floorspec
+      POSTGRES_PASSWORD: floorspec
+      POSTGRES_DB: floorspec
+    volumes: [pgdata:/var/lib/postgresql/data]
+  # api:        Node 22 — REST, SSE, /mcp
+  # web:        React 19 SPA on @d3cloud/ui
+  # worker:     Postgres job queue — render-back, PDF/DXF/glTF/USDZ
+  # ifc-worker: Python 3.13 + IfcOpenShell
+volumes:
+  pgdata: {}
