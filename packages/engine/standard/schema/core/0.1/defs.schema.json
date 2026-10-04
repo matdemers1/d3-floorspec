@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.1/defs.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The definitions here carry no `default`: a constant default belongs to a member, so it is written where the member is declared, never on a shared definition. The reference canonicalizer reads the `default` keywords of these schemas as its table of constant defaults (9.2 step 1), so a `default` appears exactly on the members whose default is constant in the spec's tables.",
+  "title": "Floorspec Core 0.1 — shared definitions",
+  "description": "Quantities, identifiers and the members every element may carry, shared by the other schemas of Floorspec Core 0.1. Every value here is a structural check (tier 3, FS-SCH-001); nothing here is an invariant (chapter 10).",
+  "$defs": {
+    "length": {
+      "title": "Length",
+      "description": "2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "positiveLength": {
+      "title": "Positive length",
+      "description": "A length (2.1) greater than zero: a level's height (1.8.3), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a texture's size (8.5.2).",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "nonNegativeLength": {
+      "title": "Non-negative length",
+      "description": "A length (2.1) that is not negative: an opening's offset (7.1.1) and sill (7.1.2), a door or window type's sill (8.4.1).",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "angle": {
+      "title": "Angle",
+      "description": "2.4: an integer number of microdegrees (10^-6 degree), counter-clockwise positive seen from above. An angle MUST be a JSON integer (FS-CORE-2.4.1); as for a length, a number written with a fraction or an exponent is not one. Where a member is an angle, its own definition states its range.",
+      "type": "integer"
+    },
+    "point": {
+      "title": "Point",
+      "description": "2.6: a JSON array of exactly two lengths, [x, y], in plan coordinates (2.3).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/length" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "polygon": {
+      "title": "Polygon",
+      "description": "2.6: a JSON array of at least three points, the vertices in order; the last vertex connects back to the first and is not repeated. That a polygon is simple and encloses a positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), not checked here.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/point" },
+      "minItems": 3
+    },
+    "id": {
+      "title": "Element ID",
+      "description": "3.1: an element's ID is its member name in its collection, and MUST match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ (FS-CORE-3.1.1). That an ID is unique across all collections (FS-CORE-3.1.2) is an invariant (FS-INV-001), not checked here.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "reference": {
+      "title": "Reference",
+      "description": "3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "extensionName": {
+      "title": "Extension name",
+      "description": "1.6: a prefix and a name joined by an underscore — FS_ (official), EXT_ (multi-implementer) or a registered vendor prefix of 2 to 8 capitals or digits. Every extension name MUST match ^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$ (FS-CORE-1.6.1).",
+      "type": "string",
+      "pattern": "^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$"
+    },
+    "extensions": {
+      "title": "Extensions",
+      "description": "1.6: an object mapping an extension name to that extension's data. The data is defined by the extension's own specification and is any JSON here. That every member name is also a member of extensionsUsed (FS-CORE-1.6.3) is an invariant (FS-INV-005), not checked here.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/extensionName" },
+      "additionalProperties": true
+    },
+    "extras": {
+      "title": "Extras",
+      "description": "1.7: an object for application-specific data that no specification defines. Its content is any JSON and is never read by derivation (FS-CORE-1.7.1).",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "name": {
+      "title": "Name",
+      "description": "1.4: a human-readable label of 1 to 200 characters, never read by derivation.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    }
+  }
+}

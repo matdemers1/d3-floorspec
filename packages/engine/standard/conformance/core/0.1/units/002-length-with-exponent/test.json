@@ -1,0 +1,6 @@
+{
+  "description": "5.12e6 is the integer 5,120,000 written with an exponent; a length is a JSON integer with no exponent.",
+  "covers": [
+    "FS-CORE-2.1.1"
+  ]
+}

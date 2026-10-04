@@ -1,0 +1,9 @@
+{
+  "description": "Five walls meeting at one junction: the fill is the pentagon of the five wedge corners.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-5.7.3",
+    "FS-CORE-5.7.4"
+  ]
+}

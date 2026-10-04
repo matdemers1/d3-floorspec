@@ -1,0 +1,7 @@
+{
+  "description": "Junction J3 is at the same position as J1, on the same level.",
+  "covers": [
+    "FS-CORE-5.1.1",
+    "FS-CORE-10.2.1"
+  ]
+}

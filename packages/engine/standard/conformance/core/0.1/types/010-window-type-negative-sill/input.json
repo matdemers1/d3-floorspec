@@ -1,0 +1,81 @@
+{
+  "floorspec": "0.1",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "WIN": {
+      "kind": "windowType",
+      "sill": -1
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [5120000, 0]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J1",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2560000, 1920000]
+    }
+  }
+}

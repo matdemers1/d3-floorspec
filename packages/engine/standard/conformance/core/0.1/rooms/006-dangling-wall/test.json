@@ -1,0 +1,8 @@
+{
+  "description": "A wall W6 runs from the south wall into the room and ends freely: the room ring goes up one face of W6, around its square free end and back down the other.",
+  "covers": [
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1",
+    "FS-CORE-5.6.1"
+  ]
+}

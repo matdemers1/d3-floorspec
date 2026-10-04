@@ -1,0 +1,7 @@
+{
+  "description": "The baseline model minified onto one line, then with CR LF line breaks between members: whitespace is not content. Same canonical form and hash as model/017.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A type without a kind.",
+  "covers": [
+    "FS-CORE-8.1.1"
+  ]
+}

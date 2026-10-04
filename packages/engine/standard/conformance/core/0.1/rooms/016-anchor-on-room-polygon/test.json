@@ -1,0 +1,6 @@
+{
+  "description": "A room anchored exactly on its polygon's edge (the inner face of W1): not strictly inside.",
+  "covers": [
+    "FS-CORE-6.3.4"
+  ]
+}

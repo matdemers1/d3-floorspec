@@ -1,0 +1,7 @@
+{
+  "description": "An empty opening that states its width but not its height.",
+  "covers": [
+    "FS-CORE-7.2.1",
+    "FS-CORE-10.2.1"
+  ]
+}

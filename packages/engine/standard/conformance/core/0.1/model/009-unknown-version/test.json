@@ -1,0 +1,7 @@
+{
+  "description": "A reader that implements 0.1 rejects a document declaring 0.2 with FS-DOC-001, whatever else the document contains.",
+  "covers": [
+    "FS-CORE-1.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

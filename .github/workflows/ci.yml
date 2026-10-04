@@ -36,9 +36,8 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
 
-  # The schema/conformance layer (foreman://FLR/test_strategy#layers). For now this is the engine's
-  # own suite; the conformance runner over the cases pinned from the floorspec repo (FLR-ADR-009)
-  # replaces this step when the engine grows one.
+  # The schema/conformance layer (foreman://FLR/test_strategy#layers): the Floorspec conformance
+  # suite, vendored in packages/engine/standard and pinned to a floorspec commit (FLR-ADR-009).
   conformance:
     needs: lint
     runs-on: ubuntu-latest
@@ -50,7 +49,38 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @floorspec/engine test
+      # The vendored standard must be exactly floorspec at the commit LOCK.json pins, so the suite
+      # can never drift silently. A sync made with --allow-dirty has no commit to check against.
+      - name: Read the pinned floorspec commit
+        id: pin
+        run: |
+          lock=packages/engine/standard/LOCK.json
+          if [ "$(jq -r .dirty "$lock")" != "false" ]; then
+            echo "::error::$lock records a dirty sync; re-run sync-standard against a clean floorspec commit"
+            exit 1
+          fi
+          echo "commit=$(jq -r .commit "$lock")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: matdemers1/floorspec
+          ref: ${{ steps.pin.outputs.commit }}
+          path: .floorspec-pinned
+          persist-credentials: false
+      - name: The vendored standard matches the pinned commit
+        run: |
+          status=0
+          for p in $(jq -r '.paths[]' packages/engine/standard/LOCK.json); do
+            diff -r ".floorspec-pinned/$p" "packages/engine/standard/$p" || status=1
+          done
+          exit $status
+      - name: The generated types and validator match the vendored schema
+        run: pnpm --filter @floorspec/engine check:generated
+      - name: Conformance suite (Node)
+        run: pnpm conformance
+      - name: Install Chromium for the browser runner
+        run: pnpm --filter @floorspec/engine exec playwright install --with-deps chromium
+      - name: Engine tests and conformance suite in the browser
+        run: pnpm --filter @floorspec/engine test:browser
 
   unit:
     needs: conformance

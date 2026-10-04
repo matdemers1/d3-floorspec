@@ -1,0 +1,12 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "4b70e22545bc0da29edada9cf317d0ce0d5d667f52cd3ef846ffb3b64c28909f",
+  "derived": {
+    "walls": {},
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {}
+  }
+}

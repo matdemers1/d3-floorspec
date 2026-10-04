@@ -13,7 +13,8 @@
     "test:integration": "turbo run test:integration --concurrency=1",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test:python": "cd workers/ifc && .venv/bin/python -m pytest -q"
+    "test:python": "cd workers/ifc && .venv/bin/python -m pytest -q",
+    "conformance": "pnpm --filter @floorspec/engine conformance"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

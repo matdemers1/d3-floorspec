@@ -1,0 +1,9 @@
+{
+  "description": "A room of layered walls (finish 19, substrate 11, core 140, finish 13 mm) justified \"coreFace\": a = 30 mm (the layers before the core) and b = 153 mm.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-6.2.1",
+    "FS-CORE-8.2.1"
+  ]
+}

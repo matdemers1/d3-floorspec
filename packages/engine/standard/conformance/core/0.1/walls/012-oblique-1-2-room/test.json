@@ -1,0 +1,10 @@
+{
+  "description": "A rectangular room whose walls run along (-1, 2) and (2, 1): lengths are multiples of sqrt(5), so the corners are irrational.",
+  "covers": [
+    "FS-CORE-2.2.1",
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1"
+  ]
+}

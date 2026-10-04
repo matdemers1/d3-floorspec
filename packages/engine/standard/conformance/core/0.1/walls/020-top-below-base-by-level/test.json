@@ -1,0 +1,6 @@
+{
+  "description": "A wall based on L2 (3000 mm) whose top follows its own level L1 (0 + 2700 mm).",
+  "covers": [
+    "FS-CORE-5.9.2"
+  ]
+}

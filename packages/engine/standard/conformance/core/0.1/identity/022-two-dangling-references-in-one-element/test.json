@@ -1,0 +1,7 @@
+{
+  "description": "A room whose floor and wall finishes both name missing materials: one FS-INV-002 for each unresolved reference, both naming the room.",
+  "covers": [
+    "FS-CORE-3.2.1",
+    "FS-CORE-10.2.1"
+  ]
+}

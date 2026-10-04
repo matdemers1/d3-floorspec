@@ -1,0 +1,108 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.1",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "level": "L1"
+    }
+  },
+  "types": {
+    "EXT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "thickness": 24320
+        },
+        {
+          "function": "substrate",
+          "thickness": 14080
+        },
+        {
+          "function": "core",
+          "thickness": 179200
+        },
+        {
+          "function": "finish",
+          "thickness": 16640
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "justification": "coreFace",
+      "level": "L1",
+      "start": "J1",
+      "type": "EXT"
+    },
+    "W2": {
+      "end": "J3",
+      "justification": "coreFace",
+      "level": "L1",
+      "start": "J2",
+      "type": "EXT"
+    },
+    "W3": {
+      "end": "J4",
+      "justification": "coreFace",
+      "level": "L1",
+      "start": "J3",
+      "type": "EXT"
+    },
+    "W4": {
+      "end": "J1",
+      "justification": "coreFace",
+      "level": "L1",
+      "start": "J4",
+      "type": "EXT"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "description": "An empty site is a site: the project has a site, so canonical form keeps \"site\": {} (its default is absent, not {}), while trueNorth 0 is omitted.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-1.5.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "Top-level extension data for an undeclared extension: FS-INV-005 with no element.",
+  "covers": [
+    "FS-CORE-1.6.3"
+  ]
+}

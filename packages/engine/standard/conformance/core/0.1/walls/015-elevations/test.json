@@ -1,0 +1,8 @@
+{
+  "description": "Five free-standing walls on L1 (elevation 0, height 2700 mm) with L2 at 3000 mm: WA follows its level (0 to 2700 mm); WB tops out at L2 - 200 mm; WC has base offset 100 mm and an unconnected height of 1200 mm; WD sits on L2 with height 900 mm; WE starts 300 mm below L1 and rises to L2.",
+  "covers": [
+    "FS-CORE-5.9.1",
+    "FS-CORE-5.9.3",
+    "FS-CORE-3.3.2"
+  ]
+}

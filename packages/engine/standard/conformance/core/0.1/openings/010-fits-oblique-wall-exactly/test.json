@@ -1,0 +1,7 @@
+{
+  "description": "A wall along (3, 4) exactly 4000 mm long, and an opening ending exactly at its end: offset + width = L is allowed.",
+  "covers": [
+    "FS-CORE-7.3.1",
+    "FS-CORE-7.4.1"
+  ]
+}

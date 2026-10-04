@@ -1,0 +1,7 @@
+{
+  "description": "A 50 mm wall W2 between two parallel 200 mm walls: the mitres at its ends cross, so its outline is not a simple polygon.",
+  "covers": [
+    "FS-CORE-5.7.2",
+    "FS-CORE-10.2.1"
+  ]
+}

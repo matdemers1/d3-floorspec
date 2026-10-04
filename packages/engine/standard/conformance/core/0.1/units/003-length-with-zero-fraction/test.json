@@ -1,0 +1,6 @@
+{
+  "description": "5120000.0 has an integer value but a fraction part. (A JSON Schema \"integer\" accepts it; Floorspec does not.)",
+  "covers": [
+    "FS-CORE-2.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The IDs in a join's through list are references too.",
+  "covers": [
+    "FS-CORE-3.2.3",
+    "FS-CORE-5.8.5"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A length of -2^53 is beyond the bound.",
+  "covers": [
+    "FS-CORE-2.1.1"
+  ]
+}

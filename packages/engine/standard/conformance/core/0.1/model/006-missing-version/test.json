@@ -1,0 +1,6 @@
+{
+  "description": "A document without \"floorspec\" does not declare the draft it targets.",
+  "covers": [
+    "FS-CORE-1.2.1"
+  ]
+}

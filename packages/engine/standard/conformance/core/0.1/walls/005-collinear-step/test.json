@@ -1,0 +1,7 @@
+{
+  "description": "Two collinear walls of 100 mm and 200 mm: the feet differ, so each wedge's corner sequence is two points and the faces meet in a step.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

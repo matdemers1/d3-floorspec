@@ -2,7 +2,7 @@
   "name": "@floorspec/cli",
   "private": true,
   "version": "0.1.0",
-  "description": "The floorspec command line: validate and friends.",
+  "description": "The floorspec command line: validate, canonicalize, hash and derive Floorspec documents.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
@@ -19,9 +19,12 @@
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "tsc -p tsconfig.build.json && vitest run"
   },
   "bin": {
     "floorspec": "./dist/bin.js"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*"
   }
 }

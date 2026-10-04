@@ -1,0 +1,21 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "8e3ef7b8e8c53ccee5cf9bdc2dceae9a65602247dd02d9c181151a64d0024e35",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [51202, -38402],
+        "endRight": [1971202, 2521598],
+        "endLeft": [1868798, 2598402],
+        "startLeft": [-51202, 38402],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {}
+  }
+}

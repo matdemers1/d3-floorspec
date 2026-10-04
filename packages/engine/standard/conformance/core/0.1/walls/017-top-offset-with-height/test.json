@@ -1,0 +1,6 @@
+{
+  "description": "offset belongs to a level-constrained top, never to a height.",
+  "covers": [
+    "FS-CORE-5.9.1"
+  ]
+}

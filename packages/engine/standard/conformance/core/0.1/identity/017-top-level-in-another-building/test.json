@@ -1,0 +1,7 @@
+{
+  "description": "Wall W1 on the house's level L1 takes its top from the garage's level G1.",
+  "covers": [
+    "FS-CORE-3.3.2",
+    "FS-CORE-10.2.1"
+  ]
+}

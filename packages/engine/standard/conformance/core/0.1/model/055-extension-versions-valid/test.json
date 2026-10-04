@@ -1,0 +1,6 @@
+{
+  "description": "Versions \"1.0\", \"2.10.3\" and \"0.1.0-rc.1\" all match the pattern. The extensions are declared and unused, which is valid.",
+  "covers": [
+    "FS-CORE-1.6.7"
+  ]
+}

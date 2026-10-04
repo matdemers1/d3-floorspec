@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.1/material.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Material",
+  "description": "8.5: what a layer, a finish or a slab's surface is made of. It has only the members of its table (FS-CORE-1.4.1).",
+  "type": "object",
+  "properties": {
+    "color": {
+      "title": "Colour",
+      "description": "8.5: the material's base colour as \"#rrggbb\", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). Absent by default.",
+      "type": "string",
+      "pattern": "^#[0-9a-f]{6}$"
+    },
+    "texture": {
+      "title": "Texture",
+      "description": "8.5: an image tiled across the surface; one tile covers `size` [w, h] base units. Absent by default; when present, both members are present.",
+      "type": "object",
+      "required": ["asset", "size"],
+      "properties": {
+        "asset": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "8.5: a reference to the asset holding the image."
+        },
+        "size": {
+          "title": "Tile size",
+          "description": "8.5: [w, h], the size one tile covers. It MUST be two lengths greater than zero (FS-CORE-8.5.2).",
+          "type": "array",
+          "items": { "$ref": "defs.schema.json#/$defs/positiveLength" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/name",
+      "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+    },
+    "extensions": {
+      "$ref": "defs.schema.json#/$defs/extensions",
+      "description": "1.4, 1.6: extension data on this material.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.4, 1.7: application-specific data on this material.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

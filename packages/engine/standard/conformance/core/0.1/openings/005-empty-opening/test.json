@@ -1,0 +1,8 @@
+{
+  "description": "An empty opening (no fill) states its own width and height; its sill defaults to 0.",
+  "covers": [
+    "FS-CORE-7.2.1",
+    "FS-CORE-7.4.1",
+    "FS-CORE-8.2.1"
+  ]
+}

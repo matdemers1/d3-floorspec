@@ -1,0 +1,7 @@
+{
+  "description": "A wall's level-constrained top has level and offset only.",
+  "covers": [
+    "FS-CORE-1.4.3",
+    "FS-CORE-5.9.1"
+  ]
+}

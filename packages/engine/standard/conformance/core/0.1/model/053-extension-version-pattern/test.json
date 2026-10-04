@@ -1,0 +1,6 @@
+{
+  "description": "An extension version is <major>.<minor>[.<patch>][-prerelease]: \"v1\" is not.",
+  "covers": [
+    "FS-CORE-1.6.7"
+  ]
+}

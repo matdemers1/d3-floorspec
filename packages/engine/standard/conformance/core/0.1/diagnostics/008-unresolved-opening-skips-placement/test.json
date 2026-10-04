@@ -1,0 +1,7 @@
+{
+  "description": "O1 has no height and would also run past the wall's end and overlap O2: FS-INV-302, -303 and -304 are evaluated only for openings without FS-INV-301, so only FS-INV-301 is reported.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-7.2.1"
+  ]
+}
