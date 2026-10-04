@@ -16,15 +16,22 @@ export function projectRoutes(db: Db): Routes {
   const routes = new Routes(db);
 
   routes.read('/', async (req, res) => {
+    // A per-project token sees its one project; a session or Claude's D3 Auth connector, the
+    // account's projects.
+    const token = req.auth === undefined ? req.token : undefined;
     const projects = await db.project.findMany({
-      where: { ownerAccountId: accountOf(req), deletedAt: null },
+      where: {
+        ownerAccountId: req.auth?.accountId ?? token?.accountId ?? accountOf(req),
+        deletedAt: null,
+        ...(token === undefined || token.projectId === null ? {} : { id: token.projectId }),
+      },
       orderBy: { updatedAt: 'desc' },
       select: { id: true, name: true, createdAt: true, updatedAt: true, heads: { where: { name: MAIN }, select: { versionHash: true } } },
     });
     res.json({
       projects: projects.map(({ heads, ...project }) => ({ ...project, head: heads[0]?.versionHash ?? null })),
     });
-  });
+  }, { token: 'read' });
 
   routes.mutate('POST', '/', async (req, tx) => {
     const { name } = parse(CreateBody, req.body);
@@ -50,7 +57,7 @@ export function projectRoutes(db: Db): Routes {
       head: head === null ? null : { name: head.name, version: head.versionHash, updatedAt: head.updatedAt },
       ops,
     });
-  });
+  }, { token: 'read' });
 
   /** The op log, newest first. Append-only, so this is the project's whole history. */
   routes.read('/:projectId/ops', async (req, res) => {
@@ -63,7 +70,7 @@ export function projectRoutes(db: Db): Routes {
       select: { seq: true, authorKind: true, authorAccountId: true, authorAgent: true, ops: true, beforeHash: true, afterHash: true, createdAt: true },
     });
     res.json({ ops });
-  });
+  }, { token: 'read' });
 
   /**
    * The model as a file: the canonical bytes of the document `main` points at — keys sorted, two
@@ -84,7 +91,7 @@ export function projectRoutes(db: Db): Routes {
     res.setHeader('ETag', `"${head.versionHash}"`);
     res.setHeader('Cache-Control', 'private, no-cache');
     res.send(Buffer.from(body, 'utf8'));
-  });
+  }, { token: 'read' });
 
   /** Delete a project: soft, because its op log and versions are append-only and stay. */
   routes.mutate('DELETE', '/:projectId', async (req, tx) => {

@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { registry } from '../../src/http/routes.js';
 import {
   Browser,
+  createProjectAs,
+  tokenFor,
   FakeD3Auth,
   ISSUER,
   OPERATOR,
@@ -43,6 +45,8 @@ async function withTotp(browser: Browser): Promise<string> {
   await browser.post('/auth/totp/confirm', { code: await totpCode(secret) });
   return secret;
 }
+
+const ROOM = [{ op: 'addElement', collection: 'buildings', id: 'B1', element: {} }];
 
 const EXERCISES: Record<string, Exercise> = {
   'POST /auth/setup': async ({ running }) => ({
@@ -115,6 +119,53 @@ const EXERCISES: Record<string, Exercise> = {
     const { id } = (await operator.post('/api/projects', { name: 'Lake house' })).body as { id: string };
     return { reply: await operator.request('DELETE', `/api/projects/${id}`), action: 'project.delete' };
   },
+  'POST /api/projects/:projectId/ops': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    return { reply: await operator.post(`/api/projects/${id}/ops`, { batch: ROOM }), action: 'ops.apply' };
+  },
+  'POST /api/projects/:projectId/undo': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    await operator.post(`/api/projects/${id}/ops`, { batch: ROOM });
+    return { reply: await operator.post(`/api/projects/${id}/undo`), action: 'ops.undo' };
+  },
+  'POST /api/projects/:projectId/redo': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    await operator.post(`/api/projects/${id}/ops`, { batch: ROOM });
+    await operator.post(`/api/projects/${id}/undo`);
+    return { reply: await operator.post(`/api/projects/${id}/redo`), action: 'ops.redo' };
+  },
+  'POST /api/projects/:projectId/changesets': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    const agent = Browser.bearer(running.url, await tokenFor(operator, id, 'agent'));
+    return { reply: await agent.post(`/api/projects/${id}/changesets`, { name: 'Idea', batch: ROOM }), action: 'changeset.propose' };
+  },
+  'POST /api/projects/:projectId/changesets/:changesetId/accept': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    const proposed = (await operator.post(`/api/projects/${id}/changesets`, { name: 'Idea', batch: ROOM })).body as { changeset: { id: string } };
+    return { reply: await operator.post(`/api/projects/${id}/changesets/${proposed.changeset.id}/accept`), action: 'changeset.accept' };
+  },
+  'POST /api/projects/:projectId/changesets/:changesetId/reject': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    const proposed = (await operator.post(`/api/projects/${id}/changesets`, { name: 'Idea', batch: ROOM })).body as { changeset: { id: string } };
+    return { reply: await operator.post(`/api/projects/${id}/changesets/${proposed.changeset.id}/reject`), action: 'changeset.reject' };
+  },
+  'POST /api/tokens': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    return { reply: await operator.post('/api/tokens', { projectId: id, name: 'Claude', kind: 'agent' }), action: 'token.create' };
+  },
+  'DELETE /api/tokens/:tokenId': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    const created = (await operator.post('/api/tokens', { projectId: id, name: 'Claude', kind: 'agent' })).body as { id: string };
+    return { reply: await operator.request('DELETE', `/api/tokens/${created.id}`), action: 'token.revoke' };
+  },
   'DELETE /api/account/d3auth': async ({ running, d3auth }) => {
     const operator = await setupOperator(running);
     await d3auth.signIn(operator, { iss: ISSUER, sub: 'operator-sub', emailVerified: false }, true);
@@ -153,7 +204,7 @@ describe('the audit walk', () => {
       const rows = await db.auditLog.findMany({ where: { action } });
       expect(rows.length, `no "${action}" row for ${route}`).toBeGreaterThan(0);
       const row = rows.at(-1);
-      expect(row?.actor).toMatch(/^(account:[0-9a-f-]{36}|anonymous)$/);
+      expect(row?.actor).toMatch(/^((account|token|agent):[0-9a-f-]{36}|anonymous)$/);
       expect(row?.at.getTime()).toBeGreaterThanOrEqual(startedAt.getTime());
       expect((row?.detail as { route?: string } | null)?.route).toBe(route);
     });

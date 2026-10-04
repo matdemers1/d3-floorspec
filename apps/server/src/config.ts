@@ -47,6 +47,11 @@ const Env = z.object({
   D3AUTH_ISSUER: optional(z.url()),
   D3AUTH_CLIENT_ID: optional(z.string()),
   D3AUTH_CLIENT_SECRET: optional(z.string()),
+  /**
+   * Where D3 Auth publishes its signing keys, for verifying the access tokens Claude's connector
+   * presents at `/mcp` (FLR-T-2.6). Defaults to `/oidc/jwks` on the issuer's origin.
+   */
+  D3AUTH_JWKS_URI: optional(z.url()),
 
   /** How long an invite link stays usable. Re-issued rather than extended once it lapses. */
   INVITE_TTL_HOURS: z.coerce.number().int().positive().max(720).default(168),

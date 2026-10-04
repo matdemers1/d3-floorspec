@@ -4,6 +4,7 @@ import { createApp, type AppDeps } from '../../src/app.js';
 import { OidcError, type CompletedSignIn, type OidcClient } from '../../src/auth/oidc.js';
 import { loadConfig, type Config } from '../../src/config.js';
 import { createDb, type Db } from '../../src/db.js';
+import { FakeApplier } from '../support/fake-applier.js';
 
 /** A fixed, valid environment. The secrets are test-only values, 32 bytes each. */
 export const TEST_ENV = {
@@ -52,7 +53,9 @@ export interface StartOptions {
 export async function start(options: StartOptions = {}): Promise<Running> {
   const config = testConfig(options.env);
   const db = testDb();
-  const app = createApp({ config, db, ...options.with });
+  // The fake applier stands in for @floorspec/ops until it is merged; no D3 Auth verifier unless a
+  // test brings one.
+  const app = createApp({ config, db, applier: new FakeApplier(), verifier: null, ...options.with });
   const server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', () => { resolve(); }));
   const { port } = server.address() as AddressInfo;
@@ -79,14 +82,23 @@ export interface Reply {
 export class Browser {
   private readonly jar = new Map<string, string>();
 
-  constructor(private readonly base: string) {}
+  constructor(
+    private readonly base: string,
+    /** Sent with every request: a bearer token, for a program rather than a browser. */
+    private readonly extraHeaders: Record<string, string> = {},
+  ) {}
+
+  /** A client that presents a bearer token and keeps no cookies. */
+  static bearer(base: string, token: string): Browser {
+    return new Browser(base, { authorization: `Bearer ${token}` });
+  }
 
   get cookies(): ReadonlyMap<string, string> {
     return this.jar;
   }
 
-  async request(method: string, path: string, body?: unknown): Promise<Reply> {
-    const headers: Record<string, string> = {};
+  async request(method: string, path: string, body?: unknown, extra: Record<string, string> = {}): Promise<Reply> {
+    const headers: Record<string, string> = { ...this.extraHeaders, ...extra };
     if (body !== undefined) headers['content-type'] = 'application/json';
     if (this.jar.size > 0) {
       headers['cookie'] = [...this.jar].map(([k, v]) => `${k}=${v}`).join('; ');
@@ -119,8 +131,8 @@ export class Browser {
   get(path: string): Promise<Reply> {
     return this.request('GET', path);
   }
-  post(path: string, body?: unknown): Promise<Reply> {
-    return this.request('POST', path, body ?? {});
+  post(path: string, body?: unknown, headers?: Record<string, string>): Promise<Reply> {
+    return this.request('POST', path, body ?? {}, headers);
   }
 }
 
@@ -200,4 +212,20 @@ export class FakeD3Auth implements OidcClient {
     const state = new URL(start.headers.get('location') ?? '').searchParams.get('state') ?? '';
     return browser.get(`/auth/oidc/callback?state=${encodeURIComponent(state)}&code=abc`);
   }
+}
+
+// ─── Projects, edits and tokens ────────────────────────────────────────────
+
+/** Create a project through the real route; returns its ID and first head. */
+export async function createProjectAs(browser: Browser, name = 'Lake house'): Promise<{ id: string; head: string }> {
+  const res = await browser.post('/api/projects', { name });
+  if (res.status !== 201) throw new Error(`create project failed: ${String(res.status)} ${res.text}`);
+  return res.body as { id: string; head: string };
+}
+
+/** Mint an API token through the account screen's route; returns the secret. */
+export async function tokenFor(browser: Browser, projectId: string, kind: 'read' | 'write' | 'agent', name = `${kind} token`): Promise<string> {
+  const res = await browser.post('/api/tokens', { projectId, name, kind });
+  if (res.status !== 201) throw new Error(`token failed: ${String(res.status)} ${res.text}`);
+  return (res.body as { token: string }).token;
 }

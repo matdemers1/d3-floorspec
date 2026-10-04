@@ -9,6 +9,7 @@ import {
 import type { Db, Tx } from '../db.js';
 import { writeAudit, type AuditEntry } from '../domain/audit.js';
 import { HttpError } from './errors.js';
+import { isAgent, type TokenPrincipal } from './context.js';
 
 /**
  * How every route is declared (FLR-T-0.4, FLR-T-0.6).
@@ -30,12 +31,22 @@ import { HttpError } from './errors.js';
 export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type Access = 'public' | 'account' | 'operator';
 
+/**
+ * Whether a bearer credential (an API token, or Claude's D3 Auth connector) may call a route, and
+ * with which scope. Absent: sessions only.
+ *   - `read`: any token with the `read` scope.
+ *   - `propose`: a `write` token (commits to main) or an `agent` one (writes a changeset).
+ *   - `write`: a `write` token only — never an agent (FLR-ADR-016).
+ */
+export type TokenAccess = 'read' | 'propose' | 'write';
+
 export interface RouteRecord {
   readonly method: Method;
   readonly path: string;
   readonly mutating: boolean;
   readonly access: Access;
   readonly projectScoped: boolean;
+  readonly token: TokenAccess | null;
 }
 
 /** What a mutation hands back: the response to send once committed, and the row to audit. */
@@ -54,6 +65,8 @@ export type ReadHandler = (req: Request, res: Response) => Promise<void> | void;
 
 export interface RouteOptions {
   readonly access?: Access;
+  /** Accept bearer credentials too, at this scope. Only for `account` routes. */
+  readonly token?: TokenAccess;
   /** Extra middleware, run after the access and ownership guards. */
   readonly before?: readonly RequestHandler[];
 }
@@ -105,14 +118,18 @@ export class Routes {
       mutating,
       access: options.access ?? 'account',
       projectScoped: path.includes(PROJECT_PARAM),
+      token: options.token ?? null,
     };
+    if (record.token !== null && record.access !== 'account') {
+      throw new Error(`${method} ${path}: only an account route can accept a token`);
+    }
     this.records.push(record);
     return record;
   }
 
   private guards(record: RouteRecord, options: RouteOptions): RequestHandler[] {
     const guards: RequestHandler[] = [];
-    if (record.access !== 'public') guards.push(requireAccount);
+    if (record.access !== 'public') guards.push(requireCaller(record.token));
     if (record.access === 'operator') guards.push(requireOperator);
     if (record.projectScoped) guards.push(this.ownedProject());
     guards.push(...(options.before ?? []));
@@ -127,8 +144,16 @@ export class Routes {
   private ownedProject(): RequestHandler {
     return (req, _res, next) => {
       const id = req.params['projectId'];
-      const accountId = req.auth?.accountId;
-      if (typeof id !== 'string' || !UUID.test(id) || accountId === undefined) {
+      const accountId = req.auth?.accountId ?? req.token?.accountId;
+      // A per-project token reaches its own project and no other: anything else is the same 404 an
+      // account gets for a project it does not own.
+      const tokenProject = req.auth === undefined ? req.token?.projectId : null;
+      if (
+        typeof id !== 'string' ||
+        !UUID.test(id) ||
+        accountId === undefined ||
+        (tokenProject !== null && tokenProject !== undefined && tokenProject !== id)
+      ) {
         next(new HttpError(404, 'project not found'));
         return;
       }
@@ -149,12 +174,49 @@ export class Routes {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function requireAccount(req: Request, _res: Response, next: NextFunction): void {
-  if (req.auth === undefined) {
-    next(new HttpError(401, 'sign in first'));
-    return;
+/**
+ * A session always passes; a bearer credential passes only a route that accepts one, with a scope
+ * that route allows. Nobody at all is a 401; a token on a person-only route is a 403 that says so.
+ */
+function requireCaller(tokenAccess: TokenAccess | null): RequestHandler {
+  return (req, _res, next) => {
+    if (req.auth !== undefined) {
+      next();
+      return;
+    }
+    const token = req.token;
+    if (token === undefined) {
+      next(new HttpError(401, 'sign in first'));
+      return;
+    }
+    if (tokenAccess === null) {
+      next(new HttpError(403, 'this needs a person signed in to D3 Floorspec, not a token'));
+      return;
+    }
+    if (!tokenAllows(token, tokenAccess)) {
+      next(new HttpError(403, tokenRefusal(token, tokenAccess)));
+      return;
+    }
+    next();
+  };
+}
+
+export function tokenAllows(token: TokenPrincipal, access: TokenAccess): boolean {
+  switch (access) {
+    case 'read':
+      return token.scopes.has('read');
+    case 'propose':
+      return token.scopes.has('write') || token.scopes.has('agent');
+    case 'write':
+      return token.scopes.has('write') && !isAgent(token);
   }
-  next();
+}
+
+function tokenRefusal(token: TokenPrincipal, access: TokenAccess): string {
+  if (access === 'write' && isAgent(token)) {
+    return 'an agent cannot do this: agents propose changesets, and a person accepts them (FLR-ADR-016)';
+  }
+  return `this token does not have the ${access === 'propose' ? 'write or agent' : access} scope`;
 }
 
 function requireOperator(req: Request, _res: Response, next: NextFunction): void {

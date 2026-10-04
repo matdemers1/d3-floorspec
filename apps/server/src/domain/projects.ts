@@ -33,6 +33,7 @@ export async function createProject(tx: Tx, ownerAccountId: string, name: string
     data: {
       projectId: project.id,
       seq: 1,
+      kind: 'create',
       authorKind: 'account',
       authorAccountId: ownerAccountId,
       ops: [{ op: 'createProject', name, floorspec: '0.1' }] as Prisma.InputJsonArray,

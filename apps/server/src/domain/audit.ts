@@ -44,11 +44,25 @@ export function scrub(value: unknown): unknown {
   return out;
 }
 
+/**
+ * How the trail names whoever made the request: the person in a session, else the bearer credential
+ * — `token:<id>` for a person's API token, `agent:<token id or D3 Auth client>` for an agent. A
+ * credential's row still carries the account it acts for.
+ */
+export function actorOf(req: Request, accountId: string | null): string {
+  const token = req.auth === undefined ? req.token : undefined;
+  if (token !== undefined) {
+    const who = token.tokenId ?? token.name;
+    return token.scopes.has('agent') ? `agent:${who}` : `token:${who}`;
+  }
+  return accountId === null ? 'anonymous' : `account:${accountId}`;
+}
+
 export async function writeAudit(tx: Tx, req: Request, entry: AuditEntry): Promise<void> {
-  const accountId = entry.actorAccountId ?? req.auth?.accountId ?? null;
+  const accountId = entry.actorAccountId ?? req.auth?.accountId ?? req.token?.accountId ?? null;
   await tx.auditLog.create({
     data: {
-      actor: accountId === null ? 'anonymous' : `account:${accountId}`,
+      actor: actorOf(req, accountId),
       actorAccountId: accountId,
       action: entry.action,
       targetType: entry.targetType,

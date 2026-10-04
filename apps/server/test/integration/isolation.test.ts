@@ -17,10 +17,28 @@ interface Call {
   readonly ownerStatus: number;
 }
 
+const ROOM = [{ op: 'addElement', collection: 'buildings', element: {} }];
+
 const CALLS: Record<string, Call> = {
   'GET /api/projects/:projectId': { ownerStatus: 200 },
   'GET /api/projects/:projectId/ops': { ownerStatus: 200 },
   'GET /api/projects/:projectId/model.json': { ownerStatus: 200 },
+  'GET /api/projects/:projectId/versions/:hash': { ownerStatus: 200 },
+  'GET /api/projects/:projectId/history': { ownerStatus: 200 },
+  'POST /api/projects/:projectId/ops': { body: { batch: ROOM }, ownerStatus: 201 },
+  'POST /api/projects/:projectId/undo': { body: {}, ownerStatus: 201 },
+  'POST /api/projects/:projectId/redo': { body: {}, ownerStatus: 201 },
+  'GET /api/projects/:projectId/validate': { ownerStatus: 200 },
+  'GET /api/projects/:projectId/findings': { ownerStatus: 200 },
+  // Answered, by a route that works: plan rendering is wired in with FLR-T-2.8.
+  'GET /api/projects/:projectId/render': { ownerStatus: 501 },
+  'GET /api/projects/:projectId/changesets': { ownerStatus: 200 },
+  'POST /api/projects/:projectId/changesets': { body: { name: 'Another idea' }, ownerStatus: 201 },
+  'GET /api/projects/:projectId/changesets/:changesetId': { ownerStatus: 200 },
+  'GET /api/projects/:projectId/changesets/:changesetId/model.json': { ownerStatus: 200 },
+  'POST /api/projects/:projectId/changesets/:changesetId/accept': { body: {}, ownerStatus: 200 },
+  // After the accept above, the same changeset is already decided: the route works and says so.
+  'POST /api/projects/:projectId/changesets/:changesetId/reject': { body: {}, ownerStatus: 409 },
   // Last: it is the one that changes the project, so the owner's call to it goes at the end.
   'DELETE /api/projects/:projectId': { ownerStatus: 204 },
 };
@@ -31,6 +49,12 @@ describe('per-account isolation', () => {
   let alice: Browser;
   let bob: Browser;
   let projectId: string;
+  let changesetId: string;
+  let head: string;
+
+  /** A route's path with A's project, version and changeset filled in. */
+  const fill = (path: string, project = projectId) =>
+    path.replace(':projectId', project).replace(':hash', head).replace(':changesetId', changesetId);
 
   beforeAll(async () => {
     running = await start();
@@ -42,7 +66,8 @@ describe('per-account isolation', () => {
     await reset(db);
     alice = await setupOperator(running);
     bob = await inviteMember(running, alice, 'bob@example.test');
-    projectId = ((await alice.post('/api/projects', { name: "Alice's house" })).body as { id: string }).id;
+    ({ id: projectId, head } = (await alice.post('/api/projects', { name: "Alice's house" })).body as { id: string; head: string });
+    changesetId = ((await alice.post(`/api/projects/${projectId}/changesets`, { name: 'An idea', batch: ROOM })).body as { changeset: { id: string } }).changeset.id;
   });
 
   it('covers every project-scoped route the app declares', () => {
@@ -58,7 +83,7 @@ describe('per-account isolation', () => {
     const auditBefore = await db.auditLog.count();
     for (const [route, call] of Object.entries(CALLS)) {
       const [method = 'GET', path = ''] = route.split(' ');
-      const res = await bob.request(method, path.replace(':projectId', projectId), call.body);
+      const res = await bob.request(method, fill(path), call.body);
       expect(res.status, `${route} as B`).toBe(404);
       expect(res.body, `${route} as B`).toEqual({ error: 'project not found' });
     }
@@ -71,7 +96,7 @@ describe('per-account isolation', () => {
     const missing = '01a10000-0000-7000-8000-000000000000';
     for (const [route, call] of Object.entries(CALLS)) {
       const [method = 'GET', path = ''] = route.split(' ');
-      const res = await bob.request(method, path.replace(':projectId', missing), call.body);
+      const res = await bob.request(method, fill(path, missing), call.body);
       expect(res.status, route).toBe(404);
       expect(res.body, route).toEqual({ error: 'project not found' });
     }
@@ -80,8 +105,21 @@ describe('per-account isolation', () => {
   it('answers A, the owner, on every one of the same routes', async () => {
     for (const [route, call] of Object.entries(CALLS)) {
       const [method = 'GET', path = ''] = route.split(' ');
-      const res = await alice.request(method, path.replace(':projectId', projectId), call.body);
-      expect(res.status, `${route} as A`).toBe(call.ownerStatus);
+      const res = await alice.request(method, fill(path), call.body);
+      expect(res.status, `${route} as A: ${res.text}`).toBe(call.ownerStatus);
+    }
+  });
+
+  it("answers B's own API token with 404 on A's project, on every route a token can reach", async () => {
+    const bobsProject = ((await bob.post('/api/projects', { name: "Bob's house" })).body as { id: string }).id;
+    const created = await bob.post('/api/tokens', { projectId: bobsProject, name: 'bob', kind: 'write' });
+    const token = Browser.bearer(running.url, (created.body as { token: string }).token);
+    const tokenRoutes = registry(running.app).filter((route) => route.projectScoped && route.token !== null);
+    expect(tokenRoutes.length).toBeGreaterThan(10);
+    for (const route of tokenRoutes) {
+      const call = CALLS[`${route.method} ${route.path}`];
+      const res = await token.request(route.method, fill(route.path), call?.body);
+      expect(res.status, `${route.method} ${route.path} with B's token`).toBe(404);
     }
   });
 

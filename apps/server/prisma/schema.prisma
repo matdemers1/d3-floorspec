@@ -55,6 +55,9 @@ model Account {
   invitesSent    Invite[]    @relation("InvitedBy")
   acceptedInvite Invite?     @relation("AcceptedBy")
   ops            OpLog[]
+  tokens         ApiToken[]
+  changesetsMade Changeset[] @relation("ChangesetCreatedBy")
+  changesetsClosed Changeset[] @relation("ChangesetClosedBy")
 
   @@map("accounts")
 }
@@ -171,9 +174,12 @@ model Project {
   /// Soft delete: the op log and the versions it points at are append-only and stay.
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  owner Account @relation(fields: [ownerAccountId], references: [id], onDelete: Restrict)
-  heads Head[]
-  ops   OpLog[]
+  owner      Account     @relation(fields: [ownerAccountId], references: [id], onDelete: Restrict)
+  heads      Head[]
+  ops        OpLog[]
+  tokens     ApiToken[]
+  changesets Changeset[]
+  retiredIds RetiredId[]
 
   @@index([ownerAccountId])
   @@map("projects")
@@ -187,49 +193,89 @@ model Version {
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  heads    Head[]
-  opsFrom  OpLog[] @relation("OpBefore")
-  opsTo    OpLog[] @relation("OpAfter")
+  heads          Head[]
+  opsFrom        OpLog[]     @relation("OpBefore")
+  opsTo          OpLog[]     @relation("OpAfter")
+  changesetBases Changeset[] @relation("ChangesetBase")
 
   @@map("versions")
 }
 
+/// Who wrote an op: a person in a session (`account`), a person's write-scoped API token (`token`),
+/// or an agent — an agent-scoped token or Claude's D3 Auth connector (`agent`).
 enum AuthorKind {
   account
   agent
+  token
+}
+
+/// What an op-log row is. `undo` applies the stored inverse of an earlier op and `redo` the inverse
+/// of an undo; `merge` is a changeset op arriving on `main` when a person accepts it. History is
+/// only ever appended to (FLR-T-2.4).
+enum OpKind {
+  create
+  apply
+  undo
+  redo
+  merge
 }
 
 /// Append-only. Every change to a project's document is a batch of Floorspec Ops recorded here
-/// (FLR-ADR-008): `seq` counts from 1 per project, and each row moves the document from
-/// `before_hash` to `after_hash`.
+/// (FLR-ADR-008): `seq` counts from 1 per project across every head, and each row moves the head it
+/// names from `before_hash` to `after_hash`.
 model OpLog {
   id        String @id @default(uuid(7)) @db.Uuid
   projectId String @map("project_id") @db.Uuid
   seq       Int
 
-  authorKind      AuthorKind @map("author_kind")
-  /// Set when a person made the change.
-  authorAccountId String?    @map("author_account_id") @db.Uuid
-  /// Set when an agent did (its token's name); agents write changesets, never main (FLR-ADR-016).
-  authorAgent     String?    @map("author_agent")
+  kind OpKind @default(apply)
+  /// The head this op moved: `main`, or a changeset's scratch head `cs/<changeset id>`.
+  head String @default("main")
 
+  authorKind      AuthorKind @map("author_kind")
+  /// The person: the session's account, a token's owner, or the account an agent acts for.
+  authorAccountId String?    @map("author_account_id") @db.Uuid
+  /// Set when an agent did it (its token's name, or the D3 Auth client); agents write changesets,
+  /// never main (FLR-ADR-016) — an agent op on main is a `merge` a person accepted.
+  authorAgent     String?    @map("author_agent")
+  authorTokenId   String?    @map("author_token_id") @db.Uuid
+
+  /// The batch as it was sent, references and all — what a changeset replays.
   ops        Json
+  /// The primitives the applier actually applied, every reference resolved (Ops 1.4).
+  resolved   Json?
+  /// The batch that turns `after` back into `before` (Ops 1.6); null for the op that created the
+  /// project, which has nothing to go back to.
+  inverse    Json?
+  created    String[] @default([])
+  removed    String[] @default([])
   /// Null only for the first op of a project, which creates the document.
   beforeHash String? @map("before_hash")
   afterHash  String  @map("after_hash")
 
+  /// The changeset this op belongs to (on its scratch head), or came from (a `merge` on main).
+  changesetId String? @map("changeset_id") @db.Uuid
+  /// For `undo` and `redo`: the op whose inverse this applied.
+  undoOfId    String? @map("undo_of_id") @db.Uuid
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  authorAccount Account? @relation(fields: [authorAccountId], references: [id], onDelete: Restrict)
-  before        Version? @relation("OpBefore", fields: [beforeHash], references: [hash], onDelete: Restrict)
-  after         Version  @relation("OpAfter", fields: [afterHash], references: [hash], onDelete: Restrict)
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  authorAccount Account?   @relation(fields: [authorAccountId], references: [id], onDelete: Restrict)
+  authorToken   ApiToken?  @relation(fields: [authorTokenId], references: [id], onDelete: Restrict)
+  before        Version?   @relation("OpBefore", fields: [beforeHash], references: [hash], onDelete: Restrict)
+  after         Version    @relation("OpAfter", fields: [afterHash], references: [hash], onDelete: Restrict)
+  changeset     Changeset? @relation(fields: [changesetId], references: [id], onDelete: Restrict)
+  undoOf        OpLog?     @relation("UndoOf", fields: [undoOfId], references: [id], onDelete: Restrict)
+  undoneBy      OpLog[]    @relation("UndoOf")
 
   @@unique([projectId, seq])
+  @@index([projectId, head, seq])
   @@map("op_log")
 }
 
-/// A named pointer into a project's history. `main` only, for now; changesets add others.
+/// A named pointer into a project's history: `main`, and one scratch head `cs/<id>` per pending
+/// changeset (FLR-T-2.5), removed when the changeset is accepted or rejected.
 model Head {
   projectId   String @map("project_id") @db.Uuid
   name        String
@@ -244,13 +290,107 @@ model Head {
   @@map("heads")
 }
 
+/// Every element ID a project has ever minted or held, on any head (Ops 1.5): what the applier is
+/// handed as `context.retired`, so a deleted wall's ID is never given to a new one. The first head
+/// to mint an ID records it; `changeset_id` says which changeset that was, if any.
+model RetiredId {
+  projectId   String  @map("project_id") @db.Uuid
+  elementId   String  @map("element_id")
+  changesetId String? @map("changeset_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@id([projectId, elementId])
+  @@map("retired_ids")
+}
+
+enum ChangesetStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum MergeMode {
+  fast_forward
+  replay
+}
+
+/// A named, pending sequence of ops on a scratch head (FLR-ADR-016): what an agent token writes
+/// instead of main. A person accepts it — main fast-forwards when it has not moved, otherwise the
+/// changeset's batches are replayed onto it — or rejects it, which discards the scratch head.
+model Changeset {
+  id        String          @id @default(uuid(7)) @db.Uuid
+  projectId String          @map("project_id") @db.Uuid
+  name      String
+  status    ChangesetStatus @default(pending)
+  /// Main's head when the changeset was opened: accept fast-forwards only while main is still here.
+  baseHash  String          @map("base_hash")
+
+  createdByAccountId String? @map("created_by_account_id") @db.Uuid
+  createdByTokenId   String? @map("created_by_token_id") @db.Uuid
+  createdByAgent     String? @map("created_by_agent")
+
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  closedAt          DateTime?  @map("closed_at") @db.Timestamptz(6)
+  closedByAccountId String?    @map("closed_by_account_id") @db.Uuid
+  mergeMode         MergeMode? @map("merge_mode")
+  mergedHash        String?    @map("merged_hash")
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  base      Version   @relation("ChangesetBase", fields: [baseHash], references: [hash], onDelete: Restrict)
+  createdBy Account?  @relation("ChangesetCreatedBy", fields: [createdByAccountId], references: [id], onDelete: Restrict)
+  createdByToken ApiToken? @relation(fields: [createdByTokenId], references: [id], onDelete: Restrict)
+  closedBy  Account?  @relation("ChangesetClosedBy", fields: [closedByAccountId], references: [id], onDelete: Restrict)
+  ops       OpLog[]
+
+  @@index([projectId, status])
+  @@map("changesets")
+}
+
+enum TokenScope {
+  read
+  write
+  agent
+}
+
+/// A per-project API token for the MCP server and the REST API (FLR-T-2.5). Only the SHA-256 of
+/// the secret is stored; the secret is shown once. `write` commits to main as the person; `agent`
+/// writes named changesets and never main (FLR-ADR-016).
+model ApiToken {
+  id        String       @id @default(uuid(7)) @db.Uuid
+  accountId String       @map("account_id") @db.Uuid
+  projectId String       @map("project_id") @db.Uuid
+  name      String
+  tokenHash String       @unique @map("token_hash")
+  /// The first characters of the secret, so a person can tell two tokens apart.
+  prefix    String
+  scopes    TokenScope[]
+
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(6)
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+
+  account    Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  ops        OpLog[]
+  changesets Changeset[]
+
+  @@index([accountId])
+  @@index([projectId])
+  @@map("api_tokens")
+}
+
 // ─── Audit ─────────────────────────────────────────────────────────────────
 
 /// Append-only. Every mutating route writes one row, in the same transaction as its change.
 model AuditLog {
   id String @id @default(uuid(7)) @db.Uuid
 
-  /// `account:<id>`, `agent:<name>` or `anonymous`.
+  /// `account:<id>`, `token:<id>`, `agent:<token id or client>` or `anonymous`.
   actor          String
   actorAccountId String?  @map("actor_account_id") @db.Uuid
   /// What happened, dotted: `project.create`, `auth.login`, `invite.revoke`.

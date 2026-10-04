@@ -20,6 +20,15 @@ import { oidcRoutes } from './routes/oidc.js';
 import { inviteRoutes } from './routes/invites.js';
 import { accountRoutes } from './routes/account.js';
 import { projectRoutes } from './routes/projects.js';
+import { historyRoutes } from './routes/history.js';
+import { changesetRoutes } from './routes/changesets.js';
+import { checkRoutes } from './routes/checks.js';
+import { tokenRoutes } from './routes/tokens.js';
+import { mountMcp } from './routes/mcp.js';
+import { ProblemError, sendProblem } from './http/problem.js';
+import { ApplierUnavailable, unavailableApplier, type Applier } from './ops/applier.js';
+import { createVerifier, protectedResourceMetadata, type Verifier } from './auth/resource-server.js';
+import type { PlanRenderer } from './render.js';
 
 export interface AppDeps {
   readonly config: Config;
@@ -29,25 +38,60 @@ export interface AppDeps {
    * one button instead of two, and nothing else changes.
    */
   readonly oidc?: OidcClient | null;
+  /**
+   * The Floorspec Ops applier every edit goes through (FLR-ADR-008). Defaults to one that answers
+   * 503 until `@floorspec/ops` is wired in.
+   */
+  readonly applier?: Applier;
+  /**
+   * Verifies D3 Auth access tokens at `/mcp`. Defaults to one built from the config when
+   * D3AUTH_ISSUER is set; null takes API tokens only.
+   */
+  readonly verifier?: Verifier | null;
+  /** Draws plan PNGs (FLR-T-2.8). Null until the worker's renderer is wired in: renders answer 501. */
+  readonly renderer?: PlanRenderer | null;
 }
 
 /** The paths the API owns. Anything else is a screen of the editor. */
 const API_PREFIXES = ['api', 'auth', 'health', 'healthz', 'readyz', 'mcp', '.well-known'];
 
-export function createApp({ config, db, oidc = null }: AppDeps): Express {
+export function createApp({
+  config,
+  db,
+  oidc = null,
+  applier = unavailableApplier,
+  verifier = createVerifier(config),
+  renderer = null,
+}: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
   // Behind the Cloudflare Tunnel: one hop, so `req.ip` is the client and the login throttle has a
   // bucket per client rather than one for everybody. Not `true`: that lets a client spoof itself.
   app.set('trust proxy', 1);
   app.use(express.json({ limit: '1mb' }));
-  app.use(attachAuth(db, config));
+  app.use(attachAuth(db, config, verifier));
 
   mount(app, '/auth', authRoutes({ db, config, oidcAvailable: oidc !== null }));
   mount(app, '/auth/oidc', oidcRoutes(db, config, oidc));
   mount(app, '/api/invites', inviteRoutes(db, config));
   mount(app, '/api/account', accountRoutes(db));
   mount(app, '/api/projects', projectRoutes(db));
+  mount(app, '/api/projects', historyRoutes(db, applier));
+  mount(app, '/api/projects', changesetRoutes(db, applier));
+  mount(app, '/api/projects', checkRoutes(db, renderer));
+  mount(app, '/api/tokens', tokenRoutes(db));
+  mountMcp(app, config);
+
+  /**
+   * RFC 9728 protected-resource metadata for `/mcp`, at both paths the spec has clients try: how
+   * Claude's connector finds D3 Auth. Registered before the not-found guards and the editor, so a
+   * probe gets this document rather than a 404 or a web page.
+   */
+  for (const path of ['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp']) {
+    app.get(path, (_req, res) => {
+      res.json(protectedResourceMetadata(config));
+    });
+  }
 
   /** Liveness: the process is up. Touches nothing else. */
   app.get('/healthz', (_req, res) => {
@@ -97,6 +141,14 @@ export function createApp({ config, db, oidc = null }: AppDeps): Express {
     if (res.headersSent) return;
     if (error instanceof HttpError) {
       res.status(error.status).json({ error: error.message, ...error.extra });
+      return;
+    }
+    if (error instanceof ProblemError) {
+      sendProblem(res, error.problem);
+      return;
+    }
+    if (error instanceof ApplierUnavailable) {
+      sendProblem(res, { status: 503, type: 'applier-unavailable', title: error.message });
       return;
     }
     if (isBodyParseError(error)) {

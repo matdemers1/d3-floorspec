@@ -20,5 +20,13 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.1.0"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*",
+    "@modelcontextprotocol/server": "2.1.0",
+    "zod": "^4.6.5"
   }
 }
