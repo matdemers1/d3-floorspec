@@ -1,0 +1,267 @@
+// D3 Floorspec schema (FLR-T-0.4). The shape is foreman://FLR/data_model; this file is the
+// relational half of it — the Floorspec document itself lives in `versions.document` as JSONB.
+//
+// Three rules are enforced by the database rather than trusted to the code, by triggers and checks
+// in the migration SQL (Prisma does not model either):
+//   1. A version row is immutable and shared by hash: `versions` refuses UPDATE and DELETE, and its
+//      key must be a lowercase hex SHA-256.
+//   2. `op_log` is append-only: it refuses UPDATE and DELETE.
+//   3. `audit_log` is append-only for the same reason.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Accounts and authentication ───────────────────────────────────────────
+
+/// `operator` is the account first-run setup creates: it invites everybody else (FLR-REQ-009).
+enum AccountRole {
+  operator
+  member
+}
+
+enum AuthMethod {
+  password
+  oidc
+}
+
+enum ThrottleScope {
+  account
+  ip
+}
+
+model Account {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Stored lower-cased; the login lookup lower-cases too.
+  email       String      @unique
+  displayName String      @map("display_name")
+  role        AccountRole @default(member)
+
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  disabledAt DateTime? @map("disabled_at") @db.Timestamptz(6)
+
+  credential     Credential?
+  identities     Identity[]
+  sessions       Session[]
+  projects       Project[]
+  invitesSent    Invite[]    @relation("InvitedBy")
+  acceptedInvite Invite?     @relation("AcceptedBy")
+  ops            OpLog[]
+
+  @@map("accounts")
+}
+
+model Credential {
+  accountId String @id @map("account_id") @db.Uuid
+
+  /// Argon2id over an HMAC of the password with the server's pepper.
+  passwordHash      String    @map("password_hash")
+  passwordUpdatedAt DateTime  @default(now()) @map("password_updated_at") @db.Timestamptz(6)
+  /// Encrypted with the KEK. Null until TOTP enrolment starts.
+  totpSecret        String?   @map("totp_secret")
+  /// Null until a code proves the enrolment works; TOTP is not in force before then.
+  totpConfirmedAt   DateTime? @map("totp_confirmed_at") @db.Timestamptz(6)
+  /// Last accepted TOTP step, so a code cannot be replayed inside its window.
+  totpLastStep      BigInt?   @map("totp_last_step")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("credentials")
+}
+
+/// A D3 Auth identity linked to an account. Sign in with D3 Auth resolves through this table and
+/// never creates an account (FLR-T-0.5).
+model Identity {
+  id        String @id @default(uuid(7)) @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+
+  iss   String
+  sub   String
+  /// What the issuer said when the link was made, for display only.
+  email String?
+
+  linkedAt    DateTime  @default(now()) @map("linked_at") @db.Timestamptz(6)
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(6)
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([iss, sub])
+  /// One identity per issuer per account: a second link from the same issuer replaces nothing.
+  @@unique([accountId, iss])
+  @@map("identities")
+}
+
+model Session {
+  id        String @id @default(uuid(7)) @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+
+  /// The cookie carries a random value; only its SHA-256 is stored.
+  tokenHash  String     @unique @map("token_hash")
+  method     AuthMethod
+  ip         String?
+  userAgent  String?    @map("user_agent")
+  lastSeenAt DateTime   @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  expiresAt  DateTime   @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime?  @map("revoked_at") @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, expiresAt])
+  @@map("sessions")
+}
+
+/// A single-use, expiring link the operator creates. The only way an account other than the
+/// operator comes to exist (FLR-REQ-009): there is no public sign-up route.
+model Invite {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  tokenHash   String  @unique @map("token_hash")
+  /// Optional: when set, the account created from this invite must use this address.
+  email       String?
+  createdById String  @map("created_by_id") @db.Uuid
+
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt         DateTime  @map("expires_at") @db.Timestamptz(6)
+  acceptedAt        DateTime? @map("accepted_at") @db.Timestamptz(6)
+  acceptedAccountId String?   @unique @map("accepted_account_id") @db.Uuid
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz(6)
+
+  createdBy       Account  @relation("InvitedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  acceptedAccount Account? @relation("AcceptedBy", fields: [acceptedAccountId], references: [id], onDelete: SetNull)
+
+  @@index([createdById])
+  @@map("invites")
+}
+
+/// Login throttling, per account and per IP, decided before any hash is computed.
+model AuthThrottle {
+  scope ThrottleScope
+  key   String
+
+  failures      Int      @default(0)
+  nextAllowedAt DateTime @map("next_allowed_at") @db.Timestamptz(6)
+  lastFailureAt DateTime @default(now()) @map("last_failure_at") @db.Timestamptz(6)
+
+  @@id([scope, key])
+  @@map("auth_throttle")
+}
+
+// ─── Projects and documents ────────────────────────────────────────────────
+
+model Project {
+  id             String @id @default(uuid(7)) @db.Uuid
+  ownerAccountId String @map("owner_account_id") @db.Uuid
+  name           String
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// Soft delete: the op log and the versions it points at are append-only and stay.
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  owner Account @relation(fields: [ownerAccountId], references: [id], onDelete: Restrict)
+  heads Head[]
+  ops   OpLog[]
+
+  @@index([ownerAccountId])
+  @@map("projects")
+}
+
+/// One canonical Floorspec document, keyed by the lowercase hex SHA-256 of its RFC 8785 (JCS)
+/// serialization. Immutable, and shared by every project and op that arrives at the same bytes.
+model Version {
+  hash     String   @id
+  document Json
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  heads    Head[]
+  opsFrom  OpLog[] @relation("OpBefore")
+  opsTo    OpLog[] @relation("OpAfter")
+
+  @@map("versions")
+}
+
+enum AuthorKind {
+  account
+  agent
+}
+
+/// Append-only. Every change to a project's document is a batch of Floorspec Ops recorded here
+/// (FLR-ADR-008): `seq` counts from 1 per project, and each row moves the document from
+/// `before_hash` to `after_hash`.
+model OpLog {
+  id        String @id @default(uuid(7)) @db.Uuid
+  projectId String @map("project_id") @db.Uuid
+  seq       Int
+
+  authorKind      AuthorKind @map("author_kind")
+  /// Set when a person made the change.
+  authorAccountId String?    @map("author_account_id") @db.Uuid
+  /// Set when an agent did (its token's name); agents write changesets, never main (FLR-ADR-016).
+  authorAgent     String?    @map("author_agent")
+
+  ops        Json
+  /// Null only for the first op of a project, which creates the document.
+  beforeHash String? @map("before_hash")
+  afterHash  String  @map("after_hash")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  authorAccount Account? @relation(fields: [authorAccountId], references: [id], onDelete: Restrict)
+  before        Version? @relation("OpBefore", fields: [beforeHash], references: [hash], onDelete: Restrict)
+  after         Version  @relation("OpAfter", fields: [afterHash], references: [hash], onDelete: Restrict)
+
+  @@unique([projectId, seq])
+  @@map("op_log")
+}
+
+/// A named pointer into a project's history. `main` only, for now; changesets add others.
+model Head {
+  projectId   String @map("project_id") @db.Uuid
+  name        String
+  versionHash String @map("version_hash")
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  version Version @relation(fields: [versionHash], references: [hash], onDelete: Restrict)
+
+  @@id([projectId, name])
+  @@map("heads")
+}
+
+// ─── Audit ─────────────────────────────────────────────────────────────────
+
+/// Append-only. Every mutating route writes one row, in the same transaction as its change.
+model AuditLog {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// `account:<id>`, `agent:<name>` or `anonymous`.
+  actor          String
+  actorAccountId String?  @map("actor_account_id") @db.Uuid
+  /// What happened, dotted: `project.create`, `auth.login`, `invite.revoke`.
+  action         String
+  targetType     String   @map("target_type")
+  targetId       String?  @map("target_id")
+  at             DateTime @default(now()) @db.Timestamptz(6)
+  detail         Json?
+
+  @@index([targetType, targetId])
+  @@index([actorAccountId, at])
+  @@index([at])
+  @@map("audit_log")
+}

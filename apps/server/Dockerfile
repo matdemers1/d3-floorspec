@@ -25,13 +25,26 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm --filter @d3-floorspec/server deploy --prod --config.minimum-release-age=0 --config.inject-workspace-packages=true /out
 
 FROM ${NODE_IMAGE} AS runtime
-ENV NODE_ENV=production PORT=3400 WEB_DIST=/app/public
+# pg_dump takes the pre-migration dump at boot (ported from Foreman, FRM-REQ-007). The client must
+# match the server's major version: a newer pg_restore writes settings Postgres 16 refuses. Debian's
+# package follows the distribution, so this comes from PGDG, whose signing key ships inside Debian's
+# postgresql-common: no key is fetched over the network.
+ARG POSTGRES_MAJOR=16
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-common ca-certificates \
+    && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
+    && apt-get install -y --no-install-recommends postgresql-client-${POSTGRES_MAJOR} \
+    && rm -rf /var/lib/apt/lists/* \
+    && pg_dump --version | grep -q " ${POSTGRES_MAJOR}\." \
+    && pg_restore --version | grep -q " ${POSTGRES_MAJOR}\."
+ENV NODE_ENV=production PORT=3400 WEB_DIST=/app/public BACKUP_DIR=/backups PREMIGRATION_DUMP=true
 WORKDIR /app
-# Code stays root-owned so the service user cannot modify it.
+# Code stays root-owned so the service user cannot modify it; only /backups is writable.
 COPY --from=build /out ./
 COPY --from=build /repo/apps/web/dist ./public
+RUN mkdir -p /backups && chown node:node /backups
 USER node
 EXPOSE 3400
 HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=6 \
-  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3400)+'/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+  CMD ["node", "dist/healthcheck.js"]
 CMD ["node", "dist/index.js"]

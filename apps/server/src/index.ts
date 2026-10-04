@@ -1,6 +1,36 @@
+import { migrate } from './boot.js';
+import { ConfigError, loadConfig } from './config.js';
 import { createApp } from './app.js';
+import { createDb } from './db.js';
+import { logger } from './logger.js';
 
-const port = Number(process.env['PORT'] ?? '3400');
-createApp().listen(port, () => {
-  process.stdout.write(`d3-floorspec api listening on ${String(port)}\n`);
+/** Entry point. A misconfigured instance exits here, naming what is wrong. */
+const config = (() => {
+  try {
+    return loadConfig();
+  } catch (error) {
+    if (error instanceof ConfigError) {
+      process.stderr.write('d3-floorspec api refused to start:\n');
+      for (const problem of error.problems) process.stderr.write(`  - ${problem}\n`);
+      process.exit(1);
+    }
+    throw error;
+  }
+})();
+
+await migrate(config);
+const db = createDb(config.DATABASE_URL);
+const app = createApp({ config, db });
+
+const server = app.listen(config.PORT, () => {
+  logger.info({ port: config.PORT, publicUrl: config.PUBLIC_URL, oidcConfigured: config.oidcConfigured }, 'd3-floorspec api listening');
 });
+
+for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+  process.on(signal, () => {
+    logger.info({ signal }, 'shutting down');
+    server.close(() => {
+      void db.$disconnect().then(() => process.exit(0));
+    });
+  });
+}
