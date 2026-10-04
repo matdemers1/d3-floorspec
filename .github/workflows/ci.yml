@@ -133,19 +133,22 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      # First, so the failure and cleanup steps below always find the dev env files they name.
+      - name: Development env files
+        run: ./deploy/dev-env.sh
       - name: No host ports and no interpolation in the production compose files
         run: |
           if grep -nE '^\s+(ports|published):' deploy/compose.yml deploy/compose.tunnel.yml; then
             echo 'deploy/compose.yml publishes a port; ingress is the Cloudflare Tunnel only' >&2
             exit 1
           fi
-          if grep -n '\${' deploy/compose.yml deploy/compose.tunnel.yml; then
+          # Comments may mention the rule; only YAML lines count.
+          if grep -nE '^[^#]*\$\{' deploy/compose.yml deploy/compose.tunnel.yml; then
             echo 'deploy/compose.yml interpolates a variable; ZimaOS and Shipyard need literals' >&2
             exit 1
           fi
       - name: Boot the stack on an empty database
         run: |
-          ./deploy/dev-env.sh
           docker compose -f deploy/compose.yml -f deploy/compose.dev.yml up -d --build --wait
           curl -fsS http://127.0.0.1:3400/health | tee health.json
           grep -q '"schemaRevision":"[0-9]\{14\}_' health.json
