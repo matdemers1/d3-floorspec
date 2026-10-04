@@ -1,4 +1,5 @@
-import type { Json } from './canonical.js';
+/** A JSON value, as stored in a version's JSONB document. */
+export type Json = null | boolean | number | string | readonly Json[] | { readonly [key: string]: Json };
 
 /** The Floorspec version a new project starts at. */
 export const FLOORSPEC_VERSION = '0.1';

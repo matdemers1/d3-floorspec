@@ -1,6 +1,7 @@
 import type { Tx } from '../db.js';
 import { Prisma } from '../db.js';
-import { contentHash, type Json } from '../model/canonical.js';
+import { contentHash } from '@floorspec/engine';
+import type { Json } from '../model/document.js';
 import { emptyDocument } from '../model/document.js';
 
 /** The head every project has from birth. Changesets add others in later phases. */

@@ -3,7 +3,7 @@ import type { Db } from '../db.js';
 import { Routes } from '../http/routes.js';
 import { HttpError } from '../http/errors.js';
 import { createProject, MAIN } from '../domain/projects.js';
-import { canonicalJson, type Json } from '../model/canonical.js';
+import { canonicalize } from '@floorspec/engine';
 import { accountOf, parse } from './auth.js';
 
 const CreateBody = z.object({ name: z.string().trim().min(1, 'a project needs a name').max(200) });
@@ -78,7 +78,7 @@ export function projectRoutes(db: Db): Routes {
       include: { version: true },
     });
     if (head === null) throw new HttpError(404, 'this project has no model yet');
-    const body = canonicalJson(head.version.document as Json);
+    const body = canonicalize(head.version.document);
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="model.json"');
     res.setHeader('ETag', `"${head.versionHash}"`);

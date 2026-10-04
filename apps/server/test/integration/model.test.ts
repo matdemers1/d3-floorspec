@@ -1,17 +1,11 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { Ajv2020 } from 'ajv/dist/2020.js';
+import { validate } from '@floorspec/engine';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { reset, setupOperator, start, testDb, type Running } from './helpers.js';
 
-const schema = JSON.parse(
-  readFileSync(join(import.meta.dirname, '../../src/model/stub-schema.json'), 'utf8'),
-) as object;
-
 /**
  * FLR-T-0.8, the code side: a signed-in account creates a project and downloads a model.json that
- * validates against the stub schema — canonical bytes, keyed by the hash of its JCS form.
+ * is a valid Floorspec Core 0.1 document by the reference engine — canonical bytes, keyed by the hash of its JCS form.
  */
 describe('create a project, download its model', () => {
   const db = testDb();
@@ -55,10 +49,10 @@ describe('create a project, download its model', () => {
     // The canonical file form, byte for byte: sorted keys, two spaces, LF, a final newline.
     expect(download.text).toBe('{\n  "floorspec": "0.1",\n  "project": {\n    "name": "Lake house"\n  }\n}\n');
 
-    const validate = new Ajv2020({ strict: true }).compile(schema);
-    const valid = validate(JSON.parse(download.text));
-    expect(validate.errors ?? []).toEqual([]);
-    expect(valid).toBe(true);
+    // Not a stub any more: the reference engine, all three tiers (FLR-T-1.10).
+    const result = validate(download.text);
+    expect(result.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(result.valid).toBe(true);
   });
 
   it('shares one version row between projects that arrive at the same document', async () => {
@@ -75,9 +69,8 @@ describe('create a project, download its model', () => {
     expect(await db.project.count()).toBe(0);
   });
 
-  it('rejects a document the stub schema does not describe', () => {
-    const validate = new Ajv2020({ strict: true }).compile(schema);
-    expect(validate({ floorspec: '0.2', project: { name: 'x' } })).toBe(false);
-    expect(validate({ floorspec: '0.1' })).toBe(false);
+  it('agrees with the engine that a document of another version is not one it can read', () => {
+    expect(validate(JSON.stringify({ floorspec: '0.2', project: { name: 'x' } })).diagnostics.map((d) => d.code)).toEqual(['FS-DOC-001']);
+    expect(validate(JSON.stringify({ floorspec: '0.1' })).valid).toBe(false);
   });
 });
