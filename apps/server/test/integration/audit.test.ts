@@ -110,6 +110,15 @@ const EXERCISES: Record<string, Exercise> = {
     const { id } = (await operator.post('/api/invites', {})).body as { id: string };
     return { reply: await operator.request('DELETE', `/api/invites/${id}`), action: 'invite.revoke' };
   },
+  'POST /api/projects': async ({ running }) => {
+    const operator = await setupOperator(running);
+    return { reply: await operator.post('/api/projects', { name: 'Lake house' }), action: 'project.create' };
+  },
+  'DELETE /api/projects/:projectId': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = (await operator.post('/api/projects', { name: 'Lake house' })).body as { id: string };
+    return { reply: await operator.request('DELETE', `/api/projects/${id}`), action: 'project.delete' };
+  },
   'DELETE /api/account/d3auth': async ({ running, d3auth }) => {
     const operator = await setupOperator(running);
     await d3auth.signIn(operator, { iss: ISSUER, sub: 'operator-sub', emailVerified: false }, true);

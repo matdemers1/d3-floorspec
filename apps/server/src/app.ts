@@ -19,6 +19,7 @@ import { authRoutes } from './routes/auth.js';
 import { oidcRoutes } from './routes/oidc.js';
 import { inviteRoutes } from './routes/invites.js';
 import { accountRoutes } from './routes/account.js';
+import { projectRoutes } from './routes/projects.js';
 
 export interface AppDeps {
   readonly config: Config;
@@ -46,6 +47,7 @@ export function createApp({ config, db, oidc = null }: AppDeps): Express {
   mount(app, '/auth/oidc', oidcRoutes(db, config, oidc));
   mount(app, '/api/invites', inviteRoutes(db, config));
   mount(app, '/api/account', accountRoutes(db));
+  mount(app, '/api/projects', projectRoutes(db));
 
   /** Liveness: the process is up. Touches nothing else. */
   app.get('/healthz', (_req, res) => {
