@@ -72,7 +72,7 @@ function Root() {
   if (state.status === 'anonymous') {
     // An invite link is followed by somebody with no account yet: that is the point of it.
     if (invite !== undefined) return <AcceptInvite token={invite} onDone={load} />;
-    if (state.session.setupRequired) return <Setup onDone={load} />;
+    if (state.session.setupRequired) return <Setup tokenRequired={state.session.setupTokenRequired} onDone={load} />;
     return <SignIn oidcAvailable={state.session.oidcAvailable} onSignedIn={load} />;
   }
 

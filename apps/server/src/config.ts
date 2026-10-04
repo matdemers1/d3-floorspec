@@ -48,6 +48,13 @@ const Env = z.object({
   D3AUTH_CLIENT_ID: optional(z.string()),
   D3AUTH_CLIENT_SECRET: optional(z.string()),
 
+  /**
+   * A one-time secret first-run setup must present. Set on any instance reachable from the internet
+   * before it is first started, so the person who installs it — not whoever reaches the address
+   * first — becomes the operator. Unset, setup is open, which is fine on a laptop.
+   */
+  SETUP_TOKEN: optional(z.string().min(24, { error: 'SETUP_TOKEN must be at least 24 characters' })),
+
   /** How long an invite link stays usable. Re-issued rather than extended once it lapses. */
   INVITE_TTL_HOURS: z.coerce.number().int().positive().max(720).default(168),
 

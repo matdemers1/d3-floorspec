@@ -6,7 +6,8 @@ import { api, messageOf } from '../lib/api';
  * First-run setup: the operator's account. Shown only while the server reports that no account
  * exists; once one does, the server's setup route is a 404 and this screen is never reached.
  */
-export function Setup({ onDone }: { onDone: () => void }) {
+export function Setup({ tokenRequired, onDone }: { tokenRequired: boolean; onDone: () => void }) {
+  const [setupToken, setSetupToken] = useState('');
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +24,7 @@ export function Setup({ onDone }: { onDone: () => void }) {
     setError(null);
     setBusy(true);
     api
-      .post('/auth/setup', { email, displayName, password })
+      .post('/auth/setup', { email, displayName, password, ...(tokenRequired ? { setupToken } : {}) })
       .then(onDone)
       .catch((caught: unknown) => { setError(messageOf(caught)); })
       .finally(() => { setBusy(false); });
@@ -42,6 +43,11 @@ export function Setup({ onDone }: { onDone: () => void }) {
                 {error}
               </Alert>
             )}
+            {tokenRequired ? (
+              <FormField label="Setup token" help="SETUP_TOKEN from the server's environment. It proves you installed this instance.">
+                <PasswordInput name="setup-token" autoComplete="off" required value={setupToken} onChange={(e) => { setSetupToken(e.target.value); }} />
+              </FormField>
+            ) : null}
             <FormField label="Your name">
               <Input name="name" autoComplete="name" autoFocus required value={displayName} onChange={(e) => { setDisplayName(e.target.value); }} />
             </FormField>

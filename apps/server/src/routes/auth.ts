@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import type { Request } from 'express';
 import { z } from 'zod';
 import { isSecureOrigin, type Config } from '../config.js';
@@ -22,7 +23,7 @@ const Password = z
   .max(1024);
 const DisplayName = z.string().trim().min(1).max(120);
 
-const SetupBody = z.object({ email: Email, displayName: DisplayName, password: Password });
+const SetupBody = z.object({ email: Email, displayName: DisplayName, password: Password, setupToken: z.string().max(512).optional() });
 const LoginBody = z.object({
   email: z.string().min(1).max(320),
   password: z.string().min(1).max(1024),
@@ -66,7 +67,12 @@ export function authRoutes({ db, config, oidcAvailable }: AuthRouteDeps): Routes
         // The sign-in screen needs both answers, and is reached by exactly the people this branch
         // answers. Neither is a secret: whether a button renders, and whether this is a new install.
         const setupRequired = (await db.account.count()) === 0;
-        res.status(401).json({ authenticated: false, oidcAvailable, setupRequired });
+        res.status(401).json({
+          authenticated: false,
+          oidcAvailable,
+          setupRequired,
+          ...(setupRequired ? { setupTokenRequired: config.SETUP_TOKEN !== undefined } : {}),
+        });
         return;
       }
       const account = await db.account.findUniqueOrThrow({
@@ -96,6 +102,9 @@ export function authRoutes({ db, config, oidcAvailable }: AuthRouteDeps): Routes
       await tx.$executeRaw`select pg_advisory_xact_lock(hashtext('floorspec:first-run-setup'))`;
       if ((await tx.account.count()) > 0) throw new HttpError(404, 'not found');
       const body = parse(SetupBody, req.body);
+      if (config.SETUP_TOKEN !== undefined && !sameSecret(body.setupToken ?? '', config.SETUP_TOKEN)) {
+        throw new HttpError(403, 'The setup token is missing or wrong. It is SETUP_TOKEN in the server environment.');
+      }
       const account = await tx.account.create({
         data: {
           email: body.email,
@@ -265,4 +274,11 @@ export function accountOf(req: Request): string {
   const id = req.auth?.accountId;
   if (id === undefined) throw new HttpError(401, 'sign in first');
   return id;
+}
+
+/** Constant-time comparison of two secrets, so a setup token cannot be guessed byte by byte. */
+function sameSecret(given: string, expected: string): boolean {
+  const a = createHash('sha256').update(given).digest();
+  const b = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(a, b);
 }

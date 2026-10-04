@@ -56,6 +56,21 @@ describe('app-native login', () => {
       expect(res.status).toBe(400);
       expect(await db.account.count()).toBe(0);
     });
+    it('asks for SETUP_TOKEN when one is configured, and refuses a missing or wrong one', async () => {
+      const token = 'a-setup-token-of-at-least-24-characters';
+      const gated = await start({ env: { SETUP_TOKEN: token } });
+      try {
+        const anonymous = new Browser(gated.url);
+        expect((await anonymous.get('/auth/session')).body).toMatchObject({ setupRequired: true, setupTokenRequired: true });
+        expect((await new Browser(gated.url).post('/auth/setup', OPERATOR)).status).toBe(403);
+        expect((await new Browser(gated.url).post('/auth/setup', { ...OPERATOR, setupToken: 'wrong' })).status).toBe(403);
+        expect(await db.account.count()).toBe(0);
+        expect((await new Browser(gated.url).post('/auth/setup', { ...OPERATOR, setupToken: token })).status).toBe(201);
+        expect(await db.account.count()).toBe(1);
+      } finally {
+        await gated.close();
+      }
+    });
   });
 
   describe('there is no public sign-up route', () => {
