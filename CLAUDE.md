@@ -31,7 +31,38 @@ pnpm build                   # turbo: every package and app
 pnpm lint && pnpm typecheck  # web lint includes @d3cloud/ui's d3-check-usage guard
 pnpm test                    # unit tests, every package
 pnpm test:python             # workers/ifc (needs workers/ifc/.venv — see its README)
+
+# Integration tests need Postgres 16 and a database name ending in _test (created and migrated
+# by the suite itself):
+docker run -d --name flr-pg -e POSTGRES_USER=floorspec -e POSTGRES_PASSWORD=floorspec \
+  -p 127.0.0.1:55440:5432 postgres:16
+DATABASE_URL=postgresql://floorspec:floorspec@127.0.0.1:55440/floorspec_test pnpm test:integration
+
+# Development: api on :3400 (migrates on boot), Vite on :5173 proxying /api and /auth to it
+cp .env.example .env   # then fill KEK and PEPPER with `openssl rand -base64 32`
+pnpm --filter @d3-floorspec/server dev
+pnpm --filter @d3-floorspec/web dev
+
+# The whole stack as it runs on the Zima, built from this checkout
+./deploy/dev-env.sh
+docker compose -f deploy/compose.yml -f deploy/compose.dev.yml up -d --build --wait
 ```
+
+## How the server is put together
+- **Routes are declared through `Routes` (`apps/server/src/http/routes.ts`)**, never with
+  `router.post` and friends. `mutate()` runs the handler in a transaction and writes the audit row
+  in it; every route needs a signed-in account unless it says `access: 'public'`; every
+  `:projectId` path checks ownership first and answers 404. The audit walk
+  (`test/integration/audit.test.ts`) and the isolation suite (`test/integration/isolation.test.ts`)
+  enumerate the app's registry and fail on a route their tables do not cover — add the route to
+  the table when you add the route.
+- `versions`, `op_log` and `audit_log` refuse UPDATE and DELETE in the database (triggers in the
+  init migration). A project is deleted softly.
+- `apps/server/src/model/canonical.ts` is **temporary**: when `@floorspec/engine` exports
+  `canonicalize`/`contentHash` (FLR-T-1.4), import those and delete it.
+- Sign in with D3 Auth never creates an account; accounts come from first-run setup (operator)
+  and invites only. Redirect URI: `<PUBLIC_URL>/auth/oidc/callback`; scopes
+  `openid profile email d3:roles`.
 
 The engine (`packages/engine`) is isomorphic: its build loads no Node types and ESLint refuses
 `node:` imports, `Buffer` and `process` there.
