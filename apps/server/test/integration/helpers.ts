@@ -4,7 +4,7 @@ import { createApp, type AppDeps } from '../../src/app.js';
 import { OidcError, type CompletedSignIn, type OidcClient } from '../../src/auth/oidc.js';
 import { loadConfig, type Config } from '../../src/config.js';
 import { createDb, type Db } from '../../src/db.js';
-import { FakeApplier } from '../support/fake-applier.js';
+import { opsApplier } from '../../src/ops/applier.js';
 
 /** A fixed, valid environment. The secrets are test-only values, 32 bytes each. */
 export const TEST_ENV = {
@@ -53,9 +53,8 @@ export interface StartOptions {
 export async function start(options: StartOptions = {}): Promise<Running> {
   const config = testConfig(options.env);
   const db = testDb();
-  // The fake applier stands in for @floorspec/ops until it is merged; no D3 Auth verifier unless a
-  // test brings one.
-  const app = createApp({ config, db, applier: new FakeApplier(), verifier: null, ...options.with });
+  // The real applier, @floorspec/ops; no D3 Auth verifier unless a test brings one.
+  const app = createApp({ config, db, applier: opsApplier, verifier: null, ...options.with });
   const server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', () => { resolve(); }));
   const { port } = server.address() as AddressInfo;

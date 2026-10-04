@@ -202,9 +202,11 @@ describe('changesets', () => {
   });
 
   it('surfaces a replay failure as the applier\'s diagnostics, merges nothing, and leaves the changeset pending', async () => {
-    const proposed = await propose('Rename the north wall', [{ op: 'setProperty', id: 'W2', path: '/name', value: 'North' }]);
-    // Meanwhile the person removes that wall on main.
-    const removed = (await operator.post(path('/ops'), { batch: [{ op: 'removeElement', id: 'W2' }] })).body as { hash: string };
+    const proposed = await propose('Rename the kitchen', [{ op: 'setProperty', id: 'R1', path: '/name', value: 'Galley' }]);
+    // Meanwhile the person removes that room on main (valid: its face becomes an unnamed room).
+    const removedReply = await operator.post(path('/ops'), { batch: [{ op: 'removeElement', id: 'R1' }] });
+    expect(removedReply.status, removedReply.text).toBe(201);
+    const removed = removedReply.body as { hash: string };
     const opsBefore = await db.opLog.count();
 
     const accepted = await operator.post(path(`/changesets/${proposed.changeset.id}/accept`));
@@ -224,15 +226,15 @@ describe('changesets', () => {
   });
 
   it('reserves the IDs a changeset minted, and gives them back to it on replay', async () => {
-    const proposed = await propose('Add a room', [{ op: 'addElement', collection: 'rooms', element: { level: 'L1', anchor: [10, 10], name: 'Den' } }]);
-    // The changeset minted R2. Main, meanwhile, adds a room of its own: R3, not R2.
-    const mainAdd = (await operator.post(path('/ops'), { batch: [{ op: 'addElement', collection: 'rooms', element: { level: 'L1', anchor: [20, 20] } }] })).body as { created: string[] };
-    expect(mainAdd.created).toEqual(['R3']);
+    const proposed = await propose('Add a loft', [{ op: 'addElement', collection: 'levels', element: { building: 'B1', elevation: 3456000, height: 2880000, name: 'Loft' } }]);
+    // The changeset minted L2. Main, meanwhile, adds a level of its own: L3, not L2.
+    const mainAdd = (await operator.post(path('/ops'), { batch: [{ op: 'addElement', collection: 'levels', element: { building: 'B1', elevation: 6336000, height: 2880000 } }] })).body as { created: string[] };
+    expect(mainAdd.created).toEqual(['L3']);
     const accepted = await operator.post(path(`/changesets/${proposed.changeset.id}/accept`));
     expect(accepted.status, accepted.text).toBe(200);
     const merged = await db.opLog.findFirstOrThrow({ where: { projectId: project.id, head: 'main', kind: 'merge' } });
-    // Re-minted on replay as one more than the largest in use, R4; R2 stays reserved but unused.
-    expect(merged.created).toEqual(['R4']);
+    // Re-minted on replay as one more than the largest in use, L4; L2 stays reserved but unused.
+    expect(merged.created).toEqual(['L4']);
   });
 
   it('rejects by discarding the scratch head; main is untouched', async () => {

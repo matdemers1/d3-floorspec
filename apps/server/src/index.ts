@@ -1,6 +1,7 @@
 import { migrate } from './boot.js';
 import { ConfigError, loadConfig } from './config.js';
 import { createApp } from './app.js';
+import { opsApplier } from './ops/applier.js';
 import { createOidcClient } from './auth/oidc.js';
 import { createDb } from './db.js';
 import { logger } from './logger.js';
@@ -26,7 +27,7 @@ const db = createDb(config.DATABASE_URL);
 // instead of two, never an api that will not start.
 const oidc = await createOidcClient(config);
 // Plans are drawn in-process by the worker's renderer until the worker has a job queue (FLR-T-2.8).
-const app = createApp({ config, db, oidc, renderer: workerRenderer() });
+const app = createApp({ config, db, oidc, renderer: workerRenderer(), applier: opsApplier });
 
 const server = app.listen(config.PORT, () => {
   logger.info(

@@ -27,6 +27,7 @@
     "@d3cloudio/auth-client": "0.1.1",
     "@floorspec/engine": "workspace:*",
     "@floorspec/mcp": "workspace:*",
+    "@floorspec/ops": "workspace:*",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "argon2": "^0.45.1",

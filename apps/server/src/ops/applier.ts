@@ -1,4 +1,5 @@
 import type { Diagnostic } from '@floorspec/engine';
+import { apply as opsApply } from '@floorspec/ops';
 
 /**
  * The seam between the store and the Floorspec Ops applier (Ops 0.1, chapter 1).
@@ -69,7 +70,14 @@ export class ApplierUnavailable extends Error {
   }
 }
 
-/** What the server runs until `@floorspec/ops` is merged: every apply is a clear 503. */
+/** The reference applier, `@floorspec/ops`: Ops 0.1, 215/215 conformance (FLR-T-2.3). */
+export const opsApplier: Applier = {
+  apply(document, request) {
+    return opsApply(document as Parameters<typeof opsApply>[0], request) as ApplyResult;
+  },
+};
+
+/** For a build without an applier: every apply is a clear 503 rather than a 500. */
 export const unavailableApplier: Applier = {
   apply() {
     throw new ApplierUnavailable();
