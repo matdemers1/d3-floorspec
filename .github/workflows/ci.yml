@@ -37,7 +37,8 @@ jobs:
       - run: pnpm typecheck
 
   # The schema/conformance layer (foreman://FLR/test_strategy#layers): the Floorspec conformance
-  # suite, vendored in packages/engine/standard and pinned to a floorspec commit (FLR-ADR-009).
+  # suites — Core in packages/engine/standard, Ops in packages/ops/standard — each pinned to a
+  # floorspec commit (FLR-ADR-009).
   conformance:
     needs: lint
     runs-on: ubuntu-latest
@@ -77,10 +78,40 @@ jobs:
         run: pnpm --filter @floorspec/engine check:generated
       - name: Conformance suite (Node)
         run: pnpm conformance
+      # Floorspec Ops (FLR-T-2.3): the same pin, for the suite vendored in packages/ops/standard.
+      # It may pin a different floorspec commit from the engine's, so it has its own checkout.
+      - name: Read the pinned floorspec commit for Ops
+        id: opspin
+        run: |
+          lock=packages/ops/standard/LOCK.json
+          if [ "$(jq -r .dirty "$lock")" != "false" ]; then
+            echo "::error::$lock records a dirty sync; re-run the ops sync-standard against a clean floorspec commit"
+            exit 1
+          fi
+          echo "commit=$(jq -r .commit "$lock")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: matdemers1/floorspec
+          ref: ${{ steps.opspin.outputs.commit }}
+          path: .floorspec-ops-pinned
+          persist-credentials: false
+      - name: The vendored Ops standard matches the pinned commit
+        run: |
+          status=0
+          for p in $(jq -r '.paths[]' packages/ops/standard/LOCK.json); do
+            diff -r ".floorspec-ops-pinned/$p" "packages/ops/standard/$p" || status=1
+          done
+          exit $status
+      - name: Ops conformance suite (Node)
+        run: |
+          pnpm --filter @floorspec/engine build
+          pnpm --filter @floorspec/ops conformance
       - name: Install Chromium for the browser runner
         run: pnpm --filter @floorspec/engine exec playwright install --with-deps chromium
       - name: Engine tests and conformance suite in the browser
         run: pnpm --filter @floorspec/engine test:browser
+      - name: Ops tests, Node-vs-browser determinism and the Ops suite in the browser
+        run: pnpm --filter @floorspec/ops test:browser
 
   unit:
     needs: conformance
