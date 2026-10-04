@@ -1,0 +1,57 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "14132213103d58f4d7cfc1df853666b9f5fe7a9583ae9825c4c0c00ae46365ac",
+  "created": ["J5", "J6", "O1", "W5"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "J5",
+      "level": "L1",
+      "position": [780288, 2731008]
+    },
+    {
+      "op": "addJunction",
+      "id": "J6",
+      "level": "L1",
+      "position": [3121152, 2731008]
+    },
+    {
+      "op": "addWall",
+      "id": "W5",
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 585216,
+        "wall": "W5"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "O1"
+    },
+    {
+      "op": "removeElement",
+      "id": "W5"
+    },
+    {
+      "op": "removeElement",
+      "id": "J5"
+    },
+    {
+      "op": "removeElement",
+      "id": "J6"
+    }
+  ]
+}

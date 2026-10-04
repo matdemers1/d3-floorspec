@@ -1,0 +1,8 @@
+{
+  "description": "An invalid result that also breaks a lock is rejected for what validation finds; locks are checked only on a valid result.",
+  "covers": [
+    "FS-OPS-6.1.2",
+    "FS-OPS-1.2.3",
+    "FS-OPS-7.1.1"
+  ]
+}

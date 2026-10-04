@@ -1,0 +1,8 @@
+{
+  "description": "Moving the Kitchen's corner J8 across the north wall and back again within one batch: normalization runs once, after the last operation, so nothing is ever split. B is A, nothing is created or removed, and the inverse is empty.",
+  "covers": [
+    "FS-OPS-5.4.1",
+    "FS-OPS-1.6.1",
+    "FS-OPS-2.4.1"
+  ]
+}

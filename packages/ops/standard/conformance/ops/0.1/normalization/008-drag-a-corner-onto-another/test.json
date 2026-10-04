@@ -1,0 +1,7 @@
+{
+  "description": "The courtyard wall's free end J7 dragged onto the box's corner J3. Both were in A, so the survivor is the one whose ID sorts first, J3: W7 now ends at J3 and J7 is removed, closing the courtyard.",
+  "covers": [
+    "FS-OPS-5.1.1",
+    "FS-OPS-5.4.1"
+  ]
+}

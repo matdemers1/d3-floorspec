@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$project",
+      "path": "/description",
+      "value": "A small house."
+    }
+  ]
+}

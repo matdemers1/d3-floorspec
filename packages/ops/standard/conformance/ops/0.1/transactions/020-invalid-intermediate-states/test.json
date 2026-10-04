@@ -1,0 +1,9 @@
+{
+  "description": "A bedroom drawn wall by wall, its room added first: until the last wall closes the face, the room's anchor is in the unbounded face and the document is invalid. Only the end state is validated, so the batch commits. Each drawWall reuses the junction the previous one left at its start point.",
+  "covers": [
+    "FS-OPS-5.4.1",
+    "FS-OPS-4.1.1",
+    "FS-OPS-4.6.1",
+    "FS-OPS-1.5.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "$document does not address a collection: /walls is not one of its members, so FS-OPS-003 (the oracle's reading of 2.3).",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

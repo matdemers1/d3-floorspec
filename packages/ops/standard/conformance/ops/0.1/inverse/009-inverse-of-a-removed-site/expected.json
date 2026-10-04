@@ -1,0 +1,24 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "4b1ea744567c35d2bf8522d5c07aea1ade2049391bad06441a35ccb34c9399b4",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/site"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/site",
+      "value": {
+        "trueNorth": -500000
+      }
+    }
+  ]
+}

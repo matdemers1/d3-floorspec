@@ -1,0 +1,18 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensionsUsed",
+      "value": {
+        "EXT_acoustics": "1.0"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extras/importer",
+      "value": "conformance"
+    }
+  ]
+}

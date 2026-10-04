@@ -1,0 +1,7 @@
+{
+  "description": "Removing junction J1 without cascade is blocked by the two walls that end at it: FS-OPS-006 names J1, W1 and W4.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-7.1.1"
+  ]
+}

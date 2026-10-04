@@ -92,7 +92,7 @@ export type Primitive = AddElement | AddJunction | AddWall | AddSeparator | Remo
 
 // ── composites (chapter 4) ─────────────────────────────────────────────────────
 
-export interface DrawWall extends WallMembers {
+export interface DrawWall extends Omit<WallMembers, 'extensions' | 'extras'> {
   op: 'drawWall';
   id?: string;
   level: ElementRef;

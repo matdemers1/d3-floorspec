@@ -1,0 +1,21 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "13266ec27a689dd7effb7573692c6581c05f950dbec037ca898d05a8b9d1d9cb",
+  "created": ["J8"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "J8",
+      "level": "L1",
+      "position": [1170432, 1170432]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "J8"
+    }
+  ]
+}

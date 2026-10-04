@@ -1,0 +1,7 @@
+{
+  "description": "A point may be a junction: drawWall to \"end of W1\" (J2) uses J2 itself.",
+  "covers": [
+    "FS-OPS-3.2.1",
+    "FS-OPS-4.1.1"
+  ]
+}

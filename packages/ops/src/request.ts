@@ -3,8 +3,9 @@
  * defines, each with exactly the members its definition lists, and an optional context of locks and
  * retired IDs. Anything else is FS-OPS-001 (1.1.1).
  *
- * Members that become element content (addElement's element, the shorthands' and drawWall's wall
- * members) are not checked here: addElement does not check content (2.1.1), validation does.
+ * Members that become element content (inside addElement's element, the shorthands' and
+ * drawWall's wall members) are not checked here: addElement does not check content (2.1.1),
+ * validation does. The shapes match schema/ops/0.1, and a test holds them to it.
  */
 import { fail } from './diagnostics.js';
 import { isCollection } from './model/working.js';
@@ -39,23 +40,26 @@ const WALL_MEMBERS: Record<string, MemberType> = {
   extras: 'any',
 };
 
+/** drawWall carries the wall members 4.1 lists: not extensions or extras. */
+const DRAW_WALL_MEMBERS: Record<string, MemberType> = { type: 'any', layers: 'any', justification: 'any', base: 'any', top: 'any', name: 'any' };
+
 export const OP_SHAPES: Readonly<Record<OperationName, OpShape>> = {
-  addElement: { required: { collection: 'collection', element: 'any' }, optional: { id: 'string' } },
-  addJunction: { required: { level: 'any', position: 'any' }, optional: { id: 'string', join: 'any' } },
-  addWall: { required: { level: 'any', start: 'any', end: 'any' }, optional: { id: 'string', ...WALL_MEMBERS } },
-  addSeparator: { required: { level: 'any', start: 'any', end: 'any' }, optional: { id: 'string' } },
+  addElement: { required: { collection: 'collection', element: 'object' }, optional: { id: 'string' } },
+  addJunction: { required: { level: 'string', position: 'pair' }, optional: { id: 'string', join: 'any' } },
+  addWall: { required: { level: 'string', start: 'string', end: 'string' }, optional: { id: 'string', ...WALL_MEMBERS } },
+  addSeparator: { required: { level: 'string', start: 'string', end: 'string' }, optional: { id: 'string' } },
   removeElement: { required: { id: 'string' }, optional: { cascade: 'boolean' } },
   setProperty: { required: { id: 'string', path: 'string', value: 'any' }, optional: {} },
   unsetProperty: { required: { id: 'string', path: 'string' }, optional: {} },
   moveJunction: { required: { id: 'string', to: 'pair' }, optional: {} },
-  drawWall: { required: { level: 'string', from: 'pair', to: 'pair' }, optional: { id: 'string', ...WALL_MEMBERS } },
+  drawWall: { required: { level: 'string', from: 'pair', to: 'pair' }, optional: { id: 'string', ...DRAW_WALL_MEMBERS } },
   drawSeparator: { required: { level: 'string', from: 'pair', to: 'pair' }, optional: { id: 'string' } },
   moveWall: { required: { wall: 'string', by: 'length' }, optional: { toward: 'string' } },
   moveRoom: { required: { room: 'string', by: 'pair' }, optional: {} },
   resizeRoom: { required: { room: 'string', side: 'side', by: 'length' }, optional: {} },
   addOpening: {
     required: { wall: 'string', at: 'length' },
-    optional: { id: 'string', fill: 'any', width: 'length', height: 'length', sill: 'length', hinge: 'any', swing: 'any', name: 'any' },
+    optional: { id: 'string', fill: 'string', width: 'length', height: 'length', sill: 'length', hinge: 'any', swing: 'any', name: 'any' },
   },
   moveOpening: { required: { opening: 'string', at: 'length' }, optional: {} },
   addRoom: {

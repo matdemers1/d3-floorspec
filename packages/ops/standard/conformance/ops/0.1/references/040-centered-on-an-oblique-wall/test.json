@@ -1,0 +1,7 @@
+{
+  "description": "A 30-inch opening centred on W5, from (2', 2') to (5', 7'): L = sqrt(34) ft = 2274910.90 base units, so the near edge is at (L - 975360) / 2 = 649775.45, rounded to 649775.",
+  "covers": [
+    "FS-OPS-3.5.1",
+    "FS-OPS-4.5.1"
+  ]
+}

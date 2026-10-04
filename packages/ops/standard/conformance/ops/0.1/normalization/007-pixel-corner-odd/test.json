@@ -1,0 +1,6 @@
+{
+  "description": "The same with P at (2000001, 2000000) and the wall along x + y = 4000002: P's x is odd, so its pixel excludes the corner (2000001.5, 2000000.5), which rounds to (2000002, 2000000). The wall misses the pixel and is not split.",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

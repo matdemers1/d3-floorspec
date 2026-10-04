@@ -1,0 +1,6 @@
+{
+  "description": "A garden wall with no room on either side is removed with its gate; no room is removed and keep is not needed.",
+  "covers": [
+    "FS-OPS-4.7.1"
+  ]
+}

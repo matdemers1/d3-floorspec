@@ -1,0 +1,27 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "8de9f50fdbbdb3c8c5646e37f74c48b9ce26690373e21ac7591304e8b70da5fc",
+  "created": ["J5"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "J5",
+      "level": "L1",
+      "position": [390144, 390144]
+    },
+    {
+      "op": "setProperty",
+      "id": "J5",
+      "path": "/name",
+      "value": "Post"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "J5"
+    }
+  ]
+}

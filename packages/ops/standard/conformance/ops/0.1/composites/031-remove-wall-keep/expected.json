@@ -1,0 +1,52 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d81581179aacdbdf3045d084e8cb4d9ecab6035e67938e1c33855db3fa108b94",
+  "created": [],
+  "removed": ["O1", "R3", "W8"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "R3"
+    },
+    {
+      "op": "removeElement",
+      "id": "W8",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W8",
+      "element": {
+        "level": "L1",
+        "start": "J7",
+        "end": "J8",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R3",
+      "element": {
+        "level": "L1",
+        "anchor": [7022592, 2340864],
+        "function": "dining",
+        "name": "Dining"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 975360,
+        "wall": "W8"
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "25bd7853c0def7d6ea2dfe496047c4411b3a9520560321b8879d0164f39b20a5",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/justification",
+      "value": "center"
+    },
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/name",
+      "value": "West"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "W1",
+      "path": "/name"
+    }
+  ]
+}

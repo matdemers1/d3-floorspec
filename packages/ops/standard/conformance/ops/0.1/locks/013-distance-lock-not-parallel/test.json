@@ -1,0 +1,6 @@
+{
+  "description": "A distance lock between W1 and W3, which are perpendicular in A: FS-OPS-010.",
+  "covers": [
+    "FS-OPS-6.1.1"
+  ]
+}

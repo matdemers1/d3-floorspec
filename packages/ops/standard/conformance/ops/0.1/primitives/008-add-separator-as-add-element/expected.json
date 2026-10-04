@@ -1,0 +1,25 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "60624201c47a0377708ee827fe290d276b4d4832c1c8d264562a2ba798508c52",
+  "created": ["S1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "separators",
+      "id": "S1",
+      "element": {
+        "level": "L1",
+        "start": "J5",
+        "end": "J6"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "S1"
+    }
+  ]
+}

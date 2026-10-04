@@ -1,0 +1,11 @@
+{
+  "batch": [
+    {
+      "op": "addWall",
+      "level": "L1",
+      "start": "start of W2",
+      "end": "end of W2",
+      "type": "WT"
+    }
+  ]
+}

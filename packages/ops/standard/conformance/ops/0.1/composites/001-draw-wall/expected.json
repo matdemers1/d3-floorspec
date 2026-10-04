@@ -1,0 +1,44 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "912eca66844142917670c590b6c8808206c5158806c294e4f6693c3c59ee96f7",
+  "created": ["J5", "J6", "W5"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "J5",
+      "level": "L1",
+      "position": [780288, 2731008]
+    },
+    {
+      "op": "addJunction",
+      "id": "J6",
+      "level": "L1",
+      "position": [1950720, 2731008]
+    },
+    {
+      "op": "addWall",
+      "id": "W5",
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "name": "Half wall",
+      "type": "WT"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "W5"
+    },
+    {
+      "op": "removeElement",
+      "id": "J5"
+    },
+    {
+      "op": "removeElement",
+      "id": "J6"
+    }
+  ]
+}

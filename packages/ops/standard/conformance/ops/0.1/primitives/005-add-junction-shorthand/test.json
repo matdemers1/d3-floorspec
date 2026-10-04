@@ -1,0 +1,6 @@
+{
+  "description": "addJunction is addElement into junctions: the same document as the previous test, byte for byte. A shorthand may not carry \"name\" (its definition lists only id, level, position and join), so the name is set afterwards.",
+  "covers": [
+    "FS-OPS-2.1.2"
+  ]
+}

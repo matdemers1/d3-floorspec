@@ -1,0 +1,6 @@
+{
+  "description": "\"12 feet\" does not match the grammar: FS-OPS-012.",
+  "covers": [
+    "FS-OPS-3.1.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "addJunction names W1, the ID of a wall: IDs are unique across collections, so it is rejected with FS-OPS-005.",
+  "covers": [
+    "FS-OPS-1.5.2",
+    "FS-OPS-2.1.1",
+    "FS-OPS-7.1.1"
+  ]
+}

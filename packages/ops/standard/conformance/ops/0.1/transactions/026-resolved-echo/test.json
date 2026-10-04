@@ -1,0 +1,8 @@
+{
+  "description": "moveWall with a selector, a length in feet and toward: the echo is the two moveJunction primitives it expanded to, with IDs and integers - the Kitchen's east wall W8 (J7 -> J8, its left side west) moved 1' toward the Dining room, east: J7 to [12'+1', 0] = [5071872, 0], J8 to [5071872, 3121152].",
+  "covers": [
+    "FS-OPS-1.4.1",
+    "FS-OPS-4.2.1",
+    "FS-OPS-3.3.1"
+  ]
+}

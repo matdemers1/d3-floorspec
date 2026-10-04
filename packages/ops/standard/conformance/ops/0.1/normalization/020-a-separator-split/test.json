@@ -1,0 +1,6 @@
+{
+  "description": "A wall drawn across a room divided by a separator splits the separator too; its new piece is minted with the separator prefix.",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

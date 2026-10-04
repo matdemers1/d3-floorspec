@@ -1,0 +1,7 @@
+{
+  "description": "\"somewhere nice\" is neither a point form nor a junction reference: FS-OPS-012.",
+  "covers": [
+    "FS-OPS-3.2.1",
+    "FS-OPS-7.1.1"
+  ]
+}

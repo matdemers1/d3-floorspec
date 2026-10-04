@@ -1,0 +1,7 @@
+{
+  "description": "Removing W5 (its gate first) without cascade still unsets the join at G2 that names it.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-2.2.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "Removing level L2 without cascade is blocked by everything on it - its junctions, walls, room and slab - and by the wall on L1 whose top is L2.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

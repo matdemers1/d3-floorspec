@@ -1,0 +1,39 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d92fa8e3bc002b377b1a6f84141031ef217b89d110935fb0cefee9ae3dc081ce",
+  "created": ["R4", "TILE"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R4",
+      "element": {
+        "level": "L1",
+        "anchor": [2340864, 3901440],
+        "floorFinish": "TILE",
+        "function": "storage",
+        "name": "Pantry"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "TILE",
+      "element": {
+        "color": "#e0ddd5"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "R4"
+    },
+    {
+      "op": "removeElement",
+      "id": "TILE"
+    }
+  ]
+}

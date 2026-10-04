@@ -1,0 +1,6 @@
+{
+  "description": "An apply request has \"batch\" and \"context\" only.",
+  "covers": [
+    "FS-OPS-1.1.1"
+  ]
+}

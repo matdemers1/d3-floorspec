@@ -1,0 +1,8 @@
+{
+  "description": "A batch that changes only a name: normalization of a planar level with no near misses changes nothing, and the inverse is the one setProperty.",
+  "covers": [
+    "FS-OPS-5.4.1",
+    "FS-OPS-5.1.1",
+    "FS-OPS-5.2.1"
+  ]
+}

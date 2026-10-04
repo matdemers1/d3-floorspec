@@ -1,0 +1,8 @@
+{
+  "description": "A wall drawn straight across the room from (-2', 6') to (14', 6') crosses W1 and W3. Planarization inserts junctions at both crossings - J7 at (0, 6') and J8 at (12', 6'), in order of x - and splits all three walls: each first piece keeps its ID, the others are minted in order along the edge, edges taken by ID (W1 -> W6, W3 -> W7, W5 -> W8, W9).",
+  "covers": [
+    "FS-OPS-5.2.1",
+    "FS-OPS-5.4.1",
+    "FS-OPS-4.1.1"
+  ]
+}

@@ -34,8 +34,8 @@ import { cmpStr, escapeToken, getMember, isObject, parsePointer, setMember, type
 const pt = (p: IPoint, ptr: string): Point => [toJsonInt(p[0], ptr), toJsonInt(p[1], ptr)];
 const sortIds = (ids: Iterable<string>): string[] => [...new Set(ids)].sort(cmpStr);
 
-/** The wall members drawWall and addWall carry to the element, in Core §5.2's order. */
-const WALL_MEMBER_NAMES = ['type', 'layers', 'justification', 'base', 'top', 'name', 'extensions', 'extras'] as const;
+/** The wall members drawWall carries to the element (4.1), in Core §5.2's order. */
+const WALL_MEMBER_NAMES = ['type', 'layers', 'justification', 'base', 'top', 'name'] as const;
 
 /** Resolve, expand and apply operation `index` of the batch. */
 export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPrimitive[] {

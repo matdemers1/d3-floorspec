@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of a junction's /position.",
+  "covers": [
+    "FS-OPS-2.4.1"
+  ]
+}
