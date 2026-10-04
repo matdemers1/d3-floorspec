@@ -1,0 +1,7 @@
+{
+  "description": "Two doors: O1 hinged at the end and swinging left keeps both members in canonical form; O2 states the defaults, which canonical form omits. Neither changes placement.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-7.4.1"
+  ]
+}

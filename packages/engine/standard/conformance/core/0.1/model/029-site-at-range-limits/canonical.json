@@ -1,0 +1,31 @@
+{
+  "floorspec": "0.1",
+  "project": {
+    "name": "Conformance"
+  },
+  "site": {
+    "boundary": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        25600000
+      ],
+      [
+        38400000,
+        25600000
+      ],
+      [
+        38400000,
+        0
+      ]
+    ],
+    "location": {
+      "latitude": -90000000,
+      "longitude": 180000000
+    },
+    "trueNorth": 180000000
+  }
+}

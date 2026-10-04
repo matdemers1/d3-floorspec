@@ -1,0 +1,8 @@
+{
+  "description": "A 6 m by 5 m room with a freestanding closet (four walls, its own room R2) and a freestanding wall inside it: the room polygon has two hole rings, each clockwise from its least vertex - the closet's outer faces and the wall's rectangle - and its net area excludes both.",
+  "covers": [
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.3.4",
+    "FS-CORE-6.4.1"
+  ]
+}

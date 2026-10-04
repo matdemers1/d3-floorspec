@@ -1,0 +1,7 @@
+{
+  "description": "A door on a wall along (2, 1): its start and end points are irrational and are rounded once; its elevations are exact.",
+  "covers": [
+    "FS-CORE-7.4.1",
+    "FS-CORE-2.2.1"
+  ]
+}

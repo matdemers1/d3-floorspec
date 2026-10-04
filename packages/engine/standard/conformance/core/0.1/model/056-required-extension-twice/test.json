@@ -1,0 +1,6 @@
+{
+  "description": "extensionsRequired names EXT_acoustics twice. FS-DOC-002 applies only to an array of distinct names, so the document reaches the schema tier, which rejects the duplicate.",
+  "covers": [
+    "FS-CORE-1.6.8"
+  ]
+}

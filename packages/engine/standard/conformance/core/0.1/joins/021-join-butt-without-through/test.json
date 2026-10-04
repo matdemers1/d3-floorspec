@@ -1,0 +1,6 @@
+{
+  "description": "A join that has none of the three forms of 5.8: a butt join names the walls that run through.",
+  "covers": [
+    "FS-CORE-5.8.5"
+  ]
+}

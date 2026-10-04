@@ -1,0 +1,7 @@
+{
+  "description": "A door and a transom window above it at the same offset: their intervals along the wall overlap, but the vertical ones only touch at 2100 mm, so they do not overlap.",
+  "covers": [
+    "FS-CORE-7.3.3",
+    "FS-CORE-7.4.1"
+  ]
+}

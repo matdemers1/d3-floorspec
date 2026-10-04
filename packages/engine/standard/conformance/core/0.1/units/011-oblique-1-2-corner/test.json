@@ -1,0 +1,8 @@
+{
+  "description": "Two perpendicular walls along (2, 1) and (-1, 2): |d| is a multiple of sqrt(5), so every corner is irrational and is rounded once, exactly.",
+  "covers": [
+    "FS-CORE-2.2.1",
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

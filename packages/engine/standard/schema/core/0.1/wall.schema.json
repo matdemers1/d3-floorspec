@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.1/wall.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Wall table and 5.9 (justification, base, base.offset, top.offset, extensions, extras). `layers` (a typed property, 8.2), `top` (derived from the level's height, 5.9) and `base.level` (derived: the wall's own level) deliberately have none. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).",
+  "title": "Wall",
+  "description": "5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.",
+  "type": "object",
+  "required": ["level", "start", "end"],
+  "properties": {
+    "level": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "1.3, 5.2: a reference to the level the wall is on. Always present."
+    },
+    "start": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "5.2: a reference to the junction where the wall's location line starts. Always present."
+    },
+    "end": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "5.2: a reference to the junction where the location line ends. Always present."
+    },
+    "type": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "5.2, 8.3: a reference to the wall's type, a type of kind wallType. Absent by default."
+    },
+    "layers": {
+      "$ref": "layer.schema.json#/$defs/layers",
+      "description": "5.2, 8.3: the wall's own layers, which replace its type's entirely. A typed property (8.2): absent, it resolves from `type`; it has no constant default."
+    },
+    "justification": {
+      "title": "Justification",
+      "description": "5.2, 5.4: where the location line sits in the wall's thickness.",
+      "type": "string",
+      "enum": ["center", "exteriorFace", "interiorFace", "coreFace"],
+      "default": "center"
+    },
+    "base": {
+      "title": "Base",
+      "description": "5.2, 5.9: the wall's bottom — `level` (absent: the wall's own level, a derived default) plus `offset`.",
+      "type": "object",
+      "properties": {
+        "level": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "5.9: a reference to the level whose elevation the base is measured from. Absent: the wall's own level (a derived default)."
+        },
+        "offset": {
+          "$ref": "defs.schema.json#/$defs/length",
+          "description": "5.9: added to the base level's elevation.",
+          "default": 0
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "top": {
+      "title": "Top",
+      "description": "5.2, 5.9: the wall's top — level-constrained, { \"level\", \"offset\"? }, or unconnected, { \"height\" }. `top` MUST have either `level` or `height`, and MUST NOT have both; `offset` MUST NOT appear with `height` (FS-CORE-5.9.1). Absent, the top follows the wall's own level's height: a derived default, so it has no `default` here.",
+      "type": "object",
+      "oneOf": [
+        {
+          "title": "Level-constrained top",
+          "description": "5.9: the top is level `level`'s elevation plus `offset`.",
+          "type": "object",
+          "required": ["level"],
+          "properties": {
+            "level": {
+              "$ref": "defs.schema.json#/$defs/reference",
+              "description": "5.9: a reference to the level whose elevation the top is measured from."
+            },
+            "offset": {
+              "$ref": "defs.schema.json#/$defs/length",
+              "description": "5.9: added to the top level's elevation.",
+              "default": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Unconnected top",
+          "description": "5.9: the top is the base elevation plus `height`.",
+          "type": "object",
+          "required": ["height"],
+          "properties": {
+            "height": {
+              "$ref": "defs.schema.json#/$defs/length",
+              "description": "5.9: the wall's height above its base elevation, a length (2.1). That the top ends above the base (FS-CORE-5.9.2) is an invariant (FS-INV-112), not checked here."
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/name",
+      "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+    },
+    "extensions": {
+      "$ref": "defs.schema.json#/$defs/extensions",
+      "description": "1.4, 1.6: extension data on this wall.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.4, 1.7: application-specific data on this wall.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

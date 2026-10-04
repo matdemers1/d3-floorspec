@@ -1,0 +1,6 @@
+{
+  "description": "An opening's offset is not negative.",
+  "covers": [
+    "FS-CORE-7.1.1"
+  ]
+}

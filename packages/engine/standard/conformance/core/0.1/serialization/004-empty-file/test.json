@@ -1,0 +1,6 @@
+{
+  "description": "An empty file is not a JSON text.",
+  "covers": [
+    "FS-CORE-9.1.1"
+  ]
+}

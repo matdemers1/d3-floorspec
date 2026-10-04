@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.1/type.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.3's and 8.4's tables (extensions, extras). A type's `layers`, `width`, `height` and `sill` have no default. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).",
+  "title": "Type",
+  "description": "8.1: a reusable definition that elements refer to instead of repeating — a wall assembly, a door or a window. A type MUST have a `kind` from 8.1's table (FS-CORE-8.1.1), and has only the members of that kind's table (FS-CORE-1.4.1).",
+  "type": "object",
+  "required": ["kind"],
+  "properties": {
+    "kind": {
+      "title": "Kind",
+      "description": "8.1: which kind of type this is.",
+      "type": "string",
+      "enum": ["wallType", "doorType", "windowType"]
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/wallType" },
+    { "$ref": "#/$defs/doorType" },
+    { "$ref": "#/$defs/windowType" }
+  ],
+  "$defs": {
+    "wallType": {
+      "title": "Wall type",
+      "description": "8.3: a wall assembly, used by a wall's `type`.",
+      "type": "object",
+      "required": ["kind", "layers"],
+      "properties": {
+        "kind": {
+          "description": "8.1, 8.3: \"wallType\".",
+          "const": "wallType"
+        },
+        "layers": {
+          "$ref": "layer.schema.json#/$defs/layers",
+          "description": "8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
+        },
+        "extensions": {
+          "$ref": "defs.schema.json#/$defs/extensions",
+          "description": "1.4, 1.6, 8.1: extension data on this type.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.4, 1.7, 8.1: application-specific data on this type.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    },
+    "doorType": {
+      "title": "Door type",
+      "description": "8.4: a door, used by an opening's `fill`.",
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "description": "8.1, 8.4: \"doorType\".",
+          "const": "doorType"
+        },
+        "width": {
+          "$ref": "defs.schema.json#/$defs/positiveLength",
+          "description": "8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."
+        },
+        "height": {
+          "$ref": "defs.schema.json#/$defs/positiveLength",
+          "description": "8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."
+        },
+        "sill": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
+        },
+        "extensions": {
+          "$ref": "defs.schema.json#/$defs/extensions",
+          "description": "1.4, 1.6, 8.1: extension data on this type.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.4, 1.7, 8.1: application-specific data on this type.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    },
+    "windowType": {
+      "title": "Window type",
+      "description": "8.4: a window, used by an opening's `fill`.",
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "description": "8.1, 8.4: \"windowType\".",
+          "const": "windowType"
+        },
+        "width": {
+          "$ref": "defs.schema.json#/$defs/positiveLength",
+          "description": "8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."
+        },
+        "height": {
+          "$ref": "defs.schema.json#/$defs/positiveLength",
+          "description": "8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."
+        },
+        "sill": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
+        },
+        "extensions": {
+          "$ref": "defs.schema.json#/$defs/extensions",
+          "description": "1.4, 1.6, 8.1: extension data on this type.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.4, 1.7, 8.1: application-specific data on this type.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

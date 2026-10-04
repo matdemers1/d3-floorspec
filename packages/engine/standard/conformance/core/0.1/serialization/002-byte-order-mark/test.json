@@ -1,0 +1,6 @@
+{
+  "description": "A document that begins with a UTF-8 byte order mark.",
+  "covers": [
+    "FS-CORE-9.1.1"
+  ]
+}

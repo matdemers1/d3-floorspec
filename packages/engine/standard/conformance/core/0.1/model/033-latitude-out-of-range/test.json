@@ -1,0 +1,6 @@
+{
+  "description": "A latitude of 90,000,001 microdegrees is beyond the pole.",
+  "covers": [
+    "FS-CORE-1.8.2"
+  ]
+}

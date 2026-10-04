@@ -1,0 +1,7 @@
+{
+  "description": "Three junctions at one position: FS-INV-101 is pairwise, so it is reported once for each of the three pairs.",
+  "covers": [
+    "FS-CORE-5.1.1",
+    "FS-CORE-10.2.1"
+  ]
+}

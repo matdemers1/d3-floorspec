@@ -1,0 +1,7 @@
+{
+  "description": "An opening reaching exactly the wall's top: allowed.",
+  "covers": [
+    "FS-CORE-7.3.2",
+    "FS-CORE-7.4.1"
+  ]
+}

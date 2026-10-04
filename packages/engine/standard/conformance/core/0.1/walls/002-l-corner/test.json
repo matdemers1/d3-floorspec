@@ -1,0 +1,8 @@
+{
+  "description": "Two centred walls meeting at a right angle with the default mitre: both walls end at the outer corner (X + 64,000, -64,000) and the inner corner (X - 64,000, 64,000).",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-5.7.2"
+  ]
+}

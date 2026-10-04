@@ -1,0 +1,6 @@
+{
+  "description": "A room anchored on a separator's location line.",
+  "covers": [
+    "FS-CORE-6.3.1"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-002",
+      "severity": "warning",
+      "elements": ["J1"]
+    }
+  ],
+  "hash": "62c1b77aafdbf60039edad335899d50f9b82952efce7e96c39b38be19a1dab65",
+  "derived": {
+    "walls": {},
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {}
+  }
+}

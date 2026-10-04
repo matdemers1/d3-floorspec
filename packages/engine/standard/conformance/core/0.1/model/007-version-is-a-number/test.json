@@ -1,0 +1,6 @@
+{
+  "description": "\"floorspec\": 0.1 is a number, not the string \"0.1\". FS-DOC-001 applies only to a string naming another version, so this is a schema error.",
+  "covers": [
+    "FS-CORE-1.2.1"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.1",
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "slabs": {
+    "SL1": {
+      "boundary": [
+        [
+          0,
+          0
+        ],
+        [
+          5120000,
+          0
+        ],
+        [
+          5120000,
+          3840000
+        ],
+        [
+          0,
+          3840000
+        ]
+      ],
+      "level": "L1",
+      "thickness": 192000
+    }
+  }
+}

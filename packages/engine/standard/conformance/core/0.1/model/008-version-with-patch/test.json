@@ -1,0 +1,7 @@
+{
+  "description": "\"0.1.0\" is not \"0.1\": patch releases are not declared. A reader that implements only 0.1 rejects it with FS-DOC-001.",
+  "covers": [
+    "FS-CORE-1.2.1",
+    "FS-CORE-1.2.2"
+  ]
+}

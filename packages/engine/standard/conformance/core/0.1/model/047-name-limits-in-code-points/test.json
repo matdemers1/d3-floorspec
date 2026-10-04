@@ -1,0 +1,7 @@
+{
+  "description": "Names of exactly 200 characters, counted in Unicode code points: 200 astral characters (400 UTF-16 code units) and 200 ASCII characters are both valid.",
+  "covers": [
+    "FS-CORE-1.4.4",
+    "FS-CORE-9.2.1"
+  ]
+}

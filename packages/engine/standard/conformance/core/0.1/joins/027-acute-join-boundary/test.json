@@ -1,0 +1,6 @@
+{
+  "description": "Two walls at about 28.8 degrees - under 30, so the lint applies by the exact test 4(d1.d2)^2 > 3|d1|^2|d2|^2.",
+  "covers": [
+    "FS-CORE-5.6.1"
+  ]
+}

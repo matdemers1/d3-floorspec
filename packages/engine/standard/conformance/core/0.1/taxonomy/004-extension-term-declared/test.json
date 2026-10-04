@@ -1,0 +1,8 @@
+{
+  "description": "A room function from an extension the document declares: valid; a reader that does not implement EXT_wellness treats the room as unspecified and keeps the term.",
+  "covers": [
+    "FS-CORE-4.1.1",
+    "FS-CORE-4.2.1",
+    "FS-CORE-1.6.6"
+  ]
+}

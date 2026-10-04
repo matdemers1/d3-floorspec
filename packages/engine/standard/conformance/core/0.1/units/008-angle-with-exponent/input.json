@@ -1,0 +1,9 @@
+{
+  "floorspec": "0.1",
+  "project": {
+    "name": "Conformance"
+  },
+  "site": {
+    "trueNorth": 9e7
+  }
+}

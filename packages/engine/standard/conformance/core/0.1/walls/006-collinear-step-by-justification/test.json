@@ -1,0 +1,7 @@
+{
+  "description": "Two collinear walls of equal thickness but different justification also step: the offsets differ, not the thickness.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

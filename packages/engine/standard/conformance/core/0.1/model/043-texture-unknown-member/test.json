@@ -1,0 +1,6 @@
+{
+  "description": "A texture has asset and size only.",
+  "covers": [
+    "FS-CORE-1.4.3"
+  ]
+}

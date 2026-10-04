@@ -1,0 +1,6 @@
+{
+  "description": "A freestanding wall 90 mm from the room's south wall: its body overlaps the south wall's, so the hole ring is not strictly inside the outer ring and the room polygon is degenerate.",
+  "covers": [
+    "FS-CORE-6.3.3"
+  ]
+}

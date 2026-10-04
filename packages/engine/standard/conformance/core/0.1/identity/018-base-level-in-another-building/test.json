@@ -1,0 +1,6 @@
+{
+  "description": "Wall W1 takes its base from another building's level.",
+  "covers": [
+    "FS-CORE-3.3.2"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "W9 crosses the room's south wall W4, and a door runs past the end of W4: opening invariants are evaluated for every opening, so FS-INV-302 is reported with the crossing; the room invariants of the level are not evaluated.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-7.3.1",
+    "FS-CORE-5.3.1"
+  ]
+}

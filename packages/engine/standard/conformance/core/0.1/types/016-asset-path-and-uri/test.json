@@ -1,0 +1,6 @@
+{
+  "description": "An asset has exactly one of path and uri: not both.",
+  "covers": [
+    "FS-CORE-8.6.1"
+  ]
+}

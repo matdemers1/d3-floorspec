@@ -1,0 +1,51 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "eda75da504c2dc46812a9fadc4d16c5e2f78baa89b3186bc71f3064c53d6180c",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [161920, 161920],
+        "endRight": [161920, 3678080],
+        "endLeft": [-161920, 4001920],
+        "startLeft": [-161920, -161920],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [161920, 3678080],
+        "endRight": [4958080, 3678080],
+        "endLeft": [5281920, 4001920],
+        "startLeft": [-161920, 4001920],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4958080, 3678080],
+        "endRight": [4958080, 161920],
+        "endLeft": [5281920, -161920],
+        "startLeft": [5281920, 4001920],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [4958080, 161920],
+        "endRight": [161920, 161920],
+        "endLeft": [-161920, -161920],
+        "startLeft": [5281920, -161920],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[161920, 161920], [4958080, 161920], [4958080, 3678080], [161920, 3678080]],
+        "holes": [],
+        "area": "16864065945600"
+      }
+    },
+    "unanchored": [],
+    "openings": {}
+  }
+}

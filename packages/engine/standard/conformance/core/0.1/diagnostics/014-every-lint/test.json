@@ -1,0 +1,7 @@
+{
+  "description": "A valid document with one of every lint: an acute join (A1, AW1, AW2), an unused junction (U1), two unanchored faces - the room and a degenerate sliver - with the sliver also degenerate, an opening in a join (O1), an unused door type and material (FS-LINT-006), and an asset located by URI.",
+  "covers": [
+    "FS-CORE-10.1.1",
+    "FS-CORE-10.2.1"
+  ]
+}

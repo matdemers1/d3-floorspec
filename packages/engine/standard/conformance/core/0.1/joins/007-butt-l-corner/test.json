@@ -1,0 +1,8 @@
+{
+  "description": "walls/002 with a butt join at the corner, W1 running through: W1 runs out to the outer corner, and W2 stops against W1's inner face. The corner points are unchanged; only the division between the walls moves.",
+  "covers": [
+    "FS-CORE-5.8.2",
+    "FS-CORE-5.8.4",
+    "FS-CORE-5.7.1"
+  ]
+}

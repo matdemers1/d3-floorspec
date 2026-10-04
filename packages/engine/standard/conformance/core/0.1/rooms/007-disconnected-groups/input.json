@@ -1,0 +1,121 @@
+{
+  "floorspec": "0.1",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "AJ1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "AJ2": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "AJ3": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "AJ4": {
+      "level": "L1",
+      "position": [5120000, 0]
+    },
+    "BJ1": {
+      "level": "L1",
+      "position": [7680000, 0]
+    },
+    "BJ2": {
+      "level": "L1",
+      "position": [7680000, 3840000]
+    },
+    "BJ3": {
+      "level": "L1",
+      "position": [12800000, 3840000]
+    },
+    "BJ4": {
+      "level": "L1",
+      "position": [12800000, 0]
+    }
+  },
+  "walls": {
+    "AW1": {
+      "level": "L1",
+      "start": "AJ1",
+      "end": "AJ2",
+      "type": "WT"
+    },
+    "AW2": {
+      "level": "L1",
+      "start": "AJ2",
+      "end": "AJ3",
+      "type": "WT"
+    },
+    "AW3": {
+      "level": "L1",
+      "start": "AJ3",
+      "end": "AJ4",
+      "type": "WT"
+    },
+    "AW4": {
+      "level": "L1",
+      "start": "AJ4",
+      "end": "AJ1",
+      "type": "WT"
+    },
+    "BW1": {
+      "level": "L1",
+      "start": "BJ1",
+      "end": "BJ2",
+      "type": "WT"
+    },
+    "BW2": {
+      "level": "L1",
+      "start": "BJ2",
+      "end": "BJ3",
+      "type": "WT"
+    },
+    "BW3": {
+      "level": "L1",
+      "start": "BJ3",
+      "end": "BJ4",
+      "type": "WT"
+    },
+    "BW4": {
+      "level": "L1",
+      "start": "BJ4",
+      "end": "BJ1",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2560000, 1920000]
+    },
+    "R2": {
+      "level": "L1",
+      "anchor": [10240000, 1920000]
+    }
+  }
+}

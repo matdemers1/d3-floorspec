@@ -1,0 +1,6 @@
+{
+  "description": "A room anchored exactly on a junction, the end of a location line.",
+  "covers": [
+    "FS-CORE-6.3.1"
+  ]
+}

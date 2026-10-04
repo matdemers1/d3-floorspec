@@ -1,0 +1,470 @@
+{
+  "floorspec": "0.1",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "JS0": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "JN0": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "JS1": {
+      "level": "L1",
+      "position": [1280000, 0]
+    },
+    "JN1": {
+      "level": "L1",
+      "position": [1280000, 3840000]
+    },
+    "JS2": {
+      "level": "L1",
+      "position": [2560000, 0]
+    },
+    "JN2": {
+      "level": "L1",
+      "position": [2560000, 3840000]
+    },
+    "JS3": {
+      "level": "L1",
+      "position": [3840000, 0]
+    },
+    "JN3": {
+      "level": "L1",
+      "position": [3840000, 3840000]
+    },
+    "JS4": {
+      "level": "L1",
+      "position": [5120000, 0]
+    },
+    "JN4": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "JS5": {
+      "level": "L1",
+      "position": [6400000, 0]
+    },
+    "JN5": {
+      "level": "L1",
+      "position": [6400000, 3840000]
+    },
+    "JS6": {
+      "level": "L1",
+      "position": [7680000, 0]
+    },
+    "JN6": {
+      "level": "L1",
+      "position": [7680000, 3840000]
+    },
+    "JS7": {
+      "level": "L1",
+      "position": [8960000, 0]
+    },
+    "JN7": {
+      "level": "L1",
+      "position": [8960000, 3840000]
+    },
+    "JS8": {
+      "level": "L1",
+      "position": [10240000, 0]
+    },
+    "JN8": {
+      "level": "L1",
+      "position": [10240000, 3840000]
+    },
+    "JS9": {
+      "level": "L1",
+      "position": [11520000, 0]
+    },
+    "JN9": {
+      "level": "L1",
+      "position": [11520000, 3840000]
+    },
+    "JS10": {
+      "level": "L1",
+      "position": [12800000, 0]
+    },
+    "JN10": {
+      "level": "L1",
+      "position": [12800000, 3840000]
+    },
+    "JS11": {
+      "level": "L1",
+      "position": [14080000, 0]
+    },
+    "JN11": {
+      "level": "L1",
+      "position": [14080000, 3840000]
+    },
+    "JS12": {
+      "level": "L1",
+      "position": [15360000, 0]
+    },
+    "JN12": {
+      "level": "L1",
+      "position": [15360000, 3840000]
+    },
+    "JS13": {
+      "level": "L1",
+      "position": [16640000, 0]
+    },
+    "JN13": {
+      "level": "L1",
+      "position": [16640000, 3840000]
+    },
+    "JS14": {
+      "level": "L1",
+      "position": [17920000, 0]
+    },
+    "JN14": {
+      "level": "L1",
+      "position": [17920000, 3840000]
+    }
+  },
+  "walls": {
+    "WW": {
+      "level": "L1",
+      "start": "JS0",
+      "end": "JN0",
+      "type": "WT"
+    },
+    "WE": {
+      "level": "L1",
+      "start": "JN14",
+      "end": "JS14",
+      "type": "WT"
+    },
+    "WN0": {
+      "level": "L1",
+      "start": "JN0",
+      "end": "JN1",
+      "type": "WT"
+    },
+    "WS0": {
+      "level": "L1",
+      "start": "JS1",
+      "end": "JS0",
+      "type": "WT"
+    },
+    "WN1": {
+      "level": "L1",
+      "start": "JN1",
+      "end": "JN2",
+      "type": "WT"
+    },
+    "WS1": {
+      "level": "L1",
+      "start": "JS2",
+      "end": "JS1",
+      "type": "WT"
+    },
+    "WN2": {
+      "level": "L1",
+      "start": "JN2",
+      "end": "JN3",
+      "type": "WT"
+    },
+    "WS2": {
+      "level": "L1",
+      "start": "JS3",
+      "end": "JS2",
+      "type": "WT"
+    },
+    "WN3": {
+      "level": "L1",
+      "start": "JN3",
+      "end": "JN4",
+      "type": "WT"
+    },
+    "WS3": {
+      "level": "L1",
+      "start": "JS4",
+      "end": "JS3",
+      "type": "WT"
+    },
+    "WN4": {
+      "level": "L1",
+      "start": "JN4",
+      "end": "JN5",
+      "type": "WT"
+    },
+    "WS4": {
+      "level": "L1",
+      "start": "JS5",
+      "end": "JS4",
+      "type": "WT"
+    },
+    "WN5": {
+      "level": "L1",
+      "start": "JN5",
+      "end": "JN6",
+      "type": "WT"
+    },
+    "WS5": {
+      "level": "L1",
+      "start": "JS6",
+      "end": "JS5",
+      "type": "WT"
+    },
+    "WN6": {
+      "level": "L1",
+      "start": "JN6",
+      "end": "JN7",
+      "type": "WT"
+    },
+    "WS6": {
+      "level": "L1",
+      "start": "JS7",
+      "end": "JS6",
+      "type": "WT"
+    },
+    "WN7": {
+      "level": "L1",
+      "start": "JN7",
+      "end": "JN8",
+      "type": "WT"
+    },
+    "WS7": {
+      "level": "L1",
+      "start": "JS8",
+      "end": "JS7",
+      "type": "WT"
+    },
+    "WN8": {
+      "level": "L1",
+      "start": "JN8",
+      "end": "JN9",
+      "type": "WT"
+    },
+    "WS8": {
+      "level": "L1",
+      "start": "JS9",
+      "end": "JS8",
+      "type": "WT"
+    },
+    "WN9": {
+      "level": "L1",
+      "start": "JN9",
+      "end": "JN10",
+      "type": "WT"
+    },
+    "WS9": {
+      "level": "L1",
+      "start": "JS10",
+      "end": "JS9",
+      "type": "WT"
+    },
+    "WN10": {
+      "level": "L1",
+      "start": "JN10",
+      "end": "JN11",
+      "type": "WT"
+    },
+    "WS10": {
+      "level": "L1",
+      "start": "JS11",
+      "end": "JS10",
+      "type": "WT"
+    },
+    "WN11": {
+      "level": "L1",
+      "start": "JN11",
+      "end": "JN12",
+      "type": "WT"
+    },
+    "WS11": {
+      "level": "L1",
+      "start": "JS12",
+      "end": "JS11",
+      "type": "WT"
+    },
+    "WN12": {
+      "level": "L1",
+      "start": "JN12",
+      "end": "JN13",
+      "type": "WT"
+    },
+    "WS12": {
+      "level": "L1",
+      "start": "JS13",
+      "end": "JS12",
+      "type": "WT"
+    },
+    "WN13": {
+      "level": "L1",
+      "start": "JN13",
+      "end": "JN14",
+      "type": "WT"
+    },
+    "WS13": {
+      "level": "L1",
+      "start": "JS14",
+      "end": "JS13",
+      "type": "WT"
+    }
+  },
+  "separators": {
+    "S1": {
+      "level": "L1",
+      "start": "JS1",
+      "end": "JN1"
+    },
+    "S2": {
+      "level": "L1",
+      "start": "JS2",
+      "end": "JN2"
+    },
+    "S3": {
+      "level": "L1",
+      "start": "JS3",
+      "end": "JN3"
+    },
+    "S4": {
+      "level": "L1",
+      "start": "JS4",
+      "end": "JN4"
+    },
+    "S5": {
+      "level": "L1",
+      "start": "JS5",
+      "end": "JN5"
+    },
+    "S6": {
+      "level": "L1",
+      "start": "JS6",
+      "end": "JN6"
+    },
+    "S7": {
+      "level": "L1",
+      "start": "JS7",
+      "end": "JN7"
+    },
+    "S8": {
+      "level": "L1",
+      "start": "JS8",
+      "end": "JN8"
+    },
+    "S9": {
+      "level": "L1",
+      "start": "JS9",
+      "end": "JN9"
+    },
+    "S10": {
+      "level": "L1",
+      "start": "JS10",
+      "end": "JN10"
+    },
+    "S11": {
+      "level": "L1",
+      "start": "JS11",
+      "end": "JN11"
+    },
+    "S12": {
+      "level": "L1",
+      "start": "JS12",
+      "end": "JN12"
+    },
+    "S13": {
+      "level": "L1",
+      "start": "JS13",
+      "end": "JN13"
+    }
+  },
+  "rooms": {
+    "R0": {
+      "level": "L1",
+      "anchor": [640000, 1920000],
+      "function": "unspecified"
+    },
+    "R1": {
+      "level": "L1",
+      "anchor": [1920000, 1920000],
+      "function": "sleeping"
+    },
+    "R2": {
+      "level": "L1",
+      "anchor": [3200000, 1920000],
+      "function": "bath"
+    },
+    "R3": {
+      "level": "L1",
+      "anchor": [4480000, 1920000],
+      "function": "kitchen"
+    },
+    "R4": {
+      "level": "L1",
+      "anchor": [5760000, 1920000],
+      "function": "living"
+    },
+    "R5": {
+      "level": "L1",
+      "anchor": [7040000, 1920000],
+      "function": "dining"
+    },
+    "R6": {
+      "level": "L1",
+      "anchor": [8320000, 1920000],
+      "function": "office"
+    },
+    "R7": {
+      "level": "L1",
+      "anchor": [9600000, 1920000],
+      "function": "laundry"
+    },
+    "R8": {
+      "level": "L1",
+      "anchor": [10880000, 1920000],
+      "function": "utility"
+    },
+    "R9": {
+      "level": "L1",
+      "anchor": [12160000, 1920000],
+      "function": "storage"
+    },
+    "R10": {
+      "level": "L1",
+      "anchor": [13440000, 1920000],
+      "function": "circulation"
+    },
+    "R11": {
+      "level": "L1",
+      "anchor": [14720000, 1920000],
+      "function": "mechanical"
+    },
+    "R12": {
+      "level": "L1",
+      "anchor": [16000000, 1920000],
+      "function": "garage"
+    },
+    "R13": {
+      "level": "L1",
+      "anchor": [17280000, 1920000],
+      "function": "exterior"
+    }
+  }
+}

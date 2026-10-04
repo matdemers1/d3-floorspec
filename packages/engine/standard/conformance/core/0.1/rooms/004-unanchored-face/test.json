@@ -1,0 +1,8 @@
+{
+  "description": "rooms/002 with only one room: the other bounded face is unanchored - derived, reported as an informational lint, and not an error.",
+  "covers": [
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1",
+    "FS-CORE-10.1.1"
+  ]
+}

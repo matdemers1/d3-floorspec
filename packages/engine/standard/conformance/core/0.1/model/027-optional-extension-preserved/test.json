@@ -1,0 +1,8 @@
+{
+  "description": "The baseline model (model/017) with an optional extension the reader does not implement: data at the top level, on a wall and on a room, some of it shaped like core members. The document is valid, derives exactly what model/017 derives, and its canonical form keeps the extension data.",
+  "covers": [
+    "FS-CORE-1.6.5",
+    "FS-CORE-1.6.6",
+    "FS-CORE-9.2.1"
+  ]
+}
