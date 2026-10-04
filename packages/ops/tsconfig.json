@@ -1,13 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": [
-      "node"
-    ]
+    "types": [],
+    "lib": ["ES2023"]
   },
-  "include": [
-    "src",
-    "test",
-    "*.config.ts"
-  ]
+  "include": ["src", "*.config.ts", "node_modules/@floorspec/engine/src/globals.d.ts"]
 }

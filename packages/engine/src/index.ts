@@ -25,6 +25,10 @@ export type { Diagnostic, DiagnosticLocation, FixOp, Severity } from './validate
 export { deriveFrom, halfString, type Derived, type DerivedWall, type DerivedRoomPolygon, type DerivedUnanchored, type DerivedOpening } from './derive/derive.js';
 export { LevelGeometry } from './derive/level.js';
 export { Surd } from './exact/surd.js';
+export { abs, floorDiv, gcd, isqrt, exactSqrt, roundHalfEvenRational, toSafeNumber, big } from './exact/bigint.js';
+export { jsonEqual } from './canonical/canonicalize.js';
+export { pointer, type JsonPath } from './json/pointer.js';
+export { sortDiagnostics, compareStringSeq, cmpStr } from './validate/diagnostic.js';
 export * as predicates from './geometry/predicates.js';
 export { HalfEdgeGraph, type Cycle, type Face } from './geometry/halfedge.js';
 export { planarize, type PlanarizeInput, type PlanarizeResult } from './geometry/planarize.js';
