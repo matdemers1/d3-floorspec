@@ -57,8 +57,15 @@ export async function writeAudit(tx: Tx, req: Request, entry: AuditEntry): Promi
       // it was.
       detail: scrub({
         ...(entry.detail ?? {}),
-        route: `${req.method} ${req.baseUrl}${req.route === undefined ? '' : (req.route as { path: string }).path}`,
+        route: routeOf(req),
       }) as Prisma.InputJsonObject,
     },
   });
+}
+
+/** The declared route, spelled as the registry spells it: `POST /api/invites`, not `/api/invites/`. */
+function routeOf(req: Request): string {
+  const path = req.route === undefined ? '' : (req.route as { path: string }).path;
+  const full = `${req.baseUrl}${path}`.replace(/\/{2,}/g, '/').replace(/(.)\/$/, '$1');
+  return `${req.method} ${full}`;
 }

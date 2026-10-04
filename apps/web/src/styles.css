@@ -1,0 +1,32 @@
+/* The editor's own handful of rules. Everything else is @d3cloud/ui; tokens only (d3-check-usage). */
+
+.fs-muted {
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+
+.fs-mono {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+/* The TOTP QR: a light island in either theme, with the quiet zone drawn inside the SVG. */
+.fs-totp-qr {
+  align-self: start;
+  width: 200px;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.fs-totp-qr > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.fs-totp-qr__light {
+  fill: var(--color-surface-raised);
+}
+.fs-totp-qr__dark {
+  fill: var(--color-fg);
+}

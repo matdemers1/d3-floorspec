@@ -1,6 +1,7 @@
 import { migrate } from './boot.js';
 import { ConfigError, loadConfig } from './config.js';
 import { createApp } from './app.js';
+import { createOidcClient } from './auth/oidc.js';
 import { createDb } from './db.js';
 import { logger } from './logger.js';
 
@@ -20,10 +21,16 @@ const config = (() => {
 
 await migrate(config);
 const db = createDb(config.DATABASE_URL);
-const app = createApp({ config, db });
+// Discovery is attempted once and allowed to fail: an unreachable D3 Auth means one sign-in button
+// instead of two, never an api that will not start.
+const oidc = await createOidcClient(config);
+const app = createApp({ config, db, oidc });
 
 const server = app.listen(config.PORT, () => {
-  logger.info({ port: config.PORT, publicUrl: config.PUBLIC_URL, oidcConfigured: config.oidcConfigured }, 'd3-floorspec api listening');
+  logger.info(
+    { port: config.PORT, publicUrl: config.PUBLIC_URL, oidcConfigured: config.oidcConfigured, oidcReachable: oidc !== null },
+    'd3-floorspec api listening',
+  );
 });
 
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {

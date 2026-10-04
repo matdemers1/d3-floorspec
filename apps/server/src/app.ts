@@ -13,16 +13,27 @@ import { schemaRevision } from './boot.js';
 import { logger } from './logger.js';
 import { attachAuth } from './auth/middleware.js';
 import { HttpError } from './http/errors.js';
+import { mount } from './http/routes.js';
+import type { OidcClient } from './auth/oidc.js';
+import { authRoutes } from './routes/auth.js';
+import { oidcRoutes } from './routes/oidc.js';
+import { inviteRoutes } from './routes/invites.js';
+import { accountRoutes } from './routes/account.js';
 
 export interface AppDeps {
   readonly config: Config;
   readonly db: Db;
+  /**
+   * Null when D3 Auth is not configured or was unreachable at boot: the sign-in screen then shows
+   * one button instead of two, and nothing else changes.
+   */
+  readonly oidc?: OidcClient | null;
 }
 
 /** The paths the API owns. Anything else is a screen of the editor. */
 const API_PREFIXES = ['api', 'auth', 'health', 'healthz', 'readyz', 'mcp', '.well-known'];
 
-export function createApp({ config, db }: AppDeps): Express {
+export function createApp({ config, db, oidc = null }: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
   // Behind the Cloudflare Tunnel: one hop, so `req.ip` is the client and the login throttle has a
@@ -30,6 +41,11 @@ export function createApp({ config, db }: AppDeps): Express {
   app.set('trust proxy', 1);
   app.use(express.json({ limit: '1mb' }));
   app.use(attachAuth(db, config));
+
+  mount(app, '/auth', authRoutes({ db, config, oidcAvailable: oidc !== null }));
+  mount(app, '/auth/oidc', oidcRoutes(db, config, oidc));
+  mount(app, '/api/invites', inviteRoutes(db, config));
+  mount(app, '/api/account', accountRoutes(db));
 
   /** Liveness: the process is up. Touches nothing else. */
   app.get('/healthz', (_req, res) => {
