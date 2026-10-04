@@ -1,0 +1,113 @@
+# Floorspec summary: Two-bedroom ranch
+Lengths are ft-in to 1/16", with exact base units in parentheses (1/1280 mm: 1 in = 32512, 1 ft = 390144); ≈ marks an irrational length rounded to the nearest unit. Areas are net, inside finished wall faces. Sides follow Floorspec Ops §3.4: "north wall of LIV" names the walls listed under North. Wall lengths are location lines; opening positions are measured from the wall's start junction.
+
+## Level MAIN "Main floor" — elevation 0' 0" (0), height 9' 0" (3511296), 6 rooms
+
+### BATH "Bath" — bath
+Net area 33.8 ft² (5147868930048 sq bu). Size 4' 7-1/2" E-W × 7' 3-3/4" N-S (1804416 × 2852928). Anchor [10338816, 9363456].
+North:
+- wall N2, 5' 0" (1950720), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WB [W2424]: 2' 0" (780288) wide, 1' 6" (585216) from the wall's start
+East:
+- wall I6, 8' 0" (3121152), INT24 "2x4 partition" 4-1/2" (146304); other side: BED1 "Primary bedroom"
+South:
+- wall I7, 5' 0" (1950720), INT24 "2x4 partition" 4-1/2" (146304); other side: HALL "Hall"
+  - door DB [D30]: 2' 6" (975360) wide, 1' 0" (390144) from the wall's start, hinge start, swing left, opens into BATH (this room)
+West:
+- wall I3, 8' 0" (3121152), INT24 "2x4 partition" 4-1/2" (146304); other side: KIT "Kitchen"
+
+### BED1 "Primary bedroom" — sleeping
+Net area 190.5 ft² (29001802125312 sq bu). Size 14' 3-3/4" E-W × 13' 3-3/4" N-S (5583936 × 5193792). Anchor [14240256, 8193024].
+North:
+- wall N3, 15' 0" (5852160), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window W1N [W4848]: 4' 0" (1560576) wide, 5' 6" (2145792) from the wall's start
+East:
+- wall E1, 14' 0" (5462016), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window W1E [W4848]: 4' 0" (1560576) wide, 5' 0" (1950720) from the wall's start
+South:
+- wall I8, 15' 0" (5852160), INT24 "2x4 partition" 4-1/2" (146304); other side: BED2 "Bedroom 2"
+West:
+- wall I6, 8' 0" (3121152), INT24 "2x4 partition" 4-1/2" (146304); other side: BATH "Bath"
+- wall I5, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: HALL "Hall"
+  - door D1 [D30]: 2' 6" (975360) wide, 1' 6" (585216) from the wall's start, hinge start, swing right, opens into BED1 (this room)
+
+### BED2 "Bedroom 2" — sleeping
+Net area 190.5 ft² (29001802125312 sq bu). Size 14' 3-3/4" E-W × 13' 3-3/4" N-S (5583936 × 5193792). Anchor [14240256, 2731008].
+North:
+- wall I8, 15' 0" (5852160), INT24 "2x4 partition" 4-1/2" (146304); other side: BED1 "Primary bedroom"
+East:
+- wall E2, 14' 0" (5462016), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window W2E [W4848]: 4' 0" (1560576) wide, 5' 0" (1950720) from the wall's start
+South:
+- wall S1, 15' 0" (5852160), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window W2S [W4848]: 4' 0" (1560576) wide, 5' 6" (2145792) from the wall's start
+West:
+- wall I4, 14' 0" (5462016), INT24 "2x4 partition" 4-1/2" (146304); other side: HALL "Hall"
+  - door D2 [D30]: 2' 6" (975360) wide, 10' 0" (3901440) from the wall's start, hinge end, swing right, opens into BED2 (this room)
+
+### HALL "Hall" — circulation
+Net area 89.3 ft² (13595653840896 sq bu). Size 4' 7-1/2" E-W × 19' 3-3/4" N-S (1804416 × 7534656). Anchor [10338816, 3121152].
+North:
+- wall I7, 5' 0" (1950720), INT24 "2x4 partition" 4-1/2" (146304); other side: BATH "Bath"
+  - door DB [D30]: 2' 6" (975360) wide, 1' 0" (390144) from the wall's start, hinge start, swing left, opens into BATH "Bath"
+East:
+- wall I5, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: BED1 "Primary bedroom"
+  - door D1 [D30]: 2' 6" (975360) wide, 1' 6" (585216) from the wall's start, hinge start, swing right, opens into BED1 "Primary bedroom"
+- wall I4, 14' 0" (5462016), INT24 "2x4 partition" 4-1/2" (146304); other side: BED2 "Bedroom 2"
+  - door D2 [D30]: 2' 6" (975360) wide, 10' 0" (3901440) from the wall's start, hinge end, swing right, opens into BED2 "Bedroom 2"
+South:
+- wall S2, 5' 0" (1950720), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - door FD "Front door" [D36]: 3' 0" (1170432) wide, 1' 0" (390144) from the wall's start, hinge start, swing right, opens into HALL (this room)
+West:
+- wall I2, 4' 0" (1560576), INT24 "2x4 partition" 4-1/2" (146304); other side: KIT "Kitchen"
+- wall I1, 16' 0" (6242304), INT24 "2x4 partition" 4-1/2" (146304); other side: LIV "Living room"
+  - opening LH "Cased opening": 4' 0" (1560576) wide, 4' 0" (1560576) from the wall's start
+
+### KIT "Kitchen" — kitchen
+Net area 268.1 ft² (40807177224192 sq bu). Size 23' 3-3/4" E-W × 11' 6" N-S (9095232 × 4486656). Anchor [4681728, 8583168].
+North:
+- wall N1, 24' 0" (9363456), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WK [W3636]: 3' 0" (1170432) wide, 10' 0" (3901440) from the wall's start
+East:
+- wall I3, 8' 0" (3121152), INT24 "2x4 partition" 4-1/2" (146304); other side: BATH "Bath"
+- wall I2, 4' 0" (1560576), INT24 "2x4 partition" 4-1/2" (146304); other side: HALL "Hall"
+South:
+- separator SEP "Kitchen island line", 24' 0" (9363456), open to LIV "Living room"
+West:
+- wall W2, 12' 0" (4681728), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+
+### LIV "Living room" — living
+Net area 361.3 ft² (55000977997824 sq bu). Size 23' 3-3/4" E-W × 15' 6" N-S (9095232 × 6047232). Anchor [4681728, 3121152].
+North:
+- separator SEP "Kitchen island line", 24' 0" (9363456), open to KIT "Kitchen"
+East:
+- wall I1, 16' 0" (6242304), INT24 "2x4 partition" 4-1/2" (146304); other side: HALL "Hall"
+  - opening LH "Cased opening": 4' 0" (1560576) wide, 4' 0" (1560576) from the wall's start
+South:
+- wall S3, 24' 0" (9363456), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WL1 [W4848]: 4' 0" (1560576) wide, 8' 0" (3121152) from the wall's start
+West:
+- wall W1, 16' 0" (6242304), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WL2 [W4848]: 4' 0" (1560576) wide, 6' 0" (2340864) from the wall's start
+
+### Adjacency (MAIN)
+- BATH "Bath" | BED1 "Primary bedroom": wall I6
+- BATH "Bath" | HALL "Hall": wall I7
+- BATH "Bath" | KIT "Kitchen": wall I3
+- BED1 "Primary bedroom" | BED2 "Bedroom 2": wall I8
+- BED1 "Primary bedroom" | HALL "Hall": wall I5
+- BED2 "Bedroom 2" | HALL "Hall": wall I4
+- HALL "Hall" | KIT "Kitchen": wall I2
+- HALL "Hall" | LIV "Living room": wall I1
+- KIT "Kitchen" | LIV "Living room": separator SEP
+
+### Door graph (MAIN)
+- exterior <-> HALL "Hall": door FD in wall S2
+- BATH "Bath" <-> HALL "Hall": door DB in wall I7
+- BED1 "Primary bedroom" <-> HALL "Hall": door D1 in wall I5
+- BED2 "Bedroom 2" <-> HALL "Hall": door D2 in wall I4
+- HALL "Hall" <-> LIV "Living room": opening LH in wall I1
+- KIT "Kitchen" <-> LIV "Living room": open plan across separator SEP
+
+## Diagnostics
+(none)
