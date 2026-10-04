@@ -1,0 +1,58 @@
+# Floorspec summary: Three-room house
+Lengths are ft-in to 1/16", with exact base units in parentheses (1/1280 mm: 1 in = 32512, 1 ft = 390144); ≈ marks an irrational length rounded to the nearest unit. Areas are net, inside finished wall faces. Sides follow Floorspec Ops §3.4: "north wall of LIV" names the walls listed under North. Wall lengths are location lines; opening positions are measured from the wall's start junction.
+
+## Level MAIN "Main floor" — elevation 0' 0" (0), height 9' 0" (3511296), 3 rooms
+
+### BED "Bedroom" — sleeping
+Net area 173.2 ft² (26366625976320 sq bu). Size 15' 3-3/4" E-W × 11' 3-3/4" N-S (5974080 × 4413504). Anchor [10924032, 2340864].
+North:
+- wall WI2, 16' 0" (6242304), INT24 "2x4 partition" 4-1/2" (146304); other side: KIT "Kitchen"
+East:
+- wall WE2, 12' 0" (4681728), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window BW [W4848]: 4' 0" (1560576) wide, 3' 0" (1170432) from the wall's start
+South:
+- wall WS1, 16' 0" (6242304), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+West:
+- wall WI1, 12' 0" (4681728), INT24 "2x4 partition" 4-1/2" (146304); other side: LIV "Living room"
+  - door BD [D32]: 2' 8" (1040384) wide, 8' 0" (3121152) from the wall's start, hinge end, swing right, opens into BED (this room)
+
+### KIT "Kitchen" — kitchen
+Net area 175.3 ft² (26689482620928 sq bu). Size 15' 6" E-W × 11' 3-3/4" N-S (6047232 × 4413504). Anchor [10924032, 7022592].
+North:
+- wall WN2, 16' 0" (6242304), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window KW [W3636]: 3' 0" (1170432) wide, 6' 0" (2340864) from the wall's start
+East:
+- wall WE1, 12' 0" (4681728), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+South:
+- wall WI2, 16' 0" (6242304), INT24 "2x4 partition" 4-1/2" (146304); other side: BED "Bedroom"
+West:
+- separator SK "Kitchen counter line", 12' 0" (4681728), open to LIV "Living room"
+
+### LIV "Living room" — living
+Net area 446.3 ft² (67939026960384 sq bu). Size 19' 6" E-W × 23' 0" N-S (7607808 × 8973312). Anchor [3901440, 4681728].
+North:
+- wall WN1, 20' 0" (7802880), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window LW2 "Picture window" [W4848]: 6' 0" (2340864) wide, 6' 0" (2340864) from the wall's start
+East:
+- separator SK "Kitchen counter line", 12' 0" (4681728), open to KIT "Kitchen"
+- wall WI1, 12' 0" (4681728), INT24 "2x4 partition" 4-1/2" (146304); other side: BED "Bedroom"
+  - door BD [D32]: 2' 8" (1040384) wide, 8' 0" (3121152) from the wall's start, hinge end, swing right, opens into BED "Bedroom"
+South:
+- wall WS2, 20' 0" (7802880), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - door FD "Front door" [D36]: 3' 0" (1170432) wide, 6' 0" (2340864) from the wall's start, hinge start, swing left, opens into exterior
+West:
+- wall WW, 24' 0" (9363456), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window LW1 [W4848]: 4' 0" (1560576) wide, 8' 0" (3121152) from the wall's start
+
+### Adjacency (MAIN)
+- BED "Bedroom" | KIT "Kitchen": wall WI2
+- BED "Bedroom" | LIV "Living room": wall WI1
+- KIT "Kitchen" | LIV "Living room": separator SK
+
+### Door graph (MAIN)
+- exterior <-> LIV "Living room": door FD in wall WS2
+- BED "Bedroom" <-> LIV "Living room": door BD in wall WI1
+- KIT "Kitchen" <-> LIV "Living room": open plan across separator SK
+
+## Diagnostics
+(none)

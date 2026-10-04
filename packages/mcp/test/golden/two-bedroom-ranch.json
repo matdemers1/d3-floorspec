@@ -1,0 +1,1476 @@
+{
+  "project": "Two-bedroom ranch",
+  "valid": true,
+  "levels": [
+    {
+      "id": "MAIN",
+      "name": "Main floor",
+      "elevation": {
+        "baseUnits": 0,
+        "ftIn": "0' 0\"",
+        "exact": true
+      },
+      "height": {
+        "baseUnits": 3511296,
+        "ftIn": "9' 0\"",
+        "exact": true
+      },
+      "derived": true,
+      "rooms": [
+        {
+          "id": "BATH",
+          "name": "Bath",
+          "function": "bath",
+          "level": "MAIN",
+          "anchor": [
+            10338816,
+            9363456
+          ],
+          "placed": true,
+          "area": {
+            "squareFeet": "33.8",
+            "squareBaseUnits": "5147868930048"
+          },
+          "size": {
+            "eastWest": {
+              "baseUnits": 1804416,
+              "ftIn": "4' 7-1/2\"",
+              "exact": true
+            },
+            "northSouth": {
+              "baseUnits": 2852928,
+              "ftIn": "7' 3-3/4\"",
+              "exact": true
+            }
+          },
+          "sides": {
+            "north": [
+              {
+                "kind": "wall",
+                "id": "N2",
+                "length": {
+                  "baseUnits": 1950720,
+                  "ftIn": "5' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": [
+                  {
+                    "id": "WB",
+                    "kind": "window",
+                    "fill": "W2424",
+                    "width": {
+                      "baseUnits": 780288,
+                      "ftIn": "2' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 585216,
+                      "ftIn": "1' 6\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ],
+            "east": [
+              {
+                "kind": "wall",
+                "id": "I6",
+                "length": {
+                  "baseUnits": 3121152,
+                  "ftIn": "8' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "BED1",
+                  "name": "Primary bedroom"
+                },
+                "openings": []
+              }
+            ],
+            "south": [
+              {
+                "kind": "wall",
+                "id": "I7",
+                "length": {
+                  "baseUnits": 1950720,
+                  "ftIn": "5' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "HALL",
+                  "name": "Hall"
+                },
+                "openings": [
+                  {
+                    "id": "DB",
+                    "kind": "door",
+                    "fill": "D30",
+                    "width": {
+                      "baseUnits": 975360,
+                      "ftIn": "2' 6\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 390144,
+                      "ftIn": "1' 0\"",
+                      "exact": true
+                    },
+                    "hinge": "start",
+                    "swing": "left",
+                    "swingsInto": {
+                      "kind": "room",
+                      "id": "BATH",
+                      "name": "Bath"
+                    }
+                  }
+                ]
+              }
+            ],
+            "west": [
+              {
+                "kind": "wall",
+                "id": "I3",
+                "length": {
+                  "baseUnits": 3121152,
+                  "ftIn": "8' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "KIT",
+                  "name": "Kitchen"
+                },
+                "openings": []
+              }
+            ]
+          },
+          "inside": []
+        },
+        {
+          "id": "BED1",
+          "name": "Primary bedroom",
+          "function": "sleeping",
+          "level": "MAIN",
+          "anchor": [
+            14240256,
+            8193024
+          ],
+          "placed": true,
+          "area": {
+            "squareFeet": "190.5",
+            "squareBaseUnits": "29001802125312"
+          },
+          "size": {
+            "eastWest": {
+              "baseUnits": 5583936,
+              "ftIn": "14' 3-3/4\"",
+              "exact": true
+            },
+            "northSouth": {
+              "baseUnits": 5193792,
+              "ftIn": "13' 3-3/4\"",
+              "exact": true
+            }
+          },
+          "sides": {
+            "north": [
+              {
+                "kind": "wall",
+                "id": "N3",
+                "length": {
+                  "baseUnits": 5852160,
+                  "ftIn": "15' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": [
+                  {
+                    "id": "W1N",
+                    "kind": "window",
+                    "fill": "W4848",
+                    "width": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 2145792,
+                      "ftIn": "5' 6\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ],
+            "east": [
+              {
+                "kind": "wall",
+                "id": "E1",
+                "length": {
+                  "baseUnits": 5462016,
+                  "ftIn": "14' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": [
+                  {
+                    "id": "W1E",
+                    "kind": "window",
+                    "fill": "W4848",
+                    "width": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 1950720,
+                      "ftIn": "5' 0\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ],
+            "south": [
+              {
+                "kind": "wall",
+                "id": "I8",
+                "length": {
+                  "baseUnits": 5852160,
+                  "ftIn": "15' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "BED2",
+                  "name": "Bedroom 2"
+                },
+                "openings": []
+              }
+            ],
+            "west": [
+              {
+                "kind": "wall",
+                "id": "I6",
+                "length": {
+                  "baseUnits": 3121152,
+                  "ftIn": "8' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "BATH",
+                  "name": "Bath"
+                },
+                "openings": []
+              },
+              {
+                "kind": "wall",
+                "id": "I5",
+                "length": {
+                  "baseUnits": 2340864,
+                  "ftIn": "6' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "HALL",
+                  "name": "Hall"
+                },
+                "openings": [
+                  {
+                    "id": "D1",
+                    "kind": "door",
+                    "fill": "D30",
+                    "width": {
+                      "baseUnits": 975360,
+                      "ftIn": "2' 6\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 585216,
+                      "ftIn": "1' 6\"",
+                      "exact": true
+                    },
+                    "hinge": "start",
+                    "swing": "right",
+                    "swingsInto": {
+                      "kind": "room",
+                      "id": "BED1",
+                      "name": "Primary bedroom"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "inside": []
+        },
+        {
+          "id": "BED2",
+          "name": "Bedroom 2",
+          "function": "sleeping",
+          "level": "MAIN",
+          "anchor": [
+            14240256,
+            2731008
+          ],
+          "placed": true,
+          "area": {
+            "squareFeet": "190.5",
+            "squareBaseUnits": "29001802125312"
+          },
+          "size": {
+            "eastWest": {
+              "baseUnits": 5583936,
+              "ftIn": "14' 3-3/4\"",
+              "exact": true
+            },
+            "northSouth": {
+              "baseUnits": 5193792,
+              "ftIn": "13' 3-3/4\"",
+              "exact": true
+            }
+          },
+          "sides": {
+            "north": [
+              {
+                "kind": "wall",
+                "id": "I8",
+                "length": {
+                  "baseUnits": 5852160,
+                  "ftIn": "15' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "BED1",
+                  "name": "Primary bedroom"
+                },
+                "openings": []
+              }
+            ],
+            "east": [
+              {
+                "kind": "wall",
+                "id": "E2",
+                "length": {
+                  "baseUnits": 5462016,
+                  "ftIn": "14' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": [
+                  {
+                    "id": "W2E",
+                    "kind": "window",
+                    "fill": "W4848",
+                    "width": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 1950720,
+                      "ftIn": "5' 0\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ],
+            "south": [
+              {
+                "kind": "wall",
+                "id": "S1",
+                "length": {
+                  "baseUnits": 5852160,
+                  "ftIn": "15' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": [
+                  {
+                    "id": "W2S",
+                    "kind": "window",
+                    "fill": "W4848",
+                    "width": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 2145792,
+                      "ftIn": "5' 6\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ],
+            "west": [
+              {
+                "kind": "wall",
+                "id": "I4",
+                "length": {
+                  "baseUnits": 5462016,
+                  "ftIn": "14' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "HALL",
+                  "name": "Hall"
+                },
+                "openings": [
+                  {
+                    "id": "D2",
+                    "kind": "door",
+                    "fill": "D30",
+                    "width": {
+                      "baseUnits": 975360,
+                      "ftIn": "2' 6\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 3901440,
+                      "ftIn": "10' 0\"",
+                      "exact": true
+                    },
+                    "hinge": "end",
+                    "swing": "right",
+                    "swingsInto": {
+                      "kind": "room",
+                      "id": "BED2",
+                      "name": "Bedroom 2"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "inside": []
+        },
+        {
+          "id": "HALL",
+          "name": "Hall",
+          "function": "circulation",
+          "level": "MAIN",
+          "anchor": [
+            10338816,
+            3121152
+          ],
+          "placed": true,
+          "area": {
+            "squareFeet": "89.3",
+            "squareBaseUnits": "13595653840896"
+          },
+          "size": {
+            "eastWest": {
+              "baseUnits": 1804416,
+              "ftIn": "4' 7-1/2\"",
+              "exact": true
+            },
+            "northSouth": {
+              "baseUnits": 7534656,
+              "ftIn": "19' 3-3/4\"",
+              "exact": true
+            }
+          },
+          "sides": {
+            "north": [
+              {
+                "kind": "wall",
+                "id": "I7",
+                "length": {
+                  "baseUnits": 1950720,
+                  "ftIn": "5' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "BATH",
+                  "name": "Bath"
+                },
+                "openings": [
+                  {
+                    "id": "DB",
+                    "kind": "door",
+                    "fill": "D30",
+                    "width": {
+                      "baseUnits": 975360,
+                      "ftIn": "2' 6\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 390144,
+                      "ftIn": "1' 0\"",
+                      "exact": true
+                    },
+                    "hinge": "start",
+                    "swing": "left",
+                    "swingsInto": {
+                      "kind": "room",
+                      "id": "BATH",
+                      "name": "Bath"
+                    }
+                  }
+                ]
+              }
+            ],
+            "east": [
+              {
+                "kind": "wall",
+                "id": "I5",
+                "length": {
+                  "baseUnits": 2340864,
+                  "ftIn": "6' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "BED1",
+                  "name": "Primary bedroom"
+                },
+                "openings": [
+                  {
+                    "id": "D1",
+                    "kind": "door",
+                    "fill": "D30",
+                    "width": {
+                      "baseUnits": 975360,
+                      "ftIn": "2' 6\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 585216,
+                      "ftIn": "1' 6\"",
+                      "exact": true
+                    },
+                    "hinge": "start",
+                    "swing": "right",
+                    "swingsInto": {
+                      "kind": "room",
+                      "id": "BED1",
+                      "name": "Primary bedroom"
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "wall",
+                "id": "I4",
+                "length": {
+                  "baseUnits": 5462016,
+                  "ftIn": "14' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "BED2",
+                  "name": "Bedroom 2"
+                },
+                "openings": [
+                  {
+                    "id": "D2",
+                    "kind": "door",
+                    "fill": "D30",
+                    "width": {
+                      "baseUnits": 975360,
+                      "ftIn": "2' 6\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 3901440,
+                      "ftIn": "10' 0\"",
+                      "exact": true
+                    },
+                    "hinge": "end",
+                    "swing": "right",
+                    "swingsInto": {
+                      "kind": "room",
+                      "id": "BED2",
+                      "name": "Bedroom 2"
+                    }
+                  }
+                ]
+              }
+            ],
+            "south": [
+              {
+                "kind": "wall",
+                "id": "S2",
+                "length": {
+                  "baseUnits": 1950720,
+                  "ftIn": "5' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": [
+                  {
+                    "id": "FD",
+                    "name": "Front door",
+                    "kind": "door",
+                    "fill": "D36",
+                    "width": {
+                      "baseUnits": 1170432,
+                      "ftIn": "3' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 390144,
+                      "ftIn": "1' 0\"",
+                      "exact": true
+                    },
+                    "hinge": "start",
+                    "swing": "right",
+                    "swingsInto": {
+                      "kind": "room",
+                      "id": "HALL",
+                      "name": "Hall"
+                    }
+                  }
+                ]
+              }
+            ],
+            "west": [
+              {
+                "kind": "wall",
+                "id": "I2",
+                "length": {
+                  "baseUnits": 1560576,
+                  "ftIn": "4' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "KIT",
+                  "name": "Kitchen"
+                },
+                "openings": []
+              },
+              {
+                "kind": "wall",
+                "id": "I1",
+                "length": {
+                  "baseUnits": 6242304,
+                  "ftIn": "16' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "LIV",
+                  "name": "Living room"
+                },
+                "openings": [
+                  {
+                    "id": "LH",
+                    "name": "Cased opening",
+                    "kind": "opening",
+                    "width": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "inside": []
+        },
+        {
+          "id": "KIT",
+          "name": "Kitchen",
+          "function": "kitchen",
+          "level": "MAIN",
+          "anchor": [
+            4681728,
+            8583168
+          ],
+          "placed": true,
+          "area": {
+            "squareFeet": "268.1",
+            "squareBaseUnits": "40807177224192"
+          },
+          "size": {
+            "eastWest": {
+              "baseUnits": 9095232,
+              "ftIn": "23' 3-3/4\"",
+              "exact": true
+            },
+            "northSouth": {
+              "baseUnits": 4486656,
+              "ftIn": "11' 6\"",
+              "exact": true
+            }
+          },
+          "sides": {
+            "north": [
+              {
+                "kind": "wall",
+                "id": "N1",
+                "length": {
+                  "baseUnits": 9363456,
+                  "ftIn": "24' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": [
+                  {
+                    "id": "WK",
+                    "kind": "window",
+                    "fill": "W3636",
+                    "width": {
+                      "baseUnits": 1170432,
+                      "ftIn": "3' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 3901440,
+                      "ftIn": "10' 0\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ],
+            "east": [
+              {
+                "kind": "wall",
+                "id": "I3",
+                "length": {
+                  "baseUnits": 3121152,
+                  "ftIn": "8' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "BATH",
+                  "name": "Bath"
+                },
+                "openings": []
+              },
+              {
+                "kind": "wall",
+                "id": "I2",
+                "length": {
+                  "baseUnits": 1560576,
+                  "ftIn": "4' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "HALL",
+                  "name": "Hall"
+                },
+                "openings": []
+              }
+            ],
+            "south": [
+              {
+                "kind": "separator",
+                "id": "SEP",
+                "name": "Kitchen island line",
+                "length": {
+                  "baseUnits": 9363456,
+                  "ftIn": "24' 0\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "LIV",
+                  "name": "Living room"
+                },
+                "openings": []
+              }
+            ],
+            "west": [
+              {
+                "kind": "wall",
+                "id": "W2",
+                "length": {
+                  "baseUnits": 4681728,
+                  "ftIn": "12' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": []
+              }
+            ]
+          },
+          "inside": []
+        },
+        {
+          "id": "LIV",
+          "name": "Living room",
+          "function": "living",
+          "level": "MAIN",
+          "anchor": [
+            4681728,
+            3121152
+          ],
+          "placed": true,
+          "area": {
+            "squareFeet": "361.3",
+            "squareBaseUnits": "55000977997824"
+          },
+          "size": {
+            "eastWest": {
+              "baseUnits": 9095232,
+              "ftIn": "23' 3-3/4\"",
+              "exact": true
+            },
+            "northSouth": {
+              "baseUnits": 6047232,
+              "ftIn": "15' 6\"",
+              "exact": true
+            }
+          },
+          "sides": {
+            "north": [
+              {
+                "kind": "separator",
+                "id": "SEP",
+                "name": "Kitchen island line",
+                "length": {
+                  "baseUnits": 9363456,
+                  "ftIn": "24' 0\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "KIT",
+                  "name": "Kitchen"
+                },
+                "openings": []
+              }
+            ],
+            "east": [
+              {
+                "kind": "wall",
+                "id": "I1",
+                "length": {
+                  "baseUnits": 6242304,
+                  "ftIn": "16' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "INT24",
+                  "name": "2x4 partition"
+                },
+                "thickness": {
+                  "baseUnits": 146304,
+                  "ftIn": "0' 4-1/2\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "room",
+                  "id": "HALL",
+                  "name": "Hall"
+                },
+                "openings": [
+                  {
+                    "id": "LH",
+                    "name": "Cased opening",
+                    "kind": "opening",
+                    "width": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ],
+            "south": [
+              {
+                "kind": "wall",
+                "id": "S3",
+                "length": {
+                  "baseUnits": 9363456,
+                  "ftIn": "24' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": [
+                  {
+                    "id": "WL1",
+                    "kind": "window",
+                    "fill": "W4848",
+                    "width": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 3121152,
+                      "ftIn": "8' 0\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ],
+            "west": [
+              {
+                "kind": "wall",
+                "id": "W1",
+                "length": {
+                  "baseUnits": 6242304,
+                  "ftIn": "16' 0\"",
+                  "exact": true
+                },
+                "type": {
+                  "id": "EXT26",
+                  "name": "2x6 exterior wall"
+                },
+                "thickness": {
+                  "baseUnits": 233680,
+                  "ftIn": "0' 7-3/16\"",
+                  "exact": true
+                },
+                "otherSide": {
+                  "kind": "exterior"
+                },
+                "openings": [
+                  {
+                    "id": "WL2",
+                    "kind": "window",
+                    "fill": "W4848",
+                    "width": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "offset": {
+                      "baseUnits": 2340864,
+                      "ftIn": "6' 0\"",
+                      "exact": true
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "inside": []
+        }
+      ],
+      "adjacency": [
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "BATH",
+              "name": "Bath"
+            },
+            {
+              "kind": "room",
+              "id": "BED1",
+              "name": "Primary bedroom"
+            }
+          ],
+          "walls": [
+            "I6"
+          ],
+          "separators": []
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "BATH",
+              "name": "Bath"
+            },
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            }
+          ],
+          "walls": [
+            "I7"
+          ],
+          "separators": []
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "BATH",
+              "name": "Bath"
+            },
+            {
+              "kind": "room",
+              "id": "KIT",
+              "name": "Kitchen"
+            }
+          ],
+          "walls": [
+            "I3"
+          ],
+          "separators": []
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "BED1",
+              "name": "Primary bedroom"
+            },
+            {
+              "kind": "room",
+              "id": "BED2",
+              "name": "Bedroom 2"
+            }
+          ],
+          "walls": [
+            "I8"
+          ],
+          "separators": []
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "BED1",
+              "name": "Primary bedroom"
+            },
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            }
+          ],
+          "walls": [
+            "I5"
+          ],
+          "separators": []
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "BED2",
+              "name": "Bedroom 2"
+            },
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            }
+          ],
+          "walls": [
+            "I4"
+          ],
+          "separators": []
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            },
+            {
+              "kind": "room",
+              "id": "KIT",
+              "name": "Kitchen"
+            }
+          ],
+          "walls": [
+            "I2"
+          ],
+          "separators": []
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            },
+            {
+              "kind": "room",
+              "id": "LIV",
+              "name": "Living room"
+            }
+          ],
+          "walls": [
+            "I1"
+          ],
+          "separators": []
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "KIT",
+              "name": "Kitchen"
+            },
+            {
+              "kind": "room",
+              "id": "LIV",
+              "name": "Living room"
+            }
+          ],
+          "walls": [],
+          "separators": [
+            "SEP"
+          ]
+        }
+      ],
+      "doorGraph": [
+        {
+          "between": [
+            {
+              "kind": "exterior"
+            },
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            }
+          ],
+          "via": "FD",
+          "kind": "door",
+          "wall": "S2"
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "BATH",
+              "name": "Bath"
+            },
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            }
+          ],
+          "via": "DB",
+          "kind": "door",
+          "wall": "I7"
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "BED1",
+              "name": "Primary bedroom"
+            },
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            }
+          ],
+          "via": "D1",
+          "kind": "door",
+          "wall": "I5"
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "BED2",
+              "name": "Bedroom 2"
+            },
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            }
+          ],
+          "via": "D2",
+          "kind": "door",
+          "wall": "I4"
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "HALL",
+              "name": "Hall"
+            },
+            {
+              "kind": "room",
+              "id": "LIV",
+              "name": "Living room"
+            }
+          ],
+          "via": "LH",
+          "kind": "opening",
+          "wall": "I1"
+        },
+        {
+          "between": [
+            {
+              "kind": "room",
+              "id": "KIT",
+              "name": "Kitchen"
+            },
+            {
+              "kind": "room",
+              "id": "LIV",
+              "name": "Living room"
+            }
+          ],
+          "via": "SEP",
+          "kind": "separator"
+        }
+      ],
+      "unanchored": []
+    }
+  ],
+  "diagnostics": []
+}
