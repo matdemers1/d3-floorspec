@@ -19,6 +19,7 @@ import {
 import { Download } from 'lucide-react';
 import { api, ApiError, messageOf } from '../lib/api';
 import { navigate } from '../lib/router';
+import { Changesets } from './Changesets';
 
 interface ProjectDetail {
   id: string;
@@ -30,7 +31,10 @@ interface ProjectDetail {
 
 interface OpRow {
   seq: number;
-  authorKind: 'account' | 'agent';
+  kind?: string;
+  head?: string;
+  authorKind: 'account' | 'agent' | 'token';
+  authorAgent: string | null;
   ops: { op: string }[];
   afterHash: string;
   createdAt: string;
@@ -43,6 +47,7 @@ export function Project({ id }: { id: string }) {
   const [ops, setOps] = useState<OpRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     Promise.all([api.get<ProjectDetail>(`/api/projects/${id}`), api.get<{ ops: OpRow[] }>(`/api/projects/${id}/ops`)])
@@ -54,7 +59,7 @@ export function Project({ id }: { id: string }) {
         if (caught instanceof ApiError && caught.status === 404) setProject('missing');
         else setError(messageOf(caught));
       });
-  }, [id]);
+  }, [id, version]);
 
   if (project === 'missing') {
     return (
@@ -90,13 +95,14 @@ export function Project({ id }: { id: string }) {
             <DescriptionItem term="Created">{new Date(project.createdAt).toLocaleString()}</DescriptionItem>
           </DescriptionList>
         </Section>
+        <Changesets projectId={id} onDecided={() => { setVersion((v) => v + 1); }} />
         <Section title="History" description="Every change is a Floorspec Op, recorded in order and never rewritten.">
           <DataList>
-            {ops.map((op) => (
+            {ops.filter((op) => op.head === undefined || op.head === 'main').map((op) => (
               <DataListRow
                 key={op.seq}
                 title={`#${String(op.seq)} ${op.ops.map((o) => o.op).join(', ')}`}
-                description={`${op.authorKind === 'agent' ? 'An agent' : 'You'} · ${new Date(op.createdAt).toLocaleString()}`}
+                description={`${op.authorKind === 'agent' ? (op.authorAgent ?? 'An agent') : op.authorKind === 'token' ? 'You, with an API token' : 'You'}${op.kind === 'undo' || op.kind === 'redo' || op.kind === 'merge' ? ` · ${op.kind}` : ''} · ${new Date(op.createdAt).toLocaleString()}`}
                 meta={<span className="fs-mono fs-muted">{op.afterHash.slice(0, 12)}</span>}
               />
             ))}

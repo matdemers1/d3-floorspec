@@ -67,7 +67,7 @@ export function projectRoutes(db: Db): Routes {
       where: { projectId: project.id },
       orderBy: { seq: 'desc' },
       take: 200,
-      select: { seq: true, authorKind: true, authorAccountId: true, authorAgent: true, ops: true, beforeHash: true, afterHash: true, createdAt: true },
+      select: { seq: true, kind: true, head: true, changesetId: true, authorKind: true, authorAccountId: true, authorAgent: true, ops: true, beforeHash: true, afterHash: true, createdAt: true },
     });
     res.json({ ops });
   }, { token: 'read' });
