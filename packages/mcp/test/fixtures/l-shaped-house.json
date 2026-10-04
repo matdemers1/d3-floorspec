@@ -1,0 +1,553 @@
+{
+  "floorspec": "0.1",
+  "project": {
+    "name": "L-shaped house"
+  },
+  "buildings": {
+    "HOUSE": {
+      "name": "House"
+    }
+  },
+  "levels": {
+    "MAIN": {
+      "name": "Main floor",
+      "building": "HOUSE",
+      "elevation": 0,
+      "height": 3511296
+    }
+  },
+  "junctions": {
+    "SW": {
+      "level": "MAIN",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "NW": {
+      "level": "MAIN",
+      "position": [
+        0,
+        17166336
+      ]
+    },
+    "NE": {
+      "level": "MAIN",
+      "position": [
+        7802880,
+        17166336
+      ]
+    },
+    "IC": {
+      "level": "MAIN",
+      "position": [
+        7802880,
+        9363456
+      ]
+    },
+    "EN": {
+      "level": "MAIN",
+      "position": [
+        15605760,
+        9363456
+      ]
+    },
+    "SE": {
+      "level": "MAIN",
+      "position": [
+        15605760,
+        0
+      ]
+    },
+    "W24": {
+      "level": "MAIN",
+      "position": [
+        0,
+        9363456
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "X1",
+          "X2"
+        ]
+      }
+    },
+    "E12": {
+      "level": "MAIN",
+      "position": [
+        15605760,
+        4681728
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "X6",
+          "X7"
+        ]
+      }
+    },
+    "S30": {
+      "level": "MAIN",
+      "position": [
+        11704320,
+        0
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "X8",
+          "X9"
+        ]
+      }
+    },
+    "S20": {
+      "level": "MAIN",
+      "position": [
+        7802880,
+        0
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "X9",
+          "X10"
+        ]
+      }
+    },
+    "M12": {
+      "level": "MAIN",
+      "position": [
+        7802880,
+        4681728
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "I2",
+          "I3"
+        ]
+      }
+    },
+    "K12": {
+      "level": "MAIN",
+      "position": [
+        11704320,
+        4681728
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "I4",
+          "I5"
+        ]
+      }
+    },
+    "C1": {
+      "level": "MAIN",
+      "position": [
+        4291584,
+        12094464
+      ]
+    },
+    "C2": {
+      "level": "MAIN",
+      "position": [
+        4291584,
+        14435328
+      ]
+    },
+    "C3": {
+      "level": "MAIN",
+      "position": [
+        6632448,
+        14435328
+      ]
+    },
+    "C4": {
+      "level": "MAIN",
+      "position": [
+        6632448,
+        12094464
+      ]
+    }
+  },
+  "walls": {
+    "X1": {
+      "level": "MAIN",
+      "start": "SW",
+      "end": "W24",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "X2": {
+      "level": "MAIN",
+      "start": "W24",
+      "end": "NW",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "X3": {
+      "level": "MAIN",
+      "start": "NW",
+      "end": "NE",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "X4": {
+      "level": "MAIN",
+      "start": "NE",
+      "end": "IC",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "X5": {
+      "level": "MAIN",
+      "start": "IC",
+      "end": "EN",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "X6": {
+      "level": "MAIN",
+      "start": "EN",
+      "end": "E12",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "X7": {
+      "level": "MAIN",
+      "start": "E12",
+      "end": "SE",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "X8": {
+      "level": "MAIN",
+      "start": "SE",
+      "end": "S30",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "X9": {
+      "level": "MAIN",
+      "start": "S30",
+      "end": "S20",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "X10": {
+      "level": "MAIN",
+      "start": "S20",
+      "end": "SW",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "I1": {
+      "level": "MAIN",
+      "start": "W24",
+      "end": "IC",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "I2": {
+      "level": "MAIN",
+      "start": "IC",
+      "end": "M12",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "I3": {
+      "level": "MAIN",
+      "start": "M12",
+      "end": "S20",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "I4": {
+      "level": "MAIN",
+      "start": "M12",
+      "end": "K12",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "I5": {
+      "level": "MAIN",
+      "start": "K12",
+      "end": "E12",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "I6": {
+      "level": "MAIN",
+      "start": "K12",
+      "end": "S30",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "CW": {
+      "level": "MAIN",
+      "start": "C1",
+      "end": "C2",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "CN": {
+      "level": "MAIN",
+      "start": "C2",
+      "end": "C3",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "CE": {
+      "level": "MAIN",
+      "start": "C3",
+      "end": "C4",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "CS": {
+      "level": "MAIN",
+      "start": "C4",
+      "end": "C1",
+      "type": "INT24",
+      "justification": "center"
+    }
+  },
+  "openings": {
+    "FD": {
+      "wall": "X10",
+      "offset": 5071872,
+      "fill": "D36",
+      "hinge": "end",
+      "swing": "right",
+      "name": "Front door"
+    },
+    "BD": {
+      "wall": "I1",
+      "offset": 5462016,
+      "fill": "D30",
+      "hinge": "start",
+      "swing": "left"
+    },
+    "LK": {
+      "wall": "I2",
+      "offset": 1170432,
+      "width": 2340864,
+      "height": 2600960,
+      "name": "Kitchen opening"
+    },
+    "DB": {
+      "wall": "I3",
+      "offset": 1560576,
+      "fill": "D30",
+      "hinge": "start",
+      "swing": "left"
+    },
+    "DL": {
+      "wall": "I5",
+      "offset": 1170432,
+      "fill": "D30",
+      "hinge": "start",
+      "swing": "right"
+    },
+    "BK": {
+      "wall": "X6",
+      "offset": 1560576,
+      "fill": "D36",
+      "hinge": "end",
+      "swing": "right",
+      "name": "Back door"
+    },
+    "CD": {
+      "wall": "CS",
+      "offset": 585216,
+      "fill": "D30",
+      "hinge": "start",
+      "swing": "right",
+      "name": "Closet door"
+    },
+    "WL1": {
+      "wall": "X10",
+      "offset": 1170432,
+      "fill": "W4848"
+    },
+    "WL2": {
+      "wall": "X1",
+      "offset": 3901440,
+      "fill": "W4848"
+    },
+    "WB1": {
+      "wall": "X3",
+      "offset": 3121152,
+      "fill": "W4848"
+    },
+    "WB2": {
+      "wall": "X2",
+      "offset": 3121152,
+      "fill": "W4848"
+    },
+    "WK": {
+      "wall": "X5",
+      "offset": 2731008,
+      "fill": "W3636"
+    },
+    "WBA": {
+      "wall": "X9",
+      "offset": 1170432,
+      "fill": "W2424"
+    },
+    "WLA": {
+      "wall": "X8",
+      "offset": 1560576,
+      "fill": "W2424"
+    }
+  },
+  "rooms": {
+    "BED": {
+      "level": "MAIN",
+      "anchor": [
+        1560576,
+        15605760
+      ],
+      "name": "Primary suite",
+      "function": "sleeping"
+    },
+    "LIV": {
+      "level": "MAIN",
+      "anchor": [
+        3901440,
+        4681728
+      ],
+      "name": "Great room",
+      "function": "living"
+    },
+    "KIT": {
+      "level": "MAIN",
+      "anchor": [
+        11704320,
+        7022592
+      ],
+      "name": "Kitchen",
+      "function": "kitchen"
+    },
+    "BATH": {
+      "level": "MAIN",
+      "anchor": [
+        9753600,
+        2340864
+      ],
+      "name": "Bath",
+      "function": "bath"
+    },
+    "LAU": {
+      "level": "MAIN",
+      "anchor": [
+        13655040,
+        2340864
+      ],
+      "name": "Laundry",
+      "function": "laundry"
+    }
+  },
+  "types": {
+    "EXT26": {
+      "kind": "wallType",
+      "name": "2x6 exterior wall",
+      "layers": [
+        {
+          "thickness": 24384,
+          "function": "finish",
+          "material": "SIDING"
+        },
+        {
+          "thickness": 14224,
+          "function": "substrate",
+          "material": "OSB"
+        },
+        {
+          "thickness": 178816,
+          "function": "core",
+          "material": "STUD"
+        },
+        {
+          "thickness": 16256,
+          "function": "finish",
+          "material": "GWB"
+        }
+      ]
+    },
+    "INT24": {
+      "kind": "wallType",
+      "name": "2x4 partition",
+      "layers": [
+        {
+          "thickness": 16256,
+          "function": "finish",
+          "material": "GWB"
+        },
+        {
+          "thickness": 113792,
+          "function": "core",
+          "material": "STUD"
+        },
+        {
+          "thickness": 16256,
+          "function": "finish",
+          "material": "GWB"
+        }
+      ]
+    },
+    "D36": {
+      "kind": "doorType",
+      "name": "36 in entry door",
+      "width": 1170432,
+      "height": 2600960
+    },
+    "D30": {
+      "kind": "doorType",
+      "name": "30 in interior door",
+      "width": 975360,
+      "height": 2600960
+    },
+    "W4848": {
+      "kind": "windowType",
+      "name": "48 x 48 in window",
+      "width": 1560576,
+      "height": 1560576,
+      "sill": 1170432
+    },
+    "W3636": {
+      "kind": "windowType",
+      "name": "36 x 36 in window",
+      "width": 1170432,
+      "height": 1170432,
+      "sill": 1365504
+    },
+    "W2424": {
+      "kind": "windowType",
+      "name": "24 x 24 in window",
+      "width": 780288,
+      "height": 780288,
+      "sill": 1755648
+    }
+  },
+  "materials": {
+    "SIDING": {
+      "name": "Fibre-cement lap siding",
+      "color": "#5b6d7a"
+    },
+    "OSB": {
+      "name": "OSB sheathing",
+      "color": "#c9a66b"
+    },
+    "STUD": {
+      "name": "SPF framing",
+      "color": "#e8d3a3"
+    },
+    "GWB": {
+      "name": "Gypsum board",
+      "color": "#f2f0eb"
+    }
+  }
+}

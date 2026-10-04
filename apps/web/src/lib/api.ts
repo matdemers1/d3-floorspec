@@ -75,6 +75,8 @@ export interface Anonymous {
   authenticated: false;
   oidcAvailable: boolean;
   setupRequired: boolean;
+  /** Whether first-run setup asks for the server's SETUP_TOKEN. */
+  setupTokenRequired: boolean;
 }
 
 export async function fetchSession(): Promise<SignedIn | Anonymous> {
@@ -87,6 +89,7 @@ export async function fetchSession(): Promise<SignedIn | Anonymous> {
         authenticated: false,
         oidcAvailable: body?.oidcAvailable ?? false,
         setupRequired: body?.setupRequired ?? false,
+        setupTokenRequired: body?.setupTokenRequired ?? false,
       };
     }
     throw error;

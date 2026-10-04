@@ -1,0 +1,113 @@
+# Floorspec summary: L-shaped house
+Lengths are ft-in to 1/16", with exact base units in parentheses (1/1280 mm: 1 in = 32512, 1 ft = 390144); ≈ marks an irrational length rounded to the nearest unit. Areas are net, inside finished wall faces. Sides follow Floorspec Ops §3.4: "north wall of LIV" names the walls listed under North. Wall lengths are location lines; opening positions are measured from the wall's start junction.
+
+## Level MAIN "Main floor" — elevation 0' 0" (0), height 9' 0" (3511296), 5 rooms
+
+### BATH "Bath" — bath
+Net area 108.9 ft² (16573307756544 sq bu). Size 9' 7-1/2" E-W × 11' 3-3/4" N-S (3755136 × 4413504). Anchor [9753600, 2340864].
+North:
+- wall I4, 10' 0" (3901440), INT24 "2x4 partition" 4-1/2" (146304); other side: KIT "Kitchen"
+East:
+- wall I6, 12' 0" (4681728), INT24 "2x4 partition" 4-1/2" (146304); other side: LAU "Laundry"
+South:
+- wall X9, 10' 0" (3901440), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WBA [W2424]: 2' 0" (780288) wide, 3' 0" (1170432) from the wall's start
+West:
+- wall I3, 12' 0" (4681728), INT24 "2x4 partition" 4-1/2" (146304); other side: LIV "Great room"
+  - door DB [D30]: 2' 6" (975360) wide, 4' 0" (1560576) from the wall's start, hinge start, swing left, opens into BATH (this room)
+
+### BED "Primary suite" — sleeping
+Net area 326.3 ft² (49666411118592 sq bu). Size 19' 0" E-W × 19' 3-3/4" N-S (7412736 × 7534656). Anchor [1560576, 15605760].
+North:
+- wall X3, 20' 0" (7802880), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WB1 [W4848]: 4' 0" (1560576) wide, 8' 0" (3121152) from the wall's start
+East:
+- wall X4, 20' 0" (7802880), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+South:
+- wall I1, 20' 0" (7802880), INT24 "2x4 partition" 4-1/2" (146304); other side: LIV "Great room"
+  - door BD [D30]: 2' 6" (975360) wide, 14' 0" (5462016) from the wall's start, hinge start, swing left, opens into BED (this room)
+West:
+- wall X2, 20' 0" (7802880), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WB2 [W4848]: 4' 0" (1560576) wide, 8' 0" (3121152) from the wall's start
+Inside the room (freestanding):
+- wall CE, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: unanchored face 1
+- wall CN, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: unanchored face 1
+- wall CS, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: unanchored face 1
+  - door CD "Closet door" [D30]: 2' 6" (975360) wide, 1' 6" (585216) from the wall's start, hinge start, swing right, opens into unanchored face 1
+- wall CW, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: unanchored face 1
+
+### KIT "Kitchen" — kitchen
+Net area 218.5 ft² (33254234394624 sq bu). Size 19' 3-3/4" E-W × 11' 3-3/4" N-S (7534656 × 4413504). Anchor [11704320, 7022592].
+North:
+- wall X5, 20' 0" (7802880), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WK [W3636]: 3' 0" (1170432) wide, 7' 0" (2731008) from the wall's start
+East:
+- wall X6, 12' 0" (4681728), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - door BK "Back door" [D36]: 3' 0" (1170432) wide, 4' 0" (1560576) from the wall's start, hinge end, swing right, opens into KIT (this room)
+South:
+- wall I4, 10' 0" (3901440), INT24 "2x4 partition" 4-1/2" (146304); other side: BATH "Bath"
+- wall I5, 10' 0" (3901440), INT24 "2x4 partition" 4-1/2" (146304); other side: LAU "Laundry"
+  - door DL [D30]: 2' 6" (975360) wide, 3' 0" (1170432) from the wall's start, hinge start, swing right, opens into LAU "Laundry"
+West:
+- wall I2, 12' 0" (4681728), INT24 "2x4 partition" 4-1/2" (146304); other side: LIV "Great room"
+  - opening LK "Kitchen opening": 6' 0" (2340864) wide, 3' 0" (1170432) from the wall's start
+
+### LAU "Laundry" — laundry
+Net area 105.3 ft² (16035213348864 sq bu). Size 9' 3-3/4" E-W × 11' 3-3/4" N-S (3633216 × 4413504). Anchor [13655040, 2340864].
+North:
+- wall I5, 10' 0" (3901440), INT24 "2x4 partition" 4-1/2" (146304); other side: KIT "Kitchen"
+  - door DL [D30]: 2' 6" (975360) wide, 3' 0" (1170432) from the wall's start, hinge start, swing right, opens into LAU (this room)
+East:
+- wall X7, 12' 0" (4681728), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+South:
+- wall X8, 10' 0" (3901440), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WLA [W2424]: 2' 0" (780288) wide, 4' 0" (1560576) from the wall's start
+West:
+- wall I6, 12' 0" (4681728), INT24 "2x4 partition" 4-1/2" (146304); other side: BATH "Bath"
+
+### LIV "Great room" — living
+Net area 450.2 ft² (68529444360192 sq bu). Size 19' 3-3/4" E-W × 23' 3-3/4" N-S (7534656 × 9095232). Anchor [3901440, 4681728].
+North:
+- wall I1, 20' 0" (7802880), INT24 "2x4 partition" 4-1/2" (146304); other side: BED "Primary suite"
+  - door BD [D30]: 2' 6" (975360) wide, 14' 0" (5462016) from the wall's start, hinge start, swing left, opens into BED "Primary suite"
+East:
+- wall I2, 12' 0" (4681728), INT24 "2x4 partition" 4-1/2" (146304); other side: KIT "Kitchen"
+  - opening LK "Kitchen opening": 6' 0" (2340864) wide, 3' 0" (1170432) from the wall's start
+- wall I3, 12' 0" (4681728), INT24 "2x4 partition" 4-1/2" (146304); other side: BATH "Bath"
+  - door DB [D30]: 2' 6" (975360) wide, 4' 0" (1560576) from the wall's start, hinge start, swing left, opens into BATH "Bath"
+South:
+- wall X10, 20' 0" (7802880), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WL1 [W4848]: 4' 0" (1560576) wide, 3' 0" (1170432) from the wall's start
+  - door FD "Front door" [D36]: 3' 0" (1170432) wide, 13' 0" (5071872) from the wall's start, hinge end, swing right, opens into LIV (this room)
+West:
+- wall X1, 24' 0" (9363456), EXT26 "2x6 exterior wall" 7-3/16" (233680); other side: exterior
+  - window WL2 [W4848]: 4' 0" (1560576) wide, 10' 0" (3901440) from the wall's start
+
+### Adjacency (MAIN)
+- BATH "Bath" | KIT "Kitchen": wall I4
+- BATH "Bath" | LAU "Laundry": wall I6
+- BATH "Bath" | LIV "Great room": wall I3
+- BED "Primary suite" | LIV "Great room": wall I1
+- BED "Primary suite" | unanchored face 1: wall CE, wall CN, wall CS, wall CW
+- KIT "Kitchen" | LAU "Laundry": wall I5
+- KIT "Kitchen" | LIV "Great room": wall I2
+
+### Door graph (MAIN)
+- exterior <-> KIT "Kitchen": door BK in wall X6
+- exterior <-> LIV "Great room": door FD in wall X10
+- BATH "Bath" <-> LIV "Great room": door DB in wall I3
+- BED "Primary suite" <-> LIV "Great room": door BD in wall I1
+- BED "Primary suite" <-> unanchored face 1: door CD in wall CS
+- KIT "Kitchen" <-> LAU "Laundry": door DL in wall I5
+- KIT "Kitchen" <-> LIV "Great room": opening LK in wall I2
+
+### Unanchored faces (MAIN)
+- face 1: 31.6 ft² (4816093593600 sq bu), 5' 7-1/2" E-W × 5' 7-1/2" N-S; a room here could anchor at [5462016, 13264896]
+  - wall CE, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: BED "Primary suite"
+  - wall CN, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: BED "Primary suite"
+  - wall CS, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: BED "Primary suite"
+    - door CD "Closet door" [D30]: 2' 6" (975360) wide, 1' 6" (585216) from the wall's start, hinge start, swing right, opens into unanchored face 1
+  - wall CW, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: BED "Primary suite"
+
+## Diagnostics
+- FS-LINT-003 (info) on MAIN: A bounded face on MAIN has no room anchored in it.
