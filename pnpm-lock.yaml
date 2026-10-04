@@ -35,6 +35,9 @@ importers:
 
   apps/server:
     dependencies:
+      '@d3-floorspec/worker':
+        specifier: workspace:*
+        version: link:../worker
       '@d3cloudio/auth-client':
         specifier: 0.1.1
         version: 0.1.1(react@19.3.0)

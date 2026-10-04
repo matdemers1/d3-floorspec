@@ -86,7 +86,7 @@ describe('API tokens', () => {
     const agent = Browser.bearer(running.url, await tokenFor(operator, project.id, 'agent'));
     const undo = await agent.post(`/api/projects/${project.id}/undo`);
     expect(undo.status).toBe(403);
-    expect(undo.body).toMatchObject({ error: expect.stringContaining('FLR-ADR-016') });
+    expect((undo.body as { error: string }).error).toContain('FLR-ADR-016');
   });
 
   it('cannot be minted for somebody else\'s project', async () => {

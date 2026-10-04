@@ -140,7 +140,8 @@ export function changesetRoutes(db: Db, applier: Applier): Routes {
           changesetId: changeset.id,
         });
         if (outcome.status === 'rejected') throw rejection(outcome.result, head);
-        applied = committedView(outcome);
+        const view = committedView(outcome);
+        applied = { ...view, changeset: changesetView(changeset, { head: view.hash }) };
       }
       const headHash = applied?.hash ?? (await tx.head.findUniqueOrThrow({ where: { projectId_name: { projectId: project.id, name: head } } })).versionHash;
       return {

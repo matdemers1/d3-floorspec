@@ -23,6 +23,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@d3-floorspec/worker": "workspace:*",
     "@d3cloudio/auth-client": "0.1.1",
     "@floorspec/engine": "workspace:*",
     "@floorspec/mcp": "workspace:*",

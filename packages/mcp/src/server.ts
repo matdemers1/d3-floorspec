@@ -1,8 +1,8 @@
 import { McpServer, ResourceTemplate, type CallToolResult } from '@modelcontextprotocol/server';
 import { z } from 'zod';
-import { FloorspecApiError, type Committed, type FloorspecClient, type ProjectSummary } from './client.js';
+import { FloorspecApiError, type Committed, type FloorspecClient, type ProjectSummary, type RenderOptions } from './client.js';
 import { Batch, Lock } from './ops-schema.js';
-import { describeStub } from './describe.js';
+import { describe, describeJson } from './summary/index.js';
 import { query, QueryInput } from './query.js';
 import { DESIGN_PARTNER_PROMPT } from './prompts.js';
 
@@ -92,7 +92,7 @@ async function resolveProject(client: FloorspecClient, handle: string | undefine
 /** How an apply landed, in words an agent cannot misread. */
 function landed(result: Committed): string {
   const where =
-    result.changeset === null
+    result.changeset === null || result.changeset === undefined
       ? `Committed to main as op ${String(result.op.seq)}.`
       : `Proposed into changeset "${result.changeset.name}" (${result.changeset.id}) as op ${String(result.op.seq)}. It is pending: main has not changed until a person accepts it.`;
   const changes = [
@@ -102,7 +102,7 @@ function landed(result: Committed): string {
   return `${where} New version ${result.hash}.${changes.length > 0 ? ` It ${changes.join('; ')}.` : ''}`;
 }
 
-async function renderContent(client: FloorspecClient, projectId: string, options: { level?: string; changeset?: string }) {
+async function renderContent(client: FloorspecClient, projectId: string, options: Omit<RenderOptions, 'view'>) {
   try {
     const png = await client.render(projectId, { view: 'plan', ...options });
     return [{ type: 'image' as const, data: Buffer.from(png).toString('base64'), mimeType: 'image/png' }];
@@ -130,7 +130,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Describe the house',
       description:
-        'A room-centric summary of the model: rooms with their sizes and areas, levels, and open diagnostics. Read this first, before any edit.',
+        'A room-centric summary of the model: rooms with feet-inch dimensions and net areas, walls by cardinal side with their openings, adjacency and the door graph, and open diagnostics. Read this first, before any edit.',
       inputSchema: z.strictObject({
         project: ProjectHandle,
         changeset: ChangesetHandle.optional().describe('Describe a pending changeset instead of main.'),
@@ -143,15 +143,16 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
       try {
         const project = await resolveProject(client, args.project);
         const model = await client.model(project.id, args.changeset);
-        const summary = describeStub(model.document, {
+        const options = {
           ...(args.level === undefined ? {} : { level: args.level }),
           ...(args.room === undefined ? {} : { room: args.room }),
-        });
-        return ok(`${project.name} at ${model.hash}${args.changeset === undefined ? ' (main)' : ` (changeset ${args.changeset})`}.`, {
-          project: project.id,
-          hash: model.hash,
-          ...summary,
-        });
+        };
+        const where = `${project.name} at ${model.hash}${args.changeset === undefined ? ' (main)' : ` (changeset ${args.changeset}, pending)`}`;
+        const summary = describeJson(model.document as object, options);
+        return {
+          content: [text(`${where}\n\n${describe(model.document as object, options)}`)],
+          structuredContent: { project: project.id, hash: model.hash, ...(args.changeset === undefined ? {} : { changeset: args.changeset }), summary },
+        };
       } catch (error) {
         return failure(error);
       }
@@ -213,7 +214,13 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         const structured = { project: project.id, ...result };
         const content: CallToolResult['content'] = [text(landed(result)), text(structured)];
         if (args.render === true) {
-          content.push(...(await renderContent(client, project.id, result.changeset === null ? {} : { changeset: result.changeset.id })));
+          // What the batch created is drawn in the accent; a changeset is drawn ghosted against its base.
+          content.push(
+            ...(await renderContent(client, project.id, {
+              highlight: result.created,
+              ...(result.changeset === null || result.changeset === undefined ? {} : { changeset: result.changeset.id }),
+            })),
+          );
         }
         return { content, structuredContent: structured };
       } catch (error) {
@@ -252,7 +259,9 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           ),
           text(structured),
         ];
-        if (args.render === true) content.push(...(await renderContent(client, project.id, { changeset: result.changeset.id })));
+        if (args.render === true) {
+          content.push(...(await renderContent(client, project.id, { changeset: result.changeset.id, highlight: result.applied?.created ?? [] })));
+        }
         return { content, structuredContent: structured };
       } catch (error) {
         return failure(error);
@@ -339,12 +348,15 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_render',
     {
       title: 'Render',
-      description: 'A PNG of a level\'s plan, for main or a pending changeset. Look at it before describing a change. 3D is not available yet.',
+      description:
+        'A PNG of a level\'s plan, for main or a pending changeset (drawn ghosted against main as it was when the changeset opened). Look at it before describing a change. 3D is not available yet.',
       inputSchema: z.strictObject({
         project: ProjectHandle,
         changeset: ChangesetHandle.optional(),
         view: z.enum(['plan', '3d']).optional().describe('"plan" (default) or "3d" (not available yet).'),
-        level: z.string().min(1).max(64).optional(),
+        level: z.string().min(1).max(64).optional().describe('The level to draw; default the lowest.'),
+        highlight: z.array(z.string().min(1).max(64)).max(100).optional().describe('Element IDs to draw in the accent colour.'),
+        width: z.int().min(256).max(4096).optional().describe('Pixels wide (default the plan\'s natural size).'),
       }),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -355,6 +367,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           view: args.view ?? 'plan',
           ...(args.level === undefined ? {} : { level: args.level }),
           ...(args.changeset === undefined ? {} : { changeset: args.changeset }),
+          ...(args.highlight === undefined ? {} : { highlight: args.highlight }),
+          ...(args.width === undefined ? {} : { width: args.width }),
         });
         return { content: [{ type: 'image', data: Buffer.from(png).toString('base64'), mimeType: 'image/png' }] };
       } catch (error) {

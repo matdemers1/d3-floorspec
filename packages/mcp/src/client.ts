@@ -91,7 +91,17 @@ export interface FloorspecClient {
   reject(projectId: string, changesetId: string): Promise<{ changeset: ChangesetView }>;
   validate(projectId: string, changeset?: string): Promise<Validation>;
   findings(projectId: string, changeset?: string): Promise<Findings>;
-  render(projectId: string, options: { view: 'plan' | '3d'; level?: string; changeset?: string }): Promise<Uint8Array>;
+  render(projectId: string, options: RenderOptions): Promise<Uint8Array>;
+}
+
+export interface RenderOptions {
+  readonly view: 'plan' | '3d';
+  readonly level?: string;
+  /** A pending changeset: drawn ghosted against its base. */
+  readonly changeset?: string;
+  /** Element IDs drawn in the accent colour. */
+  readonly highlight?: readonly string[];
+  readonly width?: number;
 }
 
 /** An answer from the API that is not a success: its status and its (problem+json) body. */
@@ -215,10 +225,12 @@ export class HttpFloorspecClient implements FloorspecClient {
     return this.json<Findings>('GET', this.project(projectId, `/findings${this.query(changeset)}`));
   }
 
-  async render(projectId: string, options: { view: 'plan' | '3d'; level?: string; changeset?: string }): Promise<Uint8Array> {
+  async render(projectId: string, options: RenderOptions): Promise<Uint8Array> {
     const params = new URLSearchParams({ view: options.view });
     if (options.level !== undefined) params.set('level', options.level);
     if (options.changeset !== undefined) params.set('changeset', options.changeset);
+    if (options.highlight !== undefined && options.highlight.length > 0) params.set('highlight', options.highlight.join(','));
+    if (options.width !== undefined) params.set('width', String(options.width));
     const res = await this.send('GET', this.project(projectId, `/render?${params.toString()}`), undefined, { accept: 'image/png' });
     return new Uint8Array(await res.arrayBuffer());
   }

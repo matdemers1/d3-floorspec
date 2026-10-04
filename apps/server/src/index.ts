@@ -4,6 +4,7 @@ import { createApp } from './app.js';
 import { createOidcClient } from './auth/oidc.js';
 import { createDb } from './db.js';
 import { logger } from './logger.js';
+import { workerRenderer } from './render.js';
 
 /** Entry point. A misconfigured instance exits here, naming what is wrong. */
 const config = (() => {
@@ -24,7 +25,8 @@ const db = createDb(config.DATABASE_URL);
 // Discovery is attempted once and allowed to fail: an unreachable D3 Auth means one sign-in button
 // instead of two, never an api that will not start.
 const oidc = await createOidcClient(config);
-const app = createApp({ config, db, oidc });
+// Plans are drawn in-process by the worker's renderer until the worker has a job queue (FLR-T-2.8).
+const app = createApp({ config, db, oidc, renderer: workerRenderer() });
 
 const server = app.listen(config.PORT, () => {
   logger.info(

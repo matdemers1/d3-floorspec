@@ -5,6 +5,12 @@
   "description": "Postgres job-queue drain: render-back and exports.",
   "license": "Apache-2.0",
   "type": "module",
+  "exports": {
+    "./render": {
+      "types": "./src/render/index.ts",
+      "default": "./dist/render/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",

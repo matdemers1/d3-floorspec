@@ -25,7 +25,7 @@ class Fail extends Error {
 }
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
-const same = (a: unknown, b: unknown) => canonicalize({ v: a } as never) === canonicalize({ v: b } as never);
+const same = (a: unknown, b: unknown) => canonicalize({ v: a }) === canonicalize({ v: b });
 const sorted = (ids: Iterable<string>) => [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 const escape = (member: string) => member.replace(/~/g, '~0').replace(/\//g, '~1');
 const unescape = (token: string) => token.replace(/~1/g, '/').replace(/~0/g, '~');
@@ -56,7 +56,7 @@ function mint(doc: Doc, collection: string, minted: string[], retired: readonly 
 function target(doc: Doc, id: string, index: number): Record<string, Json> {
   if (id === '$project') return doc['project'] as Record<string, Json>;
   if (id === '$site') return (doc['site'] ??= {}) as Record<string, Json>;
-  if (id === '$document') return doc as Record<string, Json>;
+  if (id === '$document') return doc;
   const collection = collectionOf(doc, id);
   if (collection === null) throw new Fail('FS-OPS-003', `${id} does not exist.`, [], `/batch/${String(index)}/id`);
   return (doc[collection] as Record<string, Record<string, Json>>)[id] as Record<string, Json>;
@@ -73,7 +73,7 @@ function applyOp(doc: Doc, op: Op, index: number, minted: string[], retired: rea
         id = mint(doc, collection, minted, retired);
         minted.push(id as string);
       } else if (typeof id !== 'string' || used(id)) {
-        throw new Fail('FS-OPS-005', `${String(id)} is already in use or retired.`, [], `/batch/${String(index)}/id`);
+        throw new Fail('FS-OPS-005', `${JSON.stringify(id)} is already in use or retired.`, [], `/batch/${String(index)}/id`);
       }
       const c = (doc[collection] ??= {}) as Record<string, Json>;
       c[id as string] = clone(op['element'] as Json);
@@ -84,8 +84,8 @@ function applyOp(doc: Doc, op: Op, index: number, minted: string[], retired: rea
       const collection = collectionOf(doc, id);
       if (collection === null) throw new Fail('FS-OPS-003', `${id} does not exist.`, [], `/batch/${String(index)}/id`);
       const c = doc[collection] as Record<string, Json>;
-      delete c[id];
-      if (Object.keys(c).length === 0) delete doc[collection];
+      Reflect.deleteProperty(c, id);
+      if (Object.keys(c).length === 0) Reflect.deleteProperty(doc, collection);
       return { op: 'removeElement', id };
     }
     case 'moveJunction':
@@ -93,7 +93,7 @@ function applyOp(doc: Doc, op: Op, index: number, minted: string[], retired: rea
     case 'setProperty':
     case 'unsetProperty': {
       const id = String(op['id']);
-      const path = String(op['path'] ?? '');
+      const path = typeof op['path'] === 'string' ? op['path'] : '';
       if (!path.startsWith('/') || path.length < 2) throw new Fail('FS-OPS-003', 'path is empty.', [id], `/batch/${String(index)}/path`);
       const tokens = path.slice(1).split('/').map(unescape);
       let node = target(doc, id, index);
@@ -109,7 +109,7 @@ function applyOp(doc: Doc, op: Op, index: number, minted: string[], retired: rea
       if (op.op === 'setProperty') node[last] = clone(op['value'] as Json);
       else {
         if (!Object.hasOwn(node, last)) throw new Fail('FS-OPS-003', `${id} has no ${path}.`, [id], `/batch/${String(index)}/path`);
-        delete node[last];
+        Reflect.deleteProperty(node, last);
       }
       return op.op === 'setProperty' ? { op: 'setProperty', id, path, value: op['value'] } : { op: 'unsetProperty', id, path };
     }
@@ -147,7 +147,7 @@ export function inverseOf(a: Doc, b: Doc): Op[] {
   ops.push(...memberDiff('$project', (a['project'] ?? {}) as Record<string, Json>, (b['project'] ?? {}) as Record<string, Json>));
   if (a['site'] !== undefined || b['site'] !== undefined) ops.push(...memberDiff('$site', (a['site'] ?? {}) as Record<string, Json>, (b['site'] ?? {}) as Record<string, Json>));
   const top = new Set([...Object.keys(PREFIX), 'project', 'site']);
-  ops.push(...memberDiff('$document', a as Record<string, Json>, b as Record<string, Json>, top));
+  ops.push(...memberDiff('$document', a, b, top));
   return ops;
 }
 
@@ -163,8 +163,9 @@ export class FakeApplier implements Applier {
     const resolved: Op[] = [];
     const retired = request.context?.retired ?? [];
     try {
-      if (!Array.isArray(request.batch) || request.batch.length === 0) throw new Fail('FS-OPS-001', 'A batch needs at least one operation.');
-      for (const [index, op] of request.batch.entries()) resolved.push(applyOp(working, op, index, minted, retired));
+      const batch: readonly Op[] = request.batch;
+      if (batch.length === 0) throw new Fail('FS-OPS-001', 'A batch needs at least one operation.');
+      batch.forEach((op, index) => resolved.push(applyOp(working, op, index, minted, retired)));
     } catch (error) {
       if (!(error instanceof Fail)) throw error;
       const diagnostic: Diagnostic = {
@@ -180,8 +181,8 @@ export class FakeApplier implements Applier {
     const after = new Set(allIds(working));
     return {
       status: 'committed',
-      document: canonicalize(working as never),
-      hash: contentHash(working as never),
+      document: canonicalize(working),
+      hash: contentHash(working),
       resolved,
       created: sorted([...after].filter((id) => !before.has(id))),
       removed: sorted([...before].filter((id) => !after.has(id))),
