@@ -102,7 +102,9 @@ describe('setProperty and unsetProperty (2.3)', () => {
 
   it('fails with FS-OPS-003 for an unknown target, an empty path or a missing member (2.3.1)', () => {
     rejectedWith(run(box(), { op: 'setProperty', id: 'W99', path: '/name', value: 'x' }), 'FS-OPS-003');
-    rejectedWith(run(box(), { op: 'setProperty', id: 'W1', path: '', value: 'x' }), 'FS-OPS-003');
+    rejectedWith(run(box(), { op: 'setProperty', id: 'W1', path: '', value: 'x' }), 'FS-OPS-003', ['W1']);
+    rejectedWith(run(box(), { op: 'unsetProperty', id: 'R1', path: '/floorFinish' }), 'FS-OPS-003', ['R1']);
+    rejectedWith(run(box(), { op: 'setProperty', id: 'W99', path: '', value: 'x' }), 'FS-OPS-003', []);
     rejectedWith(run(box(), { op: 'unsetProperty', id: 'W1', path: '' }), 'FS-OPS-003');
     rejectedWith(run(box(), { op: 'unsetProperty', id: 'W1', path: '/name' }), 'FS-OPS-003');
     rejectedWith(run(box(), { op: 'unsetProperty', id: 'W1', path: '/base/offset' }), 'FS-OPS-003');
@@ -131,5 +133,7 @@ describe('moveJunction (2.4.1)', () => {
     expect(a.document).toBe(b.document);
     expect(pos(B(a), 'J3')).toEqual([W + 100, H]);
     rejectedWith(run(box(), { op: 'moveJunction', id: 'J9', to: [0, 0] }), 'FS-OPS-003');
+    // It moves junctions: a wall resolves to no junction.
+    rejectedWith(run(box(), { op: 'moveJunction', id: 'W1', to: [0, 0] }), 'FS-OPS-003', []);
   });
 });

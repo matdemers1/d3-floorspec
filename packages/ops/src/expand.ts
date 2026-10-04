@@ -11,6 +11,7 @@ import { applyPrimitive } from './primitives.js';
 import {
   ANY,
   EDGE,
+  JUNCTION,
   edgeGeometry,
   LEVEL,
   OPENING,
@@ -83,7 +84,7 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       break;
     }
     case 'moveJunction': {
-      const id = resolveElement(op.id, `${base}/id`, ctx, ANY);
+      const id = resolveElement(op.id, `${base}/id`, ctx, JUNCTION);
       const to = resolvePoint(op.to, `${base}/to`, ctx).point;
       emit({ op: 'moveJunction', id, to: pt(to, `${base}/to`) });
       break;

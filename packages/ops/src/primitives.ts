@@ -190,9 +190,10 @@ function target(wc: WorkingCopy, id: string, create: boolean, ptr: string): Json
 }
 
 function tokensOf(id: string, path: string, ptr: string): string[] {
+  const own = id.startsWith('$') ? [] : [id];
   const tokens = parsePointer(path);
-  if (tokens === undefined) return fail('FS-OPS-003', `${JSON.stringify(path)} is not a JSON Pointer`, [], ptr);
-  if (tokens.length === 0) return fail('FS-OPS-003', 'the path is empty: it must name a member', [], ptr);
+  if (tokens === undefined) return fail('FS-OPS-003', `${JSON.stringify(path)} is not a JSON Pointer`, own, ptr);
+  if (tokens.length === 0) return fail('FS-OPS-003', 'the path is empty: it must name a member', own, ptr);
   if (id === '$document' && (COLLECTIONS as readonly string[]).includes(tokens[0]!))
     fail('FS-OPS-003', `$document addresses the document's members other than its collections; ${tokens[0]} is a collection`, [], ptr);
   return tokens;
@@ -206,47 +207,49 @@ const arrayIndex = (t: string, length: number, allowEnd: boolean): number | unde
 };
 
 export function setProperty(wc: WorkingCopy, id: string, path: string, value: unknown, ptr: string): void {
-  const tokens = tokensOf(id, path, ptr);
   let node: unknown = target(wc, id, true, ptr);
+  const tokens = tokensOf(id, path, ptr);
+  const own = id.startsWith('$') ? [] : [id];
   for (let i = 0; i < tokens.length - 1; i++) {
     const t = tokens[i]!;
     if (Array.isArray(node)) {
       const k = arrayIndex(t, node.length, false);
-      if (k === undefined) return fail('FS-OPS-003', `${path}: ${t} is not an index of the array there`, [], ptr);
+      if (k === undefined) return fail('FS-OPS-003', `${path}: ${t} is not an index of the array there`, own, ptr);
       node = node[k];
     } else if (isObject(node)) {
       if (!Object.hasOwn(node, t)) setMember(node, t, {});
       node = node[t];
-    } else return fail('FS-OPS-003', `${path}: there is a ${typeof node} on the way, not an object`, [], ptr);
+    } else return fail('FS-OPS-003', `${path}: there is a ${typeof node} on the way, not an object`, own, ptr);
   }
   const last = tokens[tokens.length - 1]!;
   if (Array.isArray(node)) {
     const k = arrayIndex(last, node.length, true);
-    if (k === undefined) return fail('FS-OPS-003', `${path}: ${last} is not an index of the array there`, [], ptr);
+    if (k === undefined) return fail('FS-OPS-003', `${path}: ${last} is not an index of the array there`, own, ptr);
     node[k] = clone(value);
   } else if (isObject(node)) setMember(node, last, clone(value));
-  else return fail('FS-OPS-003', `${path}: there is a ${typeof node} on the way, not an object`, [], ptr);
+  else return fail('FS-OPS-003', `${path}: there is a ${typeof node} on the way, not an object`, own, ptr);
   wc.touch();
 }
 
 export function unsetProperty(wc: WorkingCopy, id: string, path: string, ptr: string): void {
-  const tokens = tokensOf(id, path, ptr);
   let node: unknown = target(wc, id, false, ptr);
+  const tokens = tokensOf(id, path, ptr);
+  const own = id.startsWith('$') ? [] : [id];
   for (let i = 0; i < tokens.length - 1; i++) {
     const t = tokens[i]!;
     if (Array.isArray(node)) {
       const k = arrayIndex(t, node.length, false);
       node = k === undefined ? undefined : node[k];
     } else node = isObject(node) && Object.hasOwn(node, t) ? node[t] : undefined;
-    if (node === undefined) return fail('FS-OPS-003', `${id} has no member ${path}`, [], ptr);
+    if (node === undefined) return fail('FS-OPS-003', `${id} has no member ${path}`, own, ptr);
   }
   const last = tokens[tokens.length - 1]!;
   if (Array.isArray(node)) {
     const k = arrayIndex(last, node.length, false);
-    if (k === undefined) return fail('FS-OPS-003', `${id} has no member ${path}`, [], ptr);
+    if (k === undefined) return fail('FS-OPS-003', `${id} has no member ${path}`, own, ptr);
     node.splice(k, 1);
   } else if (isObject(node) && Object.hasOwn(node, last)) deleteMember(node, last);
-  else return fail('FS-OPS-003', `${id} has no member ${path}`, [], ptr);
+  else return fail('FS-OPS-003', `${id} has no member ${path}`, own, ptr);
   wc.touch();
 }
 

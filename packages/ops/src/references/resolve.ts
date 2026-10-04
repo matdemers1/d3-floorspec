@@ -73,7 +73,7 @@ export interface ResolvedPoint {
 /** A junction's position, for a point written as a junction. */
 function junctionPosition(ctx: Ctx, id: string, ptr: string): IPoint {
   const p = asPoint(getMember(ctx.wc.elementIn('junctions', id), 'position'));
-  if (!p) return fail('FS-OPS-003', `junction ${id} has no position to read`, [id], ptr);
+  if (!p) return fail('FS-OPS-003', `junction ${id} has no position to read`, [], ptr);
   return p;
 }
 
@@ -98,7 +98,7 @@ export function resolvePoint(v: unknown, ptr: string, ctx: Ctx): ResolvedPoint {
     const B = junctionPosition(ctx, b, ptr);
     const d: IPoint = [B[0] - A[0], B[1] - A[1]];
     const m = d[0] * d[0] + d[1] * d[1];
-    if (m === 0n) return fail('FS-OPS-012', `${a} and ${b} are at the same position, so "toward" has no direction`, [a, b], ptr);
+    if (m === 0n) return fail('FS-OPS-003', `${a} and ${b} are at the same position, so "toward" has no direction`, [], ptr);
     // A + len · d / |d| = A + len · d · √m / m, each coordinate rounded once (3.2).
     const k = Surd.sqrt(m).mulInt(len).divInt(m);
     return { point: [k.mulInt(d[0]).addInt(A[0]).round(), k.mulInt(d[1]).addInt(A[1]).round()] };
@@ -166,6 +166,14 @@ export function resolveElement(s: string, ptr: string, ctx: Ctx, accept: Accept)
   const wantsRooms = accept.collections.includes('rooms');
   const coll = wc.collectionOf(s);
   if (coll) {
+    if (wantsRooms) {
+      // An ID and a room name are both ways to name a room: when they name different rooms, the
+      // string is ambiguous (3.3.1: an applier never guesses).
+      const named = roomsNamed(ctx, s);
+      const all = [...new Set([...(coll === 'rooms' ? [s] : []), ...named])];
+      if (all.length > 1) return fail('FS-OPS-004', `${JSON.stringify(s)} names ${all.length} rooms: ${all.join(', ')}`, all, ptr);
+      if (all.length === 1 && (coll === 'rooms' || named.length === 1)) return all[0]!;
+    }
     if (accept.collections.includes(coll)) return s;
     if (!wantsRooms) return fail('FS-OPS-003', `${s} is in ${coll}, and this needs ${accept.what}`, [], ptr);
   }

@@ -48,7 +48,17 @@ function memberDiff(id: string, a: unknown, b: unknown, skip: ReadonlySet<string
 const NOT_DOCUMENT = new Set<string>([...INVERSE_ORDER, 'project', 'site']);
 
 export function inverseOf(aCanon: JsonObject, bCanon: JsonObject): ResolvedPrimitive[] {
-  const out: ResolvedPrimitive[] = [];
+  // The member changes of step 3 come first. In the order 1.6 lists, a removal of step 1 can be
+  // blocked by an element still referring to what it removes — a wall split by normalization still
+  // ends at the junction the split made — so 1.6.1 could not hold. The conformance suite's oracle
+  // applies step 3 before steps 1 and 2, and so does this applier (reported on the specification).
+  const members: ResolvedPrimitive[] = [];
+  for (const c of INVERSE_ORDER) {
+    const a = collectionOf(aCanon, c);
+    const b = collectionOf(bCanon, c);
+    for (const id of sortedKeys(a)) if (Object.hasOwn(b, id)) members.push(...memberDiff(id, a[id], b[id]));
+  }
+  const out: ResolvedPrimitive[] = [...members];
   // 1. Remove what B added.
   for (const c of INVERSE_ORDER) {
     const a = collectionOf(aCanon, c);
@@ -60,25 +70,15 @@ export function inverseOf(aCanon: JsonObject, bCanon: JsonObject): ResolvedPrimi
     const a = collectionOf(aCanon, c);
     for (const id of sortedKeys(a)) if (!Object.hasOwn(b, id)) out.push({ op: 'addElement', collection: c, id, element: clone(a[id]) as Record<string, unknown> });
   }
-  // 3. Members of elements in both.
-  for (const c of INVERSE_ORDER) {
-    const a = collectionOf(aCanon, c);
-    const b = collectionOf(bCanon, c);
-    for (const id of sortedKeys(a)) if (Object.hasOwn(b, id)) out.push(...memberDiff(id, a[id], b[id]));
-  }
   // 4. The project, the site and the document's other top-level members.
   out.push(...memberDiff('$project', getMember(aCanon, 'project'), getMember(bCanon, 'project')));
   const sa = getMember(aCanon, 'site');
   const sb = getMember(bCanon, 'site');
   if (sa !== undefined && sb !== undefined) out.push(...memberDiff('$site', sa, sb));
-  else if (sa !== undefined && sb === undefined) {
-    // Setting a member of $site creates the site (2.3); an empty site is set whole.
-    if (isObject(sa) && Object.keys(sa).length > 0) out.push(...memberDiff('$site', sa, {}));
-    else out.push({ op: 'setProperty', id: '$document', path: '/site', value: clone(sa) });
-  } else if (sa === undefined && sb !== undefined) {
-    // Unsetting every member of $site would leave an empty site, not none: remove it whole.
-    out.push({ op: 'unsetProperty', id: '$document', path: '/site' });
-  }
+  // A site that B lacks is set back whole, and one that A lacks is removed whole, as $document's
+  // /site: unsetting every member of $site would leave an empty site, not none.
+  else if (sa !== undefined) out.push({ op: 'setProperty', id: '$document', path: '/site', value: clone(sa) });
+  else if (sb !== undefined) out.push({ op: 'unsetProperty', id: '$document', path: '/site' });
   out.push(...memberDiff('$document', aCanon, bCanon, NOT_DOCUMENT));
   return out;
 }

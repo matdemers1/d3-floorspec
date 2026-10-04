@@ -31,10 +31,10 @@ const scenarios: [string, () => object, unknown[]][] = [
 ];
 
 /**
- * Batches whose inverse, in the order 1.6 gives, cannot be applied: it removes a junction (or a
- * wall) that B created while an element in both A and B still refers to it, because the member
- * changes of step 3 come after the removals of step 1. Reported as a specification issue; these
- * cases pin the current behaviour until the order is settled.
+ * Batches whose inverse, in the literal order 1.6 lists, could not be applied: it would remove a
+ * junction (or a wall) that B created while an element in both A and B still refers to it. The
+ * member changes of step 3 therefore come first, as the conformance suite's oracle does too
+ * (reported on the specification).
  */
 const specOrderFails: [string, () => object, unknown[]][] = [
   ['a separator splitting a wall', box, [{ op: 'drawSeparator', level: 'L1', from: 'J1', to: [3900000, 2000000] }]],
@@ -52,21 +52,14 @@ describe('the echo (1.4.1) and the inverse (1.6.1)', () => {
     expect(replay.resolved).toEqual(r.resolved);
   });
 
-  it.each(scenarios)('%s: the inverse commits A', (_name, make, batch) => {
+  it.each([...scenarios, ...specOrderFails])('%s: the inverse commits A', (_name, make, batch) => {
     const a = make();
     const r = committed(apply(a, { batch: batch as never }));
     const back = committed(apply(r.document, { batch: r.inverse }));
     expect(back.document).toBe(canonicalize(a));
   });
 
-  it.each(specOrderFails)('%s: the inverse, in the order of 1.6, is blocked (FS-OPS-006)', (_name, make, batch) => {
-    const r = committed(apply(make(), { batch: batch as never }));
-    const back = apply(r.document, { batch: r.inverse });
-    expect(back.status).toBe('rejected');
-    expect(back.status === 'rejected' && back.diagnostics[0]!.code).toBe('FS-OPS-006');
-  });
-
-  it('lists the inverse in the order of 1.6', () => {
+  it('lists the inverse: member changes, removals, additions, then the project, site and document', () => {
     const d = pair(undefined, undefined, { types: door, openings: { O1: { wall: 'W7', offset: 0, fill: 'D36' } } });
     const r = committed(
       apply(d, {
@@ -80,13 +73,13 @@ describe('the echo (1.4.1) and the inverse (1.6.1)', () => {
       }),
     );
     expect(r.inverse).toEqual([
+      { op: 'setProperty', id: 'RA', path: '/name', value: 'Kitchen' },
+      { op: 'unsetProperty', id: 'W1', path: '/name' },
       { op: 'removeElement', id: 'W8' },
       { op: 'removeElement', id: 'J5' },
       { op: 'addElement', collection: 'walls', id: 'W7', element: { level: 'L1', start: 'B0', end: 'T', layers: [{ thickness: 10000, function: 'core' }] } },
       { op: 'addElement', collection: 'rooms', id: 'RB', element: { level: 'L1', anchor: [5850000, 1400000], name: 'Dining' } },
       { op: 'addElement', collection: 'openings', id: 'O1', element: { wall: 'W7', offset: 0, fill: 'D36' } },
-      { op: 'setProperty', id: 'RA', path: '/name', value: 'Kitchen' },
-      { op: 'unsetProperty', id: 'W1', path: '/name' },
       { op: 'unsetProperty', id: '$project', path: '/description' },
     ]);
   });

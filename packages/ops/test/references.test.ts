@@ -109,6 +109,10 @@ describe('selectors (3.3.1)', () => {
     const d = pair();
     (d.rooms as Record<string, Record<string, unknown>>).RB!.name = 'kitchen';
     rejectedWith(run(d, { op: 'removeElement', id: 'Kitchen' }), 'FS-OPS-004', ['RA', 'RB']);
+    // An ID and a name that pick different rooms are ambiguous too.
+    const named = pair();
+    (named.rooms as Record<string, Record<string, unknown>>).RB!.name = 'RA';
+    rejectedWith(run(named, { op: 'resizeRoom', room: 'RA', side: 'east', by: 1 }), 'FS-OPS-004', ['RA', 'RB']);
     // The north side of the whole pair, seen from a room that spans it, is two walls.
     const whole = pair(undefined, undefined, { rooms: { R: [100000, 100000] } });
     delete (whole.walls as Record<string, unknown>).W7;

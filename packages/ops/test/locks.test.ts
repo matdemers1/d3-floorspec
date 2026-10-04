@@ -50,6 +50,6 @@ describe('locks (6.1)', () => {
   it('reports every lock the result breaks', () => {
     const r = withLocks(box(), [{ element: 'W3' }, { length: 'W2' }, { element: 'W1' }], east);
     if (r.status !== 'rejected') throw new Error('expected a rejection');
-    if (JSON.stringify(r.diagnostics.map((d) => [d.code, d.elements])) !== JSON.stringify([['FS-OPS-011', ['W3']], ['FS-OPS-011', ['W2']]])) throw new Error(JSON.stringify(r.diagnostics));
+    if (JSON.stringify(r.diagnostics.map((d) => [d.code, d.elements])) !== JSON.stringify([['FS-OPS-011', ['W2']], ['FS-OPS-011', ['W3']]])) throw new Error(JSON.stringify(r.diagnostics));
   });
 });

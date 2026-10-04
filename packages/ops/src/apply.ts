@@ -7,7 +7,7 @@
  * BigInt or exact rationals until they are rounded once; geometry uses the engine's exact Surd
  * arithmetic and integer predicates; IDs and members are ordered by UTF-16 code units.
  */
-import { canonicalize, contentHash, evaluate, omitDefaults, parseJson, pointer, type Diagnostic } from '@floorspec/engine';
+import { canonicalize, contentHash, evaluate, omitDefaults, parseJson, pointer, sortDiagnostics, type Diagnostic } from '@floorspec/engine';
 import { OpsFailure, opsDiagnostic } from './diagnostics.js';
 import { runOperation } from './expand.js';
 import { inverseOf } from './inverse.js';
@@ -75,7 +75,8 @@ const elementIds = (doc: JsonObject): Set<string> => {
   return out;
 };
 
-const rejected = (diagnostics: Diagnostic[]): ApplyResult => ({ status: 'rejected', diagnostics });
+/** A rejection, its diagnostics sorted by code and then by elements (Core §10.2). */
+const rejected = (diagnostics: Diagnostic[]): ApplyResult => ({ status: 'rejected', diagnostics: sortDiagnostics([...diagnostics]) });
 
 /**
  * Apply a batch to a document (Floorspec Ops 0.1, 1.2): `apply(A, { batch, context? })`.
@@ -126,7 +127,7 @@ export function resolveBatch(document: JsonInput, request: JsonInput): ResolveRe
     const operations = run(p);
     return { status: 'resolved', resolved: operations.flatMap((o) => o.primitives), operations };
   } catch (e) {
-    if (e instanceof OpsFailure) return { status: 'rejected', diagnostics: e.diagnostics };
+    if (e instanceof OpsFailure) return { status: 'rejected', diagnostics: sortDiagnostics([...e.diagnostics]) };
     throw e;
   }
 }
