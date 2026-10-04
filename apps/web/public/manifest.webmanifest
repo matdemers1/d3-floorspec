@@ -1,0 +1,14 @@
+{
+  "name": "D3 Floorspec",
+  "short_name": "Floorspec",
+  "description": "Design a house as code with Claude — the reference implementation of the Floorspec standard.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#191b23",
+  "theme_color": "#191b23",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
