@@ -24,7 +24,10 @@ const scenarios: [string, () => object, unknown[]][] = [
     () => box(undefined, undefined, { rooms: { R1: [1000000, 2000000] } }),
     [{ op: 'drawSeparator', level: 'L1', from: 'J1', to: 'J3' }, { op: 'addRoom', level: 'L1', at: [3000000, 500000], name: 'Nook' }],
   ],
-  ['the site removed', () => box(undefined, undefined, { extra: { site: { trueNorth: 7 } } }), [{ op: 'unsetProperty', id: '$site', path: '/trueNorth' }, { op: 'setProperty', id: '$document', path: '/site', value: { location: { latitude: 1, longitude: 2 } } }]],
+  ['a site created', box, [{ op: 'setProperty', id: '$site', path: '/trueNorth', value: 5 }]],
+  ['a site removed', () => box(undefined, undefined, { extra: { site: { trueNorth: 7, location: { latitude: 1, longitude: 2 } } } }), [{ op: 'unsetProperty', id: '$document', path: '/site' }]],
+  ['an empty site removed', () => box(undefined, undefined, { extra: { site: {} } }), [{ op: 'unsetProperty', id: '$document', path: '/site' }]],
+  ['a site changed', () => box(undefined, undefined, { extra: { site: { trueNorth: 7 } } }), [{ op: 'unsetProperty', id: '$site', path: '/trueNorth' }, { op: 'setProperty', id: '$document', path: '/site', value: { location: { latitude: 1, longitude: 2 } } }]],
 ];
 
 /**
