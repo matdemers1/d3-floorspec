@@ -1,0 +1,20 @@
+{
+  "client_id": "floorspec",
+  "name": "D3 Floorspec",
+  "client_type": "confidential_web",
+  "description": "Design a house as code with Claude: the reference implementation of the Floorspec standard.",
+  "redirect_uris": [
+    "https://floorspec.d3cloud.io/auth/oidc/callback"
+  ],
+  "post_logout_redirect_uris": [
+    "https://floorspec.d3cloud.io/"
+  ],
+  "roles": [
+    {
+      "key": "member",
+      "display": "Member",
+      "description": "An ordinary account with its own projects; D3 Floorspec has no roles yet.",
+      "default": true
+    }
+  ]
+}
