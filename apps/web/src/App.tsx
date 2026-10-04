@@ -21,6 +21,7 @@ import { Account } from './screens/Account';
 import { Project } from './screens/Project';
 import { Projects } from './screens/Projects';
 import { Invites } from './screens/Invites';
+import { EditorPlaceholder } from './projects/EditorPlaceholder';
 import { Setup } from './screens/Setup';
 import { SignIn } from './screens/SignIn';
 
@@ -125,7 +126,9 @@ function Root() {
 function Screen({ path, session, reload }: { path: string; session: SignedIn; reload: () => void }) {
   if (path === '/' || path === '/projects') return <Projects />;
   const project = /^\/projects\/([0-9a-f-]{36})$/.exec(path)?.[1];
-  if (project !== undefined) return <Project key={project} id={project} />;
+  if (project !== undefined) return <Project key={project} id={project} you={session.account.displayName} />;
+  const editor = /^\/projects\/([0-9a-f-]{36})\/editor$/.exec(path)?.[1];
+  if (editor !== undefined) return <EditorPlaceholder key={editor} id={editor} />;
   if (path === '/account') return <Account session={session} onChanged={reload} />;
   if (path === '/invites' && session.account.role === 'operator') return <Invites />;
   return (

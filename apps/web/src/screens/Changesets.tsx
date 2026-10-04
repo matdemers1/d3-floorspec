@@ -29,7 +29,7 @@ interface Refusal {
  * as it is now — and reject discards it. The full review, with the proposal drawn over the plan,
  * is the editor's (FLR-T-3.5).
  */
-export function Changesets({ projectId, onDecided }: { projectId: string; onDecided: () => void }) {
+export function Changesets({ projectId, onDecided, bare = false }: { projectId: string; onDecided: () => void; bare?: boolean }) {
   const toast = useToast();
   const [rows, setRows] = useState<ChangesetRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -66,8 +66,7 @@ export function Changesets({ projectId, onDecided }: { projectId: string; onDeci
       .finally(() => { setBusy(null); });
   };
 
-  return (
-    <Section title="Proposed changes" description="Changesets from agents. Nothing in them is in the plan until you accept it.">
+  const body = (
       <Stack gap="16">
         {error === null ? null : (
           <Alert tone="danger" dynamic>
@@ -111,6 +110,12 @@ export function Changesets({ projectId, onDecided }: { projectId: string; onDeci
           </DataList>
         )}
       </Stack>
+  );
+  // Inside the dashboard's card, the card is the heading; on its own, it is a Section.
+  if (bare) return body;
+  return (
+    <Section title="Proposed changes" description="Changesets from agents. Nothing in them is in the plan until you accept it.">
+      {body}
     </Section>
   );
 }

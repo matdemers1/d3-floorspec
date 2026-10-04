@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@d3cloud/ui": "https://github.com/matdemers1/d3-design-system/releases/download/v1.5.0/d3cloud-ui-1.5.0.tgz",
+    "@floorspec/engine": "workspace:*",
     "lucide-react": "^1.44.0",
     "qrcode-generator": "2.0.4",
     "react": "^19.3.0",

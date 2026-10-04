@@ -1,125 +1,185 @@
-import { useEffect, useState } from 'react';
+import '../components/screens.css';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Button,
-  DataList,
-  DataListRow,
-  DescriptionItem,
-  DescriptionList,
   EmptyState,
+  IconButton,
   Link,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+  MenuTrigger,
   Modal,
   Page,
   PageHeader,
-  Section,
-  Spinner,
-  Stack,
+  Skeleton,
+  Stat,
+  StatGroup,
   useToast,
 } from '@d3cloud/ui';
-import { Download } from 'lucide-react';
+import { ChevronRight, Ellipsis, Pencil } from 'lucide-react';
+import { ChangesetsSlot } from '../dashboard/ChangesetsSlot';
+import { PlanCard } from '../dashboard/PlanCard';
+import { BriefCard, ExportsCard, FindingsCard, OptionsCard, ShareCard } from '../dashboard/Sections';
+import { VersionsSlot } from '../dashboard/VersionsSlot';
 import { api, ApiError, messageOf } from '../lib/api';
 import { navigate } from '../lib/router';
-import { Changesets } from './Changesets';
+import { formatSquareFeet, loadModel, plural, type ModelSummary } from '../projects/model';
 
-interface ProjectDetail {
+export interface ProjectDetail {
   id: string;
   name: string;
   createdAt: string;
+  updatedAt?: string;
   head: { name: string; version: string; updatedAt: string } | null;
   ops: number;
 }
 
-interface OpRow {
-  seq: number;
-  kind?: string;
-  head?: string;
-  authorKind: 'account' | 'agent' | 'token';
-  authorAgent: string | null;
-  ops: { op: string }[];
-  afterHash: string;
-  createdAt: string;
-}
+type State =
+  | { status: 'loading' }
+  | { status: 'missing' }
+  | { status: 'failed'; message: string }
+  | { status: 'ready'; project: ProjectDetail; model: ModelSummary | null | 'failed' };
 
-/** One project: its current version, its history, and the model as a file. */
-export function Project({ id }: { id: string }) {
+/**
+ * One project's dashboard (screen 04): the plan of its head model and what the engine derived from
+ * it, with the sections later phases fill — brief (P4), findings (P6), options (P8), share and the
+ * other exports (P9) — and the two regions the lead wires now: changesets and versions.
+ */
+export function Project({ id, you }: { id: string; you: string }) {
   const toast = useToast();
-  const [project, setProject] = useState<ProjectDetail | null | 'missing'>(null);
-  const [ops, setOps] = useState<OpRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<State>({ status: 'loading' });
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [version, setVersion] = useState(0);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([api.get<ProjectDetail>(`/api/projects/${id}`), api.get<{ ops: OpRow[] }>(`/api/projects/${id}/ops`)])
-      .then(([detail, log]) => {
-        setProject(detail);
-        setOps(log.ops);
+  const load = useCallback(() => {
+    setState({ status: 'loading' });
+    api
+      .get<ProjectDetail>(`/api/projects/${id}`)
+      .then(async (project) => {
+        const model = await loadModel(project.id, project.head?.version ?? null).catch(() => 'failed' as const);
+        setState({ status: 'ready', project, model });
       })
       .catch((caught: unknown) => {
-        if (caught instanceof ApiError && caught.status === 404) setProject('missing');
-        else setError(messageOf(caught));
+        if (caught instanceof ApiError && caught.status === 404) setState({ status: 'missing' });
+        else setState({ status: 'failed', message: messageOf(caught) });
       });
-  }, [id, version]);
+  }, [id]);
+  useEffect(load, [load]);
 
-  if (project === 'missing') {
+  if (state.status === 'missing') {
     return (
-      <Page>
+      <Page className="fs-screen">
         <EmptyState kind="no-results" heading="That project does not exist" action={<Link href="/">All projects</Link>}>
           It may have been deleted, or it is not yours.
         </EmptyState>
       </Page>
     );
   }
-  if (project === null) return error === null ? <Spinner label="Loading the project" /> : <Alert tone="danger">{error}</Alert>;
-
-  return (
-    <Page>
-      <Stack gap="24">
-        <PageHeader
-          title={project.name}
-          back={<Link href="/" variant="muted">Projects</Link>}
-          actions={
-            // A navigation, not a fetch: the API answers with Content-Disposition: attachment, so the
-            // browser saves the file under the name the API gives it and the page stays put.
-            <Button variant="primary" icon={<Download />} onClick={() => { window.location.assign(`/api/projects/${id}/model.json`); }}>
-              Download model.json
+  if (state.status === 'failed') {
+    return (
+      <Page className="fs-screen">
+        <EmptyState
+          kind="error"
+          heading="This project did not load"
+          action={
+            <Button variant="secondary" onClick={load}>
+              Try again
             </Button>
           }
-        />
-        <Section title="Model">
-          <DescriptionList>
-            <DescriptionItem term="Version">
-              <span className="fs-mono">{project.head?.version ?? '—'}</span>
-            </DescriptionItem>
-            <DescriptionItem term="Head">{project.head?.name ?? '—'}</DescriptionItem>
-            <DescriptionItem term="Created">{new Date(project.createdAt).toLocaleString()}</DescriptionItem>
-          </DescriptionList>
-        </Section>
-        <Changesets projectId={id} onDecided={() => { setVersion((v) => v + 1); }} />
-        <Section title="History" description="Every change is a Floorspec Op, recorded in order and never rewritten.">
-          <DataList>
-            {ops.filter((op) => op.head === undefined || op.head === 'main').map((op) => (
-              <DataListRow
-                key={op.seq}
-                title={`#${String(op.seq)} ${op.ops.map((o) => o.op).join(', ')}`}
-                description={`${op.authorKind === 'agent' ? (op.authorAgent ?? 'An agent') : op.authorKind === 'token' ? 'You, with an API token' : 'You'}${op.kind === 'undo' || op.kind === 'redo' || op.kind === 'merge' ? ` · ${op.kind}` : ''} · ${new Date(op.createdAt).toLocaleString()}`}
-                meta={<span className="fs-mono fs-muted">{op.afterHash.slice(0, 12)}</span>}
-              />
-            ))}
-          </DataList>
-        </Section>
-        <Section title="Delete this project">
-          <Stack gap="12" align="start">
-            <p className="fs-muted">It disappears from your projects. Its history is kept, append-only.</p>
-            <Button variant="danger" onClick={() => { setConfirmDelete(true); }}>
-              Delete project
+        >
+          {state.message}
+        </EmptyState>
+      </Page>
+    );
+  }
+  if (state.status === 'loading') return <Loading />;
+
+  const { project } = state;
+  const model = state.model === 'failed' ? null : state.model;
+  const editor = `/projects/${project.id}/editor`;
+  const describe = [
+    model?.document?.project.description,
+    model?.document === undefined || model.document === null ? null : `Floorspec ${model.document.floorspec} Draft`,
+    `created ${new Date(project.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}`,
+  ]
+    .filter((part): part is string => typeof part === 'string' && part.length > 0)
+    .join(' · ');
+
+  return (
+    <Page className="fs-screen">
+      <Breadcrumb name={project.name} />
+      <PageHeader
+        title={project.name}
+        count={project.ops}
+        countNoun={{ one: 'version', other: 'versions' }}
+        description={describe}
+        actions={
+          <>
+            <Menu>
+              <MenuTrigger>
+                <IconButton variant="ghost" icon={<Ellipsis />} label="More actions" />
+              </MenuTrigger>
+              <MenuContent align="end">
+                <MenuItem
+                  disabled={project.head === null}
+                  onSelect={() => { window.location.assign(`/api/projects/${project.id}/model.json`); }}
+                >
+                  Download model.json
+                </MenuItem>
+                <MenuSeparator />
+                <MenuItem tone="danger" onSelect={() => { setConfirmDelete(true); }}>
+                  Delete project…
+                </MenuItem>
+              </MenuContent>
+            </Menu>
+            <Button variant="primary" icon={<Pencil />} onClick={() => { navigate(editor); }}>
+              Open editor
             </Button>
-          </Stack>
-        </Section>
-      </Stack>
+          </>
+        }
+      />
+
+      {state.model === 'failed' ? (
+        <Alert tone="warning" title="The model did not load">
+          The project is here, but its head version could not be read. Reload to try again.
+        </Alert>
+      ) : null}
+
+      <div className="fs-dashboard-wrap">
+        <div className="fs-dashboard">
+          <div className="fs-dashboard__col fs-dashboard__col--main">
+            <PlanCard projectId={project.id} name={project.name} summary={model} />
+            <BriefCard />
+            <OptionsCard />
+          </div>
+          <div className="fs-dashboard__col">
+            <StatGroup aria-label="At a glance" className="fs-dashboard__stats">
+              <Stat
+                label="Net room area"
+                value={model === null || !model.valid ? '—' : formatSquareFeet(model.area2)}
+                {...(model === null || !model.valid ? {} : { unit: 'ft²' })}
+                footnote={model === null || !model.valid ? 'No rooms derived' : `${plural(model.rooms, 'room')}, derived exactly`}
+              />
+              <Stat label="Findings" value="—" footnote="No rule packs installed yet" />
+            </StatGroup>
+            <ChangesetsSlot projectId={project.id} onDecided={load} />
+            <FindingsCard />
+            <VersionsSlot projectId={project.id} you={you} />
+            <ExportsCard projectId={project.id} hasModel={project.head !== null} />
+            <ShareCard />
+          </div>
+        </div>
+      </div>
+
       <Modal
         open={confirmDelete}
-        onOpenChange={setConfirmDelete}
+        onOpenChange={(open) => {
+          setConfirmDelete(open);
+          if (!open) setDeleteError(null);
+        }}
         destructive
         title={`Delete ${project.name}?`}
         footer={
@@ -131,12 +191,12 @@ export function Project({ id }: { id: string }) {
               variant="danger"
               onClick={() => {
                 api
-                  .del(`/api/projects/${id}`)
+                  .del(`/api/projects/${project.id}`)
                   .then(() => {
                     toast.show({ message: `${project.name} was deleted.` });
                     navigate('/', { replace: true });
                   })
-                  .catch((caught: unknown) => { setError(messageOf(caught)); });
+                  .catch((caught: unknown) => { setDeleteError(messageOf(caught)); });
               }}
             >
               Delete
@@ -144,8 +204,53 @@ export function Project({ id }: { id: string }) {
           </>
         }
       >
-        It will no longer be listed or reachable.
+        {deleteError === null ? null : (
+          <Alert tone="danger" dynamic>
+            {deleteError}
+          </Alert>
+        )}
+        It disappears from your projects and can no longer be opened. Its history is kept, append-only.
       </Modal>
+    </Page>
+  );
+}
+
+function Breadcrumb({ name }: { name: string }) {
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="fs-breadcrumb">
+        <li>
+          <Link href="/" variant="muted">
+            Projects
+          </Link>
+        </li>
+        <li aria-hidden="true">
+          <ChevronRight />
+        </li>
+        <li aria-current="page">{name}</li>
+      </ol>
+    </nav>
+  );
+}
+
+function Loading() {
+  return (
+    <Page className="fs-screen" aria-busy="true" aria-label="Loading the project">
+      <Skeleton variant="text" width={160} />
+      <Skeleton variant="text" width={320} height={28} />
+      <div className="fs-dashboard-wrap">
+        <div className="fs-dashboard">
+          <div className="fs-dashboard__col fs-dashboard__col--main">
+            <Skeleton variant="block" width="100%" height={532} />
+            <Skeleton variant="block" width="100%" height={180} />
+          </div>
+          <div className="fs-dashboard__col">
+            <Skeleton variant="block" width="100%" height={106} />
+            <Skeleton variant="block" width="100%" height={208} />
+            <Skeleton variant="block" width="100%" height={204} />
+          </div>
+        </div>
+      </div>
     </Page>
   );
 }
