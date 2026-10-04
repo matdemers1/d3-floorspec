@@ -1,0 +1,27 @@
+{
+  "name": "@d3-floorspec/server",
+  "private": true,
+  "version": "0.1.0",
+  "description": "D3 Floorspec API: REST, auth, Prisma schema and migrations; serves the editor's statics",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": ["dist", "prisma", "prisma.config.ts"],
+  "scripts": {
+    "dev": "node --env-file-if-exists=../../.env --watch --import tsx src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --project unit",
+    "test:integration": "vitest run --project integration --passWithNoTests"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pino": "^10.3.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/express-serve-static-core": "^5.1.3",
+    "tsx": "^4.23.13"
+  }
+}

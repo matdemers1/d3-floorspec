@@ -34,3 +34,6 @@ apps/server/src/generated/
 __pycache__/
 .venv/
 *.pyc
+*.egg-info/
+.pytest_cache/
+.turbo/

@@ -1,0 +1,15 @@
+{
+  "name": "@d3-floorspec/worker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Postgres job-queue drain: render-back and exports.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "start": "node dist/index.js"
+  }
+}

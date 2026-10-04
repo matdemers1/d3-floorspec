@@ -1,0 +1,24 @@
+{
+  "name": "@d3-floorspec/agent-eval",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The 30-task agent eval that tests the project kill criterion (FLR-REQ-055).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}

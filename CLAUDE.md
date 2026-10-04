@@ -25,4 +25,16 @@ Deployed to the Zima by Shipyard from GHCR `sha-` images — never by SSH.
 - No time estimates anywhere. No Co-Authored-By lines in commits.
 
 ## Commands
-`pnpm build` · `pnpm test` · `pnpm lint` · `pnpm typecheck` (filled in by FLR-T-0.2).
+```bash
+pnpm install                 # pnpm 10.34.5, Node 22 (.nvmrc); supply-chain policy in pnpm-workspace.yaml
+pnpm build                   # turbo: every package and app
+pnpm lint && pnpm typecheck  # web lint includes @d3cloud/ui's d3-check-usage guard
+pnpm test                    # unit tests, every package
+pnpm test:python             # workers/ifc (needs workers/ifc/.venv — see its README)
+```
+
+The engine (`packages/engine`) is isomorphic: its build loads no Node types and ESLint refuses
+`node:` imports, `Buffer` and `process` there.
+
+Bumping `@d3cloud/ui`: read the lockfile-integrity trap in `../foreman/CLAUDE.md` — the lockfile
+entry for the release tarball must carry `integrity: sha512-…` or the image build fails.

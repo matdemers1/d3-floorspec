@@ -1,0 +1,21 @@
+[project]
+name = "floorspec-ifc"
+version = "0.1.0"
+description = "D3 Floorspec IFC worker: Floorspec documents to and from IFC via IfcOpenShell (a separate process, because IfcOpenShell is LGPL)"
+license = "Apache-2.0"
+requires-python = ">=3.13"
+# IfcOpenShell arrives with the IFC export task, not in Phase 0.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["floorspec_ifc"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

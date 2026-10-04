@@ -1,0 +1,24 @@
+{
+  "name": "@floorspec/ops",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Floorspec Ops: reference grammar, transactions, atomic batches, locks.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}
