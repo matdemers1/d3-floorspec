@@ -29,6 +29,8 @@ import { ProblemError, sendProblem } from './http/problem.js';
 import { ApplierUnavailable, unavailableApplier, type Applier } from './ops/applier.js';
 import { createVerifier, protectedResourceMetadata, type Verifier } from './auth/resource-server.js';
 import type { PlanRenderer } from './render.js';
+import { EventHub } from './events/hub.js';
+import { eventRoutes, type EventRouteOptions } from './events/routes.js';
 
 export interface AppDeps {
   readonly config: Config;
@@ -50,6 +52,13 @@ export interface AppDeps {
   readonly verifier?: Verifier | null;
   /** Draws plan PNGs (FLR-T-2.8). Null until the worker's renderer is wired in: renders answer 501. */
   readonly renderer?: PlanRenderer | null;
+  /**
+   * The live stream's fan-out (FLR-T-3.5): one LISTEN connection, opened on the first subscriber.
+   * Defaults to one on DATABASE_URL; whoever stops the server closes it (`eventHubOf`).
+   */
+  readonly events?: EventHub;
+  /** Heartbeat and stream lifetime; tests shorten them. */
+  readonly eventStream?: EventRouteOptions;
 }
 
 /** The paths the API owns. Anything else is a screen of the editor. */
@@ -62,8 +71,11 @@ export function createApp({
   applier = unavailableApplier,
   verifier = createVerifier(config),
   renderer = null,
+  events = new EventHub(config.DATABASE_URL),
+  eventStream = {},
 }: AppDeps): Express {
   const app = express();
+  (app.locals as { events?: EventHub }).events = events;
   app.disable('x-powered-by');
   // Behind the Cloudflare Tunnel: one hop, so `req.ip` is the client and the login throttle has a
   // bucket per client rather than one for everybody. Not `true`: that lets a client spoof itself.
@@ -79,6 +91,7 @@ export function createApp({
   mount(app, '/api/projects', historyRoutes(db, applier));
   mount(app, '/api/projects', changesetRoutes(db, applier));
   mount(app, '/api/projects', checkRoutes(db, renderer));
+  mount(app, '/api/projects', eventRoutes(db, events, eventStream));
   mount(app, '/api/tokens', tokenRoutes(db));
   mountMcp(app, config);
 
@@ -160,6 +173,13 @@ export function createApp({
   }) as ErrorRequestHandler);
 
   return app;
+}
+
+/** The app's event hub: close it before closing the HTTP server, or open streams keep it alive. */
+export function eventHubOf(app: Express): EventHub {
+  const hub = (app.locals as { events?: EventHub }).events;
+  if (hub === undefined) throw new Error('this app has no event hub');
+  return hub;
 }
 
 function apiNotFound(_req: Request, res: Response): void {

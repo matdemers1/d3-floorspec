@@ -20,6 +20,7 @@ import {
 } from '../domain/history.js';
 import { changesetView, openChangeset } from '../domain/changesets.js';
 import { parse } from './auth.js';
+import { changesetEvent, countChangesetOps, headEvent } from '../events/publish.js';
 
 /** An operation: an object naming itself. Its members are the applier's to judge (Ops 1.1.1). */
 const OpSchema = z.looseObject({ op: z.string().min(1).max(64) });
@@ -120,11 +121,16 @@ export function historyRoutes(db: Db, applier: Applier): Routes {
       // the transaction goes with it.
       if (outcome.status === 'rejected') throw rejection(outcome.result, head);
       const view = committedView(outcome);
+      const event =
+        changeset === null
+          ? headEvent(project.id, outcome.op)
+          : changesetEvent(changeset, opened ? 'opened' : 'appended', { hash: view.hash, ops: await countChangesetOps(tx, changeset) });
       return {
         reply: (res) => {
           res.setHeader('ETag', `"${view.hash}"`);
           res.status(201).json({ ...view, changeset: changeset === null ? null : changesetView(changeset, { head: view.hash }) });
         },
+        events: [event],
         audit: {
           action: changeset === null ? 'ops.apply' : 'changeset.apply',
           targetType: changeset === null ? 'project' : 'changeset',
@@ -171,6 +177,7 @@ export function historyRoutes(db: Db, applier: Applier): Routes {
             res.setHeader('ETag', `"${view.hash}"`);
             res.status(201).json({ ...view, [mode === 'undo' ? 'undid' : 'redid']: target.seq });
           },
+          events: [headEvent(project.id, outcome.op)],
           audit: {
             action: `ops.${mode}`,
             targetType: 'project',

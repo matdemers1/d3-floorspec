@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { registry } from '../../src/http/routes.js';
-import { Browser, inviteMember, reset, setupOperator, start, testDb, type Running } from './helpers.js';
+import { Browser, inviteMember, isStream, reset, setupOperator, start, testDb, type Running } from './helpers.js';
 
 /**
  * Per-account isolation (FLR-T-0.6): account B receives 404 — not 403, not an empty 200 — for every
@@ -15,6 +15,8 @@ interface Call {
   readonly body?: unknown;
   /** What A, the owner, gets. */
   readonly ownerStatus: number;
+  /** A server-sent-events stream: the owner's answer is a stream that stays open, not a body. */
+  readonly stream?: true;
 }
 
 const ROOM = [{ op: 'addElement', collection: 'buildings', element: {} }];
@@ -36,6 +38,7 @@ const CALLS: Record<string, Call> = {
   'POST /api/projects/:projectId/changesets': { body: { name: 'Another idea' }, ownerStatus: 201 },
   'GET /api/projects/:projectId/changesets/:changesetId': { ownerStatus: 200 },
   'GET /api/projects/:projectId/changesets/:changesetId/model.json': { ownerStatus: 200 },
+  'GET /api/projects/:projectId/events': { ownerStatus: 200, stream: true },
   'POST /api/projects/:projectId/changesets/:changesetId/accept': { body: {}, ownerStatus: 200 },
   // After the accept above, the same changeset is already decided: the route works and says so.
   'POST /api/projects/:projectId/changesets/:changesetId/reject': { body: {}, ownerStatus: 409 },
@@ -105,6 +108,16 @@ describe('per-account isolation', () => {
   it('answers A, the owner, on every one of the same routes', async () => {
     for (const [route, call] of Object.entries(CALLS)) {
       const [method = 'GET', path = ''] = route.split(' ');
+      if (call.stream === true) {
+        const opened = await alice.events(fill(path));
+        expect(isStream(opened), `${route} as A: ${isStream(opened) ? '' : opened.text}`).toBe(true);
+        if (isStream(opened)) {
+          expect(opened.status).toBe(call.ownerStatus);
+          await opened.next('ready');
+          opened.close();
+        }
+        continue;
+      }
       const res = await alice.request(method, fill(path), call.body);
       expect(res.status, `${route} as A: ${res.text}`).toBe(call.ownerStatus);
     }

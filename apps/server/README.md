@@ -37,6 +37,26 @@ SHA-256 is stored; the secret is shown once. Routes say which tokens they accept
 
 Accept and reject need a person: a session, or that person's write token — never an agent.
 
+## Live events (FLR-T-3.5)
+
+`GET /api/projects/:id/events` is a `text/event-stream` (a session, or a `read` token; 404 to anyone
+else). Events say that something moved, never carry the model:
+
+| Event | Data |
+|---|---|
+| `ready` | `{ resumed, replayed }`: live, after any replay |
+| `head` | `{ head: 'main', hash, seq, kind, authorKind, author, changeset }`: main moved |
+| `changeset` | `{ id, name, status, change, head, hash, base, ops, createdBy, mergeMode }`; `change` is `opened`, `appended`, `accepted`, `rejected` or `replay-failed` |
+| `resync` | `{ reason }`: what was missed cannot be replayed; re-fetch |
+
+Publishing is `pg_notify('floorspec_events', …)` inside the transaction that made the change
+(`MutationResult.events`), so Postgres delivers it on commit, in commit order, and never for a
+rollback; each api process holds one `LISTEN` connection (`src/events/hub.ts`) and fans out to its
+own subscribers. IDs are `<epoch>-<n>`; `Last-Event-ID` (or `?lastEventId=`) replays from a
+bounded per-project ring or answers `resync`. Heartbeat comment every 20 s; streams end after
+15 min so the client re-authorises on reconnect. Stop the hub before the HTTP server
+(`eventHubOf(app).close()`), or open streams keep it alive.
+
 ## Checks
 
 `GET /api/projects/:id/validate`, `/findings` (empty until rule packs, Phase 6), `/render`
