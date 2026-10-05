@@ -2,7 +2,7 @@
   "name": "@floorspec/rules-engine",
   "private": true,
   "version": "0.1.0",
-  "description": "Floorspec Rules: measures, jurisdiction profiles, advisory findings with citations.",
+  "description": "Floorspec Rules 0.1 evaluator: rule packs against a Core document under a jurisdiction profile — the measure library, advisory findings that name the edition, never a compliance verdict (FLR-ADR-011). Isomorphic, exact, deterministic.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
@@ -18,7 +18,24 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit && tsc -p test && tsc -p scripts",
+    "test": "vitest run --project node",
+    "test:browser": "vitest run --project browser",
+    "conformance": "vitest run --project node test/conformance.node.test.ts",
+    "sync-standard": "tsx scripts/sync-standard.ts",
+    "generate": "tsx scripts/generate.ts",
+    "check:generated": "tsx scripts/generate.ts --check",
+    "perf": "tsx scripts/perf.ts"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/browser": "5.0.2",
+    "@vitest/browser-playwright": "5.0.2",
+    "ajv": "^8.20.0",
+    "json-schema-to-typescript": "^16.0.0",
+    "playwright": "^1.63.0",
+    "tsx": "^4.23.15"
   }
 }
