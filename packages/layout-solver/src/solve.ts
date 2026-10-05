@@ -44,6 +44,13 @@ export interface SolveOptions {
    * not the document's own has no items in the document to name, so its candidates never set it.
    */
   readonly emitBrief?: boolean;
+  /**
+   * Have no two candidates name the same ID — types, walls, rooms, and the building and level a
+   * candidate adds — so that all of them can be proposed as changesets of one project at once: the
+   * store retires an ID the first time any head holds it (Ops 1.5). Default false: each candidate
+   * mints from the document's state, as if it were the only one.
+   */
+  readonly distinctIds?: boolean;
   /** How many of the best-estimated tilings are applied and measured in full. Default 10. */
   readonly evaluate?: number;
   /** Seed for the order in which equally-estimated variants are tried. Default 1. */
@@ -272,16 +279,21 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
       shortlist.push(b);
     }
 
-  // Apply and measure each in full.
+  // Apply and measure each in full. With distinctIds, each candidate mints after the ones before it.
+  const taken = options.distinctIds === true ? new Set(used) : null;
+  const named = (ops: readonly Operation[]): string[] => ops.flatMap((o) => ('id' in o && typeof o.id === 'string' ? [o.id] : []));
   const scored: { b: Built; candidate: Omit<Candidate, 'rank'> }[] = [];
   for (const b of shortlist) {
     const layout = b.layout;
     const segs = segments(layout);
     const access = planAccess(layout, segs)!;
-    // Each candidate mints from the same state: the document's IDs, the retired ones, the prelude's.
-    const ids = new Ids(new Set([...used, ...target.prelude.flatMap((o) => ('id' in o && typeof o.id === 'string' ? [o.id] : []))]));
+    // Each candidate mints from the same state — the document's IDs, the retired ones, the prelude's —
+    // or, with distinctIds, from that state and every ID the candidates before it named.
+    const own = taken === null ? target : chooseTarget(doc, program, options, taken);
+    const ids = new Ids(new Set([...(taken ?? used), ...named(own.prelude)]));
     // Measured with every room's brief set, so the engine derives the brief fit from the document.
-    const emitted = emit(layout, segs, access, target, ids, { windows: options.windows ?? true, brief: true });
+    const emitted = emit(layout, segs, access, own, ids, { windows: options.windows ?? true, brief: true });
+    if (taken !== null) for (const id of named(emitted.batch)) taken.add(id);
     const applied = measure(working, emitted.batch, retired, layout, emitted.roomIds, brief);
     if (applied.status === 'rejected') continue;
     const m = applied.measures;
@@ -301,7 +313,7 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
         id: b.variant.key,
         strategy: layout.family,
         label: layout.label,
-        level: target.level,
+        level: own.level,
         batch: emitBrief ? emitted.batch : emitted.batch.filter((o) => !(o.op === 'setProperty' && o.path === '/brief')),
         footprint: { width: gBu(layout.width), depth: gBu(layout.depth) },
         rooms,

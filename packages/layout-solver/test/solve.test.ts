@@ -194,6 +194,31 @@ describe('options and edges', () => {
     expect(r.diagnostics.filter((d) => ['FS-LINT-008', 'FS-LINT-009', 'FS-LINT-010', 'FS-LINT-011'].includes(d.code))).toEqual([]);
   });
 
+  it('with distinctIds, names no ID twice across candidates, so all can be proposed at once', () => {
+    const bare = { floorspec: '0.1', project: { name: 'Empty' } };
+    for (const [doc, options] of [
+      [SAMPLES.ranch(), {}],
+      [bare, { program: CABIN }],
+    ] as const) {
+      const cs = solve(doc, { ...options, count: 3, distinctIds: true });
+      expect(cs.length).toBeGreaterThanOrEqual(3);
+      const seen = new Set<string>();
+      const state = parseDocument(doc);
+      const retired: string[] = [];
+      for (const c of cs) {
+        const ids = c.batch.flatMap((o) => (o.op !== 'setProperty' && 'id' in o && typeof o.id === 'string' ? [o.id] : []));
+        for (const id of ids) {
+          expect(seen.has(id), id).toBe(false);
+          seen.add(id);
+        }
+        // Each commits on the document with every earlier candidate's IDs retired, as the store does.
+        const r = apply(state, { batch: c.batch, context: { retired: [...retired] } });
+        expect(r.status, JSON.stringify(r.status === 'rejected' ? r.diagnostics.slice(0, 3) : [])).toBe('committed');
+        if (r.status === 'committed') retired.push(...r.created);
+      }
+    }
+  });
+
   it('refuses a document with no program, and a level that already has walls', () => {
     expect(() => solve(house('Nothing', { items: {} }))).toThrow(SolverError);
     const cs = solve(SAMPLES.cabin(), { count: 3 });
