@@ -1,0 +1,31 @@
+{
+  "name": "@floorspec/dsl",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A relational authoring DSL for rough plans (\"kitchen 14x12 east-of dining\") that compiles to Floorspec Ops 0.3, and a decompiler for rectilinear plans. Isomorphic, exact, deterministic.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc -p test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*",
+    "@floorspec/ops": "workspace:*"
+  },
+  "devDependencies": {
+    "@floorspec/layout-solver": "workspace:*"
+  }
+}
