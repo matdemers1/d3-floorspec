@@ -73,8 +73,25 @@ const systemTool = (system: SystemId, label: string, key: string, keywords: stri
 });
 
 export const COMMANDS: readonly Command[] = [
+  // Core 0.4, chapter 21: in the arc-wall tool's bulge step, bulge the other way.
+  {
+    id: 'arc.flip',
+    label: 'Flip the arc being drawn',
+    group: 'Tools',
+    keywords: 'arc bulge flip curve',
+    keys: ['Shift+f'],
+    hint: 'Shift+F',
+    enabled: (store) => {
+      const d = store.get().draft;
+      return d?.tool === 'arc' && d.start !== null && d.end !== null;
+    },
+    run: (_store, tools) => {
+      tools.flipArc();
+    },
+  },
   tool('select', 'Select', 'V'),
   tool('wall', 'Draw walls', 'W'),
+  tool('arc', 'Draw arc walls', 'A'),
   tool('door', 'Place a door', 'D'),
   tool('window', 'Place a window', 'N'),
   tool('room', 'Name a room', 'R'),

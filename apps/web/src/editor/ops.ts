@@ -201,6 +201,50 @@ export function drawChain(
   };
 }
 
+/**
+ * An arc wall (Core 0.4, chapter 21) from one vertex to another: drawWall under an ID the batch names, then
+ * its arc set on it in the same batch — normalization runs after the last operation, and never splits an
+ * arc (Ops 0.4, 5.2). A sagitta of zero draws a straight wall.
+ */
+export function drawArcWall(
+  document: FloorspecDocument,
+  level: string,
+  start: ChainVertex,
+  end: ChainVertex,
+  sagitta: number,
+  o: { type?: TypeChoice | undefined; justification?: string | undefined },
+): BatchBuilder {
+  return (attempt) => {
+    const type = useType(document, o.type, attempt);
+    const ref = (v: ChainVertex): string | [number, number] => v.junction ?? [v.point[0], v.point[1]];
+    let max = 0;
+    for (const c of Object.values(document as unknown as Json))
+      if (c !== null && typeof c === 'object') for (const k of Object.keys(c)) max = Math.max(max, Number(/^W(\d+)$/.exec(k)?.[1] ?? 0));
+    const id = `W${String(max + 1 + attempt)}`;
+    const ops: Batch = [
+      ...type.ops,
+      {
+        op: 'drawWall',
+        id,
+        level,
+        from: ref(start),
+        to: ref(end),
+        ...(type.id === undefined ? {} : { type: type.id }),
+        ...(o.justification === undefined || o.justification === 'center' ? {} : { justification: o.justification as 'exteriorFace' }),
+      },
+    ];
+    const h = Math.round(sagitta);
+    if (h !== 0) ops.push({ op: 'setProperty', id, path: '/arc', value: { sagitta: h } });
+    return ops;
+  };
+}
+
+/** Bend a wall or a separator into an arc, change its bulge, or straighten it (Core 0.4, 21.1). */
+export function setArc(id: string, sagitta: number | null): Batch {
+  const h = sagitta === null ? 0 : Math.round(sagitta);
+  return h === 0 ? [{ op: 'unsetProperty', id, path: '/arc' }] : [{ op: 'setProperty', id, path: '/arc', value: { sagitta: h } }];
+}
+
 // ─── Slabs ───────────────────────────────────────────────────────────────────────────────────
 
 /**

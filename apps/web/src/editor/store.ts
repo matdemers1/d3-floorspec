@@ -37,7 +37,7 @@ import type { ImportReport } from '../exports/ifcImport';
 /** The forms the stair tool draws (Core 17.2). */
 export type StairForm = 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral';
 
-export type ToolId = 'select' | 'wall' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'device';
+export type ToolId = 'select' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'device';
 
 /**
  * The tools that draw a chain of points: walls and separators (a polyline), and the outlines of a
@@ -49,6 +49,24 @@ export const isChainTool = (t: unknown): t is ChainTool => t === 'wall' || t ===
 export const isOutlineTool = (t: unknown): t is 'slab' | 'roof' => t === 'slab' || t === 'roof';
 
 export type ChainDraft = { tool: ChainTool; chain: ChainVertex[]; cursor: Snap | null; typed: string };
+
+/**
+ * The arc-wall tool (Core 0.4, chapter 21): its start, then its end — clicked, or a chord length typed and
+ * aimed with the arrows — then its bulge: the sagitta, or a radius (Tab switches), typed, or where the
+ * pointer is; Shift+F flips it. In three-point mode the third click is a point the arc passes through.
+ */
+export interface ArcDraft {
+  tool: 'arc';
+  start: ChainVertex | null;
+  end: ChainVertex | null;
+  cursor: Snap | null;
+  typed: string;
+  /** What a typed length sets in the bulge step. */
+  field: 'sagitta' | 'radius';
+  /** The bulge so far, signed: positive bulges to the left of start → end (Core 21.1). */
+  sagitta: number;
+}
+export const isArcDraft = (d: Draft | null | undefined): d is ArcDraft => d !== null && d !== undefined && d.tool === 'arc';
 export const isChainDraft = (d: Draft | null | undefined): d is ChainDraft => d !== null && d !== undefined && isChainTool(d.tool);
 
 export interface Rejection {
@@ -67,6 +85,7 @@ export interface Preview {
 
 export type Draft =
   | ChainDraft
+  | ArcDraft
   | {
       tool: 'door' | 'window';
       hover: { wall: string; offset: number; centered: boolean; width: number; side: 'left' | 'right'; nearer: 'start' | 'end'; fits: boolean } | null;
@@ -120,6 +139,8 @@ export interface Layers {
 
 export interface DrawSettings {
   wallType: string | null;
+  /** The arc-wall tool's mode (Core 0.4, 21): a chord and its sagitta, or three points. */
+  arcMode: 'chord' | 'three';
   justification: 'center' | 'exteriorFace' | 'interiorFace';
   chain: boolean;
   doorType: string | null;
@@ -261,7 +282,7 @@ const initial: EditorState = {
   view: null,
   cursor: null,
   layers: { walls: true, openings: true, rooms: true, dimensions: true, findings: true, electrical: true, plumbing: true, mechanical: true, lowvoltage: true, clearances: false, coreOnly: false, roof: false },
-  draw: { wallType: null, justification: 'center', chain: true, doorType: null, windowType: null, device: 'receptacle', receptacle: NO_OPTIONS, height: null, slab: { thickness: 130_048, offset: 0, purpose: null },
+  draw: { wallType: null, arcMode: 'chord', justification: 'center', chain: true, doorType: null, windowType: null, device: 'receptacle', receptacle: NO_OPTIONS, height: null, slab: { thickness: 130_048, offset: 0, purpose: null },
     // 6:12 with a 12" overhang; a 36" stair with 10" treads and risers no higher than 7 3/4".
     roof: { rise: 6, run: 12, overhang: 390_144, gables: false },
     stair: { form: 'straight', turn: 'left', width: 1_170_432, tread: 325_120, maxRiser: 251_968 } },

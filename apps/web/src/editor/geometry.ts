@@ -1,4 +1,5 @@
 import type { FaceView, LevelView, Point, Ring } from './model';
+import { distanceToLine } from './arcs';
 
 /**
  * Plane helpers for the editor's interaction: hit-testing, projection and snapping all ask "where
@@ -151,7 +152,7 @@ export function hitTest(level: LevelView, p: Point, tol: number, options: { junc
     if (d <= tol && (wallBest === null || d < wallBest.d)) wallBest = { id: w.id, d };
   }
   if (wallBest !== null) return { kind: 'wall', id: wallBest.id };
-  for (const s of level.separators) if (project(p, s.a, s.b).distance <= tol) return { kind: 'separator', id: s.id };
+  for (const s of level.separators) if (distanceToLine(p, s.line) <= tol) return { kind: 'separator', id: s.id };
   // A stair (Core 0.3, 17) stands in a room: inside its box in plan, it is what a click finds.
   for (const st of level.stairs) {
     const { min, max } = st.derived.box;
