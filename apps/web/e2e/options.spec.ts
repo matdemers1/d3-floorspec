@@ -8,7 +8,8 @@ import { count, firstRunSetup, FT, IN, modelOf, password, projectIn, settled } f
  * B, a different wall drawn in each (every batch carrying `context.option`), the two compared side
  * by side with the per-option room areas, and B made primary — checked through model.json and what
  * the engine derives from it. Finishes: a material, and a backsplash region on the kitchen's wall,
- * checked the same way, with the derived finish of that face.
+ * checked the same way, with the derived finish of that face. A PDF of design Kitchen B is exported
+ * from the Export dialog's Design choice, and its job records the design (FLR-T-9.7).
  */
 
 interface Camera {
@@ -122,6 +123,29 @@ test('an option set with two kitchens, drawn, compared side by side and switched
   expect(history.ops.filter((o) => o.option === B)).toHaveLength(1);
   expect(history.ops.filter((o) => o.option === A)).toHaveLength(1);
 
+  // ── FLR-T-9.7: a PDF of design Kitchen B, while A is primary. The dialog's Design choice starts
+  // on the primary; the request names B; the job records it (the dashboard's list says so, at the end).
+  await page.getByRole('button', { name: 'Export' }).click();
+  const exporting = page.getByRole('dialog', { name: /^Export / });
+  await expect(exporting).toBeVisible({ timeout: 15_000 });
+  await expect(exporting.getByRole('radio', { name: /Dimensioned PDF/ })).toHaveAttribute('aria-checked', 'true');
+  const designChoice = exporting.getByRole('combobox', { name: 'Design' });
+  await expect(designChoice).toContainText('Kitchen A (primary)');
+  // IFC is of the primary design: no choice there.
+  await exporting.getByRole('radio', { name: /IFC4 Reference View/ }).click();
+  await expect(designChoice).toHaveCount(0);
+  await exporting.getByRole('radio', { name: /Dimensioned PDF/ }).click();
+  await designChoice.click();
+  await page.getByRole('option', { name: 'Kitchen B' }).click();
+  await expect(designChoice).toContainText('Kitchen B');
+  const sent = page.waitForRequest((r) => r.method() === 'POST' && r.url().endsWith(`/api/projects/${project}/exports`));
+  const [file] = await Promise.all([page.waitForEvent('download', { timeout: 30_000 }), exporting.getByRole('button', { name: 'Export' }).click()]);
+  expect(file.suggestedFilename()).toMatch(/\.pdf$/);
+  expect((await sent).postDataJSON()).toMatchObject({ kind: 'pdf', design: { [setId]: B } });
+  await expect(exporting).toBeHidden();
+  const jobs = (await (await page.request.get(`/api/projects/${project}/exports`)).json()) as { exports: { kind: string; status: string; design: Record<string, string> | null }[] };
+  expect(jobs.exports[0]).toMatchObject({ kind: 'pdf', status: 'done', design: { [setId]: B } });
+
   // ── Side by side: two plans and the per-option room areas.
   await row('A').getByRole('button', { name: 'Editing' }).click();
   await panel.getByRole('button', { name: 'Compare side by side' }).click();
@@ -189,4 +213,8 @@ test('an option set with two kitchens, drawn, compared side by side and switched
   expect(derivedFace.room).toBe(Object.keys(doc.rooms ?? {})[0]);
   expect(derivedFace.regions.map((x) => x.material)).toEqual([material]);
   await expect(face.getByRole('list', { name: `Regions of the ${side} face` }).getByRole('listitem')).toHaveCount(1);
+
+  // ── FLR-T-9.7, the job list: the dashboard's recent exports say the PDF was of design Kitchen B.
+  await page.goto(`/projects/${project}`);
+  await expect(page.getByRole('list', { name: 'Recent exports' }).getByRole('listitem').first()).toContainText('design Kitchen B');
 });

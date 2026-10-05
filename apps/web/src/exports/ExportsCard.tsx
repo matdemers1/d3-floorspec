@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge, Button, StatusDot } from '@d3cloud/ui';
 import { Download, FileBox, FileText, Layers, Ruler } from 'lucide-react';
 import { DashCard } from '../dashboard/DashCard';
 import { messageOf } from '../lib/api';
 import { IfcImportButton } from './IfcImportButton';
-import { describeJob, listExports, requestExport, startDownload, untilFinished, type ExportJob, type ExportKind } from './api';
+import { describeJob, designSetsOf, listExports, requestExport, startDownload, untilFinished, type ExportJob, type ExportKind } from './api';
 import './exports.css';
 
 /**
@@ -12,9 +12,11 @@ import './exports.css';
  * (a sheet per level) and DXF drawings — made from the head version on the server's job queue,
  * with the latest few kept to download again; and the IFC4 Reference View model (FLR-T-9.4), which
  * comes back, edited in another tool, as a proposed changeset (FLR-T-9.5).
- * glTF and USDZ follow in FLR-P-9.
+ * glTF and USDZ follow in FLR-P-9. A job made in a chosen design (FLR-T-9.7) says which, by the
+ * names the head's document gives its option sets and options.
  */
-export function ExportsCard({ projectId, hasModel }: { projectId: string; hasModel: boolean }) {
+export function ExportsCard({ projectId, hasModel, document = null }: { projectId: string; hasModel: boolean; document?: unknown }) {
+  const sets = useMemo(() => designSetsOf(document), [document]);
   const [jobs, setJobs] = useState<ExportJob[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState<ExportKind | null>(null);
@@ -104,7 +106,7 @@ export function ExportsCard({ projectId, hasModel }: { projectId: string; hasMod
         <ul className="fs-exports-card__recent" aria-label="Recent exports">
           {jobs.map((j) => (
             <li key={j.id}>
-              <StatusDot tone={j.status === 'failed' ? 'danger' : j.status === 'done' ? 'neutral' : 'idle'}>{describeJob(j)}</StatusDot>
+              <StatusDot tone={j.status === 'failed' ? 'danger' : j.status === 'done' ? 'neutral' : 'idle'}>{describeJob(j, sets)}</StatusDot>
               {j.status === 'done' ? (
                 <Button variant="ghost" size="sm" icon={<Download />} onClick={() => { startDownload(j); }}>
                   Download

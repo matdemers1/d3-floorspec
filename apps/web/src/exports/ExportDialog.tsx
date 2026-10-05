@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button, Modal, Select, StatusDot, useToast } from '@d3cloud/ui';
 import { Box, Download, FileText, Layers, Ruler, BookOpen } from 'lucide-react';
 import { messageOf } from '../lib/api';
-import { describeJob, PAGES, requestExport, startDownload, untilFinished, type ExportJob, type PageName } from './api';
+import { describeJob, designLabel, optionChoiceLabel, PAGES, requestExport, startDownload, takesDesign, untilFinished, type DesignSet, type ExportJob, type PageName } from './api';
 import './exports.css';
 
 /**
@@ -12,6 +12,9 @@ import './exports.css';
  * Standard layers, the IFC4 Reference View model (FLR-T-9.4), and the 3D model as glTF 2.0 or USDZ
  * (FLR-T-9.2). The Floorspec model comes as a `.floorspec` package — model.json and its textures, one
  * ZIP (FLR-T-9.1) — or as model.json alone: both always free, at any time (FLR-REQ-151).
+ *
+ * A model with design options (Core 0.3, chapter 19) is drawn in one design: a "Design" choice per
+ * option set, the primary by default, for every format but IFC, which is of the primary (FLR-T-9.7).
  */
 
 type Choice = 'model' | 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz';
@@ -52,14 +55,20 @@ export interface ExportDialogProps {
   readonly levels: readonly { id: string; name: string }[];
   /** Where the dialog starts. */
   readonly initial?: Choice;
+  /** The model's option sets (Core 0.3, 19.1), in ID order; none for a model without design options. */
+  readonly optionSets?: readonly DesignSet[] | undefined;
 }
 
-export function ExportDialog({ open, onOpenChange, projectId, projectName, versionLabel, levels, initial = 'pdf' }: ExportDialogProps) {
+const NO_SETS: readonly DesignSet[] = [];
+const primaryOf = (sets: readonly DesignSet[]): Record<string, string> => Object.fromEntries(sets.map((s) => [s.id, s.primary]));
+
+export function ExportDialog({ open, onOpenChange, projectId, projectName, versionLabel, levels, initial = 'pdf', optionSets = NO_SETS }: ExportDialogProps) {
   const toast = useToast();
   const [choice, setChoice] = useState<Choice>(initial);
   const [page, setPage] = useState<PageName>('tabloid');
   const [form, setForm] = useState<ModelForm>('package');
   const [level, setLevel] = useState<string>('all');
+  const [design, setDesign] = useState<Record<string, string>>(() => primaryOf(optionSets));
   const [job, setJob] = useState<ExportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -71,11 +80,23 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
       setJob(null);
       setError(null);
       setBusy(false);
-    } else setChoice(initial);
-  }, [open, initial]);
+    } else {
+      setChoice(initial);
+      setDesign(primaryOf(optionSets));
+    }
+  }, [open, initial, optionSets]);
+
+  // A design names every set of the model, each with one of its options; anything else is the primary's.
+  const chosenDesign: Record<string, string> = Object.fromEntries(
+    optionSets.map((s) => {
+      const pick = design[s.id];
+      return [s.id, pick !== undefined && s.options.some((o) => o.id === pick) ? pick : s.primary];
+    }),
+  );
+  const designed = optionSets.length > 0 && choice !== 'model' && takesDesign(choice);
 
   const chosenLevels = level === 'all' ? null : [level];
-  const subtitle = [versionLabel, chosenLevels === null ? levels.map((l) => l.name).join(' + ') : levels.find((l) => l.id === level)?.name].filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
+  const subtitle = [versionLabel, chosenLevels === null ? levels.map((l) => l.name).join(' + ') : levels.find((l) => l.id === level)?.name, designed ? designLabel(chosenDesign, optionSets) : null].filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
 
   async function run(): Promise<void> {
     if (choice === 'model') {
@@ -87,14 +108,19 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
     setError(null);
     abort.current = new AbortController();
     try {
-      const queued = await requestExport(projectId, { kind: choice, ...(chosenLevels === null || choice === 'ifc' ? {} : { levels: chosenLevels }), ...(choice === 'pdf' ? { page } : {}) });
+      const queued = await requestExport(projectId, {
+        kind: choice,
+        ...(chosenLevels === null || choice === 'ifc' ? {} : { levels: chosenLevels }),
+        ...(choice === 'pdf' ? { page } : {}),
+        ...(designed ? { design: chosenDesign } : {}),
+      });
       setJob(queued);
       const finished = await untilFinished(projectId, queued, setJob, abort.current.signal);
       if (finished.status === 'done') {
         startDownload(finished);
         toast.show({ message: `Exported ${finished.result?.name ?? (choice === 'ifc' ? 'the model' : 'the drawings')}` });
         onOpenChange(false);
-      } else if (finished.status === 'failed') setError(describeJob(finished));
+      } else if (finished.status === 'failed') setError(describeJob(finished, optionSets));
     } catch (e) {
       setError(messageOf(e));
     } finally {
@@ -106,13 +132,13 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
     error !== null ? (
       <StatusDot tone="danger">{error}</StatusDot>
     ) : job !== null ? (
-      <StatusDot tone="neutral">{describeJob(job)}</StatusDot>
+      <StatusDot tone="neutral">{describeJob(job, optionSets)}</StatusDot>
     ) : choice === 'pdf' || choice === 'dxf' ? (
       <span className="fs-export-dialog__note">Drawn from this version by the worker; the same version always gives the same file.</span>
     ) : choice === 'ifc' ? (
-      <span className="fs-export-dialog__note">The whole model, every level, written by the IFC worker; the same version always gives the same file.</span>
+      <span className="fs-export-dialog__note">The whole model, every level, written by the IFC worker{optionSets.length > 0 ? ' in the primary design' : ''}; the same version always gives the same file.</span>
     ) : choice === 'gltf' || choice === 'usdz' ? (
-      <span className="fs-export-dialog__note">Built from this version’s primary design by the worker; every element keeps its Floorspec ID.</span>
+      <span className="fs-export-dialog__note">Built from this version’s {designed ? 'chosen' : 'primary'} design by the worker; every element keeps its Floorspec ID.</span>
     ) : (
       <span className="fs-export-dialog__note">{form === 'package' ? 'The canonical model and every texture it uses, as one file — the same as an unpacked folder.' : 'The canonical model: what every other format is made from.'}</span>
     );
@@ -188,6 +214,24 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
               />
             </label>
           ) : null}
+          {designed
+            ? optionSets.map((set) => {
+                const name = optionSets.length === 1 ? 'Design' : `Design · ${set.name}`;
+                return (
+                  <label key={set.id} className="fs-export-dialog__option">
+                    <span>{name}</span>
+                    <Select
+                      aria-label={name}
+                      size="sm"
+                      value={chosenDesign[set.id] ?? set.primary}
+                      disabled={busy}
+                      onValueChange={(v) => { setDesign((d) => ({ ...d, [set.id]: v })); }}
+                      options={set.options.map((o) => ({ value: o.id, label: o.id === set.primary ? `${optionChoiceLabel(set, o.id)} (primary)` : optionChoiceLabel(set, o.id) }))}
+                    />
+                  </label>
+                );
+              })
+            : null}
           {choice === 'pdf' ? (
             <label className="fs-export-dialog__option">
               <span>Paper</span>
