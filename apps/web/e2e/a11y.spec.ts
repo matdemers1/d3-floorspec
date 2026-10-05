@@ -405,6 +405,69 @@ test('every screen and state has no axe violations, in light and in dark', async
   await page.waitForLoadState('networkidle');
   await audit(page, 'dashboard, a pending proposal');
 
+  // ── The brief (FLR-T-4.2) on the blank house: empty, the add-item dialog, items and lines, an
+  //    item and a line selected, relating by keyboard; then its layouts (FLR-T-4.3).
+  await page.goto(`/projects/${blank}/program`);
+  await expect(page.getByRole('heading', { name: 'No brief yet' })).toBeVisible();
+  await expect(page.locator('.fs-program__live')).toContainText('Live');
+  await audit(page, 'brief, empty');
+  await page.getByRole('button', { name: 'Add the first item' }).click();
+  const addDialog = page.getByRole('dialog', { name: 'Add a brief item' });
+  await expect(addDialog).toBeVisible();
+  await audit(page, 'brief, add-item dialog');
+  await addDialog.getByLabel('Name').fill('Living room');
+  await addDialog.getByLabel('Target area').fill('260 sq ft');
+  await addDialog.getByRole('button', { name: 'Add item' }).click();
+  await expect(addDialog).toBeHidden();
+  // The rest of the brief as one batch, the way Claude sends one.
+  const briefed = await page.request.post(`/api/projects/${blank}/ops`, {
+    data: {
+      batch: [
+        { op: 'addProgramItem', function: 'kitchen', name: 'Kitchen', targetArea: '140 sq ft' },
+        { op: 'addProgramItem', function: 'sleeping', name: 'Bedroom', count: 2, targetArea: '130 sq ft' },
+        { op: 'addProgramItem', function: 'bath', name: 'Bath', targetArea: '50 sq ft' },
+        { op: 'setAdjacency', a: 'item Kitchen', b: 'item Living room', kind: 'required' },
+        { op: 'setAdjacency', a: 'item Bedroom', b: 'item Bath', kind: 'preferred' },
+        { op: 'setAdjacency', a: 'item Kitchen', b: 'item Bedroom', kind: 'forbidden' },
+      ],
+    },
+  });
+  expect(briefed.status(), await briefed.text()).toBe(201);
+  const diagram = page.getByRole('group', { name: 'Bubble diagram: 4 items, 3 lines' });
+  await expect(diagram).toBeVisible();
+  await audit(page, 'brief and bubble diagram');
+  await diagram.getByRole('button', { name: /^Kitchen, / }).focus();
+  await page.keyboard.press('Enter');
+  const briefInspector = page.getByRole('complementary', { name: 'Brief inspector' });
+  await expect(briefInspector.getByRole('heading', { name: 'Kitchen' })).toBeVisible();
+  await audit(page, 'brief, an item selected');
+  await page.keyboard.press('r');
+  await expect(page.getByRole('status').filter({ hasText: 'Choose the bubble to relate' })).toBeVisible();
+  await audit(page, 'brief, relating by keyboard');
+  await page.keyboard.press('Escape');
+  await diagram.getByRole('button', { name: /^Kitchen ↔ Bedroom, forbidden/ }).focus();
+  await page.keyboard.press('Enter');
+  await expect(briefInspector.getByRole('heading', { name: 'Kitchen ↔ Bedroom' })).toBeVisible();
+  await audit(page, 'brief, a line selected');
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await expect(diagram).toBeVisible();
+  await audit(page, 'brief, tablet width');
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await page.getByRole('radio', { name: 'Layouts' }).click();
+  await expect(page.getByRole('heading', { name: 'No layouts for this version of the plan' })).toBeVisible();
+  await audit(page, 'layouts, none yet');
+  await page.getByRole('button', { name: 'Solve 3 layouts' }).click();
+  const candidates = page.getByRole('list', { name: 'Candidates, best first' }).getByRole('listitem');
+  await expect(candidates.first()).toBeVisible({ timeout: 30_000 });
+  await expect(candidates.first().getByRole('img')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await audit(page, 'layouts, candidates');
+  await page.goto(`/projects/${blank}`);
+  await expect(page.locator('[data-region="brief"]').getByRole('button', { name: 'Open the brief' })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await audit(page, 'dashboard, a brief and layout candidates');
+
   // ── Signed out: sign in, refused, and the two-factor step.
   await page.getByRole('button', { name: /Axe Tester/ }).click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
