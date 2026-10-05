@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { firstRunSetup, password, projectIn } from './support.js';
+import { firstRunSetup, password, projectIn, settled } from './support.js';
 
 /**
  * FLR-T-9.3: the P9 exit demo's drawings — "the PDF prints a dimensioned sheet per level." A
@@ -41,9 +41,10 @@ test('exports a dimensioned PDF sheet per level, DXF drawings, and the 3D model 
 
   // ── From the editor: Export opens the dialog; the dimensioned PDF is the default choice.
   await page.goto(`/projects/${project}/editor`);
+  await settled(page);
   await page.getByRole('button', { name: 'Export' }).click();
   const dialog = page.getByRole('dialog', { name: 'Export Two-storey ranch' });
-  await expect(dialog).toBeVisible();
+  await expect(dialog).toBeVisible({ timeout: 15_000 }); // its chunk loads lazily, slowly on a loaded runner
   await expect(dialog.getByRole('radio', { name: /Dimensioned PDF/ })).toHaveAttribute('aria-checked', 'true');
   await expect(dialog.getByRole('radio', { name: /IFC4 Reference View/ })).toBeEnabled();
   await expect(dialog).toContainText('Main floor + Upper floor');
