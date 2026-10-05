@@ -1,7 +1,9 @@
 import { McpServer, ResourceTemplate, type CallToolResult } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import { FloorspecApiError, type Committed, type FloorspecClient, type ProjectSummary, type RenderOptions } from './client.js';
-import { Batch, Lock } from './ops-schema.js';
+import { Batch, Lock, OP_BY_NAME_ONLY } from './ops-schema.js';
+import { hintsFor } from './hints.js';
+import { compactSchema } from './tool-schema.js';
 import { describe, describeJson } from './summary/index.js';
 import { query, QueryInput } from './query.js';
 import { findRoom } from './model.js';
@@ -15,8 +17,9 @@ import { DESIGN_PARTNER_PROMPT } from './prompts.js';
  * that runs code** (FLR-REQ-058): an agent changes the house by sending typed operations, and a
  * test enumerates the tools to keep it that way.
  *
- * Handles are minted by the server: a project is its ID, a changeset its ID. The protocol is
- * stateless, so every call names (or defaults) its project.
+ * Handles are minted by the server: a project is its ID, a changeset its ID — and every tool that
+ * takes a changeset takes its name as well, since names are unique among a project's pending
+ * changesets. The protocol is stateless, so every call names (or defaults) its project.
  */
 
 export const SERVER_NAME = 'd3-floorspec';
@@ -40,8 +43,11 @@ const ProjectHandle = z
   .min(1)
   .max(64)
   .optional()
-  .describe('The project handle (its ID). Optional when the credential reaches exactly one project.');
+  .describe('Project ID or name; optional if the credential reaches one.');
 const ChangesetHandle = z.string().min(1).max(120);
+/** A changeset to read: by name or ID, exactly as floorspec_apply takes one. */
+const PendingChangeset = ChangesetHandle.optional().describe("A pending changeset's name or ID; omitted, main.");
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface ServerOptions {
   readonly client: FloorspecClient;
@@ -55,11 +61,18 @@ function ok(summary: string, structured: Record<string, unknown>): CallToolResul
   return { content: [text(summary), text(structured)], structuredContent: structured };
 }
 
-/** A refusal the agent can act on: what failed, and the diagnostics with their fix operations. */
-function failure(error: unknown): CallToolResult {
+/**
+ * A refusal the agent can act on: what failed, the diagnostics with their fix operations, and — for
+ * the mistakes agents are known to make — a one-line hint with the fix. The coded diagnostics are
+ * passed on unchanged; a hint is only ever extra text.
+ */
+function failure(error: unknown, batch?: readonly { op: string }[]): CallToolResult {
   if (error instanceof FloorspecApiError) {
     const structured = { status: error.status, ...error.body };
-    const diagnostics = error.diagnostics.map((d) => `- ${d.code} ${d.severity}: ${d.message}${d.elements.length > 0 ? ` [${d.elements.join(', ')}]` : ''}`);
+    const diagnostics = [
+      ...error.diagnostics.map((d) => `- ${d.code} ${d.severity}: ${d.message}${d.elements.length > 0 ? ` [${d.elements.join(', ')}]` : ''}`),
+      ...hintsFor(error.diagnostics, batch).map((h) => `Hint: ${h}`),
+    ];
     const lead =
       error.status === 422
         ? 'Rejected: nothing changed.'
@@ -88,6 +101,30 @@ async function resolveProject(client: FloorspecClient, handle: string | undefine
   if (projects.length === 1 && projects[0] !== undefined) return projects[0];
   if (projects.length === 0) throw new ToolError('This credential reaches no projects. Create one in D3 Floorspec first.');
   throw new ToolError(`Name a project: ${projects.map((p) => `${p.name} (${p.id})`).join(', ')}.`);
+}
+
+/**
+ * A changeset handle as the API takes it — its ID — from what the agent gave: an ID, or the name
+ * of a pending changeset (unique among the project's pending ones), matched exactly and then
+ * ignoring case. An ID is passed through untouched for the API to judge.
+ */
+async function resolveChangeset(client: FloorspecClient, projectId: string, handle: string): Promise<{ id: string; name?: string }> {
+  const trimmed = handle.trim();
+  if (UUID.test(trimmed)) return { id: trimmed.toLowerCase() };
+  const pending = (await client.changesets(projectId)).filter((c) => c.status === 'pending');
+  const found =
+    pending.find((c) => c.name === trimmed) ?? (pending.filter((c) => c.name.toLowerCase() === trimmed.toLowerCase()).length === 1 ? pending.find((c) => c.name.toLowerCase() === trimmed.toLowerCase()) : undefined);
+  if (found !== undefined) return { id: found.id, name: found.name };
+  throw new ToolError(
+    pending.length === 0
+      ? `No pending changeset is named "${trimmed}": this project has no pending changesets.`
+      : `No pending changeset is named "${trimmed}". Pending: ${pending.map((c) => `"${c.name}" (${c.id})`).join(', ')}.`,
+  );
+}
+
+/** resolveChangeset for an optional argument: undefined is main. */
+async function changesetId(client: FloorspecClient, projectId: string, handle: string | undefined): Promise<string | undefined> {
+  return handle === undefined ? undefined : (await resolveChangeset(client, projectId, handle)).id;
 }
 
 /** How an apply landed, in words an agent cannot misread. */
@@ -120,9 +157,10 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     { name: SERVER_NAME, version: SERVER_VERSION },
     {
       instructions:
-        'Design a house as code. Read with floorspec_describe before editing; edit with typed Floorspec Ops ' +
+        'Design a house as code. Read with floorspec_describe before editing; edit with floorspec_apply, whose `batch` is a list of typed Floorspec Ops ' +
         '(references like "north wall of Kitchen", lengths like 12\' 6"); render and validate after every change. ' +
-        'Agent edits land in a pending changeset a person accepts. Never claim a change without a committed result and a render.',
+        'Agent edits land in a pending changeset a person accepts; every tool takes a changeset by name or ID. ' +
+        'The design-partner prompt has the working rules and example calls. Never claim a change without a committed result and a render.',
     },
   );
 
@@ -131,19 +169,22 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Describe the house',
       description:
-        'A room-centric summary of the model: rooms with feet-inch dimensions and net areas, walls by cardinal side with their openings, adjacency and the door graph, and open diagnostics. Read this first, before any edit.',
-      inputSchema: z.strictObject({
-        project: ProjectHandle,
-        changeset: ChangesetHandle.optional().describe('Describe a pending changeset instead of main.'),
-        level: z.string().min(1).max(64).optional().describe('Only this level.'),
-        room: z.string().min(1).max(200).optional().describe('Only this room (ID or name).'),
-      }),
+        'A room-centric summary: rooms with ft-in sizes and net areas, walls by side with their openings, adjacency, the door graph, diagnostics and the room functions. Read it before any edit.',
+      inputSchema: compactSchema(
+        z.strictObject({
+          project: ProjectHandle,
+          changeset: PendingChangeset,
+          level: z.string().min(1).max(64).optional().describe('Only this level.'),
+          room: z.string().min(1).max(200).optional().describe('Only this room (ID or name).'),
+        }),
+      ),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
-        const model = await client.model(project.id, args.changeset);
+        const changeset = args.changeset === undefined ? undefined : await resolveChangeset(client, project.id, args.changeset);
+        const model = await client.model(project.id, changeset?.id);
         // The room may be named, as the schema says, not only given by ID.
         let room: string | undefined;
         if (args.room !== undefined) {
@@ -158,11 +199,11 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           ...(args.level === undefined ? {} : { level: args.level }),
           ...(room === undefined ? {} : { room }),
         };
-        const where = `${project.name} at ${model.hash}${args.changeset === undefined ? ' (main)' : ` (changeset ${args.changeset}, pending)`}`;
+        const where = `${project.name} at ${model.hash}${changeset === undefined ? ' (main)' : ` (changeset ${changeset.name === undefined ? '' : `"${changeset.name}" `}${changeset.id}, pending)`}`;
         const summary = describeJson(model.document as object, options);
         return {
           content: [text(`${where}\n\n${describe(model.document as object, options)}`)],
-          structuredContent: { project: project.id, hash: model.hash, ...(args.changeset === undefined ? {} : { changeset: args.changeset }), summary },
+          structuredContent: { project: project.id, hash: model.hash, ...(changeset === undefined ? {} : { changeset: changeset.id }), summary },
         };
       } catch (error) {
         return failure(error);
@@ -175,14 +216,14 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Query elements',
       description:
-        'Elements by ID, kind, level, room or relationship, with geometry resolved in feet-inches and base units: the walls bounding a room, the openings in a wall, the rooms either side of a wall.',
-      inputSchema: z.strictObject({ project: ProjectHandle, changeset: ChangesetHandle.optional(), ...QueryInput }),
+        'Elements by ID, kind, level, room or relationship, with geometry in ft-in and base units: the walls bounding a room, the openings in a wall, the rooms either side of a wall.',
+      inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset, ...QueryInput })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ project: handle, changeset, ...args }) => {
       try {
         const project = await resolveProject(client, handle);
-        const model = await client.model(project.id, changeset);
+        const model = await client.model(project.id, await changesetId(client, project.id, changeset));
         const result = query(model.document, args);
         return ok(`${String(result.count)} element(s) at ${model.hash}.${result.notes.length > 0 ? ` ${result.notes.join(' ')}` : ''}`, {
           project: project.id,
@@ -200,17 +241,20 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Apply operations',
       description:
-        'Apply a batch of typed Floorspec Ops as one transaction: all commit or none. A person\'s write token commits to main; ' +
-        'an agent credential writes into a pending changeset (named by `changeset`, or after the credential). ' +
-        'A rejection changes nothing and returns diagnostics with fix operations. Ask for render: true and look at it.',
-      inputSchema: z.strictObject({
-        project: ProjectHandle,
-        batch: Batch,
-        locks: z.array(Lock).max(200).optional(),
-        changeset: ChangesetHandle.optional().describe('A changeset handle, or a name to open or append to.'),
-        ifMatch: z.string().regex(/^[0-9a-f]{64}$/).optional().describe('Apply only if the head is still at this version hash.'),
-        render: z.boolean().optional().describe('Also return a plan render of the result.'),
-      }),
+        'Apply `batch`, a list of typed Floorspec Ops, as one transaction: all commit or none. ' +
+        'Example: {"changeset":"Widen the kitchen","batch":[{"op":"resizeRoom","room":"Kitchen","side":"east","by":"2\'"}],"render":true}. ' +
+        'A write token commits to main; an agent credential writes into a pending changeset (`changeset`, or one named after the credential). ' +
+        'A rejection changes nothing and returns diagnostics with fix operations.',
+      inputSchema: compactSchema(
+        z.strictObject({
+          project: ProjectHandle,
+          batch: Batch,
+          locks: z.array(Lock).max(200).optional(),
+          changeset: ChangesetHandle.optional().describe('A changeset\'s name or ID; a new name opens one.'),
+          ifMatch: z.string().regex(/^[0-9a-f]{64}$/).optional().describe('Apply only if the head is still at this version hash.'),
+          render: z.boolean().optional().describe('Also return a plan render; look at it.'),
+        }),
+      ),
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async (args) => {
@@ -235,7 +279,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         }
         return { content, structuredContent: structured };
       } catch (error) {
-        return failure(error);
+        return failure(error, args.batch);
       }
     },
   );
@@ -245,14 +289,18 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose a changeset',
       description:
-        'Open a named changeset (or add to the pending one of that name) with an optional batch. Main does not change; a person reviews and accepts or rejects it. Returns the changeset handle.',
-      inputSchema: z.strictObject({
-        project: ProjectHandle,
-        name: z.string().trim().min(1).max(120).describe('What the change is, for the person reviewing it: "Widen the kitchen 2 ft".'),
-        batch: Batch.optional(),
-        locks: z.array(Lock).max(200).optional(),
-        render: z.boolean().optional(),
-      }),
+        'Open a named changeset (or add to the pending one of that name), with an optional batch as floorspec_apply takes. Main does not change; a person accepts or rejects it.',
+      inputSchema: compactSchema(
+        z.strictObject({
+          project: ProjectHandle,
+          name: z.string().trim().min(1).max(120).describe('What the change is, for the reviewer: "Widen the kitchen 2 ft".'),
+          batch: Batch.optional(),
+          locks: z.array(Lock).max(200).optional(),
+          render: z.boolean().optional(),
+        }),
+        // The union is spelled out once, on floorspec_apply; the batch is validated the same here.
+        { advertise: { Op: OP_BY_NAME_ONLY } },
+      ),
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
     async (args) => {
@@ -275,7 +323,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         }
         return { content, structuredContent: structured };
       } catch (error) {
-        return failure(error);
+        return failure(error, args.batch);
       }
     },
   );
@@ -287,19 +335,20 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         title: verb === 'accept' ? 'Accept a changeset' : 'Reject a changeset',
         description:
           verb === 'accept'
-            ? 'Merge a pending changeset into main: a fast-forward when main has not moved, otherwise a replay of its batches onto main; a replay that no longer applies is refused with diagnostics. A person\'s decision: agent credentials are refused.'
+            ? 'Merge a pending changeset into main (fast-forward, or a replay refused with diagnostics if it no longer applies). A person\'s decision: agent credentials are refused.'
             : 'Discard a pending changeset. A person\'s decision: agent credentials are refused.',
-        inputSchema: z.strictObject({ project: ProjectHandle, changeset: ChangesetHandle.describe('The changeset handle (its ID).') }),
+        inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: ChangesetHandle.describe("The pending changeset's name or ID.") })),
         annotations: { readOnlyHint: false, destructiveHint: verb === 'reject', openWorldHint: false },
       },
       async (args) => {
         try {
           const project = await resolveProject(client, args.project);
+          const changeset = (await resolveChangeset(client, project.id, args.changeset)).id;
           if (verb === 'accept') {
-            const result = await client.accept(project.id, args.changeset);
+            const result = await client.accept(project.id, changeset);
             return ok(`Accepted "${result.changeset.name}" by ${result.mode}; main is at ${result.hash}.`, { project: project.id, ...result });
           }
-          const result = await client.reject(project.id, args.changeset);
+          const result = await client.reject(project.id, changeset);
           return ok(`Rejected "${result.changeset.name}"; main is unchanged.`, { project: project.id, ...result });
         } catch (error) {
           return failure(error);
@@ -313,15 +362,16 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Validate',
       description: 'Schema, invariant and lint diagnostics for main or a pending changeset, from the reference engine.',
-      inputSchema: z.strictObject({ project: ProjectHandle, changeset: ChangesetHandle.optional() }),
+      inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
-        const result = await client.validate(project.id, args.changeset);
+        const result = await client.validate(project.id, await changesetId(client, project.id, args.changeset));
         const errors = result.diagnostics.filter((d) => d.severity === 'error').length;
-        return ok(`${result.valid ? 'Valid' : 'Not valid'}: ${String(errors)} error(s), ${String(result.diagnostics.length - errors)} other diagnostic(s).`, {
+        const hints = hintsFor(result.diagnostics).map((h) => ` Hint: ${h}`).join('');
+        return ok(`${result.valid ? 'Valid' : 'Not valid'}: ${String(errors)} error(s), ${String(result.diagnostics.length - errors)} other diagnostic(s).${hints}`, {
           project: project.id,
           ...result,
         });
@@ -337,17 +387,19 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
       title: 'Advisory findings',
       description:
         'Advisory code findings with citations, for main or a pending changeset. Findings advise and never block; nothing here means a design is compliant.',
-      inputSchema: z.strictObject({
-        project: ProjectHandle,
-        changeset: ChangesetHandle.optional(),
-        profile: z.string().min(1).max(64).optional().describe('A jurisdiction profile, once rule packs are installed.'),
-      }),
+      inputSchema: compactSchema(
+        z.strictObject({
+          project: ProjectHandle,
+          changeset: PendingChangeset,
+          profile: z.string().min(1).max(64).optional().describe('A jurisdiction profile, once rule packs are installed.'),
+        }),
+      ),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
-        const result = await client.findings(project.id, args.changeset);
+        const result = await client.findings(project.id, await changesetId(client, project.id, args.changeset));
         return ok(`${String(result.findings.length)} finding(s). ${result.note}`, { project: project.id, ...result });
       } catch (error) {
         return failure(error);
@@ -360,24 +412,27 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Render',
       description:
-        'A PNG of a level\'s plan, for main or a pending changeset (drawn ghosted against main as it was when the changeset opened). Look at it before describing a change. 3D is not available yet.',
-      inputSchema: z.strictObject({
-        project: ProjectHandle,
-        changeset: ChangesetHandle.optional(),
-        view: z.enum(['plan', '3d']).optional().describe('"plan" (default) or "3d" (not available yet).'),
-        level: z.string().min(1).max(64).optional().describe('The level to draw; default the lowest.'),
-        highlight: z.array(z.string().min(1).max(64)).max(100).optional().describe('Element IDs to draw in the accent colour.'),
-        width: z.int().min(256).max(4096).optional().describe('Pixels wide (default the plan\'s natural size).'),
-      }),
+        'A PNG of a level\'s plan, for main or a pending changeset (drawn ghosted against its base). Look at it before describing a change. 3D is not available yet.',
+      inputSchema: compactSchema(
+        z.strictObject({
+          project: ProjectHandle,
+          changeset: PendingChangeset,
+          view: z.enum(['plan', '3d']).optional().describe('"plan" (default); "3d" is not available yet.'),
+          level: z.string().min(1).max(64).optional().describe('The level to draw; default the lowest.'),
+          highlight: z.array(z.string().min(1).max(64)).max(100).optional().describe('Element IDs to draw in the accent colour.'),
+          width: z.int().min(256).max(4096).optional().describe('Pixels wide; default the natural size.'),
+        }),
+      ),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
+        const changeset = await changesetId(client, project.id, args.changeset);
         const png = await client.render(project.id, {
           view: args.view ?? 'plan',
           ...(args.level === undefined ? {} : { level: args.level }),
-          ...(args.changeset === undefined ? {} : { changeset: args.changeset }),
+          ...(changeset === undefined ? {} : { changeset }),
           ...(args.highlight === undefined ? {} : { highlight: args.highlight }),
           ...(args.width === undefined ? {} : { width: args.width }),
         });
@@ -393,14 +448,15 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Export',
       description: 'Export the model. Format "floorspec": the canonical Floorspec Core JSON. Other formats come later.',
-      inputSchema: z.strictObject({ project: ProjectHandle, changeset: ChangesetHandle.optional(), format: z.enum(['floorspec']).optional() }),
+      inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset, format: z.enum(['floorspec']).optional() })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
-        const model = await client.model(project.id, args.changeset);
-        const uri = modelUri(project.id, args.changeset);
+        const changeset = await changesetId(client, project.id, args.changeset);
+        const model = await client.model(project.id, changeset);
+        const uri = modelUri(project.id, changeset);
         return {
           content: [
             text(`Canonical Floorspec JSON for ${project.name} at ${model.hash}.`),

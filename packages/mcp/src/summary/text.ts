@@ -1,6 +1,7 @@
 /** The summary as plain, Markdown-ish text: what `describe` returns to an agent. */
 import { describeJson, SIDES, type DescribeOptions, type DocumentSummary, type EdgeSummary, type Neighbour, type OpeningSummary, type RoomSummary } from './summary.js';
 import { inches, lengthText } from './units.js';
+import { ROOM_FUNCTIONS_TEXT } from '../vocabulary.js';
 
 const SIDE_TITLES = { north: 'North', east: 'East', south: 'South', west: 'West' } as const;
 
@@ -68,6 +69,7 @@ export function summaryText(s: DocumentSummary): string {
     `Lengths are ft-in to 1/16", with exact base units in parentheses (1/1280 mm: 1 in = 32512, 1 ft = 390144); ≈ marks an irrational length rounded to the nearest unit. ` +
       `Areas are net, inside finished wall faces. Sides follow Floorspec Ops §3.4: "north wall of LIV" names the walls listed under North. ` +
       `Wall lengths are location lines; opening positions are measured from the wall's start junction.`,
+    ROOM_FUNCTIONS_TEXT,
   );
   if (!s.valid) out.push('', 'The document is NOT valid: fix the error diagnostics below first; geometry is reported only where it can be derived.');
   for (const l of s.levels) {

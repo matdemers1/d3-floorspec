@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { z } from 'zod';
-import { OpUnion } from '../src/ops-schema.js';
+import { OP_NAMES, OpUnion } from '../src/ops-schema.js';
+import { ROOM_FUNCTIONS } from '../src/vocabulary.js';
 
 /**
  * The typed tool inputs advertise exactly the members the standard's own schema allows for each
@@ -10,7 +11,7 @@ import { OpUnion } from '../src/ops-schema.js';
  * applier accepts but the tool schema refuses is an edit the agent cannot make.
  */
 const schema = JSON.parse(readFileSync(join(import.meta.dirname, '../../ops/standard/schema/ops/0.1/operation.schema.json'), 'utf8')) as {
-  $defs: Record<string, { properties?: Record<string, unknown>; required?: string[] }>;
+  $defs: Record<string, { properties?: Record<string, { const?: string; enum?: string[] }>; required?: string[] }>;
 };
 
 describe('the Ops input schema', () => {
@@ -24,4 +25,24 @@ describe('the Ops input schema', () => {
       expect(required).toEqual([...(def?.required ?? [])].sort());
     });
   }
+
+  it('has every operation the vendored schema defines', () => {
+    const vendored = Object.values(schema.$defs).flatMap((d) => (typeof d.properties?.['op']?.const === 'string' ? [d.properties['op'].const] : []));
+    expect([...OP_NAMES].sort()).toEqual(vendored.sort());
+  });
+
+  it('moves an opening toward exactly the directions the vendored schema allows', () => {
+    const toward = OpUnion.options.find((o) => o.shape.op.value === 'moveOpening')?.shape as Record<string, z.ZodType> | undefined;
+    for (const value of schema.$defs['moveOpening']?.properties?.['toward']?.enum ?? []) expect(toward?.['toward']?.safeParse(value).success, value).toBe(true);
+    expect(toward?.['toward']?.safeParse('up').success).toBe(false);
+  });
+});
+
+describe('the room functions', () => {
+  it('are exactly Core 4.1\'s terms, in its order', () => {
+    const room = JSON.parse(readFileSync(join(import.meta.dirname, '../../engine/standard/schema/core/0.1/room.schema.json'), 'utf8')) as {
+      $defs: { function: { anyOf: { enum?: string[] }[] } };
+    };
+    expect([...ROOM_FUNCTIONS]).toEqual(room.$defs.function.anyOf.find((a) => a.enum !== undefined)?.enum);
+  });
 });

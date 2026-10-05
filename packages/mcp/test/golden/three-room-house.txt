@@ -1,5 +1,6 @@
 # Floorspec summary: Three-room house
 Lengths are ft-in to 1/16", with exact base units in parentheses (1/1280 mm: 1 in = 32512, 1 ft = 390144); ≈ marks an irrational length rounded to the nearest unit. Areas are net, inside finished wall faces. Sides follow Floorspec Ops §3.4: "north wall of LIV" names the walls listed under North. Wall lengths are location lines; opening positions are measured from the wall's start junction.
+Room functions (Core 4.1): unspecified, sleeping, bath, kitchen, living, dining, office, laundry, utility, storage, circulation, mechanical, garage, exterior. Common mappings: study → office; closet, pantry → storage; mudroom → utility; powder room → bath; hall, foyer → circulation.
 
 ## Level MAIN "Main floor" — elevation 0' 0" (0), height 9' 0" (3511296), 3 rooms
 

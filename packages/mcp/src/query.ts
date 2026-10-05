@@ -18,8 +18,7 @@ export const QueryInput = {
   room: z.string().min(1).max(200).optional().describe('A room ID or name; with relationship, what relates to it.'),
   wall: z.string().min(1).max(64).optional().describe('A wall ID; with relationship, what relates to it.'),
   relationship: Relationship.optional().describe(
-    'With room: "boundary" (its walls and separators, the default), "openings" (in its boundary walls), "adjacent" (rooms across a boundary). ' +
-      'With wall: "hosted" (its openings, the default) or "sides" (the rooms on either side).',
+    'With room: "boundary" (default: its walls, separators), "openings" (in them), "adjacent" (rooms across them). With wall: "hosted" (default: its openings), "sides" (rooms either side).',
   ),
   limit: z.int().min(1).max(500).optional().describe('At most this many elements (default 100).'),
 };

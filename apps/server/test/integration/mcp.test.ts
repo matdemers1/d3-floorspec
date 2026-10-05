@@ -140,6 +140,56 @@ describe('the MCP endpoint', () => {
     expect((await operator.post(`/api/projects/${project.id}/changesets/${changeset}/accept`)).status).toBe(200);
   });
 
+  it('takes a pending changeset by its name on every tool, as apply does', async () => {
+    const mcp = await connect(`Bearer ${await tokenFor(operator, project.id, 'agent', 'Claude Code')}`);
+    const name = 'Rename the kitchen';
+    const proposed = await mcp.callTool({ name: 'floorspec_propose', arguments: { name, batch: [{ op: 'setProperty', id: 'R1', path: '/name', value: 'Galley' }] } });
+    const id = (proposed.structuredContent as { changeset: { id: string } }).changeset.id;
+    // apply by name appends to it…
+    const applied = await mcp.callTool({ name: 'floorspec_apply', arguments: { changeset: name, batch: [{ op: 'setProperty', id: 'R1', path: '/function', value: 'kitchen' }] } });
+    expect(applied.structuredContent).toMatchObject({ changeset: { id } });
+    // …and every other tool reads it by name too.
+    const described = await mcp.callTool({ name: 'floorspec_describe', arguments: { changeset: name } });
+    expect(described.isError, texts(described)).toBeFalsy();
+    expect(texts(described)).toContain('Galley');
+    expect(texts(described)).toContain(`(changeset "${name}" ${id}, pending)`);
+    const queried = await mcp.callTool({ name: 'floorspec_query', arguments: { changeset: name, ids: ['R1'] } });
+    expect(JSON.stringify(queried.structuredContent)).toContain('Galley');
+    const validated = await mcp.callTool({ name: 'floorspec_validate', arguments: { changeset: name } });
+    expect(validated.structuredContent).toMatchObject({ head: `cs/${id}` });
+    const findings = await mcp.callTool({ name: 'floorspec_findings', arguments: { changeset: name } });
+    expect(findings.structuredContent).toMatchObject({ head: `cs/${id}` });
+    expect(images(await mcp.callTool({ name: 'floorspec_render', arguments: { changeset: name, width: 512 } }))).toHaveLength(1);
+    const exported = await mcp.callTool({ name: 'floorspec_export', arguments: { changeset: name } });
+    expect(JSON.stringify(exported.content)).toContain('Galley');
+    const accept = await mcp.callTool({ name: 'floorspec_accept', arguments: { changeset: name } });
+    expect(texts(accept)).toContain('FLR-ADR-016');
+    const unknown = await mcp.callTool({ name: 'floorspec_validate', arguments: { changeset: 'Widen the bath' } });
+    expect(unknown.isError).toBe(true);
+    expect(texts(unknown)).toContain(`Pending: "${name}" (${id})`);
+  });
+
+  it('adds a hint to the rejections agents are known to hit, leaving the diagnostics as they were', async () => {
+    const mcp = await connect(`Bearer ${await tokenFor(operator, project.id, 'write')}`);
+    const cased = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [{ op: 'addOpening', wall: 'W3', at: 'centered', width: '36"' }] } });
+    expect(cased.isError).toBe(true);
+    expect(texts(cased)).toMatch(/FS-INV-301 error: .*height does not resolve/);
+    expect(texts(cased)).toContain("Hint: An opening without a fill type needs `height` — door height is usually 6' 8\"");
+    expect(JSON.stringify(cased.structuredContent)).not.toContain('Hint');
+
+    const study = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [{ op: 'setProperty', id: 'R1', path: '/function', value: 'study' }] } });
+    expect(texts(study)).toContain('FS-SCH-001 error: /rooms/R1/function');
+    expect(texts(study)).toContain('Hint: Room functions (Core 4.1): unspecified, sleeping');
+    expect(texts(study)).toContain('study → office');
+
+    const midBatch = await mcp.callTool({
+      name: 'floorspec_apply',
+      arguments: { batch: [{ op: 'drawWall', level: 'L1', from: [2560000, -390144], to: [2560000, 4230144] }, { op: 'resizeRoom', room: 'Kitchen', side: 'east', by: "1'" }] },
+    });
+    expect(texts(midBatch)).toContain('FS-OPS-007');
+    expect(texts(midBatch)).toContain('Hint: Walls drawn in this batch join the plan when the batch ends; apply this operation in a second batch.');
+  });
+
   it('reports findings honestly, and 3D as not available yet', async () => {
     const mcp = await connect(`Bearer ${await tokenFor(operator, project.id, 'read')}`);
     const findings = await mcp.callTool({ name: 'floorspec_findings', arguments: {} });

@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
+import { AjvJsonSchemaValidator } from '@modelcontextprotocol/server/validators/ajv';
 import { describe, expect, it } from 'vitest';
+import { ROOM_FUNCTIONS } from '../src/vocabulary.js';
 import {
   createFloorspecMcpHandler,
   DESIGN_PARTNER_PROMPT,
@@ -38,12 +40,15 @@ const HOUSE = {
 };
 
 const PROJECT = { id: '01a10000-0000-7000-8000-000000000001', name: 'Lake house', head: 'a'.repeat(64) };
+const CHANGESET = { id: '01a10000-0000-7000-8000-0000000000c5', name: 'Widen the kitchen', status: 'pending' as const, base: PROJECT.head, head: 'c'.repeat(64), ops: 1 };
 
 /** A client that answers from memory and records what the tools asked of it. */
 class MemoryClient implements FloorspecClient {
   readonly calls: { method: string; args: unknown[] }[] = [];
   agent = false;
   renderable = false;
+  /** The next apply is refused with these diagnostics. */
+  rejectNext: { code: string; severity: 'error'; message: string; elements: string[] }[] | null = null;
 
   private record(method: string, ...args: unknown[]) {
     this.calls.push({ method, args });
@@ -58,6 +63,11 @@ class MemoryClient implements FloorspecClient {
   }
   apply(projectId: string, input: { batch: readonly unknown[] }): Promise<Committed> {
     this.record('apply', projectId, input);
+    if (this.rejectNext !== null) {
+      const diagnostics = this.rejectNext;
+      this.rejectNext = null;
+      return Promise.reject(new FloorspecApiError(422, { type: '/problems/ops-rejected', error: 'the batch was rejected and nothing changed', diagnostics }));
+    }
     if (JSON.stringify(input.batch).includes('W99')) {
       return Promise.reject(
         new FloorspecApiError(422, {
@@ -83,8 +93,9 @@ class MemoryClient implements FloorspecClient {
     this.record('propose', projectId, input);
     return Promise.resolve({ changeset: { id: 'cs-1', name: input.name, status: 'pending' as const, base: PROJECT.head, head: PROJECT.head, ops: 0 }, applied: null });
   }
-  changesets() {
-    return Promise.resolve([]);
+  changesets(projectId: string) {
+    this.record('changesets', projectId);
+    return Promise.resolve([CHANGESET]);
   }
   accept(projectId: string, changesetId: string) {
     this.record('accept', projectId, changesetId);
@@ -94,10 +105,12 @@ class MemoryClient implements FloorspecClient {
     this.record('reject', projectId, changesetId);
     return Promise.resolve({ changeset: { id: changesetId, name: 'x', status: 'rejected' as const, base: '', head: null, ops: 0 } });
   }
-  validate() {
+  validate(projectId: string, changeset?: string) {
+    this.record('validate', projectId, changeset);
     return Promise.resolve({ head: 'main', hash: PROJECT.head, valid: true, diagnostics: [] });
   }
-  findings() {
+  findings(projectId: string, changeset?: string) {
+    this.record('findings', projectId, changeset);
     return Promise.resolve({ head: 'main', hash: PROJECT.head, findings: [], rulePacks: [], note: 'No rule packs are installed yet.' });
   }
   render(projectId: string, options: RenderOptions) {
@@ -128,16 +141,59 @@ describe('the MCP server', () => {
     });
   }
 
-  it('advertises the Floorspec Ops union as the batch item schema, with exactly each op\'s members', async () => {
+  it('advertises the Floorspec Ops union once, under apply\'s $defs, with exactly each op\'s members', async () => {
     const mcp = await connect(new MemoryClient());
     const { tools } = await mcp.listTools();
-    for (const name of ['floorspec_apply', 'floorspec_propose']) {
-      const schema = tools.find((t) => t.name === name)?.inputSchema as unknown as { properties: { batch: { items: { oneOf: { properties: { op: { const: string } }; additionalProperties: boolean }[] } } } };
-      const variants = schema.properties.batch.items.oneOf;
-      expect(variants.map((v) => v.properties.op.const).sort()).toEqual([...OP_NAMES].sort());
-      expect(variants.every((v) => !v.additionalProperties)).toBe(true);
+    type Variant = { properties: { op: { const: string } }; additionalProperties: boolean };
+    type Schema = { properties: { batch: { items: { $ref: string } } }; $defs: Record<string, { type?: string; oneOf?: Variant[]; properties?: { op: { enum: string[] } } }> };
+    const apply = tools.find((t) => t.name === 'floorspec_apply')?.inputSchema as unknown as Schema;
+    expect(apply.properties.batch.items.$ref).toBe('#/$defs/Op');
+    const variants = apply.$defs['Op']?.oneOf ?? [];
+    expect(apply.$defs['Op']?.type).toBe('object');
+    expect(variants.map((v) => v.properties.op.const).sort()).toEqual([...OP_NAMES].sort());
+    expect(variants.every((v) => !v.additionalProperties && 'additionalProperties' in v)).toBe(true);
+    expect(OP_NAMES).toEqual(expect.arrayContaining(['resizeRoom', 'addOpening', 'drawWall', 'moveWall', 'removeWall', 'setProperty', 'moveOpening', 'addLevel']));
+    // Propose names the same operations and leaves their members to apply's schema.
+    const propose = tools.find((t) => t.name === 'floorspec_propose')?.inputSchema as unknown as Schema;
+    expect(propose.properties.batch.items.$ref).toBe('#/$defs/Op');
+    expect(propose.$defs['Op']?.properties?.op.enum).toEqual([...OP_NAMES]);
+    expect(JSON.stringify(propose)).not.toContain('"Length"');
+  });
+
+  it('keeps tools/list within its budget', async () => {
+    const mcp = await connect(new MemoryClient());
+    const listing = await mcp.listTools();
+    const size = JSON.stringify(listing).length;
+    process.stderr.write(`tools/list: ${String(size)} bytes (${String(JSON.stringify(listing, null, 2).length)} pretty-printed)\n`);
+    // Was ~57 KB (130 KB pretty) with the operation union inlined at every member, twice over.
+    expect(size).toBeLessThan(25_000);
+  });
+
+  it('advertises a schema that accepts and refuses what the tool does', async () => {
+    const mcp = await connect(new MemoryClient());
+    const { tools } = await mcp.listTools();
+    const ajv = new AjvJsonSchemaValidator();
+    const cases: { batch: unknown[]; ok: boolean }[] = [
+      { batch: [{ op: 'resizeRoom', room: 'Kitchen', side: 'east', by: "2'" }], ok: true },
+      { batch: [{ op: 'addOpening', wall: 'east wall of Kitchen', at: 'centered', width: 1170432, height: '6\' 8"' }], ok: true },
+      { batch: [{ op: 'setProperty', id: '$project', path: '/name', value: { any: ['json', 1, null] } }], ok: true },
+      { batch: [{ op: 'moveOpening', opening: 'O1', by: "1'", toward: 'east' }], ok: true },
+      { batch: [{ op: 'addLevel', building: 'B1', below: 'L1', height: "8'" }], ok: true },
+      { batch: [{ op: 'drawWall', level: 'L1', from: [0, 0], to: "12' east of J4", justification: 'center' }], ok: true },
+      { batch: [{ op: 'resizeRoom', room: 'Kitchen', side: 'up', by: "2'" }], ok: false },
+      { batch: [{ op: 'removeElement', id: 'W1', also: 1 }], ok: false },
+      { batch: [{ op: 'runScript', code: 'rm -rf /' }], ok: false },
+      { batch: [{ op: 'drawWall', level: 'L1', from: [0], to: 'J2' }], ok: false },
+      { batch: [{ op: 'setProperty', id: 'R1', path: 'name', value: 1 }], ok: false },
+      { batch: ['resizeRoom'], ok: false },
+      { batch: [], ok: false },
+    ];
+    const check = ajv.getValidator(tools.find((t) => t.name === 'floorspec_apply')?.inputSchema as never);
+    for (const { batch, ok } of cases) {
+      expect(check({ batch }).valid, JSON.stringify(batch)).toBe(ok);
+      const result = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch } });
+      expect(result.isError ?? false, JSON.stringify(batch)).toBe(!ok);
     }
-    expect(OP_NAMES).toEqual(expect.arrayContaining(['resizeRoom', 'addOpening', 'drawWall', 'moveWall', 'removeWall', 'setProperty']));
   });
 
   /**
@@ -259,9 +315,100 @@ describe('the MCP server', () => {
 
   it('relays a refused accept as an error', async () => {
     const mcp = await connect(new MemoryClient());
-    const result = await mcp.callTool({ name: 'floorspec_accept', arguments: { changeset: 'cs-1' } });
+    const result = await mcp.callTool({ name: 'floorspec_accept', arguments: { changeset: CHANGESET.id } });
     expect(result.isError).toBe(true);
     expect(texts(result)).toContain('FLR-ADR-016');
+  });
+
+  it('takes a pending changeset by name or ID on every tool that reads or decides one', async () => {
+    const client = new MemoryClient();
+    client.renderable = true;
+    const mcp = await connect(client);
+    const { tools } = await mcp.listTools();
+    const reads = ['floorspec_describe', 'floorspec_query', 'floorspec_validate', 'floorspec_findings', 'floorspec_render', 'floorspec_export'];
+    for (const name of [...reads, 'floorspec_accept', 'floorspec_reject', 'floorspec_apply']) {
+      const schema = tools.find((t) => t.name === name)?.inputSchema as unknown as { properties: { changeset: { description: string } } };
+      expect(schema.properties.changeset.description, name).toMatch(/name or ID/);
+    }
+    // What each tool hands the API for the changeset it was given.
+    const sent = (tool: string): unknown => {
+      const call = client.calls.filter((c) => c.method !== 'listProjects' && c.method !== 'changesets').at(-1);
+      return tool === 'floorspec_render' ? (call?.args[1] as RenderOptions).changeset : call?.args[1];
+    };
+    for (const handle of [CHANGESET.name, CHANGESET.id, CHANGESET.name.toUpperCase()]) {
+      for (const tool of reads) {
+        const result = await mcp.callTool({ name: tool, arguments: { changeset: handle } });
+        expect(result.isError ?? false, `${tool} ${handle}: ${texts(result)}`).toBe(false);
+        expect(sent(tool), `${tool} ${handle}`).toBe(CHANGESET.id);
+      }
+      await mcp.callTool({ name: 'floorspec_reject', arguments: { changeset: handle } });
+      expect(sent('floorspec_reject')).toBe(CHANGESET.id);
+      const accept = await mcp.callTool({ name: 'floorspec_accept', arguments: { changeset: handle } });
+      expect(texts(accept)).toContain('FLR-ADR-016');
+      expect(sent('floorspec_accept')).toBe(CHANGESET.id);
+    }
+    const described = await mcp.callTool({ name: 'floorspec_describe', arguments: { changeset: CHANGESET.name } });
+    expect(texts(described)).toContain(`(changeset "${CHANGESET.name}" ${CHANGESET.id}, pending)`);
+    expect(described.structuredContent).toMatchObject({ changeset: CHANGESET.id });
+
+    // A name no pending changeset has is refused before anything else is read, naming the ones there are.
+    const before = client.calls.length;
+    const missing = await mcp.callTool({ name: 'floorspec_validate', arguments: { changeset: 'Widen the bath' } });
+    expect(missing.isError).toBe(true);
+    expect(texts(missing)).toContain('No pending changeset is named "Widen the bath". Pending: "Widen the kitchen"');
+    expect(client.calls.slice(before).map((c) => c.method)).toEqual(['listProjects', 'changesets']);
+  });
+
+  describe('a rejection that teaches', () => {
+    const reject = async (diagnostics: { code: string; message: string; elements?: string[] }[], batch: unknown[]) => {
+      const client = new MemoryClient();
+      client.rejectNext = diagnostics.map((d) => ({ severity: 'error' as const, elements: [], ...d }));
+      const mcp = await connect(client);
+      return mcp.callTool({ name: 'floorspec_apply', arguments: { batch } });
+    };
+    const hints = (result: { content?: unknown }) => texts(result).split('\n').filter((l) => l.startsWith('Hint: '));
+
+    it('says a cased opening needs a height, and keeps the coded diagnostic as it was', async () => {
+      const diagnostic = { code: 'FS-INV-301', message: "O1's height does not resolve: neither the opening nor its fill gives it.", elements: ['O1'] };
+      const result = await reject([diagnostic], [{ op: 'addOpening', wall: 'W1', at: 'centered', width: '36"' }]);
+      expect(result.isError).toBe(true);
+      expect(texts(result)).toContain("- FS-INV-301 error: O1's height does not resolve");
+      expect(hints(result)).toEqual([`Hint: An opening without a fill type needs \`height\` — door height is usually 6' 8" (a cased opening 6' 8" to 7' 0").`]);
+      expect(result.structuredContent).toMatchObject({ status: 422, diagnostics: [{ ...diagnostic, severity: 'error' }] });
+      expect(JSON.stringify(result.structuredContent)).not.toContain('Hint');
+    });
+
+    it('lists the room functions when one is not a Core term', async () => {
+      const result = await reject(
+        [
+          { code: 'FS-SCH-001', message: '/rooms/R1/function: must be equal to one of the allowed values' },
+          { code: 'FS-SCH-001', message: '/rooms/R1/function: must match pattern "^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+:[a-z][A-Za-z0-9]*$"' },
+        ],
+        [{ op: 'addRoom', level: 'L1', at: 'J1', function: 'study' }],
+      );
+      const [hint] = hints(result);
+      expect(hints(result)).toHaveLength(1);
+      for (const term of ROOM_FUNCTIONS) expect(hint).toContain(term);
+      expect(hint).toContain('study → office');
+    });
+
+    it('says a selector after a drawWall must wait for the next batch', async () => {
+      const result = await reject(
+        [{ code: 'FS-OPS-007', message: 'level L1 has no faces to read: junction J9 lies inside W3 (Core 5.3.2)', elements: ['L1'] }],
+        [
+          { op: 'drawWall', level: 'L1', from: 'J1', to: 'J3' },
+          { op: 'resizeRoom', room: 'Kitchen', side: 'east', by: "2'" },
+        ],
+      );
+      expect(hints(result)).toEqual(['Hint: Walls drawn in this batch join the plan when the batch ends; apply this operation in a second batch.']);
+    });
+
+    it('gives no hint for a rejection it has nothing to add to', async () => {
+      const result = await reject([{ code: 'FS-OPS-003', message: 'W99 does not exist.' }], [{ op: 'removeElement', id: 'W99' }]);
+      expect(hints(result)).toEqual([]);
+      const noLevel = await reject([{ code: 'FS-OPS-007', message: 'level L9 has no faces to read: there is no level L9' }], [{ op: 'drawWall', level: 'L9', from: 'J1', to: 'J2' }]);
+      expect(hints(noLevel)).toEqual([]);
+    });
   });
 
   it('exports canonical JSON as a resource, and reads it as one', async () => {

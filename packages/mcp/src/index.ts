@@ -17,6 +17,8 @@ export {
 } from './client.js';
 export { Batch, Length, Lock, OP_NAMES, OpUnion, type OpInput } from './ops-schema.js';
 export { DESIGN_PARTNER_PROMPT } from './prompts.js';
+export { hintsFor } from './hints.js';
+export { ROOM_FUNCTIONS, ROOM_FUNCTION_MAPPINGS, ROOM_FUNCTIONS_TEXT } from './vocabulary.js';
 export { query } from './query.js';
 export { formatFeetInches } from './units.js';
 export * from './summary/index.js';
