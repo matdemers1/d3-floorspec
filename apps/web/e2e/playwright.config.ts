@@ -26,6 +26,8 @@ import { defineConfig, devices } from '@playwright/test';
  *                   pinned to a wall by an invited account, seen live and resolved by the owner, revoked.
  *   - `assets`    — FLR-T-8.2: a tile photo dropped in, calibrated to 12", applied to a backsplash
  *                   region and drawn in 3D; the asset store on a directory of its own (ASSET_DIR).
+ *   - `sun`       — FLR-T-8.6: the sun and shadow study — the site placed through the panel, a date and
+ *                   a time, the light three.js draws checked against the solar module, night, play.
  *
  * Run with:
  *
@@ -33,7 +35,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`). E2E_PORT is the keyboard suite's port; the others take the next eleven.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`). E2E_PORT is the keyboard suite's port; the others take the next twelve.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -88,6 +90,8 @@ const SUITES: Suite[] = [
   { name: 'share', spec: 'share.spec.ts', port: PORT + 10, database: databaseFor('share'), setupToken: true, gl: true, env: { RULE_PACKS_DIR: `${web}e2e/fixtures/rule-packs` } },
   // Content-addressed, so a directory shared across runs only ever holds the same bytes under the same names.
   { name: 'assets', spec: 'assets.spec.ts', port: PORT + 11, database: databaseFor('assets'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-assets') } },
+  // FLR-T-8.6: the sun and shadow study — a site placed, a date and time, the light and its shadows checked.
+  { name: 'sun', spec: 'sun.spec.ts', port: PORT + 12, database: databaseFor('sun'), setupToken: true, gl: true },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;
