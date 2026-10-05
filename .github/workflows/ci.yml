@@ -142,6 +142,8 @@ jobs:
         run: pnpm --filter @floorspec/ops test:browser
       - name: Rules measure tests and the Rules suite in the browser, byte for byte against Node
         run: pnpm --filter @floorspec/rules-engine test:browser
+      - name: Mesh property tests in the browser, and its meshes byte for byte against Node's
+        run: pnpm turbo run build --filter='@floorspec/mesh^...' && pnpm --filter @floorspec/mesh test:browser
 
   unit:
     needs: conformance
