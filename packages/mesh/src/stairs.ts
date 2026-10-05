@@ -1,5 +1,5 @@
 /**
- * Stairs (Core 0.3, chapter 17), from their derived steps (17.5).
+ * Stairs (Core 0.3 and 0.4, chapter 17), from their derived steps (17.5, 17.7).
  *
  * Every tread and landing, in the order they are walked up, is a block of its outline from the top
  * of the piece two before it (the stair's bottom for the first two) up to its own top: two risers
@@ -7,8 +7,11 @@
  * solid with a stepped soffit under it, never pieces that touch only along an edge. A flight's
  * treads are unioned by manifold-3d into one part; each landing is a part of its own.
  *
- * A winder or spiral stair, whose steps this draft does not derive (17.7), is a placeholder: its
- * box (17.4) as a block.
+ * A winder stair's winders are treads like any other, so its two flights and the winders between
+ * them are one solid; a spiral stair's treads are one solid too, wound round its centre column — a
+ * cylinder of its column's radius, the space its treads leave (Core 17.7), or a slender pole where
+ * they meet at the centre — from its bottom to its top. A winder or spiral stair whose steps are not
+ * derived (read as a Core 0.3 reader reads it) is a placeholder: its box (17.4) as a block.
  */
 import type { Derived, FloorspecDocument } from '@floorspec/engine';
 import { get } from './own.js';
@@ -16,6 +19,11 @@ import { MeshBuilder, type P2 } from './builder.js';
 import { scoped, type Kernel } from './kernel.js';
 import type { RawPart } from './part.js';
 import type { Box3 } from './types.js';
+
+/** How many sides a spiral stair's column is drawn with: a mesh is not normative (Core 0.5), and 32 reads as round. */
+const COLUMN_SIDES = 32;
+/** The radius of the pole a spiral stair whose treads meet at its centre is drawn round: 1 in. */
+const POLE = 32_512;
 
 interface Piece {
   outline: P2[];
@@ -73,6 +81,19 @@ export function stairParts(kernel: Kernel, doc: FloorspecDocument, derived: Deri
       }
       flight = [];
     };
+    const st = get(doc.stairs, id)!;
+    if (st.form?.kind === 'spiral' && s.centre !== undefined && want('stairColumn')) {
+      const r = st.form.diameter / 2 - st.width;
+      const radius = r > 0 ? r : POLE;
+      const [cx, cy] = s.centre;
+      const ring: P2[] = Array.from({ length: COLUMN_SIDES }, (_, i) => {
+        const a = (2 * Math.PI * i) / COLUMN_SIDES;
+        return [Math.round(cx + radius * Math.cos(a)), Math.round(cy + radius * Math.sin(a))];
+      });
+      const b = new MeshBuilder(kernel);
+      b.prism([ring], s.bottom, s.top);
+      out.push({ kind: 'stairColumn', id, level, piece: 'column', closed: true, exact: b });
+    }
     for (const p of pieces) {
       if (!p.landing) {
         flight.push(p);

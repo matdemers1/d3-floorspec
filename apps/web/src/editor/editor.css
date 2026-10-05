@@ -658,8 +658,8 @@
   stroke-width: 1.25;
   stroke-dasharray: 8 3 2 3;
 }
-/* Stairs (Core 0.3, 17): treads and landings, dashed above the plan's cut plane, a break line at
-   the cut, and an UP arrow along the walkline (render2d's symbols). */
+/* Stairs (Core 0.3 and 0.4, 17): treads, landings and winders, dashed above the plan's cut plane, a
+   break line at the cut, and an UP arrow along the walkline (render2d's symbols). */
 .fs-stair__step {
   fill: none;
   stroke: var(--color-fg-muted);
@@ -670,6 +670,12 @@
 }
 .fs-stair__step--above {
   stroke-dasharray: 3 3;
+}
+/* Core 0.4 (17.7): a spiral stair's centre column, solid, under its tapered treads. */
+.fs-stair__column {
+  fill: var(--color-fg-muted);
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
 }
 .fs-stair__bounds {
   fill: none;

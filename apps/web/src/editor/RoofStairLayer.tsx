@@ -5,9 +5,10 @@ import type { LevelView, Point, Ring } from './model';
 import { toScreen } from './viewport';
 
 /**
- * Roofs and stairs on the plan canvas (Core 0.3, chapters 16 and 17; FLR-T-7.2, 7.3). The symbols
- * are @floorspec/render2d's — the same treads, cut line, UP arrow, eave outline and ridge, hip and
- * valley lines the SVG plan draws — placed on the canvas's viewport. Nothing here derives geometry:
+ * Roofs and stairs on the plan canvas (Core 0.3 and 0.4, chapters 16 and 17; FLR-T-7.2, 7.3, 11.3).
+ * The symbols are @floorspec/render2d's — the same treads and winders, a spiral's circle and column,
+ * cut line, UP arrow, eave outline and ridge, hip and valley lines the SVG plan draws — placed on the
+ * canvas's viewport. Nothing here derives geometry:
  * every point is one the engine derived.
  */
 
@@ -37,16 +38,24 @@ export function StairsLayer({ view, level }: { view: Viewport; level: LevelView 
   return (
     <g className="fs-plan2__stairs">
       {level.stairs.map((st) => {
-        const sym = stairSymbol(st.derived, st.form);
+        const sym = stairSymbol(st.derived, st.form, st.column);
         const up = S(view, sym.up);
         return (
           <g key={st.id} data-stair={st.id}>
             {sym.steps.map((step, i) => (
-              <polygon key={i} className={['fs-stair__step', step.landing ? 'fs-stair__step--landing' : '', step.above ? 'fs-stair__step--above' : ''].join(' ')} points={pts(view, step.outline)} />
+              <polygon
+                key={i}
+                data-step={step.landing ? 'landing' : step.winder ? 'winder' : 'tread'}
+                className={['fs-stair__step', step.landing ? 'fs-stair__step--landing' : '', step.above ? 'fs-stair__step--above' : ''].join(' ')}
+                points={pts(view, step.outline)}
+              />
             ))}
             {sym.bounds !== null ? <polygon className="fs-stair__bounds" points={pts(view, sym.bounds)} /> : null}
             {sym.circle !== null ? (
               <circle className="fs-stair__step" cx={S(view, sym.circle.centre)[0]} cy={S(view, sym.circle.centre)[1]} r={sym.circle.radius * view.s} />
+            ) : null}
+            {sym.column !== null ? (
+              <circle className="fs-stair__column" data-column={st.id} cx={S(view, sym.column.centre)[0]} cy={S(view, sym.column.centre)[1]} r={sym.column.radius * view.s} />
             ) : null}
             {sym.cut !== null ? (
               <line className="fs-stair__cut" x1={S(view, sym.cut[0])[0]} y1={S(view, sym.cut[0])[1]} x2={S(view, sym.cut[1])[0]} y2={S(view, sym.cut[1])[1]} />

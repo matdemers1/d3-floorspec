@@ -6,6 +6,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { deriveEvaluation, evaluate, InvalidDocumentError } from '@floorspec/engine';
 import house from '../../engine/standard/conformance/core/0.3/examples/001-three-room-house/input.json' with { type: 'json' };
 import lStair from '../../engine/standard/conformance/core/0.3/stairs/007-l-stair-with-landing/input.json' with { type: 'json' };
+import winder from '../../engine/standard/conformance/core/0.4/stairs/050-winder-with-newel/input.json' with { type: 'json' };
+import spiral from '../../engine/standard/conformance/core/0.4/stairs/057-spiral-under-a-floor/input.json' with { type: 'json' };
 import { flatShaded, loadMesher, meshDocument, PART_KINDS, UNITS_PER_METRE, type HouseMesh, type Mesher } from '../src/index.js';
 import { loadKernel, type Kernel } from '../src/kernel.js';
 import { checkHouse, hits } from './props.js';
@@ -60,6 +62,26 @@ describe('meshDocument', () => {
     const stair = mesher.meshDocument(lStair, { include: ['stairFlight', 'stairLanding'] });
     expect(stair.parts.map((p) => p.key)).toEqual(['stairFlight:ST1:flight1', 'stairFlight:ST1:flight2', 'stairLanding:ST1:landing1']);
     expect(new Set(stair.parts.map((p) => p.id))).toEqual(new Set(['ST1']));
+  });
+
+  it('meshes a winder stair as one solid, its winders between its flights (Core 0.4, 17.7)', () => {
+    const m = mesher.meshDocument(winder, { include: ['stairFlight', 'stairLanding', 'stairColumn', 'stairBlock'], stats: true });
+    expect(m.parts.map((p) => p.key)).toEqual(['stairFlight:ST1:flight1']);
+    const ev = evaluate(winder);
+    const d = deriveEvaluation(ev);
+    const sum = checkHouse(kernel, ev.document!, d, mesher.meshDerived(ev.document!, d, { stats: true }), 'winder');
+    expect(sum.solids).toBeGreaterThan(5);
+  });
+
+  it('meshes a spiral stair as its treads round a centre column', () => {
+    const m = mesher.meshDocument(spiral, { include: ['stairFlight', 'stairColumn', 'stairBlock'] });
+    expect(m.parts.map((p) => p.key)).toEqual(['stairFlight:ST1:flight1', 'stairColumn:ST1:column']);
+    const column = m.parts.find((p) => p.kind === 'stairColumn')!;
+    expect(column.closed).toBe(true);
+    const ev = evaluate(spiral);
+    const d = deriveEvaluation(ev);
+    const sum = checkHouse(kernel, ev.document!, d, mesher.meshDerived(ev.document!, d, { stats: true }), 'spiral');
+    expect(sum.solids).toBeGreaterThan(5);
   });
 
   it('subtracts the origin before converting to metres, and nothing else changes', () => {

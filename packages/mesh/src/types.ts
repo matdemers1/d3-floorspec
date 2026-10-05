@@ -30,9 +30,10 @@ export interface Box3 {
  * | `slab` | slab | solid (15.7) |
  * | `roof` | roof | solid: with a thickness, the surface thickened down by it; without, the shell closed by its gable ends and a soffit at the eave (16.5). A flat roof without thickness is a surface facing up |
  * | `roofGable` | roof | surface: a gable end (16.5), emitted only for a roof with a thickness, whose solid does not close it |
- * | `stairFlight` | stair | solid: one flight's treads, each from two risers below its top to its top, unioned |
+ * | `stairFlight` | stair | solid: one flight's treads, each from two risers below its top to its top, unioned — a winder stair's flights and its winders between them are one, and so are a spiral stair's treads (17.7) |
  * | `stairLanding` | stair | solid: a landing plate, by the same rule |
- * | `stairBlock` | stair | solid placeholder: the stair's box (17.4), for a winder or spiral stair whose steps this draft does not derive |
+ * | `stairColumn` | stair | solid: a spiral stair's centre column, its column's radius (17.7) — or a slender pole when its treads meet at the centre — from its bottom to its top |
+ * | `stairBlock` | stair | solid placeholder: the stair's box (17.4), for a winder or spiral stair whose steps are not derived (as a Core 0.3 reader reads it) |
  * | `extension` | extension element | solid: its fallback box (12.6) |
  */
 export type PartKind =
@@ -46,6 +47,7 @@ export type PartKind =
   | 'roofGable'
   | 'stairFlight'
   | 'stairLanding'
+  | 'stairColumn'
   | 'stairBlock'
   | 'extension';
 
@@ -60,6 +62,7 @@ export const PART_KINDS: readonly PartKind[] = [
   'roofGable',
   'stairFlight',
   'stairLanding',
+  'stairColumn',
   'stairBlock',
   'extension',
 ];

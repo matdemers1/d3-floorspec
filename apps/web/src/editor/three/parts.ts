@@ -157,6 +157,7 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
       return one(DEFAULTS.gable);
     case 'stairFlight':
     case 'stairLanding':
+    case 'stairColumn':
     case 'stairBlock':
       return one(DEFAULTS.stair);
     case 'junctionFill':
@@ -186,7 +187,7 @@ export function describeScene(model: EditorModel, parts: readonly MeshPart[]): s
     plural(ids(['opening'], (p) => p.opening?.category === 'window'), 'window'),
     plural(ids(['floor']), 'room'),
   ];
-  const stairs = ids(['stairFlight', 'stairLanding', 'stairBlock']);
+  const stairs = ids(['stairFlight', 'stairLanding', 'stairColumn', 'stairBlock']);
   if (stairs > 0) bits.push(plural(stairs, 'stair'));
   const slabs = ids(['slab']);
   if (slabs > 0) bits.push(plural(slabs, 'slab'));

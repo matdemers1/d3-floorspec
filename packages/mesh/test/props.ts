@@ -313,9 +313,27 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
         expect(mine.min[k]).toBeGreaterThanOrEqual(xy.min[k]!);
         expect(mine.max[k]).toBeLessThanOrEqual(xy.max[k]!);
       }
-      expect(s.box.min.slice(0, 2), `${p.key}: the steps' corners are the stair's box`).toEqual(xy.min.slice(0, 2));
-      expect(s.box.max.slice(0, 2), `${p.key}: the steps' corners are the stair's box`).toEqual(xy.max.slice(0, 2));
+      // A spiral's box is its circle's (Core 17.4), which its treads' corners reach only where a nosing line points along an axis.
+      if (own(doc.stairs, p.id).form?.kind !== 'spiral') {
+        expect(s.box.min.slice(0, 2), `${p.key}: the steps' corners are the stair's box`).toEqual(xy.min.slice(0, 2));
+        expect(s.box.max.slice(0, 2), `${p.key}: the steps' corners are the stair's box`).toEqual(xy.max.slice(0, 2));
+      } else {
+        for (let k = 0; k < 2; k++) {
+          expect(xy.min[k]).toBeGreaterThanOrEqual(s.box.min[k]!);
+          expect(xy.max[k]).toBeLessThanOrEqual(s.box.max[k]!);
+        }
+      }
       return p.kind === 'stairFlight' ? { volume: new Rat(v6, 6n), box: mine, genus: 0 } : { volume6: v6, box: mine, genus: 0 };
+    }
+    case 'stairColumn': {
+      // A 32-sided prism of the spiral's column radius about its centre (a mesh is not normative), as tall as the stair.
+      const s = own(d.stairs, p.id);
+      const st = own(doc.stairs, p.id);
+      const f = st.form as { diameter: number };
+      const r = f.diameter / 2 - st.width > 0 ? f.diameter / 2 - st.width : 32_512;
+      const [cx, cy] = s.centre!;
+      const ring = Array.from({ length: 32 }, (_, i): [number, number] => [Math.round(cx + r * Math.cos((2 * Math.PI * i) / 32)), Math.round(cy + r * Math.sin((2 * Math.PI * i) / 32))]);
+      return { volume6: prism6(ring2(ring), s.top - s.bottom), box: planBox(ring, s.bottom, s.top), genus: 0 };
     }
     case 'stairBlock': {
       const b = own(d.stairs, p.id).box;
