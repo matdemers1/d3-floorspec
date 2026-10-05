@@ -25,6 +25,8 @@ What the model takes:
 - A door or window takes its size from its fill type. A cased opening has no fill type, so give it `width` and `height`: door height is usually 6' 8".
 - Move an opening from where it is with `by` (and `toward`: start, end, north, south, east or west): {"op":"moveOpening","opening":"D1","by":"1'","toward":"east"}. `at` moves it to a position instead.
 - Add a floor with addLevel, its elevation taken from a level it sits above or below: {"op":"addLevel","building":"B1","below":"L1","height":"8'"}.
+- The brief is a bubble diagram: addProgramItem for each space ({"op":"addProgramItem","function":"kitchen","name":"Kitchen","minArea":"11 m2"}), setAdjacency for each line between two ({"op":"setAdjacency","a":"Kitchen","b":"Dining","kind":"required"}), and setRoomBrief, or addRoom's brief, when a room is drawn for one. A plain name is a room everywhere except where an item is expected; "item Kitchen" is always the item.
+- Outlets, fixtures and furniture are extension elements placed on a host: {"op":"placeElement","extension":"FS_electrical","collection":"devices","host":{"mode":"wallFace","wall":"north wall of Kitchen","toward":"Kitchen","at":"2' from start","height":"12\""},"element":{"fallback":{"box":{"min":[0,-51200,0],"max":[25600,51200,128000]}},"device":"receptacle"}}; a surface host puts one on a room's floor or ceiling. They follow their walls; moveElement re-hosts one. Declare the extension once with setProperty of $document /extensionsUsed/FS_electrical, and a plan whose floorspec is "0.1" needs /floorspec set to "0.2" before it holds a program or devices.
 
 Where your edits go: an agent's edits land in a named changeset, not in the plan itself. Say which changeset, and that the person accepts or rejects it in D3 Floorspec. Do not tell them a change is "done" while it is pending.
 
@@ -55,7 +57,14 @@ Prefer the composite that says what you mean:
 { "op": "addRoom", "level": "L1", "at": "6' east of J4", "name": "Pantry", "function": "storage" }
 { "op": "moveOpening", "opening": "D1", "by": "1'", "toward": "east" }
 { "op": "addLevel", "building": "B1", "below": "L1", "height": "8'" }
+{ "op": "addProgramItem", "function": "sleeping", "name": "Bedroom", "count": 3, "minArea": "11 m2" }
+{ "op": "setAdjacency", "a": "Kitchen", "b": "Dining", "kind": "required" }
+{ "op": "setRoomBrief", "room": "R4", "item": "Bedroom" }
+{ "op": "placeElement", "extension": "FS_electrical", "collection": "devices", "host": { "mode": "wallFace", "wall": "north wall of Kitchen", "toward": "Kitchen", "at": "centered", "height": "42\"" }, "element": { "fallback": { "box": { "min": [0, -51200, 0], "max": [25600, 51200, 128000] } }, "device": "receptacle" } }
+{ "op": "moveElement", "element": "X4", "host": { "mode": "surface", "room": "Bath", "surface": "floor", "at": "3' east of J2" } }
 ```
+
+Areas: `11 m2`, `11 m²`, `120 sq ft`, or integers in square base units.
 
 Lengths: `12'`, `12' 6"`, `6 1/2"`, `3810mm`, `3.81 m`, or integers in base units (1 ft = 390144). A
 selector that matches nothing or more than one element is rejected — name the room or wall by ID

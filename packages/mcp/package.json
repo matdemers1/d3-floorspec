@@ -22,6 +22,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@floorspec/ops": "workspace:*",
     "@modelcontextprotocol/client": "2.1.0"
   },
   "dependencies": {
