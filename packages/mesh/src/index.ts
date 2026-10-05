@@ -12,4 +12,5 @@ export const PACKAGE_NAME = '@floorspec/mesh';
 export { loadMesher, meshDocument, type Mesher } from './mesher.js';
 export { loadKernel, type KernelOptions } from './kernel.js';
 export { flatShaded } from './shading.js';
+export { surfaceGroups, tileCoordinates, type Surface, type SurfaceGroup, type TilePlacement } from './surfaces.js';
 export { PART_KINDS, UNITS_PER_METRE, type Box3, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartMesh, type PartStats, type Vec3 } from './types.js';
