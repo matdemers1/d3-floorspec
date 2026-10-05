@@ -38,6 +38,7 @@
       }
     },
     "clearances": {},
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {}
   }
 }

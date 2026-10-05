@@ -1,0 +1,6 @@
+{
+  "description": "The same plan without the door from the hall to the second bedroom: it is reached only through the bathroom, and every path to the bathroom passes through the first bedroom. A path through a room that is not a sleeping room still passes through the bedroom before it: FS-LINT-013 names the second bedroom.",
+  "covers": [
+    "FS-CORE-14.3.1"
+  ]
+}

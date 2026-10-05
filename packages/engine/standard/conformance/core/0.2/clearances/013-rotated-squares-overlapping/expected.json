@@ -101,6 +101,12 @@
     },
     "clearanceOverlaps": [
       [["D1", "c"], ["D2", "c"]]
-    ]
+    ],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    }
   }
 }

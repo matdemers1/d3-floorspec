@@ -1,6 +1,12 @@
 {
   "valid": true,
-  "diagnostics": [],
+  "diagnostics": [
+    {
+      "code": "FS-LINT-014",
+      "severity": "warning",
+      "elements": ["B1"]
+    }
+  ],
   "hash": "908d37740174ce56c005facabe9ceb7c9dbe55e46d3f4e17d1362af05b9e5653",
   "derived": {
     "walls": {
@@ -174,6 +180,26 @@
     "fallbacks": {},
     "placements": {},
     "clearances": {},
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {
+      "RNE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RNW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "RSE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RSW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      }
+    }
   }
 }

@@ -1,0 +1,6 @@
+{
+  "description": "A stair hall on L1 with the front door, and a landing on L2 with a bedroom off it. Stairs are not in this draft; two rooms of function circulation on different levels of one building are linked, so the landing and the bedroom are reachable.",
+  "covers": [
+    "FS-CORE-14.3.1"
+  ]
+}

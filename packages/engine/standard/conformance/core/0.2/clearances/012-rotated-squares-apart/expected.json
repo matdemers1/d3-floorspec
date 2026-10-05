@@ -99,6 +99,12 @@
         }
       }
     },
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    }
   }
 }

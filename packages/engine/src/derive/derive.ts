@@ -1,5 +1,5 @@
 /**
- * The deriver (chapters 5–7, 11–13): every value a conformant deriver derives from a valid
+ * The deriver (chapters 5–7, 11–14): every value a conformant deriver derives from a valid
  * document, in the conformance suite's `derived` format (conformance/README.md).
  */
 import { Surd } from '../exact/surd.js';
@@ -11,8 +11,10 @@ import type { Analysis } from '../validate/invariants.js';
 import { elementFrame, envelopesOverlap, footprintOf, openingFrame, placementOf, type Footprint, type Placement } from './frames.js';
 import { comparePoints } from './level.js';
 import { analyseProgram, type DerivedProgram } from './program.js';
+import { analyseCirculation, type DerivedCirculationRoom } from '../circulation/circulation.js';
 
 export type { DerivedProgram, DerivedProgramItem, DerivedAdjacency } from './program.js';
+export type { DerivedCirculationRoom } from '../circulation/circulation.js';
 export type { Placement as DerivedPlacement } from './frames.js';
 
 export type Point = [number, number];
@@ -77,6 +79,8 @@ export interface Derived {
   clearances?: Record<string, Record<string, DerivedClearance>>;
   /** 13.6: every pair of envelopes of different owners that overlap, each pair sorted, the list sorted. */
   clearanceOverlaps?: [EnvelopeRef, EnvelopeRef][];
+  /** 14.3: every room — whether it is an entry, whether it is reachable, and for a sleeping room whether only through another. */
+  circulation?: Record<string, DerivedCirculationRoom>;
 }
 
 /** Half of a BigInt, as a decimal string (6.4: a net area is a multiple of one half). */
@@ -159,8 +163,8 @@ export function deriveFrom(doc: FloorspecDocument, analysis: Analysis): Derived 
 const cmpRef = (a: EnvelopeRef, b: EnvelopeRef): number =>
   a[0] !== b[0] ? (a[0] < b[0] ? -1 : 1) : a[1] !== b[1] ? (a[1] < b[1] ? -1 : 1) : 0;
 
-/** The members Core 0.2 adds: the program (11.3, 11.4), fallbacks (12.6), placements (13.4), clearances (13.5, 13.6). */
-function derive02(doc: FloorspecDocument, analysis: Analysis): Required<Pick<Derived, 'program' | 'fallbacks' | 'placements' | 'clearances' | 'clearanceOverlaps'>> {
+/** The members Core 0.2 adds: the program (11.3, 11.4), fallbacks (12.6), placements (13.4), clearances (13.5, 13.6), circulation (14.3). */
+function derive02(doc: FloorspecDocument, analysis: Analysis): Required<Pick<Derived, 'program' | 'fallbacks' | 'placements' | 'clearances' | 'clearanceOverlaps' | 'circulation'>> {
   const fallbacks: Record<string, DerivedFallback> = {};
   const placements: Record<string, Placement> = {};
   const clearances: Record<string, Record<string, DerivedClearance>> = {};
@@ -194,5 +198,12 @@ function derive02(doc: FloorspecDocument, analysis: Analysis): Required<Pick<Der
       if (a.ref[0] !== b.ref[0] && envelopesOverlap(a.fp, b.fp)) overlaps.push(cmpRef(a.ref, b.ref) <= 0 ? [a.ref, b.ref] : [b.ref, a.ref]);
     }
   overlaps.sort((p, q) => cmpRef(p[0], q[0]) || cmpRef(p[1], q[1]));
-  return { program: analyseProgram(doc, analysis).derived, fallbacks, placements, clearances, clearanceOverlaps: overlaps };
+  return {
+    program: analyseProgram(doc, analysis).derived,
+    fallbacks,
+    placements,
+    clearances,
+    clearanceOverlaps: overlaps,
+    circulation: analyseCirculation(doc, analysis).derived,
+  };
 }

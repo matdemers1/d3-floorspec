@@ -37,6 +37,10 @@ export interface ProgramAnalysis {
   readonly area2: ReadonlyMap<string, bigint>;
   /** Each item's rooms, sorted. */
   readonly roomsOf: ReadonlyMap<string, readonly string[]>;
+  /** Every pair of connected rooms (11.4), each pair sorted. Circulation (chapter 14) links them. */
+  readonly connected: readonly (readonly [string, string])[];
+  /** Rooms connected to the unbounded face of their level by a separator, a door or a cased opening (14.2). */
+  readonly outside: ReadonlySet<string>;
 }
 
 const pairKey = (a: string, b: string): string => (a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`);
@@ -50,10 +54,18 @@ function connectingWalls(doc: FloorspecDocument): Set<string> {
   return out;
 }
 
-function roomRelations(doc: FloorspecDocument, analysis: Analysis): { adjacent: Set<string>; connected: Set<string>; area2: Map<string, bigint> } {
+interface Relations {
+  adjacent: Set<string>;
+  connected: Map<string, readonly [string, string]>;
+  area2: Map<string, bigint>;
+  outside: Set<string>;
+}
+
+function roomRelations(doc: FloorspecDocument, analysis: Analysis): Relations {
   const adjacent = new Set<string>();
-  const connected = new Set<string>();
+  const connected = new Map<string, readonly [string, string]>();
   const area2 = new Map<string, bigint>();
+  const outside = new Set<string>();
   const doors = connectingWalls(doc);
   for (const [, la] of analysis.levels) {
     const g = la.geometry;
@@ -72,16 +84,22 @@ function roomRelations(doc: FloorspecDocument, analysis: Analysis): { adjacent: 
     g.edges.forEach((e, i) => {
       const fa = faceOfCycle.get(g.graph.cycleOf[2 * i]!);
       const fb = faceOfCycle.get(g.graph.cycleOf[2 * i + 1]!);
+      const joins = e.kind === 'separator' || doors.has(e.id);
+      // One side is the unbounded face: the room on the other is an entry (14.2).
+      if (joins && (fa === undefined) !== (fb === undefined)) {
+        const r = roomOfFace.get((fa ?? fb)!);
+        if (r !== undefined) outside.add(r);
+      }
       if (fa === undefined || fb === undefined || fa === fb) return;
       const ra = roomOfFace.get(fa);
       const rb = roomOfFace.get(fb);
       if (ra === undefined || rb === undefined) return;
       const k = pairKey(ra, rb);
       adjacent.add(k);
-      if (e.kind === 'separator' || doors.has(e.id)) connected.add(k);
+      if (joins) connected.set(k, ra < rb ? [ra, rb] : [rb, ra]);
     });
   }
-  return { adjacent, connected, area2 };
+  return { adjacent, connected, area2, outside };
 }
 
 const cache = new WeakMap<Analysis, ProgramAnalysis>();
@@ -90,7 +108,7 @@ const cache = new WeakMap<Analysis, ProgramAnalysis>();
 export function analyseProgram(doc: FloorspecDocument, analysis: Analysis): ProgramAnalysis {
   const hit = cache.get(analysis);
   if (hit) return hit;
-  const { adjacent, connected, area2 } = roomRelations(doc, analysis);
+  const { adjacent, connected, area2, outside } = roomRelations(doc, analysis);
   const roomsOf = new Map<string, string[]>();
   const items = programItems(doc);
   for (const [iid] of items) roomsOf.set(iid, []);
@@ -121,7 +139,7 @@ export function analyseProgram(doc: FloorspecDocument, analysis: Analysis): Prog
       connected: pairs.some((p) => connected.has(p)),
     });
   }
-  const result = { derived: out, area2, roomsOf };
+  const result = { derived: out, area2, roomsOf, connected: [...connected.values()], outside };
   cache.set(analysis, result);
   return result;
 }

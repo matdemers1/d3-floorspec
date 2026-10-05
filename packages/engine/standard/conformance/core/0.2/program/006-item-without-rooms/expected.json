@@ -5,6 +5,11 @@
       "code": "FS-LINT-008",
       "severity": "warning",
       "elements": ["STO"]
+    },
+    {
+      "code": "FS-LINT-014",
+      "severity": "warning",
+      "elements": ["B1"]
     }
   ],
   "hash": "eb4a6998c4c68980f6c7cda4db0755aa8a4e3d55e3313de6598c6e2bb54ad4b1",
@@ -186,6 +191,26 @@
     "fallbacks": {},
     "placements": {},
     "clearances": {},
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {
+      "RNE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RNW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "RSE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RSW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      }
+    }
   }
 }

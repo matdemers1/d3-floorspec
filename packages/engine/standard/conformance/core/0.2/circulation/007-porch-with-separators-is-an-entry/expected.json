@@ -1,0 +1,84 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "8fa3bc99973487db9d30928267073a12630501540c2ffdd7348f731af4f0188e",
+  "derived": {
+    "walls": {
+      "H10": {
+        "startRight": [5120000, -64000],
+        "endRight": [10304000, -64000],
+        "endLeft": [10176000, 64000],
+        "startLeft": [5184000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H11": {
+        "startRight": [5184000, 3776000],
+        "endRight": [10176000, 3776000],
+        "endLeft": [10304000, 3904000],
+        "startLeft": [5120000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V10": {
+        "startRight": [5184000, 64000],
+        "endRight": [5184000, 3776000],
+        "endLeft": [5056000, 3840000],
+        "startLeft": [5056000, 0],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V20": {
+        "startRight": [10304000, -64000],
+        "endRight": [10304000, 3904000],
+        "endLeft": [10176000, 3776000],
+        "startLeft": [10176000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J10": [[5056000, 0], [5120000, 0], [5120000, -64000], [5184000, 64000]],
+      "J11": [[5056000, 3840000], [5184000, 3776000], [5120000, 3904000], [5120000, 3840000]]
+    },
+    "rooms": {
+      "LIV": {
+        "outer": [[5184000, 64000], [10176000, 64000], [10176000, 3776000], [5184000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      },
+      "PORCH": {
+        "outer": [[0, 0], [5056000, 0], [5056000, 3840000], [0, 3840000]],
+        "holes": [],
+        "area": "19415040000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "DV10": {
+        "start": [5120000, 1280000],
+        "end": [5120000, 2432000],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "LIV": {
+        "entry": false,
+        "reachable": true
+      },
+      "PORCH": {
+        "entry": true,
+        "reachable": true
+      }
+    }
+  }
+}

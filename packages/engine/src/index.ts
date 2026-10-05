@@ -37,8 +37,10 @@ export {
   type DerivedFallback,
   type DerivedPlacement,
   type DerivedClearance,
+  type DerivedCirculationRoom,
   type EnvelopeRef,
 } from './derive/derive.js';
+export { analyseCirculation, type CirculationAnalysis, type BuildingCirculation } from './circulation/circulation.js';
 export { loadKnownExtensions, knownEntry, satisfies as versionSatisfies, compareVersions } from './validate/registry.js';
 export { facingVector, direction } from './exact/angle.js';
 export { extentsOk, footprintsOverlap, type Frame, type Footprint } from './derive/frames.js';
@@ -62,7 +64,7 @@ export class InvalidDocumentError extends Error {
   }
 }
 
-/** Derive every value of chapters 5–7 and 11–13 from a document. Throws InvalidDocumentError when it is not valid. */
+/** Derive every value of chapters 5–7 and 11–14 from a document. Throws InvalidDocumentError when it is not valid. */
 export function derive(input: string | Uint8Array | object, options: ValidateOptions = {}): Derived {
   const ev = evaluate(input, options);
   if (!ev.valid || !ev.document || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);

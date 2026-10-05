@@ -1,0 +1,7 @@
+{
+  "description": "A 0.1 document of two rooms with a cased opening between them and no way in, read by a reader of 0.2: circulation needs no member 0.2 adds, so it is derived for the 0.1 document too, and its building has no entry (FS-LINT-014). As a 0.1 document it has no diagnostics.",
+  "covers": [
+    "FS-CORE-1.2.4",
+    "FS-CORE-14.3.1"
+  ]
+}

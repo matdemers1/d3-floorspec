@@ -80,6 +80,12 @@
       }
     },
     "clearances": {},
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      }
+    }
   }
 }

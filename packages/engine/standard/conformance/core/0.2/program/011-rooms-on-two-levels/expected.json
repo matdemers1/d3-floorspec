@@ -108,6 +108,16 @@
     "fallbacks": {},
     "placements": {},
     "clearances": {},
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      },
+      "R2": {
+        "entry": false,
+        "reachable": false
+      }
+    }
   }
 }

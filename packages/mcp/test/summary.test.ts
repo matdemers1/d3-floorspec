@@ -312,3 +312,26 @@ group('Core 0.2: the program and extension elements', () => {
     expect(s.levels[0]!.elements).toBeUndefined();
   });
 });
+
+group('Core 0.2: circulation', () => {
+  const lints = readFileSync(new URL('../../engine/standard/conformance/core/0.2/diagnostics/018-every-circulation-lint/input.json', import.meta.url), 'utf8');
+
+  it('names unreachable rooms, rooms reached through a bedroom and buildings with no way in', () => {
+    expect(describeJson(lints).circulation).toEqual({ noEntry: ['B2'], unreachable: ['OFF'], throughSleeping: ['BED2'] });
+    const t = describe(lints);
+    expect(t).toContain('## Circulation');
+    expect(t).toContain('- building B2 has doors but no way in');
+    expect(t).toContain('- unreachable through doors: OFF');
+    expect(t).toContain('- reachable only through another sleeping room: BED2');
+  });
+
+  it('narrows to a room or a level, and says nothing when nothing is wrong', () => {
+    expect(describeJson(lints, { room: 'BED2' }).circulation).toEqual({ noEntry: [], unreachable: [], throughSleeping: ['BED2'] });
+    expect(describeJson(lints, { room: 'LIV' }).circulation).toBeUndefined();
+    expect(describeJson(lints, { level: 'L2' }).circulation).toEqual({ noEntry: ['B2'], unreachable: [], throughSleeping: [] });
+    for (const h of HOUSES) {
+      expect(describeJson(text(h)).circulation).toBeUndefined();
+      expect(describe(text(h))).not.toContain('## Circulation');
+    }
+  });
+});

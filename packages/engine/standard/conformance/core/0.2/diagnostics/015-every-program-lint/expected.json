@@ -30,6 +30,11 @@
       "code": "FS-LINT-011",
       "severity": "warning",
       "elements": ["DIN", "KIT"]
+    },
+    {
+      "code": "FS-LINT-014",
+      "severity": "warning",
+      "elements": ["B1"]
     }
   ],
   "hash": "0ef69f883c2cb3d47bbc3a7a6ddff8a0195a674e69925b8111b05b420a87f18d",
@@ -209,6 +214,26 @@
     "fallbacks": {},
     "placements": {},
     "clearances": {},
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {
+      "RNE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RNW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "RSE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RSW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      }
+    }
   }
 }

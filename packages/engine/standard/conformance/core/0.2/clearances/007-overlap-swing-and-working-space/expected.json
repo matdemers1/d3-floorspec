@@ -96,6 +96,12 @@
     },
     "clearanceOverlaps": [
       [["O1", "swing"], ["PNL", "working"]]
-    ]
+    ],
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      }
+    }
   }
 }

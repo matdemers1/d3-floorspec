@@ -1,0 +1,8 @@
+{
+  "description": "A living room with the front door and a bedroom off it; an office that has only windows - one into the living room (H01), one to the outside (V01) - and a second bedroom with only a window into the first (H11 has none; H12 is its window to the outside). The office and the second bedroom are unreachable: FS-LINT-012 for each. The second bedroom is not reachable at all, so its throughSleeping is false and FS-LINT-013 is not reported.",
+  "covers": [
+    "FS-CORE-14.3.1",
+    "FS-CORE-14.4.3",
+    "FS-CORE-11.4.1"
+  ]
+}

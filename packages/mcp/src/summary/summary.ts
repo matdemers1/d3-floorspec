@@ -10,7 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
-import { deriveFrom, evaluate, extElements, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { analyseCirculation, deriveFrom, evaluate, extElements, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -133,6 +133,19 @@ export interface ProgramSummary {
   readonly adjacency: readonly ProgramAdjacencySummary[];
 }
 
+/**
+ * Circulation (Core 0.2, chapter 14), as its lints report it: only buildings that have a door or a
+ * cased opening. Present only when something is wrong.
+ */
+export interface CirculationSummary {
+  /** Buildings with doors and rooms but no way in from outside (FS-LINT-014). */
+  readonly noEntry: readonly string[];
+  /** Rooms that cannot be reached from an entry through doors (FS-LINT-012). */
+  readonly unreachable: readonly string[];
+  /** Sleeping rooms reachable only through another sleeping room (FS-LINT-013). */
+  readonly throughSleeping: readonly string[];
+}
+
 export interface LevelSummary {
   readonly id: string;
   readonly name?: string;
@@ -156,6 +169,8 @@ export interface DocumentSummary {
   readonly levels: readonly LevelSummary[];
   /** The program (Core 0.2), met or not; absent when the document has none or is not valid. */
   readonly program?: ProgramSummary;
+  /** Circulation problems (Core 0.2, chapter 14); absent when there are none or the document is not valid. */
+  readonly circulation?: CirculationSummary;
   readonly diagnostics: readonly DiagnosticSummary[];
 }
 
@@ -567,6 +582,7 @@ export function describeJson(document: string | Uint8Array | object, options: De
           adjacency: derived.program.adjacency.map((a) => ({ ...a, met: a.kind === 'forbidden' ? !a.adjacent : a.adjacent })),
         }
       : undefined;
+  const circulation = derived?.circulation && circulationSummary(doc, ev.analysis, options);
   let diags = diagnostics;
   if (options.room !== undefined) {
     const rid = options.room;
@@ -589,5 +605,27 @@ export function describeJson(document: string | Uint8Array | object, options: De
     for (const [id, o] of entries(doc.openings)) if (onLevel.has(o.wall)) onLevel.add(id);
     diags = diagnostics.filter((d) => (d.level !== undefined ? d.level === lid : d.elements.length === 0 || d.elements.some((e) => onLevel.has(e))));
   }
-  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), diagnostics: diags };
+  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), ...(circulation && { circulation }), diagnostics: diags };
+}
+
+/** What the circulation lints say (14.4), narrowed to a room or level when asked; undefined when nothing. */
+function circulationSummary(doc: FloorspecDocument, analysis: Analysis, options: DescribeOptions): CirculationSummary | undefined {
+  const { derived, buildings } = analyseCirculation(doc, analysis);
+  const keep = (rid: string): boolean =>
+    (options.room === undefined || rid === options.room) && (options.level === undefined || doc.rooms![rid]!.level === options.level);
+  const noEntry: string[] = [];
+  const unreachable: string[] = [];
+  const throughSleeping: string[] = [];
+  for (const [bid, b] of buildings) {
+    if (!b.evaluated || !b.rooms.length) continue;
+    if (!b.entries.length) {
+      if (b.rooms.some(keep)) noEntry.push(bid);
+      continue;
+    }
+    for (const rid of b.rooms.filter(keep)) {
+      if (!derived[rid]!.reachable) unreachable.push(rid);
+      else if (derived[rid]!.throughSleeping) throughSleeping.push(rid);
+    }
+  }
+  return noEntry.length || unreachable.length || throughSleeping.length ? { noEntry, unreachable, throughSleeping } : undefined;
 }

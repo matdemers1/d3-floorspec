@@ -143,7 +143,8 @@ describe('program, hosting and clearances through the API', () => {
   it('reports an unmet program as warnings, never errors (11.5.2)', () => {
     const r = validate(house());
     expect(r.valid).toBe(true);
-    expect(codes(r)).toEqual(['FS-LINT-008 BED', 'FS-LINT-011 BED,KIT']);
+    // The door joins the two rooms, but none leads outside: the building has no entry (14.4).
+    expect(codes(r)).toEqual(['FS-LINT-008 BED', 'FS-LINT-011 BED,KIT', 'FS-LINT-014 B1']);
   });
 
   it('derives the program, fallbacks, placements, clearances and overlaps', () => {
@@ -170,8 +171,10 @@ describe('program, hosting and clearances through the API', () => {
     const d01 = check(doc(box(1e6, 1e6)));
     expect(d01.derived!.program).toEqual({ items: {}, adjacency: [] });
     expect(d01.derived!.clearanceOverlaps).toEqual([]);
+    expect(d01.derived!.circulation).toEqual({});
     const r = check(doc(box(1e6, 1e6)), { core: '0.1' });
     expect(r.derived!.program).toBeUndefined();
+    expect(r.derived!.circulation).toBeUndefined();
     expect(r.hash).toBe(d01.hash);
   });
 

@@ -15,7 +15,8 @@ commands:
   canonicalize <file>        print the canonical form (9.2)
   hash <file>                print the content hash (9.3)
   derive <file>              print everything derived as JSON: walls, fills, rooms, openings, and
-                             (Core 0.2) the program, fallbacks, placements, clearances and overlaps
+                             (Core 0.2) the program, fallbacks, placements, clearances, overlaps
+                             and circulation
 
 options:
   --registry <file>          the known extensions (Core 0.2, 12.2): a JSON array of registry

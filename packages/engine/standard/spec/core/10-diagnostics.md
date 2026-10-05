@@ -75,7 +75,9 @@ error, with these refinements inside tier 4:
   `FS-INV-112` was reported.
 - **Opening invariants** (`FS-INV-301` to `FS-INV-304`) are evaluated for every opening, except
   that `FS-INV-303` is not evaluated for an opening whose wall has `FS-INV-112`.
-- **Lints** are evaluated only for a valid document.
+- **Lints** are evaluated only for a valid document. The circulation lints (`FS-LINT-012` to
+  `FS-LINT-014`) are evaluated only for a building that is evaluated (14.4), and `FS-LINT-012` and
+  `FS-LINT-013` only for a building that has an entry (14.2).
 
 A validator MUST NOT report a diagnostic that this section says is not evaluated. {#FS-CORE-10.3.1 MUST NOT}
 
@@ -191,6 +193,9 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-LINT-009` | warning | a room whose net area is less than its item's `minArea` | the item and the room | 11.5 |
 | `FS-LINT-010` | warning | a `"required"` adjacency whose items' rooms are not adjacent; once for each adjacency | both items | 11.5 |
 | `FS-LINT-011` | warning | a `"forbidden"` adjacency whose items' rooms are adjacent; once for each adjacency | both items | 11.5 |
+| `FS-LINT-012` | warning | a room not reachable from an entry of its building | the room | 14.4 |
+| `FS-LINT-013` | warning | a sleeping room reachable only through another sleeping room | the room | 14.4 |
+| `FS-LINT-014` | warning | an evaluated building (14.4) that has rooms but no entry | the building | 14.4 |
 
 ## 10.5 Fix operations
 
