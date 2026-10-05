@@ -1,0 +1,6 @@
+{
+  "description": "A gas appliance burns natural gas or propane.",
+  "covers": [
+    "FS-MECH-1.3.1"
+  ]
+}

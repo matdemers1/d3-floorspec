@@ -1,0 +1,6 @@
+{
+  "description": "C4 lists the switch X21 among its loads.",
+  "covers": [
+    "FS-ELEC-3.2.2"
+  ]
+}

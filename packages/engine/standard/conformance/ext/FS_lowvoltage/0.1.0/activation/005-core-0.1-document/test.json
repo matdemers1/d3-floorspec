@@ -1,0 +1,6 @@
+{
+  "description": "A document declaring \"0.1\" has no extension elements and its extension data is opaque (Core 1.2.4): FS_lowvoltage is not evaluated, even though it is known.",
+  "covers": [
+    "FS-LOWV-1.2.1"
+  ]
+}

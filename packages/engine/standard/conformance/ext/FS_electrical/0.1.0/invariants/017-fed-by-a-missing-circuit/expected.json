@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-ELEC-INV-011",
+      "severity": "error",
+      "elements": ["X1"]
+    }
+  ]
+}

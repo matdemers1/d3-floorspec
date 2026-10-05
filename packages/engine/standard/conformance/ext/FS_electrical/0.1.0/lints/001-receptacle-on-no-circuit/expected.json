@@ -1,0 +1,590 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-ELEC-LINT-001",
+      "severity": "warning",
+      "elements": ["X5"]
+    }
+  ],
+  "hash": "68793ae64f9decfcfb5fe91eb1ce1563477f7bca9207a4a7546192e7c3fb67d0",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 4617728],
+        "endLeft": [-64000, 4745728],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W10": {
+        "startRight": [4745728, 2276864],
+        "endRight": [7738880, 2276864],
+        "endLeft": [7738880, 2404864],
+        "startLeft": [4745728, 2404864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 4617728],
+        "endRight": [4617728, 4617728],
+        "endLeft": [4681728, 4745728],
+        "startLeft": [-64000, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4745728, 4617728],
+        "endRight": [7738880, 4617728],
+        "endLeft": [7866880, 4745728],
+        "startLeft": [4681728, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [7738880, 4617728],
+        "endRight": [7738880, 2404864],
+        "endLeft": [7866880, 2340864],
+        "startLeft": [7866880, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [7738880, 2276864],
+        "endRight": [7738880, 64000],
+        "endLeft": [7866880, -64000],
+        "startLeft": [7866880, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W6": {
+        "startRight": [7738880, 64000],
+        "endRight": [4745728, 64000],
+        "endLeft": [4681728, -64000],
+        "startLeft": [7866880, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W7": {
+        "startRight": [4617728, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [4681728, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W8": {
+        "startRight": [4745728, 64000],
+        "endRight": [4745728, 2276864],
+        "endLeft": [4617728, 2340864],
+        "startLeft": [4617728, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W9": {
+        "startRight": [4745728, 2404864],
+        "endRight": [4745728, 4617728],
+        "endLeft": [4617728, 4617728],
+        "startLeft": [4617728, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J3": [[4617728, 4617728], [4745728, 4617728], [4681728, 4745728]],
+      "J6": [[4617728, 64000], [4681728, -64000], [4745728, 64000]],
+      "J7": [[4617728, 2340864], [4745728, 2276864], [4745728, 2404864]],
+      "J8": [[7738880, 2276864], [7866880, 2340864], [7738880, 2404864]]
+    },
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [4617728, 64000], [4617728, 2340864], [4617728, 4617728], [64000, 4617728]],
+        "holes": [],
+        "area": "20736438697984"
+      },
+      "R2": {
+        "outer": [[4745728, 2404864], [7738880, 2404864], [7738880, 4617728], [4745728, 4617728]],
+        "holes": [],
+        "area": "6623438307328"
+      },
+      "R3": {
+        "outer": [[4745728, 64000], [7738880, 64000], [7738880, 2276864], [4745728, 2276864]],
+        "holes": [],
+        "area": "6623438307328"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "X1": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "panels",
+        "footprint": [[7610880, 914432], [7738880, 914432], [7738880, 1426432], [7610880, 1426432]],
+        "bottom": 1024000,
+        "top": 2048000
+      },
+      "X10": {
+        "level": "L1",
+        "extension": "FS_mechanical",
+        "collection": "equipment",
+        "footprint": [[6664192, 1202176], [7380992, 1202176], [7380992, 1918976], [6664192, 1918976]],
+        "bottom": 0,
+        "top": 1792000
+      },
+      "X11": {
+        "level": "L1",
+        "extension": "FS_mechanical",
+        "collection": "terminals",
+        "footprint": [[2148864, 326144], [2532864, 326144], [2532864, 454144], [2148864, 454144]],
+        "bottom": -25600,
+        "top": 0
+      },
+      "X12": {
+        "level": "L1",
+        "extension": "FS_mechanical",
+        "collection": "terminals",
+        "footprint": [[64000, 3255296], [89600, 3255296], [89600, 3767296], [64000, 3767296]],
+        "bottom": 192000,
+        "top": 576000
+      },
+      "X13": {
+        "level": "L1",
+        "extension": "FS_mechanical",
+        "collection": "exhaust",
+        "footprint": [[6075904, 2954752], [6408704, 2954752], [6408704, 3287552], [6075904, 3287552]],
+        "bottom": 3264000,
+        "top": 3456000
+      },
+      "X14": {
+        "level": "L1",
+        "extension": "FS_mechanical",
+        "collection": "gasAppliances",
+        "footprint": [[684032, 3772928], [1656832, 3772928], [1656832, 4604928], [684032, 4604928]],
+        "bottom": 0,
+        "top": 1177600
+      },
+      "X15": {
+        "level": "L1",
+        "extension": "FS_lowvoltage",
+        "collection": "headEnds",
+        "footprint": [[6792192, 64000], [7252992, 64000], [7252992, 192000], [6792192, 192000]],
+        "bottom": 1344000,
+        "top": 2496000
+      },
+      "X16": {
+        "level": "L1",
+        "extension": "FS_lowvoltage",
+        "collection": "outlets",
+        "footprint": [[64000, 729088], [96000, 729088], [96000, 831488], [64000, 831488]],
+        "bottom": 307200,
+        "top": 460800
+      },
+      "X17": {
+        "level": "L1",
+        "extension": "FS_lowvoltage",
+        "collection": "doorbells",
+        "footprint": [[1925120, -89600], [1976320, -89600], [1976320, -64000], [1925120, -64000]],
+        "bottom": 1484800,
+        "top": 1587200
+      },
+      "X18": {
+        "level": "L1",
+        "extension": "FS_lowvoltage",
+        "collection": "doorbells",
+        "footprint": [[4553728, 4163584], [4617728, 4163584], [4617728, 4419584], [4553728, 4419584]],
+        "bottom": 2432000,
+        "top": 2688000
+      },
+      "X19": {
+        "level": "L1",
+        "extension": "FS_lowvoltage",
+        "collection": "speakers",
+        "footprint": [[1042432, 2212864], [1298432, 2212864], [1298432, 2468864], [1042432, 2468864]],
+        "bottom": 3328000,
+        "top": 3456000
+      },
+      "X2": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "receptacles",
+        "footprint": [[2289664, 4585728], [2392064, 4585728], [2392064, 4617728], [2289664, 4617728]],
+        "bottom": 1331200,
+        "top": 1484800
+      },
+      "X20": {
+        "level": "L1",
+        "extension": "FS_lowvoltage",
+        "collection": "security",
+        "footprint": [[4745728, 1899520], [4796928, 1899520], [4796928, 2001920], [4745728, 2001920]],
+        "bottom": 2739200,
+        "top": 2892800
+      },
+      "X21": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "switches",
+        "footprint": [[4585728, 338944], [4617728, 338944], [4617728, 441344], [4585728, 441344]],
+        "bottom": 1459200,
+        "top": 1612800
+      },
+      "X22": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "lights",
+        "footprint": [[2212864, 2212864], [2468864, 2212864], [2468864, 2468864], [2212864, 2468864]],
+        "bottom": 3264000,
+        "top": 3456000
+      },
+      "X23": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "alarms",
+        "footprint": [[3415296, 3415296], [3607296, 3415296], [3607296, 3607296], [3415296, 3607296]],
+        "bottom": 3392000,
+        "top": 3456000
+      },
+      "X24": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "evChargers",
+        "footprint": [[3319296, -192000], [3703296, -192000], [3703296, -64000], [3319296, -64000]],
+        "bottom": 1280000,
+        "top": 1792000
+      },
+      "X25": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[-192000, 729088], [-64000, 729088], [-64000, 831488], [-192000, 831488]],
+        "bottom": 588800,
+        "top": 691200
+      },
+      "X26": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "switches",
+        "footprint": [[4745728, 2679808], [4777728, 2679808], [4777728, 2782208], [4745728, 2782208]],
+        "bottom": 1459200,
+        "top": 1612800
+      },
+      "X27": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "cleanouts",
+        "footprint": [[7713280, 313344], [7738880, 313344], [7738880, 466944], [7713280, 466944]],
+        "bottom": 307200,
+        "top": 460800
+      },
+      "X3": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "receptacles",
+        "footprint": [[3460096, 4585728], [3562496, 4585728], [3562496, 4617728], [3460096, 4617728]],
+        "bottom": 1331200,
+        "top": 1484800
+      },
+      "X4": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "receptacles",
+        "footprint": [[4585728, 3460096], [4617728, 3460096], [4617728, 3562496], [4585728, 3562496]],
+        "bottom": 1331200,
+        "top": 1484800
+      },
+      "X5": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "receptacles",
+        "footprint": [[64000, 2289664], [96000, 2289664], [96000, 2392064], [64000, 2392064]],
+        "bottom": 1331200,
+        "top": 1484800
+      },
+      "X6": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[5999104, 3708928], [6485504, 3708928], [6485504, 4604928], [5999104, 4604928]],
+        "bottom": 0,
+        "top": 1024000
+      },
+      "X7": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[7098880, 3191296], [7738880, 3191296], [7738880, 3831296], [7098880, 3831296]],
+        "bottom": 768000,
+        "top": 1024000
+      },
+      "X8": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "waterHeaters",
+        "footprint": [[5103616, 421888], [5820416, 421888], [5820416, 1138688], [5103616, 1138688]],
+        "bottom": 0,
+        "top": 1920000
+      },
+      "X9": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "drains",
+        "footprint": [[6146304, 684288], [6338304, 684288], [6338304, 876288], [6146304, 876288]],
+        "bottom": -12800,
+        "top": 0
+      }
+    },
+    "placements": {
+      "X1": {
+        "point": [7738880, 1170432, 1536000],
+        "facing": 180000000
+      },
+      "X10": {
+        "point": [7022592, 1560576, 0],
+        "facing": 180000000
+      },
+      "X11": {
+        "point": [2340864, 390144, 0],
+        "facing": 0
+      },
+      "X12": {
+        "point": [64000, 3511296, 384000],
+        "facing": 0
+      },
+      "X13": {
+        "point": [6242304, 3121152, 3456000],
+        "facing": 0
+      },
+      "X14": {
+        "point": [1170432, 4604928, 0],
+        "facing": -90000000
+      },
+      "X15": {
+        "point": [7022592, 64000, 1920000],
+        "facing": 90000000
+      },
+      "X16": {
+        "point": [64000, 780288, 384000],
+        "facing": 0
+      },
+      "X17": {
+        "point": [1950720, -64000, 1536000],
+        "facing": -90000000
+      },
+      "X18": {
+        "point": [4617728, 4291584, 2560000],
+        "facing": 180000000
+      },
+      "X19": {
+        "point": [1170432, 2340864, 3456000],
+        "facing": 0
+      },
+      "X2": {
+        "point": [2340864, 4617728, 1408000],
+        "facing": -90000000
+      },
+      "X20": {
+        "point": [4745728, 1950720, 2816000],
+        "facing": 0
+      },
+      "X21": {
+        "point": [4617728, 390144, 1536000],
+        "facing": 180000000
+      },
+      "X22": {
+        "point": [2340864, 2340864, 3456000],
+        "facing": 0
+      },
+      "X23": {
+        "point": [3511296, 3511296, 3456000],
+        "facing": 0
+      },
+      "X24": {
+        "point": [3511296, -64000, 1536000],
+        "facing": -90000000
+      },
+      "X25": {
+        "point": [-64000, 780288, 640000],
+        "facing": 180000000
+      },
+      "X26": {
+        "point": [4745728, 2731008, 1536000],
+        "facing": 0
+      },
+      "X27": {
+        "point": [7738880, 390144, 384000],
+        "facing": 180000000
+      },
+      "X3": {
+        "point": [3511296, 4617728, 1408000],
+        "facing": -90000000
+      },
+      "X4": {
+        "point": [4617728, 3511296, 1408000],
+        "facing": 180000000
+      },
+      "X5": {
+        "point": [64000, 2340864, 1408000],
+        "facing": 0
+      },
+      "X6": {
+        "point": [6242304, 4604928, 0],
+        "facing": -90000000
+      },
+      "X7": {
+        "point": [7738880, 3511296, 1024000],
+        "facing": 180000000
+      },
+      "X8": {
+        "point": [5462016, 780288, 0],
+        "facing": 90000000
+      },
+      "X9": {
+        "point": [6242304, 780288, 0],
+        "facing": 0
+      }
+    },
+    "clearances": {
+      "X1": {
+        "working": {
+          "level": "L1",
+          "purpose": "workingSpace",
+          "footprint": [[6458880, 658432], [7738880, 658432], [7738880, 1682432], [6458880, 1682432]],
+          "bottom": 0,
+          "top": 2560000
+        }
+      },
+      "X10": {
+        "service": {
+          "level": "L1",
+          "purpose": "workingSpace",
+          "footprint": [[5704192, 1080576], [6664192, 1080576], [6664192, 2040576], [5704192, 2040576]],
+          "bottom": 0,
+          "top": 2560000
+        }
+      },
+      "X15": {
+        "access": {
+          "level": "L1",
+          "purpose": "access",
+          "footprint": [[6792192, 192000], [7252992, 192000], [7252992, 960000], [6792192, 960000]],
+          "bottom": 1344000,
+          "top": 2496000
+        }
+      },
+      "X27": {
+        "access": {
+          "level": "L1",
+          "purpose": "access",
+          "footprint": [[7137280, 102144], [7713280, 102144], [7713280, 678144], [7137280, 678144]],
+          "bottom": 307200,
+          "top": 883200
+        }
+      },
+      "X6": {
+        "front": {
+          "level": "L1",
+          "purpose": "fixtureClearance",
+          "footprint": [[5730304, 2940928], [6754304, 2940928], [6754304, 3708928], [5730304, 3708928]],
+          "bottom": 0,
+          "top": 2560000
+        }
+      },
+      "X7": {
+        "front": {
+          "level": "L1",
+          "purpose": "fixtureClearance",
+          "footprint": [[6330880, 3191296], [7098880, 3191296], [7098880, 3831296], [6330880, 3831296]],
+          "bottom": 0,
+          "top": 2560000
+        }
+      },
+      "X8": {
+        "service": {
+          "level": "L1",
+          "purpose": "access",
+          "footprint": [[5103616, 1138688], [5820416, 1138688], [5820416, 1906688], [5103616, 1906688]],
+          "bottom": 0,
+          "top": 1920000
+        }
+      }
+    },
+    "clearanceOverlaps": [
+      [["X1", "working"], ["X10", "service"]],
+      [["X1", "working"], ["X15", "access"]],
+      [["X1", "working"], ["X27", "access"]],
+      [["X10", "service"], ["X8", "service"]],
+      [["X6", "front"], ["X7", "front"]]
+    ],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      },
+      "R2": {
+        "entry": false,
+        "reachable": false
+      },
+      "R3": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "extensions": {
+      "FS_electrical": {
+        "rooms": {
+          "R1": ["X2", "X21", "X22", "X23", "X3", "X4", "X5"],
+          "R2": ["X26"],
+          "R3": ["X1"]
+        },
+        "circuits": {
+          "C1": {
+            "capacity": 2400,
+            "connectedLoad": 0,
+            "loads": ["X2", "X3"],
+            "panel": "X1"
+          },
+          "C2": {
+            "capacity": 2400,
+            "connectedLoad": 0,
+            "loads": ["X4"],
+            "panel": "X1"
+          },
+          "C3": {
+            "capacity": 7200,
+            "connectedLoad": 0,
+            "loads": ["X8"],
+            "panel": "X1"
+          },
+          "C4": {
+            "capacity": 1800,
+            "connectedLoad": 12,
+            "loads": ["X13", "X22", "X23"],
+            "panel": "X1"
+          },
+          "C5": {
+            "capacity": 9600,
+            "connectedLoad": 0,
+            "loads": ["X24"],
+            "panel": "X1"
+          }
+        },
+        "controls": {
+          "X13": ["X26"],
+          "X22": ["X21"]
+        },
+        "panels": {
+          "X1": {
+            "circuits": ["C1", "C2", "C3", "C4", "C5"],
+            "connectedLoad": 12,
+            "spacesUsed": 7
+          }
+        }
+      }
+    }
+  }
+}

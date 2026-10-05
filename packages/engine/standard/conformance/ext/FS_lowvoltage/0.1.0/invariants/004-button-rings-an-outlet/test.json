@@ -1,0 +1,6 @@
+{
+  "description": "The doorbell button rings the data outlet.",
+  "covers": [
+    "FS-LOWV-3.2.1"
+  ]
+}

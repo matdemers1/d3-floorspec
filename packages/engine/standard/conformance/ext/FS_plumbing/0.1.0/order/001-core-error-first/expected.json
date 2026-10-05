@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-501",
+      "severity": "error",
+      "elements": ["X25"]
+    }
+  ]
+}

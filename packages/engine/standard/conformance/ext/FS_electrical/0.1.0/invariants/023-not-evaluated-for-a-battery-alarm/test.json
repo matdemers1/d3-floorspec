@@ -1,0 +1,7 @@
+{
+  "description": "A battery alarm at 24 V listed by C4: FS-ELEC-INV-013 only, not its voltage too.",
+  "covers": [
+    "FS-ELEC-5.2.1",
+    "FS-ELEC-3.2.5"
+  ]
+}

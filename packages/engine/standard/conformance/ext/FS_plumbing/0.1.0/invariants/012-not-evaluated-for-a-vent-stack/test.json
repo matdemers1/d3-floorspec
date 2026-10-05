@@ -1,0 +1,7 @@
+{
+  "description": "The toilet drains to a vent stack on L2 only: FS-PLMB-INV-003, and not FS-PLMB-INV-004 (4.2).",
+  "covers": [
+    "FS-PLMB-4.2.1",
+    "FS-PLMB-3.1.3"
+  ]
+}

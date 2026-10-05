@@ -1,0 +1,6 @@
+{
+  "description": "A clothes washer X28 in the Utility room drains to the floor drain X9, which drains to K1: the washer is connected to K1 through it.",
+  "covers": [
+    "FS-PLMB-5.1.1"
+  ]
+}

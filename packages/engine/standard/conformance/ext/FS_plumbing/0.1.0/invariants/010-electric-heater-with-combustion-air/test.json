@@ -1,0 +1,6 @@
+{
+  "description": "An electric water heater has no combustion air.",
+  "covers": [
+    "FS-PLMB-2.2.1"
+  ]
+}

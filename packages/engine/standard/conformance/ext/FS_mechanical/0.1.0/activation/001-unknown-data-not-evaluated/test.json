@@ -1,0 +1,6 @@
+{
+  "description": "FS_mechanical's data does not match its schema, but no extension is known: nothing of it is evaluated, and the document is valid.",
+  "covers": [
+    "FS-MECH-1.2.1"
+  ]
+}

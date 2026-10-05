@@ -1,0 +1,7 @@
+{
+  "description": "The data breaks the schema and an invariant: only FS-LOWV-SCH-001.",
+  "covers": [
+    "FS-LOWV-1.2.2",
+    "FS-LOWV-1.3.1"
+  ]
+}

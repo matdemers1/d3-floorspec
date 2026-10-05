@@ -1,0 +1,11 @@
+{
+  "description": "The same house read with no known extensions: FS_lowvoltage is not evaluated, so nothing of it is derived (`derived.extensions` is empty) - only what Core derives from every extension element's fallback, host and clearances (Core 1.6.9): their fallbacks, placements and clearances.",
+  "covers": [
+    "FS-LOWV-1.2.1",
+    "FS-LOWV-1.2.4",
+    "FS-CORE-1.6.9",
+    "FS-CORE-12.6.2",
+    "FS-CORE-13.4.1",
+    "FS-CORE-13.5.2"
+  ]
+}

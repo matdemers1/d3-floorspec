@@ -1,0 +1,7 @@
+{
+  "description": "The water heater circuit C3's panel is missing; its 208 V and its spaces past the end are not evaluated against a panel (5.2): only FS-ELEC-INV-002.",
+  "covers": [
+    "FS-ELEC-5.2.1",
+    "FS-ELEC-3.1.1"
+  ]
+}

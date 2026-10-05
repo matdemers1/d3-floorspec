@@ -1,0 +1,6 @@
+{
+  "description": "FS_plumbing's top-level data is an array: Core allows any JSON there, FS_plumbing's schema does not.",
+  "covers": [
+    "FS-PLMB-1.3.1"
+  ]
+}

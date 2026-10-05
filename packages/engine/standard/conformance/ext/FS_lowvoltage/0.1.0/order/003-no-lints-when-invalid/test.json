@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too: the document is invalid, so no lint is reported, FS_lowvoltage's or Core's.",
+  "covers": [
+    "FS-LOWV-1.2.2",
+    "FS-LOWV-1.2.3"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A natural-gas water heater with direct combustion air: valid.",
+  "covers": [
+    "FS-PLMB-2.2.1"
+  ]
+}

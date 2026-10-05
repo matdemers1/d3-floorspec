@@ -1,0 +1,8 @@
+{
+  "description": "A subpanel X28 in the Utility room, fed by the 60 A, 2-pole C6 on the main panel, with one circuit C7 for the bath receptacle X29: each panel lists its own circuits and spaces; C6 feeds nothing directly.",
+  "covers": [
+    "FS-ELEC-6.1.1",
+    "FS-ELEC-3.4.1",
+    "FS-ELEC-3.4.2"
+  ]
+}

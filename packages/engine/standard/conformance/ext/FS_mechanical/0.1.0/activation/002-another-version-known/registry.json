@@ -1,0 +1,37 @@
+[
+  {
+    "name": "FS_mechanical",
+    "version": "0.2.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_mechanical/0.1.0/mechanical.schema.json",
+    "title": "Mechanical and fuel gas",
+    "requires": {},
+    "kinds": {
+      "equipment": {
+        "title": "HVAC equipment",
+        "fallback": {}
+      },
+      "terminals": {
+        "title": "Air terminal",
+        "fallback": {}
+      },
+      "exhaust": {
+        "title": "Exhaust fan or hood",
+        "fallback": {}
+      },
+      "gasAppliances": {
+        "title": "Gas appliance",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  }
+]

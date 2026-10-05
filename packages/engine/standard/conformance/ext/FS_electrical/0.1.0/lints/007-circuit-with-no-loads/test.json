@@ -1,0 +1,6 @@
+{
+  "description": "A spare circuit C6 at space 10 feeds nothing.",
+  "covers": [
+    "FS-ELEC-1.2.3"
+  ]
+}

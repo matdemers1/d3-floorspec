@@ -103,3 +103,32 @@ describe('human output and exit codes', () => {
     expect(Object.keys(out)).toEqual(['walls', 'junctionFills', 'rooms', 'unanchored', 'openings', 'program', 'fallbacks', 'placements', 'clearances', 'clearanceOverlaps', 'circulation']);
   });
 });
+
+describe('floorspec --extensions', () => {
+  const ext = join(import.meta.dirname, '..', '..', 'engine', 'standard', 'conformance', 'ext');
+  const demo = join(ext, 'FS_electrical', '0.1.0', 'examples', '001-p5-demo-house');
+
+  it('evaluates an official extension for a document that uses it, with its entry known', () => {
+    const expected = JSON.parse(readFileSync(join(demo, 'expected.json'), 'utf8')) as { derived: unknown };
+    const p = floorspec('validate', join(demo, 'input.json'), '--json', '--extensions', 'FS_electrical', '--registry', join(demo, 'registry.json'));
+    expect(p.status).toBe(0);
+    expect((JSON.parse(p.stdout) as { derived: unknown }).derived).toEqual(expected.derived);
+  });
+
+  it('"official" implements and knows all four', () => {
+    const p = floorspec('derive', join(demo, 'input.json'), '--extensions', 'official');
+    expect(p.status).toBe(0);
+    expect(Object.keys((JSON.parse(p.stdout) as { extensions: object }).extensions).sort()).toEqual(['FS_electrical', 'FS_lowvoltage', 'FS_mechanical', 'FS_plumbing']);
+  });
+
+  it('reports an extension invariant like any other diagnostic', () => {
+    const dir = join(ext, 'FS_electrical', '0.1.0', 'invariants', '011-240-volt-charger-on-a-120-volt-circuit');
+    const p = floorspec('validate', join(dir, 'input.json'), '--extensions', 'official');
+    expect(p.status).toBe(1);
+    expect(p.stdout).toContain('error FS-ELEC-INV-006 [C5, X24]');
+  });
+
+  it('refuses an extension it does not implement', () => {
+    expect(floorspec('validate', join(demo, 'input.json'), '--extensions', 'FS_furniture').status).toBe(2);
+  });
+});

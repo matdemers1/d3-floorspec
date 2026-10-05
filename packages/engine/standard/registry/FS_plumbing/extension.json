@@ -1,0 +1,35 @@
+{
+  "name": "FS_plumbing",
+  "version": "0.1.0",
+  "status": "releaseCandidate",
+  "schema": "https://d3cloud.io/floorspec/schema/ext/FS_plumbing/0.1.0/plumbing.schema.json",
+  "title": "Plumbing",
+  "requires": {},
+  "kinds": {
+    "fixtures": {
+      "title": "Plumbing fixture",
+      "fallback": {}
+    },
+    "waterHeaters": {
+      "title": "Water heater",
+      "fallback": {}
+    },
+    "drains": {
+      "title": "Drain",
+      "fallback": {}
+    },
+    "cleanouts": {
+      "title": "Cleanout",
+      "fallback": {}
+    }
+  },
+  "terms": {
+    "roomFunctions": []
+  },
+  "implementations": [
+    {
+      "name": "D3 Floorspec (@floorspec/engine)",
+      "url": "https://github.com/matdemers1/d3-floorspec"
+    }
+  ]
+}

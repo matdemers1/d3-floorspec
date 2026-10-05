@@ -12,6 +12,7 @@ import { elementFrame, envelopesOverlap, footprintOf, openingFrame, placementOf,
 import { comparePoints } from './level.js';
 import { analyseProgram, type DerivedProgram } from './program.js';
 import { analyseCirculation, type DerivedCirculationRoom } from '../circulation/circulation.js';
+import type { DerivedExtensions } from '../extensions/official.js';
 
 export type { DerivedProgram, DerivedProgramItem, DerivedAdjacency } from './program.js';
 export type { DerivedCirculationRoom } from '../circulation/circulation.js';
@@ -63,6 +64,11 @@ export interface DerivedClearance extends Footprint {
 export type EnvelopeRef = [owner: string, name: string];
 
 export interface Derived {
+  /**
+   * What each official extension the reader implements and evaluated derives (each extension's
+   * spec): present, possibly empty, whenever the reader implements one.
+   */
+  extensions?: DerivedExtensions;
   walls: Record<string, DerivedWall>;
   junctionFills: Record<string, Point[]>;
   rooms: Record<string, DerivedRoomPolygon>;

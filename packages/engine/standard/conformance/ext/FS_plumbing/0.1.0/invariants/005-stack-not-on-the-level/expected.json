@@ -1,0 +1,25 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-PLMB-INV-004",
+      "severity": "error",
+      "elements": ["K1", "X27"]
+    },
+    {
+      "code": "FS-PLMB-INV-004",
+      "severity": "error",
+      "elements": ["K1", "X6"]
+    },
+    {
+      "code": "FS-PLMB-INV-004",
+      "severity": "error",
+      "elements": ["K1", "X7"]
+    },
+    {
+      "code": "FS-PLMB-INV-004",
+      "severity": "error",
+      "elements": ["K1", "X9"]
+    }
+  ]
+}

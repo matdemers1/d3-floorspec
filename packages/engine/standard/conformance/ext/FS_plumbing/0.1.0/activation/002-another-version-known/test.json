@@ -1,0 +1,6 @@
+{
+  "description": "The document uses FS_plumbing at 0.2.0, which is known (a later entry), but the implementation implements 0.1.0: not evaluated, so the data that breaks 0.1.0's schema is not reported.",
+  "covers": [
+    "FS-PLMB-1.2.1"
+  ]
+}

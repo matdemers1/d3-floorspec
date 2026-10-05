@@ -1,0 +1,6 @@
+{
+  "description": "An alarm detects at least one thing.",
+  "covers": [
+    "FS-ELEC-1.3.1"
+  ]
+}

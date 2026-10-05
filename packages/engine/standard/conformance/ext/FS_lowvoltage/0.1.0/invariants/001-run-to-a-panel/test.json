@@ -1,0 +1,6 @@
+{
+  "description": "The data outlet is run to X1, the electrical panel - not a head-end.",
+  "covers": [
+    "FS-LOWV-3.1.1"
+  ]
+}

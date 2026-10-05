@@ -1,0 +1,10 @@
+{
+  "description": "The Phase 5 demo house, read by an implementation of FS_plumbing that knows it: a panel, kitchen receptacles on two 20 A circuits, a toilet, a lavatory, an electric water heater on a 240 V circuit, a gas furnace and range, a bath fan, and low-voltage devices run to a structured media enclosure. It is valid, reports nothing, and derives FS_plumbing's values as `derived.extensions.FS_plumbing`.",
+  "covers": [
+    "FS-PLMB-1.2.1",
+    "FS-PLMB-1.2.3",
+    "FS-PLMB-1.2.4",
+    "FS-PLMB-1.3.1",
+    "FS-PLMB-5.1.1"
+  ]
+}

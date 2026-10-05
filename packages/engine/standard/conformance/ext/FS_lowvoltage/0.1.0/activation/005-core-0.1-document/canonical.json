@@ -1,0 +1,14 @@
+{
+  "extensions": {
+    "FS_lowvoltage": {
+      "colour": "red"
+    }
+  },
+  "extensionsUsed": {
+    "FS_lowvoltage": "0.1.0"
+  },
+  "floorspec": "0.1",
+  "project": {
+    "name": "Old"
+  }
+}

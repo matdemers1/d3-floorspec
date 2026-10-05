@@ -1,0 +1,6 @@
+{
+  "description": "A 30 A breaker on 20 A conductors.",
+  "covers": [
+    "FS-ELEC-1.2.3"
+  ]
+}

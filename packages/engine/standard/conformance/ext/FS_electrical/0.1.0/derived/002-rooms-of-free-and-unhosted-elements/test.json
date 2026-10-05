@@ -1,0 +1,6 @@
+{
+  "description": "A floor lamp standing free in the Kitchen is in the Kitchen; one standing free outside the house, and an alarm with no host, are in no room.",
+  "covers": [
+    "FS-ELEC-6.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The same removal, with C2's loads set without X5 in the same batch: it commits.",
+  "covers": [
+    "FS-ELEC-3.2.1",
+    "FS-ELEC-1.2.1"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "5c851b5adaf6eb9c90ae0011d38f547500f0f818c0e625453f5f42f1766b2381",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "moveJunction",
+      "id": "J1",
+      "to": [-390144, 0]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J2",
+      "to": [-390144, 4681728]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "J1",
+      "path": "/position",
+      "value": [0, 0]
+    },
+    {
+      "op": "setProperty",
+      "id": "J2",
+      "path": "/position",
+      "value": [0, 4681728]
+    }
+  ]
+}

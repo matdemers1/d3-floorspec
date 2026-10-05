@@ -1,0 +1,6 @@
+{
+  "description": "FS_electrical has no collection \"outlets\": Core reports it first, as FS-INV-604 of a known extension (Core 12.4.1), and FS_electrical is not evaluated.",
+  "covers": [
+    "FS-ELEC-1.2.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A 1,500 W and a 1,000 W appliance on C1: 2,500 W on a 2,400 W circuit.",
+  "covers": [
+    "FS-ELEC-1.2.3"
+  ]
+}

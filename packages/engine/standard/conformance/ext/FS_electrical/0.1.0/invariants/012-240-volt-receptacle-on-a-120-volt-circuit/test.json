@@ -1,0 +1,6 @@
+{
+  "description": "A range receptacle (240 V) on the 120 V counter circuit.",
+  "covers": [
+    "FS-ELEC-3.2.4"
+  ]
+}

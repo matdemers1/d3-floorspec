@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-LOWV-INV-002",
+      "severity": "error",
+      "elements": ["X28"]
+    }
+  ]
+}

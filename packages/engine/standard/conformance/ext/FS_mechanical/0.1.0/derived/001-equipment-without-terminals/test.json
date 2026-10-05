@@ -1,0 +1,6 @@
+{
+  "description": "A heat pump with no terminals derives no terminals and no air flow; an appliance without an input adds nothing to its source's.",
+  "covers": [
+    "FS-MECH-5.1.1"
+  ]
+}

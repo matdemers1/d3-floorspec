@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-ELEC-INV-003",
+      "severity": "error",
+      "elements": ["C2"]
+    }
+  ]
+}

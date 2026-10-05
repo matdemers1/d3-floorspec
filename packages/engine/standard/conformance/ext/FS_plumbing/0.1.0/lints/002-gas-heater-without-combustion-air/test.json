@@ -1,0 +1,6 @@
+{
+  "description": "A propane water heater that does not say where its combustion air comes from.",
+  "covers": [
+    "FS-PLMB-1.2.3"
+  ]
+}

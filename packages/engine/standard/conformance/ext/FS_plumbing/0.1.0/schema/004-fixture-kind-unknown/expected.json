@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-PLMB-SCH-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

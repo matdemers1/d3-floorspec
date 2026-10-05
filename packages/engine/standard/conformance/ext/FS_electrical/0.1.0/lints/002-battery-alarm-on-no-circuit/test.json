@@ -1,0 +1,6 @@
+{
+  "description": "A battery alarm on no circuit is as it should be: no lint.",
+  "covers": [
+    "FS-ELEC-1.2.3"
+  ]
+}

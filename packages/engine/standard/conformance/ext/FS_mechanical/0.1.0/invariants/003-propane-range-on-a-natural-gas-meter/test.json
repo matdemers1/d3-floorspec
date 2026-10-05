@@ -1,0 +1,6 @@
+{
+  "description": "A propane range on the natural gas meter.",
+  "covers": [
+    "FS-MECH-3.1.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The main panel is fed by its own circuit C5.",
+  "covers": [
+    "FS-ELEC-3.4.2"
+  ]
+}

@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/ext/FS_lowvoltage/0.1.0/lowvoltage.schema.json",
+  "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_lowvoltage 0.1.0, registry/FS_lowvoltage/spec.md. Applied to the extension's top-level data, extensions.FS_lowvoltage, by a validator that implements FS_lowvoltage and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+  "title": "FS_lowvoltage 0.1.0",
+  "description": "Data, coax and phone outlets, doorbells, security devices, speakers, and the head-ends they are run to.",
+  "type": "object",
+  "properties": {
+    "collections": {
+      "description": "Core 12.5: the extension's elements, by kind.",
+      "type": "object",
+      "properties": {
+        "outlets": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/outlet"
+          },
+          "description": "Outlets: an ID → element map (Core 12.5)."
+        },
+        "doorbells": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/doorbell"
+          },
+          "description": "Doorbells: an ID → element map (Core 12.5)."
+        },
+        "security": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/security"
+          },
+          "description": "Security devices: an ID → element map (Core 12.5)."
+        },
+        "speakers": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/speaker"
+          },
+          "description": "Speakers: an ID → element map (Core 12.5)."
+        },
+        "headEnds": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/headEnd"
+          },
+          "description": "Head-ends: an ID → element map (Core 12.5)."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "description": "Core 3.1.1: an ID."
+    },
+    "outlet": {
+      "title": "Outlet",
+      "description": "2.1: a data, coax, phone or fibre outlet.",
+      "type": "object",
+      "required": [
+        "media"
+      ],
+      "properties": {
+        "media": {
+          "description": "What it carries.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "data",
+              "coax",
+              "phone",
+              "fiber"
+            ]
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "ports": {
+          "description": "Ports of each medium.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64,
+          "default": 1
+        },
+        "headEnd": {
+          "description": "3.1: the head-end it is run to.",
+          "$ref": "#/$defs/id"
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "doorbell": {
+      "title": "Doorbell",
+      "description": "2.2: a doorbell button or chime.",
+      "type": "object",
+      "required": [
+        "part"
+      ],
+      "properties": {
+        "part": {
+          "description": "Which part.",
+          "type": "string",
+          "enum": [
+            "button",
+            "videoButton",
+            "chime"
+          ]
+        },
+        "chime": {
+          "description": "3.2: the chime a button rings.",
+          "$ref": "#/$defs/id"
+        },
+        "headEnd": {
+          "description": "3.1: the head-end it is run to.",
+          "$ref": "#/$defs/id"
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "security": {
+      "title": "Security device",
+      "description": "2.3: a security sensor, keypad, siren or camera.",
+      "type": "object",
+      "required": [
+        "device"
+      ],
+      "properties": {
+        "device": {
+          "description": "What it is.",
+          "type": "string",
+          "enum": [
+            "contact",
+            "motion",
+            "glassBreak",
+            "keypad",
+            "siren",
+            "camera"
+          ]
+        },
+        "zone": {
+          "description": "A zone label.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "wireless": {
+          "description": "True when it is not run to a head-end by wire.",
+          "type": "boolean",
+          "default": false
+        },
+        "headEnd": {
+          "description": "3.1: the head-end it is run to.",
+          "$ref": "#/$defs/id"
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "speaker": {
+      "title": "Speaker",
+      "description": "2.4: a speaker or volume control.",
+      "type": "object",
+      "required": [
+        "speaker"
+      ],
+      "properties": {
+        "speaker": {
+          "description": "What it is.",
+          "type": "string",
+          "enum": [
+            "inCeiling",
+            "inWall",
+            "surface",
+            "subwoofer",
+            "volumeControl"
+          ]
+        },
+        "zone": {
+          "description": "An audio zone label.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "headEnd": {
+          "description": "3.1: the head-end it is run to.",
+          "$ref": "#/$defs/id"
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "headEnd": {
+      "title": "Head-end",
+      "description": "2.5: where runs end: a structured media enclosure, a rack, an alarm panel, an amplifier.",
+      "type": "object",
+      "required": [
+        "headEnd",
+        "serves"
+      ],
+      "properties": {
+        "headEnd": {
+          "description": "What it is.",
+          "type": "string",
+          "enum": [
+            "structuredMedia",
+            "networkRack",
+            "alarmPanel",
+            "audioAmplifier",
+            "doorbellTransformer"
+          ]
+        },
+        "serves": {
+          "description": "The systems it terminates.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "data",
+              "coax",
+              "phone",
+              "fiber",
+              "security",
+              "audio",
+              "doorbell"
+            ]
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

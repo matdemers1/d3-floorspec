@@ -3,7 +3,7 @@
  * documents with @floorspec/engine. The CLI may use Node; the engine may not.
  */
 import { readFileSync } from 'node:fs';
-import { CATALOGUE, check, type Diagnostic, type ValidateOptions } from '@floorspec/engine';
+import { CATALOGUE, OFFICIAL_EXTENSIONS, OFFICIAL_EXTENSION_NAMES, check, type Diagnostic, type ValidateOptions } from '@floorspec/engine';
 
 export const PACKAGE_NAME = '@floorspec/cli';
 export const VERSION = '0.2.0';
@@ -22,6 +22,11 @@ options:
   --registry <file>          the known extensions (Core 0.2, 12.2): a JSON array of registry
                              entries; FS-CFG-001 when they are not a valid registry
   --core 0.1|0.2             the newest Core draft to read as (default 0.2, which reads 0.1 too)
+  --extensions <names>       the extensions to read as implementing, comma-separated: any of
+                             FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage, each
+                             evaluated for a document that uses it at a version the validator
+                             knows (--registry); or "official": all four, knowing their registry
+                             entries unless --registry is given
   --json                     validate: print the conformance-shaped result
 
 exit status: 0 valid, 1 invalid, 2 usage or I/O error
@@ -47,7 +52,7 @@ export function formatDiagnostic(file: string, d: Diagnostic): string {
 }
 
 /** Options that take a value. */
-const VALUED = new Set(['--registry', '--core']);
+const VALUED = new Set(['--registry', '--core', '--extensions']);
 
 export function run(argv: readonly string[], io: Io = nodeIo): number {
   const args: string[] = [];
@@ -103,6 +108,16 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
       io.err(`floorspec: cannot read ${registry}: ${(e as Error).message}\n`);
       return 2;
     }
+  }
+  const exts = values.get('--extensions');
+  if (exts !== undefined) {
+    const names = exts === 'official' ? [...OFFICIAL_EXTENSION_NAMES] : exts.split(',');
+    if (names.some((n) => !OFFICIAL_EXTENSION_NAMES.includes(n))) {
+      io.err(USAGE);
+      return 2;
+    }
+    options.extensions = names;
+    if (exts === 'official' && options.knownExtensions === undefined) options.knownExtensions = OFFICIAL_EXTENSIONS;
   }
   const r = check(bytes, options);
 
