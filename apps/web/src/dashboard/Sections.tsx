@@ -3,7 +3,7 @@ import type { Derived, FloorspecDocument } from '@floorspec/engine';
 import { navigate } from '../lib/router';
 import { formatArea, readProgram } from '../program/model';
 import { unitsOf } from '../editor/units';
-import { Download, FileBox, GitBranch, LayoutGrid, Share, TriangleAlert, Waypoints } from 'lucide-react';
+import { GitBranch, LayoutGrid, Share, TriangleAlert, Waypoints } from 'lucide-react';
 import { DashCard } from './DashCard';
 
 /**
@@ -117,35 +117,5 @@ export function ShareCard() {
   );
 }
 
-/**
- * Exports. `model.json` works today: the canonical bytes of the head version. The rest arrive with
- * FLR-P-9 (Interop & Handoff).
- */
-export function ExportsCard({ projectId, hasModel }: { projectId: string; hasModel: boolean }) {
-  return (
-    <DashCard region="exports" icon={<FileBox aria-hidden="true" />} title="Exports">
-      <ul className="fs-list">
-        <li className="fs-export">
-          <span>
-            <span className="fs-mono">model.json</span> · the canonical model
-          </span>
-          {/* A navigation, not a fetch: the API answers Content-Disposition: attachment, so the
-              browser saves the file under the name the API gives it and the page stays put. */}
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Download />}
-            disabled={!hasModel}
-            onClick={() => { window.location.assign(`/api/projects/${projectId}/model.json`); }}
-          >
-            Download
-          </Button>
-        </li>
-        <li className="fs-export">
-          <span>Floorspec package, IFC, PDF plan set</span>
-          <Phase n={9} />
-        </li>
-      </ul>
-    </DashCard>
-  );
-}
+/** Exports (FLR-T-9.3): the model, the dimensioned PDF and the DXF drawings — see exports/ExportsCard. */
+export { ExportsCard } from '../exports/ExportsCard';

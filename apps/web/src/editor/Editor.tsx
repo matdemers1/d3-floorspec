@@ -1,7 +1,7 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, SegmentedControl, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
 import { navigate, takeParam } from '../lib/router';
 import { EditorStore, useEditor, type ToolId } from './store';
 import { ToolController } from './tools';
@@ -22,6 +22,7 @@ import { proposerOf } from './api';
 import { labelOf, sortedLevels } from './model';
 import { formatLen, gridStepLabel } from './units';
 import { kindById, type SystemId } from './systems/catalog';
+import { ExportButton } from '../exports/ExportButton';
 import {
   AirIcon,
   DataIcon,
@@ -329,12 +330,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
           Share
         </Button>
       </Tooltip>
-      {project !== null ? (
-        <a className="fs-topbar__export" href={`/api/projects/${project.id}/model.json`} download>
-          <Download aria-hidden="true" />
-          Export
-        </a>
-      ) : null}
+      {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} /> : null}
     </header>
   );
 }

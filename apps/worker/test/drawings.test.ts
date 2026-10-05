@@ -2,7 +2,11 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
-import DxfParser from 'dxf-parser';
+import * as dxfParser from 'dxf-parser';
+
+// dxf-parser is CommonJS: Node's ESM loader names its export, Vite's interop hands over the default.
+const DxfParser: typeof dxfParser.DxfParser =
+  typeof dxfParser.DxfParser === 'function' ? dxfParser.DxfParser : (dxfParser as unknown as { default: typeof dxfParser.DxfParser }).default;
 import { describe, expect, it } from 'vitest';
 import {
   areaText,
