@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { Diagnostic } from '@floorspec/engine';
+import { OFFICIAL_READER, type Diagnostic } from '@floorspec/engine';
 import { apply as applyLocally } from '@floorspec/ops';
 import {
   fetchHead,
@@ -20,6 +20,8 @@ import { readModel, sortedLevels, levelOfElement, type EditorModel, type LevelVi
 import { fixToOps, type Batch, type BatchBuilder, type ChainVertex, type TypeChoice } from './ops';
 import type { Snap } from './snap';
 import { unitsOf, type UnitSystem } from './units';
+import { NO_OPTIONS, type ReceptacleOptions } from './systems/catalog';
+import type { DeviceHover } from './systems/placement';
 
 /**
  * The editor's state and its one write path. Every edit is a batch handed to `apply`, which posts
@@ -31,7 +33,7 @@ import { unitsOf, type UnitSystem } from './units';
  * write it between renders without threading callbacks through every component.
  */
 
-export type ToolId = 'select' | 'wall' | 'separator' | 'door' | 'window' | 'room';
+export type ToolId = 'select' | 'wall' | 'separator' | 'door' | 'window' | 'room' | 'device';
 
 export interface Rejection {
   /** What the person tried: "Draw walls", "Move W3". */
@@ -55,12 +57,14 @@ export type Draft =
       typed: string;
     }
   | { tool: 'room'; hover: { point: Point; free: boolean } | null }
+  | { tool: 'device'; hover: DeviceHover | null; typed: string }
   | {
       tool: 'select';
       drag:
         | { kind: 'junction'; id: string; to: Point; snap: Snap }
         | { kind: 'wall'; id: string; by: number }
         | { kind: 'opening'; id: string; offset: number; centered: boolean }
+        | { kind: 'device'; id: string; hover: DeviceHover }
         | null;
       typed: string;
     };
@@ -81,6 +85,15 @@ export interface Layers {
   rooms: boolean;
   dimensions: boolean;
   findings: boolean;
+  /** The building systems (FLR-T-5.7), one eye each. */
+  electrical: boolean;
+  plumbing: boolean;
+  mechanical: boolean;
+  lowvoltage: boolean;
+  /** Clearance envelopes (Core 13.5): working space, fixture clearances, door swings' boxes. */
+  clearances: boolean;
+  /** Draw every extension element as a reader without its extension does: its fallback box (Core 1.6.9, 12.6). */
+  coreOnly: boolean;
 }
 
 export interface DrawSettings {
@@ -89,6 +102,11 @@ export interface DrawSettings {
   chain: boolean;
   doorType: string | null;
   windowType: string | null;
+  /** The device tool's kind (systems/catalog.ts), and a receptacle's options. */
+  device: string;
+  receptacle: ReceptacleOptions;
+  /** A wall mount's height; null for the kind's default. */
+  height: number | null;
 }
 
 /**
@@ -175,6 +193,8 @@ export interface EditorState {
   palette: boolean;
   /** The element being renamed in the tree (F2). */
   renaming: string | null;
+  /** Picking on the plan what a switch controls (FLR-T-5.7): clicks toggle devices in its `controls`. */
+  picking: { switch: string } | null;
 }
 
 const initial: EditorState = {
@@ -195,8 +215,8 @@ const initial: EditorState = {
   notice: null,
   view: null,
   cursor: null,
-  layers: { walls: true, openings: true, rooms: true, dimensions: true, findings: true },
-  draw: { wallType: null, justification: 'center', chain: true, doorType: null, windowType: null },
+  layers: { walls: true, openings: true, rooms: true, dimensions: true, findings: true, electrical: true, plumbing: true, mechanical: true, lowvoltage: true, clearances: false, coreOnly: false },
+  draw: { wallType: null, justification: 'center', chain: true, doorType: null, windowType: null, device: 'receptacle', receptacle: NO_OPTIONS, height: null },
   focus: null,
   treeOpen: false,
   findingsOpen: false,
@@ -212,6 +232,7 @@ const initial: EditorState = {
   nudge: readNudge(),
   palette: false,
   renaming: null,
+  picking: null,
 };
 
 function readNudge(): number | null {
@@ -463,7 +484,7 @@ export class EditorStore {
       const pending = this.previewBatch;
       const model = this.state.model;
       if (pending === null || model === null) return;
-      const result = applyLocally(model.document, { batch: pending });
+      const result = applyLocally(model.document, { batch: pending }, OFFICIAL_READER);
       if (result.status === 'committed') this.set({ preview: { model: readModel(result.hash, result.document), diagnostics: [] } });
       else this.set({ preview: { model: null, diagnostics: result.diagnostics } });
     });
@@ -488,7 +509,7 @@ export class EditorStore {
 
   setTool(tool: ToolId): void {
     this.preview(null);
-    this.set({ tool, draft: null, hover: null });
+    this.set({ tool, draft: null, hover: null, picking: null });
   }
 
   setLevel(level: string): void {

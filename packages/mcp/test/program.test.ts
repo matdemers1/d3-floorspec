@@ -1,14 +1,12 @@
-import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
-import { canonicalize, contentHash } from '@floorspec/engine';
-import { apply } from '@floorspec/ops';
 import { describe, expect, it } from 'vitest';
-import { createFloorspecMcpHandler, FloorspecApiError, SET_PROPERTY_HINT, UPGRADE_HINT, type ApplyInput, type Committed, type FloorspecClient } from '../src/index.js';
+import { SET_PROPERTY_HINT, UPGRADE_HINT } from '../src/index.js';
+import { ApplierClient, connect } from './applier-client.js';
 
 /**
  * The Ops 0.2 vocabulary end to end through the tool path: an agent sends floorspec_apply batches
  * that build a brief and place devices, the in-process MCP server checks them against the
  * advertised schema, and a client backed by the reference applier (`@floorspec/ops`, Ops 0.2, as
- * the API runs it) commits them — then floorspec_describe reads the result back.
+ * the API runs it: implementing and knowing the official extensions) commits them — then floorspec_describe reads the result back.
  */
 
 /** One room, 4 m × 3 m, named Kitchen, on a Core 0.2 document: what a new project grows into. */
@@ -32,64 +30,6 @@ const HOUSE = {
   },
   rooms: { R1: { level: 'L1', anchor: [2560000, 1920000], name: 'Kitchen', function: 'kitchen' } },
 };
-
-const PROJECT = '01a10000-0000-7000-8000-000000000001';
-
-/** A client whose main head is a document in memory, edited by the reference applier. */
-class ApplierClient implements FloorspecClient {
-  document: object;
-  seq = 1;
-  constructor(document: object) {
-    this.document = document;
-  }
-  listProjects() {
-    return Promise.resolve([{ id: PROJECT, name: 'Lake house', head: contentHash(this.document) }]);
-  }
-  model() {
-    return Promise.resolve({ hash: contentHash(this.document), document: this.document, text: canonicalize(this.document) });
-  }
-  apply(_projectId: string, input: ApplyInput): Promise<Committed> {
-    const before = contentHash(this.document);
-    const r = apply(this.document, { batch: input.batch as never }, { ops: '0.2' });
-    if (r.status === 'rejected')
-      return Promise.reject(new FloorspecApiError(422, { type: '/problems/ops-rejected', error: 'the batch was rejected and nothing changed', diagnostics: r.diagnostics }));
-    this.document = JSON.parse(r.document) as object;
-    this.seq++;
-    return Promise.resolve({ status: 'committed', head: 'main', before, hash: r.hash, op: { id: `op-${String(this.seq)}`, seq: this.seq, kind: 'apply' }, resolved: r.resolved as unknown as Committed['resolved'], created: r.created, removed: r.removed, changeset: null });
-  }
-  propose(): never {
-    throw new Error('not used');
-  }
-  changesets() {
-    return Promise.resolve([]);
-  }
-  accept(): never {
-    throw new Error('not used');
-  }
-  reject(): never {
-    throw new Error('not used');
-  }
-  proposeLayouts(): never {
-    throw new Error('not used');
-  }
-  validate() {
-    return Promise.resolve({ head: 'main', hash: contentHash(this.document), valid: true, diagnostics: [] });
-  }
-  findings() {
-    return Promise.resolve({ head: 'main', hash: contentHash(this.document), findings: [], rulePacks: [], note: '' });
-  }
-  render(): Promise<Uint8Array> {
-    return Promise.reject(new FloorspecApiError(501, { error: 'no renderer here' }));
-  }
-}
-
-async function connect(client: FloorspecClient) {
-  const handler = createFloorspecMcpHandler(() => client);
-  const fetchLike = (url: string | URL, init?: RequestInit) => handler.fetch(new Request(url, init));
-  const mcp = new Client({ name: 'test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } } });
-  await mcp.connect(new StreamableHTTPClientTransport(new URL('http://floorspec.test/mcp'), { fetch: fetchLike }));
-  return mcp;
-}
 
 type Content = { type: string; text?: string };
 const texts = (result: { content?: unknown }) => ((result.content ?? []) as Content[]).filter((c) => c.type === 'text').map((c) => c.text ?? '').join('\n');
@@ -178,16 +118,16 @@ describe('a brief and a device, through floorspec_apply', () => {
           {
             op: 'placeElement',
             extension: 'FS_electrical',
-            collection: 'devices',
+            collection: 'receptacles',
             host: { mode: 'wallFace', wall: 'north wall of Kitchen', toward: 'Kitchen', at: "2' from start", height: '12"' },
-            element: { name: 'Counter outlet', fallback: { box: { min: [0, -51200, 0], max: [25600, 51200, 128000] } }, device: 'receptacle' },
+            element: { name: 'Counter outlet', fallback: { box: { min: [0, -51200, 0], max: [25600, 51200, 128000] } } },
           },
         ],
       },
     });
     expect(placed.isError, texts(placed)).toBeFalsy();
     expect(placed.structuredContent).toMatchObject({ status: 'committed', created: ['X1'] });
-    const x1 = (client.document as Doc).extensions['FS_electrical']?.collections['devices']?.['X1'];
+    const x1 = (client.document as Doc).extensions['FS_electrical']?.collections['receptacles']?.['X1'];
     expect(x1?.host).toEqual({ mode: 'wallFace', wall: 'W2', side: 'right', offset: 2 * 390144, height: 12 * 32512 });
     expect(x1?.fallback['level']).toBe('L1');
     expect(texts(await mcp.callTool({ name: 'floorspec_describe', arguments: {} }))).toContain('X1');
@@ -198,7 +138,7 @@ describe('a brief and a device, through floorspec_apply', () => {
       arguments: { batch: [{ op: 'moveElement', element: 'Counter outlet', host: { mode: 'surface', room: 'Kitchen', surface: 'floor', at: ["3'", "4'"] } }] },
     });
     expect(moved.isError, texts(moved)).toBeFalsy();
-    expect((client.document as Doc).extensions['FS_electrical']?.collections['devices']?.['X1']?.host).toEqual({ mode: 'surface', room: 'R1', surface: 'floor', position: [3 * 390144, 4 * 390144] });
+    expect((client.document as Doc).extensions['FS_electrical']?.collections['receptacles']?.['X1']?.host).toEqual({ mode: 'surface', room: 'R1', surface: 'floor', position: [3 * 390144, 4 * 390144] });
   });
 
   it('refuses a host the schema does not allow before calling the API', async () => {
@@ -206,7 +146,7 @@ describe('a brief and a device, through floorspec_apply', () => {
     const mcp = await connect(client);
     const result = await mcp.callTool({
       name: 'floorspec_apply',
-      arguments: { batch: [{ op: 'placeElement', extension: 'FS_electrical', collection: 'devices', host: { mode: 'hanging', level: 'L1', at: [0, 0] }, element: {} }] },
+      arguments: { batch: [{ op: 'placeElement', extension: 'FS_electrical', collection: 'receptacles', host: { mode: 'hanging', level: 'L1', at: [0, 0] }, element: {} }] },
     });
     expect(result.isError).toBe(true);
     expect(client.seq).toBe(1);
@@ -230,7 +170,7 @@ describe('a brief and a device, through floorspec_apply', () => {
     const result = await mcp.callTool({
       name: 'floorspec_apply',
       arguments: {
-        batch: [{ op: 'placeElement', extension: 'FS_electrical', collection: 'devices', host: { mode: 'wallFace', wall: 'W1', side: 'left', at: 'centered', height: 0 }, element: { fallback: { box: { min: [0, -51200, 0], max: [25600, 51200, 128000] } } } }],
+        batch: [{ op: 'placeElement', extension: 'FS_electrical', collection: 'receptacles', host: { mode: 'wallFace', wall: 'W1', side: 'left', at: 'centered', height: 0 }, element: { fallback: { box: { min: [0, -51200, 0], max: [25600, 51200, 128000] } } } }],
       },
     });
     expect(texts(result)).toContain('"path":"/extensionsUsed/FS_electrical"');

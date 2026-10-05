@@ -13,7 +13,8 @@ import { DESIGN_PARTNER_PROMPT } from './prompts.js';
  * The D3 Floorspec MCP server (FLR-T-2.6): eleven verbs over one operation vocabulary.
  *
  * Perception — describe, query, validate, findings, render, export — reads; action — apply,
- * propose, propose_layouts, accept, reject — writes Floorspec Ops, nothing else (FLR-ADR-008). **There is no tool
+ * propose (a batch, or the electrical assistant's), propose_layouts, accept, reject — writes
+ * Floorspec Ops, nothing else (FLR-ADR-008). **There is no tool
  * that runs code** (FLR-REQ-058): an agent changes the house by sending typed operations, and a
  * test enumerates the tools to keep it that way.
  *
@@ -198,7 +199,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       instructions:
         'Design a house as code. Read with floorspec_describe before editing; edit with floorspec_apply, whose `batch` is a list of typed Floorspec Ops ' +
-        '(references like "north wall of Kitchen", lengths like 12\' 6"), the brief (addProgramItem, setAdjacency, setRoomBrief) and outlets, fixtures and furniture (placeElement) included; ' +
+        '(references like "north wall of Kitchen", lengths like 12\' 6"), the brief (addProgramItem, setAdjacency, setRoomBrief) and devices — receptacles, panels, fixtures, equipment (placeElement; the first of an extension declares it in extensionsUsed) — included; ' +
         'render and validate after every change. ' +
         'Agent edits land in a pending changeset a person accepts; every tool takes a changeset by name or ID. ' +
         'The design-partner prompt has the working rules and example calls. Never claim a change without a committed result and a render.',
@@ -330,13 +331,15 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose a changeset',
       description:
-        'Open a named changeset (or add to the pending one of that name), with an optional batch as floorspec_apply takes. Main does not change; a person accepts or rejects it.',
+        'Open a named changeset (or add to the pending one of that name), with an optional batch as floorspec_apply takes; or let assistant "electrical" propose receptacles, switches, lights and circuits. Main does not change; a person accepts or rejects it.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
-          name: z.string().trim().min(1).max(120).describe('What the change is, for the reviewer: "Widen the kitchen 2 ft".'),
+          name: z.string().trim().min(1).max(120).optional().describe('What the change is, for the reviewer: "Widen the kitchen 2 ft". Not for an assistant.'),
           batch: Batch.optional(),
           locks: z.array(Lock).max(200).optional(),
+          assistant: z.enum(['electrical']).optional(),
+          rooms: z.array(z.string().min(1).max(200)).max(200).optional().describe('The assistant\'s rooms; default all.'),
           render: z.boolean().optional(),
         }),
         // The union is spelled out once, on floorspec_apply; the batch is validated the same here.
@@ -347,6 +350,22 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
+        if (args.assistant === 'electrical') {
+          if (args.batch !== undefined) throw new ToolError('Send either a batch or an assistant, not both.');
+          const result = await client.proposeElectrical(project.id, args.rooms === undefined ? {} : { rooms: args.rooms });
+          const structured = { project: project.id, ...result };
+          const lead =
+            result.changeset === null
+              ? 'Nothing proposed: main is unchanged.'
+              : `Changeset "${result.changeset.name}" (${result.changeset.id}) is pending: ${String(result.proposal.ops)} operations from the electrical assistant. Main has not changed until a person accepts it.`;
+          const content: CallToolResult['content'] = [text([lead, ...result.proposal.explanation.map((l) => `- ${l}`)].join('\n')), text(structured)];
+          if (args.render === true && result.changeset !== null) {
+            const created = [...result.proposal.added.receptacles, ...result.proposal.added.switches, ...result.proposal.added.lights];
+            content.push(...(await renderContent(client, project.id, { changeset: result.changeset.id, highlight: created })));
+          }
+          return { content, structuredContent: structured };
+        }
+        if (args.name === undefined) throw new ToolError('Name the changeset: "name" says what the change is, for the reviewer.');
         const result = await client.propose(project.id, {
           name: args.name,
           ...(args.batch === undefined ? {} : { batch: args.batch }),

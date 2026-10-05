@@ -41,6 +41,9 @@ importers:
       '@d3cloudio/auth-client':
         specifier: 0.1.1
         version: 0.1.1(react@19.3.0)
+      '@floorspec/assistant-electrical':
+        specifier: workspace:*
+        version: link:../../packages/assistants/electrical
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../../packages/engine
@@ -111,6 +114,9 @@ importers:
       '@d3cloud/ui':
         specifier: https://github.com/matdemers1/d3-design-system/releases/download/v1.5.0/d3cloud-ui-1.5.0.tgz
         version: https://github.com/matdemers1/d3-design-system/releases/download/v1.5.0/d3cloud-ui-1.5.0.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@floorspec/assistant-electrical':
+        specifier: workspace:*
+        version: link:../../packages/assistants/electrical
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../../packages/engine
@@ -203,6 +209,15 @@ importers:
       tsx:
         specifier: ^4.23.13
         version: 4.23.15
+
+  packages/assistants/electrical:
+    dependencies:
+      '@floorspec/engine':
+        specifier: workspace:*
+        version: link:../../engine
+      '@floorspec/ops':
+        specifier: workspace:*
+        version: link:../../ops
 
   packages/cli:
     dependencies:

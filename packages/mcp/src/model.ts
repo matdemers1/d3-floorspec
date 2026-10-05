@@ -1,4 +1,4 @@
-import { deriveFrom, evaluate, type Derived, type Diagnostic, type Evaluation } from '@floorspec/engine';
+import { deriveEvaluation, evaluate, OFFICIAL_READER, type Derived, type Diagnostic, type Evaluation } from '@floorspec/engine';
 
 export type Analysis = NonNullable<Evaluation['analysis']>;
 
@@ -15,8 +15,9 @@ export interface Read {
 }
 
 export function read(document: unknown): Read {
-  const ev = evaluate(document as object);
-  const derived = ev.valid && ev.document !== undefined && ev.analysis !== undefined ? deriveFrom(ev.document, ev.analysis) : null;
+  // As the API reads it: implementing and knowing the official extensions (FS_electrical …).
+  const ev = evaluate(document as object, OFFICIAL_READER);
+  const derived = ev.valid && ev.document !== undefined && ev.analysis !== undefined ? deriveEvaluation(ev) : null;
   return {
     document: (document ?? {}) as Record<string, unknown>,
     valid: ev.valid,

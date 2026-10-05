@@ -210,3 +210,79 @@ export function ReadOnlyField({ label, value }: { label: string; value: string }
     </Row>
   );
 }
+
+/** A whole number — volts, amperes, watts, spaces — committed on Enter or blur once it parses and is in range. */
+export function IntField({ label, value, onCommit, disabled, min, max, unit, placeholder, allowEmpty = false }: { label: string; value: number | undefined; onCommit: (value: number | null) => void; disabled?: boolean; min?: number | undefined; max?: number | undefined; unit?: string | undefined; placeholder?: string | undefined; allowEmpty?: boolean }) {
+  const id = useId();
+  const shown = value === undefined ? '' : String(value);
+  const [text, setText] = useState(shown);
+  const [error, setError] = useState<string | null>(null);
+  const editing = useRef(false);
+  useEffect(() => {
+    if (!editing.current) {
+      setText(shown);
+      setError(null);
+    }
+  }, [shown]);
+  const commit = () => {
+    editing.current = false;
+    const t = text.trim();
+    if (t === shown) return;
+    if (t === '') {
+      if (allowEmpty) onCommit(null);
+      else setText(shown);
+      return;
+    }
+    if (!/^-?\d+$/.test(t)) {
+      setError('A whole number');
+      return;
+    }
+    const n = Number(t);
+    if ((min !== undefined && n < min) || (max !== undefined && n > max) || !Number.isSafeInteger(n)) {
+      setError(min !== undefined && max !== undefined ? `From ${String(min)} to ${String(max)}` : min !== undefined ? `At least ${String(min)}` : `At most ${String(max)}`);
+      return;
+    }
+    setError(null);
+    if (n !== value) onCommit(n);
+  };
+  return (
+    <Row label={unit === undefined ? label : `${label} (${unit})`} htmlFor={id}>
+      <Input
+        id={id}
+        appearance="filled"
+        className="fs-mono-input"
+        inputMode="numeric"
+        value={text}
+        placeholder={placeholder}
+        disabled={disabled}
+        invalid={error !== null}
+        aria-describedby={error !== null ? `${id}-help` : undefined}
+        autoComplete="off"
+        onFocus={() => { editing.current = true; }}
+        onChange={(e) => {
+          editing.current = true;
+          setText(e.target.value);
+          if (error !== null) setError(null);
+        }}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+          } else if (e.key === 'Escape') {
+            editing.current = false;
+            setText(shown);
+            setError(null);
+            (e.target as HTMLInputElement).blur();
+          }
+          e.stopPropagation();
+        }}
+      />
+      {error !== null ? (
+        <p id={`${id}-help`} className="fs-field-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </Row>
+  );
+}

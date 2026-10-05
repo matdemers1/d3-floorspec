@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { Request } from 'express';
 import { z } from 'zod';
-import { validate } from '@floorspec/engine';
+import { OFFICIAL_READER, validate } from '@floorspec/engine';
 import type { Db } from '../db.js';
 import { Routes } from '../http/routes.js';
 import { HttpError } from '../http/errors.js';
@@ -55,7 +55,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null): Routes {
     '/:projectId/validate',
     async (req, res) => {
       const { head, hash, document } = await documentAt(req);
-      const result = validate(document as object);
+      const result = validate(document as object, OFFICIAL_READER);
       res.json({ head, hash, valid: result.valid, diagnostics: result.diagnostics });
     },
     { token: 'read' },

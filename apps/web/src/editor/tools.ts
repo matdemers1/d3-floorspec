@@ -20,6 +20,11 @@ import { interiorPoint } from './geometry';
 import type { FaceView } from './model';
 import { kindOf, labelOf } from './model';
 import { requestRemove } from './actions';
+import { deviceAt } from './systems/hit';
+import { centredOn, dragHost, hoverFor, type DeviceHover } from './systems/placement';
+import { moveDevice, placeDevice, setMember } from './systems/ops';
+import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
+import type { DeviceView } from './systems/view';
 
 /**
  * Pointer and keyboard input on the plan (FLR-T-3.3). Pointer events throughout, so a mouse, a
@@ -60,7 +65,7 @@ export class ToolController {
   private readonly pointers = new Map<number, Tracked>();
   private mode: Mode = 'idle';
   private pinch: { d: number; mid: Point } | null = null;
-  private dragStart: { world: Point; target: string; kind: 'junction' | 'wall' | 'opening' } | null = null;
+  private dragStart: { world: Point; target: string; kind: 'junction' | 'wall' | 'opening' | 'device' } | null = null;
   space = false;
 
   constructor(private readonly store: EditorStore) {}
@@ -206,9 +211,19 @@ export class ToolController {
 
   // ─── Tools ───────────────────────────────────────────────────────────────────────────────
 
-  private grabTarget(p: PointerInfo): { kind: 'junction' | 'wall' | 'opening'; id: string } | null {
+  /** The device under the pointer, when its layer is shown. */
+  private deviceUnder(p: PointerInfo): DeviceView | null {
+    const level = this.level;
+    const view = this.store.get().view;
+    if (level === undefined || view === null) return null;
+    return deviceAt(level, this.world(p), this.tol(p.type), view.s, this.store.get().layers);
+  }
+
+  private grabTarget(p: PointerInfo): { kind: 'junction' | 'wall' | 'opening' | 'device'; id: string } | null {
     const level = this.level;
     if (level === undefined) return null;
+    const device = this.deviceUnder(p);
+    if (device !== null && (p.type !== 'touch' || this.store.get().selection === device.id)) return { kind: 'device', id: device.id };
     const hit = hitTest(level, this.world(p), this.tol(p.type));
     if (hit === null) return null;
     if (hit.kind === 'junction') return hit;
@@ -251,6 +266,9 @@ export class ToolController {
       case 'room':
         this.roomDown(p);
         return;
+      case 'device':
+        this.deviceDown();
+        return;
     }
   }
 
@@ -265,11 +283,14 @@ export class ToolController {
           return;
         }
         if (this.mode === 'idle' || this.mode === 'tool') {
-          const hit = hitTest(level, this.world(p), this.tol(p.type));
-          if ((hit?.id ?? null) !== s.hover) this.store.set({ hover: hit?.id ?? null });
+          const id = this.deviceUnder(p)?.id ?? hitTest(level, this.world(p), this.tol(p.type))?.id ?? null;
+          if (id !== s.hover) this.store.set({ hover: id });
         }
         return;
       }
+      case 'device':
+        this.deviceHover(p);
+        return;
       case 'wall':
       case 'separator': {
         const draft = s.draft?.tool === s.tool ? s.draft : { tool: s.tool, chain: [], cursor: null, typed: '' };
@@ -308,13 +329,19 @@ export class ToolController {
     const level = this.level;
     if (level === undefined) return;
     const world = this.world(p);
+    const picking = this.store.get().picking;
+    if (picking !== null) {
+      this.pickControl(picking.switch, this.deviceUnder(p));
+      this.dragStart = null;
+      return;
+    }
     const grab = this.editable ? this.grabTarget(p) : null;
     if (grab !== null) {
       this.dragStart = { world, target: grab.id, kind: grab.kind };
       return;
     }
     this.dragStart = null;
-    const hit = hitTest(level, world, this.tol(p.type));
+    const hit = this.deviceUnder(p) ?? hitTest(level, world, this.tol(p.type));
     this.store.select(hit?.id ?? null);
   }
 
@@ -330,6 +357,19 @@ export class ToolController {
       const snap = snapPoint(level, this.world(p), { tol: this.tol(p.type), grid, exclude: new Set([start.target]), excludeWalls: walls, lock45: p.shift, free: p.alt });
       this.store.set({ draft: { tool: 'select', drag: { kind: 'junction', id: start.target, to: snap.point, snap }, typed } });
       this.store.preview(moveJunction(start.target, snap.point));
+      return;
+    }
+    if (start.kind === 'device') {
+      const device = level.devices.find((d) => d.id === start.target);
+      if (device === undefined) return;
+      const hover = dragHost(level, device, this.world(p), { grid, tol: this.tol(p.type) });
+      if (hover === null || hover.problem !== undefined) {
+        this.store.set({ draft: { tool: 'select', drag: null, typed } });
+        this.store.preview(null);
+        return;
+      }
+      this.store.set({ draft: { tool: 'select', drag: { kind: 'device', id: device.id, hover }, typed } });
+      this.store.preview(moveDevice(device.id, hover.host));
       return;
     }
     if (start.kind === 'wall') {
@@ -372,6 +412,8 @@ export class ToolController {
       void this.store.apply(`Move ${name}`, moveJunction(drag.id, drag.to), { select: () => drag.id });
     } else if (drag.kind === 'wall') {
       if (drag.by !== 0) void this.store.apply(`Move ${name}`, moveWall(drag.id, drag.by), { select: () => drag.id });
+    } else if (drag.kind === 'device') {
+      void this.store.apply(`Move ${name}`, moveDevice(drag.id, drag.hover.host), { select: () => drag.id });
     } else {
       void this.store.apply(`Move ${name}`, moveOpening(drag.id, drag.centered ? 'centered' : drag.offset), { select: () => drag.id });
     }
@@ -483,6 +525,7 @@ export class ToolController {
     if (draft === null || draft.tool === 'room') return false;
     if (draft.tool === 'select' && draft.drag === null) return false;
     if ((draft.tool === 'door' || draft.tool === 'window') && draft.hover === null) return false;
+    if (draft.tool === 'device' && draft.hover?.host.mode !== 'wallFace') return false;
     const typed = draft.typed;
     if (key === 'Backspace') {
       if (typed === '') return false;
@@ -514,6 +557,21 @@ export class ToolController {
       return true;
     }
     if (draft === null || draft.tool === 'room') return false;
+    if (draft.tool === 'device') {
+      if (draft.hover === null) return false;
+      if (draft.typed.trim() === '') {
+        this.deviceDown();
+        return true;
+      }
+      const parsed = parseLen(draft.typed, units);
+      if (!parsed.ok) {
+        this.store.set({ notice: { tone: 'danger', text: parsed.reason } });
+        return true;
+      }
+      // Sent as the grammar's own position, resolved exactly by the applier (Ops 3.5).
+      this.deviceDown(`${lengthText(draft.typed, units)} from ${draft.hover.nearer ?? 'start'}`);
+      return true;
+    }
     if (draft.tool === 'wall' || draft.tool === 'separator') {
       if (draft.typed.trim() === '') {
         this.finishChain();
@@ -595,6 +653,10 @@ export class ToolController {
       this.store.dismissRejection();
       return;
     }
+    if (s.picking !== null) {
+      this.store.set({ picking: null });
+      return;
+    }
     if (s.tool !== 'select') {
       this.store.setTool('select');
       return;
@@ -618,6 +680,80 @@ export class ToolController {
     // A door or a window with a wall selected starts on that wall, centred: Enter places it there,
     // a typed length places it that far from the start (FLR-T-3.7, the keyboard's way in).
     if ((tool === 'door' || tool === 'window') && selection !== null) this.aimOpeningAt(selection, tool);
+    if (tool === 'device' && selection !== null) this.aimDeviceAt(selection);
+  }
+
+  // ── devices (FLR-T-5.7) ──
+
+  /** The device tool's kind, and the height a wall-mounted one goes at. */
+  get deviceKind(): DeviceKind | undefined {
+    return kindById(this.store.get().draw.device);
+  }
+
+  private deviceHeight(kind: DeviceKind): number {
+    return this.store.get().draw.height ?? defaultHeight(kind, this.store.units);
+  }
+
+  /** Choose a device kind: the tool becomes the device tool, aimed at the selected wall if one is. */
+  useDevice(kindId: string): void {
+    const draw = this.store.get().draw;
+    if (draw.device !== kindId) this.store.set({ draw: { ...draw, device: kindId, height: null } });
+    this.setTool('device');
+  }
+
+  private deviceHover(p: PointerInfo): void {
+    const level = this.level;
+    const kind = this.deviceKind;
+    const s = this.store.get();
+    if (level === undefined || kind === undefined) return;
+    const typed = s.draft?.tool === 'device' ? s.draft.typed : '';
+    const hover = hoverFor(level, kind.mount, this.world(p), { grid: gridStep(this.store.units), tol: this.tol(p.type), height: this.deviceHeight(kind) });
+    this.store.set({ draft: { tool: 'device', hover, typed } });
+  }
+
+  /** Aim the device tool at a wall: centred on its room-side face, so Enter places it there. */
+  private aimDeviceAt(wallId: string): void {
+    const wall = this.level?.walls.find((w) => w.id === wallId);
+    const kind = this.deviceKind;
+    if (wall === undefined || kind === undefined || this.level === undefined) return;
+    const hover = centredOn(this.level, wall, kind, this.deviceHeight(kind), gridStep(this.store.units));
+    if (hover !== null) this.store.set({ draft: { tool: 'device', hover, typed: '' } });
+  }
+
+  /** Place the device where the tool shows it, or at a typed position along its wall. */
+  private deviceDown(at?: string): void {
+    const s = this.store.get();
+    const draft = s.draft;
+    const kind = this.deviceKind;
+    if (draft?.tool !== 'device' || draft.hover === null || s.model === null || kind === undefined) return;
+    const hover: DeviceHover = draft.hover;
+    if (hover.problem !== undefined) {
+      this.store.set({ notice: { tone: 'info', text: hover.problem } });
+      return;
+    }
+    const host = at !== undefined && hover.host.mode === 'wallFace' ? { ...hover.host, at } : hover.host;
+    void this.store.apply(`Place ${kind.label.toLowerCase()}`, placeDevice(s.model.document, kind, host, { receptacle: s.draw.receptacle }), {
+      select: (created) => created.find((id) => s.model?.index.get(id) === undefined && /^X\d+$/.test(id)) ?? null,
+    });
+    this.store.set({ draft: { ...draft, typed: '' } });
+  }
+
+  /** Picking what a switch controls: a click on a light, a receptacle or another system's device toggles it. */
+  private pickControl(switchId: string, device: DeviceView | null): void {
+    const model = this.store.get().model;
+    if (model === null) return;
+    if (device === null) {
+      this.store.set({ picking: null, notice: { tone: 'info', text: 'Done picking. Pick again from the switch’s inspector.' } });
+      return;
+    }
+    if (device.id === switchId || (device.extension === 'FS_electrical' && device.collection !== 'lights' && device.collection !== 'receptacles')) {
+      this.store.set({ notice: { tone: 'info', text: 'A switch controls lights, receptacles, and other systems’ devices such as an exhaust fan.' } });
+      return;
+    }
+    const element = model.ext.get(switchId) === undefined ? undefined : (model.document.extensions as Record<string, { collections?: Record<string, Record<string, Record<string, unknown>>> }> | undefined)?.['FS_electrical']?.collections?.['switches']?.[switchId];
+    const controls = Array.isArray(element?.['controls']) ? (element['controls'] as string[]) : [];
+    const next = controls.includes(device.id) ? controls.filter((c) => c !== device.id) : [...controls, device.id];
+    void this.store.apply(`${controls.includes(device.id) ? 'Unlink' : 'Link'} ${labelOf(model, device.id)} ${controls.includes(device.id) ? 'from' : 'to'} ${labelOf(model, switchId)}`, setMember(switchId, 'controls', next, controls.length > 0), { select: () => switchId });
   }
 
   private aimOpeningAt(wallId: string, tool: 'door' | 'window'): void {

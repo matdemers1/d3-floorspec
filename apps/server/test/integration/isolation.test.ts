@@ -41,6 +41,8 @@ const CALLS: Record<string, Call> = {
   'GET /api/projects/:projectId/events': { ownerStatus: 200, stream: true },
   // Answered, by a route that works: A's project has no brief, so there is nothing to lay out.
   'POST /api/projects/:projectId/layouts': { body: {}, ownerStatus: 422 },
+  // Answered, by a route that works: A's project has no rooms, so there is nothing to propose.
+  'POST /api/projects/:projectId/assistants/electrical': { body: {}, ownerStatus: 200 },
   'POST /api/projects/:projectId/changesets/:changesetId/accept': { body: {}, ownerStatus: 200 },
   // After the accept above, the same changeset is already decided: the route works and says so.
   'POST /api/projects/:projectId/changesets/:changesetId/reject': { body: {}, ownerStatus: 409 },

@@ -3,6 +3,7 @@ import { kindOf, labelOf, sortedLevels } from './model';
 import { roomsBeside } from './geometry';
 import { addLevel, DEFAULT_LEVEL_HEIGHT, removeOps, setUnits, type RemoveKind } from './ops';
 import type { UnitSystem } from './units';
+import { removeDevice, removeRecord } from './systems/ops';
 
 /**
  * Edits that more than one surface starts — the keyboard, the inspector, the tree, the command
@@ -24,6 +25,16 @@ export function requestRemove(store: EditorStore, id: string): void {
       return;
     }
     void store.apply(`Remove ${name}`, removeOps(id, 'wall'), { select: () => null });
+    return;
+  }
+  if (kind === 'extensionElement') {
+    // Its references go in the same batch: a circuit's loads, a switch's controls (Ops 0.5).
+    void store.apply(`Remove ${name}`, removeDevice(model.document, id), { select: () => null });
+    return;
+  }
+  if (kind === 'circuit' || kind === 'stack' || kind === 'gasSource') {
+    const at = model.records.get(id);
+    if (at !== undefined) void store.apply(`Remove ${name}`, removeRecord(model.document, at.extension, at.collection, id), { select: () => null });
     return;
   }
   if (kind === 'level' || kind === 'building') {

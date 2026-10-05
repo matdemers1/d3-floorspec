@@ -1520,3 +1520,376 @@ line.fs-diff {
   color: var(--color-fg-faint);
   font-size: var(--text-12);
 }
+
+/* Building systems (FLR-T-5.7, the board's "23 · Building systems"): device symbols, home runs,
+   clearance envelopes, and the core-only view's fallback boxes. */
+.fs-canvas[data-systems='focus'] .fs-plan2 {
+  opacity: 0.55;
+}
+.fs-sym {
+  fill: var(--color-surface-card);
+  stroke: var(--color-fg);
+  stroke-width: 1.25;
+}
+.fs-sym--electrical {
+  stroke: var(--color-accent);
+}
+.fs-sym--plumbing {
+  stroke: var(--color-info);
+}
+.fs-sym--mechanical {
+  stroke: var(--color-success);
+}
+.fs-sym--lowvoltage {
+  stroke: var(--color-fg-muted);
+}
+.fs-sym__mark {
+  fill: none;
+}
+.fs-sym__solid {
+  fill: var(--color-warning);
+  stroke: var(--color-warning);
+}
+.fs-sym__text,
+.fs-sym__tag {
+  fill: currentColor;
+  stroke: none;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  color: var(--color-fg);
+}
+.fs-sym__tag {
+  color: var(--color-fg);
+}
+.fs-sym--ghost {
+  opacity: 0.6;
+  stroke-dasharray: 3 2;
+}
+.fs-sym--bad {
+  stroke: var(--color-danger);
+}
+.fs-fallback {
+  fill: var(--color-fg-faint);
+  fill-opacity: 0.25;
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+.fs-clearance {
+  fill: var(--color-info);
+  fill-opacity: 0.08;
+  stroke: var(--color-info);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.fs-clearance--overlap {
+  fill: var(--color-warning);
+  fill-opacity: 0.18;
+  stroke: var(--color-warning);
+}
+.fs-run {
+  fill: none;
+  stroke-width: 1.25;
+  stroke-dasharray: 5 4;
+}
+.fs-run.is-selected {
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+}
+.fs-run--1 {
+  stroke: var(--color-info);
+}
+.fs-run--2 {
+  stroke: var(--color-success);
+}
+.fs-run--3 {
+  stroke: var(--color-accent);
+}
+.fs-run--4 {
+  stroke: var(--color-warning);
+}
+.fs-run--5 {
+  stroke: var(--color-danger);
+}
+.fs-run--6 {
+  stroke: var(--color-fg-muted);
+}
+.fs-callout-tag {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-border);
+}
+.fs-callout-tag__text {
+  fill: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+.fs-hl.fs-hl--ring {
+  fill: none;
+}
+.fs-core-note {
+  position: absolute;
+  top: var(--space-16);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: var(--space-6) var(--space-16);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+}
+.fs-layers__core {
+  padding: var(--space-4) var(--space-8) var(--space-8);
+}
+.fs-layers__core .fs-note {
+  margin-top: var(--space-4);
+}
+
+/* The systems inspector: the device picker, the panel card, circuits, reference lists. */
+.fs-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+.fs-kind {
+  padding: var(--space-4) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-fg-muted);
+  font: inherit;
+  font-size: var(--text-12);
+  cursor: pointer;
+}
+.fs-kind:hover {
+  background: var(--color-surface-hover);
+}
+.fs-kind.is-on {
+  border-color: var(--color-accent);
+  background: var(--color-accent-muted);
+  color: var(--color-fg);
+}
+.fs-kind:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-switches {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+.fs-enumset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.fs-panel-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-12);
+  width: 100%;
+  padding: var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-13);
+  text-align: start;
+  cursor: pointer;
+}
+.fs-panel-card:hover {
+  background: var(--color-surface-hover);
+}
+.fs-panel-card svg {
+  flex: none;
+  width: var(--icon-16) !important;
+  height: var(--icon-16) !important;
+  margin-top: 2px;
+  color: var(--color-warning);
+}
+.fs-panel-card > span {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.fs-panel-card strong {
+  font-weight: var(--weight-medium);
+}
+.fs-panel-card__meta {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-circuits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-circuit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  padding: var(--space-6) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.fs-circuit:hover {
+  background: var(--color-surface-hover);
+}
+.fs-circuit__bar {
+  flex: none;
+  align-self: stretch;
+  width: 3px;
+  border-radius: var(--radius-full);
+}
+.fs-circuit__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.fs-circuit__name {
+  overflow: hidden;
+  font-size: var(--text-13);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-circuit__meta {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+.fs-run-bg--1 {
+  background: var(--color-info);
+}
+.fs-run-bg--2 {
+  background: var(--color-success);
+}
+.fs-run-bg--3 {
+  background: var(--color-accent);
+}
+.fs-run-bg--4 {
+  background: var(--color-warning);
+}
+.fs-run-bg--5 {
+  background: var(--color-danger);
+}
+.fs-run-bg--6 {
+  background: var(--color-fg-muted);
+}
+.fs-reflist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-13);
+}
+.fs-reflist li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 28px;
+}
+.fs-reflist svg {
+  width: var(--icon-14) !important;
+  height: var(--icon-14) !important;
+  color: var(--color-fg-muted);
+}
+.fs-row__link {
+  font-size: var(--text-13);
+}
+.fs-sym-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6) var(--space-16);
+  margin: 0;
+  padding: var(--space-8) 0 0;
+  border-top: 1px solid var(--color-border);
+  list-style: none;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-sym-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+.fs-sym-legend svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.4;
+}
+.fs-sym-legend svg[viewBox='0 0 24 16'] {
+  width: 24px;
+}
+.fs-sym-legend__s {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  color: var(--color-fg);
+}
+
+/* The electrical assistant (FLR-T-5.8): its card, and the gaps it finds drawn on the plan. */
+.fs-assistant {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-12);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-muted);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-assistant p {
+  margin: 0;
+}
+.fs-assistant__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin: 0;
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+.fs-assistant__title svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+}
+.fs-assistant__note {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-gap {
+  stroke: var(--color-warning);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+.fs-gap__tag {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-warning);
+}
+.fs-gap__text {
+  fill: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}

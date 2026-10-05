@@ -82,7 +82,7 @@ const Item = shared(z.string().min(1).max(200), 'Item', 'A program item: its ID 
 const AdjacencyKind = shared(z.enum(['required', 'preferred', 'forbidden']), 'AdjacencyKind');
 /** An extension's name and one of its collections. */
 const Extension = shared(z.string().min(1).max(64), 'Extension', 'An extension name: FS_electrical, FS_plumbing, FS_furniture.');
-const ExtCollection = z.string().min(1).max(64).describe('Its collection: devices, fixtures, pieces.');
+const ExtCollection = z.string().min(1).max(64).describe('Its collection: receptacles, fixtures, panels …');
 
 /**
  * A host reference (Ops 4.10): where a hosted element is placed, written with the reference grammar.

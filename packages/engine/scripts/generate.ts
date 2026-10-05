@@ -13,7 +13,7 @@
  *                                      FLR-ADR-006: the schema is the source; the types are
  *                                      generated from it)
  *   src/generated/registry-types.ts    and for a registry entry
- *   src/generated/official-extensions.ts   the official extensions' registry entries, as data
+ *   src/generated/official-extensions.ts   the official extensions' registry entries and schemas, as data
  *   src/generated/validate-FS_<x>.ts       each official extension's schema (FS-<CODE>-SCH-001),
  *                                          as standalone ajv code
  *   src/generated/types-FS_<x>.ts          and TypeScript types for its top-level data
@@ -218,7 +218,9 @@ export async function generate(): Promise<Map<string, string>> {
   out.set(
     'official-extensions.ts',
     HEADER('../registry', 'The official extensions\' registry entries (registry/<NAME>/extension.json), as data.') +
-      `export const OFFICIAL_ENTRIES = ${JSON.stringify(exts.map((x) => x.entry), null, 2)} as const;\n`,
+      `export const OFFICIAL_ENTRIES = ${JSON.stringify(exts.map((x) => x.entry), null, 2)} as const;\n\n` +
+      '// Each one\'s schema, by name: what an editor reads to know a kind\'s members, their types and defaults.\n' +
+      `export const OFFICIAL_SCHEMAS = ${JSON.stringify(Object.fromEntries(exts.map((x) => [x.name, x.schema])), null, 2)} as const;\n`,
   );
   for (const x of exts) {
     const schema = { ...x.schema };

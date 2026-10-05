@@ -375,3 +375,23 @@
   gap: var(--space-8);
   margin-top: var(--space-8);
 }
+
+/* Schedules (FLR-T-5.8, the board's "24") */
+.fs-schedules {
+  margin-top: var(--space-16);
+}
+.fs-schedules__bar {
+  position: relative;
+}
+.fs-schedules__live {
+  position: absolute;
+  top: var(--space-8);
+  right: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-schedules__foot {
+  margin: var(--space-12) 0 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}

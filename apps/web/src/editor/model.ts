@@ -1,5 +1,7 @@
-import { check, extElements, type Derived, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
+import { check, extElements, OFFICIAL_READER, type Derived, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
 import { twiceArea } from './units';
+import { deviceViews, recordIndex, type DeviceView, type RecordRef } from './systems/view';
+import { kindLabel } from './systems/catalog';
 
 /**
  * The editor's reading of one version of the model: the document as the server stored it, checked
@@ -23,11 +25,13 @@ export const COLLECTIONS: readonly Collection[] = [
  * Where an ID lives: a Core collection, the program's items (Core 0.2, 11.1), or an extension's
  * collection (12.5) — one space of IDs (3.1.3).
  */
-export type Place = Collection | 'items' | 'extension';
+export type Place = Collection | 'items' | 'extension' | 'record';
 
 export type Kind =
   | 'building' | 'level' | 'junction' | 'wall' | 'separator' | 'opening' | 'room' | 'slab'
-  | 'wallType' | 'doorType' | 'windowType' | 'material' | 'asset' | 'item' | 'extensionElement';
+  | 'wallType' | 'doorType' | 'windowType' | 'material' | 'asset' | 'item' | 'extensionElement'
+  /** A record an extension keeps beside its elements (FS_electrical's circuits …): not an element. */
+  | 'circuit' | 'stack' | 'gasSource';
 
 type Json = Record<string, unknown>;
 
@@ -106,6 +110,8 @@ export interface LevelView {
   rooms: RoomView[];
   /** Every bounded face: anchored rooms and unanchored ones (Core 6.3). */
   faces: FaceView[];
+  /** The extension elements on this level, as derived (Core 12.6, 13.4, 13.5). */
+  devices: DeviceView[];
   bounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
 }
 
@@ -121,6 +127,8 @@ export interface EditorModel {
   index: Map<string, Place>;
   /** The extension and collection of every extension element. */
   ext: Map<string, { extension: string; collection: string }>;
+  /** The official extensions' records — circuits, stacks, gas sources — by ID. */
+  records: Map<string, RecordRef>;
 }
 
 const entriesOf = (c: unknown): [string, Json][] =>
@@ -128,7 +136,9 @@ const entriesOf = (c: unknown): [string, Json][] =>
 
 /** Read a version: check, derive and index it. */
 export function readModel(hash: string, text: string | object): EditorModel {
-  const result = check(text);
+  // The reader implements the official extensions (FS_electrical …): their derived values — circuits,
+  // loads, panel spaces — are what the systems panels and schedules read (FLR-T-5.7, 5.8).
+  const result = check(text, OFFICIAL_READER);
   const document = (typeof text === 'string' ? JSON.parse(text) : text) as FloorspecDocument;
   const index = new Map<string, Place>();
   for (const c of COLLECTIONS) for (const [id] of entriesOf((document as unknown as Json)[c])) index.set(id, c);
@@ -139,6 +149,8 @@ export function readModel(hash: string, text: string | object): EditorModel {
     ext.set(e.id, { extension: e.extension, collection: e.collection });
   }
   const derived = result.valid ? (result.derived ?? null) : null;
+  const records = recordIndex(document);
+  for (const [id] of records) if (!index.has(id)) index.set(id, 'record');
   return {
     hash,
     document,
@@ -148,6 +160,7 @@ export function readModel(hash: string, text: string | object): EditorModel {
     levels: derived === null ? levelsWithoutGeometry(document) : levelViews(document, derived),
     index,
     ext,
+    records,
   };
 }
 
@@ -156,6 +169,10 @@ export function kindOf(model: EditorModel, id: string): Kind | null {
   if (c === undefined) return null;
   if (c === 'items') return 'item';
   if (c === 'extension') return 'extensionElement';
+  if (c === 'record') {
+    const r = model.records.get(id)?.collection;
+    return r === 'circuits' ? 'circuit' : r === 'stacks' ? 'stack' : 'gasSource';
+  }
   if (c === 'types') {
     const kind = (model.document.types?.[id] as Json | undefined)?.['kind'];
     return kind === 'wallType' || kind === 'doorType' || kind === 'windowType' ? kind : null;
@@ -172,6 +189,11 @@ export function elementOf(model: EditorModel, id: string): Json | undefined {
   const c = model.index.get(id);
   if (c === undefined) return undefined;
   if (c === 'items') return model.document.program?.items?.[id] as Json | undefined;
+  if (c === 'record') {
+    const at = model.records.get(id);
+    const data = at === undefined ? undefined : ((model.document.extensions as Record<string, Json | undefined> | undefined)?.[at.extension]);
+    return (data?.[at?.collection ?? ''] as Record<string, Json> | undefined)?.[id];
+  }
   if (c === 'extension') {
     const at = model.ext.get(id);
     const data = at === undefined ? undefined : ((model.document.extensions as Record<string, Json | undefined> | undefined)?.[at.extension]);
@@ -187,7 +209,7 @@ export function levelOfElement(model: EditorModel, id: string): string | undefin
   if (element === undefined) return undefined;
   if (c === 'levels') return id;
   // An item's level is a preference, not where it is (11.1); an extension element is where its fallback is (12.6).
-  if (c === 'items') return undefined;
+  if (c === 'items' || c === 'record') return undefined;
   if (c === 'extension') {
     const fallback = element['fallback'] as Json | undefined;
     return typeof fallback?.['level'] === 'string' ? fallback['level'] : undefined;
@@ -246,7 +268,7 @@ function levelsWithoutGeometry(document: FloorspecDocument): LevelView[] {
     building: String(level['building']),
     elevation: Number(level['elevation']),
     height: Number(level['height']),
-    junctions: [], walls: [], fills: [], separators: [], openings: [], rooms: [], faces: [],
+    junctions: [], walls: [], fills: [], separators: [], openings: [], rooms: [], faces: [], devices: [],
     bounds: null,
   }));
 }
@@ -322,6 +344,7 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
     view.rooms.push({ id, name: typeof r['name'] === 'string' ? r['name'] : id, anchor: r['anchor'] as Point, outer: d.outer, holes: d.holes, area2 });
     view.faces.push({ room: id, outer: d.outer, holes: d.holes, area2 });
   }
+  for (const device of deviceViews(document, derived)) views.get(device.level)?.devices.push(device);
   for (const free of derived.unanchored) {
     views.get(free.level)?.faces.push({ room: null, outer: free.outer, holes: free.holes, area2: twiceArea(free.area) });
   }
@@ -361,10 +384,12 @@ export function labelOf(model: EditorModel, id: string): string {
     case 'material': return name ?? `Material ${id}`;
     case 'item': return name ?? `Item ${id}`;
     case 'extensionElement': {
-      const collection = model.ext.get(id)?.collection ?? 'element';
-      const noun = collection.endsWith('s') ? collection.slice(0, -1) : collection;
-      return name ?? `${noun.charAt(0).toUpperCase()}${noun.slice(1)} ${id}`;
+      const at = model.ext.get(id);
+      return name ?? `${at === undefined ? 'Element' : kindLabel(at.extension, at.collection, element ?? {})} ${id}`;
     }
+    case 'circuit': return name === undefined ? `Circuit ${id}` : `${id} · ${name}`;
+    case 'stack': return name === undefined ? `Stack ${id}` : `${id} · ${name}`;
+    case 'gasSource': return name === undefined ? `Gas source ${id}` : `${id} · ${name}`;
     default: return name ?? id;
   }
 }

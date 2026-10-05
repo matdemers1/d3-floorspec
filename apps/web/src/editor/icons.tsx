@@ -64,3 +64,4 @@ export const SparklesIcon = icon(
 );
 export const PencilIcon = icon('pencil', <path d="M11.333 2a1.886 1.886 0 0 1 2.667 2.667L5 13.667 1.333 14.667 2.333 11 11.333 2Z" />);
 export const JunctionIcon = icon('junction', <path d="M8 2v4M8 10v4M2 8h4M10 8h4" />);
+export const DataIcon = icon('data', <path d="M8 2.667 13.333 12.667H2.667L8 2.667ZM8 7.333v2.667" />);

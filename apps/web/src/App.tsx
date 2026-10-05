@@ -20,6 +20,7 @@ import { AcceptInvite } from './screens/AcceptInvite';
 import { Account } from './screens/Account';
 import { Project } from './screens/Project';
 import { Projects } from './screens/Projects';
+import { Schedules } from './screens/Schedules';
 import { Invites } from './screens/Invites';
 import { Setup } from './screens/Setup';
 import { SignIn } from './screens/SignIn';
@@ -152,6 +153,8 @@ function Screen({ path, session, reload }: { path: string; session: SignedIn; re
   if (path === '/' || path === '/projects') return <Projects />;
   const project = /^\/projects\/([0-9a-f-]{36})$/.exec(path)?.[1];
   if (project !== undefined) return <Project key={project} id={project} you={session.account.displayName} />;
+  const scheduled = /^\/projects\/([0-9a-f-]{36})\/schedules$/.exec(path)?.[1];
+  if (scheduled !== undefined) return <Schedules key={scheduled} id={scheduled} />;
   if (path === '/account') return <Account session={session} onChanged={reload} />;
   if (path === '/invites' && session.account.role === 'operator') return <Invites />;
   return (

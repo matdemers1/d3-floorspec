@@ -127,6 +127,21 @@ class MemoryClient implements FloorspecClient {
       candidates: [candidate(1, 97.56, 'Bedroom wing along a hall'), candidate(2, 97.23, 'Compact, no hall'), candidate(3, 96.88, 'Split bedrooms')],
     });
   }
+  proposeElectrical(projectId: string, input: { rooms?: readonly string[] }) {
+    this.record('proposeElectrical', projectId, input);
+    return Promise.resolve({
+      main: PROJECT.head,
+      changeset: { id: 'cs-e', name: 'Electrical layout: Kitchen', status: 'pending' as const, base: PROJECT.head, head: 'e'.repeat(64), ops: 1 },
+      proposal: {
+        name: 'Electrical layout: Kitchen',
+        explanation: ['Proposes 6 receptacles, 1 switch, 1 light for Kitchen.', 'These are layout defaults, not a code check: advisory code findings, with their citations, arrive with the Floorspec Rules packs.'],
+        added: { receptacles: ['X1', 'X2', 'X3', 'X4', 'X5', 'X6'], switches: ['X8'], lights: ['X7'] },
+        circuits: [],
+        notes: ['There is no panel, so no circuits are proposed: place one and ask again.'],
+        ops: 9,
+      },
+    });
+  }
   reject(projectId: string, changesetId: string) {
     this.record('reject', projectId, changesetId);
     return Promise.resolve({ changeset: { id: changesetId, name: 'x', status: 'rejected' as const, base: '', head: null, ops: 0 } });
@@ -211,6 +226,22 @@ describe('the MCP server', () => {
     expect(check({ count: 3 }).valid).toBe(true);
     expect(check({ count: 40 }).valid).toBe(false);
     expect(check({ code: 'x' }).valid).toBe(false);
+  });
+
+  it('lets the electrical assistant propose a changeset, and says it is advice', async () => {
+    const client = new MemoryClient();
+    const mcp = await connect(client);
+    const result = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'electrical', rooms: ['Kitchen'] } });
+    expect(result.isError, texts(result)).toBeFalsy();
+    expect(client.calls.at(-1)).toEqual({ method: 'proposeElectrical', args: [PROJECT.id, { rooms: ['Kitchen'] }] });
+    const said = texts(result);
+    expect(said).toContain('Changeset "Electrical layout: Kitchen" (cs-e) is pending: 9 operations from the electrical assistant. Main has not changed until a person accepts it.');
+    expect(said).toContain('- These are layout defaults, not a code check');
+    // A batch and an assistant together, or neither a name nor an assistant, is refused before the API.
+    const both = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'electrical', batch: [] } });
+    expect(both.isError).toBe(true);
+    const unnamed = await mcp.callTool({ name: 'floorspec_propose', arguments: {} });
+    expect(texts(unnamed)).toContain('Name the changeset');
   });
 
   it('keeps tools/list within its budget', async () => {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { IconButton } from '@d3cloud/ui';
+import { IconButton, Switch } from '@d3cloud/ui';
 import { ChevronDown, ChevronRight, House, Layers as LayersIcon, Palette, Plus } from 'lucide-react';
 import { useEditor, type EditorStore, type Layers } from './store';
 import { elementOf, labelOf, sortedLevels, type EditorModel } from './model';
@@ -7,6 +7,8 @@ import { setOrUnset } from './ops';
 import { formatArea, formatLen } from './units';
 import { DoorIcon, EyeIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon } from './icons';
 import { newLevel } from './actions';
+import { SYSTEMS } from './systems/catalog';
+import { SystemIcon } from './systems/Panels';
 
 /**
  * The project tree (FLR-T-3.3): buildings › levels › rooms, with each level's walls, openings and
@@ -56,9 +58,10 @@ export function ProjectTree({ store }: { store: EditorStore }) {
   // The selection's row is always shown: its group opens when it is chosen on the canvas.
   useEffect(() => {
     if (model === null || selection === null) return;
-    const level = model.levels.find((l) => [...l.walls, ...l.openings, ...l.separators, ...l.junctions].some((x) => x.id === selection));
+    const level = model.levels.find((l) => [...l.walls, ...l.openings, ...l.separators, ...l.junctions, ...l.devices].some((x) => x.id === selection));
     if (level === undefined) return;
-    const group = level.walls.some((w) => w.id === selection) ? 'walls' : level.openings.some((o) => o.id === selection) ? 'openings' : level.separators.some((x) => x.id === selection) ? 'separators' : 'junctions';
+    const device = level.devices.find((d) => d.id === selection);
+    const group = device !== undefined ? (device.system ?? 'junctions') : level.walls.some((w) => w.id === selection) ? 'walls' : level.openings.some((o) => o.id === selection) ? 'openings' : level.separators.some((x) => x.id === selection) ? 'separators' : 'junctions';
     const key = `${level.id}:${group}`;
     // Groups start closed, so "open" is "flipped".
     setFlipped((s) => (s.has(key) ? s : new Set([...s, key])));
@@ -95,6 +98,8 @@ export function ProjectTree({ store }: { store: EditorStore }) {
           ['openings', 'Openings', <DoorIcon key="o" />, view.openings],
           ['separators', 'Separators', <SeparatorIcon key="s" />, view.separators],
           ['junctions', 'Junctions', <JunctionIcon key="j" />, view.junctions],
+          // The building systems' devices (FLR-T-5.7), one group per extension.
+          ...SYSTEMS.map((sys): [string, string, ReactNode, { id: string }[]] => [sys.id, sys.label, <SystemIcon key={sys.id} system={sys.id} />, view.devices.filter((d) => d.system === sys.id)]),
         ];
         for (const [key, label, icon, items] of groups) {
           if (items.length === 0) continue;
@@ -286,37 +291,53 @@ function RenameInput({ initial, label, onDone }: { initial: string; label: strin
 }
 
 export function LayerChips({ store, layers }: { store: EditorStore; layers: Layers }) {
-  const chips: [keyof Layers, string][] = [
+  const chips: [Exclude<keyof Layers, 'coreOnly'>, string][] = [
     ['walls', 'Walls'],
     ['openings', 'Openings'],
     ['rooms', 'Rooms'],
     ['dimensions', 'Dimensions'],
-    ['findings', 'Findings'],
+    ['electrical', 'Electrical'],
+    ['plumbing', 'Plumbing'],
+    ['mechanical', 'Mechanical'],
+    ['lowvoltage', 'Low-voltage'],
   ];
+  const after: [Exclude<keyof Layers, 'coreOnly'>, string][] = [
+    ['findings', 'Findings'],
+    ['clearances', 'Clearances'],
+  ];
+  const chip = ([key, label]: [Exclude<keyof Layers, 'coreOnly'>, string]) => (
+    <button
+      key={key}
+      type="button"
+      className={layers[key] ? 'fs-chip is-on' : 'fs-chip'}
+      aria-pressed={layers[key]}
+      onClick={() => { store.set({ layers: { ...layers, [key]: !layers[key] } }); }}
+    >
+      <EyeIcon />
+      {label}
+    </button>
+  );
   return (
     <div className="fs-layers">
       <div className="fs-panel-head fs-panel-head--sub">
         <span className="fs-overline">Layers</span>
       </div>
       <div className="fs-layers__chips">
-        {chips.map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            className={layers[key] ? 'fs-chip is-on' : 'fs-chip'}
-            aria-pressed={layers[key]}
-            onClick={() => { store.set({ layers: { ...layers, [key]: !layers[key] } }); }}
-          >
-            <EyeIcon />
-            {label}
-          </button>
-        ))}
-        {['Electrical', 'Plumbing', 'Furniture'].map((label) => (
-          <button key={label} type="button" className="fs-chip" disabled title="Building systems and furniture arrive with their extensions (P5, P8)">
-            <EyeIcon />
-            {label}
-          </button>
-        ))}
+        {chips.map(chip)}
+        <button type="button" className="fs-chip" disabled title="Furniture arrives with its extension (P8)">
+          <EyeIcon />
+          Furniture
+        </button>
+        {after.map(chip)}
+      </div>
+      <div className="fs-layers__core">
+        <Switch
+          checked={layers.coreOnly}
+          onCheckedChange={(on) => { store.set({ layers: { ...layers, coreOnly: on } }); }}
+        >
+          Show as core-only
+        </Switch>
+        <p className="fs-note">What a reader without the building-system extensions draws: each element’s fallback box.</p>
       </div>
     </div>
   );

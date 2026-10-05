@@ -321,6 +321,13 @@ export interface ApplyOptions {
   readonly ops?: OpsVersion;
   /** Ops 0.2: the validator's known extensions (Core §12.2), as the engine takes them. Absent: none. */
   readonly knownExtensions?: string | Uint8Array | readonly unknown[];
+  /**
+   * Ops 0.2: the extensions the applier implements (Core §1.6.4), as the engine takes them — the
+   * official ones it has (`OFFICIAL_EXTENSION_NAMES`). With `knownExtensions`, A and B are judged
+   * under each extension's own invariants too (each extension's spec, 1.2): a batch that breaks one
+   * is rejected (Ops 1.2.3). Absent: none, a core-only applier.
+   */
+  readonly extensions?: readonly string[];
 }
 
 // ── results (1.3) ─────────────────────────────────────────────────────────────

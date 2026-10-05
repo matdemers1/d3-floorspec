@@ -1,4 +1,4 @@
-import { check, type Derived, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
+import { check, OFFICIAL_READER, type Derived, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
 import { ApiError } from '../lib/api';
 
 /**
@@ -65,7 +65,7 @@ export { plural };
 
 /** Summarise a document: valid or not, and what the engine derived from it. */
 export function summarize(input: string | object): ModelSummary {
-  const result = check(input);
+  const result = check(input, OFFICIAL_READER);
   const document = (result.valid ? (typeof input === 'string' ? JSON.parse(input) : input) : null) as FloorspecDocument | null;
   const derived = result.derived ?? null;
   const levels: LevelSummary[] = [];

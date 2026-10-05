@@ -1,7 +1,7 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, SegmentedControl, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
 import { navigate, takeParam } from '../lib/router';
 import { EditorStore, useEditor, type ToolId } from './store';
 import { ToolController } from './tools';
@@ -21,8 +21,10 @@ import { openReview } from './review';
 import { proposerOf } from './api';
 import { labelOf, sortedLevels } from './model';
 import { formatLen, gridStepLabel } from './units';
+import { kindById, type SystemId } from './systems/catalog';
 import {
   AirIcon,
+  DataIcon,
   DoorIcon,
   DropIcon,
   MeasureIcon,
@@ -121,7 +123,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
         ) : null}
       </main>
       <aside className="fs-editor__inspector" aria-label={right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : 'Inspector'}>
-        {status === 'loading' ? <TreeSkeleton /> : right === 'compare' ? <ComparePanel store={store} /> : right === 'review' ? <ProposalPanel store={store} /> : <Inspector store={store} />}
+        {status === 'loading' ? <TreeSkeleton /> : right === 'compare' ? <ComparePanel store={store} /> : right === 'review' ? <ProposalPanel store={store} /> : <Inspector store={store} tools={tools} />}
       </aside>
       <StatusBar store={store} />
       <PromptModal store={store} />
@@ -213,6 +215,11 @@ function ToolHint({ store }: { store: EditorStore }) {
       </>
     ),
     room: <span>Click inside a closed space to name it</span>,
+    device: (
+      <>
+        <span>Point at a wall, a floor or a ceiling</span> <span className="fs-hint__faint">· type an offset</span> <kbd>Enter</kbd>
+      </>
+    ),
   };
   const hint = hints[tool];
   if (hint === undefined) {
@@ -279,6 +286,11 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
         ]}
         onValueChange={() => undefined}
       />
+      <Tooltip content="Rooms, doors, windows, receptacles and fixtures, live">
+        <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<TableIcon />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}/schedules`); }}>
+          Schedules
+        </Button>
+      </Tooltip>
       <Tooltip content="The brief and its bubble diagram">
         <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<Waypoints />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}/program`); }}>
           Brief
@@ -338,15 +350,24 @@ const RAIL: { tool?: ToolId; label: string; icon: ReactNode; later?: string }[] 
   { label: 'Stairs', icon: <StairIcon />, later: 'P4' },
   { label: 'Roof', icon: <RoofIcon />, later: 'P4' },
 ];
-const RAIL_SYSTEMS: { label: string; icon: ReactNode; later: string }[] = [
-  { label: 'Electrical', icon: <PlugIcon />, later: 'P5' },
-  { label: 'Plumbing', icon: <DropIcon />, later: 'P5' },
-  { label: 'Mechanical', icon: <AirIcon />, later: 'P5' },
-  { label: 'Furniture', icon: <SofaIcon />, later: 'P8' },
+/** The building systems below the rule (FLR-T-5.7): each starts the device tool with that system's first kind. */
+const RAIL_SYSTEMS: { system: SystemId; label: string; icon: ReactNode; first: string }[] = [
+  { system: 'electrical', label: 'Electrical', icon: <PlugIcon />, first: 'receptacle' },
+  { system: 'plumbing', label: 'Plumbing', icon: <DropIcon />, first: 'toilet' },
+  { system: 'mechanical', label: 'Mechanical', icon: <AirIcon />, first: 'supply' },
+  { system: 'lowvoltage', label: 'Low-voltage', icon: <DataIcon />, first: 'dataOutlet' },
 ];
+
+/** The kind last used in each system, so the rail goes back to it. */
+const lastKind = new Map<SystemId, string>();
 
 function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController }) {
   const tool = useEditor(store, (s) => s.tool);
+  const draw = useEditor(store, (s) => s.draw);
+  useEffect(() => {
+    const k = kindById(draw.device);
+    if (k !== undefined) lastKind.set(k.system, k.id);
+  }, [draw.device]);
   const level = useEditor(store, (s) => s.level);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const canDraw = level !== null && readOnly === null;
@@ -371,11 +392,25 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
         );
       })}
       <span className="fs-rail__rule" />
-      {RAIL_SYSTEMS.map((t) => (
-        <Tooltip key={t.label} content={`${t.label} — arrives in ${t.later}`} side="right">
-          <IconButton label={t.label} icon={t.icon} disabled className="fs-rail__later" />
-        </Tooltip>
-      ))}
+      {RAIL_SYSTEMS.map((t) => {
+        const current = kindById(draw.device);
+        const on = tool === 'device' && current?.system === t.system;
+        const command = commandById(`tool.${t.system}`);
+        return (
+          <Tooltip key={t.label} content={`${t.label} devices${command?.hint === undefined ? '' : ` (${command.hint})`}`} side="right">
+            <IconButton
+              label={`Place ${t.label.toLowerCase()} devices`}
+              icon={t.icon}
+              pressed={on}
+              disabled={!canDraw}
+              onClick={() => { tools.useDevice(current?.system === t.system ? current.id : (lastKind.get(t.system) ?? t.first)); }}
+            />
+          </Tooltip>
+        );
+      })}
+      <Tooltip content="Furniture — arrives in P8" side="right">
+        <IconButton label="Furniture" icon={<SofaIcon />} disabled className="fs-rail__later" />
+      </Tooltip>
       <span className="fs-rail__rule" />
       <Tooltip content="Measure — arrives with dimensions in P4" side="right">
         <IconButton label="Measure" icon={<MeasureIcon />} disabled className="fs-rail__later" />

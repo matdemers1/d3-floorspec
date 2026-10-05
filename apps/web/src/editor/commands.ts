@@ -5,6 +5,8 @@ import { fit, zoomAt } from './viewport';
 import { kindOf } from './model';
 import { accept, openReview, reject } from './review';
 import { compareOp, refreshLog, toggleHistory } from './history';
+import { kindById, kindsOf, type SystemId } from './systems/catalog';
+import { navigate } from '../lib/router';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -53,6 +55,21 @@ const tool = (id: ToolId, label: string, key: string): Command => ({
   },
 });
 
+/** The device tool on a system's kind: the one in use if it is that system's, else the system's first. */
+const systemTool = (system: SystemId, label: string, key: string, keywords: string): Command => ({
+  id: `tool.${system}`,
+  label,
+  group: 'Tools',
+  keywords,
+  keys: [key.toLowerCase()],
+  hint: key,
+  enabled: hasLevel,
+  run: (store, tools) => {
+    const current = kindById(store.get().draw.device);
+    tools.useDevice(current?.system === system ? current.id : (kindsOf(system)[0]?.id ?? 'receptacle'));
+  },
+});
+
 export const COMMANDS: readonly Command[] = [
   tool('select', 'Select', 'V'),
   tool('wall', 'Draw walls', 'W'),
@@ -60,6 +77,39 @@ export const COMMANDS: readonly Command[] = [
   tool('window', 'Place a window', 'N'),
   tool('room', 'Name a room', 'R'),
   tool('separator', 'Draw a room separator', 'S'),
+  systemTool('electrical', 'Place electrical devices', 'E', 'receptacle switch light panel outlet'),
+  systemTool('plumbing', 'Place plumbing fixtures', 'P', 'toilet sink lavatory shower tub water heater'),
+  systemTool('mechanical', 'Place mechanical equipment', 'M', 'furnace register return fan range hvac'),
+  systemTool('lowvoltage', 'Place low-voltage outlets', 'L', 'data coax network'),
+  {
+    id: 'view.coreOnly',
+    label: 'Show as core-only',
+    group: 'View',
+    keywords: 'fallback reader extension boxes',
+    run: (store) => {
+      const layers = store.get().layers;
+      store.set({ layers: { ...layers, coreOnly: !layers.coreOnly } });
+    },
+  },
+  {
+    id: 'view.schedules',
+    label: 'Open the schedules',
+    group: 'View',
+    keywords: 'rooms doors windows receptacles fixtures table csv',
+    run: (store) => {
+      navigate(`/projects/${store.projectId}/schedules`);
+    },
+  },
+  {
+    id: 'view.clearances',
+    label: 'Show clearance envelopes',
+    group: 'View',
+    keywords: 'working space fixture clearance swing access',
+    run: (store) => {
+      const layers = store.get().layers;
+      store.set({ layers: { ...layers, clearances: !layers.clearances } });
+    },
+  },
   {
     id: 'edit.undo',
     label: 'Undo',

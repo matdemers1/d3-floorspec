@@ -19,7 +19,7 @@ import {
   StatGroup,
   useToast,
 } from '@d3cloud/ui';
-import { ChevronRight, Ellipsis, Pencil } from 'lucide-react';
+import { ChevronRight, Ellipsis, Pencil, Table as TableIcon } from 'lucide-react';
 import { ChangesetsSlot } from '../dashboard/ChangesetsSlot';
 import { PlanCard } from '../dashboard/PlanCard';
 import { BriefCard, ExportsCard, FindingsCard, OptionsCard, ShareCard } from '../dashboard/Sections';
@@ -135,6 +135,9 @@ export function Project({ id, you }: { id: string; you: string }) {
                 </MenuItem>
               </MenuContent>
             </Menu>
+            <Button variant="secondary" icon={<TableIcon />} disabled={project.head === null} onClick={() => { navigate(`/projects/${project.id}/schedules`); }}>
+              Schedules
+            </Button>
             <Button variant="primary" icon={<Pencil />} onClick={() => { navigate(editor); }}>
               Open editor
             </Button>

@@ -25,6 +25,9 @@ import { requestRemove, switchUnits } from './actions';
 import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon } from './icons';
 import { FindingsList } from './Diagnostics';
 import { Layers as LayersIcon, Palette, House } from 'lucide-react';
+import type { ToolController } from './tools';
+import { DeviceBody, DevicePanel, RecordBody, SystemIcon, SystemsSummary } from './systems/Panels';
+import { systemOfExtension } from './systems/catalog';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -62,7 +65,7 @@ interface Ctx {
   edit: (label: string, batch: Batch | BatchBuilder) => void;
 }
 
-export function Inspector({ store }: { store: EditorStore }) {
+export function Inspector({ store, tools }: { store: EditorStore; tools: ToolController }) {
   const model = useEditor(store, (s) => s.model);
   const selection = useEditor(store, (s) => s.selection);
   const tool = useEditor(store, (s) => s.tool);
@@ -71,6 +74,7 @@ export function Inspector({ store }: { store: EditorStore }) {
   const levelId = useEditor(store, (s) => s.level);
   const units = useEditor(store, () => store.units);
   if (model === null) return null;
+  if (tool === 'device' && readOnly === null) return <DevicePanel store={store} tools={tools} model={model} />;
   if (tool !== 'select' && readOnly === null) return <DrawPanel store={store} model={model} />;
   const element = selection === null ? undefined : elementOf(model, selection);
   const kind = selection === null ? null : kindOf(model, selection);
@@ -112,7 +116,9 @@ function noun(kind: Kind): string {
     case 'item':
       return 'brief item';
     case 'extensionElement':
-      return 'element';
+      return 'device';
+    case 'gasSource':
+      return 'gas source';
     default:
       return kind;
   }
@@ -140,6 +146,12 @@ function kindIcon(kind: Kind): ReactNode {
       return <RoofIcon />;
     case 'material':
       return <Palette />;
+    case 'circuit':
+      return <SystemIcon system="electrical" />;
+    case 'stack':
+      return <SystemIcon system="plumbing" />;
+    case 'gasSource':
+      return <SystemIcon system="mechanical" />;
     default:
       return <House />;
   }
@@ -147,7 +159,13 @@ function kindIcon(kind: Kind): ReactNode {
 
 function Header({ ctx, kind }: { ctx: Ctx; kind: Kind }) {
   const { model, id, level } = ctx;
-  let subtitle: string = kind === 'wallType' ? 'Wall type' : kind === 'doorType' ? 'Door type' : kind === 'windowType' ? 'Window type' : kind === 'item' ? 'Brief item' : kind === 'extensionElement' ? (ctx.model.ext.get(ctx.id)?.extension ?? 'Extension element') : kind.charAt(0).toUpperCase() + kind.slice(1);
+  const device = kind === 'extensionElement' ? model.levels.flatMap((l) => l.devices).find((d) => d.id === id) : undefined;
+  const record = model.records.get(id);
+  let subtitle: string =
+    kind === 'wallType' ? 'Wall type' : kind === 'doorType' ? 'Door type' : kind === 'windowType' ? 'Window type' : kind === 'item' ? 'Brief item'
+      : kind === 'extensionElement' ? `${device?.kindLabel ?? 'Element'} · ${ctx.model.ext.get(ctx.id)?.extension ?? 'extension'}`
+        : record !== undefined ? `${kind === 'circuit' ? 'Circuit' : kind === 'stack' ? 'Stack' : 'Gas source'} · ${record.extension}`
+          : kind.charAt(0).toUpperCase() + kind.slice(1);
   if ((kind === 'wall' || kind === 'separator') && level !== undefined) {
     const sides = roomsBeside(level, id);
     const name = (r: string | null) => (r === null ? 'Outside' : labelOf(model, r));
@@ -156,7 +174,7 @@ function Header({ ctx, kind }: { ctx: Ctx; kind: Kind }) {
   const title = kind === 'room' ? labelOf(model, id) : `${labelOf(model, id)}${labelOf(model, id).includes(id) ? '' : ` · ${id}`}`;
   return (
     <div className="fs-inspector__head">
-      <span className="fs-inspector__icon">{kind === 'opening' && level?.openings.find((o) => o.id === id)?.kind === 'window' ? <WindowIcon /> : kindIcon(kind)}</span>
+      <span className="fs-inspector__icon">{kind === 'opening' && level?.openings.find((o) => o.id === id)?.kind === 'window' ? <WindowIcon /> : kind === 'extensionElement' ? <SystemIcon system={systemOfExtension(model.ext.get(id)?.extension ?? '')} /> : kindIcon(kind)}</span>
       <div className="fs-inspector__title">
         <h2>{title}</h2>
         <p>{subtitle}</p>
@@ -190,6 +208,12 @@ function bodyFor(kind: Kind, ctx: Ctx, focus: string | null): ReactNode {
       return <FillTypeBody ctx={ctx} />;
     case 'material':
       return <MaterialBody ctx={ctx} />;
+    case 'extensionElement':
+      return <DeviceBody ctx={ctx} device={ctx.model.levels.flatMap((l) => l.devices).find((d) => d.id === ctx.id)} />;
+    case 'circuit':
+    case 'stack':
+    case 'gasSource':
+      return <RecordBody ctx={ctx} />;
     default:
       return <NameOnly ctx={ctx} />;
   }
@@ -270,6 +294,9 @@ function WallBody({ ctx }: { ctx: Ctx }) {
   const top = element['top'] as Json | undefined;
   const levelHeight = model.document.levels?.[String(element['level'])]?.height ?? 0;
   const hosted = level?.openings.filter((o) => o.wall === id) ?? [];
+  const devices = (level?.devices ?? [])
+    .filter((d) => d.host?.['mode'] === 'wallFace' && d.host['wall'] === id)
+    .sort((x, y) => Number(x.host?.['offset']) - Number(y.host?.['offset']));
   const sides = level === undefined ? { left: null, right: null } : roomsBeside(level, id);
   const point = (p: [number, number] | undefined, j: string) => (p === undefined ? j : `${j} · ${formatLen(p[0], units)}, ${formatLen(p[1], units)}`);
   return (
@@ -367,6 +394,18 @@ function WallBody({ ctx }: { ctx: Ctx }) {
               <span>{labelOf(model, o.id)}</span>
               <span className="fs-spacer" />
               <span className="fs-mono-small">at {formatLen(o.offset, units)}</span>
+            </button>
+          ))}
+        </Section>
+      ) : null}
+      {devices.length > 0 ? (
+        <Section title="Devices on its faces">
+          {devices.map((d) => (
+            <button key={d.id} type="button" className="fs-hosted" onClick={() => { ctx.store.select(d.id); }}>
+              <SystemIcon system={d.system} />
+              <span>{labelOf(model, d.id)}</span>
+              <span className="fs-spacer" />
+              <span className="fs-mono-small">{d.host?.['side'] === 'left' ? 'left' : 'right'} · {formatLen(Number(d.host?.['offset']), units)}</span>
             </button>
           ))}
         </Section>
@@ -750,6 +789,7 @@ function ProjectPanel({ store, model, units, readOnly }: { store: EditorStore; m
         </Row>
         <p className="fs-note">Display only: every length is stored exactly, in 1/1280 mm. Typed values accept either system.</p>
       </Section>
+      <SystemsSummary store={store} model={model} units={units} />
       <Section title="Findings">
         <FindingsList store={store} />
       </Section>
