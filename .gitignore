@@ -37,3 +37,6 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .turbo/
+
+# vitest browser-mode failure screenshots
+.vitest/
