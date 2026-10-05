@@ -51,6 +51,7 @@ declare global {
       walker: Walker | null;
       screenPoint(id: string): { x: number; y: number } | null;
       walk(from: { x: number; y: number; yaw: number | null; level: string | null } | null): void;
+      face(yawDegrees: number): void;
     };
   }
 }
