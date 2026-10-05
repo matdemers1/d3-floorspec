@@ -1,0 +1,7 @@
+{
+  "description": "An arc whose sagitta, 1000 base units, is less than 1 mm: its polyline is its chord, so it is derived as a straight wall - its face vertices are none, its length 3000 mm - and the validator reports FS-LINT-020, information.",
+  "covers": [
+    "FS-CORE-21.2.1",
+    "FS-CORE-21.8.1"
+  ]
+}

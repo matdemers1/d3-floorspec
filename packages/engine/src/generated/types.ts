@@ -201,6 +201,10 @@ export type Reference12 = string;
  */
 export type Regions = Region[];
 /**
+ * 2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.
+ */
+export type Length5 = number;
+/**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
 export type Reference13 = string;
@@ -336,7 +340,7 @@ export type Reference25 = string;
 /**
  * 2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.
  */
-export type Length5 = number;
+export type Length6 = number;
 /**
  * 15.1: the floor's thickness, from its top down; greater than zero (FS-CORE-15.1.1). Its default is derived — the level's floorThickness, else not declared — so it carries no `default` here.
  */
@@ -403,7 +407,7 @@ export type PositiveLength14 = number;
 /**
  * 2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.
  */
-export type Length6 = number;
+export type Length7 = number;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
@@ -444,7 +448,7 @@ export type Polygon2 = [Point, Point, Point, ...Point[]];
 /**
  * 2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.
  */
-export type Length7 = number;
+export type Length8 = number;
 /**
  * 16.1, 16.3: how far the roof overhangs every edge that has no overhang of its own; MUST NOT be negative (FS-CORE-16.1.1).
  */
@@ -1132,7 +1136,7 @@ export interface Walls {
   [k: string]: Wall | undefined;
 }
 /**
- * 5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.
+ * 5.2: a solid wall — straight, or along an arc (21.1) — with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.
  */
 export interface Wall {
   level: Reference4;
@@ -1144,6 +1148,7 @@ export interface Wall {
   base?: Base;
   top?: Top;
   finishes?: WallFinishes;
+  arc?: Arc;
   option?: Reference13;
   name?: Name3;
   extensions?: Extensions3;
@@ -1209,6 +1214,12 @@ export interface FaceFinish1 {
   regions?: Regions;
 }
 /**
+ * 21.1 (0.4): the circular arc the wall runs along. Absent: the wall is straight. No constant default.
+ */
+export interface Arc {
+  sagitta: Length5;
+}
+/**
  * 1.4, 1.6: extension data on this wall.
  */
 export interface Extensions3 {
@@ -1233,10 +1244,17 @@ export interface Separator {
   level: Reference14;
   start: Reference15;
   end: Reference16;
+  arc?: Arc1;
   option?: Reference17;
   name?: Name4;
   extensions?: Extensions4;
   extras?: Extras6;
+}
+/**
+ * 21.1 (0.4): the circular arc the separator runs along. Absent: the separator is straight. No constant default.
+ */
+export interface Arc1 {
+  sagitta: Length5;
 }
 /**
  * 1.4, 1.6: extension data on this separator.
@@ -1322,7 +1340,7 @@ export interface Room {
  * 6.5, 15.1: the room's floor: its offset from the level's elevation and its thickness.
  */
 export interface Floor {
-  offset?: Length5;
+  offset?: Length6;
   thickness?: PositiveLength8;
 }
 /**
@@ -1401,7 +1419,7 @@ export interface Slab {
   level: Reference27;
   boundary: Polygon1;
   thickness: PositiveLength14;
-  offset?: Length6;
+  offset?: Length7;
   material?: Reference28;
   purpose?: SlabPurpose;
   option?: Reference29;
@@ -1433,7 +1451,7 @@ export interface Roofs {
 export interface Roof {
   level: Reference30;
   footprint: Polygon2;
-  height?: Length7;
+  height?: Length8;
   pitch?: Pitch1;
   overhang?: NonNegativeLength6;
   edges?: RoofEdges;

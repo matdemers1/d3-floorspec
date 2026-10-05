@@ -120,6 +120,25 @@ export { sortDiagnostics, compareStringSeq, cmpStr } from './validate/diagnostic
 export * as predicates from './geometry/predicates.js';
 export { HalfEdgeGraph, type Cycle, type Face } from './geometry/halfedge.js';
 export { planarize, type PlanarizeInput, type PlanarizeResult } from './geometry/planarize.js';
+export {
+  TAU as ARC_TOLERANCE,
+  arcFits,
+  arcMidpoint,
+  arcPolyline,
+  arcRadius,
+  inInterior,
+  locationLinesMeet,
+  pointAt,
+  polylineLength,
+  primitive,
+  roundSqrt,
+  sagittaOf,
+  sagittaOn,
+  segmentAt,
+  segmentLengths,
+} from './geometry/arcs.js';
+export { wallArc } from './model/document.js';
+export { Q } from './exact/rational.js';
 export type * from './model/document.js';
 
 export class InvalidDocumentError extends Error {

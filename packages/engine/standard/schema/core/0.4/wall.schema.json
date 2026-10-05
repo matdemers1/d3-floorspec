@@ -3,7 +3,7 @@
   "$id": "https://d3cloud.io/floorspec/schema/core/0.4/wall.schema.json",
   "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Wall table and 5.9 (justification, base, base.offset, top.offset, finishes, extensions, extras). `layers` (a typed property, 8.2), `top` (derived from the level's height, 5.9) and `base.level` (derived: the wall's own level) deliberately have none. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).",
   "title": "Wall",
-  "description": "5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.",
+  "description": "5.2: a solid wall — straight, or along an arc (21.1) — with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.",
   "type": "object",
   "required": [
     "level",
@@ -107,6 +107,10 @@
       "$ref": "finish.schema.json",
       "description": "5.2, 18.5: the finishes of the wall's faces, and of regions of them, where they differ from the rooms they face.",
       "default": {}
+    },
+    "arc": {
+      "$ref": "defs.schema.json#/$defs/arc",
+      "description": "21.1 (0.4): the circular arc the wall runs along. Absent: the wall is straight. No constant default."
     },
     "option": {
       "$ref": "defs.schema.json#/$defs/reference",

@@ -1,0 +1,8 @@
+{
+  "description": "A round room: three arc walls of 120 degrees between three junctions on a circle of 3000 mm, each with the sagitta of its chord on that circle, rounded. At each junction two arcs meet in a mitre of their end segments; the room polygon is the inner face all the way round, and its net area is within a fraction of a percent of the circle of 2950 mm.",
+  "covers": [
+    "FS-CORE-21.3.2",
+    "FS-CORE-21.5.1",
+    "FS-CORE-21.2.1"
+  ]
+}

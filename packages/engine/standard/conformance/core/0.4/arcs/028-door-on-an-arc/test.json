@@ -1,0 +1,9 @@
+{
+  "description": "A 900 mm door 2000 mm along the bay wall, measured on its polyline: its start and end points are the points at those distances, and the door stands on the chord between them; its swing clearance is a box in the frame at the middle of that chord, facing across it into the room. The door opens the room to the outside, so it is an entry.",
+  "covers": [
+    "FS-CORE-21.6.1",
+    "FS-CORE-7.4.1",
+    "FS-CORE-13.5.2",
+    "FS-CORE-13.1.1"
+  ]
+}

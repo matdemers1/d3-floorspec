@@ -9,6 +9,7 @@
  */
 import { area2, collinearOverlap, cross, dot, eq, inSegmentInterior, isSimple, locate, properCross, type IPoint } from '../geometry/predicates.js';
 import { LevelGeometry, type LevelEdge, type LevelJunction } from '../derive/level.js';
+import { arcFits, arcPolyline, inInterior, locationLinesMeet, polylineLength, sagittaOf } from '../geometry/arcs.js';
 import { isqrt } from '../exact/bigint.js';
 import {
   COLLECTIONS,
@@ -22,6 +23,7 @@ import {
   ipoint,
   openingDimensions,
   programItems,
+  wallArc,
   wallElevations,
   type ClearOpening,
   type FaceOffsets,
@@ -293,6 +295,22 @@ function graphInvariants(doc: FloorspecDocument, r: Reporter, levelOf: Map<strin
         flag(lid, 'FS-INV-102');
       }
     const seg = (e: LevelEdgeRef): [IPoint, IPoint] => [pos.get(e.start)!, pos.get(e.end)!];
+    // 113 (Core 0.4, 21.1.2): an arc of more than a semicircle has no polyline; it is not tested further (10.3).
+    const lines = new Map<string, readonly IPoint[]>();
+    const unfit = new Set<string>();
+    for (const e of edges) {
+      if (e.start === e.end) continue;
+      const h = sagittaOf(e.kind === 'wall' ? get(doc.walls, e.id) : get(doc.separators, e.id));
+      const [a, b] = seg(e);
+      if (h !== undefined && !arcFits(a, b, h)) {
+        r.report('FS-INV-113', `${e.id}'s arc is more than a semicircle: four times the square of its sagitta exceeds the square of its chord.`, [e.id], {
+          ...lpos,
+          pointer: ptr(e.kind === 'wall' ? 'walls' : 'separators', e.id, 'arc'),
+        });
+        flag(lid, 'FS-INV-113');
+        unfit.add(e.id);
+      } else if (h !== undefined && !eq(a, b)) lines.set(e.id, arcPolyline(a, b, h));
+    }
     const samePair = (e: LevelEdgeRef, f: LevelEdgeRef): boolean =>
       e.start !== e.end && ((e.start === f.start && e.end === f.end) || (e.start === f.end && e.end === f.start));
     for (let i = 0; i < edges.length; i++) {
@@ -304,6 +322,16 @@ function graphInvariants(doc: FloorspecDocument, r: Reporter, levelOf: Map<strin
         if (samePair(e, f)) {
           r.report('FS-INV-103', `${e.id} and ${f.id} connect the same two junctions.`, [e.id, f.id], lpos);
           flag(lid, 'FS-INV-103');
+          continue;
+        }
+        if (unfit.has(e.id) || unfit.has(f.id)) continue;
+        if (lines.has(e.id) || lines.has(f.id)) {
+          // 21.3.1: where one is an arc edge, on their polylines.
+          if (eq(a, b) || eq(c, d)) continue;
+          const code = locationLinesMeet(lines.get(e.id) ?? [a, b], lines.get(f.id) ?? [c, d]);
+          if (code === 'FS-INV-104') r.report('FS-INV-104', `The location lines of ${e.id} and ${f.id} meet at a point inside both.`, [e.id, f.id], lpos);
+          else if (code === 'FS-INV-106') r.report('FS-INV-106', `${e.id} and ${f.id} overlap along a segment.`, [e.id, f.id], lpos);
+          if (code) flag(lid, code);
           continue;
         }
         if (properCross(a, b, c, d)) {
@@ -319,9 +347,10 @@ function graphInvariants(doc: FloorspecDocument, r: Reporter, levelOf: Map<strin
     for (const [jid] of junctions) {
       const p = pos.get(jid)!;
       for (const e of edges) {
-        if (e.start === jid || e.end === jid) continue;
+        if (e.start === jid || e.end === jid || unfit.has(e.id)) continue;
         const [a, b] = seg(e);
-        if (inSegmentInterior(p, a, b)) {
+        const line = lines.get(e.id);
+        if (line ? inInterior(p, line) : inSegmentInterior(p, a, b)) {
           r.report('FS-INV-105', `Junction ${jid} lies inside ${e.id}.`, [jid, e.id], { ...lpos, point: [Number(p[0]), Number(p[1])] });
           flag(lid, 'FS-INV-105');
         }
@@ -355,7 +384,9 @@ function graphInvariants(doc: FloorspecDocument, r: Reporter, levelOf: Map<strin
       if (j.join?.kind !== 'butt') continue;
       // 10.3: not evaluated for a junction with a wall that has FS-INV-107 or FS-INV-108.
       if (edges.some((e) => e.kind === 'wall' && (e.start === jid || e.end === jid) && !offsets.has(e.id))) continue;
-      if (!joinApplies(jid, j.join.through, edges, pos, offsets)) {
+      // Nor for one an arc that does not fit ends at (21.1.2).
+      if (edges.some((e) => (e.start === jid || e.end === jid) && unfit.has(e.id))) continue;
+      if (!joinApplies(jid, j.join.through, edges, pos, offsets, lines)) {
         r.report('FS-INV-111', `The butt join at ${jid} does not apply to its junction.`, [jid], { ...lpos, pointer: ptr('junctions', jid, 'join') }, [
           { op: 'unset', id: jid, member: '/join' },
         ]);
@@ -372,13 +403,16 @@ function joinApplies(
   levelEdges: LevelEdgeRef[],
   pos: Map<string, IPoint>,
   offsets: Map<string, FaceOffsets>,
+  lines: Map<string, readonly IPoint[]> = new Map(),
 ): boolean {
   const at = levelEdges.filter((e) => e.start === jid || e.end === jid);
   // 5.8.1: every wall named is one of the junction's edges (references already resolve to walls).
   if (!through.every((w) => at.some((e) => e.id === w && e.kind === 'wall'))) return false;
   const J = pos.get(jid)!;
   const out = (e: LevelEdgeRef): IPoint => {
-    const other = pos.get(e.start === jid ? e.end : e.start)!;
+    // An arc edge leaves along its segment at the junction (21.3).
+    const line = lines.get(e.id);
+    const other = line ? (e.start === jid ? line[1]! : line[line.length - 2]!) : pos.get(e.start === jid ? e.end : e.start)!;
     return [other[0] - J[0], other[1] - J[1]];
   };
   if (through.length === 1) {
@@ -425,11 +459,15 @@ export function buildLevelGeometry(doc: FloorspecDocument, lid: string, offsets:
       .filter(([, w]) => w.level === lid)
       .map(([id, w]) => {
         const o = offsets.get(id)!;
-        return { id, kind: 'wall' as const, start: w.start, end: w.end, a2: o.a2, b2: o.b2 };
+        const h = sagittaOf(w);
+        return { id, kind: 'wall' as const, start: w.start, end: w.end, a2: o.a2, b2: o.b2, ...(h !== undefined && { sagitta: h }) };
       }),
     ...entries(doc.separators)
       .filter(([, s]) => s.level === lid)
-      .map(([id, s]) => ({ id, kind: 'separator' as const, start: s.start, end: s.end, a2: 0n, b2: 0n })),
+      .map(([id, s]) => {
+        const h = sagittaOf(s);
+        return { id, kind: 'separator' as const, start: s.start, end: s.end, a2: 0n, b2: 0n, ...(h !== undefined && { sagitta: h }) };
+      }),
   ];
   return new LevelGeometry(junctions, edges);
 }
@@ -536,8 +574,13 @@ function openingInvariants(doc: FloorspecDocument, r: Reporter): void {
     const width = BigInt(dim.width);
     const height = BigInt(dim.height);
     const sill = BigInt(dim.sill);
-    if ((offset + width) ** 2n > m) {
-      const fixOffset = isqrt(m) - width;
+    const arc = wallArc(doc, o.wall);
+    const L = arc === undefined || arc === 'unfit' ? undefined : polylineLength(arc);
+    // 21.6.2: on an arc wall, its length along its polyline; not evaluated on one with no length (10.3).
+    if (arc === 'unfit') {
+      /* FS-INV-302 is not evaluated */
+    } else if (L !== undefined ? offset + width > L : (offset + width) ** 2n > m) {
+      const fixOffset = (L ?? isqrt(m)) - width;
       r.report('FS-INV-302', `${id} extends beyond the length of ${o.wall}.`, [id], { pointer: ptr('openings', id, 'offset') },
         fixOffset >= 0n ? [{ op: 'set', id, member: '/offset', value: Number(fixOffset) }] : undefined);
     }

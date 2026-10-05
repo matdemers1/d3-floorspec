@@ -1,0 +1,7 @@
+{
+  "description": "The bay room with a tray ceiling 30 mm in from its walls: the tray's centre is the room polygon moved in, edge by edge along the curve as along the straight walls, and its floor spans the polygon that follows the arc.",
+  "covers": [
+    "FS-CORE-21.5.1",
+    "FS-CORE-15.4.2"
+  ]
+}

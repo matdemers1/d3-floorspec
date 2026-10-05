@@ -1,0 +1,8 @@
+{
+  "description": "The same wall with a sagitta of -1000 mm: it bulges to its right, south, into the room, whose net area is smaller than its chord's rectangle by the segment the arc cuts off.",
+  "covers": [
+    "FS-CORE-21.1.1",
+    "FS-CORE-21.2.1",
+    "FS-CORE-21.5.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A straight wall outside the bay through one vertex of its polyline, parallel to the chord of the two vertices either side: it touches the polyline at that vertex and nowhere else, crossing nothing. Two straight location lines cannot meet like that; a polyline's can, and meeting at a point interior to both is FS-INV-104 (21.3.1).",
+  "covers": [
+    "FS-CORE-21.3.1"
+  ]
+}

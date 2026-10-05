@@ -9,7 +9,8 @@
  * - FS-INV-503 (13.3.4), only for a `surface` host whose room is on a level where room invariants
  *   were evaluated and has none of FS-INV-201 … 204.
  */
-import { get, entries, extElements, adjacencies, declaredVersion, hasCore02Members, programItems, ipoint, wallElevations, type FloorspecDocument, type RegistryEntry } from '../model/document.js';
+import { get, entries, extElements, adjacencies, declaredVersion, hasCore02Members, programItems, ipoint, wallArc, wallElevations, type FloorspecDocument, type RegistryEntry } from '../model/document.js';
+import { polylineLength } from '../geometry/arcs.js';
 import { extentsOk } from '../derive/frames.js';
 import { knownEntry, satisfies } from './registry.js';
 import { ptr, strictlyInside, type Analysis, type Reporter } from './invariants.js';
@@ -119,7 +120,10 @@ export function hostingInvariants(doc: FloorspecDocument, r: Reporter): void {
       const S = ipoint(get(doc.junctions, w.start)!.position);
       const E = ipoint(get(doc.junctions, w.end)!.position);
       const offset = BigInt(h.offset);
-      if (offset * offset > (E[0] - S[0]) ** 2n + (E[1] - S[1]) ** 2n)
+      const arc = wallArc(doc, h.wall);                    // 21.6.2: an arc wall's length; none when unfit (10.3)
+      if (arc === 'unfit') {
+        /* FS-INV-501 is not evaluated */
+      } else if (arc ? offset > polylineLength(arc) : offset * offset > (E[0] - S[0]) ** 2n + (E[1] - S[1]) ** 2n)
         r.report('FS-INV-501', `${x.id}'s offset along ${h.wall} exceeds the wall's length.`, [x.id], { pointer: `${base}/host/offset` });
       if (!r.has('FS-INV-112', h.wall)) {
         const el = wallElevations(doc, w)!;

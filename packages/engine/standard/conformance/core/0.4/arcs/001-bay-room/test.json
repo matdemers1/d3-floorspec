@@ -1,0 +1,13 @@
+{
+  "description": "A room whose north wall is an arc bulging 1000 mm out of it, over a 5000 mm chord: radius 3625 mm, a sweep of about 87 degrees. Its polyline halves the arc six times on its deepest branch - 64 segments, every vertex within two base units of the circle - and the wall derives its polyline, its length (the sum of its segments' rounded lengths) and its face vertices; the room polygon runs along the wall's inner face, through its right face vertices, and its net area is exact from them.",
+  "covers": [
+    "FS-CORE-21.2.1",
+    "FS-CORE-21.3.2",
+    "FS-CORE-21.4.2",
+    "FS-CORE-21.5.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1",
+    "FS-CORE-2.2.1"
+  ]
+}

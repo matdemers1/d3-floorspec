@@ -1,0 +1,8 @@
+{
+  "description": "The same arch with W1 running through the apex: W1's face on the convex side runs to the point where it meets W2's face on the reflex side, which lies beyond W2's first segment, so it is found on W2's second piece and W2's first face vertex there is cut off its outline. The room polygon is the same as under the mitre (5.8).",
+  "covers": [
+    "FS-CORE-21.4.2",
+    "FS-CORE-21.4.1",
+    "FS-CORE-5.8.4"
+  ]
+}

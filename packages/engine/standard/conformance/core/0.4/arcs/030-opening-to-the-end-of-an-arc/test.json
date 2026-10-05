@@ -1,0 +1,7 @@
+{
+  "description": "An opening that ends exactly at the bay wall's length - the sum of its segments' rounded lengths: valid. It reaches into the join at J3, so FS-LINT-005.",
+  "covers": [
+    "FS-CORE-21.6.2",
+    "FS-CORE-21.6.1"
+  ]
+}

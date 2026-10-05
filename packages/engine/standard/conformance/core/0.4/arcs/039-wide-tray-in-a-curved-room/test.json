@@ -1,0 +1,7 @@
+{
+  "description": "The same tray 600 mm in from the walls: 15.4 moves every edge of the room polygon, and next to the corners at J2 and J3 the arc's edges are shorter than the corners move, so a moved edge runs backwards. FS-INV-703: a tray wider than an arc's segments does not fit (21.9).",
+  "covers": [
+    "FS-CORE-15.4.1",
+    "FS-CORE-21.5.1"
+  ]
+}

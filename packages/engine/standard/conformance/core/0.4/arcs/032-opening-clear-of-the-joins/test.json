@@ -1,0 +1,7 @@
+{
+  "description": "A cased opening in the middle of the bay: clear of both joins, measured along the first and the last segment, so no FS-LINT-005.",
+  "covers": [
+    "FS-CORE-21.6.1",
+    "FS-CORE-7.5.1"
+  ]
+}

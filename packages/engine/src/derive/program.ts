@@ -84,7 +84,7 @@ function roomRelations(doc: FloorspecDocument, analysis: Analysis): Relations {
     g.edges.forEach((e, i) => {
       const fa = faceOfCycle.get(g.graph.cycleOf[2 * i]!);
       const fb = faceOfCycle.get(g.graph.cycleOf[2 * i + 1]!);
-      const joins = e.kind === 'separator' || doors.has(e.id);
+      const joins = e.kind === 'separator' || doors.has(e.src ?? e.id); // an arc wall's segments are the wall's (21.3)
       // One side is the unbounded face: the room on the other is an entry (14.2).
       if (joins && (fa === undefined) !== (fb === undefined)) {
         const r = roomOfFace.get((fa ?? fb)!);

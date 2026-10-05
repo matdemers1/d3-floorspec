@@ -1,0 +1,7 @@
+{
+  "description": "A document that declares \"0.3\" with an arc wall: it is checked against Core 0.3's schema, which has no \"arc\" member (1.2.8).",
+  "covers": [
+    "FS-CORE-1.2.8",
+    "FS-CORE-21.1.1"
+  ]
+}

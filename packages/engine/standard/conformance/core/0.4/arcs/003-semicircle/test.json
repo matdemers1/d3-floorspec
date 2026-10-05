@@ -1,0 +1,7 @@
+{
+  "description": "A sagitta of exactly half the chord, 2500 mm: a semicircle, which 21.1.2 allows. Its radius is its sagitta, and its polyline's first vertex is the arc's midpoint, (2500 mm, 6500 mm), an integer point.",
+  "covers": [
+    "FS-CORE-21.1.2",
+    "FS-CORE-21.2.1"
+  ]
+}

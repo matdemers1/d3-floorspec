@@ -1,0 +1,6 @@
+{
+  "description": "The same region one base unit longer. FS-INV-1002.",
+  "covers": [
+    "FS-CORE-21.6.2"
+  ]
+}

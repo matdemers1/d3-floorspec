@@ -1,0 +1,6 @@
+{
+  "description": "A straight wall from the arc's start junction along its first segment and on, twice as far: it overlaps that segment, and the vertex at its end, which is no junction, lies inside the straight wall. FS-INV-106 without FS-INV-105, which two straight edges never give.",
+  "covers": [
+    "FS-CORE-21.3.1"
+  ]
+}

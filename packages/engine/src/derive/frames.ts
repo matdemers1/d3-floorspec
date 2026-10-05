@@ -12,7 +12,9 @@ import { Surd } from '../exact/surd.js';
 import { toSafeNumber } from '../exact/bigint.js';
 import type { IPoint } from '../geometry/predicates.js';
 import { startAtLeast } from './level.js';
-import { get, ipoint, openingDimensions, wallElevations, type Box, type ExtensionElement, type FloorspecDocument, type Host } from '../model/document.js';
+import { get, ipoint, openingDimensions, wallArc, wallElevations, type Box, type ExtensionElement, type FloorspecDocument, type Host } from '../model/document.js';
+import { pointAt, primitive, segmentAt } from '../geometry/arcs.js';
+import { Q } from '../exact/rational.js';
 import type { Analysis } from '../validate/invariants.js';
 import { roomRings, surfaceElevation } from '../slabs/floors.js';
 
@@ -70,8 +72,32 @@ function wallPoint(l: WallLine, along2: bigint, normal2: bigint): { x: Surd; y: 
   };
 }
 
+/**
+ * 21.6: on an arc wall, the point at distance `along` on its polyline moved `normal2 / 2` along the unit left
+ * normal of the segment that distance falls on, and that segment's left normal.
+ */
+function arcWallPoint(poly: readonly IPoint[], along: bigint, normal2: bigint): { x: Surd; y: Surd; n: IPoint } {
+  const at = segmentAt(poly, Q.of(along))!;
+  const a = poly[at.k]!;
+  const b = poly[at.k + 1]!;
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const D = dx * dx + dy * dy;
+  const [px, py] = pointAt(poly, Q.of(along));
+  const k = Surd.sqrt(D).mulInt(normal2).divInt(2n * D);
+  return { x: px.toSurd().add(k.mulInt(-dy)), y: py.toSurd().add(k.mulInt(dx)), n: [-dy, dx] };
+}
+
 /** 13.1: the frame of a host. The document is valid, so its wall has face offsets. */
 export function hostFrame(doc: FloorspecDocument, analysis: Analysis, host: Host): Frame {
+  const arc = host.mode === 'wallFace' ? wallArc(doc, host.wall) : undefined;
+  if (host.mode === 'wallFace' && arc && arc !== 'unfit') {
+    const off = analysis.offsets.get(host.wall)!;
+    const left = host.side === 'left';
+    const o = arcWallPoint(arc, BigInt(host.offset), left ? off.a2 : -off.b2);
+    const base = wallElevations(doc, get(doc.walls, host.wall)!)!.base;
+    return { ox: o.x, oy: o.y, oz: base + BigInt(host.height), f: left ? o.n : [-o.n[0], -o.n[1]] };
+  }
   if (host.mode === 'wallFace') {
     const l = wallLine(doc, host.wall);
     const off = analysis.offsets.get(host.wall)!;
@@ -101,6 +127,21 @@ export function hostFrame(doc: FloorspecDocument, analysis: Analysis, host: Host
 export function openingFrame(doc: FloorspecDocument, oid: string): Frame {
   const o = get(doc.openings, oid)!;
   const dim = openingDimensions(doc, o);
+  const arc = wallArc(doc, o.wall);
+  if (arc && arc !== 'unfit') {
+    // 21.6: at the middle of the opening's chord, facing across it.
+    const s = pointAt(arc, Q.of(BigInt(o.offset)));
+    const e = pointAt(arc, Q.of(BigInt(o.offset) + BigInt(dim.width!)));
+    const c = primitive([e[0].sub(s[0]), e[1].sub(s[1])]);
+    const n: IPoint = [-c[1], c[0]];
+    const base = wallElevations(doc, get(doc.walls, o.wall)!)!.base;
+    return {
+      ox: s[0].add(e[0]).div(2n).toSurd(),
+      oy: s[1].add(e[1]).div(2n).toSurd(),
+      oz: base + BigInt(dim.sill),
+      f: (o.swing ?? 'right') === 'left' ? n : [-n[0], -n[1]],
+    };
+  }
   const l = wallLine(doc, o.wall);
   const p = wallPoint(l, 2n * BigInt(o.offset) + BigInt(dim.width!), 0n);
   const [dx, dy] = l.d;

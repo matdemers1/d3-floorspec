@@ -4,7 +4,7 @@
  * with oblique walls, odd thicknesses and every justification, so rounding is exercised everywhere.
  */
 import { planarize } from '../src/geometry/planarize.js';
-import { box, doc } from './doc.js';
+import { box, doc, type P, type WallSpec } from './doc.js';
 
 /** mulberry32: a tiny seeded PRNG, so the fixtures are the same on every run and platform. */
 function rng(seed: number): () => number {
@@ -51,6 +51,39 @@ function randomDoc(seed: number): object {
   return doc({ junctions: Object.fromEntries([...used].map((id) => [id, p.junctions[id]!])), walls: walls as never });
 }
 
+/**
+ * Core 0.4, chapter 21: a room of four oblique walls, some of them arcs with random sagittas — outward,
+ * inward, flat — and a door on one, so the polyline's snap rounding, face paths cut at joins and stations
+ * are exercised on irrational midpoints. Valid or not, Node and the browser must agree.
+ */
+function randomArcDoc(seed: number): object {
+  const r = rng(seed);
+  const int = (lo: number, hi: number): number => lo + Math.floor(r() * (hi - lo + 1));
+  const s = 1000000;
+  const corners: P[] = [
+    [int(-200000, 200000), int(-200000, 200000)],
+    [int(-200000, 200000), 4 * s + int(-200000, 200000)],
+    [5 * s + int(-200000, 200000), 4 * s + int(-200000, 200000)],
+    [5 * s + int(-200000, 200000), int(-200000, 200000)],
+  ];
+  const walls: Record<string, WallSpec> = {};
+  for (let i = 0; i < 4; i++) {
+    const a = corners[i]!;
+    const b = corners[(i + 1) % 4]!;
+    const chord = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const kind = int(0, 3);
+    const h = kind === 0 ? 0 : kind === 1 ? int(1, 1280) : int(-Math.floor(chord / 8), Math.floor(chord / 4));
+    walls[`W${i + 1}`] = { start: `J${i + 1}`, end: `J${(i + 1) % 4 + 1}`, t: int(6400, 40000), ...(h !== 0 && { arc: { sagitta: h } }) };
+  }
+  return doc({
+    junctions: Object.fromEntries(corners.map((c, i) => [`J${i + 1}`, c])),
+    walls,
+    rooms: { R1: [2500000, 2000000] },
+    openings: { O1: { wall: 'W2', offset: int(100000, 1500000), width: 914400, height: 2032000 } },
+    extra: { floorspec: '0.4' },
+  });
+}
+
 export function fixtures(): { name: string; doc: object }[] {
   const out: { name: string; doc: object }[] = [
     { name: 'box with room', doc: doc(box(4000000, 3000000, 12801, { rooms: { R1: [2000000, 1500000] } })) },
@@ -65,5 +98,6 @@ export function fixtures(): { name: string; doc: object }[] {
     },
   ];
   for (let s = 1; s <= 40; s++) out.push({ name: `random ${s}`, doc: randomDoc(s) });
+  for (let s = 1; s <= 24; s++) out.push({ name: `random arcs ${s}`, doc: randomArcDoc(s) });
   return out;
 }

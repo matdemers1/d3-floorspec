@@ -1,0 +1,7 @@
+{
+  "description": "A third wall at the bay's end junction J3, running north-east: three edges meet there, one of them an arc, and the junction fill closes the gap between the arc's last segment and the two straight walls.",
+  "covers": [
+    "FS-CORE-21.3.2",
+    "FS-CORE-5.7.3"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A tiled region of the bay wall's inner face, from 1000 mm to the wall's length: valid, and the face's finish lists it.",
+  "covers": [
+    "FS-CORE-21.6.2",
+    "FS-CORE-18.6.1"
+  ]
+}

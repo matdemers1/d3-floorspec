@@ -4,7 +4,9 @@
  */
 import { Surd } from '../exact/surd.js';
 import { cross, dot, type IPoint } from '../geometry/predicates.js';
-import { entries, get, ipoint, openingDimensions, programItems, type FloorspecDocument } from '../model/document.js';
+import { entries, get, ipoint, openingDimensions, programItems, wallArc, type FloorspecDocument } from '../model/document.js';
+import { polylineLength, sagittaOf, TAU } from '../geometry/arcs.js';
+import { srcOf } from '../derive/level.js';
 import { analyseProgram } from '../derive/program.js';
 import { circulationLints } from '../circulation/circulation.js';
 import type { Analysis, Reporter } from './invariants.js';
@@ -38,7 +40,7 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
         if (cross(a.d, b.d) <= 0n) continue; // the wedge from a to b is not narrower than 180°
         const p = dot(a.d, b.d);
         if (p > 0n && 4n * p * p > 3n * dot(a.d, a.d) * dot(b.d, b.d))
-          r.report('FS-LINT-001', `${a.edge.id} and ${b.edge.id} meet at ${jid} at less than 30°; their mitre runs far out to a point.`, [jid, a.edge.id, b.edge.id], {
+          r.report('FS-LINT-001', `${srcOf(a.edge)} and ${srcOf(b.edge)} meet at ${jid} at less than 30°; their mitre runs far out to a point.`, [jid, srcOf(a.edge), srcOf(b.edge)], {
             level: la.id,
             pointer: ptr('junctions', jid),
           });
@@ -77,9 +79,24 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
     const fe = g.roundedFaceEnds(o.wall);
     const S = ipoint(get(doc.junctions, w.start)!.position);
     const E = ipoint(get(doc.junctions, w.end)!.position);
+    const dim = openingDimensions(doc, o);
+    const arc = wallArc(doc, o.wall);
+    if (arc && arc !== 'unfit') {
+      // 21.6: on an arc wall, along its first segment from S, and its last back from E, against its length.
+      const d0: IPoint = [arc[1]![0] - S[0], arc[1]![1] - S[1]];
+      const dn: IPoint = [E[0] - arc[arc.length - 2]![0], E[1] - arc[arc.length - 2]![1]];
+      const lo = BigInt(o.offset);
+      const rest = polylineLength(arc) - lo - BigInt(dim.width!);
+      const l0 = Surd.sqrt(dot(d0, d0)).mulInt(lo);
+      const ln = Surd.sqrt(dot(dn, dn)).mulInt(rest);
+      const reachesStart = [fe.startLeft, fe.startRight].some((p) => l0.cmp(along(S, d0, p)) < 0);
+      const reachesEnd = [fe.endLeft, fe.endRight].some((p) => ln.cmp(Surd.of(dot(dn, [E[0] - p[0], E[1] - p[1]]))) < 0);
+      if (reachesStart || reachesEnd)
+        r.report('FS-LINT-005', `${id} reaches into the join at the ${reachesStart ? 'start' : 'end'} of ${o.wall}.`, [id], { pointer: ptr('openings', id) });
+      continue;
+    }
     const d: IPoint = [E[0] - S[0], E[1] - S[1]];
     const len = Surd.sqrt(d[0] * d[0] + d[1] * d[1]);
-    const dim = openingDimensions(doc, o);
     const start = len.mulInt(BigInt(o.offset));
     const end = len.mulInt(BigInt(o.offset) + BigInt(dim.width!));
     const farStart = [along(S, d, fe.startLeft), along(S, d, fe.startRight)];
@@ -89,6 +106,14 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
     if (reachesStart || reachesEnd)
       r.report('FS-LINT-005', `${id} reaches into the join at the ${reachesStart ? 'start' : 'end'} of ${o.wall}.`, [id], { pointer: ptr('openings', id) });
   }
+
+  // 020: flat arcs — an arc edge whose sagitta is at most 1,280 is derived as its chord (21.8).
+  for (const c of ['walls', 'separators'] as const)
+    for (const [id, e] of entries(doc[c])) {
+      const h = sagittaOf(e);
+      if (h !== undefined && (h < 0n ? -h : h) <= TAU)
+        r.report('FS-LINT-020', `${id}'s arc bulges ${h < 0n ? -h : h} base units, no more than 1 mm: it is derived as a straight edge.`, [id], { pointer: `${ptr(c, id)}/arc` });
+    }
 
   // 008 … 011: the program; 012 … 014: circulation (Core 0.2).
   if (analysis.core02) {
