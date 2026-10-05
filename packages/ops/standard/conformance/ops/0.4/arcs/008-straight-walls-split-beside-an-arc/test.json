@@ -1,0 +1,7 @@
+{
+  "description": "A straight wall drawn across the Pantry, from (4', 7') to (4', 13'), on a level whose W8 is an arc: W10 and W3 are split where it meets them, as 5.2 splits straight edges; the arc, which nothing touches, is left exactly as it is.",
+  "covers": [
+    "FS-OPS-5.2.4",
+    "FS-OPS-5.2.1"
+  ]
+}

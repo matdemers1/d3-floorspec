@@ -1,0 +1,6 @@
+{
+  "description": "moveWall of W8 by 1' toward the Dining room: an arc wall moves along its chord's normal, both junctions by the same vector, and keeps its arc.",
+  "covers": [
+    "FS-OPS-4.2.1"
+  ]
+}

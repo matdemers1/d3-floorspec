@@ -1,0 +1,6 @@
+{
+  "description": "A wall drawn from the Kitchen to the Dining room across W8 and given an arc in the same batch: planarization would have to split the arc where it crosses W8, and an arc edge is never routed or split - the batch is rejected with FS-OPS-013, naming the arc.",
+  "covers": [
+    "FS-OPS-5.2.4"
+  ]
+}

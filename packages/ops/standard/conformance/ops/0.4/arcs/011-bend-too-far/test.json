@@ -1,0 +1,7 @@
+{
+  "description": "setProperty of a sagitta of 5' on the 8' wall W8: more than a semicircle, so the result has FS-INV-113 and the batch is rejected with it.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A straight wall drawn across the arc W8: the straight wall could be split, but the crossing is on the arc too, which cannot - FS-OPS-013, naming W8.",
+  "covers": [
+    "FS-OPS-5.2.4"
+  ]
+}

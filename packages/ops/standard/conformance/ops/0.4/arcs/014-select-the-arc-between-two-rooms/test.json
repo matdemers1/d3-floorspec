@@ -1,0 +1,7 @@
+{
+  "description": "setProperty of /name on \"the wall between Kitchen and Dining\": the faces of the two rooms meet along the arc's polyline (Core 21.5), and the selector finds the arc wall.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-3.4.1"
+  ]
+}

@@ -4,9 +4,9 @@
  * integers and IDs; every failure is the FS-OPS diagnostic chapter 7 names, pointing at the member
  * of the request that failed.
  */
-import { Surd } from '@floorspec/engine';
+import { polylineLength, Surd } from '@floorspec/engine';
 import { fail, OpsFailure } from '../diagnostics.js';
-import { asPoint, FacesCache, sideOf, type LevelFaces, type Side } from '../model/faces.js';
+import { arcPolylineOf, asPoint, FacesCache, sideOf, type LevelFaces, type Side } from '../model/faces.js';
 import { ITEMS, type ElementKind, type WorkingCopy } from '../model/working.js';
 import { cmpStr, getMember } from '../lib/json.js';
 import { parseArea, parseLength, MAX_LENGTH } from './length.js';
@@ -332,8 +332,11 @@ function splitRooms(rest: string, ptr: string, ctx: Ctx): [string, string] {
 
 // ── 3.5 positions along a wall ────────────────────────────────────────────────
 
-/** The squared length of an edge's location line, and its junction positions. */
-export function edgeGeometry(ctx: Ctx, edge: string, ptr: string): { S: IPoint; E: IPoint; d: IPoint; m: bigint } {
+/**
+ * The squared length of an edge's chord, its junction positions, and L, the exact length of its location
+ * line (3.5) — for an arc edge, its length along its polyline (Core 21.6), an integer.
+ */
+export function edgeGeometry(ctx: Ctx, edge: string, ptr: string): { S: IPoint; E: IPoint; d: IPoint; m: bigint; L: Surd } {
   const e = ctx.wc.element(edge);
   const s = getMember(e, 'start');
   const t = getMember(e, 'end');
@@ -341,15 +344,16 @@ export function edgeGeometry(ctx: Ctx, edge: string, ptr: string): { S: IPoint; 
   const E = typeof t === 'string' ? asPoint(getMember(ctx.wc.elementIn('junctions', t), 'position')) : undefined;
   if (!S || !E) return fail('FS-OPS-003', `${edge} does not run between two junctions with positions`, [edge], ptr);
   const d: IPoint = [E[0] - S[0], E[1] - S[1]];
-  return { S, E, d, m: d[0] * d[0] + d[1] * d[1] };
+  const m = d[0] * d[0] + d[1] * d[1];
+  const arc = arcPolylineOf(ctx.wc, edge, S, E);
+  return { S, E, d, m, L: arc ? Surd.of(polylineLength(arc)) : Surd.sqrt(m) };
 }
 
 /**
  * A position along a wall (3.5): `"centered"`, `"<length> from start"`, `"<length> from end"`, or
- * an offset. L is the length of the wall's location line (√m, exact) and w the width placed.
+ * an offset. L is the exact length of the wall's location line (edgeGeometry) and w the width placed.
  */
-export function resolvePosition(v: unknown, ptr: string, m: bigint, w: bigint): bigint {
-  const L = Surd.sqrt(m);
+export function resolvePosition(v: unknown, ptr: string, L: Surd, w: bigint): bigint {
   if (typeof v === 'string') {
     if (/^\s*centered\s*$/i.test(v)) return L.addInt(-w).divInt(2n).round();
     const from = /^\s*(.+?)[ \t]+from[ \t]+(start|end)\s*$/i.exec(v);

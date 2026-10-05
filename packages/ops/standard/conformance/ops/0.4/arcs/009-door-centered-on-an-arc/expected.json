@@ -1,0 +1,25 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "012f28aa9be15bbe14ec91fc6c07f06a52e88caad34618d88ae457a5c370518b",
+  "created": ["O1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 1039531,
+        "wall": "W8"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "O1"
+    }
+  ]
+}

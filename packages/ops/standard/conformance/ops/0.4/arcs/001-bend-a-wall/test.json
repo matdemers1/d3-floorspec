@@ -1,0 +1,7 @@
+{
+  "description": "setProperty gives the wall between the Kitchen and the Dining room an arc of 1': it bulges west, into the Kitchen, whose net area shrinks as the Dining room's grows; the wall derives its polyline. The level stays planar, so nothing is planarized.",
+  "covers": [
+    "FS-OPS-2.3.1",
+    "FS-OPS-1.3.1"
+  ]
+}

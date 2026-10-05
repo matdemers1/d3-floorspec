@@ -1,0 +1,24 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "8d407ff4f44dd1098387d279cfbc9bfd4dad925ea37bac8a25c40e1552e419c1",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "W8",
+      "path": "/arc"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "W8",
+      "path": "/arc",
+      "value": {
+        "sagitta": 390144
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-INV-113",
+      "severity": "error",
+      "elements": ["W8"]
+    }
+  ]
+}

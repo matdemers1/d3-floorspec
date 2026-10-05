@@ -1,0 +1,19 @@
+{
+  "batch": [
+    {
+      "op": "drawWall",
+      "id": "W20",
+      "level": "L1",
+      "from": [2340864, 780288],
+      "to": [7022592, 780288]
+    },
+    {
+      "op": "setProperty",
+      "id": "W20",
+      "path": "/arc",
+      "value": {
+        "sagitta": 390144
+      }
+    }
+  ]
+}

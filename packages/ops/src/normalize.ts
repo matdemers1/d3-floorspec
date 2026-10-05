@@ -8,9 +8,9 @@
  * level takes part: junctions with an integer position, and edges whose start and end are such
  * junctions on the edge's own level. Anything else is left for validation to judge.
  */
-import { predicates, roundHalfEvenRational, Surd, type Diagnostic } from '@floorspec/engine';
+import { inInterior, locationLinesMeet, predicates, roundHalfEvenRational, Surd, type Diagnostic } from '@floorspec/engine';
 import { opsDiagnostic } from './diagnostics.js';
-import { edgesOn, junctionsOn, type Keep } from './model/faces.js';
+import { arcPolylineOf, edgesOn, junctionsOn, type Keep } from './model/faces.js';
 import { atLeast03, type WorkingCopy } from './model/working.js';
 import { clone, cmpStr, deleteMember, getMember, isObject, setMember, type JsonObject } from './lib/json.js';
 
@@ -61,8 +61,12 @@ export function normalize(wc: WorkingCopy): Diagnostic[] {
   // breaks Core §5.3: one with no crossing, no junction inside an edge and no overlap is left
   // exactly as it is (near misses included).
   for (const l of levels)
-    for (const domain of atLeast03(wc.ops) ? domainsOf(wc, l) : ([ALL] as Domain[]))
+    for (const domain of atLeast03(wc.ops) ? domainsOf(wc, l) : ([ALL] as Domain[])) {
+      // Ops 0.4, 5.2: an arc edge is never routed or split; a level that would need one to be is rejected.
+      const arcs = arcsInTheWay(wc, l, domain);
+      if (arcs.length) return [opsDiagnostic('FS-OPS-013', `planarization would have to split the arc edge${arcs.length > 1 ? 's' : ''} ${arcs.join(', ')}: draw the junction where the walls meet first`, arcs)];
       if (!isPlanar(wc, l, domain)) straddles.push(...planarize(wc, l, domain));
+    }
   if (straddles.length) return straddles;
   cleanJoins(wc);
   return [];
@@ -177,8 +181,17 @@ interface Seg {
   b: IPoint;
 }
 
-/** The well-formed part of a level (chapter 5): junctions with integer positions, and the edges between them. */
-function wellFormed(wc: WorkingCopy, level: string, domain: Domain): { atPos: Map<string, string>; positions: IPoint[]; segs: Seg[] } {
+/**
+ * The well-formed part of a level (chapter 5): junctions with integer positions, and the edges between them —
+ * without the arc edges (Ops 0.4, 5.2: an arc edge is never routed), unless `withArcs`; and each edge's
+ * location line, its polyline for an arc edge.
+ */
+function wellFormed(
+  wc: WorkingCopy,
+  level: string,
+  domain: Domain,
+  withArcs = false,
+): { atPos: Map<string, string>; positions: IPoint[]; segs: Seg[]; lines: Map<string, readonly IPoint[]> } {
   const keep = domainKeep(domain);
   const atPos = new Map<string, string>();
   const pos = new Map<string, IPoint>();
@@ -188,13 +201,40 @@ function wellFormed(wc: WorkingCopy, level: string, domain: Domain): { atPos: Ma
       if (!atPos.has(key(j.pos))) atPos.set(key(j.pos), j.id);
     }
   const segs: Seg[] = [];
+  const lines = new Map<string, readonly IPoint[]>();
   for (const e of edgesOn(wc, level, keep)) {
     const a = pos.get(e.start);
     const b = pos.get(e.end);
     if (!a || !b || eq(a, b)) continue;
+    const arc = wc.ops === '0.4' ? arcPolylineOf(wc, e.id, a, b) : undefined;
+    if (arc) lines.set(e.id, arc);
+    else lines.set(e.id, [a, b]);
+    if (arc && !withArcs) continue;
     segs.push({ id: e.id, kind: e.kind, a, b });
   }
-  return { atPos, positions: [...pos.values()], segs };
+  return { atPos, positions: [...pos.values()], segs, lines };
+}
+
+/**
+ * Ops 0.4, 5.2: the arc edges of the well-formed part of a level that break Core §21.3.1 — whose location
+ * lines meet or overlap another edge's, or have a junction inside them — sorted.
+ */
+function arcsInTheWay(wc: WorkingCopy, level: string, domain: Domain): string[] {
+  if (wc.ops !== '0.4') return [];
+  const { positions, segs, lines } = wellFormed(wc, level, domain, true);
+  if (!segs.some((s) => lines.get(s.id)!.length > 2)) return [];
+  const out = new Set<string>();
+  const isArc = (s: Seg): boolean => lines.get(s.id)!.length > 2;
+  for (let i = 0; i < segs.length; i++) {
+    const s = segs[i]!;
+    if (isArc(s) && positions.some((p) => inInterior(p, lines.get(s.id)!))) out.add(s.id);
+    for (let j = i + 1; j < segs.length; j++) {
+      const t = segs[j]!;
+      if (!isArc(s) && !isArc(t)) continue;
+      if (locationLinesMeet(lines.get(s.id)!, lines.get(t.id)!)) for (const x of [s, t]) if (isArc(x)) out.add(x.id);
+    }
+  }
+  return [...out].sort(cmpStr);
 }
 
 /** Does the well-formed part of a level satisfy Core §5.3 — no crossing, no junction inside an edge, no overlap? */

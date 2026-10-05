@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "wall between Kitchen and Dining",
+      "path": "/name",
+      "value": "Curved wall"
+    }
+  ]
+}
