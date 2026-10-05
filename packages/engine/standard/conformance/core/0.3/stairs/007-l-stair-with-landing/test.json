@@ -1,0 +1,8 @@
+{
+  "description": "An L-shaped stair turning left: a first flight of 7 risers east from (1000 mm, 600 mm), a 900 mm square landing at 7 risers up from (2500 mm, 150 mm), and a second flight of 7 risers north from (2950 mm, 1050 mm) to its head at (2950 mm, 2550 mm), on the well's north separator. 12 treads and the landing, in walking order; a run of 12 x 250 mm, and a walkline through the landing's middle of 12 x 250 + 900 mm. Its headroom is under the floor above the first flight, at the well's west edge.",
+  "covers": [
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.5.1",
+    "FS-CORE-17.6.1"
+  ]
+}

@@ -94,6 +94,8 @@
         }
       }
     },
-    "slabs": {}
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
   }
 }

@@ -1,0 +1,7 @@
+{
+  "description": "A hip roof on the five-sided footprint: an equal-pitch roof with an oblique edge has skeleton nodes irrational in more than one radicand, and its surface is not derived in this draft. FS-LINT-015.",
+  "covers": [
+    "FS-CORE-16.4.1",
+    "FS-CORE-10.2.1"
+  ]
+}

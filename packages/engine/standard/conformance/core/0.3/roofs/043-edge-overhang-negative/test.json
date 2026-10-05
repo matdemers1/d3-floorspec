@@ -1,0 +1,6 @@
+{
+  "description": "An edge's overhang of -1.",
+  "covers": [
+    "FS-CORE-16.1.1"
+  ]
+}

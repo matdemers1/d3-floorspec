@@ -1,0 +1,7 @@
+{
+  "description": "The same stair under a tray ceiling at 3000 mm with a 500 mm border and its centre 400 mm higher: the stair's north side, at y = 1050 mm, is under the centre from its foot to x = 3950 mm and under the border beyond it, which splits that lane; its south side is under the border all the way. The least clearance is at the head, under the border: 3000 mm less 2700 mm, 384000.",
+  "covers": [
+    "FS-CORE-17.6.1",
+    "FS-CORE-15.4.2"
+  ]
+}

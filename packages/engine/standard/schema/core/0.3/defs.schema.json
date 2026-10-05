@@ -14,14 +14,14 @@
     },
     "positiveLength": {
       "title": "Positive length",
-      "description": "A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1).",
+      "description": "A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1), a stair's width, tread and greatest riser height and a handrail's height (17.1.1), a spiral stair's diameter (17.2.1).",
       "type": "integer",
       "minimum": 1,
       "maximum": 9007199254740991
     },
     "nonNegativeLength": {
       "title": "Non-negative length",
-      "description": "A length (2.1) that is not negative: an opening's offset (7.1.1) and sill (7.1.2), a door or window type's sill (8.4.1).",
+      "description": "A length (2.1) that is not negative: an opening's offset (7.1.1) and sill (7.1.2), a door or window type's sill (8.4.1), a stair's gap (17.2.1).",
       "type": "integer",
       "minimum": 0,
       "maximum": 9007199254740991
@@ -122,7 +122,7 @@
     },
     "angleHalfOpen": {
       "title": "Angle in (−180°, 180°]",
-      "description": "1.8, 13.3: an angle (2.4) greater than −180,000,000 and at most 180,000,000 microdegrees.",
+      "description": "1.8, 13.3, 17.1: an angle (2.4) greater than −180,000,000 and at most 180,000,000 microdegrees.",
       "type": "integer",
       "exclusiveMinimum": -180000000,
       "maximum": 180000000
@@ -136,7 +136,7 @@
     },
     "pitch": {
       "title": "Pitch",
-      "description": "2.5, 15.3: a slope as a pair of positive integers { \"rise\": r, \"run\": n } — r up for every n across. Both MUST be integers from 1 to 2^53 − 1 (FS-CORE-15.2.1).",
+      "description": "2.5, 15.3, 16.1: a slope as a pair of positive integers { \"rise\": r, \"run\": n } — r up for every n across. Both MUST be integers from 1 to 2^53 − 1 (FS-CORE-15.2.1, FS-CORE-16.1.1).",
       "type": "object",
       "required": [
         "rise",

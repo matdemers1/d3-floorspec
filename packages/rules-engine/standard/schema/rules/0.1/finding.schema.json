@@ -92,7 +92,7 @@
       "oneOf": [
         {
           "title": "Target",
-          "description": "4.1: a room, an opening, an extension element or a level.",
+          "description": "4.1: a room, an opening, an extension element, a level or a stair.",
           "type": "object",
           "required": [
             "kind",
@@ -105,7 +105,8 @@
                 "room",
                 "opening",
                 "element",
-                "level"
+                "level",
+                "stair"
               ]
             },
             "id": {

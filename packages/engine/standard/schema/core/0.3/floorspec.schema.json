@@ -119,6 +119,18 @@
       },
       "default": {}
     },
+    "roofs": {
+      "title": "Roofs",
+      "description": "1.1, 16.1: the collection of roofs (1.4), keyed by element ID. New in 0.3.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "roof.schema.json"
+      },
+      "default": {}
+    },
     "types": {
       "title": "Types",
       "description": "1.1, 8.1: the collection of types (1.4), keyed by element ID; each type's kind is given by its `kind` member.",
@@ -152,6 +164,18 @@
       },
       "additionalProperties": {
         "$ref": "asset.schema.json"
+      },
+      "default": {}
+    },
+    "stairs": {
+      "title": "Stairs",
+      "description": "1.1, 17.1: the collection of stairs (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "stair.schema.json"
       },
       "default": {}
     },

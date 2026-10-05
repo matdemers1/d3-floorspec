@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/ops/0.3/reference.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The JSON forms of the reference grammar of Floorspec Ops 0.3, chapter 3. A string form is checked here only as a string: whether it matches the grammar is decided when it is resolved (FS-OPS-012 for a length, area, point or vector string that does not match; FS-OPS-003 and FS-OPS-004 for a selector that matches no element or several).",
+  "title": "Floorspec Ops 0.3 — references",
+  "description": "The values an operation member takes where chapter 3 lets it use the reference grammar: lengths, areas, points, vectors, positions along a wall, element selectors and host references.",
+  "$defs": {
+    "length": {
+      "title": "Length",
+      "description": "3.1: a JSON integer of base units (1/1280 mm), or a string in the length grammar — \"12' 6\\\"\", \"12'6-1/2\\\"\", \"3/4 in\", \"3810mm\", \"3.81 m\", \"-2'\" — resolved exactly and rounded once, ties to even. A number written with a fraction or an exponent is neither, so the request is malformed (FS-OPS-001).",
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "area": {
+      "title": "Area",
+      "description": "3.6: a JSON integer of square base units, or a string in the area grammar — \"11 m2\", \"11 m²\", \"120 sq ft\", \"1600 in2\" — resolved exactly and rounded once, ties to even.",
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "point": {
+      "title": "Point",
+      "description": "3.2: [x, y], each a length; or a string — a junction (its position: an ID or \"start of <wall>\" / \"end of <wall>\"), \"<length> from <junction> toward <junction>\", or \"<length> <direction> of <junction>\".",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/length"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      ]
+    },
+    "vector": {
+      "title": "Vector",
+      "description": "3.2: [dx, dy], each a length; or a string \"<length> <direction>\", the direction north (+Y), south, east (+X) or west — \"2' east\" is [780288, 0].",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/length"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      ]
+    },
+    "position": {
+      "title": "Position along a wall",
+      "description": "3.5: an integer offset; or a string — \"centered\", \"<length> from start\", \"<length> from end\", or a length. For a hosted element (4.10) the width placed is 0.",
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "selector": {
+      "title": "Element reference",
+      "description": "3.3: an element ID — of an element, a program item or an extension element — or a selector: a room's name (compared ignoring case), \"<side> wall of <room>\", \"<side> separator of <room>\", \"wall between <room> and <room>\", \"separator between <room> and <room>\", \"start of <wall>\", \"end of <wall>\", \"item <item>\", \"brief of <room>\". Where a member expects a program item or an extension element, a plain string also matches those elements' names.",
+      "type": "string"
+    },
+    "host": {
+      "title": "Host reference",
+      "description": "4.10: a host (Core 13.3) written with the reference grammar, in one of three modes, each a closed object.",
+      "oneOf": [
+        {
+          "title": "Wall-face host reference",
+          "description": "On a face of `wall`: the face given by `side`, or the one that looks into the room `toward` names; `at` a position along the wall (width 0), `height` above its base.",
+          "type": "object",
+          "required": [
+            "mode",
+            "wall",
+            "at",
+            "height"
+          ],
+          "properties": {
+            "mode": {
+              "const": "wallFace"
+            },
+            "wall": {
+              "$ref": "#/$defs/selector"
+            },
+            "side": {
+              "enum": [
+                "left",
+                "right"
+              ]
+            },
+            "toward": {
+              "$ref": "#/$defs/selector"
+            },
+            "at": {
+              "$ref": "#/$defs/position"
+            },
+            "height": {
+              "$ref": "#/$defs/length"
+            }
+          },
+          "oneOf": [
+            {
+              "required": [
+                "side"
+              ]
+            },
+            {
+              "required": [
+                "toward"
+              ]
+            }
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "Surface host reference",
+          "description": "On the floor or the ceiling of `room`, at the point `at`, turned by `rotation` (microdegrees, taken as given).",
+          "type": "object",
+          "required": [
+            "mode",
+            "room",
+            "surface",
+            "at"
+          ],
+          "properties": {
+            "mode": {
+              "const": "surface"
+            },
+            "room": {
+              "$ref": "#/$defs/selector"
+            },
+            "surface": {
+              "enum": [
+                "floor",
+                "ceiling"
+              ]
+            },
+            "at": {
+              "$ref": "#/$defs/point"
+            },
+            "rotation": {
+              "$ref": "#/$defs/content"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Free host reference",
+          "description": "Standing free on `level` at the point `at`, turned by `rotation` (microdegrees, taken as given).",
+          "type": "object",
+          "required": [
+            "mode",
+            "level",
+            "at"
+          ],
+          "properties": {
+            "mode": {
+              "const": "free"
+            },
+            "level": {
+              "$ref": "#/$defs/selector"
+            },
+            "at": {
+              "$ref": "#/$defs/point"
+            },
+            "rotation": {
+              "$ref": "#/$defs/content"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "newId": {
+      "title": "New element ID",
+      "description": "1.5: the ID an operation names for an element it creates (an element, a program item or an extension element). When it is absent the applier mints one. An ID already used in the working copy, or listed in context.retired, is FS-OPS-005; one that is not a valid Core ID (3.1.1) makes the result invalid.",
+      "type": "string"
+    },
+    "content": {
+      "title": "Element content",
+      "description": "A member passed into an element as it is given, not read by the operation. Whether it is valid is decided when the batch is validated (2.1.1), so any JSON value is accepted here."
+    }
+  }
+}

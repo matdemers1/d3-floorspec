@@ -1,0 +1,6 @@
+{
+  "description": "A stair with both risers and maxRiser.",
+  "covers": [
+    "FS-CORE-17.1.1"
+  ]
+}

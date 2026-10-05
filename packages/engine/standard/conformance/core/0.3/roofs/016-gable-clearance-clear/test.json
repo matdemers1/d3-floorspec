@@ -1,0 +1,7 @@
+{
+  "description": "A G-shaped house whose west arm, 10 feet wide, ends in a gable, edge 8, facing the south eave of the top wing 5 feet away: the gable's clearance is 5 feet deep, and the eave lies on its far side, not inside it, so the roof is derived.",
+  "covers": [
+    "FS-CORE-16.4.1",
+    "FS-CORE-16.5.1"
+  ]
+}

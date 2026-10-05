@@ -1,0 +1,6 @@
+{
+  "description": "A U-shaped house with a gable on the inner face of its west arm, edge 5: both ends of that edge are reflex corners, so it is not the end of a wing. FS-LINT-015.",
+  "covers": [
+    "FS-CORE-16.4.1"
+  ]
+}

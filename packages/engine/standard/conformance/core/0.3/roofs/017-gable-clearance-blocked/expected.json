@@ -1,0 +1,113 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-015",
+      "severity": "info",
+      "elements": ["RF1"]
+    }
+  ],
+  "hash": "1927a3ae94df8bf3baf983ba8844ca939d403c44fdf9a2020b2331a2d3ac29c7",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [5056000, 3776000, 3456000],
+          "min": [64000, 64000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5056000, 3776000, 0],
+          "min": [64000, 64000, 0]
+        }
+      }
+    },
+    "roofs": {
+      "RF1": {
+        "kind": "gable",
+        "eave": 3456000,
+        "outline": [
+          [0, 0],
+          [15605760, 0],
+          [15605760, 15605760],
+          [0, 15605760],
+          [0, 9363456],
+          [11704320, 9363456],
+          [11704320, 3901440],
+          [3901440, 3901440],
+          [3901440, 7802880],
+          [0, 7802880]
+        ],
+        "surface": null
+      }
+    },
+    "slabs": {},
+    "stairs": {}
+  }
+}

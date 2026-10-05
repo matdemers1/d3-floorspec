@@ -98,6 +98,7 @@ ID of `involved` that has a shape, in ID order:
 | an extension element | `{ "kind": "polygon", "outer": ring, "holes": [] }`: its fallback's footprint (Core §12.6) |
 | a clearance envelope | `{ "kind": "polygon", "outer": ring, "holes": [] }`: its footprint (Core §13.5) |
 | a wall | `{ "kind": "polygon", "outer": ring, "holes": [] }`: its outline (Core §5.7), starting at its least vertex |
+| a stair | `{ "kind": "polygon", "outer": ring, "holes": [] }`: its box in plan (Core §17.4) — `[x₀, y₀]`, `[x₁, y₀]`, `[x₁, y₁]`, `[x₀, y₁]` |
 | a level, a circuit | none |
 
 Every ring is as Core derives it: integer points, least vertex first, counter-clockwise for an outer

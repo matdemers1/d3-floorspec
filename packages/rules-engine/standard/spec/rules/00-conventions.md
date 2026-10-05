@@ -91,10 +91,11 @@ over named measures (3.8), so that a pack is data a reviewer can read, never cod
 
 ## 0.6 What this draft does not yet define
 
-- **Measures that need data Core does not yet have**, named in 4.8 and reserved: stairs (Core has
-  none), countertops, travel distances, a room's narrowest dimension and a difference of floor
-  elevations. A rule that uses one is not evaluated (11.1, `FS-RULES-008`). Ceiling heights were
-  reserved until Core 0.3 derived ceilings (Core §15), and are `ceilingHeight` (5.7).
+- **Measures that need data Core does not yet have**, named in 4.8 and reserved: countertops,
+  travel distances, a room's narrowest dimension and a difference of floor elevations. A rule that
+  uses one is not evaluated (11.1, `FS-RULES-008`). Ceiling heights were reserved until Core 0.3
+  derived ceilings (Core §15), and are `ceilingHeight` (5.7); stairs were reserved until Core 0.3
+  defined them (Core §17), and are the five measures of 8.5, on a new kind of target, the stair.
 - **The pack format in full**: how a pack is laid out on disk, its per-rule provenance and review
   records, contributor certification and the coverage matrix a pack publishes are the rule-pack
   format's (FLR-T-6.3). This draft defines only what an evaluator reads: the pack object of chapter

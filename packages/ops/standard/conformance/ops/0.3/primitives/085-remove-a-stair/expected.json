@@ -1,0 +1,28 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "ac334859aee12b9e789d2f058ef54a0287bc3e3be4ed35bd4cc58a620026fb0e",
+  "created": [],
+  "removed": ["ST1"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "ST1"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "stairs",
+      "id": "ST1",
+      "element": {
+        "level": "L1",
+        "position": [390144, 780288],
+        "to": "L2",
+        "risers": 14,
+        "tread": 292608,
+        "width": 1170432
+      }
+    }
+  ]
+}

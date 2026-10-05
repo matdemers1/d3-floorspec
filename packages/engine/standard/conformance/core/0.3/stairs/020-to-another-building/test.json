@@ -1,0 +1,7 @@
+{
+  "description": "A stair from L1 of B1 to a level of B2 at the same elevation as L2: a stair's two levels are in one building. FS-INV-901.",
+  "covers": [
+    "FS-CORE-17.1.2",
+    "FS-CORE-10.2.1"
+  ]
+}

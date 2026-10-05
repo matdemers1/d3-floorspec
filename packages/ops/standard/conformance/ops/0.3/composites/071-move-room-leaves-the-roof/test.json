@@ -1,0 +1,6 @@
+{
+  "description": "moveRoom moves R1 3' east: its walls go with it, but the roof's footprint is plan points, which no composite moves (0.5), so the roof stays where it was.",
+  "covers": [
+    "FS-OPS-4.3.1"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "roofs",
+      "id": "RF1",
+      "element": {
+        "level": "L1",
+        "footprint": [[-64000, -64000], [4745728, -64000], [4745728, 3965440], [-64000, 3965440]],
+        "pitch": {
+          "rise": 6,
+          "run": 12
+        },
+        "overhang": 390144
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/edges/1/gable",
+      "value": true
+    }
+  ]
+}

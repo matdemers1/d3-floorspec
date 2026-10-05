@@ -1,0 +1,6 @@
+{
+  "description": "A U-shaped stair with a gap of -1.",
+  "covers": [
+    "FS-CORE-17.2.1"
+  ]
+}

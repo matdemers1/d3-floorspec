@@ -1,0 +1,7 @@
+{
+  "description": "setProperty pitches the south edge 12 in 12 under a 6-in-12 roof: Core 0.3 does not derive a roof of mixed pitches, but the document is valid - the batch commits, and the roof has no surface (Core 16.4.4).",
+  "covers": [
+    "FS-OPS-1.2.2",
+    "FS-OPS-2.3.1"
+  ]
+}

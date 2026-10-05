@@ -1,0 +1,6 @@
+{
+  "description": "A rectangle with gables on edges 1 and 2, which meet at a corner: a gable's neighbours must both be sloped. FS-LINT-015.",
+  "covers": [
+    "FS-CORE-16.4.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A spiral stair that turns through 0.",
+  "covers": [
+    "FS-CORE-17.2.1"
+  ]
+}

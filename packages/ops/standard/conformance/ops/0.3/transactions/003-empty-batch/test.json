@@ -1,6 +1,6 @@
 {
   "description": "A batch must contain at least one operation.",
   "covers": [
-    "FS-OPS-1.1.2"
+    "FS-OPS-1.1.3"
   ]
 }

@@ -1,0 +1,6 @@
+{
+  "description": "A quarter-turn winder of 6 risers with 4 before the turn and 3 winders: 4 + 3 is more than 6. FS-INV-903.",
+  "covers": [
+    "FS-CORE-17.4.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A spiral stair 1800 mm across and 1000 mm wide: wider than its radius. FS-INV-904.",
+  "covers": [
+    "FS-CORE-17.2.2"
+  ]
+}

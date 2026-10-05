@@ -1,0 +1,22 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form",
+      "value": {
+        "kind": "lShaped",
+        "turn": "left",
+        "risersBeforeTurn": 7
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/handrail",
+      "value": {
+        "height": 1170432
+      }
+    }
+  ]
+}

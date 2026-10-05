@@ -1,0 +1,7 @@
+{
+  "description": "An L-shaped house, its wings 24 feet wide, under a hip roof at 6 in 12: from the reflex corner a valley runs to where the ridges of the two wings meet, 12 feet in from three eaves, and hips run from every other corner.",
+  "covers": [
+    "FS-CORE-16.5.1",
+    "FS-CORE-16.4.1"
+  ]
+}

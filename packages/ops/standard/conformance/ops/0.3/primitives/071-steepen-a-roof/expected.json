@@ -1,0 +1,41 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "bdc2c91dc6def5d753074f4c73783672ad21a7004a876388c9ea9957e00ac726",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/pitch",
+      "value": {
+        "rise": 12,
+        "run": 12
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/overhang",
+      "value": 780288
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/overhang",
+      "value": 390144
+    },
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/pitch",
+      "value": {
+        "rise": 6,
+        "run": 12
+      }
+    }
+  ]
+}

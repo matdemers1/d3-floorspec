@@ -12,7 +12,7 @@ locks against the result.
 
 | Code | Condition | Elements | Rule |
 |---|---|---|---|
-| `FS-OPS-001` | the request is malformed: not a batch, an empty batch, an unknown operation, a missing or unknown member, none or several of members of which exactly one is required | — | 1.1.2 |
+| `FS-OPS-001` | the request is malformed: not a batch, an empty batch, an unknown operation, a missing or unknown member, none or several of members of which exactly one is required | — | 1.1.3 |
 | `FS-OPS-002` | the document the batch applies to is not valid | — | 1.2.1 |
 | `FS-OPS-003` | a reference resolves to nothing: an unknown ID, a selector with no match, a member that is not there, a container that is not an object, an adjacency that is not there | the element whose member or reference is missing; none when the reference is in the request | 2.1.3, 2.2.1, 2.3.1, 2.6.1, 3.2.1, 3.3.1, 4.5.2, 4.5.3, 4.8.1, 4.10.1 |
 | `FS-OPS-004` | a selector matches more than one element | every match | 3.3.1 |

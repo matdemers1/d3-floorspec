@@ -1,0 +1,7 @@
+{
+  "description": "Edge 0 pitched 1 in 2 under a roof pitched 6 in 12: the same pitch, compared as ratios, so the hip roof is derived exactly as if every edge said 6 in 12.",
+  "covers": [
+    "FS-CORE-16.4.1",
+    "FS-CORE-16.5.1"
+  ]
+}

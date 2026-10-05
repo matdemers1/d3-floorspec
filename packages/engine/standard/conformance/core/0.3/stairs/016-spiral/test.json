@@ -1,0 +1,9 @@
+{
+  "description": "A spiral stair 1800 mm across, 800 mm wide, turning left through 270 degrees from its first nosing line at (2000 mm, 1000 mm): its centre is 500 mm to the left, at (2000 mm, 1500 mm), and its head is turned 270 degrees about it, to (1500 mm, 1500 mm), in the well. Its box is the square around its circle; its steps are not derived (FS-LINT-016).",
+  "covers": [
+    "FS-CORE-17.2.1",
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.7.1",
+    "FS-CORE-17.7.2"
+  ]
+}

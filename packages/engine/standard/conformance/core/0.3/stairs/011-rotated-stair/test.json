@@ -1,0 +1,9 @@
+{
+  "description": "A straight stair rising at 30 degrees: its frame faces F(30000000) = (866025404, 500000000), so the corners of its treads, its head and its box are irrational, each rounded once. L2 has no room, so the stair has no head room and its top is L2's elevation; under R1's ceiling at 2700 mm its headroom is 0, at the head.",
+  "covers": [
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.5.1",
+    "FS-CORE-17.6.1",
+    "FS-CORE-2.2.1"
+  ]
+}

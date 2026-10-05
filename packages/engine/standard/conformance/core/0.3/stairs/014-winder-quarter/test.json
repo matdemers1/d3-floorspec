@@ -1,0 +1,11 @@
+{
+  "description": "A quarter-turn winder stair: 4 risers east, 3 winders in the 900 mm square at the turn, and 7 straight treads north, to its head at (2200 mm, 2800 mm). Its rise, risers and box are derived - the box spans its first flight, the square and its second flight - and its steps, run, walkline and headroom are not: FS-LINT-016, an info.",
+  "covers": [
+    "FS-CORE-17.1.1",
+    "FS-CORE-17.2.1",
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.7.1",
+    "FS-CORE-17.7.2",
+    "FS-CORE-10.2.1"
+  ]
+}

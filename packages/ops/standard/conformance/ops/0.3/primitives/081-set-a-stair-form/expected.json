@@ -1,0 +1,39 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "1d0ccf6288f2559e17f9780199b1f03e17e02a6e305fad576f184bb3c46a877f",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form",
+      "value": {
+        "kind": "lShaped",
+        "risersBeforeTurn": 7,
+        "turn": "left"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/handrail",
+      "value": {
+        "height": 1170432
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/form"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/handrail"
+    }
+  ]
+}

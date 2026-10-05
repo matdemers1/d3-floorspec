@@ -1,0 +1,153 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "GOOD": {
+          "title": "Well typed",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (well typed); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair"
+          },
+          "requirement": {
+            "measure": "stairWidth",
+            "op": ">=",
+            "value": 1170432
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ON-A-ROOM": {
+          "title": "A stair measure on a room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a stair measure on a room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "stairWidth",
+            "op": ">=",
+            "value": 1170432
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ROOM-ON-A-STAIR": {
+          "title": "A room measure on a stair",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a room measure on a stair); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair"
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "NO-SET": {
+          "title": "Rooms of a stair",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (rooms of a stair); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair"
+          },
+          "select": {
+            "from": "rooms",
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "stairWidth",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "EXTENSION": {
+          "title": "An extension on a stair",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (an extension on a stair); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair",
+            "extension": "FS_electrical"
+          },
+          "requirement": {
+            "measure": "stairWidth",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}
