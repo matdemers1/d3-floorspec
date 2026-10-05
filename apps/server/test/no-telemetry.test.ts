@@ -13,8 +13,9 @@
  * D3 Auth issuer. Anything else is refused before it leaves the process and fails the test. A
  * positive control proves the layer sees a request.
  *
- * **Free export** (FLR-REQ-151). `model.json` — the project as a canonical Floorspec document — and
- * the MCP `floorspec_export` tool answer for every project whatever state it is in: empty, edited,
+ * **Free export** (FLR-REQ-151). `model.json` — the project as a canonical Floorspec document — the
+ * `.floorspec` package holding it (FLR-T-9.1) and the MCP `floorspec_export` tool answer for every
+ * project whatever state it is in: empty, edited,
  * with a pending changeset, holding a document today's engine finds invalid or one of an older
  * draft, through a session or a token of any kind. Nothing in the app charges for anything.
  */
@@ -27,6 +28,7 @@ import net from 'node:net';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { canonicalize, contentHash, validate } from '@floorspec/engine';
+import { readPackage } from '@floorspec/package';
 import type { Prisma } from '../src/db.js';
 import { createOidcClient } from '../src/auth/oidc.js';
 import { createVerifier } from '../src/auth/resource-server.js';
@@ -361,10 +363,17 @@ describe('free export: model.json for every project, whatever its state', () => 
     await running.close();
   });
 
-  /** model.json through REST, and floorspec_export through MCP with a read-only token: the same bytes. */
-  async function exported(projectId: string, as: Browser = operator): Promise<string> {
+  /**
+   * model.json through REST, the same bytes as the .floorspec package's model.json (FLR-T-9.1), and
+   * floorspec_export through MCP with a read-only token: the same bytes.
+   */
+  async function exported(projectId: string, as: Browser = operator, bearer?: string): Promise<string> {
     const res = await as.get(`/api/projects/${projectId}/model.json`);
     expect(res.status, res.text).toBe(200);
+    const credential: Record<string, string> = bearer === undefined ? { cookie: [...as.cookies].map(([k, v]) => `${k}=${v}`).join('; ') } : { authorization: `Bearer ${bearer}` };
+    const pkg = await fetch(`${running.url}/api/projects/${projectId}/package`, { headers: credential });
+    expect(pkg.status).toBe(200);
+    expect(new TextDecoder().decode(readPackage(new Uint8Array(await pkg.arrayBuffer())).document)).toBe(res.text);
     expect(res.headers.get('content-disposition')).toBe('attachment; filename="model.json"');
     const mcp = new Client({ name: 'export', version: '1' });
     await mcp.connect(new StreamableHTTPClientTransport(new URL(`${running.url}/mcp`), { requestInit: { headers: { authorization: `Bearer ${await tokenFor(operator, projectId, 'read')}` } } }));
@@ -411,8 +420,9 @@ describe('free export: model.json for every project, whatever its state', () => 
     const project = await createProjectAs(operator, 'Credentials');
     const want = await exported(project.id);
     for (const kind of ['read', 'write', 'agent'] as const) {
-      const as = Browser.bearer(running.url, await tokenFor(operator, project.id, kind));
-      expect(await exported(project.id, as), kind).toBe(want);
+      const token = await tokenFor(operator, project.id, kind);
+      const as = Browser.bearer(running.url, token);
+      expect(await exported(project.id, as, token), kind).toBe(want);
     }
   });
 
