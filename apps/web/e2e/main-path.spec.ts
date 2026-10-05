@@ -187,6 +187,23 @@ test('setup to a compared undo: draw a room by hand, accept an agent’s proposa
   await expect.poll(async () => (await modelOf(page, project)).openings?.[doorId]?.clearOpening).toEqual({ width: 31 * 32512, height: 79 * 32512 });
   await settled(page);
   await page.keyboard.press('Escape');
+
+  // ── Floorspec 0.3, chapter 15: the room's ceiling made vaulted from its inspector (the ridge
+  //    along the room, high enough to meet the walls where the ceiling was), and a patio slab
+  //    drawn with the slab tool — four corners, then the first again to close it.
+  await tree.getByRole('treeitem', { name: /^Great room/ }).click();
+  await inspector.getByRole('radio', { name: 'Vaulted' }).click();
+  await expect.poll(async () => Object.values((await modelOf(page, project)).rooms ?? {})[0]?.ceiling?.kind).toBe('vaulted');
+  await settled(page);
+  await page.keyboard.press('Escape');
+  await rail.getByRole('button', { name: 'Draw a slab' }).click();
+  for (const [x, y] of [[-4, -12], [4, -12], [4, -8], [-4, -8], [-4, -12]] as const) await click(page, camera, x * FT, y * FT);
+  await expect.poll(async () => count((await modelOf(page, project)).slabs)).toBe(1);
+  doc = await modelOf(page, project);
+  expect(Object.values(doc.slabs ?? {})[0]?.boundary).toEqual([[-4 * FT, -12 * FT], [4 * FT, -12 * FT], [4 * FT, -8 * FT], [-4 * FT, -8 * FT]]);
+  await settled(page);
+  await page.keyboard.press('Escape');
+  await rail.getByRole('button', { name: 'Select' }).click();
   const drawn = await modelOf(page, project);
   const drawnHead = (await historyOf(page, project))[0];
 

@@ -34,6 +34,7 @@ export const DoorIcon = icon('door', <path d="M3.333 13.333V2.667M3.333 2.667a10
 export const WindowIcon = icon('window', <path d="M2.667 3.333h10.666v9.334H2.667zM8 3.333v9.334M2.667 8h10.666" />);
 export const RoomAnchorIcon = icon('room-anchor', <path d="M8 2.667 13.333 8 8 13.333 2.667 8 8 2.667ZM8 7v2M7 8h2" />);
 export const SeparatorIcon = icon('separator', <path d="M2 8h2M6 8h2M10 8h2" />);
+export const SlabIcon = icon('slab', <path d="M2 10.667 6 6.667h8L10 10.667H2ZM2 10.667v2h8v-2M10 12.667l4-4v-2" />);
 export const StairIcon = icon('stair', <path d="M2 13.333h3.333v-2.666H8V8h2.667V5.333H14" />);
 export const RoofIcon = icon('roof', <path d="M1.333 8 8 2.667 14.667 8M3.333 6.667v6.666h9.334V6.667" />);
 export const PlugIcon = icon(

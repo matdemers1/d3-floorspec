@@ -193,6 +193,29 @@ export function drawChain(
   };
 }
 
+// ─── Slabs ───────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A slab (Core 6.7): its outline as drawn, on the level, with a thickness, its top above the level
+ * (omitted at 0, its default) and — in a Floorspec 0.3 plan only — its purpose.
+ */
+export function addSlab(document: FloorspecDocument, level: string, outline: readonly Point[], o: { thickness: number; offset: number; purpose: string | null }): Batch {
+  const v03 = document.floorspec !== '0.1' && document.floorspec !== '0.2';
+  return [
+    {
+      op: 'addElement',
+      collection: 'slabs',
+      element: {
+        level,
+        boundary: outline.map((p) => [p[0], p[1]]),
+        thickness: o.thickness,
+        ...(o.offset === 0 ? {} : { offset: o.offset }),
+        ...(v03 && o.purpose !== null ? { purpose: o.purpose } : {}),
+      },
+    },
+  ];
+}
+
 // ─── Openings and rooms ──────────────────────────────────────────────────────────────────────
 
 export function addOpening(

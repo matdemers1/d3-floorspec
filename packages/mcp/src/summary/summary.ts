@@ -118,6 +118,12 @@ export interface RoomSummary {
   readonly inside: readonly EdgeSummary[];
   /** Devices on its floor or ceiling; absent when there are none. Wall devices are listed under their walls. */
   readonly devices?: readonly SurfaceDeviceSummary[];
+  /**
+   * Core 0.3 (chapter 15): its floor's top above the level and its ceiling — kind, and its least and
+   * greatest height above that floor — as derived; present when the room or its level declares a
+   * floor or ceiling of its own.
+   */
+  readonly ceiling?: { readonly kind: 'flat' | 'tray' | 'vaulted'; readonly floorOffset: Length; readonly low: Length; readonly high: Length };
 }
 
 export interface FaceSummary {
@@ -698,8 +704,26 @@ export function describeJson(document: string | Uint8Array | object, options: De
       ]);
     }
   }
+  // Core 0.3: a room's floor and ceiling, where the room or its level declares one (chapter 15).
+  const declares = (rid: string): boolean => {
+    const r = doc.rooms?.[rid];
+    const L = r === undefined ? undefined : doc.levels?.[r.level];
+    return r !== undefined && (r.floor !== undefined || r.ceiling !== undefined || L?.ceilingHeight !== undefined || L?.floorThickness !== undefined);
+  };
+  const ceilingOf = (rid: string): RoomSummary['ceiling'] => {
+    const c = derived?.ceilings?.[rid];
+    const f = derived?.floors?.[rid];
+    const r = doc.rooms?.[rid];
+    if (c === undefined || f === undefined || r === undefined || !declares(rid)) return undefined;
+    const elevation = doc.levels![r.level]!.elevation;
+    return { kind: c.kind, floorOffset: length(BigInt(f.top - elevation)), low: length(BigInt(c.low - f.top)), high: length(BigInt(c.high - f.top)) };
+  };
   levels = levels.map((l) => ({
     ...l,
+    rooms: l.rooms.map((r) => {
+      const ceiling = ceilingOf(r.id);
+      return ceiling === undefined ? r : { ...r, ceiling };
+    }),
     ...(elements.has(l.id) && { elements: elements.get(l.id)! }),
     ...(byLevel.has(l.id) && { circuits: byLevel.get(l.id)!.sort((a, b) => cmp(a.id, b.id)) }),
   }));

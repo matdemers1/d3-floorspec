@@ -1,5 +1,5 @@
 import { roomsBeside } from '../editor/geometry';
-import { labelOf, openingWidth, type EditorModel, type LevelView } from '../editor/model';
+import { labelOf, openingWidth, type EditorModel, type LevelView, type RoomView } from '../editor/model';
 import { formatArea, formatLen, type UnitSystem } from '../editor/units';
 import { kindLabel, words } from '../editor/systems/catalog';
 import { compareIds, elementsOfExtension, recordsOf } from '../editor/systems/view';
@@ -60,8 +60,24 @@ function levelOfWall(model: EditorModel, wall: string): LevelView | undefined {
 
 const roomName = (model: EditorModel, id: string | null): string => (id === null ? 'Exterior' : labelOf(model, id));
 
+const CEILING_KIND: Record<string, string> = { flat: 'Flat', tray: 'Tray', vaulted: 'Vaulted' };
+
+/**
+ * Whether the plan says anything of its floors and ceilings (Core 0.3, chapter 15): a room's own
+ * floor or ceiling, or a level's ceiling height or floor thickness. Only then do the room schedule's
+ * ceiling columns appear — every plan has ceilings, but one that declares none has only defaults.
+ */
+function declaresCeilings(model: EditorModel): boolean {
+  const doc = model.document as unknown as { rooms?: Record<string, Json | undefined>; levels?: Record<string, Json | undefined> };
+  return (
+    Object.values(doc.rooms ?? {}).some((r) => r?.['ceiling'] !== undefined || r?.['floor'] !== undefined) ||
+    Object.values(doc.levels ?? {}).some((l) => l?.['ceilingHeight'] !== undefined || l?.['floorThickness'] !== undefined)
+  );
+}
+
 export function roomsSchedule(model: EditorModel, units: UnitSystem): Schedule {
   const doc = model.document;
+  const ceilings = declaresCeilings(model);
   const finish = (r: Json, member: string) => {
     const m = str(r[member]);
     return m === undefined ? none : text(labelOf(model, m));
@@ -78,9 +94,10 @@ export function roomsSchedule(model: EditorModel, units: UnitSystem): Schedule {
           area: { text: formatArea(room.area2, units), value: Number(room.area2) },
           level: text(level.name),
           brief: brief === undefined ? none : text(labelOf(model, brief)),
+          ...ceilingCells(room, level, units, ceilings),
           floor: finish(r, 'floorFinish'),
           walls: finish(r, 'wallFinish'),
-          ceiling: finish(r, 'ceilingFinish'),
+          ceilingFinish: finish(r, 'ceilingFinish'),
         },
       };
     }),
@@ -91,16 +108,32 @@ export function roomsSchedule(model: EditorModel, units: UnitSystem): Schedule {
     { key: 'area', header: 'Net area', numeric: true },
     { key: 'level', header: 'Level' },
     { key: 'brief', header: 'Brief item' },
+    { key: 'ceiling', header: 'Ceiling' },
+    { key: 'ceilingHeight', header: 'Ceiling height', numeric: true },
     { key: 'floor', header: 'Floor' },
     { key: 'walls', header: 'Walls' },
-    { key: 'ceiling', header: 'Ceiling' },
+    { key: 'ceilingFinish', header: 'Ceiling finish' },
   ];
   return {
     id: 'rooms',
     label: 'Rooms',
-    columns: present(columns, rows, ['brief', 'floor', 'walls', 'ceiling']),
+    columns: present(columns, rows, ['brief', 'ceiling', 'ceilingHeight', 'floor', 'walls', 'ceilingFinish']),
     rows,
-    footnote: 'Net areas inside the finished wall faces, derived by the engine (Floorspec Core 6.4).',
+    footnote: ceilings
+      ? 'Net areas inside the finished wall faces, derived by the engine (Floorspec Core 6.4); ceiling heights above each room’s floor, least to greatest — a tray’s border and centre, a vault’s lowest corner and its ridge (Core 0.3, chapter 15).'
+      : 'Net areas inside the finished wall faces, derived by the engine (Floorspec Core 6.4).',
+  };
+}
+
+/** A room's ceiling kind and its height above the floor, least to greatest (Core 0.3, 15.1, 15.5). */
+function ceilingCells(room: RoomView, _level: LevelView, units: UnitSystem, declared: boolean): Record<string, Cell> {
+  const c = room.ceiling;
+  if (!declared || c === null || room.floorTop === null) return { ceiling: none, ceilingHeight: none };
+  const low = c.low - room.floorTop;
+  const high = c.high - room.floorTop;
+  return {
+    ceiling: text(CEILING_KIND[c.kind] ?? c.kind),
+    ceilingHeight: { text: low === high ? formatLen(low, units) : `${formatLen(low, units)} – ${formatLen(high, units)}`, value: low },
   };
 }
 

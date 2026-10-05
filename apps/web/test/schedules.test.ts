@@ -14,12 +14,8 @@ import { doorsSchedule, fixturesSchedule, receptaclesSchedule, roomsSchedule, sc
 const IN = 32_512;
 const FT = 12 * IN;
 const TEMPLATE = readFileSync(new URL('../src/projects/templates/three-room-house.floorspec.json', import.meta.url), 'utf8');
-/**
- * The template house as a Core 0.2 plan: the official extensions at 0.1.0 are evaluated only for
- * documents that declare "0.2" (each one's 1.2; `officialExtensionsEvaluatedFor`), and these tests
- * are about what they check and derive. When the extensions take Core 0.3, use TEMPLATE as it is.
- */
-const HOUSE = TEMPLATE.replace('"floorspec": "0.3"', '"floorspec": "0.2"');
+/** The template house, a Core 0.3 plan, as a new project gets it. */
+const HOUSE = TEMPLATE;
 const PLATE = { min: [0, -51200, -76800], max: [32000, 51200, 76800] };
 
 const text = (s: Schedule) => s.rows.map((r) => Object.fromEntries(s.columns.map((c) => [c.key, r.cells[c.key]?.text])));
@@ -57,6 +53,25 @@ describe('schedules', () => {
       { name: 'Living room', function: 'Living', area: '446 ft²', level: 'Main floor', floor: 'White oak strip', walls: '—' },
     ]);
     expect(roomsSchedule(house, 'metric').rows[0]?.cells['area']?.text).toBe('16.1 m²');
+  });
+
+  it('adds ceiling kind and height columns when the plan declares floors or ceilings (Core 0.3, chapter 15)', () => {
+    const r = apply(TEMPLATE, {
+      batch: [
+        { op: 'setProperty', id: 'MAIN', path: '/ceilingHeight', value: 8 * FT },
+        { op: 'setProperty', id: 'LIV', path: '/ceiling', value: { kind: 'tray', border: 1 * FT, depth: 6 * IN } },
+        { op: 'setProperty', id: 'BED', path: '/floor', value: { offset: -6 * IN } },
+      ],
+    });
+    if (r.status !== 'committed') throw new Error(r.diagnostics.map((d) => `${d.code} ${d.message}`).join('; '));
+    const s = roomsSchedule(readModel('c', r.document), 'imperial');
+    expect(s.columns.map((c) => c.key)).toEqual(['name', 'function', 'area', 'level', 'ceiling', 'ceilingHeight', 'floor', 'walls']);
+    const by = Object.fromEntries(text(s).map((row) => [row['name'] ?? '', row]));
+    expect(by['Living room']).toMatchObject({ ceiling: 'Tray', ceilingHeight: '8\'-0" – 8\'-6"' });
+    expect(by['Bedroom']).toMatchObject({ ceiling: 'Flat', ceilingHeight: '8\'-6"' });
+    expect(by['Kitchen']).toMatchObject({ ceiling: 'Flat', ceilingHeight: '8\'-0"' });
+    // A plan that declares none has no ceiling columns.
+    expect(roomsSchedule(house, 'imperial').columns.map((c) => c.key)).not.toContain('ceiling');
   });
 
   it('lists doors with their type, size, hinge and the rooms they open between', () => {

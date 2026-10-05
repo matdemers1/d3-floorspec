@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Diagnostic, FloorspecDocument } from '@floorspec/engine';
 import { Minus, Plus, Scan, ArrowUp } from 'lucide-react';
 import { IconButton } from '@d3cloud/ui';
-import { useEditor, type EditorStore, type Layers, type Viewport } from './store';
+import { isChainDraft, useEditor, type EditorStore, type Layers, type Viewport } from './store';
 import type { ToolController, PointerInfo } from './tools';
 import type { LevelView, OpeningView, Point, Ring, WallView, EditorModel } from './model';
 import { labelOf } from './model';
@@ -123,11 +123,11 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
     };
   };
 
-  const picking = useEditor(store, (s) => s.picking !== null);
+  const picking = useEditor(store, (s) => (s.picking === null ? null : 'ridge' in s.picking ? 'ridge' : 'switch'));
   const selection = useEditor(store, (s) => s.selection);
-  const cursor = picking ? 'copy' : tool === 'select' ? 'default' : 'crosshair';
+  const cursor = picking === 'switch' ? 'copy' : tool === 'select' && picking === null ? 'default' : 'crosshair';
   // The plan steps back while the systems are being worked on (the board's "23").
-  const focusSystems = tool === 'device' || picking;
+  const focusSystems = tool === 'device' || picking === 'switch';
   const electricalTool = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.system === 'electrical');
 
   return (
@@ -170,6 +170,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               {layers.rooms ? <RoomLabels view={view} level={level} document={model.document} units={units} /> : null}
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
+              {comparing ? null : <RidgePick store={store} view={view} />}
             </>
           ) : null}
         </svg>
@@ -219,6 +220,13 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
   const walls = new Map(level.walls.map((w) => [w.id, w]));
   return (
     <g className={ghost ? 'fs-plan2 fs-plan2--ghost' : 'fs-plan2'} aria-hidden="true">
+      {level.slabs.length > 0 ? (
+        <g className="fs-plan2__slabs">
+          {level.slabs.map((s) => (
+            <polygon key={s.id} points={pts(view, s.outline)} />
+          ))}
+        </g>
+      ) : null}
       {layers.rooms ? (
         <g className="fs-plan2__rooms">
           {level.faces.map((f, i) => (
@@ -247,9 +255,29 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
           })}
         </g>
       ) : null}
+      {layers.rooms && !ghost ? <CeilingMarks view={view} level={level} /> : null}
       {layers.rooms && !ghost && labels ? <RoomLabels view={view} level={level} document={document} units={units} /> : null}
     </g>
   );
+}
+
+/**
+ * What the plan says of a ceiling that is not flat (Core 0.3, 15.3, 15.4): a tray's centre as a
+ * dashed outline, a vault's ridge as a dash-dot line through its two points, across the room.
+ */
+function CeilingMarks({ view, level }: { view: Viewport; level: LevelView }) {
+  const marks: ReactNode[] = [];
+  for (const room of level.rooms) {
+    const c = room.ceiling;
+    if (c === null || c.kind === 'flat') continue;
+    if (c.kind === 'tray' && c.tray !== undefined) marks.push(<path key={room.id} className="fs-plan2__tray" d={pathOf(view, c.tray)} fillRule="evenodd" />);
+    if (c.kind === 'vaulted' && c.ridge !== undefined) {
+      const a = S(view, c.ridge[0]);
+      const b = S(view, c.ridge[1]);
+      marks.push(<line key={room.id} className="fs-plan2__ridge" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />);
+    }
+  }
+  return marks.length > 0 ? <g className="fs-plan2__ceilings">{marks}</g> : null;
 }
 
 function OpeningShape({ view, opening, wall }: { view: Viewport; opening: OpeningView; wall: WallView }) {
@@ -395,6 +423,8 @@ export function Outline({ view, level, id, className, pad = 0 }: { view: Viewpor
     const e0 = add(opening.end, shift);
     return <polygon className={className} points={pts(view, [add(s0, scale(n, half)), add(e0, scale(n, half)), add(e0, scale(n, -half)), add(s0, scale(n, -half))])} />;
   }
+  const slab = level.slabs.find((s) => s.id === id);
+  if (slab !== undefined) return <polygon className={className} points={pts(view, slab.outline)} />;
   const sep = level.separators.find((s) => s.id === id);
   if (sep !== undefined) {
     const a = S(view, sep.a);
@@ -538,10 +568,42 @@ function DiffLegend({ store }: { store: EditorStore }) {
 
 // ─── The tool's overlay ──────────────────────────────────────────────────────────────────────
 
+/** Picking a vault's ridge (Core 0.3, 15.3): the first point, and a line from it to the pointer. */
+function RidgePick({ store, view }: { store: EditorStore; view: Viewport }) {
+  const first = useEditor(store, (s) => (s.picking !== null && 'ridge' in s.picking ? s.picking.first : null));
+  const cursor = useEditor(store, (s) => s.cursor);
+  if (first === null) return null;
+  const a = S(view, first);
+  const b = cursor === null ? a : S(view, cursor);
+  return (
+    <g className="fs-draw" aria-hidden="true">
+      <line className="fs-plan2__ridge fs-draw__ridge" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
+      <circle className="fs-draw__vertex" cx={a[0]} cy={a[1]} r={5} />
+    </g>
+  );
+}
+
 function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: Viewport; level: LevelView; model: EditorModel }) {
   const draft = useEditor(store, (s) => s.draft);
   const draw = useEditor(store, (s) => s.draw);
   if (draft === null) return null;
+  if (draft.tool === 'slab') {
+    const chain = draft.chain.map((v) => v.point);
+    const cursor = draft.cursor;
+    const all = cursor !== null && chain.length > 0 ? [...chain, cursor.point] : chain;
+    const screen = all.map((p) => S(view, p));
+    return (
+      <g className="fs-draw" aria-hidden="true">
+        {screen.length > 2 ? <polygon className="fs-draw__slab" points={screen.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')} /> : null}
+        {screen.length > 1 ? <polyline className="fs-draw__line" points={screen.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')} /> : null}
+        {chain.map((p, i) => {
+          const q = S(view, p);
+          return <rect key={i} className="fs-draw__vertex" x={q[0] - 5} y={q[1] - 5} width={10} height={10} />;
+        })}
+        {cursor !== null ? <SnapMarker view={view} snap={cursor} /> : null}
+      </g>
+    );
+  }
   if (draft.tool === 'wall' || draft.tool === 'separator') {
     const chain = draft.chain.map((v) => v.point);
     const cursor = draft.cursor;
@@ -655,7 +717,7 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
   const tool = useEditor(store, (s) => s.tool);
   const out: ReactNode[] = [];
 
-  if ((draft?.tool === 'wall' || draft?.tool === 'separator') && draft.cursor !== null && draft.chain.length > 0) {
+  if (isChainDraft(draft) && draft.cursor !== null && draft.chain.length > 0) {
     const last = draft.chain[draft.chain.length - 1]?.point as Point;
     const to = draft.cursor.point;
     const mid = S(view, [(last[0] + to[0]) / 2, (last[1] + to[1]) / 2]);
@@ -669,7 +731,7 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
       </div>,
     );
   }
-  if ((draft?.tool === 'wall' || draft?.tool === 'separator') && draft.chain.length === 0 && draft.typed !== '') {
+  if (isChainDraft(draft) && draft.chain.length === 0 && draft.typed !== '') {
     out.push(
       <div key="start" className="fs-entry fs-entry--start" role="status" aria-live="polite">
         <span className="fs-entry__label">Start at</span>

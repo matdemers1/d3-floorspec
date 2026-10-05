@@ -350,3 +350,17 @@ group('Core 0.3: operation and declared clear openings', () => {
     expect(out).not.toMatch(/casement, clear opening/);
   });
 });
+
+group('Core 0.3: floors and ceilings', () => {
+  it("says a room's ceiling and floor when the room or its level declares them, and nothing otherwise", () => {
+    const d = load('three-room-house') as Record<string, unknown> & { rooms: Record<string, Record<string, unknown>> };
+    d.floorspec = '0.3';
+    d.rooms['LIV']!.ceiling = { kind: 'tray', border: FT, depth: 6 * 32512 };
+    d.rooms['BED']!.floor = { offset: -6 * 32512 };
+    expect(check(d).valid).toBe(true);
+    const out = describe(JSON.stringify(d));
+    expect(out).toMatch(/Ceiling tray, [^\n]* to [^\n]* above the floor\./);
+    expect(out).toMatch(/Ceiling flat, [^\n]* above the floor; floor -0' 6" \(-195072\) from the level\./);
+    expect(describe(text('three-room-house'))).not.toContain('Ceiling ');
+  });
+});

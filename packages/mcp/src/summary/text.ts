@@ -66,6 +66,11 @@ function room(r: RoomSummary): string[] {
       `Size ${r.size.eastWest.ftIn} E-W × ${r.size.northSouth.ftIn} N-S (${r.size.eastWest.baseUnits} × ${r.size.northSouth.baseUnits}). ` +
       `Anchor [${r.anchor.join(', ')}].`,
   );
+  if (r.ceiling) {
+    const c = r.ceiling;
+    const height = c.low.baseUnits === c.high.baseUnits ? lengthText(c.low) : `${lengthText(c.low)} to ${lengthText(c.high)}`;
+    out.push(`Ceiling ${c.kind}, ${height} above the floor${c.floorOffset.baseUnits === 0 ? '' : `; floor ${lengthText(c.floorOffset)} from the level`}.`);
+  }
   for (const side of SIDES) {
     const edges = r.sides[side];
     out.push(`${SIDE_TITLES[side]}:${edges.length ? '' : ' (nothing)'}`);

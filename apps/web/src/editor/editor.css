@@ -640,6 +640,24 @@
 .fs-plan2__rooms {
   fill: var(--color-surface-card);
 }
+/* Slabs (Core 6.7): authored floors outside the rooms — a patio, a deck — under everything else. */
+.fs-plan2__slabs {
+  fill: var(--color-fill-quiet);
+  stroke: var(--color-fg-faint);
+  stroke-width: 1;
+}
+/* A ceiling that is not flat (Core 0.3, 15.3, 15.4): a tray's centre, a vault's ridge. */
+.fs-plan2__tray {
+  fill: none;
+  stroke: var(--color-fg-faint);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.fs-plan2__ridge {
+  stroke: var(--color-fg-faint);
+  stroke-width: 1.25;
+  stroke-dasharray: 8 3 2 3;
+}
 .fs-plan2__face--free {
   fill: var(--color-surface-card);
   fill-opacity: 0.45;
@@ -756,6 +774,14 @@ path.fs-hl--danger {
   stroke: var(--color-accent);
   stroke-opacity: 0.45;
   stroke-linejoin: miter;
+}
+.fs-draw__slab {
+  fill: var(--color-accent);
+  fill-opacity: 0.18;
+  stroke: none;
+}
+.fs-draw__ridge {
+  stroke: var(--color-accent);
 }
 .fs-draw__sep {
   fill: none;

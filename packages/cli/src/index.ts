@@ -17,6 +17,7 @@ commands:
   derive <file>              print everything derived as JSON: walls, fills, rooms, openings, and
                              (Core 0.2) the program, fallbacks, placements, clearances, overlaps
                              and circulation, and (Core 0.3) each opening's declared clear opening
+                             and every room's floor and ceiling and every slab
 
 options:
   --registry <file>          the known extensions (Core 0.2, 12.2): a JSON array of registry

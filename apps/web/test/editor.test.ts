@@ -101,7 +101,7 @@ describe('lengths typed and shown', () => {
 function level(partial: Partial<LevelView>): LevelView {
   return {
     id: 'L1', name: 'Level 1', building: 'B1', elevation: 0, height: 3_511_296,
-    junctions: [], walls: [], fills: [], separators: [], openings: [], rooms: [], faces: [], devices: [], bounds: null,
+    junctions: [], walls: [], fills: [], separators: [], openings: [], rooms: [], faces: [], devices: [], slabs: [], bounds: null,
     ...partial,
   };
 }

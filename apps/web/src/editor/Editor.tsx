@@ -38,6 +38,7 @@ import {
   WallIcon,
   WindowIcon,
   PencilIcon,
+  SlabIcon,
 } from './icons';
 
 /**
@@ -347,6 +348,7 @@ const RAIL: { tool?: ToolId; label: string; icon: ReactNode; later?: string }[] 
   { tool: 'window', label: 'Place a window', icon: <WindowIcon /> },
   { tool: 'room', label: 'Name a room', icon: <RoomAnchorIcon /> },
   { tool: 'separator', label: 'Draw a room separator', icon: <SeparatorIcon /> },
+  { tool: 'slab', label: 'Draw a slab', icon: <SlabIcon /> },
   { label: 'Stairs', icon: <StairIcon />, later: 'P4' },
   { label: 'Roof', icon: <RoofIcon />, later: 'P4' },
 ];

@@ -33,7 +33,14 @@ import type { DeviceHover } from './systems/placement';
  * write it between renders without threading callbacks through every component.
  */
 
-export type ToolId = 'select' | 'wall' | 'separator' | 'door' | 'window' | 'room' | 'device';
+export type ToolId = 'select' | 'wall' | 'separator' | 'slab' | 'door' | 'window' | 'room' | 'device';
+
+/** The tools that draw a chain of points: walls and separators (a polyline), and a slab's outline (Core 0.3, 6.7). */
+export type ChainTool = 'wall' | 'separator' | 'slab';
+export const isChainTool = (t: unknown): t is ChainTool => t === 'wall' || t === 'separator' || t === 'slab';
+
+export type ChainDraft = { tool: ChainTool; chain: ChainVertex[]; cursor: Snap | null; typed: string };
+export const isChainDraft = (d: Draft | null | undefined): d is ChainDraft => d !== null && d !== undefined && isChainTool(d.tool);
 
 export interface Rejection {
   /** What the person tried: "Draw walls", "Move W3". */
@@ -50,7 +57,7 @@ export interface Preview {
 }
 
 export type Draft =
-  | { tool: 'wall' | 'separator'; chain: ChainVertex[]; cursor: Snap | null; typed: string }
+  | ChainDraft
   | {
       tool: 'door' | 'window';
       hover: { wall: string; offset: number; centered: boolean; width: number; side: 'left' | 'right'; nearer: 'start' | 'end'; fits: boolean } | null;
@@ -107,6 +114,8 @@ export interface DrawSettings {
   receptacle: ReceptacleOptions;
   /** A wall mount's height; null for the kind's default. */
   height: number | null;
+  /** The slab tool (Core 6.7): a new slab's thickness, its top above the level, and its purpose (Core 0.3). */
+  slab: { thickness: number; offset: number; purpose: string | null };
 }
 
 /**
@@ -194,7 +203,11 @@ export interface EditorState {
   /** The element being renamed in the tree (F2). */
   renaming: string | null;
   /** Picking on the plan what a switch controls (FLR-T-5.7): clicks toggle devices in its `controls`. */
-  picking: { switch: string } | null;
+  /**
+   * Picking on the plan: a switch's lights (FLR-T-5.7), or a vaulted ceiling's ridge (Core 0.3, 15.3)
+   * — two points, the first kept until the second is clicked.
+   */
+  picking: { switch: string } | { ridge: string; first: Point | null } | null;
 }
 
 const initial: EditorState = {
@@ -216,7 +229,7 @@ const initial: EditorState = {
   view: null,
   cursor: null,
   layers: { walls: true, openings: true, rooms: true, dimensions: true, findings: true, electrical: true, plumbing: true, mechanical: true, lowvoltage: true, clearances: false, coreOnly: false },
-  draw: { wallType: null, justification: 'center', chain: true, doorType: null, windowType: null, device: 'receptacle', receptacle: NO_OPTIONS, height: null },
+  draw: { wallType: null, justification: 'center', chain: true, doorType: null, windowType: null, device: 'receptacle', receptacle: NO_OPTIONS, height: null, slab: { thickness: 130_048, offset: 0, purpose: null } },
   focus: null,
   treeOpen: false,
   findingsOpen: false,

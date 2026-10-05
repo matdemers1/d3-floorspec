@@ -22,13 +22,14 @@ import {
   type TypeChoice,
 } from './ops';
 import { requestRemove, switchUnits } from './actions';
-import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon } from './icons';
+import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, WallIcon, WindowIcon } from './icons';
 import { FindingsList } from './Diagnostics';
 import { Layers as LayersIcon, Palette, House } from 'lucide-react';
 import type { ToolController } from './tools';
 import { DeviceBody, DevicePanel, RecordBody, SystemIcon, SystemsSummary } from './systems/Panels';
 import { systemOfExtension } from './systems/catalog';
 import { ClearOpeningFields, CoreUpgradeNotice } from './OpeningFields';
+import { LevelFloorCeiling, RoomFloorCeiling, SlabBody, SlabDrawSettings } from './FloorFields';
 import {
   clearOpeningOf,
   clearOpeningText,
@@ -152,6 +153,8 @@ function kindIcon(kind: Kind): ReactNode {
       return <RoomIcon />;
     case 'separator':
       return <SeparatorIcon />;
+    case 'slab':
+      return <SlabIcon />;
     case 'junction':
       return <JunctionIcon />;
     case 'level':
@@ -213,6 +216,13 @@ function bodyFor(kind: Kind, ctx: Ctx, focus: string | null): ReactNode {
       return <RoomBody ctx={ctx} focusName={focus === 'room-name'} />;
     case 'level':
       return <LevelBody ctx={ctx} />;
+    case 'slab':
+      return (
+        <>
+          <SlabBody ctx={ctx} />
+          <NameOnly ctx={ctx} />
+        </>
+      );
     case 'building':
       return <NameOnly ctx={ctx} />;
     case 'wallType':
@@ -718,6 +728,7 @@ function RoomBody({ ctx, focusName }: { ctx: Ctx; focusName: boolean }) {
         <ReadOnlyField label="Net area" value={room === undefined ? '—' : formatArea(room.area2, units)} />
         <ReadOnlyField label="Anchor" value={`${formatLen(anchor[0], units)}, ${formatLen(anchor[1], units)}`} />
       </Section>
+      <RoomFloorCeiling ctx={ctx} room={room} />
       <Section title="Finishes">
         {finish('floor', 'Floor')}
         {finish('wall', 'Walls')}
@@ -764,6 +775,7 @@ function LevelBody({ ctx }: { ctx: Ctx }) {
         <LengthField label="Height" value={num(element['height'])} units={units} positive disabled={readOnly} hint="Floor to floor: walls without a top follow it" onCommit={(v) => { if (v !== null) ctx.edit(`Set height of ${labelOf(model, id)}`, setProperty(id, '/height', v)); }} />
         <ReadOnlyField label="Building" value={labelOf(model, String(element['building']))} />
       </Section>
+      <LevelFloorCeiling ctx={ctx} />
     </>
   );
 }
@@ -978,6 +990,28 @@ function DrawPanel({ store, model }: { store: EditorStore; model: EditorModel })
         <div className="fs-callout-card" role="note">
           <strong>Splitting is automatic</strong>
           <p>A {tool === 'wall' ? 'wall' : 'separator'} that crosses or ends on another is split there when the batch is applied (Floorspec Ops 5.2). Closing a loop makes a face — name it with the room tool.</p>
+        </div>
+        <KeyHints />
+      </div>
+    );
+  }
+  if (tool === 'slab') {
+    const chain = draft?.tool === 'slab' ? draft.chain : [];
+    return (
+      <div className="fs-inspector__body">
+        <div className="fs-inspector__head">
+          <span className="fs-inspector__icon">
+            <SlabIcon />
+          </span>
+          <div className="fs-inspector__title">
+            <h2>Draw slab</h2>
+            <p>{chain.length === 0 ? 'Click its corners; click the first again or press Enter to finish' : `${String(chain.length)} ${chain.length === 1 ? 'corner' : 'corners'}`}</p>
+          </div>
+        </div>
+        <SlabDrawSettings store={store} model={model} units={units} />
+        <div className="fs-callout-card" role="note">
+          <strong>Slabs are authored</strong>
+          <p>A patio, a deck or a landing outside the rooms: its outline is what you draw, its top is above the level by the offset (Floorspec Core 6.7). Rooms' own floors and ceilings are set on each room.</p>
         </div>
         <KeyHints />
       </div>

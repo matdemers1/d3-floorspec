@@ -118,6 +118,7 @@ export type Hit =
   | { kind: 'opening'; id: string }
   | { kind: 'wall'; id: string }
   | { kind: 'separator'; id: string }
+  | { kind: 'slab'; id: string }
   | { kind: 'room'; id: string };
 
 /**
@@ -151,6 +152,8 @@ export function hitTest(level: LevelView, p: Point, tol: number, options: { junc
   for (const s of level.separators) if (project(p, s.a, s.b).distance <= tol) return { kind: 'separator', id: s.id };
   const face = faceAt(level, p);
   if (face?.room !== undefined && face.room !== null) return { kind: 'room', id: face.room };
+  // A slab (Core 6.7) under the pointer, outside every room: the last thing a click finds.
+  for (const s of level.slabs) if (insideRing(p, s.outline)) return { kind: 'slab', id: s.id };
   return null;
 }
 
@@ -207,4 +210,15 @@ export function interiorPoint(face: { outer: Ring; holes: readonly Ring[] }): Po
     }
   }
   return null;
+}
+
+/** Is a point inside a ring (even-odd), in floating point — for picking, never for geometry. */
+export function insideRing(p: Point, ring: readonly Point[]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i] as Point;
+    const b = ring[j] as Point;
+    if (a[1] > p[1] !== b[1] > p[1] && p[0] < ((b[0] - a[0]) * (p[1] - a[1])) / (b[1] - a[1]) + a[0]) inside = !inside;
+  }
+  return inside;
 }
