@@ -1,6 +1,19 @@
 /** Core 0.2's additions on small hand-built documents: angles, version ranges, known extensions, the API. */
 import { describe, expect, it } from 'vitest';
-import { check, compareVersions, derive, direction, facingVector, footprintsOverlap, loadKnownExtensions, validate, versionSatisfies } from '../src/index.js';
+import {
+  check,
+  compareVersions,
+  derive,
+  direction,
+  facingVector,
+  footprintsOverlap,
+  loadKnownExtensions,
+  OFFICIAL_EXTENSIONS,
+  OFFICIAL_EXTENSION_NAMES,
+  officialExtensionsEvaluatedFor,
+  validate,
+  versionSatisfies,
+} from '../src/index.js';
 import { box, codes, doc } from './doc.js';
 
 const v02 = (spec: Parameters<typeof doc>[0], extra: Record<string, unknown> = {}): Record<string, unknown> => ({ ...doc(spec), floorspec: '0.2', ...extra });
@@ -187,5 +200,16 @@ describe('program, hosting and clearances through the API', () => {
     ] as [number, number][];
     expect(footprintsOverlap(a, a.map(([x, y]) => [x + 10, y] as [number, number]))).toBe(false);
     expect(footprintsOverlap(a, a.map(([x, y]) => [x + 9, y] as [number, number]))).toBe(true);
+  });
+});
+
+describe('the official extensions and Core 0.3 (each extension spec, 1.2)', () => {
+  it('are evaluated for a document that declares "0.2" and not yet for one that declares "0.3"', () => {
+    expect(officialExtensionsEvaluatedFor('0.2')).toBe(true);
+    expect(officialExtensionsEvaluatedFor('0.3')).toBe(false);
+    const d = { ...doc(box(1e6, 1e6)), extensionsUsed: { FS_electrical: '0.1.0' }, extensions: { FS_electrical: { collections: {} } } };
+    const opts = { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_EXTENSIONS as unknown[] };
+    expect(Object.keys(check({ ...d, floorspec: '0.2' }, opts).derived!.extensions!)).toEqual(['FS_electrical']);
+    expect(check({ ...d, floorspec: '0.3' }, opts).derived!.extensions).toEqual({});
   });
 });

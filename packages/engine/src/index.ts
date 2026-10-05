@@ -48,6 +48,8 @@ export {
   OFFICIAL_EXTENSIONS,
   OFFICIAL_EXTENSION_NAMES,
   OFFICIAL_EXTENSION_SCHEMAS,
+  OFFICIAL_EXTENSION_CORE_VERSIONS,
+  officialExtensionsEvaluatedFor,
   IMPLEMENTATIONS as EXTENSION_IMPLEMENTATIONS,
   type DerivedExtensions,
 } from './extensions/official.js';

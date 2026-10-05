@@ -27,6 +27,17 @@ import { FS_PLUMBING, type DerivedPlumbing } from './fs/plumbing.js';
 export const OFFICIAL_EXTENSIONS: readonly RegistryEntry[] = OFFICIAL_ENTRIES as unknown as RegistryEntry[];
 
 /**
+ * The Core drafts a document may declare for the official extensions to be evaluated for it: each
+ * one's 0.1.0 spec, 1.2 (FS-ELEC-1.2.1 and its siblings), says "0.2" and only "0.2" — so for a
+ * document that declares "0.3" none of them is evaluated, and nothing of theirs is derived, until
+ * their specs take Core 0.3 documents. The one place that changes when they do.
+ */
+export const OFFICIAL_EXTENSION_CORE_VERSIONS: readonly string[] = ['0.2'];
+
+/** Are the official extensions evaluated for a document that declares this Core version? */
+export const officialExtensionsEvaluatedFor = (floorspec: unknown): boolean => typeof floorspec === 'string' && OFFICIAL_EXTENSION_CORE_VERSIONS.includes(floorspec);
+
+/**
  * The official extensions' schemas (registry/<NAME>/<name>.schema.json, vendored), by name: each
  * kind's members with their types, ranges and defaults under `$defs` — what an editor builds its
  * fields from. Data only; validation is the engine's.
@@ -75,7 +86,7 @@ export function evaluateExtensions(
   schemaView: unknown,
   out: Diagnostic[],
 ): ExtensionRun[] {
-  if (doc.floorspec !== '0.2') return [];
+  if (!officialExtensionsEvaluatedFor(doc.floorspec)) return [];
   const runs: ExtensionRun[] = [];
   const used = (doc.extensionsUsed ?? {}) as Record<string, Parameters<typeof declaredVersion>[0]>;
   for (const impl of [...implemented].sort((a, b) => (a.name < b.name ? -1 : 1))) {
