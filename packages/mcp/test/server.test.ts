@@ -185,6 +185,21 @@ describe('the MCP server', () => {
     expect(result.structuredContent).toMatchObject({ project: PROJECT.id, hash: PROJECT.head, summary: { valid: true } });
   });
 
+  it('describes one room by its name as well as its ID, and refuses an unknown room or level with a hint', async () => {
+    const mcp = await connect(new MemoryClient());
+    const byName = await mcp.callTool({ name: 'floorspec_describe', arguments: { room: 'kitchen' } });
+    expect(byName.isError, texts(byName)).toBeFalsy();
+    expect(texts(byName)).toContain('Kitchen');
+    const byId = await mcp.callTool({ name: 'floorspec_describe', arguments: { room: 'R1' } });
+    expect(texts(byId)).toBe(texts(byName));
+    const missing = await mcp.callTool({ name: 'floorspec_describe', arguments: { room: 'Ballroom' } });
+    expect(missing.isError).toBe(true);
+    expect(texts(missing)).toContain('No room is called "Ballroom"');
+    const level = await mcp.callTool({ name: 'floorspec_describe', arguments: { level: 'L9' } });
+    expect(level.isError).toBe(true);
+    expect(texts(level)).toContain('There is no level "L9"');
+  });
+
   it('queries the walls bounding a room, with lengths in feet-inches and base units', async () => {
     const mcp = await connect(new MemoryClient());
     const result = await mcp.callTool({ name: 'floorspec_query', arguments: { room: 'kitchen', kind: 'walls' } });

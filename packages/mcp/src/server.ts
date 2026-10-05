@@ -4,6 +4,7 @@ import { FloorspecApiError, type Committed, type FloorspecClient, type ProjectSu
 import { Batch, Lock } from './ops-schema.js';
 import { describe, describeJson } from './summary/index.js';
 import { query, QueryInput } from './query.js';
+import { findRoom } from './model.js';
 import { DESIGN_PARTNER_PROMPT } from './prompts.js';
 
 /**
@@ -143,9 +144,19 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
       try {
         const project = await resolveProject(client, args.project);
         const model = await client.model(project.id, args.changeset);
+        // The room may be named, as the schema says, not only given by ID.
+        let room: string | undefined;
+        if (args.room !== undefined) {
+          const found = findRoom(model.document as Record<string, unknown>, args.room);
+          if (found === null) throw new ToolError(`No room is called "${args.room}", or more than one is: use its ID (floorspec_describe without "room" lists them).`);
+          room = found[0];
+        }
+        if (args.level !== undefined && !Object.hasOwn((model.document as { levels?: object }).levels ?? {}, args.level)) {
+          throw new ToolError(`There is no level "${args.level}": use a level ID (floorspec_describe without "level" lists them).`);
+        }
         const options = {
           ...(args.level === undefined ? {} : { level: args.level }),
-          ...(args.room === undefined ? {} : { room: args.room }),
+          ...(room === undefined ? {} : { room }),
         };
         const where = `${project.name} at ${model.hash}${args.changeset === undefined ? ' (main)' : ` (changeset ${args.changeset}, pending)`}`;
         const summary = describeJson(model.document as object, options);
