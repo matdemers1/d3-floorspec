@@ -10,10 +10,18 @@ import './exports.css';
  * one list, the one chosen outlined. What works today: the canonical model, the dimensioned PDF
  * (a sheet per level, a 3D view, marked not for construction), DXF drawings on National CAD
  * Standard layers, the IFC4 Reference View model (FLR-T-9.4), and the 3D model as glTF 2.0 or USDZ
- * (FLR-T-9.2).
+ * (FLR-T-9.2). The Floorspec model comes as a `.floorspec` package — model.json and its textures, one
+ * ZIP (FLR-T-9.1) — or as model.json alone: both always free, at any time (FLR-REQ-151).
  */
 
 type Choice = 'model' | 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz';
+/** The Floorspec model's two forms (FLR-T-9.1). */
+type ModelForm = 'package' | 'json';
+
+const MODEL_FORMS: { value: ModelForm; label: string }[] = [
+  { value: 'package', label: '.floorspec package — model.json and its textures' },
+  { value: 'json', label: 'model.json alone' },
+];
 
 interface Format {
   readonly id: Choice;
@@ -25,7 +33,7 @@ interface Format {
 }
 
 const FORMATS: readonly Format[] = [
-  { id: 'model', icon: <BookOpen />, title: 'Floorspec model', detail: 'model.json — the canonical bytes of this version; always free, always valid', ext: '.json' },
+  { id: 'model', icon: <BookOpen />, title: 'Floorspec model', detail: 'model.json and its textures as a .floorspec package, or model.json alone — always free, always valid', ext: '.floorspec' },
   { id: 'gltf', icon: <Box />, title: 'glTF 2.0', detail: '+Y up, metres, PBR materials · for Blender, three.js, AR', ext: '.glb' },
   { id: 'usdz', icon: <Box />, title: 'USDZ', detail: 'View at 1:1 in AR Quick Look on iPad', ext: '.usdz' },
   { id: 'pdf', icon: <FileText />, title: 'Dimensioned PDF', detail: 'Sheet per level + 3D view · marked “not for construction”', ext: '.pdf' },
@@ -50,6 +58,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
   const toast = useToast();
   const [choice, setChoice] = useState<Choice>(initial);
   const [page, setPage] = useState<PageName>('tabloid');
+  const [form, setForm] = useState<ModelForm>('package');
   const [level, setLevel] = useState<string>('all');
   const [job, setJob] = useState<ExportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +79,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
 
   async function run(): Promise<void> {
     if (choice === 'model') {
-      window.location.assign(`/api/projects/${projectId}/model.json`);
+      window.location.assign(form === 'package' ? `/api/projects/${projectId}/package` : `/api/projects/${projectId}/model.json`);
       onOpenChange(false);
       return;
     }
@@ -105,7 +114,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
     ) : choice === 'gltf' || choice === 'usdz' ? (
       <span className="fs-export-dialog__note">Built from this version’s primary design by the worker; every element keeps its Floorspec ID.</span>
     ) : (
-      <span className="fs-export-dialog__note">The canonical model: what every other format is made from.</span>
+      <span className="fs-export-dialog__note">{form === 'package' ? 'The canonical model and every texture it uses, as one file — the same as an unpacked folder.' : 'The canonical model: what every other format is made from.'}</span>
     );
 
   return (
@@ -156,6 +165,14 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
           );
         })}
       </div>
+      {choice === 'model' ? (
+        <div className="fs-export-dialog__options">
+          <label className="fs-export-dialog__option">
+            <span>Form</span>
+            <Select aria-label="Form" size="sm" value={form} disabled={busy} onValueChange={(v) => { setForm(v as ModelForm); }} options={MODEL_FORMS} />
+          </label>
+        </div>
+      ) : null}
       {choice !== 'model' ? (
         <div className="fs-export-dialog__options">
           {levels.length > 1 ? (

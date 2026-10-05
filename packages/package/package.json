@@ -1,8 +1,8 @@
 {
-  "name": "@floorspec/cli",
+  "name": "@floorspec/package",
   "private": true,
   "version": "0.1.0",
-  "description": "The floorspec command line: validate, canonicalize, hash and derive Floorspec documents, and write and unpack .floorspec packages.",
+  "description": "The .floorspec package: a Floorspec document and its assets as one deterministic ZIP or an identical folder, read back with zip-slip, size and entry limits. Isomorphic.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
@@ -18,14 +18,14 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "tsc -p tsconfig.build.json && vitest run"
-  },
-  "bin": {
-    "floorspec": "./dist/bin.js"
+    "typecheck": "tsc --noEmit && tsc -p test",
+    "test": "vitest run"
   },
   "dependencies": {
     "@floorspec/engine": "workspace:*",
-    "@floorspec/package": "workspace:*"
+    "fflate": "0.8.3"
+  },
+  "devDependencies": {
+    "@floorspec/ops": "workspace:*"
   }
 }

@@ -73,6 +73,8 @@ const CALLS: Record<string, Call> = {
   'GET /api/projects/:projectId/assets/:sha256': { ownerStatus: 404 },
   // Answered, by a route that works: an IFC import is the file's bytes, never JSON (FLR-T-9.5).
   'POST /api/projects/:projectId/imports/ifc': { body: {}, ownerStatus: 415 },
+  // The .floorspec package (FLR-T-9.1): free, always — A's empty house is still a package.
+  'GET /api/projects/:projectId/package': { ownerStatus: 200 },
   // Last: it is the one that changes the project, so the owner's call to it goes at the end.
   'DELETE /api/projects/:projectId': { ownerStatus: 204 },
 };

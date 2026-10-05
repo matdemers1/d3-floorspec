@@ -46,8 +46,12 @@ those services.
 `model.json` (`GET /api/projects/:id/model.json`, the editor's download, and the MCP tool
 `floorspec_export`) — at any time and whatever state it is in: empty, mid-edit, with changesets
 pending, on an older draft of the standard, even holding a document today's engine would reject;
-through a session or any kind of token, read-only included. Nothing in the app is paid for, so
-nothing is ever held back. The same test file checks each of those states. A deleted project
+through a session or any kind of token, read-only included. So does the `.floorspec` package —
+`model.json` and every texture it uses, one ZIP that unpacks to the identical folder
+(`GET /api/projects/:id/package`, the Export dialog's **Floorspec model**, and
+`floorspec package`/`floorspec unpack`; layout in `packages/package/README.md`) — and any valid
+document or package imports as a new project. Nothing in the app is paid for, so nothing is ever
+held back. The same test file checks each of those states. A deleted project
 is deleted for everyone, its owner included; export it first.
 
 Self-hosting from a clean machine: [docs/self-host.md](docs/self-host.md).

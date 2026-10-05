@@ -1,4 +1,4 @@
-import { check, OFFICIAL_READER, type Derived, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
+import { check, OFFICIAL_READER, type Derived, type Diagnostic, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { ApiError } from '../lib/api';
 
 /**
@@ -63,9 +63,12 @@ export function formatSquareFeet(area2: bigint): string {
 const plural = (n: number, one: string, other = `${one}s`) => `${n.toLocaleString('en-US')} ${n === 1 ? one : other}`;
 export { plural };
 
-/** Summarise a document: valid or not, and what the engine derived from it. */
-export function summarize(input: string | object): ModelSummary {
-  const result = check(input, OFFICIAL_READER);
+/**
+ * Summarise a document: valid or not, and what the engine derived from it. `options` adds to the
+ * official reader — a package's files, for one (FLR-T-9.1: the engine is then a package validator).
+ */
+export function summarize(input: string | object, options: Pick<ValidateOptions, 'package'> = {}): ModelSummary {
+  const result = check(input, { ...OFFICIAL_READER, ...options });
   const document = (result.valid ? (typeof input === 'string' ? JSON.parse(input) : input) : null) as FloorspecDocument | null;
   const derived = result.derived ?? null;
   const levels: LevelSummary[] = [];

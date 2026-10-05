@@ -134,6 +134,11 @@ const EXERCISES: Record<string, Exercise> = {
     const operator = await setupOperator(running);
     return { reply: await operator.post('/api/projects', { name: 'Lake house' }), action: 'project.create' };
   },
+  'POST /api/projects/import/floorspec': async ({ running }) => {
+    const operator = await setupOperator(running);
+    // A document sent as JSON is a document too (FLR-T-9.1); a package is the raw bytes.
+    return { reply: await operator.post('/api/projects/import/floorspec', { floorspec: '0.3', project: { name: 'Imported' }, buildings: { B1: {} } }), action: 'project.import' };
+  },
   'DELETE /api/projects/:projectId': async ({ running }) => {
     const operator = await setupOperator(running);
     const { id } = (await operator.post('/api/projects', { name: 'Lake house' })).body as { id: string };

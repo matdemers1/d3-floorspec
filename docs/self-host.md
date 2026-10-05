@@ -301,7 +301,9 @@ docker compose -f deploy/compose.yml -f deploy/compose.dev.yml up -d --build --w
 ```
 
 A restore needs the same `KEK` and `PEPPER` as the instance that made the dump. Each project's
-`model.json` (the editor's **Download model.json**) is a second, portable copy of its plan.
+`.floorspec` package (the editor's **Export → Floorspec model**: `model.json` and its textures) is
+a second, portable copy of its plan, which **Import Floorspec file** on any instance turns back
+into a project.
 
 ## 11. Upgrading
 

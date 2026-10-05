@@ -44,6 +44,7 @@ import { privateShareHeaders } from './share/guards.js';
 import type { ShareLimits } from './share/limit.js';
 import { assetRoutes } from './routes/assets.js';
 import { defaultAssetStore, type AssetStore } from './assets/store.js';
+import { packageRoutes } from './routes/package.js';
 
 export interface AppDeps {
   readonly config: Config;
@@ -128,9 +129,11 @@ export function createApp({
   mount(app, '/api/tokens', tokenRoutes(db));
   mount(app, '/api/maintenance', maintenanceRoutes(db, config));
   // Sharing (FLR-T-9.6): the owner's links and comments, and what a share link reaches.
-  const share = { config, events, rules: rulePacks, stream: eventStream, ...(shareLimits === undefined ? {} : { limits: shareLimits }) };
+  const share = { config, events, rules: rulePacks, stream: eventStream, assets, ...(shareLimits === undefined ? {} : { limits: shareLimits }) };
   mount(app, '/api/projects', projectShareRoutes(db, share));
   mount(app, '/api/share', shareRoutes(db, share));
+  // The .floorspec package (FLR-T-9.1): export, always free, and import as a new project.
+  mount(app, '/api/projects', packageRoutes(db, applier, assets, config.ASSET_MAX_BYTES));
   mountMcp(app, config);
 
   /**

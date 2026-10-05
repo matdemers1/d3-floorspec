@@ -56,6 +56,9 @@ importers:
       '@floorspec/ops':
         specifier: workspace:*
         version: link:../../packages/ops
+      '@floorspec/package':
+        specifier: workspace:*
+        version: link:../../packages/package
       '@floorspec/rules-engine':
         specifier: workspace:*
         version: link:../../packages/rules-engine
@@ -129,6 +132,9 @@ importers:
       '@floorspec/ops':
         specifier: workspace:*
         version: link:../../packages/ops
+      '@floorspec/package':
+        specifier: workspace:*
+        version: link:../../packages/package
       '@floorspec/render2d':
         specifier: workspace:*
         version: link:../../packages/render2d
@@ -267,6 +273,9 @@ importers:
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../engine
+      '@floorspec/package':
+        specifier: workspace:*
+        version: link:../package
 
   packages/dsl:
     dependencies:
@@ -391,6 +400,19 @@ importers:
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
+
+  packages/package:
+    dependencies:
+      '@floorspec/engine':
+        specifier: workspace:*
+        version: link:../engine
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
+    devDependencies:
+      '@floorspec/ops':
+        specifier: workspace:*
+        version: link:../ops
 
   packages/render2d:
     dependencies:
