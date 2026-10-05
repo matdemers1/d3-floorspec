@@ -32,6 +32,46 @@ flaky tasks, by category, per-task ops committed / rejected batches / renders, a
 with the assertion that failed, the rejections and the end of the reply). Transcripts and the API
 log are written beside them and git-ignored.
 
+## The proxy eval (until there is an API key)
+
+While `claude -p` cannot run, Claude is measured by **fresh Claude subagents** acting as the agent
+under test, each reaching `/mcp` through `bin/fs-mcp` with its task's agent token. Every result and
+report from this path is labelled **"proxy — Claude subagents via fs-mcp CLI, not `claude -p`"**:
+it is evidence about the tools, not the run FLR-REQ-055 names.
+
+```bash
+pnpm --filter @d3-floorspec/agent-eval serve            # once; fresh floorspec_eval_test, port 3471 (EVAL_PORT),
+                                                        # stays up (preview config "flr-eval-server")
+pnpm --filter @d3-floorspec/agent-eval prepare 024 [--run 2] [--force]
+#   → prints the prompt and the exact fs-mcp commands; the subagent gets only those
+evals/agent/bin/fs-mcp evals/agent/.proxy/024-1/session.json prompt design-partner
+evals/agent/bin/fs-mcp evals/agent/.proxy/024-1/session.json tools
+evals/agent/bin/fs-mcp evals/agent/.proxy/024-1/session.json call floorspec_describe '{}'
+#   → the agent writes its final reply (with any ANSWER: line) to .proxy/024-1/answer.txt
+pnpm --filter @d3-floorspec/agent-eval score 024 [--run 2] [--out results/proxy-<date>] [--model "…"]
+pnpm --filter @d3-floorspec/agent-eval report --proxy results/proxy-<date>   # path relative to evals/agent
+```
+
+`.proxy/` (git-ignored):
+
+| Path | What |
+|---|---|
+| `server.json` | `{ url, port, databaseUrl, pid, startedAt, operator: { email, session } }` — the operator's session cookie, removed when `serve` stops |
+| `server.log` | the API's log |
+| `<task>-<run>/session.json` | `{ url, token, projectId, prompt, taskId, run, seedHash, answerFile, createdAt }` (mode 600: the agent token) |
+| `<task>-<run>/calls.jsonl` | one line per fs-mcp invocation: `{ at, kind: tools\|call\|prompt, tool, args, isError, text, images, ms }` |
+| `<task>-<run>/renders/NNN-<tool>.png` | every image a tool returned; fs-mcp prints the path |
+| `<task>-<run>/answer.txt` | the agent's final reply, written by the agent |
+
+`score` reads the server (changeset or main, op log, main unchanged) and the call log (calls,
+rejected batches, renders), appends to `results/proxy-<date>/results.json` (re-scoring a task and
+run replaces its entry), and prints every assertion. Restarting `serve` recreates the database, so
+sessions prepared before it are dead: prepare them again with `--force`.
+
+Keep the agent honest: give it the prompt and the fs-mcp commands only. The task files (with their
+reference solutions) are in this directory, so a subagent must not be pointed at, or allowed to
+read, `evals/agent/tasks`, `seeds` or `src`.
+
 ## How a task runs
 
 1. The built API (`apps/server/dist`) is started on a free loopback port against a fresh
@@ -120,6 +160,7 @@ Every run, and every tool fix with the run that motivated it, is recorded here.
 | 2026-10-04 | Harness self-check, `--agent reference`, commit 003a8e2 | 36/36 | End to end through the API, shim and changesets |
 | 2026-10-04 | Harness self-check after merging main 8de2ba7 (revised Ops 0.1 applier) | 36/36 | `results/2026-10-05T00-12-31-794Z-reference/` |
 | 2026-10-04 | Harness self-check after the three tool fixes below (303271e) | 36/36 | `results/2026-10-05T00-15-07-442Z-reference/` |
+| 2026-10-04 | Proxy path self-check: scripted fs-mcp calls for 024 and 010 (pass), and a deliberately off-centre door for 003 (fails as it should) | 2/3 | `results/proxy-selfcheck-2026-10-04/` — not Claude |
 | 2026-10-04 | Claude, `--tasks 001` | **not run** | `claude -p` could not authenticate from the build environment (a desktop-app session; no `ANTHROPIC_API_KEY`, CLI not logged in). No pass rate exists yet. |
 
 ### Tool fixes

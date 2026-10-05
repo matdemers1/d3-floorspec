@@ -1,0 +1,239 @@
+{
+  "method": "proxy — Claude subagents via fs-mcp CLI, not `claude -p`",
+  "config": {
+    "startedAt": "2026-10-05T00:20:56.830Z",
+    "finishedAt": "2026-10-05T00:21:10.850Z",
+    "agent": "proxy",
+    "model": "scripted calls (self-check, not Claude)",
+    "claudeVersion": null,
+    "gitSha": "885d3952f9c27adc73666a6dc553ce94035d139d",
+    "runs": 1,
+    "tasks": [
+      "003",
+      "010",
+      "024"
+    ],
+    "timeoutMs": 0,
+    "bare": false,
+    "note": "proxy — Claude subagents via fs-mcp CLI, not `claude -p`"
+  },
+  "results": [
+    {
+      "task": "003",
+      "title": "36-inch door centred between kitchen and bedroom",
+      "category": "add-opening",
+      "run": 1,
+      "pass": false,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingAdded",
+          "pass": false,
+          "detail": "O1 is 5' 3\" off centre"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "6 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, BED unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_apply": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 171.6875,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Added a 36 in door in the kitchen-bedroom wall.\n",
+      "proxy": {
+        "calls": 1,
+        "invocations": 1,
+        "listedTools": false,
+        "readPrompt": false,
+        "sessionDir": "/Users/matthewdemers/workspace/d3cloud/d3-floorspec/evals/agent/.proxy/003-1"
+      }
+    },
+    {
+      "task": "010",
+      "title": "Which rooms have no window",
+      "category": "read",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "unchanged",
+          "pass": true,
+          "detail": "the model is exactly the seed"
+        },
+        {
+          "kind": "answer",
+          "pass": true,
+          "detail": "ANSWER: Hall"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_describe": 1,
+          "floorspec_query": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 18771.109375,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "Every room has a window except the hall.\n\nANSWER: Hall\n",
+      "proxy": {
+        "calls": 2,
+        "invocations": 3,
+        "listedTools": true,
+        "readPrompt": false,
+        "sessionDir": "/Users/matthewdemers/workspace/d3cloud/d3-floorspec/evals/agent/.proxy/010-1"
+      }
+    },
+    {
+      "task": "024",
+      "title": "Split the great room with a cased opening",
+      "category": "split-room",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomCount",
+          "pass": true,
+          "detail": "6 room(s)"
+        },
+        {
+          "kind": "wallLine",
+          "pass": true,
+          "detail": "W4849 (10' 0\", 0' 0\")→(10' 0\", 24' 0\")"
+        },
+        {
+          "kind": "roomExists",
+          "pass": true,
+          "detail": "R1 \"Dining room\" 9' 7 1/2\" E-W × 23' 3 3/4\" N-S"
+        },
+        {
+          "kind": "roomExists",
+          "pass": true,
+          "detail": "LIV \"Living room\" 9' 3 3/4\" E-W × 23' 3 3/4\" N-S"
+        },
+        {
+          "kind": "openingAdded",
+          "pass": true,
+          "detail": "O1 opening 6' 0\" in W4849"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "BED, KIT, BATH, LAU unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 4,
+        "byTool": {
+          "floorspec_apply": 3,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 3,
+        "opsSent": 7,
+        "rejectedBatches": 1,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [
+          "Rejected: nothing changed. the batch was rejected and nothing changed | - FS-OPS-003 error: nothing matches \"Dining room\": there is no such room | { |   \"status\": 422, |   \"type\": \"/problems/ops-rejected\", |   \"title\": \"the batch was rejected and nothing changed\","
+        ],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 9966.543212890625,
+        "timedOut": false,
+        "opsCommitted": 5,
+        "batchesCommitted": 2,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "I split the great room with a new wall 10 ft east of the west wall and put a 6 ft cased opening centred in it. The change is in a pending changeset for you to accept.\n",
+      "proxy": {
+        "calls": 4,
+        "invocations": 7,
+        "listedTools": true,
+        "readPrompt": true,
+        "sessionDir": "/Users/matthewdemers/workspace/d3cloud/d3-floorspec/evals/agent/.proxy/024-1"
+      }
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "passed": 2,
+    "passRate": 0.6666666666666666,
+    "perRun": [
+      0.6666666666666666
+    ],
+    "min": 0.6666666666666666,
+    "max": 0.6666666666666666,
+    "byCategory": {
+      "add-opening": {
+        "passed": 0,
+        "total": 1
+      },
+      "read": {
+        "passed": 1,
+        "total": 1
+      },
+      "split-room": {
+        "passed": 1,
+        "total": 1
+      }
+    },
+    "flaky": [],
+    "averages": {
+      "toolCalls": 2.3333333333333335,
+      "opsCommitted": 2,
+      "rejectedBatches": 0.3333333333333333,
+      "renderRequests": 0.3333333333333333,
+      "turns": null,
+      "wallSeconds": 9.636446695963542,
+      "costUsd": null
+    }
+  }
+}

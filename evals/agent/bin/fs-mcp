@@ -1,0 +1,131 @@
+#!/usr/bin/env node
+/**
+ * fs-mcp — the proxy eval's MCP client (FLR-T-2.9). An agent under test that has a shell but no
+ * MCP connection uses this to reach D3 Floorspec's `/mcp` over Streamable HTTP, with the agent
+ * token from its session file — the same server, tools, descriptions and schemas Claude Code's MCP
+ * client would see, and nothing else.
+ *
+ *   fs-mcp <session.json> tools                     the tool list: names, descriptions, input schemas
+ *   fs-mcp <session.json> call <tool> '<json args>' call one tool; prints its result content
+ *   fs-mcp <session.json> prompt design-partner     the plugin's design-partner system prompt
+ *
+ * Images in a result are saved beside the session file (renders/NNN-<tool>.png) and their path is
+ * printed, so the agent can open the PNG. Every invocation is logged to calls.jsonl in the session
+ * directory; `score` counts calls, rejected batches and renders from that log.
+ */
+import { appendFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
+
+// Output piped into `head` and closed early is not an error.
+process.stdout.on('error', (error) => {
+  if (error.code === 'EPIPE') process.exit(0);
+  throw error;
+});
+
+const [sessionPath, command, ...rest] = process.argv.slice(2);
+const usage = `usage:
+  fs-mcp <session.json> tools
+  fs-mcp <session.json> call <tool> '<json args>'
+  fs-mcp <session.json> prompt design-partner`;
+
+if (sessionPath === undefined || command === undefined) {
+  process.stderr.write(`${usage}\n`);
+  process.exit(2);
+}
+
+const session = JSON.parse(readFileSync(sessionPath, 'utf8'));
+const dir = dirname(resolve(sessionPath));
+const log = (entry) => appendFileSync(join(dir, 'calls.jsonl'), `${JSON.stringify({ at: new Date().toISOString(), ...entry })}\n`);
+
+function skillPrompt() {
+  const file = join(import.meta.dirname, '../../../plugin/skills/floorspec-design-partner/SKILL.md');
+  return readFileSync(file, 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '').trim();
+}
+
+if (command === 'prompt') {
+  if (rest[0] !== 'design-partner') {
+    process.stderr.write(`no prompt "${rest[0] ?? ''}": the only one is design-partner\n`);
+    process.exit(2);
+  }
+  // What the Claude Code plugin puts in front of Claude: the skill's body, as `claude -p` mode appends it.
+  process.stdout.write(`${skillPrompt()}\n`);
+  log({ kind: 'prompt', name: 'design-partner' });
+  process.exit(0);
+}
+
+const client = new Client({ name: 'fs-mcp (agent eval proxy)', version: '0.1.0' });
+await client.connect(new StreamableHTTPClientTransport(new URL('/mcp', session.url), { requestInit: { headers: { authorization: `Bearer ${session.token}` } } }));
+
+try {
+  if (command === 'tools') {
+    const { tools } = await client.listTools();
+    const out = [];
+    for (const t of tools) {
+      out.push(`## ${t.name}${t.title ? ` — ${t.title}` : ''}`, '', t.description ?? '', '');
+      if (t.annotations) out.push(`annotations: ${JSON.stringify(t.annotations)}`, '');
+      out.push('inputSchema:', '```json', JSON.stringify(t.inputSchema, null, 2), '```', '');
+    }
+    process.stdout.write(`${out.join('\n')}\n`);
+    log({ kind: 'tools', count: tools.length });
+  } else if (command === 'call') {
+    const [tool, json] = rest;
+    if (tool === undefined) {
+      process.stderr.write(`${usage}\n`);
+      process.exit(2);
+    }
+    let args = {};
+    if (json !== undefined && json.trim().length > 0) {
+      try {
+        args = JSON.parse(json);
+      } catch (error) {
+        process.stderr.write(`the arguments are not JSON: ${error.message}\n`);
+        log({ kind: 'call', tool, args: json, parseError: error.message });
+        process.exit(2);
+      }
+    }
+    const started = Date.now();
+    let result;
+    try {
+      result = await client.callTool({ name: tool, arguments: args });
+    } catch (error) {
+      // A protocol-level refusal (unknown tool, arguments that fail the input schema): shown as the
+      // MCP client would show it, and logged as an errored call.
+      const text = `MCP error: ${error.message}`;
+      process.stdout.write(`${text}\n`);
+      log({ kind: 'call', tool, args, isError: true, protocolError: true, text, ms: Date.now() - started });
+      process.exit(1);
+    }
+    const renders = join(dir, 'renders');
+    const texts = [];
+    const images = [];
+    const lines = [];
+    if (result.isError) lines.push('[tool error]');
+    for (const c of result.content ?? []) {
+      if (c.type === 'text') {
+        texts.push(c.text);
+        lines.push(c.text);
+      } else if (c.type === 'image') {
+        mkdirSync(renders, { recursive: true });
+        const n = readdirSync(renders).length + 1;
+        const ext = c.mimeType === 'image/png' ? 'png' : 'bin';
+        const path = join(renders, `${String(n).padStart(3, '0')}-${tool}.${ext}`);
+        writeFileSync(path, Buffer.from(c.data, 'base64'));
+        images.push(path);
+        lines.push(`[image saved: ${path}]`);
+      } else if (c.type === 'resource') {
+        lines.push(c.resource?.text ?? `[resource ${c.resource?.uri ?? ''}]`);
+      } else if (c.type === 'resource_link') {
+        lines.push(`[resource link: ${c.uri}]`);
+      }
+    }
+    process.stdout.write(`${lines.join('\n')}\n`);
+    log({ kind: 'call', tool, args, isError: result.isError === true, text: texts.join('\n'), images, ms: Date.now() - started });
+    process.exitCode = result.isError ? 1 : 0;
+  } else {
+    process.stderr.write(`${usage}\n`);
+    process.exitCode = 2;
+  }
+} finally {
+  await client.close().catch(() => undefined);
+}

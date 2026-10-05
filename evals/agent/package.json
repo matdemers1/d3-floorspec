@@ -20,7 +20,11 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "eval": "tsx src/run.ts"
+    "eval": "tsx src/run.ts",
+    "serve": "tsx src/proxy.ts serve",
+    "prepare": "tsx src/prepare.ts",
+    "score": "tsx src/proxy.ts score",
+    "report": "tsx src/proxy.ts report"
   },
   "dependencies": {
     "@floorspec/engine": "workspace:*",

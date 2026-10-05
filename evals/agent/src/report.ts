@@ -34,7 +34,7 @@ export interface TaskRun {
 export interface RunConfig {
   readonly startedAt: string;
   readonly finishedAt: string;
-  readonly agent: 'claude' | 'reference';
+  readonly agent: 'claude' | 'reference' | 'proxy';
   readonly model: string;
   readonly claudeVersion: string | null;
   readonly gitSha: string | null;
@@ -107,11 +107,23 @@ const cell = (s: string): string => s.replace(/\|/g, '\\|').replace(/\n+/g, ' ')
 
 export function markdownReport(config: RunConfig, summary: Summary, results: readonly TaskRun[], tasks: readonly Task[]): string {
   const out: string[] = [];
-  const verdict = config.agent === 'reference' ? 'harness self-check (scripted reference agent — not a measurement of Claude)' : summary.passRate >= 0.8 ? 'at or above the 80% tripwire' : 'BELOW the 80% tripwire (FLR-REQ-055)';
+  const level = summary.passRate >= 0.8 ? 'at or above the 80% tripwire' : 'BELOW the 80% tripwire (FLR-REQ-055)';
+  const verdict =
+    config.agent === 'reference'
+      ? 'harness self-check (scripted reference agent — not a measurement of Claude)'
+      : config.agent === 'proxy'
+        ? `${level} — measured by the proxy method: Claude subagents via the fs-mcp CLI, not \`claude -p\``
+        : level;
   out.push(`# Agent eval — ${pct(summary.passRate)} (${String(summary.passed)}/${String(summary.total)})`, '');
   out.push(`**${verdict}.**`, '');
   out.push('| | |', '|---|---|');
-  out.push(`| Agent | ${config.agent === 'claude' ? `Claude Code ${config.claudeVersion ?? '?'}, model \`${config.model}\`${config.bare ? ', --bare' : ''}` : 'scripted reference solutions through the MCP shim'} |`);
+  const agentRow =
+    config.agent === 'claude'
+      ? `Claude Code ${config.claudeVersion ?? '?'}, model \`${config.model}\`${config.bare ? ', --bare' : ''}`
+      : config.agent === 'proxy'
+        ? `**proxy — Claude subagents via fs-mcp CLI, not \`claude -p\`** (${config.model})`
+        : 'scripted reference solutions through the MCP shim';
+  out.push(`| Agent | ${agentRow} |`);
   out.push(`| Commit | \`${config.gitSha ?? 'unknown'}\` |`);
   out.push(`| Started | ${config.startedAt} |`, `| Finished | ${config.finishedAt} |`);
   out.push(`| Tasks × runs | ${String(config.tasks.length)} × ${String(config.runs)} |`);

@@ -65,9 +65,9 @@ export interface RunningApi {
 }
 
 /** Start the built API against a fresh database; resolves when `/readyz` answers 200. */
-export async function startApi(databaseUrl: string, logFile: string): Promise<RunningApi> {
+export async function startApi(databaseUrl: string, logFile: string, fixedPort?: number): Promise<RunningApi> {
   await freshDatabase(databaseUrl);
-  const port = await freePort();
+  const port = fixedPort ?? (await freePort());
   const url = `http://127.0.0.1:${String(port)}`;
   const log = createWriteStream(logFile);
   const child = spawn(process.execPath, [SERVER_ENTRY], {
@@ -140,6 +140,18 @@ export class Operator {
   private cookie = '';
 
   constructor(readonly base: string) {}
+
+  /** The operator's session cookie, to hand to a later process (the proxy eval's server.json). */
+  get session(): string {
+    return this.cookie;
+  }
+
+  /** An operator signed in with a session cookie an earlier process saved. */
+  static resume(base: string, cookie: string): Operator {
+    const op = new Operator(base);
+    op.cookie = cookie;
+    return op;
+  }
 
   async request(method: string, path: string, body?: unknown): Promise<Response> {
     const res = await fetch(`${this.base}${path}`, {
