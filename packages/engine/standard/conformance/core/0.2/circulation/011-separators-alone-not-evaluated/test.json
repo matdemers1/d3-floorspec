@@ -1,0 +1,7 @@
+{
+  "description": "A kitchen and a dining room divided by a separator, and no opening: the rooms are connected, but a building is evaluated only once a wall hosts a door or an empty opening, so no circulation lint is reported.",
+  "covers": [
+    "FS-CORE-14.3.1",
+    "FS-CORE-14.4.2"
+  ]
+}

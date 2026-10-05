@@ -327,6 +327,65 @@
     "fallbacks": {},
     "placements": {},
     "clearances": {},
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R0": {
+        "entry": false,
+        "reachable": false
+      },
+      "R1": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "R10": {
+        "entry": false,
+        "reachable": false
+      },
+      "R11": {
+        "entry": false,
+        "reachable": false
+      },
+      "R12": {
+        "entry": false,
+        "reachable": false
+      },
+      "R13": {
+        "entry": false,
+        "reachable": false
+      },
+      "R2": {
+        "entry": false,
+        "reachable": false
+      },
+      "R3": {
+        "entry": false,
+        "reachable": false
+      },
+      "R4": {
+        "entry": false,
+        "reachable": false
+      },
+      "R5": {
+        "entry": false,
+        "reachable": false
+      },
+      "R6": {
+        "entry": false,
+        "reachable": false
+      },
+      "R7": {
+        "entry": false,
+        "reachable": false
+      },
+      "R8": {
+        "entry": false,
+        "reachable": false
+      },
+      "R9": {
+        "entry": false,
+        "reachable": false
+      }
+    }
   }
 }

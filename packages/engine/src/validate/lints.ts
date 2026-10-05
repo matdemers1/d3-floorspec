@@ -6,6 +6,7 @@ import { Surd } from '../exact/surd.js';
 import { cross, dot, type IPoint } from '../geometry/predicates.js';
 import { entries, extElements, get, ipoint, openingDimensions, programItems, type FloorspecDocument } from '../model/document.js';
 import { analyseProgram } from '../derive/program.js';
+import { circulationLints } from '../circulation/circulation.js';
 import type { Analysis, Reporter } from './invariants.js';
 
 const ptr = (collection: string, id: string): string => `/${collection}/${id.replace(/~/g, '~0').replace(/\//g, '~1')}`;
@@ -117,8 +118,11 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
   for (const [id, a] of entries(doc.assets))
     if (a.uri !== undefined) r.report('FS-LINT-007', `${id} is located by uri, so the document depends on someone else's server.`, [id], { pointer: ptr('assets', id) });
 
-  // 008 … 011: the program (Core 0.2).
-  if (analysis.core02) programLints(doc, analysis, r);
+  // 008 … 011: the program; 012 … 014: circulation (Core 0.2).
+  if (analysis.core02) {
+    programLints(doc, analysis, r);
+    circulationLints(doc, analysis, r);
+  }
 }
 
 /** 11.5: an unmet program is a warning, never an error (FS-CORE-11.5.2). */

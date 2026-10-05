@@ -10,6 +10,11 @@
       "code": "FS-LINT-009",
       "severity": "warning",
       "elements": ["BED", "RSW"]
+    },
+    {
+      "code": "FS-LINT-014",
+      "severity": "warning",
+      "elements": ["B1"]
     }
   ],
   "hash": "d6fe6c7f7906a12a123035e4f7d7d6a81cbb820d32e92b5e8c1aa5c325d43adb",
@@ -185,6 +190,26 @@
     "fallbacks": {},
     "placements": {},
     "clearances": {},
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {
+      "RNE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RNW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "RSE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RSW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      }
+    }
   }
 }

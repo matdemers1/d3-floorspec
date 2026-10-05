@@ -1,5 +1,5 @@
 {
-  "description": "One item per room, every pair of neighbours related: SW-SE share the wall EV1, which has a door (connected); NW-NE share EV2, which has only a window (adjacent, not connected); SW-NW share EH1, which has an empty, cased opening (connected); SE-NE share the separator EH2 (connected). NE-SW meet only at a junction: neither adjacent nor connected.",
+  "description": "One item per room, every pair of neighbours related: SW-SE share the wall EV1, which has a door (connected); NW-NE share EV2, which has only a window (adjacent, not connected); SW-NW share EH1, which has an empty, cased opening (connected); SE-NE share the separator EH2 (connected). NE-SW meet only at a junction: neither adjacent nor connected. No door leads outside (FS-LINT-014).",
   "covers": [
     "FS-CORE-11.4.1"
   ]

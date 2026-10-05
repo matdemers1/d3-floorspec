@@ -1,0 +1,140 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "D": {
+      "kind": "doorType",
+      "width": 1152000,
+      "height": 2688000
+    }
+  },
+  "junctions": {
+    "AJ1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "AJ2": {
+      "level": "L1",
+      "position": [0, 7680000]
+    },
+    "AJ3": {
+      "level": "L1",
+      "position": [10240000, 7680000]
+    },
+    "AJ4": {
+      "level": "L1",
+      "position": [10240000, 0]
+    },
+    "CJ1": {
+      "level": "L1",
+      "position": [3840000, 2560000]
+    },
+    "CJ2": {
+      "level": "L1",
+      "position": [3840000, 5120000]
+    },
+    "CJ3": {
+      "level": "L1",
+      "position": [6400000, 5120000]
+    },
+    "CJ4": {
+      "level": "L1",
+      "position": [6400000, 2560000]
+    }
+  },
+  "walls": {
+    "AW1": {
+      "level": "L1",
+      "start": "AJ1",
+      "end": "AJ2",
+      "type": "WT"
+    },
+    "AW2": {
+      "level": "L1",
+      "start": "AJ2",
+      "end": "AJ3",
+      "type": "WT"
+    },
+    "AW3": {
+      "level": "L1",
+      "start": "AJ3",
+      "end": "AJ4",
+      "type": "WT"
+    },
+    "AW4": {
+      "level": "L1",
+      "start": "AJ4",
+      "end": "AJ1",
+      "type": "WT"
+    },
+    "CW1": {
+      "level": "L1",
+      "start": "CJ1",
+      "end": "CJ2",
+      "type": "WT"
+    },
+    "CW2": {
+      "level": "L1",
+      "start": "CJ2",
+      "end": "CJ3",
+      "type": "WT"
+    },
+    "CW3": {
+      "level": "L1",
+      "start": "CJ3",
+      "end": "CJ4",
+      "type": "WT"
+    },
+    "CW4": {
+      "level": "L1",
+      "start": "CJ4",
+      "end": "CJ1",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "LIV": {
+      "level": "L1",
+      "anchor": [1280000, 1280000],
+      "function": "living"
+    },
+    "CLO": {
+      "level": "L1",
+      "anchor": [5120000, 3840000],
+      "function": "storage"
+    }
+  },
+  "openings": {
+    "D1": {
+      "wall": "AW4",
+      "offset": 1280000,
+      "fill": "D"
+    },
+    "D2": {
+      "wall": "CW1",
+      "offset": 640000,
+      "fill": "D"
+    }
+  }
+}

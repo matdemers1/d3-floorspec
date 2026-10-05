@@ -89,6 +89,9 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
   e('FS-LINT-009', 'warning', 'lint', "a room whose net area is less than its item's `minArea`", 'the item and the room', '11.5'),
   e('FS-LINT-010', 'warning', 'lint', "a `\"required\"` adjacency whose items' rooms are not adjacent; once for each adjacency", 'both items', '11.5'),
   e('FS-LINT-011', 'warning', 'lint', "a `\"forbidden\"` adjacency whose items' rooms are adjacent; once for each adjacency", 'both items', '11.5'),
+  e('FS-LINT-012', 'warning', 'lint', 'a room not reachable from an entry of its building', 'the room', '14.4'),
+  e('FS-LINT-013', 'warning', 'lint', 'a sleeping room reachable only through another sleeping room', 'the room', '14.4'),
+  e('FS-LINT-014', 'warning', 'lint', 'an evaluated building (14.4) that has rooms but no entry', 'the building', '14.4'),
 ];
 
 const BY_CODE = new Map(CATALOGUE.map((c) => [c.code, c]));

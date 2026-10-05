@@ -9,6 +9,7 @@ export {
   type DocumentSummary,
   type EdgeSummary,
   type ElementSummary,
+  type CirculationSummary,
   type ProgramSummary,
   type ProgramItemSummary,
   type ProgramAdjacencySummary,

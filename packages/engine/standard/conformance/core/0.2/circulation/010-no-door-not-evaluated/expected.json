@@ -1,0 +1,115 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "5f5a8647c3a066a445c993184fde1856eef74c506bf82beedcc6e542d2781b1c",
+  "derived": {
+    "walls": {
+      "H00": {
+        "startRight": [-64000, -64000],
+        "endRight": [5120000, -64000],
+        "endLeft": [5056000, 64000],
+        "startLeft": [64000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H01": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5120000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H10": {
+        "startRight": [5120000, -64000],
+        "endRight": [10304000, -64000],
+        "endLeft": [10176000, 64000],
+        "startLeft": [5184000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H11": {
+        "startRight": [5184000, 3776000],
+        "endRight": [10176000, 3776000],
+        "endLeft": [10304000, 3904000],
+        "startLeft": [5120000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V00": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V10": {
+        "startRight": [5184000, 64000],
+        "endRight": [5184000, 3776000],
+        "endLeft": [5056000, 3776000],
+        "startLeft": [5056000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V20": {
+        "startRight": [10304000, -64000],
+        "endRight": [10304000, 3904000],
+        "endLeft": [10176000, 3776000],
+        "startLeft": [10176000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J10": [[5056000, 64000], [5120000, -64000], [5184000, 64000]],
+      "J11": [[5056000, 3776000], [5184000, 3776000], [5120000, 3904000]]
+    },
+    "rooms": {
+      "BED": {
+        "outer": [[5184000, 64000], [10176000, 64000], [10176000, 3776000], [5184000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      },
+      "LIV": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "NH00": {
+        "start": [1280000, 0],
+        "end": [2816000, 0],
+        "sillElevation": 1152000,
+        "headElevation": 2688000
+      },
+      "NV10": {
+        "start": [5120000, 1280000],
+        "end": [5120000, 2816000],
+        "sillElevation": 1152000,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "BED": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "LIV": {
+        "entry": false,
+        "reachable": false
+      }
+    }
+  }
+}

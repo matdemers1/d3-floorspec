@@ -1,0 +1,260 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.2",
+  "junctions": {
+    "J00": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J01": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    },
+    "J11": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J20": {
+      "level": "L1",
+      "position": [
+        10240000,
+        0
+      ]
+    },
+    "J21": {
+      "level": "L1",
+      "position": [
+        10240000,
+        3840000
+      ]
+    },
+    "UJ00": {
+      "level": "L2",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "UJ01": {
+      "level": "L2",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "UJ10": {
+      "level": "L2",
+      "position": [
+        5120000,
+        0
+      ]
+    },
+    "UJ11": {
+      "level": "L2",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "UJ20": {
+      "level": "L2",
+      "position": [
+        10240000,
+        0
+      ]
+    },
+    "UJ21": {
+      "level": "L2",
+      "position": [
+        10240000,
+        3840000
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    },
+    "L2": {
+      "building": "B1",
+      "elevation": 3456000,
+      "height": 3456000
+    }
+  },
+  "openings": {
+    "DH00": {
+      "fill": "D",
+      "offset": 1280000,
+      "wall": "H00"
+    },
+    "DUV10": {
+      "fill": "D",
+      "offset": 1280000,
+      "wall": "UV10"
+    },
+    "DV10": {
+      "fill": "D",
+      "offset": 1280000,
+      "wall": "V10"
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "BED": {
+      "anchor": [
+        7680000,
+        1920000
+      ],
+      "function": "sleeping",
+      "level": "L2"
+    },
+    "HALL": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "function": "circulation",
+      "level": "L1"
+    },
+    "LAND": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "function": "circulation",
+      "level": "L2"
+    },
+    "LIV": {
+      "anchor": [
+        7680000,
+        1920000
+      ],
+      "function": "living",
+      "level": "L1"
+    }
+  },
+  "types": {
+    "D": {
+      "height": 2688000,
+      "kind": "doorType",
+      "width": 1152000
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "H00": {
+      "end": "J10",
+      "level": "L1",
+      "start": "J00",
+      "type": "WT"
+    },
+    "H01": {
+      "end": "J11",
+      "level": "L1",
+      "start": "J01",
+      "type": "WT"
+    },
+    "H10": {
+      "end": "J20",
+      "level": "L1",
+      "start": "J10",
+      "type": "WT"
+    },
+    "H11": {
+      "end": "J21",
+      "level": "L1",
+      "start": "J11",
+      "type": "WT"
+    },
+    "UH00": {
+      "end": "UJ10",
+      "level": "L2",
+      "start": "UJ00",
+      "type": "WT"
+    },
+    "UH01": {
+      "end": "UJ11",
+      "level": "L2",
+      "start": "UJ01",
+      "type": "WT"
+    },
+    "UH10": {
+      "end": "UJ20",
+      "level": "L2",
+      "start": "UJ10",
+      "type": "WT"
+    },
+    "UH11": {
+      "end": "UJ21",
+      "level": "L2",
+      "start": "UJ11",
+      "type": "WT"
+    },
+    "UV00": {
+      "end": "UJ01",
+      "level": "L2",
+      "start": "UJ00",
+      "type": "WT"
+    },
+    "UV10": {
+      "end": "UJ11",
+      "level": "L2",
+      "start": "UJ10",
+      "type": "WT"
+    },
+    "UV20": {
+      "end": "UJ21",
+      "level": "L2",
+      "start": "UJ20",
+      "type": "WT"
+    },
+    "V00": {
+      "end": "J01",
+      "level": "L1",
+      "start": "J00",
+      "type": "WT"
+    },
+    "V10": {
+      "end": "J11",
+      "level": "L1",
+      "start": "J10",
+      "type": "WT"
+    },
+    "V20": {
+      "end": "J21",
+      "level": "L1",
+      "start": "J20",
+      "type": "WT"
+    }
+  }
+}

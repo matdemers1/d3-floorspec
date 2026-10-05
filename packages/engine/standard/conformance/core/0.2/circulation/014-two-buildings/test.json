@@ -1,0 +1,7 @@
+{
+  "description": "A house B1 with an entry, and a detached workshop B2 whose two rooms have a door between them but none to the outside. Each building has its own door graph: circulation rooms of different buildings are never linked, so B2 has no entry (FS-LINT-014) and B1 is fine.",
+  "covers": [
+    "FS-CORE-14.3.1",
+    "FS-CORE-14.4.2"
+  ]
+}

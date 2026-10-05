@@ -142,6 +142,13 @@ export function summaryText(s: DocumentSummary): string {
     for (const a of s.program.adjacency)
       out.push(`- ${a.kind} ${a.a} | ${a.b}: ${a.adjacent ? 'adjacent' : 'not adjacent'}${a.connected ? ', connected' : ''} — ${a.met ? 'met' : 'NOT met'}`);
   }
+  if (s.circulation) {
+    const c = s.circulation;
+    out.push('', '## Circulation');
+    for (const b of c.noEntry) out.push(`- building ${b} has doors but no way in: no room has a door, cased opening or separator to the outside`);
+    if (c.unreachable.length) out.push(`- unreachable through doors: ${c.unreachable.join(', ')}`);
+    if (c.throughSleeping.length) out.push(`- reachable only through another sleeping room: ${c.throughSleeping.join(', ')}`);
+  }
   out.push('', '## Diagnostics');
   if (!s.diagnostics.length) out.push('(none)');
   for (const d of s.diagnostics) out.push(`- ${d.code} (${d.severity})${d.elements.length ? ` [${d.elements.join(', ')}]` : ''}${d.level ? ` on ${d.level}` : ''}: ${d.message}`);

@@ -1,0 +1,6 @@
+{
+  "description": "A third bedroom with a door into each of two bedrooms that open off the living room. No single bedroom stands in its way, but every path to it passes through one of them: it is reachable only through another sleeping room (FS-LINT-013).",
+  "covers": [
+    "FS-CORE-14.3.1"
+  ]
+}

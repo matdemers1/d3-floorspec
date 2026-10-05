@@ -10,7 +10,7 @@ import { check, validate, canonicalize, contentHash, derive, parseJson, planariz
 validate(bytesOrTextOrValue);        // { valid, diagnostics } — chapter 10, tiers in order
 check(bytesOrTextOrValue);           // + hash, derived, canonical for a valid document (conformance shape)
 canonicalize(doc); contentHash(doc); // 9.2, 9.3
-derive(input);                       // chapters 5–7 and 11–13; throws InvalidDocumentError if not valid
+derive(input);                       // chapters 5–7 and 11–14; throws InvalidDocumentError if not valid
 planarize({ junctions, edges, mintJunction, mintEdge }); // snap rounding (5.3 note)
 
 // Options, on validate / check / derive / evaluate:
@@ -20,14 +20,16 @@ check(input, { core: '0.1' });                      // a Core 0.1 reader: reject
 check(input, { extensions: ['FS_x'] });             // 1.6.4: extensions this reader implements (none by default)
 ```
 
-A 0.2 reader's `derived` has five more members — `program`, `fallbacks`, `placements`,
-`clearances`, `clearanceOverlaps` (conformance/README.md) — present, empty, for a 0.1 document.
+A 0.2 reader's `derived` has six more members — `program`, `fallbacks`, `placements`,
+`clearances`, `clearanceOverlaps`, `circulation` (conformance/README.md) — present for a 0.1
+document too: empty, except `circulation`, which needs no 0.2 member (14).
 
 | Directory | What |
 |---|---|
 | `src/exact` | BigInt helpers and `Surd`: exact numbers in ℚ(√r₁…√r_k), exact sign, floor and round-half-to-even; `angle.ts`: F(θ) and the direction of a vector (13.1) in BigInt fixed point |
 | `src/geometry` | integer predicates (5.3), exact face lines and corners (5.5), the half-edge structure (6.1), planarize |
 | `src/derive` | per-level geometry (wedges, face ends, joins, fills, rooms), the program (11), frames, footprints and overlaps (13), and the `derived` output |
+| `src/circulation` | the door graph, entries, reachable rooms and sleeping rooms reached only through another (14), and the lints FS-LINT-012 … 014 |
 | `src/validate` | the tiers, the invariants (`invariants02.ts`: program, extension, hosting), the lints, known extensions and version ranges (`registry.ts`), and `catalogue.ts` — the single table of codes |
 | `src/json`, `src/hash`, `src/canonical` | strict I-JSON parser, RFC 8785 writers, SHA-256, canonical form |
 | `src/generated` | types, standalone schema validators (Core 0.1, Core 0.2, registry entry) and the bundled 0.2 schema, generated from `standard/` |

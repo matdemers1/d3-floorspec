@@ -1,0 +1,6 @@
+{
+  "description": "A bedroom with its own door to the outside is an entry, and is not reached through anything; the bedroom beyond it is reachable only through it (FS-LINT-013).",
+  "covers": [
+    "FS-CORE-14.3.1"
+  ]
+}

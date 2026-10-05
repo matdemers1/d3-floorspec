@@ -143,6 +143,21 @@
     "fallbacks": {},
     "placements": {},
     "clearances": {},
-    "clearanceOverlaps": []
+    "clearanceOverlaps": [],
+    "circulation": {
+      "BED": {
+        "entry": false,
+        "reachable": true,
+        "throughSleeping": false
+      },
+      "KIT": {
+        "entry": false,
+        "reachable": true
+      },
+      "LIV": {
+        "entry": true,
+        "reachable": true
+      }
+    }
   }
 }

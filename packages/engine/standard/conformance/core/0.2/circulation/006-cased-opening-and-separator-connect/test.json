@@ -1,0 +1,7 @@
+{
+  "description": "The dining room opens from the living room through an empty, cased opening, and the kitchen from the dining room across a separator: both connect (11.4), so both are reachable.",
+  "covers": [
+    "FS-CORE-14.3.1",
+    "FS-CORE-11.4.1"
+  ]
+}

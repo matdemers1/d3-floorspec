@@ -96,6 +96,12 @@
     },
     "clearanceOverlaps": [
       [["HATCH", "access"], ["O1", "swing"]]
-    ]
+    ],
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      }
+    }
   }
 }
