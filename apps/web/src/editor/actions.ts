@@ -38,13 +38,20 @@ export function requestRemove(store: EditorStore, id: string): void {
     if (at !== undefined) void store.apply(`Remove ${name}`, removeRecord(model.document, at.extension, at.collection, id), { select: () => null });
     return;
   }
-  if (kind === 'level' || kind === 'building') {
+  if (kind === 'level' || kind === 'building' || kind === 'optionSet' || kind === 'option') {
     store.set({
       prompt: {
         kind: 'remove',
         id,
         title: `Remove ${name}?`,
-        detail: kind === 'level' ? 'Everything drawn on it goes too: its walls, openings, separators and rooms. Undo brings it all back.' : 'Its levels and everything on them go too. Undo brings it all back.',
+        detail:
+          kind === 'level'
+            ? 'Everything drawn on it goes too: its walls, openings, separators and rooms. Undo brings it all back.'
+            : kind === 'building'
+              ? 'Its levels and everything on them go too. Undo brings it all back.'
+              : kind === 'optionSet'
+                ? 'Its options and everything drawn in them go too (Ops 2.2). The common design stays. Undo brings them back.'
+                : 'Everything drawn in it goes too (Ops 2.2). A primary option leaves its set without one until another is made primary. Undo brings it back.',
       },
     });
     return;

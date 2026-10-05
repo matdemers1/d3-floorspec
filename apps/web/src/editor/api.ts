@@ -112,9 +112,10 @@ function writeInit(head: string, body: unknown): RequestInit {
   };
 }
 
-export async function postBatch(projectId: string, head: string, batch: Batch): Promise<ApplyAnswer> {
+/** Apply a batch to main — in `option`, a design option, when given (Ops 0.3, 2.8: `context.option`). */
+export async function postBatch(projectId: string, head: string, batch: Batch, option?: string): Promise<ApplyAnswer> {
   try {
-    return await answer(await fetch(`/api/projects/${projectId}/ops`, writeInit(head, { batch })));
+    return await answer(await fetch(`/api/projects/${projectId}/ops`, writeInit(head, { batch, ...(option === undefined ? {} : { context: { option } }) })));
   } catch {
     return { status: 'failed', message: 'The server did not answer. Nothing was changed.' };
   }
@@ -135,6 +136,8 @@ export interface HistoryEntry {
   kind: 'create' | 'apply' | 'undo' | 'redo' | 'merge';
   author: { kind: 'account' | 'agent' | 'token'; account: string | null; name: string | null; token: string | null };
   ops: Record<string, unknown>[];
+  /** The design option the batch was applied in (Ops 0.3, 2.8), or null. */
+  option?: string | null;
   resolved: Record<string, unknown>[] | null;
   created: string[];
   removed: string[];

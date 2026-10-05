@@ -1,7 +1,9 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, SegmentedControl, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Share, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
+import { MaterialsModal } from './Materials';
 import { navigate, takeParam } from '../lib/router';
 import { EditorStore, useEditor, type ToolId } from './store';
 import { ToolController } from './tools';
@@ -74,9 +76,12 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   const treeOpen = useEditor(store, (s) => s.treeOpen);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const notice = useEditor(store, (s) => s.notice);
-  const idle = useEditor(store, (s) => s.selection === null && s.tool === 'select' && s.compare === null && !(s.side === 'review' && s.review !== null) && !s.findingsOpen);
+  const idle = useEditor(store, (s) => s.selection === null && s.tool === 'select' && s.compare === null && !(s.side === 'review' && s.review !== null) && !s.findingsOpen && s.side !== 'options' && s.optionCompare === null);
   const left = useEditor(store, (s) => s.left);
-  const right = useEditor(store, (s) => (s.compare !== null ? 'compare' : s.side === 'review' && s.review !== null ? 'review' : s.findingsOpen ? 'findings' : 'inspector'));
+  const right = useEditor(store, (s) =>
+    s.compare !== null ? 'compare' : s.optionCompare !== null ? 'optionCompare' : s.side === 'review' && s.review !== null ? 'review' : s.findingsOpen ? 'findings' : s.side === 'options' ? 'options' : 'inspector',
+  );
+  const optionCompare = useEditor(store, (s) => s.optionCompare !== null);
   const toast = useToast();
 
   useEffect(() => {
@@ -118,6 +123,8 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
           <div className="fs-canvas fs-canvas--loading">
             <Spinner size="lg" label="Loading the model" />
           </div>
+        ) : optionCompare ? (
+          <OptionCompareCanvas store={store} />
         ) : (
           <CanvasArea store={store} tools={tools} />
         )}
@@ -128,9 +135,27 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
           </div>
         ) : null}
       </main>
-      <aside className="fs-editor__inspector" aria-label={right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : 'Inspector'}>
-        {status === 'loading' ? <TreeSkeleton /> : right === 'compare' ? <ComparePanel store={store} /> : right === 'review' ? <ProposalPanel store={store} /> : right === 'findings' ? <FindingsPanel store={store} /> : <Inspector store={store} tools={tools} />}
+      <aside
+        className="fs-editor__inspector"
+        aria-label={right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : right === 'options' || right === 'optionCompare' ? 'Design options' : 'Inspector'}
+      >
+        {status === 'loading' ? (
+          <TreeSkeleton />
+        ) : right === 'compare' ? (
+          <ComparePanel store={store} />
+        ) : right === 'optionCompare' ? (
+          <OptionComparePanel store={store} />
+        ) : right === 'review' ? (
+          <ProposalPanel store={store} />
+        ) : right === 'findings' ? (
+          <FindingsPanel store={store} />
+        ) : right === 'options' ? (
+          <OptionsPanel store={store} />
+        ) : (
+          <Inspector store={store} tools={tools} />
+        )}
       </aside>
+      <MaterialsModal store={store} />
       <StatusBar store={store} />
       <PromptModal store={store} />
       {status === 'ready' ? <Palette store={store} tools={tools} /> : null}
@@ -280,6 +305,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
           onValueChange={(v) => { store.setLevel(v); }}
         />
       ) : null}
+      <OptionsChip store={store} />
       <span className="fs-spacer" />
       <SegmentedControl
         aria-label="View"
@@ -295,6 +321,11 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
       <Tooltip content="Rooms, doors, windows, receptacles and fixtures, live">
         <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<TableIcon />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}/schedules`); }}>
           Schedules
+        </Button>
+      </Tooltip>
+      <Tooltip content="The project's materials: colour, metallic, roughness and tile size">
+        <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<PaletteIcon />} onClick={() => { store.set({ materialsOpen: true }); }}>
+          Materials
         </Button>
       </Tooltip>
       <Tooltip content="The brief and its bubble diagram">
