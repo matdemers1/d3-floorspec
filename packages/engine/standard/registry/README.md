@@ -81,6 +81,17 @@ On a pull request the gates also compare each entry with the pull request's base
 - a version only ever increases, and an entry is never removed: its name stays reserved, and its
   earlier versions stay recoverable from this repository's history and at their published URLs.
 
+**A new Core draft, while Floorspec is 0.x (FLR-ADR-034).** When a Core draft is published that
+changes nothing an official extension reads, that extension's Release Candidate may take it in
+place, without a new version. The change is limited to three things:
+- adding the draft to its 1.1 table and its 1.2.1 statement;
+- one activation test showing a document of the new draft evaluated exactly as one of an earlier draft;
+- its implementations' evidence, run again.
+
+Nothing it validates or derives for an existing draft changes, and its schema is untouched. Anything
+more is a new version. From 1.0 on, and for a Ratified version at any time, a new Core version is
+always a new version of the extension.
+
 A maintainer may allow anything else — two steps at once, a withdrawn proposal — by adding the
 `registry-maintainer` label to the pull request, which re-runs the gates, and says why in it.
 
