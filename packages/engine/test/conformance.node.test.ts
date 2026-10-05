@@ -1,15 +1,18 @@
 /**
- * The conformance suite (FLR-ADR-009: the oracle), vendored from floorspec at the commit in
+ * The conformance suites (FLR-ADR-009: the oracle), vendored from floorspec at the commit in
  * standard/LOCK.json. Every case is run as each conformance class: Validator (diagnostics, compared
  * as conformance/README.md says), Canonicalizer (the bytes of canonical.json), the content hash, and
  * Deriver (deep-equal `derived`).
+ *
+ * Core 0.2's suite runs against the engine as it ships — a 0.2 reader — with a case's
+ * registry.json, when it has one, as the validator's known extensions (12.2). Core 0.1's suite is
+ * the published 0.1 suite, unchanged, and runs against the engine configured as a Core 0.1 reader:
+ * it holds a document declaring "0.2" that a 0.1 reader rejects with FS-DOC-001.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { check } from '../src/index.js';
-
-const suite = join(import.meta.dirname, '..', 'standard', 'conformance', 'core', '0.1');
+import { check, type ValidateOptions } from '../src/index.js';
 
 interface ExpectedDiagnostic {
   code: string;
@@ -34,44 +37,70 @@ function cases(dir: string): string[] {
   return out;
 }
 
-const all = cases(suite);
-const results = new Map<string, boolean>();
+for (const core of ['0.1', '0.2'] as const) {
+  const suite = join(import.meta.dirname, '..', 'standard', 'conformance', 'core', core);
+  const all = cases(suite);
+  const results = new Map<string, boolean>();
 
-describe('conformance suite (Core 0.1)', () => {
-  it('is vendored', () => {
-    expect(all.length).toBeGreaterThan(0);
+  describe(`conformance suite (Core ${core})`, () => {
+    it('is vendored', () => {
+      expect(all.length).toBeGreaterThan(0);
+    });
+
+    it.each(all.map((d) => [relative(suite, d), d]))('%s', (_name, dir) => {
+      const name = relative(suite, dir);
+      results.set(name, false);
+      const input = new Uint8Array(readFileSync(join(dir, 'input.json')));
+      const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as Expected;
+      const registryPath = join(dir, 'registry.json');
+      const options: ValidateOptions = {
+        core,
+        ...(existsSync(registryPath) && { knownExtensions: new Uint8Array(readFileSync(registryPath)) }),
+      };
+      const r = check(input, options);
+      const actual = r.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));
+
+      // Validator: exact list, except that [FS-SCH-001] matches one or more FS-SCH-001 and nothing else.
+      const schemaOnly = expected.diagnostics.length === 1 && expected.diagnostics[0]!.code === 'FS-SCH-001';
+      if (schemaOnly) {
+        expect(actual.length, JSON.stringify(actual)).toBeGreaterThan(0);
+        expect(actual.every((d) => d.code === 'FS-SCH-001' && d.severity === 'error'), JSON.stringify(actual)).toBe(true);
+      } else {
+        expect(actual).toEqual(expected.diagnostics);
+      }
+      expect(r.valid).toBe(expected.valid);
+
+      // Hash, canonical form and derived values: present exactly when the document is valid. The
+      // derived values are compared as JSON text after sorting members, so a value that is equal
+      // but of another type (a string for a number) fails.
+      expect(r.hash).toBe(expected.hash);
+      const canonicalPath = join(dir, 'canonical.json');
+      if (existsSync(canonicalPath)) expect(r.canonical).toBe(readFileSync(canonicalPath, 'utf8'));
+      else expect(r.canonical).toBeUndefined();
+      expect(r.derived).toEqual(expected.derived);
+      expect(sortedJson(r.derived)).toBe(sortedJson(expected.derived));
+      results.set(name, true);
+    });
+
+    // The pass rate, on stderr so the default reporter shows it; the 100% gate is every case above.
+    afterAll(() => {
+      const passed = [...results.values()].filter(Boolean).length;
+      process.stderr.write(`\nconformance (Core ${core}): ${passed}/${all.length} cases pass (${all.length ? Math.floor((100 * passed) / all.length) : 0}%)\n`);
+    });
   });
+}
 
-  it.each(all.map((d) => [relative(suite, d), d]))('%s', (_name, dir) => {
-    const name = relative(suite, dir);
-    results.set(name, false);
-    const input = new Uint8Array(readFileSync(join(dir, 'input.json')));
-    const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as Expected;
-    const r = check(input);
-    const actual = r.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));
-
-    // Validator: exact list, except that [FS-SCH-001] matches one or more FS-SCH-001 and nothing else.
-    const schemaOnly = expected.diagnostics.length === 1 && expected.diagnostics[0]!.code === 'FS-SCH-001';
-    if (schemaOnly) {
-      expect(actual.length, JSON.stringify(actual)).toBeGreaterThan(0);
-      expect(actual.every((d) => d.code === 'FS-SCH-001' && d.severity === 'error'), JSON.stringify(actual)).toBe(true);
-    } else {
-      expect(actual).toEqual(expected.diagnostics);
-    }
-    expect(r.valid).toBe(expected.valid);
-
-    // Hash, canonical form and derived values: present exactly when the document is valid.
-    expect(r.hash).toBe(expected.hash);
-    const canonicalPath = join(dir, 'canonical.json');
-    if (existsSync(canonicalPath)) expect(r.canonical).toBe(readFileSync(canonicalPath, 'utf8'));
-    else expect(r.canonical).toBeUndefined();
-    expect(r.derived).toEqual(expected.derived);
-    results.set(name, true);
-  });
-
-  // The pass rate, on stderr so the default reporter shows it; the 100% gate is every case above.
-  afterAll(() => {
-    const passed = [...results.values()].filter(Boolean).length;
-    process.stderr.write(`\nconformance: ${passed}/${all.length} cases pass (${all.length ? Math.floor((100 * passed) / all.length) : 0}%)\n`);
-  });
-});
+/** JSON text with every object's members sorted, for a byte-for-byte comparison of derived values. */
+function sortedJson(v: unknown): string | undefined {
+  const sort = (x: unknown): unknown =>
+    Array.isArray(x)
+      ? x.map(sort)
+      : typeof x === 'object' && x !== null
+        ? Object.fromEntries(
+            Object.keys(x)
+              .sort()
+              .map((k) => [k, sort((x as Record<string, unknown>)[k])]),
+          )
+        : x;
+  return v === undefined ? undefined : JSON.stringify(sort(v));
+}

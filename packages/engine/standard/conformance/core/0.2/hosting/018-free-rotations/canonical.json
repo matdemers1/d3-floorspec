@@ -1,0 +1,259 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "extensions": {
+    "FS_furniture": {
+      "collections": {
+        "pieces": {
+          "R0": {
+            "fallback": {
+              "box": {
+                "max": [
+                  320000,
+                  320000,
+                  1024000
+                ],
+                "min": [
+                  -320000,
+                  -320000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                2560000,
+                1920000
+              ],
+              "rotation": 0
+            }
+          },
+          "R180": {
+            "fallback": {
+              "box": {
+                "max": [
+                  320000,
+                  320000,
+                  1024000
+                ],
+                "min": [
+                  -320000,
+                  -320000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                2611200,
+                1920000
+              ],
+              "rotation": 180000000
+            }
+          },
+          "R30": {
+            "fallback": {
+              "box": {
+                "max": [
+                  320000,
+                  320000,
+                  1024000
+                ],
+                "min": [
+                  -320000,
+                  -320000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                2585600,
+                1920000
+              ],
+              "rotation": 30000000
+            }
+          },
+          "R45": {
+            "fallback": {
+              "box": {
+                "max": [
+                  320000,
+                  320000,
+                  1024000
+                ],
+                "min": [
+                  -320000,
+                  -320000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                2572800,
+                1920000
+              ],
+              "rotation": 45000000
+            }
+          },
+          "RM135": {
+            "fallback": {
+              "box": {
+                "max": [
+                  320000,
+                  320000,
+                  1024000
+                ],
+                "min": [
+                  -320000,
+                  -320000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                2598400,
+                1920000
+              ],
+              "rotation": -135000000
+            }
+          },
+          "ROD": {
+            "fallback": {
+              "box": {
+                "max": [
+                  320000,
+                  320000,
+                  1024000
+                ],
+                "min": [
+                  -320000,
+                  -320000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                2624000,
+                1920000
+              ],
+              "rotation": 123456789
+            }
+          }
+        }
+      }
+    }
+  },
+  "extensionsUsed": {
+    "FS_furniture": "0.1"
+  },
+  "floorspec": "0.2",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "level": "L1"
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    }
+  }
+}

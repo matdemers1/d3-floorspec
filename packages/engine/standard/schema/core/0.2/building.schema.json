@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.2/building.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.4's common members; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Building",
+  "description": "1.8: a building of the project — a house, a detached garage, an accessory dwelling. It has only the members every element may carry (1.4) and no others (FS-CORE-1.4.1).",
+  "type": "object",
+  "properties": {
+    "name": {
+      "$ref": "defs.schema.json#/$defs/name",
+      "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+    },
+    "extensions": {
+      "$ref": "defs.schema.json#/$defs/extensions",
+      "description": "1.4, 1.6: extension data on this building.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.4, 1.7: application-specific data on this building.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

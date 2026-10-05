@@ -1,0 +1,7 @@
+{
+  "description": "Openings measure their sill from their wall's base: in WC (base 100 mm) a 300 mm sill is at 400 mm; in WD (based on L2 at 3000 mm) a sill of 0 is at 3000 mm.",
+  "covers": [
+    "FS-CORE-7.4.1",
+    "FS-CORE-5.9.3"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "An adjacency has no \"distance\".",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

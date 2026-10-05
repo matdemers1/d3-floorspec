@@ -1,0 +1,7 @@
+{
+  "description": "Two separate rectangles of walls on one level - a house and a detached studio drawn on the same plan: two components, neither inside the other, and a room in each.",
+  "covers": [
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1"
+  ]
+}

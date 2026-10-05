@@ -1,0 +1,9 @@
+{
+  "description": "A toilet on R1's floor at (1 m, 1 m), turned to face north (rotation 90,000,000, facing vector (0, 10^9)): its frame's x axis is +Y, so its 700 mm depth runs north and its 400 mm width east-west, centred on the position.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.3.1",
+    "FS-CORE-13.4.1",
+    "FS-CORE-12.6.2"
+  ]
+}

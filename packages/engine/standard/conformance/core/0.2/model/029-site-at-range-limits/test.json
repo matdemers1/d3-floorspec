@@ -1,0 +1,8 @@
+{
+  "description": "A site at the edges of every range: trueNorth 180,000,000 (included), latitude -90,000,000 and longitude 180,000,000 (both included), with a clockwise boundary.",
+  "covers": [
+    "FS-CORE-1.8.1",
+    "FS-CORE-1.8.2",
+    "FS-CORE-2.6.1"
+  ]
+}

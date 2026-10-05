@@ -1,0 +1,7 @@
+{
+  "description": "A surface host on R1, which shares its face with R2 (FS-INV-202): FS-INV-503 is evaluated only for a room without room invariants, so it is not reported though the position is outside.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-13.3.4"
+  ]
+}

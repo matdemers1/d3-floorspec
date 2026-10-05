@@ -1,0 +1,7 @@
+{
+  "description": "A window on the north wall W2 with an access envelope: a window has no swing, so its frame faces the default \"right\" - the wall's interior - and the envelope, 900 mm deep, runs from the floor (900 mm below the sill) to the head.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.5.2"
+  ]
+}

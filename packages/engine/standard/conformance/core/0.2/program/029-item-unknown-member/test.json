@@ -1,0 +1,6 @@
+{
+  "description": "An item does not list its rooms; rooms name their item.",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

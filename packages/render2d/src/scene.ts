@@ -54,6 +54,23 @@ export interface SceneFace {
   readonly area: string;
 }
 
+/** An extension element's fallback box in plan (Core 0.2, 12.6): what a core-only reader shows. */
+export interface SceneFallback {
+  readonly id: string;
+  readonly extension: string;
+  readonly collection: string;
+  /** Four points, counter-clockwise, as the engine derived them (13.2). */
+  readonly footprint: readonly Pt[];
+}
+
+/** A clearance envelope in plan (Core 0.2, 13.5), by owner — an opening or an extension element — and name. */
+export interface SceneClearance {
+  readonly owner: string;
+  readonly name: string;
+  readonly purpose: string;
+  readonly footprint: readonly Pt[];
+}
+
 export interface Scene {
   readonly projectName: string;
   readonly levelId: string;
@@ -66,6 +83,10 @@ export interface Scene {
   readonly openings: ReadonlyMap<string, SceneOpening>;
   readonly rooms: ReadonlyMap<string, SceneRoom>;
   readonly unanchored: readonly SceneFace[];
+  /** Extension elements on this level, by ID (Core 0.2; empty for a 0.1 document). */
+  readonly fallbacks: ReadonlyMap<string, SceneFallback>;
+  /** Clearance envelopes on this level, by owner then name. */
+  readonly clearances: readonly SceneClearance[];
 }
 
 /** A collection as [id, element] pairs sorted by ID (absent: empty). */
@@ -149,6 +170,13 @@ export function buildScene(input: string | Uint8Array | object, level?: string):
 
   const unanchored = derived.unanchored.filter((u) => u.level === lid).map((u) => ({ outer: u.outer, holes: u.holes, area: u.area }));
 
+  const fallbacks = new Map<string, SceneFallback>();
+  for (const [id, fb] of entries(derived.fallbacks))
+    if (fb.level === lid) fallbacks.set(id, { id, extension: fb.extension, collection: fb.collection, footprint: fb.footprint });
+  const clearances: SceneClearance[] = [];
+  for (const [owner, envs] of entries(derived.clearances))
+    for (const [name, env] of entries(envs)) if (env.level === lid) clearances.push({ owner, name, purpose: env.purpose, footprint: env.footprint });
+
   return {
     projectName: doc.project.name,
     levelId: lid,
@@ -160,5 +188,7 @@ export function buildScene(input: string | Uint8Array | object, level?: string):
     openings: byId(openings),
     rooms: byId(rooms),
     unanchored,
+    fallbacks: byId(fallbacks),
+    clearances,
   };
 }

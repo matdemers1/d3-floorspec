@@ -1,0 +1,6 @@
+{
+  "description": "JSON strings use double quotes.",
+  "covers": [
+    "FS-CORE-9.1.1"
+  ]
+}

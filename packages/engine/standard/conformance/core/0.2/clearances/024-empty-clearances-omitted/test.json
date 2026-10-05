@@ -1,0 +1,7 @@
+{
+  "description": "A door type with \"clearances\": {} - the constant default - is written without it in canonical form, and derives no envelope.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-1.5.1"
+  ]
+}

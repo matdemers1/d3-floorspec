@@ -1,0 +1,6 @@
+{
+  "description": "Functions are case-sensitive: \"Kitchen\" is not a term.",
+  "covers": [
+    "FS-CORE-4.1.1"
+  ]
+}

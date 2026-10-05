@@ -1,0 +1,7 @@
+{
+  "description": "Two rooms fulfil the kitchen item, which asks for one: an item with more rooms than its count meets it. DIN has no room, so its count is unmet and its adjacencies are not adjacent.",
+  "covers": [
+    "FS-CORE-11.3.1",
+    "FS-CORE-11.4.1"
+  ]
+}

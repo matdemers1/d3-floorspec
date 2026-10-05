@@ -1,0 +1,7 @@
+{
+  "description": "EXT_a requires EXT_b at \"~1.2.0\", and the document uses EXT_b 1.2.7. ~1.2.0 admits 1.2.7.",
+  "covers": [
+    "FS-CORE-12.3.1",
+    "FS-CORE-12.3.3"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A declaration is a string or an object, not an array.",
+  "covers": [
+    "FS-CORE-12.1.1"
+  ]
+}

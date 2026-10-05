@@ -1,0 +1,7 @@
+{
+  "description": "A known entry whose range \"1.x\" is not in the range grammar: FS-CFG-001.",
+  "covers": [
+    "FS-CORE-12.2.1",
+    "FS-CORE-12.3.1"
+  ]
+}

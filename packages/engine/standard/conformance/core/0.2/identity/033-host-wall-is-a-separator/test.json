@@ -1,0 +1,6 @@
+{
+  "description": "A wall-face host on a separator: host.wall must resolve to a wall. (The separator also splits the room's face; R1 is in one half.)",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

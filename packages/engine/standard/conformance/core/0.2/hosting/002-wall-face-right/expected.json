@@ -1,0 +1,73 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "7b2c79ce5c90ea98689b4020bcc5bfce1fb385c6a22b7b9cdfeca49589f87413",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "OUT": {
+        "level": "L1",
+        "extension": "EXT_electrical",
+        "collection": "outlets",
+        "footprint": [[64000, 1228800], [102400, 1228800], [102400, 1331200], [64000, 1331200]],
+        "bottom": 384000,
+        "top": 537600
+      }
+    },
+    "placements": {
+      "OUT": {
+        "point": [64000, 1280000, 384000],
+        "facing": 0
+      }
+    },
+    "clearances": {},
+    "clearanceOverlaps": []
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The same item with EXT_wellness declared: valid. No room fulfils it, so its count is unmet.",
+  "covers": [
+    "FS-CORE-11.1.2"
+  ]
+}

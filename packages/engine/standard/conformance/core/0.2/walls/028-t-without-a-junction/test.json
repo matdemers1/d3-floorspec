@@ -1,0 +1,7 @@
+{
+  "description": "A wall ends against the middle of another: J3 lies in the interior of W1. The through wall must be two edges.",
+  "covers": [
+    "FS-CORE-5.3.2",
+    "FS-CORE-10.2.1"
+  ]
+}

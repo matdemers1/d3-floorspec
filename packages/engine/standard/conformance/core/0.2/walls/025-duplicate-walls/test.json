@@ -1,0 +1,6 @@
+{
+  "description": "Two walls from J1 to J2: one wall drawn twice.",
+  "covers": [
+    "FS-CORE-5.2.2"
+  ]
+}

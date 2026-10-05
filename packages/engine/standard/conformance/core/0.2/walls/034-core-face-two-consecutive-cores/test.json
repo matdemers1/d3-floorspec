@@ -1,0 +1,7 @@
+{
+  "description": "Two consecutive core layers are one core: the location line is on the exterior face of the first.",
+  "covers": [
+    "FS-CORE-5.4.2",
+    "FS-CORE-5.7.1"
+  ]
+}

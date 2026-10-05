@@ -1,0 +1,6 @@
+{
+  "description": "A declaration always has a version.",
+  "covers": [
+    "FS-CORE-12.1.1"
+  ]
+}

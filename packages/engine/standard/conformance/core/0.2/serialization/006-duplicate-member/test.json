@@ -1,0 +1,7 @@
+{
+  "description": "The wall W1 has \"type\" twice. Parsers that keep the last copy and parsers that keep the first would read different buildings, so the document is rejected.",
+  "covers": [
+    "FS-CORE-9.1.2",
+    "FS-CORE-10.2.1"
+  ]
+}

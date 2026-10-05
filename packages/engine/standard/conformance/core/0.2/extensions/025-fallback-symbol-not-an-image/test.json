@@ -1,0 +1,6 @@
+{
+  "description": "A fallback whose asset and symbol are the same glTF JSON model: right for the asset, wrong for the symbol, so one FS-INV-506.",
+  "covers": [
+    "FS-CORE-12.6.1"
+  ]
+}

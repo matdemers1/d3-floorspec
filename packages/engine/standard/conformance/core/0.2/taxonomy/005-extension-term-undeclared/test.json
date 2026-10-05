@@ -1,0 +1,7 @@
+{
+  "description": "The same room function without EXT_wellness in extensionsUsed: FS-INV-006 naming the room.",
+  "covers": [
+    "FS-CORE-4.2.1",
+    "FS-CORE-10.2.1"
+  ]
+}

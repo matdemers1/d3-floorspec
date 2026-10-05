@@ -4,7 +4,8 @@
  */
 import { Surd } from '../exact/surd.js';
 import { cross, dot, type IPoint } from '../geometry/predicates.js';
-import { entries, get, ipoint, openingDimensions, type FloorspecDocument } from '../model/document.js';
+import { entries, extElements, get, ipoint, openingDimensions, programItems, type FloorspecDocument } from '../model/document.js';
+import { analyseProgram } from '../derive/program.js';
 import type { Analysis, Reporter } from './invariants.js';
 
 const ptr = (collection: string, id: string): string => `/${collection}/${id.replace(/~/g, '~0').replace(/\//g, '~1')}`;
@@ -104,6 +105,10 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
   }
   for (const [, s] of entries(doc.slabs)) add(s.material);
   for (const [, m] of entries(doc.materials)) add(m.texture?.asset);
+  for (const x of extElements(doc)) {
+    add(x.element.fallback.asset);
+    add(x.element.fallback.symbol);
+  }
   for (const c of ['types', 'materials', 'assets'] as const)
     for (const [id] of entries(doc[c] as Record<string, unknown> | undefined))
       if (!referred.has(id)) r.report('FS-LINT-006', `${id} is not referred to by anything.`, [id], { pointer: ptr(c, id) }, [{ op: 'remove', id }]);
@@ -111,4 +116,27 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
   // 007: assets located by uri.
   for (const [id, a] of entries(doc.assets))
     if (a.uri !== undefined) r.report('FS-LINT-007', `${id} is located by uri, so the document depends on someone else's server.`, [id], { pointer: ptr('assets', id) });
+
+  // 008 … 011: the program (Core 0.2).
+  if (analysis.core02) programLints(doc, analysis, r);
+}
+
+/** 11.5: an unmet program is a warning, never an error (FS-CORE-11.5.2). */
+function programLints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): void {
+  const { derived, area2, roomsOf } = analyseProgram(doc, analysis);
+  for (const [iid, item] of programItems(doc)) {
+    const ptrItem = `/program/items/${iid}`;
+    if (!derived.items[iid]!.countMet)
+      r.report('FS-LINT-008', `${iid} asks for ${item.count ?? 1} room${(item.count ?? 1) === 1 ? '' : 's'} and has ${roomsOf.get(iid)!.length}.`, [iid], { pointer: ptrItem });
+    if (item.minArea !== undefined)
+      for (const rid of roomsOf.get(iid)!)
+        if (area2.get(rid)! < 2n * BigInt(item.minArea))
+          r.report('FS-LINT-009', `${rid} is smaller than ${iid}'s minimum area.`, [iid, rid], { pointer: ptr('rooms', rid) });
+  }
+  derived.adjacency.forEach((a, i) => {
+    if (a.kind === 'required' && !a.adjacent)
+      r.report('FS-LINT-010', `No room of ${a.a} is next to a room of ${a.b}, which the program requires.`, [a.a, a.b], { pointer: `/program/adjacency/${i}` });
+    if (a.kind === 'forbidden' && a.adjacent)
+      r.report('FS-LINT-011', `A room of ${a.a} is next to a room of ${a.b}, which the program forbids.`, [a.a, a.b], { pointer: `/program/adjacency/${i}` });
+  });
 }

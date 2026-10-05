@@ -1,0 +1,7 @@
+{
+  "description": "Two walls meeting at an obtuse angle (direction (5, 2) after (1, 0)): the mitre corner is the exact intersection of an axis-aligned and an oblique face line.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

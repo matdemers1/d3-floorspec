@@ -1,0 +1,7 @@
+{
+  "description": "EXT_lighting used at 1.0, below ^1.1.0: FS-INV-602. (EXT_lighting 1.0 is not itself known, which changes nothing about EXT_electrical's requirement.)",
+  "covers": [
+    "FS-CORE-12.3.3",
+    "FS-CORE-12.3.1"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-403",
+      "severity": "error",
+      "elements": ["BED", "KIT"]
+    }
+  ]
+}

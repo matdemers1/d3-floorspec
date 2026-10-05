@@ -1,0 +1,9 @@
+{
+  "description": "Wall W1 keeps its type WT (100 mm) but states its own layers (200 mm): its own layers replace the type's entirely, so W1 is 200 mm thick and the room is narrower on that side.",
+  "covers": [
+    "FS-CORE-8.2.1",
+    "FS-CORE-5.4.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-6.2.1"
+  ]
+}

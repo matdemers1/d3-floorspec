@@ -1,0 +1,6 @@
+{
+  "description": "trueNorth 180,000,001 is more than a half turn.",
+  "covers": [
+    "FS-CORE-1.8.1"
+  ]
+}

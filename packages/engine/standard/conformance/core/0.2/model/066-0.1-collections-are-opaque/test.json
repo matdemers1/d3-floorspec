@@ -1,0 +1,7 @@
+{
+  "description": "A 0.1 document whose top-level extension data has a member named \"collections\" that would be malformed in 0.2. In a 0.1 document extension data is opaque, so it is valid, the ID \"SOFA\" is not an element, and nothing is derived from it: it reads exactly as in 0.1.",
+  "covers": [
+    "FS-CORE-1.2.4",
+    "FS-CORE-1.6.9"
+  ]
+}

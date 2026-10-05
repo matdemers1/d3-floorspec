@@ -1,0 +1,41 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "materials": {
+    "M1": {
+      "texture": {
+        "asset": "A1",
+        "size": [384000, 1536000]
+      }
+    }
+  },
+  "assets": {
+    "A1": {
+      "sha256": "abababababababababababababababababababababababababababababababab",
+      "mediaType": "image/png"
+    }
+  }
+}

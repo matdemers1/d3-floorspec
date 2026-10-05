@@ -1,0 +1,6 @@
+{
+  "description": "A box's min is three lengths.",
+  "covers": [
+    "FS-CORE-13.2.1"
+  ]
+}

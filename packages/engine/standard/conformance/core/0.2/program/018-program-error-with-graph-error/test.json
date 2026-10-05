@@ -1,0 +1,7 @@
+{
+  "description": "A self-adjacency and a wall WX crossing the west wall WO0: program invariants are evaluated whatever the graph, so both FS-INV-104 and FS-INV-401 are reported.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-11.2.1"
+  ]
+}

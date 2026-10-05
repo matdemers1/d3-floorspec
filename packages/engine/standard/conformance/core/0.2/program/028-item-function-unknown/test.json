@@ -1,0 +1,6 @@
+{
+  "description": "\"bedroom\" is not a room function.",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A living room on L1 and a bedroom directly above it on L2: rooms on different levels are never adjacent, so the forbidden adjacency is met.",
+  "covers": [
+    "FS-CORE-11.4.1"
+  ]
+}

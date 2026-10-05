@@ -1,0 +1,6 @@
+{
+  "description": "An envelope has a max.",
+  "covers": [
+    "FS-CORE-13.5.1"
+  ]
+}

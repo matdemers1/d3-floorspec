@@ -1,0 +1,41 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    },
+    "L2": {
+      "building": "B1",
+      "elevation": 3840000,
+      "height": 3456000
+    }
+  },
+  "extensionsUsed": {
+    "FS_furniture": "0.1"
+  },
+  "extensions": {
+    "FS_furniture": {
+      "collections": {
+        "pieces": {
+          "LAMP": {
+            "fallback": {
+              "level": "L2",
+              "box": {
+                "min": [-256000, -256000, 128000],
+                "max": [256000, 256000, 2176000]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

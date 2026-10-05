@@ -1,0 +1,7 @@
+{
+  "description": "The same door swinging left, out of the room: its frame faces south, and the envelope is mirrored across the wall.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.5.2"
+  ]
+}

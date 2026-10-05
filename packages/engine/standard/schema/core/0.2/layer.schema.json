@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.2/layer.schema.json",
+  "$comment": "Normative (FLR-ADR-006). A layer's members have no constant default, so this file carries no `default`; the reference canonicalizer reads the `default` keywords of these schemas as its table of constant defaults (9.2 step 1).",
+  "title": "Layer",
+  "description": "8.3: one layer of a wall assembly, in a wall type's `layers` or a wall's own. It has only the members of its table.",
+  "type": "object",
+  "required": [
+    "thickness",
+    "function"
+  ],
+  "properties": {
+    "thickness": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "8.3: the layer's thickness, a length that MUST be greater than zero (FS-CORE-8.3.1). Always present."
+    },
+    "function": {
+      "title": "Layer function",
+      "description": "4.3: what the layer does. It MUST be one of the terms of 4.3's table (FS-CORE-4.3.1); the layer functions are closed in this draft. Always present.",
+      "type": "string",
+      "enum": [
+        "core",
+        "substrate",
+        "insulation",
+        "membrane",
+        "airGap",
+        "finish"
+      ]
+    },
+    "material": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "8.3: a reference to the material the layer is made of. Absent by default."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "layers": {
+      "title": "Layers",
+      "description": "8.3: an assembly from the wall's left (exterior) face to its right (interior) face. A layers array MUST contain at least one layer (FS-CORE-8.3.1).",
+      "type": "array",
+      "items": {
+        "$ref": "#"
+      },
+      "minItems": 1
+    }
+  }
+}

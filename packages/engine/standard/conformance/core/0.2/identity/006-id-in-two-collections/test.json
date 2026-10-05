@@ -1,0 +1,7 @@
+{
+  "description": "The ID \"WT\" names a wall type and a material: IDs are unique across all collections, so a reference can never be ambiguous. FS-INV-001 names the ID.",
+  "covers": [
+    "FS-CORE-3.1.2",
+    "FS-CORE-10.2.1"
+  ]
+}

@@ -1,5 +1,15 @@
 /** The summary as plain, Markdown-ish text: what `describe` returns to an agent. */
-import { describeJson, SIDES, type DescribeOptions, type DocumentSummary, type EdgeSummary, type Neighbour, type OpeningSummary, type RoomSummary } from './summary.js';
+import {
+  describeJson,
+  SIDES,
+  type DescribeOptions,
+  type DocumentSummary,
+  type EdgeSummary,
+  type ElementSummary,
+  type Neighbour,
+  type OpeningSummary,
+  type RoomSummary,
+} from './summary.js';
 import { inches, lengthText } from './units.js';
 import { ROOM_FUNCTIONS_TEXT } from '../vocabulary.js';
 
@@ -62,6 +72,20 @@ function room(r: RoomSummary): string[] {
   return out;
 }
 
+function element(e: ElementSummary): string {
+  const h = e.host;
+  const on =
+    h === undefined
+      ? 'unhosted (placed by its fallback box)'
+      : h.mode === 'wallFace'
+        ? `on the ${h.side} face of wall ${h.wall}, ${lengthText(h.offset)} from its start, ${lengthText(h.height)} above its base`
+        : h.mode === 'surface'
+          ? `on the ${h.surface} of ${h.room}`
+          : 'standing free';
+  const at = e.placement ? `; at [${e.placement.point.join(', ')}], facing ${e.placement.facing / 1_000_000}°` : '';
+  return `- ${e.kind} ${e.id}${q(e.name)}: ${on}${at}`;
+}
+
 /** Render a summary as text. */
 export function summaryText(s: DocumentSummary): string {
   const out: string[] = [`# Floorspec summary: ${s.project || '(unnamed project)'}`];
@@ -88,6 +112,10 @@ export function summaryText(s: DocumentSummary): string {
       const how = d.kind === 'separator' ? `open plan across separator ${d.via}` : `${d.kind} ${d.via} in wall ${d.wall ?? ''}`;
       out.push(`- ${neighbour(d.between[0])} <-> ${neighbour(d.between[1])}: ${how}`);
     }
+    if (l.elements?.length) {
+      out.push('', `### Extension elements (${l.id})`);
+      for (const e of l.elements) out.push(element(e));
+    }
     if (l.unanchored.length) {
       out.push('', `### Unanchored faces (${l.id})`);
       for (const u of l.unanchored) {
@@ -98,6 +126,21 @@ export function summaryText(s: DocumentSummary): string {
         for (const e of u.boundary) out.push(...edge(e, '').map((x) => `  ${x}`));
       }
     }
+  }
+  if (s.program) {
+    out.push('', '## Program');
+    for (const it of s.program.items) {
+      const areas = [
+        it.minAreaMet !== undefined && `minimum area ${it.minAreaMet ? 'met' : 'NOT met'}`,
+        it.targetAreaMet !== undefined && `target area ${it.targetAreaMet ? 'met' : 'not met'}`,
+      ].filter(Boolean);
+      out.push(
+        `- ${it.id}${q(it.name)} — ${it.function}: ${it.rooms.length} of ${it.count} room${it.count === 1 ? '' : 's'}` +
+          `${it.rooms.length ? ` (${it.rooms.join(', ')})` : ''}, count ${it.countMet ? 'met' : 'NOT met'}${areas.length ? `, ${areas.join(', ')}` : ''}`,
+      );
+    }
+    for (const a of s.program.adjacency)
+      out.push(`- ${a.kind} ${a.a} | ${a.b}: ${a.adjacent ? 'adjacent' : 'not adjacent'}${a.connected ? ', connected' : ''} — ${a.met ? 'met' : 'NOT met'}`);
   }
   out.push('', '## Diagnostics');
   if (!s.diagnostics.length) out.push('(none)');

@@ -1,0 +1,7 @@
+{
+  "description": "A declaration's version matches the version pattern.",
+  "covers": [
+    "FS-CORE-1.6.7",
+    "FS-CORE-12.1.1"
+  ]
+}

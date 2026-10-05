@@ -1,0 +1,7 @@
+{
+  "description": "A site location has both a latitude and a longitude.",
+  "covers": [
+    "FS-CORE-1.4.4",
+    "FS-CORE-1.8.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "An access envelope over the door swing in plan but above the door's head, from 2100 mm up: their vertical ranges only touch, so they do not overlap.",
+  "covers": [
+    "FS-CORE-13.6.1"
+  ]
+}

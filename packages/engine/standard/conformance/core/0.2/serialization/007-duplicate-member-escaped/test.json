@@ -1,0 +1,6 @@
+{
+  "description": "\"name\" and \"n\\u0061me\" are the same member name once unescaped.",
+  "covers": [
+    "FS-CORE-9.1.2"
+  ]
+}

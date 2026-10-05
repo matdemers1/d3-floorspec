@@ -1,0 +1,6 @@
+{
+  "description": "An extension element's name is 1 to 200 characters.",
+  "covers": [
+    "FS-CORE-12.5.2"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Conformance"
+  },
+  "extensionsUsed": {
+    "EXT_electrical": "2.0",
+    "EXT_lighting": "1.2.0"
+  }
+}

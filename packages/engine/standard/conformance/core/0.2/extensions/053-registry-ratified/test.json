@@ -1,0 +1,6 @@
+{
+  "description": "A ratified entry with two implementations is well formed.",
+  "covers": [
+    "FS-CORE-12.2.1"
+  ]
+}

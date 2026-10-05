@@ -1,0 +1,6 @@
+{
+  "description": "An extension version is a string, not a number.",
+  "covers": [
+    "FS-CORE-1.6.7"
+  ]
+}

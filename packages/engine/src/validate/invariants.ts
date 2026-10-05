@@ -11,19 +11,24 @@ import { LevelGeometry, type LevelEdge, type LevelJunction } from '../derive/lev
 import { isqrt } from '../exact/bigint.js';
 import {
   COLLECTIONS,
+  adjacencies,
   effectiveLayers,
   entries,
+  extElements,
   faceOffsets,
   get,
   ipoint,
   openingDimensions,
+  programItems,
   wallElevations,
   type FaceOffsets,
   type FloorspecDocument,
   type Layer,
+  type RegistryEntry,
 } from '../model/document.js';
 import { entry } from './catalogue.js';
 import type { Diagnostic, DiagnosticLocation, FixOp } from './diagnostic.js';
+import { extensionInvariants, hostingInvariants, programInvariants, surfaceInvariants } from './invariants02.js';
 
 export class Reporter {
   readonly diagnostics: Diagnostic[] = [];
@@ -35,7 +40,7 @@ export class Reporter {
   }
 }
 
-const ptr = (collection: string, id: string, ...rest: (string | number)[]): string =>
+export const ptr = (collection: string, id: string, ...rest: (string | number)[]): string =>
   '/' + [collection, id, ...rest.map(String)].map((s) => s.replace(/~/g, '~0').replace(/\//g, '~1')).join('/');
 
 /** What the invariant tier learned about each level, for derivation and lints. */
@@ -51,16 +56,25 @@ export interface LevelAnalysis {
 export interface Analysis {
   readonly levels: Map<string, LevelAnalysis>;
   readonly offsets: Map<string, FaceOffsets>;
+  /** The reader implements Core 0.2: its lints and derived values include chapters 11–13. */
+  readonly core02: boolean;
 }
 
 // ── reference invariants (FS-INV-001 … 009) ──────────────────────────────────
 
 function referenceInvariants(doc: FloorspecDocument, r: Reporter): void {
   // 001: an ID in more than one collection.
-  const where = new Map<string, string[]>();
-  for (const c of COLLECTIONS) for (const [id] of entries(doc[c] as Record<string, unknown> | undefined)) where.set(id, [...(where.get(id) ?? []), c]);
+  // Program items and every extension collection count as collections (3.1.3).
+  const where = new Map<string, { name: string; pointer: string }[]>();
+  const own = (id: string, name: string, pointer: string): void => {
+    where.set(id, [...(where.get(id) ?? []), { name, pointer }]);
+  };
+  for (const c of COLLECTIONS) for (const [id] of entries(doc[c] as Record<string, unknown> | undefined)) own(id, c, ptr(c, id));
+  for (const [id] of programItems(doc)) own(id, 'program items', ptr('program', 'items', id));
+  for (const x of extElements(doc)) own(x.id, `${x.extension} ${x.collection}`, ptr('extensions', x.extension, 'collections', x.collection, x.id));
   for (const [id, cs] of [...where].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
-    if (cs.length > 1) r.report('FS-INV-001', `The ID ${id} is used in more than one collection (${cs.join(', ')}).`, [id], { pointer: ptr(cs[1]!, id) });
+    if (cs.length > 1)
+      r.report('FS-INV-001', `The ID ${id} is used in more than one collection (${cs.map((c) => c.name).join(', ')}).`, [id], { pointer: cs[1]!.pointer });
 
   const resolves = (collection: (typeof COLLECTIONS)[number], id: string): boolean => get(doc[collection] as Record<string, unknown> | undefined, id) !== undefined;
   const ref = (owner: string, pointer: string, collection: (typeof COLLECTIONS)[number], id: string | undefined, kinds?: string[]): void => {
@@ -118,6 +132,29 @@ function referenceInvariants(doc: FloorspecDocument, r: Reporter): void {
   for (const [id, t] of entries(doc.types)) if (t.kind === 'wallType') layerRefs(id, ptr('types', id), t.layers);
   for (const [id, m] of entries(doc.materials)) if (m.texture) ref(id, ptr('materials', id, 'texture', 'asset'), 'assets', m.texture.asset);
 
+  // Core 0.2 (3.2): room briefs, the program, and the hosts and fallbacks of extension elements.
+  const items = doc.program?.items;
+  const refItem = (owner: string[], pointer: string, id: string): void => {
+    if (get(items, id) === undefined) r.report('FS-INV-002', `${owner[0] ?? 'An adjacency'} refers to ${id}, which is not a program item.`, owner, { pointer });
+  };
+  for (const [id, rm] of entries(doc.rooms)) if (rm.brief !== undefined) refItem([id], ptr('rooms', id, 'brief'), rm.brief);
+  for (const [id, it] of programItems(doc)) ref(id, ptr('program', 'items', id, 'level'), 'levels', it.level);
+  adjacencies(doc).forEach((a, i) => {
+    refItem([], `/program/adjacency/${i}/a`, a.a);
+    refItem([], `/program/adjacency/${i}/b`, a.b);
+  });
+  for (const x of extElements(doc)) {
+    const base = ptr('extensions', x.extension, 'collections', x.collection, x.id);
+    const h = x.element.host;
+    if (h?.mode === 'wallFace') ref(x.id, `${base}/host/wall`, 'walls', h.wall);
+    if (h?.mode === 'surface') ref(x.id, `${base}/host/room`, 'rooms', h.room);
+    if (h?.mode === 'free') ref(x.id, `${base}/host/level`, 'levels', h.level);
+    const fb = x.element.fallback;
+    ref(x.id, `${base}/fallback/level`, 'levels', fb.level);
+    ref(x.id, `${base}/fallback/asset`, 'assets', fb.asset);
+    ref(x.id, `${base}/fallback/symbol`, 'assets', fb.symbol);
+  }
+
   // 004, 005, 006: extensions declared in extensionsUsed.
   const used = doc.extensionsUsed ?? {};
   const isUsed = (name: string): boolean => Object.hasOwn(used, name);
@@ -130,11 +167,16 @@ function referenceInvariants(doc: FloorspecDocument, r: Reporter): void {
     for (const [id, el] of entries(doc[c] as Record<string, { extensions?: Record<string, unknown> }> | undefined))
       for (const name of Object.keys(el.extensions ?? {}).sort())
         if (!isUsed(name)) r.report('FS-INV-005', `${id} has data for the extension ${name}, which is not in extensionsUsed.`, [id], { pointer: ptr(c, id, 'extensions', name) });
-  for (const [id, rm] of entries(doc.rooms)) {
-    const f = rm.function;
+  for (const [id, it] of programItems(doc))
+    for (const name of Object.keys(it.extensions ?? {}).sort())
+      if (!isUsed(name)) r.report('FS-INV-005', `${id} has data for the extension ${name}, which is not in extensionsUsed.`, [id], { pointer: ptr('program', 'items', id, 'extensions', name) });
+  const functionOwners: [string, string | undefined, string][] = [
+    ...entries(doc.rooms).map(([id, rm]): [string, string | undefined, string] => [id, rm.function, ptr('rooms', id, 'function')]),
+    ...programItems(doc).map(([id, it]): [string, string | undefined, string] => [id, it.function, ptr('program', 'items', id, 'function')]),
+  ];
+  for (const [id, f, pointer] of functionOwners)
     if (f?.includes(':') && !isUsed(f.slice(0, f.indexOf(':'))))
-      r.report('FS-INV-006', `${id}'s function ${f} names an extension that is not in extensionsUsed.`, [id], { pointer: ptr('rooms', id, 'function') });
-  }
+      r.report('FS-INV-006', `${id}'s function ${f} names an extension that is not in extensionsUsed.`, [id], { pointer });
 
   // 007: an edge's junction on another level.
   const edgeLevels = (c: 'walls' | 'separators'): void => {
@@ -456,7 +498,14 @@ const minB = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 
 // ── tier 4 ───────────────────────────────────────────────────────────────────
 
-export function invariants(doc: FloorspecDocument, r: Reporter): Analysis | undefined {
+export interface InvariantOptions {
+  /** Evaluate the invariants Core 0.2 adds (a 0.2 reader, for documents of either draft). */
+  readonly core02: boolean;
+  /** The validator's known extensions (12.2), already checked. */
+  readonly known?: readonly RegistryEntry[];
+}
+
+export function invariants(doc: FloorspecDocument, r: Reporter, options: InvariantOptions = { core02: false }): Analysis | undefined {
   const before = r.diagnostics.length;
   referenceInvariants(doc, r);
   if (r.diagnostics.length > before) return undefined;
@@ -477,5 +526,12 @@ export function invariants(doc: FloorspecDocument, r: Reporter): Analysis | unde
     levels.set(lid, { id: lid, broken, geometry, roomFaces });
   }
   openingInvariants(doc, r);
-  return { levels, offsets };
+  const analysis: Analysis = { levels, offsets, core02: options.core02 };
+  if (options.core02) {
+    programInvariants(doc, r);
+    extensionInvariants(doc, options.known, r);
+    hostingInvariants(doc, r);
+    surfaceInvariants(doc, analysis, r);
+  }
+  return analysis;
 }

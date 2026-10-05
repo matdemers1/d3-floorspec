@@ -1,0 +1,7 @@
+{
+  "description": "One through wall at a junction with three edges.",
+  "covers": [
+    "FS-CORE-5.8.2",
+    "FS-CORE-10.2.1"
+  ]
+}

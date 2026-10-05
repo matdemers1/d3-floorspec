@@ -1,0 +1,7 @@
+{
+  "description": "Two rooms anchored in one degenerate sliver: FS-INV-203 and -204 are evaluated only for rooms without FS-INV-201 or -202, so only FS-INV-202 is reported.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-6.3.2"
+  ]
+}

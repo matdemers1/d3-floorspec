@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-003",
+      "severity": "error",
+      "elements": ["W3"]
+    }
+  ]
+}

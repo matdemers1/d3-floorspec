@@ -27,6 +27,8 @@ export interface RenderOptions {
   readonly dimensions?: boolean;
   /** Room labels (name, area, dimensions, ID). Default true. */
   readonly labels?: boolean;
+  /** Clearance envelopes (Core 0.2, 13.5) as dashed boxes. Default false. */
+  readonly clearances?: boolean;
 }
 
 export const DEFAULT_SCALE = 24;
@@ -339,6 +341,9 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   for (const r of scene.rooms.values()) all = grow(all, r.outer);
   for (const s of scene.separators.values()) all = grow(all, [s.start, s.end]);
   for (const u of scene.unanchored) all = grow(all, u.outer);
+  for (const fb of scene.fallbacks.values()) all = grow(all, fb.footprint);
+  const showClearances = options.clearances ?? false;
+  if (showClearances) for (const c of scene.clearances) all = grow(all, c.footprint);
   if (diff) {
     for (const w of diff.walls.before.values()) all = grow(all, w.outline);
     for (const r of diff.rooms.before.values()) all = grow(all, r.outer);
@@ -442,6 +447,42 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
     );
   }
   parts.push(el('g', { id: 'openings' }, ops));
+
+  // ── extension elements: their fallback boxes (Core 0.2, 12.6), drawn by a core-only reader ──
+  if (scene.fallbacks.size) {
+    let fbs = '';
+    for (const fb of scene.fallbacks.values()) {
+      const a = hi.has(fb.id);
+      fbs += el('path', {
+        'data-id': fb.id,
+        'data-kind': `${fb.extension}:${fb.collection}`,
+        d: ringsPath([P(fb.footprint)]),
+        fill: a ? pal.accent : pal.faint,
+        'fill-opacity': a ? 0.35 : 0.12,
+        stroke: a ? pal.accent : pal.faint,
+        'stroke-width': 1,
+      });
+    }
+    parts.push(el('g', { id: 'fallbacks' }, fbs));
+  }
+
+  // ── clearance envelopes (Core 0.2, 13.5), when asked for ──
+  if (showClearances && scene.clearances.length) {
+    let cls = '';
+    for (const c of scene.clearances)
+      cls += el('path', {
+        'data-owner': c.owner,
+        'data-name': c.name,
+        'data-purpose': c.purpose,
+        d: ringsPath([P(c.footprint)]),
+        fill: pal.window,
+        'fill-opacity': 0.06,
+        stroke: pal.window,
+        'stroke-width': 1,
+        'stroke-dasharray': '4 3',
+      });
+    parts.push(el('g', { id: 'clearances' }, cls));
+  }
 
   // ── ghosts: what the changeset removed, and where moved elements were ──
   if (diff) {

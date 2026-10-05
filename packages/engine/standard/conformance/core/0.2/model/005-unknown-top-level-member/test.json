@@ -1,0 +1,6 @@
+{
+  "description": "New data enters through extensions or extras, never a new top-level member.",
+  "covers": [
+    "FS-CORE-1.1.2"
+  ]
+}

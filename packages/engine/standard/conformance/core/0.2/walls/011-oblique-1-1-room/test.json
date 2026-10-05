@@ -1,0 +1,10 @@
+{
+  "description": "A square room turned 45 degrees: every face line is offset by 64,000 along a unit normal of (1, 1)/sqrt(2), so every corner is irrational and is rounded once.",
+  "covers": [
+    "FS-CORE-2.2.1",
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1"
+  ]
+}

@@ -10,7 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
-import { evaluate, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { deriveFrom, evaluate, extElements, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -90,6 +90,49 @@ export interface Link {
   readonly wall?: string;
 }
 
+/** An extension element (Core 0.2, 12.5) and what it is placed on (13.3). */
+export interface ElementSummary {
+  readonly id: string;
+  readonly name?: string;
+  /** `<extension>:<collection>`: what kind of element it is. */
+  readonly kind: string;
+  /** What it is placed on; absent: placed only by its fallback box, in the level's coordinates. */
+  readonly host?:
+    | { readonly mode: 'wallFace'; readonly wall: string; readonly side: 'left' | 'right'; readonly offset: Length; readonly height: Length }
+    | { readonly mode: 'surface'; readonly room: string; readonly surface: 'floor' | 'ceiling' }
+    | { readonly mode: 'free' };
+  /** Its derived placement (13.4): origin in base units and facing in microdegrees. */
+  readonly placement?: { readonly point: readonly [number, number, number]; readonly facing: number };
+}
+
+/** One program item (Core 0.2, 11.3) and how far the plan meets it. */
+export interface ProgramItemSummary {
+  readonly id: string;
+  readonly name?: string;
+  readonly function: string;
+  readonly count: number;
+  readonly rooms: readonly string[];
+  readonly countMet: boolean;
+  readonly minAreaMet?: boolean;
+  readonly targetAreaMet?: boolean;
+}
+
+/** One adjacency of the program (11.4), with whether its rooms are adjacent and connected. */
+export interface ProgramAdjacencySummary {
+  readonly a: string;
+  readonly b: string;
+  readonly kind: 'required' | 'preferred' | 'forbidden';
+  readonly adjacent: boolean;
+  readonly connected: boolean;
+  /** Required or preferred: adjacent; forbidden: not adjacent. */
+  readonly met: boolean;
+}
+
+export interface ProgramSummary {
+  readonly items: readonly ProgramItemSummary[];
+  readonly adjacency: readonly ProgramAdjacencySummary[];
+}
+
 export interface LevelSummary {
   readonly id: string;
   readonly name?: string;
@@ -103,12 +146,16 @@ export interface LevelSummary {
   /** Where you can walk: doors, empty openings, and separators (open plan). */
   readonly doorGraph: readonly Link[];
   readonly unanchored: readonly FaceSummary[];
+  /** Extension elements on this level (Core 0.2), by ID; absent when there are none. */
+  readonly elements?: readonly ElementSummary[];
 }
 
 export interface DocumentSummary {
   readonly project: string;
   readonly valid: boolean;
   readonly levels: readonly LevelSummary[];
+  /** The program (Core 0.2), met or not; absent when the document has none or is not valid. */
+  readonly program?: ProgramSummary;
   readonly diagnostics: readonly DiagnosticSummary[];
 }
 
@@ -476,6 +523,50 @@ export function describeJson(document: string | Uint8Array | object, options: De
   }
 
   let levels = levelIds.map((lid) => levelSummary(doc, analysis, lid));
+  // Core 0.2: extension elements by level, and the program — derived only for a valid document.
+  const derived = ev.valid && analysis.core02 ? deriveFrom(doc, analysis) : undefined;
+  const elements = new Map<string, ElementSummary[]>();
+  for (const x of extElements(doc)) {
+    const h = x.element.host;
+    const pl = derived?.placements?.[x.id];
+    const summary: ElementSummary = {
+      id: x.id,
+      ...(x.element.name !== undefined && { name: x.element.name }),
+      kind: `${x.extension}:${x.collection}`,
+      ...(h && {
+        host:
+          h.mode === 'wallFace'
+            ? { mode: 'wallFace' as const, wall: h.wall, side: h.side, offset: length(BigInt(h.offset)), height: length(BigInt(h.height)) }
+            : h.mode === 'surface'
+              ? { mode: 'surface' as const, room: h.room, surface: h.surface }
+              : { mode: 'free' as const },
+      }),
+      ...(pl && { placement: { point: pl.point, facing: pl.facing } }),
+    };
+    const lid = x.element.fallback.level;
+    elements.set(lid, [...(elements.get(lid) ?? []), summary]);
+  }
+  levels = levels.map((l) => (elements.has(l.id) ? { ...l, elements: elements.get(l.id)! } : l));
+  const items = entries(doc.program?.items);
+  const program: ProgramSummary | undefined =
+    derived?.program && (items.length || derived.program.adjacency.length)
+      ? {
+          items: items.map(([id, it]) => {
+            const d = derived.program!.items[id]!;
+            return {
+              id,
+              ...(it.name !== undefined && { name: it.name }),
+              function: it.function,
+              count: it.count ?? 1,
+              rooms: d.rooms,
+              countMet: d.countMet,
+              ...(d.minAreaMet !== undefined && { minAreaMet: d.minAreaMet }),
+              ...(d.targetAreaMet !== undefined && { targetAreaMet: d.targetAreaMet }),
+            };
+          }),
+          adjacency: derived.program.adjacency.map((a) => ({ ...a, met: a.kind === 'forbidden' ? !a.adjacent : a.adjacent })),
+        }
+      : undefined;
   let diags = diagnostics;
   if (options.room !== undefined) {
     const rid = options.room;
@@ -485,6 +576,7 @@ export function describeJson(document: string | Uint8Array | object, options: De
       adjacency: l.adjacency.filter((a) => involves(a, rid)),
       doorGraph: l.doorGraph.filter((d) => involves(d, rid)),
       unanchored: [],
+      ...(l.elements && { elements: l.elements.filter((e) => e.host?.mode === 'surface' && e.host.room === rid) }),
     }));
     const mine = levels[0]?.rooms[0];
     const ids = mine ? roomElements(mine) : new Set([rid]);
@@ -497,5 +589,5 @@ export function describeJson(document: string | Uint8Array | object, options: De
     for (const [id, o] of entries(doc.openings)) if (onLevel.has(o.wall)) onLevel.add(id);
     diags = diagnostics.filter((d) => (d.level !== undefined ? d.level === lid : d.elements.length === 0 || d.elements.some((e) => onLevel.has(e))));
   }
-  return { project: doc.project.name, valid: ev.valid, levels, diagnostics: diags };
+  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), diagnostics: diags };
 }

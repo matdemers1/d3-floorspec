@@ -1,0 +1,7 @@
+{
+  "description": "A Y whose 400 mm trunk is much thicker than its two 100 mm arms: the wedge corners come out in clockwise order, so the junction fill is clockwise.",
+  "covers": [
+    "FS-CORE-5.7.4",
+    "FS-CORE-10.2.1"
+  ]
+}

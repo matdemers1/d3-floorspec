@@ -1,0 +1,7 @@
+{
+  "description": "A door type's envelope 1,279 base units deep: FS-INV-505 names the type.",
+  "covers": [
+    "FS-CORE-13.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

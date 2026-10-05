@@ -1,6 +1,7 @@
 /**
  * @floorspec/engine — the isomorphic Floorspec engine (FLR-ADR-010): the reference Reader,
- * Canonicalizer, Validator and Deriver of Floorspec Core 0.1.
+ * Canonicalizer, Validator and Deriver of Floorspec Core 0.2, which also reads Core 0.1 documents
+ * (1.2.4) and, configured with `core: '0.1'`, is a Core 0.1 reader.
  *
  * The same package runs in the browser, the server, the MCP server and the CLI, so nothing in it
  * reaches for a Node-only API. Lengths are integers in 1/1280 mm (FLR-ADR-004); every derived value
@@ -11,9 +12,9 @@ import { deriveFrom, type Derived } from './derive/derive.js';
 import { evaluate, type ValidateOptions } from './validate/validate.js';
 import type { Diagnostic } from './validate/diagnostic.js';
 
-export const ENGINE_VERSION = '0.1.0-draft';
-/** The Floorspec Core draft this engine implements. */
-export const CORE_VERSION = '0.1';
+export const ENGINE_VERSION = '0.2.0-draft';
+/** The newest Floorspec Core draft this engine implements; it reads every draft in IMPLEMENTED_VERSIONS. */
+export const CORE_VERSION = '0.2';
 
 export { parseJson, type ParseResult } from './json/parse.js';
 export { writeJcs, writePretty } from './json/serialize.js';
@@ -22,7 +23,26 @@ export { canonicalize, contentHash, omitDefaults } from './canonical/canonicaliz
 export { validate, evaluate, IMPLEMENTED_VERSIONS, type ValidateOptions, type ValidationResult, type Evaluation } from './validate/validate.js';
 export { CATALOGUE, entry as catalogueEntry, type CatalogueEntry, type Tier } from './validate/catalogue.js';
 export type { Diagnostic, DiagnosticLocation, FixOp, Severity } from './validate/diagnostic.js';
-export { deriveFrom, halfString, type Derived, type DerivedWall, type DerivedRoomPolygon, type DerivedUnanchored, type DerivedOpening } from './derive/derive.js';
+export {
+  deriveFrom,
+  halfString,
+  type Derived,
+  type DerivedWall,
+  type DerivedRoomPolygon,
+  type DerivedUnanchored,
+  type DerivedOpening,
+  type DerivedProgram,
+  type DerivedProgramItem,
+  type DerivedAdjacency,
+  type DerivedFallback,
+  type DerivedPlacement,
+  type DerivedClearance,
+  type EnvelopeRef,
+} from './derive/derive.js';
+export { loadKnownExtensions, knownEntry, satisfies as versionSatisfies, compareVersions } from './validate/registry.js';
+export { facingVector, direction } from './exact/angle.js';
+export { extentsOk, footprintsOverlap, type Frame, type Footprint } from './derive/frames.js';
+export { extElements, declaredVersion, type ExtElement } from './model/document.js';
 export { LevelGeometry } from './derive/level.js';
 export { Surd } from './exact/surd.js';
 export { abs, floorDiv, gcd, isqrt, exactSqrt, roundHalfEvenRational, toSafeNumber, big } from './exact/bigint.js';
@@ -42,7 +62,7 @@ export class InvalidDocumentError extends Error {
   }
 }
 
-/** Derive every value of chapters 5–7 from a document. Throws InvalidDocumentError when it is not valid. */
+/** Derive every value of chapters 5–7 and 11–13 from a document. Throws InvalidDocumentError when it is not valid. */
 export function derive(input: string | Uint8Array | object, options: ValidateOptions = {}): Derived {
   const ev = evaluate(input, options);
   if (!ev.valid || !ev.document || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);
