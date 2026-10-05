@@ -4,8 +4,9 @@ import { beat } from './heartbeat.js';
 import { createDrain, type Drain } from './queue/index.js';
 
 /**
- * The job-queue drain. Exports (PDF and DXF drawings, FLR-T-9.3) arrive on the Postgres queue the
- * api writes; the heartbeat file keeps the image's healthcheck honest about a hung process.
+ * The job-queue drain. Exports (PDF and DXF drawings, FLR-T-9.3; glTF and USDZ, FLR-T-9.2) arrive
+ * on the Postgres queue the api writes; the heartbeat file keeps the image's healthcheck honest
+ * about a hung process.
  *
  * And the health watchdog (FLR-T-12.2): the api's `/health` and the database, probed every
  * `WATCHDOG_INTERVAL_MS`, with an email to the operator after `WATCHDOG_THRESHOLD` failures in a
@@ -73,7 +74,7 @@ function startDrain(url: string): void {
   candidate.start().then(
     () => {
       drain = candidate;
-      process.stdout.write('d3-floorspec worker started: draining export.pdf and export.dxf jobs\n');
+      process.stdout.write('d3-floorspec worker started: draining export.pdf, export.dxf, export.gltf and export.usdz jobs\n');
     },
     (error: unknown) => {
       process.stderr.write(`job drain did not start (${error instanceof Error ? error.message : String(error)}); retrying in 30s\n`);

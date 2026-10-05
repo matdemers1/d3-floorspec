@@ -2,7 +2,14 @@ import { createDrain, type Drain } from '@d3-floorspec/worker/queue';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { MAX_PENDING } from '../../src/routes/exports.js';
 import { Browser, reset, setupOperator, start, testDb, tokenFor, TEST_ENV, type Reply, type Running } from './helpers.js';
+import { readFileSync } from 'node:fs';
+import type { Prisma } from '../../src/generated/prisma/client.js';
 import { projectWithDocument } from './drawings-support.js';
+
+/** Core 0.3's kitchen with two option sets: a design to choose (FLR-T-9.2). */
+const KITCHEN_OPTIONS = JSON.parse(
+  readFileSync(new URL('../../../../packages/engine/standard/conformance/core/0.3/examples/002-kitchen-options/input.json', import.meta.url), 'utf8'),
+) as Prisma.InputJsonObject;
 
 /**
  * FLR-T-9.3 end to end: an export is asked for over the API, queued on the Postgres job queue,
@@ -17,8 +24,19 @@ interface ExportView {
   version: string;
   levels: string[] | null;
   page: string | null;
+  design: Record<string, string> | null;
   error: string | null;
-  result: { name: string; contentType: string; size: number; sha256: string; sheets?: { number: string; title: string }[]; files?: string[] } | null;
+  result: {
+    name: string;
+    contentType: string;
+    size: number;
+    sha256: string;
+    sheets?: { number: string; title: string }[];
+    files?: string[];
+    design?: Record<string, string> | null;
+    levels?: string[];
+    elements?: number;
+  } | null;
   download: string | null;
 }
 
@@ -137,6 +155,54 @@ describe('drawing exports', () => {
     expect(text).toContain('\r\nE-POWR-DEVC\r\n');
     expect(text).toContain('FAMILY ROOM');
     expect(text.endsWith('  0\r\nEOF\r\n')).toBe(true);
+  });
+
+  it('queues glTF and USDZ of the 3D model, and serves a .glb and an aligned .usdz (FLR-T-9.2)', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator);
+    const gltf = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf' }));
+    const usdz = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'usdz', levels: ['MAIN'] }));
+    expect(gltf).toMatchObject({ kind: 'gltf', status: 'queued', page: null, design: null });
+    expect(await drain.runOnce()).toBe(2);
+
+    const g = view(await operator.get(`/api/projects/${id}/exports/${gltf.id}`));
+    expect(g.status, g.error ?? '').toBe('done');
+    expect(g.result).toMatchObject({ contentType: 'model/gltf-binary', design: null, levels: ['MAIN', 'UPPER'] });
+    expect(g.result?.elements).toBeGreaterThan(50);
+    const glb = await download(operator, `${running.url}${g.download ?? ''}`);
+    expect(glb.type).toBe('model/gltf-binary');
+    expect(glb.disposition).toBe(`attachment; filename="two-storey-ranch-${hash.slice(0, 8)}.glb"`);
+    expect(new TextDecoder().decode(glb.bytes.subarray(0, 4))).toBe('glTF');
+    const json = JSON.parse(new TextDecoder().decode(glb.bytes.subarray(20, 20 + new DataView(glb.bytes.buffer, glb.bytes.byteOffset).getUint32(12, true)))) as { asset: { extras: { floorspec: { version: string } } } };
+    expect(json.asset.extras.floorspec.version).toBe(hash);
+
+    const u = view(await operator.get(`/api/projects/${id}/exports/${usdz.id}`));
+    expect(u.status, u.error ?? '').toBe('done');
+    expect(u.result?.levels).toEqual(['MAIN']);
+    const file = await download(operator, `${running.url}${u.download ?? ''}`);
+    expect(file.type).toBe('model/vnd.usdz+zip');
+    expect(zipNames(file.bytes)).toEqual(['model.usda']);
+    // The root layer's data starts on a 64-byte boundary (the USDZ rule).
+    const v = new DataView(file.bytes.buffer, file.bytes.byteOffset);
+    expect((30 + v.getUint16(26, true) + v.getUint16(28, true)) % 64).toBe(0);
+    expect(await db.auditLog.count({ where: { action: 'export.request', targetId: { in: [gltf.id, usdz.id] } } })).toBe(2);
+  });
+
+  it('exports the design asked for, and refuses a design for a drawing or one the model does not have', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, KITCHEN_OPTIONS, 'Kitchen options');
+    const primary = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf' }));
+    const chosen = await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf', design: { KS: 'KB' } });
+    expect(chosen.status, chosen.text).toBe(202);
+    expect(view(chosen).design).toEqual({ KS: 'KB' });
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', design: { KS: 'KB' } })).status).toBe(400);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'usdz', design: { KS: 'NOPE' } })).status).toBe(422);
+    await drain.runOnce();
+    const a = view(await operator.get(`/api/projects/${id}/exports/${primary.id}`));
+    const b = view(await operator.get(`/api/projects/${id}/exports/${view(chosen).id}`));
+    expect(a.result?.design).toMatchObject({ KS: 'KA' });
+    expect(b.result?.design).toMatchObject({ KS: 'KB' });
+    expect(a.result?.sha256).not.toBe(b.result?.sha256);
   });
 
   it('refuses what cannot be drawn before it is queued', async () => {

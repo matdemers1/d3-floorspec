@@ -8,14 +8,15 @@ import './exports.css';
 /**
  * The Export dialog (Figma: Floorspec (FLR), P9 · Handoff & sharing, 16 · Export): every format in
  * one list, the one chosen outlined. What works today: the canonical model, the dimensioned PDF
- * (a sheet per level, a 3D view, marked not for construction) and DXF drawings on National CAD
- * Standard layers. glTF, USDZ and IFC are listed with the task that builds them.
+ * (a sheet per level, a 3D view, marked not for construction), DXF drawings on National CAD
+ * Standard layers, and the 3D model as glTF 2.0 or USDZ (FLR-T-9.2). IFC is listed with the task
+ * that builds it.
  */
 
-type Choice = 'model' | 'pdf' | 'dxf';
+type Choice = 'model' | 'pdf' | 'dxf' | 'gltf' | 'usdz';
 
 interface Format {
-  readonly id: Choice | 'gltf' | 'usdz' | 'ifc';
+  readonly id: Choice | 'ifc';
   readonly icon: ReactNode;
   readonly title: string;
   readonly detail: string;
@@ -25,8 +26,8 @@ interface Format {
 
 const FORMATS: readonly Format[] = [
   { id: 'model', icon: <BookOpen />, title: 'Floorspec model', detail: 'model.json — the canonical bytes of this version; always free, always valid', ext: '.json' },
-  { id: 'gltf', icon: <Box />, title: 'glTF 2.0', detail: '+Y up, metres, PBR materials · for Blender, three.js, AR', ext: '.glb', later: 'Arrives with FLR-T-9.2' },
-  { id: 'usdz', icon: <Box />, title: 'USDZ', detail: 'View at 1:1 in AR Quick Look on iPad', ext: '.usdz', later: 'Arrives with FLR-T-9.2' },
+  { id: 'gltf', icon: <Box />, title: 'glTF 2.0', detail: '+Y up, metres, PBR materials · for Blender, three.js, AR', ext: '.glb' },
+  { id: 'usdz', icon: <Box />, title: 'USDZ', detail: 'View at 1:1 in AR Quick Look on iPad', ext: '.usdz' },
   { id: 'pdf', icon: <FileText />, title: 'Dimensioned PDF', detail: 'Sheet per level + 3D view · marked “not for construction”', ext: '.pdf' },
   { id: 'dxf', icon: <Ruler />, title: 'DXF', detail: 'US National CAD Standard layers (A-WALL, A-DOOR, E-POWR…) · millimetres', ext: '.dxf' },
   { id: 'ifc', icon: <Layers />, title: 'IFC4 Reference View', detail: 'For your architect’s BIM tool · Floorspec IDs in a property set', ext: '.ifc', later: 'Arrives with FLR-T-9.4' },
@@ -99,6 +100,8 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
       <StatusDot tone="neutral">{describeJob(job)}</StatusDot>
     ) : choice === 'pdf' || choice === 'dxf' ? (
       <span className="fs-export-dialog__note">Drawn from this version by the worker; the same version always gives the same file.</span>
+    ) : choice === 'gltf' || choice === 'usdz' ? (
+      <span className="fs-export-dialog__note">Built from this version’s primary design by the worker; every element keeps its Floorspec ID.</span>
     ) : (
       <span className="fs-export-dialog__note">The canonical model: what every other format is made from.</span>
     );
@@ -151,7 +154,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
           );
         })}
       </div>
-      {choice === 'pdf' || choice === 'dxf' ? (
+      {choice !== 'model' ? (
         <div className="fs-export-dialog__options">
           {levels.length > 1 ? (
             <label className="fs-export-dialog__option">
@@ -162,7 +165,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
                 value={level}
                 disabled={busy}
                 onValueChange={setLevel}
-                options={[{ value: 'all', label: choice === 'pdf' ? 'Every level, a sheet each' : 'Every level, a file each (ZIP)' }, ...levels.map((l) => ({ value: l.id, label: l.name }))]}
+                options={[{ value: 'all', label: choice === 'pdf' ? 'Every level, a sheet each' : choice === 'dxf' ? 'Every level, a file each (ZIP)' : 'Every level, one model' }, ...levels.map((l) => ({ value: l.id, label: l.name }))]}
               />
             </label>
           ) : null}

@@ -1,12 +1,12 @@
 import { api } from '../lib/api';
 
 /**
- * Drawing exports (FLR-T-9.3): asked for, queued on the server's job queue, drawn by the worker,
+ * Drawing exports (FLR-T-9.3) and the 3D model (FLR-T-9.2, glTF and USDZ): asked for, queued on the server's job queue, drawn by the worker,
  * then downloaded. A navigation downloads the file — the API answers `Content-Disposition:
  * attachment` — so the page stays put and the browser names it.
  */
 
-export type ExportKind = 'pdf' | 'dxf';
+export type ExportKind = 'pdf' | 'dxf' | 'gltf' | 'usdz';
 export type PageName = 'tabloid' | 'arch-c' | 'arch-d' | 'letter' | 'a4' | 'a3';
 
 export interface ExportJob {
@@ -18,7 +18,7 @@ export interface ExportJob {
   levels: string[] | null;
   page: PageName | null;
   error: string | null;
-  result: { name: string; size: number; sheets?: { number: string; title: string }[]; files?: string[] } | null;
+  result: { name: string; size: number; sheets?: { number: string; title: string }[]; files?: string[]; elements?: number } | null;
   createdAt: string;
   finishedAt: string | null;
   download: string | null;
@@ -68,7 +68,7 @@ export async function untilFinished(projectId: string, job: ExportJob, onUpdate:
 
 /** What a job is doing, in words. */
 export function describeJob(job: ExportJob): string {
-  const what = job.kind === 'pdf' ? 'PDF' : 'DXF';
+  const what = { pdf: 'PDF', dxf: 'DXF', gltf: 'glTF', usdz: 'USDZ' }[job.kind];
   switch (job.status) {
     case 'queued':
       return `${what} waiting to be drawn`;
@@ -80,6 +80,7 @@ export function describeJob(job: ExportJob): string {
       const r = job.result;
       if (r?.sheets !== undefined) return `${r.name} · ${String(r.sheets.length)} ${r.sheets.length === 1 ? 'sheet' : 'sheets'}`;
       if (r?.files !== undefined) return `${r.name} · ${String(r.files.length)} ${r.files.length === 1 ? 'file' : 'files'}`;
+      if (r?.elements !== undefined) return `${r.name} · ${String(r.elements)} ${r.elements === 1 ? 'element' : 'elements'}`;
       return r?.name ?? what;
     }
   }

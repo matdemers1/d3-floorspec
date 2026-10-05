@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@floorspec/engine": "workspace:*",
+    "@floorspec/mesh": "workspace:*",
     "@floorspec/ops": "workspace:*",
     "@floorspec/render2d": "workspace:*",
     "@fontsource/inter": "5.3.0",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@types/pg": "8.23.1",
-    "dxf-parser": "1.1.2"
+    "dxf-parser": "1.1.2",
+    "gltf-validator": "2.0.0-dev.3.10"
   }
 }
