@@ -15,6 +15,7 @@ import { DataIcon, DropIcon, AirIcon, PlugIcon } from '../icons';
 import { defaultHeight, RECEPTACLE, extensionOfSystem, extensionVersion, kindById, kindsOf, SYSTEMS, words, type DeviceKind, type SystemId } from './catalog';
 import { addCircuit, addGasSource, addStack, assignCircuit, moveDevice, nextRecordId, rotateDevice, setMember, setRecordMember, type HostRef } from './ops';
 import { memberSpecs, type MemberSpec } from './schema';
+import { AssistantCard } from './Assistant';
 import { circuitsOf, compareIds, elementsOfExtension, recordsOf, switchesOf, type DeviceView } from './view';
 
 /**
@@ -228,6 +229,7 @@ export function ElectricalOverview({ store, model, units }: { store: EditorStore
           </ul>
         </Section>
       ) : null}
+      <AssistantCard store={store} model={model} units={units} />
       <Legend units={units} />
     </>
   );

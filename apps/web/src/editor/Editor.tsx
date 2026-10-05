@@ -1,7 +1,7 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, SegmentedControl, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
 import { navigate, takeParam } from '../lib/router';
 import { EditorStore, useEditor, type ToolId } from './store';
 import { ToolController } from './tools';
@@ -286,6 +286,11 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
         ]}
         onValueChange={() => undefined}
       />
+      <Tooltip content="Rooms, doors, windows, receptacles and fixtures, live">
+        <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<TableIcon />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}/schedules`); }}>
+          Schedules
+        </Button>
+      </Tooltip>
       <Tooltip content="The brief and its bubble diagram">
         <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<Waypoints />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}/program`); }}>
           Brief

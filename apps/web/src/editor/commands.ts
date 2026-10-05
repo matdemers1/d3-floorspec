@@ -6,6 +6,7 @@ import { kindOf } from './model';
 import { accept, openReview, reject } from './review';
 import { compareOp, refreshLog, toggleHistory } from './history';
 import { kindById, kindsOf, type SystemId } from './systems/catalog';
+import { navigate } from '../lib/router';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -88,6 +89,15 @@ export const COMMANDS: readonly Command[] = [
     run: (store) => {
       const layers = store.get().layers;
       store.set({ layers: { ...layers, coreOnly: !layers.coreOnly } });
+    },
+  },
+  {
+    id: 'view.schedules',
+    label: 'Open the schedules',
+    group: 'View',
+    keywords: 'rooms doors windows receptacles fixtures table csv',
+    run: (store) => {
+      navigate(`/projects/${store.projectId}/schedules`);
     },
   },
   {

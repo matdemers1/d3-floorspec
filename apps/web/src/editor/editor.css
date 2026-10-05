@@ -1842,3 +1842,54 @@ line.fs-diff {
   font-weight: var(--weight-medium);
   color: var(--color-fg);
 }
+
+/* The electrical assistant (FLR-T-5.8): its card, and the gaps it finds drawn on the plan. */
+.fs-assistant {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-12);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-muted);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-assistant p {
+  margin: 0;
+}
+.fs-assistant__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin: 0;
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+.fs-assistant__title svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+}
+.fs-assistant__note {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-gap {
+  stroke: var(--color-warning);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+.fs-gap__tag {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-warning);
+}
+.fs-gap__text {
+  fill: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}

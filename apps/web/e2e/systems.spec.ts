@@ -232,4 +232,42 @@ test('the P5 demo: a panel, receptacles on two 20 A circuits, a toilet and a wat
   expect(coreOnly.derived?.fallbacks).toEqual(head.derived.fallbacks);
   expect(coreOnly.derived?.placements).toEqual(head.derived.placements);
   await page.getByRole('switch', { name: 'Show as core-only' }).click();
+
+  // ── Schedules, live (FLR-T-5.8): open beside the editor, they follow every change made there.
+  const schedules = await page.context().newPage();
+  await schedules.goto(`/projects/${project}/schedules?tab=receptacles`);
+  await expect(schedules.getByRole('heading', { name: 'Schedules', level: 1 })).toBeVisible();
+  const rows = schedules.getByRole('tabpanel').locator('tbody tr');
+  await expect(rows).toHaveCount(4);
+  await expect(rows.first()).toContainText('GFCI');
+  await expect(rows.first()).toContainText('Kitchen');
+  await schedules.getByRole('tab', { name: /^Fixtures/ }).click();
+  await expect(rows).toHaveCount(2);
+  await expect(schedules.getByRole('tabpanel')).toContainText('Toilet');
+  await expect(schedules.getByRole('tabpanel')).toContainText('Water heater');
+  await schedules.getByRole('tab', { name: /^Receptacles/ }).click();
+  const download = schedules.waitForEvent('download');
+  await schedules.getByRole('button', { name: 'Export CSV' }).click();
+  const csv = await (await download).path();
+  expect((await import('node:fs')).readFileSync(csv, 'utf8')).toMatch(/^Mark,Circuit,Panel,Rating,Type,Room,Wall,Height\r\n/);
+
+  // ── The electrical assistant (FLR-T-5.8): it says what it finds and that it is advice, opens its
+  //    proposal as a changeset, and accepting it puts the receptacles in the schedule, live.
+  await page.bringToFront();
+  await page.keyboard.press('e');
+  const card = inspector.getByRole('region', { name: 'Electrical assistant' });
+  await expect(card).toContainText('Advisory, not a code check');
+  await expect(card).not.toContainText(/complian|NEC/i);
+  // The gaps it finds are drawn along their walls, the longest labelled.
+  await expect(page.locator('.fs-gap__text')).toContainText(/without a receptacle|between receptacles/);
+  expect(await page.locator('.fs-gap').count()).toBeGreaterThan(0);
+  await card.getByRole('button', { name: 'Review as changeset' }).click();
+  const proposal = page.getByRole('complementary', { name: 'Proposal' });
+  await expect(proposal.getByRole('heading', { name: /^Electrical layout/ })).toBeVisible();
+  await edits(page, project, () => proposal.getByRole('button', { name: 'Accept changeset' }).click());
+  head = await headOf(page, project);
+  const added = ids(head.doc, 'FS_electrical', 'receptacles').length;
+  expect(added).toBeGreaterThan(4);
+  await expect(rows).toHaveCount(added);
+  await schedules.close();
 });

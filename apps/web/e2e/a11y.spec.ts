@@ -417,7 +417,8 @@ test('every screen and state has no axe violations, in light and in dark', async
   await settled(page);
   await audit(page, 'editor, building systems on the plan');
   await page.keyboard.press('e');
-  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'Electrical' })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'Electrical', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Electrical assistant' })).toBeVisible();
   await audit(page, 'editor, electrical device tool');
   await page.keyboard.press('Escape');
   await pick(/^Electrical/, 'editor, a panel selected', true);
@@ -439,6 +440,15 @@ test('every screen and state has no axe violations, in light and in dark', async
   await audit(page, 'editor, clearances and the core-only view');
   await page.getByRole('switch', { name: 'Show as core-only' }).click();
   await page.getByRole('button', { name: 'Clearances' }).click();
+
+  // ── The schedules (FLR-T-5.8): rooms, and receptacles with their circuits.
+  await page.goto(`/projects/${house}/schedules`);
+  await expect(page.getByRole('heading', { name: 'Schedules', level: 1 })).toBeVisible();
+  await expect(page.getByRole('tabpanel').locator('tbody tr').first()).toBeVisible();
+  await audit(page, 'schedules, rooms');
+  await page.getByRole('tab', { name: /^Receptacles/ }).click();
+  await expect(page.getByRole('tabpanel')).toContainText('C5');
+  await audit(page, 'schedules, receptacles');
 
   // ── The dashboard with a pending proposal and a history.
   await page.goto(`/projects/${house}`);

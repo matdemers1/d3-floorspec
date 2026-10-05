@@ -14,6 +14,7 @@ import { commandById } from './commands';
 import { diffModels, type ModelDiff } from './diff';
 import { reviewDiagnostics, reviewTarget } from './review';
 import { DeviceGhost, DeviceOutline, SystemsLayer } from './systems/Symbols';
+import { GapMarkers } from './systems/Assistant';
 import { kindById } from './systems/catalog';
 import { anchorOf, circuitsOf } from './systems/view';
 
@@ -127,6 +128,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
   const cursor = picking ? 'copy' : tool === 'select' ? 'default' : 'crosshair';
   // The plan steps back while the systems are being worked on (the board's "23").
   const focusSystems = tool === 'device' || picking;
+  const electricalTool = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.system === 'electrical');
 
   return (
     <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined}>
@@ -161,6 +163,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} />
               {layers.dimensions ? <Dimensions view={view} level={level} units={units} /> : null}
               <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} />
+              {electricalTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={model} units={units} /> : null}
               <DiffLayer store={store} view={view} levelId={level.id} />
               <Findings store={store} view={view} level={level} />
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
