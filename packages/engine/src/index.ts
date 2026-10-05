@@ -96,6 +96,7 @@ export * as electrical from './extensions/fs/electrical.js';
 export * as plumbing from './extensions/fs/plumbing.js';
 export * as mechanical from './extensions/fs/mechanical.js';
 export * as lowvoltage from './extensions/fs/lowvoltage.js';
+export * as furniture from './extensions/fs/furniture.js';
 export { extentsOk, footprintsOverlap, type Frame, type Footprint } from './derive/frames.js';
 export {
   extElements,
