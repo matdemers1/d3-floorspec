@@ -1,0 +1,6 @@
+{
+  "description": "A required adjacency of KIT and PAN is a different adjacency from their preferred one: it is appended, and both are valid together (Core 11.2.3).",
+  "covers": [
+    "FS-OPS-2.6.1"
+  ]
+}

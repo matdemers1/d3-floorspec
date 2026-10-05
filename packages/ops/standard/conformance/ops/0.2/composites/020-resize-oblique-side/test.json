@@ -1,0 +1,6 @@
+{
+  "description": "The triangle's east side is its hypotenuse, which faces north-east, not exactly east: FS-OPS-008.",
+  "covers": [
+    "FS-OPS-4.4.1"
+  ]
+}

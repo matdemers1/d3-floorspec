@@ -1,0 +1,23 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/name",
+      "value": "Lounge"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/function"
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/extras",
+      "value": {
+        "colour": "teal"
+      }
+    }
+  ]
+}

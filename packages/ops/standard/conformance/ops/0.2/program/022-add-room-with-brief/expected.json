@@ -1,0 +1,40 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "7122c5ab94df44c4709c1e9990c4afb442bef8a70fef89248b3e8eaa4b47d93f",
+  "created": ["R3"],
+  "removed": ["R2"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "R2"
+    },
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R3",
+      "element": {
+        "level": "L1",
+        "anchor": [9753600, 1950720],
+        "brief": "OFF",
+        "function": "office"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "R3"
+    },
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R2",
+      "element": {
+        "level": "L1",
+        "anchor": [9753600, 1950720],
+        "name": "Office"
+      }
+    }
+  ]
+}

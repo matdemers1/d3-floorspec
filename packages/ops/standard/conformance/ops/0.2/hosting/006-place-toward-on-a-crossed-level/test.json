@@ -1,0 +1,6 @@
+{
+  "description": "A wall drawn across the room earlier in the batch leaves L1 with crossing walls, so a host that reads faces to find \"toward\" cannot: FS-OPS-007 names the level.",
+  "covers": [
+    "FS-OPS-3.4.1"
+  ]
+}

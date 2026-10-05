@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "KIT",
+      "path": "/minArea",
+      "value": 16384000000000
+    }
+  ]
+}

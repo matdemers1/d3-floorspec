@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "addJunction",
+      "position": "1 m from J1 toward J3",
+      "level": "L1"
+    }
+  ]
+}

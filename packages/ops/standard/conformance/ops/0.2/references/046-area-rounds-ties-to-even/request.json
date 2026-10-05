@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "addProgramItem",
+      "function": "storage",
+      "minArea": "0.00000091552734375 mm2"
+    },
+    {
+      "op": "addProgramItem",
+      "function": "storage",
+      "minArea": "0.00000152587890625 mm2"
+    }
+  ]
+}

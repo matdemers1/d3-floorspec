@@ -1,0 +1,8 @@
+{
+  "description": "addElement into \"items\" adds a program item to the program's items, creating the program and its items in a document that has neither; the ID is minted with the prefix P.",
+  "covers": [
+    "FS-OPS-2.1.3",
+    "FS-OPS-2.1.1",
+    "FS-OPS-1.5.1"
+  ]
+}

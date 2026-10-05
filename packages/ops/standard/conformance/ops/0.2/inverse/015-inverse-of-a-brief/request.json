@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "addProgramItem",
+      "function": "living",
+      "name": "Living"
+    },
+    {
+      "op": "setRoomBrief",
+      "room": "R1",
+      "item": "Living"
+    }
+  ]
+}

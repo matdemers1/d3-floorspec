@@ -1,0 +1,6 @@
+{
+  "description": "A's adjacency names an item that does not exist, so A is not valid: FS-OPS-002.",
+  "covers": [
+    "FS-OPS-1.2.1"
+  ]
+}

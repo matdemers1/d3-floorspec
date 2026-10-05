@@ -1,0 +1,101 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "cec833f1879319c4cf5583b63053e928c89d7ef5dbe88c75318034a4e62b27d1",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "moveJunction",
+      "id": "J1",
+      "to": [-390144, 0]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J2",
+      "to": [-390144, 3901440]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J3",
+      "to": [4291584, 3901440]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J4",
+      "to": [4291584, 0]
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/anchor",
+      "value": [1950720, 1950720]
+    },
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/host/position",
+      "value": [780288, 1560576]
+    },
+    {
+      "op": "setProperty",
+      "id": "X2",
+      "path": "/host/position",
+      "value": [1950720, 1950720]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/host",
+      "value": {
+        "position": [1170432, 1560576],
+        "mode": "surface",
+        "room": "R1",
+        "surface": "floor"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X2",
+      "path": "/host",
+      "value": {
+        "position": [2340864, 1950720],
+        "mode": "surface",
+        "room": "R1",
+        "surface": "ceiling"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/anchor",
+      "value": [2340864, 1950720]
+    },
+    {
+      "op": "setProperty",
+      "id": "J1",
+      "path": "/position",
+      "value": [0, 0]
+    },
+    {
+      "op": "setProperty",
+      "id": "J2",
+      "path": "/position",
+      "value": [0, 3901440]
+    },
+    {
+      "op": "setProperty",
+      "id": "J3",
+      "path": "/position",
+      "value": [4681728, 3901440]
+    },
+    {
+      "op": "setProperty",
+      "id": "J4",
+      "path": "/position",
+      "value": [4681728, 0]
+    }
+  ]
+}

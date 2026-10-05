@@ -1,0 +1,6 @@
+{
+  "description": "A wall drawn from the middle of the south wall into the room: its start junction J5 lies inside W4, so W4 is split there (J4 -> J5 keeps W4, J5 -> J1 is W6). No junction is minted: the hot pixel's centre is J5's position.",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

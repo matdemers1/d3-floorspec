@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "setRoomFinish",
+      "room": "Kitchen",
+      "surface": "floor",
+      "material": "M1"
+    },
+    {
+      "op": "moveJunction",
+      "id": "J99",
+      "to": [0, 0]
+    }
+  ]
+}

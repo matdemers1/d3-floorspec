@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "5a35cba75f7d4958b873b00697670f82c6c24ed4a1fdb391937dbf57cc533ee7",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/base/offset",
+      "value": 12800
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "W1",
+      "path": "/base"
+    }
+  ]
+}

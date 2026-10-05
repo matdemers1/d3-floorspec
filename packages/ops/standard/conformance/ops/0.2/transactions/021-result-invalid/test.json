@@ -1,0 +1,8 @@
+{
+  "description": "Removing the wall between the Kitchen and the Dining room joins their faces: two anchors in one face. The rejection carries the result's Core diagnostic, FS-INV-202.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-1.2.2",
+    "FS-OPS-2.2.1"
+  ]
+}

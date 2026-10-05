@@ -1,0 +1,11 @@
+{
+  "batch": [
+    {
+      "op": "setAdjacency",
+      "a": "PAN",
+      "b": "KIT",
+      "kind": "preferred",
+      "weight": 9
+    }
+  ]
+}

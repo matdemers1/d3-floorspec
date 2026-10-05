@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/ops/0.2/request.schema.json",
+  "$comment": "Normative (FLR-ADR-006): this hand-written schema is the shape of an apply request of Floorspec Ops 0.2. A request it rejects is malformed, FS-OPS-001 (1.1.2). As for Core documents, a validator maps every number written with a fraction or an exponent to a non-number before applying it, so that 2.0 is not a length.",
+  "title": "Floorspec Ops 0.2 apply request",
+  "description": "1.1: { \"batch\": [ … ], \"context\": { \"locks\": [ … ], \"retired\": [ … ] } }. The batch is at least one operation, applied in order as one transaction; context is optional.",
+  "type": "object",
+  "required": [
+    "batch"
+  ],
+  "properties": {
+    "batch": {
+      "title": "Batch",
+      "description": "1.1: a JSON array of at least one operation.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "operation.schema.json"
+      }
+    },
+    "context": {
+      "$ref": "#/$defs/context"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "context": {
+      "title": "Context",
+      "description": "1.1: what is in force for this request — the locks (chapter 6) and the IDs retired from the document's history (1.5).",
+      "type": "object",
+      "properties": {
+        "locks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/lock"
+          },
+          "description": "The locks in force (chapter 6)."
+        },
+        "retired": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "IDs that once existed in the document and are never minted or named again (1.5)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "lock": {
+      "title": "Lock",
+      "description": "6.1: exactly one of the three kinds.",
+      "oneOf": [
+        {
+          "title": "Element lock",
+          "description": "The element keeps exactly its content in A, in the same collection; a wall's or separator's junctions, the junctions of a room's face's outer cycle, and the junctions of the wall an extension element is on, stay where they are.",
+          "type": "object",
+          "required": [
+            "element"
+          ],
+          "properties": {
+            "element": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Length lock",
+          "description": "The wall's location line keeps its length.",
+          "type": "object",
+          "required": [
+            "length"
+          ],
+          "properties": {
+            "length": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Distance lock",
+          "description": "The two walls stay parallel, at the distance they are in A.",
+          "type": "object",
+          "required": [
+            "distance"
+          ],
+          "properties": {
+            "distance": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

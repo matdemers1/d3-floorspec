@@ -1,0 +1,8 @@
+{
+  "description": "Two locks that cannot apply to A: one FS-OPS-010 for each.",
+  "covers": [
+    "FS-OPS-7.1.1",
+    "FS-OPS-7.1.2",
+    "FS-OPS-6.1.1"
+  ]
+}

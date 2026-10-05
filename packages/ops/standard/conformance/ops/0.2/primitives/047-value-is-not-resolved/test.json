@@ -1,0 +1,7 @@
+{
+  "description": "setProperty's value is taken as given, never resolved: \"1'\" stays a string, and the result fails the schema.",
+  "covers": [
+    "FS-OPS-2.3.1",
+    "FS-OPS-1.2.3"
+  ]
+}

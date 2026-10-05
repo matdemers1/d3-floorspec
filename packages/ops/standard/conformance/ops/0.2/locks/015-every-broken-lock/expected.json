@@ -1,0 +1,15 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-OPS-011",
+      "severity": "error",
+      "elements": ["R3"]
+    },
+    {
+      "code": "FS-OPS-011",
+      "severity": "error",
+      "elements": ["W7"]
+    }
+  ]
+}

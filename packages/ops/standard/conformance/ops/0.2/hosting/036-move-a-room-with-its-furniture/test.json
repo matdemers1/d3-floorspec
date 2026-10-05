@@ -1,0 +1,6 @@
+{
+  "description": "moveRoom moves what is on the room's floor and ceiling by the same vector, by ID after the anchor: the table and the pendant move 1' west; the bench standing free outside does not.",
+  "covers": [
+    "FS-OPS-4.3.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "Forbidding the Kitchen next to the Dining room, which the brief requires, is written as asked - and the result is invalid (Core 11.2.3).",
+  "covers": [
+    "FS-OPS-2.6.1",
+    "FS-OPS-1.2.3"
+  ]
+}

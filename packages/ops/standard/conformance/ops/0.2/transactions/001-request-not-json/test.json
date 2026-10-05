@@ -1,0 +1,7 @@
+{
+  "description": "A request that is not a JSON text is malformed: FS-OPS-001.",
+  "covers": [
+    "FS-OPS-1.1.2",
+    "FS-OPS-7.1.1"
+  ]
+}

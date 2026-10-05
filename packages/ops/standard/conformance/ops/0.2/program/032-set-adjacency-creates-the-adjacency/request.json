@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setAdjacency",
+      "a": "A1",
+      "b": "A2",
+      "kind": "required"
+    }
+  ]
+}

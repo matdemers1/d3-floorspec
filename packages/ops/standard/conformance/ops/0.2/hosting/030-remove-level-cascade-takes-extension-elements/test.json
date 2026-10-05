@@ -1,0 +1,6 @@
+{
+  "description": "L2 removed with cascade takes, besides its walls, room, slab and window, the outlet on V1, the table on the Loft's floor and the chest standing free on L2 - and not the table downstairs.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

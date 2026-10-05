@@ -1,0 +1,12 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "W1",
+      "element": {
+        "function": "living"
+      }
+    }
+  ]
+}

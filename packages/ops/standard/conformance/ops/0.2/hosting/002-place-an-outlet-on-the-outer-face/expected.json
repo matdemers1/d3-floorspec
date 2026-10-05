@@ -1,0 +1,43 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "bfb097fdca8d4920d04ce3d202a803d31533ff4cd263fc70b7b91fd845ac9a64",
+  "created": ["X1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "devices",
+      "id": "X1",
+      "element": {
+        "device": "receptacle",
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [25600, 51200, 128000],
+            "min": [0, -51200, 0]
+          }
+        },
+        "host": {
+          "height": 384000,
+          "mode": "wallFace",
+          "offset": 1170432,
+          "side": "left",
+          "wall": "W1"
+        }
+      },
+      "extension": "FS_electrical"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "X1"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extensions"
+    }
+  ]
+}

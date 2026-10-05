@@ -1,0 +1,8 @@
+{
+  "description": "Two doors, each across a new junction: one FS-OPS-009 for each.",
+  "covers": [
+    "FS-OPS-5.2.1",
+    "FS-OPS-7.1.1",
+    "FS-OPS-7.1.2"
+  ]
+}

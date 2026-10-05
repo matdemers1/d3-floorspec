@@ -1,0 +1,7 @@
+{
+  "description": "At 13' along the 12' wall W2: the element is added as asked, and the result is invalid (Core 13.3.2).",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-1.2.3"
+  ]
+}

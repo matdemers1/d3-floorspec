@@ -1,0 +1,7 @@
+{
+  "description": "An addElement into types with no ID: no ID matches ^T[0-9]+$ (\"T-door-36\" does not), so the type is T1.",
+  "covers": [
+    "FS-OPS-1.5.1",
+    "FS-OPS-2.1.1"
+  ]
+}

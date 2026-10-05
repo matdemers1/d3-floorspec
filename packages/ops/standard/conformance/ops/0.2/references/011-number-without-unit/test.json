@@ -1,0 +1,6 @@
+{
+  "description": "A string length needs a unit: \"3810\" is FS-OPS-012 (an integer 3810 would be base units).",
+  "covers": [
+    "FS-OPS-3.1.1"
+  ]
+}

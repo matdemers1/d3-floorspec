@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "OAK",
+      "element": {
+        "name": "White oak",
+        "color": "#c8a165"
+      }
+    }
+  ]
+}

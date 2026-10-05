@@ -1,0 +1,23 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "3c6558dde4e1aca9b9f043e4b1283709d9bc4177b870aee75e4436a1b7ffa133",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "KIT",
+      "path": "/minArea",
+      "value": 16384000000000
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "KIT",
+      "path": "/minArea",
+      "value": 13107200000000
+    }
+  ]
+}

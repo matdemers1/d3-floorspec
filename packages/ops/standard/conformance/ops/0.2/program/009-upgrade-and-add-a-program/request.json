@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/floorspec",
+      "value": "0.2"
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "element": {
+        "function": "living"
+      }
+    }
+  ]
+}

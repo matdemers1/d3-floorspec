@@ -1,0 +1,6 @@
+{
+  "description": "An element lock on X9, which is in A neither as an element nor as a program item or an extension element: FS-OPS-010.",
+  "covers": [
+    "FS-OPS-6.1.1"
+  ]
+}

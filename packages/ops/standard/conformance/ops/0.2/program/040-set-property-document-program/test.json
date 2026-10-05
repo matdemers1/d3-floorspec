@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of $document /program/adjacency/1/weight edits an adjacency by its place, which a batch may do as well.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

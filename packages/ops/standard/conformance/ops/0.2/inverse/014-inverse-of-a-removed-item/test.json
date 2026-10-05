@@ -1,0 +1,6 @@
+{
+  "description": "The inverse of removing GAR adds the item back and restores the adjacency that went with it - the program's adjacency, compared member by member as $document /program/adjacency.",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

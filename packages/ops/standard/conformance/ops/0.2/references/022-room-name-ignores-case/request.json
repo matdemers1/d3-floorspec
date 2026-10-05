@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setRoomFinish",
+      "room": "kitchen",
+      "surface": "floor",
+      "material": "OAK"
+    }
+  ]
+}

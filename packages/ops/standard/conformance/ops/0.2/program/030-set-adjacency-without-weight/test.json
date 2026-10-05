@@ -1,0 +1,6 @@
+{
+  "description": "Without \"weight\" the adjacency written has none, so it is 5 (Core 11.2): the preferred KIT-PAN adjacency loses its weight of 3.",
+  "covers": [
+    "FS-OPS-2.6.1"
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "cc45b962f9733101be4fabb27432cb0e9820bfc97db38df57bc867ea16b961f1",
+  "created": ["J5", "J6", "J7", "J8", "W5", "W6", "W7", "W8", "W9"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "J5",
+      "level": "L1",
+      "position": [1560576, -390144]
+    },
+    {
+      "op": "addJunction",
+      "id": "J6",
+      "level": "L1",
+      "position": [1560576, 4291584]
+    },
+    {
+      "op": "addWall",
+      "id": "W5",
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X2",
+      "path": "/host",
+      "value": {
+        "height": 384000,
+        "mode": "wallFace",
+        "offset": 1560576,
+        "side": "right",
+        "wall": "W2"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X3",
+      "path": "/host",
+      "value": {
+        "height": 384000,
+        "mode": "wallFace",
+        "offset": 3511296,
+        "side": "right",
+        "wall": "W2"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X4",
+      "path": "/host",
+      "value": {
+        "height": 384000,
+        "mode": "wallFace",
+        "offset": 4681728,
+        "side": "right",
+        "wall": "W2"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X5",
+      "path": "/host",
+      "value": {
+        "height": 384000,
+        "mode": "wallFace",
+        "offset": 3511296,
+        "side": "right",
+        "wall": "W4"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "W2",
+      "path": "/end",
+      "value": "J3"
+    },
+    {
+      "op": "setProperty",
+      "id": "W4",
+      "path": "/end",
+      "value": "J1"
+    },
+    {
+      "op": "removeElement",
+      "id": "W5"
+    },
+    {
+      "op": "removeElement",
+      "id": "W6"
+    },
+    {
+      "op": "removeElement",
+      "id": "W7"
+    },
+    {
+      "op": "removeElement",
+      "id": "W8"
+    },
+    {
+      "op": "removeElement",
+      "id": "W9"
+    },
+    {
+      "op": "removeElement",
+      "id": "J5"
+    },
+    {
+      "op": "removeElement",
+      "id": "J6"
+    },
+    {
+      "op": "removeElement",
+      "id": "J7"
+    },
+    {
+      "op": "removeElement",
+      "id": "J8"
+    }
+  ]
+}

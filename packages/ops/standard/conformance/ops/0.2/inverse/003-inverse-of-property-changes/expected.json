@@ -1,0 +1,47 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "17e3d0641b08646eaa05a7a6025ce4165fee6078e376fca24f0d7f9a6122f723",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/name",
+      "value": "Lounge"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/function"
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/extras",
+      "value": {
+        "colour": "teal"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/extras"
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/function",
+      "value": "living"
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/name",
+      "value": "Living"
+    }
+  ]
+}

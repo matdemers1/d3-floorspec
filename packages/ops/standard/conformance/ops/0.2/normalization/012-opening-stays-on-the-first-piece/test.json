@@ -1,0 +1,6 @@
+{
+  "description": "A partition drawn across the room at x = 8' splits the south wall W4 (J4 (12', 0) -> J1) at 4' from its start. The door at offset 1' spans [1', 4'], inside the first piece [0, 4'], so it stays on W4 with its offset.",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

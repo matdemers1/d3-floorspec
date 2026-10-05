@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/justification",
+      "value": "sideways"
+    }
+  ]
+}

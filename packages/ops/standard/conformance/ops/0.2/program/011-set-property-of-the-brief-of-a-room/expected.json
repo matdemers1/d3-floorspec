@@ -1,0 +1,33 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "9549b36eeda37f8d3a23e15488e38528733ac8a3bccc54e51744264254a73681",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "KIT",
+      "path": "/targetArea",
+      "value": 19660800000000
+    },
+    {
+      "op": "unsetProperty",
+      "id": "PAN",
+      "path": "/name"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "KIT",
+      "path": "/targetArea"
+    },
+    {
+      "op": "setProperty",
+      "id": "PAN",
+      "path": "/name",
+      "value": "Pantry"
+    }
+  ]
+}

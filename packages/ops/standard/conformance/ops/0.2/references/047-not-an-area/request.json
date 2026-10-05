@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "addProgramItem",
+      "function": "storage",
+      "minArea": "11 m"
+    }
+  ]
+}

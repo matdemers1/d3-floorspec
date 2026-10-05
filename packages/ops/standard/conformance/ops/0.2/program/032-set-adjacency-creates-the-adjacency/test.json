@@ -1,0 +1,6 @@
+{
+  "description": "A program with items and no adjacencies: setAdjacency creates the adjacency array.",
+  "covers": [
+    "FS-OPS-2.6.1"
+  ]
+}

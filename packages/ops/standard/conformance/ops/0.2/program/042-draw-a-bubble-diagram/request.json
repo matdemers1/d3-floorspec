@@ -1,0 +1,51 @@
+{
+  "batch": [
+    {
+      "op": "addProgramItem",
+      "function": "living",
+      "name": "Living room",
+      "minArea": "200 sq ft"
+    },
+    {
+      "op": "addProgramItem",
+      "function": "kitchen",
+      "name": "Kitchen",
+      "minArea": "8 m2"
+    },
+    {
+      "op": "addProgramItem",
+      "function": "dining",
+      "name": "Dining"
+    },
+    {
+      "op": "addProgramItem",
+      "function": "garage",
+      "name": "Garage",
+      "targetArea": "22 m2"
+    },
+    {
+      "op": "setAdjacency",
+      "a": "Kitchen",
+      "b": "Dining",
+      "kind": "required",
+      "weight": 10
+    },
+    {
+      "op": "setAdjacency",
+      "a": "Living room",
+      "b": "Dining",
+      "kind": "preferred"
+    },
+    {
+      "op": "setAdjacency",
+      "a": "Garage",
+      "b": "Living room",
+      "kind": "forbidden"
+    },
+    {
+      "op": "setRoomBrief",
+      "room": "Living",
+      "item": "Living room"
+    }
+  ]
+}

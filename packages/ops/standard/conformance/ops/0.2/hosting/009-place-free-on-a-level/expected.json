@@ -1,0 +1,41 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "683e3b46bbb5fe765191ec868ef7af728d9ae5179db8265ca7209d61bf458f40",
+  "created": ["X1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "pieces",
+      "id": "X1",
+      "element": {
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [384000, 384000, 1024000],
+            "min": [-384000, -384000, 0]
+          }
+        },
+        "host": {
+          "level": "L1",
+          "position": [5852160, 0],
+          "mode": "free"
+        },
+        "piece": "side table"
+      },
+      "extension": "FS_furniture"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "X1"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extensions"
+    }
+  ]
+}

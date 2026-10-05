@@ -1,0 +1,66 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "f65e37165b642cfc660e8192fae37d32b1ed4fec30d84b4fd88652b86aa8751d",
+  "created": ["X6"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "devices",
+      "id": "X6",
+      "element": {
+        "device": "receptacle",
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [25600, 51200, 128000],
+            "min": [0, -51200, 0]
+          }
+        },
+        "host": {
+          "height": 384000,
+          "mode": "wallFace",
+          "offset": 780288,
+          "side": "right",
+          "wall": "W2"
+        }
+      },
+      "extension": "FS_electrical"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "X6"
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions",
+      "value": {
+        "FS_furniture": {
+          "collections": {
+            "pieces": {
+              "X2": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [384000, 384000, 1024000],
+                    "min": [-384000, -384000, 0]
+                  }
+                },
+                "host": {
+                  "position": [1170432, 1560576],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "floor"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "FS-OPS-004 lists every match: three rooms named \"Bedroom\".",
+  "covers": [
+    "FS-OPS-7.1.1",
+    "FS-OPS-3.3.1"
+  ]
+}

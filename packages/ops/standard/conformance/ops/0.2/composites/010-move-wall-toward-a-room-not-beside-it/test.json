@@ -1,0 +1,7 @@
+{
+  "description": "moveWall toward the Pantry, which W8 does not bound: FS-OPS-008.",
+  "covers": [
+    "FS-OPS-4.2.1",
+    "FS-OPS-7.1.1"
+  ]
+}

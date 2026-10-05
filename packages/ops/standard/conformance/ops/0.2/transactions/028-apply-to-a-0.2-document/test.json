@@ -1,0 +1,7 @@
+{
+  "description": "A is a Core 0.2 document with a program and briefs; it is valid, and a batch applies to it.",
+  "covers": [
+    "FS-OPS-1.2.1",
+    "FS-OPS-1.3.1"
+  ]
+}

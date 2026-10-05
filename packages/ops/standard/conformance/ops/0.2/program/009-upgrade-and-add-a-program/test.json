@@ -1,0 +1,7 @@
+{
+  "description": "The same item added in a batch that first declares \"0.2\": the result is a Core 0.2 document, and is valid.",
+  "covers": [
+    "FS-OPS-2.1.3",
+    "FS-OPS-2.3.1"
+  ]
+}

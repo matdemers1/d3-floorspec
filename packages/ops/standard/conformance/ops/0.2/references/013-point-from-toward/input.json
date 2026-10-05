@@ -1,0 +1,91 @@
+{
+  "floorspec": "0.1",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "T-door-36": {
+      "kind": "doorType",
+      "width": 1170432,
+      "height": 2600960
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 3901440]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [4681728, 3901440]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [4681728, 0]
+    },
+    "Q": {
+      "level": "L1",
+      "position": [1170432, 1560576]
+    },
+    "P": {
+      "level": "L1",
+      "position": [0, 7802880]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J1",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2340864, 1950720],
+      "name": "Living"
+    }
+  }
+}

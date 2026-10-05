@@ -1,0 +1,6 @@
+{
+  "description": "addProgramItem with a named ID, an integer area and extras; the item is added beside the existing ones.",
+  "covers": [
+    "FS-OPS-4.9.1"
+  ]
+}

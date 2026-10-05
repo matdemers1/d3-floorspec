@@ -1,7 +1,0 @@
-{
-  "description": "addLevel takes exactly one of \"elevation\", \"above\" and \"below\": two is FS-OPS-001.",
-  "covers": [
-    "FS-OPS-1.1.1",
-    "FS-OPS-4.8.1"
-  ]
-}

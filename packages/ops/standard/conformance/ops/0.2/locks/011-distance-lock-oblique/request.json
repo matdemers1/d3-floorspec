@@ -1,0 +1,21 @@
+{
+  "batch": [
+    {
+      "op": "moveWall",
+      "wall": "W5",
+      "by": "6\""
+    },
+    {
+      "op": "moveWall",
+      "wall": "W6",
+      "by": "6\""
+    }
+  ],
+  "context": {
+    "locks": [
+      {
+        "distance": ["W5", "W6"]
+      }
+    ]
+  }
+}

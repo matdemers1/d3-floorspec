@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "removeElement",
+      "id": "W8"
+    }
+  ],
+  "context": {
+    "locks": [
+      {
+        "length": "W8"
+      }
+    ]
+  }
+}
