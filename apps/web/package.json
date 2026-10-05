@@ -9,8 +9,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . && d3-check-usage src",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p e2e",
+    "test": "vitest run",
+    "e2e": "vite build && playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
     "@d3cloud/ui": "https://github.com/matdemers1/d3-design-system/releases/download/v1.5.0/d3cloud-ui-1.5.0.tgz",
@@ -22,9 +23,12 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.1",
+    "pg": "8.23.0",
     "vite": "^8.3.0"
   }
 }

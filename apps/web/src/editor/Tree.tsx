@@ -32,7 +32,7 @@ interface TreeRow {
  * The tree is a WAI-ARIA tree with a roving tab stop (FLR-T-3.7): ↑/↓ move, → opens a group or
  * steps into it, ← closes it or steps out to its parent, Home/End jump, Enter or Space selects the
  * element (or opens the group), and F2 — or Enter on the row already selected — renames it in
- * place. Every model change is reachable from here and the keyboard, without a pointer.
+ * place. Esc leaves the tree for the plan with the selection kept, where the arrows nudge it.
  */
 export function ProjectTree({ store }: { store: EditorStore }) {
   const model = useEditor(store, (s) => s.model);
@@ -165,6 +165,10 @@ export function ProjectTree({ store }: { store: EditorStore }) {
           if (e.key === 'Enter' && row.id === selection && readOnly === null) store.set({ renaming: row.id });
           else store.select(row.id);
         } else if (row.group === true) toggle(row.key);
+        break;
+      case 'Escape':
+        // Leave the tree for the plan, keeping the selection: the arrows then nudge it.
+        (refs.current.get(row.key)?.closest('.fs-editor') as HTMLElement | null)?.focus();
         break;
       case 'F2':
         if (row.id !== undefined && readOnly === null) {

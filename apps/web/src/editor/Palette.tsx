@@ -143,14 +143,21 @@ export function Palette({ store, tools }: { store: EditorStore; tools: ToolContr
     return out;
   }, [open, step, query, state, store, tools, units]);
 
+  // A command runs once the palette has closed and handed focus back, so a command that moves
+  // focus itself (a new room's name field) keeps it.
+  const shown = groups.map((g) => ({
+    ...g,
+    items: g.items.map((item) => (OPENS_STEP.has(item.id) ? item : { ...item, onSelect: () => { afterClose(item.onSelect); } })),
+  }));
+
   return (
     <CommandPalette
       open={open}
       onOpenChange={close}
       query={query}
       onQueryChange={setQuery}
-      groups={groups}
-      label="Search commands and the plan"
+      groups={shown}
+      label={LABEL}
       placeholder={step === null ? 'Type a command, a level, a room…' : step.kind === 'nudge' ? 'A length: 1", 1/2", 10mm' : step.kind === 'moveWall' ? 'A distance: 6", -1\'' : 'A point: x, y'}
       emptyMessage={step === null ? `Nothing matches “${query}”` : 'Type a value'}
       footer={
@@ -163,6 +170,22 @@ export function Palette({ store, tools }: { store: EditorStore; tools: ToolContr
       }
     />
   );
+}
+
+/** Items that open a second step in place rather than run. */
+const OPENS_STEP = new Set(['sel.moveWall', 'sel.moveJunction', 'set.nudge', 'draw.from']);
+
+const LABEL = 'Search commands and the plan';
+
+/** Run `fn` once the palette's dialog has gone (it returns focus on its way out), within a second. */
+function afterClose(fn: () => unknown): void {
+  const start = performance.now();
+  const check = () => {
+    const still = document.querySelector(`[role="dialog"][aria-label="${LABEL}"], [role="dialog"] input[aria-label="${LABEL}"]`) !== null;
+    if (still && performance.now() - start < 1000) requestAnimationFrame(check);
+    else fn();
+  };
+  requestAnimationFrame(check);
 }
 
 function elementsOnLevel(model: EditorModel, levelId: string | null): { id: string; label: string; kind: string }[] {

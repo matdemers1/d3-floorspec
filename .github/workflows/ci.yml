@@ -169,6 +169,16 @@ jobs:
           PGPASSWORD=floorspec psql -h 127.0.0.1 -U floorspec -d floorspec -c 'CREATE DATABASE floorspec_test;'
           pnpm exec prisma migrate deploy
       - run: pnpm test:integration
+      # The editor end to end (FLR-T-3.7): the API boots on a fresh database of its own — the
+      # config drops and creates it, so the name must end in _test — and serves the built editor,
+      # which a keyboard-only Chromium session drives from first-run setup to an undone nudge.
+      - run: pnpm build
+      - name: Install Chromium for the editor's end-to-end test
+        run: pnpm --filter @d3-floorspec/web exec playwright install --with-deps chromium
+      - name: Editor end to end, keyboard only
+        env:
+          E2E_DATABASE_URL: postgresql://floorspec:floorspec@127.0.0.1:5432/floorspec_e2e_test
+        run: pnpm --filter @d3-floorspec/web e2e
 
   python:
     needs: integration
