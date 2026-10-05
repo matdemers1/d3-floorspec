@@ -141,6 +141,19 @@ export function summaryText(s: DocumentSummary): string {
             `connected ${c.connectedLoad} W of ${c.capacity} W (stated watts only; not a load calculation)`,
         );
     }
+    if (l.roofs?.length) {
+      out.push('', `### Roofs (${l.id})`);
+      for (const r of l.roofs)
+        out.push(`- ${r.id}${q(r.name)}: ${r.kind}${r.pitch ? `, ${r.pitch}` : ''}, eave ${lengthText(r.eave)} above the level${r.surfaceDerived ? '' : '; surface not derived (FS-LINT-015)'}`);
+    }
+    if (l.stairs?.length) {
+      out.push('', `### Stairs (${l.id})`);
+      for (const s of l.stairs)
+        out.push(
+          `- ${s.id}${q(s.name)}: ${s.form} to ${s.to}, ${s.risers} risers × ${inches(s.riserHeight.baseUnits)} (${s.riserHeight.baseUnits}), tread ${inches(s.tread.baseUnits)}, ${lengthText(s.width)} wide` +
+            (s.headroom ? `, headroom ${lengthText(s.headroom)}` : ', headroom not derived'),
+        );
+    }
     if (l.unanchored.length) {
       out.push('', `### Unanchored faces (${l.id})`);
       for (const u of l.unanchored) {

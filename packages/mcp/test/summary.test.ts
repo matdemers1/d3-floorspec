@@ -364,3 +364,18 @@ group('Core 0.3: floors and ceilings', () => {
     expect(describe(text('three-room-house'))).not.toContain('Ceiling ');
   });
 });
+
+group('Core 0.3: roofs and stairs', () => {
+  it('lists each roof with its kind and pitch, and each stair with its risers, tread and headroom', () => {
+    const d = JSON.parse(readFileSync(new URL('../../engine/standard/conformance/core/0.3/stairs/007-l-stair-with-landing/input.json', import.meta.url), 'utf8')) as Record<string, unknown>;
+    d['roofs'] = { RF1: { level: 'L2', footprint: [[0, 0], [9_000_000, 0], [9_000_000, 6_000_000], [0, 6_000_000]], pitch: { rise: 6, run: 12 }, overhang: 400_000 } };
+    expect(check(d).valid).toBe(true);
+    const s = describeJson(d);
+    expect(s.levels.flatMap((l) => l.roofs ?? []).map((r) => [r.id, r.kind, r.pitch, r.surfaceDerived])).toEqual([['RF1', 'hip', '6:12', true]]);
+    const st = s.levels.flatMap((l) => l.stairs ?? [])[0]!;
+    expect([st.id, st.form, st.to, st.risers, st.riserHeight.baseUnits, st.headroom?.baseUnits]).toEqual(['ST1', 'lShaped', 'L2', 14, 246857, 1442743]);
+    const out = describe(JSON.stringify(d));
+    expect(out).toContain('- RF1: hip, 6:12, eave');
+    expect(out).toMatch(/- ST1: lShaped to L2, 14 risers × [^\n]*, tread [^\n]*, headroom /);
+  });
+});

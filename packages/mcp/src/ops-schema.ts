@@ -72,7 +72,7 @@ const Json = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.u
 const Obj = z.record(z.string(), z.unknown());
 
 export const COLLECTIONS = [
-  'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'types', 'materials', 'assets',
+  'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'roofs', 'types', 'materials', 'assets', 'stairs',
 ] as const;
 export const Collection = shared(z.enum(COLLECTIONS), 'Collection');
 /** Core 4.1's room functions, said once for addRoom and addProgramItem. */
