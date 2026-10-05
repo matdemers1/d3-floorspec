@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Button, Modal, Select } from '@d3cloud/ui';
+import { embedOps, libraryChoices } from './library';
 import { Plus } from 'lucide-react';
 import { MAP_MEDIA_TYPES, type FloorspecDocument } from '@floorspec/engine';
 import { useEditor, type EditorStore } from './store';
@@ -76,8 +78,10 @@ export function MaterialsModal({ store }: { store: EditorStore }) {
   const model = useEditor(store, (s) => s.model);
   const readOnly = useEditor(store, (s) => s.readOnly) !== null;
   const units = useEditor(store, () => store.units);
+  const [pick, setPick] = useState<string | null>(null);
   if (!open || model === null) return null;
   const close = () => { store.set({ materialsOpen: false }); };
+  const library = libraryChoices(model.document, 'material');
   const uses = materialUses(model);
   const materials = Object.entries((model.document.materials ?? {}) as Record<string, Json | undefined>).sort(([a], [b]) => a.localeCompare(b));
   return (
@@ -107,6 +111,29 @@ export function MaterialsModal({ store }: { store: EditorStore }) {
         </>
       }
     >
+      {!readOnly && library.length > 0 ? (
+        <section className="fs-materials__library" aria-label="US starter library">
+          <h3 className="fs-overline">From the US starter library · CC0</h3>
+          <div className="fs-materials__library-row">
+            <Select
+              aria-label="Library material"
+              appearance="filled"
+              options={library.map((i) => ({ value: i.id, label: i.name, ...(i.summary['description'] === undefined ? {} : { description: i.summary['description'] }) }))}
+              value={pick ?? library[0]?.id ?? ''}
+              onValueChange={setPick}
+            />
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const item = library.find((i) => i.id === (pick ?? library[0]?.id ?? ''));
+                if (item !== undefined) void store.apply(`Add ${item.name}`, embedOps(model.document, item));
+              }}
+            >
+              Add
+            </Button>
+          </div>
+        </section>
+      ) : null}
       {materials.length === 0 ? (
         <p className="fs-note">This project has no materials yet. Add one, then choose it as a room&rsquo;s floor, wall or ceiling finish.</p>
       ) : (

@@ -3,6 +3,7 @@ import type { Operation } from '@floorspec/ops';
 import type { Point } from './model';
 import { signedArea } from './geometry';
 import { UNITS_PATH, type UnitSystem } from './units';
+import { embedOps, libraryChoices, type LibraryItem } from './library';
 
 /**
  * Op builders (FLR-ADR-008): every gesture in the editor ends as a batch of Floorspec Ops, built
@@ -74,6 +75,8 @@ export interface TypeChoice {
   name: string;
   starter: boolean;
   element: Json;
+  /** A US starter library item (FLR-T-10.4): embedded by its own batch, under its own ID. */
+  library?: LibraryItem;
 }
 
 /** The document's types of a kind, then the starters it does not have yet (matched by name). */
@@ -90,7 +93,10 @@ export function typeChoices(document: FloorspecDocument, kind: TypeChoice['kind'
     starter: true,
     element: s.element,
   }));
-  return [...own, ...starters];
+  const library = libraryChoices(document, kind)
+    .filter((i) => !names.has(i.name))
+    .map((i) => ({ id: i.id, kind, name: i.name, starter: true, element: i.element, library: i }));
+  return [...own, ...starters, ...library];
 }
 
 /** An ID for an element this batch adds and names itself: the starter's own, then -2, -3… */
@@ -112,6 +118,7 @@ export function namedId(document: FloorspecDocument, base: string, attempt: numb
 export function useType(document: FloorspecDocument, choice: TypeChoice | undefined, attempt: number): { id: string | undefined; ops: Batch } {
   if (choice === undefined) return { id: undefined, ops: [] };
   if (!choice.starter) return { id: choice.id, ops: [] };
+  if (choice.library !== undefined) return { id: choice.id, ops: embedOps(document, choice.library) };
   const id = namedId(document, choice.id, attempt);
   return { id, ops: [{ op: 'addElement', collection: 'types', id, element: { ...choice.element } }] };
 }

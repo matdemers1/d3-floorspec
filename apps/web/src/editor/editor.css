@@ -2276,3 +2276,14 @@ line.fs-diff {
 .fs-options__add > :first-child {
   min-width: 0;
 }
+.fs-materials__library {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+}
+.fs-materials__library-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-8);
+}
