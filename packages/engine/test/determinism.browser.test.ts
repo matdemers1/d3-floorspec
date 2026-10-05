@@ -1,7 +1,7 @@
 /**
  * The engine in a real browser (FLR-ADR-010). Runs only in the `browser` project: derives every
  * determinism fixture in Chromium and compares the results, byte for byte, with Node's; then runs
- * both Core conformance suites and the official extensions' suites in the browser too.
+ * every Core conformance suite and the official extensions' suites in the browser too.
  */
 import { describe, expect, it } from 'vitest';
 import { commands } from 'vitest/browser';

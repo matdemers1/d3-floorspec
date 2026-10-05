@@ -2,7 +2,8 @@
  * Tier 4 of chapter 10: the invariants no schema can express, evaluated in the order of 10.3 —
  * reference invariants first (and nothing else if any is reported); graph invariants for every level
  * and wall; join and room invariants only on levels with no graph invariant but FS-INV-112; opening
- * invariants for every opening, FS-INV-303 not for an opening whose wall has FS-INV-112.
+ * and type invariants for every opening and every door or window type, FS-INV-303 not for an
+ * opening whose wall has FS-INV-112, and FS-INV-302 to FS-INV-305 only without FS-INV-301.
  *
  * The document has passed the schema tier, so its shape is known.
  */
@@ -12,6 +13,7 @@ import { isqrt } from '../exact/bigint.js';
 import {
   COLLECTIONS,
   adjacencies,
+  effectiveClearOpening,
   effectiveLayers,
   entries,
   extElements,
@@ -21,6 +23,7 @@ import {
   openingDimensions,
   programItems,
   wallElevations,
+  type ClearOpening,
   type FaceOffsets,
   type FloorspecDocument,
   type Layer,
@@ -451,11 +454,36 @@ export function strictlyInside(p: IPoint, outer: IPoint[], holes: IPoint[][]): b
   return locate(p, outer) === 'inside' && holes.every((h) => locate(p, h) === 'outside');
 }
 
-// ── opening invariants (FS-INV-301 … 304) ────────────────────────────────────
+// ── opening and type invariants (FS-INV-301 … 308) ───────────────────────────
+
+/** 8.4.4: a declared area is no more than the clear width times the clear height. */
+const areaFits = (c: ClearOpening): boolean => c.area === undefined || BigInt(c.area) <= BigInt(c.width) * BigInt(c.height);
+
+/** The clear opening invariants of door and window types (Core 0.3: FS-INV-306, FS-INV-307), used or not. */
+function typeInvariants(doc: FloorspecDocument, r: Reporter): void {
+  for (const [id, t] of entries(doc.types)) {
+    if (t.kind === 'wallType' || !t.clearOpening) continue;
+    const c: ClearOpening = t.clearOpening;
+    if (!areaFits(c))
+      r.report('FS-INV-306', `${id}'s clear opening declares an area larger than its clear width times its clear height.`, [id], { pointer: ptr('types', id, 'clearOpening', 'area') });
+    if ((t.width !== undefined && c.width > t.width) || (t.height !== undefined && c.height > t.height))
+      r.report('FS-INV-307', `${id}'s clear opening is ${t.width !== undefined && c.width > t.width ? 'wider' : 'taller'} than the type.`, [id], { pointer: ptr('types', id, 'clearOpening') });
+  }
+}
 
 function openingInvariants(doc: FloorspecDocument, r: Reporter): void {
   const ok: { id: string; wall: string; offset: bigint; width: bigint; sill: bigint; height: bigint }[] = [];
   for (const [id, o] of entries(doc.openings)) {
+    // Core 0.3: an opening's own clear opening (FS-INV-306, FS-INV-308) — for every opening.
+    if (o.clearOpening) {
+      if (!areaFits(o.clearOpening))
+        r.report('FS-INV-306', `${id}'s clear opening declares an area larger than its clear width times its clear height.`, [id], { pointer: ptr('openings', id, 'clearOpening', 'area') });
+      const fill = o.fill === undefined ? undefined : get(doc.types, o.fill);
+      if (o.clearOpening.area !== undefined && fill?.kind !== 'windowType')
+        r.report('FS-INV-308', `${id}'s clear opening has an area, but ${fill ? `its fill ${o.fill} is a door type` : 'it is an empty opening'}: only a window's clear opening has one.`, [id], {
+          pointer: ptr('openings', id, 'clearOpening', 'area'),
+        });
+    }
     const dim = openingDimensions(doc, o);
     if (dim.width === undefined || dim.height === undefined) {
       r.report('FS-INV-301', `${id}'s ${dim.width === undefined ? 'width' : 'height'} does not resolve: neither the opening nor its fill gives it.`, [id], {
@@ -480,6 +508,12 @@ function openingInvariants(doc: FloorspecDocument, r: Reporter): void {
       const el = wallElevations(doc, w)!;
       if (sill + height > el.top - el.base) r.report('FS-INV-303', `${id} extends above the height of ${o.wall}.`, [id], { pointer: ptr('openings', id) });
     }
+    // Core 0.3: the effective clear opening fits the opening (FS-INV-305).
+    const clear = effectiveClearOpening(doc, o);
+    if (clear && (BigInt(clear.width) > width || BigInt(clear.height) > height))
+      r.report('FS-INV-305', `${id}'s clear opening is ${BigInt(clear.width) > width ? 'wider' : 'taller'} than the opening${o.clearOpening ? '' : ` (it is ${o.fill}'s)`}.`, [id], {
+        pointer: ptr('openings', id, ...(o.clearOpening ? ['clearOpening'] : [])),
+      });
     ok.push({ id, wall: o.wall, offset, width, sill, height });
   }
   for (let i = 0; i < ok.length; i++)
@@ -526,6 +560,7 @@ export function invariants(doc: FloorspecDocument, r: Reporter, options: Invaria
     levels.set(lid, { id: lid, broken, geometry, roomFaces });
   }
   openingInvariants(doc, r);
+  typeInvariants(doc, r);
   const analysis: Analysis = { levels, offsets, core02: options.core02 };
   if (options.core02) {
     programInvariants(doc, r);

@@ -1,0 +1,6 @@
+{
+  "description": "Extension data on an element is keyed by extension names too.",
+  "covers": [
+    "FS-CORE-1.6.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A collection name starts with a lowercase letter: \"Pieces\" does not.",
+  "covers": [
+    "FS-CORE-12.5.1"
+  ]
+}

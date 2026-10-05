@@ -1,0 +1,9 @@
+{
+  "description": "The 0.2 suite's document using every member 0.2 adds (model/068 of conformance/core/0.2), exactly as it is there, declaring \"0.2\", read by a reader of 0.3: valid, with the same diagnostics, derived values, hash and canonical form as in the 0.2 suite, and no clear opening derived.",
+  "covers": [
+    "FS-CORE-1.2.2",
+    "FS-CORE-1.2.6",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1"
+  ]
+}

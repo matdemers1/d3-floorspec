@@ -1,0 +1,12 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Conformance"
+  },
+  "site": {
+    "location": {
+      "latitude": 90000001,
+      "longitude": 0
+    }
+  }
+}

@@ -12,16 +12,22 @@ describe('tiers (10.1, 10.3)', () => {
   });
 
   it('FS-DOC-001: an unimplemented version, before the schema', () => {
-    expect(codes(validate(text({ floorspec: '0.3', project: { name: 'x' }, bogus: 1 })))).toEqual(['FS-DOC-001']);
-    // a Core 0.1 reader does not implement 0.2
+    expect(codes(validate(text({ floorspec: '0.4', project: { name: 'x' }, bogus: 1 })))).toEqual(['FS-DOC-001']);
+    // a Core 0.1 reader does not implement 0.2, and a Core 0.2 reader does not implement 0.3
     expect(codes(validate(text({ floorspec: '0.2', project: { name: 'x' } }), { core: '0.1' }))).toEqual(['FS-DOC-001']);
+    expect(codes(validate(text({ floorspec: '0.3', project: { name: 'x' } }), { core: '0.2' }))).toEqual(['FS-DOC-001']);
     expect(validate(text({ floorspec: '0.2', project: { name: 'x' } })).valid).toBe(true);
+    expect(validate(text({ floorspec: '0.3', project: { name: 'x' } })).valid).toBe(true);
   });
 
-  it('applies the schema of the draft a document declares (1.2.4)', () => {
+  it('applies the schema of the draft a document declares (1.2.6)', () => {
     const program = { items: { K: { function: 'kitchen' } } };
     expect(validate({ floorspec: '0.2', project: { name: 'x' }, program }).valid).toBe(true);
+    expect(validate({ floorspec: '0.3', project: { name: 'x' }, program }).valid).toBe(true);
     expect(codes(validate({ floorspec: '0.1', project: { name: 'x' }, program }))).toEqual(['FS-SCH-001']);
+    const types = { D: { kind: 'doorType', width: 1152000, height: 2688000, operation: 'swing', clearOpening: { width: 1040384, height: 2600960 } } };
+    expect(validate({ floorspec: '0.3', project: { name: 'x' }, types }).valid).toBe(true);
+    expect(new Set(codes(validate({ floorspec: '0.2', project: { name: 'x' }, types })))).toEqual(new Set(['FS-SCH-001']));
   });
 
   it('FS-DOC-002: a well-formed required extension this reader does not implement', () => {

@@ -1,0 +1,9 @@
+{
+  "description": "A room drawn clockwise with every wall justified \"interiorFace\": the location line is the interior (right) face, so the room polygon is exactly the location-line rectangle.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1"
+  ]
+}

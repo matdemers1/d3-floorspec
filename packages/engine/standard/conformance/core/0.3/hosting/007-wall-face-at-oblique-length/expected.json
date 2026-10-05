@@ -1,0 +1,44 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "ac3158418b74b5215f9fd32649c682b9cbe0d5f5b164c29363777e93f4e92f97",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [51200, -38400],
+        "endRight": [1971200, 2521600],
+        "endLeft": [1868800, 2598400],
+        "startLeft": [-51200, 38400],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "A": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[793600, 2444800], [1408000, 1984000], [1868800, 2598400], [1254400, 3059200]],
+        "bottom": 384000,
+        "top": 1536000
+      }
+    },
+    "placements": {
+      "A": {
+        "point": [1868800, 2598400, 384000],
+        "facing": 143130102
+      }
+    },
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {}
+  }
+}

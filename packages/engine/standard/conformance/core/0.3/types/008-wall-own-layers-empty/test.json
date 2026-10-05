@@ -1,0 +1,6 @@
+{
+  "description": "A wall's own layers follow the same rules: an empty array is invalid (it does not mean \"no override\").",
+  "covers": [
+    "FS-CORE-8.3.1"
+  ]
+}

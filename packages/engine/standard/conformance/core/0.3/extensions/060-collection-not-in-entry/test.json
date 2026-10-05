@@ -1,0 +1,7 @@
+{
+  "description": "EXT_electrical data with a \"circuits\" collection, which its entry does not name: FS-INV-604.",
+  "covers": [
+    "FS-CORE-12.4.1",
+    "FS-CORE-10.2.1"
+  ]
+}

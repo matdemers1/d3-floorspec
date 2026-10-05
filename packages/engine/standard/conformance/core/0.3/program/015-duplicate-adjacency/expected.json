@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-402",
+      "severity": "error",
+      "elements": ["DIN", "KIT"]
+    }
+  ]
+}

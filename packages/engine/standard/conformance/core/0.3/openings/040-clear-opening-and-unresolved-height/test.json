@@ -1,0 +1,7 @@
+{
+  "description": "An empty opening with no height and a clear opening taller than anything: FS-INV-301, and FS-INV-305 is not evaluated for an opening that has it.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-7.2.1"
+  ]
+}

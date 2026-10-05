@@ -1,0 +1,7 @@
+{
+  "description": "An extension element's clearances are a clearances object: here an array.",
+  "covers": [
+    "FS-CORE-12.5.2",
+    "FS-CORE-13.5.1"
+  ]
+}

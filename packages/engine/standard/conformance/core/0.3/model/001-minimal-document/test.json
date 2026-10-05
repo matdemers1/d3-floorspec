@@ -1,0 +1,10 @@
+{
+  "description": "The smallest valid document: a version and a named project. Every collection is absent and so empty; nothing is derived.",
+  "covers": [
+    "FS-CORE-1.1.1",
+    "FS-CORE-1.2.5",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1",
+    "FS-CORE-10.1.1"
+  ]
+}

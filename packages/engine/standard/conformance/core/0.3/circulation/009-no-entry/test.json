@@ -1,0 +1,9 @@
+{
+  "description": "Two rooms with a door between them and only a window to the outside: the building has doors but no entry. FS-LINT-014 is reported once, for the building, and FS-LINT-012 is not reported for its rooms, though neither is reachable.",
+  "covers": [
+    "FS-CORE-14.3.1",
+    "FS-CORE-14.4.2",
+    "FS-CORE-14.4.3",
+    "FS-CORE-10.3.1"
+  ]
+}

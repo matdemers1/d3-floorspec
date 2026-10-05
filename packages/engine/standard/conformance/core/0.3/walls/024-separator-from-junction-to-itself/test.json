@@ -1,0 +1,6 @@
+{
+  "description": "A separator that starts and ends at J1.",
+  "covers": [
+    "FS-CORE-5.2.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The same two diamonds with centres 706 mm apart in x and y: they overlap by about 1.5 mm, and the pair is listed.",
+  "covers": [
+    "FS-CORE-13.6.1"
+  ]
+}

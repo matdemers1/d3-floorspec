@@ -1,0 +1,209 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-012",
+      "severity": "warning",
+      "elements": ["BED1"]
+    },
+    {
+      "code": "FS-LINT-012",
+      "severity": "warning",
+      "elements": ["BED2"]
+    }
+  ],
+  "hash": "b0ea97006c753aa3e11bc43fd9d4cb9c2f9abcbbf8896afbd8b84201698ee21a",
+  "derived": {
+    "walls": {
+      "H00": {
+        "startRight": [-64000, -64000],
+        "endRight": [5120000, -64000],
+        "endLeft": [5056000, 64000],
+        "startLeft": [64000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H01": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5120000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H10": {
+        "startRight": [5120000, -64000],
+        "endRight": [10304000, -64000],
+        "endLeft": [10176000, 64000],
+        "startLeft": [5184000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H11": {
+        "startRight": [5184000, 3776000],
+        "endRight": [10176000, 3776000],
+        "endLeft": [10304000, 3904000],
+        "startLeft": [5120000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "UH00": {
+        "startRight": [-64000, -64000],
+        "endRight": [5120000, -64000],
+        "endLeft": [5056000, 64000],
+        "startLeft": [64000, 64000],
+        "baseElevation": 3456000,
+        "topElevation": 6912000
+      },
+      "UH01": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5120000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 3456000,
+        "topElevation": 6912000
+      },
+      "UH10": {
+        "startRight": [5120000, -64000],
+        "endRight": [10304000, -64000],
+        "endLeft": [10176000, 64000],
+        "startLeft": [5184000, 64000],
+        "baseElevation": 3456000,
+        "topElevation": 6912000
+      },
+      "UH11": {
+        "startRight": [5184000, 3776000],
+        "endRight": [10176000, 3776000],
+        "endLeft": [10304000, 3904000],
+        "startLeft": [5120000, 3904000],
+        "baseElevation": 3456000,
+        "topElevation": 6912000
+      },
+      "UV00": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 3456000,
+        "topElevation": 6912000
+      },
+      "UV10": {
+        "startRight": [5184000, 64000],
+        "endRight": [5184000, 3776000],
+        "endLeft": [5056000, 3776000],
+        "startLeft": [5056000, 64000],
+        "baseElevation": 3456000,
+        "topElevation": 6912000
+      },
+      "UV20": {
+        "startRight": [10304000, -64000],
+        "endRight": [10304000, 3904000],
+        "endLeft": [10176000, 3776000],
+        "startLeft": [10176000, 64000],
+        "baseElevation": 3456000,
+        "topElevation": 6912000
+      },
+      "V00": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V10": {
+        "startRight": [5184000, 64000],
+        "endRight": [5184000, 3776000],
+        "endLeft": [5056000, 3776000],
+        "startLeft": [5056000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V20": {
+        "startRight": [10304000, -64000],
+        "endRight": [10304000, 3904000],
+        "endLeft": [10176000, 3776000],
+        "startLeft": [10176000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J10": [[5056000, 64000], [5120000, -64000], [5184000, 64000]],
+      "J11": [[5056000, 3776000], [5184000, 3776000], [5120000, 3904000]],
+      "UJ10": [[5056000, 64000], [5120000, -64000], [5184000, 64000]],
+      "UJ11": [[5056000, 3776000], [5184000, 3776000], [5120000, 3904000]]
+    },
+    "rooms": {
+      "BED1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      },
+      "BED2": {
+        "outer": [[5184000, 64000], [10176000, 64000], [10176000, 3776000], [5184000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      },
+      "HALL": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      },
+      "LIV": {
+        "outer": [[5184000, 64000], [10176000, 64000], [10176000, 3776000], [5184000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "DH00": {
+        "start": [1280000, 0],
+        "end": [2432000, 0],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      },
+      "DUV10": {
+        "start": [5120000, 1280000],
+        "end": [5120000, 2432000],
+        "sillElevation": 3456000,
+        "headElevation": 6144000
+      },
+      "DV10": {
+        "start": [5120000, 1280000],
+        "end": [5120000, 2432000],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "BED1": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "BED2": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "HALL": {
+        "entry": true,
+        "reachable": true
+      },
+      "LIV": {
+        "entry": false,
+        "reachable": true
+      }
+    }
+  }
+}

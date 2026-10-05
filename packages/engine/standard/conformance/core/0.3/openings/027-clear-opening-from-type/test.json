@@ -1,0 +1,7 @@
+{
+  "description": "A door filled by a type with a clear opening has that clear opening, derived exactly as the type declares it: 32 by 80 inches, 1040384 by 2600960 base units, and no area.",
+  "covers": [
+    "FS-CORE-7.4.2",
+    "FS-CORE-8.2.1"
+  ]
+}

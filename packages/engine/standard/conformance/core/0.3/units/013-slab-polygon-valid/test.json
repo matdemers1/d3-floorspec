@@ -1,0 +1,7 @@
+{
+  "description": "A counter-clockwise slab boundary: a simple polygon with positive area.",
+  "covers": [
+    "FS-CORE-2.6.1",
+    "FS-CORE-6.7.1"
+  ]
+}

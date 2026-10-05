@@ -1,0 +1,8 @@
+{
+  "description": "A butt join at a 63.4-degree corner (directions (1, 0) and (1, 2)): p, the intersection of W2's convex-side face and W1's reflex-side face, is irrational.",
+  "covers": [
+    "FS-CORE-2.2.1",
+    "FS-CORE-5.8.2",
+    "FS-CORE-5.8.4"
+  ]
+}

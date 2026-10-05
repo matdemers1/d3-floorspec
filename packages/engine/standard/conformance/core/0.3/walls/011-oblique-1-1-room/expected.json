@@ -1,0 +1,65 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "28d6fb7e29278b4fdc59700c37cc05aa0161d1be979e95c8a5f1ee9fca7f3e96",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [0, -3749490],
+        "endRight": [-3749490, 0],
+        "endLeft": [-3930510, 0],
+        "startLeft": [0, -3930510],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [-3749490, 0],
+        "endRight": [0, 3749490],
+        "endLeft": [0, 3930510],
+        "startLeft": [-3930510, 0],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [0, 3749490],
+        "endRight": [3749490, 0],
+        "endLeft": [3930510, 0],
+        "startLeft": [0, 3930510],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [3749490, 0],
+        "endRight": [0, -3749490],
+        "endLeft": [0, -3930510],
+        "startLeft": [3930510, 0],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[-3749490, 0], [0, -3749490], [3749490, 0], [0, 3749490]],
+        "holes": [],
+        "area": "28117350520200"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    }
+  }
+}

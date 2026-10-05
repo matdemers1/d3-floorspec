@@ -1,0 +1,6 @@
+{
+  "description": "A site boundary whose three vertices are collinear encloses no area: FS-INV-009 with no element.",
+  "covers": [
+    "FS-CORE-2.6.1"
+  ]
+}

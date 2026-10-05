@@ -1,0 +1,8 @@
+{
+  "description": "Two walls meeting at about 14 degrees: valid, with an acute-join warning naming the junction and both walls.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-10.1.1"
+  ]
+}

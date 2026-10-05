@@ -1,0 +1,8 @@
+{
+  "description": "The baseline model (model/017) with extras on the document, the project, a wall, a junction, a room and an opening - including members named like core members. The derived values are exactly those of model/017, and every extra is kept in the canonical form.",
+  "covers": [
+    "FS-CORE-1.7.1",
+    "FS-CORE-1.7.2",
+    "FS-CORE-9.2.1"
+  ]
+}

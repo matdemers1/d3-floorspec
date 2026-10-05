@@ -6,7 +6,7 @@ import { Surd } from '../exact/surd.js';
 import { toSafeNumber } from '../exact/bigint.js';
 import { roundPoint, toNumbers } from '../geometry/exact-point.js';
 import type { IPoint } from '../geometry/predicates.js';
-import { entries, extElements, get, ipoint, openingDimensions, wallElevations, type FloorspecDocument } from '../model/document.js';
+import { effectiveClearOpening, entries, extElements, get, ipoint, openingDimensions, wallElevations, type ClearOpening, type FloorspecDocument } from '../model/document.js';
 import type { Analysis } from '../validate/invariants.js';
 import { elementFrame, envelopesOverlap, footprintOf, openingFrame, placementOf, type Footprint, type Placement } from './frames.js';
 import { comparePoints } from './level.js';
@@ -45,6 +45,11 @@ export interface DerivedOpening {
   end: Point;
   sillElevation: number;
   headElevation: number;
+  /**
+   * 7.4 (Core 0.3): the opening's effective clear opening, exactly as declared — present only when
+   * one resolves, and with an `area` only when one is declared. Never computed.
+   */
+  clearOpening?: { width: number; height: number; area?: number };
 }
 
 /** 12.6: an extension element's fallback box, in its frame. */
@@ -160,11 +165,16 @@ export function deriveFrom(doc: FloorspecDocument, analysis: Analysis): Derived 
       end: at(BigInt(o.offset) + BigInt(dim.width!)),
       sillElevation: toSafeNumber(sill),
       headElevation: toSafeNumber(sill + BigInt(dim.height!)),
+      ...clearOpeningOf(effectiveClearOpening(doc, o)),
     });
   }
   if (analysis.core02) Object.assign(out, derive02(doc, analysis));
   return out;
 }
+
+/** 7.4.2: a derived clear opening has exactly the members declared. */
+const clearOpeningOf = (c: ClearOpening | undefined): Pick<DerivedOpening, 'clearOpening'> =>
+  c ? { clearOpening: { width: c.width, height: c.height, ...(c.area !== undefined && { area: c.area }) } } : {};
 
 const cmpRef = (a: EnvelopeRef, b: EnvelopeRef): number =>
   a[0] !== b[0] ? (a[0] < b[0] ? -1 : 1) : a[1] !== b[1] ? (a[1] < b[1] ? -1 : 1) : 0;

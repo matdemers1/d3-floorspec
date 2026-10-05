@@ -1,0 +1,8 @@
+{
+  "description": "A wall along (3, 4): its length is rational (5 per step), and with thickness 128,005 its feet are at (-51,202, 38,401.5) from each end - an exact tie, rounded to 38,402. A deriver that computes the unit normal in floating point does not land exactly on the tie.",
+  "covers": [
+    "FS-CORE-2.2.1",
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

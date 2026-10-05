@@ -1,0 +1,7 @@
+{
+  "description": "At an L corner, O1 starts at W2's start junction and O2 ends 30 mm short of W1's end junction: both reach into the part of the wall the mitre occupies, which runs 50 mm (64,000 units) from the corner, and are warned about. O3, in the middle of W1, is not.",
+  "covers": [
+    "FS-CORE-7.4.1",
+    "FS-CORE-10.1.1"
+  ]
+}

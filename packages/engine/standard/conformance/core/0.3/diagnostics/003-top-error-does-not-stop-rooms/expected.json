@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-112",
+      "severity": "error",
+      "elements": ["W1"]
+    },
+    {
+      "code": "FS-INV-201",
+      "severity": "error",
+      "elements": ["R2"]
+    }
+  ]
+}

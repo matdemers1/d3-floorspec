@@ -1,0 +1,6 @@
+{
+  "description": "Two through walls with two other edges on the same side.",
+  "covers": [
+    "FS-CORE-5.8.3"
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "907996c86d44308014af2dd80d4a00fb3d22640f195d38b734ac0e814b5b7dc1",
+  "derived": {
+    "walls": {
+      "WE1": {
+        "startRight": [13850112, 9168384],
+        "endRight": [13850112, 4681728],
+        "endLeft": [14083792, 4681728],
+        "startLeft": [14083792, 9402064],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WE2": {
+        "startRight": [13850112, 4681728],
+        "endRight": [13850112, 195072],
+        "endLeft": [14083792, -38608],
+        "startLeft": [14083792, 4681728],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WI1": {
+        "startRight": [7876032, 195072],
+        "endRight": [7876032, 4608576],
+        "endLeft": [7729728, 4681728],
+        "startLeft": [7729728, 195072],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WI2": {
+        "startRight": [7876032, 4608576],
+        "endRight": [13850112, 4608576],
+        "endLeft": [13850112, 4754880],
+        "startLeft": [7802880, 4754880],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WN1": {
+        "startRight": [195072, 9168384],
+        "endRight": [7802880, 9168384],
+        "endLeft": [7802880, 9402064],
+        "startLeft": [-38608, 9402064],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WN2": {
+        "startRight": [7802880, 9168384],
+        "endRight": [13850112, 9168384],
+        "endLeft": [14083792, 9402064],
+        "startLeft": [7802880, 9402064],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WS1": {
+        "startRight": [13850112, 195072],
+        "endRight": [7802880, 195072],
+        "endLeft": [7802880, -38608],
+        "startLeft": [14083792, -38608],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WS2": {
+        "startRight": [7802880, 195072],
+        "endRight": [195072, 195072],
+        "endLeft": [-38608, -38608],
+        "startLeft": [7802880, -38608],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WW": {
+        "startRight": [195072, 195072],
+        "endRight": [195072, 9168384],
+        "endLeft": [-38608, 9402064],
+        "startLeft": [-38608, -38608],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      }
+    },
+    "junctionFills": {
+      "TM": [[7729728, 4681728], [7876032, 4608576], [7802880, 4754880], [7802880, 4681728]]
+    },
+    "rooms": {
+      "BED": {
+        "outer": [[7876032, 195072], [13850112, 195072], [13850112, 4608576], [7876032, 4608576]],
+        "holes": [],
+        "area": "26366625976320"
+      },
+      "KIT": {
+        "outer": [[7802880, 4754880], [13850112, 4754880], [13850112, 9168384], [7802880, 9168384]],
+        "holes": [],
+        "area": "26689482620928"
+      },
+      "LIV": {
+        "outer": [[195072, 195072], [7729728, 195072], [7729728, 4681728], [7802880, 4681728], [7802880, 9168384], [195072, 9168384]],
+        "holes": [],
+        "area": "67939026960384"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "BD": {
+        "start": [7802880, 3121152],
+        "end": [7802880, 4161536],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "BW": {
+        "start": [14045184, 3511296],
+        "end": [14045184, 1950720],
+        "sillElevation": 1170432,
+        "headElevation": 2731008
+      },
+      "FD": {
+        "start": [5462016, 0],
+        "end": [4291584, 0],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "KW": {
+        "start": [10143744, 9363456],
+        "end": [11314176, 9363456],
+        "sillElevation": 1365504,
+        "headElevation": 2535936
+      },
+      "LW1": {
+        "start": [0, 3121152],
+        "end": [0, 4681728],
+        "sillElevation": 1170432,
+        "headElevation": 2731008
+      },
+      "LW2": {
+        "start": [2340864, 9363456],
+        "end": [4681728, 9363456],
+        "sillElevation": 1170432,
+        "headElevation": 2731008
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "BED": {
+        "entry": false,
+        "reachable": true,
+        "throughSleeping": false
+      },
+      "KIT": {
+        "entry": false,
+        "reachable": true
+      },
+      "LIV": {
+        "entry": true,
+        "reachable": true
+      }
+    }
+  }
+}

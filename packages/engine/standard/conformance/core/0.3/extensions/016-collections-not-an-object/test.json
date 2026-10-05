@@ -1,0 +1,6 @@
+{
+  "description": "\"collections\" is an object of collections, not an array.",
+  "covers": [
+    "FS-CORE-12.5.1"
+  ]
+}

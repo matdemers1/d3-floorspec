@@ -1,0 +1,79 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "3e67c1f0c2f840927a864a4089aaf420cad291ed6490d4cb931512b6e7187438",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 4416000],
+        "endLeft": [-64000, 4544000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 4416000],
+        "endRight": [5056000, 4416000],
+        "endLeft": [5184000, 4544000],
+        "startLeft": [-64000, 4544000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 4416000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 4544000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 4416000], [64000, 4416000]],
+        "holes": [],
+        "area": "21725184000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "OUT": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[1280000, 3648000], [2048000, 3648000], [2048000, 4416000], [1280000, 4416000]],
+        "bottom": 384000,
+        "top": 1536000
+      }
+    },
+    "placements": {
+      "OUT": {
+        "point": [1280000, 4416000, 384000],
+        "facing": -90000000
+      }
+    },
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    }
+  }
+}

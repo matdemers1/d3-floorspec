@@ -1,0 +1,6 @@
+{
+  "description": "A schema URL is absolute.",
+  "covers": [
+    "FS-CORE-12.1.2"
+  ]
+}

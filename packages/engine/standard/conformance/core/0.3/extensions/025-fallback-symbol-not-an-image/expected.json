@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-506",
+      "severity": "error",
+      "elements": ["SOFA"]
+    }
+  ]
+}

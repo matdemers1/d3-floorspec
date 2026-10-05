@@ -1,0 +1,82 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "6a8ca449c5c92c8fb76f489135efc3fe53016d612b8f3b0b1a917a47999096db",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [28622, 85865],
+        "endRight": [-1194135, 2531378],
+        "endLeft": [-1365865, 2588622],
+        "startLeft": [-28622, -85865],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [-1194135, 2531378],
+        "endRight": [3811378, 5034135],
+        "endLeft": [3868622, 5205865],
+        "startLeft": [-1365865, 2588622],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [3811378, 5034135],
+        "endRight": [5034135, 2588622],
+        "endLeft": [5205865, 2531378],
+        "startLeft": [3868622, 5205865],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5034135, 2588622],
+        "endRight": [28622, 85865],
+        "endLeft": [-28622, -85865],
+        "startLeft": [5205865, 2531378],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[-1194135, 2531378], [28622, 85865], [5034135, 2588622], [3811378, 5034135]],
+        "holes": [],
+        "area": "15301310754218"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [4547567, 2273783],
+        "end": [3517186, 1758593],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {
+      "O1": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[3001996, 2788973], [3517186, 1758593], [4547567, 2273783], [4032377, 3304163]],
+          "bottom": 0,
+          "top": 2688000
+        }
+      }
+    },
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      }
+    }
+  }
+}

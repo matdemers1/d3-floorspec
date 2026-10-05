@@ -1,0 +1,7 @@
+{
+  "description": "A duplicate member, a dangling reference and an unknown member: only FS-JSON-002.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-9.1.2"
+  ]
+}

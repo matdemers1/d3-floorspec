@@ -1,0 +1,7 @@
+{
+  "description": "EXT_lighting's entry requires every element of its \"fixtures\" kind to carry a symbol, and this one has none: FS-INV-603.",
+  "covers": [
+    "FS-CORE-12.4.2",
+    "FS-CORE-10.2.1"
+  ]
+}

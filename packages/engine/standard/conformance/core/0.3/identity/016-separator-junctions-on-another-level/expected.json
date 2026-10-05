@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-007",
+      "severity": "error",
+      "elements": ["J1", "S1"]
+    },
+    {
+      "code": "FS-INV-007",
+      "severity": "error",
+      "elements": ["J2", "S1"]
+    }
+  ]
+}

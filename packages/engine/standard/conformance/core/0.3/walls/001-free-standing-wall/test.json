@@ -1,0 +1,10 @@
+{
+  "description": "One centred wall with two free ends: each junction has one edge, so each wedge is a full turn with parallel face lines and the corner sequence is the two feet - the ends are cut square.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-5.7.2",
+    "FS-CORE-5.9.3",
+    "FS-CORE-2.3.1"
+  ]
+}

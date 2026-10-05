@@ -1,0 +1,7 @@
+{
+  "description": "A door whose own clear opening has an area: FS-INV-308.",
+  "covers": [
+    "FS-CORE-7.1.3",
+    "FS-CORE-10.2.1"
+  ]
+}

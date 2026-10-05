@@ -1,0 +1,6 @@
+{
+  "description": "W1 and W2 are opposite but W2 is justified differently, so their face lines do not coincide.",
+  "covers": [
+    "FS-CORE-5.8.3"
+  ]
+}

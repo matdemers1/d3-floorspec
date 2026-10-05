@@ -1,0 +1,6 @@
+{
+  "description": "A 0.1 document whose door type has a clear opening: Core 0.1's schema applies to it, and has no such member.",
+  "covers": [
+    "FS-CORE-1.2.6"
+  ]
+}

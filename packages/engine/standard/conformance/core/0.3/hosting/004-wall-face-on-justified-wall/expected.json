@@ -1,0 +1,91 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "8bb553af1f0ccb92ac5ea92559a9d52cc666df818b5e643995da6803ba30b63b",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [128000, 64000],
+        "endRight": [128000, 3776000],
+        "endLeft": [0, 3904000],
+        "startLeft": [0, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [128000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [0, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [128000, 64000],
+        "endLeft": [0, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[128000, 64000], [5056000, 64000], [5056000, 3776000], [128000, 3776000]],
+        "holes": [],
+        "area": "18292736000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "A": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[-768000, -128000], [0, -128000], [0, 640000], [-768000, 640000]],
+        "bottom": 384000,
+        "top": 1536000
+      },
+      "B": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[128000, 640000], [896000, 640000], [896000, 1408000], [128000, 1408000]],
+        "bottom": 384000,
+        "top": 1536000
+      }
+    },
+    "placements": {
+      "A": {
+        "point": [0, 640000, 384000],
+        "facing": 180000000
+      },
+      "B": {
+        "point": [128000, 640000, 384000],
+        "facing": 0
+      }
+    },
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    }
+  }
+}

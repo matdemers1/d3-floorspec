@@ -1,0 +1,6 @@
+{
+  "description": "On a wall along (3, 4) x 640,000, whose length is exactly 3,200,000: an offset of 3,200,000 fits, exactly.",
+  "covers": [
+    "FS-CORE-13.3.2"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "program/001 with an item's count 1, empty extensions and extras, and an adjacency's weight 5 written out: the same derived values and hash as program/001, and a canonical form without them.",
+  "covers": [
+    "FS-CORE-1.5.1",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.2.2",
+    "FS-CORE-11.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A document using EXT_electrical 2.0 without EXT_lighting, which its entry requires: FS-INV-601.",
+  "covers": [
+    "FS-CORE-12.3.2",
+    "FS-CORE-10.2.1"
+  ]
+}

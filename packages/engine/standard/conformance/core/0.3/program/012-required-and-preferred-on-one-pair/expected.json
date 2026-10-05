@@ -1,0 +1,198 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-014",
+      "severity": "warning",
+      "elements": ["B1"]
+    }
+  ],
+  "hash": "baf620809287d25f3ebe94166c9bd7be424a941b592849fff81654a468019e55",
+  "derived": {
+    "walls": {
+      "EH1": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5056000, 3904000],
+        "startLeft": [64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "EV1": {
+        "startRight": [5184000, 64000],
+        "endRight": [5184000, 3840000],
+        "endLeft": [5056000, 3776000],
+        "startLeft": [5056000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "EV2": {
+        "startRight": [5184000, 3840000],
+        "endRight": [5184000, 7616000],
+        "endLeft": [5056000, 7616000],
+        "startLeft": [5056000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WO0": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3840000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WO1": {
+        "startRight": [64000, 3904000],
+        "endRight": [64000, 7616000],
+        "endLeft": [-64000, 7744000],
+        "startLeft": [-64000, 3840000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WO2": {
+        "startRight": [64000, 7616000],
+        "endRight": [5056000, 7616000],
+        "endLeft": [5120000, 7744000],
+        "startLeft": [-64000, 7744000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WO3": {
+        "startRight": [5184000, 7616000],
+        "endRight": [10176000, 7616000],
+        "endLeft": [10304000, 7744000],
+        "startLeft": [5120000, 7744000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WO4": {
+        "startRight": [10176000, 7616000],
+        "endRight": [10176000, 3840000],
+        "endLeft": [10304000, 3840000],
+        "startLeft": [10304000, 7744000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WO5": {
+        "startRight": [10176000, 3840000],
+        "endRight": [10176000, 64000],
+        "endLeft": [10304000, -64000],
+        "startLeft": [10304000, 3840000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WO6": {
+        "startRight": [10176000, 64000],
+        "endRight": [5184000, 64000],
+        "endLeft": [5120000, -64000],
+        "startLeft": [10304000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WO7": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5120000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J01": [[-64000, 3840000], [64000, 3776000], [64000, 3904000]],
+      "J10": [[5056000, 64000], [5120000, -64000], [5184000, 64000]],
+      "J11": [[5056000, 3776000], [5184000, 3840000], [5056000, 3904000]],
+      "J12": [[5056000, 7616000], [5184000, 7616000], [5120000, 7744000]]
+    },
+    "rooms": {
+      "RNE": {
+        "outer": [[5184000, 3840000], [10176000, 3840000], [10176000, 7616000], [5184000, 7616000]],
+        "holes": [],
+        "area": "18849792000000"
+      },
+      "RNW": {
+        "outer": [[64000, 3904000], [5056000, 3904000], [5056000, 7616000], [64000, 7616000]],
+        "holes": [],
+        "area": "18530304000000"
+      },
+      "RSE": {
+        "outer": [[5184000, 64000], [10176000, 64000], [10176000, 3840000], [5184000, 3840000]],
+        "holes": [],
+        "area": "18849792000000"
+      },
+      "RSW": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [5120000, 1280000],
+        "end": [5120000, 2432000],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {
+        "BED": {
+          "rooms": ["RNW", "RSW"],
+          "countMet": true,
+          "minAreaMet": true,
+          "targetAreaMet": false
+        },
+        "DIN": {
+          "rooms": ["RNE"],
+          "countMet": true
+        },
+        "KIT": {
+          "rooms": ["RSE"],
+          "countMet": true
+        }
+      },
+      "adjacency": [
+        {
+          "a": "KIT",
+          "b": "DIN",
+          "kind": "required",
+          "adjacent": true,
+          "connected": true
+        },
+        {
+          "a": "DIN",
+          "b": "KIT",
+          "kind": "preferred",
+          "adjacent": true,
+          "connected": true
+        }
+      ]
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "RNE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RNW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "RSE": {
+        "entry": false,
+        "reachable": false
+      },
+      "RSW": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      }
+    }
+  }
+}

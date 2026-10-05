@@ -1,0 +1,6 @@
+{
+  "description": "Two vertices of a slab boundary coincide.",
+  "covers": [
+    "FS-CORE-2.6.1"
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "86010b55ec37168d524d4f0f62ff9fd7ce4a27be483beb5270371e9cc40ce292",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [3840000, 0],
+        "end": [2688000, 0],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "HATCH": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2560000, 1920000], [2561280, 1920000], [2561280, 1921280], [2560000, 1921280]],
+        "bottom": 0,
+        "top": 1280
+      }
+    },
+    "placements": {
+      "HATCH": {
+        "point": [0, 0, 0],
+        "facing": 0
+      }
+    },
+    "clearances": {
+      "HATCH": {
+        "access": {
+          "level": "L1",
+          "purpose": "access",
+          "footprint": [[2048000, 64000], [2688001, 64000], [2688001, 1216000], [2048000, 1216000]],
+          "bottom": 0,
+          "top": 1280000
+        }
+      },
+      "O1": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[2688000, 0], [3840000, 0], [3840000, 1152000], [2688000, 1152000]],
+          "bottom": 0,
+          "top": 2688000
+        }
+      }
+    },
+    "clearanceOverlaps": [
+      [["HATCH", "access"], ["O1", "swing"]]
+    ],
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      }
+    }
+  }
+}

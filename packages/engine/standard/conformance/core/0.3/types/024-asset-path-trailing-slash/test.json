@@ -1,0 +1,6 @@
+{
+  "description": "An asset path with a trailing slash (an empty last segment).",
+  "covers": [
+    "FS-CORE-8.6.2"
+  ]
+}

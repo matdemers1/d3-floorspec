@@ -1,0 +1,9 @@
+{
+  "description": "model/017 with every constant default written out - \"center\", base offset 0, the mitre join, \"unspecified\", hinge and swing, and every empty collection and object. Its derived values and hash are exactly those of model/017, and its canonical form is byte-identical.",
+  "covers": [
+    "FS-CORE-1.5.1",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.2.2",
+    "FS-CORE-9.3.1"
+  ]
+}

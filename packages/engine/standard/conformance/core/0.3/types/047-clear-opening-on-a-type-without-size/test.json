@@ -1,0 +1,7 @@
+{
+  "description": "A door type with a clear opening and no width or height: there is nothing to compare it with on the type, so it is valid; the opening it fills states its own 1000 mm by 2200 mm, and the clear opening fits that.",
+  "covers": [
+    "FS-CORE-8.4.5",
+    "FS-CORE-7.2.2"
+  ]
+}

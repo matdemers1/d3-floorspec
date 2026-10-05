@@ -1,0 +1,6 @@
+{
+  "description": "The same house with no room of function circulation on L2: nothing links L2 to L1, so both bedrooms upstairs are unreachable, FS-LINT-012 for each. Neither is reached through a sleeping room, since neither is reached at all.",
+  "covers": [
+    "FS-CORE-14.3.1"
+  ]
+}

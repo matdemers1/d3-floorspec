@@ -1,0 +1,6 @@
+{
+  "description": "An L-shaped hall - three cells along the south and one up the west side, the walls between them left out - whose front door is in the west wall of the upper leg (V01), far from the hall's anchor. Both bedrooms open off the long leg, so both are reachable: a room is one node of the door graph, whatever its shape.",
+  "covers": [
+    "FS-CORE-14.3.1"
+  ]
+}

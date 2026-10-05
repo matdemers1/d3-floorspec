@@ -1,0 +1,6 @@
+{
+  "description": "\"#fff\" is not #rrggbb.",
+  "covers": [
+    "FS-CORE-8.5.1"
+  ]
+}

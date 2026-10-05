@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.3/slab.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.7's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Slab",
+  "description": "6.7: an authored floor or deck that is not derived from a room — a patio, a porch deck, a landing. Every slab MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).",
+  "type": "object",
+  "required": [
+    "level",
+    "boundary",
+    "thickness"
+  ],
+  "properties": {
+    "level": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "1.3, 6.7: a reference to the level the slab belongs to. Always present."
+    },
+    "boundary": {
+      "$ref": "defs.schema.json#/$defs/polygon",
+      "description": "6.7: the slab's outline in plan, a polygon (2.6). Always present. That it is simple with positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), not checked here."
+    },
+    "thickness": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "6.7: the slab's thickness. Always present, and MUST be greater than zero (FS-CORE-6.7.1)."
+    },
+    "offset": {
+      "$ref": "defs.schema.json#/$defs/length",
+      "description": "6.7: the height of the slab's top above its level's elevation.",
+      "default": 0
+    },
+    "material": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "6.7: a reference to the material of the slab's top surface. Absent by default."
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/name",
+      "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+    },
+    "extensions": {
+      "$ref": "defs.schema.json#/$defs/extensions",
+      "description": "1.4, 1.6: extension data on this slab.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.4, 1.7: application-specific data on this slab.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

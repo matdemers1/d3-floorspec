@@ -1,0 +1,7 @@
+{
+  "description": "walls/002 with W2 drawn the other way, ending at the corner: its face ends are the same points, read from its end junction where its sides are reversed.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

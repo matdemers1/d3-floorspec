@@ -1,0 +1,7 @@
+{
+  "description": "An offset equal to the wall's length, 3000 mm, and a height equal to its height, 2700 mm: both within the wall.",
+  "covers": [
+    "FS-CORE-13.3.2",
+    "FS-CORE-13.3.3"
+  ]
+}

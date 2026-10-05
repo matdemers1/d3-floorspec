@@ -1,0 +1,7 @@
+{
+  "description": "A JSON array is well-formed JSON but not a document: FS-SCH-001.",
+  "covers": [
+    "FS-CORE-1.1.1",
+    "FS-CORE-10.2.1"
+  ]
+}

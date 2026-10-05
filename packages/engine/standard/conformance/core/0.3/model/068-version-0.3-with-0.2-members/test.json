@@ -1,0 +1,10 @@
+{
+  "description": "A 0.3 document using every member 0.2 added - a program and a brief, a declaration object, door clearances, and an extension element with a host - each written with its defaults, so the canonical form shows which are omitted: count 1, weight 5, empty clearances and the declaration object without a schema are; the extension element, which is extension data, is not changed at all.",
+  "covers": [
+    "FS-CORE-1.2.5",
+    "FS-CORE-1.5.1",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.2.2",
+    "FS-CORE-12.1.3"
+  ]
+}

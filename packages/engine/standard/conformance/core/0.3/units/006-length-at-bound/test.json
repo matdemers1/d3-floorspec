@@ -1,0 +1,7 @@
+{
+  "description": "Lengths of exactly +-(2^53 - 1) are valid. The junction is unused, which is only a lint, so the document is valid.",
+  "covers": [
+    "FS-CORE-2.1.1",
+    "FS-CORE-10.1.1"
+  ]
+}

@@ -1,5 +1,5 @@
 /**
- * The diagnostic catalogue of Floorspec Core 0.2 (10.4) — a superset of 0.1's — the single table of codes. A test checks
+ * The diagnostic catalogue of Floorspec Core 0.3 (10.4) — a superset of 0.2's and 0.1's — the single table of codes. A test checks
  * it against the copy of spec/core/10-diagnostics.md vendored with the conformance suite.
  */
 import type { Severity } from './diagnostic.js';
@@ -34,7 +34,7 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
   e('FS-JSON-003', 'error', 'parse', 'a string has an unpaired surrogate', '—', '9.1.3'),
   e('FS-DOC-001', 'error', 'document', 'the root is an object whose `floorspec` member is a string naming a version this reader does not implement', '—', '1.2.2'),
   e('FS-DOC-002', 'error', 'document', '`extensionsRequired` names an extension this reader does not implement', '—', '1.6.4'),
-  e('FS-SCH-001', 'error', 'schema', 'the document does not match the schema of the draft it declares (1.2.4)', '—', '1.1, 1.2.3, 1.2.4, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 7.1, 8.1, 8.3–8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1'),
+  e('FS-SCH-001', 'error', 'schema', 'the document does not match the schema of the draft it declares (1.2.6)', '—', '1.1, 1.2.5, 1.2.6, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 7.1.1, 7.1.2, 8.1, 8.3, 8.4.1–8.4.3, 8.5, 8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1'),
   e('FS-INV-001', 'error', 'invariant', 'an ID is used in more than one collection — counting program items and every extension collection', 'the ID', '3.1.2, 3.1.3'),
   e('FS-INV-002', 'error', 'invariant', 'a reference does not resolve to an element of the right collection', 'the referring element, program item or extension element; none for an adjacency', '3.2.1'),
   e('FS-INV-003', 'error', 'invariant', 'a type reference resolves to a type of the wrong kind', 'the referring element', '3.2.2'),
@@ -64,6 +64,10 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
   e('FS-INV-302', 'error', 'invariant', "an opening extends beyond its wall's length", 'the opening', '7.3.1'),
   e('FS-INV-303', 'error', 'invariant', "an opening extends above its wall's height", 'the opening', '7.3.2'),
   e('FS-INV-304', 'error', 'invariant', 'two openings on one wall overlap', 'both openings', '7.3.3'),
+  e('FS-INV-305', 'error', 'invariant', "an opening's effective clear opening is wider or taller than the opening", 'the opening', '7.2.2'),
+  e('FS-INV-306', 'error', 'invariant', "a clear opening's area exceeds its width times its height; once for each such clear opening, on a type or on an opening", 'the type or the opening', '8.4.4'),
+  e('FS-INV-307', 'error', 'invariant', "a door or window type's clear opening is wider or taller than the type", 'the type', '8.4.5'),
+  e('FS-INV-308', 'error', 'invariant', "an opening's own clear opening has an area, and the opening's fill is not a window type", 'the opening', '7.1.3'),
   e('FS-INV-401', 'error', 'invariant', 'an adjacency relates an item to itself', 'the item', '11.2.1'),
   e('FS-INV-402', 'error', 'invariant', 'an adjacency has the pair and kind of an earlier one; once for each such adjacency', 'both items', '11.2.2'),
   e('FS-INV-403', 'error', 'invariant', 'a pair has a `"forbidden"` adjacency and a `"required"` or `"preferred"` one; once for each such pair', 'both items', '11.2.3'),

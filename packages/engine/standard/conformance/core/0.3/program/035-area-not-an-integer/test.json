@@ -1,0 +1,6 @@
+{
+  "description": "An area is a JSON integer: 1.5e13 is written with an exponent.",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

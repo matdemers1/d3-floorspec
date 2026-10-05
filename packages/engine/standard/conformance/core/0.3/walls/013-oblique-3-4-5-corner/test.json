@@ -1,0 +1,7 @@
+{
+  "description": "An L corner of walls along (3, 4) and (4, -3): every length is rational, so the corners are rational too.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "Wall W3's type is a door type: FS-INV-003.",
+  "covers": [
+    "FS-CORE-3.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

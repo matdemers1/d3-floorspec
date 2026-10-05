@@ -1,0 +1,6 @@
+{
+  "description": "A room on level L2, which has no walls: its anchor is in L2's unbounded face, whatever lies under it on L1.",
+  "covers": [
+    "FS-CORE-6.3.1"
+  ]
+}

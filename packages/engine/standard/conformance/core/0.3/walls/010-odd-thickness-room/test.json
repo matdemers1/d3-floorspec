@@ -1,0 +1,10 @@
+{
+  "description": "A room of centred walls 128,001 units thick: every corner is at a half unit in both coordinates, and rounds to even - so the room polygon is not symmetric about the location lines.",
+  "covers": [
+    "FS-CORE-2.2.1",
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1"
+  ]
+}

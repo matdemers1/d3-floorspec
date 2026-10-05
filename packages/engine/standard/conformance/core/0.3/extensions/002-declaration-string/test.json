@@ -1,0 +1,7 @@
+{
+  "description": "extensions/001 with EXT_acoustics declared as the string \"2.1\": the same hash and canonical form as extensions/001.",
+  "covers": [
+    "FS-CORE-12.1.3",
+    "FS-CORE-9.3.1"
+  ]
+}

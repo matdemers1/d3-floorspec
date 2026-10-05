@@ -1,0 +1,7 @@
+{
+  "description": "An X with the north-south walls W2 and W4 running through, one other edge on each side.",
+  "covers": [
+    "FS-CORE-5.8.3",
+    "FS-CORE-5.8.4"
+  ]
+}

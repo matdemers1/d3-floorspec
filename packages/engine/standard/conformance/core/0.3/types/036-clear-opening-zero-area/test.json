@@ -1,0 +1,6 @@
+{
+  "description": "A window's clear area of 0.",
+  "covers": [
+    "FS-CORE-8.4.3"
+  ]
+}

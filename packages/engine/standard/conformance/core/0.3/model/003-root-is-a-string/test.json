@@ -1,0 +1,6 @@
+{
+  "description": "A JSON string is not a document either; it has no floorspec member to name a version, so it fails the schema, not the version check.",
+  "covers": [
+    "FS-CORE-1.1.1"
+  ]
+}

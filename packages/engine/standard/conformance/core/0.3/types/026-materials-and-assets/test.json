@@ -1,0 +1,11 @@
+{
+  "description": "Materials with a colour and textures, assets by path (with a space and, after the first segment, a colon) and by URI: valid. The lints name the unused door type, material and asset (FS-LINT-006) and the asset located by URI (FS-LINT-007).",
+  "covers": [
+    "FS-CORE-8.1.1",
+    "FS-CORE-8.5.1",
+    "FS-CORE-8.5.2",
+    "FS-CORE-8.6.1",
+    "FS-CORE-8.6.2",
+    "FS-CORE-10.1.1"
+  ]
+}

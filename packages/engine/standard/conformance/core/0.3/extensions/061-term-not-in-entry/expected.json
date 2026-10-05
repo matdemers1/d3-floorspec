@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-605",
+      "severity": "error",
+      "elements": ["R1"]
+    },
+    {
+      "code": "FS-INV-605",
+      "severity": "error",
+      "elements": ["SRV"]
+    }
+  ]
+}

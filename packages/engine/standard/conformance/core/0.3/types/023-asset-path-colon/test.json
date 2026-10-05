@@ -1,0 +1,6 @@
+{
+  "description": "An asset path with a colon in its first segment.",
+  "covers": [
+    "FS-CORE-8.6.2"
+  ]
+}

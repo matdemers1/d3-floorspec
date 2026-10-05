@@ -1,0 +1,6 @@
+{
+  "description": "BED-KIT is preferred and also forbidden: a contradiction too, FS-INV-403.",
+  "covers": [
+    "FS-CORE-11.2.3"
+  ]
+}

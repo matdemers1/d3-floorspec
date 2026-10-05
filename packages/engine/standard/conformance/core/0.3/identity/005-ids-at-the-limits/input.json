@@ -1,0 +1,45 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "0": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "a.b_c-D": {
+      "level": "L1",
+      "position": [5120000, 0]
+    }
+  },
+  "walls": {
+    "x012345678901234567890123456789012345678901234567890123456789abc": {
+      "level": "L1",
+      "start": "0",
+      "end": "a.b_c-D",
+      "type": "WT"
+    }
+  }
+}

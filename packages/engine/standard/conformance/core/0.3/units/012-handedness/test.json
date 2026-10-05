@@ -1,0 +1,7 @@
+{
+  "description": "A wall from west to east justified \"exteriorFace\": its location line is its left face, and its right face lies to the south (negative y), because +Y is north and a rotation from +X to +Y is counter-clockwise. A deriver with Y pointing down puts the wall on the wrong side.",
+  "covers": [
+    "FS-CORE-2.3.1",
+    "FS-CORE-5.7.1"
+  ]
+}

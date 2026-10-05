@@ -1,0 +1,7 @@
+{
+  "description": "A wall carries EXT_acoustics data that extensionsUsed does not declare: FS-INV-005 naming the wall.",
+  "covers": [
+    "FS-CORE-1.6.3",
+    "FS-CORE-10.2.1"
+  ]
+}

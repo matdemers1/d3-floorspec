@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.3/clearance.schema.json",
+  "$comment": "Normative (FLR-ADR-006). A clearance envelope has no constant defaults.",
+  "title": "Clearances",
+  "description": "13.5: a `clearances` object maps envelope names (^[a-z][A-Za-z0-9]*$) to clearance envelopes (FS-CORE-13.5.1). It appears only on door types, window types and extension elements. That each extent of an envelope is at least 1,280 (FS-CORE-13.2.2) is an invariant (FS-INV-505), not checked here.",
+  "type": "object",
+  "propertyNames": {
+    "$ref": "defs.schema.json#/$defs/collectionName"
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/envelope"
+  },
+  "$defs": {
+    "envelope": {
+      "title": "Clearance envelope",
+      "description": "13.5: a box, in the frame of the element it belongs to, that names space the element needs kept clear.",
+      "type": "object",
+      "required": [
+        "purpose",
+        "shape",
+        "min",
+        "max"
+      ],
+      "properties": {
+        "purpose": {
+          "title": "Purpose",
+          "description": "13.5: why the space is kept clear. Always present.",
+          "type": "string",
+          "enum": [
+            "workingSpace",
+            "fixtureClearance",
+            "swing",
+            "access"
+          ]
+        },
+        "shape": {
+          "title": "Shape",
+          "description": "13.5: the envelope's shape; \"box\" is the only shape of this draft. Always present.",
+          "const": "box"
+        },
+        "min": {
+          "$ref": "defs.schema.json#/$defs/triple",
+          "description": "13.2, 13.5: the least local x, y and z. Always present."
+        },
+        "max": {
+          "$ref": "defs.schema.json#/$defs/triple",
+          "description": "13.2, 13.5: the greatest local x, y and z. Always present."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

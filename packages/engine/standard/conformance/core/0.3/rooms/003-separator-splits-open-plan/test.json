@@ -1,0 +1,8 @@
+{
+  "description": "An open kitchen and dining room divided by separator S1: the separator has no thickness, so both room polygons run to its location line.",
+  "covers": [
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.3.2",
+    "FS-CORE-6.4.1"
+  ]
+}

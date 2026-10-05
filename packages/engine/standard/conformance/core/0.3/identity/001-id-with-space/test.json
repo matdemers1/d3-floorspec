@@ -1,0 +1,6 @@
+{
+  "description": "An element ID may not contain a space.",
+  "covers": [
+    "FS-CORE-3.1.1"
+  ]
+}
