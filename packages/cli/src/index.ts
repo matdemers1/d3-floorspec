@@ -3,18 +3,25 @@
  * documents with @floorspec/engine. The CLI may use Node; the engine may not.
  */
 import { readFileSync } from 'node:fs';
-import { CATALOGUE, check, type Diagnostic } from '@floorspec/engine';
+import { CATALOGUE, check, type Diagnostic, type ValidateOptions } from '@floorspec/engine';
 
 export const PACKAGE_NAME = '@floorspec/cli';
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 
-export const USAGE = `usage: floorspec <command> <file> [--json]
+export const USAGE = `usage: floorspec <command> <file> [options]
 
 commands:
   validate <file> [--json]   report diagnostics; exit 0 when valid, 1 when not
   canonicalize <file>        print the canonical form (9.2)
   hash <file>                print the content hash (9.3)
-  derive <file>              print the derived walls, fills, rooms and openings as JSON
+  derive <file>              print everything derived as JSON: walls, fills, rooms, openings, and
+                             (Core 0.2) the program, fallbacks, placements, clearances and overlaps
+
+options:
+  --registry <file>          the known extensions (Core 0.2, 12.2): a JSON array of registry
+                             entries; FS-CFG-001 when they are not a valid registry
+  --core 0.1|0.2             the newest Core draft to read as (default 0.2, which reads 0.1 too)
+  --json                     validate: print the conformance-shaped result
 
 exit status: 0 valid, 1 invalid, 2 usage or I/O error
 `;
@@ -38,9 +45,26 @@ export function formatDiagnostic(file: string, d: Diagnostic): string {
   return `${file}: ${d.severity} ${d.code}${els} ${d.message}${where ? ` (${where})` : ''}\n`;
 }
 
+/** Options that take a value. */
+const VALUED = new Set(['--registry', '--core']);
+
 export function run(argv: readonly string[], io: Io = nodeIo): number {
-  const args = argv.filter((a) => !a.startsWith('--'));
-  const flags = new Set(argv.filter((a) => a.startsWith('--')));
+  const args: string[] = [];
+  const flags = new Set<string>();
+  const values = new Map<string, string>();
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]!;
+    if (!a.startsWith('--')) args.push(a);
+    else if (VALUED.has(a)) {
+      const v = argv[i + 1];
+      if (v === undefined || values.has(a)) {
+        io.err(USAGE);
+        return 2;
+      }
+      values.set(a, v);
+      i++;
+    } else flags.add(a);
+  }
   if (flags.has('--version')) {
     io.out(`floorspec ${VERSION}\n`);
     return 0;
@@ -63,7 +87,23 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
     io.err(`floorspec: cannot read ${file}: ${(e as Error).message}\n`);
     return 2;
   }
-  const r = check(bytes);
+  const core = values.get('--core');
+  if (core !== undefined && core !== '0.1' && core !== '0.2') {
+    io.err(USAGE);
+    return 2;
+  }
+  const options: { -readonly [K in keyof ValidateOptions]: ValidateOptions[K] } = {};
+  if (core !== undefined) options.core = core;
+  const registry = values.get('--registry');
+  if (registry !== undefined) {
+    try {
+      options.knownExtensions = io.read(registry);
+    } catch (e) {
+      io.err(`floorspec: cannot read ${registry}: ${(e as Error).message}\n`);
+      return 2;
+    }
+  }
+  const r = check(bytes, options);
 
   if (command === 'validate') {
     if (flags.has('--json')) {
