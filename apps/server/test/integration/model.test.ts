@@ -70,7 +70,7 @@ describe('create a project, download its model', () => {
   });
 
   it('agrees with the engine that a document of another version is not one it can read', () => {
-    expect(validate(JSON.stringify({ floorspec: '0.2', project: { name: 'x' } })).diagnostics.map((d) => d.code)).toEqual(['FS-DOC-001']);
+    expect(validate(JSON.stringify({ floorspec: '0.3', project: { name: 'x' } })).diagnostics.map((d) => d.code)).toEqual(['FS-DOC-001']);
     expect(validate(JSON.stringify({ floorspec: '0.1' })).valid).toBe(false);
   });
 });
