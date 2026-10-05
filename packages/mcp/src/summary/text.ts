@@ -84,6 +84,8 @@ function room(r: RoomSummary): string[] {
     out.push('On its floor and ceiling:');
     for (const d of r.devices) out.push(`- ${d.kind} ${d.id}${q(d.name)} on the ${d.surface}${d.circuits ? `, on circuit ${d.circuits.join(' and ')}` : ''}`);
   }
+  if (r.furniture?.length)
+    out.push(`Furniture (FS_furniture): ${r.furniture.map((f) => `${f.category} ${f.id}${q(f.name)} ${inches(f.size[0])} W × ${inches(f.size[1])} D`).join('; ')}.`);
   return out;
 }
 

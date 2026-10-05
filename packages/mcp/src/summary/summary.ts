@@ -124,6 +124,17 @@ export interface RoomSummary {
    * floor or ceiling of its own.
    */
   readonly ceiling?: { readonly kind: 'flat' | 'tray' | 'vaulted'; readonly floorOffset: Length; readonly low: Length; readonly high: Length };
+  /** FS_furniture (6.2): the furniture, appliances and casework in it, briefly; absent when there are none. */
+  readonly furniture?: readonly FurnitureSummary[];
+}
+
+/** An FS_furniture element in a room (FS_furniture 6.2): what it is and how big. */
+export interface FurnitureSummary {
+  readonly id: string;
+  readonly name?: string;
+  readonly category: string;
+  /** Width × depth × height (FS_furniture 3.1), in base units. */
+  readonly size: readonly [number, number, number];
 }
 
 export interface FaceSummary {
@@ -724,8 +735,9 @@ export function describeJson(document: string | Uint8Array | object, options: De
   const elements = new Map<string, ElementSummary[]>();
   const circuits = circuitsByLoad(doc);
   const roomOf = new Map<string, string>();
-  for (const data of Object.values(derived?.extensions ?? {}) as { rooms?: Record<string, string[]> }[])
-    for (const [rid, ids] of Object.entries(data.rooms ?? {})) for (const id of ids) roomOf.set(id, rid);
+  // An extension's rooms are lists of IDs (FS_electrical 6.1 and the like) or, for FS_furniture (6.2), `{ items }`.
+  for (const data of Object.values(derived?.extensions ?? {}) as { rooms?: Record<string, string[] | { items?: string[] }> }[])
+    for (const [rid, v] of Object.entries(data.rooms ?? {})) for (const id of Array.isArray(v) ? v : (v.items ?? [])) roomOf.set(id, rid);
   for (const x of extElements(doc)) {
     const h = x.element.host;
     const pl = derived?.placements?.[x.id];
@@ -816,11 +828,25 @@ export function describeJson(document: string | Uint8Array | object, options: De
       },
     ]);
   }
+  // FS_furniture (6.2): each room's items, as the extension derives them.
+  const furniture = derived?.extensions?.FS_furniture;
+  const furnitureIn = (rid: string): FurnitureSummary[] | undefined => {
+    const ids = furniture?.rooms[rid]?.items;
+    if (ids === undefined || ids.length === 0) return undefined;
+    const names = new Map(extElements(doc).map((x) => [x.id, x.element.name]));
+    return ids.flatMap((id) => {
+      const it = furniture?.items[id];
+      if (it === undefined) return [];
+      const name = names.get(id);
+      return [{ id, ...(name !== undefined && { name }), category: it.category, size: [it.width, it.depth, it.height] as const }];
+    });
+  };
   levels = levels.map((l) => ({
     ...l,
     rooms: l.rooms.map((r) => {
       const ceiling = ceilingOf(r.id);
-      return ceiling === undefined ? r : { ...r, ceiling };
+      const items = furnitureIn(r.id);
+      return ceiling === undefined && items === undefined ? r : { ...r, ...(ceiling !== undefined && { ceiling }), ...(items !== undefined && { furniture: items }) };
     }),
     ...(roofsOn.has(l.id) && { roofs: roofsOn.get(l.id)! }),
     ...(stairsOn.has(l.id) && { stairs: stairsOn.get(l.id)! }),
