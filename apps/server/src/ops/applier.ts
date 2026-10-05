@@ -2,7 +2,7 @@ import type { Diagnostic } from '@floorspec/engine';
 import { apply as opsApply } from '@floorspec/ops';
 
 /**
- * The seam between the store and the Floorspec Ops applier (Ops 0.1, chapter 1).
+ * The seam between the store and the Floorspec Ops applier (Ops 0.2, chapter 1).
  *
  * The types here are the spec's request and result, exactly: the server hands the applier the
  * document at a head and an apply request, and stores what comes back. It never edits a document
@@ -70,10 +70,15 @@ export class ApplierUnavailable extends Error {
   }
 }
 
-/** The reference applier, `@floorspec/ops`: Ops 0.1, 215/215 conformance (FLR-T-2.3). */
+/**
+ * The reference applier, `@floorspec/ops`, as Ops 0.2 (conformance/ops/0.2, 359/359): it applies to
+ * the Core 0.2 documents new projects start as and to the Core 0.1 documents stored before, keeps
+ * each document's declared version (see FLOORSPEC_VERSION), and validates with no known extensions,
+ * as the conformance suite does.
+ */
 export const opsApplier: Applier = {
   apply(document, request) {
-    return opsApply(document as Parameters<typeof opsApply>[0], request) as ApplyResult;
+    return opsApply(document as Parameters<typeof opsApply>[0], request, { ops: '0.2' }) as ApplyResult;
   },
 };
 

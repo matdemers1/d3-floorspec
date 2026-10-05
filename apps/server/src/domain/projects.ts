@@ -2,7 +2,7 @@ import type { Tx } from '../db.js';
 import { Prisma } from '../db.js';
 import { contentHash } from '@floorspec/engine';
 import type { Json } from '../model/document.js';
-import { emptyDocument } from '../model/document.js';
+import { emptyDocument, FLOORSPEC_VERSION } from '../model/document.js';
 
 /** The head every project has from birth. Changesets add others in later phases. */
 export const MAIN = 'main';
@@ -36,7 +36,7 @@ export async function createProject(tx: Tx, ownerAccountId: string, name: string
       kind: 'create',
       authorKind: 'account',
       authorAccountId: ownerAccountId,
-      ops: [{ op: 'createProject', name, floorspec: '0.1' }] as Prisma.InputJsonArray,
+      ops: [{ op: 'createProject', name, floorspec: FLOORSPEC_VERSION }] as Prisma.InputJsonArray,
       beforeHash: null,
       afterHash: hash,
     },
