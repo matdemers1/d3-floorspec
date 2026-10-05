@@ -121,7 +121,7 @@ export function Layouts({ store, view, tick }: { store: EditorStore; view: Progr
         </Alert>
       )}
 
-      {sets.accepted !== null ? (
+      {sets.accepted !== null && sets.accepted.superseded.length > 0 ? (
         <Alert tone="info" title={`“${sets.accepted.row.name}” is in the plan`}>
           <p>
             The other {sets.accepted.superseded.length === 1 ? 'candidate was' : `${String(sets.accepted.superseded.length)} candidates were`} drawn for the plan before it, so they no longer apply: accepting one would fail its replay.

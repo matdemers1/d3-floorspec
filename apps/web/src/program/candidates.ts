@@ -131,7 +131,7 @@ export interface CandidateSets {
   current: Candidate[];
   /** Pending candidates solved on an earlier main: the brief or the plan has moved since. */
   stale: Candidate[];
-  /** A layout candidate accepted into main, and the pending ones it supersedes (solved on its base). */
+  /** The layout candidate last accepted into main, and the pending ones it supersedes (solved on its base). */
   accepted: { row: ChangesetRow; superseded: Candidate[] } | null;
 }
 
@@ -147,7 +147,7 @@ export function candidateSets(rows: readonly ChangesetRow[], main: string | null
   return {
     current: pending.filter((c) => c.row.base === main && !superseded.includes(c)),
     stale: pending.filter((c) => c.row.base !== main && !superseded.includes(c)),
-    accepted: acceptedRow === undefined || superseded.length === 0 ? null : { row: acceptedRow, superseded },
+    accepted: acceptedRow === undefined ? null : { row: acceptedRow, superseded },
   };
 }
 

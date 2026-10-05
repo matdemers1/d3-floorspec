@@ -251,7 +251,8 @@ describe('layout candidates among the changesets', () => {
     expect(sets.stale.map((c) => c.row.id)).toEqual(['c1']);
     expect(sets.accepted?.row.id).toBe('a1');
     expect(sets.accepted?.superseded.map((c) => c.row.id)).toEqual(['a2']);
-    expect(candidateSets(rows.filter((r) => r.id !== 'a2'), 'm3').accepted).toBeNull();
+    expect(candidateSets(rows.filter((r) => r.id !== 'a2'), 'm3').accepted?.superseded).toEqual([]);
+    expect(candidateSets(rows.filter((r) => r.id !== 'a1'), 'm3').accepted).toBeNull();
   });
 });
 
