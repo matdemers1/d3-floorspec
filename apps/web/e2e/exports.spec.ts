@@ -45,7 +45,7 @@ test('exports a dimensioned PDF sheet per level and DXF drawings', async ({ page
   const dialog = page.getByRole('dialog', { name: 'Export Two-storey ranch' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('radio', { name: /Dimensioned PDF/ })).toHaveAttribute('aria-checked', 'true');
-  await expect(dialog.getByRole('radio', { name: /IFC4 Reference View/ })).toBeDisabled();
+  await expect(dialog.getByRole('radio', { name: /IFC4 Reference View/ })).toBeEnabled();
   await expect(dialog).toContainText('Main floor + Upper floor');
   await page.waitForTimeout(400); // the dialog's entrance, so the picture is of the dialog
   await page.screenshot({ path: 'test-results/exports-dialog.png' });

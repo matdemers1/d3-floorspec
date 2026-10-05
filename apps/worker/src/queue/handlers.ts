@@ -3,6 +3,7 @@
  * checked by the api when the job was queued, and are checked again here because a job row is data.
  */
 import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/index.js';
+import { exportIfc } from '../export/ifc/index.js';
 
 export interface JobRow {
   readonly id: string;
@@ -57,5 +58,10 @@ export const handlers: Readonly<Record<string, Handler>> = {
   'export.dxf': (document, job) => {
     const dxf = exportDxf(document, options(job));
     return Promise.resolve({ name: dxf.name, contentType: dxf.contentType, bytes: dxf.bytes, summary: { files: dxf.files.map((f) => f.name) } });
+  },
+  // FLR-T-9.4: derived here, written by the Python IFC worker (IfcOpenShell is LGPL: its own process).
+  'export.ifc': async (document, job) => {
+    const ifc = await exportIfc(document, { version: options(job).version });
+    return { name: ifc.name, contentType: ifc.contentType, bytes: ifc.bytes, summary: { ifc: ifc.summary } };
   },
 };

@@ -11,6 +11,11 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   NOT FOR CONSTRUCTION mark; PDFKit, fonts embedded) and `exportDxf` (AutoCAD 2000 DXF per level in
   millimetres on NCS-pattern layers; a ZIP for several). Both are pure functions of the document
   and the version's facts: the same version gives the same bytes, on a laptop or in the image.
+- `src/export/ifc/` — FLR-T-9.4: `exportIfc` evaluates and derives the version with the engine and
+  POSTs `{document, derived, hash, design, file}` to the Python IFC worker (`workers/ifc`,
+  `IFC_WORKER_URL`, default `http://ifc-worker:3410` in production and `http://127.0.0.1:3410`
+  elsewhere), which writes IFC4 ADD2 TC1 Reference View through IfcOpenShell — LGPL, so in its own
+  process and image. Job kind `export.ifc`; the file is stored like any other export.
 - `src/render/` — FLR-T-2.8: plan PNGs through resvg, with the bundled fonts only.
 - `src/alerts/` — FLR-T-12.2: alert email through the D3 Auth mail relay (`MAIL_RELAY_URL`,
   `MAIL_RELAY_TOKEN`, `ALERT_TO`; redacted, once an hour per kind, remembered in the `alerts` table),

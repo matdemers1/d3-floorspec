@@ -8,14 +8,15 @@ import './exports.css';
 /**
  * The Export dialog (Figma: Floorspec (FLR), P9 · Handoff & sharing, 16 · Export): every format in
  * one list, the one chosen outlined. What works today: the canonical model, the dimensioned PDF
- * (a sheet per level, a 3D view, marked not for construction) and DXF drawings on National CAD
- * Standard layers. glTF, USDZ and IFC are listed with the task that builds them.
+ * (a sheet per level, a 3D view, marked not for construction), DXF drawings on National CAD
+ * Standard layers, and the IFC4 Reference View model (FLR-T-9.4). glTF and USDZ are listed with
+ * the task that builds them.
  */
 
-type Choice = 'model' | 'pdf' | 'dxf';
+type Choice = 'model' | 'pdf' | 'dxf' | 'ifc';
 
 interface Format {
-  readonly id: Choice | 'gltf' | 'usdz' | 'ifc';
+  readonly id: Choice | 'gltf' | 'usdz';
   readonly icon: ReactNode;
   readonly title: string;
   readonly detail: string;
@@ -29,7 +30,7 @@ const FORMATS: readonly Format[] = [
   { id: 'usdz', icon: <Box />, title: 'USDZ', detail: 'View at 1:1 in AR Quick Look on iPad', ext: '.usdz', later: 'Arrives with FLR-T-9.2' },
   { id: 'pdf', icon: <FileText />, title: 'Dimensioned PDF', detail: 'Sheet per level + 3D view · marked “not for construction”', ext: '.pdf' },
   { id: 'dxf', icon: <Ruler />, title: 'DXF', detail: 'US National CAD Standard layers (A-WALL, A-DOOR, E-POWR…) · millimetres', ext: '.dxf' },
-  { id: 'ifc', icon: <Layers />, title: 'IFC4 Reference View', detail: 'For your architect’s BIM tool · Floorspec IDs in a property set', ext: '.ifc', later: 'Arrives with FLR-T-9.4' },
+  { id: 'ifc', icon: <Layers />, title: 'IFC4 Reference View', detail: 'For your architect’s BIM tool · Floorspec IDs in a property set', ext: '.ifc' },
 ];
 
 export interface ExportDialogProps {
@@ -77,12 +78,12 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
     setError(null);
     abort.current = new AbortController();
     try {
-      const queued = await requestExport(projectId, { kind: choice, ...(chosenLevels === null ? {} : { levels: chosenLevels }), ...(choice === 'pdf' ? { page } : {}) });
+      const queued = await requestExport(projectId, { kind: choice, ...(chosenLevels === null || choice === 'ifc' ? {} : { levels: chosenLevels }), ...(choice === 'pdf' ? { page } : {}) });
       setJob(queued);
       const finished = await untilFinished(projectId, queued, setJob, abort.current.signal);
       if (finished.status === 'done') {
         startDownload(finished);
-        toast.show({ message: `Exported ${finished.result?.name ?? 'the drawings'}` });
+        toast.show({ message: `Exported ${finished.result?.name ?? (choice === 'ifc' ? 'the model' : 'the drawings')}` });
         onOpenChange(false);
       } else if (finished.status === 'failed') setError(describeJob(finished));
     } catch (e) {
@@ -99,6 +100,8 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
       <StatusDot tone="neutral">{describeJob(job)}</StatusDot>
     ) : choice === 'pdf' || choice === 'dxf' ? (
       <span className="fs-export-dialog__note">Drawn from this version by the worker; the same version always gives the same file.</span>
+    ) : choice === 'ifc' ? (
+      <span className="fs-export-dialog__note">The whole model, every level, written by the IFC worker; the same version always gives the same file.</span>
     ) : (
       <span className="fs-export-dialog__note">The canonical model: what every other format is made from.</span>
     );

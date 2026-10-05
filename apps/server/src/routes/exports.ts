@@ -10,12 +10,12 @@ import { MAIN } from '../domain/projects.js';
 
 /**
  * Drawing exports (FLR-T-9.3): a dimensioned PDF sheet per level, or DXF drawings on NCS-pattern
- * layers. Asking for one queues a job on the Postgres job queue and answers 202; the worker drains
+ * layers; and the IFC4 Reference View model (FLR-T-9.4), written by the Python IFC worker. Asking for one queues a job on the Postgres job queue and answers 202; the worker drains
  * the queue, and the file is downloaded once the job is done. A job reads one immutable version —
  * main's head unless another version of this project is named — so its file is reproducible.
  */
 
-const KINDS = ['pdf', 'dxf'] as const;
+const KINDS = ['pdf', 'dxf', 'ifc'] as const;
 export const PAGE_NAMES = ['tabloid', 'arch-c', 'arch-d', 'letter', 'a4', 'a3'] as const;
 
 const ExportBody = z.strictObject({
@@ -106,6 +106,7 @@ export function exportRoutes(db: Db): Routes {
         throw new ProblemError({ status: 422, type: 'not-drawable', title: 'this version cannot be drawn', detail: 'The model is not valid. Run validate to see why.' });
       const levels = Object.keys(ev.document.levels ?? {});
       if (levels.length === 0) throw new ProblemError({ status: 422, type: 'not-drawable', title: 'this version has no levels to draw' });
+      if (body.kind === 'ifc' && body.levels !== undefined) throw new HttpError(400, 'an IFC export is of the whole model: it takes no levels');
       const missing = (body.levels ?? []).filter((l) => !levels.includes(l));
       if (missing.length > 0) throw new HttpError(400, `the model has no level ${missing.join(', ')}`);
       const pending = await tx.job.count({ where: { projectId: project.id, status: { in: ['queued', 'running'] } } });

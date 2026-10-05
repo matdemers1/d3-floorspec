@@ -1,7 +1,7 @@
 import pg from 'pg';
 import { createMailer, createWatchdog, describeRelay, httpProbe, pgAlertLedger, pgProbe, relayFromEnv, urlPassword, type Probe } from './alerts/index.js';
 import { beat } from './heartbeat.js';
-import { createDrain, type Drain } from './queue/index.js';
+import { createDrain, handlers, type Drain } from './queue/index.js';
 
 /**
  * The job-queue drain. Exports (PDF and DXF drawings, FLR-T-9.3) arrive on the Postgres queue the
@@ -73,7 +73,7 @@ function startDrain(url: string): void {
   candidate.start().then(
     () => {
       drain = candidate;
-      process.stdout.write('d3-floorspec worker started: draining export.pdf and export.dxf jobs\n');
+      process.stdout.write(`d3-floorspec worker started: draining ${Object.keys(handlers).join(', ')} jobs\n`);
     },
     (error: unknown) => {
       process.stderr.write(`job drain did not start (${error instanceof Error ? error.message : String(error)}); retrying in 30s\n`);

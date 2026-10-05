@@ -6,7 +6,7 @@ import { api } from '../lib/api';
  * attachment` — so the page stays put and the browser names it.
  */
 
-export type ExportKind = 'pdf' | 'dxf';
+export type ExportKind = 'pdf' | 'dxf' | 'ifc';
 export type PageName = 'tabloid' | 'arch-c' | 'arch-d' | 'letter' | 'a4' | 'a3';
 
 export interface ExportJob {
@@ -18,7 +18,7 @@ export interface ExportJob {
   levels: string[] | null;
   page: PageName | null;
   error: string | null;
-  result: { name: string; size: number; sheets?: { number: string; title: string }[]; files?: string[] } | null;
+  result: { name: string; size: number; sheets?: { number: string; title: string }[]; files?: string[]; ifc?: { entities: Record<string, number> } } | null;
   createdAt: string;
   finishedAt: string | null;
   download: string | null;
@@ -68,12 +68,12 @@ export async function untilFinished(projectId: string, job: ExportJob, onUpdate:
 
 /** What a job is doing, in words. */
 export function describeJob(job: ExportJob): string {
-  const what = job.kind === 'pdf' ? 'PDF' : 'DXF';
+  const what = job.kind === 'pdf' ? 'PDF' : job.kind === 'ifc' ? 'IFC model' : 'DXF';
   switch (job.status) {
     case 'queued':
-      return `${what} waiting to be drawn`;
+      return job.kind === 'ifc' ? `${what} waiting to be written` : `${what} waiting to be drawn`;
     case 'running':
-      return `Drawing the ${what}…`;
+      return job.kind === 'ifc' ? `Writing the ${what}…` : `Drawing the ${what}…`;
     case 'failed':
       return `${what} failed: ${job.error ?? 'no reason was recorded'}`;
     case 'done': {
