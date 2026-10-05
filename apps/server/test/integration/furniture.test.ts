@@ -74,7 +74,8 @@ describe('furniture through the asset store and the applier', () => {
   it('uploads a library refrigerator’s model and symbol as they are, places it in one batch, and the package validates with FS_furniture known', async () => {
     const { id } = await createProjectAs(alice);
     expect((await alice.post(`/api/projects/${id}/ops`, { batch: KITCHEN })).status).toBe(201);
-    const item = LIBRARY.items['refrigerator-900']!;
+    const item = LIBRARY.items['refrigerator-900'];
+    if (item === undefined) throw new Error('the library has no refrigerator-900');
     const glb = libFile(item.model.path);
     const svg = libFile(item.symbol.path);
 
@@ -109,7 +110,7 @@ describe('furniture through the asset store and the applier', () => {
     expect(list.assets.map((a) => a.mediaType).sort()).toEqual(['image/svg+xml', 'model/gltf-binary']);
     const files: Record<string, Uint8Array> = {};
     for (const a of list.assets) files[a.path] = (await fetchBytes(running.url, alice, `${a.href ?? ''}?download`)).bytes;
-    expect(sha(files[model.path]!)).toBe(item.model.sha256);
+    expect(sha(files[model.path] ?? new Uint8Array())).toBe(item.model.sha256);
     const result = validate(doc.bytes, { package: new Package(files), ...OFFICIAL_READER });
     expect(result.valid, JSON.stringify(result.diagnostics)).toBe(true);
     expect(result.diagnostics.filter((d) => d.code.startsWith('FS-FURN-') || /^FS-INV-100[5-7]$/.test(d.code))).toEqual([]);
