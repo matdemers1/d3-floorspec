@@ -4,6 +4,7 @@ import { join, relative } from 'node:path';
 import type { BrowserCommand } from 'vitest/node';
 import { check } from '../src/index.js';
 import { fixtures } from './fixtures.js';
+import { readDesign, readPackage } from './suite-io.js';
 
 /** Check every determinism fixture in Node, so the browser can compare its own results byte for byte. */
 const checkFixturesInNode: BrowserCommand = () => fixtures().map((f) => ({ name: f.name, result: JSON.stringify(check(f.doc)) }));
@@ -19,7 +20,19 @@ export interface ConformanceCase {
   extensions: string[] | null;
   expected: string;
   canonical: string | null;
+  /** The case's design.json (Core 0.3, 19.6), when it has one. */
+  design: unknown;
+  /** The files of the case's package/ (Core 0.3, 18.4), path → base64, when it has one. */
+  package: Record<string, string> | null;
 }
+
+const extras = (dir: string): Pick<ConformanceCase, 'design' | 'package'> => {
+  const pkg = readPackage(dir);
+  return {
+    design: readDesign(dir) ?? null,
+    package: pkg ? Object.fromEntries([...pkg].map(([k, v]) => [k, Buffer.from(v).toString('base64')])) : null,
+  };
+};
 
 /** The vendored conformance cases of every suite, with input bytes in base64 (they may be malformed UTF-8 on purpose). */
 const conformanceCases: BrowserCommand = () => {
@@ -41,6 +54,7 @@ const conformanceCases: BrowserCommand = () => {
             extensions: null,
             expected: readFileSync(join(dir, 'expected.json'), 'utf8'),
             canonical: existsSync(c) ? readFileSync(c, 'utf8') : null,
+            ...extras(dir),
           });
         }
       }
@@ -76,6 +90,7 @@ const conformanceCases: BrowserCommand = () => {
               extensions: [name],
               expected: readFileSync(join(dir, 'expected.json'), 'utf8'),
               canonical: existsSync(c) ? readFileSync(c, 'utf8') : null,
+              ...extras(dir),
             });
           }
         }

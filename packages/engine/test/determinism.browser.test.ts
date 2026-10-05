@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
-import { check } from '../src/index.js';
+import { check, Package } from '../src/index.js';
 import { fixtures } from './fixtures.js';
 
 const fromBase64 = (s: string): Uint8Array => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
@@ -28,8 +28,10 @@ describe('in the browser', () => {
         core: c.core,
         ...(c.registry !== null && { knownExtensions: fromBase64(c.registry) }),
         ...(c.extensions !== null && { extensions: c.extensions }),
+        ...(c.design !== null && { design: c.design }),
+        ...(c.package !== null && { package: new Package(Object.fromEntries(Object.entries(c.package).map(([k, v]) => [k, fromBase64(v)]))) }),
       });
-      const actual = r.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));
+      const actual = r.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements, ...(d.design !== undefined && { design: d.design }) }));
       const schemaOnly = expected.diagnostics.length === 1 && expected.diagnostics[0]!.code === 'FS-SCH-001';
       const diagOk = schemaOnly ? actual.length > 0 && actual.every((d) => d.code === 'FS-SCH-001') : JSON.stringify(actual) === JSON.stringify(expected.diagnostics);
       expect({ name: c.name, diagOk }).toEqual({ name: c.name, diagOk: true });

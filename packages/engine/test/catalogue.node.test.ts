@@ -7,7 +7,7 @@ import { CATALOGUE } from '../src/validate/catalogue.js';
 function specCatalogue(): { code: string; severity: string }[] {
   const md = readFileSync(join(import.meta.dirname, '..', 'standard', 'spec', 'core', '10-diagnostics.md'), 'utf8');
   const section = md.slice(md.indexOf('## 10.4'), md.indexOf('## 10.5'));
-  return [...section.matchAll(/^\| `(FS-[A-Z]+-\d{3})` \| (error|warning|info) \|/gm)].map((m) => ({ code: m[1]!, severity: m[2]! }));
+  return [...section.matchAll(/^\| `(FS-[A-Z]+-\d{3,4})` \| (error|warning|info) \|/gm)].map((m) => ({ code: m[1]!, severity: m[2]! }));
 }
 
 describe('diagnostic catalogue', () => {
