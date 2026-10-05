@@ -187,6 +187,8 @@ export function summaryText(s: DocumentSummary): string {
     if (c.unreachable.length) out.push(`- unreachable through doors: ${c.unreachable.join(', ')}`);
     if (c.throughSleeping.length) out.push(`- reachable only through another sleeping room: ${c.throughSleeping.join(', ')}`);
   }
+  if (s.area?.length)
+    out.push('', `Finished area after ANSI Z765-2021 (paraphrased; an app measure, not part of Floorspec): ${s.area.map((a) => `${a.building} ${a.aboveGradeSqFt} sq ft above grade, ${a.belowGradeSqFt} below`).join('; ')}.`);
   out.push('', '## Diagnostics');
   if (!s.diagnostics.length) out.push('(none)');
   for (const d of s.diagnostics) out.push(`- ${d.code} (${d.severity})${d.elements.length ? ` [${d.elements.join(', ')}]` : ''}${d.level ? ` on ${d.level}` : ''}: ${d.message}`);

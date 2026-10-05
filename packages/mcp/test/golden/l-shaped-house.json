@@ -1555,6 +1555,13 @@
       ]
     }
   ],
+  "area": [
+    {
+      "building": "HOUSE",
+      "aboveGradeSqFt": 1377,
+      "belowGradeSqFt": 0
+    }
+  ],
   "diagnostics": [
     {
       "code": "FS-LINT-003",

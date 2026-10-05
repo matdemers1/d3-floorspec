@@ -377,5 +377,6 @@ group('Core 0.3: roofs and stairs', () => {
     const out = describe(JSON.stringify(d));
     expect(out).toContain('- RF1: hip, 6:12, eave');
     expect(out).toMatch(/- ST1: lShaped to L2, 14 risers × [^\n]*, tread [^\n]*, headroom /);
+    expect(out).toMatch(/Finished area after ANSI Z765-2021 \(paraphrased; an app measure, not part of Floorspec\): /);
   });
 });

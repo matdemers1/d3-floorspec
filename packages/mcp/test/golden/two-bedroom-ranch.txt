@@ -110,5 +110,7 @@ West:
 - HALL "Hall" <-> LIV "Living room": opening LH in wall I1
 - KIT "Kitchen" <-> LIV "Living room": open plan across separator SEP
 
+Finished area after ANSI Z765-2021 (paraphrased; an app measure, not part of Floorspec): HOUSE 1246 sq ft above grade, 0 below.
+
 ## Diagnostics
 (none)

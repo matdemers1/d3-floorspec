@@ -110,5 +110,7 @@ West:
     - door CD "Closet door" [D30]: 2' 6" (975360) wide, 1' 6" (585216) from the wall's start, hinge start, swing right, opens into unanchored face 1
   - wall CW, 6' 0" (2340864), INT24 "2x4 partition" 4-1/2" (146304); other side: BED "Primary suite"
 
+Finished area after ANSI Z765-2021 (paraphrased; an app measure, not part of Floorspec): HOUSE 1377 sq ft above grade, 0 below.
+
 ## Diagnostics
 - FS-LINT-003 (info) on MAIN: A bounded face on MAIN has no room anchored in it.

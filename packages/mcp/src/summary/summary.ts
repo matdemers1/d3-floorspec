@@ -10,7 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
-import { analyseCirculation, deriveEvaluation, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { analyseCirculation, deriveEvaluation, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -261,6 +261,8 @@ export interface DocumentSummary {
   readonly program?: ProgramSummary;
   /** Circulation problems (Core 0.2, chapter 14); absent when there are none or the document is not valid. */
   readonly circulation?: CirculationSummary;
+  /** Finished area after ANSI Z765-2021 (paraphrased; an app measure, not the standard), per building; absent when not valid. */
+  readonly area?: readonly { readonly building: string; readonly aboveGradeSqFt: number; readonly belowGradeSqFt: number }[];
   readonly diagnostics: readonly DiagnosticSummary[];
 }
 
@@ -838,7 +840,8 @@ export function describeJson(document: string | Uint8Array | object, options: De
     for (const [id, o] of entries(doc.openings)) if (onLevel.has(o.wall)) onLevel.add(id);
     diags = diagnostics.filter((d) => (d.level !== undefined ? d.level === lid : d.elements.length === 0 || d.elements.some((e) => onLevel.has(e))));
   }
-  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), ...(circulation && { circulation }), diagnostics: diags };
+  const area = ev.valid && options.room === undefined ? z765(doc).buildings.map((b) => ({ building: b.building, aboveGradeSqFt: b.aboveGradeSqFt, belowGradeSqFt: b.belowGradeSqFt })) : undefined;
+  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), diagnostics: diags };
 }
 
 /** What the circulation lints say (14.4), narrowed to a room or level when asked; undefined when nothing. */

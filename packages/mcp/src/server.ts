@@ -211,7 +211,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Describe the house',
       description:
-        'A room-centric summary: rooms with ft-in sizes and net areas, walls by side with their openings, adjacency, the door graph, roofs, stairs, diagnostics and the room functions. Read it before any edit.',
+        'A room-centric summary: rooms with ft-in sizes and net areas, walls by side with their openings, adjacency, the door graph, roofs, stairs, finished area, diagnostics and the room functions. Read it before any edit.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
