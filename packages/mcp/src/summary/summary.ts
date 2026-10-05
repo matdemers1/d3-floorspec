@@ -10,7 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
-import { analyseCirculation, deriveFrom, evaluate, extElements, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { analyseCirculation, deriveEvaluation, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -51,6 +51,49 @@ export interface EdgeSummary {
   readonly otherSide: Neighbour;
   /** Walls only: every opening in it, by offset. */
   readonly openings: readonly OpeningSummary[];
+  /**
+   * Walls only: the devices on this wall's face toward the space being described (Core 13.3's
+   * wall-face hosts: receptacles, switches, a panel …), by offset; absent when there are none.
+   */
+  readonly devices?: readonly WallDeviceSummary[];
+}
+
+/** A device on a wall face: where along the wall and how high, and the circuits that feed it. */
+export interface WallDeviceSummary {
+  readonly id: string;
+  readonly name?: string;
+  /** `<extension>:<collection>`. */
+  readonly kind: string;
+  /** Along the wall's location line from its start junction. */
+  readonly offset: Length;
+  /** Above the wall's base. */
+  readonly height: Length;
+  /** FS_electrical circuits that list it as a load. */
+  readonly circuits?: readonly string[];
+}
+
+/** A device on a room's floor or ceiling. */
+export interface SurfaceDeviceSummary {
+  readonly id: string;
+  readonly name?: string;
+  readonly kind: string;
+  readonly surface: 'floor' | 'ceiling';
+  readonly circuits?: readonly string[];
+}
+
+/** An FS_electrical circuit, as its extension derives it (FS_electrical 6.2). */
+export interface CircuitSummary {
+  readonly id: string;
+  readonly name?: string;
+  readonly panel: string;
+  readonly breaker: number;
+  readonly volts: number;
+  readonly poles: number;
+  readonly loads: readonly string[];
+  /** Watts: the sum of its loads' stated watts. */
+  readonly connectedLoad: number;
+  /** Watts: breaker × volts. */
+  readonly capacity: number;
 }
 
 export interface RoomSummary {
@@ -69,6 +112,8 @@ export interface RoomSummary {
   readonly sides: Readonly<Record<Side, readonly EdgeSummary[]>>;
   /** Walls standing inside the room (its holes: a freestanding closet, a chase). */
   readonly inside: readonly EdgeSummary[];
+  /** Devices on its floor or ceiling; absent when there are none. Wall devices are listed under their walls. */
+  readonly devices?: readonly SurfaceDeviceSummary[];
 }
 
 export interface FaceSummary {
@@ -103,6 +148,10 @@ export interface ElementSummary {
     | { readonly mode: 'free' };
   /** Its derived placement (13.4): origin in base units and facing in microdegrees. */
   readonly placement?: { readonly point: readonly [number, number, number]; readonly facing: number };
+  /** The room it is in, as its extension derives it (FS_electrical 6.1 and the like). */
+  readonly room?: string;
+  /** FS_electrical circuits that list it as a load. */
+  readonly circuits?: readonly string[];
 }
 
 /** One program item (Core 0.2, 11.3) and how far the plan meets it. */
@@ -161,6 +210,8 @@ export interface LevelSummary {
   readonly unanchored: readonly FaceSummary[];
   /** Extension elements on this level (Core 0.2), by ID; absent when there are none. */
   readonly elements?: readonly ElementSummary[];
+  /** FS_electrical circuits whose panel is on this level; absent when there are none. */
+  readonly circuits?: readonly CircuitSummary[];
 }
 
 export interface DocumentSummary {
@@ -266,6 +317,8 @@ class LevelTopology {
   private readonly faceOfCycle = new Map<number, number>();
   private readonly faceNeighbour = new Map<number, Neighbour>();
   readonly unanchoredFaces: { index: number; face: number }[] = [];
+  /** Wall-face devices by wall, and the circuits each load is on. */
+  private readonly wallDevices = new Map<string, { side: 'left' | 'right'; summary: WallDeviceSummary }[]>();
 
   constructor(
     readonly doc: FloorspecDocument,
@@ -293,6 +346,21 @@ class LevelTopology {
       });
     free.forEach(({ i }, k) => this.unanchoredFaces.push({ index: k + 1, face: i }));
     const unanchoredIndex = new Map(this.unanchoredFaces.map((u) => [u.face, u.index]));
+    const circuits = circuitsByLoad(doc);
+    for (const x of extElements(doc)) {
+      const h = x.element.host;
+      if (h?.mode !== 'wallFace' || x.element.fallback.level !== level) continue;
+      const on = circuits.get(x.id);
+      const summary: WallDeviceSummary = {
+        id: x.id,
+        ...(x.element.name !== undefined && { name: x.element.name }),
+        kind: `${x.extension}:${x.collection}`,
+        offset: length(BigInt(h.offset)),
+        height: length(BigInt(h.height)),
+        ...(on && { circuits: on }),
+      };
+      this.wallDevices.set(h.wall, [...(this.wallDevices.get(h.wall) ?? []), { side: h.side, summary }]);
+    }
     graph.faces.forEach((_, i) => {
       const rid = roomOfFace.get(i);
       if (rid !== undefined) {
@@ -334,6 +402,12 @@ class LevelTopology {
     const w = this.doc.walls![e.id]!;
     const type = w.type === undefined ? undefined : this.doc.types?.[w.type];
     const offsets = this.analysis.offsets.get(e.id);
+    // The space described is on h's left: the wall's left face when h runs the wall's way.
+    const face: 'left' | 'right' = ((h & 1) === 0) === (e.start === w.start) ? 'left' : 'right';
+    const devices = (this.wallDevices.get(e.id) ?? [])
+      .filter((d) => d.side === face)
+      .map((d) => d.summary)
+      .sort((a, b) => a.offset.baseUnits - b.offset.baseUnits || cmp(a.id, b.id));
     return {
       kind: 'wall',
       id: e.id,
@@ -343,6 +417,7 @@ class LevelTopology {
       ...(offsets && { thickness: length(offsets.thickness) }),
       otherSide: neighbour,
       openings: this.openingsOn(e.id),
+      ...(devices.length > 0 && { devices }),
     };
   }
 
@@ -411,6 +486,7 @@ function levelSummary(doc: FloorspecDocument, analysis: Analysis, lid: string): 
   }
   const topo = new LevelTopology(doc, analysis, lid);
   const g = topo.g;
+  const circuits = circuitsByLoad(doc);
 
   const rooms: RoomSummary[] = roomsHere.map(([id, r]) => {
     const face = la.roomFaces.get(id);
@@ -429,6 +505,18 @@ function levelSummary(doc: FloorspecDocument, analysis: Analysis, lid: string): 
       .flatMap((c) => topo.cycleEdges(c.halfEdges))
       .sort((a, b2) => cmp(a.summary.id, b2.summary.id) || (a.h < b2.h ? -1 : 1))
       .map((x) => x.summary);
+    const devices: SurfaceDeviceSummary[] = extElements(doc)
+      .filter((x) => x.element.host?.mode === 'surface' && x.element.host.room === id)
+      .map((x) => {
+        const on = circuits.get(x.id);
+        return {
+          id: x.id,
+          ...(x.element.name !== undefined && { name: x.element.name }),
+          kind: `${x.extension}:${x.collection}`,
+          surface: x.element.host?.mode === 'surface' && x.element.host.surface === 'ceiling' ? ('ceiling' as const) : ('floor' as const),
+          ...(on && { circuits: on }),
+        };
+      });
     return {
       id,
       ...(r.name !== undefined && { name: r.name }),
@@ -440,6 +528,7 @@ function levelSummary(doc: FloorspecDocument, analysis: Analysis, lid: string): 
       size: { eastWest: length(b.maxX - b.minX), northSouth: length(b.maxY - b.minY) },
       sides,
       inside,
+      ...(devices.length > 0 && { devices }),
     };
   });
 
@@ -498,13 +587,24 @@ function unplaced(id: string, r: NonNullable<FloorspecDocument['rooms']>[string]
   };
 }
 
+/** Every load of every FS_electrical circuit: the circuits that list it, sorted. */
+function circuitsByLoad(doc: FloorspecDocument): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  const data = (doc.extensions as Record<string, { circuits?: Record<string, { loads?: unknown }> }> | undefined)?.['FS_electrical'];
+  for (const [cid, c] of Object.entries(data?.circuits ?? {}).sort(([a], [b]) => cmp(a, b)))
+    for (const load of Array.isArray(c.loads) ? c.loads : []) if (typeof load === 'string') out.set(load, [...(out.get(load) ?? []), cid]);
+  return out;
+}
+
 /** The elements a room's section mentions: the room, its walls, separators and their openings. */
 function roomElements(r: RoomSummary): Set<string> {
   const out = new Set([r.id]);
   for (const e of [...SIDES.flatMap((s) => r.sides[s]), ...r.inside]) {
     out.add(e.id);
     for (const o of e.openings) out.add(o.id);
+    for (const d of e.devices ?? []) out.add(d.id);
   }
+  for (const d of r.devices ?? []) out.add(d.id);
   return out;
 }
 
@@ -512,7 +612,8 @@ const involves = (l: { between: readonly [Neighbour, Neighbour] }, id: string): 
 
 /** The summary as structured data. */
 export function describeJson(document: string | Uint8Array | object, options: DescribeOptions = {}): DocumentSummary {
-  const ev = evaluate(document);
+  // The reader implements the official extensions, so circuits and rooms of devices are derived.
+  const ev = evaluate(document, OFFICIAL_READER);
   const doc = ev.document;
   const diagnostics: DiagnosticSummary[] = ev.diagnostics.map(({ code, severity, elements, message, location }) => ({
     code,
@@ -539,11 +640,17 @@ export function describeJson(document: string | Uint8Array | object, options: De
 
   let levels = levelIds.map((lid) => levelSummary(doc, analysis, lid));
   // Core 0.2: extension elements by level, and the program — derived only for a valid document.
-  const derived = ev.valid && analysis.core02 ? deriveFrom(doc, analysis) : undefined;
+  const derived = ev.valid && analysis.core02 ? deriveEvaluation(ev) : undefined;
   const elements = new Map<string, ElementSummary[]>();
+  const circuits = circuitsByLoad(doc);
+  const roomOf = new Map<string, string>();
+  for (const data of Object.values(derived?.extensions ?? {}) as { rooms?: Record<string, string[]> }[])
+    for (const [rid, ids] of Object.entries(data.rooms ?? {})) for (const id of ids) roomOf.set(id, rid);
   for (const x of extElements(doc)) {
     const h = x.element.host;
     const pl = derived?.placements?.[x.id];
+    const room = roomOf.get(x.id);
+    const on = circuits.get(x.id);
     const summary: ElementSummary = {
       id: x.id,
       ...(x.element.name !== undefined && { name: x.element.name }),
@@ -557,11 +664,32 @@ export function describeJson(document: string | Uint8Array | object, options: De
               : { mode: 'free' as const },
       }),
       ...(pl && { placement: { point: pl.point, facing: pl.facing } }),
+      ...(room !== undefined && { room }),
+      ...(on && { circuits: on }),
     };
     const lid = x.element.fallback.level;
     elements.set(lid, [...(elements.get(lid) ?? []), summary]);
   }
-  levels = levels.map((l) => (elements.has(l.id) ? { ...l, elements: elements.get(l.id)! } : l));
+  // FS_electrical's circuits, by the level their panel is on (FS_electrical 6.2).
+  const byLevel = new Map<string, CircuitSummary[]>();
+  const electrical = derived?.extensions?.FS_electrical;
+  if (electrical !== undefined) {
+    const data = (doc.extensions as Record<string, { circuits?: Record<string, { name?: string; breaker: number; volts: number; poles?: number }>; collections?: Record<string, Record<string, { fallback: { level: string } }>> }> | undefined)?.['FS_electrical'];
+    for (const [cid, c] of Object.entries(electrical.circuits)) {
+      const record = data?.circuits?.[cid];
+      const lid = data?.collections?.['panels']?.[c.panel]?.fallback.level;
+      if (record === undefined || lid === undefined) continue;
+      byLevel.set(lid, [
+        ...(byLevel.get(lid) ?? []),
+        { id: cid, ...(record.name !== undefined && { name: record.name }), panel: c.panel, breaker: record.breaker, volts: record.volts, poles: record.poles ?? 1, loads: c.loads, connectedLoad: c.connectedLoad, capacity: c.capacity },
+      ]);
+    }
+  }
+  levels = levels.map((l) => ({
+    ...l,
+    ...(elements.has(l.id) && { elements: elements.get(l.id)! }),
+    ...(byLevel.has(l.id) && { circuits: byLevel.get(l.id)!.sort((a, b) => cmp(a.id, b.id)) }),
+  }));
   const items = entries(doc.program?.items);
   const program: ProgramSummary | undefined =
     derived?.program && (items.length || derived.program.adjacency.length)
@@ -592,7 +720,7 @@ export function describeJson(document: string | Uint8Array | object, options: De
       adjacency: l.adjacency.filter((a) => involves(a, rid)),
       doorGraph: l.doorGraph.filter((d) => involves(d, rid)),
       unanchored: [],
-      ...(l.elements && { elements: l.elements.filter((e) => e.host?.mode === 'surface' && e.host.room === rid) }),
+      ...(l.elements && { elements: l.elements.filter((e) => e.room === rid || (e.host?.mode === 'surface' && e.host.room === rid)) }),
     }));
     const mine = levels[0]?.rooms[0];
     const ids = mine ? roomElements(mine) : new Set([rid]);

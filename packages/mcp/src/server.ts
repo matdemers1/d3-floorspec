@@ -198,7 +198,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       instructions:
         'Design a house as code. Read with floorspec_describe before editing; edit with floorspec_apply, whose `batch` is a list of typed Floorspec Ops ' +
-        '(references like "north wall of Kitchen", lengths like 12\' 6"), the brief (addProgramItem, setAdjacency, setRoomBrief) and outlets, fixtures and furniture (placeElement) included; ' +
+        '(references like "north wall of Kitchen", lengths like 12\' 6"), the brief (addProgramItem, setAdjacency, setRoomBrief) and devices — receptacles, panels, fixtures, equipment (placeElement; the first of an extension declares it in extensionsUsed) — included; ' +
         'render and validate after every change. ' +
         'Agent edits land in a pending changeset a person accepts; every tool takes a changeset by name or ID. ' +
         'The design-partner prompt has the working rules and example calls. Never claim a change without a committed result and a render.',

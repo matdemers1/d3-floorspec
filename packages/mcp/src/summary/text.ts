@@ -46,6 +46,7 @@ function edge(e: EdgeSummary, self: string): string[] {
   return [
     `- wall ${e.id}${q(e.name)}, ${lengthText(e.length)}, ${type}${thick}; other side: ${neighbour(e.otherSide, self)}`,
     ...e.openings.map((o) => `  - ${opening(o, self)}`),
+    ...(e.devices ?? []).map((d) => `  - ${d.kind} ${d.id}${q(d.name)} on this face: ${lengthText(d.offset)} from the wall's start, ${lengthText(d.height)} high${d.circuits ? `, on circuit ${d.circuits.join(' and ')}` : ''}`),
   ];
 }
 
@@ -69,6 +70,10 @@ function room(r: RoomSummary): string[] {
     out.push('Inside the room (freestanding):');
     for (const e of r.inside) out.push(...edge(e, r.id));
   }
+  if (r.devices?.length) {
+    out.push('On its floor and ceiling:');
+    for (const d of r.devices) out.push(`- ${d.kind} ${d.id}${q(d.name)} on the ${d.surface}${d.circuits ? `, on circuit ${d.circuits.join(' and ')}` : ''}`);
+  }
   return out;
 }
 
@@ -83,7 +88,9 @@ function element(e: ElementSummary): string {
           ? `on the ${h.surface} of ${h.room}`
           : 'standing free';
   const at = e.placement ? `; at [${e.placement.point.join(', ')}], facing ${e.placement.facing / 1_000_000}°` : '';
-  return `- ${e.kind} ${e.id}${q(e.name)}: ${on}${at}`;
+  const room = e.room === undefined ? '' : `; in ${e.room}`;
+  const circuits = e.circuits === undefined ? '' : `; on circuit ${e.circuits.join(' and ')}`;
+  return `- ${e.kind} ${e.id}${q(e.name)}: ${on}${at}${room}${circuits}`;
 }
 
 /** Render a summary as text. */
@@ -115,6 +122,14 @@ export function summaryText(s: DocumentSummary): string {
     if (l.elements?.length) {
       out.push('', `### Extension elements (${l.id})`);
       for (const e of l.elements) out.push(element(e));
+    }
+    if (l.circuits?.length) {
+      out.push('', `### Circuits (${l.id}, FS_electrical)`);
+      for (const c of l.circuits)
+        out.push(
+          `- ${c.id}${q(c.name)} on panel ${c.panel}: ${c.breaker} A, ${c.volts} V${c.poles > 1 ? `, ${c.poles}-pole` : ''}; loads ${c.loads.length ? c.loads.join(', ') : '(none)'}; ` +
+            `connected ${c.connectedLoad} W of ${c.capacity} W (stated watts only; not a load calculation)`,
+        );
     }
     if (l.unanchored.length) {
       out.push('', `### Unanchored faces (${l.id})`);
