@@ -1,4 +1,4 @@
-import type { Diagnostic } from '@floorspec/engine';
+import { OFFICIAL_READER, type Diagnostic } from '@floorspec/engine';
 import { apply as opsApply } from '@floorspec/ops';
 
 /**
@@ -73,12 +73,13 @@ export class ApplierUnavailable extends Error {
 /**
  * The reference applier, `@floorspec/ops`, as Ops 0.2 (conformance/ops/0.2, 359/359): it applies to
  * the Core 0.2 documents new projects start as and to the Core 0.1 documents stored before, keeps
- * each document's declared version (see FLOORSPEC_VERSION), and validates with no known extensions,
- * as the conformance suite does.
+ * each document's declared version (see FLOORSPEC_VERSION), and implements and knows the four
+ * official extensions (FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage 0.1.0): a batch that
+ * leaves a circuit naming a removed receptacle is rejected, as each extension's Ops cases say.
  */
 export const opsApplier: Applier = {
   apply(document, request) {
-    return opsApply(document as Parameters<typeof opsApply>[0], request, { ops: '0.2' }) as ApplyResult;
+    return opsApply(document as Parameters<typeof opsApply>[0], request, { ops: '0.2', ...OFFICIAL_READER }) as ApplyResult;
   },
 };
 

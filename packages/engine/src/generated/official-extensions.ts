@@ -154,3 +154,1587 @@ export const OFFICIAL_ENTRIES = [
     ]
   }
 ] as const;
+
+// Each one's schema, by name: what an editor reads to know a kind's members, their types and defaults.
+export const OFFICIAL_SCHEMAS = {
+  "FS_electrical": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_electrical/0.1.0/electrical.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_electrical 0.1.0, registry/FS_electrical/spec.md. Applied to the extension's top-level data, extensions.FS_electrical, by a validator that implements FS_electrical and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+    "title": "FS_electrical 0.1.0",
+    "description": "Panels, circuits, receptacles, switches, lights, smoke and CO alarms, EV chargers and switch control.",
+    "type": "object",
+    "properties": {
+      "collections": {
+        "description": "Core 12.5: the extension's elements, by kind.",
+        "type": "object",
+        "properties": {
+          "panels": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/panel"
+            },
+            "description": "Panels: an ID → element map (Core 12.5)."
+          },
+          "receptacles": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/receptacle"
+            },
+            "description": "Receptacles: an ID → element map (Core 12.5)."
+          },
+          "switches": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/switch"
+            },
+            "description": "Switches: an ID → element map (Core 12.5)."
+          },
+          "lights": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/light"
+            },
+            "description": "Lights: an ID → element map (Core 12.5)."
+          },
+          "alarms": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/alarm"
+            },
+            "description": "Alarms: an ID → element map (Core 12.5)."
+          },
+          "evChargers": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/evCharger"
+            },
+            "description": "EV chargers: an ID → element map (Core 12.5)."
+          }
+        },
+        "additionalProperties": false
+      },
+      "circuits": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "#/$defs/id"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/circuit"
+        },
+        "description": "Circuits: an ID → record map; the IDs share the document's one space of IDs."
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+        "description": "Core 3.1.1: an ID."
+      },
+      "panel": {
+        "title": "Panel",
+        "description": "2.1: a panelboard or load centre.",
+        "type": "object",
+        "required": [
+          "volts",
+          "rating",
+          "spaces"
+        ],
+        "properties": {
+          "volts": {
+            "description": "The nominal voltages it supplies, in volts.",
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "rating": {
+            "description": "Bus rating, in amperes.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          },
+          "mainBreaker": {
+            "description": "Main breaker rating, in amperes; absent for a main-lug panel.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          },
+          "spaces": {
+            "description": "Breaker spaces (poles).",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "fedBy": {
+            "description": "3.4: the circuit that feeds it, for a subpanel.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "receptacle": {
+        "title": "Receptacle",
+        "description": "2.2: a receptacle outlet.",
+        "type": "object",
+        "properties": {
+          "volts": {
+            "description": "Nominal voltage, in volts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 120
+          },
+          "amps": {
+            "description": "Rating, in amperes.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000,
+            "default": 15
+          },
+          "outlets": {
+            "description": "Sockets.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16,
+            "default": 2
+          },
+          "features": {
+            "description": "What it is besides a plain receptacle.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "gfci",
+                "afci",
+                "usb",
+                "tamperResistant",
+                "weatherResistant"
+              ]
+            },
+            "uniqueItems": true,
+            "default": []
+          },
+          "watts": {
+            "description": "Connected load, in watts (volt-amperes).",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "switch": {
+        "title": "Switch",
+        "description": "2.3, 4.1: a wall switch or control.",
+        "type": "object",
+        "properties": {
+          "control": {
+            "description": "How it switches.",
+            "type": "string",
+            "enum": [
+              "single",
+              "threeWay",
+              "fourWay",
+              "dimmer",
+              "timer",
+              "occupancy",
+              "smart"
+            ],
+            "default": "single"
+          },
+          "controls": {
+            "description": "4.1: what it switches.",
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/id"
+            },
+            "uniqueItems": true,
+            "default": []
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "light": {
+        "title": "Light",
+        "description": "2.4: a luminaire.",
+        "type": "object",
+        "properties": {
+          "fixture": {
+            "description": "What kind of luminaire.",
+            "type": "string",
+            "enum": [
+              "ceiling",
+              "recessed",
+              "pendant",
+              "wall",
+              "track",
+              "underCabinet",
+              "fan",
+              "exterior"
+            ],
+            "default": "ceiling"
+          },
+          "volts": {
+            "description": "Nominal voltage, in volts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 120
+          },
+          "watts": {
+            "description": "Connected load, in watts (volt-amperes).",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "alarm": {
+        "title": "Alarm",
+        "description": "2.5: a smoke, carbon monoxide or heat alarm.",
+        "type": "object",
+        "required": [
+          "detects"
+        ],
+        "properties": {
+          "detects": {
+            "description": "What it detects.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "smoke",
+                "carbonMonoxide",
+                "heat"
+              ]
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "power": {
+            "description": "How it is powered.",
+            "type": "string",
+            "enum": [
+              "battery",
+              "mains",
+              "mainsWithBattery"
+            ],
+            "default": "mainsWithBattery"
+          },
+          "volts": {
+            "description": "Nominal voltage, in volts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 120
+          },
+          "interconnect": {
+            "description": "Alarms with the same label are interconnected.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "watts": {
+            "description": "Connected load, in watts (volt-amperes).",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "evCharger": {
+        "title": "EV charger",
+        "description": "2.6: electric vehicle supply equipment.",
+        "type": "object",
+        "required": [
+          "amps"
+        ],
+        "properties": {
+          "volts": {
+            "description": "Nominal voltage, in volts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 240
+          },
+          "amps": {
+            "description": "Charging current, in amperes.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "connector": {
+            "description": "The vehicle connector.",
+            "type": "string",
+            "enum": [
+              "j1772",
+              "nacs",
+              "ccs1",
+              "ccs2",
+              "type2"
+            ]
+          },
+          "watts": {
+            "description": "Connected load, in watts (volt-amperes).",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "circuit": {
+        "title": "Circuit",
+        "description": "3.1: a branch circuit or feeder from a panel.",
+        "type": "object",
+        "required": [
+          "panel",
+          "breaker",
+          "volts"
+        ],
+        "properties": {
+          "panel": {
+            "description": "3.1: the panel it is on.",
+            "$ref": "#/$defs/id"
+          },
+          "breaker": {
+            "description": "Overcurrent device rating, in amperes.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          },
+          "poles": {
+            "description": "Poles: the spaces it takes.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3,
+            "default": 1
+          },
+          "volts": {
+            "description": "Nominal voltage, in volts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "rating": {
+            "description": "Conductor rating (ampacity), in amperes.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          },
+          "protection": {
+            "description": "Protection at the breaker.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "gfci",
+                "afci"
+              ]
+            },
+            "uniqueItems": true,
+            "default": []
+          },
+          "space": {
+            "description": "3.3: the first panel space it takes.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "loads": {
+            "description": "3.2: the elements it feeds.",
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/id"
+            },
+            "uniqueItems": true,
+            "default": []
+          },
+          "name": {
+            "description": "A human-readable label, 1-200 characters.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "extras": {
+            "description": "As Core 1.7: data no specification defines.",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "FS_lowvoltage": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_lowvoltage/0.1.0/lowvoltage.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_lowvoltage 0.1.0, registry/FS_lowvoltage/spec.md. Applied to the extension's top-level data, extensions.FS_lowvoltage, by a validator that implements FS_lowvoltage and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+    "title": "FS_lowvoltage 0.1.0",
+    "description": "Data, coax and phone outlets, doorbells, security devices, speakers, and the head-ends they are run to.",
+    "type": "object",
+    "properties": {
+      "collections": {
+        "description": "Core 12.5: the extension's elements, by kind.",
+        "type": "object",
+        "properties": {
+          "outlets": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/outlet"
+            },
+            "description": "Outlets: an ID → element map (Core 12.5)."
+          },
+          "doorbells": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/doorbell"
+            },
+            "description": "Doorbells: an ID → element map (Core 12.5)."
+          },
+          "security": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/security"
+            },
+            "description": "Security devices: an ID → element map (Core 12.5)."
+          },
+          "speakers": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/speaker"
+            },
+            "description": "Speakers: an ID → element map (Core 12.5)."
+          },
+          "headEnds": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/headEnd"
+            },
+            "description": "Head-ends: an ID → element map (Core 12.5)."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+        "description": "Core 3.1.1: an ID."
+      },
+      "outlet": {
+        "title": "Outlet",
+        "description": "2.1: a data, coax, phone or fibre outlet.",
+        "type": "object",
+        "required": [
+          "media"
+        ],
+        "properties": {
+          "media": {
+            "description": "What it carries.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "data",
+                "coax",
+                "phone",
+                "fiber"
+              ]
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "ports": {
+            "description": "Ports of each medium.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64,
+            "default": 1
+          },
+          "headEnd": {
+            "description": "3.1: the head-end it is run to.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "doorbell": {
+        "title": "Doorbell",
+        "description": "2.2: a doorbell button or chime.",
+        "type": "object",
+        "required": [
+          "part"
+        ],
+        "properties": {
+          "part": {
+            "description": "Which part.",
+            "type": "string",
+            "enum": [
+              "button",
+              "videoButton",
+              "chime"
+            ]
+          },
+          "chime": {
+            "description": "3.2: the chime a button rings.",
+            "$ref": "#/$defs/id"
+          },
+          "headEnd": {
+            "description": "3.1: the head-end it is run to.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "security": {
+        "title": "Security device",
+        "description": "2.3: a security sensor, keypad, siren or camera.",
+        "type": "object",
+        "required": [
+          "device"
+        ],
+        "properties": {
+          "device": {
+            "description": "What it is.",
+            "type": "string",
+            "enum": [
+              "contact",
+              "motion",
+              "glassBreak",
+              "keypad",
+              "siren",
+              "camera"
+            ]
+          },
+          "zone": {
+            "description": "A zone label.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "wireless": {
+            "description": "True when it is not run to a head-end by wire.",
+            "type": "boolean",
+            "default": false
+          },
+          "headEnd": {
+            "description": "3.1: the head-end it is run to.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "speaker": {
+        "title": "Speaker",
+        "description": "2.4: a speaker or volume control.",
+        "type": "object",
+        "required": [
+          "speaker"
+        ],
+        "properties": {
+          "speaker": {
+            "description": "What it is.",
+            "type": "string",
+            "enum": [
+              "inCeiling",
+              "inWall",
+              "surface",
+              "subwoofer",
+              "volumeControl"
+            ]
+          },
+          "zone": {
+            "description": "An audio zone label.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "headEnd": {
+            "description": "3.1: the head-end it is run to.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "headEnd": {
+        "title": "Head-end",
+        "description": "2.5: where runs end: a structured media enclosure, a rack, an alarm panel, an amplifier.",
+        "type": "object",
+        "required": [
+          "headEnd",
+          "serves"
+        ],
+        "properties": {
+          "headEnd": {
+            "description": "What it is.",
+            "type": "string",
+            "enum": [
+              "structuredMedia",
+              "networkRack",
+              "alarmPanel",
+              "audioAmplifier",
+              "doorbellTransformer"
+            ]
+          },
+          "serves": {
+            "description": "The systems it terminates.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "data",
+                "coax",
+                "phone",
+                "fiber",
+                "security",
+                "audio",
+                "doorbell"
+              ]
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "FS_mechanical": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_mechanical/0.1.0/mechanical.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_mechanical 0.1.0, registry/FS_mechanical/spec.md. Applied to the extension's top-level data, extensions.FS_mechanical, by a validator that implements FS_mechanical and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+    "title": "FS_mechanical 0.1.0",
+    "description": "Heating, cooling and ventilation equipment, terminals, exhaust, gas appliances and gas sources.",
+    "type": "object",
+    "properties": {
+      "collections": {
+        "description": "Core 12.5: the extension's elements, by kind.",
+        "type": "object",
+        "properties": {
+          "equipment": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/equipment"
+            },
+            "description": "Equipment: an ID → element map (Core 12.5)."
+          },
+          "terminals": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/terminal"
+            },
+            "description": "Terminals: an ID → element map (Core 12.5)."
+          },
+          "exhaust": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/exhaust"
+            },
+            "description": "Exhaust: an ID → element map (Core 12.5)."
+          },
+          "gasAppliances": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/gasAppliance"
+            },
+            "description": "Gas appliances: an ID → element map (Core 12.5)."
+          }
+        },
+        "additionalProperties": false
+      },
+      "gasSources": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "#/$defs/id"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/gasSource"
+        },
+        "description": "Gas sources: an ID → record map; the IDs share the document's one space of IDs."
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+        "description": "Core 3.1.1: an ID."
+      },
+      "equipment": {
+        "title": "Equipment",
+        "description": "2.1: heating, cooling or ventilation equipment.",
+        "type": "object",
+        "required": [
+          "equipment"
+        ],
+        "properties": {
+          "equipment": {
+            "description": "What it is.",
+            "type": "string",
+            "enum": [
+              "furnace",
+              "airHandler",
+              "heatPump",
+              "airConditioner",
+              "boiler",
+              "miniSplit",
+              "fanCoil",
+              "erv",
+              "hrv",
+              "dehumidifier",
+              "humidifier"
+            ]
+          },
+          "fuel": {
+            "description": "What it runs on.",
+            "type": "string",
+            "enum": [
+              "electric",
+              "naturalGas",
+              "propane",
+              "oil"
+            ],
+            "default": "electric"
+          },
+          "input": {
+            "description": "Input rating, in watts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "heating": {
+            "description": "Heating output, in watts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "cooling": {
+            "description": "Cooling output, in watts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "airflow": {
+            "description": "Air flow, in millilitres per second.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "combustionAir": {
+            "description": "Where combustion air comes from: the space the appliance is in, outdoors through a duct or opening, or a sealed direct connection to outdoors.",
+            "type": "string",
+            "enum": [
+              "indoor",
+              "outdoor",
+              "direct"
+            ]
+          },
+          "vent": {
+            "description": "How it vents its combustion products.",
+            "type": "string",
+            "enum": [
+              "natural",
+              "power",
+              "direct"
+            ]
+          },
+          "gasFrom": {
+            "description": "3.1: the gas source it draws from.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "terminal": {
+        "title": "Terminal",
+        "description": "2.2: an air terminal: a supply register or diffuser, a return or transfer grille.",
+        "type": "object",
+        "required": [
+          "terminal"
+        ],
+        "properties": {
+          "terminal": {
+            "description": "What it does.",
+            "type": "string",
+            "enum": [
+              "supply",
+              "return",
+              "transfer"
+            ]
+          },
+          "equipment": {
+            "description": "3.2: the equipment it is served by.",
+            "$ref": "#/$defs/id"
+          },
+          "airflow": {
+            "description": "Air flow, in millilitres per second.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "exhaust": {
+        "title": "Exhaust",
+        "description": "2.3: an exhaust fan, hood or vent.",
+        "type": "object",
+        "required": [
+          "exhaust"
+        ],
+        "properties": {
+          "exhaust": {
+            "description": "What it is.",
+            "type": "string",
+            "enum": [
+              "bathFan",
+              "rangeHood",
+              "kitchenFan",
+              "dryerVent",
+              "wholeHouse"
+            ]
+          },
+          "airflow": {
+            "description": "Air flow, in millilitres per second.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "discharge": {
+            "description": "Where it discharges.",
+            "type": "string",
+            "enum": [
+              "outdoors",
+              "recirculating"
+            ]
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "gasAppliance": {
+        "title": "Gas appliance",
+        "description": "2.4: a fuel-gas appliance.",
+        "type": "object",
+        "required": [
+          "appliance",
+          "fuel"
+        ],
+        "properties": {
+          "appliance": {
+            "description": "What it is.",
+            "type": "string",
+            "enum": [
+              "range",
+              "cooktop",
+              "oven",
+              "dryer",
+              "fireplace",
+              "spaceHeater",
+              "grill",
+              "poolHeater",
+              "generator",
+              "lamp"
+            ]
+          },
+          "fuel": {
+            "description": "The gas it burns.",
+            "type": "string",
+            "enum": [
+              "naturalGas",
+              "propane"
+            ]
+          },
+          "input": {
+            "description": "Input rating, in watts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "combustionAir": {
+            "description": "Where combustion air comes from: the space the appliance is in, outdoors through a duct or opening, or a sealed direct connection to outdoors.",
+            "type": "string",
+            "enum": [
+              "indoor",
+              "outdoor",
+              "direct"
+            ]
+          },
+          "vent": {
+            "description": "How it vents its combustion products.",
+            "type": "string",
+            "enum": [
+              "none",
+              "natural",
+              "power",
+              "direct"
+            ]
+          },
+          "gasFrom": {
+            "description": "3.1: the gas source it draws from.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "gasSource": {
+        "title": "Gas source",
+        "description": "3.1: where fuel gas enters: a meter or a tank.",
+        "type": "object",
+        "required": [
+          "fuel"
+        ],
+        "properties": {
+          "fuel": {
+            "description": "The gas.",
+            "type": "string",
+            "enum": [
+              "naturalGas",
+              "propane"
+            ]
+          },
+          "source": {
+            "description": "What it is.",
+            "type": "string",
+            "enum": [
+              "meter",
+              "tank"
+            ],
+            "default": "meter"
+          },
+          "name": {
+            "description": "A human-readable label, 1-200 characters.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "extras": {
+            "description": "As Core 1.7: data no specification defines.",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "FS_plumbing": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_plumbing/0.1.0/plumbing.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_plumbing 0.1.0, registry/FS_plumbing/spec.md. Applied to the extension's top-level data, extensions.FS_plumbing, by a validator that implements FS_plumbing and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+    "title": "FS_plumbing 0.1.0",
+    "description": "Fixtures, water heaters, drains, cleanouts and logical stacks, with their connections.",
+    "type": "object",
+    "properties": {
+      "collections": {
+        "description": "Core 12.5: the extension's elements, by kind.",
+        "type": "object",
+        "properties": {
+          "fixtures": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/fixture"
+            },
+            "description": "Fixtures: an ID → element map (Core 12.5)."
+          },
+          "waterHeaters": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/waterHeater"
+            },
+            "description": "Water heaters: an ID → element map (Core 12.5)."
+          },
+          "drains": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/drain"
+            },
+            "description": "Drains: an ID → element map (Core 12.5)."
+          },
+          "cleanouts": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/cleanout"
+            },
+            "description": "Cleanouts: an ID → element map (Core 12.5)."
+          }
+        },
+        "additionalProperties": false
+      },
+      "stacks": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "#/$defs/id"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/stack"
+        },
+        "description": "Stacks: an ID → record map; the IDs share the document's one space of IDs."
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+        "description": "Core 3.1.1: an ID."
+      },
+      "fixture": {
+        "title": "Fixture",
+        "description": "2.1: a plumbing fixture or appliance connection.",
+        "type": "object",
+        "required": [
+          "fixture"
+        ],
+        "properties": {
+          "fixture": {
+            "description": "What it is.",
+            "type": "string",
+            "enum": [
+              "waterCloset",
+              "lavatory",
+              "kitchenSink",
+              "barSink",
+              "laundryTub",
+              "mopSink",
+              "bathtub",
+              "shower",
+              "bathtubShower",
+              "bidet",
+              "urinal",
+              "clothesWasher",
+              "dishwasher",
+              "hoseBibb",
+              "iceMaker"
+            ]
+          },
+          "supply": {
+            "description": "The water it is supplied with.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "cold",
+                "hot"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "hotFrom": {
+            "description": "3.2: the water heater its hot water comes from.",
+            "$ref": "#/$defs/id"
+          },
+          "drain": {
+            "description": "3.1: the stack or drain it drains to.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "waterHeater": {
+        "title": "Water heater",
+        "description": "2.2: a water heater.",
+        "type": "object",
+        "required": [
+          "heater",
+          "energy"
+        ],
+        "properties": {
+          "heater": {
+            "description": "How it heats.",
+            "type": "string",
+            "enum": [
+              "storage",
+              "tankless",
+              "heatPump",
+              "indirect"
+            ]
+          },
+          "energy": {
+            "description": "What it runs on.",
+            "type": "string",
+            "enum": [
+              "electric",
+              "naturalGas",
+              "propane",
+              "oil",
+              "solar"
+            ]
+          },
+          "capacity": {
+            "description": "Storage, in millilitres.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "input": {
+            "description": "Input rating, in watts.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "combustionAir": {
+            "description": "Where combustion air comes from: the space the appliance is in, outdoors through a duct or opening, or a sealed direct connection to outdoors.",
+            "type": "string",
+            "enum": [
+              "indoor",
+              "outdoor",
+              "direct"
+            ]
+          },
+          "drain": {
+            "description": "3.1: the stack or drain its relief and pan discharge to.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "drain": {
+        "title": "Drain",
+        "description": "2.3: a floor drain or other receptor.",
+        "type": "object",
+        "required": [
+          "receptor"
+        ],
+        "properties": {
+          "receptor": {
+            "description": "What kind of receptor.",
+            "type": "string",
+            "enum": [
+              "floor",
+              "trench",
+              "area",
+              "standpipe",
+              "floorSink"
+            ]
+          },
+          "drain": {
+            "description": "3.1: the stack it drains to.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "cleanout": {
+        "title": "Cleanout",
+        "description": "2.4: an access point to a drain line.",
+        "type": "object",
+        "required": [
+          "stack"
+        ],
+        "properties": {
+          "stack": {
+            "description": "3.1: the stack it opens.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "stack": {
+        "title": "Stack",
+        "description": "3.1: a logical drain, waste or vent stack.",
+        "type": "object",
+        "required": [
+          "levels"
+        ],
+        "properties": {
+          "stack": {
+            "description": "What it carries.",
+            "type": "string",
+            "enum": [
+              "drainWasteVent",
+              "drain",
+              "vent"
+            ],
+            "default": "drainWasteVent"
+          },
+          "levels": {
+            "description": "3.1: the levels it passes through.",
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/id"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "size": {
+            "description": "Nominal diameter, a length in base units.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1280000
+          },
+          "outlet": {
+            "description": "Where it ends.",
+            "type": "string",
+            "enum": [
+              "sewer",
+              "septic",
+              "other"
+            ]
+          },
+          "name": {
+            "description": "A human-readable label, 1-200 characters.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "extras": {
+            "description": "As Core 1.7: data no specification defines.",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+} as const;

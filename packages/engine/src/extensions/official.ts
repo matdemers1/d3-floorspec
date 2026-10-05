@@ -9,7 +9,7 @@
  * invariants, and only when Core reported no error; its lints only for a valid document; and what
  * it derives becomes `derived.extensions[name]`.
  */
-import { OFFICIAL_ENTRIES } from '../generated/official-extensions.js';
+import { OFFICIAL_ENTRIES, OFFICIAL_SCHEMAS } from '../generated/official-extensions.js';
 import { declaredVersion, type FloorspecDocument, type RegistryEntry } from '../model/document.js';
 import type { Analysis } from '../validate/invariants.js';
 import type { Diagnostic } from '../validate/diagnostic.js';
@@ -25,6 +25,13 @@ import { FS_PLUMBING, type DerivedPlumbing } from './fs/plumbing.js';
  * pass as `knownExtensions`: `validate(doc, { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_EXTENSIONS })`.
  */
 export const OFFICIAL_EXTENSIONS: readonly RegistryEntry[] = OFFICIAL_ENTRIES as unknown as RegistryEntry[];
+
+/**
+ * The official extensions' schemas (registry/<NAME>/<name>.schema.json, vendored), by name: each
+ * kind's members with their types, ranges and defaults under `$defs` — what an editor builds its
+ * fields from. Data only; validation is the engine's.
+ */
+export const OFFICIAL_EXTENSION_SCHEMAS: Readonly<Record<string, unknown>> = OFFICIAL_SCHEMAS;
 
 /** Every extension implementation the engine has, by name. */
 export const IMPLEMENTATIONS: ReadonlyMap<string, ExtensionImplementation> = new Map(

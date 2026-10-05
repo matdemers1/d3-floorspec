@@ -21,7 +21,7 @@
     "typecheck": "tsc --noEmit && tsc -p test && tsc -p scripts",
     "test": "vitest run --project node",
     "test:browser": "vitest run --project browser",
-    "conformance": "vitest run --project node test/conformance.node.test.ts",
+    "conformance": "vitest run --project node test/conformance.node.test.ts test/extensions.node.test.ts",
     "sync-standard": "tsx scripts/sync-standard.ts"
   },
   "dependencies": {

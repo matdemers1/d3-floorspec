@@ -36,18 +36,26 @@ function readRequest(input: JsonInput, ops: OpsVersion): ApplyRequest {
 /**
  * How A and the result are validated (0.2, 1.2 steps 1 and 6): Ops 0.1 applies to Core 0.1
  * documents, with a Core 0.1 reader (a document declaring "0.2" is FS-DOC-001, so FS-OPS-002); Ops
- * 0.2 with a Core 0.2 reader, which reads 0.1 documents too, and the known extensions it is given.
+ * 0.2 with a Core 0.2 reader, which reads 0.1 documents too, and the known and implemented
+ * extensions it is given.
  */
 interface Settings {
   readonly ops: OpsVersion;
-  readonly core: { core: '0.1' | '0.2'; knownExtensions?: string | Uint8Array | readonly unknown[] };
+  readonly core: { core: '0.1' | '0.2'; knownExtensions?: string | Uint8Array | readonly unknown[]; extensions?: readonly string[] };
 }
 
 function settings(options: ApplyOptions): Settings {
   const ops: string = options.ops ?? '0.2';
   if (ops !== '0.1' && ops !== '0.2') throw new RangeError(`@floorspec/ops applies Floorspec Ops 0.1 and 0.2, not ${ops}`);
   if (ops === '0.1') return { ops, core: { core: '0.1' } };
-  return { ops, core: options.knownExtensions === undefined ? { core: '0.2' } : { core: '0.2', knownExtensions: options.knownExtensions } };
+  return {
+    ops,
+    core: {
+      core: '0.2',
+      ...(options.knownExtensions === undefined ? {} : { knownExtensions: options.knownExtensions }),
+      ...(options.extensions === undefined ? {} : { extensions: options.extensions }),
+    },
+  };
 }
 
 /** Step 1: A must be a valid Floorspec Core document (FS-OPS-002). Returns its parsed value. */

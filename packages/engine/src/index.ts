@@ -47,10 +47,12 @@ export { facingVector, direction } from './exact/angle.js';
 export {
   OFFICIAL_EXTENSIONS,
   OFFICIAL_EXTENSION_NAMES,
+  OFFICIAL_EXTENSION_SCHEMAS,
   IMPLEMENTATIONS as EXTENSION_IMPLEMENTATIONS,
   type DerivedExtensions,
 } from './extensions/official.js';
 export type { ExtensionImplementation, ExtensionDiagnostic, ExtensionContext } from './extensions/context.js';
+export { OFFICIAL_READER } from './extensions/reader.js';
 export { defaultClearances } from './extensions/clearances.js';
 export * as electrical from './extensions/fs/electrical.js';
 export * as plumbing from './extensions/fs/plumbing.js';
@@ -82,6 +84,16 @@ function derivedOf(ev: Evaluation): Derived {
   const derived = deriveFrom(ev.document!, ev.analysis!);
   if (ev.extensions) derived.extensions = deriveExtensions(ev.extensions);
   return derived;
+}
+
+/**
+ * What an evaluation of a valid document derives — Core's values, and those of the extensions it
+ * evaluated — for a caller that evaluated once and wants both the analysis and the derived values.
+ * Throws InvalidDocumentError when it is not valid.
+ */
+export function deriveEvaluation(ev: Evaluation): Derived {
+  if (!ev.valid || !ev.document || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);
+  return derivedOf(ev);
 }
 
 /**
