@@ -1,0 +1,313 @@
+/* The 3D view, the split view and the walkthrough (FLR-T-7.5): the board's "08" frames. Tokens only. */
+
+/* ─── The views in the canvas area ─────────────────────────────────────────────────────────── */
+.fs-views {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+.fs-views__plan,
+.fs-views__three {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.fs-views__plan[hidden] {
+  display: none;
+}
+.fs-views[data-mode='split'] .fs-views__three {
+  border-left: 1px solid var(--color-border);
+}
+.fs-views__label,
+.fs-views__synced,
+.fs-three__chip {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 30px;
+  padding: 0 var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  white-space: nowrap;
+}
+.fs-views__label {
+  top: var(--space-16);
+  left: var(--space-16);
+  pointer-events: none;
+}
+.fs-views__synced {
+  bottom: var(--space-16);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 1;
+}
+.fs-editor .fs-views svg.lucide,
+.fs-editor .fs-three svg.lucide {
+  width: var(--icon-14);
+  height: var(--icon-14);
+}
+
+/* ─── The 3D view ──────────────────────────────────────────────────────────────────────────── */
+.fs-three {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-sunken);
+  overflow: hidden;
+}
+.fs-three__gl {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+.fs-three__gl:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--color-focus);
+}
+.fs-three__canvas {
+  display: block;
+}
+.fs-three[data-walking='on'] .fs-three__gl {
+  cursor: grab;
+}
+.fs-three__message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-24);
+}
+.fs-three__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.fs-three__tools {
+  position: absolute;
+  top: var(--space-16);
+  left: var(--space-16);
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.fs-three__cutaway {
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+.fs-three__cutaway:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-fg);
+}
+.fs-three__cutaway[aria-pressed='true'] {
+  color: var(--color-fg);
+}
+.fs-three__cutaway:focus-visible,
+.fs-three__cube:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-three__cube {
+  position: absolute;
+  top: var(--space-16);
+  right: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 60px;
+  height: 56px;
+  padding: var(--space-6) var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+.fs-three__cube:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-fg);
+}
+.fs-editor .fs-three__cube svg.lucide {
+  width: var(--icon-20);
+  height: var(--icon-20);
+}
+.fs-three__stats {
+  left: var(--space-16);
+  bottom: var(--space-16);
+}
+.fs-three__pane-label {
+  top: var(--space-16);
+  left: var(--space-16);
+}
+.fs-three__label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* ─── The walkthrough ──────────────────────────────────────────────────────────────────────── */
+.fs-editor[data-walk='on'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'top'
+    'canvas'
+    'status';
+}
+.fs-editor[data-walk='on'] > .fs-rail,
+.fs-editor[data-walk='on'] > .fs-editor__tree,
+.fs-editor[data-walk='on'] > .fs-editor__inspector {
+  display: none;
+}
+.fs-editor .fs-three svg.fs-three__map {
+  position: absolute;
+  top: var(--space-20);
+  left: var(--space-20);
+  width: 240px;
+  height: 160px;
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.fs-three__map-room {
+  fill: var(--color-fill-quiet);
+}
+.fs-three__map-wall {
+  fill: var(--color-fg);
+}
+.fs-three__map-cone {
+  fill: var(--color-accent);
+  opacity: 0.35;
+}
+.fs-three__map-you {
+  fill: var(--color-accent);
+  stroke: var(--color-surface);
+  stroke-width: 0.08;
+}
+.fs-three__where {
+  top: var(--space-20);
+  left: 280px;
+}
+.fs-three__exit {
+  position: absolute;
+  top: var(--space-20);
+  right: var(--space-20);
+}
+.fs-three__keys {
+  position: absolute;
+  bottom: var(--space-24);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.fs-three__key-label {
+  color: var(--color-fg-muted);
+}
+.fs-three__stick {
+  position: absolute;
+  left: var(--space-32);
+  bottom: var(--space-32);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  opacity: 0.85;
+  touch-action: none;
+}
+.fs-three__knob {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  pointer-events: none;
+}
+@media (pointer: coarse) {
+  .fs-three__stick {
+    display: flex;
+  }
+  .fs-three__keys {
+    bottom: 164px;
+  }
+}
+
+/* ─── The inspector's 3D section ───────────────────────────────────────────────────────────── */
+.fs-three-section__value {
+  color: var(--color-fg);
+  font-size: var(--text-13);
+}
+.fs-three-section__walk {
+  width: 100%;
+  margin: var(--space-8) 0;
+}
+
+/* ─── Narrow screens: the view switch stays, and the walkthrough's chips move out of each other's way */
+@media (max-width: 1199px) {
+  .fs-topbar .fs-topbar__views {
+    display: inline-flex;
+  }
+  .fs-editor[data-walk='on'] {
+    grid-template-areas:
+      'top'
+      'canvas';
+  }
+  .fs-three__where {
+    top: 196px;
+    left: var(--space-20);
+  }
+  .fs-views[data-mode='split'] {
+    flex-direction: column;
+  }
+  .fs-views[data-mode='split'] .fs-views__three {
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+  }
+}

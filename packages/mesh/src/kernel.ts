@@ -62,7 +62,9 @@ export function loadKernel(options: KernelOptions = {}): Promise<Kernel> {
     const m = await Module(options.locateFile ? { locateFile: options.locateFile } : undefined);
     m.setup();
     // Its own declarations type these members as `any` under NodeNext (above): name what they are.
-    const kernel: Kernel = m;
+    // Under Bundler resolution (the editor type-checks this source) they do resolve, to classes
+    // wider than the part used here — hence through `unknown`.
+    const kernel = m as unknown as Kernel;
     return kernel;
   })();
   return loading;

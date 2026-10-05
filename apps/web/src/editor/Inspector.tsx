@@ -44,6 +44,7 @@ import {
   swingApplies,
   type ClearOpening,
 } from './openings';
+import { ThreeSection } from './three/ThreeSection';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -112,6 +113,7 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
     <div className="fs-inspector__body">
       <Header ctx={ctx} kind={kind} />
       {body}
+      <ThreeSection store={store} id={selection} kind={kind} />
       {!ctx.readOnly ? (
         <div className="fs-inspector__actions">
           <Button variant="danger-ghost" size="sm" icon={<Trash2 />} onClick={() => { requestRemove(store, selection); }}>
