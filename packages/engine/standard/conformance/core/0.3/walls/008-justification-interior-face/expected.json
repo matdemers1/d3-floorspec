@@ -55,11 +55,33 @@
     "placements": {},
     "clearances": {},
     "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [5120000, 3840000, 3456000],
+          "min": [0, 0, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
     "circulation": {
       "R1": {
         "entry": false,
         "reachable": false
       }
-    }
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5120000, 3840000, 0],
+          "min": [0, 0, 0]
+        }
+      }
+    },
+    "slabs": {}
   }
 }

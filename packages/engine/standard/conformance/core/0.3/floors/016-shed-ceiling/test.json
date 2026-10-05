@@ -1,0 +1,7 @@
+{
+  "description": "A one-sided vault: the ridge runs east along y = 2 m at 3000 mm, and the ceiling falls 6 in 12 to its right - south. As one plane it rises to the ridge's left: at the north side, 950 mm beyond it, the ceiling is 3475 mm - higher than the ridge - and at the south side, 1950 mm before it, 2025 mm.",
+  "covers": [
+    "FS-CORE-15.3.2",
+    "FS-CORE-15.5.1"
+  ]
+}

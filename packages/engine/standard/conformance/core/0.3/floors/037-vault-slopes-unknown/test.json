@@ -1,0 +1,6 @@
+{
+  "description": "A vault whose slopes are \"up\".",
+  "covers": [
+    "FS-CORE-15.2.1"
+  ]
+}

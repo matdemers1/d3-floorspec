@@ -16,6 +16,19 @@
     "placements": {},
     "clearances": {},
     "clearanceOverlaps": [],
-    "circulation": {}
+    "ceilings": {},
+    "circulation": {},
+    "floors": {},
+    "slabs": {
+      "SL1": {
+        "bottom": -192000,
+        "top": 0,
+        "box": {
+          "max": [5120000, 3840000, 0],
+          "min": [0, 0, -192000]
+        },
+        "outline": [[0, 0], [5120000, 0], [5120000, 3840000], [0, 3840000]]
+      }
+    }
   }
 }

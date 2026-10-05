@@ -1,0 +1,6 @@
+{
+  "description": "A ceiling with a height and no kind.",
+  "covers": [
+    "FS-CORE-15.2.1"
+  ]
+}

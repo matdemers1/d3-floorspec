@@ -14,7 +14,7 @@
     },
     "positiveLength": {
       "title": "Positive length",
-      "description": "A length (2.1) greater than zero: a level's height (1.8.3), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2).",
+      "description": "A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1).",
       "type": "integer",
       "minimum": 1,
       "maximum": 9007199254740991
@@ -133,6 +133,30 @@
       "type": "integer",
       "minimum": 1,
       "maximum": 9007199254740991
+    },
+    "pitch": {
+      "title": "Pitch",
+      "description": "2.5, 15.3: a slope as a pair of positive integers { \"rise\": r, \"run\": n } — r up for every n across. Both MUST be integers from 1 to 2^53 − 1 (FS-CORE-15.2.1).",
+      "type": "object",
+      "required": [
+        "rise",
+        "run"
+      ],
+      "properties": {
+        "rise": {
+          "description": "2.5: the rise, a positive integer. Always present.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "run": {
+          "description": "2.5: the run, a positive integer. Always present.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "additionalProperties": false
     },
     "clearOpening": {
       "title": "Clear opening",

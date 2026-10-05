@@ -1,0 +1,8 @@
+{
+  "description": "A document declaring \"0.2\" with a light on its room's ceiling and a piece on its floor, read by a reader of 0.3: the light hangs from the level's elevation plus its height, 2700 mm, and the piece stands at its elevation, 0 - exactly where a reader of 0.2 places them; the room's floor and ceiling are there too.",
+  "covers": [
+    "FS-CORE-15.6.1",
+    "FS-CORE-1.2.6",
+    "FS-CORE-13.4.1"
+  ]
+}

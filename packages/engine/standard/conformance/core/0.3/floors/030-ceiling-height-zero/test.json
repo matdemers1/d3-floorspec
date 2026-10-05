@@ -1,0 +1,6 @@
+{
+  "description": "A flat ceiling at height 0.",
+  "covers": [
+    "FS-CORE-15.2.1"
+  ]
+}

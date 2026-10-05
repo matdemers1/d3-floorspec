@@ -309,6 +309,11 @@ export class LevelGeometry {
   }
 }
 
+/** 6.2: are these rings, taken as a room polygon, degenerate? */
+export function polygonDegenerate(outer: IPoint[], holes: IPoint[][]): boolean {
+  return isDegenerate(outer, holes, area2(outer), holes.map(area2));
+}
+
 /** 6.2: is a room polygon degenerate? */
 function isDegenerate(outer: IPoint[], holes: IPoint[][], outerA: bigint, holeAs: bigint[]): boolean {
   if (outer.length < 3 || !isSimple(outer) || outerA <= 0n) return true;

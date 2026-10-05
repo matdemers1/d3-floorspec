@@ -14,6 +14,7 @@ import type { IPoint } from '../geometry/predicates.js';
 import { startAtLeast } from './level.js';
 import { get, ipoint, openingDimensions, wallElevations, type Box, type ExtensionElement, type FloorspecDocument, type Host } from '../model/document.js';
 import type { Analysis } from '../validate/invariants.js';
+import { roomRings, surfaceElevation } from '../slabs/floors.js';
 
 export interface Frame {
   readonly ox: Surd;
@@ -83,9 +84,15 @@ export function hostFrame(doc: FloorspecDocument, analysis: Analysis, host: Host
   const f = facingVector(host.rotation ?? 0);
   const [x, y] = host.position;
   if (host.mode === 'surface') {
-    const L = get(doc.levels, get(doc.rooms, host.room)!.level)!;
-    const z = BigInt(L.elevation) + (host.surface === 'ceiling' ? BigInt(L.height) : 0n);
-    return { ox: Surd.of(x), oy: Surd.of(y), oz: z, f };
+    // 15.6: on the room's floor, or under its ceiling at the host's position (for a document of an
+    // earlier draft: the level's elevation, or its elevation plus its height, as 13.1 said).
+    const room = get(doc.rooms, host.room)!;
+    const rings = () => {
+      const la = analysis.levels.get(room.level);
+      const face = la?.roomFaces.get(host.room);
+      return la?.geometry && face !== undefined ? roomRings(la.geometry, face) : undefined;
+    };
+    return { ox: Surd.of(x), oy: Surd.of(y), oz: surfaceElevation(doc, room, host.surface, host.position, rings), f };
   }
   return { ox: Surd.of(x), oy: Surd.of(y), oz: BigInt(get(doc.levels, host.level)!.elevation), f };
 }

@@ -32,6 +32,7 @@ import {
 import { entry } from './catalogue.js';
 import type { Diagnostic, DiagnosticLocation, FixOp } from './diagnostic.js';
 import { extensionInvariants, hostingInvariants, programInvariants, surfaceInvariants } from './invariants02.js';
+import { floorInvariants, roomRings } from '../slabs/floors.js';
 
 export class Reporter {
   readonly diagnostics: Diagnostic[] = [];
@@ -61,6 +62,8 @@ export interface Analysis {
   readonly offsets: Map<string, FaceOffsets>;
   /** The reader implements Core 0.2: its lints and derived values include chapters 11–13. */
   readonly core02: boolean;
+  /** The reader implements Core 0.3: its derived values include floors, ceilings and slabs (chapter 15), for a document of any draft. */
+  readonly core03: boolean;
 }
 
 // ── reference invariants (FS-INV-001 … 009) ──────────────────────────────────
@@ -530,11 +533,39 @@ function openingInvariants(doc: FloorspecDocument, r: Reporter): void {
 const maxB = (a: bigint, b: bigint): bigint => (a > b ? a : b);
 const minB = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 
+// ── floor and ceiling invariants (FS-INV-701 … 703) ──────────────────────────
+
+/**
+ * Core 0.3, 10.3: for every room on a level where room invariants were evaluated and with none of
+ * FS-INV-201 to FS-INV-204, tested on its room polygon. A document of an earlier draft has no
+ * `floor`, `ceiling` or `ceilingHeight`, so none of them can be reported for it.
+ */
+function floorAndCeilingInvariants(doc: FloorspecDocument, r: Reporter, levels: Map<string, LevelAnalysis>): void {
+  const roomCodes = ['FS-INV-201', 'FS-INV-202', 'FS-INV-203', 'FS-INV-204'];
+  for (const [id, room] of entries(doc.rooms)) {
+    const la = levels.get(room.level);
+    if (!la || la.broken || !la.geometry) continue;
+    const face = la.roomFaces.get(id);
+    if (face === undefined || roomCodes.some((c) => r.has(c, id))) continue;
+    for (const d of floorInvariants(doc, id, room, roomRings(la.geometry, face))) {
+      const message =
+        d.code === 'FS-INV-701'
+          ? `${id}'s ceiling is not above its floor.`
+          : d.code === 'FS-INV-702'
+            ? `${id}'s vaulted ceiling has its two ridge points at the same point.`
+            : `${id}'s tray ceiling border does not fit the room.`;
+      r.report(d.code, message, [id], { pointer: ptr('rooms', id, d.code === 'FS-INV-701' ? 'ceiling' : 'ceiling') });
+    }
+  }
+}
+
 // ── tier 4 ───────────────────────────────────────────────────────────────────
 
 export interface InvariantOptions {
   /** Evaluate the invariants Core 0.2 adds (a 0.2 reader, for documents of either draft). */
   readonly core02: boolean;
+  /** Derive what Core 0.3 adds for every document: floors, ceilings and slabs (chapter 15). */
+  readonly core03?: boolean;
   /** The validator's known extensions (12.2), already checked. */
   readonly known?: readonly RegistryEntry[];
 }
@@ -561,7 +592,8 @@ export function invariants(doc: FloorspecDocument, r: Reporter, options: Invaria
   }
   openingInvariants(doc, r);
   typeInvariants(doc, r);
-  const analysis: Analysis = { levels, offsets, core02: options.core02 };
+  floorAndCeilingInvariants(doc, r, levels);
+  const analysis: Analysis = { levels, offsets, core02: options.core02, core03: options.core03 ?? false };
   if (options.core02) {
     programInvariants(doc, r);
     extensionInvariants(doc, options.known, r);

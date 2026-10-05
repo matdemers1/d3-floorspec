@@ -1,0 +1,6 @@
+{
+  "description": "A room whose anchor is in a wall's thickness (FS-INV-204), with a tray border far too wide: floor and ceiling invariants are evaluated only for a room without FS-INV-201 to FS-INV-204, so only FS-INV-204.",
+  "covers": [
+    "FS-CORE-10.3.1"
+  ]
+}

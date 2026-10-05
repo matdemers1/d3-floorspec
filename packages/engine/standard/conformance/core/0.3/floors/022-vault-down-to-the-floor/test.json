@@ -1,0 +1,8 @@
+{
+  "description": "A vault at 1450 mm along the centre line falling 1 in 1: at the walls, 1450 mm from the ridge, it reaches the floor exactly. FS-INV-701.",
+  "covers": [
+    "FS-CORE-15.2.2",
+    "FS-CORE-15.3.2",
+    "FS-CORE-10.2.1"
+  ]
+}

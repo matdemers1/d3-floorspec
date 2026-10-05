@@ -1,0 +1,7 @@
+{
+  "description": "A floor raised 2700 mm, to the level's ceiling: the ceiling is not above it. FS-INV-701.",
+  "covers": [
+    "FS-CORE-15.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

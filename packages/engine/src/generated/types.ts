@@ -59,6 +59,14 @@ export type Length1 = number;
  */
 export type PositiveLength = number;
 /**
+ * 1.8, 15.1: the thickness of the floors of the level's rooms, unless a room's floor states its own; greater than zero when present (FS-CORE-1.8.4). Absent by default: not declared.
+ */
+export type PositiveLength1 = number;
+/**
+ * 1.8, 15.2: the height of the ceilings of the level's rooms above its elevation, unless a room's ceiling states its own; greater than zero when present (FS-CORE-1.8.4). Its default is derived — the level's height — so it carries no `default` here.
+ */
+export type PositiveLength2 = number;
+/**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name1 = string;
@@ -123,7 +131,7 @@ export type Layers = [Layer, ...Layer[]];
 /**
  * 8.3: the layer's thickness, a length that MUST be greater than zero (FS-CORE-8.3.1). Always present.
  */
-export type PositiveLength1 = number;
+export type PositiveLength3 = number;
 /**
  * 4.3: what the layer does. It MUST be one of the terms of 4.3's table (FS-CORE-4.3.1); the layer functions are closed in this draft. Always present.
  */
@@ -191,11 +199,11 @@ export type NonNegativeLength = number;
 /**
  * 7.1: the opening's width along the wall, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2).
  */
-export type PositiveLength2 = number;
+export type PositiveLength4 = number;
 /**
  * 7.1: the opening's height, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2).
  */
-export type PositiveLength3 = number;
+export type PositiveLength5 = number;
 /**
  * 7.1: the height of the opening's bottom above the wall's base, which MUST NOT be negative (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill`, else 0 (7.2).
  */
@@ -215,11 +223,11 @@ export type Swing = 'left' | 'right';
 /**
  * 8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present.
  */
-export type PositiveLength4 = number;
+export type PositiveLength6 = number;
 /**
  * 8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present.
  */
-export type PositiveLength5 = number;
+export type PositiveLength7 = number;
 /**
  * 8.4: the clear area, in square base units. Absent: not declared — and never read as width × height (7.4).
  */
@@ -282,6 +290,51 @@ export type Reference18 = string;
  */
 export type Reference19 = string;
 /**
+ * 2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.
+ */
+export type Length5 = number;
+/**
+ * 15.1: the floor's thickness, from its top down; greater than zero (FS-CORE-15.1.1). Its default is derived — the level's floorThickness, else not declared — so it carries no `default` here.
+ */
+export type PositiveLength8 = number;
+/**
+ * 6.5, 15.2: the room's ceiling: flat, tray or vaulted, and its height.
+ */
+export type Ceiling = (FlatCeiling | TrayCeiling | VaultedCeiling) & {
+  kind: CeilingKind;
+};
+/**
+ * 15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here.
+ */
+export type PositiveLength9 = number;
+/**
+ * 15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here.
+ */
+export type PositiveLength10 = number;
+/**
+ * 15.4: the width of the border, measured in plan from the room polygon inwards; greater than zero (FS-CORE-15.2.1). Always present.
+ */
+export type PositiveLength11 = number;
+/**
+ * 15.2: how far the centre is raised above the border; greater than zero (FS-CORE-15.2.1). Always present.
+ */
+export type PositiveLength12 = number;
+/**
+ * 15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here.
+ */
+export type PositiveLength13 = number;
+/**
+ * 15.3: two plan points the ridge line runs through. Always present. That they differ (FS-CORE-15.3.1) is an invariant (FS-INV-702).
+ *
+ * @minItems 2
+ * @maxItems 2
+ */
+export type Ridge = [Point, Point];
+/**
+ * 15.2: "flat", "tray" or "vaulted".
+ */
+export type CeilingKind = 'flat' | 'tray' | 'vaulted';
+/**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name6 = string;
@@ -298,15 +351,30 @@ export type Polygon1 = [Point, Point, Point, ...Point[]];
 /**
  * 6.7: the slab's thickness. Always present, and MUST be greater than zero (FS-CORE-6.7.1).
  */
-export type PositiveLength6 = number;
+export type PositiveLength14 = number;
 /**
  * 2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.
  */
-export type Length5 = number;
+export type Length6 = number;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
 export type Reference21 = string;
+/**
+ * 6.7: what the slab is for; when present, one of the purposes of 6.7's table (FS-CORE-6.7.2). Absent by default: not stated. It changes nothing that is derived.
+ */
+export type SlabPurpose =
+  | 'patio'
+  | 'deck'
+  | 'porch'
+  | 'stoop'
+  | 'landing'
+  | 'balcony'
+  | 'garage'
+  | 'walkway'
+  | 'driveway'
+  | 'equipmentPad'
+  | 'other';
 /**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
@@ -329,11 +397,11 @@ export type Name8 = string;
 /**
  * 8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default.
  */
-export type PositiveLength7 = number;
+export type PositiveLength15 = number;
 /**
  * 8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default.
  */
-export type PositiveLength8 = number;
+export type PositiveLength16 = number;
 /**
  * 8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default.
  */
@@ -354,11 +422,11 @@ export type DoorOperation =
 /**
  * 8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present.
  */
-export type PositiveLength9 = number;
+export type PositiveLength17 = number;
 /**
  * 8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present.
  */
-export type PositiveLength10 = number;
+export type PositiveLength18 = number;
 /**
  * 13.5: why the space is kept clear. Always present.
  */
@@ -388,11 +456,11 @@ export type Name9 = string;
 /**
  * 8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default.
  */
-export type PositiveLength11 = number;
+export type PositiveLength19 = number;
 /**
  * 8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default.
  */
-export type PositiveLength12 = number;
+export type PositiveLength20 = number;
 /**
  * 8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default.
  */
@@ -424,11 +492,11 @@ export type Reference22 = string;
  * @minItems 2
  * @maxItems 2
  */
-export type TileSize = [PositiveLength13, PositiveLength13];
+export type TileSize = [PositiveLength21, PositiveLength21];
 /**
- * A length (2.1) greater than zero: a level's height (1.8.3), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2).
+ * A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1).
  */
-export type PositiveLength13 = number;
+export type PositiveLength21 = number;
 /**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
@@ -731,6 +799,8 @@ export interface Level {
   building: Reference;
   elevation: Length1;
   height: PositiveLength;
+  floorThickness?: PositiveLength1;
+  ceilingHeight?: PositiveLength2;
   name?: Name1;
   extensions?: Extensions1;
   extras?: Extras3;
@@ -821,7 +891,7 @@ export interface Wall {
  * 8.3: one layer of a wall assembly, in a wall type's `layers` or a wall's own. It has only the members of its table.
  */
 export interface Layer {
-  thickness: PositiveLength1;
+  thickness: PositiveLength3;
   function: LayerFunction;
   material?: Reference7;
 }
@@ -898,8 +968,8 @@ export interface Openings {
 export interface Opening {
   wall: Reference13;
   offset: NonNegativeLength;
-  width?: PositiveLength2;
-  height?: PositiveLength3;
+  width?: PositiveLength4;
+  height?: PositiveLength5;
   sill?: NonNegativeLength1;
   fill?: Reference14;
   hinge?: Hinge;
@@ -913,8 +983,8 @@ export interface Opening {
  * 7.1, 8.4: the net clear opening of what fills it, as declared. A typed property (8.2): absent, it resolves from `fill` (7.2), and an opening that resolves none has no clear opening. Replaces its type's whole: an own clear opening without an area has no declared area.
  */
 export interface ClearOpening {
-  width: PositiveLength4;
-  height: PositiveLength5;
+  width: PositiveLength6;
+  height: PositiveLength7;
   area?: Area;
 }
 /**
@@ -936,7 +1006,7 @@ export interface Rooms {
   [k: string]: Room | undefined;
 }
 /**
- * 6.5: a room — what cannot be derived about a bounded face of its level's wall graph: its name, its function, its finishes, the program item it fulfils, and the anchor that says which face it is. Every room MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). Where its anchor lies (6.3) is an invariant, not checked here.
+ * 6.5: a room — what cannot be derived about a bounded face of its level's wall graph: its name, its function, its finishes, the program item it fulfils, its floor and ceiling (chapter 15), and the anchor that says which face it is. Every room MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). Where its anchor lies (6.3) is an invariant, not checked here.
  */
 export interface Room {
   level: Reference15;
@@ -946,9 +1016,69 @@ export interface Room {
   floorFinish?: Reference17;
   ceilingFinish?: Reference18;
   brief?: Reference19;
+  floor?: Floor;
+  ceiling?: Ceiling;
   name?: Name6;
   extensions?: Extensions6;
   extras?: Extras8;
+}
+/**
+ * 6.5, 15.1: the room's floor: its offset from the level's elevation and its thickness.
+ */
+export interface Floor {
+  offset?: Length5;
+  thickness?: PositiveLength8;
+}
+/**
+ * 15.2: { "kind": "flat", "height"? } — flat at its height.
+ */
+export interface FlatCeiling {
+  /**
+   * 15.2: "flat".
+   */
+  kind: 'flat';
+  height?: PositiveLength9;
+}
+/**
+ * 15.2, 15.4: { "kind": "tray", "height"?, "border", "depth" } — flat at its height for a border inside the walls, raised by depth over the centre.
+ */
+export interface TrayCeiling {
+  /**
+   * 15.2: "tray".
+   */
+  kind: 'tray';
+  height?: PositiveLength10;
+  border: PositiveLength11;
+  depth: PositiveLength12;
+}
+/**
+ * 15.2, 15.3: { "kind": "vaulted", "height"?, "ridge", "pitch", "slopes"? } — rising to a ridge line at its height and falling away from it at its pitch.
+ */
+export interface VaultedCeiling {
+  /**
+   * 15.2: "vaulted".
+   */
+  kind: 'vaulted';
+  height?: PositiveLength13;
+  ridge: Ridge;
+  pitch: Pitch;
+  /**
+   * 15.3: "both" (a cathedral ceiling), or "left" or "right": one plane falling to that side of the ridge line, walked from its first point to its second.
+   */
+  slopes?: 'both' | 'left' | 'right';
+}
+/**
+ * 15.3: the slope away from the ridge. Always present.
+ */
+export interface Pitch {
+  /**
+   * 2.5: the rise, a positive integer. Always present.
+   */
+  rise: number;
+  /**
+   * 2.5: the run, a positive integer. Always present.
+   */
+  run: number;
 }
 /**
  * 1.4, 1.6: extension data on this room.
@@ -974,9 +1104,10 @@ export interface Slabs {
 export interface Slab {
   level: Reference20;
   boundary: Polygon1;
-  thickness: PositiveLength6;
-  offset?: Length5;
+  thickness: PositiveLength14;
+  offset?: Length6;
   material?: Reference21;
+  purpose?: SlabPurpose;
   name?: Name7;
   extensions?: Extensions7;
   extras?: Extras9;
@@ -1032,8 +1163,8 @@ export interface DoorType {
    * 8.1, 8.4: "doorType".
    */
   kind: 'doorType';
-  width?: PositiveLength7;
-  height?: PositiveLength8;
+  width?: PositiveLength15;
+  height?: PositiveLength16;
   sill?: NonNegativeLength2;
   operation?: DoorOperation;
   clearOpening?: DoorClearOpening;
@@ -1046,8 +1177,8 @@ export interface DoorType {
  * 8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width and height, never an area (FS-CORE-8.4.3). Absent by default: none declared.
  */
 export interface DoorClearOpening {
-  width: PositiveLength9;
-  height: PositiveLength10;
+  width: PositiveLength17;
+  height: PositiveLength18;
 }
 /**
  * 8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).
@@ -1084,8 +1215,8 @@ export interface WindowType {
    * 8.1, 8.4: "windowType".
    */
   kind: 'windowType';
-  width?: PositiveLength11;
-  height?: PositiveLength12;
+  width?: PositiveLength19;
+  height?: PositiveLength20;
   sill?: NonNegativeLength3;
   operation?: WindowOperation;
   clearOpening?: ClearOpening1;
@@ -1098,8 +1229,8 @@ export interface WindowType {
  * 8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width, height and, when declared, area. Absent by default: none declared.
  */
 export interface ClearOpening1 {
-  width: PositiveLength4;
-  height: PositiveLength5;
+  width: PositiveLength6;
+  height: PositiveLength7;
   area?: Area;
 }
 /**

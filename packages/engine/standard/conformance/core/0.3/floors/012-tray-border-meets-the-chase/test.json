@@ -1,0 +1,7 @@
+{
+  "description": "A 1 m border around a chase that stands 1.9 m from the room's walls: every edge still runs its way, but the chase's moved ring reaches past the outer one, so the centre is degenerate - FS-INV-703.",
+  "covers": [
+    "FS-CORE-15.4.1",
+    "FS-CORE-10.2.1"
+  ]
+}

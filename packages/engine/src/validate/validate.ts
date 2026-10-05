@@ -161,7 +161,7 @@ export function evaluate(input: string | Uint8Array | object, options: ValidateO
   const document = value as FloorspecDocument;
 
   // Tier 4: invariants.
-  const analysis = invariants(document, r, { core02: versions.includes('0.2'), ...(known && { known }) });
+  const analysis = invariants(document, r, { core02: versions.includes('0.2'), core03: versions.includes('0.3'), ...(known && { known }) });
   if (!analysis) return finish(r, { value, document });
 
   // The extensions this reader implements, after Core's invariants and only without a Core error:

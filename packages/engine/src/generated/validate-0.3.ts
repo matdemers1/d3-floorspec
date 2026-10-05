@@ -37,7 +37,7 @@ function func2(str) {
 "use strict";
 export const validate = validate20;
 export default validate20;
-const schema31 = {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://d3cloud.io/floorspec/schema/core/0.3/floorspec.bundle.json","$ref":"#/$defs/floorspec","$defs":{"asset":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.6's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Asset","description":"8.6: a file the document refers to — a texture image in this draft. An asset MUST have exactly one of `path` and `uri` (FS-CORE-8.6.1). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["sha256","mediaType"],"properties":{"path":{"title":"Path","description":"8.6: where the file is, relative to the document. A path MUST be relative, use / as its separator, and contain no empty, . or .. segment (FS-CORE-8.6.2): so it does not start with /, contains no \\, has no colon in its first segment (which would make it a URI with a scheme or a drive-letter path), and has no // and no trailing /.","type":"string","pattern":"^(?:[^/\\\\.:]|[^/\\\\.:][^/\\\\:]|\\.[^/\\\\.:]|[^/\\\\:]{3,})(?:/(?:[^/\\\\.]|[^/\\\\.][^/\\\\]|\\.[^/\\\\.]|[^/\\\\]{3,}))*$"},"uri":{"title":"URI","description":"8.6: where the file is on the web, an absolute https: URI (RFC 3986) with an authority: only the characters RFC 3986 allows, with every % starting a percent-encoding.","type":"string","format":"uri","pattern":"^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"},"sha256":{"title":"SHA-256 digest","description":"8.6: the SHA-256 digest of the file's bytes, 64 lowercase hexadecimal digits. Always present.","type":"string","pattern":"^[0-9a-f]{64}$"},"mediaType":{"title":"Media type","description":"8.6: what kind of file it is, a media type such as \"image/png\" — a type and a subtype as RFC 6838 §4.2 names them, without parameters. Always present.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}$"},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this asset.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this asset.","default":{}}},"additionalProperties":false,"oneOf":[{"title":"Packaged asset","description":"8.6.1: located by `path`, and not by `uri`.","required":["path"]},{"title":"External asset","description":"8.6.1: located by `uri`, and not by `path`.","required":["uri"]}]},"building":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.4's common members; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Building","description":"1.8: a building of the project — a house, a detached garage, an accessory dwelling. It has only the members every element may carry (1.4) and no others (FS-CORE-1.4.1).","type":"object","properties":{"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this building.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this building.","default":{}}},"additionalProperties":false},"clearance":{"$comment":"Normative (FLR-ADR-006). A clearance envelope has no constant defaults.","title":"Clearances","description":"13.5: a `clearances` object maps envelope names (^[a-z][A-Za-z0-9]*$) to clearance envelopes (FS-CORE-13.5.1). It appears only on door types, window types and extension elements. That each extent of an envelope is at least 1,280 (FS-CORE-13.2.2) is an invariant (FS-INV-505), not checked here.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/collectionName"},"additionalProperties":{"$ref":"#/$defs/clearance/$defs/envelope"},"$defs":{"envelope":{"title":"Clearance envelope","description":"13.5: a box, in the frame of the element it belongs to, that names space the element needs kept clear.","type":"object","required":["purpose","shape","min","max"],"properties":{"purpose":{"title":"Purpose","description":"13.5: why the space is kept clear. Always present.","type":"string","enum":["workingSpace","fixtureClearance","swing","access"]},"shape":{"title":"Shape","description":"13.5: the envelope's shape; \"box\" is the only shape of this draft. Always present.","const":"box"},"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the least local x, y and z. Always present."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the greatest local x, y and z. Always present."}},"additionalProperties":false}}},"defs":{"$comment":"Normative (FLR-ADR-006). The definitions here carry no `default`: a constant default belongs to a member, so it is written where the member is declared, never on a shared definition. The reference canonicalizer reads the `default` keywords of these schemas as its table of constant defaults (9.2 step 1), so a `default` appears exactly on the members whose default is constant in the spec's tables.","title":"Floorspec Core 0.3 — shared definitions","description":"Quantities, identifiers and the members every element may carry, shared by the other schemas of Floorspec Core 0.3. Every value here is a structural check (tier 3, FS-SCH-001); nothing here is an invariant (chapter 10).","$defs":{"length":{"title":"Length","description":"2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.","type":"integer","minimum":-9007199254740991,"maximum":9007199254740991},"positiveLength":{"title":"Positive length","description":"A length (2.1) greater than zero: a level's height (1.8.3), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2).","type":"integer","minimum":1,"maximum":9007199254740991},"nonNegativeLength":{"title":"Non-negative length","description":"A length (2.1) that is not negative: an opening's offset (7.1.1) and sill (7.1.2), a door or window type's sill (8.4.1).","type":"integer","minimum":0,"maximum":9007199254740991},"angle":{"title":"Angle","description":"2.4: an integer number of microdegrees (10^-6 degree), counter-clockwise positive seen from above. An angle MUST be a JSON integer (FS-CORE-2.4.1); as for a length, a number written with a fraction or an exponent is not one. Where a member is an angle, its own definition states its range.","type":"integer"},"point":{"title":"Point","description":"2.6: a JSON array of exactly two lengths, [x, y], in plan coordinates (2.3).","type":"array","items":{"$ref":"#/$defs/defs/$defs/length"},"minItems":2,"maxItems":2},"polygon":{"title":"Polygon","description":"2.6: a JSON array of at least three points, the vertices in order; the last vertex connects back to the first and is not repeated. That a polygon is simple and encloses a positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), not checked here.","type":"array","items":{"$ref":"#/$defs/defs/$defs/point"},"minItems":3},"id":{"title":"Element ID","description":"3.1: an element's ID is its member name in its collection, and MUST match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ (FS-CORE-3.1.1). That an ID is unique across all collections (FS-CORE-3.1.2) is an invariant (FS-INV-001), not checked here.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"},"reference":{"title":"Reference","description":"3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"},"extensionName":{"title":"Extension name","description":"1.6: a prefix and a name joined by an underscore — FS_ (official), EXT_ (multi-implementer) or a registered vendor prefix of 2 to 8 capitals or digits. Every extension name MUST match ^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$ (FS-CORE-1.6.1).","type":"string","pattern":"^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$"},"extensions":{"title":"Extensions","description":"1.6: an object mapping an extension name to that extension's data. The data is defined by the extension's own specification and is any JSON here. That every member name is also a member of extensionsUsed (FS-CORE-1.6.3) is an invariant (FS-INV-005), not checked here.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/extensionName"},"additionalProperties":true},"extras":{"title":"Extras","description":"1.7: an object for application-specific data that no specification defines. Its content is any JSON and is never read by derivation (FS-CORE-1.7.1).","type":"object","additionalProperties":true},"name":{"title":"Name","description":"1.4: a human-readable label of 1 to 200 characters, never read by derivation.","type":"string","minLength":1,"maxLength":200},"triple":{"title":"Triple of lengths","description":"13.2: a JSON array of exactly three lengths, [x, y, z], in local coordinates of a frame (13.1).","type":"array","items":{"$ref":"#/$defs/defs/$defs/length"},"minItems":3,"maxItems":3},"box":{"title":"Box","description":"13.2: a box in a frame (13.1): the points whose local coordinates lie between `min` and `max` on each axis. A box MUST have exactly `min` and `max`, each three lengths (FS-CORE-13.2.1). That each extent is at least 1,280 (FS-CORE-13.2.2) is an invariant (FS-INV-505), not checked here.","type":"object","required":["min","max"],"properties":{"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2: the least local x, y and z."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2: the greatest local x, y and z."}},"additionalProperties":false},"angleHalfOpen":{"title":"Angle in (−180°, 180°]","description":"1.8, 13.3: an angle (2.4) greater than −180,000,000 and at most 180,000,000 microdegrees.","type":"integer","exclusiveMinimum":-180000000,"maximum":180000000},"area":{"title":"Area","description":"2.5, 8.4, 11.1: an integer number of square base units, from 1 to 2^53 − 1 — a program item's area, a clear opening's area. Like a length, it MUST be written as a JSON integer.","type":"integer","minimum":1,"maximum":9007199254740991},"clearOpening":{"title":"Clear opening","description":"8.4: the net clear opening of a window, or of an opening (7.1), as declared — never derived (7.4). Width and height greater than zero, and an area, when present, from 1 to 2^53 − 1 (FS-CORE-8.4.3). That the area is at most width × height (FS-CORE-8.4.4), that the clear opening fits its type (FS-CORE-8.4.5) or its opening (FS-CORE-7.2.2), and that an opening's own has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.","type":"object","required":["width","height"],"properties":{"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present."},"area":{"$ref":"#/$defs/defs/$defs/area","description":"8.4: the clear area, in square base units. Absent: not declared — and never read as width × height (7.4)."}},"additionalProperties":false},"doorClearOpening":{"title":"Door clear opening","description":"8.4: a door type's net clear opening, as its maker declares it: width and height, never an area (FS-CORE-8.4.3). That it fits its type is an invariant (FS-CORE-8.4.5).","type":"object","required":["width","height"],"properties":{"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present."}},"additionalProperties":false},"collectionName":{"title":"Collection or envelope name","description":"12.5, 13.5: the name of a collection an extension adds, or of a clearance envelope: ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^[a-z][A-Za-z0-9]*$"},"httpsUri":{"title":"https URI","description":"8.6, 12.1: an absolute https: URI (RFC 3986) with an authority: only the characters RFC 3986 allows, with every % starting a percent-encoding.","type":"string","format":"uri","pattern":"^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"}}},"extension":{"$comment":"Normative (FLR-ADR-006). Extension data is defined by each extension; this file checks only what core defines about it. Nothing here has a constant default the canonicalizer omits: extension data is never changed by canonicalization (9.2).","title":"Extensions — declarations, data and elements","description":"12.1, 12.5: the declaration of an extension in extensionsUsed, top-level extension data, and the extension elements in its `collections`.","$defs":{"version":{"title":"Extension version","description":"1.6: the version of the extension the document targets (FS-CORE-1.6.7).","type":"string","pattern":"^\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?$"},"declaration":{"title":"Extension declaration","description":"12.1: a version string, or a declaration object with `version` and, optionally, `schema` (FS-CORE-12.1.1). Canonical form writes an object without `schema` as its version string.","oneOf":[{"$ref":"#/$defs/extension/$defs/version"},{"type":"object","required":["version"],"properties":{"version":{"$ref":"#/$defs/extension/$defs/version","description":"12.1: the version of the extension the document targets."},"schema":{"$ref":"#/$defs/defs/$defs/httpsUri","description":"12.1: where the extension's JSON Schema for that version is published (FS-CORE-12.1.2)."}},"additionalProperties":false}]},"topLevel":{"title":"Top-level extension data","description":"1.6, 12.5: maps an extension name to its document-level data. That every name is in extensionsUsed (FS-CORE-1.6.3) is an invariant (FS-INV-005). Data that is an object may have a `collections` member (FS-CORE-12.5.1); everything else in it is the extension's own.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/extensionName"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/data"}},"data":{"title":"Extension data","description":"12.5: one extension's document-level data: any JSON, except that an object's `collections` member holds the extension's elements.","anyOf":[{"not":{"type":"object"}},{"type":"object","properties":{"collections":{"$ref":"#/$defs/extension/$defs/collections"}}}]},"collections":{"title":"Collections","description":"12.5: maps a collection name (^[a-z][A-Za-z0-9]*$) to a collection of extension elements keyed by ID (FS-CORE-12.5.1).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/collectionName"},"additionalProperties":{"type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/element"}}},"element":{"title":"Extension element","description":"12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.","type":"object","required":["fallback"],"properties":{"fallback":{"$ref":"#/$defs/fallback","description":"12.6: what to show when the extension is not implemented. Always present."},"host":{"$ref":"#/$defs/host","description":"13.3: what the element is placed on. Absent: the element is placed only by its fallback."},"clearances":{"$ref":"#/$defs/clearance","description":"13.5: the space the element needs kept clear, in its frame. Absent: none."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"12.5: a human-readable label, 1–200 characters. Absent by default."},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 12.5: application-specific data on this element."}},"additionalProperties":true}}},"fallback":{"$comment":"Normative (FLR-ADR-006). A fallback has no constant defaults.","title":"Fallback","description":"12.6: what a reader without an extension shows for one of its elements: a box in the element's frame, and optionally a glTF model and a 2D symbol. That its references resolve, its media types (FS-CORE-12.6.1), its level (FS-CORE-13.3.5) and its extents (FS-CORE-13.2.2) are invariants, not checked here.","type":"object","required":["level","box"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to the level the element is on. Always present."},"box":{"$ref":"#/$defs/defs/$defs/box","description":"12.6, 13.2: the space the element occupies, in its frame. Always present."},"asset":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to an asset holding a glTF 2.0 model of the element. Absent by default."},"symbol":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to an asset holding a 2D plan symbol. Absent by default."}},"additionalProperties":false},"floorspec":{"$comment":"Normative (FLR-ADR-006): this hand-written schema is the source; TypeScript types are generated from it, never the reverse. The `default` keywords in these schemas are exactly the constant defaults of Floorspec Core 0.3 (1.5) — the reference canonicalizer reads them as its table of constant defaults (9.2 step 1). A member whose default is derived, and every typed property (8.2), carries no `default`; never add one for documentation.","title":"Floorspec Core 0.3 document","description":"1.1: a Floorspec document is a JSON object (FS-CORE-1.1.1) whose members are the version declaration, the project, an optional site, the element collections, the program, the extension declarations and extras, and no other member (FS-CORE-1.1.2). This schema checks structure only — tier 3 of chapter 10, reported as FS-SCH-001. The invariants of chapter 10 (references resolve, IDs are unique, the wall graph is planar, rooms, openings and hosted elements fit, the program is consistent, extensions are declared and used as their registry entries say) need a validator. Every length is an integer (2.1): a number written with a fraction or an exponent must be mapped to a non-number before this schema is applied.","type":"object","required":["floorspec","project"],"properties":{"floorspec":{"title":"Version declaration","description":"1.2: the version of Floorspec Core the document targets, as \"<major>.<minor>\". A document that targets this draft MUST declare \"0.3\" (FS-CORE-1.2.5). A reader of 0.3 applies Core 0.1's or Core 0.2's schema, at its own URL, to a document that declares \"0.1\" or \"0.2\" (FS-CORE-1.2.6); a string naming a version the reader does not implement is rejected before any schema is applied, with FS-DOC-001 (FS-CORE-1.2.2).","const":"0.3"},"project":{"$ref":"#/$defs/project","description":"1.1, 1.8: the project the document describes. Present in every document."},"site":{"$ref":"#/$defs/site","description":"1.1, 1.8: the project's site. Absent: the project has no site."},"buildings":{"title":"Buildings","description":"1.1, 1.8: the collection of buildings (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/building"},"default":{}},"levels":{"title":"Levels","description":"1.1, 1.8: the collection of levels (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/level"},"default":{}},"junctions":{"title":"Junctions","description":"1.1, 5.1: the collection of junctions (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/junction"},"default":{}},"walls":{"title":"Walls","description":"1.1, 5.2: the collection of walls (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/wall"},"default":{}},"separators":{"title":"Separators","description":"1.1, 5.2: the collection of room separators (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/separator"},"default":{}},"openings":{"title":"Openings","description":"1.1, 7.1: the collection of openings (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/opening"},"default":{}},"rooms":{"title":"Rooms","description":"1.1, 6.5: the collection of rooms (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/room"},"default":{}},"slabs":{"title":"Slabs","description":"1.1, 6.7: the collection of slabs (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/slab"},"default":{}},"types":{"title":"Types","description":"1.1, 8.1: the collection of types (1.4), keyed by element ID; each type's kind is given by its `kind` member.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/type"},"default":{}},"materials":{"title":"Materials","description":"1.1, 8.5: the collection of materials (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/material"},"default":{}},"assets":{"title":"Assets","description":"1.1, 8.6: the collection of assets (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/asset"},"default":{}},"program":{"$ref":"#/$defs/program","description":"1.1, 11.1: the program — the items the building is meant to provide and the adjacency graph between them.","default":{}},"extensionsUsed":{"title":"Extensions used","description":"1.6, 12.1: maps the name of every extension the document uses (FS-CORE-1.6.1) to its declaration: a version string, or a declaration object with the version and, optionally, the URL of the extension's schema (FS-CORE-12.1.1).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/extensionName"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/declaration"},"default":{}},"extensionsRequired":{"title":"Extensions required","description":"1.6: the extensions a reader must implement to read the document correctly, each named once (FS-CORE-1.6.1). That each is also in extensionsUsed (FS-CORE-1.6.2) is an invariant (FS-INV-004), not checked here.","type":"array","items":{"$ref":"#/$defs/defs/$defs/extensionName"},"uniqueItems":true,"default":[]},"extensions":{"$ref":"#/$defs/extension/$defs/topLevel","description":"1.6, 12.5: document-level extension data, keyed by extension name; an extension's kinds of element are in its `collections` member.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7: application-specific data for the document as a whole.","default":{}}},"additionalProperties":false},"host":{"$comment":"Normative (FLR-ADR-006). `rotation` defaults to 0 for `surface` and `free` hosts; hosts live in extension elements, which the canonical form never changes (9.2), so the default carries no `default` keyword here: the canonicalizer does not omit it.","title":"Host","description":"13.3: what an extension element is placed on. A host MUST have exactly the members of one of its three forms (FS-CORE-13.3.1). That its wall, room or level resolves (FS-CORE-3.2.1), and that it fits its host (FS-CORE-13.3.2 to 13.3.5), are invariants, not checked here.","type":"object","required":["mode"],"properties":{"mode":{"title":"Mode","description":"13.3: which of the three forms this host has.","type":"string","enum":["wallFace","surface","free"]}},"oneOf":[{"$ref":"#/$defs/host/$defs/wallFace"},{"$ref":"#/$defs/host/$defs/surface"},{"$ref":"#/$defs/host/$defs/free"}],"$defs":{"wallFace":{"title":"Wall-face host","description":"13.3: on a face of a wall.","type":"object","required":["mode","wall","side","offset","height"],"properties":{"mode":{"const":"wallFace","description":"13.3: \"wallFace\"."},"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host wall."},"side":{"title":"Side","description":"13.3: which face of the wall, seen along its direction.","type":"string","enum":["left","right"]},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the distance along the wall's location line from its start junction; not negative."},"height":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the height above the wall's base elevation; not negative."}},"additionalProperties":false},"surface":{"title":"Surface host","description":"13.3: on the floor or the ceiling of a room.","type":"object","required":["mode","room","surface","position"],"properties":{"mode":{"const":"surface","description":"13.3: \"surface\"."},"room":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host room."},"surface":{"title":"Surface","description":"13.3: the floor or the ceiling.","type":"string","enum":["floor","ceiling"]},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false},"free":{"title":"Free host","description":"13.3: standing free on a level.","type":"object","required":["mode","level","position"],"properties":{"mode":{"const":"free","description":"13.3: \"free\"."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the level."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false}}},"junction":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.1's Junction table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Junction","description":"5.1: a node of a level's wall graph — a point on a level where walls and separators start and end. Every junction MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). That no two junctions on a level share a position (FS-CORE-5.1.1) is an invariant (FS-INV-101), not checked here.","type":"object","required":["level","position"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.1: a reference to the level the junction is on. Always present."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"5.1: where the junction is, in plan. Always present."},"join":{"$ref":"#/$defs/junction/$defs/join","description":"5.1, 5.8: how the walls meeting here are cut.","default":{"kind":"mitre"}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this junction.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this junction.","default":{}}},"additionalProperties":false,"$defs":{"join":{"title":"Join override","description":"5.8: how the walls meeting at the junction are cut — the default mitre, or a butt join naming one or two walls that run through. Whether a butt join applies to its junction (FS-CORE-5.8.1 to 5.8.3) is an invariant (FS-INV-111), not checked here.","type":"object","required":["kind"],"properties":{"kind":{"title":"Join kind","description":"5.8: \"mitre\" (the default join of 5.7) or \"butt\".","type":"string","enum":["mitre","butt"]}},"oneOf":[{"title":"Mitre join","description":"5.8: { \"kind\": \"mitre\" } — the default join, as 5.7.","type":"object","required":["kind"],"properties":{"kind":{"description":"5.8: \"mitre\".","const":"mitre"}},"additionalProperties":false},{"title":"Butt join","description":"5.8: { \"kind\": \"butt\", \"through\": [W] } or { \"kind\": \"butt\", \"through\": [W1, W2] } — one or two walls run through the junction and every other edge stops against them.","type":"object","required":["kind","through"],"properties":{"kind":{"description":"5.8: \"butt\".","const":"butt"},"through":{"title":"Through walls","description":"5.8: references to the one or two walls that run through the junction.","type":"array","items":{"$ref":"#/$defs/defs/$defs/reference"},"minItems":1,"maxItems":2}},"additionalProperties":false}]}}},"layer":{"$comment":"Normative (FLR-ADR-006). A layer's members have no constant default, so this file carries no `default`; the reference canonicalizer reads the `default` keywords of these schemas as its table of constant defaults (9.2 step 1).","title":"Layer","description":"8.3: one layer of a wall assembly, in a wall type's `layers` or a wall's own. It has only the members of its table.","type":"object","required":["thickness","function"],"properties":{"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.3: the layer's thickness, a length that MUST be greater than zero (FS-CORE-8.3.1). Always present."},"function":{"title":"Layer function","description":"4.3: what the layer does. It MUST be one of the terms of 4.3's table (FS-CORE-4.3.1); the layer functions are closed in this draft. Always present.","type":"string","enum":["core","substrate","insulation","membrane","airGap","finish"]},"material":{"$ref":"#/$defs/defs/$defs/reference","description":"8.3: a reference to the material the layer is made of. Absent by default."}},"additionalProperties":false,"$defs":{"layers":{"title":"Layers","description":"8.3: an assembly from the wall's left (exterior) face to its right (interior) face. A layers array MUST contain at least one layer (FS-CORE-8.3.1).","type":"array","items":{"$ref":"#/$defs/layer"},"minItems":1}}},"level":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Level table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Level","description":"1.8: a level of a building. Every level MUST reference a building (FS-CORE-1.3.1). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["building","elevation","height"],"properties":{"building":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 1.8: a reference to the building the level is in. Always present."},"elevation":{"$ref":"#/$defs/defs/$defs/length","description":"1.8: the level's datum — the height of its finished floor above project zero, a length (2.1). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"1.8: floor-to-floor height, the default top of the level's walls (5.9). Always present, and MUST be greater than zero (FS-CORE-1.8.3)."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this level.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this level.","default":{}}},"additionalProperties":false},"material":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Material","description":"8.5: what a layer, a finish or a slab's surface is made of. It has only the members of its table (FS-CORE-1.4.1).","type":"object","properties":{"color":{"title":"Colour","description":"8.5: the material's base colour as \"#rrggbb\", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). Absent by default.","type":"string","pattern":"^#[0-9a-f]{6}$"},"texture":{"title":"Texture","description":"8.5: an image tiled across the surface; one tile covers `size` [w, h] base units. Absent by default; when present, both members are present.","type":"object","required":["asset","size"],"properties":{"asset":{"$ref":"#/$defs/defs/$defs/reference","description":"8.5: a reference to the asset holding the image."},"size":{"title":"Tile size","description":"8.5: [w, h], the size one tile covers. It MUST be two lengths greater than zero (FS-CORE-8.5.2).","type":"array","items":{"$ref":"#/$defs/defs/$defs/positiveLength"},"minItems":2,"maxItems":2}},"additionalProperties":false},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this material.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this material.","default":{}}},"additionalProperties":false},"opening":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 7.1's table (hinge, swing, extensions, extras). `width`, `height`, `sill` and `clearOpening` are typed properties (8.2) that resolve from `fill`, so they deliberately have none — an opening that states \"sill\": 0 keeps it. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Opening","description":"7.1: a hole in a wall — a door, a window or a plain cased opening — hosted on its wall and placed by distances along it. It has only the members of its table (FS-CORE-1.4.1). That its width and height resolve (FS-CORE-7.2.1), that it fits its wall (7.3), that its clear opening fits it (FS-CORE-7.2.2) and that its own clear opening has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.","type":"object","required":["wall","offset"],"properties":{"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"7.1: a reference to the host wall. Always present."},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"7.1: the distance from the wall's start junction along its location line to the opening's near edge. Always present, and MUST NOT be negative (FS-CORE-7.1.1)."},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"7.1: the opening's width along the wall, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"7.1: the opening's height, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"7.1: the height of the opening's bottom above the wall's base, which MUST NOT be negative (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill`, else 0 (7.2)."},"fill":{"$ref":"#/$defs/defs/$defs/reference","description":"7.1: a reference to a type of kind doorType or windowType that fills the opening. Absent: an empty opening."},"hinge":{"title":"Hinge","description":"7.1: for a door, the jamb its leaf hangs from — the one nearer the wall's start or its end.","type":"string","enum":["start","end"],"default":"start"},"swing":{"title":"Swing","description":"7.1: for a door, the side of the wall, seen along the wall's direction, that its leaf opens into.","type":"string","enum":["left","right"],"default":"right"},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"7.1, 8.4: the net clear opening of what fills it, as declared. A typed property (8.2): absent, it resolves from `fill` (7.2), and an opening that resolves none has no clear opening. Replaces its type's whole: an own clear opening without an area has no declared area."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this opening.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this opening.","default":{}}},"additionalProperties":false},"program":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 11.1's and 11.2's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Program","description":"11.1: the program — what the building is meant to provide (its items) and which items should, may or must not be next to each other (its adjacency graph). A program, a program item and an adjacency MUST have only the members of their tables (FS-CORE-11.1.1). That references resolve, that an adjacency relates two different items, and that adjacencies neither repeat nor contradict each other (FS-CORE-11.2.1 to 11.2.3) are invariants, not checked here.","type":"object","properties":{"items":{"title":"Program items","description":"11.1: the program items, keyed by ID. An item ID shares the document's single space of IDs (FS-CORE-3.1.3).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/program/$defs/item"},"default":{}},"adjacency":{"title":"Adjacency graph","description":"11.2: the adjacencies between items, in an order the derived values keep.","type":"array","items":{"$ref":"#/$defs/program/$defs/adjacency"},"default":[]}},"additionalProperties":false,"$defs":{"item":{"title":"Program item","description":"11.1: a space the building is meant to provide: what for, how many, how large, and on which level preferably.","type":"object","required":["function"],"properties":{"function":{"$ref":"#/$defs/room/$defs/function","description":"11.1: what the space is for: a room function (FS-CORE-11.1.2). That an extension term's extension is in extensionsUsed is an invariant (FS-INV-006). Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"11.1: what its owners call it, 1–200 characters. Absent by default."},"count":{"title":"Count","description":"11.1: how many rooms the item asks for; at least 1.","type":"integer","minimum":1,"maximum":9007199254740991,"default":1},"targetArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the net area each of its rooms is meant to have, in square base units. Absent by default."},"minArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the least net area each of its rooms may have, in square base units. Absent by default."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"11.1: a reference to the level its rooms are preferred on. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.6, 11.1: extension data on this item.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 11.1: application-specific data on this item.","default":{}}},"additionalProperties":false},"adjacency":{"title":"Adjacency","description":"11.2: an undirected relation between two program items.","type":"object","required":["a","b","kind"],"properties":{"a":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to one program item. Always present."},"b":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to the other program item. Always present."},"kind":{"title":"Kind","description":"11.2: whether rooms of a and b must, should or must not be adjacent (11.4). Always present.","type":"string","enum":["required","preferred","forbidden"]},"weight":{"title":"Weight","description":"11.2: how much the adjacency matters, from 1 to 10.","type":"integer","minimum":1,"maximum":10,"default":5}},"additionalProperties":false}}},"project":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Project table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Project","description":"1.8: the one project a document describes. It is not an element: it carries no extensions, and only the members of its table.","type":"object","required":["name"],"properties":{"name":{"title":"Project name","description":"1.8: the project's name, 1–200 characters. Always present.","type":"string","minLength":1,"maxLength":200},"description":{"title":"Project description","description":"1.8: free text, up to 2000 characters. Absent by default.","type":"string","maxLength":2000},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 1.8: application-specific data for the project.","default":{}}},"additionalProperties":false},"room":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Room","description":"6.5: a room — what cannot be derived about a bounded face of its level's wall graph: its name, its function, its finishes, the program item it fulfils, and the anchor that says which face it is. Every room MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). Where its anchor lies (6.3) is an invariant, not checked here.","type":"object","required":["level","anchor"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 6.5: a reference to the level the room is on. Always present."},"anchor":{"$ref":"#/$defs/defs/$defs/point","description":"6.3, 6.5: a point on the room's level; the face that contains it is the room's face. Always present."},"function":{"$ref":"#/$defs/room/$defs/function","description":"4.1, 6.5: what the room is for.","default":"unspecified"},"wallFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the material that finishes the walls facing this room. Absent by default."},"floorFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the floor finish's material. Absent by default."},"ceilingFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the ceiling finish's material. Absent by default."},"brief":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5, 11.3: a reference to the program item this room fulfils. That it resolves to a program item (FS-CORE-3.2.1) is an invariant (FS-INV-002), not checked here. Absent by default: the room fulfils no item."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this room.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this room.","default":{}}},"additionalProperties":false,"$defs":{"function":{"title":"Room function","description":"4.1: a room's function MUST be either one of the terms of 4.1's table or an extension term (FS-CORE-4.1.1). That an extension term's extension is in extensionsUsed (FS-CORE-4.2.1) is an invariant (FS-INV-006), not checked here.","type":"string","anyOf":[{"title":"Core room function","description":"4.1: one of the fourteen core terms.","type":"string","enum":["unspecified","sleeping","bath","kitchen","living","dining","office","laundry","utility","storage","circulation","mechanical","garage","exterior"]},{"title":"Extension term","description":"4.2: <extension name>:<term>, such as EXT_wellness:sauna, where the extension name matches 1.6's pattern and the term matches ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+:[a-z][A-Za-z0-9]*$"}]}}},"separator":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Separator table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Separator","description":"5.2: a room separator — a boundary of zero thickness that divides rooms without building anything, an edge of its level's wall graph. Every separator MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["level","start","end"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.2: a reference to the level the separator is on. Always present."},"start":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction at one end. Always present."},"end":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction at the other end. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this separator.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this separator.","default":{}}},"additionalProperties":false},"site":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Site table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Site","description":"1.8: the project's site. A project with no site yet omits it. It is not an element: it carries no name and no extensions.","type":"object","properties":{"trueNorth":{"title":"True north","description":"1.8: the angle (2.4) from project north (+Y) to true north, counter-clockwise positive, in microdegrees. It MUST be greater than −180,000,000 and at most 180,000,000 (FS-CORE-1.8.1).","type":"integer","exclusiveMinimum":-180000000,"maximum":180000000,"default":0},"location":{"title":"Location","description":"1.8: the site's WGS 84 position in microdegrees. Absent by default; when present, both members are present.","type":"object","required":["latitude","longitude"],"properties":{"latitude":{"title":"Latitude","description":"1.8: an angle (2.4) in [−90,000,000, 90,000,000] microdegrees (FS-CORE-1.8.2).","type":"integer","minimum":-90000000,"maximum":90000000},"longitude":{"title":"Longitude","description":"1.8: an angle (2.4) in (−180,000,000, 180,000,000] microdegrees (FS-CORE-1.8.2).","type":"integer","exclusiveMinimum":-180000000,"maximum":180000000}},"additionalProperties":false},"boundary":{"$ref":"#/$defs/defs/$defs/polygon","description":"1.8: the lot line, a polygon (2.6) in project coordinates. Absent by default."},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 1.8: application-specific data for the site.","default":{}}},"additionalProperties":false},"slab":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.7's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Slab","description":"6.7: an authored floor or deck that is not derived from a room — a patio, a porch deck, a landing. Every slab MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["level","boundary","thickness"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 6.7: a reference to the level the slab belongs to. Always present."},"boundary":{"$ref":"#/$defs/defs/$defs/polygon","description":"6.7: the slab's outline in plan, a polygon (2.6). Always present. That it is simple with positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), not checked here."},"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"6.7: the slab's thickness. Always present, and MUST be greater than zero (FS-CORE-6.7.1)."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"6.7: the height of the slab's top above its level's elevation.","default":0},"material":{"$ref":"#/$defs/defs/$defs/reference","description":"6.7: a reference to the material of the slab's top surface. Absent by default."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this slab.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this slab.","default":{}}},"additionalProperties":false},"type":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.3's and 8.4's tables (clearances, extensions, extras). A type's `layers`, `width`, `height`, `sill` and `clearOpening` have no default, and neither has `operation`, whose absence means that none is declared. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Type","description":"8.1: a reusable definition that elements refer to instead of repeating — a wall assembly, a door or a window. A type MUST have a `kind` from 8.1's table (FS-CORE-8.1.1), and has only the members of that kind's table (FS-CORE-1.4.1).","type":"object","required":["kind"],"properties":{"kind":{"title":"Kind","description":"8.1: which kind of type this is.","type":"string","enum":["wallType","doorType","windowType"]}},"oneOf":[{"$ref":"#/$defs/type/$defs/wallType"},{"$ref":"#/$defs/type/$defs/doorType"},{"$ref":"#/$defs/type/$defs/windowType"}],"$defs":{"wallType":{"title":"Wall type","description":"8.3: a wall assembly, used by a wall's `type`.","type":"object","required":["kind","layers"],"properties":{"kind":{"description":"8.1, 8.3: \"wallType\".","const":"wallType"},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false},"doorType":{"title":"Door type","description":"8.4: a door, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"doorType\".","const":"doorType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Door operation","description":"8.4: how the door's leaves move — one of 8.4's door operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["swing","doubleSwing","doubleActing","bypassSlide","pocket","surfaceSlide","bifold","overhead","cased"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/doorClearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width and height, never an area (FS-CORE-8.4.3). Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false},"windowType":{"title":"Window type","description":"8.4: a window, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"windowType\".","const":"windowType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Window operation","description":"8.4: how the window's sashes move — one of 8.4's window operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["fixed","casement","awning","hopper","singleHung","doubleHung","horizontalSlider","tiltTurn","pivot"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width, height and, when declared, area. Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false}}},"wall":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Wall table and 5.9 (justification, base, base.offset, top.offset, extensions, extras). `layers` (a typed property, 8.2), `top` (derived from the level's height, 5.9) and `base.level` (derived: the wall's own level) deliberately have none. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Wall","description":"5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.","type":"object","required":["level","start","end"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.2: a reference to the level the wall is on. Always present."},"start":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction where the wall's location line starts. Always present."},"end":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction where the location line ends. Always present."},"type":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2, 8.3: a reference to the wall's type, a type of kind wallType. Absent by default."},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"5.2, 8.3: the wall's own layers, which replace its type's entirely. A typed property (8.2): absent, it resolves from `type`; it has no constant default."},"justification":{"title":"Justification","description":"5.2, 5.4: where the location line sits in the wall's thickness.","type":"string","enum":["center","exteriorFace","interiorFace","coreFace"],"default":"center"},"base":{"title":"Base","description":"5.2, 5.9: the wall's bottom — `level` (absent: the wall's own level, a derived default) plus `offset`.","type":"object","properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"5.9: a reference to the level whose elevation the base is measured from. Absent: the wall's own level (a derived default)."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: added to the base level's elevation.","default":0}},"additionalProperties":false,"default":{}},"top":{"title":"Top","description":"5.2, 5.9: the wall's top — level-constrained, { \"level\", \"offset\"? }, or unconnected, { \"height\" }. `top` MUST have either `level` or `height`, and MUST NOT have both; `offset` MUST NOT appear with `height` (FS-CORE-5.9.1). Absent, the top follows the wall's own level's height: a derived default, so it has no `default` here.","type":"object","oneOf":[{"title":"Level-constrained top","description":"5.9: the top is level `level`'s elevation plus `offset`.","type":"object","required":["level"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"5.9: a reference to the level whose elevation the top is measured from."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: added to the top level's elevation.","default":0}},"additionalProperties":false},{"title":"Unconnected top","description":"5.9: the top is the base elevation plus `height`.","type":"object","required":["height"],"properties":{"height":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: the wall's height above its base elevation, a length (2.1). That the top ends above the base (FS-CORE-5.9.2) is an invariant (FS-INV-112), not checked here."}},"additionalProperties":false}]},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this wall.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this wall.","default":{}}},"additionalProperties":false}}};
+const schema31 = {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://d3cloud.io/floorspec/schema/core/0.3/floorspec.bundle.json","$ref":"#/$defs/floorspec","$defs":{"asset":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.6's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Asset","description":"8.6: a file the document refers to — a texture image in this draft. An asset MUST have exactly one of `path` and `uri` (FS-CORE-8.6.1). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["sha256","mediaType"],"properties":{"path":{"title":"Path","description":"8.6: where the file is, relative to the document. A path MUST be relative, use / as its separator, and contain no empty, . or .. segment (FS-CORE-8.6.2): so it does not start with /, contains no \\, has no colon in its first segment (which would make it a URI with a scheme or a drive-letter path), and has no // and no trailing /.","type":"string","pattern":"^(?:[^/\\\\.:]|[^/\\\\.:][^/\\\\:]|\\.[^/\\\\.:]|[^/\\\\:]{3,})(?:/(?:[^/\\\\.]|[^/\\\\.][^/\\\\]|\\.[^/\\\\.]|[^/\\\\]{3,}))*$"},"uri":{"title":"URI","description":"8.6: where the file is on the web, an absolute https: URI (RFC 3986) with an authority: only the characters RFC 3986 allows, with every % starting a percent-encoding.","type":"string","format":"uri","pattern":"^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"},"sha256":{"title":"SHA-256 digest","description":"8.6: the SHA-256 digest of the file's bytes, 64 lowercase hexadecimal digits. Always present.","type":"string","pattern":"^[0-9a-f]{64}$"},"mediaType":{"title":"Media type","description":"8.6: what kind of file it is, a media type such as \"image/png\" — a type and a subtype as RFC 6838 §4.2 names them, without parameters. Always present.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}$"},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this asset.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this asset.","default":{}}},"additionalProperties":false,"oneOf":[{"title":"Packaged asset","description":"8.6.1: located by `path`, and not by `uri`.","required":["path"]},{"title":"External asset","description":"8.6.1: located by `uri`, and not by `path`.","required":["uri"]}]},"building":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.4's common members; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Building","description":"1.8: a building of the project — a house, a detached garage, an accessory dwelling. It has only the members every element may carry (1.4) and no others (FS-CORE-1.4.1).","type":"object","properties":{"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this building.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this building.","default":{}}},"additionalProperties":false},"clearance":{"$comment":"Normative (FLR-ADR-006). A clearance envelope has no constant defaults.","title":"Clearances","description":"13.5: a `clearances` object maps envelope names (^[a-z][A-Za-z0-9]*$) to clearance envelopes (FS-CORE-13.5.1). It appears only on door types, window types and extension elements. That each extent of an envelope is at least 1,280 (FS-CORE-13.2.2) is an invariant (FS-INV-505), not checked here.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/collectionName"},"additionalProperties":{"$ref":"#/$defs/clearance/$defs/envelope"},"$defs":{"envelope":{"title":"Clearance envelope","description":"13.5: a box, in the frame of the element it belongs to, that names space the element needs kept clear.","type":"object","required":["purpose","shape","min","max"],"properties":{"purpose":{"title":"Purpose","description":"13.5: why the space is kept clear. Always present.","type":"string","enum":["workingSpace","fixtureClearance","swing","access"]},"shape":{"title":"Shape","description":"13.5: the envelope's shape; \"box\" is the only shape of this draft. Always present.","const":"box"},"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the least local x, y and z. Always present."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the greatest local x, y and z. Always present."}},"additionalProperties":false}}},"defs":{"$comment":"Normative (FLR-ADR-006). The definitions here carry no `default`: a constant default belongs to a member, so it is written where the member is declared, never on a shared definition. The reference canonicalizer reads the `default` keywords of these schemas as its table of constant defaults (9.2 step 1), so a `default` appears exactly on the members whose default is constant in the spec's tables.","title":"Floorspec Core 0.3 — shared definitions","description":"Quantities, identifiers and the members every element may carry, shared by the other schemas of Floorspec Core 0.3. Every value here is a structural check (tier 3, FS-SCH-001); nothing here is an invariant (chapter 10).","$defs":{"length":{"title":"Length","description":"2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.","type":"integer","minimum":-9007199254740991,"maximum":9007199254740991},"positiveLength":{"title":"Positive length","description":"A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1).","type":"integer","minimum":1,"maximum":9007199254740991},"nonNegativeLength":{"title":"Non-negative length","description":"A length (2.1) that is not negative: an opening's offset (7.1.1) and sill (7.1.2), a door or window type's sill (8.4.1).","type":"integer","minimum":0,"maximum":9007199254740991},"angle":{"title":"Angle","description":"2.4: an integer number of microdegrees (10^-6 degree), counter-clockwise positive seen from above. An angle MUST be a JSON integer (FS-CORE-2.4.1); as for a length, a number written with a fraction or an exponent is not one. Where a member is an angle, its own definition states its range.","type":"integer"},"point":{"title":"Point","description":"2.6: a JSON array of exactly two lengths, [x, y], in plan coordinates (2.3).","type":"array","items":{"$ref":"#/$defs/defs/$defs/length"},"minItems":2,"maxItems":2},"polygon":{"title":"Polygon","description":"2.6: a JSON array of at least three points, the vertices in order; the last vertex connects back to the first and is not repeated. That a polygon is simple and encloses a positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), not checked here.","type":"array","items":{"$ref":"#/$defs/defs/$defs/point"},"minItems":3},"id":{"title":"Element ID","description":"3.1: an element's ID is its member name in its collection, and MUST match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ (FS-CORE-3.1.1). That an ID is unique across all collections (FS-CORE-3.1.2) is an invariant (FS-INV-001), not checked here.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"},"reference":{"title":"Reference","description":"3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"},"extensionName":{"title":"Extension name","description":"1.6: a prefix and a name joined by an underscore — FS_ (official), EXT_ (multi-implementer) or a registered vendor prefix of 2 to 8 capitals or digits. Every extension name MUST match ^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$ (FS-CORE-1.6.1).","type":"string","pattern":"^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$"},"extensions":{"title":"Extensions","description":"1.6: an object mapping an extension name to that extension's data. The data is defined by the extension's own specification and is any JSON here. That every member name is also a member of extensionsUsed (FS-CORE-1.6.3) is an invariant (FS-INV-005), not checked here.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/extensionName"},"additionalProperties":true},"extras":{"title":"Extras","description":"1.7: an object for application-specific data that no specification defines. Its content is any JSON and is never read by derivation (FS-CORE-1.7.1).","type":"object","additionalProperties":true},"name":{"title":"Name","description":"1.4: a human-readable label of 1 to 200 characters, never read by derivation.","type":"string","minLength":1,"maxLength":200},"triple":{"title":"Triple of lengths","description":"13.2: a JSON array of exactly three lengths, [x, y, z], in local coordinates of a frame (13.1).","type":"array","items":{"$ref":"#/$defs/defs/$defs/length"},"minItems":3,"maxItems":3},"box":{"title":"Box","description":"13.2: a box in a frame (13.1): the points whose local coordinates lie between `min` and `max` on each axis. A box MUST have exactly `min` and `max`, each three lengths (FS-CORE-13.2.1). That each extent is at least 1,280 (FS-CORE-13.2.2) is an invariant (FS-INV-505), not checked here.","type":"object","required":["min","max"],"properties":{"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2: the least local x, y and z."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2: the greatest local x, y and z."}},"additionalProperties":false},"angleHalfOpen":{"title":"Angle in (−180°, 180°]","description":"1.8, 13.3: an angle (2.4) greater than −180,000,000 and at most 180,000,000 microdegrees.","type":"integer","exclusiveMinimum":-180000000,"maximum":180000000},"area":{"title":"Area","description":"2.5, 8.4, 11.1: an integer number of square base units, from 1 to 2^53 − 1 — a program item's area, a clear opening's area. Like a length, it MUST be written as a JSON integer.","type":"integer","minimum":1,"maximum":9007199254740991},"pitch":{"title":"Pitch","description":"2.5, 15.3: a slope as a pair of positive integers { \"rise\": r, \"run\": n } — r up for every n across. Both MUST be integers from 1 to 2^53 − 1 (FS-CORE-15.2.1).","type":"object","required":["rise","run"],"properties":{"rise":{"description":"2.5: the rise, a positive integer. Always present.","type":"integer","minimum":1,"maximum":9007199254740991},"run":{"description":"2.5: the run, a positive integer. Always present.","type":"integer","minimum":1,"maximum":9007199254740991}},"additionalProperties":false},"clearOpening":{"title":"Clear opening","description":"8.4: the net clear opening of a window, or of an opening (7.1), as declared — never derived (7.4). Width and height greater than zero, and an area, when present, from 1 to 2^53 − 1 (FS-CORE-8.4.3). That the area is at most width × height (FS-CORE-8.4.4), that the clear opening fits its type (FS-CORE-8.4.5) or its opening (FS-CORE-7.2.2), and that an opening's own has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.","type":"object","required":["width","height"],"properties":{"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present."},"area":{"$ref":"#/$defs/defs/$defs/area","description":"8.4: the clear area, in square base units. Absent: not declared — and never read as width × height (7.4)."}},"additionalProperties":false},"doorClearOpening":{"title":"Door clear opening","description":"8.4: a door type's net clear opening, as its maker declares it: width and height, never an area (FS-CORE-8.4.3). That it fits its type is an invariant (FS-CORE-8.4.5).","type":"object","required":["width","height"],"properties":{"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present."}},"additionalProperties":false},"collectionName":{"title":"Collection or envelope name","description":"12.5, 13.5: the name of a collection an extension adds, or of a clearance envelope: ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^[a-z][A-Za-z0-9]*$"},"httpsUri":{"title":"https URI","description":"8.6, 12.1: an absolute https: URI (RFC 3986) with an authority: only the characters RFC 3986 allows, with every % starting a percent-encoding.","type":"string","format":"uri","pattern":"^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"}}},"extension":{"$comment":"Normative (FLR-ADR-006). Extension data is defined by each extension; this file checks only what core defines about it. Nothing here has a constant default the canonicalizer omits: extension data is never changed by canonicalization (9.2).","title":"Extensions — declarations, data and elements","description":"12.1, 12.5: the declaration of an extension in extensionsUsed, top-level extension data, and the extension elements in its `collections`.","$defs":{"version":{"title":"Extension version","description":"1.6: the version of the extension the document targets (FS-CORE-1.6.7).","type":"string","pattern":"^\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?$"},"declaration":{"title":"Extension declaration","description":"12.1: a version string, or a declaration object with `version` and, optionally, `schema` (FS-CORE-12.1.1). Canonical form writes an object without `schema` as its version string.","oneOf":[{"$ref":"#/$defs/extension/$defs/version"},{"type":"object","required":["version"],"properties":{"version":{"$ref":"#/$defs/extension/$defs/version","description":"12.1: the version of the extension the document targets."},"schema":{"$ref":"#/$defs/defs/$defs/httpsUri","description":"12.1: where the extension's JSON Schema for that version is published (FS-CORE-12.1.2)."}},"additionalProperties":false}]},"topLevel":{"title":"Top-level extension data","description":"1.6, 12.5: maps an extension name to its document-level data. That every name is in extensionsUsed (FS-CORE-1.6.3) is an invariant (FS-INV-005). Data that is an object may have a `collections` member (FS-CORE-12.5.1); everything else in it is the extension's own.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/extensionName"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/data"}},"data":{"title":"Extension data","description":"12.5: one extension's document-level data: any JSON, except that an object's `collections` member holds the extension's elements.","anyOf":[{"not":{"type":"object"}},{"type":"object","properties":{"collections":{"$ref":"#/$defs/extension/$defs/collections"}}}]},"collections":{"title":"Collections","description":"12.5: maps a collection name (^[a-z][A-Za-z0-9]*$) to a collection of extension elements keyed by ID (FS-CORE-12.5.1).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/collectionName"},"additionalProperties":{"type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/element"}}},"element":{"title":"Extension element","description":"12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.","type":"object","required":["fallback"],"properties":{"fallback":{"$ref":"#/$defs/fallback","description":"12.6: what to show when the extension is not implemented. Always present."},"host":{"$ref":"#/$defs/host","description":"13.3: what the element is placed on. Absent: the element is placed only by its fallback."},"clearances":{"$ref":"#/$defs/clearance","description":"13.5: the space the element needs kept clear, in its frame. Absent: none."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"12.5: a human-readable label, 1–200 characters. Absent by default."},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 12.5: application-specific data on this element."}},"additionalProperties":true}}},"fallback":{"$comment":"Normative (FLR-ADR-006). A fallback has no constant defaults.","title":"Fallback","description":"12.6: what a reader without an extension shows for one of its elements: a box in the element's frame, and optionally a glTF model and a 2D symbol. That its references resolve, its media types (FS-CORE-12.6.1), its level (FS-CORE-13.3.5) and its extents (FS-CORE-13.2.2) are invariants, not checked here.","type":"object","required":["level","box"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to the level the element is on. Always present."},"box":{"$ref":"#/$defs/defs/$defs/box","description":"12.6, 13.2: the space the element occupies, in its frame. Always present."},"asset":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to an asset holding a glTF 2.0 model of the element. Absent by default."},"symbol":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to an asset holding a 2D plan symbol. Absent by default."}},"additionalProperties":false},"floorspec":{"$comment":"Normative (FLR-ADR-006): this hand-written schema is the source; TypeScript types are generated from it, never the reverse. The `default` keywords in these schemas are exactly the constant defaults of Floorspec Core 0.3 (1.5) — the reference canonicalizer reads them as its table of constant defaults (9.2 step 1). A member whose default is derived, and every typed property (8.2), carries no `default`; never add one for documentation.","title":"Floorspec Core 0.3 document","description":"1.1: a Floorspec document is a JSON object (FS-CORE-1.1.1) whose members are the version declaration, the project, an optional site, the element collections, the program, the extension declarations and extras, and no other member (FS-CORE-1.1.2). This schema checks structure only — tier 3 of chapter 10, reported as FS-SCH-001. The invariants of chapter 10 (references resolve, IDs are unique, the wall graph is planar, rooms, openings and hosted elements fit, the program is consistent, extensions are declared and used as their registry entries say) need a validator. Every length is an integer (2.1): a number written with a fraction or an exponent must be mapped to a non-number before this schema is applied.","type":"object","required":["floorspec","project"],"properties":{"floorspec":{"title":"Version declaration","description":"1.2: the version of Floorspec Core the document targets, as \"<major>.<minor>\". A document that targets this draft MUST declare \"0.3\" (FS-CORE-1.2.5). A reader of 0.3 applies Core 0.1's or Core 0.2's schema, at its own URL, to a document that declares \"0.1\" or \"0.2\" (FS-CORE-1.2.6); a string naming a version the reader does not implement is rejected before any schema is applied, with FS-DOC-001 (FS-CORE-1.2.2).","const":"0.3"},"project":{"$ref":"#/$defs/project","description":"1.1, 1.8: the project the document describes. Present in every document."},"site":{"$ref":"#/$defs/site","description":"1.1, 1.8: the project's site. Absent: the project has no site."},"buildings":{"title":"Buildings","description":"1.1, 1.8: the collection of buildings (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/building"},"default":{}},"levels":{"title":"Levels","description":"1.1, 1.8: the collection of levels (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/level"},"default":{}},"junctions":{"title":"Junctions","description":"1.1, 5.1: the collection of junctions (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/junction"},"default":{}},"walls":{"title":"Walls","description":"1.1, 5.2: the collection of walls (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/wall"},"default":{}},"separators":{"title":"Separators","description":"1.1, 5.2: the collection of room separators (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/separator"},"default":{}},"openings":{"title":"Openings","description":"1.1, 7.1: the collection of openings (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/opening"},"default":{}},"rooms":{"title":"Rooms","description":"1.1, 6.5: the collection of rooms (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/room"},"default":{}},"slabs":{"title":"Slabs","description":"1.1, 6.7: the collection of slabs (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/slab"},"default":{}},"types":{"title":"Types","description":"1.1, 8.1: the collection of types (1.4), keyed by element ID; each type's kind is given by its `kind` member.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/type"},"default":{}},"materials":{"title":"Materials","description":"1.1, 8.5: the collection of materials (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/material"},"default":{}},"assets":{"title":"Assets","description":"1.1, 8.6: the collection of assets (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/asset"},"default":{}},"program":{"$ref":"#/$defs/program","description":"1.1, 11.1: the program — the items the building is meant to provide and the adjacency graph between them.","default":{}},"extensionsUsed":{"title":"Extensions used","description":"1.6, 12.1: maps the name of every extension the document uses (FS-CORE-1.6.1) to its declaration: a version string, or a declaration object with the version and, optionally, the URL of the extension's schema (FS-CORE-12.1.1).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/extensionName"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/declaration"},"default":{}},"extensionsRequired":{"title":"Extensions required","description":"1.6: the extensions a reader must implement to read the document correctly, each named once (FS-CORE-1.6.1). That each is also in extensionsUsed (FS-CORE-1.6.2) is an invariant (FS-INV-004), not checked here.","type":"array","items":{"$ref":"#/$defs/defs/$defs/extensionName"},"uniqueItems":true,"default":[]},"extensions":{"$ref":"#/$defs/extension/$defs/topLevel","description":"1.6, 12.5: document-level extension data, keyed by extension name; an extension's kinds of element are in its `collections` member.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7: application-specific data for the document as a whole.","default":{}}},"additionalProperties":false},"host":{"$comment":"Normative (FLR-ADR-006). `rotation` defaults to 0 for `surface` and `free` hosts; hosts live in extension elements, which the canonical form never changes (9.2), so the default carries no `default` keyword here: the canonicalizer does not omit it.","title":"Host","description":"13.3: what an extension element is placed on. A host MUST have exactly the members of one of its three forms (FS-CORE-13.3.1). That its wall, room or level resolves (FS-CORE-3.2.1), and that it fits its host (FS-CORE-13.3.2 to 13.3.5), are invariants, not checked here.","type":"object","required":["mode"],"properties":{"mode":{"title":"Mode","description":"13.3: which of the three forms this host has.","type":"string","enum":["wallFace","surface","free"]}},"oneOf":[{"$ref":"#/$defs/host/$defs/wallFace"},{"$ref":"#/$defs/host/$defs/surface"},{"$ref":"#/$defs/host/$defs/free"}],"$defs":{"wallFace":{"title":"Wall-face host","description":"13.3: on a face of a wall.","type":"object","required":["mode","wall","side","offset","height"],"properties":{"mode":{"const":"wallFace","description":"13.3: \"wallFace\"."},"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host wall."},"side":{"title":"Side","description":"13.3: which face of the wall, seen along its direction.","type":"string","enum":["left","right"]},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the distance along the wall's location line from its start junction; not negative."},"height":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the height above the wall's base elevation; not negative."}},"additionalProperties":false},"surface":{"title":"Surface host","description":"13.3: on the floor or the ceiling of a room.","type":"object","required":["mode","room","surface","position"],"properties":{"mode":{"const":"surface","description":"13.3: \"surface\"."},"room":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host room."},"surface":{"title":"Surface","description":"13.3: the floor or the ceiling.","type":"string","enum":["floor","ceiling"]},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false},"free":{"title":"Free host","description":"13.3: standing free on a level.","type":"object","required":["mode","level","position"],"properties":{"mode":{"const":"free","description":"13.3: \"free\"."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the level."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false}}},"junction":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.1's Junction table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Junction","description":"5.1: a node of a level's wall graph — a point on a level where walls and separators start and end. Every junction MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). That no two junctions on a level share a position (FS-CORE-5.1.1) is an invariant (FS-INV-101), not checked here.","type":"object","required":["level","position"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.1: a reference to the level the junction is on. Always present."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"5.1: where the junction is, in plan. Always present."},"join":{"$ref":"#/$defs/junction/$defs/join","description":"5.1, 5.8: how the walls meeting here are cut.","default":{"kind":"mitre"}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this junction.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this junction.","default":{}}},"additionalProperties":false,"$defs":{"join":{"title":"Join override","description":"5.8: how the walls meeting at the junction are cut — the default mitre, or a butt join naming one or two walls that run through. Whether a butt join applies to its junction (FS-CORE-5.8.1 to 5.8.3) is an invariant (FS-INV-111), not checked here.","type":"object","required":["kind"],"properties":{"kind":{"title":"Join kind","description":"5.8: \"mitre\" (the default join of 5.7) or \"butt\".","type":"string","enum":["mitre","butt"]}},"oneOf":[{"title":"Mitre join","description":"5.8: { \"kind\": \"mitre\" } — the default join, as 5.7.","type":"object","required":["kind"],"properties":{"kind":{"description":"5.8: \"mitre\".","const":"mitre"}},"additionalProperties":false},{"title":"Butt join","description":"5.8: { \"kind\": \"butt\", \"through\": [W] } or { \"kind\": \"butt\", \"through\": [W1, W2] } — one or two walls run through the junction and every other edge stops against them.","type":"object","required":["kind","through"],"properties":{"kind":{"description":"5.8: \"butt\".","const":"butt"},"through":{"title":"Through walls","description":"5.8: references to the one or two walls that run through the junction.","type":"array","items":{"$ref":"#/$defs/defs/$defs/reference"},"minItems":1,"maxItems":2}},"additionalProperties":false}]}}},"layer":{"$comment":"Normative (FLR-ADR-006). A layer's members have no constant default, so this file carries no `default`; the reference canonicalizer reads the `default` keywords of these schemas as its table of constant defaults (9.2 step 1).","title":"Layer","description":"8.3: one layer of a wall assembly, in a wall type's `layers` or a wall's own. It has only the members of its table.","type":"object","required":["thickness","function"],"properties":{"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.3: the layer's thickness, a length that MUST be greater than zero (FS-CORE-8.3.1). Always present."},"function":{"title":"Layer function","description":"4.3: what the layer does. It MUST be one of the terms of 4.3's table (FS-CORE-4.3.1); the layer functions are closed in this draft. Always present.","type":"string","enum":["core","substrate","insulation","membrane","airGap","finish"]},"material":{"$ref":"#/$defs/defs/$defs/reference","description":"8.3: a reference to the material the layer is made of. Absent by default."}},"additionalProperties":false,"$defs":{"layers":{"title":"Layers","description":"8.3: an assembly from the wall's left (exterior) face to its right (interior) face. A layers array MUST contain at least one layer (FS-CORE-8.3.1).","type":"array","items":{"$ref":"#/$defs/layer"},"minItems":1}}},"level":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Level table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Level","description":"1.8: a level of a building. Every level MUST reference a building (FS-CORE-1.3.1). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["building","elevation","height"],"properties":{"building":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 1.8: a reference to the building the level is in. Always present."},"elevation":{"$ref":"#/$defs/defs/$defs/length","description":"1.8: the level's datum — the height of its finished floor above project zero, a length (2.1). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"1.8: floor-to-floor height, the default top of the level's walls (5.9). Always present, and MUST be greater than zero (FS-CORE-1.8.3)."},"floorThickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"1.8, 15.1: the thickness of the floors of the level's rooms, unless a room's floor states its own; greater than zero when present (FS-CORE-1.8.4). Absent by default: not declared."},"ceilingHeight":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"1.8, 15.2: the height of the ceilings of the level's rooms above its elevation, unless a room's ceiling states its own; greater than zero when present (FS-CORE-1.8.4). Its default is derived — the level's height — so it carries no `default` here."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this level.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this level.","default":{}}},"additionalProperties":false},"material":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Material","description":"8.5: what a layer, a finish or a slab's surface is made of. It has only the members of its table (FS-CORE-1.4.1).","type":"object","properties":{"color":{"title":"Colour","description":"8.5: the material's base colour as \"#rrggbb\", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). Absent by default.","type":"string","pattern":"^#[0-9a-f]{6}$"},"texture":{"title":"Texture","description":"8.5: an image tiled across the surface; one tile covers `size` [w, h] base units. Absent by default; when present, both members are present.","type":"object","required":["asset","size"],"properties":{"asset":{"$ref":"#/$defs/defs/$defs/reference","description":"8.5: a reference to the asset holding the image."},"size":{"title":"Tile size","description":"8.5: [w, h], the size one tile covers. It MUST be two lengths greater than zero (FS-CORE-8.5.2).","type":"array","items":{"$ref":"#/$defs/defs/$defs/positiveLength"},"minItems":2,"maxItems":2}},"additionalProperties":false},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this material.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this material.","default":{}}},"additionalProperties":false},"opening":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 7.1's table (hinge, swing, extensions, extras). `width`, `height`, `sill` and `clearOpening` are typed properties (8.2) that resolve from `fill`, so they deliberately have none — an opening that states \"sill\": 0 keeps it. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Opening","description":"7.1: a hole in a wall — a door, a window or a plain cased opening — hosted on its wall and placed by distances along it. It has only the members of its table (FS-CORE-1.4.1). That its width and height resolve (FS-CORE-7.2.1), that it fits its wall (7.3), that its clear opening fits it (FS-CORE-7.2.2) and that its own clear opening has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.","type":"object","required":["wall","offset"],"properties":{"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"7.1: a reference to the host wall. Always present."},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"7.1: the distance from the wall's start junction along its location line to the opening's near edge. Always present, and MUST NOT be negative (FS-CORE-7.1.1)."},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"7.1: the opening's width along the wall, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"7.1: the opening's height, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"7.1: the height of the opening's bottom above the wall's base, which MUST NOT be negative (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill`, else 0 (7.2)."},"fill":{"$ref":"#/$defs/defs/$defs/reference","description":"7.1: a reference to a type of kind doorType or windowType that fills the opening. Absent: an empty opening."},"hinge":{"title":"Hinge","description":"7.1: for a door, the jamb its leaf hangs from — the one nearer the wall's start or its end.","type":"string","enum":["start","end"],"default":"start"},"swing":{"title":"Swing","description":"7.1: for a door, the side of the wall, seen along the wall's direction, that its leaf opens into.","type":"string","enum":["left","right"],"default":"right"},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"7.1, 8.4: the net clear opening of what fills it, as declared. A typed property (8.2): absent, it resolves from `fill` (7.2), and an opening that resolves none has no clear opening. Replaces its type's whole: an own clear opening without an area has no declared area."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this opening.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this opening.","default":{}}},"additionalProperties":false},"program":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 11.1's and 11.2's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Program","description":"11.1: the program — what the building is meant to provide (its items) and which items should, may or must not be next to each other (its adjacency graph). A program, a program item and an adjacency MUST have only the members of their tables (FS-CORE-11.1.1). That references resolve, that an adjacency relates two different items, and that adjacencies neither repeat nor contradict each other (FS-CORE-11.2.1 to 11.2.3) are invariants, not checked here.","type":"object","properties":{"items":{"title":"Program items","description":"11.1: the program items, keyed by ID. An item ID shares the document's single space of IDs (FS-CORE-3.1.3).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/program/$defs/item"},"default":{}},"adjacency":{"title":"Adjacency graph","description":"11.2: the adjacencies between items, in an order the derived values keep.","type":"array","items":{"$ref":"#/$defs/program/$defs/adjacency"},"default":[]}},"additionalProperties":false,"$defs":{"item":{"title":"Program item","description":"11.1: a space the building is meant to provide: what for, how many, how large, and on which level preferably.","type":"object","required":["function"],"properties":{"function":{"$ref":"#/$defs/room/$defs/function","description":"11.1: what the space is for: a room function (FS-CORE-11.1.2). That an extension term's extension is in extensionsUsed is an invariant (FS-INV-006). Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"11.1: what its owners call it, 1–200 characters. Absent by default."},"count":{"title":"Count","description":"11.1: how many rooms the item asks for; at least 1.","type":"integer","minimum":1,"maximum":9007199254740991,"default":1},"targetArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the net area each of its rooms is meant to have, in square base units. Absent by default."},"minArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the least net area each of its rooms may have, in square base units. Absent by default."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"11.1: a reference to the level its rooms are preferred on. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.6, 11.1: extension data on this item.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 11.1: application-specific data on this item.","default":{}}},"additionalProperties":false},"adjacency":{"title":"Adjacency","description":"11.2: an undirected relation between two program items.","type":"object","required":["a","b","kind"],"properties":{"a":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to one program item. Always present."},"b":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to the other program item. Always present."},"kind":{"title":"Kind","description":"11.2: whether rooms of a and b must, should or must not be adjacent (11.4). Always present.","type":"string","enum":["required","preferred","forbidden"]},"weight":{"title":"Weight","description":"11.2: how much the adjacency matters, from 1 to 10.","type":"integer","minimum":1,"maximum":10,"default":5}},"additionalProperties":false}}},"project":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Project table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Project","description":"1.8: the one project a document describes. It is not an element: it carries no extensions, and only the members of its table.","type":"object","required":["name"],"properties":{"name":{"title":"Project name","description":"1.8: the project's name, 1–200 characters. Always present.","type":"string","minLength":1,"maxLength":200},"description":{"title":"Project description","description":"1.8: free text, up to 2000 characters. Absent by default.","type":"string","maxLength":2000},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 1.8: application-specific data for the project.","default":{}}},"additionalProperties":false},"room":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Room","description":"6.5: a room — what cannot be derived about a bounded face of its level's wall graph: its name, its function, its finishes, the program item it fulfils, its floor and ceiling (chapter 15), and the anchor that says which face it is. Every room MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). Where its anchor lies (6.3) is an invariant, not checked here.","type":"object","required":["level","anchor"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 6.5: a reference to the level the room is on. Always present."},"anchor":{"$ref":"#/$defs/defs/$defs/point","description":"6.3, 6.5: a point on the room's level; the face that contains it is the room's face. Always present."},"function":{"$ref":"#/$defs/room/$defs/function","description":"4.1, 6.5: what the room is for.","default":"unspecified"},"wallFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the material that finishes the walls facing this room. Absent by default."},"floorFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the floor finish's material. Absent by default."},"ceilingFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the ceiling finish's material. Absent by default."},"brief":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5, 11.3: a reference to the program item this room fulfils. That it resolves to a program item (FS-CORE-3.2.1) is an invariant (FS-INV-002), not checked here. Absent by default: the room fulfils no item."},"floor":{"$ref":"#/$defs/room/$defs/floor","description":"6.5, 15.1: the room's floor: its offset from the level's elevation and its thickness.","default":{}},"ceiling":{"$ref":"#/$defs/room/$defs/ceiling","description":"6.5, 15.2: the room's ceiling: flat, tray or vaulted, and its height.","default":{"kind":"flat"}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this room.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this room.","default":{}}},"additionalProperties":false,"$defs":{"function":{"title":"Room function","description":"4.1: a room's function MUST be either one of the terms of 4.1's table or an extension term (FS-CORE-4.1.1). That an extension term's extension is in extensionsUsed (FS-CORE-4.2.1) is an invariant (FS-INV-006), not checked here.","type":"string","anyOf":[{"title":"Core room function","description":"4.1: one of the fourteen core terms.","type":"string","enum":["unspecified","sleeping","bath","kitchen","living","dining","office","laundry","utility","storage","circulation","mechanical","garage","exterior"]},{"title":"Extension term","description":"4.2: <extension name>:<term>, such as EXT_wellness:sauna, where the extension name matches 1.6's pattern and the term matches ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+:[a-z][A-Za-z0-9]*$"}]},"floor":{"title":"Floor","description":"15.1: a room's floor. It has only these members (FS-CORE-15.1.1).","type":"object","properties":{"offset":{"$ref":"#/$defs/defs/$defs/length","description":"15.1: the height of the floor's top above the level's elevation: negative for a sunken floor, positive for a raised one.","default":0},"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.1: the floor's thickness, from its top down; greater than zero (FS-CORE-15.1.1). Its default is derived — the level's floorThickness, else not declared — so it carries no `default` here."}},"additionalProperties":false},"ceiling":{"title":"Ceiling","description":"15.2: a room's ceiling, of exactly one of three forms (FS-CORE-15.2.1). That it is above the floor (FS-CORE-15.2.2), that a vault's ridge points differ (FS-CORE-15.3.1) and that a tray's border fits its room (FS-CORE-15.4.1) are invariants (FS-INV-701 to FS-INV-703), not checked here.","type":"object","required":["kind"],"properties":{"kind":{"title":"Ceiling kind","description":"15.2: \"flat\", \"tray\" or \"vaulted\".","type":"string","enum":["flat","tray","vaulted"]}},"oneOf":[{"title":"Flat ceiling","description":"15.2: { \"kind\": \"flat\", \"height\"? } — flat at its height.","type":"object","required":["kind"],"properties":{"kind":{"description":"15.2: \"flat\".","const":"flat"},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."}},"additionalProperties":false},{"title":"Tray ceiling","description":"15.2, 15.4: { \"kind\": \"tray\", \"height\"?, \"border\", \"depth\" } — flat at its height for a border inside the walls, raised by depth over the centre.","type":"object","required":["kind","border","depth"],"properties":{"kind":{"description":"15.2: \"tray\".","const":"tray"},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."},"border":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.4: the width of the border, measured in plan from the room polygon inwards; greater than zero (FS-CORE-15.2.1). Always present."},"depth":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: how far the centre is raised above the border; greater than zero (FS-CORE-15.2.1). Always present."}},"additionalProperties":false},{"title":"Vaulted ceiling","description":"15.2, 15.3: { \"kind\": \"vaulted\", \"height\"?, \"ridge\", \"pitch\", \"slopes\"? } — rising to a ridge line at its height and falling away from it at its pitch.","type":"object","required":["kind","ridge","pitch"],"properties":{"kind":{"description":"15.2: \"vaulted\".","const":"vaulted"},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."},"ridge":{"title":"Ridge","description":"15.3: two plan points the ridge line runs through. Always present. That they differ (FS-CORE-15.3.1) is an invariant (FS-INV-702).","type":"array","items":{"$ref":"#/$defs/defs/$defs/point"},"minItems":2,"maxItems":2},"pitch":{"$ref":"#/$defs/defs/$defs/pitch","description":"15.3: the slope away from the ridge. Always present."},"slopes":{"description":"15.3: \"both\" (a cathedral ceiling), or \"left\" or \"right\": one plane falling to that side of the ridge line, walked from its first point to its second.","type":"string","enum":["both","left","right"],"default":"both"}},"additionalProperties":false}]}}},"separator":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Separator table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Separator","description":"5.2: a room separator — a boundary of zero thickness that divides rooms without building anything, an edge of its level's wall graph. Every separator MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["level","start","end"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.2: a reference to the level the separator is on. Always present."},"start":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction at one end. Always present."},"end":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction at the other end. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this separator.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this separator.","default":{}}},"additionalProperties":false},"site":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Site table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Site","description":"1.8: the project's site. A project with no site yet omits it. It is not an element: it carries no name and no extensions.","type":"object","properties":{"trueNorth":{"title":"True north","description":"1.8: the angle (2.4) from project north (+Y) to true north, counter-clockwise positive, in microdegrees. It MUST be greater than −180,000,000 and at most 180,000,000 (FS-CORE-1.8.1).","type":"integer","exclusiveMinimum":-180000000,"maximum":180000000,"default":0},"location":{"title":"Location","description":"1.8: the site's WGS 84 position in microdegrees. Absent by default; when present, both members are present.","type":"object","required":["latitude","longitude"],"properties":{"latitude":{"title":"Latitude","description":"1.8: an angle (2.4) in [−90,000,000, 90,000,000] microdegrees (FS-CORE-1.8.2).","type":"integer","minimum":-90000000,"maximum":90000000},"longitude":{"title":"Longitude","description":"1.8: an angle (2.4) in (−180,000,000, 180,000,000] microdegrees (FS-CORE-1.8.2).","type":"integer","exclusiveMinimum":-180000000,"maximum":180000000}},"additionalProperties":false},"boundary":{"$ref":"#/$defs/defs/$defs/polygon","description":"1.8: the lot line, a polygon (2.6) in project coordinates. Absent by default."},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 1.8: application-specific data for the site.","default":{}}},"additionalProperties":false},"slab":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.7's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Slab","description":"6.7: an authored floor or deck that is not derived from a room — a patio, a porch deck, a landing. Every slab MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["level","boundary","thickness"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 6.7: a reference to the level the slab belongs to. Always present."},"boundary":{"$ref":"#/$defs/defs/$defs/polygon","description":"6.7: the slab's outline in plan, a polygon (2.6). Always present. That it is simple with positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), not checked here."},"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"6.7: the slab's thickness. Always present, and MUST be greater than zero (FS-CORE-6.7.1)."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"6.7: the height of the slab's top above its level's elevation.","default":0},"material":{"$ref":"#/$defs/defs/$defs/reference","description":"6.7: a reference to the material of the slab's top surface. Absent by default."},"purpose":{"title":"Slab purpose","description":"6.7: what the slab is for; when present, one of the purposes of 6.7's table (FS-CORE-6.7.2). Absent by default: not stated. It changes nothing that is derived.","type":"string","enum":["patio","deck","porch","stoop","landing","balcony","garage","walkway","driveway","equipmentPad","other"]},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this slab.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this slab.","default":{}}},"additionalProperties":false},"type":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.3's and 8.4's tables (clearances, extensions, extras). A type's `layers`, `width`, `height`, `sill` and `clearOpening` have no default, and neither has `operation`, whose absence means that none is declared. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Type","description":"8.1: a reusable definition that elements refer to instead of repeating — a wall assembly, a door or a window. A type MUST have a `kind` from 8.1's table (FS-CORE-8.1.1), and has only the members of that kind's table (FS-CORE-1.4.1).","type":"object","required":["kind"],"properties":{"kind":{"title":"Kind","description":"8.1: which kind of type this is.","type":"string","enum":["wallType","doorType","windowType"]}},"oneOf":[{"$ref":"#/$defs/type/$defs/wallType"},{"$ref":"#/$defs/type/$defs/doorType"},{"$ref":"#/$defs/type/$defs/windowType"}],"$defs":{"wallType":{"title":"Wall type","description":"8.3: a wall assembly, used by a wall's `type`.","type":"object","required":["kind","layers"],"properties":{"kind":{"description":"8.1, 8.3: \"wallType\".","const":"wallType"},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false},"doorType":{"title":"Door type","description":"8.4: a door, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"doorType\".","const":"doorType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Door operation","description":"8.4: how the door's leaves move — one of 8.4's door operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["swing","doubleSwing","doubleActing","bypassSlide","pocket","surfaceSlide","bifold","overhead","cased"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/doorClearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width and height, never an area (FS-CORE-8.4.3). Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false},"windowType":{"title":"Window type","description":"8.4: a window, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"windowType\".","const":"windowType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Window operation","description":"8.4: how the window's sashes move — one of 8.4's window operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["fixed","casement","awning","hopper","singleHung","doubleHung","horizontalSlider","tiltTurn","pivot"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width, height and, when declared, area. Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false}}},"wall":{"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Wall table and 5.9 (justification, base, base.offset, top.offset, extensions, extras). `layers` (a typed property, 8.2), `top` (derived from the level's height, 5.9) and `base.level` (derived: the wall's own level) deliberately have none. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Wall","description":"5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.","type":"object","required":["level","start","end"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.2: a reference to the level the wall is on. Always present."},"start":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction where the wall's location line starts. Always present."},"end":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction where the location line ends. Always present."},"type":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2, 8.3: a reference to the wall's type, a type of kind wallType. Absent by default."},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"5.2, 8.3: the wall's own layers, which replace its type's entirely. A typed property (8.2): absent, it resolves from `type`; it has no constant default."},"justification":{"title":"Justification","description":"5.2, 5.4: where the location line sits in the wall's thickness.","type":"string","enum":["center","exteriorFace","interiorFace","coreFace"],"default":"center"},"base":{"title":"Base","description":"5.2, 5.9: the wall's bottom — `level` (absent: the wall's own level, a derived default) plus `offset`.","type":"object","properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"5.9: a reference to the level whose elevation the base is measured from. Absent: the wall's own level (a derived default)."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: added to the base level's elevation.","default":0}},"additionalProperties":false,"default":{}},"top":{"title":"Top","description":"5.2, 5.9: the wall's top — level-constrained, { \"level\", \"offset\"? }, or unconnected, { \"height\" }. `top` MUST have either `level` or `height`, and MUST NOT have both; `offset` MUST NOT appear with `height` (FS-CORE-5.9.1). Absent, the top follows the wall's own level's height: a derived default, so it has no `default` here.","type":"object","oneOf":[{"title":"Level-constrained top","description":"5.9: the top is level `level`'s elevation plus `offset`.","type":"object","required":["level"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"5.9: a reference to the level whose elevation the top is measured from."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: added to the top level's elevation.","default":0}},"additionalProperties":false},{"title":"Unconnected top","description":"5.9: the top is the base elevation plus `height`.","type":"object","required":["height"],"properties":{"height":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: the wall's height above its base elevation, a length (2.1). That the top ends above the base (FS-CORE-5.9.2) is an invariant (FS-INV-112), not checked here."}},"additionalProperties":false}]},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this wall.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this wall.","default":{}}},"additionalProperties":false}}};
 const schema32 = {"$comment":"Normative (FLR-ADR-006): this hand-written schema is the source; TypeScript types are generated from it, never the reverse. The `default` keywords in these schemas are exactly the constant defaults of Floorspec Core 0.3 (1.5) — the reference canonicalizer reads them as its table of constant defaults (9.2 step 1). A member whose default is derived, and every typed property (8.2), carries no `default`; never add one for documentation.","title":"Floorspec Core 0.3 document","description":"1.1: a Floorspec document is a JSON object (FS-CORE-1.1.1) whose members are the version declaration, the project, an optional site, the element collections, the program, the extension declarations and extras, and no other member (FS-CORE-1.1.2). This schema checks structure only — tier 3 of chapter 10, reported as FS-SCH-001. The invariants of chapter 10 (references resolve, IDs are unique, the wall graph is planar, rooms, openings and hosted elements fit, the program is consistent, extensions are declared and used as their registry entries say) need a validator. Every length is an integer (2.1): a number written with a fraction or an exponent must be mapped to a non-number before this schema is applied.","type":"object","required":["floorspec","project"],"properties":{"floorspec":{"title":"Version declaration","description":"1.2: the version of Floorspec Core the document targets, as \"<major>.<minor>\". A document that targets this draft MUST declare \"0.3\" (FS-CORE-1.2.5). A reader of 0.3 applies Core 0.1's or Core 0.2's schema, at its own URL, to a document that declares \"0.1\" or \"0.2\" (FS-CORE-1.2.6); a string naming a version the reader does not implement is rejected before any schema is applied, with FS-DOC-001 (FS-CORE-1.2.2).","const":"0.3"},"project":{"$ref":"#/$defs/project","description":"1.1, 1.8: the project the document describes. Present in every document."},"site":{"$ref":"#/$defs/site","description":"1.1, 1.8: the project's site. Absent: the project has no site."},"buildings":{"title":"Buildings","description":"1.1, 1.8: the collection of buildings (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/building"},"default":{}},"levels":{"title":"Levels","description":"1.1, 1.8: the collection of levels (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/level"},"default":{}},"junctions":{"title":"Junctions","description":"1.1, 5.1: the collection of junctions (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/junction"},"default":{}},"walls":{"title":"Walls","description":"1.1, 5.2: the collection of walls (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/wall"},"default":{}},"separators":{"title":"Separators","description":"1.1, 5.2: the collection of room separators (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/separator"},"default":{}},"openings":{"title":"Openings","description":"1.1, 7.1: the collection of openings (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/opening"},"default":{}},"rooms":{"title":"Rooms","description":"1.1, 6.5: the collection of rooms (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/room"},"default":{}},"slabs":{"title":"Slabs","description":"1.1, 6.7: the collection of slabs (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/slab"},"default":{}},"types":{"title":"Types","description":"1.1, 8.1: the collection of types (1.4), keyed by element ID; each type's kind is given by its `kind` member.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/type"},"default":{}},"materials":{"title":"Materials","description":"1.1, 8.5: the collection of materials (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/material"},"default":{}},"assets":{"title":"Assets","description":"1.1, 8.6: the collection of assets (1.4), keyed by element ID.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/asset"},"default":{}},"program":{"$ref":"#/$defs/program","description":"1.1, 11.1: the program — the items the building is meant to provide and the adjacency graph between them.","default":{}},"extensionsUsed":{"title":"Extensions used","description":"1.6, 12.1: maps the name of every extension the document uses (FS-CORE-1.6.1) to its declaration: a version string, or a declaration object with the version and, optionally, the URL of the extension's schema (FS-CORE-12.1.1).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/extensionName"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/declaration"},"default":{}},"extensionsRequired":{"title":"Extensions required","description":"1.6: the extensions a reader must implement to read the document correctly, each named once (FS-CORE-1.6.1). That each is also in extensionsUsed (FS-CORE-1.6.2) is an invariant (FS-INV-004), not checked here.","type":"array","items":{"$ref":"#/$defs/defs/$defs/extensionName"},"uniqueItems":true,"default":[]},"extensions":{"$ref":"#/$defs/extension/$defs/topLevel","description":"1.6, 12.5: document-level extension data, keyed by extension name; an extension's kinds of element are in its `collections` member.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7: application-specific data for the document as a whole.","default":{}}},"additionalProperties":false};
 const schema40 = {"title":"Element ID","description":"3.1: an element's ID is its member name in its collection, and MUST match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ (FS-CORE-3.1.1). That an ID is unique across all collections (FS-CORE-3.1.2) is an invariant (FS-INV-001), not checked here.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"};
 const schema44 = {"title":"Extension name","description":"1.6: a prefix and a name joined by an underscore — FS_ (official), EXT_ (multi-implementer) or a registered vendor prefix of 2 to 8 capitals or digits. Every extension name MUST match ^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$ (FS-CORE-1.6.1).","type":"string","pattern":"^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$"};
@@ -681,9 +681,9 @@ return errors === 0;
 }
 validate30.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema47 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Level table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Level","description":"1.8: a level of a building. Every level MUST reference a building (FS-CORE-1.3.1). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["building","elevation","height"],"properties":{"building":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 1.8: a reference to the building the level is in. Always present."},"elevation":{"$ref":"#/$defs/defs/$defs/length","description":"1.8: the level's datum — the height of its finished floor above project zero, a length (2.1). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"1.8: floor-to-floor height, the default top of the level's walls (5.9). Always present, and MUST be greater than zero (FS-CORE-1.8.3)."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this level.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this level.","default":{}}},"additionalProperties":false};
+const schema47 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Level table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Level","description":"1.8: a level of a building. Every level MUST reference a building (FS-CORE-1.3.1). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["building","elevation","height"],"properties":{"building":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 1.8: a reference to the building the level is in. Always present."},"elevation":{"$ref":"#/$defs/defs/$defs/length","description":"1.8: the level's datum — the height of its finished floor above project zero, a length (2.1). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"1.8: floor-to-floor height, the default top of the level's walls (5.9). Always present, and MUST be greater than zero (FS-CORE-1.8.3)."},"floorThickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"1.8, 15.1: the thickness of the floors of the level's rooms, unless a room's floor states its own; greater than zero when present (FS-CORE-1.8.4). Absent by default: not declared."},"ceilingHeight":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"1.8, 15.2: the height of the ceilings of the level's rooms above its elevation, unless a room's ceiling states its own; greater than zero when present (FS-CORE-1.8.4). Its default is derived — the level's height — so it carries no `default` here."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this level.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this level.","default":{}}},"additionalProperties":false};
 const schema48 = {"title":"Reference","description":"3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"};
-const schema50 = {"title":"Positive length","description":"A length (2.1) greater than zero: a level's height (1.8.3), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2).","type":"integer","minimum":1,"maximum":9007199254740991};
+const schema50 = {"title":"Positive length","description":"A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1).","type":"integer","minimum":1,"maximum":9007199254740991};
 const pattern4 = new RegExp("^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$", "u");
 
 function validate34(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
@@ -728,7 +728,7 @@ vErrors.push(err2);
 errors++;
 }
 for(const key0 in data){
-if(!((((((key0 === "building") || (key0 === "elevation")) || (key0 === "height")) || (key0 === "name")) || (key0 === "extensions")) || (key0 === "extras"))){
+if(!((((((((key0 === "building") || (key0 === "elevation")) || (key0 === "height")) || (key0 === "floorThickness")) || (key0 === "ceilingHeight")) || (key0 === "name")) || (key0 === "extensions")) || (key0 === "extras"))){
 const err3 = {instancePath,schemaPath:"#/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"};
 if(vErrors === null){
 vErrors = [err3];
@@ -834,11 +834,10 @@ errors++;
 }
 }
 }
-if(data.name !== undefined){
-let data3 = data.name;
-if(typeof data3 === "string"){
-if(func2(data3) > 200){
-const err12 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/maxLength",keyword:"maxLength",params:{limit: 200},message:"must NOT have more than 200 characters"};
+if(data.floorThickness !== undefined){
+let data3 = data.floorThickness;
+if(!(((typeof data3 == "number") && (!(data3 % 1) && !isNaN(data3))) && (isFinite(data3)))){
+const err12 = {instancePath:instancePath+"/floorThickness",schemaPath:"#/$defs/defs/$defs/positiveLength/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
 if(vErrors === null){
 vErrors = [err12];
 }
@@ -847,8 +846,9 @@ vErrors.push(err12);
 }
 errors++;
 }
-if(func2(data3) < 1){
-const err13 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/minLength",keyword:"minLength",params:{limit: 1},message:"must NOT have fewer than 1 characters"};
+if((typeof data3 == "number") && (isFinite(data3))){
+if(data3 > 9007199254740991 || isNaN(data3)){
+const err13 = {instancePath:instancePath+"/floorThickness",schemaPath:"#/$defs/defs/$defs/positiveLength/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
 if(vErrors === null){
 vErrors = [err13];
 }
@@ -857,14 +857,84 @@ vErrors.push(err13);
 }
 errors++;
 }
-}
-else {
-const err14 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/type",keyword:"type",params:{type: "string"},message:"must be string"};
+if(data3 < 1 || isNaN(data3)){
+const err14 = {instancePath:instancePath+"/floorThickness",schemaPath:"#/$defs/defs/$defs/positiveLength/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
 if(vErrors === null){
 vErrors = [err14];
 }
 else {
 vErrors.push(err14);
+}
+errors++;
+}
+}
+}
+if(data.ceilingHeight !== undefined){
+let data4 = data.ceilingHeight;
+if(!(((typeof data4 == "number") && (!(data4 % 1) && !isNaN(data4))) && (isFinite(data4)))){
+const err15 = {instancePath:instancePath+"/ceilingHeight",schemaPath:"#/$defs/defs/$defs/positiveLength/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err15];
+}
+else {
+vErrors.push(err15);
+}
+errors++;
+}
+if((typeof data4 == "number") && (isFinite(data4))){
+if(data4 > 9007199254740991 || isNaN(data4)){
+const err16 = {instancePath:instancePath+"/ceilingHeight",schemaPath:"#/$defs/defs/$defs/positiveLength/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err16];
+}
+else {
+vErrors.push(err16);
+}
+errors++;
+}
+if(data4 < 1 || isNaN(data4)){
+const err17 = {instancePath:instancePath+"/ceilingHeight",schemaPath:"#/$defs/defs/$defs/positiveLength/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
+if(vErrors === null){
+vErrors = [err17];
+}
+else {
+vErrors.push(err17);
+}
+errors++;
+}
+}
+}
+if(data.name !== undefined){
+let data5 = data.name;
+if(typeof data5 === "string"){
+if(func2(data5) > 200){
+const err18 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/maxLength",keyword:"maxLength",params:{limit: 200},message:"must NOT have more than 200 characters"};
+if(vErrors === null){
+vErrors = [err18];
+}
+else {
+vErrors.push(err18);
+}
+errors++;
+}
+if(func2(data5) < 1){
+const err19 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/minLength",keyword:"minLength",params:{limit: 1},message:"must NOT have fewer than 1 characters"};
+if(vErrors === null){
+vErrors = [err19];
+}
+else {
+vErrors.push(err19);
+}
+errors++;
+}
+}
+else {
+const err20 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/type",keyword:"type",params:{type: "string"},message:"must be string"};
+if(vErrors === null){
+vErrors = [err20];
+}
+else {
+vErrors.push(err20);
 }
 errors++;
 }
@@ -876,28 +946,28 @@ errors = vErrors.length;
 }
 }
 if(data.extras !== undefined){
-let data5 = data.extras;
-if(data5 && typeof data5 == "object" && !Array.isArray(data5)){
+let data7 = data.extras;
+if(data7 && typeof data7 == "object" && !Array.isArray(data7)){
 }
 else {
-const err15 = {instancePath:instancePath+"/extras",schemaPath:"#/$defs/defs/$defs/extras/type",keyword:"type",params:{type: "object"},message:"must be object"};
+const err21 = {instancePath:instancePath+"/extras",schemaPath:"#/$defs/defs/$defs/extras/type",keyword:"type",params:{type: "object"},message:"must be object"};
 if(vErrors === null){
-vErrors = [err15];
+vErrors = [err21];
 }
 else {
-vErrors.push(err15);
+vErrors.push(err21);
 }
 errors++;
 }
 }
 }
 else {
-const err16 = {instancePath,schemaPath:"#/type",keyword:"type",params:{type: "object"},message:"must be object"};
+const err22 = {instancePath,schemaPath:"#/type",keyword:"type",params:{type: "object"},message:"must be object"};
 if(vErrors === null){
-vErrors = [err16];
+vErrors = [err22];
 }
 else {
-vErrors.push(err16);
+vErrors.push(err22);
 }
 errors++;
 }
@@ -906,8 +976,8 @@ return errors === 0;
 }
 validate34.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema54 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.1's Junction table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Junction","description":"5.1: a node of a level's wall graph — a point on a level where walls and separators start and end. Every junction MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). That no two junctions on a level share a position (FS-CORE-5.1.1) is an invariant (FS-INV-101), not checked here.","type":"object","required":["level","position"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.1: a reference to the level the junction is on. Always present."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"5.1: where the junction is, in plan. Always present."},"join":{"$ref":"#/$defs/junction/$defs/join","description":"5.1, 5.8: how the walls meeting here are cut.","default":{"kind":"mitre"}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this junction.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this junction.","default":{}}},"additionalProperties":false,"$defs":{"join":{"title":"Join override","description":"5.8: how the walls meeting at the junction are cut — the default mitre, or a butt join naming one or two walls that run through. Whether a butt join applies to its junction (FS-CORE-5.8.1 to 5.8.3) is an invariant (FS-INV-111), not checked here.","type":"object","required":["kind"],"properties":{"kind":{"title":"Join kind","description":"5.8: \"mitre\" (the default join of 5.7) or \"butt\".","type":"string","enum":["mitre","butt"]}},"oneOf":[{"title":"Mitre join","description":"5.8: { \"kind\": \"mitre\" } — the default join, as 5.7.","type":"object","required":["kind"],"properties":{"kind":{"description":"5.8: \"mitre\".","const":"mitre"}},"additionalProperties":false},{"title":"Butt join","description":"5.8: { \"kind\": \"butt\", \"through\": [W] } or { \"kind\": \"butt\", \"through\": [W1, W2] } — one or two walls run through the junction and every other edge stops against them.","type":"object","required":["kind","through"],"properties":{"kind":{"description":"5.8: \"butt\".","const":"butt"},"through":{"title":"Through walls","description":"5.8: references to the one or two walls that run through the junction.","type":"array","items":{"$ref":"#/$defs/defs/$defs/reference"},"minItems":1,"maxItems":2}},"additionalProperties":false}]}}};
-const schema56 = {"title":"Join override","description":"5.8: how the walls meeting at the junction are cut — the default mitre, or a butt join naming one or two walls that run through. Whether a butt join applies to its junction (FS-CORE-5.8.1 to 5.8.3) is an invariant (FS-INV-111), not checked here.","type":"object","required":["kind"],"properties":{"kind":{"title":"Join kind","description":"5.8: \"mitre\" (the default join of 5.7) or \"butt\".","type":"string","enum":["mitre","butt"]}},"oneOf":[{"title":"Mitre join","description":"5.8: { \"kind\": \"mitre\" } — the default join, as 5.7.","type":"object","required":["kind"],"properties":{"kind":{"description":"5.8: \"mitre\".","const":"mitre"}},"additionalProperties":false},{"title":"Butt join","description":"5.8: { \"kind\": \"butt\", \"through\": [W] } or { \"kind\": \"butt\", \"through\": [W1, W2] } — one or two walls run through the junction and every other edge stops against them.","type":"object","required":["kind","through"],"properties":{"kind":{"description":"5.8: \"butt\".","const":"butt"},"through":{"title":"Through walls","description":"5.8: references to the one or two walls that run through the junction.","type":"array","items":{"$ref":"#/$defs/defs/$defs/reference"},"minItems":1,"maxItems":2}},"additionalProperties":false}]};
+const schema56 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.1's Junction table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Junction","description":"5.1: a node of a level's wall graph — a point on a level where walls and separators start and end. Every junction MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). That no two junctions on a level share a position (FS-CORE-5.1.1) is an invariant (FS-INV-101), not checked here.","type":"object","required":["level","position"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.1: a reference to the level the junction is on. Always present."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"5.1: where the junction is, in plan. Always present."},"join":{"$ref":"#/$defs/junction/$defs/join","description":"5.1, 5.8: how the walls meeting here are cut.","default":{"kind":"mitre"}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this junction.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this junction.","default":{}}},"additionalProperties":false,"$defs":{"join":{"title":"Join override","description":"5.8: how the walls meeting at the junction are cut — the default mitre, or a butt join naming one or two walls that run through. Whether a butt join applies to its junction (FS-CORE-5.8.1 to 5.8.3) is an invariant (FS-INV-111), not checked here.","type":"object","required":["kind"],"properties":{"kind":{"title":"Join kind","description":"5.8: \"mitre\" (the default join of 5.7) or \"butt\".","type":"string","enum":["mitre","butt"]}},"oneOf":[{"title":"Mitre join","description":"5.8: { \"kind\": \"mitre\" } — the default join, as 5.7.","type":"object","required":["kind"],"properties":{"kind":{"description":"5.8: \"mitre\".","const":"mitre"}},"additionalProperties":false},{"title":"Butt join","description":"5.8: { \"kind\": \"butt\", \"through\": [W] } or { \"kind\": \"butt\", \"through\": [W1, W2] } — one or two walls run through the junction and every other edge stops against them.","type":"object","required":["kind","through"],"properties":{"kind":{"description":"5.8: \"butt\".","const":"butt"},"through":{"title":"Through walls","description":"5.8: references to the one or two walls that run through the junction.","type":"array","items":{"$ref":"#/$defs/defs/$defs/reference"},"minItems":1,"maxItems":2}},"additionalProperties":false}]}}};
+const schema58 = {"title":"Join override","description":"5.8: how the walls meeting at the junction are cut — the default mitre, or a butt join naming one or two walls that run through. Whether a butt join applies to its junction (FS-CORE-5.8.1 to 5.8.3) is an invariant (FS-INV-111), not checked here.","type":"object","required":["kind"],"properties":{"kind":{"title":"Join kind","description":"5.8: \"mitre\" (the default join of 5.7) or \"butt\".","type":"string","enum":["mitre","butt"]}},"oneOf":[{"title":"Mitre join","description":"5.8: { \"kind\": \"mitre\" } — the default join, as 5.7.","type":"object","required":["kind"],"properties":{"kind":{"description":"5.8: \"mitre\".","const":"mitre"}},"additionalProperties":false},{"title":"Butt join","description":"5.8: { \"kind\": \"butt\", \"through\": [W] } or { \"kind\": \"butt\", \"through\": [W1, W2] } — one or two walls run through the junction and every other edge stops against them.","type":"object","required":["kind","through"],"properties":{"kind":{"description":"5.8: \"butt\".","const":"butt"},"through":{"title":"Through walls","description":"5.8: references to the one or two walls that run through the junction.","type":"array","items":{"$ref":"#/$defs/defs/$defs/reference"},"minItems":1,"maxItems":2}},"additionalProperties":false}]};
 
 function validate39(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
@@ -1156,7 +1226,7 @@ vErrors.push(err16);
 errors++;
 }
 if(!((data4 === "mitre") || (data4 === "butt"))){
-const err17 = {instancePath:instancePath+"/kind",schemaPath:"#/properties/kind/enum",keyword:"enum",params:{allowedValues: schema56.properties.kind.enum},message:"must be equal to one of the allowed values"};
+const err17 = {instancePath:instancePath+"/kind",schemaPath:"#/properties/kind/enum",keyword:"enum",params:{allowedValues: schema58.properties.kind.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err17];
 }
@@ -1336,9 +1406,9 @@ return errors === 0;
 }
 validate37.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema61 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Wall table and 5.9 (justification, base, base.offset, top.offset, extensions, extras). `layers` (a typed property, 8.2), `top` (derived from the level's height, 5.9) and `base.level` (derived: the wall's own level) deliberately have none. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Wall","description":"5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.","type":"object","required":["level","start","end"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.2: a reference to the level the wall is on. Always present."},"start":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction where the wall's location line starts. Always present."},"end":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction where the location line ends. Always present."},"type":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2, 8.3: a reference to the wall's type, a type of kind wallType. Absent by default."},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"5.2, 8.3: the wall's own layers, which replace its type's entirely. A typed property (8.2): absent, it resolves from `type`; it has no constant default."},"justification":{"title":"Justification","description":"5.2, 5.4: where the location line sits in the wall's thickness.","type":"string","enum":["center","exteriorFace","interiorFace","coreFace"],"default":"center"},"base":{"title":"Base","description":"5.2, 5.9: the wall's bottom — `level` (absent: the wall's own level, a derived default) plus `offset`.","type":"object","properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"5.9: a reference to the level whose elevation the base is measured from. Absent: the wall's own level (a derived default)."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: added to the base level's elevation.","default":0}},"additionalProperties":false,"default":{}},"top":{"title":"Top","description":"5.2, 5.9: the wall's top — level-constrained, { \"level\", \"offset\"? }, or unconnected, { \"height\" }. `top` MUST have either `level` or `height`, and MUST NOT have both; `offset` MUST NOT appear with `height` (FS-CORE-5.9.1). Absent, the top follows the wall's own level's height: a derived default, so it has no `default` here.","type":"object","oneOf":[{"title":"Level-constrained top","description":"5.9: the top is level `level`'s elevation plus `offset`.","type":"object","required":["level"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"5.9: a reference to the level whose elevation the top is measured from."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: added to the top level's elevation.","default":0}},"additionalProperties":false},{"title":"Unconnected top","description":"5.9: the top is the base elevation plus `height`.","type":"object","required":["height"],"properties":{"height":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: the wall's height above its base elevation, a length (2.1). That the top ends above the base (FS-CORE-5.9.2) is an invariant (FS-INV-112), not checked here."}},"additionalProperties":false}]},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this wall.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this wall.","default":{}}},"additionalProperties":false};
-const schema66 = {"title":"Layers","description":"8.3: an assembly from the wall's left (exterior) face to its right (interior) face. A layers array MUST contain at least one layer (FS-CORE-8.3.1).","type":"array","items":{"$ref":"#/$defs/layer"},"minItems":1};
-const schema67 = {"$comment":"Normative (FLR-ADR-006). A layer's members have no constant default, so this file carries no `default`; the reference canonicalizer reads the `default` keywords of these schemas as its table of constant defaults (9.2 step 1).","title":"Layer","description":"8.3: one layer of a wall assembly, in a wall type's `layers` or a wall's own. It has only the members of its table.","type":"object","required":["thickness","function"],"properties":{"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.3: the layer's thickness, a length that MUST be greater than zero (FS-CORE-8.3.1). Always present."},"function":{"title":"Layer function","description":"4.3: what the layer does. It MUST be one of the terms of 4.3's table (FS-CORE-4.3.1); the layer functions are closed in this draft. Always present.","type":"string","enum":["core","substrate","insulation","membrane","airGap","finish"]},"material":{"$ref":"#/$defs/defs/$defs/reference","description":"8.3: a reference to the material the layer is made of. Absent by default."}},"additionalProperties":false,"$defs":{"layers":{"title":"Layers","description":"8.3: an assembly from the wall's left (exterior) face to its right (interior) face. A layers array MUST contain at least one layer (FS-CORE-8.3.1).","type":"array","items":{"$ref":"#/$defs/layer"},"minItems":1}}};
+const schema63 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Wall table and 5.9 (justification, base, base.offset, top.offset, extensions, extras). `layers` (a typed property, 8.2), `top` (derived from the level's height, 5.9) and `base.level` (derived: the wall's own level) deliberately have none. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Wall","description":"5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.","type":"object","required":["level","start","end"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.2: a reference to the level the wall is on. Always present."},"start":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction where the wall's location line starts. Always present."},"end":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction where the location line ends. Always present."},"type":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2, 8.3: a reference to the wall's type, a type of kind wallType. Absent by default."},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"5.2, 8.3: the wall's own layers, which replace its type's entirely. A typed property (8.2): absent, it resolves from `type`; it has no constant default."},"justification":{"title":"Justification","description":"5.2, 5.4: where the location line sits in the wall's thickness.","type":"string","enum":["center","exteriorFace","interiorFace","coreFace"],"default":"center"},"base":{"title":"Base","description":"5.2, 5.9: the wall's bottom — `level` (absent: the wall's own level, a derived default) plus `offset`.","type":"object","properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"5.9: a reference to the level whose elevation the base is measured from. Absent: the wall's own level (a derived default)."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: added to the base level's elevation.","default":0}},"additionalProperties":false,"default":{}},"top":{"title":"Top","description":"5.2, 5.9: the wall's top — level-constrained, { \"level\", \"offset\"? }, or unconnected, { \"height\" }. `top` MUST have either `level` or `height`, and MUST NOT have both; `offset` MUST NOT appear with `height` (FS-CORE-5.9.1). Absent, the top follows the wall's own level's height: a derived default, so it has no `default` here.","type":"object","oneOf":[{"title":"Level-constrained top","description":"5.9: the top is level `level`'s elevation plus `offset`.","type":"object","required":["level"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"5.9: a reference to the level whose elevation the top is measured from."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: added to the top level's elevation.","default":0}},"additionalProperties":false},{"title":"Unconnected top","description":"5.9: the top is the base elevation plus `height`.","type":"object","required":["height"],"properties":{"height":{"$ref":"#/$defs/defs/$defs/length","description":"5.9: the wall's height above its base elevation, a length (2.1). That the top ends above the base (FS-CORE-5.9.2) is an invariant (FS-INV-112), not checked here."}},"additionalProperties":false}]},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this wall.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this wall.","default":{}}},"additionalProperties":false};
+const schema68 = {"title":"Layers","description":"8.3: an assembly from the wall's left (exterior) face to its right (interior) face. A layers array MUST contain at least one layer (FS-CORE-8.3.1).","type":"array","items":{"$ref":"#/$defs/layer"},"minItems":1};
+const schema69 = {"$comment":"Normative (FLR-ADR-006). A layer's members have no constant default, so this file carries no `default`; the reference canonicalizer reads the `default` keywords of these schemas as its table of constant defaults (9.2 step 1).","title":"Layer","description":"8.3: one layer of a wall assembly, in a wall type's `layers` or a wall's own. It has only the members of its table.","type":"object","required":["thickness","function"],"properties":{"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.3: the layer's thickness, a length that MUST be greater than zero (FS-CORE-8.3.1). Always present."},"function":{"title":"Layer function","description":"4.3: what the layer does. It MUST be one of the terms of 4.3's table (FS-CORE-4.3.1); the layer functions are closed in this draft. Always present.","type":"string","enum":["core","substrate","insulation","membrane","airGap","finish"]},"material":{"$ref":"#/$defs/defs/$defs/reference","description":"8.3: a reference to the material the layer is made of. Absent by default."}},"additionalProperties":false,"$defs":{"layers":{"title":"Layers","description":"8.3: an assembly from the wall's left (exterior) face to its right (interior) face. A layers array MUST contain at least one layer (FS-CORE-8.3.1).","type":"array","items":{"$ref":"#/$defs/layer"},"minItems":1}}};
 
 function validate45(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
@@ -1431,7 +1501,7 @@ vErrors.push(err6);
 errors++;
 }
 if(!((((((data1 === "core") || (data1 === "substrate")) || (data1 === "insulation")) || (data1 === "membrane")) || (data1 === "airGap")) || (data1 === "finish"))){
-const err7 = {instancePath:instancePath+"/function",schemaPath:"#/properties/function/enum",keyword:"enum",params:{allowedValues: schema67.properties.function.enum},message:"must be equal to one of the allowed values"};
+const err7 = {instancePath:instancePath+"/function",schemaPath:"#/properties/function/enum",keyword:"enum",params:{allowedValues: schema69.properties.function.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err7];
 }
@@ -1570,7 +1640,7 @@ vErrors.push(err2);
 errors++;
 }
 for(const key0 in data){
-if(!(func1.call(schema61.properties, key0))){
+if(!(func1.call(schema63.properties, key0))){
 const err3 = {instancePath,schemaPath:"#/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"};
 if(vErrors === null){
 vErrors = [err3];
@@ -1700,7 +1770,7 @@ vErrors.push(err12);
 errors++;
 }
 if(!((((data5 === "center") || (data5 === "exteriorFace")) || (data5 === "interiorFace")) || (data5 === "coreFace"))){
-const err13 = {instancePath:instancePath+"/justification",schemaPath:"#/properties/justification/enum",keyword:"enum",params:{allowedValues: schema61.properties.justification.enum},message:"must be equal to one of the allowed values"};
+const err13 = {instancePath:instancePath+"/justification",schemaPath:"#/properties/justification/enum",keyword:"enum",params:{allowedValues: schema63.properties.justification.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err13];
 }
@@ -2091,7 +2161,7 @@ return errors === 0;
 }
 validate43.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema78 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Separator table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Separator","description":"5.2: a room separator — a boundary of zero thickness that divides rooms without building anything, an edge of its level's wall graph. Every separator MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["level","start","end"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.2: a reference to the level the separator is on. Always present."},"start":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction at one end. Always present."},"end":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction at the other end. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this separator.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this separator.","default":{}}},"additionalProperties":false};
+const schema80 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Separator table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Separator","description":"5.2: a room separator — a boundary of zero thickness that divides rooms without building anything, an edge of its level's wall graph. Every separator MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["level","start","end"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 5.2: a reference to the level the separator is on. Always present."},"start":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction at one end. Always present."},"end":{"$ref":"#/$defs/defs/$defs/reference","description":"5.2: a reference to the junction at the other end. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this separator.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this separator.","default":{}}},"additionalProperties":false};
 
 function validate50(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
@@ -2293,10 +2363,10 @@ return errors === 0;
 }
 validate50.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema85 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 7.1's table (hinge, swing, extensions, extras). `width`, `height`, `sill` and `clearOpening` are typed properties (8.2) that resolve from `fill`, so they deliberately have none — an opening that states \"sill\": 0 keeps it. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Opening","description":"7.1: a hole in a wall — a door, a window or a plain cased opening — hosted on its wall and placed by distances along it. It has only the members of its table (FS-CORE-1.4.1). That its width and height resolve (FS-CORE-7.2.1), that it fits its wall (7.3), that its clear opening fits it (FS-CORE-7.2.2) and that its own clear opening has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.","type":"object","required":["wall","offset"],"properties":{"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"7.1: a reference to the host wall. Always present."},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"7.1: the distance from the wall's start junction along its location line to the opening's near edge. Always present, and MUST NOT be negative (FS-CORE-7.1.1)."},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"7.1: the opening's width along the wall, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"7.1: the opening's height, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"7.1: the height of the opening's bottom above the wall's base, which MUST NOT be negative (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill`, else 0 (7.2)."},"fill":{"$ref":"#/$defs/defs/$defs/reference","description":"7.1: a reference to a type of kind doorType or windowType that fills the opening. Absent: an empty opening."},"hinge":{"title":"Hinge","description":"7.1: for a door, the jamb its leaf hangs from — the one nearer the wall's start or its end.","type":"string","enum":["start","end"],"default":"start"},"swing":{"title":"Swing","description":"7.1: for a door, the side of the wall, seen along the wall's direction, that its leaf opens into.","type":"string","enum":["left","right"],"default":"right"},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"7.1, 8.4: the net clear opening of what fills it, as declared. A typed property (8.2): absent, it resolves from `fill` (7.2), and an opening that resolves none has no clear opening. Replaces its type's whole: an own clear opening without an area has no declared area."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this opening.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this opening.","default":{}}},"additionalProperties":false};
-const schema87 = {"title":"Non-negative length","description":"A length (2.1) that is not negative: an opening's offset (7.1.1) and sill (7.1.2), a door or window type's sill (8.4.1).","type":"integer","minimum":0,"maximum":9007199254740991};
-const schema92 = {"title":"Clear opening","description":"8.4: the net clear opening of a window, or of an opening (7.1), as declared — never derived (7.4). Width and height greater than zero, and an area, when present, from 1 to 2^53 − 1 (FS-CORE-8.4.3). That the area is at most width × height (FS-CORE-8.4.4), that the clear opening fits its type (FS-CORE-8.4.5) or its opening (FS-CORE-7.2.2), and that an opening's own has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.","type":"object","required":["width","height"],"properties":{"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present."},"area":{"$ref":"#/$defs/defs/$defs/area","description":"8.4: the clear area, in square base units. Absent: not declared — and never read as width × height (7.4)."}},"additionalProperties":false};
-const schema95 = {"title":"Area","description":"2.5, 8.4, 11.1: an integer number of square base units, from 1 to 2^53 − 1 — a program item's area, a clear opening's area. Like a length, it MUST be written as a JSON integer.","type":"integer","minimum":1,"maximum":9007199254740991};
+const schema87 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 7.1's table (hinge, swing, extensions, extras). `width`, `height`, `sill` and `clearOpening` are typed properties (8.2) that resolve from `fill`, so they deliberately have none — an opening that states \"sill\": 0 keeps it. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Opening","description":"7.1: a hole in a wall — a door, a window or a plain cased opening — hosted on its wall and placed by distances along it. It has only the members of its table (FS-CORE-1.4.1). That its width and height resolve (FS-CORE-7.2.1), that it fits its wall (7.3), that its clear opening fits it (FS-CORE-7.2.2) and that its own clear opening has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.","type":"object","required":["wall","offset"],"properties":{"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"7.1: a reference to the host wall. Always present."},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"7.1: the distance from the wall's start junction along its location line to the opening's near edge. Always present, and MUST NOT be negative (FS-CORE-7.1.1)."},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"7.1: the opening's width along the wall, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"7.1: the opening's height, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"7.1: the height of the opening's bottom above the wall's base, which MUST NOT be negative (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill`, else 0 (7.2)."},"fill":{"$ref":"#/$defs/defs/$defs/reference","description":"7.1: a reference to a type of kind doorType or windowType that fills the opening. Absent: an empty opening."},"hinge":{"title":"Hinge","description":"7.1: for a door, the jamb its leaf hangs from — the one nearer the wall's start or its end.","type":"string","enum":["start","end"],"default":"start"},"swing":{"title":"Swing","description":"7.1: for a door, the side of the wall, seen along the wall's direction, that its leaf opens into.","type":"string","enum":["left","right"],"default":"right"},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"7.1, 8.4: the net clear opening of what fills it, as declared. A typed property (8.2): absent, it resolves from `fill` (7.2), and an opening that resolves none has no clear opening. Replaces its type's whole: an own clear opening without an area has no declared area."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this opening.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this opening.","default":{}}},"additionalProperties":false};
+const schema89 = {"title":"Non-negative length","description":"A length (2.1) that is not negative: an opening's offset (7.1.1) and sill (7.1.2), a door or window type's sill (8.4.1).","type":"integer","minimum":0,"maximum":9007199254740991};
+const schema94 = {"title":"Clear opening","description":"8.4: the net clear opening of a window, or of an opening (7.1), as declared — never derived (7.4). Width and height greater than zero, and an area, when present, from 1 to 2^53 − 1 (FS-CORE-8.4.3). That the area is at most width × height (FS-CORE-8.4.4), that the clear opening fits its type (FS-CORE-8.4.5) or its opening (FS-CORE-7.2.2), and that an opening's own has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.","type":"object","required":["width","height"],"properties":{"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present."},"area":{"$ref":"#/$defs/defs/$defs/area","description":"8.4: the clear area, in square base units. Absent: not declared — and never read as width × height (7.4)."}},"additionalProperties":false};
+const schema97 = {"title":"Area","description":"2.5, 8.4, 11.1: an integer number of square base units, from 1 to 2^53 − 1 — a program item's area, a clear opening's area. Like a length, it MUST be written as a JSON integer.","type":"integer","minimum":1,"maximum":9007199254740991};
 
 function validate54(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
@@ -2495,7 +2565,7 @@ vErrors.push(err1);
 errors++;
 }
 for(const key0 in data){
-if(!(func1.call(schema85.properties, key0))){
+if(!(func1.call(schema87.properties, key0))){
 const err2 = {instancePath,schemaPath:"#/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"};
 if(vErrors === null){
 vErrors = [err2];
@@ -2709,7 +2779,7 @@ vErrors.push(err19);
 errors++;
 }
 if(!((data6 === "start") || (data6 === "end"))){
-const err20 = {instancePath:instancePath+"/hinge",schemaPath:"#/properties/hinge/enum",keyword:"enum",params:{allowedValues: schema85.properties.hinge.enum},message:"must be equal to one of the allowed values"};
+const err20 = {instancePath:instancePath+"/hinge",schemaPath:"#/properties/hinge/enum",keyword:"enum",params:{allowedValues: schema87.properties.hinge.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err20];
 }
@@ -2732,7 +2802,7 @@ vErrors.push(err21);
 errors++;
 }
 if(!((data7 === "left") || (data7 === "right"))){
-const err22 = {instancePath:instancePath+"/swing",schemaPath:"#/properties/swing/enum",keyword:"enum",params:{allowedValues: schema85.properties.swing.enum},message:"must be equal to one of the allowed values"};
+const err22 = {instancePath:instancePath+"/swing",schemaPath:"#/properties/swing/enum",keyword:"enum",params:{allowedValues: schema87.properties.swing.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err22];
 }
@@ -2820,9 +2890,784 @@ return errors === 0;
 }
 validate53.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema99 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Room","description":"6.5: a room — what cannot be derived about a bounded face of its level's wall graph: its name, its function, its finishes, the program item it fulfils, and the anchor that says which face it is. Every room MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). Where its anchor lies (6.3) is an invariant, not checked here.","type":"object","required":["level","anchor"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 6.5: a reference to the level the room is on. Always present."},"anchor":{"$ref":"#/$defs/defs/$defs/point","description":"6.3, 6.5: a point on the room's level; the face that contains it is the room's face. Always present."},"function":{"$ref":"#/$defs/room/$defs/function","description":"4.1, 6.5: what the room is for.","default":"unspecified"},"wallFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the material that finishes the walls facing this room. Absent by default."},"floorFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the floor finish's material. Absent by default."},"ceilingFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the ceiling finish's material. Absent by default."},"brief":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5, 11.3: a reference to the program item this room fulfils. That it resolves to a program item (FS-CORE-3.2.1) is an invariant (FS-INV-002), not checked here. Absent by default: the room fulfils no item."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this room.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this room.","default":{}}},"additionalProperties":false,"$defs":{"function":{"title":"Room function","description":"4.1: a room's function MUST be either one of the terms of 4.1's table or an extension term (FS-CORE-4.1.1). That an extension term's extension is in extensionsUsed (FS-CORE-4.2.1) is an invariant (FS-INV-006), not checked here.","type":"string","anyOf":[{"title":"Core room function","description":"4.1: one of the fourteen core terms.","type":"string","enum":["unspecified","sleeping","bath","kitchen","living","dining","office","laundry","utility","storage","circulation","mechanical","garage","exterior"]},{"title":"Extension term","description":"4.2: <extension name>:<term>, such as EXT_wellness:sauna, where the extension name matches 1.6's pattern and the term matches ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+:[a-z][A-Za-z0-9]*$"}]}}};
-const schema101 = {"title":"Room function","description":"4.1: a room's function MUST be either one of the terms of 4.1's table or an extension term (FS-CORE-4.1.1). That an extension term's extension is in extensionsUsed (FS-CORE-4.2.1) is an invariant (FS-INV-006), not checked here.","type":"string","anyOf":[{"title":"Core room function","description":"4.1: one of the fourteen core terms.","type":"string","enum":["unspecified","sleeping","bath","kitchen","living","dining","office","laundry","utility","storage","circulation","mechanical","garage","exterior"]},{"title":"Extension term","description":"4.2: <extension name>:<term>, such as EXT_wellness:sauna, where the extension name matches 1.6's pattern and the term matches ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+:[a-z][A-Za-z0-9]*$"}]};
+const schema101 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Room","description":"6.5: a room — what cannot be derived about a bounded face of its level's wall graph: its name, its function, its finishes, the program item it fulfils, its floor and ceiling (chapter 15), and the anchor that says which face it is. Every room MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). Where its anchor lies (6.3) is an invariant, not checked here.","type":"object","required":["level","anchor"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 6.5: a reference to the level the room is on. Always present."},"anchor":{"$ref":"#/$defs/defs/$defs/point","description":"6.3, 6.5: a point on the room's level; the face that contains it is the room's face. Always present."},"function":{"$ref":"#/$defs/room/$defs/function","description":"4.1, 6.5: what the room is for.","default":"unspecified"},"wallFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the material that finishes the walls facing this room. Absent by default."},"floorFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the floor finish's material. Absent by default."},"ceilingFinish":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5: a reference to the ceiling finish's material. Absent by default."},"brief":{"$ref":"#/$defs/defs/$defs/reference","description":"6.5, 11.3: a reference to the program item this room fulfils. That it resolves to a program item (FS-CORE-3.2.1) is an invariant (FS-INV-002), not checked here. Absent by default: the room fulfils no item."},"floor":{"$ref":"#/$defs/room/$defs/floor","description":"6.5, 15.1: the room's floor: its offset from the level's elevation and its thickness.","default":{}},"ceiling":{"$ref":"#/$defs/room/$defs/ceiling","description":"6.5, 15.2: the room's ceiling: flat, tray or vaulted, and its height.","default":{"kind":"flat"}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this room.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this room.","default":{}}},"additionalProperties":false,"$defs":{"function":{"title":"Room function","description":"4.1: a room's function MUST be either one of the terms of 4.1's table or an extension term (FS-CORE-4.1.1). That an extension term's extension is in extensionsUsed (FS-CORE-4.2.1) is an invariant (FS-INV-006), not checked here.","type":"string","anyOf":[{"title":"Core room function","description":"4.1: one of the fourteen core terms.","type":"string","enum":["unspecified","sleeping","bath","kitchen","living","dining","office","laundry","utility","storage","circulation","mechanical","garage","exterior"]},{"title":"Extension term","description":"4.2: <extension name>:<term>, such as EXT_wellness:sauna, where the extension name matches 1.6's pattern and the term matches ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+:[a-z][A-Za-z0-9]*$"}]},"floor":{"title":"Floor","description":"15.1: a room's floor. It has only these members (FS-CORE-15.1.1).","type":"object","properties":{"offset":{"$ref":"#/$defs/defs/$defs/length","description":"15.1: the height of the floor's top above the level's elevation: negative for a sunken floor, positive for a raised one.","default":0},"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.1: the floor's thickness, from its top down; greater than zero (FS-CORE-15.1.1). Its default is derived — the level's floorThickness, else not declared — so it carries no `default` here."}},"additionalProperties":false},"ceiling":{"title":"Ceiling","description":"15.2: a room's ceiling, of exactly one of three forms (FS-CORE-15.2.1). That it is above the floor (FS-CORE-15.2.2), that a vault's ridge points differ (FS-CORE-15.3.1) and that a tray's border fits its room (FS-CORE-15.4.1) are invariants (FS-INV-701 to FS-INV-703), not checked here.","type":"object","required":["kind"],"properties":{"kind":{"title":"Ceiling kind","description":"15.2: \"flat\", \"tray\" or \"vaulted\".","type":"string","enum":["flat","tray","vaulted"]}},"oneOf":[{"title":"Flat ceiling","description":"15.2: { \"kind\": \"flat\", \"height\"? } — flat at its height.","type":"object","required":["kind"],"properties":{"kind":{"description":"15.2: \"flat\".","const":"flat"},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."}},"additionalProperties":false},{"title":"Tray ceiling","description":"15.2, 15.4: { \"kind\": \"tray\", \"height\"?, \"border\", \"depth\" } — flat at its height for a border inside the walls, raised by depth over the centre.","type":"object","required":["kind","border","depth"],"properties":{"kind":{"description":"15.2: \"tray\".","const":"tray"},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."},"border":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.4: the width of the border, measured in plan from the room polygon inwards; greater than zero (FS-CORE-15.2.1). Always present."},"depth":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: how far the centre is raised above the border; greater than zero (FS-CORE-15.2.1). Always present."}},"additionalProperties":false},{"title":"Vaulted ceiling","description":"15.2, 15.3: { \"kind\": \"vaulted\", \"height\"?, \"ridge\", \"pitch\", \"slopes\"? } — rising to a ridge line at its height and falling away from it at its pitch.","type":"object","required":["kind","ridge","pitch"],"properties":{"kind":{"description":"15.2: \"vaulted\".","const":"vaulted"},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."},"ridge":{"title":"Ridge","description":"15.3: two plan points the ridge line runs through. Always present. That they differ (FS-CORE-15.3.1) is an invariant (FS-INV-702).","type":"array","items":{"$ref":"#/$defs/defs/$defs/point"},"minItems":2,"maxItems":2},"pitch":{"$ref":"#/$defs/defs/$defs/pitch","description":"15.3: the slope away from the ridge. Always present."},"slopes":{"description":"15.3: \"both\" (a cathedral ceiling), or \"left\" or \"right\": one plane falling to that side of the ridge line, walked from its first point to its second.","type":"string","enum":["both","left","right"],"default":"both"}},"additionalProperties":false}]}}};
+const schema103 = {"title":"Room function","description":"4.1: a room's function MUST be either one of the terms of 4.1's table or an extension term (FS-CORE-4.1.1). That an extension term's extension is in extensionsUsed (FS-CORE-4.2.1) is an invariant (FS-INV-006), not checked here.","type":"string","anyOf":[{"title":"Core room function","description":"4.1: one of the fourteen core terms.","type":"string","enum":["unspecified","sleeping","bath","kitchen","living","dining","office","laundry","utility","storage","circulation","mechanical","garage","exterior"]},{"title":"Extension term","description":"4.2: <extension name>:<term>, such as EXT_wellness:sauna, where the extension name matches 1.6's pattern and the term matches ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+:[a-z][A-Za-z0-9]*$"}]};
 const pattern28 = new RegExp("^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+:[a-z][A-Za-z0-9]*$", "u");
+const schema108 = {"title":"Floor","description":"15.1: a room's floor. It has only these members (FS-CORE-15.1.1).","type":"object","properties":{"offset":{"$ref":"#/$defs/defs/$defs/length","description":"15.1: the height of the floor's top above the level's elevation: negative for a sunken floor, positive for a raised one.","default":0},"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.1: the floor's thickness, from its top down; greater than zero (FS-CORE-15.1.1). Its default is derived — the level's floorThickness, else not declared — so it carries no `default` here."}},"additionalProperties":false};
+
+function validate60(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+let vErrors = null;
+let errors = 0;
+const evaluated0 = validate60.evaluated;
+if(evaluated0.dynamicProps){
+evaluated0.props = undefined;
+}
+if(evaluated0.dynamicItems){
+evaluated0.items = undefined;
+}
+if(data && typeof data == "object" && !Array.isArray(data)){
+for(const key0 in data){
+if(!((key0 === "offset") || (key0 === "thickness"))){
+const err0 = {instancePath,schemaPath:"#/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"};
+if(vErrors === null){
+vErrors = [err0];
+}
+else {
+vErrors.push(err0);
+}
+errors++;
+}
+}
+if(data.offset !== undefined){
+let data0 = data.offset;
+if(!(((typeof data0 == "number") && (!(data0 % 1) && !isNaN(data0))) && (isFinite(data0)))){
+const err1 = {instancePath:instancePath+"/offset",schemaPath:"#/$defs/defs/$defs/length/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err1];
+}
+else {
+vErrors.push(err1);
+}
+errors++;
+}
+if((typeof data0 == "number") && (isFinite(data0))){
+if(data0 > 9007199254740991 || isNaN(data0)){
+const err2 = {instancePath:instancePath+"/offset",schemaPath:"#/$defs/defs/$defs/length/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err2];
+}
+else {
+vErrors.push(err2);
+}
+errors++;
+}
+if(data0 < -9007199254740991 || isNaN(data0)){
+const err3 = {instancePath:instancePath+"/offset",schemaPath:"#/$defs/defs/$defs/length/minimum",keyword:"minimum",params:{comparison: ">=", limit: -9007199254740991},message:"must be >= -9007199254740991"};
+if(vErrors === null){
+vErrors = [err3];
+}
+else {
+vErrors.push(err3);
+}
+errors++;
+}
+}
+}
+if(data.thickness !== undefined){
+let data1 = data.thickness;
+if(!(((typeof data1 == "number") && (!(data1 % 1) && !isNaN(data1))) && (isFinite(data1)))){
+const err4 = {instancePath:instancePath+"/thickness",schemaPath:"#/$defs/defs/$defs/positiveLength/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err4];
+}
+else {
+vErrors.push(err4);
+}
+errors++;
+}
+if((typeof data1 == "number") && (isFinite(data1))){
+if(data1 > 9007199254740991 || isNaN(data1)){
+const err5 = {instancePath:instancePath+"/thickness",schemaPath:"#/$defs/defs/$defs/positiveLength/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err5];
+}
+else {
+vErrors.push(err5);
+}
+errors++;
+}
+if(data1 < 1 || isNaN(data1)){
+const err6 = {instancePath:instancePath+"/thickness",schemaPath:"#/$defs/defs/$defs/positiveLength/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
+if(vErrors === null){
+vErrors = [err6];
+}
+else {
+vErrors.push(err6);
+}
+errors++;
+}
+}
+}
+}
+else {
+const err7 = {instancePath,schemaPath:"#/type",keyword:"type",params:{type: "object"},message:"must be object"};
+if(vErrors === null){
+vErrors = [err7];
+}
+else {
+vErrors.push(err7);
+}
+errors++;
+}
+validate60.errors = vErrors;
+return errors === 0;
+}
+validate60.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+
+const schema111 = {"title":"Ceiling","description":"15.2: a room's ceiling, of exactly one of three forms (FS-CORE-15.2.1). That it is above the floor (FS-CORE-15.2.2), that a vault's ridge points differ (FS-CORE-15.3.1) and that a tray's border fits its room (FS-CORE-15.4.1) are invariants (FS-INV-701 to FS-INV-703), not checked here.","type":"object","required":["kind"],"properties":{"kind":{"title":"Ceiling kind","description":"15.2: \"flat\", \"tray\" or \"vaulted\".","type":"string","enum":["flat","tray","vaulted"]}},"oneOf":[{"title":"Flat ceiling","description":"15.2: { \"kind\": \"flat\", \"height\"? } — flat at its height.","type":"object","required":["kind"],"properties":{"kind":{"description":"15.2: \"flat\".","const":"flat"},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."}},"additionalProperties":false},{"title":"Tray ceiling","description":"15.2, 15.4: { \"kind\": \"tray\", \"height\"?, \"border\", \"depth\" } — flat at its height for a border inside the walls, raised by depth over the centre.","type":"object","required":["kind","border","depth"],"properties":{"kind":{"description":"15.2: \"tray\".","const":"tray"},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."},"border":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.4: the width of the border, measured in plan from the room polygon inwards; greater than zero (FS-CORE-15.2.1). Always present."},"depth":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: how far the centre is raised above the border; greater than zero (FS-CORE-15.2.1). Always present."}},"additionalProperties":false},{"title":"Vaulted ceiling","description":"15.2, 15.3: { \"kind\": \"vaulted\", \"height\"?, \"ridge\", \"pitch\", \"slopes\"? } — rising to a ridge line at its height and falling away from it at its pitch.","type":"object","required":["kind","ridge","pitch"],"properties":{"kind":{"description":"15.2: \"vaulted\".","const":"vaulted"},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."},"ridge":{"title":"Ridge","description":"15.3: two plan points the ridge line runs through. Always present. That they differ (FS-CORE-15.3.1) is an invariant (FS-INV-702).","type":"array","items":{"$ref":"#/$defs/defs/$defs/point"},"minItems":2,"maxItems":2},"pitch":{"$ref":"#/$defs/defs/$defs/pitch","description":"15.3: the slope away from the ridge. Always present."},"slopes":{"description":"15.3: \"both\" (a cathedral ceiling), or \"left\" or \"right\": one plane falling to that side of the ridge line, walked from its first point to its second.","type":"string","enum":["both","left","right"],"default":"both"}},"additionalProperties":false}]};
+const schema117 = {"title":"Pitch","description":"2.5, 15.3: a slope as a pair of positive integers { \"rise\": r, \"run\": n } — r up for every n across. Both MUST be integers from 1 to 2^53 − 1 (FS-CORE-15.2.1).","type":"object","required":["rise","run"],"properties":{"rise":{"description":"2.5: the rise, a positive integer. Always present.","type":"integer","minimum":1,"maximum":9007199254740991},"run":{"description":"2.5: the run, a positive integer. Always present.","type":"integer","minimum":1,"maximum":9007199254740991}},"additionalProperties":false};
+
+function validate62(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+let vErrors = null;
+let errors = 0;
+const evaluated0 = validate62.evaluated;
+if(evaluated0.dynamicProps){
+evaluated0.props = undefined;
+}
+if(evaluated0.dynamicItems){
+evaluated0.items = undefined;
+}
+const _errs1 = errors;
+let valid0 = false;
+let passing0 = null;
+const _errs2 = errors;
+if(data && typeof data == "object" && !Array.isArray(data)){
+if(data.kind === undefined){
+const err0 = {instancePath,schemaPath:"#/oneOf/0/required",keyword:"required",params:{missingProperty: "kind"},message:"must have required property '"+"kind"+"'"};
+if(vErrors === null){
+vErrors = [err0];
+}
+else {
+vErrors.push(err0);
+}
+errors++;
+}
+for(const key0 in data){
+if(!((key0 === "kind") || (key0 === "height"))){
+const err1 = {instancePath,schemaPath:"#/oneOf/0/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"};
+if(vErrors === null){
+vErrors = [err1];
+}
+else {
+vErrors.push(err1);
+}
+errors++;
+}
+}
+if(data.kind !== undefined){
+if("flat" !== data.kind){
+const err2 = {instancePath:instancePath+"/kind",schemaPath:"#/oneOf/0/properties/kind/const",keyword:"const",params:{allowedValue: "flat"},message:"must be equal to constant"};
+if(vErrors === null){
+vErrors = [err2];
+}
+else {
+vErrors.push(err2);
+}
+errors++;
+}
+}
+if(data.height !== undefined){
+let data1 = data.height;
+if(!(((typeof data1 == "number") && (!(data1 % 1) && !isNaN(data1))) && (isFinite(data1)))){
+const err3 = {instancePath:instancePath+"/height",schemaPath:"#/$defs/defs/$defs/positiveLength/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err3];
+}
+else {
+vErrors.push(err3);
+}
+errors++;
+}
+if((typeof data1 == "number") && (isFinite(data1))){
+if(data1 > 9007199254740991 || isNaN(data1)){
+const err4 = {instancePath:instancePath+"/height",schemaPath:"#/$defs/defs/$defs/positiveLength/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err4];
+}
+else {
+vErrors.push(err4);
+}
+errors++;
+}
+if(data1 < 1 || isNaN(data1)){
+const err5 = {instancePath:instancePath+"/height",schemaPath:"#/$defs/defs/$defs/positiveLength/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
+if(vErrors === null){
+vErrors = [err5];
+}
+else {
+vErrors.push(err5);
+}
+errors++;
+}
+}
+}
+}
+else {
+const err6 = {instancePath,schemaPath:"#/oneOf/0/type",keyword:"type",params:{type: "object"},message:"must be object"};
+if(vErrors === null){
+vErrors = [err6];
+}
+else {
+vErrors.push(err6);
+}
+errors++;
+}
+var _valid0 = _errs2 === errors;
+if(_valid0){
+valid0 = true;
+passing0 = 0;
+var props0 = true;
+}
+const _errs9 = errors;
+if(data && typeof data == "object" && !Array.isArray(data)){
+if(data.kind === undefined){
+const err7 = {instancePath,schemaPath:"#/oneOf/1/required",keyword:"required",params:{missingProperty: "kind"},message:"must have required property '"+"kind"+"'"};
+if(vErrors === null){
+vErrors = [err7];
+}
+else {
+vErrors.push(err7);
+}
+errors++;
+}
+if(data.border === undefined){
+const err8 = {instancePath,schemaPath:"#/oneOf/1/required",keyword:"required",params:{missingProperty: "border"},message:"must have required property '"+"border"+"'"};
+if(vErrors === null){
+vErrors = [err8];
+}
+else {
+vErrors.push(err8);
+}
+errors++;
+}
+if(data.depth === undefined){
+const err9 = {instancePath,schemaPath:"#/oneOf/1/required",keyword:"required",params:{missingProperty: "depth"},message:"must have required property '"+"depth"+"'"};
+if(vErrors === null){
+vErrors = [err9];
+}
+else {
+vErrors.push(err9);
+}
+errors++;
+}
+for(const key1 in data){
+if(!((((key1 === "kind") || (key1 === "height")) || (key1 === "border")) || (key1 === "depth"))){
+const err10 = {instancePath,schemaPath:"#/oneOf/1/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key1},message:"must NOT have additional properties"};
+if(vErrors === null){
+vErrors = [err10];
+}
+else {
+vErrors.push(err10);
+}
+errors++;
+}
+}
+if(data.kind !== undefined){
+if("tray" !== data.kind){
+const err11 = {instancePath:instancePath+"/kind",schemaPath:"#/oneOf/1/properties/kind/const",keyword:"const",params:{allowedValue: "tray"},message:"must be equal to constant"};
+if(vErrors === null){
+vErrors = [err11];
+}
+else {
+vErrors.push(err11);
+}
+errors++;
+}
+}
+if(data.height !== undefined){
+let data3 = data.height;
+if(!(((typeof data3 == "number") && (!(data3 % 1) && !isNaN(data3))) && (isFinite(data3)))){
+const err12 = {instancePath:instancePath+"/height",schemaPath:"#/$defs/defs/$defs/positiveLength/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err12];
+}
+else {
+vErrors.push(err12);
+}
+errors++;
+}
+if((typeof data3 == "number") && (isFinite(data3))){
+if(data3 > 9007199254740991 || isNaN(data3)){
+const err13 = {instancePath:instancePath+"/height",schemaPath:"#/$defs/defs/$defs/positiveLength/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err13];
+}
+else {
+vErrors.push(err13);
+}
+errors++;
+}
+if(data3 < 1 || isNaN(data3)){
+const err14 = {instancePath:instancePath+"/height",schemaPath:"#/$defs/defs/$defs/positiveLength/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
+if(vErrors === null){
+vErrors = [err14];
+}
+else {
+vErrors.push(err14);
+}
+errors++;
+}
+}
+}
+if(data.border !== undefined){
+let data4 = data.border;
+if(!(((typeof data4 == "number") && (!(data4 % 1) && !isNaN(data4))) && (isFinite(data4)))){
+const err15 = {instancePath:instancePath+"/border",schemaPath:"#/$defs/defs/$defs/positiveLength/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err15];
+}
+else {
+vErrors.push(err15);
+}
+errors++;
+}
+if((typeof data4 == "number") && (isFinite(data4))){
+if(data4 > 9007199254740991 || isNaN(data4)){
+const err16 = {instancePath:instancePath+"/border",schemaPath:"#/$defs/defs/$defs/positiveLength/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err16];
+}
+else {
+vErrors.push(err16);
+}
+errors++;
+}
+if(data4 < 1 || isNaN(data4)){
+const err17 = {instancePath:instancePath+"/border",schemaPath:"#/$defs/defs/$defs/positiveLength/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
+if(vErrors === null){
+vErrors = [err17];
+}
+else {
+vErrors.push(err17);
+}
+errors++;
+}
+}
+}
+if(data.depth !== undefined){
+let data5 = data.depth;
+if(!(((typeof data5 == "number") && (!(data5 % 1) && !isNaN(data5))) && (isFinite(data5)))){
+const err18 = {instancePath:instancePath+"/depth",schemaPath:"#/$defs/defs/$defs/positiveLength/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err18];
+}
+else {
+vErrors.push(err18);
+}
+errors++;
+}
+if((typeof data5 == "number") && (isFinite(data5))){
+if(data5 > 9007199254740991 || isNaN(data5)){
+const err19 = {instancePath:instancePath+"/depth",schemaPath:"#/$defs/defs/$defs/positiveLength/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err19];
+}
+else {
+vErrors.push(err19);
+}
+errors++;
+}
+if(data5 < 1 || isNaN(data5)){
+const err20 = {instancePath:instancePath+"/depth",schemaPath:"#/$defs/defs/$defs/positiveLength/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
+if(vErrors === null){
+vErrors = [err20];
+}
+else {
+vErrors.push(err20);
+}
+errors++;
+}
+}
+}
+}
+else {
+const err21 = {instancePath,schemaPath:"#/oneOf/1/type",keyword:"type",params:{type: "object"},message:"must be object"};
+if(vErrors === null){
+vErrors = [err21];
+}
+else {
+vErrors.push(err21);
+}
+errors++;
+}
+var _valid0 = _errs9 === errors;
+if(_valid0 && valid0){
+valid0 = false;
+passing0 = [passing0, 1];
+}
+else {
+if(_valid0){
+valid0 = true;
+passing0 = 1;
+if(props0 !== true){
+props0 = true;
+}
+}
+const _errs22 = errors;
+if(data && typeof data == "object" && !Array.isArray(data)){
+if(data.kind === undefined){
+const err22 = {instancePath,schemaPath:"#/oneOf/2/required",keyword:"required",params:{missingProperty: "kind"},message:"must have required property '"+"kind"+"'"};
+if(vErrors === null){
+vErrors = [err22];
+}
+else {
+vErrors.push(err22);
+}
+errors++;
+}
+if(data.ridge === undefined){
+const err23 = {instancePath,schemaPath:"#/oneOf/2/required",keyword:"required",params:{missingProperty: "ridge"},message:"must have required property '"+"ridge"+"'"};
+if(vErrors === null){
+vErrors = [err23];
+}
+else {
+vErrors.push(err23);
+}
+errors++;
+}
+if(data.pitch === undefined){
+const err24 = {instancePath,schemaPath:"#/oneOf/2/required",keyword:"required",params:{missingProperty: "pitch"},message:"must have required property '"+"pitch"+"'"};
+if(vErrors === null){
+vErrors = [err24];
+}
+else {
+vErrors.push(err24);
+}
+errors++;
+}
+for(const key2 in data){
+if(!(((((key2 === "kind") || (key2 === "height")) || (key2 === "ridge")) || (key2 === "pitch")) || (key2 === "slopes"))){
+const err25 = {instancePath,schemaPath:"#/oneOf/2/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key2},message:"must NOT have additional properties"};
+if(vErrors === null){
+vErrors = [err25];
+}
+else {
+vErrors.push(err25);
+}
+errors++;
+}
+}
+if(data.kind !== undefined){
+if("vaulted" !== data.kind){
+const err26 = {instancePath:instancePath+"/kind",schemaPath:"#/oneOf/2/properties/kind/const",keyword:"const",params:{allowedValue: "vaulted"},message:"must be equal to constant"};
+if(vErrors === null){
+vErrors = [err26];
+}
+else {
+vErrors.push(err26);
+}
+errors++;
+}
+}
+if(data.height !== undefined){
+let data7 = data.height;
+if(!(((typeof data7 == "number") && (!(data7 % 1) && !isNaN(data7))) && (isFinite(data7)))){
+const err27 = {instancePath:instancePath+"/height",schemaPath:"#/$defs/defs/$defs/positiveLength/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err27];
+}
+else {
+vErrors.push(err27);
+}
+errors++;
+}
+if((typeof data7 == "number") && (isFinite(data7))){
+if(data7 > 9007199254740991 || isNaN(data7)){
+const err28 = {instancePath:instancePath+"/height",schemaPath:"#/$defs/defs/$defs/positiveLength/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err28];
+}
+else {
+vErrors.push(err28);
+}
+errors++;
+}
+if(data7 < 1 || isNaN(data7)){
+const err29 = {instancePath:instancePath+"/height",schemaPath:"#/$defs/defs/$defs/positiveLength/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
+if(vErrors === null){
+vErrors = [err29];
+}
+else {
+vErrors.push(err29);
+}
+errors++;
+}
+}
+}
+if(data.ridge !== undefined){
+let data8 = data.ridge;
+if(Array.isArray(data8)){
+if(data8.length > 2){
+const err30 = {instancePath:instancePath+"/ridge",schemaPath:"#/oneOf/2/properties/ridge/maxItems",keyword:"maxItems",params:{limit: 2},message:"must NOT have more than 2 items"};
+if(vErrors === null){
+vErrors = [err30];
+}
+else {
+vErrors.push(err30);
+}
+errors++;
+}
+if(data8.length < 2){
+const err31 = {instancePath:instancePath+"/ridge",schemaPath:"#/oneOf/2/properties/ridge/minItems",keyword:"minItems",params:{limit: 2},message:"must NOT have fewer than 2 items"};
+if(vErrors === null){
+vErrors = [err31];
+}
+else {
+vErrors.push(err31);
+}
+errors++;
+}
+const len0 = data8.length;
+for(let i0=0; i0<len0; i0++){
+if(!(validate26(data8[i0], {instancePath:instancePath+"/ridge/" + i0,parentData:data8,parentDataProperty:i0,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate26.errors : vErrors.concat(validate26.errors);
+errors = vErrors.length;
+}
+}
+}
+else {
+const err32 = {instancePath:instancePath+"/ridge",schemaPath:"#/oneOf/2/properties/ridge/type",keyword:"type",params:{type: "array"},message:"must be array"};
+if(vErrors === null){
+vErrors = [err32];
+}
+else {
+vErrors.push(err32);
+}
+errors++;
+}
+}
+if(data.pitch !== undefined){
+let data10 = data.pitch;
+if(data10 && typeof data10 == "object" && !Array.isArray(data10)){
+if(data10.rise === undefined){
+const err33 = {instancePath:instancePath+"/pitch",schemaPath:"#/$defs/defs/$defs/pitch/required",keyword:"required",params:{missingProperty: "rise"},message:"must have required property '"+"rise"+"'"};
+if(vErrors === null){
+vErrors = [err33];
+}
+else {
+vErrors.push(err33);
+}
+errors++;
+}
+if(data10.run === undefined){
+const err34 = {instancePath:instancePath+"/pitch",schemaPath:"#/$defs/defs/$defs/pitch/required",keyword:"required",params:{missingProperty: "run"},message:"must have required property '"+"run"+"'"};
+if(vErrors === null){
+vErrors = [err34];
+}
+else {
+vErrors.push(err34);
+}
+errors++;
+}
+for(const key3 in data10){
+if(!((key3 === "rise") || (key3 === "run"))){
+const err35 = {instancePath:instancePath+"/pitch",schemaPath:"#/$defs/defs/$defs/pitch/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key3},message:"must NOT have additional properties"};
+if(vErrors === null){
+vErrors = [err35];
+}
+else {
+vErrors.push(err35);
+}
+errors++;
+}
+}
+if(data10.rise !== undefined){
+let data11 = data10.rise;
+if(!(((typeof data11 == "number") && (!(data11 % 1) && !isNaN(data11))) && (isFinite(data11)))){
+const err36 = {instancePath:instancePath+"/pitch/rise",schemaPath:"#/$defs/defs/$defs/pitch/properties/rise/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err36];
+}
+else {
+vErrors.push(err36);
+}
+errors++;
+}
+if((typeof data11 == "number") && (isFinite(data11))){
+if(data11 > 9007199254740991 || isNaN(data11)){
+const err37 = {instancePath:instancePath+"/pitch/rise",schemaPath:"#/$defs/defs/$defs/pitch/properties/rise/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err37];
+}
+else {
+vErrors.push(err37);
+}
+errors++;
+}
+if(data11 < 1 || isNaN(data11)){
+const err38 = {instancePath:instancePath+"/pitch/rise",schemaPath:"#/$defs/defs/$defs/pitch/properties/rise/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
+if(vErrors === null){
+vErrors = [err38];
+}
+else {
+vErrors.push(err38);
+}
+errors++;
+}
+}
+}
+if(data10.run !== undefined){
+let data12 = data10.run;
+if(!(((typeof data12 == "number") && (!(data12 % 1) && !isNaN(data12))) && (isFinite(data12)))){
+const err39 = {instancePath:instancePath+"/pitch/run",schemaPath:"#/$defs/defs/$defs/pitch/properties/run/type",keyword:"type",params:{type: "integer"},message:"must be integer"};
+if(vErrors === null){
+vErrors = [err39];
+}
+else {
+vErrors.push(err39);
+}
+errors++;
+}
+if((typeof data12 == "number") && (isFinite(data12))){
+if(data12 > 9007199254740991 || isNaN(data12)){
+const err40 = {instancePath:instancePath+"/pitch/run",schemaPath:"#/$defs/defs/$defs/pitch/properties/run/maximum",keyword:"maximum",params:{comparison: "<=", limit: 9007199254740991},message:"must be <= 9007199254740991"};
+if(vErrors === null){
+vErrors = [err40];
+}
+else {
+vErrors.push(err40);
+}
+errors++;
+}
+if(data12 < 1 || isNaN(data12)){
+const err41 = {instancePath:instancePath+"/pitch/run",schemaPath:"#/$defs/defs/$defs/pitch/properties/run/minimum",keyword:"minimum",params:{comparison: ">=", limit: 1},message:"must be >= 1"};
+if(vErrors === null){
+vErrors = [err41];
+}
+else {
+vErrors.push(err41);
+}
+errors++;
+}
+}
+}
+}
+else {
+const err42 = {instancePath:instancePath+"/pitch",schemaPath:"#/$defs/defs/$defs/pitch/type",keyword:"type",params:{type: "object"},message:"must be object"};
+if(vErrors === null){
+vErrors = [err42];
+}
+else {
+vErrors.push(err42);
+}
+errors++;
+}
+}
+if(data.slopes !== undefined){
+let data13 = data.slopes;
+if(typeof data13 !== "string"){
+const err43 = {instancePath:instancePath+"/slopes",schemaPath:"#/oneOf/2/properties/slopes/type",keyword:"type",params:{type: "string"},message:"must be string"};
+if(vErrors === null){
+vErrors = [err43];
+}
+else {
+vErrors.push(err43);
+}
+errors++;
+}
+if(!(((data13 === "both") || (data13 === "left")) || (data13 === "right"))){
+const err44 = {instancePath:instancePath+"/slopes",schemaPath:"#/oneOf/2/properties/slopes/enum",keyword:"enum",params:{allowedValues: schema111.oneOf[2].properties.slopes.enum},message:"must be equal to one of the allowed values"};
+if(vErrors === null){
+vErrors = [err44];
+}
+else {
+vErrors.push(err44);
+}
+errors++;
+}
+}
+}
+else {
+const err45 = {instancePath,schemaPath:"#/oneOf/2/type",keyword:"type",params:{type: "object"},message:"must be object"};
+if(vErrors === null){
+vErrors = [err45];
+}
+else {
+vErrors.push(err45);
+}
+errors++;
+}
+var _valid0 = _errs22 === errors;
+if(_valid0 && valid0){
+valid0 = false;
+passing0 = [passing0, 2];
+}
+else {
+if(_valid0){
+valid0 = true;
+passing0 = 2;
+if(props0 !== true){
+props0 = true;
+}
+}
+}
+}
+if(!valid0){
+const err46 = {instancePath,schemaPath:"#/oneOf",keyword:"oneOf",params:{passingSchemas: passing0},message:"must match exactly one schema in oneOf"};
+if(vErrors === null){
+vErrors = [err46];
+}
+else {
+vErrors.push(err46);
+}
+errors++;
+}
+else {
+errors = _errs1;
+if(vErrors !== null){
+if(_errs1){
+vErrors.length = _errs1;
+}
+else {
+vErrors = null;
+}
+}
+}
+if(data && typeof data == "object" && !Array.isArray(data)){
+if(data.kind === undefined){
+const err47 = {instancePath,schemaPath:"#/required",keyword:"required",params:{missingProperty: "kind"},message:"must have required property '"+"kind"+"'"};
+if(vErrors === null){
+vErrors = [err47];
+}
+else {
+vErrors.push(err47);
+}
+errors++;
+}
+if(props0 !== true){
+props0 = props0 || {};
+props0.kind = true;
+}
+if(data.kind !== undefined){
+let data14 = data.kind;
+if(typeof data14 !== "string"){
+const err48 = {instancePath:instancePath+"/kind",schemaPath:"#/properties/kind/type",keyword:"type",params:{type: "string"},message:"must be string"};
+if(vErrors === null){
+vErrors = [err48];
+}
+else {
+vErrors.push(err48);
+}
+errors++;
+}
+if(!(((data14 === "flat") || (data14 === "tray")) || (data14 === "vaulted"))){
+const err49 = {instancePath:instancePath+"/kind",schemaPath:"#/properties/kind/enum",keyword:"enum",params:{allowedValues: schema111.properties.kind.enum},message:"must be equal to one of the allowed values"};
+if(vErrors === null){
+vErrors = [err49];
+}
+else {
+vErrors.push(err49);
+}
+errors++;
+}
+}
+}
+else {
+const err50 = {instancePath,schemaPath:"#/type",keyword:"type",params:{type: "object"},message:"must be object"};
+if(vErrors === null){
+vErrors = [err50];
+}
+else {
+vErrors.push(err50);
+}
+errors++;
+}
+validate62.errors = vErrors;
+evaluated0.props = props0;
+return errors === 0;
+}
+validate62.evaluated = {"dynamicProps":true,"dynamicItems":false};
+
 
 function validate58(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
@@ -2856,7 +3701,7 @@ vErrors.push(err1);
 errors++;
 }
 for(const key0 in data){
-if(!(func1.call(schema99.properties, key0))){
+if(!(func1.call(schema101.properties, key0))){
 const err2 = {instancePath,schemaPath:"#/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"};
 if(vErrors === null){
 vErrors = [err2];
@@ -2924,7 +3769,7 @@ vErrors.push(err6);
 errors++;
 }
 if(!((((((((((((((data2 === "unspecified") || (data2 === "sleeping")) || (data2 === "bath")) || (data2 === "kitchen")) || (data2 === "living")) || (data2 === "dining")) || (data2 === "office")) || (data2 === "laundry")) || (data2 === "utility")) || (data2 === "storage")) || (data2 === "circulation")) || (data2 === "mechanical")) || (data2 === "garage")) || (data2 === "exterior"))){
-const err7 = {instancePath:instancePath+"/function",schemaPath:"#/$defs/room/$defs/function/anyOf/0/enum",keyword:"enum",params:{allowedValues: schema101.anyOf[0].enum},message:"must be equal to one of the allowed values"};
+const err7 = {instancePath:instancePath+"/function",schemaPath:"#/$defs/room/$defs/function/anyOf/0/enum",keyword:"enum",params:{allowedValues: schema103.anyOf[0].enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err7];
 }
@@ -3082,10 +3927,22 @@ vErrors.push(err18);
 errors++;
 }
 }
+if(data.floor !== undefined){
+if(!(validate60(data.floor, {instancePath:instancePath+"/floor",parentData:data,parentDataProperty:"floor",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate60.errors : vErrors.concat(validate60.errors);
+errors = vErrors.length;
+}
+}
+if(data.ceiling !== undefined){
+if(!(validate62(data.ceiling, {instancePath:instancePath+"/ceiling",parentData:data,parentDataProperty:"ceiling",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate62.errors : vErrors.concat(validate62.errors);
+errors = vErrors.length;
+}
+}
 if(data.name !== undefined){
-let data7 = data.name;
-if(typeof data7 === "string"){
-if(func2(data7) > 200){
+let data9 = data.name;
+if(typeof data9 === "string"){
+if(func2(data9) > 200){
 const err19 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/maxLength",keyword:"maxLength",params:{limit: 200},message:"must NOT have more than 200 characters"};
 if(vErrors === null){
 vErrors = [err19];
@@ -3095,7 +3952,7 @@ vErrors.push(err19);
 }
 errors++;
 }
-if(func2(data7) < 1){
+if(func2(data9) < 1){
 const err20 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/minLength",keyword:"minLength",params:{limit: 1},message:"must NOT have fewer than 1 characters"};
 if(vErrors === null){
 vErrors = [err20];
@@ -3124,8 +3981,8 @@ errors = vErrors.length;
 }
 }
 if(data.extras !== undefined){
-let data9 = data.extras;
-if(data9 && typeof data9 == "object" && !Array.isArray(data9)){
+let data11 = data.extras;
+if(data11 && typeof data11 == "object" && !Array.isArray(data11)){
 }
 else {
 const err22 = {instancePath:instancePath+"/extras",schemaPath:"#/$defs/defs/$defs/extras/type",keyword:"type",params:{type: "object"},message:"must be object"};
@@ -3154,12 +4011,12 @@ return errors === 0;
 }
 validate58.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema109 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.7's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Slab","description":"6.7: an authored floor or deck that is not derived from a room — a patio, a porch deck, a landing. Every slab MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["level","boundary","thickness"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 6.7: a reference to the level the slab belongs to. Always present."},"boundary":{"$ref":"#/$defs/defs/$defs/polygon","description":"6.7: the slab's outline in plan, a polygon (2.6). Always present. That it is simple with positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), not checked here."},"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"6.7: the slab's thickness. Always present, and MUST be greater than zero (FS-CORE-6.7.1)."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"6.7: the height of the slab's top above its level's elevation.","default":0},"material":{"$ref":"#/$defs/defs/$defs/reference","description":"6.7: a reference to the material of the slab's top surface. Absent by default."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this slab.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this slab.","default":{}}},"additionalProperties":false};
+const schema121 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.7's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Slab","description":"6.7: an authored floor or deck that is not derived from a room — a patio, a porch deck, a landing. Every slab MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["level","boundary","thickness"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"1.3, 6.7: a reference to the level the slab belongs to. Always present."},"boundary":{"$ref":"#/$defs/defs/$defs/polygon","description":"6.7: the slab's outline in plan, a polygon (2.6). Always present. That it is simple with positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), not checked here."},"thickness":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"6.7: the slab's thickness. Always present, and MUST be greater than zero (FS-CORE-6.7.1)."},"offset":{"$ref":"#/$defs/defs/$defs/length","description":"6.7: the height of the slab's top above its level's elevation.","default":0},"material":{"$ref":"#/$defs/defs/$defs/reference","description":"6.7: a reference to the material of the slab's top surface. Absent by default."},"purpose":{"title":"Slab purpose","description":"6.7: what the slab is for; when present, one of the purposes of 6.7's table (FS-CORE-6.7.2). Absent by default: not stated. It changes nothing that is derived.","type":"string","enum":["patio","deck","porch","stoop","landing","balcony","garage","walkway","driveway","equipmentPad","other"]},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this slab.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this slab.","default":{}}},"additionalProperties":false};
 
-function validate62(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate67(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate62.evaluated;
+const evaluated0 = validate67.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -3198,7 +4055,7 @@ vErrors.push(err2);
 errors++;
 }
 for(const key0 in data){
-if(!((((((((key0 === "level") || (key0 === "boundary")) || (key0 === "thickness")) || (key0 === "offset")) || (key0 === "material")) || (key0 === "name")) || (key0 === "extensions")) || (key0 === "extras"))){
+if(!(func1.call(schema121.properties, key0))){
 const err3 = {instancePath,schemaPath:"#/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"};
 if(vErrors === null){
 vErrors = [err3];
@@ -3335,11 +4192,10 @@ vErrors.push(err13);
 errors++;
 }
 }
-if(data.name !== undefined){
-let data5 = data.name;
-if(typeof data5 === "string"){
-if(func2(data5) > 200){
-const err14 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/maxLength",keyword:"maxLength",params:{limit: 200},message:"must NOT have more than 200 characters"};
+if(data.purpose !== undefined){
+let data5 = data.purpose;
+if(typeof data5 !== "string"){
+const err14 = {instancePath:instancePath+"/purpose",schemaPath:"#/properties/purpose/type",keyword:"type",params:{type: "string"},message:"must be string"};
 if(vErrors === null){
 vErrors = [err14];
 }
@@ -3348,8 +4204,8 @@ vErrors.push(err14);
 }
 errors++;
 }
-if(func2(data5) < 1){
-const err15 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/minLength",keyword:"minLength",params:{limit: 1},message:"must NOT have fewer than 1 characters"};
+if(!(((((((((((data5 === "patio") || (data5 === "deck")) || (data5 === "porch")) || (data5 === "stoop")) || (data5 === "landing")) || (data5 === "balcony")) || (data5 === "garage")) || (data5 === "walkway")) || (data5 === "driveway")) || (data5 === "equipmentPad")) || (data5 === "other"))){
+const err15 = {instancePath:instancePath+"/purpose",schemaPath:"#/properties/purpose/enum",keyword:"enum",params:{allowedValues: schema121.properties.purpose.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err15];
 }
@@ -3359,13 +4215,37 @@ vErrors.push(err15);
 errors++;
 }
 }
-else {
-const err16 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/type",keyword:"type",params:{type: "string"},message:"must be string"};
+if(data.name !== undefined){
+let data6 = data.name;
+if(typeof data6 === "string"){
+if(func2(data6) > 200){
+const err16 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/maxLength",keyword:"maxLength",params:{limit: 200},message:"must NOT have more than 200 characters"};
 if(vErrors === null){
 vErrors = [err16];
 }
 else {
 vErrors.push(err16);
+}
+errors++;
+}
+if(func2(data6) < 1){
+const err17 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/minLength",keyword:"minLength",params:{limit: 1},message:"must NOT have fewer than 1 characters"};
+if(vErrors === null){
+vErrors = [err17];
+}
+else {
+vErrors.push(err17);
+}
+errors++;
+}
+}
+else {
+const err18 = {instancePath:instancePath+"/name",schemaPath:"#/$defs/defs/$defs/name/type",keyword:"type",params:{type: "string"},message:"must be string"};
+if(vErrors === null){
+vErrors = [err18];
+}
+else {
+vErrors.push(err18);
 }
 errors++;
 }
@@ -3377,43 +4257,43 @@ errors = vErrors.length;
 }
 }
 if(data.extras !== undefined){
-let data7 = data.extras;
-if(data7 && typeof data7 == "object" && !Array.isArray(data7)){
+let data8 = data.extras;
+if(data8 && typeof data8 == "object" && !Array.isArray(data8)){
 }
 else {
-const err17 = {instancePath:instancePath+"/extras",schemaPath:"#/$defs/defs/$defs/extras/type",keyword:"type",params:{type: "object"},message:"must be object"};
+const err19 = {instancePath:instancePath+"/extras",schemaPath:"#/$defs/defs/$defs/extras/type",keyword:"type",params:{type: "object"},message:"must be object"};
 if(vErrors === null){
-vErrors = [err17];
+vErrors = [err19];
 }
 else {
-vErrors.push(err17);
+vErrors.push(err19);
 }
 errors++;
 }
 }
 }
 else {
-const err18 = {instancePath,schemaPath:"#/type",keyword:"type",params:{type: "object"},message:"must be object"};
+const err20 = {instancePath,schemaPath:"#/type",keyword:"type",params:{type: "object"},message:"must be object"};
 if(vErrors === null){
-vErrors = [err18];
+vErrors = [err20];
 }
 else {
-vErrors.push(err18);
+vErrors.push(err20);
 }
 errors++;
 }
-validate62.errors = vErrors;
+validate67.errors = vErrors;
 return errors === 0;
 }
-validate62.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate67.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema117 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.3's and 8.4's tables (clearances, extensions, extras). A type's `layers`, `width`, `height`, `sill` and `clearOpening` have no default, and neither has `operation`, whose absence means that none is declared. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Type","description":"8.1: a reusable definition that elements refer to instead of repeating — a wall assembly, a door or a window. A type MUST have a `kind` from 8.1's table (FS-CORE-8.1.1), and has only the members of that kind's table (FS-CORE-1.4.1).","type":"object","required":["kind"],"properties":{"kind":{"title":"Kind","description":"8.1: which kind of type this is.","type":"string","enum":["wallType","doorType","windowType"]}},"oneOf":[{"$ref":"#/$defs/type/$defs/wallType"},{"$ref":"#/$defs/type/$defs/doorType"},{"$ref":"#/$defs/type/$defs/windowType"}],"$defs":{"wallType":{"title":"Wall type","description":"8.3: a wall assembly, used by a wall's `type`.","type":"object","required":["kind","layers"],"properties":{"kind":{"description":"8.1, 8.3: \"wallType\".","const":"wallType"},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false},"doorType":{"title":"Door type","description":"8.4: a door, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"doorType\".","const":"doorType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Door operation","description":"8.4: how the door's leaves move — one of 8.4's door operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["swing","doubleSwing","doubleActing","bypassSlide","pocket","surfaceSlide","bifold","overhead","cased"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/doorClearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width and height, never an area (FS-CORE-8.4.3). Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false},"windowType":{"title":"Window type","description":"8.4: a window, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"windowType\".","const":"windowType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Window operation","description":"8.4: how the window's sashes move — one of 8.4's window operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["fixed","casement","awning","hopper","singleHung","doubleHung","horizontalSlider","tiltTurn","pivot"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width, height and, when declared, area. Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false}}};
-const schema118 = {"title":"Wall type","description":"8.3: a wall assembly, used by a wall's `type`.","type":"object","required":["kind","layers"],"properties":{"kind":{"description":"8.1, 8.3: \"wallType\".","const":"wallType"},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false};
+const schema129 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.3's and 8.4's tables (clearances, extensions, extras). A type's `layers`, `width`, `height`, `sill` and `clearOpening` have no default, and neither has `operation`, whose absence means that none is declared. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).","title":"Type","description":"8.1: a reusable definition that elements refer to instead of repeating — a wall assembly, a door or a window. A type MUST have a `kind` from 8.1's table (FS-CORE-8.1.1), and has only the members of that kind's table (FS-CORE-1.4.1).","type":"object","required":["kind"],"properties":{"kind":{"title":"Kind","description":"8.1: which kind of type this is.","type":"string","enum":["wallType","doorType","windowType"]}},"oneOf":[{"$ref":"#/$defs/type/$defs/wallType"},{"$ref":"#/$defs/type/$defs/doorType"},{"$ref":"#/$defs/type/$defs/windowType"}],"$defs":{"wallType":{"title":"Wall type","description":"8.3: a wall assembly, used by a wall's `type`.","type":"object","required":["kind","layers"],"properties":{"kind":{"description":"8.1, 8.3: \"wallType\".","const":"wallType"},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false},"doorType":{"title":"Door type","description":"8.4: a door, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"doorType\".","const":"doorType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Door operation","description":"8.4: how the door's leaves move — one of 8.4's door operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["swing","doubleSwing","doubleActing","bypassSlide","pocket","surfaceSlide","bifold","overhead","cased"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/doorClearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width and height, never an area (FS-CORE-8.4.3). Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false},"windowType":{"title":"Window type","description":"8.4: a window, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"windowType\".","const":"windowType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Window operation","description":"8.4: how the window's sashes move — one of 8.4's window operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["fixed","casement","awning","hopper","singleHung","doubleHung","horizontalSlider","tiltTurn","pivot"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width, height and, when declared, area. Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false}}};
+const schema130 = {"title":"Wall type","description":"8.3: a wall assembly, used by a wall's `type`.","type":"object","required":["kind","layers"],"properties":{"kind":{"description":"8.1, 8.3: \"wallType\".","const":"wallType"},"layers":{"$ref":"#/$defs/layer/$defs/layers","description":"8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false};
 
-function validate67(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate72(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate67.evaluated;
+const evaluated0 = validate72.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -3538,18 +4418,18 @@ vErrors.push(err8);
 }
 errors++;
 }
-validate67.errors = vErrors;
+validate72.errors = vErrors;
 return errors === 0;
 }
-validate67.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate72.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema121 = {"title":"Door type","description":"8.4: a door, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"doorType\".","const":"doorType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Door operation","description":"8.4: how the door's leaves move — one of 8.4's door operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["swing","doubleSwing","doubleActing","bypassSlide","pocket","surfaceSlide","bifold","overhead","cased"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/doorClearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width and height, never an area (FS-CORE-8.4.3). Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false};
-const schema125 = {"title":"Door clear opening","description":"8.4: a door type's net clear opening, as its maker declares it: width and height, never an area (FS-CORE-8.4.3). That it fits its type is an invariant (FS-CORE-8.4.5).","type":"object","required":["width","height"],"properties":{"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present."}},"additionalProperties":false};
+const schema133 = {"title":"Door type","description":"8.4: a door, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"doorType\".","const":"doorType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Door operation","description":"8.4: how the door's leaves move — one of 8.4's door operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["swing","doubleSwing","doubleActing","bypassSlide","pocket","surfaceSlide","bifold","overhead","cased"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/doorClearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width and height, never an area (FS-CORE-8.4.3). Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false};
+const schema137 = {"title":"Door clear opening","description":"8.4: a door type's net clear opening, as its maker declares it: width and height, never an area (FS-CORE-8.4.3). That it fits its type is an invariant (FS-CORE-8.4.5).","type":"object","required":["width","height"],"properties":{"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear width, greater than zero (FS-CORE-8.4.3). Always present."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the clear height, greater than zero (FS-CORE-8.4.3). Always present."}},"additionalProperties":false};
 
-function validate72(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate77(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate72.evaluated;
+const evaluated0 = validate77.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -3670,21 +4550,21 @@ vErrors.push(err9);
 }
 errors++;
 }
-validate72.errors = vErrors;
+validate77.errors = vErrors;
 return errors === 0;
 }
-validate72.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate77.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema128 = {"$comment":"Normative (FLR-ADR-006). A clearance envelope has no constant defaults.","title":"Clearances","description":"13.5: a `clearances` object maps envelope names (^[a-z][A-Za-z0-9]*$) to clearance envelopes (FS-CORE-13.5.1). It appears only on door types, window types and extension elements. That each extent of an envelope is at least 1,280 (FS-CORE-13.2.2) is an invariant (FS-INV-505), not checked here.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/collectionName"},"additionalProperties":{"$ref":"#/$defs/clearance/$defs/envelope"},"$defs":{"envelope":{"title":"Clearance envelope","description":"13.5: a box, in the frame of the element it belongs to, that names space the element needs kept clear.","type":"object","required":["purpose","shape","min","max"],"properties":{"purpose":{"title":"Purpose","description":"13.5: why the space is kept clear. Always present.","type":"string","enum":["workingSpace","fixtureClearance","swing","access"]},"shape":{"title":"Shape","description":"13.5: the envelope's shape; \"box\" is the only shape of this draft. Always present.","const":"box"},"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the least local x, y and z. Always present."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the greatest local x, y and z. Always present."}},"additionalProperties":false}}};
-const schema129 = {"title":"Collection or envelope name","description":"12.5, 13.5: the name of a collection an extension adds, or of a clearance envelope: ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^[a-z][A-Za-z0-9]*$"};
+const schema140 = {"$comment":"Normative (FLR-ADR-006). A clearance envelope has no constant defaults.","title":"Clearances","description":"13.5: a `clearances` object maps envelope names (^[a-z][A-Za-z0-9]*$) to clearance envelopes (FS-CORE-13.5.1). It appears only on door types, window types and extension elements. That each extent of an envelope is at least 1,280 (FS-CORE-13.2.2) is an invariant (FS-INV-505), not checked here.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/collectionName"},"additionalProperties":{"$ref":"#/$defs/clearance/$defs/envelope"},"$defs":{"envelope":{"title":"Clearance envelope","description":"13.5: a box, in the frame of the element it belongs to, that names space the element needs kept clear.","type":"object","required":["purpose","shape","min","max"],"properties":{"purpose":{"title":"Purpose","description":"13.5: why the space is kept clear. Always present.","type":"string","enum":["workingSpace","fixtureClearance","swing","access"]},"shape":{"title":"Shape","description":"13.5: the envelope's shape; \"box\" is the only shape of this draft. Always present.","const":"box"},"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the least local x, y and z. Always present."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the greatest local x, y and z. Always present."}},"additionalProperties":false}}};
+const schema141 = {"title":"Collection or envelope name","description":"12.5, 13.5: the name of a collection an extension adds, or of a clearance envelope: ^[a-z][A-Za-z0-9]*$.","type":"string","pattern":"^[a-z][A-Za-z0-9]*$"};
 const pattern37 = new RegExp("^[a-z][A-Za-z0-9]*$", "u");
-const schema130 = {"title":"Clearance envelope","description":"13.5: a box, in the frame of the element it belongs to, that names space the element needs kept clear.","type":"object","required":["purpose","shape","min","max"],"properties":{"purpose":{"title":"Purpose","description":"13.5: why the space is kept clear. Always present.","type":"string","enum":["workingSpace","fixtureClearance","swing","access"]},"shape":{"title":"Shape","description":"13.5: the envelope's shape; \"box\" is the only shape of this draft. Always present.","const":"box"},"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the least local x, y and z. Always present."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the greatest local x, y and z. Always present."}},"additionalProperties":false};
-const schema131 = {"title":"Triple of lengths","description":"13.2: a JSON array of exactly three lengths, [x, y, z], in local coordinates of a frame (13.1).","type":"array","items":{"$ref":"#/$defs/defs/$defs/length"},"minItems":3,"maxItems":3};
+const schema142 = {"title":"Clearance envelope","description":"13.5: a box, in the frame of the element it belongs to, that names space the element needs kept clear.","type":"object","required":["purpose","shape","min","max"],"properties":{"purpose":{"title":"Purpose","description":"13.5: why the space is kept clear. Always present.","type":"string","enum":["workingSpace","fixtureClearance","swing","access"]},"shape":{"title":"Shape","description":"13.5: the envelope's shape; \"box\" is the only shape of this draft. Always present.","const":"box"},"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the least local x, y and z. Always present."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2, 13.5: the greatest local x, y and z. Always present."}},"additionalProperties":false};
+const schema143 = {"title":"Triple of lengths","description":"13.2: a JSON array of exactly three lengths, [x, y, z], in local coordinates of a frame (13.1).","type":"array","items":{"$ref":"#/$defs/defs/$defs/length"},"minItems":3,"maxItems":3};
 
-function validate76(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate81(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate76.evaluated;
+const evaluated0 = validate81.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -3759,16 +4639,16 @@ vErrors.push(err5);
 }
 errors++;
 }
-validate76.errors = vErrors;
+validate81.errors = vErrors;
 return errors === 0;
 }
-validate76.evaluated = {"items":true,"dynamicProps":false,"dynamicItems":false};
+validate81.evaluated = {"items":true,"dynamicProps":false,"dynamicItems":false};
 
 
-function validate75(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate80(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate75.evaluated;
+const evaluated0 = validate80.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -3841,7 +4721,7 @@ vErrors.push(err5);
 errors++;
 }
 if(!((((data0 === "workingSpace") || (data0 === "fixtureClearance")) || (data0 === "swing")) || (data0 === "access"))){
-const err6 = {instancePath:instancePath+"/purpose",schemaPath:"#/properties/purpose/enum",keyword:"enum",params:{allowedValues: schema130.properties.purpose.enum},message:"must be equal to one of the allowed values"};
+const err6 = {instancePath:instancePath+"/purpose",schemaPath:"#/properties/purpose/enum",keyword:"enum",params:{allowedValues: schema142.properties.purpose.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err6];
 }
@@ -3864,14 +4744,14 @@ errors++;
 }
 }
 if(data.min !== undefined){
-if(!(validate76(data.min, {instancePath:instancePath+"/min",parentData:data,parentDataProperty:"min",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate76.errors : vErrors.concat(validate76.errors);
+if(!(validate81(data.min, {instancePath:instancePath+"/min",parentData:data,parentDataProperty:"min",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate81.errors : vErrors.concat(validate81.errors);
 errors = vErrors.length;
 }
 }
 if(data.max !== undefined){
-if(!(validate76(data.max, {instancePath:instancePath+"/max",parentData:data,parentDataProperty:"max",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate76.errors : vErrors.concat(validate76.errors);
+if(!(validate81(data.max, {instancePath:instancePath+"/max",parentData:data,parentDataProperty:"max",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate81.errors : vErrors.concat(validate81.errors);
 errors = vErrors.length;
 }
 }
@@ -3886,16 +4766,16 @@ vErrors.push(err8);
 }
 errors++;
 }
-validate75.errors = vErrors;
+validate80.errors = vErrors;
 return errors === 0;
 }
-validate75.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate80.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 
-function validate74(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate79(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate74.evaluated;
+const evaluated0 = validate79.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -3940,8 +4820,8 @@ errors++;
 }
 }
 for(const key1 in data){
-if(!(validate75(data[key1], {instancePath:instancePath+"/" + key1.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data,parentDataProperty:key1,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate75.errors : vErrors.concat(validate75.errors);
+if(!(validate80(data[key1], {instancePath:instancePath+"/" + key1.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data,parentDataProperty:key1,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate80.errors : vErrors.concat(validate80.errors);
 errors = vErrors.length;
 }
 }
@@ -3956,16 +4836,16 @@ vErrors.push(err3);
 }
 errors++;
 }
-validate74.errors = vErrors;
+validate79.errors = vErrors;
 return errors === 0;
 }
-validate74.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate79.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 
-function validate71(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate76(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate71.evaluated;
+const evaluated0 = validate76.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -3984,7 +4864,7 @@ vErrors.push(err0);
 errors++;
 }
 for(const key0 in data){
-if(!(func1.call(schema121.properties, key0))){
+if(!(func1.call(schema133.properties, key0))){
 const err1 = {instancePath,schemaPath:"#/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"};
 if(vErrors === null){
 vErrors = [err1];
@@ -4125,7 +5005,7 @@ vErrors.push(err12);
 errors++;
 }
 if(!(((((((((data4 === "swing") || (data4 === "doubleSwing")) || (data4 === "doubleActing")) || (data4 === "bypassSlide")) || (data4 === "pocket")) || (data4 === "surfaceSlide")) || (data4 === "bifold")) || (data4 === "overhead")) || (data4 === "cased"))){
-const err13 = {instancePath:instancePath+"/operation",schemaPath:"#/properties/operation/enum",keyword:"enum",params:{allowedValues: schema121.properties.operation.enum},message:"must be equal to one of the allowed values"};
+const err13 = {instancePath:instancePath+"/operation",schemaPath:"#/properties/operation/enum",keyword:"enum",params:{allowedValues: schema133.properties.operation.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err13];
 }
@@ -4136,14 +5016,14 @@ errors++;
 }
 }
 if(data.clearOpening !== undefined){
-if(!(validate72(data.clearOpening, {instancePath:instancePath+"/clearOpening",parentData:data,parentDataProperty:"clearOpening",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate72.errors : vErrors.concat(validate72.errors);
+if(!(validate77(data.clearOpening, {instancePath:instancePath+"/clearOpening",parentData:data,parentDataProperty:"clearOpening",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate77.errors : vErrors.concat(validate77.errors);
 errors = vErrors.length;
 }
 }
 if(data.clearances !== undefined){
-if(!(validate74(data.clearances, {instancePath:instancePath+"/clearances",parentData:data,parentDataProperty:"clearances",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate74.errors : vErrors.concat(validate74.errors);
+if(!(validate79(data.clearances, {instancePath:instancePath+"/clearances",parentData:data,parentDataProperty:"clearances",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate79.errors : vErrors.concat(validate79.errors);
 errors = vErrors.length;
 }
 }
@@ -4214,17 +5094,17 @@ vErrors.push(err18);
 }
 errors++;
 }
-validate71.errors = vErrors;
+validate76.errors = vErrors;
 return errors === 0;
 }
-validate71.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate76.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema135 = {"title":"Window type","description":"8.4: a window, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"windowType\".","const":"windowType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Window operation","description":"8.4: how the window's sashes move — one of 8.4's window operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["fixed","casement","awning","hopper","singleHung","doubleHung","horizontalSlider","tiltTurn","pivot"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width, height and, when declared, area. Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false};
+const schema147 = {"title":"Window type","description":"8.4: a window, used by an opening's `fill`.","type":"object","required":["kind"],"properties":{"kind":{"description":"8.1, 8.4: \"windowType\".","const":"windowType"},"width":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"height":{"$ref":"#/$defs/defs/$defs/positiveLength","description":"8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."},"sill":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."},"operation":{"title":"Window operation","description":"8.4: how the window's sashes move — one of 8.4's window operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.","type":"string","enum":["fixed","casement","awning","hopper","singleHung","doubleHung","horizontalSlider","tiltTurn","pivot"]},"clearOpening":{"$ref":"#/$defs/defs/$defs/clearOpening","description":"8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width, height and, when declared, area. Absent by default: none declared."},"clearances":{"$ref":"#/$defs/clearance","description":"8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).","default":{}},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6, 8.1: extension data on this type.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7, 8.1: application-specific data on this type.","default":{}}},"additionalProperties":false};
 
-function validate83(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate88(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate83.evaluated;
+const evaluated0 = validate88.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -4243,7 +5123,7 @@ vErrors.push(err0);
 errors++;
 }
 for(const key0 in data){
-if(!(func1.call(schema135.properties, key0))){
+if(!(func1.call(schema147.properties, key0))){
 const err1 = {instancePath,schemaPath:"#/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"};
 if(vErrors === null){
 vErrors = [err1];
@@ -4384,7 +5264,7 @@ vErrors.push(err12);
 errors++;
 }
 if(!(((((((((data4 === "fixed") || (data4 === "casement")) || (data4 === "awning")) || (data4 === "hopper")) || (data4 === "singleHung")) || (data4 === "doubleHung")) || (data4 === "horizontalSlider")) || (data4 === "tiltTurn")) || (data4 === "pivot"))){
-const err13 = {instancePath:instancePath+"/operation",schemaPath:"#/properties/operation/enum",keyword:"enum",params:{allowedValues: schema135.properties.operation.enum},message:"must be equal to one of the allowed values"};
+const err13 = {instancePath:instancePath+"/operation",schemaPath:"#/properties/operation/enum",keyword:"enum",params:{allowedValues: schema147.properties.operation.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err13];
 }
@@ -4401,8 +5281,8 @@ errors = vErrors.length;
 }
 }
 if(data.clearances !== undefined){
-if(!(validate74(data.clearances, {instancePath:instancePath+"/clearances",parentData:data,parentDataProperty:"clearances",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate74.errors : vErrors.concat(validate74.errors);
+if(!(validate79(data.clearances, {instancePath:instancePath+"/clearances",parentData:data,parentDataProperty:"clearances",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate79.errors : vErrors.concat(validate79.errors);
 errors = vErrors.length;
 }
 }
@@ -4473,16 +5353,16 @@ vErrors.push(err18);
 }
 errors++;
 }
-validate83.errors = vErrors;
+validate88.errors = vErrors;
 return errors === 0;
 }
-validate83.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate88.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 
-function validate66(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate71(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate66.evaluated;
+const evaluated0 = validate71.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -4493,8 +5373,8 @@ const _errs2 = errors;
 let valid0 = false;
 let passing0 = null;
 const _errs3 = errors;
-if(!(validate67(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate67.errors : vErrors.concat(validate67.errors);
+if(!(validate72(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate72.errors : vErrors.concat(validate72.errors);
 errors = vErrors.length;
 }
 var _valid0 = _errs3 === errors;
@@ -4504,8 +5384,8 @@ passing0 = 0;
 var props0 = true;
 }
 const _errs4 = errors;
-if(!(validate71(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate71.errors : vErrors.concat(validate71.errors);
+if(!(validate76(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate76.errors : vErrors.concat(validate76.errors);
 errors = vErrors.length;
 }
 var _valid0 = _errs4 === errors;
@@ -4522,8 +5402,8 @@ props0 = true;
 }
 }
 const _errs5 = errors;
-if(!(validate83(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate83.errors : vErrors.concat(validate83.errors);
+if(!(validate88(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate88.errors : vErrors.concat(validate88.errors);
 errors = vErrors.length;
 }
 var _valid0 = _errs5 === errors;
@@ -4590,7 +5470,7 @@ vErrors.push(err2);
 errors++;
 }
 if(!(((data0 === "wallType") || (data0 === "doorType")) || (data0 === "windowType"))){
-const err3 = {instancePath:instancePath+"/kind",schemaPath:"#/properties/kind/enum",keyword:"enum",params:{allowedValues: schema117.properties.kind.enum},message:"must be equal to one of the allowed values"};
+const err3 = {instancePath:instancePath+"/kind",schemaPath:"#/properties/kind/enum",keyword:"enum",params:{allowedValues: schema129.properties.kind.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err3];
 }
@@ -4611,19 +5491,19 @@ vErrors.push(err4);
 }
 errors++;
 }
-validate66.errors = vErrors;
+validate71.errors = vErrors;
 evaluated0.props = props0;
 return errors === 0;
 }
-validate66.evaluated = {"dynamicProps":true,"dynamicItems":false};
+validate71.evaluated = {"dynamicProps":true,"dynamicItems":false};
 
-const schema142 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Material","description":"8.5: what a layer, a finish or a slab's surface is made of. It has only the members of its table (FS-CORE-1.4.1).","type":"object","properties":{"color":{"title":"Colour","description":"8.5: the material's base colour as \"#rrggbb\", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). Absent by default.","type":"string","pattern":"^#[0-9a-f]{6}$"},"texture":{"title":"Texture","description":"8.5: an image tiled across the surface; one tile covers `size` [w, h] base units. Absent by default; when present, both members are present.","type":"object","required":["asset","size"],"properties":{"asset":{"$ref":"#/$defs/defs/$defs/reference","description":"8.5: a reference to the asset holding the image."},"size":{"title":"Tile size","description":"8.5: [w, h], the size one tile covers. It MUST be two lengths greater than zero (FS-CORE-8.5.2).","type":"array","items":{"$ref":"#/$defs/defs/$defs/positiveLength"},"minItems":2,"maxItems":2}},"additionalProperties":false},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this material.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this material.","default":{}}},"additionalProperties":false};
+const schema154 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Material","description":"8.5: what a layer, a finish or a slab's surface is made of. It has only the members of its table (FS-CORE-1.4.1).","type":"object","properties":{"color":{"title":"Colour","description":"8.5: the material's base colour as \"#rrggbb\", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). Absent by default.","type":"string","pattern":"^#[0-9a-f]{6}$"},"texture":{"title":"Texture","description":"8.5: an image tiled across the surface; one tile covers `size` [w, h] base units. Absent by default; when present, both members are present.","type":"object","required":["asset","size"],"properties":{"asset":{"$ref":"#/$defs/defs/$defs/reference","description":"8.5: a reference to the asset holding the image."},"size":{"title":"Tile size","description":"8.5: [w, h], the size one tile covers. It MUST be two lengths greater than zero (FS-CORE-8.5.2).","type":"array","items":{"$ref":"#/$defs/defs/$defs/positiveLength"},"minItems":2,"maxItems":2}},"additionalProperties":false},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this material.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this material.","default":{}}},"additionalProperties":false};
 const pattern39 = new RegExp("^#[0-9a-f]{6}$", "u");
 
-function validate89(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate94(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate89.evaluated;
+const evaluated0 = validate94.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -4878,21 +5758,21 @@ vErrors.push(err19);
 }
 errors++;
 }
-validate89.errors = vErrors;
+validate94.errors = vErrors;
 return errors === 0;
 }
-validate89.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate94.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema148 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.6's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Asset","description":"8.6: a file the document refers to — a texture image in this draft. An asset MUST have exactly one of `path` and `uri` (FS-CORE-8.6.1). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["sha256","mediaType"],"properties":{"path":{"title":"Path","description":"8.6: where the file is, relative to the document. A path MUST be relative, use / as its separator, and contain no empty, . or .. segment (FS-CORE-8.6.2): so it does not start with /, contains no \\, has no colon in its first segment (which would make it a URI with a scheme or a drive-letter path), and has no // and no trailing /.","type":"string","pattern":"^(?:[^/\\\\.:]|[^/\\\\.:][^/\\\\:]|\\.[^/\\\\.:]|[^/\\\\:]{3,})(?:/(?:[^/\\\\.]|[^/\\\\.][^/\\\\]|\\.[^/\\\\.]|[^/\\\\]{3,}))*$"},"uri":{"title":"URI","description":"8.6: where the file is on the web, an absolute https: URI (RFC 3986) with an authority: only the characters RFC 3986 allows, with every % starting a percent-encoding.","type":"string","format":"uri","pattern":"^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"},"sha256":{"title":"SHA-256 digest","description":"8.6: the SHA-256 digest of the file's bytes, 64 lowercase hexadecimal digits. Always present.","type":"string","pattern":"^[0-9a-f]{64}$"},"mediaType":{"title":"Media type","description":"8.6: what kind of file it is, a media type such as \"image/png\" — a type and a subtype as RFC 6838 §4.2 names them, without parameters. Always present.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}$"},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this asset.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this asset.","default":{}}},"additionalProperties":false,"oneOf":[{"title":"Packaged asset","description":"8.6.1: located by `path`, and not by `uri`.","required":["path"]},{"title":"External asset","description":"8.6.1: located by `uri`, and not by `path`.","required":["uri"]}]};
+const schema160 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.6's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Asset","description":"8.6: a file the document refers to — a texture image in this draft. An asset MUST have exactly one of `path` and `uri` (FS-CORE-8.6.1). It has only the members of its table (FS-CORE-1.4.1).","type":"object","required":["sha256","mediaType"],"properties":{"path":{"title":"Path","description":"8.6: where the file is, relative to the document. A path MUST be relative, use / as its separator, and contain no empty, . or .. segment (FS-CORE-8.6.2): so it does not start with /, contains no \\, has no colon in its first segment (which would make it a URI with a scheme or a drive-letter path), and has no // and no trailing /.","type":"string","pattern":"^(?:[^/\\\\.:]|[^/\\\\.:][^/\\\\:]|\\.[^/\\\\.:]|[^/\\\\:]{3,})(?:/(?:[^/\\\\.]|[^/\\\\.][^/\\\\]|\\.[^/\\\\.]|[^/\\\\]{3,}))*$"},"uri":{"title":"URI","description":"8.6: where the file is on the web, an absolute https: URI (RFC 3986) with an authority: only the characters RFC 3986 allows, with every % starting a percent-encoding.","type":"string","format":"uri","pattern":"^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"},"sha256":{"title":"SHA-256 digest","description":"8.6: the SHA-256 digest of the file's bytes, 64 lowercase hexadecimal digits. Always present.","type":"string","pattern":"^[0-9a-f]{64}$"},"mediaType":{"title":"Media type","description":"8.6: what kind of file it is, a media type such as \"image/png\" — a type and a subtype as RFC 6838 §4.2 names them, without parameters. Always present.","type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}$"},"name":{"$ref":"#/$defs/defs/$defs/name","description":"1.4: a human-readable label, 1–200 characters. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.4, 1.6: extension data on this asset.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.4, 1.7: application-specific data on this asset.","default":{}}},"additionalProperties":false,"oneOf":[{"title":"Packaged asset","description":"8.6.1: located by `path`, and not by `uri`.","required":["path"]},{"title":"External asset","description":"8.6.1: located by `uri`, and not by `path`.","required":["uri"]}]};
 const pattern42 = new RegExp("^(?:[^/\\\\.:]|[^/\\\\.:][^/\\\\:]|\\.[^/\\\\.:]|[^/\\\\:]{3,})(?:/(?:[^/\\\\.]|[^/\\\\.][^/\\\\]|\\.[^/\\\\.]|[^/\\\\]{3,}))*$", "u");
 const pattern43 = new RegExp("^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$", "u");
 const pattern44 = new RegExp("^[0-9a-f]{64}$", "u");
 const pattern45 = new RegExp("^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}$", "u");
 
-function validate92(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate97(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate92.evaluated;
+const evaluated0 = validate97.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -5165,18 +6045,18 @@ vErrors.push(err18);
 }
 errors++;
 }
-validate92.errors = vErrors;
+validate97.errors = vErrors;
 return errors === 0;
 }
-validate92.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate97.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema151 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 11.1's and 11.2's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Program","description":"11.1: the program — what the building is meant to provide (its items) and which items should, may or must not be next to each other (its adjacency graph). A program, a program item and an adjacency MUST have only the members of their tables (FS-CORE-11.1.1). That references resolve, that an adjacency relates two different items, and that adjacencies neither repeat nor contradict each other (FS-CORE-11.2.1 to 11.2.3) are invariants, not checked here.","type":"object","properties":{"items":{"title":"Program items","description":"11.1: the program items, keyed by ID. An item ID shares the document's single space of IDs (FS-CORE-3.1.3).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/program/$defs/item"},"default":{}},"adjacency":{"title":"Adjacency graph","description":"11.2: the adjacencies between items, in an order the derived values keep.","type":"array","items":{"$ref":"#/$defs/program/$defs/adjacency"},"default":[]}},"additionalProperties":false,"$defs":{"item":{"title":"Program item","description":"11.1: a space the building is meant to provide: what for, how many, how large, and on which level preferably.","type":"object","required":["function"],"properties":{"function":{"$ref":"#/$defs/room/$defs/function","description":"11.1: what the space is for: a room function (FS-CORE-11.1.2). That an extension term's extension is in extensionsUsed is an invariant (FS-INV-006). Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"11.1: what its owners call it, 1–200 characters. Absent by default."},"count":{"title":"Count","description":"11.1: how many rooms the item asks for; at least 1.","type":"integer","minimum":1,"maximum":9007199254740991,"default":1},"targetArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the net area each of its rooms is meant to have, in square base units. Absent by default."},"minArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the least net area each of its rooms may have, in square base units. Absent by default."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"11.1: a reference to the level its rooms are preferred on. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.6, 11.1: extension data on this item.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 11.1: application-specific data on this item.","default":{}}},"additionalProperties":false},"adjacency":{"title":"Adjacency","description":"11.2: an undirected relation between two program items.","type":"object","required":["a","b","kind"],"properties":{"a":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to one program item. Always present."},"b":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to the other program item. Always present."},"kind":{"title":"Kind","description":"11.2: whether rooms of a and b must, should or must not be adjacent (11.4). Always present.","type":"string","enum":["required","preferred","forbidden"]},"weight":{"title":"Weight","description":"11.2: how much the adjacency matters, from 1 to 10.","type":"integer","minimum":1,"maximum":10,"default":5}},"additionalProperties":false}}};
-const schema153 = {"title":"Program item","description":"11.1: a space the building is meant to provide: what for, how many, how large, and on which level preferably.","type":"object","required":["function"],"properties":{"function":{"$ref":"#/$defs/room/$defs/function","description":"11.1: what the space is for: a room function (FS-CORE-11.1.2). That an extension term's extension is in extensionsUsed is an invariant (FS-INV-006). Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"11.1: what its owners call it, 1–200 characters. Absent by default."},"count":{"title":"Count","description":"11.1: how many rooms the item asks for; at least 1.","type":"integer","minimum":1,"maximum":9007199254740991,"default":1},"targetArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the net area each of its rooms is meant to have, in square base units. Absent by default."},"minArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the least net area each of its rooms may have, in square base units. Absent by default."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"11.1: a reference to the level its rooms are preferred on. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.6, 11.1: extension data on this item.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 11.1: application-specific data on this item.","default":{}}},"additionalProperties":false};
+const schema163 = {"$comment":"Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 11.1's and 11.2's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).","title":"Program","description":"11.1: the program — what the building is meant to provide (its items) and which items should, may or must not be next to each other (its adjacency graph). A program, a program item and an adjacency MUST have only the members of their tables (FS-CORE-11.1.1). That references resolve, that an adjacency relates two different items, and that adjacencies neither repeat nor contradict each other (FS-CORE-11.2.1 to 11.2.3) are invariants, not checked here.","type":"object","properties":{"items":{"title":"Program items","description":"11.1: the program items, keyed by ID. An item ID shares the document's single space of IDs (FS-CORE-3.1.3).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/program/$defs/item"},"default":{}},"adjacency":{"title":"Adjacency graph","description":"11.2: the adjacencies between items, in an order the derived values keep.","type":"array","items":{"$ref":"#/$defs/program/$defs/adjacency"},"default":[]}},"additionalProperties":false,"$defs":{"item":{"title":"Program item","description":"11.1: a space the building is meant to provide: what for, how many, how large, and on which level preferably.","type":"object","required":["function"],"properties":{"function":{"$ref":"#/$defs/room/$defs/function","description":"11.1: what the space is for: a room function (FS-CORE-11.1.2). That an extension term's extension is in extensionsUsed is an invariant (FS-INV-006). Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"11.1: what its owners call it, 1–200 characters. Absent by default."},"count":{"title":"Count","description":"11.1: how many rooms the item asks for; at least 1.","type":"integer","minimum":1,"maximum":9007199254740991,"default":1},"targetArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the net area each of its rooms is meant to have, in square base units. Absent by default."},"minArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the least net area each of its rooms may have, in square base units. Absent by default."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"11.1: a reference to the level its rooms are preferred on. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.6, 11.1: extension data on this item.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 11.1: application-specific data on this item.","default":{}}},"additionalProperties":false},"adjacency":{"title":"Adjacency","description":"11.2: an undirected relation between two program items.","type":"object","required":["a","b","kind"],"properties":{"a":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to one program item. Always present."},"b":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to the other program item. Always present."},"kind":{"title":"Kind","description":"11.2: whether rooms of a and b must, should or must not be adjacent (11.4). Always present.","type":"string","enum":["required","preferred","forbidden"]},"weight":{"title":"Weight","description":"11.2: how much the adjacency matters, from 1 to 10.","type":"integer","minimum":1,"maximum":10,"default":5}},"additionalProperties":false}}};
+const schema165 = {"title":"Program item","description":"11.1: a space the building is meant to provide: what for, how many, how large, and on which level preferably.","type":"object","required":["function"],"properties":{"function":{"$ref":"#/$defs/room/$defs/function","description":"11.1: what the space is for: a room function (FS-CORE-11.1.2). That an extension term's extension is in extensionsUsed is an invariant (FS-INV-006). Always present."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"11.1: what its owners call it, 1–200 characters. Absent by default."},"count":{"title":"Count","description":"11.1: how many rooms the item asks for; at least 1.","type":"integer","minimum":1,"maximum":9007199254740991,"default":1},"targetArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the net area each of its rooms is meant to have, in square base units. Absent by default."},"minArea":{"$ref":"#/$defs/defs/$defs/area","description":"11.1: the least net area each of its rooms may have, in square base units. Absent by default."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"11.1: a reference to the level its rooms are preferred on. Absent by default."},"extensions":{"$ref":"#/$defs/defs/$defs/extensions","description":"1.6, 11.1: extension data on this item.","default":{}},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 11.1: application-specific data on this item.","default":{}}},"additionalProperties":false};
 
-function validate96(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate101(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate96.evaluated;
+const evaluated0 = validate101.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -5232,7 +6112,7 @@ vErrors.push(err3);
 errors++;
 }
 if(!((((((((((((((data0 === "unspecified") || (data0 === "sleeping")) || (data0 === "bath")) || (data0 === "kitchen")) || (data0 === "living")) || (data0 === "dining")) || (data0 === "office")) || (data0 === "laundry")) || (data0 === "utility")) || (data0 === "storage")) || (data0 === "circulation")) || (data0 === "mechanical")) || (data0 === "garage")) || (data0 === "exterior"))){
-const err4 = {instancePath:instancePath+"/function",schemaPath:"#/$defs/room/$defs/function/anyOf/0/enum",keyword:"enum",params:{allowedValues: schema101.anyOf[0].enum},message:"must be equal to one of the allowed values"};
+const err4 = {instancePath:instancePath+"/function",schemaPath:"#/$defs/room/$defs/function/anyOf/0/enum",keyword:"enum",params:{allowedValues: schema103.anyOf[0].enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err4];
 }
@@ -5487,17 +6367,17 @@ vErrors.push(err23);
 }
 errors++;
 }
-validate96.errors = vErrors;
+validate101.errors = vErrors;
 return errors === 0;
 }
-validate96.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate101.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema160 = {"title":"Adjacency","description":"11.2: an undirected relation between two program items.","type":"object","required":["a","b","kind"],"properties":{"a":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to one program item. Always present."},"b":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to the other program item. Always present."},"kind":{"title":"Kind","description":"11.2: whether rooms of a and b must, should or must not be adjacent (11.4). Always present.","type":"string","enum":["required","preferred","forbidden"]},"weight":{"title":"Weight","description":"11.2: how much the adjacency matters, from 1 to 10.","type":"integer","minimum":1,"maximum":10,"default":5}},"additionalProperties":false};
+const schema172 = {"title":"Adjacency","description":"11.2: an undirected relation between two program items.","type":"object","required":["a","b","kind"],"properties":{"a":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to one program item. Always present."},"b":{"$ref":"#/$defs/defs/$defs/reference","description":"11.2: a reference to the other program item. Always present."},"kind":{"title":"Kind","description":"11.2: whether rooms of a and b must, should or must not be adjacent (11.4). Always present.","type":"string","enum":["required","preferred","forbidden"]},"weight":{"title":"Weight","description":"11.2: how much the adjacency matters, from 1 to 10.","type":"integer","minimum":1,"maximum":10,"default":5}},"additionalProperties":false};
 
-function validate99(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate104(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate99.evaluated;
+const evaluated0 = validate104.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -5610,7 +6490,7 @@ vErrors.push(err8);
 errors++;
 }
 if(!(((data2 === "required") || (data2 === "preferred")) || (data2 === "forbidden"))){
-const err9 = {instancePath:instancePath+"/kind",schemaPath:"#/properties/kind/enum",keyword:"enum",params:{allowedValues: schema160.properties.kind.enum},message:"must be equal to one of the allowed values"};
+const err9 = {instancePath:instancePath+"/kind",schemaPath:"#/properties/kind/enum",keyword:"enum",params:{allowedValues: schema172.properties.kind.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err9];
 }
@@ -5666,16 +6546,16 @@ vErrors.push(err13);
 }
 errors++;
 }
-validate99.errors = vErrors;
+validate104.errors = vErrors;
 return errors === 0;
 }
-validate99.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate104.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 
-function validate95(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate100(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate95.evaluated;
+const evaluated0 = validate100.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -5735,8 +6615,8 @@ errors++;
 }
 }
 for(const key2 in data0){
-if(!(validate96(data0[key2], {instancePath:instancePath+"/items/" + key2.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data0,parentDataProperty:key2,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate96.errors : vErrors.concat(validate96.errors);
+if(!(validate101(data0[key2], {instancePath:instancePath+"/items/" + key2.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data0,parentDataProperty:key2,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate101.errors : vErrors.concat(validate101.errors);
 errors = vErrors.length;
 }
 }
@@ -5757,8 +6637,8 @@ let data2 = data.adjacency;
 if(Array.isArray(data2)){
 const len0 = data2.length;
 for(let i0=0; i0<len0; i0++){
-if(!(validate99(data2[i0], {instancePath:instancePath+"/adjacency/" + i0,parentData:data2,parentDataProperty:i0,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate99.errors : vErrors.concat(validate99.errors);
+if(!(validate104(data2[i0], {instancePath:instancePath+"/adjacency/" + i0,parentData:data2,parentDataProperty:i0,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate104.errors : vErrors.concat(validate104.errors);
 errors = vErrors.length;
 }
 }
@@ -5785,20 +6665,20 @@ vErrors.push(err6);
 }
 errors++;
 }
-validate95.errors = vErrors;
+validate100.errors = vErrors;
 return errors === 0;
 }
-validate95.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate100.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema164 = {"title":"Extension declaration","description":"12.1: a version string, or a declaration object with `version` and, optionally, `schema` (FS-CORE-12.1.1). Canonical form writes an object without `schema` as its version string.","oneOf":[{"$ref":"#/$defs/extension/$defs/version"},{"type":"object","required":["version"],"properties":{"version":{"$ref":"#/$defs/extension/$defs/version","description":"12.1: the version of the extension the document targets."},"schema":{"$ref":"#/$defs/defs/$defs/httpsUri","description":"12.1: where the extension's JSON Schema for that version is published (FS-CORE-12.1.2)."}},"additionalProperties":false}]};
-const schema165 = {"title":"Extension version","description":"1.6: the version of the extension the document targets (FS-CORE-1.6.7).","type":"string","pattern":"^\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?$"};
-const schema167 = {"title":"https URI","description":"8.6, 12.1: an absolute https: URI (RFC 3986) with an authority: only the characters RFC 3986 allows, with every % starting a percent-encoding.","type":"string","format":"uri","pattern":"^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"};
+const schema176 = {"title":"Extension declaration","description":"12.1: a version string, or a declaration object with `version` and, optionally, `schema` (FS-CORE-12.1.1). Canonical form writes an object without `schema` as its version string.","oneOf":[{"$ref":"#/$defs/extension/$defs/version"},{"type":"object","required":["version"],"properties":{"version":{"$ref":"#/$defs/extension/$defs/version","description":"12.1: the version of the extension the document targets."},"schema":{"$ref":"#/$defs/defs/$defs/httpsUri","description":"12.1: where the extension's JSON Schema for that version is published (FS-CORE-12.1.2)."}},"additionalProperties":false}]};
+const schema177 = {"title":"Extension version","description":"1.6: the version of the extension the document targets (FS-CORE-1.6.7).","type":"string","pattern":"^\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?$"};
+const schema179 = {"title":"https URI","description":"8.6, 12.1: an absolute https: URI (RFC 3986) with an authority: only the characters RFC 3986 allows, with every % starting a percent-encoding.","type":"string","format":"uri","pattern":"^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"};
 const pattern52 = new RegExp("^\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?$", "u");
 
-function validate102(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate107(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate102.evaluated;
+const evaluated0 = validate107.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -5954,23 +6834,23 @@ vErrors = null;
 }
 }
 }
-validate102.errors = vErrors;
+validate107.errors = vErrors;
 evaluated0.props = props0;
 return errors === 0;
 }
-validate102.evaluated = {"dynamicProps":true,"dynamicItems":false};
+validate107.evaluated = {"dynamicProps":true,"dynamicItems":false};
 
-const schema169 = {"title":"Top-level extension data","description":"1.6, 12.5: maps an extension name to its document-level data. That every name is in extensionsUsed (FS-CORE-1.6.3) is an invariant (FS-INV-005). Data that is an object may have a `collections` member (FS-CORE-12.5.1); everything else in it is the extension's own.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/extensionName"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/data"}};
-const schema171 = {"title":"Extension data","description":"12.5: one extension's document-level data: any JSON, except that an object's `collections` member holds the extension's elements.","anyOf":[{"not":{"type":"object"}},{"type":"object","properties":{"collections":{"$ref":"#/$defs/extension/$defs/collections"}}}]};
-const schema172 = {"title":"Collections","description":"12.5: maps a collection name (^[a-z][A-Za-z0-9]*$) to a collection of extension elements keyed by ID (FS-CORE-12.5.1).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/collectionName"},"additionalProperties":{"type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/element"}}};
-const schema175 = {"title":"Extension element","description":"12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.","type":"object","required":["fallback"],"properties":{"fallback":{"$ref":"#/$defs/fallback","description":"12.6: what to show when the extension is not implemented. Always present."},"host":{"$ref":"#/$defs/host","description":"13.3: what the element is placed on. Absent: the element is placed only by its fallback."},"clearances":{"$ref":"#/$defs/clearance","description":"13.5: the space the element needs kept clear, in its frame. Absent: none."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"12.5: a human-readable label, 1–200 characters. Absent by default."},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 12.5: application-specific data on this element."}},"additionalProperties":true};
-const schema176 = {"$comment":"Normative (FLR-ADR-006). A fallback has no constant defaults.","title":"Fallback","description":"12.6: what a reader without an extension shows for one of its elements: a box in the element's frame, and optionally a glTF model and a 2D symbol. That its references resolve, its media types (FS-CORE-12.6.1), its level (FS-CORE-13.3.5) and its extents (FS-CORE-13.2.2) are invariants, not checked here.","type":"object","required":["level","box"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to the level the element is on. Always present."},"box":{"$ref":"#/$defs/defs/$defs/box","description":"12.6, 13.2: the space the element occupies, in its frame. Always present."},"asset":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to an asset holding a glTF 2.0 model of the element. Absent by default."},"symbol":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to an asset holding a 2D plan symbol. Absent by default."}},"additionalProperties":false};
-const schema178 = {"title":"Box","description":"13.2: a box in a frame (13.1): the points whose local coordinates lie between `min` and `max` on each axis. A box MUST have exactly `min` and `max`, each three lengths (FS-CORE-13.2.1). That each extent is at least 1,280 (FS-CORE-13.2.2) is an invariant (FS-INV-505), not checked here.","type":"object","required":["min","max"],"properties":{"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2: the least local x, y and z."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2: the greatest local x, y and z."}},"additionalProperties":false};
+const schema181 = {"title":"Top-level extension data","description":"1.6, 12.5: maps an extension name to its document-level data. That every name is in extensionsUsed (FS-CORE-1.6.3) is an invariant (FS-INV-005). Data that is an object may have a `collections` member (FS-CORE-12.5.1); everything else in it is the extension's own.","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/extensionName"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/data"}};
+const schema183 = {"title":"Extension data","description":"12.5: one extension's document-level data: any JSON, except that an object's `collections` member holds the extension's elements.","anyOf":[{"not":{"type":"object"}},{"type":"object","properties":{"collections":{"$ref":"#/$defs/extension/$defs/collections"}}}]};
+const schema184 = {"title":"Collections","description":"12.5: maps a collection name (^[a-z][A-Za-z0-9]*$) to a collection of extension elements keyed by ID (FS-CORE-12.5.1).","type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/collectionName"},"additionalProperties":{"type":"object","propertyNames":{"$ref":"#/$defs/defs/$defs/id"},"additionalProperties":{"$ref":"#/$defs/extension/$defs/element"}}};
+const schema187 = {"title":"Extension element","description":"12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.","type":"object","required":["fallback"],"properties":{"fallback":{"$ref":"#/$defs/fallback","description":"12.6: what to show when the extension is not implemented. Always present."},"host":{"$ref":"#/$defs/host","description":"13.3: what the element is placed on. Absent: the element is placed only by its fallback."},"clearances":{"$ref":"#/$defs/clearance","description":"13.5: the space the element needs kept clear, in its frame. Absent: none."},"name":{"$ref":"#/$defs/defs/$defs/name","description":"12.5: a human-readable label, 1–200 characters. Absent by default."},"extras":{"$ref":"#/$defs/defs/$defs/extras","description":"1.7, 12.5: application-specific data on this element."}},"additionalProperties":true};
+const schema188 = {"$comment":"Normative (FLR-ADR-006). A fallback has no constant defaults.","title":"Fallback","description":"12.6: what a reader without an extension shows for one of its elements: a box in the element's frame, and optionally a glTF model and a 2D symbol. That its references resolve, its media types (FS-CORE-12.6.1), its level (FS-CORE-13.3.5) and its extents (FS-CORE-13.2.2) are invariants, not checked here.","type":"object","required":["level","box"],"properties":{"level":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to the level the element is on. Always present."},"box":{"$ref":"#/$defs/defs/$defs/box","description":"12.6, 13.2: the space the element occupies, in its frame. Always present."},"asset":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to an asset holding a glTF 2.0 model of the element. Absent by default."},"symbol":{"$ref":"#/$defs/defs/$defs/reference","description":"12.6: a reference to an asset holding a 2D plan symbol. Absent by default."}},"additionalProperties":false};
+const schema190 = {"title":"Box","description":"13.2: a box in a frame (13.1): the points whose local coordinates lie between `min` and `max` on each axis. A box MUST have exactly `min` and `max`, each three lengths (FS-CORE-13.2.1). That each extent is at least 1,280 (FS-CORE-13.2.2) is an invariant (FS-INV-505), not checked here.","type":"object","required":["min","max"],"properties":{"min":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2: the least local x, y and z."},"max":{"$ref":"#/$defs/defs/$defs/triple","description":"13.2: the greatest local x, y and z."}},"additionalProperties":false};
 
-function validate109(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate114(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate109.evaluated;
+const evaluated0 = validate114.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -6011,14 +6891,14 @@ errors++;
 }
 }
 if(data.min !== undefined){
-if(!(validate76(data.min, {instancePath:instancePath+"/min",parentData:data,parentDataProperty:"min",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate76.errors : vErrors.concat(validate76.errors);
+if(!(validate81(data.min, {instancePath:instancePath+"/min",parentData:data,parentDataProperty:"min",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate81.errors : vErrors.concat(validate81.errors);
 errors = vErrors.length;
 }
 }
 if(data.max !== undefined){
-if(!(validate76(data.max, {instancePath:instancePath+"/max",parentData:data,parentDataProperty:"max",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate76.errors : vErrors.concat(validate76.errors);
+if(!(validate81(data.max, {instancePath:instancePath+"/max",parentData:data,parentDataProperty:"max",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate81.errors : vErrors.concat(validate81.errors);
 errors = vErrors.length;
 }
 }
@@ -6033,16 +6913,16 @@ vErrors.push(err3);
 }
 errors++;
 }
-validate109.errors = vErrors;
+validate114.errors = vErrors;
 return errors === 0;
 }
-validate109.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate114.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 
-function validate108(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate113(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate108.evaluated;
+const evaluated0 = validate113.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -6108,8 +6988,8 @@ errors++;
 }
 }
 if(data.box !== undefined){
-if(!(validate109(data.box, {instancePath:instancePath+"/box",parentData:data,parentDataProperty:"box",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate109.errors : vErrors.concat(validate109.errors);
+if(!(validate114(data.box, {instancePath:instancePath+"/box",parentData:data,parentDataProperty:"box",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate114.errors : vErrors.concat(validate114.errors);
 errors = vErrors.length;
 }
 }
@@ -6174,18 +7054,18 @@ vErrors.push(err9);
 }
 errors++;
 }
-validate108.errors = vErrors;
+validate113.errors = vErrors;
 return errors === 0;
 }
-validate108.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate113.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema181 = {"$comment":"Normative (FLR-ADR-006). `rotation` defaults to 0 for `surface` and `free` hosts; hosts live in extension elements, which the canonical form never changes (9.2), so the default carries no `default` keyword here: the canonicalizer does not omit it.","title":"Host","description":"13.3: what an extension element is placed on. A host MUST have exactly the members of one of its three forms (FS-CORE-13.3.1). That its wall, room or level resolves (FS-CORE-3.2.1), and that it fits its host (FS-CORE-13.3.2 to 13.3.5), are invariants, not checked here.","type":"object","required":["mode"],"properties":{"mode":{"title":"Mode","description":"13.3: which of the three forms this host has.","type":"string","enum":["wallFace","surface","free"]}},"oneOf":[{"$ref":"#/$defs/host/$defs/wallFace"},{"$ref":"#/$defs/host/$defs/surface"},{"$ref":"#/$defs/host/$defs/free"}],"$defs":{"wallFace":{"title":"Wall-face host","description":"13.3: on a face of a wall.","type":"object","required":["mode","wall","side","offset","height"],"properties":{"mode":{"const":"wallFace","description":"13.3: \"wallFace\"."},"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host wall."},"side":{"title":"Side","description":"13.3: which face of the wall, seen along its direction.","type":"string","enum":["left","right"]},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the distance along the wall's location line from its start junction; not negative."},"height":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the height above the wall's base elevation; not negative."}},"additionalProperties":false},"surface":{"title":"Surface host","description":"13.3: on the floor or the ceiling of a room.","type":"object","required":["mode","room","surface","position"],"properties":{"mode":{"const":"surface","description":"13.3: \"surface\"."},"room":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host room."},"surface":{"title":"Surface","description":"13.3: the floor or the ceiling.","type":"string","enum":["floor","ceiling"]},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false},"free":{"title":"Free host","description":"13.3: standing free on a level.","type":"object","required":["mode","level","position"],"properties":{"mode":{"const":"free","description":"13.3: \"free\"."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the level."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false}}};
-const schema182 = {"title":"Wall-face host","description":"13.3: on a face of a wall.","type":"object","required":["mode","wall","side","offset","height"],"properties":{"mode":{"const":"wallFace","description":"13.3: \"wallFace\"."},"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host wall."},"side":{"title":"Side","description":"13.3: which face of the wall, seen along its direction.","type":"string","enum":["left","right"]},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the distance along the wall's location line from its start junction; not negative."},"height":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the height above the wall's base elevation; not negative."}},"additionalProperties":false};
+const schema193 = {"$comment":"Normative (FLR-ADR-006). `rotation` defaults to 0 for `surface` and `free` hosts; hosts live in extension elements, which the canonical form never changes (9.2), so the default carries no `default` keyword here: the canonicalizer does not omit it.","title":"Host","description":"13.3: what an extension element is placed on. A host MUST have exactly the members of one of its three forms (FS-CORE-13.3.1). That its wall, room or level resolves (FS-CORE-3.2.1), and that it fits its host (FS-CORE-13.3.2 to 13.3.5), are invariants, not checked here.","type":"object","required":["mode"],"properties":{"mode":{"title":"Mode","description":"13.3: which of the three forms this host has.","type":"string","enum":["wallFace","surface","free"]}},"oneOf":[{"$ref":"#/$defs/host/$defs/wallFace"},{"$ref":"#/$defs/host/$defs/surface"},{"$ref":"#/$defs/host/$defs/free"}],"$defs":{"wallFace":{"title":"Wall-face host","description":"13.3: on a face of a wall.","type":"object","required":["mode","wall","side","offset","height"],"properties":{"mode":{"const":"wallFace","description":"13.3: \"wallFace\"."},"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host wall."},"side":{"title":"Side","description":"13.3: which face of the wall, seen along its direction.","type":"string","enum":["left","right"]},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the distance along the wall's location line from its start junction; not negative."},"height":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the height above the wall's base elevation; not negative."}},"additionalProperties":false},"surface":{"title":"Surface host","description":"13.3: on the floor or the ceiling of a room.","type":"object","required":["mode","room","surface","position"],"properties":{"mode":{"const":"surface","description":"13.3: \"surface\"."},"room":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host room."},"surface":{"title":"Surface","description":"13.3: the floor or the ceiling.","type":"string","enum":["floor","ceiling"]},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false},"free":{"title":"Free host","description":"13.3: standing free on a level.","type":"object","required":["mode","level","position"],"properties":{"mode":{"const":"free","description":"13.3: \"free\"."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the level."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false}}};
+const schema194 = {"title":"Wall-face host","description":"13.3: on a face of a wall.","type":"object","required":["mode","wall","side","offset","height"],"properties":{"mode":{"const":"wallFace","description":"13.3: \"wallFace\"."},"wall":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host wall."},"side":{"title":"Side","description":"13.3: which face of the wall, seen along its direction.","type":"string","enum":["left","right"]},"offset":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the distance along the wall's location line from its start junction; not negative."},"height":{"$ref":"#/$defs/defs/$defs/nonNegativeLength","description":"13.3: the height above the wall's base elevation; not negative."}},"additionalProperties":false};
 
-function validate115(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate120(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate115.evaluated;
+const evaluated0 = validate120.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -6305,7 +7185,7 @@ vErrors.push(err9);
 errors++;
 }
 if(!((data2 === "left") || (data2 === "right"))){
-const err10 = {instancePath:instancePath+"/side",schemaPath:"#/properties/side/enum",keyword:"enum",params:{allowedValues: schema182.properties.side.enum},message:"must be equal to one of the allowed values"};
+const err10 = {instancePath:instancePath+"/side",schemaPath:"#/properties/side/enum",keyword:"enum",params:{allowedValues: schema194.properties.side.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err10];
 }
@@ -6396,18 +7276,18 @@ vErrors.push(err17);
 }
 errors++;
 }
-validate115.errors = vErrors;
+validate120.errors = vErrors;
 return errors === 0;
 }
-validate115.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate120.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema186 = {"title":"Surface host","description":"13.3: on the floor or the ceiling of a room.","type":"object","required":["mode","room","surface","position"],"properties":{"mode":{"const":"surface","description":"13.3: \"surface\"."},"room":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host room."},"surface":{"title":"Surface","description":"13.3: the floor or the ceiling.","type":"string","enum":["floor","ceiling"]},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false};
-const schema188 = {"title":"Angle in (−180°, 180°]","description":"1.8, 13.3: an angle (2.4) greater than −180,000,000 and at most 180,000,000 microdegrees.","type":"integer","exclusiveMinimum":-180000000,"maximum":180000000};
+const schema198 = {"title":"Surface host","description":"13.3: on the floor or the ceiling of a room.","type":"object","required":["mode","room","surface","position"],"properties":{"mode":{"const":"surface","description":"13.3: \"surface\"."},"room":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the host room."},"surface":{"title":"Surface","description":"13.3: the floor or the ceiling.","type":"string","enum":["floor","ceiling"]},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false};
+const schema200 = {"title":"Angle in (−180°, 180°]","description":"1.8, 13.3: an angle (2.4) greater than −180,000,000 and at most 180,000,000 microdegrees.","type":"integer","exclusiveMinimum":-180000000,"maximum":180000000};
 
-function validate117(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate122(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate117.evaluated;
+const evaluated0 = validate122.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -6517,7 +7397,7 @@ vErrors.push(err8);
 errors++;
 }
 if(!((data2 === "floor") || (data2 === "ceiling"))){
-const err9 = {instancePath:instancePath+"/surface",schemaPath:"#/properties/surface/enum",keyword:"enum",params:{allowedValues: schema186.properties.surface.enum},message:"must be equal to one of the allowed values"};
+const err9 = {instancePath:instancePath+"/surface",schemaPath:"#/properties/surface/enum",keyword:"enum",params:{allowedValues: schema198.properties.surface.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err9];
 }
@@ -6579,17 +7459,17 @@ vErrors.push(err13);
 }
 errors++;
 }
-validate117.errors = vErrors;
+validate122.errors = vErrors;
 return errors === 0;
 }
-validate117.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate122.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
-const schema189 = {"title":"Free host","description":"13.3: standing free on a level.","type":"object","required":["mode","level","position"],"properties":{"mode":{"const":"free","description":"13.3: \"free\"."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the level."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false};
+const schema201 = {"title":"Free host","description":"13.3: standing free on a level.","type":"object","required":["mode","level","position"],"properties":{"mode":{"const":"free","description":"13.3: \"free\"."},"level":{"$ref":"#/$defs/defs/$defs/reference","description":"13.3: a reference to the level."},"position":{"$ref":"#/$defs/defs/$defs/point","description":"13.3: where it is, in plan."},"rotation":{"$ref":"#/$defs/defs/$defs/angleHalfOpen","description":"13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."}},"additionalProperties":false};
 
-function validate120(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate125(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate120.evaluated;
+const evaluated0 = validate125.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -6728,16 +7608,16 @@ vErrors.push(err10);
 }
 errors++;
 }
-validate120.errors = vErrors;
+validate125.errors = vErrors;
 return errors === 0;
 }
-validate120.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate125.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 
-function validate114(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate119(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate114.evaluated;
+const evaluated0 = validate119.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -6748,8 +7628,8 @@ const _errs2 = errors;
 let valid0 = false;
 let passing0 = null;
 const _errs3 = errors;
-if(!(validate115(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate115.errors : vErrors.concat(validate115.errors);
+if(!(validate120(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate120.errors : vErrors.concat(validate120.errors);
 errors = vErrors.length;
 }
 var _valid0 = _errs3 === errors;
@@ -6759,8 +7639,8 @@ passing0 = 0;
 var props0 = true;
 }
 const _errs4 = errors;
-if(!(validate117(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate117.errors : vErrors.concat(validate117.errors);
+if(!(validate122(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate122.errors : vErrors.concat(validate122.errors);
 errors = vErrors.length;
 }
 var _valid0 = _errs4 === errors;
@@ -6777,8 +7657,8 @@ props0 = true;
 }
 }
 const _errs5 = errors;
-if(!(validate120(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate120.errors : vErrors.concat(validate120.errors);
+if(!(validate125(data, {instancePath,parentData,parentDataProperty,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate125.errors : vErrors.concat(validate125.errors);
 errors = vErrors.length;
 }
 var _valid0 = _errs5 === errors;
@@ -6845,7 +7725,7 @@ vErrors.push(err2);
 errors++;
 }
 if(!(((data0 === "wallFace") || (data0 === "surface")) || (data0 === "free"))){
-const err3 = {instancePath:instancePath+"/mode",schemaPath:"#/properties/mode/enum",keyword:"enum",params:{allowedValues: schema181.properties.mode.enum},message:"must be equal to one of the allowed values"};
+const err3 = {instancePath:instancePath+"/mode",schemaPath:"#/properties/mode/enum",keyword:"enum",params:{allowedValues: schema193.properties.mode.enum},message:"must be equal to one of the allowed values"};
 if(vErrors === null){
 vErrors = [err3];
 }
@@ -6866,17 +7746,17 @@ vErrors.push(err4);
 }
 errors++;
 }
-validate114.errors = vErrors;
+validate119.errors = vErrors;
 evaluated0.props = props0;
 return errors === 0;
 }
-validate114.evaluated = {"dynamicProps":true,"dynamicItems":false};
+validate119.evaluated = {"dynamicProps":true,"dynamicItems":false};
 
 
-function validate107(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate112(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate107.evaluated;
+const evaluated0 = validate112.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -6895,20 +7775,20 @@ vErrors.push(err0);
 errors++;
 }
 if(data.fallback !== undefined){
-if(!(validate108(data.fallback, {instancePath:instancePath+"/fallback",parentData:data,parentDataProperty:"fallback",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate108.errors : vErrors.concat(validate108.errors);
+if(!(validate113(data.fallback, {instancePath:instancePath+"/fallback",parentData:data,parentDataProperty:"fallback",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate113.errors : vErrors.concat(validate113.errors);
 errors = vErrors.length;
 }
 }
 if(data.host !== undefined){
-if(!(validate114(data.host, {instancePath:instancePath+"/host",parentData:data,parentDataProperty:"host",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate114.errors : vErrors.concat(validate114.errors);
+if(!(validate119(data.host, {instancePath:instancePath+"/host",parentData:data,parentDataProperty:"host",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate119.errors : vErrors.concat(validate119.errors);
 errors = vErrors.length;
 }
 }
 if(data.clearances !== undefined){
-if(!(validate74(data.clearances, {instancePath:instancePath+"/clearances",parentData:data,parentDataProperty:"clearances",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate74.errors : vErrors.concat(validate74.errors);
+if(!(validate79(data.clearances, {instancePath:instancePath+"/clearances",parentData:data,parentDataProperty:"clearances",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate79.errors : vErrors.concat(validate79.errors);
 errors = vErrors.length;
 }
 }
@@ -6973,16 +7853,16 @@ vErrors.push(err5);
 }
 errors++;
 }
-validate107.errors = vErrors;
+validate112.errors = vErrors;
 return errors === 0;
 }
-validate107.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate112.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 
-function validate106(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate111(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate106.evaluated;
+const evaluated0 = validate111.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -7066,8 +7946,8 @@ errors++;
 }
 }
 for(const key3 in data0){
-if(!(validate107(data0[key3], {instancePath:instancePath+"/" + key1.replace(/~/g, "~0").replace(/\//g, "~1")+"/" + key3.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data0,parentDataProperty:key3,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate107.errors : vErrors.concat(validate107.errors);
+if(!(validate112(data0[key3], {instancePath:instancePath+"/" + key1.replace(/~/g, "~0").replace(/\//g, "~1")+"/" + key3.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data0,parentDataProperty:key3,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate112.errors : vErrors.concat(validate112.errors);
 errors = vErrors.length;
 }
 }
@@ -7094,16 +7974,16 @@ vErrors.push(err7);
 }
 errors++;
 }
-validate106.errors = vErrors;
+validate111.errors = vErrors;
 return errors === 0;
 }
-validate106.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate111.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 
-function validate105(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate110(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate105.evaluated;
+const evaluated0 = validate110.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -7152,8 +8032,8 @@ valid0 = valid0 || _valid0;
 const _errs5 = errors;
 if(data && typeof data == "object" && !Array.isArray(data)){
 if(data.collections !== undefined){
-if(!(validate106(data.collections, {instancePath:instancePath+"/collections",parentData:data,parentDataProperty:"collections",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate106.errors : vErrors.concat(validate106.errors);
+if(!(validate111(data.collections, {instancePath:instancePath+"/collections",parentData:data,parentDataProperty:"collections",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate111.errors : vErrors.concat(validate111.errors);
 errors = vErrors.length;
 }
 }
@@ -7195,17 +8075,17 @@ vErrors = null;
 }
 }
 }
-validate105.errors = vErrors;
+validate110.errors = vErrors;
 evaluated0.props = props0;
 return errors === 0;
 }
-validate105.evaluated = {"dynamicProps":true,"dynamicItems":false};
+validate110.evaluated = {"dynamicProps":true,"dynamicItems":false};
 
 
-function validate104(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+function validate109(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 let vErrors = null;
 let errors = 0;
-const evaluated0 = validate104.evaluated;
+const evaluated0 = validate109.evaluated;
 if(evaluated0.dynamicProps){
 evaluated0.props = undefined;
 }
@@ -7250,8 +8130,8 @@ errors++;
 }
 }
 for(const key1 in data){
-if(!(validate105(data[key1], {instancePath:instancePath+"/" + key1.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data,parentDataProperty:key1,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate105.errors : vErrors.concat(validate105.errors);
+if(!(validate110(data[key1], {instancePath:instancePath+"/" + key1.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data,parentDataProperty:key1,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate110.errors : vErrors.concat(validate110.errors);
 errors = vErrors.length;
 }
 }
@@ -7266,10 +8146,10 @@ vErrors.push(err3);
 }
 errors++;
 }
-validate104.errors = vErrors;
+validate109.errors = vErrors;
 return errors === 0;
 }
-validate104.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+validate109.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 
 function validate21(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
@@ -7778,8 +8658,8 @@ errors++;
 }
 }
 for(const key16 in data17){
-if(!(validate62(data17[key16], {instancePath:instancePath+"/slabs/" + key16.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data17,parentDataProperty:key16,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate62.errors : vErrors.concat(validate62.errors);
+if(!(validate67(data17[key16], {instancePath:instancePath+"/slabs/" + key16.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data17,parentDataProperty:key16,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate67.errors : vErrors.concat(validate67.errors);
 errors = vErrors.length;
 }
 }
@@ -7835,8 +8715,8 @@ errors++;
 }
 }
 for(const key18 in data19){
-if(!(validate66(data19[key18], {instancePath:instancePath+"/types/" + key18.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data19,parentDataProperty:key18,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate66.errors : vErrors.concat(validate66.errors);
+if(!(validate71(data19[key18], {instancePath:instancePath+"/types/" + key18.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data19,parentDataProperty:key18,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate71.errors : vErrors.concat(validate71.errors);
 errors = vErrors.length;
 }
 }
@@ -7892,8 +8772,8 @@ errors++;
 }
 }
 for(const key20 in data21){
-if(!(validate89(data21[key20], {instancePath:instancePath+"/materials/" + key20.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data21,parentDataProperty:key20,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate89.errors : vErrors.concat(validate89.errors);
+if(!(validate94(data21[key20], {instancePath:instancePath+"/materials/" + key20.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data21,parentDataProperty:key20,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate94.errors : vErrors.concat(validate94.errors);
 errors = vErrors.length;
 }
 }
@@ -7949,8 +8829,8 @@ errors++;
 }
 }
 for(const key22 in data23){
-if(!(validate92(data23[key22], {instancePath:instancePath+"/assets/" + key22.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data23,parentDataProperty:key22,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate92.errors : vErrors.concat(validate92.errors);
+if(!(validate97(data23[key22], {instancePath:instancePath+"/assets/" + key22.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data23,parentDataProperty:key22,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate97.errors : vErrors.concat(validate97.errors);
 errors = vErrors.length;
 }
 }
@@ -7967,8 +8847,8 @@ errors++;
 }
 }
 if(data.program !== undefined){
-if(!(validate95(data.program, {instancePath:instancePath+"/program",parentData:data,parentDataProperty:"program",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate95.errors : vErrors.concat(validate95.errors);
+if(!(validate100(data.program, {instancePath:instancePath+"/program",parentData:data,parentDataProperty:"program",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate100.errors : vErrors.concat(validate100.errors);
 errors = vErrors.length;
 }
 }
@@ -8012,8 +8892,8 @@ errors++;
 }
 }
 for(const key24 in data26){
-if(!(validate102(data26[key24], {instancePath:instancePath+"/extensionsUsed/" + key24.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data26,parentDataProperty:key24,rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate102.errors : vErrors.concat(validate102.errors);
+if(!(validate107(data26[key24], {instancePath:instancePath+"/extensionsUsed/" + key24.replace(/~/g, "~0").replace(/\//g, "~1"),parentData:data26,parentDataProperty:key24,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate107.errors : vErrors.concat(validate107.errors);
 errors = vErrors.length;
 }
 }
@@ -8091,8 +8971,8 @@ errors++;
 }
 }
 if(data.extensions !== undefined){
-if(!(validate104(data.extensions, {instancePath:instancePath+"/extensions",parentData:data,parentDataProperty:"extensions",rootData,dynamicAnchors}))){
-vErrors = vErrors === null ? validate104.errors : vErrors.concat(validate104.errors);
+if(!(validate109(data.extensions, {instancePath:instancePath+"/extensions",parentData:data,parentDataProperty:"extensions",rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate109.errors : vErrors.concat(validate109.errors);
 errors = vErrors.length;
 }
 }

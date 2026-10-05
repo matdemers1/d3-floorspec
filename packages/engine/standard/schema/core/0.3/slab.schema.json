@@ -32,6 +32,24 @@
       "$ref": "defs.schema.json#/$defs/reference",
       "description": "6.7: a reference to the material of the slab's top surface. Absent by default."
     },
+    "purpose": {
+      "title": "Slab purpose",
+      "description": "6.7: what the slab is for; when present, one of the purposes of 6.7's table (FS-CORE-6.7.2). Absent by default: not stated. It changes nothing that is derived.",
+      "type": "string",
+      "enum": [
+        "patio",
+        "deck",
+        "porch",
+        "stoop",
+        "landing",
+        "balcony",
+        "garage",
+        "walkway",
+        "driveway",
+        "equipmentPad",
+        "other"
+      ]
+    },
     "name": {
       "$ref": "defs.schema.json#/$defs/name",
       "description": "1.4: a human-readable label, 1–200 characters. Absent by default."

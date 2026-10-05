@@ -1,0 +1,6 @@
+{
+  "description": "A 0.2 document whose level has a ceiling height, which 0.3 adds.",
+  "covers": [
+    "FS-CORE-1.2.6"
+  ]
+}

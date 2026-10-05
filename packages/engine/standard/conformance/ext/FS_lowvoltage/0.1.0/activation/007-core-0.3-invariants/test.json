@@ -1,0 +1,7 @@
+{
+  "description": "The same \"0.3\" house with FS_lowvoltage's data breaking one of its invariants: FS_lowvoltage is evaluated for a Core 0.3 document, so the invariant is reported.",
+  "covers": [
+    "FS-LOWV-1.2.1",
+    "FS-LOWV-1.2.3"
+  ]
+}

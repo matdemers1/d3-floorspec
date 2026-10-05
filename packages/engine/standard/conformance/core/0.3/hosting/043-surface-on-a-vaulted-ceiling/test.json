@@ -1,0 +1,8 @@
+{
+  "description": "Lights on the cathedral ceiling: X1 on the ridge hangs from 3200 mm, X2 1000 mm from the south wall's line - 500 mm from the ridge - from 2950 mm.",
+  "covers": [
+    "FS-CORE-15.6.1",
+    "FS-CORE-15.3.2",
+    "FS-CORE-13.4.1"
+  ]
+}

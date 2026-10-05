@@ -1,0 +1,6 @@
+{
+  "description": "A slab whose purpose is \"pool\", which 6.7 does not list.",
+  "covers": [
+    "FS-CORE-6.7.2"
+  ]
+}

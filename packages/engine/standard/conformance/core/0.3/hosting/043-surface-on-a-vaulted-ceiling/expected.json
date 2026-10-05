@@ -1,0 +1,113 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "dc6394e566c8f8bc5b7015937eff14e7f4c88b771399b281c763b66977312aaa",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "X1": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2432000, 1792000], [2688000, 1792000], [2688000, 2048000], [2432000, 2048000]],
+        "bottom": 3904000,
+        "top": 4096000
+      },
+      "X2": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[1152000, 1152000], [1408000, 1152000], [1408000, 1408000], [1152000, 1408000]],
+        "bottom": 3584000,
+        "top": 3776000
+      }
+    },
+    "placements": {
+      "X1": {
+        "point": [2560000, 1920000, 4096000],
+        "facing": 0
+      },
+      "X2": {
+        "point": [1280000, 1280000, 3776000],
+        "facing": 0
+      }
+    },
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "vaulted",
+        "box": {
+          "max": [5056000, 3776000, 4096000],
+          "min": [64000, 64000, 3168000]
+        },
+        "high": 4096000,
+        "low": 3168000
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5056000, 3776000, 0],
+          "min": [64000, 64000, 0]
+        }
+      }
+    },
+    "slabs": {}
+  }
+}

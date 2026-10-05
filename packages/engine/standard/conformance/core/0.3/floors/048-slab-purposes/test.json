@@ -1,0 +1,7 @@
+{
+  "description": "A slab of every purpose of 6.7, side by side south of the room: valid, each with its bounding geometry.",
+  "covers": [
+    "FS-CORE-6.7.2",
+    "FS-CORE-15.7.1"
+  ]
+}

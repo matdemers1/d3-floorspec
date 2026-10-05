@@ -1,0 +1,9 @@
+{
+  "description": "A light under the vault whose ridge is oblique: its frame's elevation is the ceiling's exact elevation at its position, rounded once, and its fallback box hangs from that integer.",
+  "covers": [
+    "FS-CORE-15.6.1",
+    "FS-CORE-15.3.2",
+    "FS-CORE-13.4.1",
+    "FS-CORE-2.2.1"
+  ]
+}

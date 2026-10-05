@@ -1,0 +1,6 @@
+{
+  "description": "A floor raised 200 mm, with the level's 300 mm thickness: top 200 mm, bottom -100 mm.",
+  "covers": [
+    "FS-CORE-15.1.2"
+  ]
+}

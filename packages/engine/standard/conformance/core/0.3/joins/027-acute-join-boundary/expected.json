@@ -39,6 +39,9 @@
     "placements": {},
     "clearances": {},
     "clearanceOverlaps": [],
-    "circulation": {}
+    "ceilings": {},
+    "circulation": {},
+    "floors": {},
+    "slabs": {}
   }
 }

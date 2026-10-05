@@ -1,0 +1,6 @@
+{
+  "description": "A flat ceiling with a tray's border: each form has only its own members.",
+  "covers": [
+    "FS-CORE-15.2.1"
+  ]
+}

@@ -70,6 +70,26 @@
     "placements": {},
     "clearances": {},
     "clearanceOverlaps": [],
+    "ceilings": {
+      "LIV": {
+        "kind": "flat",
+        "box": {
+          "max": [10176000, 3776000, 3456000],
+          "min": [5184000, 64000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      },
+      "PORCH": {
+        "kind": "flat",
+        "box": {
+          "max": [5056000, 3840000, 3456000],
+          "min": [0, 0, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
     "circulation": {
       "LIV": {
         "entry": false,
@@ -79,6 +99,25 @@
         "entry": true,
         "reachable": true
       }
-    }
+    },
+    "floors": {
+      "LIV": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [10176000, 3776000, 0],
+          "min": [5184000, 64000, 0]
+        }
+      },
+      "PORCH": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5056000, 3840000, 0],
+          "min": [0, 0, 0]
+        }
+      }
+    },
+    "slabs": {}
   }
 }

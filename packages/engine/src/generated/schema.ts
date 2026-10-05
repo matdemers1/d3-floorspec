@@ -162,7 +162,7 @@ export const SCHEMA = {
         },
         "positiveLength": {
           "title": "Positive length",
-          "description": "A length (2.1) greater than zero: a level's height (1.8.3), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2).",
+          "description": "A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1).",
           "type": "integer",
           "minimum": 1,
           "maximum": 9007199254740991
@@ -281,6 +281,30 @@ export const SCHEMA = {
           "type": "integer",
           "minimum": 1,
           "maximum": 9007199254740991
+        },
+        "pitch": {
+          "title": "Pitch",
+          "description": "2.5, 15.3: a slope as a pair of positive integers { \"rise\": r, \"run\": n } — r up for every n across. Both MUST be integers from 1 to 2^53 − 1 (FS-CORE-15.2.1).",
+          "type": "object",
+          "required": [
+            "rise",
+            "run"
+          ],
+          "properties": {
+            "rise": {
+              "description": "2.5: the rise, a positive integer. Always present.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "run": {
+              "description": "2.5: the run, a positive integer. Always present.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "additionalProperties": false
         },
         "clearOpening": {
           "title": "Clear opening",
@@ -998,6 +1022,14 @@ export const SCHEMA = {
           "$ref": "#/$defs/defs/$defs/positiveLength",
           "description": "1.8: floor-to-floor height, the default top of the level's walls (5.9). Always present, and MUST be greater than zero (FS-CORE-1.8.3)."
         },
+        "floorThickness": {
+          "$ref": "#/$defs/defs/$defs/positiveLength",
+          "description": "1.8, 15.1: the thickness of the floors of the level's rooms, unless a room's floor states its own; greater than zero when present (FS-CORE-1.8.4). Absent by default: not declared."
+        },
+        "ceilingHeight": {
+          "$ref": "#/$defs/defs/$defs/positiveLength",
+          "description": "1.8, 15.2: the height of the ceilings of the level's rooms above its elevation, unless a room's ceiling states its own; greater than zero when present (FS-CORE-1.8.4). Its default is derived — the level's height — so it carries no `default` here."
+        },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
           "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
@@ -1298,7 +1330,7 @@ export const SCHEMA = {
     "room": {
       "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
       "title": "Room",
-      "description": "6.5: a room — what cannot be derived about a bounded face of its level's wall graph: its name, its function, its finishes, the program item it fulfils, and the anchor that says which face it is. Every room MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). Where its anchor lies (6.3) is an invariant, not checked here.",
+      "description": "6.5: a room — what cannot be derived about a bounded face of its level's wall graph: its name, its function, its finishes, the program item it fulfils, its floor and ceiling (chapter 15), and the anchor that says which face it is. Every room MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). Where its anchor lies (6.3) is an invariant, not checked here.",
       "type": "object",
       "required": [
         "level",
@@ -1333,6 +1365,18 @@ export const SCHEMA = {
         "brief": {
           "$ref": "#/$defs/defs/$defs/reference",
           "description": "6.5, 11.3: a reference to the program item this room fulfils. That it resolves to a program item (FS-CORE-3.2.1) is an invariant (FS-INV-002), not checked here. Absent by default: the room fulfils no item."
+        },
+        "floor": {
+          "$ref": "#/$defs/room/$defs/floor",
+          "description": "6.5, 15.1: the room's floor: its offset from the level's elevation and its thickness.",
+          "default": {}
+        },
+        "ceiling": {
+          "$ref": "#/$defs/room/$defs/ceiling",
+          "description": "6.5, 15.2: the room's ceiling: flat, tray or vaulted, and its height.",
+          "default": {
+            "kind": "flat"
+          }
         },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
@@ -1382,6 +1426,138 @@ export const SCHEMA = {
               "description": "4.2: <extension name>:<term>, such as EXT_wellness:sauna, where the extension name matches 1.6's pattern and the term matches ^[a-z][A-Za-z0-9]*$.",
               "type": "string",
               "pattern": "^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+:[a-z][A-Za-z0-9]*$"
+            }
+          ]
+        },
+        "floor": {
+          "title": "Floor",
+          "description": "15.1: a room's floor. It has only these members (FS-CORE-15.1.1).",
+          "type": "object",
+          "properties": {
+            "offset": {
+              "$ref": "#/$defs/defs/$defs/length",
+              "description": "15.1: the height of the floor's top above the level's elevation: negative for a sunken floor, positive for a raised one.",
+              "default": 0
+            },
+            "thickness": {
+              "$ref": "#/$defs/defs/$defs/positiveLength",
+              "description": "15.1: the floor's thickness, from its top down; greater than zero (FS-CORE-15.1.1). Its default is derived — the level's floorThickness, else not declared — so it carries no `default` here."
+            }
+          },
+          "additionalProperties": false
+        },
+        "ceiling": {
+          "title": "Ceiling",
+          "description": "15.2: a room's ceiling, of exactly one of three forms (FS-CORE-15.2.1). That it is above the floor (FS-CORE-15.2.2), that a vault's ridge points differ (FS-CORE-15.3.1) and that a tray's border fits its room (FS-CORE-15.4.1) are invariants (FS-INV-701 to FS-INV-703), not checked here.",
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "title": "Ceiling kind",
+              "description": "15.2: \"flat\", \"tray\" or \"vaulted\".",
+              "type": "string",
+              "enum": [
+                "flat",
+                "tray",
+                "vaulted"
+              ]
+            }
+          },
+          "oneOf": [
+            {
+              "title": "Flat ceiling",
+              "description": "15.2: { \"kind\": \"flat\", \"height\"? } — flat at its height.",
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "15.2: \"flat\".",
+                  "const": "flat"
+                },
+                "height": {
+                  "$ref": "#/$defs/defs/$defs/positiveLength",
+                  "description": "15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "title": "Tray ceiling",
+              "description": "15.2, 15.4: { \"kind\": \"tray\", \"height\"?, \"border\", \"depth\" } — flat at its height for a border inside the walls, raised by depth over the centre.",
+              "type": "object",
+              "required": [
+                "kind",
+                "border",
+                "depth"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "15.2: \"tray\".",
+                  "const": "tray"
+                },
+                "height": {
+                  "$ref": "#/$defs/defs/$defs/positiveLength",
+                  "description": "15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."
+                },
+                "border": {
+                  "$ref": "#/$defs/defs/$defs/positiveLength",
+                  "description": "15.4: the width of the border, measured in plan from the room polygon inwards; greater than zero (FS-CORE-15.2.1). Always present."
+                },
+                "depth": {
+                  "$ref": "#/$defs/defs/$defs/positiveLength",
+                  "description": "15.2: how far the centre is raised above the border; greater than zero (FS-CORE-15.2.1). Always present."
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "title": "Vaulted ceiling",
+              "description": "15.2, 15.3: { \"kind\": \"vaulted\", \"height\"?, \"ridge\", \"pitch\", \"slopes\"? } — rising to a ridge line at its height and falling away from it at its pitch.",
+              "type": "object",
+              "required": [
+                "kind",
+                "ridge",
+                "pitch"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "15.2: \"vaulted\".",
+                  "const": "vaulted"
+                },
+                "height": {
+                  "$ref": "#/$defs/defs/$defs/positiveLength",
+                  "description": "15.2: the ceiling's height above the level's elevation — of the whole ceiling, of a tray's border, of a vault's ridge — greater than zero (FS-CORE-15.2.1). Its default is derived — the level's ceilingHeight, else its height — so it carries no `default` here."
+                },
+                "ridge": {
+                  "title": "Ridge",
+                  "description": "15.3: two plan points the ridge line runs through. Always present. That they differ (FS-CORE-15.3.1) is an invariant (FS-INV-702).",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/defs/$defs/point"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "pitch": {
+                  "$ref": "#/$defs/defs/$defs/pitch",
+                  "description": "15.3: the slope away from the ridge. Always present."
+                },
+                "slopes": {
+                  "description": "15.3: \"both\" (a cathedral ceiling), or \"left\" or \"right\": one plane falling to that side of the ridge line, walked from its first point to its second.",
+                  "type": "string",
+                  "enum": [
+                    "both",
+                    "left",
+                    "right"
+                  ],
+                  "default": "both"
+                }
+              },
+              "additionalProperties": false
             }
           ]
         }
@@ -1510,6 +1686,24 @@ export const SCHEMA = {
         "material": {
           "$ref": "#/$defs/defs/$defs/reference",
           "description": "6.7: a reference to the material of the slab's top surface. Absent by default."
+        },
+        "purpose": {
+          "title": "Slab purpose",
+          "description": "6.7: what the slab is for; when present, one of the purposes of 6.7's table (FS-CORE-6.7.2). Absent by default: not stated. It changes nothing that is derived.",
+          "type": "string",
+          "enum": [
+            "patio",
+            "deck",
+            "porch",
+            "stoop",
+            "landing",
+            "balcony",
+            "garage",
+            "walkway",
+            "driveway",
+            "equipmentPad",
+            "other"
+          ]
         },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",

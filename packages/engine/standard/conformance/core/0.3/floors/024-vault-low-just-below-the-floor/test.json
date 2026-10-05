@@ -1,0 +1,7 @@
+{
+  "description": "The same vault one base unit lower: 0.78 of a base unit below the floor at that corner. FS-INV-701.",
+  "covers": [
+    "FS-CORE-15.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

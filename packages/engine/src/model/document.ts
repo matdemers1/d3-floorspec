@@ -26,6 +26,13 @@ export type Separator = G.Separator;
 export type Opening = G.Opening;
 export type Room = G.Room;
 export type Slab = G.Slab;
+/** 15.1 (Core 0.3): a room's floor. */
+export type RoomFloor = G.Floor;
+/** 15.2 (Core 0.3): a room's ceiling — flat, tray or vaulted. */
+export type Ceiling = G.Ceiling;
+export type FlatCeiling = G.FlatCeiling;
+export type TrayCeiling = G.TrayCeiling;
+export type VaultedCeiling = G.VaultedCeiling;
 export type Type = G.Type;
 export type WallType = G.WallType;
 export type DoorType = G.DoorType;

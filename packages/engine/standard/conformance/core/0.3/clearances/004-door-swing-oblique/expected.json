@@ -72,11 +72,33 @@
       }
     },
     "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [5034135, 5034135, 3456000],
+          "min": [-1194135, 85865, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
     "circulation": {
       "R1": {
         "entry": true,
         "reachable": true
       }
-    }
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5034135, 5034135, 0],
+          "min": [-1194135, 85865, 0]
+        }
+      }
+    },
+    "slabs": {}
   }
 }

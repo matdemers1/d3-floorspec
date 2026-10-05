@@ -23,6 +23,14 @@
       "$ref": "defs.schema.json#/$defs/positiveLength",
       "description": "1.8: floor-to-floor height, the default top of the level's walls (5.9). Always present, and MUST be greater than zero (FS-CORE-1.8.3)."
     },
+    "floorThickness": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "1.8, 15.1: the thickness of the floors of the level's rooms, unless a room's floor states its own; greater than zero when present (FS-CORE-1.8.4). Absent by default: not declared."
+    },
+    "ceilingHeight": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "1.8, 15.2: the height of the ceilings of the level's rooms above its elevation, unless a room's ceiling states its own; greater than zero when present (FS-CORE-1.8.4). Its default is derived — the level's height — so it carries no `default` here."
+    },
     "name": {
       "$ref": "defs.schema.json#/$defs/name",
       "description": "1.4: a human-readable label, 1–200 characters. Absent by default."

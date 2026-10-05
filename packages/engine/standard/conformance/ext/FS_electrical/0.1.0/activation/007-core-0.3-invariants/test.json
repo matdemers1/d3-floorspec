@@ -1,0 +1,7 @@
+{
+  "description": "The same \"0.3\" house with FS_electrical's data breaking one of its invariants: FS_electrical is evaluated for a Core 0.3 document, so the invariant is reported.",
+  "covers": [
+    "FS-ELEC-1.2.1",
+    "FS-ELEC-1.2.3"
+  ]
+}

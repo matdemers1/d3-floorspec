@@ -1,0 +1,6 @@
+{
+  "description": "A vault whose pitch rises 0: a pitch is two positive integers.",
+  "covers": [
+    "FS-CORE-15.2.1"
+  ]
+}
