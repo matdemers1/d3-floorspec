@@ -1,0 +1,28 @@
+{
+  "name": "@floorspec/assistant-electrical",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Non-normative electrical layout assistant: proposes receptacles, GFCI and AFCI, switches, lights and circuits for a Floorspec plan as one Floorspec Ops batch, from Floorspec's own configurable defaults. Advice, never a code check. Isomorphic and deterministic.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc -p test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*",
+    "@floorspec/ops": "workspace:*"
+  }
+}
