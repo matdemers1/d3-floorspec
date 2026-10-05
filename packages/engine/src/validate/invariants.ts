@@ -33,6 +33,7 @@ import { entry } from './catalogue.js';
 import type { Diagnostic, DiagnosticLocation, FixOp } from './diagnostic.js';
 import { extensionInvariants, hostingInvariants, programInvariants, surfaceInvariants } from './invariants02.js';
 import { floorInvariants, roomRings } from '../slabs/floors.js';
+import { roofInvariants } from '../roofs/roofs.js';
 
 export class Reporter {
   readonly diagnostics: Diagnostic[] = [];
@@ -135,6 +136,11 @@ function referenceInvariants(doc: FloorspecDocument, r: Reporter): void {
     ref(id, ptr('slabs', id, 'level'), 'levels', s.level);
     ref(id, ptr('slabs', id, 'material'), 'materials', s.material);
   }
+  // Core 0.3: roofs (16.1) and stairs (17.1).
+  for (const [id, rf] of entries(doc.roofs)) {
+    ref(id, ptr('roofs', id, 'level'), 'levels', rf.level);
+    ref(id, ptr('roofs', id, 'material'), 'materials', rf.material);
+  }
   for (const [id, t] of entries(doc.types)) if (t.kind === 'wallType') layerRefs(id, ptr('types', id), t.layers);
   for (const [id, m] of entries(doc.materials)) if (m.texture) ref(id, ptr('materials', id, 'texture', 'asset'), 'assets', m.texture.asset);
 
@@ -217,6 +223,8 @@ function referenceInvariants(doc: FloorspecDocument, r: Reporter): void {
     r.report('FS-INV-009', 'The site boundary is not a simple polygon with positive area.', [], { pointer: '/site/boundary' });
   for (const [id, s] of entries(doc.slabs))
     if (!polygonOk(s.boundary)) r.report('FS-INV-009', `${id}'s boundary is not a simple polygon with positive area.`, [id], { pointer: ptr('slabs', id, 'boundary') });
+  for (const [id, rf] of entries(doc.roofs))
+    if (!polygonOk(rf.footprint)) r.report('FS-INV-009', `${id}'s footprint is not a simple polygon with positive area.`, [id], { pointer: ptr('roofs', id, 'footprint') });
 }
 
 // ── graph invariants (FS-INV-101 … 108, 111, 112) ────────────────────────────
@@ -559,6 +567,21 @@ function floorAndCeilingInvariants(doc: FloorspecDocument, r: Reporter, levels: 
   }
 }
 
+// ── roof invariants (FS-INV-801 … 805) ─────────────────────────────────────────
+
+const ROOF_MESSAGES: Record<string, string> = {
+  'FS-INV-801': 'names an edge its footprint does not have in `edges`',
+  'FS-INV-802': 'has both level edges and edges that are not level: a roof is all flat or all sloped',
+  'FS-INV-803': 'has a gable on every edge, so nothing slopes',
+  'FS-INV-804': 'has two consecutive footprint edges that are collinear',
+  'FS-INV-805': "has an eave outline that does not fit its footprint: an overhang is too wide for an edge or closes a notch",
+};
+
+function roofInvariantsOf(doc: FloorspecDocument, r: Reporter): void {
+  for (const [id, roof] of entries(doc.roofs))
+    for (const code of roofInvariants(roof)) r.report(code, `${id} ${ROOF_MESSAGES[code]}.`, [id], { pointer: ptr('roofs', id) });
+}
+
 // ── tier 4 ───────────────────────────────────────────────────────────────────
 
 export interface InvariantOptions {
@@ -593,6 +616,7 @@ export function invariants(doc: FloorspecDocument, r: Reporter, options: Invaria
   openingInvariants(doc, r);
   typeInvariants(doc, r);
   floorAndCeilingInvariants(doc, r, levels);
+  roofInvariantsOf(doc, r);
   const analysis: Analysis = { levels, offsets, core02: options.core02, core03: options.core03 ?? false };
   if (options.core02) {
     programInvariants(doc, r);

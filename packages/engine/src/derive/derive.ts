@@ -14,6 +14,9 @@ import { comparePoints } from './level.js';
 import { analyseProgram, type DerivedProgram } from './program.js';
 import { analyseCirculation, type DerivedCirculationRoom } from '../circulation/circulation.js';
 import type { DerivedExtensions } from '../extensions/official.js';
+import { deriveRoofs, type DerivedRoof } from '../roofs/roofs.js';
+
+export type { DerivedRoof, DerivedRoofFace, DerivedRoofLine } from '../roofs/roofs.js';
 
 export type { DerivedProgram, DerivedProgramItem, DerivedAdjacency } from './program.js';
 export type { DerivedCirculationRoom } from '../circulation/circulation.js';
@@ -100,6 +103,8 @@ export interface Derived {
   ceilings?: Record<string, DerivedCeiling>;
   /** 15.7: every slab's outline, top, bottom and box. */
   slabs?: Record<string, DerivedSlab>;
+  /** 16.5: every roof's kind, eave outline, eave and surface (null when this draft does not derive it). */
+  roofs?: Record<string, DerivedRoof>;
 }
 
 /** Half of a BigInt, as a decimal string (6.4: a net area is a multiple of one half). */
@@ -177,7 +182,7 @@ export function deriveFrom(doc: FloorspecDocument, analysis: Analysis): Derived 
     });
   }
   if (analysis.core02) Object.assign(out, derive02(doc, analysis));
-  // Core 0.3 (chapter 15): every room's floor and ceiling and every slab, for a document of any draft.
+  // Core 0.3 (chapters 15–16): every room's floor and ceiling, every slab and roof, for a document of any draft.
   if (analysis.core03)
     Object.assign(
       out,
@@ -185,6 +190,7 @@ export function deriveFrom(doc: FloorspecDocument, analysis: Analysis): Derived 
         const la = analysis.levels.get(room.level)!;
         return roomRings(la.geometry!, la.roomFaces.get(id)!);
       }),
+      { roofs: deriveRoofs(doc) },
     );
   return out;
 }

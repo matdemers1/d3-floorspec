@@ -8,6 +8,7 @@ import { entries, extElements, get, ipoint, openingDimensions, programItems, typ
 import { analyseProgram } from '../derive/program.js';
 import { circulationLints } from '../circulation/circulation.js';
 import type { Analysis, Reporter } from './invariants.js';
+import { surfaceDerived } from '../roofs/roofs.js';
 
 const ptr = (collection: string, id: string): string => `/${collection}/${id.replace(/~/g, '~0').replace(/\//g, '~1')}`;
 
@@ -105,6 +106,7 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
     add(rm.ceilingFinish);
   }
   for (const [, s] of entries(doc.slabs)) add(s.material);
+  for (const [, rf] of entries(doc.roofs)) add(rf.material);
   for (const [, m] of entries(doc.materials)) add(m.texture?.asset);
   for (const x of extElements(doc)) {
     add(x.element.fallback.asset);
@@ -123,6 +125,11 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
     programLints(doc, analysis, r);
     circulationLints(doc, analysis, r);
   }
+
+  // 015: roofs whose surface this draft does not derive (16.4.4).
+  for (const [id, roof] of entries(doc.roofs))
+    if (!surfaceDerived(roof))
+      r.report('FS-LINT-015', `${id}'s surface is not derived by this draft: its pitches differ, its outline has an oblique edge, or a gable is not at the end of a wing.`, [id], { pointer: ptr('roofs', id) });
 }
 
 /** 11.5: an unmet program is a warning, never an error (FS-CORE-11.5.2). */
