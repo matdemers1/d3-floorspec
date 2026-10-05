@@ -76,6 +76,17 @@ const Env = z.object({
 
   /** The built editor. Set in the image; absent in development, where Vite serves it. */
   WEB_DIST: optional(z.string()),
+
+  /**
+   * Where the installed rule packs are (FLR-T-6.2): built Floorspec Rules 0.1 pack objects, read and
+   * validated at boot (src/rules/packs.ts). Unset: none, and findings say no pack is installed.
+   */
+  RULE_PACKS_DIR: optional(z.string()),
+  /**
+   * A Floorspec Rules 0.1 profile file (Rules chapter 10) the packs are evaluated under. Unset: the
+   * default profile, the model codes' latest editions (Rules 10.6).
+   */
+  RULE_PROFILE: optional(z.string()),
 });
 
 export type Config = z.infer<typeof Env> & {

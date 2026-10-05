@@ -56,6 +56,9 @@ importers:
       '@floorspec/ops':
         specifier: workspace:*
         version: link:../../packages/ops
+      '@floorspec/rules-engine':
+        specifier: workspace:*
+        version: link:../../packages/rules-engine
       '@prisma/adapter-pg':
         specifier: 7.10.0
         version: 7.10.0
