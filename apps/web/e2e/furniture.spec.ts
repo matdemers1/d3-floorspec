@@ -17,6 +17,8 @@ import { FT, firstRunSetup, historyOf, password, projectIn, settled } from './su
  * inspector and the blocked clearance turns to the warning tone. In 3D the refrigerator is its
  * model. Undo takes the island away in one step and the note goes with it. axe runs on the library
  * and the inspector in both themes; screenshots of each land in test-results/furniture-*.png.
+ * Through a share link, with no account, the symbol and the model load from the link's own asset
+ * route (FLR-T-9.6).
  */
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -53,7 +55,7 @@ async function audit(page: Page, state: string): Promise<void> {
   await page.emulateMedia({ colorScheme: 'light' });
 }
 
-test('the P8 furniture demo: place a fridge from the library, its door clearance shows, an island in its way is a note, 3D shows the model, undo', async ({ page }) => {
+test('the P8 furniture demo: place a fridge from the library, its door clearance shows, an island in its way is a note, 3D shows the model, undo', async ({ page, browser, baseURL }) => {
   test.setTimeout(180_000);
   await firstRunSetup(page, { name: 'Fitter', email: 'fitter@example.test', password: password('furniture') });
   await page.getByRole('button', { name: 'New project' }).first().click();
@@ -179,6 +181,32 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   await expect.poll(async () => furniture(await modelOf(page, project)).length).toBe(1);
   await expect(page.locator('.fs-clearance--blocked')).toHaveCount(0);
   expect(Object.keys((await modelOf(page, project)).assets ?? {})).toHaveLength(2);
+
+  // ── FLR-T-9.6's follow-up: somebody with no account opens a share link and sees the refrigerator
+  // as its symbol on the plan and its model in 3D — both from the link's own asset route, never
+  // the owner's, so nothing falls back to an outline or a box.
+  const shared = await page.request.post(`/api/projects/${project}/shares`, { data: {} });
+  expect(shared.status(), await shared.text()).toBe(201);
+  const { url } = (await shared.json()) as { url: string };
+  const via = `/api/share/${url.split('/s/')[1]!}/assets/`;
+  const fileOf = (key: string) => model.assets![key]!.sha256;
+  const stranger = await browser.newContext({ baseURL: baseURL! });
+  const viewer = await stranger.newPage();
+  const answered = new Map<string, number>();
+  viewer.on('response', (r) => { const path = new URL(r.url()).pathname; if (path.startsWith('/api/') && path.includes('/assets/')) answered.set(path, r.status()); });
+  await viewer.goto(url);
+  await expect(viewer.locator(`[data-furniture="${fridge!.id}"] image`)).toHaveAttribute('href', `${via}${fileOf(fridge!.fallback.symbol)}`);
+  await expect.poll(() => answered.get(`${via}${fileOf(fridge!.fallback.symbol)}`)).toBe(200);
+  await viewer.getByRole('radio', { name: '3D' }).click();
+  await viewer.waitForFunction(() => (window as unknown as { __floorspec3d?: { ready: boolean } }).__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
+  await viewer.waitForFunction((id) => ((window as unknown as { __floorspecFurniture3d?: { drawn: string[] } }).__floorspecFurniture3d?.drawn ?? []).includes(id), fridge!.id, { timeout: 30_000 });
+  expect((await viewer.evaluate(() => (window as unknown as { __floorspecFurniture3d: { failed: string[] } }).__floorspecFurniture3d)).failed).toEqual([]);
+  expect(answered.get(`${via}${fileOf(fridge!.fallback.asset)}`)).toBe(200);
+  // Every file the viewer asked for came through the link; the owner's route was never tried.
+  expect([...answered.keys()].filter((p) => !p.startsWith(via))).toEqual([]);
+  await viewer.waitForTimeout(400); // the frame the model arrived in, so the picture is of the model
+  await viewer.screenshot({ path: 'test-results/furniture-shared-3d.png' });
+  await stranger.close();
 
   // ── Upload your own: a model made facing +Z, turned to face +X; a symbol with a script in it.
   await page.keyboard.press('f');

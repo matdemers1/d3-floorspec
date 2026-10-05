@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { packageEntries, packageZip, writeZip } from '@floorspec/package';
 import { readImportBytes } from '../src/projects/importPackage';
 import { textureUrl } from '../src/editor/three/textures';
+import { assetHref } from '../src/furniture/api';
 
 /** The import dialog's reading of a file (FLR-T-9.1), and where the 3D view finds a texture (FLR-T-9.6). */
 
@@ -50,5 +51,11 @@ describe('texture URLs', () => {
     const sha = 'a'.repeat(64);
     expect(textureUrl('0199aaaa-0000-7000-8000-000000000000', sha)).toBe(`/api/projects/0199aaaa-0000-7000-8000-000000000000/assets/${sha}`);
     expect(textureUrl('share:AbC_d-1', sha)).toBe(`/api/share/AbC_d-1/assets/${sha}`);
+  });
+
+  it('are the same for furniture symbols and models, so a link draws them too', () => {
+    const sha = 'b'.repeat(64);
+    expect(assetHref('0199aaaa-0000-7000-8000-000000000000', sha)).toBe(`/api/projects/0199aaaa-0000-7000-8000-000000000000/assets/${sha}`);
+    expect(assetHref('share:AbC_d-1', sha)).toBe(`/api/share/AbC_d-1/assets/${sha}`);
   });
 });

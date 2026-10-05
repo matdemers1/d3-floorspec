@@ -24,15 +24,20 @@ import { filesOf, isFurniture } from './view';
 
 type Json = Record<string, unknown>;
 
-/** Every model file, loaded once per page: its digest → the parsed scene. */
+/**
+ * Every model file, loaded once per page: its URL → the parsed scene. Keyed by where it was read
+ * from, not its digest alone, so the owner's editor and a share link (FLR-T-9.6: the link's own
+ * asset route) never answer for each other.
+ */
 const cache = new Map<string, Promise<THREE.Group>>();
 const loaded = new Set<string>();
 const failed = new Set<string>();
 
 function loadModel(projectId: string, sha256: string): Promise<THREE.Group> {
-  let p = cache.get(sha256);
+  const url = assetHref(projectId, sha256);
+  let p = cache.get(url);
   if (p === undefined) {
-    p = fetch(assetHref(projectId, sha256), { credentials: 'same-origin' })
+    p = fetch(url, { credentials: 'same-origin' })
       .then(async (res) => {
         if (!res.ok) throw new Error(`the model answered ${String(res.status)}`);
         const buffer = await res.arrayBuffer();
@@ -42,15 +47,15 @@ function loadModel(projectId: string, sha256: string): Promise<THREE.Group> {
       })
       .then(
         (scene) => {
-          loaded.add(sha256);
+          loaded.add(url);
           return scene;
         },
         (e: unknown) => {
-          failed.add(sha256);
+          failed.add(url);
           throw e;
         },
       );
-    cache.set(sha256, p);
+    cache.set(url, p);
   }
   return p;
 }
@@ -102,7 +107,7 @@ export function useFurnitureModels(projectId: string, model: EditorModel | null)
   useEffect(() => {
     let live = true;
     for (const sha of new Set(items.map((i) => i.sha256))) {
-      if (scenes.has(sha) || failed.has(sha)) continue;
+      if (scenes.has(sha) || failed.has(assetHref(projectId, sha))) continue;
       loadModel(projectId, sha).then(
         (scene) => {
           if (live) setScenes((m) => new Map(m).set(sha, scene));
@@ -117,7 +122,7 @@ export function useFurnitureModels(projectId: string, model: EditorModel | null)
     };
   }, [items, projectId, scenes]);
   const drawn = useMemo(() => new Set(items.filter((i) => scenes.has(i.sha256)).map((i) => i.id)), [items, scenes]);
-  useTestHook(items, drawn);
+  useTestHook(projectId, items, drawn);
   return { items, scenes, drawn };
 }
 
@@ -236,19 +241,19 @@ declare global {
 }
 
 /** Under automation only (navigator.webdriver): which models are drawn. Nothing is exposed to a person's browser. */
-function useTestHook(items: FurnitureModel[], drawn: Set<string>): void {
+function useTestHook(projectId: string, items: FurnitureModel[], drawn: Set<string>): void {
   useEffect(() => {
     if (!navigator.webdriver) return;
     const hook: Hook = {
       drawn: [...drawn].sort(),
       items: items.map((i) => i.id).sort(),
-      failed: items.filter((i) => failed.has(i.sha256)).map((i) => i.id).sort(),
+      failed: items.filter((i) => failed.has(assetHref(projectId, i.sha256))).map((i) => i.id).sort(),
     };
     window.__floorspecFurniture3d = hook;
     return () => {
       if (window.__floorspecFurniture3d === hook) delete window.__floorspecFurniture3d;
     };
-  }, [items, drawn]);
+  }, [projectId, items, drawn]);
 }
 
 /** Leave out the fallback boxes the mesher drew for elements whose model is drawn instead. */
