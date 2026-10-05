@@ -10,21 +10,21 @@
     {
       "code": "TEST-CODE",
       "edition": "2024",
-      "note": "Ceiling heights: Core derives no ceilings yet.",
+      "note": "Ceiling heights are left to a later version of the pack; Core derives them since Core 0.3 (`ceilingHeight`).",
       "section": "§2",
       "status": "notAddressed"
     },
     {
       "code": "TEST-CODE",
       "edition": "2024",
-      "note": "Room widths are left to a later version of the pack.",
+      "note": "Room widths at every point of a room that is not convex: the measure is deferred.",
       "section": "§3",
       "status": "notAddressed"
     },
     {
       "code": "TEST-CODE",
       "edition": "2024",
-      "note": "Riser heights, written ahead of stair data in Core.",
+      "note": "Riser heights of every stair.",
       "section": "§4",
       "status": "addressed"
     },
@@ -45,13 +45,13 @@
           "domain": "room-sizes"
         },
         {
-          "domain": "room-sizes",
-          "needs": [
-            "ceilingHeight"
-          ]
+          "domain": "room-sizes"
         },
         {
-          "domain": "room-sizes"
+          "domain": "room-sizes",
+          "needs": [
+            "roomNarrowestDimension"
+          ]
         },
         {
           "domain": "stairs"
@@ -189,7 +189,7 @@
     },
     "STAIR-RISER": {
       "applies": {
-        "to": "level"
+        "to": "stair"
       },
       "citation": {
         "code": "TEST-CODE",
@@ -205,10 +205,9 @@
           "review": "unreviewed"
         }
       },
-      "paraphrase": "Each step of a stair rises no more than 7 inches from the one below. Floorspec Core has no stairs yet, so this rule is written ahead of the data and is not evaluated until the stair measures exist.",
+      "paraphrase": "Each step of a stair rises no more than 7 inches from the one below. The rule reads the riser height Floorspec Core derives for the stair: its rise, from the floor at its foot to the floor at its head, over its riser count.",
       "provenance": {
         "edition": "2024",
-        "note": "Kept so that the coverage matrix shows a section waiting on data.",
         "verifiedBy": "Floorspec contributors",
         "verifiedOn": "2026-10-05"
       },

@@ -100,17 +100,15 @@
       "declared": "notAddressed",
       "domain": "room-sizes",
       "edition": "2024",
-      "needs": [
-        "ceilingHeight"
-      ],
+      "needs": [],
       "newestVerification": null,
-      "note": "Ceiling heights: Core derives no ceilings yet.",
+      "note": "Ceiling heights are left to a later version of the pack; Core derives them since Core 0.3 (`ceilingHeight`).",
       "oldestVerification": null,
       "pack": "example",
       "reviewed": 0,
       "rules": [],
       "section": "§2",
-      "status": "deferred",
+      "status": "notCovered",
       "version": "0.1.0"
     },
     {
@@ -118,15 +116,17 @@
       "declared": "notAddressed",
       "domain": "room-sizes",
       "edition": "2024",
-      "needs": [],
+      "needs": [
+        "roomNarrowestDimension"
+      ],
       "newestVerification": null,
-      "note": "Room widths are left to a later version of the pack.",
+      "note": "Room widths at every point of a room that is not convex: the measure is deferred.",
       "oldestVerification": null,
       "pack": "example",
       "reviewed": 0,
       "rules": [],
       "section": "§3",
-      "status": "notCovered",
+      "status": "deferred",
       "version": "0.1.0"
     },
     {
@@ -136,7 +136,7 @@
       "edition": "2024",
       "needs": [],
       "newestVerification": "2026-10-05",
-      "note": "Riser heights, written ahead of stair data in Core.",
+      "note": "Riser heights of every stair.",
       "oldestVerification": "2026-10-05",
       "pack": "example",
       "reviewed": 0,
