@@ -9,6 +9,7 @@ import { analyseProgram } from '../derive/program.js';
 import { circulationLints } from '../circulation/circulation.js';
 import type { Analysis, Reporter } from './invariants.js';
 import { surfaceDerived } from '../roofs/roofs.js';
+import { stepsDerived } from '../stairs/stairs.js';
 
 const ptr = (collection: string, id: string): string => `/${collection}/${id.replace(/~/g, '~0').replace(/\//g, '~1')}`;
 
@@ -126,10 +127,13 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
     circulationLints(doc, analysis, r);
   }
 
-  // 015: roofs whose surface this draft does not derive (16.4.4).
+  // 015: roofs whose surface this draft does not derive (16.4.4); 016: winder and spiral stairs (17.7).
   for (const [id, roof] of entries(doc.roofs))
     if (!surfaceDerived(roof))
       r.report('FS-LINT-015', `${id}'s surface is not derived by this draft: its pitches differ, its outline has an oblique edge, or a gable is not at the end of a wing.`, [id], { pointer: ptr('roofs', id) });
+  for (const [id, st] of entries(doc.stairs))
+    if (!stepsDerived(st))
+      r.report('FS-LINT-016', `${id} is a ${st.form?.kind} stair, whose steps, run, walkline and headroom this draft does not derive.`, [id], { pointer: ptr('stairs', id) });
 }
 
 /** 11.5: an unmet program is a warning, never an error (FS-CORE-11.5.2). */
