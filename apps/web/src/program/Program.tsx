@@ -1,6 +1,6 @@
 import '../editor/editor.css';
 import './program.css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar, Button, EmptyState, IconButton, SegmentedControl, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
 import { ArrowLeft, Download, Redo2, Undo2 } from 'lucide-react';
 import { navigate } from '../lib/router';
@@ -49,11 +49,15 @@ function Frame({ store, screen, you, tick }: { store: EditorStore; screen: Progr
     store.set({ notice: null });
   }, [notice, toast, store]);
 
-  // A selection whose item or line is gone (an undo, somebody else's edit) is dropped.
+  // A selection whose item or line is gone (an undo, somebody else's edit) is dropped. One made for
+  // an item or line an edit is still adding (relate, add) is not there yet: it waits for the next
+  // model before it can be missing, so a slow round trip does not undo the selection it was made for.
+  const madeIn = useRef<{ selection: Selection; view: ProgramView | null }>({ selection: null, view: null });
   useEffect(() => {
     if (view === null || selection === null) return;
+    if (madeIn.current.selection !== selection) madeIn.current = { selection, view };
     const exists = selection.kind === 'item' ? view.items.some((i) => i.id === selection.id) : view.edges.some((e) => e.key === selection.key);
-    if (!exists) setSelection(null);
+    if (!exists && view !== madeIn.current.view) setSelection(null);
   }, [view, selection]);
 
   useUndoKeys(store);
