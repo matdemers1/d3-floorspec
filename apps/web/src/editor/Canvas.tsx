@@ -710,9 +710,10 @@ function CanvasChrome({ store, view, units }: { store: EditorStore; view: Viewpo
   const run = (id: string) => () => commandById(id)?.run(store, undefined as never);
   return (
     <>
-      <div className="fs-north" aria-label="North is up">
+      {/* An image with a name: aria-label on a plain div is not announced (ARIA 1.2 prohibits it). */}
+      <div className="fs-north" role="img" aria-label="North is up">
         <ArrowUp aria-hidden="true" />
-        <span>N</span>
+        <span aria-hidden="true">N</span>
       </div>
       <div className="fs-zoom">
         <IconButton size="sm" label="Zoom out" icon={<Minus />} onClick={run('view.zoomOut')} />

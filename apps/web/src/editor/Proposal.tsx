@@ -29,7 +29,7 @@ export function ProposalPanel({ store }: { store: EditorStore }) {
   const status = failed ? <Badge tone="danger">Does not apply</Badge> : rebased ? <Badge tone="warning">Rebased</Badge> : <Badge tone="attention">Pending</Badge>;
 
   return (
-    <div className="fs-inspector__body fs-review" aria-label="Proposed changes">
+    <div className="fs-inspector__body fs-review" role="group" aria-label="Proposed changes">
       <div className="fs-inspector__head">
         <span className="fs-inspector__icon fs-review__icon">
           <Sparkles />

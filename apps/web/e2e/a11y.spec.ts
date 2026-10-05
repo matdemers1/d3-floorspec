@@ -1,0 +1,447 @@
+// The named export: under NodeNext the default resolves to the module namespace, not the class.
+import { AxeBuilder } from '@axe-core/playwright';
+import { expect, test, type Page } from '@playwright/test';
+import type { Result } from 'axe-core';
+import { asAgent, password, projectIn, settled, setupToken, totp } from './support.js';
+
+/**
+ * FLR-T-3.9: axe on every screen and every significant state, in both themes — zero violations of
+ * WCAG 2.0, 2.1 and 2.2 A/AA is the bar. One walk through the app, from first-run setup to a
+ * second account accepting an invite; at each stop the colour scheme is switched to light and to
+ * dark, the page is checked to have actually re-themed (the `data-theme` @d3cloud/ui's
+ * ThemeProvider sets on <html>, and a different page background), and axe runs.
+ *
+ * Nothing is excluded and no rule is disabled: a violation is fixed in the app.
+ */
+
+const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+const THEMES = ['light', 'dark'] as const;
+
+interface Finding {
+  state: string;
+  theme: string;
+  violation: string;
+}
+
+const findings: Finding[] = [];
+const audited = new Set<string>();
+const backgrounds: Record<string, Set<string>> = { light: new Set(), dark: new Set() };
+
+function describe(v: Result): string {
+  const nodes = v.nodes.slice(0, 4).map((n) => `${n.target.join(' ')}${n.failureSummary === undefined ? '' : ` — ${n.failureSummary.split('\n').slice(1).join(' ').trim()}`}`);
+  return `${v.id} (${v.impact ?? '?'}): ${v.help} [${String(v.nodes.length)} node(s)]\n        ${nodes.join('\n        ')}`;
+}
+
+/** Wait until nothing is animating, so axe reads settled colours rather than a transition's middle. */
+async function still(page: Page): Promise<void> {
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running' || (a.effect?.getComputedTiming().iterations ?? 1) === Infinity), undefined, { timeout: 5_000 }).catch(() => undefined);
+}
+
+/**
+ * Text drawn in SVG — the plan's room names, areas and dimensions, on the canvas and on the
+ * dashboard's thumbnail — is text a sighted person reads, but axe cannot judge it: it reports
+ * "background could not be determined" (an image node) and moves on. So it is checked here, by the
+ * same WCAG 1.4.3 arithmetic, against every surface it can sit on: the well the plan is drawn in,
+ * and each room's fill composited over it. Opacity on the text or its groups counts against it.
+ */
+async function svgTextContrast(page: Page): Promise<{ failures: string[]; checked: string[] }> {
+  return page.evaluate(() => {
+    type Rgba = [number, number, number, number];
+    const parse = (c: string): Rgba | null => {
+      const m = /rgba?\(([^)]+)\)/.exec(c);
+      if (m === null) return null;
+      const [r, g, b, a] = (m[1] ?? '').split(/[ ,/]+/).filter(Boolean).map(Number);
+      return [r ?? 0, g ?? 0, b ?? 0, a ?? 1];
+    };
+    const over = (top: Rgba, under: Rgba): Rgba => {
+      const a = top[3];
+      return [top[0] * a + under[0] * (1 - a), top[1] * a + under[1] * (1 - a), top[2] * a + under[2] * (1 - a), 1];
+    };
+    const lum = (c: Rgba) => {
+      const ch = c.slice(0, 3).map((v) => {
+        const x = v / 255;
+        return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * (ch[0] ?? 0) + 0.7152 * (ch[1] ?? 0) + 0.0722 * (ch[2] ?? 0);
+    };
+    const ratio = (a: Rgba, b: Rgba) => {
+      const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+      return ((x ?? 0) + 0.05) / ((y ?? 0) + 0.05);
+    };
+    const opacityOf = (el: Element, stop: Element) => {
+      let o = 1;
+      for (let e: Element | null = el; e !== null && e !== stop.parentElement; e = e.parentElement) o *= Number(getComputedStyle(e).opacity);
+      return o;
+    };
+    const failures: string[] = [];
+    const checked: string[] = [];
+    for (const svg of document.querySelectorAll('svg')) {
+      const texts = [...svg.querySelectorAll('text')].filter((t) => t.textContent.trim() !== '' && t.getBoundingClientRect().width > 0);
+      if (texts.length === 0) continue;
+      let well: Rgba | null = null;
+      for (let e: Element | null = svg; e !== null && well === null; e = e.parentElement) {
+        const bg = parse(getComputedStyle(e).backgroundColor);
+        if (bg !== null && bg[3] > 0) well = bg;
+      }
+      const base = well ?? ([255, 255, 255, 1] as Rgba);
+      const surfaces: Rgba[] = [base];
+      for (const face of svg.querySelectorAll('[class*="__rooms"] > *')) {
+        const style = getComputedStyle(face);
+        const fill = parse(style.fill);
+        if (fill === null) continue;
+        surfaces.push(over([fill[0], fill[1], fill[2], fill[3] * Number(style.fillOpacity) * opacityOf(face, svg)], base));
+      }
+      for (const text of texts) {
+        const parts = text.querySelectorAll('tspan').length > 0 ? [...text.querySelectorAll('tspan')] : [text];
+        for (const part of parts) {
+          const style = getComputedStyle(part);
+          const fill = parse(style.fill);
+          if (fill === null) continue;
+          const size = parseFloat(style.fontSize);
+          const bold = Number(style.fontWeight) >= 700;
+          const needed = size >= 24 || (bold && size >= 18.66) ? 3 : 4.5;
+          const alpha = fill[3] * Number(style.fillOpacity) * opacityOf(part, svg);
+          const worst = Math.min(...surfaces.map((bg) => ratio(over([fill[0], fill[1], fill[2], alpha], bg), bg)));
+          checked.push(`${part.textContent.trim()}=${worst.toFixed(2)}`);
+          if (worst < needed) failures.push(`svg-text-contrast: "${part.textContent.trim()}" (${part.getAttribute('class') ?? 'text'}) is ${worst.toFixed(2)}:1, needs ${String(needed)}:1`);
+        }
+      }
+    }
+    return { failures, checked };
+  });
+}
+
+/** A11Y_DEBUG=1 prints, per state and theme, what axe passed and what it could not decide. */
+const DEBUG = process.env['A11Y_DEBUG'] !== undefined;
+/** A11Y_SHOTS=<dir> keeps a screenshot of every state in each theme, for a person to look at. */
+const SHOTS = process.env['A11Y_SHOTS'];
+
+/** axe, in both themes, on what the page shows now. */
+async function audit(page: Page, state: string): Promise<void> {
+  if (audited.has(state)) throw new Error(`state "${state}" audited twice`);
+  audited.add(state);
+  for (const theme of THEMES) {
+    await page.emulateMedia({ colorScheme: theme });
+    await expect(page.locator('html'), `${state}: the ${theme} theme rendered`).toHaveAttribute('data-theme', theme);
+    await still(page);
+    backgrounds[theme]?.add(await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
+    if (SHOTS !== undefined) await page.screenshot({ path: `${SHOTS}/${state.replace(/[^a-z0-9]+/gi, '-')}-${theme}.png` });
+
+    const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+    const drawn = await svgTextContrast(page);
+    if (DEBUG) {
+      const incomplete = results.incomplete.map((r) => `${r.id}×${String(r.nodes.length)}`).join(' ');
+      console.log(`${state} · ${theme}: ${String(results.passes.length)} rules pass, ${String(results.violations.length)} fail, needs review: ${incomplete || 'none'}; svg text ${drawn.checked.join(', ') || 'none'}`);
+    }
+    for (const v of results.violations) findings.push({ state, theme, violation: describe(v) });
+    for (const d of drawn.failures) findings.push({ state, theme, violation: d });
+    expect.soft([...results.violations.map(describe), ...drawn.failures], `${state} (${theme})`).toEqual([]);
+  }
+}
+
+test('every screen and state has no axe violations, in light and in dark', async ({ page, baseURL, browser }) => {
+  if (baseURL === undefined) throw new Error('no baseURL');
+  test.setTimeout(300_000);
+
+  // ── Anonymous: first-run setup, gated by the setup token, and its failure.
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Set up D3 Floorspec' })).toBeVisible();
+  await audit(page, 'first-run setup');
+  const secret = password('a11y');
+  await page.getByLabel('Setup token').fill('wrong-wrong-wrong-wrong-wrong');
+  await page.getByLabel('Your name').fill('Axe Tester');
+  await page.getByLabel('Email').fill('axe@example.test');
+  await page.getByLabel('Password', { exact: true }).fill(secret);
+  await page.getByLabel('Password again').fill(secret);
+  await page.getByRole('button', { name: 'Create the operator account' }).click();
+  await expect(page.getByText('Setup failed')).toBeVisible();
+  await audit(page, 'first-run setup, refused');
+  await page.getByLabel('Setup token').fill(setupToken());
+  await page.getByRole('button', { name: 'Create the operator account' }).click();
+
+  // ── Projects: empty, the new-project dialog, the list, the import dialog.
+  await expect(page.getByRole('heading', { name: 'Design your first house' })).toBeVisible();
+  await audit(page, 'projects, empty');
+  await page.getByRole('button', { name: 'New project' }).first().click();
+  await expect(page.getByRole('dialog', { name: 'New project' })).toBeVisible();
+  await audit(page, 'new-project dialog');
+  await page.getByRole('dialog').getByLabel('Name').fill('Blank house');
+  await page.getByRole('dialog').getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('heading', { name: 'Blank house', level: 1 })).toBeVisible();
+  const blank = projectIn(page.url());
+  await page.waitForLoadState('networkidle');
+  await audit(page, 'dashboard, blank project');
+
+  await page.getByRole('link', { name: 'Projects' }).first().click();
+  await expect(page.getByRole('heading', { name: 'Start from a template' })).toBeVisible();
+  await page.getByText('Three-room house').first().click();
+  await expect(page.getByRole('dialog', { name: /New project from/ })).toBeVisible();
+  await audit(page, 'new-project dialog, from a template');
+  await page.getByRole('dialog').getByRole('button', { name: 'Create project' }).click();
+  await expect(page).toHaveURL(/\/projects\/[0-9a-f-]{36}$/);
+  const house = projectIn(page.url());
+  await expect(page.getByRole('heading', { name: 'Three-room house', level: 1 })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await audit(page, 'dashboard, a house');
+  await page.getByRole('button', { name: 'More actions' }).click();
+  await expect(page.getByRole('menu')).toBeVisible();
+  await audit(page, 'dashboard, actions menu');
+  await page.getByRole('menuitem', { name: 'Delete project…' }).click();
+  await expect(page.getByRole('dialog', { name: /Delete/ })).toBeVisible();
+  await audit(page, 'dashboard, delete confirmation');
+  await page.getByRole('button', { name: 'Keep it' }).click();
+
+  await page.getByRole('link', { name: 'Projects' }).first().click();
+  await expect(page.getByRole('list', { name: 'Projects' })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await audit(page, 'projects, list');
+  await page.getByRole('searchbox').fill('no such thing');
+  await expect(page.getByText(/Nothing matches/)).toBeVisible();
+  await audit(page, 'projects, no search results');
+  await page.getByRole('searchbox').fill('');
+  await page.getByRole('button', { name: 'Import Floorspec file' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await audit(page, 'import dialog');
+  await page.keyboard.press('Escape');
+
+  // ── Account: tokens (one minted, its secret shown once), two-factor enrolment, the menu.
+  await page.getByRole('link', { name: 'Account' }).click();
+  await expect(page.getByRole('heading', { name: 'API tokens' })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await audit(page, 'account');
+  await page.getByRole('button', { name: 'Create token' }).click();
+  const shown = page.getByRole('status').filter({ hasText: 'Copy this token now' });
+  await expect(shown).toBeVisible();
+  await expect(shown.locator('.fs-mono')).toHaveText(/^fls_/);
+  await audit(page, 'account, token created');
+  await page.getByRole('button', { name: 'Turn on' }).click();
+  await expect(page.getByLabel('Code from the app')).toBeVisible();
+  const totpSecret = (await page.locator('p.fs-mono').last().textContent())?.trim() ?? '';
+  await audit(page, 'account, two-factor enrolment');
+  await page.getByLabel('Code from the app').fill(totp(totpSecret));
+  await page.getByRole('button', { name: 'Confirm and turn on' }).click();
+  await expect(page.getByRole('button', { name: 'Turn off two-factor' })).toBeVisible();
+  await audit(page, 'account, two-factor on');
+  await page.getByRole('button', { name: /Axe Tester/ }).click();
+  await expect(page.getByRole('menu')).toBeVisible();
+  await audit(page, 'account menu');
+  await page.keyboard.press('Escape');
+
+  // ── Invites (the operator's), with one created.
+  await page.getByRole('link', { name: 'Invites' }).click();
+  await expect(page.getByRole('heading', { name: 'Invites', level: 1 })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await audit(page, 'invites');
+  await page.getByRole('button', { name: 'Create invite link' }).click();
+  const inviteAlert = page.getByRole('status').filter({ hasText: 'Send this link' });
+  await expect(inviteAlert).toBeVisible();
+  const inviteLink = (await inviteAlert.locator('.fs-mono').textContent())?.trim() ?? '';
+  expect(inviteLink).toMatch(/\/invite\/[A-Za-z0-9_-]+$/);
+  await audit(page, 'invites, link created');
+
+  // ── Not found, and not yours.
+  await page.goto('/no-such-page');
+  await expect(page.getByRole('heading', { name: 'That page does not exist' })).toBeVisible();
+  await audit(page, 'page not found');
+  await page.goto('/projects/00000000-0000-4000-8000-000000000000');
+  await expect(page.getByRole('heading', { name: 'That project does not exist' })).toBeVisible();
+  await audit(page, 'project not found');
+  await page.goto('/projects/00000000-0000-4000-8000-000000000000/editor');
+  await expect(page.getByRole('heading', { name: 'No such project' })).toBeVisible();
+  await audit(page, 'editor, no such project');
+
+  // ── The editor, on a project with no levels.
+  await page.goto(`/projects/${blank}/editor`);
+  await expect(page.getByText('This project has no levels yet')).toBeVisible();
+  await expect(page.locator('.fs-statusbar')).toContainText('Live');
+  await audit(page, 'editor, no levels');
+
+  // ── The editor, on the house: the tree, the inspector for each kind of element, the tools.
+  await page.goto(`/projects/${house}/editor`);
+  await expect(page.locator('.fs-statusbar')).toContainText('Live');
+  await settled(page);
+  await audit(page, 'editor, tree and idle inspector');
+  const tree = page.getByRole('tree');
+  const rows = tree.getByRole('treeitem');
+  /** Select a row; a group's first element when `first` (the tree is flat, depth in aria-level). */
+  const pick = async (name: RegExp, state: string, first = false) => {
+    const row = tree.getByRole('treeitem', { name });
+    let target = row;
+    if (first) {
+      if ((await row.getAttribute('aria-expanded')) === 'false') await row.click();
+      await expect(row).toHaveAttribute('aria-expanded', 'true');
+      const names = await rows.evaluateAll((els) => els.map((el) => el.getAttribute('aria-label') ?? el.textContent));
+      target = rows.nth(names.findIndex((n) => name.test(n)) + 1);
+    }
+    await target.click();
+    await expect(target).toHaveAttribute('aria-selected', 'true');
+    await audit(page, state);
+  };
+  await pick(/^Walls/, 'editor, a wall selected', true);
+  await pick(/^Openings/, 'editor, an opening selected', true);
+  await pick(/^Junctions/, 'editor, a junction selected', true);
+  await pick(/^Living room/, 'editor, a room selected');
+  await pick(/^Main floor/, 'editor, a level selected');
+  await pick(/^House/, 'editor, a building selected');
+  await pick(/^Types/, 'editor, a type selected', true);
+  await pick(/^Materials/, 'editor, a material selected', true);
+  await page.keyboard.press('Escape');
+  const rail = page.getByRole('navigation', { name: 'Tools' });
+  await rail.getByRole('button', { name: 'Draw walls' }).click();
+  await audit(page, 'editor, wall tool');
+  await page.keyboard.type('0,0');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.type('4');
+  await audit(page, 'editor, drawing a wall with a typed length');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+
+  // The command palette.
+  await page.keyboard.press('ControlOrMeta+k');
+  await expect(page.getByRole('combobox', { name: 'Search commands and the plan' })).toBeFocused();
+  await page.keyboard.type('room');
+  await audit(page, 'editor, command palette');
+  await page.keyboard.press('Escape');
+
+  // A rejected edit: the diagnostics banner. A room anchor outside every closed space is refused.
+  const svg = page.getByRole('application', { name: /^Plan of / });
+  const box = await svg.boundingBox();
+  if (box === null) throw new Error('the plan canvas has no box');
+  await rail.getByRole('button', { name: 'Name a room' }).click();
+  await page.mouse.move(box.x + 30, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.up();
+  await expect(page.locator('.fs-reject')).toBeVisible();
+  await audit(page, 'editor, a rejected edit');
+  await page.keyboard.press('Escape');
+  await rail.getByRole('button', { name: 'Select' }).click();
+
+  // The prompt removing a wall between two rooms asks which room keeps the space.
+  await page.getByRole('treeitem', { name: /^Wall WI2\b/ }).click();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Delete');
+  await expect(page.getByRole('dialog', { name: /^Remove / })).toBeVisible();
+  await audit(page, 'editor, remove-wall prompt');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+  await page.keyboard.press('Escape');
+
+  // An agent's proposal, live: drawn over the plan, the proposal panel open.
+  const minted = await page.request.post('/api/tokens', { data: { projectId: house, name: 'Axe agent', kind: 'agent' } });
+  expect(minted.status()).toBe(201);
+  const agent = await asAgent(baseURL, ((await minted.json()) as { token: string }).token);
+  const propose = async (name: string, batch: unknown[]) => {
+    const res = await agent.post(`/api/projects/${house}/changesets`, { data: { name, batch } });
+    expect(res.status(), await res.text()).toBe(201);
+  };
+  const panel = page.getByRole('complementary', { name: 'Proposal' });
+  await propose('Bigger bedroom', [
+    { op: 'moveWall', wall: 'WI2', by: 12 * 32_512 },
+    { op: 'setProperty', id: 'LIV', path: '/name', value: 'Great room' },
+  ]);
+  await expect(panel.getByRole('heading', { name: 'Bigger bedroom' })).toBeVisible();
+  await expect(panel).toContainText('Pending');
+  await audit(page, 'editor, a proposal under review');
+
+  // Main moves underneath it: the proposal is rebased, and accepting asks twice.
+  const commit = async (batch: unknown[]) => {
+    const res = await page.request.post(`/api/projects/${house}/ops`, { data: { batch } });
+    expect(res.status(), await res.text()).toBe(201);
+  };
+  await commit([{ op: 'setProperty', id: 'KIT', path: '/name', value: 'Galley' }]);
+  await expect(panel).toContainText('Rebased');
+  await audit(page, 'editor, a rebased proposal');
+  await panel.getByRole('button', { name: 'Accept rebased' }).click();
+  const confirm = page.getByRole('dialog', { name: /rebased\?$/ });
+  await expect(confirm).toBeVisible();
+  await audit(page, 'editor, accepting a rebased proposal');
+  await confirm.getByRole('button', { name: 'Accept rebased' }).click();
+  await expect(panel).toBeHidden();
+  await settled(page);
+
+  // A proposal that no longer applies: it names an opening main then removes.
+  await propose('Name the bedroom door', [{ op: 'setProperty', id: 'BD', path: '/name', value: 'Bedroom door' }]);
+  await expect(panel.getByRole('heading', { name: 'Name the bedroom door' })).toBeVisible();
+  await commit([{ op: 'removeElement', id: 'BD' }]);
+  await expect(panel).toContainText('Does not apply');
+  await audit(page, 'editor, a proposal that no longer applies');
+  await panel.getByRole('button', { name: 'Reject' }).click();
+  await expect(panel).toBeHidden();
+
+  // One left pending, for the dashboard.
+  await propose('Rename the kitchen', [{ op: 'setProperty', id: 'KIT', path: '/name', value: 'Kitchen' }]);
+  await expect(panel.getByRole('heading', { name: 'Rename the kitchen' })).toBeVisible();
+  await panel.getByRole('button', { name: 'Close the proposal' }).click();
+  await expect(panel).toBeHidden();
+  await agent.dispose();
+
+  // The history, and two versions compared in the diff view.
+  await page.getByRole('button', { name: 'Show the history' }).click();
+  const versions = page.getByRole('listbox', { name: 'Versions, newest first' });
+  await expect(versions.getByRole('option').first()).toBeVisible();
+  await audit(page, 'editor, history');
+  await versions.getByRole('option').filter({ hasText: 'Accepted “Bigger bedroom”' }).click();
+  const comparison = page.getByRole('complementary', { name: 'Comparison' });
+  await expect(comparison.getByRole('heading', { name: /^Compare v\d+ → v\d+$/ })).toBeVisible();
+  await expect(page.getByRole('note', { name: 'Legend' })).toBeVisible();
+  await audit(page, 'editor, two versions compared');
+  await comparison.getByRole('button', { name: 'Back to the plan' }).click();
+  await page.getByRole('button', { name: 'Hide the history' }).click();
+
+  // A narrower window: the tree folds away and the inspector floats.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  const treeToggle = page.getByRole('button', { name: /the project tree$/ });
+  await expect(treeToggle).toBeVisible();
+  const treeWas = await treeToggle.getAttribute('aria-pressed');
+  await audit(page, `editor, tablet width, tree ${treeWas === 'true' ? 'open' : 'folded'}`);
+  await treeToggle.click();
+  await expect(treeToggle).not.toHaveAttribute('aria-pressed', treeWas ?? '');
+  await audit(page, `editor, tablet width, tree ${treeWas === 'true' ? 'folded' : 'open'}`);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  // ── The dashboard with a pending proposal and a history.
+  await page.goto(`/projects/${house}`);
+  await expect(page.getByText('Rename the kitchen')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await audit(page, 'dashboard, a pending proposal');
+
+  // ── Signed out: sign in, refused, and the two-factor step.
+  await page.getByRole('button', { name: /Axe Tester/ }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await expect(page.getByRole('heading', { name: 'Sign in to D3 Floorspec' })).toBeVisible();
+  await audit(page, 'sign in');
+  await page.getByLabel('Email').fill('axe@example.test');
+  await page.getByRole('textbox', { name: 'Password' }).fill('not the password at all');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByText('Sign-in failed')).toBeVisible();
+  await audit(page, 'sign in, refused');
+  await page.getByRole('textbox', { name: 'Password' }).fill(secret);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByText('Authentication code')).toBeVisible();
+  await audit(page, 'sign in, two-factor code');
+
+  // ── An invite, followed by somebody with no account.
+  const stranger = await browser.newContext({ baseURL });
+  const invited = await stranger.newPage();
+  await invited.goto(new URL(inviteLink).pathname);
+  await expect(invited.getByRole('heading', { name: 'Join D3 Floorspec' })).toBeVisible();
+  await invited.waitForLoadState('networkidle');
+  await audit(invited, 'accept an invite');
+  await invited.goto('/invite/not-a-real-invite');
+  await expect(invited.getByRole('heading', { name: 'This invite cannot be used' })).toBeVisible();
+  await audit(invited, 'an invite that cannot be used');
+  await stranger.close();
+
+  // Each theme really was a theme: no page background the light theme drew is one the dark drew.
+  const light = [...(backgrounds['light'] ?? [])];
+  const dark = [...(backgrounds['dark'] ?? [])];
+  expect(light.length * dark.length).toBeGreaterThan(0);
+  expect(light.filter((c) => dark.includes(c)), `light ${light.join(', ')} vs dark ${dark.join(', ')}`).toEqual([]);
+});
+
+test.afterAll(() => {
+  if (findings.length > 0) {
+    console.log(`\n${String(findings.length)} violation(s):\n${findings.map((f) => `  [${f.state} · ${f.theme}] ${f.violation}`).join('\n')}`);
+  }
+  console.log(`audited ${String(audited.size)} states × ${String(THEMES.length)} themes`);
+});

@@ -33,6 +33,9 @@ export function HistoryPanel({ store, you }: { store: EditorStore; you: string }
   if (log === null) return <Spinner label="Loading the history" />;
 
   const name = (id: string) => (model?.index.has(id) === true ? labelOf(model, id) : id);
+  // What redo would bring back: the op the newest undo took back.
+  const redoEntry = history.redo === null ? undefined : log.find((e) => e.seq === history.redo);
+  const redoOf = redoEntry === undefined ? null : (redoEntry.undoOf ?? redoEntry.seq);
   const inRange = (e: HistoryEntry) => {
     if (cmp === null) return false;
     const from = seqOf.get(cmp.from) ?? -Infinity;
@@ -72,6 +75,41 @@ export function HistoryPanel({ store, you }: { store: EditorStore; you: string }
         <span className="fs-spacer" />
         <IconButton size="sm" label="Back to the project tree" icon={<X />} onClick={() => { closeHistory(store); }} />
       </div>
+      {/* Undo and redo sit above the versions, not on a row: a button inside an option is an
+          interactive control nested in another, which a screen reader cannot reach (axe
+          nested-interactive). */}
+      {history.undo !== null || redoOf !== null ? (
+        <div className="fs-history__actions">
+          {history.undo !== null ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<Undo2 />}
+              disabled={pending !== null || readOnly !== null}
+              onClick={() => {
+                endCompare(store);
+                void store.undo('undo');
+              }}
+            >
+              Undo v{String(history.undo)}
+            </Button>
+          ) : null}
+          {redoOf !== null ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={<Redo2 />}
+              disabled={pending !== null || readOnly !== null}
+              onClick={() => {
+                endCompare(store);
+                void store.undo('redo');
+              }}
+            >
+              Redo v{String(redoOf)}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       <div role="listbox" aria-label="Versions, newest first" className="fs-history__rows">
         {log.map((entry, i) => {
           const who = authorOf(entry, tokens);
@@ -85,7 +123,6 @@ export function HistoryPanel({ store, you }: { store: EditorStore; you: string }
                   ? `Redid v${String(entry.undoOf ?? '?')}`
                   : `${entry.changeset !== null ? `Accepted “${entry.changeset.name}” · ` : ''}${summarizeBatch(entry.ops, units, name)}`;
           const selected = cmp !== null && inRange(entry);
-          const undoable = history.undo === entry.seq;
           return (
             <div
               key={entry.seq}
@@ -110,32 +147,6 @@ export function HistoryPanel({ store, you }: { store: EditorStore; you: string }
                   {kind === null ? '' : ` · ${kind}`} · {timeAgo(entry.at)}
                 </span>
               </span>
-              {undoable ? (
-                <IconButton
-                  size="sm"
-                  label={`Undo v${String(entry.seq)}`}
-                  icon={<Undo2 />}
-                  disabled={pending !== null || readOnly !== null}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    endCompare(store);
-                    void store.undo('undo');
-                  }}
-                />
-              ) : null}
-              {history.redo !== null && history.redo === entry.seq ? (
-                <IconButton
-                  size="sm"
-                  label={`Redo v${String(entry.undoOf ?? entry.seq)}`}
-                  icon={<Redo2 />}
-                  disabled={pending !== null || readOnly !== null}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    endCompare(store);
-                    void store.undo('redo');
-                  }}
-                />
-              ) : null}
             </div>
           );
         })}
@@ -165,7 +176,7 @@ export function ComparePanel({ store }: { store: EditorStore }) {
   }).map((e) => `${e.author.kind}:${e.author.name ?? e.author.token ?? ''}`));
   const options = versions.map((v) => ({ value: v.hash, label: v.label }));
   return (
-    <div className="fs-inspector__body fs-compare" aria-label="Compare versions">
+    <div className="fs-inspector__body fs-compare" role="group" aria-label="Compare versions">
       <div className="fs-inspector__head">
         <span className="fs-inspector__icon">
           <GitCompareArrows />

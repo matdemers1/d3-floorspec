@@ -1,7 +1,7 @@
 name: CI
 
-# A gated pipeline, cheapest first: lint → conformance → unit → integration → python → compose →
-# images.
+# A gated pipeline, cheapest first: lint → conformance → unit → integration + e2e → python →
+# compose → images.
 # Every job needs the one before it, so a type error never spends minutes waiting for a database,
 # and only a push to main that passed all of them publishes `sha-` images to GHCR.
 #
@@ -169,19 +169,56 @@ jobs:
           PGPASSWORD=floorspec psql -h 127.0.0.1 -U floorspec -d floorspec -c 'CREATE DATABASE floorspec_test;'
           pnpm exec prisma migrate deploy
       - run: pnpm test:integration
-      # The editor end to end (FLR-T-3.7): the API boots on a fresh database of its own — the
-      # config drops and creates it, so the name must end in _test — and serves the built editor,
-      # which a keyboard-only Chromium session drives from first-run setup to an undone nudge.
-      - run: pnpm build
-      - name: Install Chromium for the editor's end-to-end test
-        run: pnpm --filter @d3-floorspec/web exec playwright install --with-deps chromium
-      - name: Editor end to end, keyboard only
+
+  # The editor end to end (FLR-T-3.7, FLR-T-3.9), in a browser, as its own gate. Three suites, each
+  # booting the API on a fresh database of its own — the config drops and creates each one, so the
+  # names must end in _test — serving the built editor:
+  #   - keyboard:  a keyboard-only session from first-run setup to an undone nudge (FLR-T-3.7);
+  #   - main-path: the P3 exit demo with a pointer — setup behind SETUP_TOKEN, a room drawn by hand,
+  #                an agent's changeset posted with its token, accepted, undone, compared;
+  #   - a11y:      axe (WCAG 2.0/2.1/2.2 A and AA) on every screen and state in the light and the
+  #                dark theme, plus the plan's SVG text contrast. Any violation fails the build.
+  e2e:
+    needs: unit
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
         env:
+          POSTGRES_USER: floorspec
+          POSTGRES_PASSWORD: floorspec
+          POSTGRES_DB: floorspec
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U floorspec -d floorspec"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Install Chromium for the editor's end-to-end tests
+        run: pnpm --filter @d3-floorspec/web exec playwright install --with-deps chromium
+      - name: Editor end to end — keyboard, main path, accessibility in both themes
+        env:
+          # The keyboard suite's database; main-path and a11y use floorspec_e2e_main_test and
+          # floorspec_e2e_a11y_test beside it.
           E2E_DATABASE_URL: postgresql://floorspec:floorspec@127.0.0.1:5432/floorspec_e2e_test
         run: pnpm --filter @d3-floorspec/web e2e
+      - name: Keep the traces of a failed run
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: e2e-test-results
+          path: apps/web/test-results
+          retention-days: 7
 
   python:
-    needs: integration
+    needs: [integration, e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
