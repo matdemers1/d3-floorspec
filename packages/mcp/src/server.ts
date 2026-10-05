@@ -1,4 +1,5 @@
 import { McpServer, ResourceTemplate, type CallToolResult } from '@modelcontextprotocol/server';
+import { describeEstimate, estimateEnergy, EstimateError } from '@floorspec/analysis';
 import { z } from 'zod';
 import { FloorspecApiError, type Committed, type FloorspecClient, type Layouts, type ProjectSummary, type RenderOptions } from './client.js';
 import { Batch, Lock, OP_BY_NAME_ONLY } from './ops-schema.js';
@@ -597,6 +598,37 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     },
   );
 
+  // FLR-REQ-153: the advisory energy and comfort estimate, as a resource rather than a tool, so the
+  // tool list an agent reads every session stays as it is. Read from main, in the project's units.
+  server.registerResource(
+    'energy',
+    new ResourceTemplate('floorspec://{project}/energy', {
+      list: async () => ({
+        resources: (await client.listProjects()).map((p) => ({ uri: energyUri(p.id), name: `${p.name} — energy & comfort (advisory)`, mimeType: 'text/plain' })),
+      }),
+    }),
+    {
+      title: 'Energy & comfort (advisory)',
+      description:
+        "An estimate to compare options — not an energy-code calculation: design loads, a typical year, façades, assemblies with where each value came from, and comfort notes naming rooms and openings. Inputs live at the document's /extras/d3floorspec/energy.",
+      mimeType: 'text/plain',
+    },
+    async (uri, variables) => {
+      const project = String(variables['project']);
+      const model = await client.model(project);
+      const doc = model.document as { extras?: { d3floorspec?: { units?: unknown } } };
+      const units = doc.extras?.d3floorspec?.units === 'metric' ? 'metric' : 'imperial';
+      let body: string;
+      try {
+        body = describeEstimate(estimateEnergy(model.document as object), units);
+      } catch (error) {
+        if (!(error instanceof EstimateError)) throw error;
+        body = `No estimate: ${error.message}.`;
+      }
+      return { contents: [{ uri: uri.href, mimeType: 'text/plain', text: body }] };
+    },
+  );
+
   server.registerPrompt(
     'design-partner',
     { title: 'Design partner', description: 'How to work on a house with these tools: read, propose, render, check, never claim without a render.' },
@@ -617,6 +649,10 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
   );
 
   return server;
+}
+
+export function energyUri(projectId: string): string {
+  return `floorspec://${projectId}/energy`;
 }
 
 export function modelUri(projectId: string, changeset?: string): string {

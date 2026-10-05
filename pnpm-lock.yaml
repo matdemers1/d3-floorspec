@@ -347,6 +347,9 @@ importers:
 
   packages/mcp:
     dependencies:
+      '@floorspec/analysis':
+        specifier: workspace:*
+        version: link:../analysis
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../engine

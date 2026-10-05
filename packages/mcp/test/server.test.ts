@@ -533,6 +533,17 @@ describe('the MCP server', () => {
     expect(read.contents[0]).toMatchObject({ mimeType: 'application/json' });
   });
 
+  it('offers the advisory energy estimate as a resource, never as a verdict (FLR-REQ-153)', async () => {
+    const mcp = await connect(new MemoryClient());
+    const listed = await mcp.listResources();
+    expect(listed.resources.map((r) => r.uri)).toContain(`floorspec://${PROJECT.id}/energy`);
+    const read = await mcp.readResource({ uri: `floorspec://${PROJECT.id}/energy` });
+    const body = (read.contents[0] as { text: string }).text;
+    expect(body).toContain('An estimate to compare options — not an energy-code calculation.');
+    expect(body).toMatch(/Design loads: heating [\d.,]+–[\d.,]+ kBtu\/h/);
+    expect(body).not.toMatch(/complian/i);
+  });
+
   it('offers the design partner prompt, the same text the plugin skill carries', async () => {
     const mcp = await connect(new MemoryClient());
     const prompt = await mcp.getPrompt({ name: 'design-partner' });
