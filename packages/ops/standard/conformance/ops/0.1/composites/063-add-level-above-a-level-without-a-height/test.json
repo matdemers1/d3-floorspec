@@ -1,0 +1,7 @@
+{
+  "description": "L1's height is unset earlier in the batch, so there is no top to sit on: FS-OPS-003 names L1.",
+  "covers": [
+    "FS-OPS-4.8.1",
+    "FS-OPS-7.1.1"
+  ]
+}

@@ -142,10 +142,17 @@ export interface AddOpening extends CommonMembers {
   hinge?: 'start' | 'end';
   swing?: 'left' | 'right';
 }
+/**
+ * 4.5: exactly one of `at` (absolute) and `by` (relative to the opening's offset); `toward`, only
+ * with `by`, chooses its sign — toward the wall's start or end, or along the wall in whichever
+ * direction points more that way.
+ */
 export interface MoveOpening {
   op: 'moveOpening';
   opening: ElementRef;
-  at: Position;
+  at?: Position;
+  by?: Length;
+  toward?: 'start' | 'end' | Side;
 }
 export interface AddRoom extends CommonMembers {
   op: 'addRoom';
@@ -169,7 +176,29 @@ export interface RemoveWall {
   keep?: ElementRef;
 }
 
-export type Composite = DrawWall | DrawSeparator | MoveWall | MoveRoom | ResizeRoom | AddOpening | MoveOpening | AddRoom | SetRoomFinish | RemoveWall;
+/** 4.8: exactly one of `elevation`, `above` and `below`. */
+export interface AddLevel extends CommonMembers {
+  op: 'addLevel';
+  id?: string;
+  building: ElementRef;
+  height: Length;
+  elevation?: Length;
+  above?: ElementRef;
+  below?: ElementRef;
+}
+
+export type Composite =
+  | DrawWall
+  | DrawSeparator
+  | MoveWall
+  | MoveRoom
+  | ResizeRoom
+  | AddOpening
+  | MoveOpening
+  | AddRoom
+  | SetRoomFinish
+  | RemoveWall
+  | AddLevel;
 export type Operation = Primitive | Composite;
 export type OperationName = Operation['op'];
 

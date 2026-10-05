@@ -1,0 +1,7 @@
+{
+  "description": "A negative \"by\" moves the opening toward its wall's start: 4' less 1' 6\" is 2' 6\", 975360.",
+  "covers": [
+    "FS-OPS-4.5.2",
+    "FS-OPS-3.1.1"
+  ]
+}

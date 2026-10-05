@@ -1,7 +1,9 @@
 /**
  * The shape of an apply request (1.1): a batch of at least one operation this specification
  * defines, each with exactly the members its definition lists, and an optional context of locks and
- * retired IDs. Anything else is FS-OPS-001 (1.1.1).
+ * retired IDs. Anything else is FS-OPS-001 (1.1.1) — including an operation with none, or more than
+ * one, of a group of members of which it takes exactly one (moveOpening's `at` and `by`, addLevel's
+ * `elevation`, `above` and `below`), or with `toward` but no `by` on moveOpening.
  *
  * Members that become element content (inside addElement's element, the shorthands' and
  * drawWall's wall members) are not checked here: addElement does not check content (2.1.1),
@@ -21,11 +23,16 @@ type MemberType =
   | 'any'
   | 'collection'
   | 'side'
-  | 'surface';
+  | 'surface'
+  | 'toward'; // moveOpening's: start, end or a side
 
 interface OpShape {
   readonly required: Readonly<Record<string, MemberType>>;
   readonly optional: Readonly<Record<string, MemberType>>;
+  /** Groups of optional members of which exactly one must be present (4.5, 4.8). */
+  readonly oneOf?: readonly (readonly string[])[];
+  /** Optional members allowed only beside another member. */
+  readonly needs?: Readonly<Record<string, string>>;
 }
 
 /** The members every created element may carry (2.1, Core §1.4), passed into it as given. */
@@ -52,13 +59,18 @@ export const OP_SHAPES: Readonly<Record<OperationName, OpShape>> = {
     required: { wall: 'string', at: 'length' },
     optional: { id: 'string', fill: 'string', width: 'length', height: 'length', sill: 'length', hinge: 'any', swing: 'any', ...COMMON },
   },
-  moveOpening: { required: { opening: 'string', at: 'length' }, optional: {} },
+  moveOpening: { required: { opening: 'string' }, optional: { at: 'length', by: 'length', toward: 'toward' }, oneOf: [['at', 'by']], needs: { toward: 'by' } },
   addRoom: {
     required: { level: 'string', at: 'pair' },
     optional: { id: 'string', function: 'any', wallFinish: 'any', floorFinish: 'any', ceilingFinish: 'any', ...COMMON },
   },
   setRoomFinish: { required: { room: 'string', surface: 'surface', material: 'string' }, optional: {} },
   removeWall: { required: { wall: 'string' }, optional: { keep: 'string' } },
+  addLevel: {
+    required: { building: 'string', height: 'length' },
+    optional: { elevation: 'length', above: 'string', below: 'string', id: 'string', ...COMMON },
+    oneOf: [['elevation', 'above', 'below']],
+  },
 };
 
 const isLength = (v: unknown, nonInteger: ReadonlySet<string>, ptr: string): boolean =>
@@ -84,6 +96,8 @@ function typeOk(t: MemberType, v: unknown, nonInteger: ReadonlySet<string>, ptr:
       return v === 'north' || v === 'south' || v === 'east' || v === 'west';
     case 'surface':
       return v === 'wall' || v === 'floor' || v === 'ceiling';
+    case 'toward':
+      return v === 'start' || v === 'end' || v === 'north' || v === 'south' || v === 'east' || v === 'west';
   }
 }
 
@@ -114,6 +128,10 @@ export function checkRequest(request: unknown, nonInteger: ReadonlySet<string> =
       const t = shape.optional[m]!;
       if (!typeOk(t, op[m], nonInteger, `${base}/${m}`)) fail('FS-OPS-001', `${name}'s ${JSON.stringify(m)} is not ${describe(t)}`, [], `${base}/${m}`);
     }
+    for (const group of shape.oneOf ?? [])
+      if (group.filter((m) => Object.hasOwn(op, m)).length !== 1) fail('FS-OPS-001', `${name} takes exactly one of ${group.map((m) => JSON.stringify(m)).join(', ')}`, [], base);
+    for (const [m, other] of Object.entries(shape.needs ?? {}))
+      if (Object.hasOwn(op, m) && !Object.hasOwn(op, other)) fail('FS-OPS-001', `${name}'s ${JSON.stringify(m)} is allowed only with ${JSON.stringify(other)}`, [], `${base}/${m}`);
     return undefined;
   });
   if (Object.hasOwn(request, 'context')) {
@@ -164,5 +182,7 @@ function describe(t: MemberType): string {
       return 'north, south, east or west';
     case 'surface':
       return 'wall, floor or ceiling';
+    case 'toward':
+      return 'start, end, north, south, east or west';
   }
 }

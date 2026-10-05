@@ -1,0 +1,7 @@
+{
+  "description": "\"toward\" is allowed only with \"by\": with \"at\" it is FS-OPS-001.",
+  "covers": [
+    "FS-OPS-1.1.1",
+    "FS-OPS-4.5.2"
+  ]
+}

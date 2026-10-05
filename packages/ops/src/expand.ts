@@ -10,6 +10,7 @@ import { RESERVED_TARGETS, type CollectionName, type ReservedTarget } from './mo
 import { applyPrimitive } from './primitives.js';
 import {
   ANY,
+  BUILDING,
   EDGE,
   JUNCTION,
   edgeGeometry,
@@ -199,12 +200,31 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       const e = ctx.wc.element(opening);
       const wall = getMember(e, 'wall');
       if (typeof wall !== 'string' || !ctx.wc.elementIn('walls', wall)) return fail('FS-OPS-003', `${opening} is on no wall`, [opening], `${base}/opening`);
-      const g = edgeGeometry(ctx, wall, `${base}/opening`);
-      const own = getMember(e, 'width');
-      const w = typeof own === 'number' && Number.isSafeInteger(own) ? own : fillWidth(ctx, getMember(e, 'fill'));
-      if (w === undefined) fail('FS-OPS-003', `the width of ${opening} resolves from neither its own width nor its fill`, [opening], `${base}/opening`);
-      const offset = resolvePosition(op.at, `${base}/at`, g.m, BigInt(w));
-      emit({ op: 'setProperty', id: opening, path: '/offset', value: toJsonInt(offset, `${base}/at`) }, `${base}/opening`);
+      if (op.at !== undefined) {
+        // 4.5.1: absolute — `at` is a position, resolved with the opening's effective width.
+        const g = edgeGeometry(ctx, wall, `${base}/opening`);
+        const own = getMember(e, 'width');
+        const w = typeof own === 'number' && Number.isSafeInteger(own) ? own : fillWidth(ctx, getMember(e, 'fill'));
+        if (w === undefined) fail('FS-OPS-003', `the width of ${opening} resolves from neither its own width nor its fill`, [opening], `${base}/opening`);
+        const offset = resolvePosition(op.at, `${base}/at`, g.m, BigInt(w));
+        emit({ op: 'setProperty', id: opening, path: '/offset', value: toJsonInt(offset, `${base}/at`) }, `${base}/opening`);
+        break;
+      }
+      // 4.5.2: relative — the offset in the working copy plus `by`, its sign chosen by `toward`.
+      const old = getMember(e, 'offset');
+      if (typeof old !== 'number' || !Number.isSafeInteger(old)) return fail('FS-OPS-003', `${opening} has no integer offset to move it from`, [opening], `${base}/opening`);
+      let by = resolveLength(op.by, `${base}/by`);
+      const mag = by < 0n ? -by : by;
+      if (op.toward === 'end') by = mag;
+      else if (op.toward === 'start') by = -mag;
+      else if (op.toward !== undefined) {
+        const g = edgeGeometry(ctx, wall, `${base}/opening`);
+        const u = SIDE_UNIT[op.toward];
+        const dot = g.d[0] * u[0] + g.d[1] * u[1];
+        if (dot === 0n) fail('FS-OPS-008', `${wall} runs perpendicular to ${op.toward}, so ${opening} cannot move along it toward ${op.toward}`, [wall], `${base}/toward`);
+        by = dot > 0n ? mag : -mag;
+      }
+      emit({ op: 'setProperty', id: opening, path: '/offset', value: toJsonInt(BigInt(old) + by, `${base}/by`) }, `${base}/opening`);
       break;
     }
 
@@ -240,6 +260,33 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
         for (const r of roomsL.includes(keep) ? roomsR : roomsL) emit({ op: 'removeElement', id: r }, `${base}/keep`);
       }
       emit({ op: 'removeElement', id: wall, cascade: true }, `${base}/wall`);
+      break;
+    }
+
+    // ── 4.8 addLevel ──
+    case 'addLevel': {
+      // References in the order 4.8 lists them: building, height, then elevation, above or below.
+      const building = resolveElement(op.building, `${base}/building`, ctx, BUILDING);
+      const height = resolveLength(op.height, `${base}/height`);
+      let elevation: bigint;
+      if (op.elevation !== undefined) elevation = resolveLength(op.elevation, `${base}/elevation`);
+      else {
+        const m = op.above !== undefined ? 'above' : 'below';
+        const level = resolveElement((op.above ?? op.below)!, `${base}/${m}`, ctx, LEVEL);
+        const l = ctx.wc.element(level);
+        const le = getMember(l, 'elevation');
+        const lh = getMember(l, 'height');
+        if (typeof le !== 'number' || !Number.isSafeInteger(le) || typeof lh !== 'number' || !Number.isSafeInteger(lh))
+          return fail('FS-OPS-003', `${level} has no integer elevation and height to place a level ${m} it`, [level], `${base}/${m}`);
+        elevation = m === 'above' ? BigInt(le) + BigInt(lh) : BigInt(le) - height;
+      }
+      const element: JsonObject = {
+        building,
+        elevation: toJsonInt(elevation, op.elevation !== undefined ? `${base}/elevation` : `${base}/height`),
+        height: toJsonInt(height, `${base}/height`),
+      };
+      for (const m of COMMON_MEMBERS) if (has(m)) setMember(element, m, o[m]);
+      emit({ op: 'addElement', collection: 'levels', id: op.id ?? ctx.wc.mint('levels'), element });
       break;
     }
   }

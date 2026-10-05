@@ -125,6 +125,7 @@ export interface Accept {
 }
 
 export const ANY: Accept = { collections: COLLECTIONS, what: 'an element' };
+export const BUILDING: Accept = { collections: ['buildings'], what: 'a building' };
 export const JUNCTION: Accept = { collections: ['junctions'], what: 'a junction' };
 export const LEVEL: Accept = { collections: ['levels'], what: 'a level' };
 export const ROOM: Accept = { collections: ['rooms'], what: 'a room' };

@@ -61,6 +61,12 @@ export function fixtures(): Fixture[] {
     { name: 'moveRoom', doc: pair(), request: { batch: [{ op: 'moveRoom', room: 'Dining', by: '1.5 m west' }] } },
     { name: 'addOpening centred', doc: pair(undefined, undefined, { types: door }), request: { batch: [{ op: 'addOpening', wall: 'wall between Kitchen and Dining', at: 'centered', fill: 'D36' }] } },
     { name: 'removeWall', doc: pair(), request: { batch: [{ op: 'removeWall', wall: 'W7', keep: 'Dining' }] } },
+    {
+      name: 'moveOpening by, toward a direction',
+      doc: pair(undefined, undefined, { types: door, openings: { O1: { wall: 'W7', offset: 0, fill: 'D36' } } }),
+      request: { batch: [{ op: 'moveOpening', opening: 'O1', by: "1' 1/3\"", toward: 'north' }, { op: 'moveOpening', opening: 'O1', by: '-3 cm' }] },
+    },
+    { name: 'addLevel above and below', doc: box(), request: { batch: [{ op: 'addLevel', building: 'B1', above: 'L1', height: "8' 1/3\"" }, { op: 'addLevel', building: 'B1', below: 'L1', height: '2.7 m' }] } },
     { name: 'rejected: no keep', doc: pair(), request: { batch: [{ op: 'removeWall', wall: 'W7' }] } },
     {
       name: 'an oblique crossing',
