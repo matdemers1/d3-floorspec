@@ -9,7 +9,7 @@ import { HttpError } from '../http/errors.js';
 import { ProblemError } from '../http/problem.js';
 import { MAIN } from '../domain/projects.js';
 import { changesetHead } from '../domain/history.js';
-import { RENDER_3D_PENDING, RENDER_PENDING, type PlanRenderer } from '../render.js';
+import { RENDER_PENDING, type PlanRenderer } from '../render.js';
 import { NO_PACKS, type InstalledPacks } from '../rules/packs.js';
 import { profileOfProject } from '../rules/profiles.js';
 
@@ -20,7 +20,22 @@ const RenderQuery = z.object({
   highlight: z.string().max(2000).optional(),
   width: z.coerce.number().int().min(64).max(4096).optional(),
   theme: z.enum(['light', 'dark']).optional(),
+  // 3D (FLR-T-8.5): a named view, or a room to stand in; and the design.
+  camera: z.enum(['sw', 'se', 'ne', 'nw', 'top']).optional(),
+  room: z.string().min(1).max(128).optional(),
+  design: z.string().optional(),
 });
+
+/** The 3D render's widest picture: a software render, so its pixels are the worker's time. */
+export const MAX_3D_WIDTH = 2048;
+/** How many 3D renders a project may have waiting at once. */
+export const MAX_PENDING_RENDERS = 3;
+
+export interface Render3dWait {
+  /** How long a 3D render request waits for the worker. Default 60 s. */
+  readonly timeoutMs?: number;
+  readonly pollMs?: number;
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -38,7 +53,7 @@ function unitsOf(document: unknown): Units {
  * Checks on a head — main, or a pending changeset with `?changeset=<id>`: validation by the
  * reference engine, advisory findings, and a plan render.
  */
-export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: InstalledPacks = NO_PACKS, coverageUrl = '/rule-packs'): Routes {
+export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: InstalledPacks = NO_PACKS, coverageUrl = '/rule-packs', wait: Render3dWait = {}): Routes {
   const routes = new Routes(db);
 
   async function documentAt(req: Request): Promise<{ head: string; hash: string; document: unknown; base: unknown }> {
@@ -121,17 +136,74 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
     { token: 'read' },
   );
 
-  /** A plan render as PNG. 3D arrives in Phase 7; the plan with FLR-T-2.8. */
+  /**
+   * A 3D render (FLR-T-8.5): queued on the job queue as `render.3d` and drawn by the worker — the
+   * worker container in production, this process's inline drain in development — while the request
+   * waits for it. The job row records who asked; like the plan render, a render is a read, so no
+   * audit row is written.
+   */
+  async function render3d(req: Request, at: { hash: string; document: unknown }, q: z.infer<typeof RenderQuery>): Promise<Uint8Array> {
+    const project = req.project;
+    if (project === undefined) throw new HttpError(404, 'project not found');
+    if ((q.width ?? 0) > MAX_3D_WIDTH) throw new HttpError(400, `a 3D render is at most ${String(MAX_3D_WIDTH)} pixels wide`);
+    if (q.camera !== undefined && q.room !== undefined) throw new HttpError(400, 'a 3D render is from a named camera or from a room, not both');
+    const design = designQuery(q.design);
+    const ev = evaluate(at.document as object, design === undefined ? {} : { design });
+    if (!ev.valid || ev.document === undefined)
+      throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this model cannot be drawn in 3D', detail: 'The model is not valid. Run validate to see why.' });
+    if (ev.view === undefined) throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this design cannot be drawn', detail: 'The design names no design of this model, or that design is not valid.' });
+    const pending = await db.job.count({ where: { projectId: project.id, kind: 'render.3d', status: { in: ['queued', 'running'] } } });
+    if (pending >= MAX_PENDING_RENDERS) throw new HttpError(429, `this project already has ${String(pending)} 3D renders waiting; try again when one finishes`);
+    const highlight = q.highlight?.split(',').filter((id) => id.length > 0);
+    const job = await db.job.create({
+      data: {
+        projectId: project.id,
+        kind: 'render.3d',
+        params: {
+          ...(q.camera === undefined ? {} : { camera: q.camera }),
+          ...(q.room === undefined ? {} : { room: q.room }),
+          ...(q.level === undefined ? {} : { level: q.level }),
+          ...(highlight === undefined || highlight.length === 0 ? {} : { highlight }),
+          ...(q.width === undefined ? {} : { width: q.width }),
+          ...(design === undefined ? {} : { design }),
+        },
+        versionHash: at.hash,
+        requestedByAccountId: req.auth?.accountId ?? req.token?.accountId ?? null,
+        requestedByTokenId: req.auth === undefined ? (req.token?.tokenId ?? null) : null,
+      },
+    });
+    const timeout = wait.timeoutMs ?? 60_000;
+    const until = Date.now() + timeout;
+    for (;;) {
+      const now = await db.job.findUniqueOrThrow({ where: { id: job.id }, select: { status: true, error: true, output: { select: { bytes: true } } } });
+      if (now.status === 'done' && now.output !== null) return new Uint8Array(now.output.bytes);
+      if (now.status === 'failed')
+        throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this 3D view cannot be drawn', detail: `${now.error ?? 'The render failed.'} Run validate if the model may be the reason.` });
+      if (Date.now() > until)
+        throw new ProblemError({ status: 503, type: 'render-timeout', title: 'the 3D render did not finish in time', detail: `No worker drew it within ${String(Math.round(timeout / 1000))} s; it stays queued. Try again shortly.` });
+      await new Promise((resolve) => setTimeout(resolve, wait.pollMs ?? 100));
+    }
+  }
+
+  /** A render as PNG: the plan (FLR-T-2.8), or the 3D model drawn by the worker (FLR-T-8.5). */
   routes.read(
     '/:projectId/render',
     async (req, res) => {
       const view = req.query['view'] ?? 'plan';
       if (view !== 'plan' && view !== '3d') throw new HttpError(400, 'view is "plan" or "3d"');
       const { hash, document, base } = await documentAt(req);
-      if (view === '3d') throw new ProblemError({ status: 501, type: 'not-available', title: RENDER_3D_PENDING });
-      if (renderer === null) throw new ProblemError({ status: 501, type: 'not-available', title: RENDER_PENDING });
       const options = RenderQuery.safeParse(req.query);
       if (!options.success) throw new HttpError(400, 'the render options are not valid', { fields: options.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) });
+      const etag = `"${hash}-${createHash('sha256').update(JSON.stringify(options.data)).digest('hex').slice(0, 16)}"`;
+      if (view === '3d') {
+        const png = await render3d(req, { hash, document }, options.data);
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('ETag', etag);
+        res.setHeader('Cache-Control', 'private, no-cache');
+        res.send(Buffer.from(png));
+        return;
+      }
+      if (renderer === null) throw new ProblemError({ status: 501, type: 'not-available', title: RENDER_PENDING });
       const { level, highlight, width, theme } = options.data;
       let png: Uint8Array;
       try {
@@ -153,7 +225,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
       }
       res.setHeader('Content-Type', 'image/png');
       // One version drawn one way: the hash and the options that shaped the picture.
-      res.setHeader('ETag', `"${hash}-${createHash('sha256').update(JSON.stringify(options.data)).digest('hex').slice(0, 16)}"`);
+      res.setHeader('ETag', etag);
       res.setHeader('Cache-Control', 'private, no-cache');
       res.send(Buffer.from(png));
     },

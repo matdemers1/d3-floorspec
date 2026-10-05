@@ -4,6 +4,7 @@
  */
 import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/index.js';
 import { exportGltf, exportUsdz } from '../export/gltf/index.js';
+import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
 
 export interface JobRow {
   readonly id: string;
@@ -54,6 +55,35 @@ export function exportParams(raw: unknown): ExportParams {
   return { ...(levels === undefined ? {} : { levels }), ...(page === undefined ? {} : { page }), versionSeq: seq, versionAt: at, ...(design === undefined ? {} : { design }) };
 }
 
+/** The parameters of a 3D render job (FLR-T-8.5), as the api writes them. */
+export interface Render3dParams {
+  readonly camera?: Preset;
+  readonly room?: string;
+  readonly level?: string;
+  readonly highlight?: readonly string[];
+  readonly width?: number;
+  readonly design?: Record<string, string>;
+}
+
+export function render3dParams(raw: unknown): Render3dParams {
+  const p = (raw ?? {}) as Record<string, unknown>;
+  const camera = typeof p['camera'] === 'string' && (PRESETS as readonly string[]).includes(p['camera']) ? (p['camera'] as Preset) : undefined;
+  const str = (k: string): string | undefined => (typeof p[k] === 'string' && p[k] !== '' ? p[k] : undefined);
+  const room = str('room');
+  const level = str('level');
+  const highlight = Array.isArray(p['highlight']) && p['highlight'].every((h) => typeof h === 'string') ? p['highlight'] : undefined;
+  const width = typeof p['width'] === 'number' && Number.isInteger(p['width']) ? p['width'] : undefined;
+  const design = designOf(p['design']);
+  return {
+    ...(camera === undefined ? {} : { camera }),
+    ...(room === undefined ? {} : { room }),
+    ...(level === undefined ? {} : { level }),
+    ...(highlight === undefined ? {} : { highlight }),
+    ...(width === undefined ? {} : { width }),
+    ...(design === undefined ? {} : { design }),
+  };
+}
+
 /** The 3D exports' options: one version, its levels, its design. Map bytes are not in the worker's reach yet. */
 function modelOptions(job: JobRow) {
   const p = exportParams(job.params);
@@ -89,5 +119,10 @@ export const handlers: Readonly<Record<string, Handler>> = {
   'export.usdz': async (document, job) => {
     const file = await exportUsdz(document, modelOptions(job));
     return { name: file.name, contentType: file.contentType, bytes: file.bytes, summary: file.summary };
+  },
+  /** FLR-T-8.5: a PNG of the 3D model from a named view or a room; the api waits for it. */
+  'render.3d': async (document, job) => {
+    const r = await render3dPng(document, render3dParams(job.params));
+    return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: r.png, summary: { width: r.width, height: r.height, camera: r.camera, design: r.design } };
   },
 };

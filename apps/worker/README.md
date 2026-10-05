@@ -29,6 +29,17 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   bytes, on macOS and in the linux image alike. Tests run the Khronos validator (`gltf-validator`)
   over every valid Core 0.3 conformance case and the fixture houses — zero errors, zero warnings —
   and, where Apple's `usdchecker` is installed (macOS), `usdchecker --arkit --strict` on the USDZ.
+- `src/render3d/` — FLR-T-8.5: headless 3D render-back. A PNG of the scene above from a named view
+  (`sw`, `se`, `ne`, `nw`, `top` — the editor's presets, framed on the house), or standing in a room
+  (by ID or name: at eye height just inside its first door, else in its far corner, looking at its
+  middle), optionally cut away above a level and with elements highlighted. Drawn by a small
+  software rasterizer (`raster.ts`: z-buffer, flat Lambert shading, 2× supersampling, ink where
+  planes meet, glass blended last) in plain JavaScript — **no Chromium, no GPU, no WebGL** in the
+  image, so the picture is the same on every machine and the image grew by about 2 MB (manifold-3d's
+  WASM and the mesher), not by a browser. A 1024 × 768 render takes a few hundred milliseconds. The
+  api's `GET /render?view=3d` queues a `render.3d` job and waits for it (60 s by default); MCP
+  `floorspec_render` with `view: "3d"` and `camera` (a view's name, or a room's ID or name) calls it.
+  `renderGlb` draws an exported .glb back through the same rasterizer — how the tests look at one.
 - `src/render/` — FLR-T-2.8: plan PNGs through resvg, with the bundled fonts only.
 - `src/alerts/` — FLR-T-12.2: alert email through the D3 Auth mail relay (`MAIL_RELAY_URL`,
   `MAIL_RELAY_TOKEN`, `ALERT_TO`; redacted, once an hour per kind, remembered in the `alerts` table),
@@ -38,5 +49,5 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   failures in a row and one on recovery. See `docs/runbooks/restore.md`.
 
 ```bash
-pnpm --filter @d3-floorspec/worker test    # drawings, glTF/USDZ, plan render, heartbeat, alerts, watchdog
+pnpm --filter @d3-floorspec/worker test    # drawings, glTF/USDZ, 3D render, plan render, heartbeat, alerts, watchdog
 ```

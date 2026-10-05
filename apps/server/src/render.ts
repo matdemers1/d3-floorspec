@@ -19,7 +19,6 @@ export interface PlanRenderer {
 }
 
 export const RENDER_PENDING = 'rendering arrives with FLR-T-2.8';
-export const RENDER_3D_PENDING = '3D rendering is not available yet: it arrives in Phase 7 (FLR-P-7)';
 
 /** The worker's renderer, in-process. Imported lazily so a server that never renders never loads resvg. */
 export function workerRenderer(): PlanRenderer {

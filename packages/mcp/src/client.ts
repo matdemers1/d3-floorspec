@@ -184,6 +184,10 @@ export interface FloorspecClient {
 
 export interface RenderOptions {
   readonly view: 'plan' | '3d';
+  /** 3D: a named view (FLR-T-8.5). */
+  readonly camera?: 'sw' | 'se' | 'ne' | 'nw' | 'top';
+  /** 3D: stand in this room, by ID or name. */
+  readonly room?: string;
   readonly level?: string;
   /** A pending changeset: drawn ghosted against its base. */
   readonly changeset?: string;
@@ -325,6 +329,8 @@ export class HttpFloorspecClient implements FloorspecClient {
 
   async render(projectId: string, options: RenderOptions): Promise<Uint8Array> {
     const params = new URLSearchParams({ view: options.view });
+    if (options.camera !== undefined) params.set('camera', options.camera);
+    if (options.room !== undefined) params.set('room', options.room);
     if (options.level !== undefined) params.set('level', options.level);
     if (options.changeset !== undefined) params.set('changeset', options.changeset);
     if (options.highlight !== undefined && options.highlight.length > 0) params.set('highlight', options.highlight.join(','));

@@ -166,7 +166,7 @@ class MemoryClient implements FloorspecClient {
   }
   render(projectId: string, options: RenderOptions) {
     this.record('render', projectId, options);
-    if (options.view === '3d') return Promise.reject(new FloorspecApiError(501, { error: '3D rendering is not available yet' }));
+    if (options.view === '3d' && options.room === 'Attic') return Promise.reject(new FloorspecApiError(422, { title: 'this 3D view cannot be drawn', detail: 'the model has no room Attic' }));
     if (!this.renderable) return Promise.reject(new FloorspecApiError(501, { error: 'rendering arrives with FLR-T-2.8' }));
     return Promise.resolve(new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
   }
@@ -412,9 +412,15 @@ describe('the MCP server', () => {
     const withPng = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [{ op: 'removeElement', id: 'W1' }], render: true } });
     expect((withPng.content as Content[]).some((c) => c.type === 'image' && c.mimeType === 'image/png')).toBe(true);
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toMatchObject({ view: 'plan', highlight: ['O2'] });
-    const threeD = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d' } });
-    expect(threeD.isError).toBe(true);
-    expect(texts(threeD)).toContain('not available yet');
+    // FLR-T-8.5: 3D from a named view, or from inside a room — one property, a view's name or a room's.
+    const threeD = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'ne', level: 'L1' } });
+    expect((threeD.content as Content[]).some((c) => c.type === 'image' && c.mimeType === 'image/png')).toBe(true);
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', camera: 'ne', level: 'L1' });
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Kitchen' } });
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'Kitchen' });
+    const missing = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Attic' } });
+    expect(missing.isError).toBe(true);
+    expect(texts(missing)).toContain('this 3D view cannot be drawn');
   });
 
   it('relays a refused accept as an error', async () => {
