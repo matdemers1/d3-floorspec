@@ -101,9 +101,9 @@ describe('human output and exit codes', () => {
     expect(p.stdout).toMatch(/error FS-CFG-001/);
     expect(floorspec('validate', join(dir, 'input.json'), '--registry', '/nonexistent/registry.json').status).toBe(2);
   });
-  it('derive prints the Core 0.2 members', () => {
+  it('derive prints the Core 0.2 and 0.3 members', () => {
     const out = JSON.parse(execFileSync(process.execPath, [bin, 'derive', join(suite, 'program', '001-house-brief', 'input.json')], { encoding: 'utf8' })) as Record<string, unknown>;
-    expect(Object.keys(out)).toEqual(['walls', 'junctionFills', 'rooms', 'unanchored', 'openings', 'program', 'fallbacks', 'placements', 'clearances', 'clearanceOverlaps', 'circulation']);
+    expect(Object.keys(out)).toEqual(['walls', 'junctionFills', 'rooms', 'unanchored', 'openings', 'program', 'fallbacks', 'placements', 'clearances', 'clearanceOverlaps', 'circulation', 'floors', 'ceilings', 'slabs']);
   });
 });
 
@@ -113,7 +113,8 @@ describe('floorspec --extensions', () => {
 
   it('evaluates an official extension for a document that uses it, with its entry known', () => {
     const expected = JSON.parse(readFileSync(join(demo, 'expected.json'), 'utf8')) as { derived: unknown };
-    const p = floorspec('validate', join(demo, 'input.json'), '--json', '--extensions', 'FS_electrical', '--registry', join(demo, 'registry.json'));
+    // The demo house declares "0.2": its suite reads it as a Core 0.2 reader (conformance/README.md).
+    const p = floorspec('validate', join(demo, 'input.json'), '--json', '--core', '0.2', '--extensions', 'FS_electrical', '--registry', join(demo, 'registry.json'));
     expect(p.status).toBe(0);
     expect((JSON.parse(p.stdout) as { derived: unknown }).derived).toEqual(expected.derived);
   });
