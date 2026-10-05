@@ -17,6 +17,8 @@ export const JOB_CHANNEL = 'floorspec_jobs';
 export const MAX_ATTEMPTS = 3;
 const STALE_AFTER = "interval '10 minutes'";
 const KEEP_DAYS = 7;
+/** How often a job's progress is written, at most. */
+const PROGRESS_EVERY_MS = 1000;
 
 export interface DrainOptions {
   readonly databaseUrl: string;
@@ -65,7 +67,7 @@ export function createDrain(options: DrainOptions): Drain {
     );
     const { rows } = await pool.query<JobRow>(
       `update jobs set status = 'running', attempts = attempts + 1, locked_by = $1, locked_at = now(),
-         started_at = coalesce(started_at, now()), error = null
+         started_at = coalesce(started_at, now()), error = null, progress = null
        where id = (
          select id from jobs
          where status = 'queued' or (status = 'running' and locked_at < now() - ${STALE_AFTER} and attempts < $2)
@@ -87,7 +89,15 @@ export function createDrain(options: DrainOptions): Drain {
       if (version === undefined) throw new Error(`version ${job.versionHash.slice(0, 12)} is not in the store`);
       // What this project uploaded: the only asset bytes its exports may carry.
       const claims = await pool.query<{ sha256: string }>('select sha256 from project_assets where project_id = $1', [job.projectId]);
-      const file = await handler(version.document as object, { ...job, claimed: new Set(claims.rows.map((r) => r.sha256)) });
+      // A long job says how far it has got: written at most once a second, while this worker holds it.
+      let said = 0;
+      const progress = async (p: Record<string, unknown>): Promise<void> => {
+        const now = Date.now();
+        if (now - said < PROGRESS_EVERY_MS) return;
+        said = now;
+        await pool.query(`update jobs set progress = $2, locked_at = now() where id = $1 and locked_by = $3 and status = 'running'`, [job.id, JSON.stringify(p), workerId]).catch(() => undefined);
+      };
+      const file = await handler(version.document as object, { ...job, claimed: new Set(claims.rows.map((r) => r.sha256)), progress });
       const sha256 = createHash('sha256').update(file.bytes).digest('hex');
       const client = await pool.connect();
       try {

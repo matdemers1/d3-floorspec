@@ -6,6 +6,7 @@ import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/i
 import { exportIfc } from '../export/ifc/index.js';
 import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
 import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
+import { QUALITIES, renderStill, SIZES, withinBudget, type Quality, type Size, type SunInput } from '../pathtrace/index.js';
 
 export interface JobRow {
   readonly id: string;
@@ -19,6 +20,11 @@ export interface JobRow {
    * file. Absent (a direct call, a test): no restriction.
    */
   readonly claimed?: ReadonlySet<string>;
+  /**
+   * Tell the queue how far a long job has got (FLR-T-12.6): the drain writes it to the job's
+   * `progress`, where the api shows it. Absent: nobody is listening.
+   */
+  readonly progress?: (progress: Record<string, unknown>) => Promise<void>;
 }
 
 export interface JobFile {
@@ -91,6 +97,48 @@ export function render3dParams(raw: unknown): Render3dParams {
   };
 }
 
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** The parameters of a path-traced still (FLR-T-12.6), as the api writes them. */
+export interface StillParams {
+  readonly camera?: Preset;
+  readonly room?: string;
+  readonly level?: string;
+  readonly size: Size;
+  readonly quality: Quality;
+  readonly sun?: SunInput;
+  readonly design?: Record<string, string>;
+}
+
+export function stillParams(raw: unknown): StillParams {
+  const p = (raw ?? {}) as Record<string, unknown>;
+  const str = (k: string): string | undefined => (typeof p[k] === 'string' && p[k] !== '' ? p[k] : undefined);
+  const camera = typeof p['camera'] === 'string' && (PRESETS as readonly string[]).includes(p['camera']) ? (p['camera'] as Preset) : undefined;
+  const size = typeof p['size'] === 'string' && Object.hasOwn(SIZES, p['size']) ? (p['size'] as Size) : 'medium';
+  const quality = typeof p['quality'] === 'string' && Object.hasOwn(QUALITIES, p['quality']) ? (p['quality'] as Quality) : 'standard';
+  if (!withinBudget(size, quality)) throw new RangeError(`a ${size} still at ${quality} quality is more work than a still may take`);
+  const s: unknown = p['sun'];
+  const sun = isRecord(s) && typeof s['azimuth'] === 'number' && typeof s['altitude'] === 'number' && Number.isFinite(s['azimuth']) && s['altitude'] > 0 && s['altitude'] <= 90 ? { azimuth: s['azimuth'], altitude: s['altitude'] } : undefined;
+  const room = str('room');
+  const level = str('level');
+  const design = designOf(p['design']);
+  return {
+    ...(camera === undefined ? {} : { camera }),
+    ...(room === undefined ? {} : { room }),
+    ...(level === undefined ? {} : { level }),
+    size,
+    quality,
+    ...(sun === undefined ? {} : { sun }),
+    ...(design === undefined ? {} : { design }),
+  };
+}
+
+/** Only the images the job's project claimed (FLR-T-8.2). */
+function claimedOnly(job: JobRow, source: ImageSource | undefined): ImageSource | undefined {
+  const claimed = job.claimed;
+  return source === undefined || claimed === undefined ? source : (asset) => (claimed.has(asset.sha256) ? source(asset) : undefined);
+}
+
 /**
  * The 3D exports' options: one version, its levels, its design, and the asset store's maps and
  * fallback models when the worker can read them — only files the job's project claimed.
@@ -153,6 +201,38 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
     'export.usdz': async (document, job) => {
       const file = await exportUsdz(document, modelOptions(job, store));
       return { name: file.name, contentType: file.contentType, bytes: file.bytes, summary: file.summary };
+    },
+    /**
+     * FLR-T-12.6: a path-traced still of a view, rendered offline — approximate lighting, a sun and a
+     * clear sky — reporting each pass as it goes. Downloaded like an export.
+     */
+    'export.still': async (document, job) => {
+      const p = stillParams(job.params);
+      const images = claimedOnly(job, store.images);
+      const r = await renderStill(document, {
+        ...p,
+        ...(images === undefined ? {} : { images }),
+        ...(job.progress === undefined ? {} : { onPass: (done: number, total: number) => job.progress?.({ pass: done, passes: total }) }),
+      });
+      const view = p.room ?? p.camera ?? 'sw';
+      return {
+        name: `still-${view.replace(/[^\w-]/g, '_')}-${job.versionHash.slice(0, 8)}.png`,
+        contentType: 'image/png',
+        bytes: r.png,
+        summary: {
+          label: 'Offline path-traced render — approximate lighting',
+          width: r.width,
+          height: r.height,
+          samples: r.samples,
+          size: p.size,
+          quality: p.quality,
+          camera: r.camera,
+          sun: r.sun,
+          design: r.design,
+          maps: r.maps,
+          ms: r.ms,
+        },
+      };
     },
     /** FLR-T-8.5: a PNG of the 3D model from a named view or a room; the api waits for it. */
     'render.3d': async (document, job) => {

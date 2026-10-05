@@ -487,6 +487,8 @@ model Job {
   error    String?
   /// What it made: name, content type, size, SHA-256, sheets or files.
   result   Json?
+  /// How far a long job has got (FLR-T-12.6: a still's passes), written by the worker while it runs.
+  progress Json?
 
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   startedAt  DateTime? @map("started_at") @db.Timestamptz(6)
