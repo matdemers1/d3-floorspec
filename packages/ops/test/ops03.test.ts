@@ -75,4 +75,13 @@ describe('Ops 0.3', () => {
     // A door's operation must be a door operation (the schema, FS-SCH-001).
     rejectedWith(apply(pair03(), { batch: [{ op: 'setProperty', id: 'D', path: '/operation', value: 'casement' }] }), 'FS-SCH-001');
   });
+
+  it("moves a vaulted ceiling's ridge with its room, and leaves it where it is when one wall moves (FS-OPS-4.3.2)", () => {
+    const vault = { kind: 'vaulted', ridge: [[0, 1_400_000], [3_900_000, 1_400_000]], pitch: { rise: 4, run: 12 } };
+    const d = { ...pair(undefined, undefined, { rooms: { RA: { anchor: [1_950_000, 1_400_000], name: 'Kitchen', ceiling: vault }, RB: [5_850_000, 1_400_000] } }), floorspec: '0.3' };
+    const moved = B(apply(d, { batch: [{ op: 'moveRoom', room: 'Kitchen', by: [1000, 0] }] }));
+    expect(moved.rooms!.RA!.ceiling).toEqual({ ...vault, ridge: [[1000, 1_400_000], [3_901_000, 1_400_000]] });
+    const wall = B(apply(d, { batch: [{ op: 'moveWall', wall: 'W1', by: -1000 }] }));
+    expect(wall.rooms!.RA!.ceiling).toEqual(vault);
+  });
 });

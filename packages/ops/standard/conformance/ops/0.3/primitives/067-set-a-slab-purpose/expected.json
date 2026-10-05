@@ -1,0 +1,27 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "542126700cd7f7de95cbbc3fbf18726734f9217973cddd3fdb50cad84d60e482",
+  "created": ["S1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "slabs",
+      "id": "S1",
+      "element": {
+        "level": "L1",
+        "boundary": [[0, -3121152], [4681728, -3121152], [4681728, -195072], [0, -195072]],
+        "offset": -195072,
+        "purpose": "patio",
+        "thickness": 130048
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "S1"
+    }
+  ]
+}

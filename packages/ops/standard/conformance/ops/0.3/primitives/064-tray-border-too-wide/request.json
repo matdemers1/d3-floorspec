@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/ceiling/border",
+      "value": 1950720
+    }
+  ]
+}

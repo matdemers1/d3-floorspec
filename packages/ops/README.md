@@ -58,7 +58,7 @@ formatLength(4893056); // `12' 6 1/2"` (1/16" by default); { system: 'metric' } 
 | `src/normalize.ts` | 5.1 merge → 5.2 snap rounding (only on a level that breaks Core §5.3), splitting, re-hosting openings and hosted elements → 5.3 join cleanup |
 | `src/locks.ts`, `src/inverse.ts` | locks (ch. 6); the inverse (1.6) |
 | `src/types.ts` | request, operation and result types |
-| `standard/` | the three Ops conformance suites (0.1: 230 cases, 0.2: 359, 0.3: 380), both schemas (0.3 has none of its own) and the diagnostics chapter, vendored by `pnpm sync-standard` and pinned in `LOCK.json` |
+| `standard/` | the three Ops conformance suites (0.1: 230 cases, 0.2: 359, 0.3: 393), both schemas (0.3 has none of its own) and the diagnostics chapter, vendored by `pnpm sync-standard` and pinned in `LOCK.json` |
 
 ## Exactness and determinism
 

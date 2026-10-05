@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "resizeRoom",
+      "room": "R1",
+      "side": "east",
+      "by": "2'"
+    }
+  ]
+}

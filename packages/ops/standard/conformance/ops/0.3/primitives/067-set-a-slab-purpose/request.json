@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "slabs",
+      "id": "S1",
+      "element": {
+        "level": "L1",
+        "boundary": [[0, -3121152], [4681728, -3121152], [4681728, -195072], [0, -195072]],
+        "thickness": 130048,
+        "offset": -195072,
+        "purpose": "patio"
+      }
+    }
+  ]
+}

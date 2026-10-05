@@ -1,0 +1,27 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "1678c273bce6b08fea01fc4cada7fa491a03a8c8c96e6ed5ac4f489b77ea0d4a",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/ceiling/border",
+      "value": 780288
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/ceiling",
+      "value": {
+        "border": 390144,
+        "depth": 195072,
+        "kind": "tray"
+      }
+    }
+  ]
+}
