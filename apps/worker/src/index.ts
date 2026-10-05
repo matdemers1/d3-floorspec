@@ -1,8 +1,9 @@
 import { beat } from './heartbeat.js';
+import { createDrain, type Drain } from './queue/index.js';
 
 /**
- * The job-queue drain. Render-back, PDF/DXF/glTF/USDZ exports and the IFC hand-off arrive in later
- * phases; in Phase 0 the process exists so the stack, its image and its healthcheck are real.
+ * The job-queue drain. Exports (PDF and DXF drawings, FLR-T-9.3) arrive on the Postgres queue the
+ * api writes; the heartbeat file keeps the image's healthcheck honest about a hung process.
  */
 const TICK_MS = 30_000;
 
@@ -17,11 +18,19 @@ const timer = setInterval(() => {
   });
 }, TICK_MS);
 
-process.stdout.write('d3-floorspec worker started; no job kinds are registered yet\n');
+const databaseUrl = process.env['DATABASE_URL'];
+let drain: Drain | null = null;
+if (databaseUrl === undefined || databaseUrl === '') {
+  process.stdout.write('d3-floorspec worker started without DATABASE_URL: no jobs are drained\n');
+} else {
+  drain = createDrain({ databaseUrl });
+  await drain.start();
+  process.stdout.write('d3-floorspec worker started: draining export.pdf and export.dxf jobs\n');
+}
 
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {
   process.on(signal, () => {
     clearInterval(timer);
-    process.exit(0);
+    void (drain?.stop() ?? Promise.resolve()).finally(() => process.exit(0));
   });
 }

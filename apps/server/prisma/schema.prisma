@@ -59,6 +59,7 @@ model Account {
   changesetsMade   Changeset[]   @relation("ChangesetCreatedBy")
   changesetsClosed Changeset[]   @relation("ChangesetClosedBy")
   ruleProfiles     RuleProfile[]
+  jobsRequested    Job[]
 
   @@map("accounts")
 }
@@ -186,6 +187,7 @@ model Project {
   tokens      ApiToken[]
   changesets  Changeset[]
   retiredIds  RetiredId[]
+  jobs        Job[]
 
   @@index([ownerAccountId])
   @@index([ruleProfileId])
@@ -195,7 +197,7 @@ model Project {
 /// One canonical Floorspec document, keyed by the lowercase hex SHA-256 of its RFC 8785 (JCS)
 /// serialization. Immutable, and shared by every project and op that arrives at the same bytes.
 model Version {
-  hash     String   @id
+  hash     String @id
   document Json
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -204,6 +206,7 @@ model Version {
   opsFrom        OpLog[]     @relation("OpBefore")
   opsTo          OpLog[]     @relation("OpAfter")
   changesetBases Changeset[] @relation("ChangesetBase")
+  jobs           Job[]
 
   @@map("versions")
 }
@@ -257,8 +260,8 @@ model OpLog {
   created    String[] @default([])
   removed    String[] @default([])
   /// Null only for the first op of a project, which creates the document.
-  beforeHash String? @map("before_hash")
-  afterHash  String  @map("after_hash")
+  beforeHash String?  @map("before_hash")
+  afterHash  String   @map("after_hash")
 
   /// The changeset this op belongs to (on its scratch head), or came from (a `merge` on main).
   changesetId String? @map("changeset_id") @db.Uuid
@@ -346,12 +349,12 @@ model Changeset {
   mergeMode         MergeMode? @map("merge_mode")
   mergedHash        String?    @map("merged_hash")
 
-  project   Project   @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  base      Version   @relation("ChangesetBase", fields: [baseHash], references: [hash], onDelete: Restrict)
-  createdBy Account?  @relation("ChangesetCreatedBy", fields: [createdByAccountId], references: [id], onDelete: Restrict)
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  base           Version   @relation("ChangesetBase", fields: [baseHash], references: [hash], onDelete: Restrict)
+  createdBy      Account?  @relation("ChangesetCreatedBy", fields: [createdByAccountId], references: [id], onDelete: Restrict)
   createdByToken ApiToken? @relation(fields: [createdByTokenId], references: [id], onDelete: Restrict)
-  closedBy  Account?  @relation("ChangesetClosedBy", fields: [closedByAccountId], references: [id], onDelete: Restrict)
-  ops       OpLog[]
+  closedBy       Account?  @relation("ChangesetClosedBy", fields: [closedByAccountId], references: [id], onDelete: Restrict)
+  ops            OpLog[]
 
   @@index([projectId, status])
   @@map("changesets")
@@ -433,4 +436,68 @@ model AuditLog {
   @@index([actorAccountId, at])
   @@index([at])
   @@map("audit_log")
+}
+
+// ─── The job queue (FLR-T-9.3) ──────────────────────────────────────────────
+
+/// queued → running → done | failed. A running job whose worker died is queued again by the next
+/// drain once its lock is stale, up to three attempts.
+enum JobStatus {
+  queued
+  running
+  done
+  failed
+}
+
+/// The Postgres job queue the architecture names: the api enqueues, the worker drains it with
+/// `FOR UPDATE SKIP LOCKED`, woken by NOTIFY on `floorspec_jobs`. Exports are its first kinds
+/// (`export.pdf`, `export.dxf`). A job reads one immutable version, so it is reproducible.
+model Job {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  projectId   String    @map("project_id") @db.Uuid
+  kind        String
+  status      JobStatus @default(queued)
+  /// What was asked for: levels, page — and the version's facts (number, time) the drawing prints.
+  params      Json
+  /// The version drawn: a hash in `versions`.
+  versionHash String    @map("version_hash")
+
+  requestedByAccountId String? @map("requested_by_account_id") @db.Uuid
+  requestedByTokenId   String? @map("requested_by_token_id") @db.Uuid
+
+  attempts Int       @default(0)
+  lockedBy String?   @map("locked_by")
+  lockedAt DateTime? @map("locked_at") @db.Timestamptz(6)
+  /// Why it failed, in words for a person.
+  error    String?
+  /// What it made: name, content type, size, SHA-256, sheets or files.
+  result   Json?
+
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  startedAt  DateTime? @map("started_at") @db.Timestamptz(6)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(6)
+
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  version     Version    @relation(fields: [versionHash], references: [hash], onDelete: Restrict, onUpdate: Restrict)
+  requestedBy Account?   @relation(fields: [requestedByAccountId], references: [id], onDelete: SetNull)
+  output      JobOutput?
+
+  @@index([status, createdAt])
+  @@index([projectId, createdAt])
+  @@map("jobs")
+}
+
+/// A finished job's file. Kept for seven days, then removed by the worker; the job stays.
+model JobOutput {
+  jobId       String @id @map("job_id") @db.Uuid
+  name        String
+  contentType String @map("content_type")
+  bytes       Bytes
+  sha256      String
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("job_outputs")
 }

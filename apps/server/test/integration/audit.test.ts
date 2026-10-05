@@ -16,6 +16,7 @@ import {
   type Reply,
   type Running,
 } from './helpers.js';
+import { projectWithDocument } from './drawings-support.js';
 
 /**
  * The audit walk (FLR-T-0.4): every mutating route, called successfully, writes an audit row with
@@ -181,6 +182,11 @@ const EXERCISES: Record<string, Exercise> = {
     const { id } = await createProjectAs(operator);
     const proposed = (await operator.post(`/api/projects/${id}/changesets`, { name: 'Idea', batch: ROOM })).body as { changeset: { id: string } };
     return { reply: await operator.post(`/api/projects/${id}/changesets/${proposed.changeset.id}/reject`), action: 'changeset.reject' };
+  },
+  'POST /api/projects/:projectId/exports': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(running.db, operator);
+    return { reply: await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' }), action: 'export.request' };
   },
   'POST /api/tokens': async ({ running }) => {
     const operator = await setupOperator(running);

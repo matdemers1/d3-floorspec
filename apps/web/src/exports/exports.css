@@ -1,0 +1,132 @@
+/* Export dialog and the dashboard's exports card (FLR-T-9.3). Figma: Floorspec (FLR), 16 · Export. */
+
+.fs-export-dialog__formats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.fs-export-format {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  color: var(--color-fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fs-export-format:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+}
+.fs-export-format:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-export-format[data-selected='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-muted);
+}
+.fs-export-format:disabled {
+  cursor: default;
+  color: var(--color-fg-muted);
+}
+.fs-export-format__icon {
+  display: inline-flex;
+  color: var(--color-fg-muted);
+}
+.fs-export-format__icon svg {
+  width: var(--icon-16);
+  height: var(--icon-16);
+}
+.fs-export-format__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.fs-export-format__title {
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+.fs-export-format__detail {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-export-format__ext {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+
+.fs-export-dialog__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+  margin-top: var(--space-16);
+}
+.fs-export-dialog__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+
+.fs-export-dialog__status {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-12);
+}
+.fs-export-dialog__note {
+  color: var(--color-fg-muted);
+}
+
+.fs-exports-card__recent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: var(--space-8) 0 0;
+  padding: var(--space-8) 0 0;
+  border-top: 1px solid var(--color-border);
+  list-style: none;
+  font-size: var(--text-12);
+}
+.fs-exports-card__recent li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.fs-exports-card__error {
+  margin: var(--space-8) 0 0;
+  font-size: var(--text-12);
+}
+.fs-exports-card__recent li > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.fs-exports-card__recent li > button {
+  flex-shrink: 0;
+}
+
+/* The editor top bar's Export (editor.css styles it): a button now, so it sheds the UA button chrome. */
+button.fs-topbar__export {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+button.fs-topbar__export:hover {
+  background: var(--color-surface-hover);
+}
+button.fs-topbar__export:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
