@@ -3,6 +3,7 @@ export { describe, summaryText } from './text.js';
 export {
   describeJson,
   sideOf,
+  siteSummary,
   SIDES,
   type DescribeOptions,
   type DiagnosticSummary,
@@ -20,5 +21,6 @@ export {
   type OpeningSummary,
   type RoomSummary,
   type Side,
+  type SiteSummary,
 } from './summary.js';
 export { feetInches, inches, squareFeet, segmentLength, lengthText, type Length } from './units.js';

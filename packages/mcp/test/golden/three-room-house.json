@@ -1,6 +1,29 @@
 {
   "project": "Three-room house",
   "valid": true,
+  "site": {
+    "trueNorth": -12500000,
+    "facing": {
+      "north": {
+        "bearing": 348,
+        "compass": "NNW"
+      },
+      "east": {
+        "bearing": 78,
+        "compass": "ENE"
+      },
+      "south": {
+        "bearing": 168,
+        "compass": "SSE"
+      },
+      "west": {
+        "bearing": 258,
+        "compass": "WSW"
+      }
+    },
+    "latitude": 42.3601,
+    "longitude": -71.0589
+  },
   "levels": [
     {
       "id": "MAIN",
@@ -101,6 +124,16 @@
                       "ftIn": "4' 0\"",
                       "exact": true
                     },
+                    "height": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "sill": {
+                      "baseUnits": 1170432,
+                      "ftIn": "3' 0\"",
+                      "exact": true
+                    },
                     "offset": {
                       "baseUnits": 1170432,
                       "ftIn": "3' 0\"",
@@ -167,6 +200,11 @@
                       "ftIn": "2' 8\"",
                       "exact": true
                     },
+                    "height": {
+                      "baseUnits": 2600960,
+                      "ftIn": "6' 8\"",
+                      "exact": true
+                    },
                     "offset": {
                       "baseUnits": 3121152,
                       "ftIn": "8' 0\"",
@@ -184,7 +222,18 @@
               }
             ]
           },
-          "inside": []
+          "inside": [],
+          "daylight": {
+            "windows": 1,
+            "facing": [
+              "east"
+            ],
+            "roughOpening": {
+              "squareFeet": "16.0",
+              "squareBaseUnits": "2435397451776"
+            },
+            "percentOfFloor": "9.2"
+          }
         },
         {
           "id": "KIT",
@@ -242,6 +291,16 @@
                     "width": {
                       "baseUnits": 1170432,
                       "ftIn": "3' 0\"",
+                      "exact": true
+                    },
+                    "height": {
+                      "baseUnits": 1170432,
+                      "ftIn": "3' 0\"",
+                      "exact": true
+                    },
+                    "sill": {
+                      "baseUnits": 1365504,
+                      "ftIn": "3' 6\"",
                       "exact": true
                     },
                     "offset": {
@@ -322,7 +381,18 @@
               }
             ]
           },
-          "inside": []
+          "inside": [],
+          "daylight": {
+            "windows": 1,
+            "facing": [
+              "north"
+            ],
+            "roughOpening": {
+              "squareFeet": "9.0",
+              "squareBaseUnits": "1369911066624"
+            },
+            "percentOfFloor": "5.1"
+          }
         },
         {
           "id": "LIV",
@@ -383,6 +453,16 @@
                       "ftIn": "6' 0\"",
                       "exact": true
                     },
+                    "height": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "sill": {
+                      "baseUnits": 1170432,
+                      "ftIn": "3' 0\"",
+                      "exact": true
+                    },
                     "offset": {
                       "baseUnits": 2340864,
                       "ftIn": "6' 0\"",
@@ -441,6 +521,11 @@
                       "ftIn": "2' 8\"",
                       "exact": true
                     },
+                    "height": {
+                      "baseUnits": 2600960,
+                      "ftIn": "6' 8\"",
+                      "exact": true
+                    },
                     "offset": {
                       "baseUnits": 3121152,
                       "ftIn": "8' 0\"",
@@ -489,6 +574,11 @@
                       "ftIn": "3' 0\"",
                       "exact": true
                     },
+                    "height": {
+                      "baseUnits": 2600960,
+                      "ftIn": "6' 8\"",
+                      "exact": true
+                    },
                     "offset": {
                       "baseUnits": 2340864,
                       "ftIn": "6' 0\"",
@@ -534,6 +624,16 @@
                       "ftIn": "4' 0\"",
                       "exact": true
                     },
+                    "height": {
+                      "baseUnits": 1560576,
+                      "ftIn": "4' 0\"",
+                      "exact": true
+                    },
+                    "sill": {
+                      "baseUnits": 1170432,
+                      "ftIn": "3' 0\"",
+                      "exact": true
+                    },
                     "offset": {
                       "baseUnits": 3121152,
                       "ftIn": "8' 0\"",
@@ -544,7 +644,19 @@
               }
             ]
           },
-          "inside": []
+          "inside": [],
+          "daylight": {
+            "windows": 2,
+            "facing": [
+              "north",
+              "west"
+            ],
+            "roughOpening": {
+              "squareFeet": "40.0",
+              "squareBaseUnits": "6088493629440"
+            },
+            "percentOfFloor": "9.0"
+          }
         }
       ],
       "adjacency": [

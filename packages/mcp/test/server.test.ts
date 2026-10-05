@@ -6,8 +6,11 @@ import { describe, expect, it } from 'vitest';
 import { ROOM_FUNCTIONS } from '../src/vocabulary.js';
 import {
   createFloorspecMcpHandler,
+  CRITIQUE_CATEGORIES,
+  critiquePrompt,
   DESIGN_PARTNER_PROMPT,
   FloorspecApiError,
+  parseFocus,
   formatFeetInches,
   OP_NAMES,
   TOOL_NAMES,
@@ -536,6 +539,74 @@ describe('the MCP server', () => {
     expect(prompt.messages[0]?.content).toMatchObject({ type: 'text', text: DESIGN_PARTNER_PROMPT });
     const skill = readFileSync(join(import.meta.dirname, '../../../plugin/skills/floorspec-design-partner/SKILL.md'), 'utf8');
     expect(skill.replace(/\r\n/g, '\n')).toContain(DESIGN_PARTNER_PROMPT);
+  });
+});
+
+/** FLR-REQ-079: the design critique prompt, kept apart from code findings. */
+describe('the design critique prompt', () => {
+  it('is listed beside the design partner, with optional project, changeset and focus arguments', async () => {
+    const mcp = await connect(new MemoryClient());
+    const { prompts } = await mcp.listPrompts();
+    expect(prompts.map((p) => p.name).sort()).toEqual(['design-critique', 'design-partner']);
+    const critique = prompts.find((p) => p.name === 'design-critique');
+    if (critique === undefined) throw new Error('design-critique is not listed');
+    expect(critique.title).toBe('Design critique');
+    expect(critique.description).toMatch(/daylight, circulation, storage, privacy and furniture fit/);
+    expect(critique.description).toMatch(/Not a code review/);
+    expect((critique.arguments ?? []).map((a) => [a.name, a.required ?? false])).toEqual([
+      ['project', false],
+      ['changeset', false],
+      ['focus', false],
+    ]);
+  });
+
+  it('asks for all five categories by default, from the tools only, as structured observations', async () => {
+    const mcp = await connect(new MemoryClient());
+    const prompt = await mcp.getPrompt({ name: 'design-critique' });
+    const text = (prompt.messages[0]?.content as { text: string }).text;
+    expect(text).toBe(critiquePrompt());
+    for (const heading of ['## Daylight', '## Circulation', '## Storage', '## Privacy', '## Furniture fit']) expect(text).toContain(heading);
+    for (const tool of ['floorspec_describe', 'floorspec_render', 'floorspec_query', 'floorspec_validate']) expect(text).toContain(tool);
+    expect(text).toMatch(/Rating: good \| could be better \| needs work/);
+    expect(text).toMatch(/elements: <IDs/);
+    expect(text).toMatch(/Ops: <a floorspec_apply-style batch/);
+    await expect(text).toMatchFileSnapshot('./golden/design-critique.txt');
+  });
+
+  it('keeps code findings out: no code is cited and no verdict of compliance is asked for', () => {
+    const text = critiquePrompt();
+    expect(text).not.toMatch(/\b(IRC|IBC|NFPA|ADA|ICC|R3\d\d)\b/);
+    expect(text).toContain('This is a design critique, not a code review.');
+    expect(text).toContain('Do not call floorspec_findings for this critique');
+    // "compliant" appears once, only in the instruction never to say it.
+    expect(text.match(/compliant/g)).toEqual(['compliant', 'compliant']);
+    expect(text).toMatch(/never say a design is "compliant" or "non-compliant"/);
+  });
+
+  it('narrows to the categories asked for, and names the changeset it critiques', async () => {
+    const mcp = await connect(new MemoryClient());
+    const prompt = await mcp.getPrompt({ name: 'design-critique', arguments: { focus: 'privacy, furniture fit', changeset: 'Open the kitchen', project: 'Lake house' } });
+    const text = (prompt.messages[0]?.content as { text: string }).text;
+    expect(text).toContain('## Privacy');
+    expect(text).toContain('## Furniture fit');
+    expect(text).not.toContain('## Daylight');
+    expect(text).not.toContain('## Storage');
+    expect(text).toContain('the pending changeset "Open the kitchen"');
+    expect(text).toContain('floorspec_describe {"project": "Lake house","changeset": "Open the kitchen"}');
+  });
+
+  it('refuses a focus that names nothing it critiques', async () => {
+    const mcp = await connect(new MemoryClient());
+    await expect(mcp.getPrompt({ name: 'design-critique', arguments: { focus: 'structure' } })).rejects.toThrow(/focus/);
+  });
+
+  it('reads focus as people write it', () => {
+    expect(parseFocus(undefined)).toEqual([...CRITIQUE_CATEGORIES]);
+    expect(parseFocus('all')).toEqual([...CRITIQUE_CATEGORIES]);
+    expect(parseFocus('Furniture fit and daylight')).toEqual(['daylight', 'furniture']);
+    expect(parseFocus('storage; privacy / circulation')).toEqual(['circulation', 'storage', 'privacy']);
+    expect(parseFocus('light')).toEqual(['daylight']);
+    expect(parseFocus('code')).toBeNull();
   });
 });
 

@@ -8,6 +8,7 @@ import { describe, describeJson } from './summary/index.js';
 import { query, QueryInput } from './query.js';
 import { findRoom } from './model.js';
 import { DESIGN_PARTNER_PROMPT } from './prompts.js';
+import { CRITIQUE_PROMPT_NAME, CritiqueArgs, critiquePrompt } from './prompts/critique.js';
 
 /**
  * The D3 Floorspec MCP server (FLR-T-2.6): eleven verbs over one operation vocabulary.
@@ -202,7 +203,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         '(references like "north wall of Kitchen", lengths like 12\' 6"), the brief (addProgramItem, setAdjacency, setRoomBrief) and devices — receptacles, panels, fixtures, equipment (placeElement; the first of an extension declares it in extensionsUsed) — included; ' +
         'render and validate after every change. ' +
         'Agent edits land in a pending changeset a person accepts; every tool takes a changeset by name or ID. ' +
-        'The design-partner prompt has the working rules and example calls. Never claim a change without a committed result and a render.',
+        'The design-partner prompt has the working rules and example calls; the design-critique prompt reviews a plan on daylight, circulation, storage, privacy and furniture fit. Never claim a change without a committed result and a render.',
     },
   );
 
@@ -600,6 +601,19 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'design-partner',
     { title: 'Design partner', description: 'How to work on a house with these tools: read, propose, render, check, never claim without a render.' },
     () => ({ messages: [{ role: 'user', content: { type: 'text', text: DESIGN_PARTNER_PROMPT } }] }),
+  );
+
+  // FLR-REQ-079: a design critique on daylight, circulation, storage, privacy and furniture fit, kept
+  // apart from the advisory code findings of floorspec_findings.
+  server.registerPrompt(
+    CRITIQUE_PROMPT_NAME,
+    {
+      title: 'Design critique',
+      description:
+        'Critique the plan as a designer on daylight, circulation, storage, privacy and furniture fit, from what the tools expose: observations with element IDs, severities and suggested Ops. Not a code review.',
+      argsSchema: CritiqueArgs,
+    },
+    (args) => ({ messages: [{ role: 'user', content: { type: 'text', text: critiquePrompt(args) } }] }),
   );
 
   return server;
