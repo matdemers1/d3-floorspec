@@ -1,0 +1,9 @@
+{
+  "description": "The demo house declaring Core \"0.4\", a draft FS_plumbing 0.1.0 lists (1.1): FS_plumbing is evaluated, reports nothing, and derives exactly what it derives for the house declaring \"0.2\". The suite reads a document declaring \"0.4\" as a Core 0.4 reader.",
+  "covers": [
+    "FS-PLMB-1.2.1",
+    "FS-PLMB-1.2.3",
+    "FS-PLMB-1.2.4",
+    "FS-PLMB-5.1.1"
+  ]
+}

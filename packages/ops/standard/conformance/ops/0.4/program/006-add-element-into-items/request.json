@@ -1,0 +1,12 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "element": {
+        "function": "living",
+        "name": "Living"
+      }
+    }
+  ]
+}

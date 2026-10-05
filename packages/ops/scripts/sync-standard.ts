@@ -8,7 +8,7 @@
  * Copies, from a floorspec checkout (default: ../floorspec beside this repository):
  *
  *   schema/ops/0.1/, 0.2/, 0.3/      → standard/schema/ops/0.1/, 0.2/, 0.3/
- *   conformance/ops/0.1/, 0.2/, 0.3/ → standard/conformance/ops/0.1/, 0.2/, 0.3/
+ *   conformance/ops/0.1/ to 0.4/ → standard/conformance/ops/0.1/ to 0.4/ (Ops 0.4's requests match schema/ops/0.3)
  *   spec/ops/07-diagnostics.md       → standard/spec/ops/07-diagnostics.md
  *
  * Ops 0.3 has a request schema of its own since roofs and stairs: addElement accepts the
@@ -29,6 +29,7 @@ export const PATHS = [
   'conformance/ops/0.1',
   'conformance/ops/0.2',
   'conformance/ops/0.3',
+  'conformance/ops/0.4',
   'spec/ops/07-diagnostics.md',
 ] as const;
 

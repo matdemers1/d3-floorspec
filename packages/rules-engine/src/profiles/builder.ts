@@ -155,7 +155,7 @@ export function profileProblems(value: unknown): ProfileProblem[] {
   }
 
   // The schema and the rules-engine's own check have the last word.
-  if (problems.length === 0 && !profileOk(value)) problems.push({ path: '', message: 'this is not a Floorspec Rules 0.1 profile (schema/rules/0.1/profile.schema.json)' });
+  if (problems.length === 0 && !profileOk(value, '0.1')) problems.push({ path: '', message: 'this is not a Floorspec Rules 0.1 profile (schema/rules/0.1/profile.schema.json)' });
   return problems;
 }
 

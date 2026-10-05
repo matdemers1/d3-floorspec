@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "ef57c38a42daf54c0f3eba05debb1fb19244f433d95705826974e90ffd75f535",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$project",
+      "path": "/description",
+      "value": "A small house."
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "$project",
+      "path": "/description"
+    }
+  ]
+}

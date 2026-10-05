@@ -1,0 +1,6 @@
+{
+  "description": "A spiral stair of 13 risers that turns through 10 microdegrees: its treads' nosing lines are 10 x k / 12 rounded, so some treads turn through no angle at all. FS-INV-906.",
+  "covers": [
+    "FS-CORE-17.7.5"
+  ]
+}

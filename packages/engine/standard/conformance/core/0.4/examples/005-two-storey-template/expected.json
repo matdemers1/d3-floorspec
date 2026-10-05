@@ -1,0 +1,2993 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-003",
+      "severity": "info",
+      "elements": []
+    }
+  ],
+  "hash": "6db028557e68f7de5f41ea9bb068dcee00f62fbad5d1aade025d61cce01c75bf",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [219964, 219964],
+        "endRight": [219964, 6242304],
+        "endLeft": [0, 6242304],
+        "startLeft": [0, 0],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W10": {
+        "startRight": [13825220, 219964],
+        "endRight": [9363456, 219964],
+        "endLeft": [9363456, 0],
+        "startLeft": [14045184, 0],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W11": {
+        "startRight": [9363456, 219964],
+        "endRight": [3901440, 219964],
+        "endLeft": [3901440, 0],
+        "startLeft": [9363456, 0],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W12": {
+        "startRight": [3901440, 219964],
+        "endRight": [219964, 219964],
+        "endLeft": [0, 0],
+        "startLeft": [3901440, 0],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W13": {
+        "startRight": [3974592, 219964],
+        "endRight": [3974592, 6242304],
+        "endLeft": [3828288, 6242304],
+        "startLeft": [3828288, 219964],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W14": {
+        "startRight": [3974592, 6242304],
+        "endRight": [3974592, 8583168],
+        "endLeft": [3828288, 8583168],
+        "startLeft": [3828288, 6242304],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W15": {
+        "startRight": [3974592, 8583168],
+        "endRight": [3974592, 10704068],
+        "endLeft": [3828288, 10704068],
+        "startLeft": [3828288, 8583168],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W16": {
+        "startRight": [9436608, 219964],
+        "endRight": [9436608, 5071872],
+        "endLeft": [9290304, 5071872],
+        "startLeft": [9290304, 219964],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W17": {
+        "startRight": [9436608, 5071872],
+        "endRight": [9436608, 6242304],
+        "endLeft": [9290304, 6169152],
+        "startLeft": [9290304, 5071872],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W18": {
+        "startRight": [3974592, 6169152],
+        "endRight": [9290304, 6169152],
+        "endLeft": [9363456, 6315456],
+        "startLeft": [3974592, 6315456],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W19": {
+        "startRight": [219964, 6169152],
+        "endRight": [3828288, 6169152],
+        "endLeft": [3828288, 6315456],
+        "startLeft": [219964, 6315456],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W2": {
+        "startRight": [219964, 6242304],
+        "endRight": [219964, 8583168],
+        "endLeft": [0, 8583168],
+        "startLeft": [0, 6242304],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W20": {
+        "startRight": [219964, 8510016],
+        "endRight": [1950720, 8510016],
+        "endLeft": [1950720, 8656320],
+        "startLeft": [219964, 8656320],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W21": {
+        "startRight": [1950720, 8510016],
+        "endRight": [3828288, 8510016],
+        "endLeft": [3828288, 8656320],
+        "startLeft": [1950720, 8656320],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W22": {
+        "startRight": [2023872, 8656320],
+        "endRight": [2023872, 10704068],
+        "endLeft": [1877568, 10704068],
+        "startLeft": [1877568, 8656320],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W23": {
+        "startRight": [219964, 219964],
+        "endRight": [219964, 2243328],
+        "endLeft": [0, 2243328],
+        "startLeft": [0, 0],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W24": {
+        "startRight": [219964, 2243328],
+        "endRight": [219964, 6242304],
+        "endLeft": [0, 6242304],
+        "startLeft": [0, 2243328],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W25": {
+        "startRight": [219964, 6242304],
+        "endRight": [219964, 7802880],
+        "endLeft": [0, 7802880],
+        "startLeft": [0, 6242304],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W26": {
+        "startRight": [219964, 7802880],
+        "endRight": [219964, 10704068],
+        "endLeft": [0, 10924032],
+        "startLeft": [0, 7802880],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W27": {
+        "startRight": [219964, 10704068],
+        "endRight": [2145792, 10704068],
+        "endLeft": [2145792, 10924032],
+        "startLeft": [0, 10924032],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W28": {
+        "startRight": [2145792, 10704068],
+        "endRight": [3901440, 10704068],
+        "endLeft": [3901440, 10924032],
+        "startLeft": [2145792, 10924032],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W29": {
+        "startRight": [3901440, 10704068],
+        "endRight": [9363456, 10704068],
+        "endLeft": [9363456, 10924032],
+        "startLeft": [3901440, 10924032],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W3": {
+        "startRight": [219964, 8583168],
+        "endRight": [219964, 10704068],
+        "endLeft": [0, 10924032],
+        "startLeft": [0, 8583168],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W30": {
+        "startRight": [9363456, 10704068],
+        "endRight": [13825220, 10704068],
+        "endLeft": [14045184, 10924032],
+        "startLeft": [9363456, 10924032],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W31": {
+        "startRight": [13825220, 10704068],
+        "endRight": [13825220, 8583168],
+        "endLeft": [14045184, 8583168],
+        "startLeft": [14045184, 10924032],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W32": {
+        "startRight": [13825220, 8583168],
+        "endRight": [13825220, 2340864],
+        "endLeft": [14045184, 2340864],
+        "startLeft": [14045184, 8583168],
+        "baseElevation": 3901440,
+        "topElevation": 8128000
+      },
+      "W33": {
+        "startRight": [13825220, 2340864],
+        "endRight": [13825220, 219964],
+        "endLeft": [14045184, 0],
+        "startLeft": [14045184, 2340864],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W34": {
+        "startRight": [13825220, 219964],
+        "endRight": [9363456, 219964],
+        "endLeft": [9363456, 0],
+        "startLeft": [14045184, 0],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W35": {
+        "startRight": [9363456, 219964],
+        "endRight": [3901440, 219964],
+        "endLeft": [3901440, 0],
+        "startLeft": [9363456, 0],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W36": {
+        "startRight": [3901440, 219964],
+        "endRight": [219964, 219964],
+        "endLeft": [0, 0],
+        "startLeft": [3901440, 0],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W37": {
+        "startRight": [219964, 2170176],
+        "endRight": [1463040, 2170176],
+        "endLeft": [1463040, 2316480],
+        "startLeft": [219964, 2316480],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W38": {
+        "startRight": [1463040, 2170176],
+        "endRight": [3828288, 2170176],
+        "endLeft": [3828288, 2316480],
+        "startLeft": [1463040, 2316480],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W39": {
+        "startRight": [3974592, 219964],
+        "endRight": [3974592, 2243328],
+        "endLeft": [3828288, 2243328],
+        "startLeft": [3828288, 219964],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W4": {
+        "startRight": [219964, 10704068],
+        "endRight": [1950720, 10704068],
+        "endLeft": [1950720, 10924032],
+        "startLeft": [0, 10924032],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W40": {
+        "startRight": [3974592, 2243328],
+        "endRight": [3974592, 3901440],
+        "endLeft": [3828288, 3901440],
+        "startLeft": [3828288, 2243328],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W41": {
+        "startRight": [3974592, 3901440],
+        "endRight": [3974592, 4803648],
+        "endLeft": [3828288, 4949952],
+        "startLeft": [3828288, 3901440],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W42": {
+        "startRight": [3974592, 6315456],
+        "endRight": [3974592, 7217664],
+        "endLeft": [3828288, 7217664],
+        "startLeft": [3828288, 6169152],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W43": {
+        "startRight": [3974592, 7217664],
+        "endRight": [3974592, 7802880],
+        "endLeft": [3828288, 7802880],
+        "startLeft": [3828288, 7217664],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W44": {
+        "startRight": [3974592, 7802880],
+        "endRight": [3974592, 10704068],
+        "endLeft": [3828288, 10704068],
+        "startLeft": [3828288, 7802880],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W45": {
+        "startRight": [3974592, 4803648],
+        "endRight": [6242304, 4803648],
+        "endLeft": [6242304, 4949952],
+        "startLeft": [3828288, 4949952],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W46": {
+        "startRight": [6242304, 4803648],
+        "endRight": [9290304, 4803648],
+        "endLeft": [9290304, 4949952],
+        "startLeft": [6242304, 4949952],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W47": {
+        "startRight": [3828288, 6169152],
+        "endRight": [6242304, 6169152],
+        "endLeft": [6242304, 6315456],
+        "startLeft": [3974592, 6315456],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W48": {
+        "startRight": [6242304, 6169152],
+        "endRight": [9290304, 6169152],
+        "endLeft": [9290304, 6315456],
+        "startLeft": [6242304, 6315456],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W49": {
+        "startRight": [9436608, 219964],
+        "endRight": [9436608, 2340864],
+        "endLeft": [9290304, 2340864],
+        "startLeft": [9290304, 219964],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W5": {
+        "startRight": [1950720, 10704068],
+        "endRight": [3901440, 10704068],
+        "endLeft": [3901440, 10924032],
+        "startLeft": [1950720, 10924032],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W50": {
+        "startRight": [9436608, 2340864],
+        "endRight": [9436608, 4876800],
+        "endLeft": [9290304, 4876800],
+        "startLeft": [9290304, 2340864],
+        "baseElevation": 3901440,
+        "topElevation": 8128000
+      },
+      "W51": {
+        "startRight": [9436608, 4876800],
+        "endRight": [9436608, 6242304],
+        "endLeft": [9290304, 6242304],
+        "startLeft": [9290304, 4876800],
+        "baseElevation": 3901440,
+        "topElevation": 8128000
+      },
+      "W52": {
+        "startRight": [9436608, 6242304],
+        "endRight": [9436608, 8583168],
+        "endLeft": [9290304, 8583168],
+        "startLeft": [9290304, 6242304],
+        "baseElevation": 3901440,
+        "topElevation": 8128000
+      },
+      "W53": {
+        "startRight": [9436608, 8583168],
+        "endRight": [9436608, 10704068],
+        "endLeft": [9290304, 10704068],
+        "startLeft": [9290304, 8583168],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W54": {
+        "startRight": [9436608, 2267712],
+        "endRight": [13825220, 2267712],
+        "endLeft": [13825220, 2414016],
+        "startLeft": [9436608, 2414016],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W55": {
+        "startRight": [9436608, 8510016],
+        "endRight": [13825220, 8510016],
+        "endLeft": [13825220, 8656320],
+        "startLeft": [9436608, 8656320],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W56": {
+        "startRight": [219964, 7729728],
+        "endRight": [2145792, 7729728],
+        "endLeft": [2145792, 7876032],
+        "startLeft": [219964, 7876032],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W57": {
+        "startRight": [2145792, 7729728],
+        "endRight": [3828288, 7729728],
+        "endLeft": [3828288, 7876032],
+        "startLeft": [2145792, 7876032],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W58": {
+        "startRight": [2218944, 7876032],
+        "endRight": [2218944, 10704068],
+        "endLeft": [2072640, 10704068],
+        "startLeft": [2072640, 7876032],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W59": {
+        "startRight": [3974592, 3828288],
+        "endRight": [6315456, 3828288],
+        "endLeft": [6169152, 3974592],
+        "startLeft": [3974592, 3974592],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W6": {
+        "startRight": [3901440, 10704068],
+        "endRight": [9363456, 10704068],
+        "endLeft": [9363456, 10924032],
+        "startLeft": [3901440, 10924032],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W60": {
+        "startRight": [6315456, 3828288],
+        "endRight": [6315456, 4803648],
+        "endLeft": [6169152, 4803648],
+        "startLeft": [6169152, 3974592],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W61": {
+        "startRight": [3974592, 7144512],
+        "endRight": [6169152, 7144512],
+        "endLeft": [6315456, 7290816],
+        "startLeft": [3974592, 7290816],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W62": {
+        "startRight": [6169152, 7144512],
+        "endRight": [6169152, 6315456],
+        "endLeft": [6315456, 6315456],
+        "startLeft": [6315456, 7290816],
+        "baseElevation": 3901440,
+        "topElevation": 7059168
+      },
+      "W7": {
+        "startRight": [9363456, 10704068],
+        "endRight": [13825220, 10704068],
+        "endLeft": [14045184, 10924032],
+        "startLeft": [9363456, 10924032],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W8": {
+        "startRight": [13825220, 10704068],
+        "endRight": [13825220, 5071872],
+        "endLeft": [14045184, 5071872],
+        "startLeft": [14045184, 10924032],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      },
+      "W9": {
+        "startRight": [13825220, 5071872],
+        "endRight": [13825220, 219964],
+        "endLeft": [14045184, 0],
+        "startLeft": [14045184, 5071872],
+        "baseElevation": 0,
+        "topElevation": 3901440
+      }
+    },
+    "junctionFills": {
+      "J11": [[9290304, 6169152], [9436608, 6242304], [9363456, 6242304], [9363456, 6315456]]
+    },
+    "rooms": {
+      "B2": {
+        "outer": [
+          [3974592, 219964],
+          [9290304, 219964],
+          [9290304, 2340864],
+          [9290304, 4803648],
+          [6315456, 4803648],
+          [6315456, 3828288],
+          [3974592, 3828288],
+          [3974592, 2243328]
+        ],
+        "holes": [],
+        "area": "22082358931968"
+      },
+      "B3": {
+        "outer": [
+          [3974592, 7290816],
+          [6315456, 7290816],
+          [6315456, 6315456],
+          [9290304, 6315456],
+          [9290304, 8583168],
+          [9290304, 10704068],
+          [3974592, 10704068],
+          [3974592, 7802880]
+        ],
+        "holes": [],
+        "area": "21045412360704"
+      },
+      "BATH": {
+        "outer": [[219964, 219964], [3828288, 219964], [3828288, 2170176], [1463040, 2170176], [219964, 2170176]],
+        "holes": [],
+        "area": "7036996764688"
+      },
+      "CL2": {
+        "outer": [[3974592, 3974592], [6169152, 3974592], [6169152, 4803648], [3974592, 4803648]],
+        "holes": [],
+        "area": "1819413135360"
+      },
+      "CL3": {
+        "outer": [[3974592, 6315456], [6169152, 6315456], [6169152, 7144512], [3974592, 7144512]],
+        "holes": [],
+        "area": "1819413135360"
+      },
+      "DIN": {
+        "outer": [[9436608, 219964], [13825220, 219964], [13825220, 5071872], [9436608, 5071872]],
+        "holes": [],
+        "area": "21293141671696"
+      },
+      "FAM": {
+        "outer": [[3974592, 6315456], [9363456, 6315456], [9363456, 10704068], [3974592, 10704068], [3974592, 8583168]],
+        "holes": [],
+        "area": "23649633216768"
+      },
+      "FOY": {
+        "outer": [[219964, 219964], [3828288, 219964], [3828288, 6169152], [219964, 6169152]],
+        "holes": [],
+        "area": "21466597840912"
+      },
+      "HALL": {
+        "outer": [
+          [219964, 6242304],
+          [1463040, 6242304],
+          [1463040, 2316480],
+          [3828288, 2316480],
+          [3828288, 3901440],
+          [3828288, 4949952],
+          [6242304, 4949952],
+          [9290304, 4949952],
+          [9290304, 6169152],
+          [6242304, 6169152],
+          [3828288, 6169152],
+          [3828288, 7217664],
+          [3828288, 7729728],
+          [2145792, 7729728],
+          [219964, 7729728]
+        ],
+        "holes": [],
+        "area": "21311944988928"
+      },
+      "KIT": {
+        "outer": [[9363456, 6242304], [9436608, 6242304], [9436608, 5071872], [13825220, 5071872], [13825220, 10704068], [9363456, 10704068]],
+        "holes": [],
+        "area": "25043909912080"
+      },
+      "LAU": {
+        "outer": [[219964, 7876032], [2072640, 7876032], [2072640, 10704068], [219964, 10704068]],
+        "holes": [],
+        "area": "5239434424336"
+      },
+      "LIV": {
+        "outer": [[3974592, 219964], [9290304, 219964], [9290304, 5071872], [9290304, 6169152], [3974592, 6169152]],
+        "holes": [],
+        "area": "31624170041856"
+      },
+      "MUD": {
+        "outer": [[219964, 6315456], [3828288, 6315456], [3828288, 8510016], [1950720, 8510016], [219964, 8510016]],
+        "holes": [],
+        "area": "7918683517440"
+      },
+      "PBA": {
+        "outer": [[9436608, 219964], [13825220, 219964], [13825220, 2267712], [9436608, 2267712]],
+        "holes": [],
+        "area": "8986771445776"
+      },
+      "PRI": {
+        "outer": [[9436608, 2414016], [13825220, 2414016], [13825220, 8510016], [9436608, 8510016], [9436608, 6242304], [9436608, 4876800]],
+        "holes": [],
+        "area": "26752978752000"
+      },
+      "PWR": {
+        "outer": [[219964, 8656320], [1877568, 8656320], [1877568, 10704068], [219964, 10704068]],
+        "holes": [],
+        "area": "3394355275792"
+      },
+      "STO": {
+        "outer": [[2218944, 7876032], [3828288, 7876032], [3828288, 10704068], [2218944, 10704068]],
+        "holes": [],
+        "area": "4551282768384"
+      },
+      "UTL": {
+        "outer": [[2023872, 8656320], [3828288, 8656320], [3828288, 10704068], [2023872, 10704068]],
+        "holes": [],
+        "area": "3694989255168"
+      },
+      "WIC": {
+        "outer": [[9436608, 8656320], [13825220, 8656320], [13825220, 10704068], [9436608, 10704068]],
+        "holes": [],
+        "area": "8986771445776"
+      }
+    },
+    "unanchored": [
+      {
+        "level": "L2",
+        "outer": [[219964, 2316480], [1463040, 2316480], [1463040, 6242304], [219964, 6242304]],
+        "holes": [],
+        "area": "4880097594624"
+      }
+    ],
+    "openings": {
+      "B2D": {
+        "start": [6892544, 4876800],
+        "end": [7932928, 4876800],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 910336
+        }
+      },
+      "B3D": {
+        "start": [6892544, 6242304],
+        "end": [7932928, 6242304],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 910336
+        }
+      },
+      "BAD": {
+        "start": [2048256, 2243328],
+        "end": [3023616, 2243328],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 845312
+        }
+      },
+      "BKD": {
+        "start": [0, 6795008],
+        "end": [0, 8030464],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2568448,
+          "width": 1097280
+        }
+      },
+      "C1": {
+        "start": [3901440, 2340864],
+        "end": [3901440, 4681728],
+        "sillElevation": 0,
+        "headElevation": 2731008
+      },
+      "C2": {
+        "start": [9363456, 1365504],
+        "end": [9363456, 3706368],
+        "sillElevation": 0,
+        "headElevation": 2731008
+      },
+      "C2D": {
+        "start": [4259072, 3901440],
+        "end": [5884672, 3901440],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 747776
+        }
+      },
+      "C3": {
+        "start": [5071872, 6242304],
+        "end": [8193024, 6242304],
+        "sillElevation": 0,
+        "headElevation": 2731008
+      },
+      "C3D": {
+        "start": [4259072, 7217664],
+        "end": [5884672, 7217664],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 747776
+        }
+      },
+      "CLD": {
+        "start": [2503424, 8583168],
+        "end": [3348736, 8583168],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 715264
+        }
+      },
+      "FD": {
+        "start": [3543808, 0],
+        "end": [2308352, 0],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2568448,
+          "width": 1097280
+        }
+      },
+      "LAD": {
+        "start": [585216, 7802880],
+        "end": [1560576, 7802880],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 845312
+        }
+      },
+      "MFD": {
+        "start": [2015744, 6242304],
+        "end": [3056128, 6242304],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 910336
+        }
+      },
+      "MFM": {
+        "start": [3901440, 6892544],
+        "end": [3901440, 7932928],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 910336
+        }
+      },
+      "PBD": {
+        "start": [10013696, 2340864],
+        "end": [11054080, 2340864],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 910336
+        }
+      },
+      "PRD": {
+        "start": [9363456, 5039360],
+        "end": [9363456, 6079744],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 910336
+        }
+      },
+      "PTD": {
+        "start": [10696448, 10924032],
+        "end": [12712192, 10924032],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 1820672
+        }
+      },
+      "PWD": {
+        "start": [552704, 8583168],
+        "end": [1398016, 8583168],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 715264
+        }
+      },
+      "STD": {
+        "start": [2600960, 7802880],
+        "end": [3446272, 7802880],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 715264
+        }
+      },
+      "WCD": {
+        "start": [10046208, 8583168],
+        "end": [11021568, 8583168],
+        "sillElevation": 3901440,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 845312
+        }
+      },
+      "WIN1": {
+        "start": [1666240, 0],
+        "end": [674624, 0],
+        "sillElevation": 1105408,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 577138458624,
+          "height": 682752,
+          "width": 845312
+        }
+      },
+      "WIN10": {
+        "start": [8038592, 10924032],
+        "end": [9225280, 10924032],
+        "sillElevation": 715264,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN11": {
+        "start": [2739136, 0],
+        "end": [1162304, 0],
+        "sillElevation": 5396992,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 710324256768,
+          "height": 1040384,
+          "width": 682752
+        }
+      },
+      "WIN12": {
+        "start": [6055360, 0],
+        "end": [4868672, 0],
+        "sillElevation": 4616704,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN13": {
+        "start": [8396224, 0],
+        "end": [7209536, 0],
+        "sillElevation": 4616704,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN14": {
+        "start": [12492736, 0],
+        "end": [10915904, 0],
+        "sillElevation": 5396992,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 710324256768,
+          "height": 1040384,
+          "width": 682752
+        }
+      },
+      "WIN15": {
+        "start": [14045184, 4884928],
+        "end": [14045184, 3698240],
+        "sillElevation": 4616704,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN16": {
+        "start": [14045184, 7225792],
+        "end": [14045184, 6039104],
+        "sillElevation": 4616704,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN17": {
+        "start": [11306048, 10924032],
+        "end": [12102592, 10924032],
+        "sillElevation": 5006848,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 837167874048,
+          "height": 1430528,
+          "width": 585216
+        }
+      },
+      "WIN18": {
+        "start": [4868672, 10924032],
+        "end": [6055360, 10924032],
+        "sillElevation": 4616704,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN19": {
+        "start": [7209536, 10924032],
+        "end": [8396224, 10924032],
+        "sillElevation": 4616704,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN2": {
+        "start": [6055360, 0],
+        "end": [4868672, 0],
+        "sillElevation": 715264,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN20": {
+        "start": [0, 3698240],
+        "end": [0, 4884928],
+        "sillElevation": 4616704,
+        "headElevation": 6583680,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN3": {
+        "start": [8396224, 0],
+        "end": [7209536, 0],
+        "sillElevation": 715264,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN4": {
+        "start": [12297664, 0],
+        "end": [11110976, 0],
+        "sillElevation": 715264,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN5": {
+        "start": [14045184, 3129280],
+        "end": [14045184, 1942592],
+        "sillElevation": 715264,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "WIN6": {
+        "start": [14045184, 8981440],
+        "end": [14045184, 7404608],
+        "sillElevation": 1495552,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 710324256768,
+          "height": 1040384,
+          "width": 682752
+        }
+      },
+      "WIN7": {
+        "start": [5453888, 10924032],
+        "end": [7811008, 10924032],
+        "sillElevation": 1105408,
+        "headElevation": 2682240
+      },
+      "WIN8": {
+        "start": [577088, 10924032],
+        "end": [1373632, 10924032],
+        "sillElevation": 1105408,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 837167874048,
+          "height": 1430528,
+          "width": 585216
+        }
+      },
+      "WIN9": {
+        "start": [4039616, 10924032],
+        "end": [5226304, 10924032],
+        "sillElevation": 715264,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      }
+    },
+    "program": {
+      "items": {
+        "P-BATH": {
+          "rooms": ["BATH"],
+          "countMet": true,
+          "minAreaMet": true
+        },
+        "P-BED": {
+          "rooms": ["B2", "B3"],
+          "countMet": true,
+          "minAreaMet": true,
+          "targetAreaMet": false
+        },
+        "P-DINING": {
+          "rooms": ["DIN"],
+          "countMet": true,
+          "minAreaMet": true
+        },
+        "P-FAMILY": {
+          "rooms": ["FAM"],
+          "countMet": true,
+          "minAreaMet": true
+        },
+        "P-KITCHEN": {
+          "rooms": ["KIT"],
+          "countMet": true,
+          "minAreaMet": true
+        },
+        "P-LAUNDRY": {
+          "rooms": ["LAU"],
+          "countMet": true
+        },
+        "P-LIVING": {
+          "rooms": ["LIV"],
+          "countMet": true,
+          "minAreaMet": true
+        },
+        "P-PBATH": {
+          "rooms": ["PBA"],
+          "countMet": true,
+          "minAreaMet": true
+        },
+        "P-POWDER": {
+          "rooms": ["PWR"],
+          "countMet": true
+        },
+        "P-PRIMARY": {
+          "rooms": ["PRI"],
+          "countMet": true,
+          "minAreaMet": true,
+          "targetAreaMet": false
+        }
+      },
+      "adjacency": [
+        {
+          "a": "P-KITCHEN",
+          "b": "P-DINING",
+          "kind": "required",
+          "adjacent": true,
+          "connected": true
+        },
+        {
+          "a": "P-KITCHEN",
+          "b": "P-FAMILY",
+          "kind": "required",
+          "adjacent": true,
+          "connected": true
+        },
+        {
+          "a": "P-LIVING",
+          "b": "P-DINING",
+          "kind": "preferred",
+          "adjacent": true,
+          "connected": true
+        },
+        {
+          "a": "P-PRIMARY",
+          "b": "P-PBATH",
+          "kind": "required",
+          "adjacent": true,
+          "connected": true
+        },
+        {
+          "a": "P-KITCHEN",
+          "b": "P-POWDER",
+          "kind": "forbidden",
+          "adjacent": false,
+          "connected": false
+        },
+        {
+          "a": "P-LAUNDRY",
+          "b": "P-BED",
+          "kind": "preferred",
+          "adjacent": false,
+          "connected": false
+        }
+      ]
+    },
+    "fallbacks": {
+      "HB-LAV": {
+        "level": "L2",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[1625600, 219964], [2275840, 219964], [2275840, 870204], [1625600, 870204]],
+        "bottom": 4681728,
+        "top": 4941824
+      },
+      "HB-TUB": {
+        "level": "L2",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[219964, 243840], [1195324, 243840], [1195324, 2194560], [219964, 2194560]],
+        "bottom": 3901440,
+        "top": 4551680
+      },
+      "HB-WC": {
+        "level": "L2",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[2926080, 219964], [3511296, 219964], [3511296, 1130300], [2926080, 1130300]],
+        "bottom": 3901440,
+        "top": 4876800
+      },
+      "K-SINK": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[13109956, 7705344], [13825220, 7705344], [13825220, 8680704], [13109956, 8680704]],
+        "bottom": 877824,
+        "top": 1170432
+      },
+      "L-WASH": {
+        "level": "L2",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[219964, 8908288], [1195324, 8908288], [1195324, 9818624], [219964, 9818624]],
+        "bottom": 3901440,
+        "top": 5169408
+      },
+      "PANEL": {
+        "level": "L1",
+        "extension": "FS_electrical",
+        "collection": "panels",
+        "footprint": [[3283712, 6315456], [3738880, 6315456], [3738880, 6445504], [3283712, 6445504]],
+        "bottom": 1072896,
+        "top": 2048256
+      },
+      "PB-LAV1": {
+        "level": "L2",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[10793984, 219964], [11444224, 219964], [11444224, 870204], [10793984, 870204]],
+        "bottom": 4681728,
+        "top": 4941824
+      },
+      "PB-LAV2": {
+        "level": "L2",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[11964416, 219964], [12614656, 219964], [12614656, 870204], [11964416, 870204]],
+        "bottom": 4681728,
+        "top": 4941824
+      },
+      "PB-SH": {
+        "level": "L2",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[12654788, 585216], [13825220, 585216], [13825220, 1755648], [12654788, 1755648]],
+        "bottom": 3901440,
+        "top": 6502400
+      },
+      "PB-WC": {
+        "level": "L2",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[12192000, 1357376], [12777216, 1357376], [12777216, 2267712], [12192000, 2267712]],
+        "bottom": 3901440,
+        "top": 4876800
+      },
+      "PR-LAV": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[1227328, 9526016], [1877568, 9526016], [1877568, 10176256], [1227328, 10176256]],
+        "bottom": 780288,
+        "top": 1040384
+      },
+      "PR-WC": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "fixtures",
+        "footprint": [[585216, 9793732], [1170432, 9793732], [1170432, 10704068], [585216, 10704068]],
+        "bottom": 0,
+        "top": 975360
+      },
+      "WH1": {
+        "level": "L1",
+        "extension": "FS_plumbing",
+        "collection": "waterHeaters",
+        "footprint": [[2568448, 9988804], [3283712, 9988804], [3283712, 10704068], [2568448, 10704068]],
+        "bottom": 0,
+        "top": 1950720
+      }
+    },
+    "placements": {
+      "HB-LAV": {
+        "point": [1950720, 219964, 4941824],
+        "facing": 90000000
+      },
+      "HB-TUB": {
+        "point": [219964, 1219200, 3901440],
+        "facing": 0
+      },
+      "HB-WC": {
+        "point": [3218688, 219964, 3901440],
+        "facing": 90000000
+      },
+      "K-SINK": {
+        "point": [13825220, 8193024, 1170432],
+        "facing": 180000000
+      },
+      "L-WASH": {
+        "point": [219964, 9363456, 3901440],
+        "facing": 0
+      },
+      "PANEL": {
+        "point": [3511296, 6315456, 1560576],
+        "facing": 90000000
+      },
+      "PB-LAV1": {
+        "point": [11119104, 219964, 4941824],
+        "facing": 90000000
+      },
+      "PB-LAV2": {
+        "point": [12289536, 219964, 4941824],
+        "facing": 90000000
+      },
+      "PB-SH": {
+        "point": [13825220, 1170432, 3901440],
+        "facing": 180000000
+      },
+      "PB-WC": {
+        "point": [12484608, 2267712, 3901440],
+        "facing": -90000000
+      },
+      "PR-LAV": {
+        "point": [1877568, 9851136, 1040384],
+        "facing": 180000000
+      },
+      "PR-WC": {
+        "point": [877824, 10704068, 0],
+        "facing": -90000000
+      },
+      "WH1": {
+        "point": [2926080, 10704068, 0],
+        "facing": -90000000
+      }
+    },
+    "clearances": {
+      "B2D": {
+        "swing": {
+          "level": "L2",
+          "purpose": "swing",
+          "footprint": [[6892544, 3901440], [7932928, 3901440], [7932928, 4876800], [6892544, 4876800]],
+          "bottom": 3901440,
+          "top": 6583680
+        }
+      },
+      "B3D": {
+        "swing": {
+          "level": "L2",
+          "purpose": "swing",
+          "footprint": [[6892544, 6242304], [7932928, 6242304], [7932928, 7217664], [6892544, 7217664]],
+          "bottom": 3901440,
+          "top": 6583680
+        }
+      },
+      "BAD": {
+        "swing": {
+          "level": "L2",
+          "purpose": "swing",
+          "footprint": [[2048256, 1332992], [3023616, 1332992], [3023616, 2243328], [2048256, 2243328]],
+          "bottom": 3901440,
+          "top": 6583680
+        }
+      },
+      "BKD": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[0, 6795008], [1170432, 6795008], [1170432, 8030464], [0, 8030464]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      },
+      "CLD": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[2503424, 8583168], [3348736, 8583168], [3348736, 9363456], [2503424, 9363456]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      },
+      "FD": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[2308352, 0], [3543808, 0], [3543808, 1170432], [2308352, 1170432]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      },
+      "HB-LAV": {
+        "front": {
+          "level": "L2",
+          "purpose": "fixtureClearance",
+          "footprint": [[1463040, 870204], [2438400, 870204], [2438400, 1650492], [1463040, 1650492]],
+          "bottom": 3901440,
+          "top": 6502400
+        }
+      },
+      "HB-WC": {
+        "front": {
+          "level": "L2",
+          "purpose": "fixtureClearance",
+          "footprint": [[2731008, 1130300], [3706368, 1130300], [3706368, 1910588], [2731008, 1910588]],
+          "bottom": 3901440,
+          "top": 6502400
+        }
+      },
+      "LAD": {
+        "swing": {
+          "level": "L2",
+          "purpose": "swing",
+          "footprint": [[585216, 7802880], [1560576, 7802880], [1560576, 8713216], [585216, 8713216]],
+          "bottom": 3901440,
+          "top": 6583680
+        }
+      },
+      "MFD": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[2015744, 6242304], [3056128, 6242304], [3056128, 7217664], [2015744, 7217664]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      },
+      "MFM": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[3901440, 6892544], [4876800, 6892544], [4876800, 7932928], [3901440, 7932928]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      },
+      "PANEL": {
+        "working": {
+          "level": "L1",
+          "purpose": "workingSpace",
+          "footprint": [[3023616, 6315456], [3998976, 6315456], [3998976, 7485888], [3023616, 7485888]],
+          "bottom": 0,
+          "top": 2535936
+        }
+      },
+      "PB-LAV1": {
+        "front": {
+          "level": "L2",
+          "purpose": "fixtureClearance",
+          "footprint": [[10631424, 870204], [11606784, 870204], [11606784, 1650492], [10631424, 1650492]],
+          "bottom": 3901440,
+          "top": 6502400
+        }
+      },
+      "PB-LAV2": {
+        "front": {
+          "level": "L2",
+          "purpose": "fixtureClearance",
+          "footprint": [[11801856, 870204], [12777216, 870204], [12777216, 1650492], [11801856, 1650492]],
+          "bottom": 3901440,
+          "top": 6502400
+        }
+      },
+      "PB-WC": {
+        "front": {
+          "level": "L2",
+          "purpose": "fixtureClearance",
+          "footprint": [[11996928, 577088], [12972288, 577088], [12972288, 1357376], [11996928, 1357376]],
+          "bottom": 3901440,
+          "top": 6502400
+        }
+      },
+      "PBD": {
+        "swing": {
+          "level": "L2",
+          "purpose": "swing",
+          "footprint": [[10013696, 1365504], [11054080, 1365504], [11054080, 2340864], [10013696, 2340864]],
+          "bottom": 3901440,
+          "top": 6583680
+        }
+      },
+      "PR-LAV": {
+        "front": {
+          "level": "L1",
+          "purpose": "fixtureClearance",
+          "footprint": [[447040, 9363456], [1227328, 9363456], [1227328, 10338816], [447040, 10338816]],
+          "bottom": 0,
+          "top": 2600960
+        }
+      },
+      "PR-WC": {
+        "front": {
+          "level": "L1",
+          "purpose": "fixtureClearance",
+          "footprint": [[390144, 9013444], [1365504, 9013444], [1365504, 9793732], [390144, 9793732]],
+          "bottom": 0,
+          "top": 2600960
+        }
+      },
+      "PRD": {
+        "swing": {
+          "level": "L2",
+          "purpose": "swing",
+          "footprint": [[9363456, 5039360], [10338816, 5039360], [10338816, 6079744], [9363456, 6079744]],
+          "bottom": 3901440,
+          "top": 6583680
+        }
+      },
+      "PTD": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[10696448, 9948672], [12712192, 9948672], [12712192, 10924032], [10696448, 10924032]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      },
+      "PWD": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[552704, 8583168], [1398016, 8583168], [1398016, 9363456], [552704, 9363456]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      },
+      "STD": {
+        "swing": {
+          "level": "L2",
+          "purpose": "swing",
+          "footprint": [[2600960, 7802880], [3446272, 7802880], [3446272, 8583168], [2600960, 8583168]],
+          "bottom": 3901440,
+          "top": 6583680
+        }
+      },
+      "WCD": {
+        "swing": {
+          "level": "L2",
+          "purpose": "swing",
+          "footprint": [[10046208, 8583168], [11021568, 8583168], [11021568, 9493504], [10046208, 9493504]],
+          "bottom": 3901440,
+          "top": 6583680
+        }
+      },
+      "WH1": {
+        "service": {
+          "level": "L1",
+          "purpose": "access",
+          "footprint": [[2438400, 9013444], [3413760, 9013444], [3413760, 9988804], [2438400, 9988804]],
+          "bottom": 0,
+          "top": 1950720
+        }
+      }
+    },
+    "clearanceOverlaps": [
+      [["BAD", "swing"], ["HB-LAV", "front"]],
+      [["BAD", "swing"], ["HB-WC", "front"]],
+      [["CLD", "swing"], ["WH1", "service"]],
+      [["MFD", "swing"], ["PANEL", "working"]],
+      [["MFM", "swing"], ["PANEL", "working"]],
+      [["PB-LAV1", "front"], ["PBD", "swing"]],
+      [["PB-LAV2", "front"], ["PB-WC", "front"]],
+      [["PR-LAV", "front"], ["PR-WC", "front"]],
+      [["PR-WC", "front"], ["PWD", "swing"]]
+    ],
+    "ceilings": {
+      "B2": {
+        "kind": "flat",
+        "box": {
+          "max": [9290304, 4803648, 7022592],
+          "min": [3974592, 219964, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      },
+      "B3": {
+        "kind": "flat",
+        "box": {
+          "max": [9290304, 10704068, 7022592],
+          "min": [3974592, 6315456, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      },
+      "BATH": {
+        "kind": "flat",
+        "box": {
+          "max": [3828288, 2170176, 7022592],
+          "min": [219964, 219964, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      },
+      "CL2": {
+        "kind": "flat",
+        "box": {
+          "max": [6169152, 4803648, 7022592],
+          "min": [3974592, 3974592, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      },
+      "CL3": {
+        "kind": "flat",
+        "box": {
+          "max": [6169152, 7144512, 7022592],
+          "min": [3974592, 6315456, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      },
+      "DIN": {
+        "kind": "flat",
+        "box": {
+          "max": [13825220, 5071872, 3511296],
+          "min": [9436608, 219964, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "FAM": {
+        "kind": "flat",
+        "box": {
+          "max": [9363456, 10704068, 3511296],
+          "min": [3974592, 6315456, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "FOY": {
+        "kind": "flat",
+        "box": {
+          "max": [3828288, 6169152, 3511296],
+          "min": [219964, 219964, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "HALL": {
+        "kind": "flat",
+        "box": {
+          "max": [9290304, 7729728, 7022592],
+          "min": [219964, 2316480, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      },
+      "KIT": {
+        "kind": "flat",
+        "box": {
+          "max": [13825220, 10704068, 3511296],
+          "min": [9363456, 5071872, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "LAU": {
+        "kind": "flat",
+        "box": {
+          "max": [2072640, 10704068, 7022592],
+          "min": [219964, 7876032, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      },
+      "LIV": {
+        "kind": "flat",
+        "box": {
+          "max": [9290304, 6169152, 3511296],
+          "min": [3974592, 219964, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "MUD": {
+        "kind": "flat",
+        "box": {
+          "max": [3828288, 8510016, 3511296],
+          "min": [219964, 6315456, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "PBA": {
+        "kind": "flat",
+        "box": {
+          "max": [13825220, 2267712, 7022592],
+          "min": [9436608, 219964, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      },
+      "PRI": {
+        "kind": "vaulted",
+        "box": {
+          "max": [13825220, 8510016, 8062976],
+          "min": [9436608, 2414016, 7046976]
+        },
+        "high": 8062976,
+        "low": 7046976
+      },
+      "PWR": {
+        "kind": "flat",
+        "box": {
+          "max": [1877568, 10704068, 3511296],
+          "min": [219964, 8656320, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "STO": {
+        "kind": "flat",
+        "box": {
+          "max": [3828288, 10704068, 7022592],
+          "min": [2218944, 7876032, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      },
+      "UTL": {
+        "kind": "flat",
+        "box": {
+          "max": [3828288, 10704068, 3511296],
+          "min": [2023872, 8656320, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "WIC": {
+        "kind": "flat",
+        "box": {
+          "max": [13825220, 10704068, 7022592],
+          "min": [9436608, 8656320, 7022592]
+        },
+        "high": 7022592,
+        "low": 7022592
+      }
+    },
+    "circulation": {
+      "B2": {
+        "entry": false,
+        "reachable": true,
+        "throughSleeping": false
+      },
+      "B3": {
+        "entry": false,
+        "reachable": true,
+        "throughSleeping": false
+      },
+      "BATH": {
+        "entry": false,
+        "reachable": true
+      },
+      "CL2": {
+        "entry": false,
+        "reachable": true
+      },
+      "CL3": {
+        "entry": false,
+        "reachable": true
+      },
+      "DIN": {
+        "entry": false,
+        "reachable": true
+      },
+      "FAM": {
+        "entry": false,
+        "reachable": true
+      },
+      "FOY": {
+        "entry": true,
+        "reachable": true
+      },
+      "HALL": {
+        "entry": false,
+        "reachable": true
+      },
+      "KIT": {
+        "entry": true,
+        "reachable": true
+      },
+      "LAU": {
+        "entry": false,
+        "reachable": true
+      },
+      "LIV": {
+        "entry": false,
+        "reachable": true
+      },
+      "MUD": {
+        "entry": true,
+        "reachable": true
+      },
+      "PBA": {
+        "entry": false,
+        "reachable": true
+      },
+      "PRI": {
+        "entry": false,
+        "reachable": true,
+        "throughSleeping": false
+      },
+      "PWR": {
+        "entry": false,
+        "reachable": true
+      },
+      "STO": {
+        "entry": false,
+        "reachable": true
+      },
+      "UTL": {
+        "entry": false,
+        "reachable": true
+      },
+      "WIC": {
+        "entry": false,
+        "reachable": true
+      }
+    },
+    "finishes": {
+      "walls": {
+        "W1": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "FOY",
+            "source": "layer"
+          }
+        },
+        "W10": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "DIN",
+            "source": "layer"
+          }
+        },
+        "W11": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          }
+        },
+        "W12": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "FOY",
+            "source": "layer"
+          }
+        },
+        "W13": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "FOY",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          }
+        },
+        "W14": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "MUD",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "FAM",
+            "source": "layer"
+          }
+        },
+        "W15": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "UTL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "FAM",
+            "source": "layer"
+          }
+        },
+        "W16": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "DIN",
+            "source": "layer"
+          }
+        },
+        "W17": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "KIT",
+            "source": "layer"
+          }
+        },
+        "W18": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "FAM",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          }
+        },
+        "W19": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "MUD",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "FOY",
+            "source": "layer"
+          }
+        },
+        "W2": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "MUD",
+            "source": "layer"
+          }
+        },
+        "W20": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PWR",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "MUD",
+            "source": "layer"
+          }
+        },
+        "W21": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "UTL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "MUD",
+            "source": "layer"
+          }
+        },
+        "W22": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PWR",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "UTL",
+            "source": "layer"
+          }
+        },
+        "W23": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "BATH",
+            "source": "layer"
+          }
+        },
+        "W24": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "source": "layer"
+          }
+        },
+        "W25": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          }
+        },
+        "W26": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LAU",
+            "source": "layer"
+          }
+        },
+        "W27": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LAU",
+            "source": "layer"
+          }
+        },
+        "W28": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "STO",
+            "source": "layer"
+          }
+        },
+        "W29": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B3",
+            "source": "layer"
+          }
+        },
+        "W3": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PWR",
+            "source": "layer"
+          }
+        },
+        "W30": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "WIC",
+            "source": "layer"
+          }
+        },
+        "W31": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "WIC",
+            "source": "layer"
+          }
+        },
+        "W32": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PRI",
+            "source": "layer"
+          }
+        },
+        "W33": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PBA",
+            "source": "layer"
+          }
+        },
+        "W34": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PBA",
+            "source": "layer"
+          }
+        },
+        "W35": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B2",
+            "source": "layer"
+          }
+        },
+        "W36": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "BATH",
+            "source": "layer"
+          }
+        },
+        "W37": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "BATH",
+            "source": "layer"
+          }
+        },
+        "W38": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "BATH",
+            "source": "layer"
+          }
+        },
+        "W39": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "BATH",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B2",
+            "source": "layer"
+          }
+        },
+        "W4": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PWR",
+            "source": "layer"
+          }
+        },
+        "W40": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B2",
+            "source": "layer"
+          }
+        },
+        "W41": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "CL2",
+            "source": "layer"
+          }
+        },
+        "W42": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "CL3",
+            "source": "layer"
+          }
+        },
+        "W43": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B3",
+            "source": "layer"
+          }
+        },
+        "W44": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "STO",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B3",
+            "source": "layer"
+          }
+        },
+        "W45": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "CL2",
+            "source": "layer"
+          }
+        },
+        "W46": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B2",
+            "source": "layer"
+          }
+        },
+        "W47": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "CL3",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          }
+        },
+        "W48": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B3",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          }
+        },
+        "W49": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B2",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PBA",
+            "source": "layer"
+          }
+        },
+        "W5": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "UTL",
+            "source": "layer"
+          }
+        },
+        "W50": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B2",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PRI",
+            "source": "layer"
+          }
+        },
+        "W51": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PRI",
+            "source": "layer"
+          }
+        },
+        "W52": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B3",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PRI",
+            "source": "layer"
+          }
+        },
+        "W53": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B3",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "WIC",
+            "source": "layer"
+          }
+        },
+        "W54": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PRI",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PBA",
+            "source": "layer"
+          }
+        },
+        "W55": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "WIC",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "PRI",
+            "source": "layer"
+          }
+        },
+        "W56": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LAU",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          }
+        },
+        "W57": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "STO",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "HALL",
+            "source": "layer"
+          }
+        },
+        "W58": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LAU",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "STO",
+            "source": "layer"
+          }
+        },
+        "W59": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "CL2",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B2",
+            "source": "layer"
+          }
+        },
+        "W6": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "FAM",
+            "source": "layer"
+          }
+        },
+        "W60": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "CL2",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B2",
+            "source": "layer"
+          }
+        },
+        "W61": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B3",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "CL3",
+            "source": "layer"
+          }
+        },
+        "W62": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "B3",
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "CL3",
+            "source": "layer"
+          }
+        },
+        "W7": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "KIT",
+            "source": "layer"
+          }
+        },
+        "W8": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "KIT",
+            "source": "layer"
+          }
+        },
+        "W9": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "DIN",
+            "source": "layer"
+          }
+        }
+      },
+      "rooms": {
+        "B2": {
+          "floor": "carpet"
+        },
+        "B3": {
+          "floor": "carpet"
+        },
+        "BATH": {
+          "floor": "porcelain-tile"
+        },
+        "DIN": {
+          "floor": "oak-flooring"
+        },
+        "FAM": {
+          "floor": "oak-flooring"
+        },
+        "FOY": {
+          "floor": "oak-flooring"
+        },
+        "HALL": {
+          "floor": "oak-flooring"
+        },
+        "KIT": {
+          "floor": "oak-flooring"
+        },
+        "LAU": {
+          "floor": "luxury-vinyl-plank"
+        },
+        "LIV": {
+          "floor": "oak-flooring"
+        },
+        "MUD": {
+          "floor": "luxury-vinyl-plank"
+        },
+        "PBA": {
+          "floor": "porcelain-tile"
+        },
+        "PRI": {
+          "floor": "carpet"
+        },
+        "PWR": {
+          "floor": "porcelain-tile"
+        },
+        "WIC": {
+          "floor": "carpet"
+        }
+      }
+    },
+    "floors": {
+      "B2": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [9290304, 4803648, 3901440],
+          "min": [3974592, 219964, 3511296]
+        }
+      },
+      "B3": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [9290304, 10704068, 3901440],
+          "min": [3974592, 6315456, 3511296]
+        }
+      },
+      "BATH": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [3828288, 2170176, 3901440],
+          "min": [219964, 219964, 3511296]
+        }
+      },
+      "CL2": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [6169152, 4803648, 3901440],
+          "min": [3974592, 3974592, 3511296]
+        }
+      },
+      "CL3": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [6169152, 7144512, 3901440],
+          "min": [3974592, 6315456, 3511296]
+        }
+      },
+      "DIN": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [13825220, 5071872, 0],
+          "min": [9436608, 219964, 0]
+        }
+      },
+      "FAM": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [9363456, 10704068, 0],
+          "min": [3974592, 6315456, 0]
+        }
+      },
+      "FOY": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [3828288, 6169152, 0],
+          "min": [219964, 219964, 0]
+        }
+      },
+      "HALL": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [9290304, 7729728, 3901440],
+          "min": [219964, 2316480, 3511296]
+        }
+      },
+      "KIT": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [13825220, 10704068, 0],
+          "min": [9363456, 5071872, 0]
+        }
+      },
+      "LAU": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [2072640, 10704068, 3901440],
+          "min": [219964, 7876032, 3511296]
+        }
+      },
+      "LIV": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [9290304, 6169152, 0],
+          "min": [3974592, 219964, 0]
+        }
+      },
+      "MUD": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [3828288, 8510016, 0],
+          "min": [219964, 6315456, 0]
+        }
+      },
+      "PBA": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [13825220, 2267712, 3901440],
+          "min": [9436608, 219964, 3511296]
+        }
+      },
+      "PRI": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [13825220, 8510016, 3901440],
+          "min": [9436608, 2414016, 3511296]
+        }
+      },
+      "PWR": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [1877568, 10704068, 0],
+          "min": [219964, 8656320, 0]
+        }
+      },
+      "STO": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [3828288, 10704068, 3901440],
+          "min": [2218944, 7876032, 3511296]
+        }
+      },
+      "UTL": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [3828288, 10704068, 0],
+          "min": [2023872, 8656320, 0]
+        }
+      },
+      "WIC": {
+        "bottom": 3511296,
+        "top": 3901440,
+        "box": {
+          "max": [13825220, 10704068, 3901440],
+          "min": [9436608, 8656320, 3511296]
+        }
+      }
+    },
+    "roofs": {
+      "ROOF": {
+        "kind": "gable",
+        "eave": 7059168,
+        "outline": [[-195072, -390144], [14240256, -390144], [14240256, 11314176], [-195072, 11314176]],
+        "surface": {
+          "box": {
+            "max": [14240256, 11314176, 10960608],
+            "min": [-195072, -390144, 6734048]
+          },
+          "faces": [
+            {
+              "area": "84477849108480",
+              "edge": 0,
+              "polygon": [[-195072, -390144, 7059168], [14240256, -390144, 7059168], [14240256, 5462016, 10960608], [-195072, 5462016, 10960608]]
+            },
+            {
+              "area": "84477849108480",
+              "edge": 2,
+              "polygon": [[-195072, 5462016, 10960608], [14240256, 5462016, 10960608], [14240256, 11314176, 7059168], [-195072, 11314176, 7059168]]
+            }
+          ],
+          "gables": [
+            {
+              "edge": 1,
+              "polygon": [[14240256, -390144, 7059168], [14240256, 11314176, 7059168], [14240256, 5462016, 10960608]]
+            },
+            {
+              "edge": 3,
+              "polygon": [[-195072, 11314176, 7059168], [-195072, -390144, 7059168], [-195072, 5462016, 10960608]]
+            }
+          ],
+          "high": 10960608,
+          "lines": [
+            {
+              "kind": "ridge",
+              "from": [-195072, 5462016, 10960608],
+              "to": [14240256, 5462016, 10960608]
+            }
+          ]
+        }
+      }
+    },
+    "slabs": {
+      "PATIO": {
+        "bottom": -390144,
+        "top": -260096,
+        "box": {
+          "max": [14045184, 14825472, -260096],
+          "min": [9363456, 10924032, -390144]
+        },
+        "outline": [[9363456, 10924032], [14045184, 10924032], [14045184, 14825472], [9363456, 14825472]]
+      },
+      "PORCH": {
+        "bottom": -325120,
+        "top": -195072,
+        "box": {
+          "max": [4681728, 0, -195072],
+          "min": [0, -2340864, -325120]
+        },
+        "outline": [[0, -2340864], [4681728, -2340864], [4681728, 0], [0, 0]]
+      }
+    },
+    "stairs": {
+      "ST1": {
+        "bottom": 0,
+        "top": 3901440,
+        "box": {
+          "max": [2048256, 6242304, 3901440],
+          "min": [227584, 1170432, 0]
+        },
+        "foot": [2048256, 1755648],
+        "footRoom": "FOY",
+        "head": [812800, 6242304],
+        "headRoom": "HALL",
+        "headroom": 2779776,
+        "rise": 3901440,
+        "riserHeight": 243840,
+        "risers": 16,
+        "run": 4551680,
+        "steps": [
+          {
+            "top": 243840,
+            "outline": [[1723136, 1170432], [2048256, 1170432], [2048256, 2340864], [1723136, 2340864]]
+          },
+          {
+            "top": 487680,
+            "outline": [[1398016, 1170432], [1723136, 1170432], [1723136, 2340864], [1398016, 2340864]]
+          },
+          {
+            "top": 731520,
+            "landing": true,
+            "outline": [[227584, 1170432], [1398016, 1170432], [1398016, 2340864], [227584, 2340864]]
+          },
+          {
+            "top": 975360,
+            "outline": [[227584, 2340864], [1398016, 2340864], [1398016, 2665984], [227584, 2665984]]
+          },
+          {
+            "top": 1219200,
+            "outline": [[227584, 2665984], [1398016, 2665984], [1398016, 2991104], [227584, 2991104]]
+          },
+          {
+            "top": 1463040,
+            "outline": [[227584, 2991104], [1398016, 2991104], [1398016, 3316224], [227584, 3316224]]
+          },
+          {
+            "top": 1706880,
+            "outline": [[227584, 3316224], [1398016, 3316224], [1398016, 3641344], [227584, 3641344]]
+          },
+          {
+            "top": 1950720,
+            "outline": [[227584, 3641344], [1398016, 3641344], [1398016, 3966464], [227584, 3966464]]
+          },
+          {
+            "top": 2194560,
+            "outline": [[227584, 3966464], [1398016, 3966464], [1398016, 4291584], [227584, 4291584]]
+          },
+          {
+            "top": 2438400,
+            "outline": [[227584, 4291584], [1398016, 4291584], [1398016, 4616704], [227584, 4616704]]
+          },
+          {
+            "top": 2682240,
+            "outline": [[227584, 4616704], [1398016, 4616704], [1398016, 4941824], [227584, 4941824]]
+          },
+          {
+            "top": 2926080,
+            "outline": [[227584, 4941824], [1398016, 4941824], [1398016, 5266944], [227584, 5266944]]
+          },
+          {
+            "top": 3169920,
+            "outline": [[227584, 5266944], [1398016, 5266944], [1398016, 5592064], [227584, 5592064]]
+          },
+          {
+            "top": 3413760,
+            "outline": [[227584, 5592064], [1398016, 5592064], [1398016, 5917184], [227584, 5917184]]
+          },
+          {
+            "top": 3657600,
+            "outline": [[227584, 5917184], [1398016, 5917184], [1398016, 6242304], [227584, 6242304]]
+          }
+        ],
+        "walkline": {
+          "length": 5722112,
+          "points": [[2048256, 1755648], [812800, 1755648], [812800, 6242304]]
+        }
+      }
+    }
+  }
+}

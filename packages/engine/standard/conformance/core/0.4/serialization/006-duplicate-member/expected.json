@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-JSON-002",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

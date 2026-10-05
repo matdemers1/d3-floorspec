@@ -1,0 +1,7 @@
+{
+  "description": "A butt join at an acute (63.4-degree) corner between a 200 mm centred wall W1, which runs through, and a 100 mm wall W2 justified \"interiorFace\".",
+  "covers": [
+    "FS-CORE-5.8.2",
+    "FS-CORE-5.8.4"
+  ]
+}

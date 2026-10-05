@@ -1,0 +1,9 @@
+{
+  "description": "In a 0.2 document an extension element's \"option\" is the extension's own member, and a reader of 0.3 reads it as absent (1.2.8): the document is valid, with no option \"deluxe\" anywhere. The step moves it (20.5.1), so that the migration is valid under 0.3 too, and reads the same (20.6.1).",
+  "covers": [
+    "FS-CORE-20.5.1",
+    "FS-CORE-20.3.1",
+    "FS-CORE-20.6.1",
+    "FS-CORE-1.2.8"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "A room built from the US starter library: a 2x4 partition wall type, a door type and a window type, and the two materials the wall's layers use, each embedded with its \"source\" - the library's URI, its version and the item. Valid: a source is provenance, not a reference, and nothing derives from it - the door's and the window's clear openings are their types' declared values, and the walls' thickness their layers'. The canonical form keeps every source.",
+  "covers": [
+    "FS-CORE-8.1.3",
+    "FS-CORE-8.1.2",
+    "FS-CORE-7.4.2",
+    "FS-CORE-9.2.1"
+  ]
+}

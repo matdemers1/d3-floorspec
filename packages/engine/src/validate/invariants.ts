@@ -68,6 +68,8 @@ export interface Analysis {
   readonly core02: boolean;
   /** The reader implements Core 0.3: its derived values include floors, ceilings and slabs (chapter 15), for a document of any draft. */
   readonly core03: boolean;
+  /** The reader implements Core 0.4: it derives the tapered treads of winder and spiral stairs (17.7), for a document of any draft. */
+  readonly core04?: boolean;
 }
 
 // ── reference invariants (FS-INV-001 … 009) ──────────────────────────────────
@@ -186,7 +188,7 @@ function referenceInvariants(doc: FloorspecDocument, r: Reporter): void {
     const fb = x.element.fallback;
     ref(x.id, `${base}/fallback/level`, 'levels', fb.level);
     // Core 0.3 (19.2): core's only in a 0.3 document; in a 0.2 one the extension's own member (1.2.6).
-    if (doc.floorspec === '0.3') ref(x.id, `${base}/option`, 'options', x.element.option);
+    if (doc.floorspec === '0.3' || doc.floorspec === '0.4') ref(x.id, `${base}/option`, 'options', x.element.option);
     ref(x.id, `${base}/fallback/asset`, 'assets', fb.asset);
     ref(x.id, `${base}/fallback/symbol`, 'assets', fb.symbol);
   }
@@ -606,9 +608,11 @@ const STAIR_MESSAGES: Record<string, string> = {
   'FS-INV-902': 'does not rise: the floor at its head is not above the floor at its foot',
   'FS-INV-903': 'has a riser count that does not fit its form: every flight needs a tread',
   'FS-INV-904': 'is a spiral stair wider than half its diameter',
+  'FS-INV-905': "is a winder stair whose newel reaches its walkline, or whose half turn's gap is wider than the stair",
+  'FS-INV-906': 'has a tapered tread that turns through no angle, or a spiral tread that turns through half a turn or more',
 };
 
-function roofAndStairInvariants(doc: FloorspecDocument, r: Reporter, levels: Map<string, LevelAnalysis>): void {
+function roofAndStairInvariants(doc: FloorspecDocument, r: Reporter, levels: Map<string, LevelAnalysis>, core04: boolean): void {
   for (const [id, roof] of entries(doc.roofs))
     for (const code of roofInvariants(roof)) r.report(code, `${id} ${ROOF_MESSAGES[code]}.`, [id], { pointer: ptr('roofs', id) });
   if (!entries(doc.stairs).length) return;
@@ -616,7 +620,7 @@ function roofAndStairInvariants(doc: FloorspecDocument, r: Reporter, levels: Map
   const badRoomLevels = new Set(
     r.diagnostics.filter((d) => roomCodes.includes(d.code)).flatMap((d) => d.elements.map((e) => get(doc.rooms, e)?.level).filter((l): l is string => l !== undefined)),
   );
-  for (const { id, code } of stairInvariants(new StairContext(doc, levels), badRoomLevels))
+  for (const { id, code } of stairInvariants(new StairContext(doc, levels), badRoomLevels, core04))
     r.report(code, `${id} ${STAIR_MESSAGES[code]}.`, [id], { pointer: ptr('stairs', id) });
 }
 
@@ -627,6 +631,8 @@ export interface InvariantOptions {
   readonly core02: boolean;
   /** Derive what Core 0.3 adds for every document: floors, ceilings and slabs (chapter 15). */
   readonly core03?: boolean;
+  /** Evaluate and derive what Core 0.4 adds: winder and spiral stairs' treads (17.7), FS-INV-905 and FS-INV-906. */
+  readonly core04?: boolean;
   /** The validator's known extensions (12.2), already checked. */
   readonly known?: readonly RegistryEntry[];
   /** The files of the document's package, for a package validator (18.4); absent: not one. */
@@ -690,9 +696,9 @@ export function designInvariants(doc: FloorspecDocument, r: Reporter, options: I
   openingInvariants(doc, r);
   typeInvariants(doc, r);
   floorAndCeilingInvariants(doc, r, levels);
-  roofAndStairInvariants(doc, r, levels);
+  roofAndStairInvariants(doc, r, levels, options.core04 ?? false);
   if (options.core03) finishAndPackageInvariants(doc, r, options.package);
-  const analysis: Analysis = { levels, offsets, core02: options.core02, core03: options.core03 ?? false };
+  const analysis: Analysis = { levels, offsets, core02: options.core02, core03: options.core03 ?? false, core04: options.core04 ?? false };
   if (options.core02) {
     programInvariants(doc, r);
     extensionInvariants(doc, options.known, r);

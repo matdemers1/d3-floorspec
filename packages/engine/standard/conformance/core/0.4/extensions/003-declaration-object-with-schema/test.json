@@ -1,0 +1,9 @@
+{
+  "description": "A declaration with a schema URL: the canonical form keeps the object, and the schema changes nothing a reader derives: walls, rooms and openings as extensions/001.",
+  "covers": [
+    "FS-CORE-12.1.1",
+    "FS-CORE-12.1.2",
+    "FS-CORE-12.1.3",
+    "FS-CORE-9.2.1"
+  ]
+}

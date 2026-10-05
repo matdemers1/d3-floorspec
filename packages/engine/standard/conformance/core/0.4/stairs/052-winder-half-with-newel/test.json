@@ -1,0 +1,8 @@
+{
+  "description": "A half-turn winder stair with a 100 mm gap and a 50 mm newel along the gap's side, from y = 1000 mm to 1200 mm: its six winders of 30 degrees radiate from the middle of that side, the first and last nosing lines start at the newel's two ends, and the winders around the two outer corners of the turn wrap them. The walkline's arc, 500 mm from the pivot, crosses each nosing line beyond the newel.",
+  "covers": [
+    "FS-CORE-17.2.3",
+    "FS-CORE-17.7.3",
+    "FS-CORE-17.7.4"
+  ]
+}

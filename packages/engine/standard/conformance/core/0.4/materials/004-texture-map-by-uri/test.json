@@ -1,0 +1,8 @@
+{
+  "description": "A brick texture whose normal map is located by uri: valid, and the asset is warned as not portable (FS-LINT-007). It is used, so it is not FS-LINT-006.",
+  "covers": [
+    "FS-CORE-18.2.1",
+    "FS-CORE-8.7.1",
+    "FS-CORE-8.6.1"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "3d0eff802d4d332ca1c8d77cba044857d89e6653f791e39ca5a9db1e6a4bf0b3",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "OB",
+      "path": "/option"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "OB",
+      "path": "/option",
+      "value": "KB"
+    }
+  ]
+}

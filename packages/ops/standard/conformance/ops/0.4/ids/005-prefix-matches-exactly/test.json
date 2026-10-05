@@ -1,0 +1,6 @@
+{
+  "description": "A slab SL9 does not match ^S[0-9]+$, so the first separator is S1; J007 is junction number 7, so the next junction is J8; a new slab is SL10.",
+  "covers": [
+    "FS-OPS-1.5.1"
+  ]
+}

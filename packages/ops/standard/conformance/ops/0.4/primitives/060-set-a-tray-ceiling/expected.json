@@ -1,0 +1,26 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "8965597061ee1f12a3db3a471860aff0cbd208184e26bb78adf0b08ffa00186e",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/ceiling",
+      "value": {
+        "border": 390144,
+        "depth": 195072,
+        "kind": "tray"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/ceiling"
+    }
+  ]
+}

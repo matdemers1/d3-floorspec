@@ -1,5 +1,5 @@
 import { DOOR_OPERATIONS, effectiveClearOpening, WINDOW_OPERATIONS, type FloorspecDocument, type Opening } from '@floorspec/engine';
-import { migrationBatch } from '@floorspec/migrate';
+import { migrationBatch, needsMigration } from '@floorspec/migrate';
 import { parseArea } from '@floorspec/ops';
 import type { Batch } from './ops';
 import { formatLen, type UnitSystem } from './units';
@@ -11,19 +11,30 @@ import { formatLen, type UnitSystem } from './units';
  * opening that differs; it is never computed here or anywhere (Core 7.4).
  */
 
-/** The newest Core draft the editor writes, and the one a 0.2 or 0.1 plan is offered. */
-export const CURRENT_CORE = '0.3';
+/** The newest Core draft the editor writes, and the one an earlier plan is offered. */
+export const CURRENT_CORE = '0.4';
+
+/** Does this plan declare Core 0.4 or later — can it hold a winder's newel and a stair's design headroom (Core 17.1, 17.2)? */
+export const holdsCore04 = (document: { floorspec: string }): boolean => !needsMigration(document, '0.4');
+
+/**
+ * The migration (Core chapter 20) that makes a plan declare at least `to`, as one batch; nothing when
+ * it does already. A plan is never declared back to an earlier draft, which a migration refuses.
+ */
+export function upgradeAtLeast(document: object, to: '0.3' | '0.4'): Batch {
+  return needsMigration(document, to) ? migrationBatch(document, to) : [];
+}
 
 /** Does this plan hold operations and clear openings — does it declare Core 0.3 or later? */
 export const holdsClearOpenings = (document: { floorspec: string }): boolean => document.floorspec !== '0.1' && document.floorspec !== '0.2';
 
 /**
- * What makes a 0.2 (or 0.1) plan a Core 0.3 one: its migration (Core chapter 20) as one batch — the
- * version, and whatever 0.3 reads differently moved into `extras["floorspec:migration"]` — so it means
- * exactly what it meant, and Undo takes it back.
+ * What makes an earlier plan a Core 0.4 one: its migration (Core chapter 20) as one batch — the
+ * version, and whatever a later draft reads differently moved into `extras["floorspec:migration"]` — so
+ * it means exactly what it meant, and Undo takes it back.
  */
-export function upgradeTo03(document: object): Batch {
-  return migrationBatch(document, CURRENT_CORE);
+export function upgradeToCurrent(document: object): Batch {
+  return upgradeAtLeast(document, CURRENT_CORE);
 }
 
 export const DOOR_OPERATION_LABELS: Readonly<Record<(typeof DOOR_OPERATIONS)[number], string>> = {

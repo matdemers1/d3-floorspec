@@ -1,0 +1,6 @@
+{
+  "description": "A rule with a member `note`, which a rule record does not have: FS-RULES-004.",
+  "covers": [
+    "FS-RULES-2.1.1"
+  ]
+}

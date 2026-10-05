@@ -1,0 +1,7 @@
+{
+  "description": "A synthetic rule that the boiler's service space overlaps no other space, with every door swinging 3': the space overlaps O4's swing, so X2 may not meet it, O4 is involved, and the finding draws the boiler, its service space and - as every involved ID with a shape (9.4) - the door O4, as the segment from its start to its end point.",
+  "covers": [
+    "FS-RULES-7.8.1",
+    "FS-RULES-9.4.1"
+  ]
+}

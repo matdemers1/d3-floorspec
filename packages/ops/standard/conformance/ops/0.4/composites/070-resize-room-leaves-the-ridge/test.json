@@ -1,0 +1,7 @@
+{
+  "description": "resizeRoom moves the vaulted room's east side 2' out: its ceiling covers the larger room polygon, but its ridge is a plan point, which only moveRoom moves - so it is unchanged.",
+  "covers": [
+    "FS-OPS-4.4.1",
+    "FS-OPS-4.3.2"
+  ]
+}

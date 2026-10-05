@@ -1,0 +1,6 @@
+{
+  "description": "A collection is an object keyed by ID, not an array.",
+  "covers": [
+    "FS-CORE-1.4.4"
+  ]
+}

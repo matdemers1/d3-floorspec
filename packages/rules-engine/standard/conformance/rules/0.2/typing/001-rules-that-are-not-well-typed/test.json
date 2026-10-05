@@ -1,0 +1,8 @@
+{
+  "description": "One pack, one well-typed rule and seventeen that are not, each broken in one way: a measure the library does not define, a measure on a target it does not take, a missing, an extra or a mistyped argument, a value or an operator that does not fit the type, `in` on an area, an extension or a collection where applicability does not allow one, a candidate set the subject does not have or an argument it does not take, `elementMember` on elements of an extension the rule does not name, a unit on a term, a limit of zero, provenance for another edition, and a deferred measure beside an unknown one (FS-RULES-007, not 008). Each is reported with FS-RULES-007 and listed as \"invalid\"; the well-typed rule is evaluated.",
+  "covers": [
+    "FS-RULES-11.1.1",
+    "FS-RULES-3.9.1",
+    "FS-RULES-9.1.1"
+  ]
+}

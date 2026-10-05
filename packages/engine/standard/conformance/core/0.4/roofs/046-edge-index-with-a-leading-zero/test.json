@@ -1,0 +1,6 @@
+{
+  "description": "An edge named \"01\": an edge index has no leading zeros.",
+  "covers": [
+    "FS-CORE-16.1.1"
+  ]
+}

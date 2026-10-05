@@ -1,0 +1,7 @@
+{
+  "description": "The quarter-turn winder stair with a newel, designed for 2000 mm of headroom under L2's 300 mm floor, whose bottom is at 2400 mm: a step needs the floor open when its top is above 400 mm, 512000, and the third tread of its first flight, at 740571.43, is the first that does - index 2, before the winders, which need it too, as does every later step.",
+  "covers": [
+    "FS-CORE-17.6.3",
+    "FS-CORE-17.7.3"
+  ]
+}

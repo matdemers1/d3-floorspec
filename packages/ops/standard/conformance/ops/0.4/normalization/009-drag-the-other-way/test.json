@@ -1,0 +1,6 @@
+{
+  "description": "The box's corner J3 dragged onto J7: the survivor is still J3, the one that sorts first - now at J7's position - and J7 is removed.",
+  "covers": [
+    "FS-OPS-5.1.1"
+  ]
+}

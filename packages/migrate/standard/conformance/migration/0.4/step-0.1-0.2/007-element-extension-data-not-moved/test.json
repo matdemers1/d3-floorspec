@@ -1,0 +1,6 @@
+{
+  "description": "A room's own extension data has a \"collections\" member: core never looks for collections in extension data on an element (12.5), so the step leaves it where it is (20.4.1).",
+  "covers": [
+    "FS-CORE-20.4.1"
+  ]
+}

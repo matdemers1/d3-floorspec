@@ -1,0 +1,6 @@
+{
+  "description": "The Pantry is locked and its corner J3 is moved: the room's own content is unchanged, but a junction on its cycle moved.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

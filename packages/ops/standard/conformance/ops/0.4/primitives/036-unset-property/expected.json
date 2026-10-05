@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "eac80400d2b8f44efce2d543de728a9d8fc1c93d3fff860b2e6701c67769da42",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/name"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/name",
+      "value": "Living"
+    }
+  ]
+}

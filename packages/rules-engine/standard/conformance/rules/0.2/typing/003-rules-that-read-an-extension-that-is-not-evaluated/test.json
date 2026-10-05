@@ -1,0 +1,7 @@
+{
+  "description": "The rules house, with a furniture piece of EXT_furniture, for an evaluator with no known extensions: neither FS_electrical nor EXT_furniture is evaluated. Rules that read their members - a match on `detects`, `elementMember`, `elementProtectedBy`, `circuitCount`, a receptacle match - are reported with FS-RULES-009 and listed as \"extension\"; rules that read only core members (an alarm count without a match, receptacle reach without one) are evaluated; and a rule that reads FS_electrical but is not in force is listed as \"edition\", with no FS-RULES-009.",
+  "covers": [
+    "FS-RULES-11.1.1",
+    "FS-RULES-3.10.1"
+  ]
+}

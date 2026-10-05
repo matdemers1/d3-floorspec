@@ -1,0 +1,21 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$project",
+      "path": "/name",
+      "value": "Cottage"
+    },
+    {
+      "op": "setProperty",
+      "id": "$site",
+      "path": "/trueNorth",
+      "value": 2000000
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extras"
+    }
+  ]
+}

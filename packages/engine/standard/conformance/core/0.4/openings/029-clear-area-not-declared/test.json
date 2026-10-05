@@ -1,0 +1,6 @@
+{
+  "description": "A window type whose clear opening declares no area: the derived clear opening has a width and a height and no area - never 560 mm times 1050 mm.",
+  "covers": [
+    "FS-CORE-7.4.2"
+  ]
+}

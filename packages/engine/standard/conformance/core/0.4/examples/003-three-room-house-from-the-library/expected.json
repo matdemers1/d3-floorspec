@@ -1,0 +1,397 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "47dc721bed34aae10a1b4b44aa519d4f0b8bf89fd1fb35b17fc437826dcb9815",
+  "derived": {
+    "walls": {
+      "WE1": {
+        "startRight": [13850112, 9168384],
+        "endRight": [13850112, 4681728],
+        "endLeft": [14070076, 4681728],
+        "startLeft": [14070076, 9388348],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WE2": {
+        "startRight": [13850112, 4681728],
+        "endRight": [13850112, 195072],
+        "endLeft": [14070076, -24892],
+        "startLeft": [14070076, 4681728],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WI1": {
+        "startRight": [7876032, 195072],
+        "endRight": [7876032, 4608576],
+        "endLeft": [7729728, 4681728],
+        "startLeft": [7729728, 195072],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WI2": {
+        "startRight": [7876032, 4608576],
+        "endRight": [13850112, 4608576],
+        "endLeft": [13850112, 4754880],
+        "startLeft": [7802880, 4754880],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WN1": {
+        "startRight": [195072, 9168384],
+        "endRight": [7802880, 9168384],
+        "endLeft": [7802880, 9388348],
+        "startLeft": [-24892, 9388348],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WN2": {
+        "startRight": [7802880, 9168384],
+        "endRight": [13850112, 9168384],
+        "endLeft": [14070076, 9388348],
+        "startLeft": [7802880, 9388348],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WS1": {
+        "startRight": [13850112, 195072],
+        "endRight": [7802880, 195072],
+        "endLeft": [7802880, -24892],
+        "startLeft": [14070076, -24892],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WS2": {
+        "startRight": [7802880, 195072],
+        "endRight": [195072, 195072],
+        "endLeft": [-24892, -24892],
+        "startLeft": [7802880, -24892],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      },
+      "WW": {
+        "startRight": [195072, 195072],
+        "endRight": [195072, 9168384],
+        "endLeft": [-24892, 9388348],
+        "startLeft": [-24892, -24892],
+        "baseElevation": 0,
+        "topElevation": 3511296
+      }
+    },
+    "junctionFills": {
+      "TM": [[7729728, 4681728], [7876032, 4608576], [7802880, 4754880], [7802880, 4681728]]
+    },
+    "rooms": {
+      "BED": {
+        "outer": [[7876032, 195072], [13850112, 195072], [13850112, 4608576], [7876032, 4608576]],
+        "holes": [],
+        "area": "26366625976320"
+      },
+      "KIT": {
+        "outer": [[7802880, 4754880], [13850112, 4754880], [13850112, 9168384], [7802880, 9168384]],
+        "holes": [],
+        "area": "26689482620928"
+      },
+      "LIV": {
+        "outer": [[195072, 195072], [7729728, 195072], [7729728, 4681728], [7802880, 4681728], [7802880, 9168384], [195072, 9168384]],
+        "holes": [],
+        "area": "67939026960384"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "BD": {
+        "start": [7802880, 3121152],
+        "end": [7802880, 4226560],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 975360
+        }
+      },
+      "BW": {
+        "start": [14045184, 3511296],
+        "end": [14045184, 2519680],
+        "sillElevation": 715264,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 1420648513536,
+          "height": 1820672,
+          "width": 780288
+        }
+      },
+      "FD": {
+        "start": [5462016, 0],
+        "end": [4226560, 0],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2568448,
+          "width": 1097280
+        }
+      },
+      "KW": {
+        "start": [10143744, 9363456],
+        "end": [11720576, 9363456],
+        "sillElevation": 1495552,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 710324256768,
+          "height": 1040384,
+          "width": 682752
+        }
+      },
+      "LW1": {
+        "start": [0, 3121152],
+        "end": [0, 4307840],
+        "sillElevation": 715264,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 913274044416,
+          "height": 877824,
+          "width": 1040384
+        }
+      },
+      "LW2": {
+        "start": [2340864, 9363456],
+        "end": [4697984, 9363456],
+        "sillElevation": 1105408,
+        "headElevation": 2682240
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {
+      "BD": {
+        "swing": {
+          "level": "MAIN",
+          "purpose": "swing",
+          "footprint": [[7802880, 3121152], [8843264, 3121152], [8843264, 4226560], [7802880, 4226560]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      },
+      "FD": {
+        "swing": {
+          "level": "MAIN",
+          "purpose": "swing",
+          "footprint": [[4226560, -1170432], [5462016, -1170432], [5462016, 0], [4226560, 0]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      }
+    },
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "BED": {
+        "kind": "flat",
+        "box": {
+          "max": [13850112, 4608576, 3511296],
+          "min": [7876032, 195072, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "KIT": {
+        "kind": "flat",
+        "box": {
+          "max": [13850112, 9168384, 3511296],
+          "min": [7802880, 4754880, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      },
+      "LIV": {
+        "kind": "flat",
+        "box": {
+          "max": [7802880, 9168384, 3511296],
+          "min": [195072, 195072, 3511296]
+        },
+        "high": 3511296,
+        "low": 3511296
+      }
+    },
+    "circulation": {
+      "BED": {
+        "entry": false,
+        "reachable": true,
+        "throughSleeping": false
+      },
+      "KIT": {
+        "entry": false,
+        "reachable": true
+      },
+      "LIV": {
+        "entry": true,
+        "reachable": true
+      }
+    },
+    "finishes": {
+      "walls": {
+        "WE1": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "KIT",
+            "source": "layer"
+          }
+        },
+        "WE2": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "PAINT",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "WI1": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          },
+          "right": {
+            "material": "PAINT",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "WI2": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "KIT",
+            "source": "layer"
+          },
+          "right": {
+            "material": "PAINT",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "WN1": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          }
+        },
+        "WN2": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "KIT",
+            "source": "layer"
+          }
+        },
+        "WS1": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "PAINT",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "WS2": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          }
+        },
+        "WW": {
+          "left": {
+            "material": "fibre-cement-siding",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          }
+        }
+      },
+      "rooms": {
+        "BED": {
+          "floor": "OAK"
+        },
+        "KIT": {
+          "floor": "TILE"
+        },
+        "LIV": {
+          "floor": "OAK"
+        }
+      }
+    },
+    "floors": {
+      "BED": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [13850112, 4608576, 0],
+          "min": [7876032, 195072, 0]
+        }
+      },
+      "KIT": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [13850112, 9168384, 0],
+          "min": [7802880, 4754880, 0]
+        }
+      },
+      "LIV": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [7802880, 9168384, 0],
+          "min": [195072, 195072, 0]
+        }
+      }
+    },
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

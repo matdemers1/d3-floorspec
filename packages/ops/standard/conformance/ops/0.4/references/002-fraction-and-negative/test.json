@@ -1,0 +1,7 @@
+{
+  "description": "3/4 in is 24384; -2' is -780288. (The Office is moved by them, as a vector.)",
+  "covers": [
+    "FS-OPS-3.1.1",
+    "FS-OPS-3.2.1"
+  ]
+}

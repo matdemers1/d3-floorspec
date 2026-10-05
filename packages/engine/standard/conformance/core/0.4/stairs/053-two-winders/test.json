@@ -1,0 +1,6 @@
+{
+  "description": "A quarter turn on two winders of 45 degrees: the nosing line between them runs from the pivot through the outer corner of the turn, so neither winder has the corner strictly inside it - each is a triangle.",
+  "covers": [
+    "FS-CORE-17.7.3"
+  ]
+}

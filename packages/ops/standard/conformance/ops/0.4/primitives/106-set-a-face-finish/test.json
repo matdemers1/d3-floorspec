@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of W1's /finishes/right/material: the west wall's inside face is tiled, overriding the kitchen's paint on that face alone.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "addOpening",
+      "wall": "wall between Kitchen and Dining",
+      "at": "centered",
+      "fill": "T-door-36"
+    }
+  ]
+}

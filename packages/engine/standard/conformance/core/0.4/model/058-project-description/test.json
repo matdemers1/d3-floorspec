@@ -1,0 +1,7 @@
+{
+  "description": "A project with a description of exactly 2000 characters: valid, and kept in canonical form.",
+  "covers": [
+    "FS-CORE-1.4.4",
+    "FS-CORE-9.2.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A rejected result carries the Core diagnostics with severity error that the result has, with their elements: a door wider than its wall.",
+  "covers": [
+    "FS-OPS-7.1.1",
+    "FS-OPS-1.2.3"
+  ]
+}

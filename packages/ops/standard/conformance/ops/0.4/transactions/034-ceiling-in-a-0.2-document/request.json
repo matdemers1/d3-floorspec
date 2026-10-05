@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/ceiling",
+      "value": {
+        "kind": "tray",
+        "border": 390144,
+        "depth": 195072
+      }
+    }
+  ]
+}

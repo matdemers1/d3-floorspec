@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "moveJunction",
+      "id": "P",
+      "to": "1' from J1 toward J1"
+    }
+  ]
+}

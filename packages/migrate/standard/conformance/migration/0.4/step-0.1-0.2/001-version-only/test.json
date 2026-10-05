@@ -1,0 +1,9 @@
+{
+  "description": "A 0.1 house with no extension data: the step makes it declare \"0.2\" and changes nothing else - no record, no extras (20.4.1, 20.3.2). A reader of 0.2 reads both alike (20.6.1).",
+  "covers": [
+    "FS-CORE-20.4.1",
+    "FS-CORE-20.3.2",
+    "FS-CORE-20.1.4",
+    "FS-CORE-20.6.1"
+  ]
+}

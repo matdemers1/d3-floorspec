@@ -1,0 +1,8 @@
+{
+  "description": "A 900 mm door on the south wall W4 - which runs west, from J4 at (4 m, 0) to J1 - swinging right, into the room. Its frame's origin is the middle of the opening on the location line, at the sill, facing north; the swing envelope reaches 900 mm into the room and 450 mm either side.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.5.1",
+    "FS-CORE-13.5.2"
+  ]
+}

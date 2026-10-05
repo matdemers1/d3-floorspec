@@ -1,0 +1,178 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "67ba47a9f9ed2d21627cea4912ba8e86b3ea022f7e5b2f6b8a07198022d252cf",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [73152, 73152],
+        "endRight": [73152, 3766848],
+        "endLeft": [-73152, 3913152],
+        "startLeft": [-73152, -73152],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [73152, 3766848],
+        "endRight": [5046848, 3766848],
+        "endLeft": [5193152, 3913152],
+        "startLeft": [-73152, 3913152],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5046848, 3766848],
+        "endRight": [5046848, 73152],
+        "endLeft": [5193152, -73152],
+        "startLeft": [5193152, 3913152],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5046848, 73152],
+        "endRight": [73152, 73152],
+        "endLeft": [-73152, -73152],
+        "startLeft": [5193152, -73152],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[73152, 73152], [5046848, 73152], [5046848, 3766848], [73152, 3766848]],
+        "holes": [],
+        "area": "18371321020416"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [3840000, 0],
+        "end": [2799616, 0],
+        "sillElevation": 0,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "height": 2600960,
+          "width": 910336
+        }
+      },
+      "O2": {
+        "start": [0, 1152000],
+        "end": [0, 2338688],
+        "sillElevation": 1105408,
+        "headElevation": 2682240,
+        "clearOpening": {
+          "area": 710324256768,
+          "height": 682752,
+          "width": 1040384
+        }
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {
+      "O1": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[2799616, 0], [3840000, 0], [3840000, 975360], [2799616, 975360]],
+          "bottom": 0,
+          "top": 2682240
+        }
+      }
+    },
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [5046848, 3766848, 3456000],
+          "min": [73152, 73152, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      }
+    },
+    "finishes": {
+      "walls": {
+        "W1": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "R1",
+            "source": "layer"
+          }
+        },
+        "W2": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "R1",
+            "source": "layer"
+          }
+        },
+        "W3": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "R1",
+            "source": "layer"
+          }
+        },
+        "W4": {
+          "left": {
+            "material": "gypsum-board",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "gypsum-board",
+            "regions": [],
+            "room": "R1",
+            "source": "layer"
+          }
+        }
+      },
+      "rooms": {}
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5046848, 3766848, 0],
+          "min": [73152, 73152, 0]
+        }
+      }
+    },
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

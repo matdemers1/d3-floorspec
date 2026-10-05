@@ -1,0 +1,8 @@
+{
+  "description": "Every constant default present, including an empty site with trueNorth 0 and base {\"offset\": 0} (omitted innermost first, so base disappears entirely): canonical form removes them all except the site, whose default is absent rather than {}.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.2.2",
+    "FS-CORE-1.5.1"
+  ]
+}

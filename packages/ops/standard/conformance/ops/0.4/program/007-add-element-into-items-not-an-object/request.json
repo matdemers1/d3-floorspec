@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/program",
+      "value": "tbd"
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "element": {
+        "function": "living"
+      }
+    }
+  ]
+}

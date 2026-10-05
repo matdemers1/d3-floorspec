@@ -1,0 +1,7 @@
+{
+  "description": "The quarter-turn winder stair with a newel under L2's floor, 300 mm thick, which covers the whole turn: the well starts only at y = 1700 mm. Its winders are level at their tops, and their lanes - the edges of their outlines and their walkline chords - are under the floor's bottom at 2400 mm; the least clearance is under the floor at the edge of the well, over the second flight.",
+  "covers": [
+    "FS-CORE-17.6.2",
+    "FS-CORE-17.7.3"
+  ]
+}

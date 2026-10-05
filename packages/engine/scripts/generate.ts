@@ -1,16 +1,16 @@
 /**
  * Generate the engine's schema-derived sources from the vendored standard:
  *
- *   src/generated/schema.ts            the Core 0.3 schema files bundled into one self-contained
+ *   src/generated/schema.ts            the Core 0.4 schema files bundled into one self-contained
  *                                      schema, as data — the canonicalizer's table of constant
- *                                      defaults (9.2 step 1), which serves 0.1 and 0.2 documents too
- *                                      (0.3 adds no default; 0.2's are 0.3's)
+ *                                      defaults (9.2 step 1), which serves 0.1 to 0.3 documents too
+ *                                      (0.4 adds no default; 0.3's are 0.4's)
  *   src/generated/validate-0.1.ts      the schema tier (FS-SCH-001) of each draft as standalone ajv
  *   src/generated/validate-0.2.ts      code: no `new Function` at runtime, so it runs under a strict
- *   src/generated/validate-0.3.ts      CSP in the browser. A 0.3 reader applies the schema of the
- *                                      draft a document declares to it (FS-CORE-1.2.6)
+ *   src/generated/validate-0.3.ts      CSP in the browser. A 0.4 reader applies the schema of the
+ *   src/generated/validate-0.4.ts      draft a document declares to it (FS-CORE-1.2.8)
  *   src/generated/validate-registry.ts the registry entry schema (Core 0.2, 12.2), for FS-CFG-001
- *   src/generated/types.ts             TypeScript types for a Core 0.3 document (FLR-T-1.5,
+ *   src/generated/types.ts             TypeScript types for a Core 0.4 document (FLR-T-1.5,
  *                                      FLR-ADR-006: the schema is the source; the types are
  *                                      generated from it)
  *   src/generated/registry-types.ts    and for a registry entry
@@ -198,18 +198,20 @@ export async function generate(): Promise<Map<string, string>> {
   const core01 = bundle(loadFiles('core/0.1'), 'floorspec');
   const core02 = bundle(loadFiles('core/0.2'), 'floorspec');
   const core03 = bundle(loadFiles('core/0.3'), 'floorspec');
+  const core04 = bundle(loadFiles('core/0.4'), 'floorspec');
   const registry = bundle(loadFiles('registry/0.1'), 'extension');
   const out = new Map<string, string>();
   out.set(
     'schema.ts',
-    HEADER('core/0.3', 'The Core 0.3 schema files bundled into one schema. Its `default` keywords are the constant defaults of 9.2 step 1.') +
-      `export const SCHEMA = ${JSON.stringify(core03, null, 2)} as const;\n`,
+    HEADER('core/0.4', 'The Core 0.4 schema files bundled into one schema. Its `default` keywords are the constant defaults of 9.2 step 1.') +
+      `export const SCHEMA = ${JSON.stringify(core04, null, 2)} as const;\n`,
   );
   out.set('validate-0.1.ts', validatorSource(core01, 'core/0.1', 'The Core 0.1 schema tier (FS-SCH-001)'));
   out.set('validate-0.2.ts', validatorSource(core02, 'core/0.2', 'The Core 0.2 schema tier (FS-SCH-001)'));
   out.set('validate-0.3.ts', validatorSource(core03, 'core/0.3', 'The Core 0.3 schema tier (FS-SCH-001)'));
+  out.set('validate-0.4.ts', validatorSource(core04, 'core/0.4', 'The Core 0.4 schema tier (FS-SCH-001)'));
   out.set('validate-registry.ts', validatorSource(registry, 'registry/0.1', 'The registry entry schema (Core 0.2, 12.2.1; FS-CFG-001)'));
-  out.set('types.ts', await typesSource(core03, 'FloorspecDocument', 'core/0.3', 'TypeScript types for a Core 0.3 document, generated from the schema with json-schema-to-typescript.'));
+  out.set('types.ts', await typesSource(core04, 'FloorspecDocument', 'core/0.4', 'TypeScript types for a Core 0.4 document, generated from the schema with json-schema-to-typescript.'));
   out.set(
     'registry-types.ts',
     await typesSource(registry, 'RegistryEntry', 'registry/0.1', 'TypeScript types for a registry entry (Core 0.2, 12.2), generated from the schema with json-schema-to-typescript.'),

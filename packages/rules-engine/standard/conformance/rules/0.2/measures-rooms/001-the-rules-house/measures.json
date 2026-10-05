@@ -1,0 +1,159 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomFunction"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R3"
+      },
+      "measure": "roomFunction"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomNetArea"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R3"
+      },
+      "measure": "roomNetArea"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomLeastWidth"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R3"
+      },
+      "measure": "roomLeastWidth"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R2"
+      },
+      "measure": "roomIsEntry"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomIsEntry"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomIsReachable"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomThroughSleeping"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R2"
+      },
+      "measure": "roomThroughSleeping"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomAdjacentTo",
+      "args": {
+        "function": "living"
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomAdjacentTo",
+      "args": {
+        "function": "mechanical"
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R2"
+      },
+      "measure": "roomConnectedTo",
+      "args": {
+        "function": "mechanical"
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "elementCount",
+      "args": {
+        "extension": "FS_electrical"
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "elementCount",
+      "args": {
+        "extension": "FS_electrical",
+        "collection": "alarms",
+        "match": {
+          "detects": "smoke"
+        }
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "elementCount",
+      "args": {
+        "extension": "FS_electrical",
+        "collection": "alarms",
+        "match": {
+          "detects": "carbonMonoxide"
+        }
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R3"
+      },
+      "measure": "elementCount",
+      "args": {
+        "extension": "FS_mechanical"
+      }
+    }
+  ]
+}

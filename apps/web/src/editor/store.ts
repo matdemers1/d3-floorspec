@@ -34,6 +34,9 @@ import type { ImportReport } from '../exports/ifcImport';
  * write it between renders without threading callbacks through every component.
  */
 
+/** The forms the stair tool draws (Core 17.2). */
+export type StairForm = 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral';
+
 export type ToolId = 'select' | 'wall' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'device';
 
 /**
@@ -130,8 +133,8 @@ export interface DrawSettings {
   slab: { thickness: number; offset: number; purpose: string | null };
   /** The roof tool (Core 0.3, 16.1): a new roof's pitch and overhang, and whether its two short ends are gables. */
   roof: { rise: number; run: number; overhang: number; gables: boolean };
-  /** The stair tool (Core 0.3, 17.1): a new stair's form, the way it turns, width, tread and greatest riser. */
-  stair: { form: 'straight' | 'lShaped' | 'uShaped'; turn: 'left' | 'right'; width: number; tread: number; maxRiser: number };
+  /** The stair tool (Core 17.1): a new stair's form, the way it turns, width, tread and greatest riser. */
+  stair: { form: StairForm; turn: 'left' | 'right'; width: number; tread: number; maxRiser: number };
 }
 
 /**

@@ -1,0 +1,6 @@
+{
+  "description": "Removing W5 with cascade takes its gate O1, and - as removing a wall always does - unsets the join at G2 that names it. Nothing else changes; G1 is left unused.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

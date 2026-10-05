@@ -1,0 +1,8 @@
+{
+  "description": "The kitchen house, deriving the design {\"KS\": \"KB\"} (design.json): the separator SB and the window OB, the open kitchen 3950 mm wide and the dining room as wide - and no WA, OA or junction fill at S5. Validity and the diagnostics do not depend on the design; `options` is the same, but for `chosen`.",
+  "covers": [
+    "FS-CORE-19.6.1",
+    "FS-CORE-19.3.1",
+    "FS-CORE-19.6.3"
+  ]
+}

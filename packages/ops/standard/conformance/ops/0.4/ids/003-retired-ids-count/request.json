@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "drawWall",
+      "level": "L1",
+      "from": ["3'", "3'"],
+      "to": ["6'", "3'"],
+      "type": "WT"
+    }
+  ],
+  "context": {
+    "retired": ["J12", "W40", "X1"]
+  }
+}

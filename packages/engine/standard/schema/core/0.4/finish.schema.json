@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.4/finish.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 18.5's tables: a wall's `finishes` and each face finish `{}`, and `regions` `[]`; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1). A face finish's `material` has none: absent, the face takes its room's or its layer's (18.6).",
+  "title": "Wall finishes",
+  "description": "18.5: the finishes of a wall's two faces, where they differ from the rooms the faces face. That a region is not empty, fits its wall and overlaps no other region of its face (FS-CORE-18.5.2 to 18.5.4) are invariants, not checked here.",
+  "type": "object",
+  "properties": {
+    "left": {
+      "$ref": "#/$defs/faceFinish",
+      "description": "18.5: the finish of the wall's left face (5.4).",
+      "default": {}
+    },
+    "right": {
+      "$ref": "#/$defs/faceFinish",
+      "description": "18.5: the finish of the wall's right face (5.4).",
+      "default": {}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "faceFinish": {
+      "title": "Face finish",
+      "description": "18.5: the material of one face of a wall, and rectangles of it finished with other materials. It has only the members of its table (FS-CORE-18.5.1).",
+      "type": "object",
+      "properties": {
+        "material": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "18.5, 18.6: a reference to the material of the whole face. Absent: the face takes the finish of the room it faces, or of the wall's outermost layer on that side (18.6)."
+        },
+        "regions": {
+          "title": "Regions",
+          "description": "18.5: rectangles of the face finished with another material.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/region"
+          },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    },
+    "region": {
+      "title": "Region",
+      "description": "18.5: a rectangle on a face, from `from` to `to` along the wall's location line from its start junction, and from `bottom` to `top` above its base elevation, finished with `material`. Every member is always present and the four lengths MUST NOT be negative (FS-CORE-18.5.1).",
+      "type": "object",
+      "required": [
+        "from",
+        "to",
+        "bottom",
+        "top",
+        "material"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "18.5: where the region starts, along the location line from the start junction."
+        },
+        "to": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "18.5: where it ends, along the location line from the start junction."
+        },
+        "bottom": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "18.5: the height of its bottom edge above the wall's base elevation."
+        },
+        "top": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "18.5: the height of its top edge above the wall's base elevation."
+        },
+        "material": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "18.5: a reference to the region's material."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

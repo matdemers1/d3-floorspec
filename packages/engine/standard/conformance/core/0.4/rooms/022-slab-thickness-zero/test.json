@@ -1,0 +1,6 @@
+{
+  "description": "A slab's thickness must be greater than zero.",
+  "covers": [
+    "FS-CORE-6.7.1"
+  ]
+}

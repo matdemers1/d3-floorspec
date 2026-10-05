@@ -1,0 +1,7 @@
+{
+  "description": "A floor has only an offset and a thickness: \"finish\" is the room's floorFinish.",
+  "covers": [
+    "FS-CORE-15.1.1",
+    "FS-CORE-1.4.3"
+  ]
+}

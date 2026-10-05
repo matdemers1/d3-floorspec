@@ -1,0 +1,89 @@
+{
+  "floorspecRules": "0.2",
+  "packs": [
+    {
+      "floorspecRules": "0.2",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "NET-ESCAPE": {
+          "title": "Net clear escape opening in every sleeping room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§3.2"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (net clear escape opening in every sleeping room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "args": {
+              "to": "outside"
+            },
+            "where": {
+              "not": {
+                "measure": "openingOperation",
+                "op": "=",
+                "value": "fixed"
+              }
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "all": [
+              {
+                "measure": "openingNetClearArea",
+                "op": ">=",
+                "value": 761061703680
+              },
+              {
+                "measure": "openingNetClearWidth",
+                "op": ">=",
+                "value": 650240
+              },
+              {
+                "measure": "openingNetClearHeight",
+                "op": ">=",
+                "value": 780288
+              },
+              {
+                "measure": "openingSillHeight",
+                "op": "<=",
+                "value": 1430528
+              }
+            ]
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.2",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

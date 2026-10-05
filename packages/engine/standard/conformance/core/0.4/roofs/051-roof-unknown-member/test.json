@@ -1,0 +1,7 @@
+{
+  "description": "A roof has only the members of its table: \"kind\" is derived, never stored.",
+  "covers": [
+    "FS-CORE-16.1.1",
+    "FS-CORE-1.4.1"
+  ]
+}

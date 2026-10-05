@@ -1,0 +1,7 @@
+{
+  "description": "A door type's clear opening has no area (Core 8.4.3): setting one makes the result invalid, FS-SCH-001.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

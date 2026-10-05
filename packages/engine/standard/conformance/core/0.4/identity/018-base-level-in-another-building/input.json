@@ -1,0 +1,56 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {},
+    "B2": {
+      "name": "Garage"
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    },
+    "G1": {
+      "building": "B2",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [5120000, 0]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT",
+      "base": {
+        "level": "G1"
+      }
+    }
+  }
+}

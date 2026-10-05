@@ -1,0 +1,39 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingNetClearWidth"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingNetClearHeight"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingNetClearArea"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O2"
+      },
+      "measure": "doorClearWidth"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O2"
+      },
+      "measure": "openingOperation"
+    }
+  ]
+}

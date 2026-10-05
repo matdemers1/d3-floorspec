@@ -1,0 +1,8 @@
+{
+  "description": "A pair of doors, 1800 mm wide: its clear opening is the whole pair's, both leaves open. Its \"swing\" says which side both leaves open into; its \"hinge\" means nothing for a pair, and is the default, which the canonical form omits.",
+  "covers": [
+    "FS-CORE-8.4.2",
+    "FS-CORE-7.4.2",
+    "FS-CORE-9.2.1"
+  ]
+}

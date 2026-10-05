@@ -1,0 +1,10 @@
+{
+  "description": "Four synthetic rules on the stairs: both have risers of 180 mm, under 7 3/4 in; both have a headroom under Rules 0.2, which reads the document as Core 0.4 does - ST1's, at about 4' 11\", and the spiral's, 180 mm under the bedroom's ceiling - and both may not meet 6' 8\"; the spiral declares no handrail, so both handrail conditions fail on it; and the spiral is exempt from the tread rule as narrower than 3', while ST1's 9\" treads may not meet 10\". A stair's finding is on its level, L1, and draws its box.",
+  "covers": [
+    "FS-RULES-3.4.1",
+    "FS-RULES-3.7.1",
+    "FS-RULES-3.8.1",
+    "FS-RULES-8.5.2",
+    "FS-RULES-9.4.1"
+  ]
+}

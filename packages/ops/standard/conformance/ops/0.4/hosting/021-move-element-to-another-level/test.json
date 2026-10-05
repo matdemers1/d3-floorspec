@@ -1,0 +1,6 @@
+{
+  "description": "A side table on the Living room's floor moves up to the Loft's floor on L2: its fallback's level becomes L2.",
+  "covers": [
+    "FS-OPS-4.10.1"
+  ]
+}

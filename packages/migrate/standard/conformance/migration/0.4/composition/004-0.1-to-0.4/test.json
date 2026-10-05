@@ -1,0 +1,11 @@
+{
+  "description": "A 0.1 document with opaque collections, migrated to 0.4: the step from 0.1 to 0.2 moves them, and the steps from 0.2 to 0.3 and from 0.3 to 0.4 move nothing - one record (20.1.3, 20.3.2).",
+  "covers": [
+    "FS-CORE-20.1.3",
+    "FS-CORE-20.4.1",
+    "FS-CORE-20.5.1",
+    "FS-CORE-20.7.1",
+    "FS-CORE-20.3.2",
+    "FS-CORE-20.6.1"
+  ]
+}

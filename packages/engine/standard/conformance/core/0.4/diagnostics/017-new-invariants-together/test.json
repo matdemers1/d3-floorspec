@@ -1,0 +1,7 @@
+{
+  "description": "A self-adjacency, a host beyond its wall, a missing dependency and a wall whose top is below its base: each group of invariants is evaluated, and the diagnostics are sorted by code.",
+  "covers": [
+    "FS-CORE-10.2.1",
+    "FS-CORE-10.3.1"
+  ]
+}

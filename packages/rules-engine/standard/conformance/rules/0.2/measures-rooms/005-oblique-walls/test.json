@@ -1,0 +1,8 @@
+{
+  "description": "A four-sided room with oblique walls: its least width is the least, over its hull's edges, of the greatest distance of a vertex from the edge - a quotient of an integer by a square root, rounded once - and its net area has a half. Both values are the oracle's; the check bounds the width by hand.",
+  "covers": [
+    "FS-RULES-4.3.1",
+    "FS-RULES-5.2.1",
+    "FS-RULES-5.3.1"
+  ]
+}

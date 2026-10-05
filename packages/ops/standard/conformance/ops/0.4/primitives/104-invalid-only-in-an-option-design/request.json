@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "PANTRY",
+      "element": {
+        "level": "L1",
+        "anchor": [5760000, 2560000]
+      }
+    }
+  ],
+  "context": {
+    "option": "KB"
+  }
+}

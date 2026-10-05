@@ -1,0 +1,12 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Conformance"
+  },
+  "extensionsUsed": {
+    "EXT_acoustics": {
+      "version": "2.1",
+      "schema": "schema.json"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The same turn on four winders of 22.5 degrees: 176 mm on the walkline, under 9 inches.",
+  "outcome": "fail",
+  "findings": [
+    "ST1"
+  ]
+}

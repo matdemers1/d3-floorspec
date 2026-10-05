@@ -1,0 +1,7 @@
+{
+  "description": "addElement names R9, which context.retired lists: FS-OPS-005.",
+  "covers": [
+    "FS-OPS-1.5.2",
+    "FS-OPS-2.1.1"
+  ]
+}

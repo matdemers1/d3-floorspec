@@ -1,0 +1,6 @@
+{
+  "description": "\"rotateWall\" is not an operation this specification defines.",
+  "covers": [
+    "FS-OPS-1.1.3"
+  ]
+}

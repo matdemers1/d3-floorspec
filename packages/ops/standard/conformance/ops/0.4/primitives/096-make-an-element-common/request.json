@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "OB",
+      "path": "/option"
+    }
+  ]
+}

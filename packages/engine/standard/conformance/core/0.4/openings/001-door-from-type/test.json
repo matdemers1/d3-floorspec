@@ -1,0 +1,8 @@
+{
+  "description": "A door filled by door type DT takes its width and height from the type: it runs from 1000 mm to 1900 mm along W4 (which runs west from (X, 0)), sill 0, head 2100 mm.",
+  "covers": [
+    "FS-CORE-7.2.1",
+    "FS-CORE-7.4.1",
+    "FS-CORE-8.2.1"
+  ]
+}

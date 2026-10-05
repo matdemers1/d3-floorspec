@@ -1,0 +1,21 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form",
+      "value": {
+        "kind": "spiral",
+        "turn": "left",
+        "diameter": 1950720,
+        "sweep": 270000000
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/width",
+      "value": 877824
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "A hip roof whose south edge rises at 12 in 12 and the rest at 6 in 12: a roof of unequal pitches needs the weighted straight skeleton, which this draft does not define. Its eave outline is derived and its surface is not: FS-LINT-015, an informational lint, and the document is valid.",
+  "covers": [
+    "FS-CORE-16.4.1",
+    "FS-CORE-10.2.1",
+    "FS-CORE-10.1.1"
+  ]
+}

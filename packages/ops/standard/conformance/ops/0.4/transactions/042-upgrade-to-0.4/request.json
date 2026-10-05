@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/floorspec",
+      "value": "0.4"
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form/newel",
+      "value": 130048
+    }
+  ]
+}

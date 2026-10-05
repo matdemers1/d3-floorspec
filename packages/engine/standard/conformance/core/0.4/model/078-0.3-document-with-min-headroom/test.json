@@ -1,0 +1,6 @@
+{
+  "description": "A 0.3 document whose stair declares the headroom it is designed for: \"minHeadroom\" is a member 0.4 adds.",
+  "covers": [
+    "FS-CORE-1.2.8"
+  ]
+}

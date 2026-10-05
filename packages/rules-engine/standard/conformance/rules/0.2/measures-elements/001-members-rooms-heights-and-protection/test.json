@@ -1,0 +1,12 @@
+{
+  "description": "Element measures on the rules house with three furniture pieces of EXT_furniture (P1 free in the living room, P2 free on the location line of W9, P3 unhosted) and two FS_lowvoltage security devices: members read with their defaults (a receptacle's 15 A, an alarm's `mainsWithBattery`, a contact's `wireless` false), a member of another type than asked (the panel's `volts` is an array) and one with no default (`watts`) have no value; the room each element is in, by its host; heights of fallbacks above the floor, one below it; and protection by a circuit (X4, on C1 with AFCI) or by the device itself (X5, a GFCI receptacle).",
+  "covers": [
+    "FS-RULES-4.4.1",
+    "FS-RULES-4.7.1",
+    "FS-RULES-7.1.1",
+    "FS-RULES-7.2.1",
+    "FS-RULES-7.3.1",
+    "FS-RULES-7.4.1",
+    "FS-RULES-9.6.1"
+  ]
+}

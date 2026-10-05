@@ -1,0 +1,8 @@
+{
+  "description": "Synthetic winder rules on the winder stair with a newel: its winders are 232.9 mm deep at the walkline, under 10 in, and 57.7 mm at their narrow ends, under 6 in, so it may not meet either; the spiral rule applies to no stair here.",
+  "covers": [
+    "FS-RULES-3.4.1",
+    "FS-RULES-3.8.1",
+    "FS-RULES-8.5.2"
+  ]
+}

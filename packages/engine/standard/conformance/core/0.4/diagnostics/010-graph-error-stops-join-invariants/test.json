@@ -1,0 +1,7 @@
+{
+  "description": "walls/039's stub W2, whose outline is not simple, on a level where W4 and W5 also cross: join invariants are not evaluated on a level with a graph error, so only FS-INV-104 is reported.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-5.3.1"
+  ]
+}

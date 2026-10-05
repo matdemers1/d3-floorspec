@@ -1,0 +1,7 @@
+{
+  "description": "A 0.1 document whose FS_electrical data holds an outlet shaped like a 0.2 extension element. In 0.1 it is still opaque, so the step moves it rather than make it an element: the migration derives no fallback, placement or clearance, as the document does not (20.4.1, 20.6.1). Ops 0.3 ids/020 shows the other edit - declaring \"0.2\" by setProperty, which turns it into one.",
+  "covers": [
+    "FS-CORE-20.4.1",
+    "FS-CORE-20.6.1"
+  ]
+}

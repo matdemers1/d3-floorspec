@@ -1,5 +1,6 @@
 /**
- * The two transcendental values of Core 0.2 (13.1): the facing vector of an angle,
+ * The two transcendental values of Core 0.2 (13.1) — and the length of an arc (Core 0.4, 17.7): the
+ * facing vector of an angle,
  *
  *     F(θ) = ( round(10⁹ · cos θ), round(10⁹ · sin θ) ),   θ in microdegrees,
  *
@@ -154,4 +155,15 @@ export function direction(x: bigint | number, y: bigint | number): number {
   else a = sy > 0 ? P - base : base - P;
   const r = roundFar(((a * DEG180) << PREC) / P);
   return Number(r === -DEG180 ? DEG180 : r);
+}
+
+/**
+ * Core 0.4, 17.7: round(s + r · θ · π / 180,000,000) — straight lengths s and an arc of radius r
+ * through θ microdegrees — for rational s and r. π is transcendental, so with r·θ ≠ 0 this is never a
+ * tie; like F, it is evaluated in fixed point to far more bits than needed, and refuses to decide a
+ * value within MARGIN of a tie.
+ */
+export function roundArc(sNum: bigint, sDen: bigint, rNum: bigint, rDen: bigint, theta: bigint): bigint {
+  const v = (sNum << PREC) / sDen + (rNum * theta * pi()) / (rDen * DEG180);
+  return roundFar(v);
 }

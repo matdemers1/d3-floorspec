@@ -1,0 +1,6 @@
+{
+  "description": "A wall with a source: only types and materials have one.",
+  "covers": [
+    "FS-CORE-1.4.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The same notch with a 1-foot overhang: its bottom edge keeps no length, and an edge with no length does not run its edge's way. FS-INV-805.",
+  "covers": [
+    "FS-CORE-16.3.1"
+  ]
+}

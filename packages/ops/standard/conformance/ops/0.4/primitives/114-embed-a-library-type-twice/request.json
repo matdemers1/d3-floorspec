@@ -1,0 +1,33 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "types",
+      "id": "door-exterior-swing-36x80",
+      "element": {
+        "clearOpening": {
+          "height": 2568448,
+          "width": 1097280
+        },
+        "clearances": {
+          "swing": {
+            "max": [1170432, 617728, 2682240],
+            "min": [0, -617728, 0],
+            "purpose": "swing",
+            "shape": "box"
+          }
+        },
+        "height": 2682240,
+        "kind": "doorType",
+        "name": "Exterior swing door, 36 x 80 in",
+        "operation": "swing",
+        "source": {
+          "item": "door-exterior-swing-36x80",
+          "library": "https://d3cloud.io/floorspec/library/us-starter",
+          "version": "0.1.0"
+        },
+        "width": 1235456
+      }
+    }
+  ]
+}

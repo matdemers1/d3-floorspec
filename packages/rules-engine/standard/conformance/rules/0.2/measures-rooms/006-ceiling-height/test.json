@@ -1,0 +1,8 @@
+{
+  "description": "The rules house with ceilings: the bedroom's cathedral ceiling comes down to 3200 mm less half of 6' less 50 mm at its walls; the sunken living room's is the level's 2700 mm plus the 6\" its floor is sunk; the utility room's is its tray's border at the level's 8', not its raised centre. Each is Core's derived ceiling low minus its floor top.",
+  "covers": [
+    "FS-RULES-4.3.1",
+    "FS-RULES-4.7.1",
+    "FS-RULES-5.7.1"
+  ]
+}

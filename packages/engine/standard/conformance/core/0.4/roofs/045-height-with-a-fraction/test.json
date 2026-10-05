@@ -1,0 +1,7 @@
+{
+  "description": "A height written with a fraction is not a length.",
+  "covers": [
+    "FS-CORE-16.1.1",
+    "FS-CORE-2.1.1"
+  ]
+}

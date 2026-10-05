@@ -1,0 +1,6 @@
+{
+  "description": "A program has only items and adjacency.",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

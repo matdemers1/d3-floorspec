@@ -1,0 +1,6 @@
+{
+  "description": "An extension element's envelope with a zero extent: FS-INV-505 names the element.",
+  "covers": [
+    "FS-CORE-13.2.2"
+  ]
+}

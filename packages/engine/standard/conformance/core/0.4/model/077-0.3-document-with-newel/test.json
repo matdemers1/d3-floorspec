@@ -1,0 +1,6 @@
+{
+  "description": "A document that declares \"0.3\" and whose winder stair has a newel, which 0.4 adds: it is checked against Core 0.3's schema, which has no \"newel\" member.",
+  "covers": [
+    "FS-CORE-1.2.8"
+  ]
+}

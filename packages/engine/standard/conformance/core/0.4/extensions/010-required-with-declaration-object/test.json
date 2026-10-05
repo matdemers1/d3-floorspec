@@ -1,0 +1,7 @@
+{
+  "description": "A required extension declared with a declaration object, which the reader does not implement: FS-DOC-002, exactly as for a version string.",
+  "covers": [
+    "FS-CORE-1.6.4",
+    "FS-CORE-12.1.3"
+  ]
+}

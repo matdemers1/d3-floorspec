@@ -1,0 +1,6 @@
+{
+  "description": "A separator may not carry a wall's \"type\" member.",
+  "covers": [
+    "FS-CORE-1.4.1"
+  ]
+}

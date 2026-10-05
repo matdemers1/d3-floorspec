@@ -4,7 +4,7 @@
 > FS_lowvoltage 0.1.0 is a **Release Candidate** (`registry/README.md`): specified, with a schema
 > and a conformance suite, and frozen unless implementations find a problem. It becomes Ratified
 > only when a second, independent implementation passes its conformance suite (FLR-REQ-092). It
-> builds on Floorspec Core 0.2 and 0.3, which are Drafts.
+> builds on Floorspec Core 0.2, 0.3 and 0.4, which are Drafts.
 
 FS_lowvoltage describes the low-voltage systems of a house: **outlets** for data, coax, phone and
 fibre, **doorbells**, **security** devices, **speakers**, and the **head-ends** they are run to — a
@@ -39,7 +39,7 @@ every `MUST` and `MUST NOT` is exercised by the conformance suite in
 | Registry entry | `registry/FS_lowvoltage/extension.json` |
 | Schema | `registry/FS_lowvoltage/lowvoltage.schema.json`, published at `https://d3cloud.io/floorspec/schema/ext/FS_lowvoltage/0.1.0/lowvoltage.schema.json` |
 | Requires | nothing |
-| Core drafts | `0.2` and `0.3`: the drafts whose documents it is evaluated for (1.2) |
+| Core drafts | `0.2`, `0.3` and `0.4`: the drafts whose documents it is evaluated for (1.2) |
 | Kinds | `outlets`, `doorbells`, `security`, `speakers`, `headEnds` (none requires an asset or a symbol) |
 | Statement IDs | `FS-LOWV-` |
 | Diagnostic codes | `FS-LOWV-SCH-`, `FS-LOWV-INV-`, `FS-LOWV-LINT-` |
@@ -52,7 +52,7 @@ specification says; it is then also a reader that implements FS_lowvoltage (Core
 apply when the validator knows the version the document targets (Core §12.2) — normally because it
 is configured with this specification's registry entry.
 
-A validator that implements FS_lowvoltage 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"` or `"0.3"` — a Core draft this version lists (1.1) — and uses FS_lowvoltage at a version at which FS_lowvoltage is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-LOWV-1.2.1 MUST}
+A validator that implements FS_lowvoltage 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"`, `"0.3"` or `"0.4"` — a Core draft this version lists (1.1) — and uses FS_lowvoltage at a version at which FS_lowvoltage is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-LOWV-1.2.1 MUST}
 
 Such a validator MUST NOT evaluate FS_lowvoltage's diagnostics for a document for which Core's tiers 0 to 4 reported an error, MUST NOT evaluate its invariants (`FS-LOWV-INV-`) when it reported `FS-LOWV-SCH-001`, and MUST NOT evaluate its lints (`FS-LOWV-LINT-`) unless the document is valid. {#FS-LOWV-1.2.2 MUST NOT}
 FS_lowvoltage's errors are part of tier 4 (Core §10.1) and its lints part of tier 5: an `FS-LOWV-`
@@ -244,5 +244,5 @@ position is on a location line; and no room otherwise.
 ## 6.1 Related
 
 FLR-T-5.6, FLR-REQ-092 (Release Candidate until a second independent implementation), FLR-ADR-001
-(building systems are `FS_` extensions), FLR-ADR-007 (the extension model). Floorspec Core 0.2 and 0.3
+(building systems are `FS_` extensions), FLR-ADR-007 (the extension model). Floorspec Core 0.2, 0.3 and 0.4
 chapters 12 and 13.

@@ -1,0 +1,7 @@
+{
+  "description": "The L-shaped stair turning right under a floor with no thickness, designed for 100 mm of headroom: its highest tread, at 3209142.86, is more than 100 mm below the floor at 3456000, so no step needs an opening, and it has no opening member. Its headroom is 0, less than it declares: FS-LINT-019.",
+  "covers": [
+    "FS-CORE-17.6.3",
+    "FS-CORE-17.6.4"
+  ]
+}

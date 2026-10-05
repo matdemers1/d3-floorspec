@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "moveJunction",
+      "id": "J8",
+      "to": ["13'", "13'"]
+    },
+    {
+      "op": "removeWall",
+      "wall": "W5"
+    }
+  ]
+}

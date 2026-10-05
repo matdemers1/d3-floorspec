@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/program/adjacency",
+      "value": "tbd"
+    },
+    {
+      "op": "setAdjacency",
+      "a": "KIT",
+      "b": "PAN",
+      "kind": "required"
+    }
+  ]
+}

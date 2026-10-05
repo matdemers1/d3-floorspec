@@ -1,0 +1,7 @@
+{
+  "description": "A wall at exactly 45 degrees belongs to the side counter-clockwise before it: the chamfer W3, facing north-east, is on the east side with W4, so \"east wall of Study\" is ambiguous.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-3.4.1"
+  ]
+}

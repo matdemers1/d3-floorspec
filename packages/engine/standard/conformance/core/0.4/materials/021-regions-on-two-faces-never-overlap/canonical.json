@@ -1,0 +1,146 @@
+{
+  "assets": {
+    "TILE-PHOTO": {
+      "byteLength": 73,
+      "mediaType": "image/png",
+      "path": "assets/tile-12in.png",
+      "sha256": "cf77abf784e1b49ffad62638d0117883502d08e4f0b8b1e7beb10fe1f70eab6c"
+    }
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.4",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "materials": {
+    "PAINT": {
+      "color": "#e9e6df",
+      "name": "Eggshell paint",
+      "roughness": 700
+    },
+    "TILE": {
+      "color": "#d8d4cc",
+      "name": "Porcelain tile, 12 inch",
+      "roughness": 300,
+      "texture": {
+        "asset": "TILE-PHOTO",
+        "size": [
+          390144,
+          390144
+        ]
+      }
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "function": "kitchen",
+      "level": "L1",
+      "name": "Kitchen",
+      "wallFinish": "PAINT"
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "finishes": {
+        "left": {
+          "regions": [
+            {
+              "bottom": 0,
+              "from": 0,
+              "material": "PAINT",
+              "to": 5120000,
+              "top": 3456000
+            }
+          ]
+        },
+        "right": {
+          "regions": [
+            {
+              "bottom": 1170432,
+              "from": 768000,
+              "material": "TILE",
+              "to": 4352000,
+              "top": 1755648
+            }
+          ]
+        }
+      },
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    }
+  }
+}

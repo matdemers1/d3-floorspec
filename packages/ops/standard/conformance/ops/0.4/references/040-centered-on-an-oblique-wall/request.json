@@ -1,0 +1,11 @@
+{
+  "batch": [
+    {
+      "op": "addOpening",
+      "wall": "W5",
+      "at": "centered",
+      "width": "30\"",
+      "height": "6' 8\""
+    }
+  ]
+}

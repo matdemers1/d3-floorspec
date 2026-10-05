@@ -1,0 +1,7 @@
+{
+  "description": "A malformed request, with a malformed profile, for an invalid document: only FS-RULES-001 is reported - an evaluator stops at the first of steps 1 to 3 that fails.",
+  "covers": [
+    "FS-RULES-1.1.1",
+    "FS-RULES-1.3.1"
+  ]
+}

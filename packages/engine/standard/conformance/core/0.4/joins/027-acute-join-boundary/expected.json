@@ -1,0 +1,53 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-001",
+      "severity": "warning",
+      "elements": ["J1", "W1", "W2"]
+    }
+  ],
+  "hash": "8d31c7168d94705b774aab68a862b4a399c2746d73eddbe8d64d1e33979912b4",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [5120000, 64000],
+        "endRight": [249166, 64000],
+        "endLeft": [-249166, -64000],
+        "startLeft": [5120000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [249166, 64000],
+        "endRight": [5150843, 2759922],
+        "endLeft": [5089157, 2872078],
+        "startLeft": [-249166, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {},
+    "circulation": {},
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {},
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

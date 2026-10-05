@@ -1,0 +1,44 @@
+{
+  "title": "Headroom over a spiral stair",
+  "citation": {
+    "code": "TEST-CODE",
+    "edition": "2024",
+    "section": "§4.10",
+    "link": "https://example.org/test-code/2024/4.10"
+  },
+  "paraphrase": "A spiral stair has at least 6 feet 6 inches of clear height over the treads a person walks on. The rule reads the headroom Floorspec derives for the stair under the floors and ceilings above it, and checks only a stair that has something above it.",
+  "applies": {
+    "to": "stair",
+    "where": {
+      "all": [
+        {
+          "measure": "stairForm",
+          "op": "=",
+          "value": "spiral"
+        },
+        {
+          "measure": "stairHeadroom",
+          "op": ">=",
+          "value": 0
+        }
+      ]
+    }
+  },
+  "requirement": {
+    "measure": "stairHeadroom",
+    "op": ">=",
+    "value": 2535936
+  },
+  "severity": "mayNotMeet",
+  "provenance": {
+    "verifiedBy": "Floorspec contributors",
+    "verifiedOn": "2026-10-05",
+    "edition": "2024",
+    "method": "synthetic",
+    "certifiedBy": "Floorspec contributors",
+    "certification": "original-paraphrase-v1",
+    "review": {
+      "status": "unreviewed"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A host mode is wallFace, surface or free.",
+  "covers": [
+    "FS-CORE-13.3.1"
+  ]
+}

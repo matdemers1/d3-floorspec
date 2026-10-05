@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "KIT",
+      "path": "/minArea",
+      "value": 14745600000000
+    }
+  ],
+  "context": {
+    "locks": [
+      {
+        "element": "KIT"
+      }
+    ]
+  }
+}

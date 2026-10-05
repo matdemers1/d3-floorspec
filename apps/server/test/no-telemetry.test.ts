@@ -389,7 +389,7 @@ describe('free export: model.json for every project, whatever its state', () => 
     const project = await createProjectAs(operator, 'Empty');
     const text = await exported(project.id);
     expect(validate(text).valid).toBe(true);
-    expect(JSON.parse(text)).toMatchObject({ floorspec: '0.3', project: { name: 'Empty' } });
+    expect(JSON.parse(text)).toMatchObject({ floorspec: '0.4', project: { name: 'Empty' } });
   });
 
   it('an edited project exports its canonical document, its ETag the content hash', async () => {

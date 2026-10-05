@@ -1,0 +1,6 @@
+{
+  "description": "Setting a winder's newel and the stair's minHeadroom in one batch: the inverse sets the stair's form back as A has it, whole - the members that differ are the stair's own, /form and /minHeadroom (1.6) - and unsets its minHeadroom; applying it gives back A exactly (1.6.1).",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "Resizing by 3 base units moves the anchors by 3 / 2 = 1.5, rounded to the even 2; by 1 base unit, 0.5 rounds to 0.",
+  "covers": [
+    "FS-OPS-4.4.1"
+  ]
+}

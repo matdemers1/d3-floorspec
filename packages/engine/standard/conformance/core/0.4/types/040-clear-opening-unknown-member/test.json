@@ -1,0 +1,7 @@
+{
+  "description": "A clear opening has only width, height and area: \"depth\" is unknown.",
+  "covers": [
+    "FS-CORE-8.4.3",
+    "FS-CORE-1.4.3"
+  ]
+}

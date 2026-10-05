@@ -1,0 +1,40 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "c210ba4dc994efe40e83798e3b36a09f0fe8c29e621c2b1659c243d2ada13fe1",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form/newel",
+      "value": 130048
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/minHeadroom",
+      "value": 2600960
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form",
+      "value": {
+        "angle": "quarter",
+        "kind": "winder",
+        "risersBeforeTurn": 4,
+        "turn": "left",
+        "winders": 3
+      }
+    },
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/minHeadroom"
+    }
+  ]
+}

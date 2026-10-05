@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-1004",
+      "severity": "error",
+      "elements": ["MODEL", "ODD"]
+    },
+    {
+      "code": "FS-INV-1004",
+      "severity": "error",
+      "elements": ["ODD", "VECTOR"]
+    }
+  ]
+}

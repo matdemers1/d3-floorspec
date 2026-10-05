@@ -1,0 +1,7 @@
+{
+  "description": "A border of 1449 mm in a room 2900 mm deep inside its walls: the centre is 1002 mm wide and 2 mm deep, and fits.",
+  "covers": [
+    "FS-CORE-15.4.1",
+    "FS-CORE-15.4.2"
+  ]
+}

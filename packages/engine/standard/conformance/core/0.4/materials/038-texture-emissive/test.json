@@ -1,0 +1,7 @@
+{
+  "description": "A texture has no emissive map in this draft (0.5).",
+  "covers": [
+    "FS-CORE-18.2.1",
+    "FS-CORE-1.4.3"
+  ]
+}

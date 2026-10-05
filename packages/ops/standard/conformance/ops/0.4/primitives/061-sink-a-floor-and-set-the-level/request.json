@@ -1,0 +1,24 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/floor",
+      "value": {
+        "offset": -195072
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "L1",
+      "path": "/floorThickness",
+      "value": 384000
+    },
+    {
+      "op": "setProperty",
+      "id": "L1",
+      "path": "/ceilingHeight",
+      "value": 3072000
+    }
+  ]
+}

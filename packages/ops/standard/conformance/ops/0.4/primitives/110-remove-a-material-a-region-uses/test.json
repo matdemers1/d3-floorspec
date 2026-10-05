@@ -1,0 +1,6 @@
+{
+  "description": "Removing the tile is blocked by W2, whose backsplash region names it (2.2).",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

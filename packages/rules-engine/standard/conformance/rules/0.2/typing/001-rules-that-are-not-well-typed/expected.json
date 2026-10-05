@@ -1,0 +1,244 @@
+{
+  "coverage": [],
+  "diagnostics": [
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "APPLIES-EXTENSION",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "ARG-TYPE",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "BOOLEAN-ORDER",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "COLLECTION-ALONE",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "DEFERRED-AND-BAD",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "EXTRA-ARG",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "IN-AN-AREA",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "MEMBER-OF-WHAT",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "MISSING-ARG",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "NO-SUCH-SET",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "OP-FOR-TYPE",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "PROVENANCE",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "SET-ARG",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "UNIT-ON-A-TERM",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "UNKNOWN-MEASURE",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "VALUE-TYPE",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "WRONG-TARGET",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "test-pack",
+      "rule": "ZERO-LIMIT",
+      "severity": "error"
+    }
+  ],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "GOOD",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [],
+  "floorspecRules": "0.2",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "APPLIES-EXTENSION",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "ARG-TYPE",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "BOOLEAN-ORDER",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "COLLECTION-ALONE",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "DEFERRED-AND-BAD",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "EXTRA-ARG",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "IN-AN-AREA",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "MEMBER-OF-WHAT",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "MISSING-ARG",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "NO-SUCH-SET",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "OP-FOR-TYPE",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "PROVENANCE",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "SET-ARG",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "UNIT-ON-A-TERM",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "UNKNOWN-MEASURE",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "VALUE-TYPE",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "WRONG-TARGET",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "invalid",
+      "rule": "ZERO-LIMIT",
+      "version": "0.1.0"
+    }
+  ],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

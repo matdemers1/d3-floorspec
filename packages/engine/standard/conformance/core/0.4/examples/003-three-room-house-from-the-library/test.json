@@ -1,0 +1,11 @@
+{
+  "description": "The three-room house of examples/001, built from the US starter library 0.1.0 (library/us-starter): 2x6 exterior walls with fibre-cement siding and 2x4 partitions, a 36-inch exterior door and a 32-inch interior door, a double-hung, a fixed picture, a sliding and a casement window. Every type and every material its layers use is embedded exactly as the library publishes it, with its source, so the document is complete on its own: the walls are as thick as the library's layers, each door and window is its rough opening at the library's sill, and each clear opening is the library's generic declared value - a fixed window has none. The room finishes stay the project's own materials.",
+  "covers": [
+    "FS-CORE-8.1.3",
+    "FS-CORE-8.2.1",
+    "FS-CORE-7.4.2",
+    "FS-CORE-13.5.2",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1"
+  ]
+}

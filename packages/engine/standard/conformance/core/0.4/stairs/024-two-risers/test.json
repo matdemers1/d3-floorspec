@@ -1,0 +1,7 @@
+{
+  "description": "A straight stair of 2 risers, each 1350 mm: valid - how tall a riser may be is a code's to say, not Core's - with one tread.",
+  "covers": [
+    "FS-CORE-17.4.2",
+    "FS-CORE-17.5.1"
+  ]
+}

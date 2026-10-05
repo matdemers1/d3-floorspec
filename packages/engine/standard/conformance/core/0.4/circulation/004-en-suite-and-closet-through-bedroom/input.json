@@ -1,0 +1,250 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "D": {
+      "kind": "doorType",
+      "width": 1152000,
+      "height": 2688000
+    }
+  },
+  "junctions": {
+    "J00": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [5120000, 0]
+    },
+    "J01": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "J11": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "J02": {
+      "level": "L1",
+      "position": [0, 7680000]
+    },
+    "J12": {
+      "level": "L1",
+      "position": [5120000, 7680000]
+    },
+    "J20": {
+      "level": "L1",
+      "position": [10240000, 0]
+    },
+    "J21": {
+      "level": "L1",
+      "position": [10240000, 3840000]
+    },
+    "J22": {
+      "level": "L1",
+      "position": [10240000, 7680000]
+    },
+    "J30": {
+      "level": "L1",
+      "position": [15360000, 0]
+    },
+    "J31": {
+      "level": "L1",
+      "position": [15360000, 3840000]
+    },
+    "J32": {
+      "level": "L1",
+      "position": [15360000, 7680000]
+    }
+  },
+  "walls": {
+    "H00": {
+      "level": "L1",
+      "start": "J00",
+      "end": "J10",
+      "type": "WT"
+    },
+    "H01": {
+      "level": "L1",
+      "start": "J01",
+      "end": "J11",
+      "type": "WT"
+    },
+    "H02": {
+      "level": "L1",
+      "start": "J02",
+      "end": "J12",
+      "type": "WT"
+    },
+    "H10": {
+      "level": "L1",
+      "start": "J10",
+      "end": "J20",
+      "type": "WT"
+    },
+    "H11": {
+      "level": "L1",
+      "start": "J11",
+      "end": "J21",
+      "type": "WT"
+    },
+    "H12": {
+      "level": "L1",
+      "start": "J12",
+      "end": "J22",
+      "type": "WT"
+    },
+    "H20": {
+      "level": "L1",
+      "start": "J20",
+      "end": "J30",
+      "type": "WT"
+    },
+    "H21": {
+      "level": "L1",
+      "start": "J21",
+      "end": "J31",
+      "type": "WT"
+    },
+    "H22": {
+      "level": "L1",
+      "start": "J22",
+      "end": "J32",
+      "type": "WT"
+    },
+    "V00": {
+      "level": "L1",
+      "start": "J00",
+      "end": "J01",
+      "type": "WT"
+    },
+    "V01": {
+      "level": "L1",
+      "start": "J01",
+      "end": "J02",
+      "type": "WT"
+    },
+    "V10": {
+      "level": "L1",
+      "start": "J10",
+      "end": "J11",
+      "type": "WT"
+    },
+    "V11": {
+      "level": "L1",
+      "start": "J11",
+      "end": "J12",
+      "type": "WT"
+    },
+    "V20": {
+      "level": "L1",
+      "start": "J20",
+      "end": "J21",
+      "type": "WT"
+    },
+    "V21": {
+      "level": "L1",
+      "start": "J21",
+      "end": "J22",
+      "type": "WT"
+    },
+    "V30": {
+      "level": "L1",
+      "start": "J30",
+      "end": "J31",
+      "type": "WT"
+    },
+    "V31": {
+      "level": "L1",
+      "start": "J31",
+      "end": "J32",
+      "type": "WT"
+    }
+  },
+  "openings": {
+    "DH00": {
+      "wall": "H00",
+      "offset": 1280000,
+      "fill": "D"
+    },
+    "DV10": {
+      "wall": "V10",
+      "offset": 1280000,
+      "fill": "D"
+    },
+    "DV20": {
+      "wall": "V20",
+      "offset": 1280000,
+      "fill": "D"
+    },
+    "DH01": {
+      "wall": "H01",
+      "offset": 1280000,
+      "fill": "D"
+    },
+    "DH11": {
+      "wall": "H11",
+      "offset": 1280000,
+      "fill": "D"
+    },
+    "DH21": {
+      "wall": "H21",
+      "offset": 1280000,
+      "fill": "D"
+    }
+  },
+  "rooms": {
+    "LIV": {
+      "level": "L1",
+      "anchor": [2560000, 1920000],
+      "function": "living"
+    },
+    "BED": {
+      "level": "L1",
+      "anchor": [7680000, 1920000],
+      "function": "sleeping"
+    },
+    "BATH": {
+      "level": "L1",
+      "anchor": [12800000, 1920000],
+      "function": "bath"
+    },
+    "KIT": {
+      "level": "L1",
+      "anchor": [2560000, 5760000],
+      "function": "kitchen"
+    },
+    "CLO": {
+      "level": "L1",
+      "anchor": [7680000, 5760000],
+      "function": "storage"
+    },
+    "WIC": {
+      "level": "L1",
+      "anchor": [12800000, 5760000],
+      "function": "storage"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A border of 1450 mm, exactly half the room's depth: the centre's short edges have no length, so they do not run the way the room's do - FS-INV-703.",
+  "covers": [
+    "FS-CORE-15.4.1",
+    "FS-CORE-10.2.1"
+  ]
+}

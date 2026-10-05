@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/program/adjacency/1/weight",
+      "value": 7
+    }
+  ]
+}

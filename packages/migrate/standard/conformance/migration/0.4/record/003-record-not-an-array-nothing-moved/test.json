@@ -1,0 +1,7 @@
+{
+  "description": "The same extras, but no step moves anything: nothing is recorded, so the member is no obstacle, and it is kept as it was (20.3.2, 20.3.3).",
+  "covers": [
+    "FS-CORE-20.3.2",
+    "FS-CORE-20.3.3"
+  ]
+}

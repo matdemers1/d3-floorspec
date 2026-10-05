@@ -1,0 +1,8 @@
+{
+  "description": "A stair up to a loft, under the cathedral ceiling of the room it rises in: the ridge runs from (0, 0) to (6000 mm, 2000 mm) at 4500 mm and falls 6 in 12, and L2 has nothing over the stair. The lanes cross the ridge line - the ceiling's highest line - so it splits them; the least clearance is at the head, at the stair's south side, where the vault is lowest: 4500 mm less half of 7600000 / sqrt(40000000) mm, less 2700 mm, exact in one radicand and rounded once.",
+  "covers": [
+    "FS-CORE-17.6.1",
+    "FS-CORE-15.3.2",
+    "FS-CORE-2.2.1"
+  ]
+}

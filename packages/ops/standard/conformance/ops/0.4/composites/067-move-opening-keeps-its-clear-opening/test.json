@@ -1,0 +1,6 @@
+{
+  "description": "moveOpening moves O1 2' along its wall: only its offset changes, and its own clear opening goes with it.",
+  "covers": [
+    "FS-OPS-4.5.2"
+  ]
+}

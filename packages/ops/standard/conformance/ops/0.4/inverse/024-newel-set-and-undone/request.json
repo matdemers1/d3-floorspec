@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form/newel",
+      "value": 130048
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/minHeadroom",
+      "value": 2600960
+    }
+  ]
+}

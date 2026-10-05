@@ -1,0 +1,7 @@
+{
+  "description": "An outlet is on the courtyard wall W7: W7 cannot be removed without cascade, and FS-OPS-006 names the wall and the outlet.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-7.1.1"
+  ]
+}

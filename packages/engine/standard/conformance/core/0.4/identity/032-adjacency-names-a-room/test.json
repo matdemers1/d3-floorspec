@@ -1,0 +1,6 @@
+{
+  "description": "An adjacency names the room R1 instead of an item.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "R2",
+      "path": "/anchor",
+      "value": [-390144, 3901440]
+    },
+    {
+      "op": "moveOpening",
+      "opening": "O1",
+      "at": "6'"
+    }
+  ]
+}

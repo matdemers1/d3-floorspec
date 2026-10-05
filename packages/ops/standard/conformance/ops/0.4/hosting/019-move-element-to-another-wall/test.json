@@ -1,0 +1,6 @@
+{
+  "description": "moveElement sets the outlet's host to the east wall of the Living room, on its inner face, 1' from its start, and its fallback's level to that wall's.",
+  "covers": [
+    "FS-OPS-4.10.1"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "84f230f13f5d29eaa6b3382ef7dbe4090c62628c9065926beb9bab2117f802a9",
+  "created": ["OA", "WA"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addWall",
+      "id": "WA",
+      "level": "L1",
+      "start": "S5",
+      "end": "N5",
+      "type": "WT"
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "OA",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 1920000,
+        "wall": "WA"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "OA"
+    },
+    {
+      "op": "removeElement",
+      "id": "WA"
+    }
+  ]
+}

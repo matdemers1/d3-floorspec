@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/site"
+    }
+  ]
+}

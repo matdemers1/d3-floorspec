@@ -1,0 +1,6 @@
+{
+  "description": "setProperty gives the door type an operation and a clear opening: a pocket door, 34 inches by 79 clear.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "FS_furniture's data has \"style\" beside \"collections\", and EXT_acoustics's has no \"collections\" at all: the step moves the one member and leaves \"style\" and EXT_acoustics's data exactly as they were (20.4.1, 20.1.4).",
+  "covers": [
+    "FS-CORE-20.4.1",
+    "FS-CORE-20.1.4"
+  ]
+}

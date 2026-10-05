@@ -439,17 +439,17 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   }
   if (ceilings !== '') parts.push(el('g', { id: 'ceilings' }, ceilings));
 
-  // ── stairs (Core 0.3, 17): treads, landings, the cut line and the UP arrow ──
+  // ── stairs (Core 0.3 and 0.4, 17): treads, landings and winders, a spiral's circle and column, the cut line and the UP arrow ──
   if (scene.stairs.size) {
     let stairs = '';
     for (const [id, st] of scene.stairs) {
-      const sym = stairSymbol(st.derived, st.form);
+      const sym = stairSymbol(st.derived, st.form, st.column);
       const a = hi.has(id);
       const ink = a ? pal.accent : pal.muted;
       let g = '';
       for (const step of sym.steps)
         g += el('path', {
-          'data-step': step.landing ? 'landing' : 'tread',
+          'data-step': step.landing ? 'landing' : step.winder ? 'winder' : 'tread',
           d: ringsPath([P(step.outline)]),
           fill: step.landing ? pal.unanchored : 'none',
           stroke: ink,
@@ -460,6 +460,10 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
       if (sym.circle) {
         const c = f.P(sym.circle.centre);
         g += el('circle', { cx: c[0], cy: c[1], r: sym.circle.radius * s, fill: 'none', stroke: ink, 'stroke-width': 1 });
+      }
+      if (sym.column) {
+        const c = f.P(sym.column.centre);
+        g += el('circle', { 'data-column': id, cx: c[0], cy: c[1], r: sym.column.radius * s, fill: ink, stroke: ink, 'stroke-width': 1 });
       }
       if (sym.cut) g += el('path', { 'data-cut': id, d: linePath(f.P(sym.cut[0]), f.P(sym.cut[1])), stroke: pal.text, 'stroke-width': 1.5, fill: 'none' });
       g += arrow(sym.arrow.map(f.P), ink);

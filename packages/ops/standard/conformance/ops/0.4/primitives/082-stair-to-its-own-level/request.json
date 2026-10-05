@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/to",
+      "value": "L1"
+    }
+  ]
+}

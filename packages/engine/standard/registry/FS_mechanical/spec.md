@@ -4,7 +4,7 @@
 > FS_mechanical 0.1.0 is a **Release Candidate** (`registry/README.md`): specified, with a schema
 > and a conformance suite, and frozen unless implementations find a problem. It becomes Ratified
 > only when a second, independent implementation passes its conformance suite (FLR-REQ-092). It
-> builds on Floorspec Core 0.2 and 0.3, which are Drafts.
+> builds on Floorspec Core 0.2, 0.3 and 0.4, which are Drafts.
 
 FS_mechanical describes a house's heating, cooling, ventilation and fuel gas: the **equipment** —
 furnaces, air handlers, heat pumps, boilers, mini-splits, ventilators — the **terminals** it
@@ -44,7 +44,7 @@ every `MUST` and `MUST NOT` is exercised by the conformance suite in
 | Registry entry | `registry/FS_mechanical/extension.json` |
 | Schema | `registry/FS_mechanical/mechanical.schema.json`, published at `https://d3cloud.io/floorspec/schema/ext/FS_mechanical/0.1.0/mechanical.schema.json` |
 | Requires | nothing |
-| Core drafts | `0.2` and `0.3`: the drafts whose documents it is evaluated for (1.2) |
+| Core drafts | `0.2`, `0.3` and `0.4`: the drafts whose documents it is evaluated for (1.2) |
 | Kinds | `equipment`, `terminals`, `exhaust`, `gasAppliances` (none requires an asset or a symbol) |
 | Statement IDs | `FS-MECH-` |
 | Diagnostic codes | `FS-MECH-SCH-`, `FS-MECH-INV-`, `FS-MECH-LINT-` |
@@ -57,7 +57,7 @@ specification says; it is then also a reader that implements FS_mechanical (Core
 apply when the validator knows the version the document targets (Core §12.2) — normally because it
 is configured with this specification's registry entry.
 
-A validator that implements FS_mechanical 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"` or `"0.3"` — a Core draft this version lists (1.1) — and uses FS_mechanical at a version at which FS_mechanical is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-MECH-1.2.1 MUST}
+A validator that implements FS_mechanical 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"`, `"0.3"` or `"0.4"` — a Core draft this version lists (1.1) — and uses FS_mechanical at a version at which FS_mechanical is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-MECH-1.2.1 MUST}
 
 Such a validator MUST NOT evaluate FS_mechanical's diagnostics for a document for which Core's tiers 0 to 4 reported an error, MUST NOT evaluate its invariants (`FS-MECH-INV-`) when it reported `FS-MECH-SCH-001`, and MUST NOT evaluate its lints (`FS-MECH-LINT-`) unless the document is valid. {#FS-MECH-1.2.2 MUST NOT}
 FS_mechanical's errors are part of tier 4 (Core §10.1) and its lints part of tier 5: an `FS-MECH-`
@@ -297,5 +297,5 @@ position is on a location line; and no room otherwise.
 
 FLR-T-5.5, FLR-REQ-092 (Release Candidate until a second independent implementation), FLR-ADR-001
 (building systems are `FS_` extensions), FLR-ADR-007 (the extension model), FLR-ADR-011 (rules
-advise). Floorspec Core 0.2 and 0.3 chapters 12 and 13; FS_plumbing §2.2 (gas water heaters);
+advise). Floorspec Core 0.2, 0.3 and 0.4 chapters 12 and 13; FS_plumbing §2.2 (gas water heaters);
 FS_electrical §4.1 (switches that control exhaust fans).

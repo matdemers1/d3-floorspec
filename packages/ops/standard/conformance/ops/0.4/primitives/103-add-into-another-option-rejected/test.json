@@ -1,0 +1,7 @@
+{
+  "description": "With context.option KB, a door added in A's wall: it is in B, and refers to an element of A, so the result is invalid: FS-INV-1102.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.8.1"
+  ]
+}

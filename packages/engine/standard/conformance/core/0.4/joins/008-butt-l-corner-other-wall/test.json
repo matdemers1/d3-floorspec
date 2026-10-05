@@ -1,0 +1,7 @@
+{
+  "description": "The same corner with W2 running through instead.",
+  "covers": [
+    "FS-CORE-5.8.2",
+    "FS-CORE-5.8.4"
+  ]
+}

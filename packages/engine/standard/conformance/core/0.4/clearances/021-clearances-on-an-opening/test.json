@@ -1,0 +1,6 @@
+{
+  "description": "In this draft an opening takes its clearances from its type: an opening's own \"clearances\" is an unknown member.",
+  "covers": [
+    "FS-CORE-13.5.1"
+  ]
+}

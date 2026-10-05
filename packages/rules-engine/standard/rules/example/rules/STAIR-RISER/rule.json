@@ -1,0 +1,30 @@
+{
+  "title": "Stair risers are not too tall",
+  "citation": {
+    "code": "TEST-CODE",
+    "edition": "2024",
+    "section": "§4.1",
+    "link": "https://example.org/test-code/2024/4.1"
+  },
+  "paraphrase": "Each step of a stair rises no more than 7 inches from the one below. The rule reads the riser height Floorspec Core derives for the stair: its rise, from the floor at its foot to the floor at its head, over its riser count.",
+  "applies": {
+    "to": "stair"
+  },
+  "requirement": {
+    "measure": "stairRiserHeight",
+    "op": "<=",
+    "value": 227584
+  },
+  "severity": "mayNotMeet",
+  "provenance": {
+    "verifiedBy": "Floorspec contributors",
+    "verifiedOn": "2026-10-05",
+    "edition": "2024",
+    "method": "synthetic",
+    "certifiedBy": "Floorspec contributors",
+    "certification": "original-paraphrase-v1",
+    "review": {
+      "status": "unreviewed"
+    }
+  }
+}

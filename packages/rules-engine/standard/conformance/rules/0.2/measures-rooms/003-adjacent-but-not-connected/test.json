@@ -1,0 +1,7 @@
+{
+  "description": "The rules house without the door O2: R1 is still adjacent to the living room, no longer connected to it, and no longer reachable.",
+  "covers": [
+    "FS-RULES-5.4.1",
+    "FS-RULES-5.5.1"
+  ]
+}

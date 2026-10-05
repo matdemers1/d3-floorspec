@@ -1,0 +1,6 @@
+{
+  "description": "A request that declares `\"floorspecRules\": \"0.3\"` is FS-RULES-001: this draft is 0.2.",
+  "covers": [
+    "FS-RULES-1.1.1"
+  ]
+}

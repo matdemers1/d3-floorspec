@@ -1,0 +1,53 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "b0ffdf00dda9e6d316a1683774327cb6a21f1684522ca8311f82fe714c6c2c6b",
+  "created": ["L2", "L3", "L4"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L2",
+      "element": {
+        "building": "B1",
+        "elevation": 3456000,
+        "height": 3121152
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L3",
+      "element": {
+        "building": "B1",
+        "elevation": 6577152,
+        "height": 3511296
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L4",
+      "element": {
+        "building": "B1",
+        "elevation": -3200000,
+        "height": 3200000
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "L2"
+    },
+    {
+      "op": "removeElement",
+      "id": "L3"
+    },
+    {
+      "op": "removeElement",
+      "id": "L4"
+    }
+  ]
+}

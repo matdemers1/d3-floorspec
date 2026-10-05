@@ -1,0 +1,7 @@
+{
+  "description": "A stair has no \"nosing\" member in this draft.",
+  "covers": [
+    "FS-CORE-17.1.1",
+    "FS-CORE-1.4.1"
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "3e9cbf9fe367b91a4767b1d64f9f39172f69bd16deb2d53b4fae94dc80a40fd8",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [161920, 161920],
+        "endRight": [161920, 3678080],
+        "endLeft": [-161920, 4001920],
+        "startLeft": [-161920, -161920],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [161920, 3678080],
+        "endRight": [4958080, 3678080],
+        "endLeft": [5281920, 4001920],
+        "startLeft": [-161920, 4001920],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4958080, 3678080],
+        "endRight": [4958080, 161920],
+        "endLeft": [5281920, -161920],
+        "startLeft": [5281920, 4001920],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [4958080, 161920],
+        "endRight": [161920, 161920],
+        "endLeft": [-161920, -161920],
+        "startLeft": [5281920, -161920],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[161920, 161920], [4958080, 161920], [4958080, 3678080], [161920, 3678080]],
+        "holes": [],
+        "area": "16864065945600"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [4958080, 3678080, 3456000],
+          "min": [161920, 161920, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [4958080, 3678080, 0],
+          "min": [161920, 161920, 0]
+        }
+      }
+    },
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

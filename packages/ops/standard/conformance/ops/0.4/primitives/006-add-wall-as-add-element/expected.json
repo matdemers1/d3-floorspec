@@ -1,0 +1,28 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d8d1019d6408257c9fcfcaef9ec795ca040507fcc7f0e3f5ba2e8d503a45a75c",
+  "created": ["W5"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W5",
+      "element": {
+        "level": "L1",
+        "start": "J5",
+        "end": "J6",
+        "justification": "exteriorFace",
+        "name": "Half wall",
+        "type": "WT"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "W5"
+    }
+  ]
+}

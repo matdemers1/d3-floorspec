@@ -1,0 +1,6 @@
+{
+  "description": "Giving R1 a vaulted ceiling and a sunken floor: the inverse unsets both, and applying it gives back A exactly (1.6.1).",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "8e0dc9bd6f9e428294fc0d0e762ddaa50d3252f1333e1c907d8ba02a7806efc3",
+  "created": [],
+  "removed": ["KA", "KB", "KS", "OA", "OB", "SB", "WA"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "KS",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "optionSets",
+      "id": "KS",
+      "element": {
+        "name": "Kitchen",
+        "primary": "KA"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "KA",
+      "element": {
+        "name": "A",
+        "set": "KS"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "KB",
+      "element": {
+        "name": "B",
+        "set": "KS"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "WA",
+      "element": {
+        "level": "L1",
+        "start": "S5",
+        "end": "N5",
+        "option": "KA",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "separators",
+      "id": "SB",
+      "element": {
+        "level": "L1",
+        "start": "S4",
+        "end": "N4",
+        "option": "KB"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "OA",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 1920000,
+        "option": "KA",
+        "wall": "WA"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "OB",
+      "element": {
+        "fill": "G",
+        "offset": 640000,
+        "option": "KB",
+        "wall": "W4"
+      }
+    }
+  ]
+}

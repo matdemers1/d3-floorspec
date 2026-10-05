@@ -1,0 +1,8 @@
+{
+  "description": "The kitchen house with a second set, Deck: DA (primary) has a deck slab, DB has none - an empty option is an alternative too. The checked designs are the primary design (KA, DA), KB's (KB, DA) and DB's (KA, DB); the slab is derived in the primary design, and DB's `rooms` are the primary design's.",
+  "covers": [
+    "FS-CORE-19.5.1",
+    "FS-CORE-19.6.3",
+    "FS-CORE-19.3.1"
+  ]
+}

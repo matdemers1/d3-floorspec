@@ -1,0 +1,47 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "1b29b7e64a76fbfcbe7078fcc504340b8a8df520c723d5ad21aea10f08d343aa",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [0, -64000],
+        "endRight": [2572325, -64000],
+        "endLeft": [2547675, 64000],
+        "startLeft": [0, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [2572325, -64000],
+        "endRight": [8983769, 2500577],
+        "endLeft": [8936231, 2619423],
+        "startLeft": [2547675, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {},
+    "circulation": {},
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {},
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A window whose own clear area is more than its own clear width times height: FS-INV-306 names the opening.",
+  "covers": [
+    "FS-CORE-8.4.4",
+    "FS-CORE-10.2.1"
+  ]
+}

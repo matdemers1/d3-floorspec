@@ -1,0 +1,305 @@
+{
+  "floorspecRules": "0.2",
+  "packs": [
+    {
+      "floorspecRules": "0.2",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "SMOKE": {
+          "title": "A smoke alarm in every sleeping room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§5.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a smoke alarm in every sleeping room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "elementCount",
+            "op": ">=",
+            "value": 1,
+            "args": {
+              "extension": "FS_electrical",
+              "collection": "alarms",
+              "match": {
+                "detects": "smoke"
+              }
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "COUNT": {
+          "title": "Any alarm, by core members",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (any alarm, by core members); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "elementCount",
+            "op": ">=",
+            "value": 1,
+            "args": {
+              "extension": "FS_electrical",
+              "collection": "alarms"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "MEMBER": {
+          "title": "A panel rating",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a panel rating); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "FS_electrical",
+            "collection": "panels"
+          },
+          "requirement": {
+            "measure": "elementMember",
+            "op": ">=",
+            "value": 60,
+            "args": {
+              "name": "rating",
+              "type": "integer",
+              "unit": "A"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "PROTECTED": {
+          "title": "Protection",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (protection); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "FS_electrical",
+            "collection": "panels"
+          },
+          "requirement": {
+            "measure": "elementProtectedBy",
+            "op": "=",
+            "value": false,
+            "args": {
+              "protection": "gfci"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "CIRCUITS": {
+          "title": "A receptacle circuit",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a receptacle circuit); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "circuitCount",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "REACH": {
+          "title": "Receptacles, by core members",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (receptacles, by core members); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "receptacleReach",
+            "op": "<=",
+            "value": 11704320
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "REACH-MATCH": {
+          "title": "Receptacles of 15 A",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (receptacles of 15 a); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "receptacleReach",
+            "op": "<=",
+            "value": 11704320,
+            "args": {
+              "match": {
+                "amps": 15
+              }
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "FURNITURE": {
+          "title": "A member of an extension nobody implements",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a member of an extension nobody implements); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "EXT_furniture"
+          },
+          "requirement": {
+            "measure": "elementMember",
+            "op": "=",
+            "value": "oak",
+            "args": {
+              "name": "finish",
+              "type": "term"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "OLD-SMOKE": {
+          "title": "A smoke alarm (2021)",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2021",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a smoke alarm (2021)); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "elementCount",
+            "op": ">=",
+            "value": 1,
+            "args": {
+              "extension": "FS_electrical",
+              "collection": "alarms",
+              "match": {
+                "detects": "smoke"
+              }
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2021"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.2",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

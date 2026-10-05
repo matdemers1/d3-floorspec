@@ -1,0 +1,6 @@
+{
+  "description": "A program item ID starting with \"-\" does not match the ID pattern.",
+  "covers": [
+    "FS-CORE-3.1.3"
+  ]
+}

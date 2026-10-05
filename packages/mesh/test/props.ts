@@ -19,6 +19,7 @@ import type { Derived, FloorspecDocument } from '@floorspec/engine';
 import { area2, clip, iarea2, Rat, rpoint, type IPoint, type RPoint } from '../src/exact.js';
 import type { Kernel } from '../src/kernel.js';
 import { UNITS_PER_METRE as BU, type Box3, type HouseMesh, type MeshPart, type PartMesh } from '../src/index.js';
+import { treadOutlines } from '../src/stairs.js';
 
 const own = <T>(c: Record<string, T | undefined> | undefined, id: string): T => {
   if (!c || !Object.hasOwn(c, id)) throw new Error(`no ${id}`);
@@ -289,7 +290,9 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
     case 'stairLanding': {
       const s = own(d.stairs, p.id);
       const steps = s.steps!;
-      const pieces = steps.map((st, k) => ({ ...st, lo: k >= 2 ? steps[k - 2]!.top : s.bottom }));
+      // Tapered treads stop short of the point they meet at, and share their faces exactly (treadOutlines).
+      const outlines = treadOutlines(own(doc.stairs, p.id), s);
+      const pieces = steps.map((st, k) => ({ ...st, outline: outlines[k]!, lo: k >= 2 ? steps[k - 2]!.top : s.bottom }));
       // The pieces of this part: flights are the runs between landings, numbered from 1.
       const groups: { kind: 'stairFlight' | 'stairLanding'; n: number; pieces: typeof pieces }[] = [];
       let flights = 0;
@@ -313,9 +316,27 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
         expect(mine.min[k]).toBeGreaterThanOrEqual(xy.min[k]!);
         expect(mine.max[k]).toBeLessThanOrEqual(xy.max[k]!);
       }
-      expect(s.box.min.slice(0, 2), `${p.key}: the steps' corners are the stair's box`).toEqual(xy.min.slice(0, 2));
-      expect(s.box.max.slice(0, 2), `${p.key}: the steps' corners are the stair's box`).toEqual(xy.max.slice(0, 2));
+      // A spiral's box is its circle's (Core 17.4), which its treads' corners reach only where a nosing line points along an axis.
+      if (own(doc.stairs, p.id).form?.kind !== 'spiral') {
+        expect(s.box.min.slice(0, 2), `${p.key}: the steps' corners are the stair's box`).toEqual(xy.min.slice(0, 2));
+        expect(s.box.max.slice(0, 2), `${p.key}: the steps' corners are the stair's box`).toEqual(xy.max.slice(0, 2));
+      } else {
+        for (let k = 0; k < 2; k++) {
+          expect(xy.min[k]).toBeGreaterThanOrEqual(s.box.min[k]!);
+          expect(xy.max[k]).toBeLessThanOrEqual(s.box.max[k]!);
+        }
+      }
       return p.kind === 'stairFlight' ? { volume: new Rat(v6, 6n), box: mine, genus: 0 } : { volume6: v6, box: mine, genus: 0 };
+    }
+    case 'stairColumn': {
+      // A 32-sided prism of the spiral's column radius about its centre (a mesh is not normative), as tall as the stair.
+      const s = own(d.stairs, p.id);
+      const st = own(doc.stairs, p.id);
+      const f = st.form as { diameter: number };
+      const r = f.diameter / 2 - st.width > 0 ? f.diameter / 2 - st.width : 32_512;
+      const [cx, cy] = s.centre!;
+      const ring = Array.from({ length: 32 }, (_, i): [number, number] => [Math.round(cx + r * Math.cos((2 * Math.PI * i) / 32)), Math.round(cy + r * Math.sin((2 * Math.PI * i) / 32))]);
+      return { volume6: prism6(ring2(ring), s.top - s.bottom), box: planBox(ring, s.bottom, s.top), genus: 0 };
     }
     case 'stairBlock': {
       const b = own(d.stairs, p.id).box;

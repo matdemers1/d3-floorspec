@@ -1,0 +1,9 @@
+{
+  "description": "A spiral stair at 45 degrees turning right through 450 degrees - more than a full turn: its centre is 500 mm to its right, and its head is its foot turned clockwise about the centre by 450 degrees: in the direction F(45000000) from it, 45 + 90 - 450 degrees taken in (-180, 180]. Both, its box, and the corners of its treads, are irrational and rounded once. Its width is exactly half its diameter, which 17.2.2 allows: it has no column, its treads meet at its centre, and their narrow ends have no depth (FS-LINT-018).",
+  "covers": [
+    "FS-CORE-17.2.2",
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.7.3",
+    "FS-CORE-2.2.1"
+  ]
+}

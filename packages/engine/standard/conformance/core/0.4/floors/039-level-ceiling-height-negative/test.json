@@ -1,0 +1,6 @@
+{
+  "description": "A level whose ceilings are at -1.",
+  "covers": [
+    "FS-CORE-1.8.4"
+  ]
+}

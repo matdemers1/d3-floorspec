@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/rules/0.2/pack-rule.schema.json",
+  "$comment": "The rule-pack format (FLR-T-6.3, rules/README.md): one rule on disk, rules/<pack>/rules/<rule ID>/rule.json. It is the evaluator's rule record (rule.schema.json) with the viewer link required and the full provenance: method, the contributor's certification, the review badge or the unreviewed mark, and lint overrides. tools/build-pack.ts writes the evaluator's minimum provenance (spec/rules 3.12) from it and carries the rest in the rule's extras.packFormat.",
+  "title": "Floorspec rule on disk",
+  "description": "A rule record with its viewer link, original-paraphrase certification and full provenance.",
+  "type": "object",
+  "required": [
+    "title",
+    "citation",
+    "paraphrase",
+    "applies",
+    "requirement",
+    "severity",
+    "provenance"
+  ],
+  "properties": {
+    "title": {
+      "$ref": "defs.schema.json#/$defs/title"
+    },
+    "citation": {
+      "title": "Citation",
+      "description": "spec/rules 3.2's citation, with link required: the cited section in the publisher's free public viewer. A link only; nothing is ever fetched from it.",
+      "type": "object",
+      "required": [
+        "code",
+        "edition",
+        "section",
+        "link"
+      ],
+      "properties": {
+        "code": {
+          "$ref": "defs.schema.json#/$defs/code"
+        },
+        "edition": {
+          "$ref": "defs.schema.json#/$defs/edition"
+        },
+        "section": {
+          "$ref": "defs.schema.json#/$defs/section"
+        },
+        "link": {
+          "$ref": "defs.schema.json#/$defs/httpsUri"
+        }
+      },
+      "additionalProperties": false
+    },
+    "paraphrase": {
+      "$ref": "defs.schema.json#/$defs/text"
+    },
+    "applies": {
+      "$ref": "rule.schema.json#/properties/applies"
+    },
+    "select": {
+      "$ref": "rule.schema.json#/properties/select"
+    },
+    "requirement": {
+      "$ref": "defs.schema.json#/$defs/test"
+    },
+    "exceptions": {
+      "$ref": "rule.schema.json#/properties/exceptions"
+    },
+    "severity": {
+      "$ref": "defs.schema.json#/$defs/severity"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "extras": {
+      "type": "object",
+      "default": {},
+      "propertyNames": {
+        "not": {
+          "const": "packFormat"
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "provenance": {
+      "title": "Provenance",
+      "description": "Who verified the rule, against which edition, when and how; who wrote the paraphrase and certified it original; and whether a licensed professional reviewed it.",
+      "type": "object",
+      "required": [
+        "verifiedBy",
+        "verifiedOn",
+        "edition",
+        "method",
+        "certifiedBy",
+        "certification",
+        "review"
+      ],
+      "properties": {
+        "verifiedBy": {
+          "$ref": "defs.schema.json#/$defs/title"
+        },
+        "verifiedOn": {
+          "$ref": "defs.schema.json#/$defs/date"
+        },
+        "edition": {
+          "$ref": "defs.schema.json#/$defs/edition"
+        },
+        "method": {
+          "title": "Method",
+          "description": "How the verifier read the section: freePublicViewer - read by a person in the publisher's free public viewer; ownedCopy - read in a copy the verifier lawfully holds; synthetic - a synthetic code of an example pack. Never by automated extraction.",
+          "type": "string",
+          "enum": [
+            "freePublicViewer",
+            "ownedCopy",
+            "synthetic"
+          ]
+        },
+        "certifiedBy": {
+          "title": "Certified by",
+          "description": "The contributor who wrote the paraphrase and makes the certification.",
+          "$ref": "defs.schema.json#/$defs/title"
+        },
+        "certification": {
+          "title": "Certification",
+          "description": "The certification of rules/CONTRIBUTING.md, by version: the paraphrase, title and notes are the contributor's own original wording, and no code text, table or figure was copied or scraped.",
+          "const": "original-paraphrase-v1"
+        },
+        "review": {
+          "$ref": "#/$defs/review"
+        },
+        "note": {
+          "$ref": "defs.schema.json#/$defs/text"
+        },
+        "lintOverrides": {
+          "title": "Lint overrides",
+          "description": "A heuristic lint finding a reviewer has read and accepted, with their note. Only the verbatim heuristics can be overridden.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "check",
+              "reviewer",
+              "on",
+              "note"
+            ],
+            "properties": {
+              "check": {
+                "type": "string",
+                "enum": [
+                  "verbatim-shall",
+                  "verbatim-quote",
+                  "verbatim-sections",
+                  "verbatim-table",
+                  "verbatim-structure",
+                  "verbatim-sentence"
+                ]
+              },
+              "reviewer": {
+                "$ref": "defs.schema.json#/$defs/title"
+              },
+              "on": {
+                "$ref": "defs.schema.json#/$defs/date"
+              },
+              "note": {
+                "$ref": "defs.schema.json#/$defs/text"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "review": {
+      "title": "Review",
+      "description": "The reviewed badge (FLR-REQ-104) or the unreviewed mark (FLR-REQ-164). Exactly one.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "unreviewed"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "status",
+            "by",
+            "on",
+            "credential"
+          ],
+          "properties": {
+            "status": {
+              "const": "reviewed"
+            },
+            "by": {
+              "$ref": "defs.schema.json#/$defs/title"
+            },
+            "on": {
+              "$ref": "defs.schema.json#/$defs/date"
+            },
+            "credential": {
+              "title": "Credential",
+              "description": "The reviewer's licence: profession and jurisdiction, \"Licensed architect (ME)\".",
+              "$ref": "defs.schema.json#/$defs/title"
+            },
+            "scope": {
+              "title": "Scope",
+              "description": "What the reviewer looked at: the paraphrase, the thresholds, the applicability, the fixtures.",
+              "$ref": "defs.schema.json#/$defs/text"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

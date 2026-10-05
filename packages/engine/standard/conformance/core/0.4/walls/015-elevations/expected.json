@@ -1,0 +1,71 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "769ed3d7bd6cd45df7740a7e00aa3c20ae2bab92ba0d430d01d8d79a584b778d",
+  "derived": {
+    "walls": {
+      "WA": {
+        "startRight": [0, -64000],
+        "endRight": [2560000, -64000],
+        "endLeft": [2560000, 64000],
+        "startLeft": [0, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WB": {
+        "startRight": [5120000, -64000],
+        "endRight": [7680000, -64000],
+        "endLeft": [7680000, 64000],
+        "startLeft": [5120000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3584000
+      },
+      "WC": {
+        "startRight": [10240000, -64000],
+        "endRight": [12800000, -64000],
+        "endLeft": [12800000, 64000],
+        "startLeft": [10240000, 64000],
+        "baseElevation": 128000,
+        "topElevation": 1664000
+      },
+      "WD": {
+        "startRight": [15360000, -64000],
+        "endRight": [17920000, -64000],
+        "endLeft": [17920000, 64000],
+        "startLeft": [15360000, 64000],
+        "baseElevation": 3840000,
+        "topElevation": 4992000
+      },
+      "WE": {
+        "startRight": [20480000, -64000],
+        "endRight": [23040000, -64000],
+        "endLeft": [23040000, 64000],
+        "startLeft": [20480000, 64000],
+        "baseElevation": -384000,
+        "topElevation": 3840000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {},
+    "circulation": {},
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {},
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

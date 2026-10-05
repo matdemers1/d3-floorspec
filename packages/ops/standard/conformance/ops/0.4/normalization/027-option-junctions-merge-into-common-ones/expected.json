@@ -1,0 +1,34 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "aefb67239c4956b497bb76b42f3b3a807500fffa4e05f354932201da7f6dec7e",
+  "created": ["SB"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "JX",
+      "level": "L1",
+      "position": [5120000, 0]
+    },
+    {
+      "op": "addJunction",
+      "id": "JY",
+      "level": "L1",
+      "position": [5120000, 5120000]
+    },
+    {
+      "op": "addSeparator",
+      "id": "SB",
+      "level": "L1",
+      "start": "JX",
+      "end": "JY"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "SB"
+    }
+  ]
+}

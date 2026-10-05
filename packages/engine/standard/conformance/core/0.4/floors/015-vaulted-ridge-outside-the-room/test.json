@@ -1,0 +1,7 @@
+{
+  "description": "A vault whose ridge runs 1 m south of the room, at 4000 mm: the ridge line meets no part of the room, so the high is not 4000 mm but the ceiling at the room's south side, 1050 mm from the ridge - 3475 mm - and the low is at its north side, 3950 mm away: 2025 mm.",
+  "covers": [
+    "FS-CORE-15.3.2",
+    "FS-CORE-15.5.1"
+  ]
+}

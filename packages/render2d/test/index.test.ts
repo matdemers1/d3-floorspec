@@ -399,11 +399,24 @@ describe('Core 0.3: stairs and roofs', () => {
     expect(renderPlan(d, { level: 'L1' })).toBe(svg);
   });
 
-  it('draws a spiral stair as its circle and box, since its steps are not derived', () => {
+  it('draws a spiral stair: its tapered treads, its circle and its column (Core 0.4, 17.7)', () => {
     const svg = renderPlan(stairCase('016-spiral'), { level: 'L1' });
     expect(svg).toContain('data-form="spiral"');
-    expect(svg).toContain('<circle');
-    expect(svg).not.toContain('data-step=');
+    expect(svg.match(/data-step="winder"/g)).toHaveLength(12);
+    expect(svg).toContain('data-column="ST1"');
+    expect(svg).toContain('data-arrow="up"');
+    expect(svg).toContain('>UP</text>');
+  });
+
+  it('draws a winder stair: its first flight, three winders around the newel, its second flight, the cut and UP', () => {
+    const d = JSON.parse(readFileSync(new URL('../../engine/standard/conformance/core/0.4/stairs/050-winder-with-newel/input.json', import.meta.url), 'utf8')) as Record<string, unknown>;
+    const svg = renderPlan(d, { level: 'L1' });
+    expect(svg).toContain('data-form="winder"');
+    expect(svg.match(/data-step="winder"/g)).toHaveLength(3);
+    expect(svg.match(/data-step="tread"/g)).toHaveLength(10);
+    expect(svg).toContain('data-cut="ST1"');
+    expect(svg).not.toContain('data-column=');
+    expect(svg).not.toContain('stroke-dasharray="6 3"');
   });
 
   it('draws a roof only on the roof layer: the eave dashed, ridge and hips, gable ends heavier', () => {

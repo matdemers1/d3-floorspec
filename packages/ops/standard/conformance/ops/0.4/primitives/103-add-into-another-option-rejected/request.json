@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "OX",
+      "element": {
+        "wall": "WA",
+        "offset": 384000,
+        "fill": "T-door-36"
+      }
+    }
+  ],
+  "context": {
+    "option": "KB"
+  }
+}

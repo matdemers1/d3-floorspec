@@ -1,0 +1,7 @@
+{
+  "description": "A document that declares \"0.1\" with a material's roughness, which 0.3 added (1.2.8).",
+  "covers": [
+    "FS-CORE-1.2.8",
+    "FS-CORE-18.1.1"
+  ]
+}

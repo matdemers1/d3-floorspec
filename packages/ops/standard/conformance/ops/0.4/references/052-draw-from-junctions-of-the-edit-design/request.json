@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "drawSeparator",
+      "id": "SB",
+      "level": "L1",
+      "from": [5120000, 0],
+      "to": [5120000, 5120000]
+    }
+  ],
+  "context": {
+    "option": "KB"
+  }
+}

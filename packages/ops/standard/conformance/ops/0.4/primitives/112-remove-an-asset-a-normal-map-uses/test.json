@@ -1,0 +1,6 @@
+{
+  "description": "Removing the tile's normal map asset is blocked by the material whose texture names it (2.2): every map refers to its asset.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

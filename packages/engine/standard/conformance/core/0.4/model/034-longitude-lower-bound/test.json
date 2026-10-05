@@ -1,0 +1,6 @@
+{
+  "description": "A longitude of -180,000,000 is excluded (180,000,000 is the same meridian and is the one included).",
+  "covers": [
+    "FS-CORE-1.8.2"
+  ]
+}

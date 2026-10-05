@@ -1,0 +1,6 @@
+{
+  "description": "A clear area of 2^53 square base units, one more than an area may be.",
+  "covers": [
+    "FS-CORE-8.4.3"
+  ]
+}

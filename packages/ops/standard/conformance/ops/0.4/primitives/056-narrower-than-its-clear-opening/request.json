@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "O1",
+      "path": "/width",
+      "value": 975360
+    }
+  ]
+}

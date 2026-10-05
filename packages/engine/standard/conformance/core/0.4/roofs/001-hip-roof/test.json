@@ -1,0 +1,12 @@
+{
+  "description": "A hip roof over the standard room: every edge of its footprint slopes at 6 in 12 and overhangs 300 mm, so its eave outline is 4700 mm by 3700 mm at the level's 2700 mm. Its ridge runs 1000 mm along the long axis, 1850 mm from either long eave - 925 mm higher, at 3625 mm, its high - and four hips run from its ends to the corners: two trapezoids and two triangles.",
+  "covers": [
+    "FS-CORE-16.5.1",
+    "FS-CORE-16.4.1",
+    "FS-CORE-16.3.1",
+    "FS-CORE-16.2.2",
+    "FS-CORE-16.2.3",
+    "FS-CORE-16.1.2",
+    "FS-CORE-9.2.1"
+  ]
+}

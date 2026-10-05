@@ -1,0 +1,28 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/edges/0/gable",
+      "value": true
+    },
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/edges/1/gable",
+      "value": true
+    },
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/edges/2/gable",
+      "value": true
+    },
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/edges/3/gable",
+      "value": true
+    }
+  ]
+}

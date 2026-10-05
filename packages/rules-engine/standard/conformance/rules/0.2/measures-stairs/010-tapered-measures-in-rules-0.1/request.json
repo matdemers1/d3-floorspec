@@ -1,0 +1,112 @@
+{
+  "floorspecRules": "0.2",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "WINDER-WALKLINE": {
+          "title": "Winders at least 10 in deep at the walkline",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§4.5"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (winders at least 10 in deep at the walkline); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair",
+            "where": {
+              "measure": "stairForm",
+              "op": "=",
+              "value": "winder"
+            }
+          },
+          "requirement": {
+            "measure": "stairWalklineGoing",
+            "op": ">=",
+            "value": 325120
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "WINDER-NARROW": {
+          "title": "Winders at least 6 in deep at the narrow end",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§4.6"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (winders at least 6 in deep at the narrow end); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair",
+            "where": {
+              "measure": "stairForm",
+              "op": "=",
+              "value": "winder"
+            }
+          },
+          "requirement": {
+            "measure": "stairNarrowGoing",
+            "op": ">=",
+            "value": 195072
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "SPIRAL-WIDTH": {
+          "title": "Spiral stairs 26 in wide",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§4.7"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (spiral stairs 26 in wide); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair",
+            "where": {
+              "measure": "stairForm",
+              "op": "=",
+              "value": "spiral"
+            }
+          },
+          "requirement": {
+            "measure": "stairWidth",
+            "op": ">=",
+            "value": 845312
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.2",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

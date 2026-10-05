@@ -1,0 +1,7 @@
+{
+  "description": "Three amendments: one with no date withdraws SMOKE (\"withdrawn\"); one effective 2027-01-01, after the profile's asOf 2026-10-04, would withdraw ESCAPE but does not apply yet, so ESCAPE is evaluated; and one withdraws a rule the pack does not have and a rule of a pack that is not given - FS-RULES-011 for each. An amendment that does not apply is not checked.",
+  "covers": [
+    "FS-RULES-10.5.1",
+    "FS-RULES-11.1.1"
+  ]
+}

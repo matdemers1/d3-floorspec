@@ -1,0 +1,7 @@
+{
+  "description": "A clear area written with a fraction is not an integer.",
+  "covers": [
+    "FS-CORE-8.4.3",
+    "FS-CORE-2.1.1"
+  ]
+}

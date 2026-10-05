@@ -1,0 +1,61 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "O4",
+        "envelope": "swing"
+      },
+      "measure": "envelopePurpose"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "O4",
+        "envelope": "swing"
+      },
+      "measure": "envelopeObstructions"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "O4",
+        "envelope": "swing"
+      },
+      "measure": "clearDepthInFront",
+      "args": {
+        "limit": 3901440
+      }
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "O4",
+        "envelope": "swing"
+      },
+      "measure": "envelopeOverlaps"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X2",
+        "envelope": "service"
+      },
+      "measure": "envelopeOverlaps",
+      "args": {
+        "purpose": "swing"
+      }
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X2",
+        "envelope": "service"
+      },
+      "measure": "envelopeOverlaps",
+      "args": {
+        "purpose": "workingSpace"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "addWall's start and end are references: \"start of W2\" is J2, \"end of W2\" is J3 - a second wall between the same junctions, which the result rejects (FS-INV-103).",
+  "covers": [
+    "FS-OPS-2.1.2",
+    "FS-OPS-3.3.1"
+  ]
+}

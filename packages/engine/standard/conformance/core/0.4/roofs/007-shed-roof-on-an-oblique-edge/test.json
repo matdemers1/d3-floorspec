@@ -1,0 +1,8 @@
+{
+  "description": "A shed roof over a five-sided footprint whose sloped edge is oblique - from (4 m, 3 m) to (2 m, 4 m), falling north-east - with its other edges gables, the outline wholly on its inner side: each vertex's elevation is its distance from the edge's line, an integer over the square root of 5 m², times 6 / 12, exact and rounded once.",
+  "covers": [
+    "FS-CORE-16.5.1",
+    "FS-CORE-16.4.1",
+    "FS-CORE-2.2.1"
+  ]
+}

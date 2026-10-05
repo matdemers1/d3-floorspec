@@ -1,0 +1,8 @@
+{
+  "description": "A program item whose function is an extension term of an extension not in extensionsUsed: FS-INV-006 names the item.",
+  "covers": [
+    "FS-CORE-11.1.2",
+    "FS-CORE-4.2.1",
+    "FS-CORE-10.2.1"
+  ]
+}

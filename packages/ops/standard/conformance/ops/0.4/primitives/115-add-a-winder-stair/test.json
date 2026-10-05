@@ -1,0 +1,7 @@
+{
+  "description": "addElement adds a quarter-turn winder stair with a newel to a Core 0.4 document: the result is valid, and its three winders are derived between its two flights.",
+  "covers": [
+    "FS-OPS-2.1.1",
+    "FS-OPS-1.3.1"
+  ]
+}

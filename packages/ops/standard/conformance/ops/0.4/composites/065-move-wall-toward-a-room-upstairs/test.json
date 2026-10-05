@@ -1,0 +1,7 @@
+{
+  "description": "\"toward\" names the Loft, on L2: its face is not a face of W1's level, so it is on neither side of W1 - FS-OPS-008, naming the wall.",
+  "covers": [
+    "FS-OPS-4.2.1",
+    "FS-OPS-7.1.1"
+  ]
+}

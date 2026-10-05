@@ -1,0 +1,7 @@
+{
+  "description": "The Phase 1 exit demo as Core 0.1 published it (core/0.1/examples/001-three-room-house), migrated to 0.4: it declares \"0.4\" and is otherwise byte for byte the document, members sorted; a reader of 0.4 reads both alike (20.1.3, 20.6.1).",
+  "covers": [
+    "FS-CORE-20.1.3",
+    "FS-CORE-20.6.1"
+  ]
+}

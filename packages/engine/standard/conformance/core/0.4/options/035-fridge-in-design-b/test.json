@@ -1,0 +1,8 @@
+{
+  "description": "The fridges, deriving B's design: B's fridge, and not A's.",
+  "covers": [
+    "FS-CORE-19.3.1",
+    "FS-CORE-19.6.1",
+    "FS-CORE-12.6.2"
+  ]
+}

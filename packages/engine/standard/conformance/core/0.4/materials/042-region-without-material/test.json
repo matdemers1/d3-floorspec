@@ -1,0 +1,6 @@
+{
+  "description": "A region without its material.",
+  "covers": [
+    "FS-CORE-18.5.1"
+  ]
+}

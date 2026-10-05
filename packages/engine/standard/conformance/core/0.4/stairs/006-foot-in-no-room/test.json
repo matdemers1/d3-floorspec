@@ -1,0 +1,6 @@
+{
+  "description": "A stair whose position, 30 mm east of L1's west wall's location line, is in that wall's thickness - in no room - and whose head, on the well's east separator at (3280 mm, 600 mm), is in R2: its bottom is L1's elevation, it has no footRoom member, and it derives everything else.",
+  "covers": [
+    "FS-CORE-17.4.3"
+  ]
+}

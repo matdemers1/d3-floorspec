@@ -3,7 +3,11 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { RulesCase } from './suite.js';
 
-export const SUITE = join(import.meta.dirname, '..', 'standard', 'conformance', 'rules', '0.1');
+export const SUITES = {
+  '0.1': join(import.meta.dirname, '..', 'standard', 'conformance', 'rules', '0.1'),
+  '0.2': join(import.meta.dirname, '..', 'standard', 'conformance', 'rules', '0.2'),
+} as const;
+export const SUITE = SUITES['0.1'];
 
 /** Every test directory of the suite (one holding test.json), relative to it, sorted. */
 export function listCases(root = SUITE): string[] {
@@ -21,11 +25,12 @@ export function listCases(root = SUITE): string[] {
 
 const bytes = (p: string): Uint8Array | null => (existsSync(p) ? new Uint8Array(readFileSync(p)) : null);
 
-export function loadCase(name: string, root = SUITE): RulesCase {
+export function loadCase(name: string, root = SUITE, rules: '0.1' | '0.2' = '0.1'): RulesCase {
   const dir = join(root, name);
   const measures = join(dir, 'measures.json');
   return {
     name,
+    rules,
     input: bytes(join(dir, 'input.json'))!,
     registry: bytes(join(dir, 'registry.json')),
     request: bytes(join(dir, 'request.json')),

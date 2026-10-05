@@ -1,0 +1,8 @@
+{
+  "description": "A window type 1200 mm high whose clear opening is 1201 mm high: FS-INV-307 for the type; the window that fills it is 1200 mm high too, so FS-INV-305.",
+  "covers": [
+    "FS-CORE-8.4.5",
+    "FS-CORE-7.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

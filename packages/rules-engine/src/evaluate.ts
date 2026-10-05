@@ -1,7 +1,8 @@
 /**
- * The evaluator of Floorspec Rules 0.1 (Rules 0.2: the evaluator class): a document, the
- * extensions it implements and its known extensions, and an evaluation request in; the report of
- * chapter 9 out. The steps are those of 1.3, in order.
+ * The evaluator of Floorspec Rules 0.2 — and, with `{ rules: '0.1' }`, of Rules 0.1 as published
+ * (Rules 0.2: the evaluator class): a document, the extensions it implements and its known
+ * extensions, and an evaluation request in; the report of chapter 9 out. The steps are those of 1.3,
+ * in order. An evaluator of 0.2 reads the document as Core 0.4 does, of 0.1 as Core 0.3 does (1.2).
  *
  * Evaluation is pure (1.4): nothing here reads a clock, the environment or anything but its
  * arguments, and the order in which a request lists packs or a pack lists rules changes nothing.
@@ -23,7 +24,7 @@ import { Evaluator, cmpTarget } from './evaluation.js';
 import { measureFor } from './measures/library.js';
 import { argsOk } from './measures/measure.js';
 import { cmpStr, Model } from './model.js';
-import { assures, DEFAULT_PROFILE, diag, isPack, isRequest, NOTICE, packText, profileOk } from './structure.js';
+import { assures, CURRENT_RULES, defaultProfileOf, diag, isPack, isRequest, NOTICE, packText, profileOk } from './structure.js';
 import type {
   EvaluatedRule,
   Finding,
@@ -36,6 +37,7 @@ import type {
   ReportCoverageEntry,
   Request,
   RulesDiagnostic,
+  RulesDraft,
   Units,
 } from './types.js';
 import { typeRule } from './typing.js';
@@ -55,6 +57,12 @@ export interface EvaluateOptions {
    * document (1.2). The engine's `OFFICIAL_EXTENSIONS` are the official entries.
    */
   readonly knownExtensions?: ValidateOptions['knownExtensions'];
+  /**
+   * The draft of Floorspec Rules to evaluate as: `'0.2'`, the default, reads requests, packs and
+   * profiles of 0.2 and documents as a Core 0.4 reader; `'0.1'` is Rules 0.1 exactly as published —
+   * 0.1's inputs, documents read as a Core 0.3 reader, and no stair measure 0.2 adds.
+   */
+  readonly rules?: RulesDraft;
 }
 
 // ── the request as JSON (1.1) ─────────────────────────────────────────────────
@@ -103,8 +111,8 @@ export const applyingAmendments = (profile: Profile): NonNullable<Profile['amend
 
 // ── the report (9.1, 9.7, 9.8) ─────────────────────────────────────────────────
 
-function report(members: Partial<Report>): Report {
-  return { floorspecRules: '0.1', notice: NOTICE, diagnostics: [], evaluated: [], notEvaluated: [], coverage: [], findings: [], ...members };
+function report(draft: RulesDraft, members: Partial<Report>): Report {
+  return { floorspecRules: draft, notice: NOTICE, diagnostics: [], evaluated: [], notEvaluated: [], coverage: [], findings: [], ...members };
 }
 
 /** An absent member sorts first; integers numerically, strings by UTF-16 code units (9.7). */
@@ -142,6 +150,7 @@ export function serialize(value: Report | { results: MeasureResult[] }): string 
  */
 function readDocument(document: Input, units: Units, options: EvaluateOptions, design?: unknown): { model: Model; hash: string } | undefined {
   const ev = evaluateDocument(document, {
+    core: (options.rules ?? CURRENT_RULES) === '0.1' ? '0.3' : '0.4',
     extensions: options.extensions ?? OFFICIAL_EXTENSION_NAMES,
     ...(options.knownExtensions !== undefined && { knownExtensions: options.knownExtensions }),
     ...(design !== undefined && { design }),
@@ -159,33 +168,34 @@ function readDocument(document: Input, units: Units, options: EvaluateOptions, d
  * request may each be a JSON text (a string or UTF-8 bytes) or an already-parsed value.
  */
 export function evaluate(document: Input, request: Input, options: EvaluateOptions = {}): Report {
+  const draft = options.rules ?? CURRENT_RULES;
   // 1. The request.
   let req: unknown;
   if (typeof request === 'string' || request instanceof Uint8Array) {
     const r = readJson(request);
-    if (!r.ok) return report({ diagnostics: [diag('FS-RULES-001')] });
+    if (!r.ok) return report(draft, { diagnostics: [diag('FS-RULES-001')] });
     req = r.value;
   } else req = request;
-  if (!isRequest(req)) return report({ diagnostics: [diag('FS-RULES-001')] });
+  if (!isRequest(req, draft)) return report(draft, { diagnostics: [diag('FS-RULES-001')] });
   const units: Units = req.units ?? 'imperial';
 
   // 2. The profile — the request's, or the default (10.6).
-  const profile: unknown = Object.hasOwn(req, 'profile') ? req.profile : DEFAULT_PROFILE;
-  if (!profileOk(profile)) return report({ units, diagnostics: [diag('FS-RULES-002')] });
+  const profile: unknown = Object.hasOwn(req, 'profile') ? req.profile : defaultProfileOf(draft);
+  if (!profileOk(profile, draft)) return report(draft, { units, diagnostics: [diag('FS-RULES-002')] });
 
   // 3. The document, in the request's design (1.2.2).
   const doc = readDocument(document, units, options, req.design);
-  if (doc === undefined) return report({ units, profile: profile.name, diagnostics: [diag('FS-RULES-003')] });
-  return evaluateValid(doc.model, doc.hash, req, profile);
+  if (doc === undefined) return report(draft, { units, profile: profile.name, diagnostics: [diag('FS-RULES-003')] });
+  return evaluateValid(doc.model, doc.hash, req, profile, draft);
 }
 
-function evaluateValid(model: Model, hash: string, req: Request, profile: Profile): Report {
+function evaluateValid(model: Model, hash: string, req: Request, profile: Profile, draft: RulesDraft): Report {
   const ds: RulesDiagnostic[] = [];
   // 4. The packs: the schema, then shared names and wording among those that match it.
   const packs = req.packs;
   const valid: number[] = [];
   packs.forEach((p, i) => {
-    if (isPack(p)) valid.push(i);
+    if (isPack(p, draft)) valid.push(i);
     else ds.push(diag('FS-RULES-004', { packIndex: i }));
   });
   const usableIdx = new Set(valid);
@@ -234,7 +244,7 @@ function evaluateValid(model: Model, hash: string, req: Request, profile: Profil
         notEvaluated.push({ ...base, reason: 'profile' });
         continue;
       }
-      const typing = typeRule(rule);
+      const typing = typeRule(rule, draft);
       if (!typing.ok) {
         ds.push(diag('FS-RULES-007', { pack: p.name, rule: ruleId }));
         notEvaluated.push({ ...base, reason: 'invalid' });
@@ -265,7 +275,7 @@ function evaluateValid(model: Model, hash: string, req: Request, profile: Profil
     }
     if (selected.has(p)) for (const cv of p.coverage ?? []) if (inForce.get(cv.code) === cv.edition) coverage.push({ pack: p.name, ...cv });
   }
-  return report({
+  return report(draft, {
     units: req.units ?? 'imperial',
     profile: profile.name,
     hash,
@@ -285,12 +295,13 @@ function evaluateValid(model: Model, hash: string, req: Request, profile: Profil
  * measure of its target's kind or gives it arguments it does not take.
  */
 export function callMeasures(document: Input, calls: { units?: Units; calls: readonly MeasureCall[] }, options: EvaluateOptions = {}): { results: MeasureResult[] } {
+  const draft = options.rules ?? CURRENT_RULES;
   const doc = readDocument(document, calls.units ?? 'imperial', options);
   if (doc === undefined) throw new Error('callMeasures: the document is not valid');
   const ev = new Evaluator(doc.model);
   return {
     results: calls.calls.map((c) => {
-      const m = measureFor(c.measure, c.target.kind);
+      const m = measureFor(c.measure, c.target.kind, draft);
       const args = c.args ?? {};
       if (m === undefined || !argsOk(m, args)) throw new Error(`callMeasures: ${c.measure} on a ${c.target.kind} with ${JSON.stringify(args)} is not a measure call`);
       return ev.result(c.measure, c.target, args).result;

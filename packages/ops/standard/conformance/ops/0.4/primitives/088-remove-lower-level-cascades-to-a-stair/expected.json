@@ -1,0 +1,129 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "dfbaa04776359344c2e69ad019a3493e38927743185b725c0c84d292b4cbe6b0",
+  "created": [],
+  "removed": ["J1", "J2", "J3", "J4", "L1", "R1", "ST1", "W1", "W2", "W3", "W4"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "L1",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L1",
+      "element": {
+        "building": "B1",
+        "elevation": 0,
+        "height": 3456000
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "junctions",
+      "id": "J1",
+      "element": {
+        "level": "L1",
+        "position": [0, 0]
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "junctions",
+      "id": "J2",
+      "element": {
+        "level": "L1",
+        "position": [0, 3901440]
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "junctions",
+      "id": "J3",
+      "element": {
+        "level": "L1",
+        "position": [4681728, 3901440]
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "junctions",
+      "id": "J4",
+      "element": {
+        "level": "L1",
+        "position": [4681728, 0]
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W1",
+      "element": {
+        "level": "L1",
+        "start": "J1",
+        "end": "J2",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W2",
+      "element": {
+        "level": "L1",
+        "start": "J2",
+        "end": "J3",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W3",
+      "element": {
+        "level": "L1",
+        "start": "J3",
+        "end": "J4",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W4",
+      "element": {
+        "level": "L1",
+        "start": "J4",
+        "end": "J1",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "stairs",
+      "id": "ST1",
+      "element": {
+        "level": "L1",
+        "position": [390144, 780288],
+        "to": "L2",
+        "risers": 14,
+        "tread": 292608,
+        "width": 1170432
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R1",
+      "element": {
+        "level": "L1",
+        "anchor": [2340864, 1950720],
+        "name": "Living"
+      }
+    }
+  ]
+}

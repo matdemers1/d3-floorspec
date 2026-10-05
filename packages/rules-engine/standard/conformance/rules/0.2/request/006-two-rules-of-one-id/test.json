@@ -1,0 +1,6 @@
+{
+  "description": "A pack whose `rules` object names SMOKE twice makes the request a JSON text with a duplicate member name, which is not well formed (Core 9.1.2): FS-RULES-001, and nothing is evaluated.",
+  "covers": [
+    "FS-RULES-1.1.1"
+  ]
+}

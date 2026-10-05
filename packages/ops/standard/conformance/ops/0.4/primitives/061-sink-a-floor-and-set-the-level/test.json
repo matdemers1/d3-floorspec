@@ -1,0 +1,6 @@
+{
+  "description": "setProperty sinks R1's floor 6\" and gives L1 300 mm floors and 2400 mm ceilings: R1's floor runs from -6\" down 300 mm, and its ceiling is at 2400 mm.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

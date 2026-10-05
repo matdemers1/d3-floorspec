@@ -1,0 +1,7 @@
+{
+  "description": "The same outlet on W1's interior (right) face: origin 50 mm east of the location line, facing east (0).",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.4.1"
+  ]
+}

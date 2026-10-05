@@ -1,0 +1,6 @@
+{
+  "description": "\"batch\" is an operation object, not an array of them.",
+  "covers": [
+    "FS-OPS-1.1.3"
+  ]
+}

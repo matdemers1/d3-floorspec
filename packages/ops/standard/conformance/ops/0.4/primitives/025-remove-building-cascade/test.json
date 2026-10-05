@@ -1,0 +1,6 @@
+{
+  "description": "Removing building B2 with cascade takes its level L2 and everything L2 takes.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

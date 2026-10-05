@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-1102",
+      "severity": "error",
+      "elements": ["S4", "W7"]
+    },
+    {
+      "code": "FS-INV-1102",
+      "severity": "error",
+      "elements": ["S4", "W8"]
+    }
+  ]
+}

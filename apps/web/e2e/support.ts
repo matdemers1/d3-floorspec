@@ -15,7 +15,7 @@ export interface Doc {
   rooms?: Record<string, { name?: string; anchor?: [number, number]; ceiling?: { kind: string } }>;
   slabs?: Record<string, { level: string; boundary: [number, number][]; thickness: number; purpose?: string }>;
   roofs?: Record<string, { level: string; footprint: [number, number][]; pitch?: { rise: number; run: number }; overhang?: number; edges?: Record<string, unknown> }>;
-  stairs?: Record<string, { level: string; to: string; position: [number, number]; rotation?: number; form?: { kind: string; turn?: string }; maxRiser?: number; risers?: number }>;
+  stairs?: Record<string, { level: string; to: string; position: [number, number]; rotation?: number; form?: { kind: string; turn?: string; newel?: number; diameter?: number; sweep?: number }; maxRiser?: number; risers?: number; minHeadroom?: number }>;
   types?: Record<string, { kind: string; name?: string; operation?: string; clearOpening?: { width: number; height: number; area?: number } }>;
 }
 

@@ -1,0 +1,6 @@
+{
+  "description": "A window on each wall of the box, each 1' toward north or east: W1 runs north and W2 east, so O1 and O2 move toward their walls' ends (4' to 5'); W3 runs south and W4 west, so O3 and O4 move toward their walls' starts (4' to 3').",
+  "covers": [
+    "FS-OPS-4.5.2"
+  ]
+}

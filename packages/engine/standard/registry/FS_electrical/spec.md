@@ -4,7 +4,7 @@
 > FS_electrical 0.1.0 is a **Release Candidate** (`registry/README.md`): specified, with a schema
 > and a conformance suite, and frozen unless implementations find a problem. It becomes Ratified
 > only when a second, independent implementation passes its conformance suite (FLR-REQ-092). It
-> builds on Floorspec Core 0.2 and 0.3, which are Drafts.
+> builds on Floorspec Core 0.2, 0.3 and 0.4, which are Drafts.
 
 FS_electrical describes a house's electrical system: the **panels** that distribute power, the
 **circuits** that leave them, and what those circuits feed — **receptacles**, **lights**, **smoke
@@ -45,7 +45,7 @@ every `MUST` and `MUST NOT` is exercised by the conformance suite in
 | Registry entry | `registry/FS_electrical/extension.json` |
 | Schema | `registry/FS_electrical/electrical.schema.json`, published at `https://d3cloud.io/floorspec/schema/ext/FS_electrical/0.1.0/electrical.schema.json` |
 | Requires | nothing |
-| Core drafts | `0.2` and `0.3`: the drafts whose documents it is evaluated for (1.2) |
+| Core drafts | `0.2`, `0.3` and `0.4`: the drafts whose documents it is evaluated for (1.2) |
 | Kinds | `panels`, `receptacles`, `switches`, `lights`, `alarms`, `evChargers` (none requires an asset or a symbol) |
 | Statement IDs | `FS-ELEC-` |
 | Diagnostic codes | `FS-ELEC-SCH-`, `FS-ELEC-INV-`, `FS-ELEC-LINT-` |
@@ -62,7 +62,7 @@ FS_electrical uses them the same way: its rules apply when the validator knows t
 document targets — normally because the validator is configured with this specification's registry
 entry.
 
-A validator that implements FS_electrical 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"` or `"0.3"` — a Core draft this version lists (1.1) — and uses FS_electrical at a version at which FS_electrical is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-ELEC-1.2.1 MUST}
+A validator that implements FS_electrical 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"`, `"0.3"` or `"0.4"` — a Core draft this version lists (1.1) — and uses FS_electrical at a version at which FS_electrical is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-ELEC-1.2.1 MUST}
 
 Such a validator MUST NOT evaluate FS_electrical's diagnostics for a document for which Core's tiers 0 to 4 reported an error, MUST NOT evaluate its invariants (`FS-ELEC-INV-`) when it reported `FS-ELEC-SCH-001`, and MUST NOT evaluate its lints (`FS-ELEC-LINT-`) unless the document is valid. {#FS-ELEC-1.2.2 MUST NOT}
 FS_electrical's diagnostics are therefore part of tier 4 (Core §10.1) when they are errors, and of
@@ -421,6 +421,6 @@ from.
 
 FLR-REQ-086 (what FS_electrical models), FLR-REQ-092 (Release Candidate until a second independent
 implementation), FLR-ADR-001 (building systems are `FS_` extensions), FLR-ADR-007 (the extension
-model), FLR-ADR-011 (rules advise; findings never say a design meets a code). Floorspec Core 0.2 and 0.3
+model), FLR-ADR-011 (rules advise; findings never say a design meets a code). Floorspec Core 0.2, 0.3 and 0.4
 chapters 12 (extensions) and 13 (hosting and clearances); Floorspec Ops 0.2 §2.7 (hosted elements
 follow their hosts).

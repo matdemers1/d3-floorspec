@@ -1,0 +1,7 @@
+{
+  "description": "A cyclic registry and a document that is not JSON: configuration is evaluated before parsing, and only FS-CFG-001 is reported.",
+  "covers": [
+    "FS-CORE-12.2.2",
+    "FS-CORE-10.3.1"
+  ]
+}

@@ -1,0 +1,337 @@
+{
+    "floorspec": "0.4",
+    "project": {
+        "name": "Three-room house",
+        "extras": {}
+    },
+    "site": {
+        "trueNorth": -12500000,
+        "location": {
+            "latitude": 42360100,
+            "longitude": -71058900
+        }
+    },
+    "buildings": {
+        "HOUSE": {
+            "name": "House"
+        }
+    },
+    "levels": {
+        "MAIN": {
+            "name": "Main floor",
+            "building": "HOUSE",
+            "elevation": 0,
+            "height": 3511296
+        }
+    },
+    "walls": {
+        "WW": {
+            "level": "MAIN",
+            "start": "C1",
+            "end": "C2",
+            "type": "EXT26",
+            "justification": "coreFace",
+            "base": {
+                "offset": 0
+            }
+        },
+        "WN1": {
+            "level": "MAIN",
+            "start": "C2",
+            "end": "TN",
+            "type": "EXT26",
+            "justification": "coreFace"
+        },
+        "WN2": {
+            "level": "MAIN",
+            "start": "TN",
+            "end": "C3",
+            "type": "EXT26",
+            "justification": "coreFace"
+        },
+        "WE1": {
+            "level": "MAIN",
+            "start": "C3",
+            "end": "TE",
+            "type": "EXT26",
+            "justification": "coreFace"
+        },
+        "WE2": {
+            "level": "MAIN",
+            "start": "TE",
+            "end": "C4",
+            "type": "EXT26",
+            "justification": "coreFace"
+        },
+        "WS1": {
+            "level": "MAIN",
+            "start": "C4",
+            "end": "TS",
+            "type": "EXT26",
+            "justification": "coreFace"
+        },
+        "WS2": {
+            "level": "MAIN",
+            "start": "TS",
+            "end": "C1",
+            "type": "EXT26",
+            "justification": "coreFace",
+            "extras": {}
+        },
+        "WI1": {
+            "level": "MAIN",
+            "start": "TS",
+            "end": "TM",
+            "type": "INT24",
+            "justification": "center"
+        },
+        "WI2": {
+            "level": "MAIN",
+            "start": "TM",
+            "end": "TE",
+            "type": "INT24"
+        }
+    },
+    "junctions": {
+        "C1": {
+            "level": "MAIN",
+            "position": [0, 0],
+            "name": "SW corner"
+        },
+        "C2": {
+            "level": "MAIN",
+            "position": [0, 9363456],
+            "join": {
+                "kind": "mitre"
+            }
+        },
+        "C3": {
+            "level": "MAIN",
+            "position": [14045184, 9363456]
+        },
+        "C4": {
+            "level": "MAIN",
+            "position": [14045184, 0]
+        },
+        "TN": {
+            "level": "MAIN",
+            "position": [7802880, 9363456],
+            "join": {
+                "kind": "butt",
+                "through": ["WN1", "WN2"]
+            }
+        },
+        "TS": {
+            "level": "MAIN",
+            "position": [7802880, 0],
+            "join": {
+                "kind": "butt",
+                "through": ["WS1", "WS2"]
+            }
+        },
+        "TE": {
+            "level": "MAIN",
+            "position": [14045184, 4681728],
+            "join": {
+                "kind": "butt",
+                "through": ["WE1", "WE2"]
+            }
+        },
+        "TM": {
+            "level": "MAIN",
+            "position": [7802880, 4681728]
+        }
+    },
+    "separators": {
+        "SK": {
+            "level": "MAIN",
+            "start": "TM",
+            "end": "TN",
+            "name": "Kitchen counter line"
+        }
+    },
+    "rooms": {
+        "LIV": {
+            "level": "MAIN",
+            "anchor": [3901440, 4681728],
+            "name": "Living room",
+            "function": "living",
+            "floorFinish": "OAK"
+        },
+        "KIT": {
+            "level": "MAIN",
+            "anchor": [10924032, 7022592],
+            "name": "Kitchen",
+            "function": "kitchen",
+            "floorFinish": "TILE"
+        },
+        "BED": {
+            "level": "MAIN",
+            "anchor": [10924032, 2340864],
+            "name": "Bedroom",
+            "function": "sleeping",
+            "floorFinish": "OAK",
+            "wallFinish": "PAINT"
+        }
+    },
+    "openings": {
+        "FD": {
+            "wall": "WS2",
+            "offset": 2340864,
+            "fill": "D36",
+            "hinge": "start",
+            "swing": "left",
+            "name": "Front door"
+        },
+        "LW1": {
+            "wall": "WW",
+            "offset": 3121152,
+            "fill": "W4848"
+        },
+        "LW2": {
+            "wall": "WN1",
+            "offset": 2340864,
+            "fill": "W4848",
+            "width": 2340864,
+            "name": "Picture window"
+        },
+        "KW": {
+            "wall": "WN2",
+            "offset": 2340864,
+            "fill": "W3636"
+        },
+        "BW": {
+            "wall": "WE2",
+            "offset": 1170432,
+            "fill": "W4848",
+            "swing": "right"
+        },
+        "BD": {
+            "wall": "WI1",
+            "offset": 3121152,
+            "fill": "D32",
+            "hinge": "end",
+            "swing": "right"
+        }
+    },
+    "types": {
+        "EXT26": {
+            "kind": "wallType",
+            "name": "2x6 exterior wall",
+            "layers": [
+                {
+                    "thickness": 24384,
+                    "function": "finish",
+                    "material": "SIDING"
+                },
+                {
+                    "thickness": 14224,
+                    "function": "substrate",
+                    "material": "OSB"
+                },
+                {
+                    "thickness": 178816,
+                    "function": "core",
+                    "material": "STUD"
+                },
+                {
+                    "thickness": 16256,
+                    "function": "finish",
+                    "material": "GWB"
+                }
+            ]
+        },
+        "INT24": {
+            "kind": "wallType",
+            "name": "2x4 partition",
+            "layers": [
+                {
+                    "thickness": 16256,
+                    "function": "finish",
+                    "material": "GWB"
+                },
+                {
+                    "thickness": 113792,
+                    "function": "core",
+                    "material": "STUD"
+                },
+                {
+                    "thickness": 16256,
+                    "function": "finish",
+                    "material": "GWB"
+                }
+            ]
+        },
+        "D36": {
+            "kind": "doorType",
+            "name": "36 in entry door",
+            "width": 1170432,
+            "height": 2600960
+        },
+        "D32": {
+            "kind": "doorType",
+            "name": "32 in interior door",
+            "width": 1040384,
+            "height": 2600960
+        },
+        "W4848": {
+            "kind": "windowType",
+            "name": "48 x 48 in window",
+            "width": 1560576,
+            "height": 1560576,
+            "sill": 1170432
+        },
+        "W3636": {
+            "kind": "windowType",
+            "name": "36 x 36 in window",
+            "width": 1170432,
+            "height": 1170432,
+            "sill": 1365504
+        }
+    },
+    "materials": {
+        "SIDING": {
+            "name": "Fibre-cement lap siding",
+            "color": "#5b6d7a"
+        },
+        "OSB": {
+            "name": "OSB sheathing",
+            "color": "#c9a66b"
+        },
+        "STUD": {
+            "name": "SPF framing",
+            "color": "#e8d3a3"
+        },
+        "GWB": {
+            "name": "Gypsum board",
+            "color": "#f2f0eb"
+        },
+        "PAINT": {
+            "name": "Eggshell paint, \"Sea Salt\"",
+            "color": "#cdd2ca"
+        },
+        "OAK": {
+            "name": "White oak strip",
+            "texture": {
+                "asset": "OAKIMG",
+                "size": [97536, 1560576]
+            }
+        },
+        "TILE": {
+            "name": "Porcelain tile 12 x 24",
+            "color": "#d9d6d0"
+        }
+    },
+    "assets": {
+        "OAKIMG": {
+            "path": "textures/white-oak.png",
+            "mediaType": "image/png",
+            "sha256": "3f6c2a8e9d1b4c7f0a5e8d2b6c9f1a4e7d0b3c6f9a2e5d8b1c4f7a0e3d6b9c2f"
+        }
+    },
+    "extras": {
+        "author": {
+            "tool": "hand-written for FLR-T-1.12"
+        }
+    }
+}

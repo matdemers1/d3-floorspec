@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of R1's /ceiling/border widens its tray's border to 2' and leaves its depth.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

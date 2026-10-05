@@ -4,7 +4,7 @@ import { useEditor, type EditorStore } from './store';
 import type { EditorModel } from './model';
 import { LengthField, Row } from './fields';
 import type { UnitSystem } from './units';
-import { CURRENT_CORE, clearAreaText, formatClearArea, parseClearArea, upgradeTo03, type ClearOpening } from './openings';
+import { CURRENT_CORE, clearAreaText, formatClearArea, parseClearArea, upgradeToCurrent, type ClearOpening } from './openings';
 
 /**
  * The inspector's fields for Floorspec Core 0.3's door and window data: the offer to upgrade a 0.2
@@ -12,18 +12,18 @@ import { CURRENT_CORE, clearAreaText, formatClearArea, parseClearArea, upgradeTo
  */
 
 /**
- * The offer to upgrade a plan to Floorspec 0.3: its migration (Core chapter 20) as one batch, which
- * changes nothing the plan means and which Undo takes back.
+ * The offer to upgrade a plan to the current Floorspec draft: its migration (Core chapter 20) as one
+ * batch, which changes nothing the plan means and which Undo takes back. `what` is part of `since`.
  */
-export function CoreUpgradeNotice({ store, model, what }: { store: EditorStore; model: EditorModel; what: string }) {
+export function CoreUpgradeNotice({ store, model, what, since = '0.3' }: { store: EditorStore; model: EditorModel; what: string; since?: string }) {
   const readOnly = useEditor(store, (s) => s.readOnly);
   const pending = useEditor(store, (s) => s.pending);
   return (
     <Alert tone="info" title={`This plan is Floorspec ${model.document.floorspec}`}>
       <p>
-        {what} are part of Floorspec {CURRENT_CORE}. Upgrading changes nothing else in the plan, and Undo takes it back.
+        {what} are part of Floorspec {since}{since === CURRENT_CORE ? '' : ' and later'}. Upgrading to {CURRENT_CORE} changes nothing else in the plan, and Undo takes it back.
       </p>
-      <Button size="sm" variant="primary" loading={pending !== null} disabled={readOnly !== null} onClick={() => void store.apply(`Upgrade to Floorspec ${CURRENT_CORE}`, upgradeTo03(model.document))}>
+      <Button size="sm" variant="primary" loading={pending !== null} disabled={readOnly !== null} onClick={() => void store.apply(`Upgrade to Floorspec ${CURRENT_CORE}`, upgradeToCurrent(model.document))}>
         Upgrade to Floorspec {CURRENT_CORE}
       </Button>
     </Alert>

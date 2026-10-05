@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.4/roof.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 16.1's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Roof",
+  "description": "16.1: a roof — a footprint polygon, a pitch, and gables and overhangs edge by edge. It has only the members of its table (FS-CORE-1.4.1, FS-CORE-16.1.1).",
+  "type": "object",
+  "required": [
+    "level",
+    "footprint"
+  ],
+  "properties": {
+    "level": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "1.3, 16.1: a reference to the level the roof belongs to. Always present."
+    },
+    "footprint": {
+      "$ref": "defs.schema.json#/$defs/polygon",
+      "description": "16.1: the roof's outline in plan, before overhangs: a polygon (2.6). Always present. That it is simple with positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), and that no two consecutive edges are collinear (FS-CORE-16.2.3) another (FS-INV-804); neither is checked here."
+    },
+    "height": {
+      "$ref": "defs.schema.json#/$defs/length",
+      "description": "16.1, 16.3: the elevation of the roof's eaves above its level's elevation. Absent by default: its level's `height` (a derived default)."
+    },
+    "pitch": {
+      "$ref": "defs.schema.json#/$defs/pitch",
+      "description": "16.1, 16.2: the pitch of every edge that is not a gable and has no pitch of its own. Absent by default: none — a roof with no pitch anywhere is flat."
+    },
+    "overhang": {
+      "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+      "description": "16.1, 16.3: how far the roof overhangs every edge that has no overhang of its own; MUST NOT be negative (FS-CORE-16.1.1).",
+      "default": 0
+    },
+    "edges": {
+      "title": "Roof edges",
+      "description": "16.1: what differs, edge by edge: each member name an edge index in decimal without leading zeros (FS-CORE-16.1.1). That it names an edge of the footprint (FS-CORE-16.1.2) is an invariant (FS-INV-801), not checked here.",
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(0|[1-9][0-9]*)$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/edge"
+      },
+      "default": {}
+    },
+    "thickness": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "16.1: the thickness of the roof under its surface, measured vertically; MUST be greater than zero (FS-CORE-16.1.1). Absent by default: not declared."
+    },
+    "material": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "16.1: a reference to the material of the roof's top surface. Absent by default."
+    },
+    "option": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "19.2: a reference to the option this roof is in. Absent: it is in no option, and so in every design."
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/name",
+      "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+    },
+    "extensions": {
+      "$ref": "defs.schema.json#/$defs/extensions",
+      "description": "1.4, 1.6: extension data on this roof.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.4, 1.7: application-specific data on this roof.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "edge": {
+      "title": "Roof edge",
+      "description": "16.1: one edge's gable flag, pitch and overhang, each overriding the roof's; an edge absent from `edges` is `{}`. An edge whose `gable` is true has no `pitch` (FS-CORE-16.1.1).",
+      "type": "object",
+      "properties": {
+        "gable": {
+          "description": "16.1, 16.2: the edge is a gable — a vertical end the roof does not slope up from.",
+          "type": "boolean",
+          "default": false
+        },
+        "pitch": {
+          "$ref": "defs.schema.json#/$defs/pitch",
+          "description": "16.1, 16.2: the pitch the roof rises at from this edge. Absent by default: the roof's `pitch` (a derived default)."
+        },
+        "overhang": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "16.1, 16.3: how far the roof overhangs this edge; MUST NOT be negative. Absent by default: the roof's `overhang` (a derived default)."
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "gable": {
+            "const": true
+          }
+        },
+        "required": [
+          "gable"
+        ]
+      },
+      "then": {
+        "properties": {
+          "pitch": false
+        }
+      },
+      "default": {}
+    }
+  }
+}

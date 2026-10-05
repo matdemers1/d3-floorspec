@@ -1,0 +1,6 @@
+{
+  "description": "Removing the door type is blocked by the door that uses it, whatever it declares.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

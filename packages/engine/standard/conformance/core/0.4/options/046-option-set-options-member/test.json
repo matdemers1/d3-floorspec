@@ -1,0 +1,7 @@
+{
+  "description": "An option set that lists its options: a set's options are the options that name it, and a set has no \"options\" member.",
+  "covers": [
+    "FS-CORE-19.1.1",
+    "FS-CORE-1.4.1"
+  ]
+}

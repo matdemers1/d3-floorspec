@@ -1,0 +1,6 @@
+{
+  "description": "A base colour map that is an SVG and a normal map that is a glTF model: a map is a PNG, JPEG, WebP or KTX2 image. FS-INV-1004 once for each, naming the material and the asset.",
+  "covers": [
+    "FS-CORE-18.2.2"
+  ]
+}

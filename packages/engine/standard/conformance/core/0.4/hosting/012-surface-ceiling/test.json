@@ -1,0 +1,7 @@
+{
+  "description": "A light on R1's ceiling: the origin is at the level's elevation plus its height, 2700 mm, and the fallback hangs below it.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.4.1"
+  ]
+}

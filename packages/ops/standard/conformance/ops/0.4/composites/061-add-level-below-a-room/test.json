@@ -1,0 +1,7 @@
+{
+  "description": "\"below\" names the room Living: only levels count as matches, so it resolves to nothing.",
+  "covers": [
+    "FS-OPS-4.8.1",
+    "FS-OPS-3.3.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "setRoomFinish of each surface is setProperty of /wallFinish, /floorFinish and /ceilingFinish.",
+  "covers": [
+    "FS-OPS-4.6.1"
+  ]
+}

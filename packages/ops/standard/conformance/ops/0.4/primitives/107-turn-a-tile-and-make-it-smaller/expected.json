@@ -1,0 +1,43 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "e3135a4b15effe17b2fe21ccda079aa8607f0e1510d95e98c02463dc48e7f84f",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "TILE",
+      "path": "/texture/size",
+      "value": [195072, 195072]
+    },
+    {
+      "op": "setProperty",
+      "id": "TILE",
+      "path": "/texture/rotation",
+      "value": 45000000
+    },
+    {
+      "op": "setProperty",
+      "id": "TILE",
+      "path": "/metallic",
+      "value": 0
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "TILE",
+      "path": "/metallic"
+    },
+    {
+      "op": "setProperty",
+      "id": "TILE",
+      "path": "/texture",
+      "value": {
+        "asset": "TILE-PHOTO",
+        "size": [390144, 390144]
+      }
+    }
+  ]
+}

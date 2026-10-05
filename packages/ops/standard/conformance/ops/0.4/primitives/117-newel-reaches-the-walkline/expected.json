@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-INV-905",
+      "severity": "error",
+      "elements": ["ST1"]
+    }
+  ]
+}

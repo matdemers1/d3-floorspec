@@ -1,0 +1,17 @@
+{
+  "description": "The Phase 6 demo, with synthetic rules: the boiler is moved beside the panel, into its working space, and the bedroom loses its only window. Two findings: X1 may not meet TEST-ELEC 2026 §4.2 - its working space is obstructed by X2 and clear for 0 in, both measured conditions listed with X2 involved, and the panel, the space and the boiler drawn on L1 - and R1 may not meet TEST-CODE 2024 §3.1, with no candidate opening to the outside, as a `check` because the rule measures openings as drawn. Each message names the code, edition and section.",
+  "covers": [
+    "FS-RULES-1.5.1",
+    "FS-RULES-1.5.2",
+    "FS-RULES-3.5.1",
+    "FS-RULES-3.6.1",
+    "FS-RULES-7.6.1",
+    "FS-RULES-7.7.1",
+    "FS-RULES-9.2.1",
+    "FS-RULES-9.3.1",
+    "FS-RULES-9.4.1",
+    "FS-RULES-9.5.1",
+    "FS-RULES-9.5.2",
+    "FS-RULES-9.8.1"
+  ]
+}

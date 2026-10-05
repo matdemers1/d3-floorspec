@@ -1,0 +1,178 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [5120000, 0]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J1",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2560000, 1920000]
+    }
+  },
+  "extensionsUsed": {
+    "FS_furniture": "0.1"
+  },
+  "extensions": {
+    "FS_furniture": {
+      "collections": {
+        "pieces": {
+          "R0": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-320000, -320000, 0],
+                "max": [320000, 320000, 1024000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [2560000, 1920000],
+              "rotation": 0
+            }
+          },
+          "R45": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-320000, -320000, 0],
+                "max": [320000, 320000, 1024000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [2572800, 1920000],
+              "rotation": 45000000
+            }
+          },
+          "R30": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-320000, -320000, 0],
+                "max": [320000, 320000, 1024000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [2585600, 1920000],
+              "rotation": 30000000
+            }
+          },
+          "RM135": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-320000, -320000, 0],
+                "max": [320000, 320000, 1024000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [2598400, 1920000],
+              "rotation": -135000000
+            }
+          },
+          "R180": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-320000, -320000, 0],
+                "max": [320000, 320000, 1024000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [2611200, 1920000],
+              "rotation": 180000000
+            }
+          },
+          "ROD": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-320000, -320000, 0],
+                "max": [320000, 320000, 1024000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [2624000, 1920000],
+              "rotation": 123456789
+            }
+          }
+        }
+      }
+    }
+  }
+}

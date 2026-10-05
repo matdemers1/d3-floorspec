@@ -1,0 +1,24 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "788a7c3a39aaec62516ae34a59611b4ecacd09e828f700345fb1845718b61c90",
+  "created": ["OAK"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "OAK",
+      "element": {
+        "color": "#c8a165",
+        "name": "White oak"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "OAK"
+    }
+  ]
+}

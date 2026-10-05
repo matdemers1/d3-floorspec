@@ -1,0 +1,215 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.4",
+  "junctions": {
+    "DJ1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "DJ2": {
+      "level": "L1",
+      "position": [
+        0,
+        5120000
+      ]
+    },
+    "DJ3": {
+      "level": "L1",
+      "position": [
+        5760000,
+        5120000
+      ]
+    },
+    "DJ4": {
+      "level": "L1",
+      "position": [
+        7680000,
+        5120000
+      ]
+    },
+    "DJ5": {
+      "level": "L1",
+      "position": [
+        7680000,
+        0
+      ]
+    },
+    "DJ6": {
+      "level": "L1",
+      "position": [
+        5760000,
+        0
+      ]
+    },
+    "UJ1": {
+      "level": "L2",
+      "position": [
+        5440000,
+        5120000
+      ]
+    },
+    "UJ2": {
+      "level": "L2",
+      "position": [
+        7680000,
+        5120000
+      ]
+    },
+    "UJ3": {
+      "level": "L2",
+      "position": [
+        7680000,
+        0
+      ]
+    },
+    "UJ4": {
+      "level": "L2",
+      "position": [
+        5440000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    },
+    "L2": {
+      "building": "B1",
+      "elevation": 3456000,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        2560000
+      ],
+      "ceiling": {
+        "border": 640000,
+        "depth": 512000,
+        "height": 3840000,
+        "kind": "tray"
+      },
+      "level": "L1"
+    },
+    "R2": {
+      "anchor": [
+        6400000,
+        2560000
+      ],
+      "level": "L2"
+    },
+    "R3": {
+      "anchor": [
+        6656000,
+        2560000
+      ],
+      "level": "L1"
+    }
+  },
+  "separators": {
+    "US1": {
+      "end": "UJ1",
+      "level": "L2",
+      "start": "UJ4"
+    }
+  },
+  "stairs": {
+    "ST1": {
+      "level": "L1",
+      "position": [
+        1280000,
+        768000
+      ],
+      "risers": 14,
+      "to": "L2",
+      "tread": 320000,
+      "width": 1152000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "DW1": {
+      "end": "DJ2",
+      "level": "L1",
+      "start": "DJ1",
+      "type": "WT"
+    },
+    "DW2": {
+      "end": "DJ3",
+      "level": "L1",
+      "start": "DJ2",
+      "type": "WT"
+    },
+    "DW3": {
+      "end": "DJ4",
+      "level": "L1",
+      "start": "DJ3",
+      "type": "WT"
+    },
+    "DW4": {
+      "end": "DJ5",
+      "level": "L1",
+      "start": "DJ4",
+      "type": "WT"
+    },
+    "DW5": {
+      "end": "DJ6",
+      "level": "L1",
+      "start": "DJ5",
+      "type": "WT"
+    },
+    "DW6": {
+      "end": "DJ1",
+      "level": "L1",
+      "start": "DJ6",
+      "type": "WT"
+    },
+    "DW7": {
+      "end": "DJ3",
+      "level": "L1",
+      "start": "DJ6",
+      "type": "WT"
+    },
+    "UW1": {
+      "end": "UJ2",
+      "level": "L2",
+      "start": "UJ1",
+      "type": "WT"
+    },
+    "UW2": {
+      "end": "UJ3",
+      "level": "L2",
+      "start": "UJ2",
+      "type": "WT"
+    },
+    "UW3": {
+      "end": "UJ4",
+      "level": "L2",
+      "start": "UJ3",
+      "type": "WT"
+    }
+  }
+}

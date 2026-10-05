@@ -1,0 +1,7 @@
+{
+  "description": "The straight stair with no riser count and a greatest riser of 7 3/4 in (251968): 2700 mm over 13 risers would be 265846.15, too tall; over 14, 246857.14 is not. Its riser count is 14, and every other value is the first test's.",
+  "covers": [
+    "FS-CORE-17.1.1",
+    "FS-CORE-17.4.3"
+  ]
+}

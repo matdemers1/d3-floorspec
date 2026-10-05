@@ -1,0 +1,6 @@
+{
+  "description": "A program item carrying data of an undeclared extension: FS-INV-005 names the item.",
+  "covers": [
+    "FS-CORE-1.6.3"
+  ]
+}

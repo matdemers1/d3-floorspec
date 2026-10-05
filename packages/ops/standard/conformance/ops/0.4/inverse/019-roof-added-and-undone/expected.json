@@ -1,0 +1,35 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "97e88697fd96c2fe6092561a4ea3a56f146aba08cdeb69d2610e9c9b5b9fd1dd",
+  "created": ["RF1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "roofs",
+      "id": "RF1",
+      "element": {
+        "level": "L1",
+        "footprint": [[-64000, -64000], [4745728, -64000], [4745728, 3965440], [-64000, 3965440]],
+        "overhang": 390144,
+        "pitch": {
+          "rise": 6,
+          "run": 12
+        }
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/edges/1/gable",
+      "value": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "RF1"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 3,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "SLEEP-EVERYWHERE",
+      "subjects": 3,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [],
+  "floorspecRules": "0.2",
+  "hash": "32230be4ab1a2f2aaa5e84c511061ef04a1d9cc437652bee7c515793cc7e0c1c",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The straight stair written with every constant default - rotation 0, form {\"kind\": \"straight\"} and a handrail's sides \"both\": the canonical form omits all three, and keeps the handrail's height, which has no default.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-17.1.1"
+  ]
+}

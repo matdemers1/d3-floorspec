@@ -1,0 +1,23 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "8297d08cd5c02c87c6eeca5a0fb809e7f0065287361546c0a907dfc0f77e4dd7",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "O1",
+      "path": "/offset",
+      "value": 2731008
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "O1",
+      "path": "/offset",
+      "value": 390144
+    }
+  ]
+}

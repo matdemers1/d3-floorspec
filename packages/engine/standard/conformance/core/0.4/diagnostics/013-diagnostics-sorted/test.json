@@ -1,0 +1,7 @@
+{
+  "description": "Three errors, listed sorted by code and then by elements: FS-INV-101 before FS-INV-112, and the two FS-INV-112 by wall ID.",
+  "covers": [
+    "FS-CORE-10.2.1",
+    "FS-CORE-10.3.1"
+  ]
+}

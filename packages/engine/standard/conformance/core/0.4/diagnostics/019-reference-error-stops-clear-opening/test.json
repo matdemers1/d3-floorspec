@@ -1,0 +1,6 @@
+{
+  "description": "An opening filled by a type that does not exist, beside a door type whose clear opening is twice as wide as it: once a reference invariant is reported, no other is evaluated, so only FS-INV-002.",
+  "covers": [
+    "FS-CORE-10.3.1"
+  ]
+}

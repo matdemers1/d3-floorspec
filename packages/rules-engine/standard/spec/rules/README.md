@@ -1,14 +1,14 @@
 # Floorspec Rules
 
-The normative specification of advisory building-code rules — **Draft 0.1**: rule records, the
-named-measure library, findings and jurisdiction profiles. It evaluates Floorspec Core 0.3
-documents (and so Core 0.2 and 0.1 documents) with the official extensions, and is versioned independently
+The normative specification of advisory building-code rules — **Draft 0.2**: rule records, the
+named-measure library, findings and jurisdiction profiles. It evaluates Floorspec Core 0.4
+documents (and so Core 0.3, 0.2 and 0.1 documents) with the official extensions, and is versioned independently
 of Core and Ops (FLR-ADR-008). Findings are advice: they never make a document invalid, never stop
 an edit, and never say that a design meets a code (FLR-ADR-011).
 
 | Chapter | |
 |---|---|
-| [0. Conventions](00-conventions.md) | what Rules is, conformance classes, relation to Core and Ops, the RASE shape, what this draft does not define, code text |
+| [0. Conventions](00-conventions.md) | what Rules is, conformance classes, relation to Core and Ops, the RASE shape, what this draft does not define, code text, changes from 0.1 |
 | [1. Evaluation](01-evaluation.md) | the evaluation request, the document, the order of evaluation, a pure function, advice never a gate |
 | [2. Rule packs](02-packs.md) | the pack object, names, the CC BY 4.0 licence, coverage, wording and the assurance pattern |
 | [3. Rule records](03-rules.md) | citation, paraphrase, applicability, selection, requirement, exceptions, tests, typing, extension data, severity, provenance |
@@ -21,8 +21,10 @@ an edit, and never say that a design meets a code (FLR-ADR-011).
 | [10. Jurisdiction profiles](10-profiles.md) | adoptions and editions in force, rules in force, packs, amendments, the default profile |
 | [11. Diagnostics](11-diagnostics.md) | the FS-RULES catalogue |
 
-Schemas: `schema/rules/0.1/` (request, pack, rule, profile, report, finding), published at
-`https://d3cloud.io/floorspec/schema/rules/0.1/`. Conformance: `conformance/rules/0.1/` — a
+Schemas: `schema/rules/0.2/` (request, pack, rule, profile, report, finding), published at
+`https://d3cloud.io/floorspec/schema/rules/0.2/`; Rules 0.1's, as published at `8a99d02`, stay at
+`schema/rules/0.1/`. Conformance: `conformance/rules/0.2/` (Rules 0.1's suite stays at
+`conformance/rules/0.1/`) — a
 document, a request and the expected report, byte for byte; and measure tests. Rule packs
 themselves live in [`rules/`](../../rules/).
 

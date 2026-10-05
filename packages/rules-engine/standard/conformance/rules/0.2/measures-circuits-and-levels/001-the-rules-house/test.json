@@ -1,0 +1,8 @@
+{
+  "description": "Circuits and levels: R1's receptacles and its alarm are all on C1 (15 A); no 20 A circuit feeds it; the living room has no circuit; the level has four FS_electrical elements, one FS_mechanical, one smoke alarm and three rooms, one of them a sleeping room.",
+  "covers": [
+    "FS-RULES-4.7.1",
+    "FS-RULES-8.3.1",
+    "FS-RULES-8.4.1"
+  ]
+}

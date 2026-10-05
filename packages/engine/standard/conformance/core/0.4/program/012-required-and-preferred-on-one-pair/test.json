@@ -1,0 +1,7 @@
+{
+  "description": "A pair with both a required and a preferred adjacency: redundant, not contradictory, so valid; both are derived, in order.",
+  "covers": [
+    "FS-CORE-11.2.3",
+    "FS-CORE-11.4.1"
+  ]
+}

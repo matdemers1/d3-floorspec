@@ -83,7 +83,7 @@ describe('no packs', () => {
     const d = house();
     const r = findingsFor(d, undefined, []);
     expect(r).toEqual({
-      floorspecRules: '0.1',
+      floorspecRules: '0.2',
       notice: NOTICE,
       units: 'imperial',
       profile: DEFAULT_PROFILE.name,
@@ -189,17 +189,17 @@ describe('the request (1.1) and the inputs it carries', () => {
 
   it('a request that is not well-formed JSON, or has a duplicate member, is FS-RULES-001 alone', () => {
     for (const text of ['{', '{"floorspecRules":"0.1","packs":[],"packs":[]}', '{"floorspecRules":"0.2","packs":[]}', '[]'])
-      expect(evaluate(d, text)).toEqual({ floorspecRules: '0.1', notice: NOTICE, diagnostics: [{ code: 'FS-RULES-001', severity: 'error' }], evaluated: [], notEvaluated: [], coverage: [], findings: [] });
+      expect(evaluate(d, text, { rules: '0.1' })).toEqual({ floorspecRules: '0.1', notice: NOTICE, diagnostics: [{ code: 'FS-RULES-001', severity: 'error' }], evaluated: [], notEvaluated: [], coverage: [], findings: [] });
   });
 
   it('a threshold written 1.0 is not a JSON integer: the pack does not match its schema', () => {
     const p = JSON.stringify(PACKS[1]).replace('"value":1}', '"value":1.0}');
-    const r = evaluate(d, `{"floorspecRules":"0.1","packs":[${p}]}`);
+    const r = evaluate(d, `{"floorspecRules":"0.1","packs":[${p}]}`, { rules: '0.1' });
     expect(r.diagnostics).toEqual([{ code: 'FS-RULES-004', severity: 'error', packIndex: 0 }]);
   });
 
   it('a profile of null is not the default: FS-RULES-002', () => {
-    expect(evaluate(d, { floorspecRules: '0.1', packs: [], profile: null }).diagnostics).toEqual([{ code: 'FS-RULES-002', severity: 'error' }]);
+    expect(evaluate(d, { floorspecRules: '0.1', packs: [], profile: null }, { rules: '0.1' }).diagnostics).toEqual([{ code: 'FS-RULES-002', severity: 'error' }]);
   });
 
   it('a pack whose text says a design complies is refused: FS-RULES-006', () => {
@@ -220,7 +220,7 @@ describe('the request (1.1) and the inputs it carries', () => {
     });
     // With the official extensions known, FS_electrical is evaluated; with none known, it is not.
     expect(findingsFor(d, undefined, [member]).evaluated.map((e) => e.rule)).toEqual(['AMPS']);
-    const r = evaluate(d, { floorspecRules: '0.1', packs: [member] });
+    const r = evaluate(d, { floorspecRules: '0.1', packs: [member] }, { rules: '0.1' });
     expect(r.notEvaluated).toEqual([{ pack: 'delta', version: '0.1.0', rule: 'AMPS', reason: 'extension' }]);
     expect(r.diagnostics).toEqual([{ code: 'FS-RULES-009', severity: 'info', pack: 'delta', rule: 'AMPS' }]);
   });

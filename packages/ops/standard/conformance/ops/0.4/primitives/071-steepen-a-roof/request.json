@@ -1,0 +1,19 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/pitch",
+      "value": {
+        "rise": 12,
+        "run": 12
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/overhang",
+      "value": 780288
+    }
+  ]
+}

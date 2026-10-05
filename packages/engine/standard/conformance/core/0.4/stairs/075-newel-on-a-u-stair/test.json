@@ -1,0 +1,6 @@
+{
+  "description": "A U-shaped stair has no newel.",
+  "covers": [
+    "FS-CORE-17.2.3"
+  ]
+}

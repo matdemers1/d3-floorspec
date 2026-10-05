@@ -1,0 +1,26 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "7a0341f8da378e722bb6eda8236fcd5e6bb1e8e4f47f38dfe42741c02ae492da",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "T-door-36",
+      "path": "/clearOpening/width",
+      "value": 1072896
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "T-door-36",
+      "path": "/clearOpening",
+      "value": {
+        "height": 2568448,
+        "width": 1040384
+      }
+    }
+  ]
+}

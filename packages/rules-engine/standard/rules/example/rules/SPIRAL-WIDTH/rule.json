@@ -1,0 +1,35 @@
+{
+  "title": "Spiral stairs wide enough",
+  "citation": {
+    "code": "TEST-CODE",
+    "edition": "2024",
+    "section": "§4.7",
+    "link": "https://example.org/test-code/2024/4.7"
+  },
+  "paraphrase": "A spiral stair is at least 26 inches wide, from its centre column to its outer edge. The rule reads the declared width of the stair, which for a spiral is the clear width of its treads; it does not look at handrails.",
+  "applies": {
+    "to": "stair",
+    "where": {
+      "measure": "stairForm",
+      "op": "=",
+      "value": "spiral"
+    }
+  },
+  "requirement": {
+    "measure": "stairWidth",
+    "op": ">=",
+    "value": 845312
+  },
+  "severity": "mayNotMeet",
+  "provenance": {
+    "verifiedBy": "Floorspec contributors",
+    "verifiedOn": "2026-10-05",
+    "edition": "2024",
+    "method": "synthetic",
+    "certifiedBy": "Floorspec contributors",
+    "certification": "original-paraphrase-v1",
+    "review": {
+      "status": "unreviewed"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "An asset URI uses https.",
+  "covers": [
+    "FS-CORE-1.4.4"
+  ]
+}

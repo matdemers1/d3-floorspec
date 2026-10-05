@@ -1,0 +1,127 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.3",
+  "junctions": {
+    "K1": {
+      "level": "L2",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "K2": {
+      "level": "L2",
+      "position": [
+        0,
+        3121152
+      ]
+    },
+    "K3": {
+      "level": "L2",
+      "position": [
+        3121152,
+        3121152
+      ]
+    },
+    "K4": {
+      "level": "L2",
+      "position": [
+        3121152,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L2": {
+      "building": "B1",
+      "elevation": 3456000,
+      "height": 3456000
+    }
+  },
+  "openings": {
+    "O1": {
+      "height": 1560576,
+      "offset": 780288,
+      "sill": 1170432,
+      "wall": "V1",
+      "width": 1170432
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R2": {
+      "anchor": [
+        1560576,
+        1560576
+      ],
+      "level": "L2",
+      "name": "Loft"
+    }
+  },
+  "slabs": {
+    "SL1": {
+      "boundary": [
+        [
+          0,
+          0
+        ],
+        [
+          3121152,
+          0
+        ],
+        [
+          3121152,
+          -1560576
+        ]
+      ],
+      "level": "L2",
+      "thickness": 256000
+    }
+  },
+  "types": {
+    "T-door-36": {
+      "height": 2600960,
+      "kind": "doorType",
+      "width": 1170432
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "V1": {
+      "end": "K2",
+      "level": "L2",
+      "start": "K1",
+      "type": "WT"
+    },
+    "V2": {
+      "end": "K3",
+      "level": "L2",
+      "start": "K2",
+      "type": "WT"
+    },
+    "V3": {
+      "end": "K4",
+      "level": "L2",
+      "start": "K3",
+      "type": "WT"
+    },
+    "V4": {
+      "end": "K1",
+      "level": "L2",
+      "start": "K4",
+      "type": "WT"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "\"created\" and \"removed\" list program items and extension elements with the other elements: an item and a device created, a table removed.",
+  "covers": [
+    "FS-OPS-1.3.1"
+  ]
+}

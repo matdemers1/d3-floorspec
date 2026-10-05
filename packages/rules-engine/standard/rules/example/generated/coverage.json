@@ -1,0 +1,378 @@
+{
+  "domains": [
+    {
+      "domain": "room-sizes",
+      "newestVerification": "2026-10-05",
+      "oldestVerification": "2026-10-05",
+      "pack": "example",
+      "reviewed": 1,
+      "rules": 1,
+      "sections": {
+        "covered": 1,
+        "deferred": 1,
+        "notCovered": 1,
+        "partial": 0
+      },
+      "title": "Room sizes"
+    },
+    {
+      "domain": "alarms",
+      "newestVerification": "2026-10-05",
+      "oldestVerification": "2026-10-05",
+      "pack": "example",
+      "reviewed": 0,
+      "rules": 1,
+      "sections": {
+        "covered": 0,
+        "deferred": 0,
+        "notCovered": 0,
+        "partial": 1
+      },
+      "title": "Alarms"
+    },
+    {
+      "domain": "stairs",
+      "newestVerification": "2026-10-05",
+      "oldestVerification": "2026-10-05",
+      "pack": "example",
+      "reviewed": 0,
+      "rules": 7,
+      "sections": {
+        "covered": 1,
+        "deferred": 0,
+        "notCovered": 0,
+        "partial": 0
+      },
+      "title": "Stairs"
+    }
+  ],
+  "floorspecRules": "0.2",
+  "packs": [
+    {
+      "attribution": "Floorspec example pack (example 0.2.0) by the Floorspec contributors, CC BY 4.0, https://github.com/matdemers1/floorspec/tree/main/rules/example",
+      "jurisdiction": "Nowhere: synthetic codes for testing the format",
+      "license": "CC-BY-4.0",
+      "name": "example",
+      "reviewed": 1,
+      "rules": 9,
+      "synthetic": true,
+      "title": "Example pack (synthetic codes)",
+      "version": "0.2.0"
+    }
+  ],
+  "rows": [
+    {
+      "code": "TEST-CODE",
+      "declared": "addressed",
+      "domain": "room-sizes",
+      "edition": "2024",
+      "needs": [],
+      "newestVerification": "2026-10-05",
+      "note": "Floor area of sleeping rooms.",
+      "oldestVerification": "2026-10-05",
+      "pack": "example",
+      "reviewed": 1,
+      "rules": [
+        {
+          "deferred": [],
+          "link": "https://example.org/test-code/2024/1.2",
+          "pack": "example",
+          "review": "reviewed",
+          "reviewed": {
+            "by": "Example Reviewer (synthetic)",
+            "credential": "Licensed architect (synthetic example)",
+            "on": "2026-10-05"
+          },
+          "rule": "ROOM-SIZE",
+          "section": "§1.2",
+          "severity": "mayNotMeet",
+          "title": "Sleeping rooms have a minimum floor area",
+          "verifiedBy": "Floorspec contributors",
+          "verifiedOn": "2026-10-05"
+        }
+      ],
+      "section": "§1",
+      "status": "covered",
+      "version": "0.2.0"
+    },
+    {
+      "code": "TEST-CODE",
+      "declared": "notAddressed",
+      "domain": "room-sizes",
+      "edition": "2024",
+      "needs": [],
+      "newestVerification": null,
+      "note": "Ceiling heights are left to a later version of the pack; Core derives them since Core 0.3 (`ceilingHeight`).",
+      "oldestVerification": null,
+      "pack": "example",
+      "reviewed": 0,
+      "rules": [],
+      "section": "§2",
+      "status": "notCovered",
+      "version": "0.2.0"
+    },
+    {
+      "code": "TEST-CODE",
+      "declared": "notAddressed",
+      "domain": "room-sizes",
+      "edition": "2024",
+      "needs": [
+        "roomNarrowestDimension"
+      ],
+      "newestVerification": null,
+      "note": "Room widths at every point of a room that is not convex: the measure is deferred.",
+      "oldestVerification": null,
+      "pack": "example",
+      "reviewed": 0,
+      "rules": [],
+      "section": "§3",
+      "status": "deferred",
+      "version": "0.2.0"
+    },
+    {
+      "code": "TEST-CODE",
+      "declared": "addressed",
+      "domain": "stairs",
+      "edition": "2024",
+      "needs": [],
+      "newestVerification": "2026-10-05",
+      "note": "Riser heights of every stair; the goings of winders at the walkline and at their narrow ends; and the width, going at the walkline, risers and headroom of spiral stairs.",
+      "oldestVerification": "2026-10-05",
+      "pack": "example",
+      "reviewed": 0,
+      "rules": [
+        {
+          "deferred": [],
+          "link": "https://example.org/test-code/2024/4.8",
+          "pack": "example",
+          "review": "unreviewed",
+          "rule": "SPIRAL-GOING",
+          "section": "§4.8",
+          "severity": "mayNotMeet",
+          "title": "Spiral treads deep enough at the walkline",
+          "verifiedBy": "Floorspec contributors",
+          "verifiedOn": "2026-10-05"
+        },
+        {
+          "deferred": [],
+          "link": "https://example.org/test-code/2024/4.10",
+          "pack": "example",
+          "review": "unreviewed",
+          "rule": "SPIRAL-HEADROOM",
+          "section": "§4.10",
+          "severity": "mayNotMeet",
+          "title": "Headroom over a spiral stair",
+          "verifiedBy": "Floorspec contributors",
+          "verifiedOn": "2026-10-05"
+        },
+        {
+          "deferred": [],
+          "link": "https://example.org/test-code/2024/4.9",
+          "pack": "example",
+          "review": "unreviewed",
+          "rule": "SPIRAL-RISER",
+          "section": "§4.9",
+          "severity": "mayNotMeet",
+          "title": "Spiral risers not too tall",
+          "verifiedBy": "Floorspec contributors",
+          "verifiedOn": "2026-10-05"
+        },
+        {
+          "deferred": [],
+          "link": "https://example.org/test-code/2024/4.7",
+          "pack": "example",
+          "review": "unreviewed",
+          "rule": "SPIRAL-WIDTH",
+          "section": "§4.7",
+          "severity": "mayNotMeet",
+          "title": "Spiral stairs wide enough",
+          "verifiedBy": "Floorspec contributors",
+          "verifiedOn": "2026-10-05"
+        },
+        {
+          "deferred": [],
+          "link": "https://example.org/test-code/2024/4.1",
+          "pack": "example",
+          "review": "unreviewed",
+          "rule": "STAIR-RISER",
+          "section": "§4.1",
+          "severity": "mayNotMeet",
+          "title": "Stair risers are not too tall",
+          "verifiedBy": "Floorspec contributors",
+          "verifiedOn": "2026-10-05"
+        },
+        {
+          "deferred": [],
+          "link": "https://example.org/test-code/2024/4.6",
+          "pack": "example",
+          "review": "unreviewed",
+          "rule": "WINDER-NARROW",
+          "section": "§4.6",
+          "severity": "mayNotMeet",
+          "title": "Winders not too narrow at the inside",
+          "verifiedBy": "Floorspec contributors",
+          "verifiedOn": "2026-10-05"
+        },
+        {
+          "deferred": [],
+          "link": "https://example.org/test-code/2024/4.5",
+          "pack": "example",
+          "review": "unreviewed",
+          "rule": "WINDER-WALKLINE",
+          "section": "§4.5",
+          "severity": "mayNotMeet",
+          "title": "Winders deep enough at the walkline",
+          "verifiedBy": "Floorspec contributors",
+          "verifiedOn": "2026-10-05"
+        }
+      ],
+      "section": "§4",
+      "status": "covered",
+      "version": "0.2.0"
+    },
+    {
+      "code": "TEST-ELEC",
+      "declared": "partial",
+      "domain": "alarms",
+      "edition": "2026",
+      "needs": [],
+      "newestVerification": "2026-10-05",
+      "note": "Smoke alarms in sleeping rooms only; carbon monoxide alarms are not checked.",
+      "oldestVerification": "2026-10-05",
+      "pack": "example",
+      "reviewed": 0,
+      "rules": [
+        {
+          "deferred": [],
+          "link": "https://example.org/test-elec/2026/3.1",
+          "pack": "example",
+          "review": "unreviewed",
+          "rule": "SMOKE-ALARM",
+          "section": "§3.1",
+          "severity": "mayNotMeet",
+          "title": "A smoke alarm in every sleeping room",
+          "verifiedBy": "Floorspec contributors",
+          "verifiedOn": "2026-10-05"
+        }
+      ],
+      "section": "§3",
+      "status": "partial",
+      "version": "0.2.0"
+    }
+  ],
+  "rules": [
+    {
+      "deferred": [],
+      "link": "https://example.org/test-code/2024/1.2",
+      "pack": "example",
+      "review": "reviewed",
+      "reviewed": {
+        "by": "Example Reviewer (synthetic)",
+        "credential": "Licensed architect (synthetic example)",
+        "on": "2026-10-05"
+      },
+      "rule": "ROOM-SIZE",
+      "section": "§1.2",
+      "severity": "mayNotMeet",
+      "title": "Sleeping rooms have a minimum floor area",
+      "verifiedBy": "Floorspec contributors",
+      "verifiedOn": "2026-10-05"
+    },
+    {
+      "deferred": [],
+      "link": "https://example.org/test-elec/2026/3.1",
+      "pack": "example",
+      "review": "unreviewed",
+      "rule": "SMOKE-ALARM",
+      "section": "§3.1",
+      "severity": "mayNotMeet",
+      "title": "A smoke alarm in every sleeping room",
+      "verifiedBy": "Floorspec contributors",
+      "verifiedOn": "2026-10-05"
+    },
+    {
+      "deferred": [],
+      "link": "https://example.org/test-code/2024/4.8",
+      "pack": "example",
+      "review": "unreviewed",
+      "rule": "SPIRAL-GOING",
+      "section": "§4.8",
+      "severity": "mayNotMeet",
+      "title": "Spiral treads deep enough at the walkline",
+      "verifiedBy": "Floorspec contributors",
+      "verifiedOn": "2026-10-05"
+    },
+    {
+      "deferred": [],
+      "link": "https://example.org/test-code/2024/4.10",
+      "pack": "example",
+      "review": "unreviewed",
+      "rule": "SPIRAL-HEADROOM",
+      "section": "§4.10",
+      "severity": "mayNotMeet",
+      "title": "Headroom over a spiral stair",
+      "verifiedBy": "Floorspec contributors",
+      "verifiedOn": "2026-10-05"
+    },
+    {
+      "deferred": [],
+      "link": "https://example.org/test-code/2024/4.9",
+      "pack": "example",
+      "review": "unreviewed",
+      "rule": "SPIRAL-RISER",
+      "section": "§4.9",
+      "severity": "mayNotMeet",
+      "title": "Spiral risers not too tall",
+      "verifiedBy": "Floorspec contributors",
+      "verifiedOn": "2026-10-05"
+    },
+    {
+      "deferred": [],
+      "link": "https://example.org/test-code/2024/4.7",
+      "pack": "example",
+      "review": "unreviewed",
+      "rule": "SPIRAL-WIDTH",
+      "section": "§4.7",
+      "severity": "mayNotMeet",
+      "title": "Spiral stairs wide enough",
+      "verifiedBy": "Floorspec contributors",
+      "verifiedOn": "2026-10-05"
+    },
+    {
+      "deferred": [],
+      "link": "https://example.org/test-code/2024/4.1",
+      "pack": "example",
+      "review": "unreviewed",
+      "rule": "STAIR-RISER",
+      "section": "§4.1",
+      "severity": "mayNotMeet",
+      "title": "Stair risers are not too tall",
+      "verifiedBy": "Floorspec contributors",
+      "verifiedOn": "2026-10-05"
+    },
+    {
+      "deferred": [],
+      "link": "https://example.org/test-code/2024/4.6",
+      "pack": "example",
+      "review": "unreviewed",
+      "rule": "WINDER-NARROW",
+      "section": "§4.6",
+      "severity": "mayNotMeet",
+      "title": "Winders not too narrow at the inside",
+      "verifiedBy": "Floorspec contributors",
+      "verifiedOn": "2026-10-05"
+    },
+    {
+      "deferred": [],
+      "link": "https://example.org/test-code/2024/4.5",
+      "pack": "example",
+      "review": "unreviewed",
+      "rule": "WINDER-WALKLINE",
+      "section": "§4.5",
+      "severity": "mayNotMeet",
+      "title": "Winders deep enough at the walkline",
+      "verifiedBy": "Floorspec contributors",
+      "verifiedOn": "2026-10-05"
+    }
+  ]
+}

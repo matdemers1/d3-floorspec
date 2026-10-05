@@ -1,0 +1,6 @@
+{
+  "description": "A texture has only the members of its table (18.2): \"repeat\" is not one of them - every texture repeats.",
+  "covers": [
+    "FS-CORE-1.4.3"
+  ]
+}

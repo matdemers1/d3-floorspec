@@ -1,0 +1,7 @@
+{
+  "description": "A stair whose to is L1, below its level L2: its rise is -2700 mm. FS-INV-902.",
+  "covers": [
+    "FS-CORE-17.4.1",
+    "FS-CORE-10.2.1"
+  ]
+}

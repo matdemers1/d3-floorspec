@@ -1,0 +1,7 @@
+{
+  "description": "A height of 2700 mm and one base unit on a 2700 mm wall: FS-INV-502.",
+  "covers": [
+    "FS-CORE-13.3.3",
+    "FS-CORE-10.2.1"
+  ]
+}

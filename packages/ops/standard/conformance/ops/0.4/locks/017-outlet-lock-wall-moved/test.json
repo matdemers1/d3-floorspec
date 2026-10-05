@@ -1,0 +1,6 @@
+{
+  "description": "An element lock on the outlet X1: its content is unchanged when its wall W3 moves, but an outlet follows its wall, so the lock holds the wall's junctions too, and the move breaks it.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

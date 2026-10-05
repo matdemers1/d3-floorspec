@@ -1,0 +1,6 @@
+{
+  "description": "The part before the colon must be an extension name.",
+  "covers": [
+    "FS-CORE-4.1.1"
+  ]
+}

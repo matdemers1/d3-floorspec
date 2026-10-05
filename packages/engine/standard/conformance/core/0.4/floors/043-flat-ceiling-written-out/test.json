@@ -1,0 +1,7 @@
+{
+  "description": "A ceiling written {\"kind\": \"flat\"}: the canonical form omits it, its constant default, and the room has the flat ceiling at its level's height that it has without it.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-15.5.1"
+  ]
+}

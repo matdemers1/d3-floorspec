@@ -1,0 +1,8 @@
+{
+  "description": "A tray ceiling in a room with a chase in its middle: the chase's hole ring moves outwards by the border as the outer ring moves in - every edge moves to its left, into the room - so the centre is a ring with a hole, both rounded and listed as a room polygon is. The chase's inside is a face no room is anchored in.",
+  "covers": [
+    "FS-CORE-15.4.2",
+    "FS-CORE-15.5.1",
+    "FS-CORE-15.4.1"
+  ]
+}

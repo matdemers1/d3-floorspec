@@ -130,6 +130,8 @@ export interface StairView {
   to: string;
   form: string;
   derived: DerivedStair;
+  /** A spiral stair's column radius (Core 17.7), diameter / 2 less width; 0 for every other stair. */
+  column: number;
 }
 
 export interface FaceView {
@@ -483,7 +485,12 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
   for (const [id, st] of entriesOf(document.stairs)) {
     const d = derived.stairs?.[id];
     if (d === undefined) continue;
-    views.get(String(st['level']))?.stairs.push({ id, to: String(st['to']), form: typeof (st['form'] as Json | undefined)?.['kind'] === 'string' ? String((st['form'] as Json)['kind']) : 'straight', derived: d });
+    const form = st['form'] as Json | undefined;
+    const kind = typeof form?.['kind'] === 'string' ? form['kind'] : 'straight';
+    const diameter = form?.['diameter'];
+    const width = st['width'];
+    const column = kind === 'spiral' && typeof diameter === 'number' && typeof width === 'number' ? Math.max(0, diameter / 2 - width) : 0;
+    views.get(String(st['level']))?.stairs.push({ id, to: String(st['to']), form: kind, derived: d, column });
   }
   for (const free of derived.unanchored) {
     views.get(free.level)?.faces.push({ room: null, outer: free.outer, holes: free.holes, area2: twiceArea(free.area) });

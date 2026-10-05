@@ -1,0 +1,46 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "a2f889704312b3f17b10689feb6712c4f6301a8cb1b62ac5a51e46610a1cd2f4",
+  "created": ["J8", "S1", "SL10"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "J8",
+      "level": "L1",
+      "position": [9363456, 1170432]
+    },
+    {
+      "op": "addSeparator",
+      "id": "S1",
+      "level": "L1",
+      "start": "J007",
+      "end": "J8"
+    },
+    {
+      "op": "addElement",
+      "collection": "slabs",
+      "id": "SL10",
+      "element": {
+        "level": "L1",
+        "boundary": [[0, 0], [0, -390144], [-390144, 0]],
+        "thickness": 256000
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "SL10"
+    },
+    {
+      "op": "removeElement",
+      "id": "S1"
+    },
+    {
+      "op": "removeElement",
+      "id": "J8"
+    }
+  ]
+}

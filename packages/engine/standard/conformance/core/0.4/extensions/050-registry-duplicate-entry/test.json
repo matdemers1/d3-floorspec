@@ -1,0 +1,7 @@
+{
+  "description": "Two known entries for EXT_lighting 1.2.0: FS-CFG-001.",
+  "covers": [
+    "FS-CORE-12.2.1",
+    "FS-CORE-12.2.2"
+  ]
+}

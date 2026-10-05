@@ -1,0 +1,9 @@
+{
+  "description": "The Phase 1 three-room house exactly as the 0.1 suite has it, declaring \"0.1\", read by a reader of 0.4: valid, with the same diagnostics, derived values, hash and canonical form as in the 0.1 suite (examples/001), and nothing derived for a program, hosts, clearances or clear openings.",
+  "covers": [
+    "FS-CORE-1.2.2",
+    "FS-CORE-1.2.8",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1"
+  ]
+}

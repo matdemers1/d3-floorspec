@@ -1,0 +1,6 @@
+{
+  "description": "A room's floor finish names a material that does not exist.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

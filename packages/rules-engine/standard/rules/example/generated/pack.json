@@ -1,0 +1,456 @@
+{
+  "coverage": [
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "note": "Floor area of sleeping rooms.",
+      "section": "§1",
+      "status": "addressed"
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "note": "Ceiling heights are left to a later version of the pack; Core derives them since Core 0.3 (`ceilingHeight`).",
+      "section": "§2",
+      "status": "notAddressed"
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "note": "Room widths at every point of a room that is not convex: the measure is deferred.",
+      "section": "§3",
+      "status": "notAddressed"
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "note": "Riser heights of every stair; the goings of winders at the walkline and at their narrow ends; and the width, going at the walkline, risers and headroom of spiral stairs.",
+      "section": "§4",
+      "status": "addressed"
+    },
+    {
+      "code": "TEST-ELEC",
+      "edition": "2026",
+      "note": "Smoke alarms in sleeping rooms only; carbon monoxide alarms are not checked.",
+      "section": "§3",
+      "status": "partial"
+    }
+  ],
+  "description": "A tiny pack that exercises the rule-pack format end to end: build, lint, fixtures and the coverage matrix. It cites only the synthetic codes TEST-CODE and TEST-ELEC, which stand for no real code, and its thresholds are invented.",
+  "extras": {
+    "packFormat": {
+      "attribution": "Floorspec example pack (example 0.2.0) by the Floorspec contributors, CC BY 4.0, https://github.com/matdemers1/floorspec/tree/main/rules/example",
+      "coverage": [
+        {
+          "domain": "room-sizes"
+        },
+        {
+          "domain": "room-sizes"
+        },
+        {
+          "domain": "room-sizes",
+          "needs": [
+            "roomNarrowestDimension"
+          ]
+        },
+        {
+          "domain": "stairs"
+        },
+        {
+          "domain": "alarms"
+        }
+      ],
+      "domains": [
+        {
+          "id": "room-sizes",
+          "title": "Room sizes"
+        },
+        {
+          "id": "alarms",
+          "title": "Alarms"
+        },
+        {
+          "id": "stairs",
+          "title": "Stairs"
+        }
+      ],
+      "editions": [
+        {
+          "code": "TEST-CODE",
+          "edition": "2024",
+          "title": "Synthetic building code"
+        },
+        {
+          "code": "TEST-ELEC",
+          "edition": "2026",
+          "title": "Synthetic electrical code"
+        }
+      ],
+      "jurisdiction": "Nowhere: synthetic codes for testing the format",
+      "maintainers": [
+        {
+          "name": "Floorspec contributors",
+          "url": "https://github.com/matdemers1/floorspec"
+        }
+      ],
+      "synthetic": true
+    }
+  },
+  "floorspecRules": "0.2",
+  "license": "CC-BY-4.0",
+  "name": "example",
+  "rules": {
+    "ROOM-SIZE": {
+      "applies": {
+        "to": "room",
+        "where": {
+          "measure": "roomFunction",
+          "op": "=",
+          "value": "sleeping"
+        }
+      },
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.org/test-code/2024/1.2",
+        "section": "§1.2"
+      },
+      "extras": {
+        "packFormat": {
+          "certification": "original-paraphrase-v1",
+          "certifiedBy": "Floorspec contributors",
+          "method": "synthetic",
+          "review": "reviewed",
+          "reviewScope": "The paraphrase, the threshold of 100 square feet and both fixtures."
+        }
+      },
+      "paraphrase": "Every room used for sleeping needs at least 100 square feet of floor, measured inside the finished wall faces. The rule reads the net area Floorspec derives for the room; it does not look at closets or alcoves separately.",
+      "provenance": {
+        "edition": "2024",
+        "reviewed": {
+          "by": "Example Reviewer (synthetic)",
+          "credential": "Licensed architect (synthetic example)",
+          "on": "2026-10-05"
+        },
+        "verifiedBy": "Floorspec contributors",
+        "verifiedOn": "2026-10-05"
+      },
+      "requirement": {
+        "measure": "roomNetArea",
+        "op": ">=",
+        "value": 15221234073600
+      },
+      "severity": "mayNotMeet",
+      "title": "Sleeping rooms have a minimum floor area"
+    },
+    "SMOKE-ALARM": {
+      "applies": {
+        "to": "room",
+        "where": {
+          "measure": "roomFunction",
+          "op": "=",
+          "value": "sleeping"
+        }
+      },
+      "citation": {
+        "code": "TEST-ELEC",
+        "edition": "2026",
+        "link": "https://example.org/test-elec/2026/3.1",
+        "section": "§3.1"
+      },
+      "extras": {
+        "packFormat": {
+          "certification": "original-paraphrase-v1",
+          "certifiedBy": "Floorspec contributors",
+          "method": "synthetic",
+          "review": "unreviewed"
+        }
+      },
+      "paraphrase": "Each room used for sleeping needs at least one alarm that detects smoke inside it. The rule counts FS_electrical alarms whose detects list includes smoke; it does not check where on the ceiling the alarm sits or how alarms are interconnected.",
+      "provenance": {
+        "edition": "2026",
+        "verifiedBy": "Floorspec contributors",
+        "verifiedOn": "2026-10-05"
+      },
+      "requirement": {
+        "args": {
+          "collection": "alarms",
+          "extension": "FS_electrical",
+          "match": {
+            "detects": "smoke"
+          }
+        },
+        "measure": "elementCount",
+        "op": ">=",
+        "value": 1
+      },
+      "severity": "mayNotMeet",
+      "title": "A smoke alarm in every sleeping room"
+    },
+    "SPIRAL-GOING": {
+      "applies": {
+        "to": "stair",
+        "where": {
+          "measure": "stairForm",
+          "op": "=",
+          "value": "spiral"
+        }
+      },
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.org/test-code/2024/4.8",
+        "section": "§4.8"
+      },
+      "extras": {
+        "packFormat": {
+          "certification": "original-paraphrase-v1",
+          "certifiedBy": "Floorspec contributors",
+          "method": "synthetic",
+          "review": "unreviewed"
+        }
+      },
+      "paraphrase": "Each tread of a spiral stair is at least 7 1/2 inches deep on the walkline. The rule reads the least going at the walkline that Floorspec derives for the spiral, on the circle through the middle of its treads; the declared tread depth of a spiral is not used.",
+      "provenance": {
+        "edition": "2024",
+        "verifiedBy": "Floorspec contributors",
+        "verifiedOn": "2026-10-05"
+      },
+      "requirement": {
+        "measure": "stairWalklineGoing",
+        "op": ">=",
+        "value": 243840
+      },
+      "severity": "mayNotMeet",
+      "title": "Spiral treads deep enough at the walkline"
+    },
+    "SPIRAL-HEADROOM": {
+      "applies": {
+        "to": "stair",
+        "where": {
+          "all": [
+            {
+              "measure": "stairForm",
+              "op": "=",
+              "value": "spiral"
+            },
+            {
+              "measure": "stairHeadroom",
+              "op": ">=",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.org/test-code/2024/4.10",
+        "section": "§4.10"
+      },
+      "extras": {
+        "packFormat": {
+          "certification": "original-paraphrase-v1",
+          "certifiedBy": "Floorspec contributors",
+          "method": "synthetic",
+          "review": "unreviewed"
+        }
+      },
+      "paraphrase": "A spiral stair has at least 6 feet 6 inches of clear height over the treads a person walks on. The rule reads the headroom Floorspec derives for the stair under the floors and ceilings above it, and checks only a stair that has something above it.",
+      "provenance": {
+        "edition": "2024",
+        "verifiedBy": "Floorspec contributors",
+        "verifiedOn": "2026-10-05"
+      },
+      "requirement": {
+        "measure": "stairHeadroom",
+        "op": ">=",
+        "value": 2535936
+      },
+      "severity": "mayNotMeet",
+      "title": "Headroom over a spiral stair"
+    },
+    "SPIRAL-RISER": {
+      "applies": {
+        "to": "stair",
+        "where": {
+          "measure": "stairForm",
+          "op": "=",
+          "value": "spiral"
+        }
+      },
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.org/test-code/2024/4.9",
+        "section": "§4.9"
+      },
+      "extras": {
+        "packFormat": {
+          "certification": "original-paraphrase-v1",
+          "certifiedBy": "Floorspec contributors",
+          "method": "synthetic",
+          "review": "unreviewed"
+        }
+      },
+      "paraphrase": "Each riser of a spiral stair rises no more than 9 1/2 inches. The rule reads the riser height Floorspec derives for the stair from the floors at its foot and its head and its riser count.",
+      "provenance": {
+        "edition": "2024",
+        "verifiedBy": "Floorspec contributors",
+        "verifiedOn": "2026-10-05"
+      },
+      "requirement": {
+        "measure": "stairRiserHeight",
+        "op": "<=",
+        "value": 308864
+      },
+      "severity": "mayNotMeet",
+      "title": "Spiral risers not too tall"
+    },
+    "SPIRAL-WIDTH": {
+      "applies": {
+        "to": "stair",
+        "where": {
+          "measure": "stairForm",
+          "op": "=",
+          "value": "spiral"
+        }
+      },
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.org/test-code/2024/4.7",
+        "section": "§4.7"
+      },
+      "extras": {
+        "packFormat": {
+          "certification": "original-paraphrase-v1",
+          "certifiedBy": "Floorspec contributors",
+          "method": "synthetic",
+          "review": "unreviewed"
+        }
+      },
+      "paraphrase": "A spiral stair is at least 26 inches wide, from its centre column to its outer edge. The rule reads the declared width of the stair, which for a spiral is the clear width of its treads; it does not look at handrails.",
+      "provenance": {
+        "edition": "2024",
+        "verifiedBy": "Floorspec contributors",
+        "verifiedOn": "2026-10-05"
+      },
+      "requirement": {
+        "measure": "stairWidth",
+        "op": ">=",
+        "value": 845312
+      },
+      "severity": "mayNotMeet",
+      "title": "Spiral stairs wide enough"
+    },
+    "STAIR-RISER": {
+      "applies": {
+        "to": "stair"
+      },
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.org/test-code/2024/4.1",
+        "section": "§4.1"
+      },
+      "extras": {
+        "packFormat": {
+          "certification": "original-paraphrase-v1",
+          "certifiedBy": "Floorspec contributors",
+          "method": "synthetic",
+          "review": "unreviewed"
+        }
+      },
+      "paraphrase": "Each step of a stair rises no more than 7 inches from the one below. The rule reads the riser height Floorspec Core derives for the stair: its rise, from the floor at its foot to the floor at its head, over its riser count.",
+      "provenance": {
+        "edition": "2024",
+        "verifiedBy": "Floorspec contributors",
+        "verifiedOn": "2026-10-05"
+      },
+      "requirement": {
+        "measure": "stairRiserHeight",
+        "op": "<=",
+        "value": 227584
+      },
+      "severity": "mayNotMeet",
+      "title": "Stair risers are not too tall"
+    },
+    "WINDER-NARROW": {
+      "applies": {
+        "to": "stair",
+        "where": {
+          "measure": "stairForm",
+          "op": "=",
+          "value": "winder"
+        }
+      },
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.org/test-code/2024/4.6",
+        "section": "§4.6"
+      },
+      "extras": {
+        "packFormat": {
+          "certification": "original-paraphrase-v1",
+          "certifiedBy": "Floorspec contributors",
+          "method": "synthetic",
+          "review": "unreviewed"
+        }
+      },
+      "paraphrase": "Each winder keeps at least 2 inches of depth at its narrow end, so that no tread runs out to a point. The rule reads the least going at the narrow end that Floorspec derives for the winders: where they stand on the newel at the inside of the turn, or nothing at all when the turn has no newel.",
+      "provenance": {
+        "edition": "2024",
+        "verifiedBy": "Floorspec contributors",
+        "verifiedOn": "2026-10-05"
+      },
+      "requirement": {
+        "measure": "stairNarrowGoing",
+        "op": ">=",
+        "value": 65024
+      },
+      "severity": "mayNotMeet",
+      "title": "Winders not too narrow at the inside"
+    },
+    "WINDER-WALKLINE": {
+      "applies": {
+        "to": "stair",
+        "where": {
+          "measure": "stairForm",
+          "op": "=",
+          "value": "winder"
+        }
+      },
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.org/test-code/2024/4.5",
+        "section": "§4.5"
+      },
+      "extras": {
+        "packFormat": {
+          "certification": "original-paraphrase-v1",
+          "certifiedBy": "Floorspec contributors",
+          "method": "synthetic",
+          "review": "unreviewed"
+        }
+      },
+      "paraphrase": "Each winder of a stair that turns on winders is at least 9 inches deep where a person walks, measured on the walkline. The rule reads the least going of the winders that Floorspec derives at its walkline, the middle of the stair; the straight treads of its flights are checked by the tread rule, not this one.",
+      "provenance": {
+        "edition": "2024",
+        "verifiedBy": "Floorspec contributors",
+        "verifiedOn": "2026-10-05"
+      },
+      "requirement": {
+        "measure": "stairWalklineGoing",
+        "op": ">=",
+        "value": 292608
+      },
+      "severity": "mayNotMeet",
+      "title": "Winders deep enough at the walkline"
+    }
+  },
+  "title": "Example pack (synthetic codes)",
+  "version": "0.2.0"
+}

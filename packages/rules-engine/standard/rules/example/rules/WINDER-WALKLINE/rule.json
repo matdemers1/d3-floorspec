@@ -1,0 +1,35 @@
+{
+  "title": "Winders deep enough at the walkline",
+  "citation": {
+    "code": "TEST-CODE",
+    "edition": "2024",
+    "section": "§4.5",
+    "link": "https://example.org/test-code/2024/4.5"
+  },
+  "paraphrase": "Each winder of a stair that turns on winders is at least 9 inches deep where a person walks, measured on the walkline. The rule reads the least going of the winders that Floorspec derives at its walkline, the middle of the stair; the straight treads of its flights are checked by the tread rule, not this one.",
+  "applies": {
+    "to": "stair",
+    "where": {
+      "measure": "stairForm",
+      "op": "=",
+      "value": "winder"
+    }
+  },
+  "requirement": {
+    "measure": "stairWalklineGoing",
+    "op": ">=",
+    "value": 292608
+  },
+  "severity": "mayNotMeet",
+  "provenance": {
+    "verifiedBy": "Floorspec contributors",
+    "verifiedOn": "2026-10-05",
+    "edition": "2024",
+    "method": "synthetic",
+    "certifiedBy": "Floorspec contributors",
+    "certification": "original-paraphrase-v1",
+    "review": {
+      "status": "unreviewed"
+    }
+  }
+}

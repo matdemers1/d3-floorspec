@@ -1,0 +1,39 @@
+{
+  "title": "Sleeping rooms have a minimum floor area",
+  "citation": {
+    "code": "TEST-CODE",
+    "edition": "2024",
+    "section": "§1.2",
+    "link": "https://example.org/test-code/2024/1.2"
+  },
+  "paraphrase": "Every room used for sleeping needs at least 100 square feet of floor, measured inside the finished wall faces. The rule reads the net area Floorspec derives for the room; it does not look at closets or alcoves separately.",
+  "applies": {
+    "to": "room",
+    "where": {
+      "measure": "roomFunction",
+      "op": "=",
+      "value": "sleeping"
+    }
+  },
+  "requirement": {
+    "measure": "roomNetArea",
+    "op": ">=",
+    "value": 15221234073600
+  },
+  "severity": "mayNotMeet",
+  "provenance": {
+    "verifiedBy": "Floorspec contributors",
+    "verifiedOn": "2026-10-05",
+    "edition": "2024",
+    "method": "synthetic",
+    "certifiedBy": "Floorspec contributors",
+    "certification": "original-paraphrase-v1",
+    "review": {
+      "status": "reviewed",
+      "by": "Example Reviewer (synthetic)",
+      "on": "2026-10-05",
+      "credential": "Licensed architect (synthetic example)",
+      "scope": "The paraphrase, the threshold of 100 square feet and both fixtures."
+    }
+  }
+}

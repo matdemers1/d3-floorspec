@@ -1,0 +1,6 @@
+{
+  "description": "A room that names its wall, floor and ceiling finishes: the right face of each of its four walls faces it and inherits its paint (source \"room\"); its floor is oak and its ceiling white. The walls' left faces face the outside and have no finish.",
+  "covers": [
+    "FS-CORE-18.6.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "removeElement removes a stair, and nothing depends on it.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-2.2.2"
+  ]
+}

@@ -1,0 +1,179 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.7"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "SPIRAL-WIDTH",
+      "subjects": 0,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.6"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "WINDER-NARROW",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.5"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "WINDER-WALKLINE",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.6"
+      },
+      "elements": [
+        "ST1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                1280000,
+                192000
+              ],
+              [
+                3392000,
+                192000
+              ],
+              [
+                3392000,
+                3584000
+              ],
+              [
+                1280000,
+                3584000
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "0' 0\"",
+          "holds": false,
+          "measure": "stairNarrowGoing",
+          "op": ">=",
+          "target": {
+            "id": "ST1",
+            "kind": "stair"
+          },
+          "threshold": 195072,
+          "thresholdDisplay": "0' 6\"",
+          "type": "length",
+          "value": 0
+        }
+      ],
+      "message": "ST1 may not meet TEST-CODE 2024 §4.6 (Winders at least 6 in deep at the narrow end).",
+      "pack": "test-pack",
+      "rule": "WINDER-NARROW",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "ST1",
+        "kind": "stair"
+      },
+      "title": "Winders at least 6 in deep at the narrow end",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.5"
+      },
+      "elements": [
+        "ST1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                1280000,
+                192000
+              ],
+              [
+                3392000,
+                192000
+              ],
+              [
+                3392000,
+                3584000
+              ],
+              [
+                1280000,
+                3584000
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "0' 9 3/16\"",
+          "holds": false,
+          "measure": "stairWalklineGoing",
+          "op": ">=",
+          "target": {
+            "id": "ST1",
+            "kind": "stair"
+          },
+          "threshold": 325120,
+          "thresholdDisplay": "0' 10\"",
+          "type": "length",
+          "value": 298160
+        }
+      ],
+      "message": "ST1 may not meet TEST-CODE 2024 §4.5 (Winders at least 10 in deep at the walkline).",
+      "pack": "test-pack",
+      "rule": "WINDER-WALKLINE",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "ST1",
+        "kind": "stair"
+      },
+      "title": "Winders at least 10 in deep at the walkline",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.2",
+  "hash": "4d6dda6a1c6fd74281c4ac49a6ac6077998b2fdb984bc76f1a39b8cdedf9ccf6",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

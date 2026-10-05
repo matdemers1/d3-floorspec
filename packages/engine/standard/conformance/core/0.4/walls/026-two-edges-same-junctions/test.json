@@ -1,0 +1,7 @@
+{
+  "description": "A wall and a separator both connect J1 and J2 (in opposite orders).",
+  "covers": [
+    "FS-CORE-5.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

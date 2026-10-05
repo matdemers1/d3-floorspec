@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "removeAdjacency",
+      "a": "Kitchen",
+      "b": "Garage",
+      "kind": "forbidden"
+    }
+  ]
+}

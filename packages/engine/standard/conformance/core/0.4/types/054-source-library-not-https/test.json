@@ -1,0 +1,6 @@
+{
+  "description": "A source whose library is an http: URI: it must be https.",
+  "covers": [
+    "FS-CORE-8.1.3"
+  ]
+}

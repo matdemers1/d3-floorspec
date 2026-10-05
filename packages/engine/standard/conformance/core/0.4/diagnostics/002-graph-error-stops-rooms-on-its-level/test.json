@@ -1,0 +1,8 @@
+{
+  "description": "On L1 two walls cross (FS-INV-104), so L1's room invariants are not evaluated - R1, anchored outside, is not reported. L2 has no graph error: its rooms are checked, and R3, anchored outside, is reported.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-5.3.1",
+    "FS-CORE-6.3.1"
+  ]
+}

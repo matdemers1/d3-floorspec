@@ -1,0 +1,6 @@
+{
+  "description": "An item's count is at least 1.",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

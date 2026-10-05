@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "resizeRoom",
+      "room": "Kitchen",
+      "side": "east",
+      "by": "two feet"
+    },
+    {
+      "op": "resizeRoom",
+      "room": "Garage",
+      "side": "east",
+      "by": "2'"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ An evaluation returns one **report**:
 
 | Member | Type | Present | Meaning |
 |---|---|---|---|
-| `floorspecRules` | `"0.1"` | always | the draft the report follows |
+| `floorspecRules` | `"0.2"` | always | the draft the report follows |
 | `notice` | string | always | the notice of 9.9 |
 | `units` | `"imperial"` or `"metric"` | when step 1 of 1.3 passed | how values are displayed (9.6) |
 | `profile` | string | when step 2 passed | the profile's `name` |

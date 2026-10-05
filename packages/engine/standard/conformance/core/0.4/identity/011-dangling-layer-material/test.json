@@ -1,0 +1,6 @@
+{
+  "description": "A wall type's layer names a material that does not exist; the referring element is the type.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

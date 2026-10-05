@@ -1,0 +1,6 @@
+{
+  "description": "A pack whose text uses \"complimentary\", \"the code passes through\" and \"compliances\" (a word the pattern does not list) has no match of the assurance pattern, and is evaluated.",
+  "covers": [
+    "FS-RULES-2.5.1"
+  ]
+}

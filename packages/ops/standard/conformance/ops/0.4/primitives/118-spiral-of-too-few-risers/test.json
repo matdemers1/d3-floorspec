@@ -1,0 +1,7 @@
+{
+  "description": "setProperty of 3 risers on a spiral that turns 360 degrees: each tread would turn 180 degrees, FS-INV-906, and the batch is rejected.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

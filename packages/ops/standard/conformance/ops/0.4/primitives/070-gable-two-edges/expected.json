@@ -1,0 +1,28 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "0a2f8de232fbbd7d8e0fc5708f4c15603c13fdcc487faeae142103e005d50e24",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/edges/1/gable",
+      "value": true
+    },
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/edges/3/gable",
+      "value": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "RF1",
+      "path": "/edges"
+    }
+  ]
+}

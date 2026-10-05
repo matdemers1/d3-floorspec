@@ -1,0 +1,37 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "2a8b38324bce1b900988c9d895b31de5e8429572b164e9a50a9d50d052ebfd8c",
+  "created": ["L2", "T2"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L2",
+      "element": {
+        "building": "B1",
+        "elevation": 3456000,
+        "height": 3456000
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "types",
+      "id": "T2",
+      "element": {
+        "kind": "doorType"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "L2"
+    },
+    {
+      "op": "removeElement",
+      "id": "T2"
+    }
+  ]
+}

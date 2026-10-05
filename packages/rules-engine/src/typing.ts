@@ -4,7 +4,7 @@
  */
 import { DEFERRED, measureFor } from './measures/library.js';
 import { argsOk, aCollection, aExtension, aFunction, anEnum, isInt, PURPOSES, typeOf, type ArgCheck } from './measures/measure.js';
-import type { MeasureType, Op, Rule, Selection, TargetKind, Test } from './types.js';
+import type { MeasureType, Op, Rule, RulesDraft, Selection, TargetKind, Test } from './types.js';
 
 /** 3.5: the candidate sets of each subject kind, their arguments, and the kind of their candidates. */
 export const CANDIDATE_SETS: Readonly<Record<string, { args: Readonly<Record<string, ArgCheck>>; kind: TargetKind }>> = {
@@ -45,7 +45,7 @@ export interface Typing {
   readonly reads: ReadonlySet<string>;
 }
 
-export function typeRule(rule: Rule): Typing {
+export function typeRule(rule: Rule, draft: RulesDraft = '0.2'): Typing {
   const a = rule.applies;
   const subject = a.to;
   let ok = true;
@@ -62,7 +62,7 @@ export function typeRule(rule: Rule): Typing {
         deferred = true;
         return;
       }
-      const m = measureFor(t.measure, kind);
+      const m = measureFor(t.measure, kind, draft);
       if (m === undefined || !argsOk(m, args)) {
         ok = false;
         return;

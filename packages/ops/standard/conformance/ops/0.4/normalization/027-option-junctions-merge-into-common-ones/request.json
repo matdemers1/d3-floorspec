@@ -1,0 +1,26 @@
+{
+  "batch": [
+    {
+      "op": "addJunction",
+      "id": "JX",
+      "level": "L1",
+      "position": [5120000, 0]
+    },
+    {
+      "op": "addJunction",
+      "id": "JY",
+      "level": "L1",
+      "position": [5120000, 5120000]
+    },
+    {
+      "op": "addSeparator",
+      "id": "SB",
+      "level": "L1",
+      "start": "JX",
+      "end": "JY"
+    }
+  ],
+  "context": {
+    "option": "KB"
+  }
+}

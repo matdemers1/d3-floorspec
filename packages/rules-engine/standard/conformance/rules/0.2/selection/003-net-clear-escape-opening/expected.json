@@ -1,0 +1,26 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§3.2"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "NET-ESCAPE",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [],
+  "floorspecRules": "0.2",
+  "hash": "88a0e65d74b4ec3ba44d1e70d242290493f600e4ee63b3ad3a885ccaf9a5356b",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

@@ -1,0 +1,42 @@
+{
+  "coverage": [],
+  "diagnostics": [
+    {
+      "code": "FS-RULES-004",
+      "packIndex": 2,
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-005",
+      "packIndex": 0,
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-005",
+      "packIndex": 1,
+      "severity": "error"
+    }
+  ],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§5.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "other",
+      "rule": "SMOKE",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [],
+  "floorspecRules": "0.2",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

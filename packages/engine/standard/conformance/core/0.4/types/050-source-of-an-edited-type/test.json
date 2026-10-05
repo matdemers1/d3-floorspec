@@ -1,0 +1,6 @@
+{
+  "description": "The library's 2x4 partition, edited after it was embedded into a 2x6 one (its stud layer 5 1/2 in): it keeps its source, which records where it came from, not that it still matches; valid.",
+  "covers": [
+    "FS-CORE-8.1.3"
+  ]
+}

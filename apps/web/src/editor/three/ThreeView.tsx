@@ -830,6 +830,8 @@ function MiniMap({ level, mesh, x, y, yaw, where }: { level: LevelView; mesh: Ho
 interface Hook {
   ready: boolean;
   parts: number;
+  /** The mesh's parts by kind (packages/mesh's PartKind): how many of each are drawn. */
+  kinds: Record<string, number>;
   walking: boolean;
   /** The walker, in metres in the document's frame; null when not walking. */
   walker: { x: number; y: number; feet: number; eye: number; ground: number; yaw: number; room: string | null; blocked: string | null } | null;
@@ -865,6 +867,11 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
       },
       get parts() {
         return ready?.mesh.parts.length ?? 0;
+      },
+      get kinds() {
+        const k: Record<string, number> = {};
+        for (const p of ready?.mesh.parts ?? []) k[p.kind] = (k[p.kind] ?? 0) + 1;
+        return k;
       },
       get walking() {
         return three.get().walking && ctl.walker !== null;

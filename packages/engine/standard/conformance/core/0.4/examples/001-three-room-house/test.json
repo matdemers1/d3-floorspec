@@ -1,0 +1,17 @@
+{
+  "description": "The Phase 1 exit demo: a 36 by 24 ft single-storey house of 2x6 exterior walls (siding, OSB, studs, drywall; justified on the exterior face of the studs and drawn clockwise) and 2x4 partitions. A living room open to the kitchen across a separator, a bedroom behind a partition, a front door, an interior door and four windows. Dimensions are feet and inches in base units (1 ft = 390,144, 1 in = 32,512). The exterior tees are butt joins with the exterior walls running through; the corners and the interior tee are mitred. The input is deliberately not canonical - member order, four-space indentation, constant defaults written out - so canonical.json is a real re-serialization.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-5.7.3",
+    "FS-CORE-5.8.4",
+    "FS-CORE-5.9.3",
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1",
+    "FS-CORE-7.4.1",
+    "FS-CORE-8.2.1",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.2.2",
+    "FS-CORE-9.3.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A room name is compared ignoring case: \"kitchen\" is R1.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-4.6.1"
+  ]
+}

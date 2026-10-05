@@ -1,0 +1,6 @@
+{
+  "description": "The two exterior walls W1 and W5 are locked 24' apart; resizing the Kitchen moves neither.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

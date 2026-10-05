@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/rules/0.2/rule.schema.json",
+  "$comment": "Normative (FLR-ADR-006, FLR-ADR-011): a rule record of Floorspec Rules 0.2 (chapter 3). Typing (3.9) is checked by the evaluator, not here.",
+  "title": "Floorspec Rules 0.2 rule record",
+  "description": "3.1: one checkable requirement of one edition of one code — citation, paraphrase, applicability, selection, requirement, exceptions, severity and provenance (the RASE shape, 0.5).",
+  "type": "object",
+  "required": [
+    "title",
+    "citation",
+    "paraphrase",
+    "applies",
+    "requirement",
+    "severity",
+    "provenance"
+  ],
+  "properties": {
+    "title": {
+      "$ref": "defs.schema.json#/$defs/title"
+    },
+    "citation": {
+      "$ref": "defs.schema.json#/$defs/citation"
+    },
+    "paraphrase": {
+      "$ref": "defs.schema.json#/$defs/text"
+    },
+    "applies": {
+      "title": "Applicability",
+      "description": "3.4: the rule's subjects. extension and collection are for \"element\" only, and collection only with extension (3.9).",
+      "type": "object",
+      "required": [
+        "to"
+      ],
+      "properties": {
+        "to": {
+          "type": "string",
+          "enum": [
+            "room",
+            "opening",
+            "element",
+            "level",
+            "stair"
+          ]
+        },
+        "extension": {
+          "$ref": "defs.schema.json#/$defs/extensionName"
+        },
+        "collection": {
+          "$ref": "defs.schema.json#/$defs/collectionName"
+        },
+        "where": {
+          "$ref": "defs.schema.json#/$defs/test"
+        }
+      },
+      "additionalProperties": false
+    },
+    "select": {
+      "title": "Selection",
+      "description": "3.5: the subject's candidates the requirement is tried on, and whether any or all must pass it.",
+      "type": "object",
+      "required": [
+        "from",
+        "need"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "enum": [
+            "openings",
+            "elements",
+            "envelopes",
+            "rooms"
+          ]
+        },
+        "args": {
+          "type": "object"
+        },
+        "where": {
+          "$ref": "defs.schema.json#/$defs/test"
+        },
+        "need": {
+          "type": "string",
+          "enum": [
+            "any",
+            "all"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "requirement": {
+      "$ref": "defs.schema.json#/$defs/test"
+    },
+    "exceptions": {
+      "title": "Exceptions",
+      "description": "3.7: when a subject is exempt.",
+      "type": "array",
+      "default": [],
+      "items": {
+        "title": "Exception",
+        "description": "3.7: a test on the subject, and the exception in the contributor's words.",
+        "type": "object",
+        "required": [
+          "when",
+          "note"
+        ],
+        "properties": {
+          "when": {
+            "$ref": "defs.schema.json#/$defs/test"
+          },
+          "note": {
+            "$ref": "defs.schema.json#/$defs/text"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "severity": {
+      "$ref": "defs.schema.json#/$defs/severity"
+    },
+    "provenance": {
+      "title": "Provenance",
+      "description": "3.12: who verified the rule, against which edition (the citation's, 3.9), and when; a licensed professional's review is the reviewed badge.",
+      "type": "object",
+      "required": [
+        "verifiedBy",
+        "verifiedOn",
+        "edition"
+      ],
+      "properties": {
+        "verifiedBy": {
+          "$ref": "defs.schema.json#/$defs/title"
+        },
+        "verifiedOn": {
+          "$ref": "defs.schema.json#/$defs/date"
+        },
+        "edition": {
+          "$ref": "defs.schema.json#/$defs/edition"
+        },
+        "reviewed": {
+          "title": "Review",
+          "description": "3.12: a licensed professional's review of the rule.",
+          "type": "object",
+          "required": [
+            "by",
+            "on"
+          ],
+          "properties": {
+            "by": {
+              "$ref": "defs.schema.json#/$defs/title"
+            },
+            "on": {
+              "$ref": "defs.schema.json#/$defs/date"
+            },
+            "credential": {
+              "$ref": "defs.schema.json#/$defs/title"
+            }
+          },
+          "additionalProperties": false
+        },
+        "note": {
+          "$ref": "defs.schema.json#/$defs/text"
+        }
+      },
+      "additionalProperties": false
+    },
+    "extras": {
+      "type": "object",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

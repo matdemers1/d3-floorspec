@@ -1,0 +1,7 @@
+{
+  "description": "moveWall's \"wall\" is a wall: the separator S1 across the box counts as no match, so FS-OPS-003.",
+  "covers": [
+    "FS-OPS-4.2.1",
+    "FS-OPS-3.3.1"
+  ]
+}

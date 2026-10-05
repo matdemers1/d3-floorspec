@@ -1,0 +1,6 @@
+{
+  "description": "removeElement removes an extension element; nothing depends on one, and its collection stays, empty.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

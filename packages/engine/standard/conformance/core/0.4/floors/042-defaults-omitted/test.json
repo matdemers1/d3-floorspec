@@ -1,0 +1,8 @@
+{
+  "description": "A floor at offset 0 with no thickness, and a vault whose slopes are \"both\", written out: the canonical form omits the floor - its offset is a constant default, and so is an empty floor - and the vault's \"slopes\", and keeps its \"height\", whose default is derived.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-15.1.2",
+    "FS-CORE-15.3.2"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R3"
+      },
+      "measure": "wallRunBetweenReceptacles"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R3"
+      },
+      "measure": "receptacleReach"
+    }
+  ]
+}

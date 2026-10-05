@@ -1,0 +1,6 @@
+{
+  "description": "A door type's source without \"version\".",
+  "covers": [
+    "FS-CORE-8.1.3"
+  ]
+}

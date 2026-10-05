@@ -1,0 +1,9 @@
+{
+  "description": "The same rule when the casement's clear opening declares no area: its area is not 30\" times 44\" but has no value, which no threshold is met by (3.8), so R1 may not meet the rule; the finding shows the area as `not stated`.",
+  "covers": [
+    "FS-RULES-3.8.1",
+    "FS-RULES-6.5.1",
+    "FS-RULES-9.3.1",
+    "FS-RULES-9.6.1"
+  ]
+}

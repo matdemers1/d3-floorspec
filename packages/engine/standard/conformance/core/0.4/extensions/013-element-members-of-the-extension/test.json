@@ -1,0 +1,9 @@
+{
+  "description": "A sofa whose extension-defined members are named like core members (level_, position, anchor) or hold non-integer numbers, beside top-level data of the extension's own: core neither checks nor reads them, derives the same as for the bare element, and the canonical form keeps all of it, unchanged.",
+  "covers": [
+    "FS-CORE-1.6.6",
+    "FS-CORE-1.6.9",
+    "FS-CORE-12.5.2",
+    "FS-CORE-9.2.1"
+  ]
+}

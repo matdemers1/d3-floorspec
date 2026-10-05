@@ -1,0 +1,7 @@
+{
+  "description": "A fallback on L2, whose elevation is 3000 mm: its box's z is relative to the level datum, so bottom and top are 3000 mm higher than the box's own z.",
+  "covers": [
+    "FS-CORE-12.6.2",
+    "FS-CORE-13.1.1"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-702",
+      "severity": "error",
+      "elements": ["R1"]
+    }
+  ]
+}

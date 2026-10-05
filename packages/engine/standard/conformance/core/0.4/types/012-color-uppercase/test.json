@@ -1,0 +1,6 @@
+{
+  "description": "Colours are lowercase hexadecimal.",
+  "covers": [
+    "FS-CORE-8.5.1"
+  ]
+}

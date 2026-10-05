@@ -1,0 +1,42 @@
+{
+  "title": "A smoke alarm in every sleeping room",
+  "citation": {
+    "code": "TEST-ELEC",
+    "edition": "2026",
+    "section": "§3.1",
+    "link": "https://example.org/test-elec/2026/3.1"
+  },
+  "paraphrase": "Each room used for sleeping needs at least one alarm that detects smoke inside it. The rule counts FS_electrical alarms whose detects list includes smoke; it does not check where on the ceiling the alarm sits or how alarms are interconnected.",
+  "applies": {
+    "to": "room",
+    "where": {
+      "measure": "roomFunction",
+      "op": "=",
+      "value": "sleeping"
+    }
+  },
+  "requirement": {
+    "measure": "elementCount",
+    "args": {
+      "extension": "FS_electrical",
+      "collection": "alarms",
+      "match": {
+        "detects": "smoke"
+      }
+    },
+    "op": ">=",
+    "value": 1
+  },
+  "severity": "mayNotMeet",
+  "provenance": {
+    "verifiedBy": "Floorspec contributors",
+    "verifiedOn": "2026-10-05",
+    "edition": "2026",
+    "method": "synthetic",
+    "certifiedBy": "Floorspec contributors",
+    "certification": "original-paraphrase-v1",
+    "review": {
+      "status": "unreviewed"
+    }
+  }
+}

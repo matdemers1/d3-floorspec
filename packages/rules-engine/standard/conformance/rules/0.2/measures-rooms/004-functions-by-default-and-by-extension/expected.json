@@ -1,0 +1,24 @@
+{
+  "results": [
+    {
+      "display": "unspecified",
+      "type": "term",
+      "value": "unspecified"
+    },
+    {
+      "display": "EXT_furniture:sauna",
+      "type": "term",
+      "value": "EXT_furniture:sauna"
+    },
+    {
+      "display": "1",
+      "type": "count",
+      "value": 1
+    },
+    {
+      "display": "1",
+      "type": "count",
+      "value": 1
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "The second bedroom of the two-bedroom variant has no alarm.",
+  "outcome": "fail",
+  "document": "two-bedrooms",
+  "findings": [
+    "R3"
+  ]
+}

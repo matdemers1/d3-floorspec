@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/rules/0.2/profile.schema.json",
+  "$comment": "Normative (FLR-ADR-006): a jurisdiction profile of Floorspec Rules 0.2 (chapter 10). A profile it rejects is FS-RULES-002; so is one that adopts one code twice with one date, names a pack twice, or whose text matches the assurance pattern (10.1.1).",
+  "title": "Floorspec Rules 0.2 jurisdiction profile",
+  "description": "10.1: the editions in force, from when, the packs selected and the local amendments that withdraw rules.",
+  "type": "object",
+  "required": [
+    "floorspecRules",
+    "name",
+    "adopts"
+  ],
+  "properties": {
+    "floorspecRules": {
+      "$ref": "defs.schema.json#/$defs/floorspecRules"
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/title"
+    },
+    "jurisdiction": {
+      "$ref": "defs.schema.json#/$defs/title"
+    },
+    "adopts": {
+      "title": "Adoptions",
+      "description": "10.2.",
+      "type": "array",
+      "items": {
+        "title": "Adoption",
+        "description": "10.2: a code, the edition adopted and when it takes effect.",
+        "type": "object",
+        "required": [
+          "code",
+          "edition"
+        ],
+        "properties": {
+          "code": {
+            "$ref": "defs.schema.json#/$defs/code"
+          },
+          "edition": {
+            "$ref": "defs.schema.json#/$defs/edition"
+          },
+          "effective": {
+            "$ref": "defs.schema.json#/$defs/date"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "asOf": {
+      "$ref": "defs.schema.json#/$defs/date"
+    },
+    "packs": {
+      "title": "Packs",
+      "description": "10.4: the packs selected, each by name and version range.",
+      "type": "array",
+      "items": {
+        "title": "Pack selection",
+        "description": "10.4.",
+        "type": "object",
+        "required": [
+          "name",
+          "version"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "defs.schema.json#/$defs/packName"
+          },
+          "version": {
+            "$ref": "defs.schema.json#/$defs/range"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "amendments": {
+      "title": "Amendments",
+      "description": "10.5.",
+      "type": "array",
+      "default": [],
+      "items": {
+        "title": "Amendment",
+        "description": "10.5: a local amendment, cited by reference, that withdraws rules.",
+        "type": "object",
+        "required": [
+          "citation",
+          "withdraws"
+        ],
+        "properties": {
+          "citation": {
+            "title": "Amendment citation",
+            "description": "10.5: who made the amendment, and where.",
+            "type": "object",
+            "required": [
+              "authority",
+              "reference"
+            ],
+            "properties": {
+              "authority": {
+                "$ref": "defs.schema.json#/$defs/title"
+              },
+              "reference": {
+                "$ref": "defs.schema.json#/$defs/title"
+              },
+              "link": {
+                "$ref": "defs.schema.json#/$defs/httpsUri"
+              }
+            },
+            "additionalProperties": false
+          },
+          "effective": {
+            "$ref": "defs.schema.json#/$defs/date"
+          },
+          "withdraws": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "title": "Rule reference",
+              "description": "10.5: a rule, by its pack's name and its ID.",
+              "type": "object",
+              "required": [
+                "pack",
+                "rule"
+              ],
+              "properties": {
+                "pack": {
+                  "$ref": "defs.schema.json#/$defs/packName"
+                },
+                "rule": {
+                  "$ref": "defs.schema.json#/$defs/id"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "note": {
+            "$ref": "defs.schema.json#/$defs/text"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "extras": {
+      "type": "object",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,8 @@
+{
+  "description": "The five stair measures of 8.5 on the straight stair ST1 and the spiral ST2: each riser height is Core's, 2700 mm over 15 risers; each tread depth and width is the stair's own; ST1's headroom is Core's - at the well's west edge, 3' past its first nosing, the nosing line is 5 risers up, under U1's floor, 12\" thick - and its handrail is 34\"; the spiral has a headroom Core 0.4 derives - under the bedroom's ceiling at 2700 mm, over its highest tread, its 14th riser up, 180 mm - and no handrail, which is null.",
+  "covers": [
+    "FS-RULES-4.3.1",
+    "FS-RULES-4.7.1",
+    "FS-RULES-8.5.2"
+  ]
+}

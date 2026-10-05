@@ -1,0 +1,6 @@
+{
+  "description": "A length is a JSON integer or a string: 2.5 is neither, so the request is malformed (FS-OPS-001), not a grammar failure.",
+  "covers": [
+    "FS-OPS-1.1.3"
+  ]
+}

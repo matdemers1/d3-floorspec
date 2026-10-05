@@ -1,0 +1,6 @@
+{
+  "description": "A quarter-turn winder stair has no gap.",
+  "covers": [
+    "FS-CORE-17.2.1"
+  ]
+}

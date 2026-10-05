@@ -1,0 +1,9 @@
+{
+  "description": "Six chairs standing free, each 500 mm square around its position, at rotations 0, 45, 30, -135, 180 and 123.456789 degrees: each frame faces F(rotation), whose components are cos and sin times 10^9 rounded once - (707106781, 707106781) at 45 degrees, (866025404, 500000000) at 30 - and each placement's facing is its rotation.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.3.1",
+    "FS-CORE-13.4.1",
+    "FS-CORE-12.6.2"
+  ]
+}

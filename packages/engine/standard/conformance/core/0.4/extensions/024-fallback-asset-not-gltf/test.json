@@ -1,0 +1,7 @@
+{
+  "description": "A fallback asset that is a PNG image, not a glTF model: FS-INV-506.",
+  "covers": [
+    "FS-CORE-12.6.1",
+    "FS-CORE-10.2.1"
+  ]
+}

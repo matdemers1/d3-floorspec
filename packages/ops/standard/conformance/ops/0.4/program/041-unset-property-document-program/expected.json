@@ -1,0 +1,109 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "ef2cbf21006fb66393553b112ddf5d044ba6273c15263ae4991814e31e5c9570",
+  "created": [],
+  "removed": ["DIN", "GAR", "KIT", "PAN"],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/brief"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R2",
+      "path": "/brief"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R3",
+      "path": "/brief"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/program"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/brief",
+      "value": "KIT"
+    },
+    {
+      "op": "setProperty",
+      "id": "R2",
+      "path": "/brief",
+      "value": "PAN"
+    },
+    {
+      "op": "setProperty",
+      "id": "R3",
+      "path": "/brief",
+      "value": "DIN"
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "DIN",
+      "element": {
+        "function": "dining",
+        "name": "Dining"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "GAR",
+      "element": {
+        "function": "garage",
+        "name": "Garage"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "KIT",
+      "element": {
+        "function": "kitchen",
+        "minArea": 13107200000000,
+        "name": "Kitchen"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "PAN",
+      "element": {
+        "function": "storage",
+        "name": "Pantry"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/program/adjacency",
+      "value": [
+        {
+          "a": "KIT",
+          "b": "DIN",
+          "kind": "required"
+        },
+        {
+          "a": "KIT",
+          "b": "PAN",
+          "kind": "preferred",
+          "weight": 3
+        },
+        {
+          "a": "GAR",
+          "b": "KIT",
+          "kind": "forbidden"
+        }
+      ]
+    }
+  ]
+}

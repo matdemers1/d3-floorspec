@@ -1,0 +1,9 @@
+{
+  "description": "Two rooms divided by a centred interior wall W7: each room polygon stops at that wall's face, and the T junctions get fills.",
+  "covers": [
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.3.2",
+    "FS-CORE-6.4.1",
+    "FS-CORE-5.7.3"
+  ]
+}

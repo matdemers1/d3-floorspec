@@ -9,7 +9,7 @@ import { analyseProgram } from '../derive/program.js';
 import { circulationLints } from '../circulation/circulation.js';
 import type { Analysis, Reporter } from './invariants.js';
 import { surfaceDerived } from '../roofs/roofs.js';
-import { stepsDerived } from '../stairs/stairs.js';
+import { StairContext, stairLints, stepsDerived } from '../stairs/stairs.js';
 import { references } from './references.js';
 
 const ptr = (collection: string, id: string): string => `/${collection}/${id.replace(/~/g, '~0').replace(/\//g, '~1')}`;
@@ -100,9 +100,21 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
   for (const [id, roof] of entries(doc.roofs))
     if (!surfaceDerived(roof))
       r.report('FS-LINT-015', `${id}'s surface is not derived by this draft: its pitches differ, its outline has an oblique edge, or a gable is not at the end of a wing.`, [id], { pointer: ptr('roofs', id) });
-  for (const [id, st] of entries(doc.stairs))
-    if (!stepsDerived(st))
-      r.report('FS-LINT-016', `${id} is a ${st.form?.kind} stair, whose steps, run, walkline and headroom this draft does not derive.`, [id], { pointer: ptr('stairs', id) });
+  // Core 0.4 derives every stair's steps, and reports 018 and 019 instead (17.6, 17.7).
+  if (!analysis.core04) {
+    for (const [id, st] of entries(doc.stairs))
+      if (!stepsDerived(st))
+        r.report('FS-LINT-016', `${id} is a ${st.form?.kind} stair, whose steps, run, walkline and headroom this draft does not derive.`, [id], { pointer: ptr('stairs', id) });
+  } else if (entries(doc.stairs).length)
+    for (const { id, code } of stairLints(new StairContext(doc, analysis.levels)))
+      r.report(
+        code,
+        code === 'FS-LINT-018'
+          ? `${id}'s tapered treads narrow to a point: a winder stair without a newel, or a spiral stair with no column.`
+          : `${id}'s headroom is less than the ${get(doc.stairs, id)!.minHeadroom} it is designed for: the floor above is not open where the stair needs it.`,
+        [id],
+        { pointer: ptr('stairs', id) },
+      );
 }
 
 /**

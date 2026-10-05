@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/risers"
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/maxRiser",
+      "value": 251968
+    }
+  ]
+}

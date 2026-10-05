@@ -1,0 +1,6 @@
+{
+  "description": "An envelope states its shape.",
+  "covers": [
+    "FS-CORE-13.5.1"
+  ]
+}

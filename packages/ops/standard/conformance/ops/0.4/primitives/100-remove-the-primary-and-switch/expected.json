@@ -1,0 +1,60 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d96c2a8ace4de8714e2d5a1e60309145e4fc2efc91c914d6cf4c6f3f43640767",
+  "created": [],
+  "removed": ["KA", "OA", "WA"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "KA",
+      "cascade": true
+    },
+    {
+      "op": "setProperty",
+      "id": "KS",
+      "path": "/primary",
+      "value": "KB"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "KS",
+      "path": "/primary",
+      "value": "KA"
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "KA",
+      "element": {
+        "name": "A",
+        "set": "KS"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "WA",
+      "element": {
+        "level": "L1",
+        "start": "S5",
+        "end": "N5",
+        "option": "KA",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "OA",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 1920000,
+        "option": "KA",
+        "wall": "WA"
+      }
+    }
+  ]
+}

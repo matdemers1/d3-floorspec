@@ -1,0 +1,6 @@
+{
+  "description": "An opening's height is greater than zero.",
+  "covers": [
+    "FS-CORE-7.1.2"
+  ]
+}

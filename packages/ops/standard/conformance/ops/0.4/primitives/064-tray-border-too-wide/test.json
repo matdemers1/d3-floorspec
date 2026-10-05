@@ -1,0 +1,7 @@
+{
+  "description": "setProperty of a 5' border in a room under 10' deep inside its walls: the tray does not fit (Core 15.4.1), so the result is invalid: FS-INV-703.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -22,7 +22,7 @@ const pair03 = (): Record<string, unknown> => ({
 
 describe('Ops 0.3', () => {
   it('is a draft this applier implements, beside 0.2 and 0.1', () => {
-    expect(OPS_VERSIONS).toEqual(['0.1', '0.2', '0.3']);
+    expect(OPS_VERSIONS).toEqual(['0.1', '0.2', '0.3', '0.4']);
   });
 
   it('applies to a Core 0.3 document; Ops 0.2 rejects one with FS-OPS-002', () => {
@@ -98,5 +98,20 @@ describe('Ops 0.3', () => {
     expect(B(committed(apply(r.document, { batch: [{ op: 'removeElement', id: 'L2', cascade: true }] }))).stairs).toBeUndefined();
     const d02 = { ...pair(), floorspec: '0.2' };
     rejectedWith(apply(d02, { batch: [{ op: 'addElement', collection: 'roofs', element: roof }] }, { ops: '0.2' }), 'FS-OPS-001', []);
+  });
+});
+
+describe('Ops 0.4', () => {
+  it('applies to a Core 0.4 document; Ops 0.3 rejects one with FS-OPS-002', () => {
+    const d04 = { ...pair03(), floorspec: '0.4' };
+    committed(apply(d04, { batch: [{ op: 'moveWall', wall: 'W7', by: 1000 }] }));
+    rejectedWith(apply(d04, { batch: [{ op: 'moveWall', wall: 'W7', by: 1000 }] }, { ops: '0.3' }), 'FS-OPS-002', []);
+  });
+
+  it('upgrades a 0.3 document to 0.4 with setProperty of $document /floorspec, which Ops 0.3 cannot', () => {
+    const upgrade = { batch: [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.4' }] };
+    const r = committed(apply(pair03(), upgrade));
+    expect((JSON.parse(r.document) as { floorspec: string }).floorspec).toBe('0.4');
+    expect(apply(pair03(), upgrade, { ops: '0.3' }).status).toBe('rejected');
   });
 });

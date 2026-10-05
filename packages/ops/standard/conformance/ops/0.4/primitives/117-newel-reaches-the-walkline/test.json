@@ -1,0 +1,7 @@
+{
+  "description": "setProperty of a newel 13 in deep on a winder stair 3' wide: its far corner is 13 sqrt 2 in from the pivot, beyond the walkline 18 in away, so the result has FS-INV-905 and the batch is rejected with it.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "130a596c32183cb0828fd3ceddc189370e08df83c3d41b8cd96da9a1e85c4cdb",
+  "created": ["TILE", "TILE-PHOTO"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "assets",
+      "id": "TILE-PHOTO",
+      "element": {
+        "path": "assets/tile-12in.jpg",
+        "byteLength": 48213,
+        "mediaType": "image/jpeg",
+        "sha256": "5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "TILE",
+      "element": {
+        "color": "#d8d4cc",
+        "name": "Porcelain tile, 12 inch",
+        "roughness": 300,
+        "texture": {
+          "asset": "TILE-PHOTO",
+          "size": [390144, 390144]
+        }
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "W2",
+      "path": "/finishes/right/regions",
+      "value": [
+        {
+          "to": 3901440,
+          "bottom": 1170432,
+          "from": 780288,
+          "material": "TILE",
+          "top": 1755648
+        }
+      ]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "W2",
+      "path": "/finishes"
+    },
+    {
+      "op": "removeElement",
+      "id": "TILE"
+    },
+    {
+      "op": "removeElement",
+      "id": "TILE-PHOTO"
+    }
+  ]
+}

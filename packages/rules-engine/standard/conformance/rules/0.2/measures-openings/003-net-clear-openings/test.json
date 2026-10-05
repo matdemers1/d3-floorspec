@@ -1,0 +1,9 @@
+{
+  "description": "The rules house as a Core 0.3 document whose window and door types declare their operation and clear opening. The bedroom window O1 has its type's 30\" x 44\" and 8 sq ft - not 30\" times 44\" - and no door clear width; the door O2 has its type's 32\" x 78\", no area, and a door clear width of 32\"; the living-room window O5 overrides its clear opening without an area, so its area has no value; the empty opening O6 states its own clear opening, and has no door clear width and no operation.",
+  "covers": [
+    "FS-RULES-4.7.1",
+    "FS-RULES-6.1.1",
+    "FS-RULES-6.5.1",
+    "FS-RULES-9.6.1"
+  ]
+}

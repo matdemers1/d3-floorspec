@@ -1,0 +1,7 @@
+{
+  "description": "Two declared required extensions the reader does not implement: one FS-DOC-002 for each.",
+  "covers": [
+    "FS-CORE-1.6.4",
+    "FS-CORE-10.2.1"
+  ]
+}

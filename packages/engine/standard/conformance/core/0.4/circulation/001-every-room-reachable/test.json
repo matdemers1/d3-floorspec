@@ -1,0 +1,7 @@
+{
+  "description": "A six-room house: a front door in the south wall of the hall (H10), doors from the hall to the living room, the kitchen and the bathroom, a bedroom off the living room and one off the kitchen. The hall is the only entry - the windows on H02 and V30 are not ways in - and every room is reachable. Neither bedroom is reached through another sleeping room, so throughSleeping is false for both and absent for every other room. No circulation lint.",
+  "covers": [
+    "FS-CORE-14.3.1",
+    "FS-CORE-11.4.1"
+  ]
+}

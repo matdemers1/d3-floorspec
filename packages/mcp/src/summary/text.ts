@@ -176,7 +176,9 @@ export function summaryText(s: DocumentSummary): string {
       for (const s of l.stairs)
         out.push(
           `- ${s.id}${q(s.name)}: ${s.form} to ${s.to}, ${s.risers} risers × ${inches(s.riserHeight.baseUnits)} (${s.riserHeight.baseUnits}), tread ${inches(s.tread.baseUnits)}, ${lengthText(s.width)} wide` +
-            (s.headroom ? `, headroom ${lengthText(s.headroom)}` : ', headroom not derived'),
+            (s.headroom ? `, headroom ${lengthText(s.headroom)}` : ', headroom not derived') +
+            (s.walklineGoing ? `; tapered treads: least going ${lengthText(s.walklineGoing)} at the walkline, ${s.narrowGoing ? lengthText(s.narrowGoing) : '0'} at the narrow end` : '') +
+            (s.minHeadroom ? `; designed for ${lengthText(s.minHeadroom)} headroom${s.openFromStep !== undefined ? `, the floor above open from step ${s.openFromStep}` : ', met with no opening'}` : ''),
         );
     }
     if (l.unanchored.length) {

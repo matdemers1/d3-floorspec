@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-INV-1004",
+      "severity": "error",
+      "elements": ["TILE", "TILE-GLB"]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "RF1",
+      "path": "/overhang"
+    }
+  ]
+}

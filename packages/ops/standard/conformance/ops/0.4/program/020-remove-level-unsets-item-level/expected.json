@@ -1,0 +1,31 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "b0f9b6a3b7ff63ad803ff67346f64a9c5491e426ac8a5309c0f6459291a3d372",
+  "created": [],
+  "removed": ["L3"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "L3"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "BED",
+      "path": "/level",
+      "value": "L3"
+    },
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L3",
+      "element": {
+        "building": "B1",
+        "elevation": 3456000,
+        "height": 3456000
+      }
+    }
+  ]
+}

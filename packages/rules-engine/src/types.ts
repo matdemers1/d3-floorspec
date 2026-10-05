@@ -1,15 +1,20 @@
 /**
- * The Rules 0.1 objects. The inputs — request, pack, rule, profile, test — are the types generated
- * from schema/rules/0.1 (FLR-ADR-006), under readable names; the report and its parts are written
- * out here, because what the schema calls "any JSON" (a measured value, a threshold) the engine
- * knows exactly.
+ * The Rules objects. The inputs — request, pack, rule, profile, test — are the types generated
+ * from schema/rules/0.2 (FLR-ADR-006), under readable names, declaring either draft the evaluator
+ * implements (0.1's objects have the same shape, declaring "0.1"); the report and its parts are
+ * written out here, because what the schema calls "any JSON" (a measured value, a threshold) the
+ * engine knows exactly.
  */
 import type * as G from './generated/types.js';
 
-export type Request = G.FloorspecRules01EvaluationRequest;
-export type Pack = G.FloorspecRules01RulePack;
-export type Rule = G.FloorspecRules01RuleRecord;
-export type Profile = G.FloorspecRules01JurisdictionProfile;
+/** A draft of Floorspec Rules this evaluator implements. */
+export type RulesDraft = '0.1' | '0.2';
+type Drafted<T> = Omit<T, 'floorspecRules'> & { floorspecRules: RulesDraft };
+
+export type Request = Drafted<G.FloorspecRules02EvaluationRequest>;
+export type Pack = Drafted<G.FloorspecRules02RulePack>;
+export type Rule = G.FloorspecRules02RuleRecord;
+export type Profile = Drafted<G.FloorspecRules02JurisdictionProfile>;
 export type Test = G.Test;
 export type Condition = G.Condition;
 export type Citation = G.Citation;
@@ -107,7 +112,7 @@ export type ReportCoverageEntry = CoverageEntry & { pack: string };
 
 /** 9.1: what an evaluation returns. */
 export interface Report {
-  floorspecRules: '0.1';
+  floorspecRules: RulesDraft;
   notice: string;
   /** When step 1 of 1.3 passed. */
   units?: Units;

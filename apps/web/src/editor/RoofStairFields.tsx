@@ -7,12 +7,16 @@ import { formatLen, type UnitSystem } from './units';
 import type { Batch } from './ops';
 import type { FloorCtx } from './FloorFields';
 import { roofOverLevel } from './actions';
+import { CoreUpgradeNotice } from './OpeningFields';
+import { holdsCore04 } from './openings';
 
 /**
  * Roofs and stairs in the inspector (Core 0.3, chapters 16 and 17; FLR-T-7.2, 7.3): a roof's pitch,
  * overhang, eave height and thickness, and which of its edges are gables; a stair's form, the way it
- * turns, width, tread, riser count or greatest riser height, and the level it rises to. Each edit is
- * a setProperty or unsetProperty (Ops 2.3); the engine derives the rest, which is shown beneath.
+ * turns, width, tread, riser count or greatest riser height, and the level it rises to — and, from
+ * Core 0.4, a winder's angle, gap and newel, a spiral's diameter and sweep, and the headroom a stair is
+ * designed for. Each edit is a setProperty or unsetProperty (Ops 2.3); the engine derives the rest,
+ * which is shown beneath.
  */
 
 type Json = Record<string, unknown>;
@@ -20,6 +24,8 @@ type Json = Record<string, unknown>;
 const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined);
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
 const set = (id: string, path: string, value: unknown): Batch => [{ op: 'setProperty', id, path, value }];
+/** A whole number of degrees, in microdegrees (Core 2.4). */
+const DEG = 1_000_000;
 const unset = (id: string, path: string): Batch => [{ op: 'unsetProperty', id, path }];
 
 // ─── Roofs ───────────────────────────────────────────────────────────────────────────────────
@@ -186,7 +192,7 @@ export function StairBody({ ctx }: { ctx: FloorCtx }) {
       case 'winder':
         return { kind, turn, angle: 'quarter', risersBeforeTurn: Math.max(1, (num(form['risersBeforeTurn']) ?? half) - 1), winders: 3 };
       case 'spiral':
-        return { kind, turn, diameter: 2 * width + 2 * 32512 * 6, sweep: 270_000_000 };
+        return { kind, turn, diameter: 2 * width + 6 * 32_512, sweep: 270_000_000 };
       default:
         return null;
     }
@@ -196,6 +202,7 @@ export function StairBody({ ctx }: { ctx: FloorCtx }) {
   const rotation = num(element['rotation']) ?? 0;
   const turned = rotation + 90_000_000 > 180_000_000 ? rotation - 270_000_000 : rotation + 90_000_000;
   const byCount = element['risers'] !== undefined;
+  const v04 = holdsCore04(model.document);
   return (
     <>
       <Section title="Stair">
@@ -231,7 +238,54 @@ export function StairBody({ ctx }: { ctx: FloorCtx }) {
           <LengthField label="Gap between flights" value={num(form['gap']) ?? 0} units={units} nonNegative disabled={readOnly} onCommit={(v) => { ctx.edit(`Set the gap of ${name}`, v === null || v === 0 ? (form['gap'] === undefined ? [] : unset(id, '/form/gap')) : set(id, '/form/gap', v)); }} />
         ) : null}
         {form.kind === 'winder' ? (
-          <IntField label="Winders" value={num(form['winders'])} min={1} max={9} disabled={readOnly} onCommit={(v) => { if (v !== null) ctx.edit(`Set the winders of ${name}`, set(id, '/form/winders', v)); }} />
+          <>
+            <Row label="Turns through">
+              <SegmentedControl
+                aria-label="Turns through"
+                size="sm"
+                value={str(form['angle']) ?? 'quarter'}
+                items={[{ value: 'quarter', label: 'A quarter' }, { value: 'half', label: 'A half' }]}
+                onValueChange={(v) => {
+                  if (readOnly || v === form['angle']) return;
+                  // A quarter turn has no gap (17.2): the form is set whole, without it.
+                  const next: Json = { ...form, angle: v, winders: v === 'half' ? 2 * (num(form['winders']) ?? 3) : Math.max(1, Math.floor((num(form['winders']) ?? 6) / 2)) };
+                  if (v === 'quarter') delete next['gap'];
+                  ctx.edit(`Turn ${name} through a ${v}`, set(id, '/form', next));
+                }}
+              />
+            </Row>
+            <IntField label="Winders" value={num(form['winders'])} min={1} max={99} disabled={readOnly} onCommit={(v) => { if (v !== null) ctx.edit(`Set the winders of ${name}`, set(id, '/form/winders', v)); }} />
+            {form['angle'] === 'half' ? (
+              <LengthField label="Gap between flights" value={num(form['gap']) ?? 0} units={units} nonNegative disabled={readOnly} onCommit={(v) => { ctx.edit(`Set the gap of ${name}`, v === null || v === 0 ? (form['gap'] === undefined ? [] : unset(id, '/form/gap')) : set(id, '/form/gap', v)); }} />
+            ) : null}
+            {v04 ? (
+              <LengthField
+                label="Newel"
+                value={num(form['newel'])}
+                units={units}
+                positive
+                allowEmpty
+                placeholder="None: the winders meet at a point"
+                hint="The newel post's side, at the turn's inner corner"
+                disabled={readOnly}
+                onCommit={(v) => { ctx.edit(`Set the newel of ${name}`, v === null ? (form['newel'] === undefined ? [] : unset(id, '/form/newel')) : set(id, '/form/newel', v)); }}
+              />
+            ) : null}
+          </>
+        ) : null}
+        {form.kind === 'spiral' ? (
+          <>
+            <LengthField label="Diameter" value={num(form['diameter'])} units={units} positive disabled={readOnly} hint="Outside the treads; the centre column is what the width leaves" onCommit={(v) => { if (v !== null) ctx.edit(`Set the diameter of ${name}`, set(id, '/form/diameter', v)); }} />
+            <IntField
+              label="Sweep"
+              unit="°"
+              value={num(form['sweep']) === undefined ? undefined : Math.round((num(form['sweep']) ?? 0) / DEG)}
+              min={1}
+              max={1080}
+              disabled={readOnly}
+              onCommit={(v) => { if (v !== null) ctx.edit(`Set the sweep of ${name}`, set(id, '/form/sweep', v * DEG)); }}
+            />
+          </>
         ) : null}
         <LengthField label="Width" value={width} units={units} positive disabled={readOnly} onCommit={(v) => { if (v !== null) ctx.edit(`Set width of ${name}`, set(id, '/width', v)); }} />
         <LengthField label="Tread" value={num(element['tread'])} units={units} positive disabled={readOnly} hint="The going, nosing to nosing" onCommit={(v) => { if (v !== null) ctx.edit(`Set tread of ${name}`, set(id, '/tread', v)); }} />
@@ -263,6 +317,21 @@ export function StairBody({ ctx }: { ctx: FloorCtx }) {
             onValueChange={(v) => { if (v !== element['to']) ctx.edit(`${name} rises to ${labelOf(model, v)}`, set(id, '/to', v)); }}
           />
         </Row>
+        {v04 ? (
+          <LengthField
+            label="Design headroom"
+            value={num(element['minHeadroom'])}
+            units={units}
+            positive
+            allowEmpty
+            placeholder="None declared"
+            hint="Where the floor above must be open (17.6)"
+            disabled={readOnly}
+            onCommit={(v) => { ctx.edit(`Set the design headroom of ${name}`, v === null ? (element['minHeadroom'] === undefined ? [] : unset(id, '/minHeadroom')) : set(id, '/minHeadroom', v)); }}
+          />
+        ) : (
+          <CoreUpgradeNotice store={ctx.store} model={model} since="0.4" what="A winder's newel and a stair's design headroom" />
+        )}
         <Button size="sm" variant="secondary" icon={<RotateCw />} disabled={readOnly} onClick={() => { ctx.edit(`Turn ${name} a quarter`, turned === 0 ? unset(id, '/rotation') : set(id, '/rotation', turned)); }}>
           Turn a quarter
         </Button>
@@ -273,16 +342,19 @@ export function StairBody({ ctx }: { ctx: FloorCtx }) {
           <ReadOnlyField label="Rise" value={formatLen(d.rise, units)} />
           {d.run !== undefined ? <ReadOnlyField label="Run" value={formatLen(d.run, units)} /> : null}
           {d.walkline !== undefined ? <ReadOnlyField label="Walkline" value={formatLen(d.walkline.length, units)} /> : null}
+          {d.walklineGoing !== undefined ? <ReadOnlyField label="Least going at the walkline" value={formatLen(d.walklineGoing, units)} /> : null}
+          {d.narrowGoing !== undefined ? <ReadOnlyField label="Least going at the narrow end" value={formatLen(d.narrowGoing, units)} /> : null}
+          {d.opening !== undefined ? <ReadOnlyField label="Floor above open from" value={d.steps !== undefined && d.opening.first < d.steps.length ? `Step ${String(d.opening.first + 1)} of ${String(d.steps.length)}` : 'No step'} /> : null}
           <ReadOnlyField label="Headroom" value={d.headroom !== undefined ? formatLen(d.headroom, units) : d.steps === undefined ? 'Not derived for this form' : 'Nothing above it'} />
           <ReadOnlyField label="From · to" value={`${d.footRoom !== undefined ? labelOf(model, d.footRoom) : 'no room'} → ${d.headRoom !== undefined ? labelOf(model, d.headRoom) : 'no room'}`} />
-          {d.steps === undefined ? <p className="fs-note">Floorspec 0.3 derives a winder's or a spiral's risers and box, not its steps (FS-LINT-016).</p> : null}
+          {d.steps === undefined ? <p className="fs-note">This stair's steps are not derived.</p> : null}
         </Section>
       ) : null}
     </>
   );
 }
 
-/** The stair tool's settings: a new stair's form, turn, width, tread and greatest riser. */
+/** The stair tool's settings: a new stair's form (a winder turns a quarter; a spiral sweeps 270°), turn, width, tread and greatest riser. */
 export function StairDrawSettings({ store, model, units }: { store: EditorStore; model: EditorModel; units: UnitSystem }) {
   const draw = useEditor(store, (s) => s.draw);
   const level = useEditor(store, (s) => s.level);
@@ -294,7 +366,7 @@ export function StairDrawSettings({ store, model, units }: { store: EditorStore;
         aria-label="Form"
         size="sm"
         value={draw.stair.form}
-        items={[{ value: 'straight', label: 'Straight' }, { value: 'lShaped', label: 'L' }, { value: 'uShaped', label: 'U' }]}
+        items={[{ value: 'straight', label: 'Straight' }, { value: 'lShaped', label: 'L' }, { value: 'uShaped', label: 'U' }, { value: 'winder', label: 'Winder' }, { value: 'spiral', label: 'Spiral' }]}
         onValueChange={(v) => { setStair({ form: v as typeof draw.stair.form }); }}
       />
       {draw.stair.form !== 'straight' ? (

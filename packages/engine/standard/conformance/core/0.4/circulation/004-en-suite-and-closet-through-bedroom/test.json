@@ -1,0 +1,6 @@
+{
+  "description": "A bedroom with an en-suite bathroom and a closet, each reached only through the bedroom, and a walk-in closet reached only through the bathroom. None of them is a sleeping room, so each is simply reachable: no lint.",
+  "covers": [
+    "FS-CORE-14.3.1"
+  ]
+}

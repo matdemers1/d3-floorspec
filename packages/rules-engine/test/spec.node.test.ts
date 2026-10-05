@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CATALOGUE, DEFAULT_PROFILE, DEFERRED, MEASURES, NOTICE, typeOf } from '../src/index.js';
+import { CATALOGUE, DEFAULT_PROFILE, defaultProfileOf, DEFERRED, MEASURES, NOTICE, typeOf } from '../src/index.js';
 
 const SPEC = join(import.meta.dirname, '..', 'standard', 'spec', 'rules');
 const read = (f: string): string => readFileSync(join(SPEC, f), 'utf8');
@@ -38,7 +38,7 @@ describe('the measure library against chapters 5–8', () => {
   const rows = ['05-rooms.md', '06-openings.md', '07-elements.md', '08-wall-lines.md'].flatMap(measureRows);
 
   it('defines exactly the measures the specification defines, each of its type, for its kind of target', () => {
-    expect(rows.length).toBe(45); // 44 measures, elementCount in both 5.6 and 8.4
+    expect(rows.length).toBe(48); // 47 measures, elementCount in both 5.6 and 8.4
     const specified = new Set(rows.map(([s, n]) => `${n}/${kindOf(s)}`));
     const built = new Set(MEASURES.flatMap((m) => m.kinds.map((k) => `${m.name}/${k}`)));
     expect([...built].sort()).toEqual([...specified].sort());
@@ -47,9 +47,9 @@ describe('the measure library against chapters 5–8', () => {
       if (type === 'as `type`') expect(m.type).toBeNull();
       else expect(typeOf(m, {})).toBe(type);
     }
-    // 44 measures by name (elementCount is one measure of rooms and levels), the five of stairs (8.5) among them.
-    expect(new Set(rows.map(([, n]) => n)).size).toBe(44);
-    expect(MEASURES.length).toBe(44);
+    // 47 measures by name (elementCount is one measure of rooms and levels), the eight of stairs (8.5) among them.
+    expect(new Set(rows.map(([, n]) => n)).size).toBe(47);
+    expect(MEASURES.length).toBe(47);
   });
 
   it('defers exactly the measures of 4.8, and builds none of them', () => {
@@ -83,6 +83,8 @@ describe('the catalogue, the notice and the default profile', () => {
   it('evaluates under exactly the default profile of 10.6', () => {
     const text = read('10-profiles.md');
     const block = /## 10\.6[\s\S]*?```json\n([\s\S]*?)```/.exec(text)![1]!;
-    expect(DEFAULT_PROFILE).toEqual(JSON.parse(block));
+    // The text is Rules 0.2's; DEFAULT_PROFILE is the same editions declaring 0.1, for the app's 0.1 profiles.
+    expect(defaultProfileOf('0.2')).toEqual(JSON.parse(block));
+    expect({ ...DEFAULT_PROFILE, floorspecRules: '0.2' }).toEqual(JSON.parse(block));
   });
 });

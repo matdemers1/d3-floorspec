@@ -1,0 +1,6 @@
+{
+  "description": "unsetProperty of a stair's /minHeadroom: it declares no headroom, and so derives no opening.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

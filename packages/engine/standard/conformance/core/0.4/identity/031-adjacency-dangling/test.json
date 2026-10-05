@@ -1,0 +1,6 @@
+{
+  "description": "An adjacency names an item D that does not exist: FS-INV-002 with no element, since an adjacency is not an element.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

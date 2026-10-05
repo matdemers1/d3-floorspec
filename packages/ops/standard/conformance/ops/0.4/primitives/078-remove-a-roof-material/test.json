@@ -1,0 +1,6 @@
+{
+  "description": "Removing a material is blocked by the roof whose top surface it is.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

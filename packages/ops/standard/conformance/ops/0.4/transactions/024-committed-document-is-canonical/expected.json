@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "8def7ceae54f266e0f3d207ed9449c7d084f764efd99a8b965590acd56969502",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$project",
+      "path": "/description",
+      "value": "A canonical result."
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "$project",
+      "path": "/description"
+    }
+  ]
+}

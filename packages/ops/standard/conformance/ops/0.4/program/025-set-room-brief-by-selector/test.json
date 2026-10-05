@@ -1,0 +1,7 @@
+{
+  "description": "setRoomBrief with an item selector and a room ID: the Pantry fulfils whatever the Kitchen fulfils.",
+  "covers": [
+    "FS-OPS-4.6.2",
+    "FS-OPS-3.3.1"
+  ]
+}

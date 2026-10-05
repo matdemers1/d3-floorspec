@@ -1,0 +1,6 @@
+{
+  "description": "A wall's finishes are of its left and right faces: there is no \"top\".",
+  "covers": [
+    "FS-CORE-18.5.1"
+  ]
+}

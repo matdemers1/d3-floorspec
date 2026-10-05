@@ -1,0 +1,23 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "9f125baacf0d1ba5a343b17ac2aaad57093c89dca182e098b2884066470b47c1",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "KS",
+      "path": "/primary",
+      "value": "KB"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "KS",
+      "path": "/primary",
+      "value": "KA"
+    }
+  ]
+}

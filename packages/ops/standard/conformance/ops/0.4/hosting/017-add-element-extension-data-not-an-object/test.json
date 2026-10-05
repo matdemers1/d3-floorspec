@@ -1,0 +1,6 @@
+{
+  "description": "An earlier operation sets the electrical extension's data to a string, so there is no collection to add the device to: FS-OPS-003.",
+  "covers": [
+    "FS-OPS-2.1.3"
+  ]
+}

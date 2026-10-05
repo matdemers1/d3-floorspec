@@ -1,0 +1,6 @@
+{
+  "description": "A document with no option set and a design input that names a set: nothing is derived.",
+  "covers": [
+    "FS-CORE-19.6.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A texture's normal map names an asset that does not exist: FS-INV-002, naming the material.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

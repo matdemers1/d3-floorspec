@@ -1,0 +1,7 @@
+{
+  "description": "The same pack on the spiral stair, 800 mm wide - more than 26 in - so the spiral rule finds nothing, and the winder rules apply to no stair.",
+  "covers": [
+    "FS-RULES-3.4.1",
+    "FS-RULES-8.5.2"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The room is given no brief first; then its item can be removed, and both its adjacencies go with it.",
+  "covers": [
+    "FS-OPS-2.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

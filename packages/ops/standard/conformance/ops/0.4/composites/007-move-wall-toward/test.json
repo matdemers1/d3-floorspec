@@ -1,0 +1,6 @@
+{
+  "description": "With \"toward\", the sign of \"by\" is chosen so the wall moves into that room: W10 (J2 -> J8, left is north, into the Pantry) moved toward the Kitchen goes south, whatever the sign given.",
+  "covers": [
+    "FS-OPS-4.2.1"
+  ]
+}

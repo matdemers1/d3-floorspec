@@ -1,0 +1,39 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "221027cabd91c706346813274a933835c496b9c12eca58ca239a0b41d9c2ec9d",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form",
+      "value": {
+        "diameter": 1950720,
+        "kind": "spiral",
+        "sweep": 270000000,
+        "turn": "left"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/width",
+      "value": 877824
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/form"
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/width",
+      "value": 1170432
+    }
+  ]
+}

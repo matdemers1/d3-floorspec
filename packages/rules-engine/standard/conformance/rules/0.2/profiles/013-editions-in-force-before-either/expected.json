@@ -1,0 +1,25 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [],
+  "findings": [],
+  "floorspecRules": "0.2",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [
+    {
+      "pack": "test-pack",
+      "reason": "edition",
+      "rule": "ESCAPE",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "edition",
+      "rule": "ESCAPE-2021",
+      "version": "0.1.0"
+    }
+  ],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

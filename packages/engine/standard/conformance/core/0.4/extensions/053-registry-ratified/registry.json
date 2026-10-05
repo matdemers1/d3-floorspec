@@ -1,0 +1,49 @@
+[
+  {
+    "name": "EXT_lighting",
+    "version": "1.2.0",
+    "status": "ratified",
+    "schema": "https://example.com/floorspec/EXT_lighting/1.2.0/schema.json",
+    "kinds": {
+      "fixtures": {
+        "title": "Light fixture",
+        "fallback": {
+          "symbol": true
+        }
+      }
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec",
+        "url": "https://floorspec.d3cloud.io/"
+      },
+      {
+        "name": "Another",
+        "url": "https://example.com/"
+      }
+    ]
+  },
+  {
+    "name": "EXT_electrical",
+    "version": "2.0.0",
+    "status": "draft",
+    "schema": "https://example.com/floorspec/EXT_electrical/2.0.0/schema.json",
+    "requires": {
+      "EXT_lighting": "^1.1.0"
+    },
+    "kinds": {
+      "outlets": {
+        "title": "Outlet"
+      },
+      "panels": {
+        "title": "Panel",
+        "fallback": {
+          "asset": true
+        }
+      }
+    },
+    "terms": {
+      "roomFunctions": ["electricalRoom"]
+    }
+  }
+]

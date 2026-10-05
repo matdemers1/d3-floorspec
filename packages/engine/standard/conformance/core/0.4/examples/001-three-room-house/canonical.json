@@ -1,0 +1,370 @@
+{
+  "assets": {
+    "OAKIMG": {
+      "mediaType": "image/png",
+      "path": "textures/white-oak.png",
+      "sha256": "3f6c2a8e9d1b4c7f0a5e8d2b6c9f1a4e7d0b3c6f9a2e5d8b1c4f7a0e3d6b9c2f"
+    }
+  },
+  "buildings": {
+    "HOUSE": {
+      "name": "House"
+    }
+  },
+  "extras": {
+    "author": {
+      "tool": "hand-written for FLR-T-1.12"
+    }
+  },
+  "floorspec": "0.4",
+  "junctions": {
+    "C1": {
+      "level": "MAIN",
+      "name": "SW corner",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "C2": {
+      "level": "MAIN",
+      "position": [
+        0,
+        9363456
+      ]
+    },
+    "C3": {
+      "level": "MAIN",
+      "position": [
+        14045184,
+        9363456
+      ]
+    },
+    "C4": {
+      "level": "MAIN",
+      "position": [
+        14045184,
+        0
+      ]
+    },
+    "TE": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "WE1",
+          "WE2"
+        ]
+      },
+      "level": "MAIN",
+      "position": [
+        14045184,
+        4681728
+      ]
+    },
+    "TM": {
+      "level": "MAIN",
+      "position": [
+        7802880,
+        4681728
+      ]
+    },
+    "TN": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "WN1",
+          "WN2"
+        ]
+      },
+      "level": "MAIN",
+      "position": [
+        7802880,
+        9363456
+      ]
+    },
+    "TS": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "WS1",
+          "WS2"
+        ]
+      },
+      "level": "MAIN",
+      "position": [
+        7802880,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "MAIN": {
+      "building": "HOUSE",
+      "elevation": 0,
+      "height": 3511296,
+      "name": "Main floor"
+    }
+  },
+  "materials": {
+    "GWB": {
+      "color": "#f2f0eb",
+      "name": "Gypsum board"
+    },
+    "OAK": {
+      "name": "White oak strip",
+      "texture": {
+        "asset": "OAKIMG",
+        "size": [
+          97536,
+          1560576
+        ]
+      }
+    },
+    "OSB": {
+      "color": "#c9a66b",
+      "name": "OSB sheathing"
+    },
+    "PAINT": {
+      "color": "#cdd2ca",
+      "name": "Eggshell paint, \"Sea Salt\""
+    },
+    "SIDING": {
+      "color": "#5b6d7a",
+      "name": "Fibre-cement lap siding"
+    },
+    "STUD": {
+      "color": "#e8d3a3",
+      "name": "SPF framing"
+    },
+    "TILE": {
+      "color": "#d9d6d0",
+      "name": "Porcelain tile 12 x 24"
+    }
+  },
+  "openings": {
+    "BD": {
+      "fill": "D32",
+      "hinge": "end",
+      "offset": 3121152,
+      "wall": "WI1"
+    },
+    "BW": {
+      "fill": "W4848",
+      "offset": 1170432,
+      "wall": "WE2"
+    },
+    "FD": {
+      "fill": "D36",
+      "name": "Front door",
+      "offset": 2340864,
+      "swing": "left",
+      "wall": "WS2"
+    },
+    "KW": {
+      "fill": "W3636",
+      "offset": 2340864,
+      "wall": "WN2"
+    },
+    "LW1": {
+      "fill": "W4848",
+      "offset": 3121152,
+      "wall": "WW"
+    },
+    "LW2": {
+      "fill": "W4848",
+      "name": "Picture window",
+      "offset": 2340864,
+      "wall": "WN1",
+      "width": 2340864
+    }
+  },
+  "project": {
+    "name": "Three-room house"
+  },
+  "rooms": {
+    "BED": {
+      "anchor": [
+        10924032,
+        2340864
+      ],
+      "floorFinish": "OAK",
+      "function": "sleeping",
+      "level": "MAIN",
+      "name": "Bedroom",
+      "wallFinish": "PAINT"
+    },
+    "KIT": {
+      "anchor": [
+        10924032,
+        7022592
+      ],
+      "floorFinish": "TILE",
+      "function": "kitchen",
+      "level": "MAIN",
+      "name": "Kitchen"
+    },
+    "LIV": {
+      "anchor": [
+        3901440,
+        4681728
+      ],
+      "floorFinish": "OAK",
+      "function": "living",
+      "level": "MAIN",
+      "name": "Living room"
+    }
+  },
+  "separators": {
+    "SK": {
+      "end": "TN",
+      "level": "MAIN",
+      "name": "Kitchen counter line",
+      "start": "TM"
+    }
+  },
+  "site": {
+    "location": {
+      "latitude": 42360100,
+      "longitude": -71058900
+    },
+    "trueNorth": -12500000
+  },
+  "types": {
+    "D32": {
+      "height": 2600960,
+      "kind": "doorType",
+      "name": "32 in interior door",
+      "width": 1040384
+    },
+    "D36": {
+      "height": 2600960,
+      "kind": "doorType",
+      "name": "36 in entry door",
+      "width": 1170432
+    },
+    "EXT26": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "SIDING",
+          "thickness": 24384
+        },
+        {
+          "function": "substrate",
+          "material": "OSB",
+          "thickness": 14224
+        },
+        {
+          "function": "core",
+          "material": "STUD",
+          "thickness": 178816
+        },
+        {
+          "function": "finish",
+          "material": "GWB",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x6 exterior wall"
+    },
+    "INT24": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "GWB",
+          "thickness": 16256
+        },
+        {
+          "function": "core",
+          "material": "STUD",
+          "thickness": 113792
+        },
+        {
+          "function": "finish",
+          "material": "GWB",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x4 partition"
+    },
+    "W3636": {
+      "height": 1170432,
+      "kind": "windowType",
+      "name": "36 x 36 in window",
+      "sill": 1365504,
+      "width": 1170432
+    },
+    "W4848": {
+      "height": 1560576,
+      "kind": "windowType",
+      "name": "48 x 48 in window",
+      "sill": 1170432,
+      "width": 1560576
+    }
+  },
+  "walls": {
+    "WE1": {
+      "end": "TE",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "C3",
+      "type": "EXT26"
+    },
+    "WE2": {
+      "end": "C4",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "TE",
+      "type": "EXT26"
+    },
+    "WI1": {
+      "end": "TM",
+      "level": "MAIN",
+      "start": "TS",
+      "type": "INT24"
+    },
+    "WI2": {
+      "end": "TE",
+      "level": "MAIN",
+      "start": "TM",
+      "type": "INT24"
+    },
+    "WN1": {
+      "end": "TN",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "C2",
+      "type": "EXT26"
+    },
+    "WN2": {
+      "end": "C3",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "TN",
+      "type": "EXT26"
+    },
+    "WS1": {
+      "end": "TS",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "C4",
+      "type": "EXT26"
+    },
+    "WS2": {
+      "end": "C1",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "TS",
+      "type": "EXT26"
+    },
+    "WW": {
+      "end": "C2",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "C1",
+      "type": "EXT26"
+    }
+  }
+}

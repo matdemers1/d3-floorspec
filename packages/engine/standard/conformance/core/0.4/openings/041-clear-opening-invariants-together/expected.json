@@ -1,0 +1,25 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-305",
+      "severity": "error",
+      "elements": ["O1"]
+    },
+    {
+      "code": "FS-INV-306",
+      "severity": "error",
+      "elements": ["O2"]
+    },
+    {
+      "code": "FS-INV-307",
+      "severity": "error",
+      "elements": ["D"]
+    },
+    {
+      "code": "FS-INV-308",
+      "severity": "error",
+      "elements": ["O3"]
+    }
+  ]
+}

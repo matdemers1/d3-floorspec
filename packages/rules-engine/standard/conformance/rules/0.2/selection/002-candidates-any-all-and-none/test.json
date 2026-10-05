@@ -1,0 +1,7 @@
+{
+  "description": "Selection on the rules house's bedroom, its level and its doors: the bedroom's only opening to the outside is its window, so \"a door to the outside\" fails while \"any door\" passes (O2 is to the living room); \"only windows\" over all its openings fails on O2; with no empty opening, a rule that needs any fails and one that needs all passes; both receptacles stand 240 mm above the floor, so \"all at most 200 mm\" fails; the level's one sleeping room is under 200 sq ft; its one alarm detects only smoke; and each of the three doors has no swing envelope.",
+  "covers": [
+    "FS-RULES-3.5.1",
+    "FS-RULES-3.6.1"
+  ]
+}

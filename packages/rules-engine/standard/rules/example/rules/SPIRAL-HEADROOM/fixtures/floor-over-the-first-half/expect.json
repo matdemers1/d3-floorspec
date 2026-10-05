@@ -1,0 +1,8 @@
+{
+  "description": "The floor above covers the first half-turn: about 1569 mm, under 6 ft 6 in.",
+  "outcome": "fail",
+  "document": "spiral-stair",
+  "findings": [
+    "ST1"
+  ]
+}

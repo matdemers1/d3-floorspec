@@ -1,0 +1,7 @@
+{
+  "description": "The US starter library's recipe for embedding an item: the item's published batch - addElement of each material the 2x6 exterior wall's layers use, then of the wall type, each with its source - and setProperty pointing the four walls of the box at it, in one batch. The wall type and its materials are added exactly as given (2.1), so the document holds the library's elements byte for byte and is complete on its own; the box's own wall type is now unused (FS-LINT-006 is a lint, so the batch commits).",
+  "covers": [
+    "FS-OPS-2.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

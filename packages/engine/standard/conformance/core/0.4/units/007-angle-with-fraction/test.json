@@ -1,0 +1,6 @@
+{
+  "description": "An angle is an integer number of microdegrees.",
+  "covers": [
+    "FS-CORE-2.4.1"
+  ]
+}

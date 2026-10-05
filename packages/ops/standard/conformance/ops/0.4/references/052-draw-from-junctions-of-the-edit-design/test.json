@@ -1,0 +1,8 @@
+{
+  "description": "With context.option KB, drawSeparator from S4's position to N4's: both are common, so in the edit design, and the separator is drawn between them, in B.",
+  "covers": [
+    "FS-OPS-2.8.2",
+    "FS-OPS-4.1.1",
+    "FS-OPS-2.8.1"
+  ]
+}

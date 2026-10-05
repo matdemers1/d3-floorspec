@@ -1,0 +1,15 @@
+{
+  "description": "The ranch starter template (templates/ranch.floorspec.json): one storey of 2x6 exterior walls justified on their exterior face - three bedrooms, two baths, a great room of living, dining and kitchen divided by separators, a den, a laundry and an attached two-car garage - under one hip roof of 5 in 12 whose L-shaped footprint the straight skeleton derives with a valley; a stoop, a patio and a driveway as slabs; a brief whose every item is met and whose rooms name their items; plumbing fixtures and a panel of FS_electrical and FS_plumbing, which a Core reader keeps and places. Valid, with nothing to report.",
+  "covers": [
+    "FS-CORE-8.1.3",
+    "FS-CORE-11.3.1",
+    "FS-CORE-11.4.1",
+    "FS-CORE-14.1.1",
+    "FS-CORE-15.7.1",
+    "FS-CORE-16.4.1",
+    "FS-CORE-16.5.1",
+    "FS-CORE-13.4.1",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1"
+  ]
+}

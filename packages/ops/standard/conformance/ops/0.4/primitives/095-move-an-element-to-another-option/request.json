@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "OB",
+      "path": "/option",
+      "value": "KA"
+    }
+  ]
+}

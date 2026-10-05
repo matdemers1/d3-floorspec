@@ -1,0 +1,132 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "extensions": {
+    "EXT_acoustics": {
+      "a": [],
+      "big": 12345678901234567000,
+      "e": 100,
+      "n": 1.5,
+      "neg0": 0,
+      "nested": {
+        "extras": {},
+        "justification": "center"
+      },
+      "nul": null,
+      "t": true,
+      "text": "line\nbreak é   / \\ \"q\"",
+      "tinier": 1e-7,
+      "tiny": 0.000001,
+      "z": {}
+    }
+  },
+  "extensionsUsed": {
+    "EXT_acoustics": "1.0"
+  },
+  "extras": {
+    "defaults": {
+      "kind": "mitre"
+    },
+    "emptyArr": [],
+    "emptyObj": {}
+  },
+  "floorspec": "0.4",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "openings": {
+    "O1": {
+      "height": 2688000,
+      "offset": 1280000,
+      "wall": "W4",
+      "width": 1152000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "level": "L1"
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "extras": {
+        "k": {}
+      },
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    }
+  }
+}

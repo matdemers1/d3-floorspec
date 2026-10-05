@@ -1,0 +1,7 @@
+{
+  "description": "A request of Rules 0.2 whose rule reads stairNarrowGoing is well typed; the same measure in a rule of a 0.1 pack is never read, since the pack is FS-RULES-004 - an evaluator of 0.2 reads only 0.2 packs.",
+  "covers": [
+    "FS-RULES-2.1.1",
+    "FS-RULES-3.9.1"
+  ]
+}

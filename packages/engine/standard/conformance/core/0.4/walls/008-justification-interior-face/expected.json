@@ -1,0 +1,93 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "0b844c1d588530cd9d282c148e47f2c258858bfd1ad7c65ec72150e891f718e7",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [0, 0],
+        "endRight": [0, 3840000],
+        "endLeft": [-128000, 3968000],
+        "startLeft": [-128000, -128000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [0, 3840000],
+        "endRight": [5120000, 3840000],
+        "endLeft": [5248000, 3968000],
+        "startLeft": [-128000, 3968000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5120000, 3840000],
+        "endRight": [5120000, 0],
+        "endLeft": [5248000, -128000],
+        "startLeft": [5248000, 3968000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5120000, 0],
+        "endRight": [0, 0],
+        "endLeft": [-128000, -128000],
+        "startLeft": [5248000, -128000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[0, 0], [5120000, 0], [5120000, 3840000], [0, 3840000]],
+        "holes": [],
+        "area": "19660800000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [5120000, 3840000, 3456000],
+          "min": [0, 0, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5120000, 3840000, 0],
+          "min": [0, 0, 0]
+        }
+      }
+    },
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

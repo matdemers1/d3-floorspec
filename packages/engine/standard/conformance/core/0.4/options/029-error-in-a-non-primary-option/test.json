@@ -1,0 +1,7 @@
+{
+  "description": "The same door, with B primary: A is checked against it, and the error is A's design's, so it carries \"design\": \"KA\" and the document is invalid.",
+  "covers": [
+    "FS-CORE-19.5.1",
+    "FS-CORE-19.5.2"
+  ]
+}

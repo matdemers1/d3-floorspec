@@ -1,0 +1,7 @@
+{
+  "description": "A quarter-turn winder stair with a newel that rises at 30 degrees and turns right: in its frame the mirror image of a left turn, its pivot on its right. Its frame faces F(30000000), so every corner of its winders, every walkline point and its head are irrational, each rounded once; the goings are distances in its frame, the same as the left turn's.",
+  "covers": [
+    "FS-CORE-17.7.3",
+    "FS-CORE-2.2.1"
+  ]
+}

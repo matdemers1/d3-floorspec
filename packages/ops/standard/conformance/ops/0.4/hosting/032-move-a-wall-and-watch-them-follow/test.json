@@ -1,0 +1,7 @@
+{
+  "description": "The Phase 5 demo. Outlets on three walls of the box, and the east wall W3 moved 2' east: no outlet changes - their hosts are relative - yet the one on W3 is now 2' further east; the one on the north wall W2, measured from W2's start J2, stays where it is; and the one on the south wall W4, which runs west from the corner that moved, moves 2' east with its start (2.7).",
+  "covers": [
+    "FS-OPS-2.7.1",
+    "FS-OPS-4.2.1"
+  ]
+}

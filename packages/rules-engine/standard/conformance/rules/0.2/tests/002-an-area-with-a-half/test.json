@@ -1,0 +1,7 @@
+{
+  "description": "A room with oblique walls whose net area, from its rounded corners, is an integer and a half (computed by the oracle). Areas compare exactly: it is greater than the integer below it and less than the integer above, and equal to neither, so of four conditions `>` and `<` hold and `>=` the integer above and `=` the integer below fail.",
+  "covers": [
+    "FS-RULES-3.8.1",
+    "FS-RULES-5.2.1"
+  ]
+}

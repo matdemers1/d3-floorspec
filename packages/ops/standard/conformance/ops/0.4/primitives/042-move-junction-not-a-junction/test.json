@@ -1,0 +1,7 @@
+{
+  "description": "moveJunction names a wall: it resolves to no junction, FS-OPS-003.",
+  "covers": [
+    "FS-OPS-2.4.1",
+    "FS-OPS-3.3.1"
+  ]
+}

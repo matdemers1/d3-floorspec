@@ -1,0 +1,6 @@
+{
+  "description": "moveWall moves a wall towards its left (exterior) side for a positive \"by\": the north wall W2 (J2 -> J3, left is north) 1' north.",
+  "covers": [
+    "FS-OPS-4.2.1"
+  ]
+}

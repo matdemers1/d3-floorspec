@@ -1,0 +1,6 @@
+{
+  "description": "EXT_a 1.0.0 requires EXT_b, and EXT_b 2.0.0 requires EXT_a: the relation is between extension names, so this is a cycle although no single version depends on itself.",
+  "covers": [
+    "FS-CORE-12.2.1"
+  ]
+}

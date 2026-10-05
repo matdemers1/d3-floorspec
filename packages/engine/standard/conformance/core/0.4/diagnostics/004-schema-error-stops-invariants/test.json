@@ -1,0 +1,7 @@
+{
+  "description": "A schema error (an unknown wall member) and a dangling reference: only FS-SCH-001, because invariants are evaluated only when the schema tier passed.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-1.4.1"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "a548ec69dd32ce0a7c34b6cc65f2f2fafdee8c2bd62bb02610cdb101fa6b08a2",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "WT",
+      "path": "/layers/0/thickness",
+      "value": 192000
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "WT",
+      "path": "/layers",
+      "value": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  ]
+}

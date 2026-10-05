@@ -9,7 +9,8 @@ import { describe, expect, it } from 'vitest';
 
 const bin = join(import.meta.dirname, '..', 'dist', 'bin.js');
 const suites = join(import.meta.dirname, '..', '..', 'engine', 'standard', 'conformance', 'core');
-const suite = join(suites, '0.3');
+const suite = join(suites, '0.4');
+const suite03 = join(suites, '0.3');
 const suite02 = join(suites, '0.2');
 const suite01 = join(suites, '0.1');
 
@@ -24,8 +25,9 @@ function cases(dir: string): string[] {
 }
 
 const all = existsSync(suite) ? cases(suite) : [];
-// The published Core 0.2 and 0.1 suites, read as a reader of that draft: a sample, since the
+// The published Core 0.3, 0.2 and 0.1 suites, read as a reader of that draft: a sample, since the
 // engine's own conformance test runs every case of every suite in process.
+const all03 = existsSync(suite03) ? cases(suite03).filter((_, i) => i % 4 === 0) : [];
 const all02 = existsSync(suite02) ? cases(suite02).filter((_, i) => i % 4 === 0) : [];
 const all01 = existsSync(suite01) ? cases(suite01).filter((_, i) => i % 4 === 0) : [];
 const floorspec = (...args: string[]) => spawnSync(process.execPath, [bin, ...args], { encoding: 'utf8' });
@@ -38,7 +40,8 @@ const registryArgs = (dir: string): string[] => [
 ];
 
 describe.each([
-  ['Core 0.3', suite, all, [] as string[]],
+  ['Core 0.4', suite, all, [] as string[]],
+  ['Core 0.3, --core 0.3', suite03, all03, ['--core', '0.3']],
   ['Core 0.2, --core 0.2', suite02, all02, ['--core', '0.2']],
   ['Core 0.1, --core 0.1', suite01, all01, ['--core', '0.1']],
 ] as const)('floorspec validate --json (%s)', (_s, root, list, extra) => {
@@ -100,7 +103,7 @@ describe('human output and exit codes', () => {
   });
   it('--help and --version exit 0', () => {
     expect(floorspec('--help').status).toBe(0);
-    expect(floorspec('--version').stdout).toBe('floorspec 0.3.0\n');
+    expect(floorspec('--version').stdout).toBe('floorspec 0.4.0\n');
   });
   it('--registry is read as the known extensions; a bad one is FS-CFG-001', () => {
     const dir = join(suite, 'extensions', '047-registry-cycle');
@@ -146,8 +149,8 @@ describe('floorspec --extensions', () => {
 });
 
 describe('floorspec migrate', () => {
-  // The migration suite (Core 0.3, chapter 20), vendored in packages/migrate/standard.
-  const msuite = join(import.meta.dirname, '..', '..', 'migrate', 'standard', 'conformance', 'migration', '0.3');
+  // The migration suite (Core 0.4, chapter 20), vendored in packages/migrate/standard.
+  const msuite = join(import.meta.dirname, '..', '..', 'migrate', 'standard', 'conformance', 'migration', '0.4');
   const mcases = existsSync(msuite) ? cases(msuite) : [];
 
   it('has the migration suite', () => {
@@ -174,6 +177,6 @@ describe('floorspec migrate', () => {
     const doc = join(msuite, 'step-0.1-0.2', '001-version-only', 'input.json');
     expect(floorspec('migrate', doc, '--core', '0.2').status).toBe(2);
     expect(floorspec('validate', doc, '--to', '0.3').status).toBe(2);
-    expect(floorspec('migrate', doc).stdout).toContain('"floorspec": "0.3"');
+    expect(floorspec('migrate', doc).stdout).toContain('"floorspec": "0.4"');
   });
 });

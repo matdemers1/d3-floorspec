@@ -11,7 +11,7 @@
 import { predicates, roundHalfEvenRational, Surd, type Diagnostic } from '@floorspec/engine';
 import { opsDiagnostic } from './diagnostics.js';
 import { edgesOn, junctionsOn, type Keep } from './model/faces.js';
-import type { WorkingCopy } from './model/working.js';
+import { atLeast03, type WorkingCopy } from './model/working.js';
 import { clone, cmpStr, deleteMember, getMember, isObject, setMember, type JsonObject } from './lib/json.js';
 
 type IPoint = readonly [bigint, bigint];
@@ -61,7 +61,7 @@ export function normalize(wc: WorkingCopy): Diagnostic[] {
   // breaks Core §5.3: one with no crossing, no junction inside an edge and no overlap is left
   // exactly as it is (near misses included).
   for (const l of levels)
-    for (const domain of wc.ops === '0.3' ? domainsOf(wc, l) : ([ALL] as Domain[]))
+    for (const domain of atLeast03(wc.ops) ? domainsOf(wc, l) : ([ALL] as Domain[]))
       if (!isPlanar(wc, l, domain)) straddles.push(...planarize(wc, l, domain));
   if (straddles.length) return straddles;
   cleanJoins(wc);
@@ -83,7 +83,7 @@ export function mergeCoincident(wc: WorkingCopy, level: string): void {
   for (const ids of groups.values()) {
     if (ids.length < 2) continue;
     // Ops 0.3, 5.5: into a common survivor when one is common; otherwise each option's among themselves.
-    if (wc.ops !== '0.3' || ids.every((id) => scopeOf(id) === null)) {
+    if (!atLeast03(wc.ops) || ids.every((id) => scopeOf(id) === null)) {
       merges.push([survivorOf(ids), ids]);
       continue;
     }
@@ -307,7 +307,7 @@ function planarize(wc: WorkingCopy, level: string, domain: Domain): Diagnostic[]
       if (kind === 'walls') {
         diagnostics.push(...rehost(wc, s, route, ids));
         rehostHosted(wc, s, route, ids);
-        if (wc.ops === '0.3') cutRegions(wc, s, route, ids);
+        if (atLeast03(wc.ops)) cutRegions(wc, s, route, ids);
       }
     }
   return diagnostics;

@@ -70,7 +70,7 @@ test('the P4 exit demo: a brief, its bubble diagram, three layouts, one accepted
   await addItem(page, { name: 'Bedroom', area: '130 sq ft', count: 2 });
   await addItem(page, { name: 'Bath', fn: 'Bath', area: '50 sq ft' });
   let doc = await modelOf(page, project);
-  expect(doc.floorspec).toBe('0.3');
+  expect(doc.floorspec).toBe('0.4');
   const ids: Record<string, string> = Object.fromEntries(Object.entries(doc.program?.items ?? {}).map(([id, item]): [string, string] => [item.name ?? id, id]));
   expect(Object.keys(ids).sort()).toEqual(['Bath', 'Bedroom', 'Kitchen', 'Living room']);
   expect(doc.program?.items[ids['Bedroom'] ?? '']).toMatchObject({ function: 'sleeping', count: 2 });

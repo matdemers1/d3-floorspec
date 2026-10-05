@@ -1,0 +1,7 @@
+{
+  "description": "The door OA is common, but the wall it is in, WA, is only in option A: B's design would have a door in no wall. FS-INV-1102 names both.",
+  "covers": [
+    "FS-CORE-19.4.1",
+    "FS-CORE-10.2.1"
+  ]
+}

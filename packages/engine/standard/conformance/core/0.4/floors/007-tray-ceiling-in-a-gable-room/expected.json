@@ -1,0 +1,105 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "198d7b5ad61575e6dd709bf6558d42bfe8a1cdf51adc1383ae172328187349a8",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3800446],
+        "endLeft": [-64000, 3879554],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3800446],
+        "endRight": [2560000, 5048446],
+        "endLeft": [2560000, 5191554],
+        "startLeft": [-64000, 3879554],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [2560000, 5048446],
+        "endRight": [5056000, 3800446],
+        "endLeft": [5184000, 3879554],
+        "startLeft": [2560000, 5191554],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 3800446],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3879554],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3800446], [2560000, 5048446], [64000, 3800446]],
+        "holes": [],
+        "area": "21767346432000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "tray",
+        "box": {
+          "max": [5056000, 5048446, 3712000],
+          "min": [64000, 64000, 3456000]
+        },
+        "high": 3712000,
+        "low": 3456000,
+        "tray": {
+          "outer": [[448000, 448000], [4672000, 448000], [4672000, 3563121], [2560000, 4619121], [448000, 3563121]],
+          "holes": []
+        }
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5056000, 5048446, 0],
+          "min": [64000, 64000, 0]
+        }
+      }
+    },
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

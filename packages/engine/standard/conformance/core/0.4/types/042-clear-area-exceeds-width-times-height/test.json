@@ -1,0 +1,7 @@
+{
+  "description": "One square base unit more than the clear width times the clear height: FS-INV-306 names the type.",
+  "covers": [
+    "FS-CORE-8.4.4",
+    "FS-CORE-10.2.1"
+  ]
+}

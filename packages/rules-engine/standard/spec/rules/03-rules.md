@@ -19,8 +19,8 @@ expected to pass, when it does not apply, how serious a finding is, and who veri
 | `provenance` | provenance (3.12) | — (always present) | who verified the rule, against which edition, and when |
 | `extras` | object | `{}` | as Core §1.7 |
 
-The rule record schema is `schema/rules/0.1/rule.schema.json`, published at
-`https://d3cloud.io/floorspec/schema/rules/0.1/rule.schema.json`. A rule is part of its pack: a
+The rule record schema is `schema/rules/0.2/rule.schema.json`, published at
+`https://d3cloud.io/floorspec/schema/rules/0.2/rule.schema.json`. A rule is part of its pack: a
 rule that does not match its schema makes its pack not match the pack schema (2.1).
 
 ## 3.2 Citation

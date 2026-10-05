@@ -1,0 +1,46 @@
+{
+  "batch": [
+    {
+      "op": "placeElement",
+      "extension": "FS_electrical",
+      "collection": "devices",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W2",
+        "at": "centered",
+        "height": 384000,
+        "side": "right"
+      },
+      "element": {
+        "fallback": {
+          "box": {
+            "min": [0, -51200, 0],
+            "max": [25600, 51200, 128000]
+          }
+        },
+        "device": "receptacle"
+      }
+    },
+    {
+      "op": "placeElement",
+      "extension": "FS_electrical",
+      "collection": "devices",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W2",
+        "at": "3' from end",
+        "height": 384000,
+        "side": "right"
+      },
+      "element": {
+        "fallback": {
+          "box": {
+            "min": [0, -51200, 0],
+            "max": [25600, 51200, 128000]
+          }
+        },
+        "device": "receptacle"
+      }
+    }
+  ]
+}

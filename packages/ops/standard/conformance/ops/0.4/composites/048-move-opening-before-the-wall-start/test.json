@@ -1,0 +1,7 @@
+{
+  "description": "The door at 1' moved 2' toward its wall's start: its offset would be -1', and an offset is never negative, so the result is invalid.",
+  "covers": [
+    "FS-OPS-4.5.2",
+    "FS-OPS-1.2.3"
+  ]
+}

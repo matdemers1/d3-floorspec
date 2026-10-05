@@ -1,0 +1,115 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "circuitCount"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "circuitCount",
+      "args": {
+        "circuit": {
+          "breaker": 20
+        }
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "circuitCount",
+      "args": {
+        "collection": "alarms"
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "circuitCount",
+      "args": {
+        "match": {
+          "amps": 15
+        }
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "circuitCount",
+      "args": {
+        "match": {
+          "amps": 20
+        }
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R2"
+      },
+      "measure": "circuitCount"
+    },
+    {
+      "target": {
+        "kind": "level",
+        "id": "L1"
+      },
+      "measure": "elementCount",
+      "args": {
+        "extension": "FS_electrical"
+      }
+    },
+    {
+      "target": {
+        "kind": "level",
+        "id": "L1"
+      },
+      "measure": "elementCount",
+      "args": {
+        "extension": "FS_mechanical"
+      }
+    },
+    {
+      "target": {
+        "kind": "level",
+        "id": "L1"
+      },
+      "measure": "elementCount",
+      "args": {
+        "extension": "FS_electrical",
+        "collection": "alarms",
+        "match": {
+          "detects": "smoke"
+        }
+      }
+    },
+    {
+      "target": {
+        "kind": "level",
+        "id": "L1"
+      },
+      "measure": "roomCount"
+    },
+    {
+      "target": {
+        "kind": "level",
+        "id": "L1"
+      },
+      "measure": "roomCount",
+      "args": {
+        "function": "sleeping"
+      }
+    }
+  ]
+}

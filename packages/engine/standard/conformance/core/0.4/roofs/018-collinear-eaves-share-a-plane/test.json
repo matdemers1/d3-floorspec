@@ -1,0 +1,7 @@
+{
+  "description": "A rectangle with a narrow bay, 2 feet square, pushed out of its south side: the south eave is two collinear edges, 0 and 4, either side of the bay, facing the same way. Once the bay's little hip closes, their faces meet, in one plane: the boundary between them, from the valleys' meeting point to the main ridge, is a seam and not a line, and each face is still its own edge's.",
+  "covers": [
+    "FS-CORE-16.4.1",
+    "FS-CORE-16.5.1"
+  ]
+}

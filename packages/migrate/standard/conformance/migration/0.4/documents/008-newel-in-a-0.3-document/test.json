@@ -1,0 +1,6 @@
+{
+  "description": "A document declaring \"0.3\" whose winder stair has a newel, which 0.4 added: it does not match the schema of the draft it declares, so it is refused with FS-SCH-001 (20.2.1) - a migrator does not guess that 0.4 was meant.",
+  "covers": [
+    "FS-CORE-20.2.1"
+  ]
+}

@@ -1,7 +1,8 @@
 # @floorspec/engine
 
-The reference Reader, Canonicalizer, Validator and Deriver of Floorspec Core 0.3 — which reads Core
-0.2 and 0.1 documents too, each with its own draft's schema and hash (1.2.6). Isomorphic: the same package runs in the
+The reference Reader, Canonicalizer, Validator and Deriver of Floorspec Core 0.4 — which reads Core
+0.3, 0.2 and 0.1 documents too, each with its own draft's schema and hash (1.2.8), and derives the
+tapered treads of winder and spiral stairs (17.7) for a document of any draft. Isomorphic: the same package runs in the
 browser, the server, MCP and the CLI (FLR-ADR-010) — no Node APIs in `src/`.
 
 ```ts
@@ -16,6 +17,7 @@ planarize({ junctions, edges, mintJunction, mintEdge }); // snap rounding (5.3 n
 // Options, on validate / check / derive / evaluate:
 check(input, { knownExtensions: registryEntries }); // 12.2: an array of registry entries (value, text or bytes);
                                                     // a bad registry → FS-CFG-001 alone
+check(input, { core: '0.3' });                      // a Core 0.3 reader: rejects "0.4", steps no winder or spiral
 check(input, { core: '0.2' });                      // a Core 0.2 reader: rejects "0.3"
 check(input, { core: '0.1' });                      // a Core 0.1 reader: rejects "0.2" and "0.3", derives no 0.2 members
 check(input, { extensions: ['FS_x'] });             // 1.6.4: extensions this reader implements (none by default)
@@ -27,7 +29,7 @@ check(input, { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_E
 defaultClearances('FS_electrical', 'panels', element);  // Floorspec's default envelopes for a new element
 ```
 
-An official extension is **evaluated** for a document that declares "0.2" or "0.3" (its 0.1.0
+An official extension is **evaluated** for a document that declares "0.2", "0.3" or "0.4" (its 0.1.0
 spec, 1.1 and 1.2) and uses it at a version
 the reader implements (`extensions`) and the validator knows (`knownExtensions`) — each extension's
 spec, 1.2. Its schema is checked, then its invariants, after Core's and only without a Core error;

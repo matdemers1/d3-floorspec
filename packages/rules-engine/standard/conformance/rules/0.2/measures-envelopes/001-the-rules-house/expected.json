@@ -1,0 +1,66 @@
+{
+  "results": [
+    {
+      "display": "workingSpace",
+      "type": "term",
+      "value": "workingSpace"
+    },
+    {
+      "display": "3' 3 3/8\"",
+      "type": "length",
+      "value": 1280000
+    },
+    {
+      "display": "2' 7 1/2\"",
+      "type": "length",
+      "value": 1024000
+    },
+    {
+      "display": "6' 6 3/4\"",
+      "type": "length",
+      "value": 2560000
+    },
+    {
+      "display": "0' 0\"",
+      "type": "length",
+      "value": 0
+    },
+    {
+      "display": "2' 5 1/2\"",
+      "type": "length",
+      "value": 960000
+    },
+    {
+      "display": "0",
+      "involved": [],
+      "type": "count",
+      "value": 0
+    },
+    {
+      "display": "0",
+      "involved": [],
+      "type": "count",
+      "value": 0
+    },
+    {
+      "display": "3' 0\"",
+      "involved": [],
+      "type": "length",
+      "value": 1170432
+    },
+    {
+      "display": "7' 8 1/16\"",
+      "involved": [
+        "W10"
+      ],
+      "type": "length",
+      "value": 2993152
+    },
+    {
+      "display": "0",
+      "involved": [],
+      "type": "count",
+      "value": 0
+    }
+  ]
+}

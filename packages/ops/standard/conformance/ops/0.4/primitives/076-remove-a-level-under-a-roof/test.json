@@ -1,0 +1,6 @@
+{
+  "description": "A roof stands on level L2, which has nothing else: removing L2 without cascade is blocked by the roof (2.2).",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

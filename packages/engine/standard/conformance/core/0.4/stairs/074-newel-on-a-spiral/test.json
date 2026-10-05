@@ -1,0 +1,7 @@
+{
+  "description": "A spiral stair's column is the space its treads leave: it has no newel member.",
+  "covers": [
+    "FS-CORE-17.2.3",
+    "FS-CORE-17.2.1"
+  ]
+}

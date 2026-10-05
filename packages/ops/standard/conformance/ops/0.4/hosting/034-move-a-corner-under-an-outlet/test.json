@@ -1,0 +1,7 @@
+{
+  "description": "The corner J2, the start of the north wall W2, is dragged 1' east along it: the outlet 3' along W2 moves with W2's start, as an opening does, and is unchanged.",
+  "covers": [
+    "FS-OPS-2.7.1",
+    "FS-OPS-2.4.1"
+  ]
+}

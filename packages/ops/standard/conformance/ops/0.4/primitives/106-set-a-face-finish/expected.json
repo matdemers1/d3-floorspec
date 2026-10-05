@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "3553928ecd803be39eb23c56c00e0d18509498a908cb43bd0397dd6594440123",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/finishes/right/material",
+      "value": "TILE"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "W1",
+      "path": "/finishes"
+    }
+  ]
+}

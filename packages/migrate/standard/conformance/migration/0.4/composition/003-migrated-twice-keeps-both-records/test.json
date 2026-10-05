@@ -1,0 +1,7 @@
+{
+  "description": "The 0.2 migration of a 0.1 document - its record already in extras - with an outlet added since that has an \"option\" of its own. Migrated to 0.3, its second record is appended after the first (20.3.1, 20.1.3).",
+  "covers": [
+    "FS-CORE-20.3.1",
+    "FS-CORE-20.1.3"
+  ]
+}

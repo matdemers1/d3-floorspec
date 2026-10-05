@@ -200,7 +200,7 @@ export function deriveFrom(doc: FloorspecDocument, analysis: Analysis): Derived 
         const la = analysis.levels.get(room.level)!;
         return roomRings(la.geometry!, la.roomFaces.get(id)!);
       }),
-      { roofs: deriveRoofs(doc), stairs: deriveStairs(new StairContext(doc, analysis.levels)), finishes: deriveFinishes(doc, analysis.levels) },
+      { roofs: deriveRoofs(doc), stairs: deriveStairs(new StairContext(doc, analysis.levels), analysis.core04 ?? false), finishes: deriveFinishes(doc, analysis.levels) },
     );
   return out;
 }

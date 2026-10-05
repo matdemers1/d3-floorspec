@@ -1,0 +1,212 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    },
+    "L2": {
+      "building": "B1",
+      "elevation": 3456000,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "D": {
+      "kind": "doorType",
+      "width": 1152000,
+      "height": 2688000
+    }
+  },
+  "junctions": {
+    "J00": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [5120000, 0]
+    },
+    "J01": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "J11": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "J20": {
+      "level": "L1",
+      "position": [10240000, 0]
+    },
+    "J21": {
+      "level": "L1",
+      "position": [10240000, 3840000]
+    },
+    "UJ00": {
+      "level": "L2",
+      "position": [0, 0]
+    },
+    "UJ10": {
+      "level": "L2",
+      "position": [5120000, 0]
+    },
+    "UJ01": {
+      "level": "L2",
+      "position": [0, 3840000]
+    },
+    "UJ11": {
+      "level": "L2",
+      "position": [5120000, 3840000]
+    },
+    "UJ20": {
+      "level": "L2",
+      "position": [10240000, 0]
+    },
+    "UJ21": {
+      "level": "L2",
+      "position": [10240000, 3840000]
+    }
+  },
+  "walls": {
+    "H00": {
+      "level": "L1",
+      "start": "J00",
+      "end": "J10",
+      "type": "WT"
+    },
+    "H01": {
+      "level": "L1",
+      "start": "J01",
+      "end": "J11",
+      "type": "WT"
+    },
+    "H10": {
+      "level": "L1",
+      "start": "J10",
+      "end": "J20",
+      "type": "WT"
+    },
+    "H11": {
+      "level": "L1",
+      "start": "J11",
+      "end": "J21",
+      "type": "WT"
+    },
+    "V00": {
+      "level": "L1",
+      "start": "J00",
+      "end": "J01",
+      "type": "WT"
+    },
+    "V10": {
+      "level": "L1",
+      "start": "J10",
+      "end": "J11",
+      "type": "WT"
+    },
+    "V20": {
+      "level": "L1",
+      "start": "J20",
+      "end": "J21",
+      "type": "WT"
+    },
+    "UH00": {
+      "level": "L2",
+      "start": "UJ00",
+      "end": "UJ10",
+      "type": "WT"
+    },
+    "UH01": {
+      "level": "L2",
+      "start": "UJ01",
+      "end": "UJ11",
+      "type": "WT"
+    },
+    "UH10": {
+      "level": "L2",
+      "start": "UJ10",
+      "end": "UJ20",
+      "type": "WT"
+    },
+    "UH11": {
+      "level": "L2",
+      "start": "UJ11",
+      "end": "UJ21",
+      "type": "WT"
+    },
+    "UV00": {
+      "level": "L2",
+      "start": "UJ00",
+      "end": "UJ01",
+      "type": "WT"
+    },
+    "UV10": {
+      "level": "L2",
+      "start": "UJ10",
+      "end": "UJ11",
+      "type": "WT"
+    },
+    "UV20": {
+      "level": "L2",
+      "start": "UJ20",
+      "end": "UJ21",
+      "type": "WT"
+    }
+  },
+  "openings": {
+    "DH00": {
+      "wall": "H00",
+      "offset": 1280000,
+      "fill": "D"
+    },
+    "DV10": {
+      "wall": "V10",
+      "offset": 1280000,
+      "fill": "D"
+    },
+    "DUV10": {
+      "wall": "UV10",
+      "offset": 1280000,
+      "fill": "D"
+    }
+  },
+  "rooms": {
+    "HALL": {
+      "level": "L1",
+      "anchor": [2560000, 1920000],
+      "function": "circulation"
+    },
+    "LIV": {
+      "level": "L1",
+      "anchor": [7680000, 1920000],
+      "function": "living"
+    },
+    "BED1": {
+      "level": "L2",
+      "anchor": [2560000, 1920000],
+      "function": "sleeping"
+    },
+    "BED2": {
+      "level": "L2",
+      "anchor": [7680000, 1920000],
+      "function": "sleeping"
+    }
+  }
+}

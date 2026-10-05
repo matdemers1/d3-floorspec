@@ -1,0 +1,8 @@
+{
+  "description": "The same 800 mm door with its own 30-inch clear opening: it fits.",
+  "covers": [
+    "FS-CORE-7.2.2",
+    "FS-CORE-7.4.2",
+    "FS-CORE-8.2.1"
+  ]
+}

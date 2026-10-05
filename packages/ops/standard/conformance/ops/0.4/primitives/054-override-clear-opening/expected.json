@@ -1,0 +1,25 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "7aa00531141f75c1fb2448848f30750f528106d37aef17d7ebe2a01357422766",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "O1",
+      "path": "/clearOpening",
+      "value": {
+        "height": 2568448,
+        "width": 975360
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "O1",
+      "path": "/clearOpening"
+    }
+  ]
+}

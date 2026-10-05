@@ -251,7 +251,7 @@ export interface LevelSummary {
   readonly circuits?: readonly CircuitSummary[];
   /** Core 0.3 (chapter 16): roofs on this level — kind, pitch, eave above the level; absent when there are none. */
   readonly roofs?: readonly RoofSummary[];
-  /** Core 0.3 (chapter 17): stairs rising from this level; absent when there are none. */
+  /** Core 0.3 and 0.4 (chapter 17): stairs rising from this level; absent when there are none. */
   readonly stairs?: readonly StairSummary[];
 }
 
@@ -276,8 +276,14 @@ export interface StairSummary {
   readonly riserHeight: Length;
   readonly tread: Length;
   readonly width: Length;
-  /** Absent where Core derives none (a winder or spiral stair, or nothing above it). */
+  /** Absent where Core derives none (nothing above it). */
   readonly headroom?: Length;
+  /** Core 0.4 (17.7): a winder or spiral stair's least going of its tapered treads at the walkline, and at their narrow ends. */
+  readonly walklineGoing?: Length;
+  readonly narrowGoing?: Length;
+  /** Core 0.4 (17.6): the headroom it is designed for, and the first step (1-based) over which the floor above must be open for it. */
+  readonly minHeadroom?: Length;
+  readonly openFromStep?: number;
 }
 
 /**
@@ -885,6 +891,10 @@ export function describeJson(document: string | Uint8Array | object, options: De
         tread: length(BigInt(st.tread)),
         width: length(BigInt(st.width)),
         ...(d.headroom !== undefined && { headroom: length(BigInt(d.headroom)) }),
+        ...(d.walklineGoing !== undefined && { walklineGoing: length(BigInt(d.walklineGoing)) }),
+        ...(d.narrowGoing !== undefined && { narrowGoing: length(BigInt(d.narrowGoing)) }),
+        ...(st.minHeadroom !== undefined && { minHeadroom: length(BigInt(st.minHeadroom)) }),
+        ...(d.opening !== undefined && { openFromStep: d.opening.first + 1 }),
       },
     ]);
   }

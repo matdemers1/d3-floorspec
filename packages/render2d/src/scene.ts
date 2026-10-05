@@ -5,6 +5,7 @@
  * symbols (door leaves, glazing lines) relative to those points.
  */
 import { deriveFrom, evaluate, InvalidDocumentError, type DerivedRoof, type DerivedStair, type FloorspecDocument } from '@floorspec/engine';
+import { columnRadius } from './symbols.js';
 
 export type Pt = readonly [number, number];
 
@@ -104,8 +105,8 @@ export interface Scene {
   readonly slabs: ReadonlyMap<string, SceneSlab>;
   /** Roofs on this level, by ID, as derived (Core 0.3, 16.5). */
   readonly roofs: ReadonlyMap<string, DerivedRoof>;
-  /** Stairs rising from this level, by ID, as derived (Core 0.3, 17.4–17.6), with their form. */
-  readonly stairs: ReadonlyMap<string, { readonly derived: DerivedStair; readonly form: string }>;
+  /** Stairs rising from this level, by ID, as derived (Core 0.3 and 0.4, 17.4–17.7), with their form and a spiral's column radius. */
+  readonly stairs: ReadonlyMap<string, { readonly derived: DerivedStair; readonly form: string; readonly column: number }>;
 }
 
 /** A collection as [id, element] pairs sorted by ID (absent: empty). */
@@ -220,10 +221,10 @@ export function buildScene(input: string | Uint8Array | object, level?: string, 
     const d = derived.roofs?.[id];
     if (rf.level === lid && d !== undefined) roofs.set(id, d);
   }
-  const stairs = new Map<string, { derived: DerivedStair; form: string }>();
+  const stairs = new Map<string, { derived: DerivedStair; form: string; column: number }>();
   for (const [id, st] of entries(doc.stairs)) {
     const d = derived.stairs?.[id];
-    if (st.level === lid && d !== undefined) stairs.set(id, { derived: d, form: st.form?.kind ?? 'straight' });
+    if (st.level === lid && d !== undefined) stairs.set(id, { derived: d, form: st.form?.kind ?? 'straight', column: columnRadius(st) });
   }
 
   return {

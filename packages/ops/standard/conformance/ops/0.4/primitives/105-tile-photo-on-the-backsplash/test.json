@@ -1,0 +1,8 @@
+{
+  "description": "The exit demo of FLR-P-8, as one batch: addElement adds the photo of a tile as an asset and a material whose texture is that photo at 12 inches, and setProperty lays it on the kitchen's backsplash - a region of W2's right face from 2' to 10' along the wall, between the counter at 36\" and the cabinets at 54\", creating /finishes and /finishes/right on the way. The rest of the face is the kitchen's paint.",
+  "covers": [
+    "FS-OPS-2.1.1",
+    "FS-OPS-2.3.1",
+    "FS-OPS-1.3.1"
+  ]
+}

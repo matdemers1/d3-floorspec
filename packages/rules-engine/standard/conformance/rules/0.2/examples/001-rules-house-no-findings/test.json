@@ -1,0 +1,14 @@
+{
+  "description": "The rules house under the test jurisdiction, with the three synthetic rules of the examples: an escape opening in every sleeping room, a smoke alarm in every sleeping room, and a clear working space in front of every panel. Each rule is evaluated, on one subject, and none gives a finding; the report lists them in `evaluated` with 0 findings, carries the coverage entries of the editions in force and the notice, and names nothing as passing.",
+  "covers": [
+    "FS-RULES-1.1.1",
+    "FS-RULES-1.2.3",
+    "FS-RULES-11.1.1",
+    "FS-RULES-3.4.1",
+    "FS-RULES-3.5.1",
+    "FS-RULES-9.1.1",
+    "FS-RULES-9.1.2",
+    "FS-RULES-9.8.1",
+    "FS-RULES-9.9.1"
+  ]
+}

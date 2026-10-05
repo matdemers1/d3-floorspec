@@ -1,0 +1,33 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "circuitCount"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "circuitCount",
+      "args": {
+        "circuit": {
+          "breaker": 20
+        }
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X5"
+      },
+      "measure": "elementProtectedBy",
+      "args": {
+        "protection": "afci"
+      }
+    }
+  ]
+}

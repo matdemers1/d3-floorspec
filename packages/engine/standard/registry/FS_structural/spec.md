@@ -4,7 +4,7 @@
 > FS_structural 0.1.0 is a **Draft** (`registry/README.md`): specified, with a schema and a
 > conformance suite, and still changing. It becomes a Release Candidate when an implementation other
 > than the suite's own oracle passes its suite, and Ratified only when a second, independent
-> implementation does too (FLR-REQ-092). It builds on Floorspec Core 0.2 and 0.3, which are Drafts.
+> implementation does too (FLR-REQ-092). It builds on Floorspec Core 0.2, 0.3 and 0.4, which are Drafts.
 
 > [!danger] Attributes for handoff, never a structural design
 > FS_structural records what someone says about a house's structure — which walls bear, how a wall
@@ -48,7 +48,7 @@ every `MUST` and `MUST NOT` is exercised by the conformance suite in
 | Registry entry | `registry/FS_structural/extension.json` |
 | Schema | `registry/FS_structural/structural.schema.json`, published at `https://d3cloud.io/floorspec/schema/ext/FS_structural/0.1.0/structural.schema.json` |
 | Requires | nothing |
-| Core drafts | `0.2` and `0.3`: the drafts whose documents it is evaluated for (1.2) |
+| Core drafts | `0.2`, `0.3` and `0.4`: the drafts whose documents it is evaluated for (1.2) |
 | Kinds | none: its data is on core elements (1.3) |
 | Statement IDs | `FS-STRC-` |
 | Diagnostic codes | `FS-STRC-SCH-`, `FS-STRC-INV-`, `FS-STRC-LINT-` |
@@ -61,7 +61,7 @@ specification says; it is then also a reader that implements FS_structural (Core
 apply when the validator knows the version the document targets (Core §12.2) — normally because it
 is configured with this specification's registry entry.
 
-A validator that implements FS_structural 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"` or `"0.3"` — a Core draft this version lists (1.1) — and uses FS_structural at a version at which FS_structural is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-STRC-1.2.1 MUST}
+A validator that implements FS_structural 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"`, `"0.3"` or `"0.4"` — a Core draft this version lists (1.1) — and uses FS_structural at a version at which FS_structural is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-STRC-1.2.1 MUST}
 
 Such a validator MUST NOT evaluate FS_structural's diagnostics for a document for which Core's tiers 0 to 4 reported an error, MUST NOT evaluate its invariants (`FS-STRC-INV-`) when it reported `FS-STRC-SCH-001`, and MUST NOT evaluate its lints (`FS-STRC-LINT-`) unless the document is valid. {#FS-STRC-1.2.2 MUST NOT}
 FS_structural's errors are part of tier 4 (Core §10.1) and its lints part of tier 5: an `FS-STRC-`

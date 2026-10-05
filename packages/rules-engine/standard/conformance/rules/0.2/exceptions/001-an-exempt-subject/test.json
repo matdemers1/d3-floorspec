@@ -1,0 +1,7 @@
+{
+  "description": "A rule that every room be a sleeping room, except a mechanical room or one nobody can reach: R1 passes, R3 is exempt (counted in `exempt`, with no finding), and R2 gets the only finding. The subjects are still 3.",
+  "covers": [
+    "FS-RULES-3.7.1",
+    "FS-RULES-9.1.1"
+  ]
+}

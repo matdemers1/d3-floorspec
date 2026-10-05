@@ -1,0 +1,7 @@
+{
+  "description": "A 0.2 document migrated to 0.2 is the document itself (20.1.2): nothing moves, and nothing is canonicalized - its explicit \"justification\": \"center\", a constant default, is kept; its members are only sorted and indented (20.1.1).",
+  "covers": [
+    "FS-CORE-20.1.1",
+    "FS-CORE-20.1.2"
+  ]
+}

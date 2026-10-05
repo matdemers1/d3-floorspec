@@ -1,0 +1,6 @@
+{
+  "description": "A floor 0 thick: a thickness is greater than zero; \"not declared\" is an absent member.",
+  "covers": [
+    "FS-CORE-15.1.1"
+  ]
+}

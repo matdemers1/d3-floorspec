@@ -1,0 +1,8 @@
+{
+  "description": "The Phase 8 exit demo's house: kitchen option A, closed off with a door, and B, open to the dining room with a window over the sink, each with its fridge and the clearance its door needs; and a deck, or none. The primary design is derived; `options` sets A and B side by side - each one's rooms and their areas, and what in the common plan changes between them.",
+  "covers": [
+    "FS-CORE-19.6.1",
+    "FS-CORE-19.6.3",
+    "FS-CORE-19.5.1"
+  ]
+}

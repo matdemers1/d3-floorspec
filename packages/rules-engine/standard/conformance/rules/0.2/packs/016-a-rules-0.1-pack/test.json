@@ -1,0 +1,6 @@
+{
+  "description": "A pack that declares `\"floorspecRules\": \"0.1\"` in a 0.2 request: FS-RULES-004 (2.1.1).",
+  "covers": [
+    "FS-RULES-2.1.1"
+  ]
+}

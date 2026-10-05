@@ -1,0 +1,6 @@
+{
+  "description": "The program already has a preferred adjacency of KIT and PAN; setAdjacency of the same pair - given the other way round - and kind replaces it where it stands, with the new weight and its a and b as now written.",
+  "covers": [
+    "FS-OPS-2.6.1"
+  ]
+}

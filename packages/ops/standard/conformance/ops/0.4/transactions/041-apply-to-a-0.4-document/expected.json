@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "159497c4a4d261916c8c27b4da2484d39f5e1ea49e71fd1e9ee4fd8fbd39eb54",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/name",
+      "value": "Main stair"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/name"
+    }
+  ]
+}
