@@ -127,11 +127,12 @@ function centreOf(outer: readonly Point[], holes: readonly (readonly Point[])[],
 /** Read a plan: valid under the official extensions, or a PlanError that says why not. */
 export function readPlan(input: string | Uint8Array | FloorspecDocument | object, options: { level?: string | undefined; rooms?: readonly string[] | undefined; grid: number }): PlanReading {
   const evaluation = evaluate(input, OFFICIAL_READER);
-  if (!evaluation.valid || evaluation.document === undefined || evaluation.analysis === undefined) {
+  if (!evaluation.valid || evaluation.view === undefined || evaluation.analysis === undefined) {
     const codes = [...new Set(evaluation.diagnostics.filter((d) => d.severity === 'error').map((d) => d.code))];
     throw new PlanError(`the plan is not valid (${codes.join(', ')}): fix it before laying out its electrical`);
   }
-  const doc = evaluation.document;
+  // The primary design's view (Core 0.3, 19.3): the document itself when it has no design options.
+  const doc = evaluation.view;
   const derived = deriveEvaluation(evaluation);
   if (options.level !== undefined && !Object.hasOwn(doc.levels ?? {}, options.level)) throw new PlanError(`there is no level ${options.level}`);
   for (const r of options.rooms ?? []) if (!Object.hasOwn(doc.rooms ?? {}, r)) throw new PlanError(`there is no room ${r}`);

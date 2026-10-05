@@ -113,6 +113,13 @@ export function summaryText(s: DocumentSummary): string {
     ROOM_FUNCTIONS_TEXT,
   );
   if (!s.valid) out.push('', 'The document is NOT valid: fix the error diagnostics below first; geometry is reported only where it can be derived.');
+  if (s.options?.length) {
+    out.push('', '## Design options', 'Described: the primary design; elements of other options are left out. floorspec_apply\'s `option` adds what a batch draws into one.');
+    for (const set of s.options)
+      out.push(
+        `- set ${set.id}${q(set.name)}, primary ${set.primary}: ${set.options.map((o) => `${o.id}${q(o.name)} (${o.members} element${o.members === 1 ? '' : 's'})`).join(', ')}`,
+      );
+  }
   for (const l of s.levels) {
     out.push('', `## Level ${l.id}${q(l.name)} — elevation ${lengthText(l.elevation)}, height ${lengthText(l.height)}, ${l.rooms.length} room${l.rooms.length === 1 ? '' : 's'}`);
     if (!l.derived) out.push('Its walls break Core 5.1–5.3, so it has no faces: rooms, sides and adjacency are not available.');
@@ -191,7 +198,7 @@ export function summaryText(s: DocumentSummary): string {
     out.push('', `Finished area after ANSI Z765-2021 (paraphrased; an app measure, not part of Floorspec): ${s.area.map((a) => `${a.building} ${a.aboveGradeSqFt} sq ft above grade, ${a.belowGradeSqFt} below`).join('; ')}.`);
   out.push('', '## Diagnostics');
   if (!s.diagnostics.length) out.push('(none)');
-  for (const d of s.diagnostics) out.push(`- ${d.code} (${d.severity})${d.elements.length ? ` [${d.elements.join(', ')}]` : ''}${d.level ? ` on ${d.level}` : ''}: ${d.message}`);
+  for (const d of s.diagnostics) out.push(`- ${d.code} (${d.severity})${d.elements.length ? ` [${d.elements.join(', ')}]` : ''}${d.level ? ` on ${d.level}` : ''}${d.design ? ` in option ${d.design}'s design` : ''}: ${d.message}`);
   return `${out.join('\n')}\n`;
 }
 

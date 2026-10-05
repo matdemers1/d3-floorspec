@@ -16,6 +16,8 @@ import { PALETTES, type Palette, type ThemeName } from './theme.js';
 export interface RenderOptions {
   /** The level to draw. Default: the lowest by elevation, then by ID. */
   readonly level?: string;
+  /** Core 0.3 (19.6): the design of a document with design options to draw — option set → option. Default: the primary design. */
+  readonly design?: Readonly<Record<string, string>>;
   /** Default `light`. */
   readonly theme?: ThemeName;
   /** Drawing scale in SVG pixels per foot. Default 24. */
@@ -313,7 +315,7 @@ function labelBlock(lines: readonly LabelLine[], x: number, y: number, rotate: b
 
 /** Render one level of a Floorspec document as a standalone SVG string. */
 export function renderPlan(document: string | Uint8Array | object, options: RenderOptions = {}): string {
-  const scene = buildScene(document, options.level);
+  const scene = buildScene(document, options.level, options.design);
   const pal = PALETTES[options.theme ?? 'light'];
   const scale = options.scale ?? DEFAULT_SCALE;
   if (!(scale > 0) || !Number.isFinite(scale)) throw new RangeError('scale must be a positive number of pixels per foot');

@@ -286,14 +286,15 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         'Apply `batch`, a list of typed Floorspec Ops, as one transaction: all commit or none. ' +
         'Example: {"changeset":"Widen the kitchen","batch":[{"op":"resizeRoom","room":"Kitchen","side":"east","by":"2\'"}],"render":true}. ' +
         'A write token commits to main; an agent credential writes into a pending changeset (`changeset`, or one named after the credential). ' +
-        'A rejection changes nothing and returns diagnostics with fix operations.',
+        'A rejection changes nothing and returns diagnostics with fixes.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
           batch: Batch,
           locks: z.array(Lock).max(200).optional(),
+          option: z.string().min(1).max(64).optional().describe('Design option to edit in.'),
           changeset: ChangesetHandle.optional().describe('A changeset\'s name or ID; a new name opens one.'),
-          ifMatch: z.string().regex(/^[0-9a-f]{64}$/).optional().describe('Apply only if the head is still at this version hash.'),
+          ifMatch: z.string().regex(/^[0-9a-f]{64}$/).optional().describe('Apply only if the head is at this version hash.'),
           render: z.boolean().optional().describe('Also return a plan render; look at it.'),
         }),
       ),
@@ -305,6 +306,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         const result = await client.apply(project.id, {
           batch: args.batch,
           ...(args.locks === undefined ? {} : { locks: args.locks }),
+          ...(args.option === undefined ? {} : { option: args.option }),
           ...(args.changeset === undefined ? {} : { changeset: args.changeset }),
           ...(args.ifMatch === undefined ? {} : { ifMatch: args.ifMatch }),
         });

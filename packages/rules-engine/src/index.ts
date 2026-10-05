@@ -30,6 +30,8 @@ export const RULES_VERSION = '0.1';
 export interface FindingsOptions extends EvaluateOptions {
   /** How the report displays lengths and areas (9.6). Default: imperial. */
   readonly units?: Units;
+  /** The design of a document with design options to evaluate (1.2.2, Core §19.6): option set → option. Default: the primary design. */
+  readonly design?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -49,6 +51,7 @@ export function findingsFor(document: Input, profile: Profile | undefined, packs
     packs: [...packs],
     ...(profile !== undefined && { profile }),
     ...(options.units !== undefined && { units: options.units }),
+    ...(options.design !== undefined && { design: { ...options.design } }),
   };
   return evaluate(document, request, { ...options, knownExtensions: options.knownExtensions ?? OFFICIAL_EXTENSIONS });
 }

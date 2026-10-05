@@ -10,7 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
-import { analyseCirculation, deriveEvaluation, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -263,12 +263,39 @@ export interface DocumentSummary {
   readonly circulation?: CirculationSummary;
   /** Finished area after ANSI Z765-2021 (paraphrased; an app measure, not the standard), per building; absent when not valid. */
   readonly area?: readonly { readonly building: string; readonly aboveGradeSqFt: number; readonly belowGradeSqFt: number }[];
+  /**
+   * Design options (Core 0.3, chapter 19): every option set, its primary and its options with how
+   * many elements each holds. Everything else in the summary describes the primary design.
+   */
+  readonly options?: readonly OptionSetSummary[];
   readonly diagnostics: readonly DiagnosticSummary[];
+}
+
+export interface OptionSetSummary {
+  readonly id: string;
+  readonly name?: string;
+  readonly primary: string;
+  readonly options: readonly { readonly id: string; readonly name?: string; readonly members: number }[];
+}
+
+/** Core 0.3, 19.1: the option sets of a document, each with its options and their member counts. */
+function optionSummary(doc: FloorspecDocument): OptionSetSummary[] | undefined {
+  if (!hasOptions(doc)) return undefined;
+  const members = membership(doc);
+  const count = (oid: string): number => [...members.values()].filter((o) => o === oid).length;
+  return entries(doc.optionSets).map(([sid, set]) => ({
+    id: sid,
+    ...(set.name !== undefined && { name: set.name }),
+    primary: set.primary,
+    options: optionsOf(doc, sid).map((oid) => ({ id: oid, ...(doc.options?.[oid]?.name !== undefined && { name: doc.options[oid].name }), members: count(oid) })),
+  }));
 }
 
 export interface DiagnosticSummary extends Pick<Diagnostic, 'code' | 'severity' | 'elements' | 'message'> {
   /** The level the diagnostic is located on, when it says. */
   readonly level?: string;
+  /** The option whose design alone has it (Core 0.3, 19.5.2). */
+  readonly design?: string;
 }
 
 export interface DescribeOptions {
@@ -664,15 +691,18 @@ const involves = (l: { between: readonly [Neighbour, Neighbour] }, id: string): 
 export function describeJson(document: string | Uint8Array | object, options: DescribeOptions = {}): DocumentSummary {
   // The reader implements the official extensions, so circuits and rooms of devices are derived.
   const ev = evaluate(document, OFFICIAL_READER);
-  const doc = ev.document;
-  const diagnostics: DiagnosticSummary[] = ev.diagnostics.map(({ code, severity, elements, message, location }) => ({
+  // The primary design's view (Core 0.3, 19.3): the document itself when it has no design options.
+  const doc = ev.view ?? ev.document;
+  const diagnostics: DiagnosticSummary[] = ev.diagnostics.map(({ code, severity, elements, message, location, design }) => ({
     code,
     severity,
     elements,
     message,
     ...(location.level !== undefined && { level: location.level }),
+    ...(design !== undefined && { design }),
   }));
-  if (!doc || !ev.analysis) return { project: '', valid: ev.valid, levels: [], diagnostics };
+  const optionSets = ev.document === undefined ? undefined : optionSummary(ev.document);
+  if (!doc || !ev.analysis) return { project: '', valid: ev.valid, levels: [], ...(optionSets && { options: optionSets }), diagnostics };
   const analysis = ev.analysis;
 
   let levelIds = entries(doc.levels)
@@ -841,7 +871,7 @@ export function describeJson(document: string | Uint8Array | object, options: De
     diags = diagnostics.filter((d) => (d.level !== undefined ? d.level === lid : d.elements.length === 0 || d.elements.some((e) => onLevel.has(e))));
   }
   const area = ev.valid && options.room === undefined ? z765(doc).buildings.map((b) => ({ building: b.building, aboveGradeSqFt: b.aboveGradeSqFt, belowGradeSqFt: b.belowGradeSqFt })) : undefined;
-  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), diagnostics: diags };
+  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), diagnostics: diags };
 }
 
 /** What the circulation lints say (14.4), narrowed to a room or level when asked; undefined when nothing. */
