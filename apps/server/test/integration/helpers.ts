@@ -1,6 +1,6 @@
 import type { AddressInfo } from 'node:net';
 import type { Express } from 'express';
-import { createApp, type AppDeps } from '../../src/app.js';
+import { createApp, eventHubOf, type AppDeps } from '../../src/app.js';
 import { OidcError, type CompletedSignIn, type OidcClient } from '../../src/auth/oidc.js';
 import { loadConfig, type Config } from '../../src/config.js';
 import { createDb, type Db } from '../../src/db.js';
@@ -63,10 +63,13 @@ export async function start(options: StartOptions = {}): Promise<Running> {
     url: `http://127.0.0.1:${String(port)}`,
     config,
     db,
-    close: () =>
-      new Promise<void>((resolve, reject) => {
+    // Open event streams would keep the server from closing: the hub ends them first.
+    close: async () => {
+      await eventHubOf(app).close();
+      await new Promise<void>((resolve, reject) => {
         server.close((error) => { if (error) reject(error); else resolve(); });
-      }),
+      });
+    },
   };
 }
 
@@ -125,6 +128,28 @@ export class Browser {
       parsed = undefined;
     }
     return { status: res.status, body: parsed, text, headers: res.headers };
+  }
+
+  /**
+   * Open a server-sent-events stream with this browser's cookies and headers. A non-200 answer is
+   * read whole and returned as a Reply; a stream is returned open.
+   */
+  async events(path: string, extra: Record<string, string> = {}): Promise<EventStream | Reply> {
+    const headers: Record<string, string> = { accept: 'text/event-stream', ...this.extraHeaders, ...extra };
+    if (this.jar.size > 0) headers['cookie'] = [...this.jar].map(([k, v]) => `${k}=${v}`).join('; ');
+    const abort = new AbortController();
+    const res = await fetch(`${this.base}${path}`, { headers, redirect: 'manual', signal: abort.signal });
+    if (res.status !== 200 || res.body === null) {
+      const text = await res.text();
+      let body: unknown;
+      try {
+        body = text.length > 0 ? JSON.parse(text) : undefined;
+      } catch {
+        body = undefined;
+      }
+      return { status: res.status, body, text, headers: res.headers };
+    }
+    return new EventStream(res, abort);
   }
 
   get(path: string): Promise<Reply> {
@@ -227,4 +252,140 @@ export async function tokenFor(browser: Browser, projectId: string, kind: 'read'
   const res = await browser.post('/api/tokens', { projectId, name, kind });
   if (res.status !== 201) throw new Error(`token failed: ${String(res.status)} ${res.text}`);
   return (res.body as { token: string }).token;
+}
+
+// ─── Server-sent events ────────────────────────────────────────────────────
+
+export interface SseEvent {
+  readonly id: string | null;
+  readonly event: string;
+  readonly data: unknown;
+}
+
+/** A minimal EventSource for tests: parses frames as they arrive and keeps comments and events. */
+export class EventStream {
+  readonly status: number;
+  readonly headers: Headers;
+  readonly events: SseEvent[] = [];
+  readonly comments: string[] = [];
+  retry: number | null = null;
+  ended = false;
+  private cursor = 0;
+  private buffer = '';
+  private waiters: (() => void)[] = [];
+
+  constructor(
+    res: Response,
+    private readonly abort: AbortController,
+  ) {
+    this.status = res.status;
+    this.headers = res.headers;
+    void this.pump(res);
+  }
+
+  private async pump(res: Response): Promise<void> {
+    const body = res.body;
+    if (body === null) return;
+    const decoder = new TextDecoder();
+    const reader = (body as ReadableStream<Uint8Array>).getReader();
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        this.buffer += decoder.decode(value, { stream: true });
+        let index: number;
+        while ((index = this.buffer.indexOf('\n\n')) >= 0) {
+          this.parse(this.buffer.slice(0, index));
+          this.buffer = this.buffer.slice(index + 2);
+        }
+        this.wake();
+      }
+    } catch {
+      // Aborted by close(), or the server went away: either way the stream has ended.
+    }
+    this.ended = true;
+    this.wake();
+  }
+
+  private parse(block: string): void {
+    let id: string | null = null;
+    let event = 'message';
+    const data: string[] = [];
+    for (const line of block.split('\n')) {
+      if (line.startsWith(':')) {
+        this.comments.push(line.slice(1).trim());
+        continue;
+      }
+      const colon = line.indexOf(':');
+      const field = colon < 0 ? line : line.slice(0, colon);
+      const value = colon < 0 ? '' : line.slice(colon + 1).replace(/^ /, '');
+      if (field === 'id') id = value;
+      else if (field === 'event') event = value;
+      else if (field === 'data') data.push(value);
+      else if (field === 'retry') this.retry = Number(value);
+    }
+    if (data.length === 0) return;
+    this.events.push({ id, event, data: JSON.parse(data.join('\n')) as unknown });
+  }
+
+  private wake(): void {
+    const waiters = this.waiters;
+    this.waiters = [];
+    for (const wake of waiters) wake();
+  }
+
+  /** Wait for a condition on the stream, or fail after `timeoutMs`. */
+  async until(check: () => boolean, timeoutMs = 5_000, what = 'the stream'): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    while (!check()) {
+      if (this.ended) throw new Error(`${what}: the stream ended first`);
+      const left = deadline - Date.now();
+      if (left <= 0) throw new Error(`${what}: timed out; events so far: ${JSON.stringify(this.events)}`);
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, left);
+        this.waiters.push(() => {
+          clearTimeout(timer);
+          resolve();
+        });
+      });
+    }
+  }
+
+  /** The next event not yet taken, optionally of one type (others before it are skipped). */
+  async next(type?: string, timeoutMs = 5_000): Promise<SseEvent> {
+    const find = () => this.events.findIndex((e, i) => i >= this.cursor && (type === undefined || e.event === type));
+    await this.until(() => find() >= 0, timeoutMs, `waiting for ${type ?? 'an event'}`);
+    const index = find();
+    this.cursor = index + 1;
+    return this.events[index] as SseEvent;
+  }
+
+  /** Events not yet taken. */
+  pending(): SseEvent[] {
+    return this.events.slice(this.cursor);
+  }
+
+  /** Wait until the server ends the stream. */
+  async closed(timeoutMs = 5_000): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    const ended = () => this.ended;
+    while (!ended()) {
+      if (Date.now() > deadline) throw new Error('waiting for the stream to end: timed out');
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 20);
+        this.waiters.push(() => {
+          clearTimeout(timer);
+          resolve();
+        });
+      });
+    }
+  }
+
+  close(): void {
+    this.abort.abort();
+  }
+}
+
+export function isStream(reply: EventStream | Reply): reply is EventStream {
+  return reply instanceof EventStream;
 }

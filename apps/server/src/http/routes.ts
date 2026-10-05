@@ -8,6 +8,9 @@ import {
 } from 'express';
 import type { Db, Tx } from '../db.js';
 import { writeAudit, type AuditEntry } from '../domain/audit.js';
+import { publishInTx, publishNow, WithEvents } from '../events/publish.js';
+import type { ProjectEvent } from '../events/types.js';
+import { logger } from '../logger.js';
 import { HttpError } from './errors.js';
 import { isAgent, type TokenPrincipal } from './context.js';
 
@@ -58,6 +61,11 @@ export interface MutationResult {
    * fails on any that answers without a row.
    */
   readonly audit: AuditEntry | null;
+  /**
+   * What the live stream should hear (FLR-T-3.5). Queued on the same transaction with
+   * `pg_notify`, so Postgres delivers them when — and only if — it commits.
+   */
+  readonly events?: readonly ProjectEvent[];
 }
 
 export type MutationHandler = (req: Request, tx: Tx) => Promise<MutationResult>;
@@ -95,6 +103,7 @@ export class Routes {
           async (tx) => {
             const result = await handler(req, tx);
             if (result.audit !== null) await writeAudit(tx, req, result.audit);
+            if (result.events !== undefined && result.events.length > 0) await publishInTx(tx, result.events);
             return result;
           },
           // Argon2id runs inside some of these; the default five seconds is generous but not for
@@ -104,7 +113,21 @@ export class Routes {
         .then((result) => {
           result.reply(res);
         })
-        .catch(next);
+        .catch((error: unknown) => {
+          if (!(error instanceof WithEvents)) {
+            next(error);
+            return;
+          }
+          // News of something that did not happen (a replay that failed): the transaction has rolled
+          // back by now, so it goes out on its own. A failure to publish it never changes the answer.
+          publishNow(this.db, error.events)
+            .catch((failure: unknown) => {
+              logger.warn({ err: failure instanceof Error ? failure.message : String(failure) }, 'could not publish an event');
+            })
+            .finally(() => {
+              next(error.error);
+            });
+        });
     };
     const verb = method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete';
     this.router[verb](path, ...this.guards(record, options), run);

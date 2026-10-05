@@ -11,6 +11,9 @@ import { applyToHead, authorOf, changesetHead, lockProject } from '../domain/his
 import { acceptChangeset, changesetView, openChangeset, rejectChangeset } from '../domain/changesets.js';
 import { ApplyBody, committedView, rejection } from './history.js';
 import { parse } from './auth.js';
+import { ProblemError } from '../http/problem.js';
+import { changesetEvent, countChangesetOps, headEvent, WithEvents } from '../events/publish.js';
+import type { ProjectEvent } from '../events/types.js';
 
 const ProposeBody = z.strictObject({
   name: z.string().trim().min(1, 'a changeset needs a name').max(120),
@@ -144,8 +147,14 @@ export function changesetRoutes(db: Db, applier: Applier): Routes {
         applied = { ...view, changeset: changesetView(changeset, { head: view.hash }) };
       }
       const headHash = applied?.hash ?? (await tx.head.findUniqueOrThrow({ where: { projectId_name: { projectId: project.id, name: head } } })).versionHash;
+      // Naming a pending changeset again without a batch changes nothing, and says nothing.
+      const events: ProjectEvent[] =
+        opened || applied !== null
+          ? [changesetEvent(changeset, opened ? 'opened' : 'appended', { hash: headHash, ops: await countChangesetOps(tx, changeset) })]
+          : [];
       return {
         reply: (res) => res.status(opened ? 201 : 200).json({ changeset: changesetView(changeset, { head: headHash }), applied }),
+        events,
         audit: {
           action: 'changeset.propose',
           targetType: 'changeset',
@@ -166,9 +175,28 @@ export function changesetRoutes(db: Db, applier: Applier): Routes {
       parse(DecideBody, req.body);
       const person = personOf(req);
       const changesetId = String(req.params['changesetId']);
-      const outcome = await acceptChangeset(tx, applier, { projectId: project.id, changesetId, acceptedBy: person, ifMatch: req.get('if-match') });
+      let outcome;
+      try {
+        outcome = await acceptChangeset(tx, applier, { projectId: project.id, changesetId, acceptedBy: person, ifMatch: req.get('if-match') });
+      } catch (error) {
+        // A replay that failed rolls everything back, but the editor showing the changeset should
+        // still hear that it no longer applies: published once the rollback is done.
+        if (error instanceof ProblemError && error.problem.type === 'replay-failed') {
+          const pending = await tx.changeset.findFirstOrThrow({ where: { id: changesetId, projectId: project.id } });
+          const scratch = await tx.head.findUnique({ where: { projectId_name: { projectId: project.id, name: changesetHead(changesetId) } } });
+          throw new WithEvents(error, [
+            changesetEvent(pending, 'replay-failed', { hash: scratch?.versionHash ?? null, ops: await countChangesetOps(tx, pending) }),
+          ]);
+        }
+        throw error;
+      }
       const changeset = await tx.changeset.findFirstOrThrow({ where: { id: changesetId, projectId: project.id } });
+      const merged = outcome.ops.at(-1);
+      const events: ProjectEvent[] = [changesetEvent(changeset, 'accepted', { hash: outcome.hash, ops: await countChangesetOps(tx, changeset) })];
+      // A changeset with no ops accepts without moving main.
+      if (merged !== undefined) events.push(headEvent(project.id, merged));
       return {
+        events,
         reply: (res) => {
           res.setHeader('ETag', `"${outcome.hash}"`);
           res.json({
@@ -200,6 +228,7 @@ export function changesetRoutes(db: Db, applier: Applier): Routes {
       const changeset = await rejectChangeset(tx, { projectId: project.id, changesetId: String(req.params['changesetId']), rejectedBy: person });
       return {
         reply: (res) => res.json({ changeset: changesetView(changeset) }),
+        events: [changesetEvent(changeset, 'rejected', { hash: null, ops: await countChangesetOps(tx, changeset) })],
         audit: { action: 'changeset.reject', targetType: 'changeset', targetId: changeset.id, detail: { project: project.id, name: changeset.name } },
       };
     },

@@ -1,6 +1,6 @@
 import { migrate } from './boot.js';
 import { ConfigError, loadConfig } from './config.js';
-import { createApp } from './app.js';
+import { createApp, eventHubOf } from './app.js';
 import { opsApplier } from './ops/applier.js';
 import { createOidcClient } from './auth/oidc.js';
 import { createDb } from './db.js';
@@ -29,6 +29,13 @@ const oidc = await createOidcClient(config);
 // Plans are drawn in-process by the worker's renderer until the worker has a job queue (FLR-T-2.8).
 const app = createApp({ config, db, oidc, renderer: workerRenderer(), applier: opsApplier });
 
+// Listen for events from boot, so a client reconnecting after a quiet spell can still resume. A
+// database that is not answering yet is retried on the first subscriber.
+const events = eventHubOf(app);
+events.start().catch((error: unknown) => {
+  logger.warn({ err: error instanceof Error ? error.message : String(error) }, 'event listener did not start; will retry on the first subscriber');
+});
+
 const server = app.listen(config.PORT, () => {
   logger.info(
     { port: config.PORT, publicUrl: config.PUBLIC_URL, oidcConfigured: config.oidcConfigured, oidcReachable: oidc !== null },
@@ -39,6 +46,8 @@ const server = app.listen(config.PORT, () => {
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {
   process.on(signal, () => {
     logger.info({ signal }, 'shutting down');
+    // Open event streams would hold the server open forever: end them first.
+    void events.close();
     server.close(() => {
       void db.$disconnect().then(() => process.exit(0));
     });
