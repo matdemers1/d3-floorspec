@@ -2,7 +2,7 @@
   "name": "@d3-floorspec/worker",
   "private": true,
   "version": "0.1.0",
-  "description": "Postgres job-queue drain: render-back and exports.",
+  "description": "Postgres job-queue drain: render-back and exports; the health watchdog and alert email.",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
@@ -17,6 +17,10 @@
     "./drawings": {
       "types": "./src/export/drawings/index.ts",
       "default": "./dist/export/drawings/index.js"
+    },
+    "./alerts": {
+      "types": "./src/alerts/index.ts",
+      "default": "./dist/alerts/index.js"
     }
   },
   "scripts": {

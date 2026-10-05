@@ -12,7 +12,13 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   millimetres on NCS-pattern layers; a ZIP for several). Both are pure functions of the document
   and the version's facts: the same version gives the same bytes, on a laptop or in the image.
 - `src/render/` — FLR-T-2.8: plan PNGs through resvg, with the bundled fonts only.
+- `src/alerts/` — FLR-T-12.2: alert email through the D3 Auth mail relay (`MAIL_RELAY_URL`,
+  `MAIL_RELAY_TOKEN`, `ALERT_TO`; redacted, once an hour per kind, remembered in the `alerts` table),
+  shared with the api as `@d3-floorspec/worker/alerts`; and the health watchdog `src/index.ts`
+  starts — the api's `/health` (`HEALTH_URL`, default `http://api:3400/health` in production) and
+  the database, every `WATCHDOG_INTERVAL_MS` (60 s), one email after `WATCHDOG_THRESHOLD` (3)
+  failures in a row and one on recovery. See `docs/runbooks/restore.md`.
 
 ```bash
-pnpm --filter @d3-floorspec/worker test    # drawings, render, heartbeat
+pnpm --filter @d3-floorspec/worker test    # drawings, render, heartbeat, alerts and the watchdog
 ```
