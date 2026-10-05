@@ -7,13 +7,14 @@ import {
   MenuItem,
   MenuSeparator,
   SideNav,
+  SideNavGroup,
   SideNavItem,
   Spinner,
   ThemeProvider,
   ThemeSwitch,
   ToastRegion,
 } from '@d3cloud/ui';
-import { FolderOpen, MailPlus, UserRound } from 'lucide-react';
+import { BookOpen, FolderOpen, MailPlus, MapPin, UserRound } from 'lucide-react';
 import { fetchSession, logout, type Anonymous, type SignedIn } from './lib/api';
 import { navigate, useLocation } from './lib/router';
 import { AcceptInvite } from './screens/AcceptInvite';
@@ -22,11 +23,15 @@ import { Project } from './screens/Project';
 import { Projects } from './screens/Projects';
 import { Schedules } from './screens/Schedules';
 import { Invites } from './screens/Invites';
+import { FindingsReportScreen } from './findings/Report';
+import { Coverage } from './findings/Coverage';
 import { Setup } from './screens/Setup';
 import { SignIn } from './screens/SignIn';
 
 const Editor = lazy(() => import('./editor/Editor'));
 const Program = lazy(() => import('./program/Program'));
+// The profile builder carries the rules engine's checker: a chunk of its own (FLR-T-6.8).
+const Jurisdictions = lazy(() => import('./profiles/Jurisdictions').then((m) => ({ default: m.Jurisdictions })));
 
 /**
  * The editor shell. One question decides what renders — is there a session? — and the answer comes
@@ -119,6 +124,10 @@ function Root() {
       nav={
         <SideNav>
           <SideNavItem href="/" icon={<FolderOpen />} label="Projects" current={path === '/' || path.startsWith('/projects')} />
+          <SideNavGroup title="Codes">
+            <SideNavItem href="/jurisdictions" icon={<MapPin />} label="Jurisdictions" current={path === '/jurisdictions'} />
+            <SideNavItem href="/rule-packs" icon={<BookOpen />} label="Rule packs" current={path === '/rule-packs'} />
+          </SideNavGroup>
           {operator ? (
             <SideNavItem href="/invites" icon={<MailPlus />} label="Invites" current={path === '/invites'} />
           ) : null}
@@ -155,6 +164,16 @@ function Screen({ path, session, reload }: { path: string; session: SignedIn; re
   if (project !== undefined) return <Project key={project} id={project} you={session.account.displayName} />;
   const scheduled = /^\/projects\/([0-9a-f-]{36})\/schedules$/.exec(path)?.[1];
   if (scheduled !== undefined) return <Schedules key={scheduled} id={scheduled} />;
+  const reported = /^\/projects\/([0-9a-f-]{36})\/findings$/.exec(path)?.[1];
+  if (reported !== undefined) return <FindingsReportScreen key={reported} id={reported} />;
+  if (path === '/rule-packs') return <Coverage />;
+  if (path === '/jurisdictions') {
+    return (
+      <Suspense fallback={<Spinner label="Opening the profiles" />}>
+        <Jurisdictions />
+      </Suspense>
+    );
+  }
   if (path === '/account') return <Account session={session} onChanged={reload} />;
   if (path === '/invites' && session.account.role === 'operator') return <Invites />;
   return (
