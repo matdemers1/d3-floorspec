@@ -1,7 +1,7 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, SegmentedControl, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Download, PanelLeft, Redo2, Share, TriangleAlert, Undo2 } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, TriangleAlert, Undo2 } from 'lucide-react';
 import { navigate } from '../lib/router';
 import { EditorStore, useEditor, type ToolId } from './store';
 import { ToolController } from './tools';
@@ -11,6 +11,13 @@ import { Inspector } from './Inspector';
 import { RejectionBanner } from './Diagnostics';
 import { COMMANDS, commandById, commandFor, keyOf } from './commands';
 import { confirmPrompt, newLevel, switchUnits } from './actions';
+import { connectLive } from './live';
+import { ProposalPanel } from './Proposal';
+import { ComparePanel, HistoryPanel } from './HistoryPanel';
+import { Palette } from './Palette';
+import { isArrow, nudge, nudgeable } from './nudge';
+import { endCompare, toggleHistory } from './history';
+import { openReview } from './review';
 import { labelOf, sortedLevels } from './model';
 import { formatLen, gridStepLabel } from './units';
 import {
@@ -38,9 +45,8 @@ import {
 export default function Editor({ id, you }: { id: string; you: string }) {
   const store = useMemo(() => new EditorStore(id), [id]);
   const tools = useMemo(() => new ToolController(store), [store]);
-  useEffect(() => {
-    void store.load();
-  }, [store]);
+  // Subscribe first, load on `ready` (FLR-T-3.5).
+  useEffect(() => connectLive(store), [store]);
   return (
     <TooltipProvider>
       <EditorFrame store={store} tools={tools} you={you} />
@@ -54,7 +60,9 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   const treeOpen = useEditor(store, (s) => s.treeOpen);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const notice = useEditor(store, (s) => s.notice);
-  const idle = useEditor(store, (s) => s.selection === null && s.tool === 'select');
+  const idle = useEditor(store, (s) => s.selection === null && s.tool === 'select' && s.compare === null && !(s.side === 'review' && s.review !== null));
+  const left = useEditor(store, (s) => s.left);
+  const right = useEditor(store, (s) => (s.compare !== null ? 'compare' : s.side === 'review' && s.review !== null ? 'review' : 'inspector'));
   const toast = useToast();
 
   useEffect(() => {
@@ -90,7 +98,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
     <div className="fs-editor" tabIndex={-1} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle ? 'idle' : 'active'}>
       <TopBar store={store} you={you} />
       <ToolRail store={store} tools={tools} />
-      <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : <ProjectTree store={store} />}</aside>
+      <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : left === 'history' ? <HistoryPanel store={store} you={you} /> : <ProjectTree store={store} />}</aside>
       <main className="fs-editor__canvas" aria-label="Plan">
         {status === 'loading' ? (
           <div className="fs-canvas fs-canvas--loading">
@@ -106,11 +114,12 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
           </div>
         ) : null}
       </main>
-      <aside className="fs-editor__inspector" aria-label="Inspector">
-        {status === 'loading' ? <TreeSkeleton /> : <Inspector store={store} />}
+      <aside className="fs-editor__inspector" aria-label={right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : 'Inspector'}>
+        {status === 'loading' ? <TreeSkeleton /> : right === 'compare' ? <ComparePanel store={store} /> : right === 'review' ? <ProposalPanel store={store} /> : <Inspector store={store} />}
       </aside>
       <StatusBar store={store} />
       <PromptModal store={store} />
+      {status === 'ready' ? <Palette store={store} tools={tools} /> : null}
     </div>
   );
 }
@@ -224,12 +233,17 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
   const pending = useEditor(store, (s) => s.pending);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const treeOpen = useEditor(store, (s) => s.treeOpen);
+  const proposals = useEditor(store, (s) => s.proposals);
+  const review = useEditor(store, (s) => s.review);
+  const left = useEditor(store, (s) => s.left);
+  const comparing = useEditor(store, (s) => s.compare !== null);
   const levels = model === null ? [] : sortedLevels(model.document);
   const building = model === null || level === null ? null : (model.document.levels?.[level]?.building ?? '');
   const subtitle = [building === null || building === '' || model === null ? null : labelOf(model, building), history.seq === null ? null : `v${String(history.seq)}`, pending !== null ? `${pending}…` : readOnly !== null ? 'view only' : 'saved']
     .filter((x) => x !== null)
     .join(' · ');
-  const editable = readOnly === null && pending === null;
+  const editable = readOnly === null && pending === null && !comparing;
+  const proposer = proposals[0]?.createdBy ?? null;
   return (
     <header className="fs-topbar">
       <IconButton label="Back to the project" icon={<ArrowLeft />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}`); }} />
@@ -260,6 +274,25 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
         onValueChange={() => undefined}
       />
       <span className="fs-spacer" />
+      {proposals.length > 0 ? (
+        <button
+          type="button"
+          className="fs-topbar__proposals"
+          aria-pressed={review !== null && store.get().side === 'review'}
+          onClick={() => void openReview(store, review?.id ?? (proposals[0]?.id as string))}
+        >
+          <Sparkles aria-hidden="true" />
+          <span>
+            {proposer ?? 'Agent'} · {proposals.length === 1 ? '1 proposal' : `${String(proposals.length)} proposals`}
+          </span>
+        </button>
+      ) : null}
+      <Tooltip content="History (H)">
+        <IconButton label={left === 'history' ? 'Hide the history' : 'Show the history'} pressed={left === 'history'} icon={<HistoryIcon />} onClick={() => { toggleHistory(store); }} />
+      </Tooltip>
+      <Tooltip content="Commands (⌘K)">
+        <IconButton label="Command palette" icon={<CommandIcon />} onClick={() => { store.set({ palette: true }); }} />
+      </Tooltip>
       <Tooltip content="Undo (⌘Z)">
         <IconButton label="Undo" icon={<Undo2 />} disabled={!editable || history.undo === null} onClick={() => void store.undo('undo')} />
       </Tooltip>
@@ -348,6 +381,8 @@ function StatusBar({ store }: { store: EditorStore }) {
   const history = useEditor(store, (s) => s.history);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const units = useEditor(store, () => store.units);
+  const live = useEditor(store, (s) => s.live);
+  const proposals = useEditor(store, (s) => s.proposals.length);
   const findings = model?.diagnostics.length ?? 0;
   return (
     <footer className="fs-statusbar">
@@ -380,6 +415,17 @@ function StatusBar({ store }: { store: EditorStore }) {
         <TriangleAlert className={findings > 0 ? 'fs-warn' : 'fs-faint'} aria-hidden="true" />
         {findings === 1 ? '1 finding' : `${String(findings)} findings`}
       </button>
+      {proposals > 0 ? (
+        <span className="fs-statusbar__item fs-statusbar__proposals">
+          <Sparkles aria-hidden="true" />
+          {proposals === 1 ? '1 proposal' : `${String(proposals)} proposals`}
+        </span>
+      ) : null}
+      <span className="fs-statusbar__item" title={live === 'live' ? 'Changes made elsewhere appear here as they happen' : 'Reconnecting to live updates'}>
+        <StatusDot tone={live === 'live' ? 'attention' : live === 'reconnecting' ? 'warning' : 'idle'} size="sm">
+          {live === 'live' ? 'Live' : live === 'reconnecting' ? 'Reconnecting' : 'Connecting'}
+        </StatusDot>
+      </span>
       <span className="fs-statusbar__mono">{history.seq === null ? '' : `v${String(history.seq)}`}</span>
     </footer>
   );
@@ -442,6 +488,12 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
     const mac = /Mac|iPhone|iPad/.test(navigator.platform);
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
+      // ⌘K reaches the palette from anywhere, a field included (FLR-T-3.7).
+      if ((mac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'k' && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        store.set({ palette: !store.get().palette });
+        return;
+      }
       const typing = target !== null && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.getAttribute('role') === 'combobox');
       if (typing || store.get().prompt !== null || document.querySelector('[role="dialog"]') !== null) return;
       if (e.key === ' ' && !e.repeat) {
@@ -460,9 +512,17 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
         return;
       }
       if (e.key === 'Escape') {
-        tools.escape();
+        if (store.get().compare !== null && store.get().draft === null) endCompare(store);
+        else tools.escape();
         e.preventDefault();
         return;
+      }
+      // Arrows: aim the next wall while drawing; nudge the selection; otherwise pan.
+      if (isArrow(e.key) && !mod && !e.altKey) {
+        if (tools.aim(e.key) || (nudgeable(store) && store.get().tool === 'select' && nudge(store, e.key, e.shiftKey))) {
+          e.preventDefault();
+          return;
+        }
       }
       const view = store.get().view;
       const arrows: Record<string, [number, number]> = { ArrowLeft: [80, 0], ArrowRight: [-80, 0], ArrowUp: [0, 80], ArrowDown: [0, -80] };

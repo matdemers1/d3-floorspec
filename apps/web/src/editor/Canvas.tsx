@@ -11,6 +11,8 @@ import { fit, gridSpacing, scaleBar, toScreen, zoomAt, zoomPercent } from './vie
 import { formatArea, formatLen, prettyLen, type UnitSystem } from './units';
 import { typeChoices } from './ops';
 import { commandById } from './commands';
+import { diffModels, type ModelDiff } from './diff';
+import { reviewDiagnostics, reviewTarget } from './review';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -29,7 +31,9 @@ const pathOf = (v: Viewport, rings: readonly Ring[]) => rings.map((r) => `M${pts
 export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolController }) {
   const host = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
-  const model = useEditor(store, (s) => s.model);
+  // While two versions are compared, the canvas shows the newer of them, read-only (FLR-T-3.6).
+  const model = useEditor(store, (s) => (s.compare === null ? s.model : (s.compare.toModel ?? s.model)));
+  const comparing = useEditor(store, (s) => s.compare !== null);
   const levelId = useEditor(store, (s) => s.level);
   const view = useEditor(store, (s) => s.view);
   const layers = useEditor(store, (s) => s.layers);
@@ -136,16 +140,18 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
             <>
               <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} />
               {layers.dimensions ? <Dimensions view={view} level={level} units={units} /> : null}
+              <DiffLayer store={store} view={view} levelId={level.id} />
               <Findings store={store} view={view} level={level} />
-              <Selection store={store} view={view} level={level} coarse={coarse} />
+              {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
               {layers.rooms ? <RoomLabels view={view} level={level} document={model.document} units={units} /> : null}
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
-              <ToolOverlay store={store} view={view} level={level} model={model} />
+              {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
             </>
           ) : null}
         </svg>
       ) : null}
-      {view !== null && model !== null && level !== undefined ? <HtmlOverlays store={store} view={view} level={level} model={model} units={units} /> : null}
+      {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={model} units={units} /> : null}
+      <DiffLegend store={store} />
       {view !== null ? <CanvasChrome store={store} view={view} units={units} /> : null}
     </div>
   );
@@ -344,7 +350,7 @@ function Dimensions({ view, level, units }: { view: Viewport; level: LevelView; 
 // ─── Findings, selection, hover ──────────────────────────────────────────────────────────────
 
 /** The outline of any element on the level, for highlighting it. */
-function Outline({ view, level, id, className, pad = 0 }: { view: Viewport; level: LevelView; id: string; className: string; pad?: number }) {
+export function Outline({ view, level, id, className, pad = 0 }: { view: Viewport; level: LevelView; id: string; className: string; pad?: number }) {
   const wall = level.walls.find((w) => w.id === id);
   if (wall !== undefined) return <polygon className={className} points={pts(view, wall.ring)} />;
   const room = level.faces.find((f) => f.room === id);
@@ -378,7 +384,10 @@ function Findings({ store, view, level }: { store: EditorStore; view: Viewport; 
   const rejection = useEditor(store, (s) => s.rejection);
   const preview = useEditor(store, (s) => s.preview);
   const layers = useEditor(store, (s) => s.layers);
-  const diagnostics: Diagnostic[] = rejection?.diagnostics ?? preview?.diagnostics ?? [];
+  const review = useEditor(store, (s) => (s.side === 'review' ? s.review : null));
+  const main = useEditor(store, (s) => s.model);
+  const failed = reviewDiagnostics(review, main);
+  const diagnostics: Diagnostic[] = rejection?.diagnostics ?? preview?.diagnostics ?? (failed.length > 0 ? failed : []);
   if (diagnostics.length === 0 || !layers.findings) return null;
   const ids = [...new Set(diagnostics.flatMap((d) => d.elements))];
   const points = diagnostics.flatMap((d) => (d.location.point !== undefined && (d.location.level === undefined || d.location.level === level.id) ? [d.location.point as Point] : []));
@@ -424,6 +433,76 @@ function Ghost({ store, view, levelId, layers, units }: { store: EditorStore; vi
   const level = preview?.model?.levels.find((l) => l.id === levelId);
   if (preview?.model === null || preview?.model === undefined || level === undefined) return null;
   return <Plan view={view} level={level} document={preview.model.document} layers={{ ...layers, rooms: false }} units={units} ghost />;
+}
+
+// ─── Diffs: a proposal over main, or two versions compared ──────────────────────────────────
+
+/** The two versions the canvas is diffing, and how to colour them. */
+export function useDiff(store: EditorStore): { from: EditorModel; to: EditorModel; diff: ModelDiff; mode: 'proposal' | 'compare' } | null {
+  const compare = useEditor(store, (s) => s.compare);
+  const review = useEditor(store, (s) => (s.side === 'review' ? s.review : null));
+  const main = useEditor(store, (s) => s.model);
+  const units = useEditor(store, () => store.units);
+  const target = reviewTarget(review, main);
+  return useMemo(() => {
+    if (compare !== null) {
+      if (compare.fromModel === null || compare.toModel === null) return null;
+      return { from: compare.fromModel, to: compare.toModel, diff: diffModels(compare.fromModel, compare.toModel, units), mode: 'compare' as const };
+    }
+    if (target === null || main === null) return null;
+    return { from: main, to: target, diff: diffModels(main, target, units), mode: 'proposal' as const };
+  }, [compare, target, main, units]);
+}
+
+/**
+ * Added in accent (a proposal) or green (a comparison), removed dashed red, moved drawn twice —
+ * where it was, ghosted, and where it is. A proposal is drawn over main, which stays the plan
+ * underneath; a comparison draws the newer version as the plan.
+ */
+function DiffLayer({ store, view, levelId }: { store: EditorStore; view: Viewport; levelId: string }) {
+  const d = useDiff(store);
+  if (d === null) return null;
+  const a = d.from.levels.find((l) => l.id === levelId);
+  const b = d.to.levels.find((l) => l.id === levelId);
+  const listed = new Set(d.diff.changes.map((c) => c.id));
+  // Junctions that moved with their walls are carried by the walls' outlines.
+  const shown = (id: string) => listed.has(id) || (d.to.index.get(id) ?? d.from.index.get(id)) !== 'junctions';
+  const tone = d.mode === 'proposal' ? 'proposed' : 'added';
+  const parts: ReactNode[] = [];
+  for (const id of d.diff.ids.removed) if (a !== undefined && shown(id)) parts.push(<Outline key={`r-${id}`} view={view} level={a} id={id} className="fs-diff fs-diff--removed" />);
+  for (const id of d.diff.ids.moved) {
+    if (!shown(id)) continue;
+    if (a !== undefined) parts.push(<Outline key={`w-${id}`} view={view} level={a} id={id} className="fs-diff fs-diff--was" />);
+    if (b !== undefined) parts.push(<Outline key={`m-${id}`} view={view} level={b} id={id} className={d.mode === 'proposal' ? 'fs-diff fs-diff--proposed' : 'fs-diff fs-diff--moved'} />);
+  }
+  for (const id of d.diff.ids.added) if (b !== undefined && shown(id)) parts.push(<Outline key={`a-${id}`} view={view} level={b} id={id} className={`fs-diff fs-diff--${tone}`} />);
+  for (const id of d.diff.ids.changed) if (b !== undefined && listed.has(id)) parts.push(<Outline key={`c-${id}`} view={view} level={b} id={id} className="fs-diff fs-diff--changed" />);
+  return (
+    <g className="fs-diffs" aria-hidden="true">
+      {parts}
+    </g>
+  );
+}
+
+function DiffLegend({ store }: { store: EditorStore }) {
+  const d = useDiff(store);
+  if (d === null) return null;
+  const c = d.diff.counts;
+  const items: [string, string][] =
+    d.mode === 'proposal'
+      ? [['proposed', 'Proposed'], ['removed', 'Removed'], ['was', 'Was']]
+      : [['added', `Added ${String(c.added)}`], ['removed', `Removed ${String(c.removed)}`], ['moved', `Moved ${String(c.moved)}`], ['was', 'Was']];
+  return (
+    <div className="fs-legend" role="note" aria-label="Legend">
+      {items.map(([k, label]) => (
+        <span key={k} className="fs-legend__item">
+          <span className={`fs-legend__dot fs-legend__dot--${k}`} aria-hidden="true" />
+          {label}
+        </span>
+      ))}
+      {d.diff.same ? <span className="fs-legend__item">The same version</span> : null}
+    </div>
+  );
 }
 
 // ─── The tool's overlay ──────────────────────────────────────────────────────────────────────
@@ -536,6 +615,15 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
         <span className="fs-entry__value">{draft.typed !== '' ? draft.typed : formatLen(length, units)}</span>
         <span className="fs-entry__caret" />
         <span className="fs-entry__angle">→ {String(draft.cursor.angle ?? 0)}°</span>
+      </div>,
+    );
+  }
+  if ((draft?.tool === 'wall' || draft?.tool === 'separator') && draft.chain.length === 0 && draft.typed !== '') {
+    out.push(
+      <div key="start" className="fs-entry fs-entry--start" role="status" aria-live="polite">
+        <span className="fs-entry__label">Start at</span>
+        <span className="fs-entry__value">{draft.typed}</span>
+        <span className="fs-entry__caret" />
       </div>,
     );
   }

@@ -10,7 +10,10 @@ import {
   postBatch,
   postUndo,
   type ApplyAnswer,
+  type ChangesetLogEntry,
+  type ChangesetRow,
   type History,
+  type HistoryEntry,
   type ProjectInfo,
 } from './api';
 import { readModel, sortedLevels, levelOfElement, type EditorModel, type LevelView, type Point } from './model';
@@ -88,6 +91,41 @@ export interface DrawSettings {
   windowType: string | null;
 }
 
+/**
+ * A changeset under review (FLR-T-3.5): what an agent proposed, drawn over main. When main has moved
+ * since the changeset's base, its batches are replayed onto main locally with @floorspec/ops —
+ * the same applier the server's accept runs — and that rebased result is what is reviewed.
+ */
+export interface Review {
+  id: string;
+  name: string;
+  createdBy: string;
+  createdAt: string;
+  base: string;
+  log: ChangesetLogEntry[];
+  /** The scratch head as proposed (against its base). */
+  proposed: EditorModel | null;
+  /** The replay onto main, when main has moved: against which main, and its result. */
+  rebased: { against: string; model: EditorModel; differs: number[] } | null;
+  /** A replay that failed — predicted here, or answered by the server's accept — and why. */
+  failure: { against: string; detail: string; diagnostics: Diagnostic[]; failedIndex: number | null; source: 'preview' | 'server' } | null;
+  loading: boolean;
+  /** Accept or reject in flight. */
+  busy: 'accept' | 'reject' | null;
+  /** The second confirmation a rebased accept asks for is showing. */
+  confirming: boolean;
+}
+
+/** Two versions compared on the canvas (FLR-T-3.6). */
+export interface Compare {
+  from: string;
+  to: string;
+  fromModel: EditorModel | null;
+  toModel: EditorModel | null;
+  loading: boolean;
+  error: string | null;
+}
+
 /** A question the editor must ask before it can build a batch. */
 export type Prompt =
   | { kind: 'keep'; wall: string; rooms: [string, string] }
@@ -120,6 +158,23 @@ export interface EditorState {
   treeOpen: boolean;
   findingsOpen: boolean;
   prompt: Prompt | null;
+  /** The live event stream (FLR-T-3.5). */
+  live: 'connecting' | 'live' | 'reconnecting';
+  /** Pending changesets: what agents have proposed. */
+  proposals: ChangesetRow[];
+  review: Review | null;
+  /** The right column: the inspector, or the review of a proposal. */
+  side: 'inspector' | 'review';
+  /** The left column: the project tree, or the history (FLR-T-3.6). */
+  left: 'tree' | 'history';
+  log: HistoryEntry[] | null;
+  tokenNames: ReadonlyMap<string, string>;
+  compare: Compare | null;
+  /** The arrow keys' step, base units; null for the units' default (1" or 10 mm). */
+  nudge: number | null;
+  palette: boolean;
+  /** The element being renamed in the tree (F2). */
+  renaming: string | null;
 }
 
 const initial: EditorState = {
@@ -146,7 +201,28 @@ const initial: EditorState = {
   treeOpen: false,
   findingsOpen: false,
   prompt: null,
+  live: 'connecting',
+  proposals: [],
+  review: null,
+  side: 'inspector',
+  left: 'tree',
+  log: null,
+  tokenNames: new Map(),
+  compare: null,
+  nudge: readNudge(),
+  palette: false,
+  renaming: null,
 };
+
+function readNudge(): number | null {
+  try {
+    const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem('floorspec.nudge');
+    const n = raw === null ? NaN : Number(raw);
+    return Number.isSafeInteger(n) && n > 0 ? n : null;
+  } catch {
+    return null;
+  }
+}
 
 export interface ApplyOptions {
   /** Pick the element to select from the IDs the batch created. */
@@ -203,9 +279,11 @@ export class EditorStore {
         project,
         model,
         history,
+        compare: null,
         level: this.pickLevel(model, this.state.level),
         readOnly: model.valid ? null : 'This version of the model does not validate, so it cannot be edited here. Undo the change that broke it, or fix it in the file.',
       });
+      this.onModel?.();
     } catch (error) {
       if (error instanceof HttpFailure && error.status === 404) this.set({ status: 'missing', error: 'This project does not exist, or it is not yours.' });
       else this.set({ status: 'error', error: error instanceof Error ? error.message : 'The editor could not load the model.' });
@@ -217,11 +295,17 @@ export class EditorStore {
     return sortedLevels(model.document)[0]?.id ?? null;
   }
 
-  /** Read a committed version and make it the editor's model. */
+  private adopting = 0;
+  /** Called after the model moves, by whoever needs to follow it (the review, the history). */
+  onModel: (() => void) | null = null;
+
+  /** Read a committed version and make it the editor's model. The newest request wins. */
   private async adopt(hash: string): Promise<void> {
+    const ticket = ++this.adopting;
     const text = await fetchVersion(this.projectId, hash);
     const model = readModel(hash, text);
     const history = await fetchHistory(this.projectId).catch(() => this.state.history);
+    if (ticket !== this.adopting) return;
     this.set((s) => ({
       model,
       history,
@@ -231,6 +315,19 @@ export class EditorStore {
       preview: null,
       readOnly: model.valid ? null : s.readOnly,
     }));
+    this.onModel?.();
+  }
+
+  /**
+   * Main moved somewhere else — another tab, an undo, an accepted changeset (FLR-T-3.5): read the
+   * new head. The tool, its draft and the view are left as they are; the selection survives if
+   * the element does.
+   */
+  follow(hash: string, seq: number | null): Promise<void> {
+    const { model, history } = this.state;
+    if (model?.hash === hash) return Promise.resolve();
+    if (seq !== null && history.seq !== null && seq < history.seq) return Promise.resolve();
+    return this.adopt(hash).catch(() => this.reloadHead());
   }
 
   // ─── Writing ─────────────────────────────────────────────────────────────────────────────
@@ -242,7 +339,7 @@ export class EditorStore {
   apply(label: string, batch: Batch | BatchBuilder, options: ApplyOptions = {}): Promise<boolean> {
     const run = async (): Promise<boolean> => {
       const { model, readOnly } = this.state;
-      if (model === null || readOnly !== null) return false;
+      if (model === null || readOnly !== null || this.state.compare !== null) return false;
       this.set({ pending: label, notice: null });
       try {
         for (let attempt = 0; attempt < 5; attempt++) {
@@ -296,7 +393,7 @@ export class EditorStore {
     }
   }
 
-  private async reloadHead(): Promise<void> {
+  async reloadHead(): Promise<void> {
     const head = await fetchHead(this.projectId);
     if (head !== null) await this.adopt(head.hash);
   }
@@ -371,14 +468,19 @@ export class EditorStore {
 
   // ─── Selection and tools ─────────────────────────────────────────────────────────────────
 
-  select(id: string | null): void {
+  /**
+   * Select an element. Choosing one on the plan or in the tree brings the inspector back over a
+   * proposal under review (the proposal stays, a click away in the top bar); a link inside the
+   * proposal panel keeps the panel (`keepSide`).
+   */
+  select(id: string | null, options: { keepSide?: boolean } = {}): void {
     if (id === null) {
       this.set({ selection: null });
       return;
     }
     const model = this.state.model;
     const level = model === null ? undefined : levelOfElement(model, id);
-    this.set({ selection: id, ...(level === undefined ? {} : { level }) });
+    this.set({ selection: id, ...(level === undefined ? {} : { level }), ...(options.keepSide === true ? {} : { side: 'inspector' as const }) });
   }
 
   setTool(tool: ToolId): void {
@@ -389,6 +491,27 @@ export class EditorStore {
   setLevel(level: string): void {
     this.preview(null);
     this.set({ level, selection: null, hover: null, draft: null });
+  }
+
+  /** The arrow keys' step, base units (FLR-T-3.7): the setting, or 1" in ft-in and 10 mm in metric. */
+  get nudgeStep(): number {
+    return this.state.nudge ?? (this.units === 'metric' ? 12_800 : 32_512);
+  }
+
+  setNudge(step: number | null): void {
+    this.set({ nudge: step });
+    try {
+      if (step === null) localStorage.removeItem('floorspec.nudge');
+      else localStorage.setItem('floorspec.nudge', String(step));
+    } catch {
+      // Storage refused (a private window): the setting lasts for this session.
+    }
+  }
+
+  /** The model the canvas shows: main, or the newer version of a comparison. */
+  get shown(): EditorModel | null {
+    const { compare, model } = this.state;
+    return compare === null ? model : compare.toModel;
   }
 
   /** The type the draw panel has chosen, as a choice (a document type or a starter). */

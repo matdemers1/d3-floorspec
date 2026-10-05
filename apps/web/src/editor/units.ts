@@ -108,3 +108,38 @@ export function twiceArea(area: string): bigint {
   const value = BigInt(whole) * 2n + (half === '5' ? 1n : 0n);
   return negative ? -value : value;
 }
+
+export type PointInput = { ok: true; value: [number, number] } | { ok: false; reason: string };
+
+/** A typed point, `x, y`, each a length in the grammar: `0, 0`, `12', 8'6"`, `3810mm, 0`. */
+export function parsePoint(text: string, system: UnitSystem): PointInput {
+  const parts = text.split(',');
+  if (parts.length !== 2) return { ok: false, reason: 'Type a point as x, y' };
+  const x = parseLen(parts[0] ?? '', system);
+  if (!x.ok) return { ok: false, reason: `x: ${x.reason}` };
+  const y = parseLen(parts[1] ?? '', system);
+  if (!y.ok) return { ok: false, reason: `y: ${y.reason}` };
+  return { ok: true, value: [x.value, y.value] };
+}
+
+export type SegmentInput =
+  | { ok: true; kind: 'point'; point: [number, number] }
+  | { ok: true; kind: 'length'; length: number; angle: number | null }
+  | { ok: false; reason: string };
+
+/**
+ * What can be typed while drawing (FLR-T-3.7): a point `x, y` to go to, a length to go along the
+ * current direction, or a length and an angle `12' < 90` (degrees counter-clockwise from east;
+ * `@` works too).
+ */
+export function parseSegment(text: string, system: UnitSystem): SegmentInput {
+  if (text.includes(',')) {
+    const p = parsePoint(text, system);
+    return p.ok ? { ok: true, kind: 'point', point: p.value } : p;
+  }
+  const m = /^(.*?)\s*[<@]\s*(-?\d+(?:\.\d+)?)\s*°?$/.exec(text.trim());
+  const l = parseLen(m === null ? text : (m[1] ?? ''), system);
+  if (!l.ok) return l;
+  const angle = m === null ? null : ((Number(m[2]) % 360) + 360) % 360;
+  return { ok: true, kind: 'length', length: l.value, angle };
+}
