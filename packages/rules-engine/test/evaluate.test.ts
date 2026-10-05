@@ -74,7 +74,7 @@ const PACKS: Pack[] = [
   }),
   pack('beta', {
     AREA: rule({ requirement: { measure: 'roomNetArea', op: '>=', value: 70 * 152212340736 }, severity: 'note' }),
-    STAIR: rule({ requirement: { measure: 'stairRiserHeight', op: '<=', value: 1 } }),
+    NARROW: rule({ requirement: { measure: 'roomNarrowestDimension', op: '>=', value: 1 } }),
   }),
 ];
 
@@ -109,9 +109,9 @@ describe('a report', () => {
     ]);
     expect(r.notEvaluated).toEqual([
       { pack: 'alpha', version: '0.1.0', rule: 'ALARM21', reason: 'edition' },
-      { pack: 'beta', version: '0.1.0', rule: 'STAIR', reason: 'deferred' },
+      { pack: 'beta', version: '0.1.0', rule: 'NARROW', reason: 'deferred' },
     ]);
-    expect(r.diagnostics).toEqual([{ code: 'FS-RULES-008', severity: 'info', pack: 'beta', rule: 'STAIR' }]);
+    expect(r.diagnostics).toEqual([{ code: 'FS-RULES-008', severity: 'info', pack: 'beta', rule: 'NARROW' }]);
   });
 
   it('words each finding as advice naming the edition, with a finding severity, never an error', () => {
@@ -156,7 +156,7 @@ describe('a report', () => {
       ['ALARM', 'edition'],
       ['SPACE', 'withdrawn'],
       ['AREA', 'profile'],
-      ['STAIR', 'profile'],
+      ['NARROW', 'profile'],
     ]);
     expect(p.findings.map((f) => f.message)).toEqual(['R1 may not meet IRC 2021 TEST-1 (A synthetic rule).']);
   });

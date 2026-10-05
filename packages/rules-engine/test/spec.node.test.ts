@@ -31,14 +31,14 @@ function kindOf(section: string): string {
   if (ch === 5) return 'room';
   if (ch === 6) return 'opening';
   if (ch === 7) return s <= 4 ? 'element' : 'envelope';
-  return s === 4 ? 'level' : 'room';
+  return s === 4 ? 'level' : s === 5 ? 'stair' : 'room';
 }
 
 describe('the measure library against chapters 5–8', () => {
   const rows = ['05-rooms.md', '06-openings.md', '07-elements.md', '08-wall-lines.md'].flatMap(measureRows);
 
   it('defines exactly the measures the specification defines, each of its type, for its kind of target', () => {
-    expect(rows.length).toBe(40); // 39 measures, elementCount in both 5.6 and 8.4
+    expect(rows.length).toBe(45); // 44 measures, elementCount in both 5.6 and 8.4
     const specified = new Set(rows.map(([s, n]) => `${n}/${kindOf(s)}`));
     const built = new Set(MEASURES.flatMap((m) => m.kinds.map((k) => `${m.name}/${k}`)));
     expect([...built].sort()).toEqual([...specified].sort());
@@ -47,9 +47,9 @@ describe('the measure library against chapters 5–8', () => {
       if (type === 'as `type`') expect(m.type).toBeNull();
       else expect(typeOf(m, {})).toBe(type);
     }
-    // 39 measures by name (elementCount is one measure of rooms and levels).
-    expect(new Set(rows.map(([, n]) => n)).size).toBe(39);
-    expect(MEASURES.length).toBe(39);
+    // 44 measures by name (elementCount is one measure of rooms and levels), the five of stairs (8.5) among them.
+    expect(new Set(rows.map(([, n]) => n)).size).toBe(44);
+    expect(MEASURES.length).toBe(44);
   });
 
   it('defers exactly the measures of 4.8, and builds none of them', () => {
@@ -61,7 +61,7 @@ describe('the measure library against chapters 5–8', () => {
       if (cell) for (const n of cell[1]!.matchAll(/`([a-zA-Z]+)`/g)) names.add(n[1]!);
     }
     expect([...DEFERRED].sort()).toEqual([...names].sort());
-    expect(DEFERRED.size).toBe(10);
+    expect(DEFERRED.size).toBe(5);
     for (const m of MEASURES) expect(DEFERRED.has(m.name)).toBe(false);
   });
 });

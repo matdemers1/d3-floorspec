@@ -129,6 +129,7 @@ export class Evaluator {
     if (a.to === 'room') ids = sortIds(Object.keys(m.doc.rooms ?? {}));
     else if (a.to === 'opening') ids = sortIds(Object.keys(m.doc.openings ?? {}));
     else if (a.to === 'level') ids = sortIds(Object.keys(m.doc.levels ?? {}));
+    else if (a.to === 'stair') ids = sortIds(Object.keys(m.doc.stairs ?? {}));
     else
       ids = sortIds(
         [...m.ext.values()].filter((x) => (a.extension === undefined || x.extension === a.extension) && (a.collection === undefined || x.collection === a.collection)).map((x) => x.id),
@@ -189,6 +190,11 @@ export class Evaluator {
         return { kind: 'polygon', outer: ringOf(own(d.fallbacks, id)!.footprint), holes: [] };
       case 'envelope':
         return { kind: 'polygon', outer: ringOf(this.model.clearance(id, envelope!).footprint), holes: [] };
+      case 'stair': {
+        // 9.4: its box, in plan.
+        const { min, max } = own(d.stairs, id)!.box;
+        return { kind: 'polygon', outer: [[min[0], min[1]], [max[0], min[1]], [max[0], max[1]], [min[0], max[1]]], holes: [] };
+      }
       case 'wall': {
         const ring = leastFirst(this.model.level(this.model.wallLevel(id)).g.outline(id));
         return { kind: 'polygon', outer: ring.map((p) => [toSafeNumber(p[0]), toSafeNumber(p[1])]), holes: [] };

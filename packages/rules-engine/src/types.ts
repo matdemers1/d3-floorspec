@@ -25,7 +25,7 @@ export type Op = Condition['op'];
 
 /** 4.1: what a measure is computed on, and how a report names it. */
 export type Target =
-  | { kind: 'room' | 'opening' | 'element' | 'level'; id: string }
+  | { kind: 'room' | 'opening' | 'element' | 'level' | 'stair'; id: string }
   | { kind: 'envelope'; id: string; envelope: string };
 export type TargetKind = Target['kind'];
 

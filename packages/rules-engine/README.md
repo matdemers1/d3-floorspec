@@ -32,7 +32,7 @@ callMeasures(document, { calls: [{ target: { kind: 'room', id: 'R1' }, measure: 
 | `src/evaluate.ts` | the pipeline of Rules 1.3: request, profile, document, packs, the profile's packs and amendments, each rule; the report |
 | `src/evaluation.ts` | measure results, tests, subjects, candidates, exceptions, findings, shapes, messages |
 | `src/typing.ts` | 3.9: well typed, deferred, which extensions a rule reads |
-| `src/measures/` | the measure library, one module per chapter: `rooms.ts` (5), `openings.ts` (6), `elements.ts` (7), `walllines.ts` (8); `library.ts` holds them and the deferred measures of 4.8 |
+| `src/measures/` | the measure library, one module per chapter: `rooms.ts` (5), `openings.ts` (6), `elements.ts` (7), `walllines.ts` (8.1–8.4), `stairs.ts` (8.5); `library.ts` holds them and the deferred measures of 4.8 |
 | `src/model.ts` | what measures read: faces, the room of an element (4.4), members with defaults (4.5), frames |
 | `src/exact.ts` | rationals and ℚ(√m) for local coordinates; exact rounding |
 | `src/display.ts` | 9.6 |
@@ -57,6 +57,9 @@ measures of 6.5 — `openingNetClearWidth`, `openingNetClearHeight`, `openingNet
 (`derived.openings[O].clearOpening`, the fill type's `operation`), and have no value — displayed as
 `not stated` — where nothing is declared: never a figure computed from the opening's own size. A
 Core 0.1 or 0.2 document declares none. `ceilingHeight` (5.7) is the room's ceiling's `low` minus
-its floor's `top`, as Core 0.3 derives them (Core §15) for a document of any draft. Ten measures
-stay deferred (4.8). The official extensions at 0.1.0 are evaluated for documents that declare
+its floor's `top`, as Core 0.3 derives them (Core §15) for a document of any draft. A rule may apply
+`to` a `"stair"` (Core §17): `stairRiserHeight` and `stairHeadroom` read Core's derived values (no
+value where Core derives no headroom), `stairTreadDepth`, `stairWidth` and `stairHandrailHeight` the
+stair's own members (8.5); a stair finding is drawn as its box in plan. Five measures stay deferred
+(4.8). The official extensions at 0.1.0 are evaluated for documents that declare
 "0.2" or "0.3" (each one's 1.2).

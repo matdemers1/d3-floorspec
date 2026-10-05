@@ -200,6 +200,8 @@ export class Model {
         return this.ext.get(t.id)!.element.fallback.level;
       case 'envelope':
         return this.clearance(t.id, t.envelope!).level;
+      case 'stair': // Core 0.3, 17.1: the level it rises from
+        return own(this.doc.stairs, t.id)!.level;
       default:
         return t.id;
     }

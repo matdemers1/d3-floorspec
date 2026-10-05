@@ -8,9 +8,10 @@ import { ROOM_MEASURES } from './rooms.js';
 import { OPENING_MEASURES } from './openings.js';
 import { ELEMENT_MEASURES } from './elements.js';
 import { WALL_LINE_MEASURES } from './walllines.js';
+import { STAIR_MEASURES } from './stairs.js';
 
 /** Every measure the library defines, in chapter order. */
-export const MEASURES: readonly Measure[] = [...ROOM_MEASURES, ...OPENING_MEASURES, ...ELEMENT_MEASURES, ...WALL_LINE_MEASURES];
+export const MEASURES: readonly Measure[] = [...ROOM_MEASURES, ...OPENING_MEASURES, ...ELEMENT_MEASURES, ...WALL_LINE_MEASURES, ...STAIR_MEASURES];
 
 const BY_KIND = new Map<string, Measure>();
 for (const m of MEASURES) for (const k of m.kinds) BY_KIND.set(`${m.name}\u0000${k}`, m);
@@ -22,17 +23,12 @@ export function measureFor(name: string, kind: TargetKind): Measure | undefined 
 
 /**
  * 4.8: the reserved measures. Each needs something Core 0.3 does not yet describe (ceilingHeight left
- * the list when Core 0.3 derived ceilings: 5.7); a rule that uses
+ * the list when Core 0.3 derived ceilings: 5.7; the five stair measures when it defined stairs: 8.5); a rule that uses
  * one is not evaluated (FS-RULES-008). A measure leaves this list only when a later Rules draft
  * defines it — then it is added to its chapter's module like any other.
  */
 export const DEFERRED: ReadonlySet<string> = new Set([
   'roomNarrowestDimension',
-  'stairRiserHeight',
-  'stairTreadDepth',
-  'stairWidth',
-  'stairHeadroom',
-  'stairHandrailHeight',
   'countertopReceptacleReach',
   'countertopWallRunBetweenReceptacles',
   'travelDistance',
