@@ -39,6 +39,10 @@ export {
   type DerivedPlacement,
   type DerivedClearance,
   type DerivedCirculationRoom,
+  type DerivedRoof,
+  type DerivedRoofFace,
+  type DerivedRoofLine,
+  type DerivedStair,
   type EnvelopeRef,
 } from './derive/derive.js';
 export { analyseCirculation, type CirculationAnalysis, type BuildingCirculation } from './circulation/circulation.js';
@@ -73,6 +77,7 @@ export {
   type ExtElement,
 } from './model/document.js';
 export { LevelGeometry } from './derive/level.js';
+export { z765, Z765_CITATION, FOOT, type Z765Options, type Z765Result, type Z765Building, type Z765Level } from './measures/z765.js';
 export { Surd } from './exact/surd.js';
 export { abs, floorDiv, gcd, isqrt, exactSqrt, roundHalfEvenRational, toSafeNumber, big } from './exact/bigint.js';
 export { jsonEqual } from './canonical/canonicalize.js';
