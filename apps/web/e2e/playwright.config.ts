@@ -32,6 +32,8 @@ import { defineConfig, devices } from '@playwright/test';
  *                   new project, its texture drawn in 3D; axe on the import dialog.
  *   - `furniture` — FLR-T-8.3: the P8 fridge — placed from the library with its door's clearance,
  *                   an island in its way as a note, its glTF model in 3D, undo.
+ *   - `templates` — FLR-T-4.5: a project from each of the standard's starter templates, held exactly,
+ *                   opened in the plan, in 3D and in the schedules.
  *
  * Run with:
  *
@@ -39,7 +41,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`). E2E_PORT is the keyboard suite's port; the others take the next fourteen.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`). E2E_PORT is the keyboard suite's port; the others take the next fifteen.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -100,6 +102,8 @@ const SUITES: Suite[] = [
   { name: 'package', spec: 'package.spec.ts', port: PORT + 13, database: databaseFor('package'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-package-assets') } },
   // FLR-T-8.3: a library refrigerator placed, its door's clearance, an island in its way, its model in 3D.
   { name: 'furniture', spec: 'furniture.spec.ts', port: PORT + 14, database: databaseFor('furniture'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-furniture-assets') } },
+  // FLR-T-4.5: the starter templates, each made a project and opened in the plan, 3D and the schedules.
+  { name: 'templates', spec: 'templates.spec.ts', port: PORT + 15, database: databaseFor('templates'), setupToken: true, gl: true },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;

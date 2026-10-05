@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { apply } from '@floorspec/ops';
-import { canonicalize } from '@floorspec/engine';
+import { canonicalize, check } from '@floorspec/engine';
 import { documentToBatch } from '../src/projects/fromDocument';
+import { TEMPLATES } from '../src/projects/templates';
+import { summarize } from '../src/projects/model';
 
 /** Templates and imports land as one batch of Floorspec Ops on a blank project (FLR-ADR-008). */
 describe('a document as a batch', () => {
@@ -54,5 +56,36 @@ describe('a document as a batch', () => {
     expect(result.status, JSON.stringify(result.status === 'rejected' ? result.diagnostics : [])).toBe('committed');
     if (result.status !== 'committed') return;
     expect(result.document).toBe(canonicalize({ ...source, project: { ...(source['project'] as object), name: 'Imported' } }));
+  });
+});
+
+/** Every template on the new-project screen: the standard's starter templates and the three-room house (FLR-T-4.5). */
+describe('the templates', () => {
+  const houses = TEMPLATES.filter((t): t is typeof t & { document: string } => t.document !== null);
+
+  it('offers the ranch, the two-storey house and the cabin from the standard', () => {
+    expect(houses.map((t) => t.id)).toEqual(['three-room-house', 'ranch', 'two-storey', 'cabin']);
+    for (const id of ['ranch', 'two-storey', 'cabin']) {
+      const vendored = readFileSync(new URL(`../../../packages/engine/standard/templates/${id}.floorspec.json`, import.meta.url), 'utf8');
+      expect(houses.find((t) => t.id === id)?.document).toBe(vendored);
+    }
+  });
+
+  it.each(houses.map((t) => [t.id, t] as const))('%s is valid, and lands on a blank project byte for byte', (_id, template) => {
+    const document = JSON.parse(template.document) as Record<string, unknown>;
+    const errors = check(template.document).diagnostics.filter((d) => d.severity === 'error');
+    expect(errors).toEqual([]);
+    const blank = { floorspec: '0.3', project: { name: template.name } };
+    const result = apply(blank, { batch: documentToBatch(document, template.name) });
+    expect(result.status, JSON.stringify(result.status === 'rejected' ? result.diagnostics : [])).toBe('committed');
+    if (result.status !== 'committed') return;
+    expect(result.document).toBe(canonicalize({ ...document, project: { ...(document['project'] as object), name: template.name } }));
+  });
+
+  it.each(houses.map((t) => [t.id, t] as const))('%s is drawn on its card from what the engine derives', (_id, template) => {
+    const summary = summarize(template.document);
+    expect(summary.valid).toBe(true);
+    expect(summary.empty).toBe(false);
+    expect(summary.derived).not.toBeNull();
   });
 });
