@@ -2178,6 +2178,10 @@ line.fs-diff {
 .fs-plan2__face--tinted {
   fill-opacity: 0.32;
 }
+/* On the dark canvas a light finish washes the room labels out: a fainter tint keeps them legible. */
+[data-theme='dark'] .fs-plan2__face--tinted {
+  fill-opacity: 0.1;
+}
 .fs-materials {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
