@@ -63,6 +63,21 @@ bounded per-project ring or answers `resync`. Heartbeat comment every 20 s; stre
 (plan PNG via the worker's `renderPlanPng`, in-process; `?changeset=` draws it ghosted against its
 base; 3D answers 501) — each on main or `?changeset=<id>`.
 
+## Assets (FLR-T-8.2)
+
+`POST /api/projects/:id/assets` takes an image's own bytes as the body (`X-Asset-Name`: its file
+name, percent-encoded; JSON is refused with 415): sniffed as PNG, JPEG, WebP or KTX2 from the
+bytes, its EXIF/XMP/text metadata removed losslessly, stored once by SHA-256 under `ASSET_DIR`
+(`ab/cd/<sha256>`, written to a temporary name and renamed), and claimed by the project in
+`project_assets`. 201 with the entry the document's `assets` should carry — `path`
+`assets/<sha256>.<ext>`, `sha256`, `mediaType`, `byteLength` — plus `width` and `height`. A session,
+or a `write` or `agent` token. It changes no model: the editor adds the asset in an Ops batch.
+`GET …/assets` lists the model's assets and the project's uploads; `GET …/assets/:sha256` serves the
+bytes (`immutable`, `nosniff`, a sandboxing CSP; `?download` as an attachment) to a project that
+uploaded them, or whose model names a digest its owner uploaded — 404 to anyone else, digest or not.
+`src/assets/store.ts` is the adapter (`FsAssetStore`; `MemoryAssetStore` when `ASSET_DIR` is unset
+outside production).
+
 ## MCP (FLR-T-2.6)
 
 `POST /mcp`: MCP 2026-07-28 (and 2025-era clients, statelessly) via `@floorspec/mcp`. Bearer
