@@ -1,0 +1,8 @@
+{
+  "description": "A separator meeting walls only at shared junctions is planar.",
+  "covers": [
+    "FS-CORE-5.3.1",
+    "FS-CORE-5.3.2",
+    "FS-CORE-5.3.3"
+  ]
+}

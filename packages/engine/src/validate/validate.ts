@@ -5,6 +5,7 @@
 import { validate as schema01 } from '../generated/validate-0.1.js';
 import { validate as schema02 } from '../generated/validate-0.2.js';
 import { validate as schema03 } from '../generated/validate-0.3.js';
+import { validate as schema04 } from '../generated/validate-0.4.js';
 import { parseJson } from '../json/parse.js';
 import type { JsonPath } from '../json/pointer.js';
 import type { FloorspecDocument } from '../model/document.js';
@@ -17,11 +18,14 @@ import type { Package } from '../finishes/finishes.js';
 import { loadKnownExtensions } from './registry.js';
 import { evaluateExtensions, implementationsOf, lintExtensions, type ExtensionRun } from '../extensions/official.js';
 
-/** The Floorspec Core versions this reader implements (1.2.2): Core 0.3, which also reads 0.1 and 0.2 (1.2.6). */
-export const IMPLEMENTED_VERSIONS: readonly string[] = ['0.1', '0.2', '0.3'];
+/** The Floorspec Core versions this reader implements (1.2.2): Core 0.4, which also reads 0.1, 0.2 and 0.3 (1.2.8). */
+export const IMPLEMENTED_VERSIONS: readonly string[] = ['0.1', '0.2', '0.3', '0.4'];
 
 /** The Core drafts a reader configured as each draft implements: a reader of a draft reads every earlier one. */
-const READS: Record<'0.1' | '0.2' | '0.3', readonly string[]> = { '0.1': ['0.1'], '0.2': ['0.1', '0.2'], '0.3': IMPLEMENTED_VERSIONS };
+const READS: Record<CoreDraft, readonly string[]> = { '0.1': ['0.1'], '0.2': ['0.1', '0.2'], '0.3': ['0.1', '0.2', '0.3'], '0.4': IMPLEMENTED_VERSIONS };
+
+/** A Core draft a reader can be configured as. */
+export type CoreDraft = '0.1' | '0.2' | '0.3' | '0.4';
 
 export interface ValidateOptions {
   /**
@@ -33,12 +37,13 @@ export interface ValidateOptions {
    */
   readonly extensions?: readonly string[];
   /**
-   * The newest Core draft the reader implements. `'0.3'`, the default, reads documents declaring
-   * "0.1", "0.2" or "0.3" (1.2.6) and derives chapters 11–13 and clear openings (7.4); `'0.2'` is a
-   * Core 0.2 reader, which rejects "0.3" with FS-DOC-001, and `'0.1'` a Core 0.1 reader, which
-   * rejects "0.2" too — what the published Core 0.2 and 0.1 suites test.
+   * The newest Core draft the reader implements. `'0.4'`, the default, reads documents declaring
+   * "0.1" to "0.4" (1.2.8) and derives everything Core 0.4 does, the tapered treads of winder and
+   * spiral stairs included (17.7); `'0.3'` is a Core 0.3 reader, which rejects "0.4" with
+   * FS-DOC-001 and does not step winders and spirals; `'0.2'` and `'0.1'` likewise — what the
+   * published Core 0.3, 0.2 and 0.1 suites test.
    */
-  readonly core?: '0.1' | '0.2' | '0.3';
+  readonly core?: CoreDraft;
   /**
    * The validator's known extensions (12.2): a JSON array of registry entries, as text, UTF-8
    * bytes or a parsed value. Absent: none, and nothing defined in terms of known extensions is
@@ -136,7 +141,7 @@ function finish(r: Reporter, extra: Omit<Evaluation, 'valid' | 'diagnostics'> = 
  */
 export function evaluate(input: string | Uint8Array | object, options: ValidateOptions = {}): Evaluation {
   const r = new Reporter();
-  const versions = READS[options.core ?? '0.3'];
+  const versions = READS[options.core ?? '0.4'];
   // Tier 0: configuration — the known extensions must be a valid registry (12.2.2).
   let known: ReturnType<typeof loadKnownExtensions>;
   if (options.knownExtensions !== undefined && versions.includes('0.2')) {
@@ -187,7 +192,7 @@ export function evaluate(input: string | Uint8Array | object, options: ValidateO
   // implements when it declares none it can read.
   const declared = isObject(value) ? value.floorspec : undefined;
   const draft = typeof declared === 'string' && versions.includes(declared) ? declared : versions[versions.length - 1];
-  const fn = (draft === '0.1' ? schema01 : draft === '0.2' ? schema02 : schema03) as unknown as SchemaFn;
+  const fn = (draft === '0.1' ? schema01 : draft === '0.2' ? schema02 : draft === '0.3' ? schema03 : schema04) as unknown as SchemaFn;
   if (!fn(schemaView(value, nonInteger))) {
     for (const e of fn.errors ?? [])
       r.report('FS-SCH-001', `${e.instancePath || '/'}: ${e.message ?? e.keyword}`, [], { pointer: e.instancePath });
@@ -216,6 +221,7 @@ export function evaluate(input: string | Uint8Array | object, options: ValidateO
   const opts: InvariantOptions = {
     core02: versions.includes('0.2'),
     core03: versions.includes('0.3'),
+    core04: versions.includes('0.4'),
     ...(known && { known }),
     ...(options.package && { package: options.package }),
   };

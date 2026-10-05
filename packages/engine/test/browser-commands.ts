@@ -11,8 +11,8 @@ const checkFixturesInNode: BrowserCommand = () => fixtures().map((f) => ({ name:
 
 export interface ConformanceCase {
   name: string;
-  /** The reader the suite tests: Core 0.1's suite a 0.1 reader, 0.2's a 0.2 reader, Core 0.3's the engine as it ships. */
-  core: '0.1' | '0.2' | '0.3';
+  /** The reader the suite tests: Core 0.1's suite a 0.1 reader, 0.2's a 0.2 reader, 0.3's a 0.3 reader, Core 0.4's the engine as it ships. */
+  core: '0.1' | '0.2' | '0.3' | '0.4';
   input: string;
   /** The case's registry.json (Core 0.2, 12.2), when it has one. */
   registry: string | null;
@@ -37,7 +37,7 @@ const extras = (dir: string): Pick<ConformanceCase, 'design' | 'package'> => {
 /** The vendored conformance cases of every suite, with input bytes in base64 (they may be malformed UTF-8 on purpose). */
 const conformanceCases: BrowserCommand = () => {
   const out: ConformanceCase[] = [];
-  for (const core of ['0.1', '0.2', '0.3'] as const) {
+  for (const core of ['0.1', '0.2', '0.3', '0.4'] as const) {
     const root = join(import.meta.dirname, '..', 'standard', 'conformance', 'core', core);
     const walk = (dir: string): void => {
       for (const entry of readdirSync(dir).sort()) {
@@ -75,9 +75,10 @@ const conformanceCases: BrowserCommand = () => {
             const c = join(dir, 'canonical.json');
             const reg = join(dir, 'registry.json');
             const input = readFileSync(join(dir, 'input.json'));
-            let core: '0.2' | '0.3' = '0.2';
+            let core: '0.2' | '0.3' | '0.4' = '0.2';
             try {
-              if ((JSON.parse(input.toString('utf8')) as { floorspec?: unknown }).floorspec === '0.3') core = '0.3';
+              const v = (JSON.parse(input.toString('utf8')) as { floorspec?: unknown }).floorspec;
+              if (v === '0.3' || v === '0.4') core = v;
             } catch {
               // a malformed document: read as the default for every other, Core 0.2
             }

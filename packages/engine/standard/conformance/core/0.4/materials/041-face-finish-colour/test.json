@@ -1,0 +1,6 @@
+{
+  "description": "A face finish names a material; it has no colour of its own.",
+  "covers": [
+    "FS-CORE-18.5.1"
+  ]
+}

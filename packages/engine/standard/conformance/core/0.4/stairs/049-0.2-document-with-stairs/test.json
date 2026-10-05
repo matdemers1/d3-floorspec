@@ -1,0 +1,7 @@
+{
+  "description": "A document that declares \"0.2\" and has a stairs collection, which 0.3 added: Core 0.2's schema has none.",
+  "covers": [
+    "FS-CORE-1.2.8",
+    "FS-CORE-1.1.2"
+  ]
+}

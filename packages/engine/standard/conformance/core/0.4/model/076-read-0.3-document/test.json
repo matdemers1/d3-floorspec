@@ -1,0 +1,10 @@
+{
+  "description": "The 0.3 suite's quarter-turn winder stair (stairs/014 of conformance/core/0.3), exactly as it is there, declaring \"0.3\", read by a reader of 0.4: valid, with the same hash and canonical form, and every value 0.3 derives for it; and, as 0.4 derives them for a stair of any draft, its winders, walkline, goings and headroom. A 0.3 reader reports FS-LINT-016 for the winder stair; a 0.4 reader derives its steps, and reports FS-LINT-018 for winders that narrow to a point.",
+  "covers": [
+    "FS-CORE-1.2.2",
+    "FS-CORE-1.2.8",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1",
+    "FS-CORE-17.7.3"
+  ]
+}

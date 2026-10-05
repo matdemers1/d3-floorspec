@@ -1,0 +1,7 @@
+{
+  "description": "The rules house on a level at 1,000 mm, with the bedroom's north wall W2 based 100 mm above it: the window's sill and head are measured from the level's floor, so both are 100 mm higher than in the rules house, and the level's own elevation does not count. Displayed in millimetres.",
+  "covers": [
+    "FS-RULES-6.3.1",
+    "FS-RULES-9.6.1"
+  ]
+}

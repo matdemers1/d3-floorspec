@@ -1,0 +1,12 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "optionSets",
+      "id": "KS",
+      "element": {
+        "primary": "KA"
+      }
+    }
+  ]
+}

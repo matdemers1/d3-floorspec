@@ -1,0 +1,119 @@
+{
+  "coverage": [],
+  "diagnostics": [
+    {
+      "code": "FS-RULES-009",
+      "pack": "test-pack",
+      "rule": "CIRCUITS",
+      "severity": "info"
+    },
+    {
+      "code": "FS-RULES-009",
+      "pack": "test-pack",
+      "rule": "FURNITURE",
+      "severity": "info"
+    },
+    {
+      "code": "FS-RULES-009",
+      "pack": "test-pack",
+      "rule": "MEMBER",
+      "severity": "info"
+    },
+    {
+      "code": "FS-RULES-009",
+      "pack": "test-pack",
+      "rule": "PROTECTED",
+      "severity": "info"
+    },
+    {
+      "code": "FS-RULES-009",
+      "pack": "test-pack",
+      "rule": "REACH-MATCH",
+      "severity": "info"
+    },
+    {
+      "code": "FS-RULES-009",
+      "pack": "test-pack",
+      "rule": "SMOKE",
+      "severity": "info"
+    }
+  ],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "COUNT",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "REACH",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [],
+  "floorspecRules": "0.2",
+  "hash": "86b1c95823e29c2f237ed7654e7482b2fa5756e5ae9c5efaacd367ca4c91103d",
+  "notEvaluated": [
+    {
+      "pack": "test-pack",
+      "reason": "extension",
+      "rule": "CIRCUITS",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "extension",
+      "rule": "FURNITURE",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "extension",
+      "rule": "MEMBER",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "edition",
+      "rule": "OLD-SMOKE",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "extension",
+      "rule": "PROTECTED",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "extension",
+      "rule": "REACH-MATCH",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "test-pack",
+      "reason": "extension",
+      "rule": "SMOKE",
+      "version": "0.1.0"
+    }
+  ],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

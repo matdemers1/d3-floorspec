@@ -1,0 +1,6 @@
+{
+  "description": "G2 is a butt join through W5. Setting W5's end to a new junction leaves the join naming a wall that does not end at G2: it is removed.",
+  "covers": [
+    "FS-OPS-5.3.1"
+  ]
+}

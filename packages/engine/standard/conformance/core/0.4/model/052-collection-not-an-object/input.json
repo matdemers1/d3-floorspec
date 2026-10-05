@@ -1,0 +1,11 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": [
+    {
+      "name": "House"
+    }
+  ]
+}

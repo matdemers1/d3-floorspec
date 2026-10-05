@@ -1,0 +1,6 @@
+{
+  "description": "A 0.2 document whose opening overrides a clear opening, which 0.3 added.",
+  "covers": [
+    "FS-CORE-1.2.8"
+  ]
+}

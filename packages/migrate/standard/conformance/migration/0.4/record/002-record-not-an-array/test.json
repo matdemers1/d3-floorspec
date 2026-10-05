@@ -1,0 +1,6 @@
+{
+  "description": "The document's extras have a member \"floorspec:migration\" that is a string, and the step has something to move: there is no record to append to, so the migrator refuses it with FS-MIG-002 (20.3.3).",
+  "covers": [
+    "FS-CORE-20.3.3"
+  ]
+}

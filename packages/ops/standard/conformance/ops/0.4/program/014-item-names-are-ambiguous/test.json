@@ -1,0 +1,7 @@
+{
+  "description": "Two items are named \"Bedroom\": \"item Bedroom\" matches both, FS-OPS-004.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-7.1.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "W2 runs from J1 along W1 to J3, halfway: the two overlap along a segment. An overlap always leaves a junction inside the other edge, so FS-INV-105 is reported with it.",
+  "covers": [
+    "FS-CORE-5.3.3",
+    "FS-CORE-5.3.2",
+    "FS-CORE-10.2.1"
+  ]
+}

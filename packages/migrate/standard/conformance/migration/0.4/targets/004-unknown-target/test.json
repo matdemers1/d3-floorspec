@@ -1,0 +1,6 @@
+{
+  "description": "The target \"0.5\" is not a draft this migrator implements (20.2.3).",
+  "covers": [
+    "FS-CORE-20.2.3"
+  ]
+}

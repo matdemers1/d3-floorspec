@@ -1,0 +1,46 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairForm"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairWalklineGoing"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairNarrowGoing"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairWidth"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairHeadroom"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairRiserHeight"
+    }
+  ]
+}

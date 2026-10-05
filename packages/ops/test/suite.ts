@@ -7,6 +7,7 @@ export const SUITES = {
   '0.1': join(import.meta.dirname, '..', 'standard', 'conformance', 'ops', '0.1'),
   '0.2': join(import.meta.dirname, '..', 'standard', 'conformance', 'ops', '0.2'),
   '0.3': join(import.meta.dirname, '..', 'standard', 'conformance', 'ops', '0.3'),
+  '0.4': join(import.meta.dirname, '..', 'standard', 'conformance', 'ops', '0.4'),
 } as const;
 
 /**

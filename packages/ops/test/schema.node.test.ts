@@ -15,7 +15,7 @@ import { checkRequest, OpsFailure, OP_SHAPES_BY_VERSION, type OpsVersion } from 
 import { listCases, SUITES } from './suite.js';
 
 /** The schema of each draft's requests. */
-const SCHEMA_OF: Record<OpsVersion, OpsVersion> = { '0.1': '0.1', '0.2': '0.2', '0.3': '0.3' };
+const SCHEMA_OF: Record<OpsVersion, OpsVersion> = { '0.1': '0.1', '0.2': '0.2', '0.3': '0.3', '0.4': '0.3' };
 const schemaDir = (ops: OpsVersion): string => join(import.meta.dirname, '..', 'standard', 'schema', 'ops', SCHEMA_OF[ops]);
 
 const validators = new Map<OpsVersion, (v: unknown) => boolean>();
@@ -129,7 +129,7 @@ const WELL_FORMED = [
   '{"batch":[{"op":"removeElement","id":"R1"}],"context":{"locks":[{"element":"W1"},{"length":"W1"},{"distance":["W1","W3"]}],"retired":["W9"]}}',
 ];
 
-for (const ops of ['0.1', '0.2', '0.3'] as const) {
+for (const ops of ['0.1', '0.2', '0.3', '0.4'] as const) {
   describe.runIf(existsSync(schemaDir(ops)))(`the request shape of Ops ${ops} agrees with schema/ops/${SCHEMA_OF[ops]}`, () => {
     it('lists the same operations', () => {
       const schema = JSON.parse(readFileSync(join(schemaDir(ops), 'operation.schema.json'), 'utf8')) as { $defs: Record<string, { properties?: { op?: { const?: string } } }> };

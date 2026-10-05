@@ -1,0 +1,6 @@
+{
+  "description": "A door type's clear opening has no area: an area is a window's.",
+  "covers": [
+    "FS-CORE-8.4.3"
+  ]
+}

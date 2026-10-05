@@ -1,0 +1,8 @@
+{
+  "description": "Two free-standing centred walls of odd thickness put every face half a base unit off the grid: 128,001 gives offsets 64,000.5, which round to 64,000; 128,003 gives 64,001.5, which rounds to 64,002. Ties go to even, in both directions and on both signs.",
+  "covers": [
+    "FS-CORE-2.2.1",
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

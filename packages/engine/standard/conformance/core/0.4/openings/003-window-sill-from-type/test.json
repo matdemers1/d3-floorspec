@@ -1,0 +1,8 @@
+{
+  "description": "A window on W1 takes width, height and its 900 mm sill from its type.",
+  "covers": [
+    "FS-CORE-7.2.1",
+    "FS-CORE-7.4.1",
+    "FS-CORE-8.2.1"
+  ]
+}

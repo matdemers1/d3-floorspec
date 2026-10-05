@@ -1,0 +1,6 @@
+{
+  "description": "Top-level extension data may be any JSON; only an object's \"collections\" member holds elements. An array has none.",
+  "covers": [
+    "FS-CORE-12.5.1"
+  ]
+}

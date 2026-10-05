@@ -1,0 +1,6 @@
+{
+  "description": "A wall from (2000000, -300000) to (2000001, 300000) crosses y = 0 at x = 2000000.5 exactly. Rounding ties to even, so the hot pixel is (2000000, 0).",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

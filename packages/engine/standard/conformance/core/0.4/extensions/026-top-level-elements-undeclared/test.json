@@ -1,0 +1,6 @@
+{
+  "description": "Extension elements of an extension that extensionsUsed does not declare: FS-INV-005, and nothing else is evaluated.",
+  "covers": [
+    "FS-CORE-1.6.3"
+  ]
+}

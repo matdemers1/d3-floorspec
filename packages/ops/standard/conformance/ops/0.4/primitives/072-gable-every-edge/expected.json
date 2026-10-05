@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-INV-803",
+      "severity": "error",
+      "elements": ["RF1"]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A region's bottom is not negative.",
+  "covers": [
+    "FS-CORE-18.5.1"
+  ]
+}

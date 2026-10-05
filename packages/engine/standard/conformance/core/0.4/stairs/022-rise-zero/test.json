@@ -1,0 +1,7 @@
+{
+  "description": "L2 at L1's elevation: the stair's rise is exactly 0, which is not greater than zero. FS-INV-902, and FS-INV-903 is not evaluated for it.",
+  "covers": [
+    "FS-CORE-17.4.1",
+    "FS-CORE-10.3.1"
+  ]
+}

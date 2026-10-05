@@ -1,0 +1,8 @@
+{
+  "description": "With context.option KB, drawWall from a point in the kitchen to a point on the common north wall W4: W4 is split there into two common walls, and the junction where they meet - added by drawWall in B - is common now, since a common wall ends at it; the drawn wall stays in B.",
+  "covers": [
+    "FS-OPS-5.5.1",
+    "FS-OPS-5.2.1",
+    "FS-OPS-2.8.1"
+  ]
+}

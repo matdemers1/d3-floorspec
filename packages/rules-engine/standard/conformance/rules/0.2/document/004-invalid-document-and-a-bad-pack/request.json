@@ -1,0 +1,27 @@
+{
+  "floorspecRules": "0.2",
+  "packs": [
+    {
+      "floorspecRules": "0.2",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "MIT",
+      "rules": {}
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.2",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

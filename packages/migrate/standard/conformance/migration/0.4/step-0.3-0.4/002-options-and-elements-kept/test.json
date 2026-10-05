@@ -1,0 +1,8 @@
+{
+  "description": "A 0.3 document with design options and an extension element in one - its \"option\" member is core's in 0.3 and 0.4 alike: the step moves nothing (20.7.1), and a reader of 0.4 reads the element in option OB in both (20.6.1).",
+  "covers": [
+    "FS-CORE-20.7.1",
+    "FS-CORE-20.3.2",
+    "FS-CORE-20.6.1"
+  ]
+}

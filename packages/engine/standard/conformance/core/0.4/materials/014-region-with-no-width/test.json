@@ -1,0 +1,6 @@
+{
+  "description": "A region whose to is its from: FS-INV-1001.",
+  "covers": [
+    "FS-CORE-18.5.2"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "An empty opening that states its own clear opening - a cased opening inside its trim, 1450 mm by 2350 mm in a 1500 mm by 2400 mm hole: valid, and derived as stated.",
+  "covers": [
+    "FS-CORE-7.4.2",
+    "FS-CORE-7.2.2",
+    "FS-CORE-7.1.3"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The same when the level is removed with cascade and takes the loft with it.",
+  "covers": [
+    "FS-OPS-2.2.3",
+    "FS-OPS-2.2.2"
+  ]
+}

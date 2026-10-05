@@ -1,0 +1,6 @@
+{
+  "description": "A half-turn winder stair 900 mm wide with a gap of 1000 mm: its walkline's arc, of radius 950 mm, would run outside the turn. FS-INV-905.",
+  "covers": [
+    "FS-CORE-17.7.4"
+  ]
+}

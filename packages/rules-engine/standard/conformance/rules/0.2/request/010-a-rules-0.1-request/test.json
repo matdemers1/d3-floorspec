@@ -1,0 +1,6 @@
+{
+  "description": "A request that declares `\"floorspecRules\": \"0.1\"`: an evaluator of Rules 0.2 implements 0.2 alone, so it is FS-RULES-001 (1.1.1).",
+  "covers": [
+    "FS-RULES-1.1.1"
+  ]
+}

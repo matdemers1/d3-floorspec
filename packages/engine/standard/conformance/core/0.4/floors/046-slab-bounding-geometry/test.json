@@ -1,0 +1,7 @@
+{
+  "description": "A patio south of the room, its boundary written clockwise, its top 150 mm below the level and 100 mm thick: its outline is the boundary counter-clockwise from its least vertex, its top -150 mm, its bottom -250 mm, and its box spans them. Its purpose changes nothing derived.",
+  "covers": [
+    "FS-CORE-15.7.1",
+    "FS-CORE-6.7.2"
+  ]
+}

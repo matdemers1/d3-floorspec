@@ -1,0 +1,15 @@
+{
+  "description": "The two-storey starter template (templates/two-storey.floorspec.json): a side-hall main floor of 9 ft ceilings, and an L-shaped stair - three risers, a landing and thirteen more, its riser count derived from its maxRiser - rising through a well drawn with railing separators to an upper floor with a 12 in floor and three bedrooms, the primary bedroom under a 4 in 12 vaulted ceiling whose walls rise to its ridge. A gable roof of 8 in 12 with 6 in rakes. The well is a bounded face with no room, so FS-LINT-003 is reported for it, as it is for every stair well.",
+  "covers": [
+    "FS-CORE-8.1.3",
+    "FS-CORE-15.1.2",
+    "FS-CORE-15.3.2",
+    "FS-CORE-15.5.1",
+    "FS-CORE-16.4.1",
+    "FS-CORE-16.5.1",
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.5.1",
+    "FS-CORE-17.6.1",
+    "FS-CORE-14.1.1"
+  ]
+}

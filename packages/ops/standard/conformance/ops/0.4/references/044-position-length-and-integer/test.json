@@ -1,0 +1,7 @@
+{
+  "description": "A position may be a length or an integer offset.",
+  "covers": [
+    "FS-OPS-3.5.1",
+    "FS-OPS-4.5.3"
+  ]
+}

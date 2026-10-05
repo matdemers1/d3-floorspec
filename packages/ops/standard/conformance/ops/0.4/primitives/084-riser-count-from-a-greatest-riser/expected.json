@@ -1,0 +1,33 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "39642442e0bba19beeb12435f67607cbe3dd6153bead0a65bd0491e3115d5bce",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/risers"
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/maxRiser",
+      "value": 251968
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/maxRiser"
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/risers",
+      "value": 14
+    }
+  ]
+}

@@ -13,7 +13,7 @@ import { runOperation } from './expand.js';
 import { inverseOf } from './inverse.js';
 import { brokenLocks, invalidLocks } from './locks.js';
 import { FacesCache } from './model/faces.js';
-import { idsOf, WorkingCopy, type OpsVersion } from './model/working.js';
+import { atLeast03, idsOf, WorkingCopy, type OpsVersion } from './model/working.js';
 import { normalize } from './normalize.js';
 import type { Ctx } from './references/resolve.js';
 import { checkRequest } from './request.js';
@@ -42,12 +42,12 @@ function readRequest(input: JsonInput, ops: OpsVersion): ApplyRequest {
  */
 interface Settings {
   readonly ops: OpsVersion;
-  readonly core: { core: '0.1' | '0.2' | '0.3'; knownExtensions?: string | Uint8Array | readonly unknown[]; extensions?: readonly string[] };
+  readonly core: { core: '0.1' | '0.2' | '0.3' | '0.4'; knownExtensions?: string | Uint8Array | readonly unknown[]; extensions?: readonly string[] };
 }
 
 function settings(options: ApplyOptions): Settings {
-  const ops: string = options.ops ?? '0.3';
-  if (ops !== '0.1' && ops !== '0.2' && ops !== '0.3') throw new RangeError(`@floorspec/ops applies Floorspec Ops 0.1, 0.2 and 0.3, not ${ops}`);
+  const ops: string = options.ops ?? '0.4';
+  if (ops !== '0.1' && ops !== '0.2' && ops !== '0.3' && ops !== '0.4') throw new RangeError(`@floorspec/ops applies Floorspec Ops 0.1, 0.2, 0.3 and 0.4, not ${ops}`);
   if (ops === '0.1') return { ops, core: { core: '0.1' } };
   return {
     ops,
@@ -81,7 +81,7 @@ function prepare(document: JsonInput, request: JsonInput, s: Settings): Prepared
   const req = readRequest(request, s.ops);
   const a = readDocument(document, s);
   const wc = new WorkingCopy(clone(a), req.context?.retired ?? [], s.ops);
-  if (s.ops === '0.3') wc.editOption = req.context?.option;
+  if (atLeast03(s.ops)) wc.editOption = req.context?.option;
   const locks = req.context?.locks ?? [];
   const bad = invalidLocks(new WorkingCopy(a, [], s.ops), locks);
   if (bad.length) throw new OpsFailure(bad);

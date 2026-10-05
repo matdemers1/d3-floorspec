@@ -1,0 +1,7 @@
+{
+  "description": "moveOpening is setProperty of the offset: the door moved to 2' from its wall's end.",
+  "covers": [
+    "FS-OPS-4.5.3",
+    "FS-OPS-3.5.1"
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.4/extension.schema.json",
+  "$comment": "Normative (FLR-ADR-006). Extension data is defined by each extension; this file checks only what core defines about it. Nothing here has a constant default the canonicalizer omits: extension data is never changed by canonicalization (9.2).",
+  "title": "Extensions — declarations, data and elements",
+  "description": "12.1, 12.5: the declaration of an extension in extensionsUsed, top-level extension data, and the extension elements in its `collections`.",
+  "$defs": {
+    "version": {
+      "title": "Extension version",
+      "description": "1.6: the version of the extension the document targets (FS-CORE-1.6.7).",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?$"
+    },
+    "declaration": {
+      "title": "Extension declaration",
+      "description": "12.1: a version string, or a declaration object with `version` and, optionally, `schema` (FS-CORE-12.1.1). Canonical form writes an object without `schema` as its version string.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/version"
+        },
+        {
+          "type": "object",
+          "required": [
+            "version"
+          ],
+          "properties": {
+            "version": {
+              "$ref": "#/$defs/version",
+              "description": "12.1: the version of the extension the document targets."
+            },
+            "schema": {
+              "$ref": "defs.schema.json#/$defs/httpsUri",
+              "description": "12.1: where the extension's JSON Schema for that version is published (FS-CORE-12.1.2)."
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "topLevel": {
+      "title": "Top-level extension data",
+      "description": "1.6, 12.5: maps an extension name to its document-level data. That every name is in extensionsUsed (FS-CORE-1.6.3) is an invariant (FS-INV-005). Data that is an object may have a `collections` member (FS-CORE-12.5.1); everything else in it is the extension's own.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/extensionName"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/data"
+      }
+    },
+    "data": {
+      "title": "Extension data",
+      "description": "12.5: one extension's document-level data: any JSON, except that an object's `collections` member holds the extension's elements.",
+      "anyOf": [
+        {
+          "not": {
+            "type": "object"
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "collections": {
+              "$ref": "#/$defs/collections"
+            }
+          }
+        }
+      ]
+    },
+    "collections": {
+      "title": "Collections",
+      "description": "12.5: maps a collection name (^[a-z][A-Za-z0-9]*$) to a collection of extension elements keyed by ID (FS-CORE-12.5.1).",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/collectionName"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "defs.schema.json#/$defs/id"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/element"
+        }
+      }
+    },
+    "element": {
+      "title": "Extension element",
+      "description": "12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members — `fallback`, `host`, `clearances`, `option` (19.2), `name` and `extras` — MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.",
+      "type": "object",
+      "required": [
+        "fallback"
+      ],
+      "properties": {
+        "fallback": {
+          "$ref": "fallback.schema.json",
+          "description": "12.6: what to show when the extension is not implemented. Always present."
+        },
+        "host": {
+          "$ref": "host.schema.json",
+          "description": "13.3: what the element is placed on. Absent: the element is placed only by its fallback."
+        },
+        "clearances": {
+          "$ref": "clearance.schema.json",
+          "description": "13.5: the space the element needs kept clear, in its frame. Absent: none."
+        },
+        "option": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "12.5, 19.2: a reference to the option the element is in. Absent: it is in no option, and so in every design."
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "12.5: a human-readable label, 1–200 characters. Absent by default."
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.7, 12.5: application-specific data on this element."
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

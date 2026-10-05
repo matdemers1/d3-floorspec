@@ -1,0 +1,20 @@
+{
+  "batch": [
+    {
+      "op": "addOpening",
+      "id": "O2",
+      "wall": "W2",
+      "at": "centered",
+      "fill": "T-door-36"
+    },
+    {
+      "op": "setProperty",
+      "id": "O2",
+      "path": "/clearOpening",
+      "value": {
+        "width": 1007872,
+        "height": 2568448
+      }
+    }
+  ]
+}

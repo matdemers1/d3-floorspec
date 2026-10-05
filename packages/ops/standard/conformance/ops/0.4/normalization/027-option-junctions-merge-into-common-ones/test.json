@@ -1,0 +1,7 @@
+{
+  "description": "With context.option KB, two junctions added at the positions of the common junctions S4 and N4, and a separator between them: 5.1 merges each into the common one, so B's separator ends at S4 and N4.",
+  "covers": [
+    "FS-OPS-5.5.1",
+    "FS-OPS-5.1.1"
+  ]
+}

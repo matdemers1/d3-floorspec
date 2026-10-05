@@ -1,0 +1,25 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L2",
+      "element": {
+        "building": "B1",
+        "elevation": 3456000,
+        "height": 3456000
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "types",
+      "id": "T2",
+      "element": {
+        "kind": "doorType"
+      }
+    }
+  ],
+  "context": {
+    "option": "KA"
+  }
+}

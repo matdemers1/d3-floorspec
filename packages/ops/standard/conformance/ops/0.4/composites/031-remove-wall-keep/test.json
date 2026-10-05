@@ -1,0 +1,6 @@
+{
+  "description": "\"Open up the kitchen into the dining room\": removeWall of the wall between them, keeping the Kitchen. The Dining room is removed first, then the wall with cascade - taking its door.",
+  "covers": [
+    "FS-OPS-4.7.1"
+  ]
+}

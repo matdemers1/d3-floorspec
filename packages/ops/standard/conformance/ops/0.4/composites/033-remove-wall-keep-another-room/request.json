@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "removeWall",
+      "wall": "W8",
+      "keep": "Pantry"
+    }
+  ]
+}

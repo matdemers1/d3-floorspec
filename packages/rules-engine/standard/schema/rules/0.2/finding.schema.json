@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/rules/0.2/finding.schema.json",
+  "$comment": "Normative (FLR-ADR-006, FLR-ADR-011): a finding of Floorspec Rules 0.2 (9.2).",
+  "title": "Floorspec Rules 0.2 finding",
+  "description": "9.2: one subject may not meet one rule. Advisory; never says that a design meets a code (9.5).",
+  "type": "object",
+  "required": [
+    "pack",
+    "version",
+    "rule",
+    "title",
+    "citation",
+    "severity",
+    "subject",
+    "measures",
+    "elements",
+    "location",
+    "message"
+  ],
+  "properties": {
+    "pack": {
+      "$ref": "defs.schema.json#/$defs/packName"
+    },
+    "version": {
+      "$ref": "defs.schema.json#/$defs/version"
+    },
+    "rule": {
+      "$ref": "defs.schema.json#/$defs/id"
+    },
+    "title": {
+      "$ref": "defs.schema.json#/$defs/title"
+    },
+    "citation": {
+      "$ref": "defs.schema.json#/$defs/citation"
+    },
+    "severity": {
+      "$ref": "defs.schema.json#/$defs/severity"
+    },
+    "subject": {
+      "$ref": "#/$defs/target"
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/target"
+      }
+    },
+    "measures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/measured"
+      }
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "$ref": "defs.schema.json#/$defs/id"
+      }
+    },
+    "location": {
+      "title": "Location",
+      "description": "9.4: the subject's level and the shapes to draw.",
+      "type": "object",
+      "required": [
+        "level",
+        "shapes"
+      ],
+      "properties": {
+        "level": {
+          "$ref": "defs.schema.json#/$defs/id"
+        },
+        "shapes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/shape"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "message": {
+      "type": "string",
+      "pattern": " may not meet "
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "target": {
+      "title": "Target",
+      "description": "4.1: what a measure is computed on.",
+      "oneOf": [
+        {
+          "title": "Target",
+          "description": "4.1: a room, an opening, an extension element, a level or a stair.",
+          "type": "object",
+          "required": [
+            "kind",
+            "id"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "room",
+                "opening",
+                "element",
+                "level",
+                "stair"
+              ]
+            },
+            "id": {
+              "$ref": "defs.schema.json#/$defs/id"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Envelope target",
+          "description": "4.1: a clearance envelope, by its owner and its name.",
+          "type": "object",
+          "required": [
+            "kind",
+            "id",
+            "envelope"
+          ],
+          "properties": {
+            "kind": {
+              "const": "envelope"
+            },
+            "id": {
+              "$ref": "defs.schema.json#/$defs/id"
+            },
+            "envelope": {
+              "$ref": "defs.schema.json#/$defs/collectionName"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "shape": {
+      "title": "Shape",
+      "description": "9.4: where a plan draws a target.",
+      "oneOf": [
+        {
+          "title": "Polygon",
+          "description": "9.4: an outer ring and holes, as Core derives rings.",
+          "type": "object",
+          "required": [
+            "kind",
+            "outer",
+            "holes"
+          ],
+          "properties": {
+            "kind": {
+              "const": "polygon"
+            },
+            "outer": {
+              "type": "array",
+              "minItems": 3,
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "$ref": "defs.schema.json#/$defs/integer"
+                }
+              }
+            },
+            "holes": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "minItems": 3,
+                "items": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "$ref": "defs.schema.json#/$defs/integer"
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Segment",
+          "description": "9.4: an opening's start and end points.",
+          "type": "object",
+          "required": [
+            "kind",
+            "points"
+          ],
+          "properties": {
+            "kind": {
+              "const": "segment"
+            },
+            "points": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "$ref": "defs.schema.json#/$defs/integer"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "measured": {
+      "title": "Measured condition",
+      "description": "9.3: one condition of the requirement on one target: the measure result (4.7), the comparison and whether it holds.",
+      "type": "object",
+      "required": [
+        "target",
+        "measure",
+        "type",
+        "value",
+        "display",
+        "op",
+        "threshold",
+        "thresholdDisplay",
+        "holds"
+      ],
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "measure": {
+          "type": "string"
+        },
+        "args": {
+          "type": "object"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "length",
+            "area",
+            "count",
+            "integer",
+            "boolean",
+            "term",
+            "terms"
+          ]
+        },
+        "value": {
+          "description": "4.2: a JSON integer (length, count, integer), a decimal string (area), a boolean, a string (term), an array of strings (terms), or null (no value)."
+        },
+        "display": {
+          "type": "string"
+        },
+        "involved": {
+          "type": "array",
+          "items": {
+            "$ref": "defs.schema.json#/$defs/id"
+          }
+        },
+        "op": {
+          "type": "string",
+          "enum": [
+            "<",
+            "<=",
+            "=",
+            "!=",
+            ">=",
+            ">",
+            "in",
+            "has"
+          ]
+        },
+        "threshold": {
+          "description": "9.3: the condition's value, as the rule gives it."
+        },
+        "thresholdDisplay": {
+          "type": "string"
+        },
+        "holds": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "measureResult": {
+      "title": "Measure result",
+      "description": "4.7: a measure computed on a target: its type, its value (null when it has none), its display, and what it found.",
+      "type": "object",
+      "required": [
+        "type",
+        "value",
+        "display"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "length",
+            "area",
+            "count",
+            "integer",
+            "boolean",
+            "term",
+            "terms"
+          ]
+        },
+        "value": {
+          "description": "4.2: a JSON integer (length, count, integer), a decimal string (area), a boolean, a string (term), an array of strings (terms), or null (no value)."
+        },
+        "display": {
+          "type": "string"
+        },
+        "involved": {
+          "type": "array",
+          "items": {
+            "$ref": "defs.schema.json#/$defs/id"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

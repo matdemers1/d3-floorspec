@@ -1,0 +1,24 @@
+{
+  "results": [
+    {
+      "display": "winder",
+      "type": "term",
+      "value": "winder"
+    },
+    {
+      "display": "0' 9 3/16\"",
+      "type": "length",
+      "value": 298160
+    },
+    {
+      "display": "0' 2 1/4\"",
+      "type": "length",
+      "value": 73901
+    },
+    {
+      "display": "0' 9 13/16\"",
+      "type": "length",
+      "value": 320000
+    }
+  ]
+}

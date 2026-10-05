@@ -1,0 +1,6 @@
+{
+  "description": "The junction S4 is in option B, and the common walls W7 and W8 end at it: FS-INV-1102 once for each, and for SB, which is in B too, nothing.",
+  "covers": [
+    "FS-CORE-19.4.1"
+  ]
+}

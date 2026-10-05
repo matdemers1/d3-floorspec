@@ -1,0 +1,7 @@
+{
+  "description": "The document declares \"0.1\" and has a member 0.2 added, and the target \"0.1.0\" names no draft: the document is checked first, and only its FS-SCH-001 is reported (20.2.3).",
+  "covers": [
+    "FS-CORE-20.2.1",
+    "FS-CORE-20.2.3"
+  ]
+}

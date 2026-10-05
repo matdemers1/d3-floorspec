@@ -1,0 +1,7 @@
+{
+  "description": "Wall W2 ends at junction J9, which does not exist.",
+  "covers": [
+    "FS-CORE-3.2.1",
+    "FS-CORE-10.2.1"
+  ]
+}

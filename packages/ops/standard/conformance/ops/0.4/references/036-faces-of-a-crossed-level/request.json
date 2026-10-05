@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "moveJunction",
+      "id": "J8",
+      "to": ["13'", "13'"]
+    },
+    {
+      "op": "setProperty",
+      "id": "north wall of Kitchen",
+      "path": "/name",
+      "value": "x"
+    }
+  ]
+}

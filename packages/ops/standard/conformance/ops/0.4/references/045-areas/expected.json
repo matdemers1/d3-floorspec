@@ -1,0 +1,94 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "235b3aee87ad26dd6162a5f539fa41a948c53bea02bc43e5c2e61832fc434b24",
+  "created": ["P1", "P2", "P3", "P4", "P5", "P6"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P1",
+      "element": {
+        "function": "storage",
+        "minArea": 18022400000000
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P2",
+      "element": {
+        "function": "storage",
+        "minArea": 18022400000000
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P3",
+      "element": {
+        "function": "storage",
+        "minArea": 18265480888320
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P4",
+      "element": {
+        "function": "storage",
+        "minArea": 1691248230400
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P5",
+      "element": {
+        "function": "storage",
+        "minArea": 76106170368
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P6",
+      "element": {
+        "function": "storage",
+        "minArea": 409600000
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "P1"
+    },
+    {
+      "op": "removeElement",
+      "id": "P2"
+    },
+    {
+      "op": "removeElement",
+      "id": "P3"
+    },
+    {
+      "op": "removeElement",
+      "id": "P4"
+    },
+    {
+      "op": "removeElement",
+      "id": "P5"
+    },
+    {
+      "op": "removeElement",
+      "id": "P6"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/program"
+    }
+  ]
+}

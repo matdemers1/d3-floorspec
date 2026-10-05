@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "east wall of Study",
+      "path": "/name",
+      "value": "x"
+    }
+  ]
+}

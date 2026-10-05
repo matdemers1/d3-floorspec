@@ -1,0 +1,6 @@
+{
+  "description": "A source whose version is \"v0.1\": not a version string of 1.6.7.",
+  "covers": [
+    "FS-CORE-8.1.3"
+  ]
+}

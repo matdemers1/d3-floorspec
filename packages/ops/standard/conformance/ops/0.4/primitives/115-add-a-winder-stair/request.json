@@ -1,0 +1,25 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "stairs",
+      "id": "ST1",
+      "element": {
+        "level": "L1",
+        "to": "L2",
+        "position": [390144, 780288],
+        "width": 1170432,
+        "tread": 292608,
+        "risers": 14,
+        "form": {
+          "kind": "winder",
+          "turn": "left",
+          "angle": "quarter",
+          "risersBeforeTurn": 4,
+          "winders": 3,
+          "newel": 130048
+        }
+      }
+    }
+  ]
+}

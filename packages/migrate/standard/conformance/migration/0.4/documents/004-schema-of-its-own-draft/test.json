@@ -1,0 +1,6 @@
+{
+  "description": "A document declaring \"0.1\" with a program, which 0.2 added: it does not match the schema of the draft it declares, so it is refused with FS-SCH-001 (20.2.1) - a migrator does not guess which draft was meant.",
+  "covers": [
+    "FS-CORE-20.2.1"
+  ]
+}

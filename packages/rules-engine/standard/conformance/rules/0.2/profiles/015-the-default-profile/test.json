@@ -1,0 +1,7 @@
+{
+  "description": "A request with no profile is evaluated under \"Model Codes (latest)\": of synthetic rules citing editions of the model codes (with sections TEST-n, and no requirement of those codes), IRC 2024, NEC 2026, IPC 2024, IMC 2024 and IFGC 2024 are in force and evaluated; IRC 2021, NEC 2023 and TEST-CODE 2024 are not. The report names the profile.",
+  "covers": [
+    "FS-RULES-10.3.1",
+    "FS-RULES-10.6.1"
+  ]
+}

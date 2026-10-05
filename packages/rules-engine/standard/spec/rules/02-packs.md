@@ -12,7 +12,7 @@ format's (FLR-T-6.3), which builds on this object and does not change what it me
 
 | Member | Type | Default | Meaning |
 |---|---|---|---|
-| `floorspecRules` | `"0.1"` | — (always present) | the draft of Floorspec Rules the pack targets |
+| `floorspecRules` | `"0.2"` | — (always present) | the draft of Floorspec Rules the pack targets |
 | `name` | string matching `^[a-z0-9]+(-[a-z0-9]+)*$`, 1–64 characters | — (always present) | the pack's name: `us-model-latest` |
 | `version` | `<major>.<minor>.<patch>`, with an optional `-prerelease` (Semantic Versioning 2.0.0, as a registry entry's, Core §12.2) | — (always present) | the version of the pack's data |
 | `title` | string, 1–200 characters | — (always present) | a human-readable name |
@@ -28,8 +28,8 @@ text whose object has two members of one name is not well formed (Core §9.1.2),
 holding one is reported as `FS-RULES-001` (1.1). A rule is named, everywhere outside its pack, by
 its pack's name and its ID.
 
-The pack schema is `schema/rules/0.1/pack.schema.json`, published at
-`https://d3cloud.io/floorspec/schema/rules/0.1/pack.schema.json`; it refers to the rule record
+The pack schema is `schema/rules/0.2/pack.schema.json`, published at
+`https://d3cloud.io/floorspec/schema/rules/0.2/pack.schema.json`; it refers to the rule record
 schema, `rule.schema.json` beside it.
 
 A pack MUST match the pack schema; an evaluator MUST report `FS-RULES-004` for each pack of a request that does not, and MUST NOT evaluate it. {#FS-RULES-2.1.1 MUST}

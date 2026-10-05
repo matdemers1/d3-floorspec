@@ -1,0 +1,7 @@
+{
+  "description": "GAR is fulfilled by no room, so it is removed - and the forbidden adjacency of GAR and KIT goes with it; the others stay, in their order.",
+  "covers": [
+    "FS-OPS-2.2.3",
+    "FS-OPS-2.2.1"
+  ]
+}

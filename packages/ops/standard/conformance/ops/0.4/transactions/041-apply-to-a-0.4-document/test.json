@@ -1,0 +1,7 @@
+{
+  "description": "A is a Core 0.4 document whose stair declares the headroom it is designed for; it is valid, and a batch applies to it.",
+  "covers": [
+    "FS-OPS-1.2.1",
+    "FS-OPS-1.3.1"
+  ]
+}

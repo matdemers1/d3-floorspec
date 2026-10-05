@@ -1,0 +1,132 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "HALF",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                -443046,
+                5200340
+              ],
+              [
+                56992,
+                74946
+              ],
+              [
+                5046894,
+                948179
+              ],
+              [
+                4171979,
+                6447644
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "172.40 sq ft",
+          "holds": true,
+          "measure": "roomNetArea",
+          "op": ">",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 26241658447513,
+          "thresholdDisplay": "172.40 sq ft",
+          "type": "area",
+          "value": "26241658447513.5"
+        },
+        {
+          "display": "172.40 sq ft",
+          "holds": true,
+          "measure": "roomNetArea",
+          "op": "<",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 26241658447514,
+          "thresholdDisplay": "172.40 sq ft",
+          "type": "area",
+          "value": "26241658447513.5"
+        },
+        {
+          "display": "172.40 sq ft",
+          "holds": false,
+          "measure": "roomNetArea",
+          "op": ">=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 26241658447514,
+          "thresholdDisplay": "172.40 sq ft",
+          "type": "area",
+          "value": "26241658447513.5"
+        },
+        {
+          "display": "172.40 sq ft",
+          "holds": false,
+          "measure": "roomNetArea",
+          "op": "=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 26241658447513,
+          "thresholdDisplay": "172.40 sq ft",
+          "type": "area",
+          "value": "26241658447513.5"
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §1.1 (Half).",
+      "pack": "test-pack",
+      "rule": "HALF",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "Half",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.2",
+  "hash": "265cdf65b3af4ced5fe3bdfd146601dfe8c4302047556d38ecbf6cb0572e7e35",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

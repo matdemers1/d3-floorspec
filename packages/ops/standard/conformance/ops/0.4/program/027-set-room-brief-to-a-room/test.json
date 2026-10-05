@@ -1,0 +1,7 @@
+{
+  "description": "\"item\" expects a program item: R1, a room, does not count as a match.",
+  "covers": [
+    "FS-OPS-4.6.2",
+    "FS-OPS-3.3.1"
+  ]
+}

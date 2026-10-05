@@ -1,0 +1,137 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.1",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3901440
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        4681728,
+        3901440
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        4681728,
+        0
+      ]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [
+        2000000,
+        -300000
+      ]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [
+        2000001,
+        300000
+      ]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [
+        2000000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2340864,
+        1950720
+      ],
+      "level": "L1",
+      "name": "Living"
+    }
+  },
+  "types": {
+    "T-door-36": {
+      "height": 2600960,
+      "kind": "doorType",
+      "width": 1170432
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J7",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    },
+    "W5": {
+      "end": "J7",
+      "level": "L1",
+      "start": "J5",
+      "type": "WT"
+    },
+    "W6": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    },
+    "W7": {
+      "end": "J6",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    }
+  }
+}

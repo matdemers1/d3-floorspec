@@ -1,0 +1,7 @@
+{
+  "description": "A greatest riser taller than the whole rise: 1 riser is enough, and a straight stair of 1 riser does not fit its form. FS-INV-903.",
+  "covers": [
+    "FS-CORE-17.4.2",
+    "FS-CORE-17.4.3"
+  ]
+}

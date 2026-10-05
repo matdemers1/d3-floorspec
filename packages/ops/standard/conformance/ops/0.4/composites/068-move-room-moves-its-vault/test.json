@@ -1,0 +1,7 @@
+{
+  "description": "moveRoom moves R1 3' east: its junctions, its anchor and its vaulted ceiling's ridge move by the same vector (step 3), and nothing else of its ceiling changes.",
+  "covers": [
+    "FS-OPS-4.3.1",
+    "FS-OPS-4.3.2"
+  ]
+}

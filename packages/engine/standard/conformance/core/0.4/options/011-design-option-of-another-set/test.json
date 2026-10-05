@@ -1,0 +1,6 @@
+{
+  "description": "The kitchen and deck house with the design input {\"KS\": \"DB\"}: DB is an option of the Deck set, not of the Kitchen set, so nothing is derived.",
+  "covers": [
+    "FS-CORE-19.6.2"
+  ]
+}

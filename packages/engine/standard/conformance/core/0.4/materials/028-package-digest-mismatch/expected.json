@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-1006",
+      "severity": "error",
+      "elements": ["TILE-PHOTO"]
+    }
+  ]
+}

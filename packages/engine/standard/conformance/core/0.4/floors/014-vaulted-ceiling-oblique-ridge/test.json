@@ -1,0 +1,8 @@
+{
+  "description": "A vault whose ridge runs from (0, 0) to (3 m, 1 m), at 3500 mm: the distance of each corner from the ridge line is an integer over the square root of 10 square metres, so the low is rounded once from an irrational value. The ridge crosses the room, so the high is 3500 mm.",
+  "covers": [
+    "FS-CORE-15.3.2",
+    "FS-CORE-15.5.1",
+    "FS-CORE-2.2.1"
+  ]
+}

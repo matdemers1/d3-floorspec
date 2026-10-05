@@ -1,0 +1,6 @@
+{
+  "description": "A request with a member the request schema does not list (`document`) is FS-RULES-001.",
+  "covers": [
+    "FS-RULES-1.1.1"
+  ]
+}

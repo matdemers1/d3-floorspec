@@ -1,0 +1,25 @@
+{
+  "batch": [
+    {
+      "op": "addWall",
+      "id": "WA",
+      "level": "L1",
+      "start": "S5",
+      "end": "N5",
+      "type": "WT"
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "OA",
+      "element": {
+        "wall": "WA",
+        "offset": 1920000,
+        "fill": "T-door-36"
+      }
+    }
+  ],
+  "context": {
+    "option": "KA"
+  }
+}

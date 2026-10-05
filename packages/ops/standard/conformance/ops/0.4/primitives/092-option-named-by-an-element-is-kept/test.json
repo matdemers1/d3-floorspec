@@ -1,0 +1,6 @@
+{
+  "description": "With context.option KA, an addElement whose element names option KB: it is added in KB, as given.",
+  "covers": [
+    "FS-OPS-2.8.1"
+  ]
+}

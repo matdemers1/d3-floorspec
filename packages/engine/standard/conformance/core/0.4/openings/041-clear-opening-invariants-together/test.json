@@ -1,0 +1,11 @@
+{
+  "description": "A door narrower than its type's clear opening (FS-INV-305), whose type's clear opening is taller than the type (FS-INV-307); a window whose own clear area is more than its width times its height (FS-INV-306); and an empty opening with a clear area (FS-INV-308): each is reported, sorted by code.",
+  "covers": [
+    "FS-CORE-10.2.1",
+    "FS-CORE-10.3.1",
+    "FS-CORE-7.2.2",
+    "FS-CORE-7.1.3",
+    "FS-CORE-8.4.4",
+    "FS-CORE-8.4.5"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "Removing L2 with cascade takes the stair that rises to it with everything on it.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "55af01648fd368d1e36b1c1dc49eea337e8e092c1e43ab66639272c77b4e51c9",
+  "created": ["J7", "W6", "W7"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "moveJunction",
+      "id": "J5",
+      "to": [-243712, 1548288]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J6",
+      "to": [926720, 3108864]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/end",
+      "value": "J2"
+    },
+    {
+      "op": "setProperty",
+      "id": "W5",
+      "path": "/end",
+      "value": "J6"
+    },
+    {
+      "op": "setProperty",
+      "id": "J5",
+      "path": "/position",
+      "value": [780288, 780288]
+    },
+    {
+      "op": "setProperty",
+      "id": "J6",
+      "path": "/position",
+      "value": [1950720, 2340864]
+    },
+    {
+      "op": "removeElement",
+      "id": "W6"
+    },
+    {
+      "op": "removeElement",
+      "id": "W7"
+    },
+    {
+      "op": "removeElement",
+      "id": "J7"
+    }
+  ]
+}

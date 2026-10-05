@@ -1,0 +1,40 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "5fee87d95d4474782ec2884ce916d0aaaee5e31c4c634af30fef3410d345cd16",
+  "created": ["RF8"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "RF7",
+      "path": "/name",
+      "value": "Porch"
+    },
+    {
+      "op": "addElement",
+      "collection": "roofs",
+      "id": "RF8",
+      "element": {
+        "level": "L1",
+        "footprint": [[-64000, -64000], [4745728, -64000], [4745728, 3965440], [-64000, 3965440]],
+        "overhang": 390144,
+        "pitch": {
+          "rise": 4,
+          "run": 12
+        }
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "RF7",
+      "path": "/name"
+    },
+    {
+      "op": "removeElement",
+      "id": "RF8"
+    }
+  ]
+}

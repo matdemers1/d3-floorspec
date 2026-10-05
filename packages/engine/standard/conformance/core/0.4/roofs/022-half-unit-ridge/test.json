@@ -1,0 +1,7 @@
+{
+  "description": "A hip roof 5248000 by 3967999 base units at 7 in 12: its ridge lies on y = 1983999.5, half a base unit off the grid, and rises 7/12 of 1983999.5 above the eave. Each is rounded once, ties to even.",
+  "covers": [
+    "FS-CORE-16.5.1",
+    "FS-CORE-2.2.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The 36-inch exterior door's published batch applied to a document that already holds it: addElement of an ID that is used fails the batch with FS-OPS-005 (2.1.1) - which is why the library's recipe leaves out every element the document already holds with the same content, so that embedding twice adds nothing.",
+  "covers": [
+    "FS-OPS-2.1.1"
+  ]
+}

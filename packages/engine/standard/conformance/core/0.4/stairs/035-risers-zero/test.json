@@ -1,0 +1,6 @@
+{
+  "description": "A stair of 0 risers: a riser count is from 1.",
+  "covers": [
+    "FS-CORE-17.1.1"
+  ]
+}

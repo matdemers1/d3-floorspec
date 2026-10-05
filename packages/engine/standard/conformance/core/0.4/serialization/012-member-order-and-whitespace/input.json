@@ -1,0 +1,86 @@
+{
+	     "walls" :  {
+	         "W4" :  {
+	             "type" :  "WT",
+	             "end" :  "J1",
+	             "start" :  "J4",
+	             "level" :  "L1"
+	         },
+	         "W3" :  {
+	             "type" :  "WT",
+	             "end" :  "J4",
+	             "start" :  "J3",
+	             "level" :  "L1"
+	         },
+	         "W2" :  {
+	             "type" :  "WT",
+	             "end" :  "J3",
+	             "start" :  "J2",
+	             "level" :  "L1"
+	         },
+	         "W1" :  {
+	             "type" :  "WT",
+	             "end" :  "J2",
+	             "start" :  "J1",
+	             "level" :  "L1"
+	         }
+	     },
+	     "rooms" :  {
+	         "R1" :  {
+	             "level" :  "L1",
+	             "anchor" :  [2560000, 1920000]
+	         }
+	     },
+	     "openings" :  {
+	         "O1" :  {
+	             "height" :  2688000,
+	             "width" :  1152000,
+	             "offset" :  1280000,
+	             "wall" :  "W4"
+	         }
+	     },
+	     "junctions" :  {
+	         "J4" :  {
+	             "level" :  "L1",
+	             "position" :  [5120000, 0]
+	         },
+	         "J3" :  {
+	             "level" :  "L1",
+	             "position" :  [5120000, 3840000]
+	         },
+	         "J2" :  {
+	             "level" :  "L1",
+	             "position" :  [0, 3840000]
+	         },
+	         "J1" :  {
+	             "level" :  "L1",
+	             "position" :  [0, 0]
+	         }
+	     },
+	     "types" :  {
+	         "WT" :  {
+	             "kind" :  "wallType",
+	             "layers" :  [
+	                 {
+	                     "thickness" :  128000,
+	                     "function" :  "core"
+	                 }
+	             ]
+	         }
+	     },
+	     "project" :  {
+	         "name" :  "Conformance"
+	     },
+	     "levels" :  {
+	         "L1" :  {
+	             "building" :  "B1",
+	             "elevation" :  0,
+	             "height" :  3456000
+	         }
+	     },
+	     "floorspec" :  "0.4",
+	     "buildings" :  {
+	         "B1" :  {}
+	     }
+	 }
+

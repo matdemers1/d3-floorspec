@@ -12,14 +12,14 @@ The request is a JSON text (Core §9.1) whose value is an object:
 
 | Member | Type | Default | Meaning |
 |---|---|---|---|
-| `floorspecRules` | `"0.1"` | — (always present) | the draft of Floorspec Rules the request targets |
+| `floorspecRules` | `"0.2"` | — (always present) | the draft of Floorspec Rules the request targets |
 | `packs` | array of rule packs (chapter 2) | — (always present) | the packs to evaluate; it may be empty |
 | `profile` | profile (chapter 10) | the default profile (10.6) | the jurisdiction profile to evaluate under |
 | `units` | `"imperial"` or `"metric"` | `"imperial"` | how the report displays lengths and areas (9.6) |
 | `design` | object: option set ID → option ID | absent: the primary design | the design of a document with design options to evaluate (Core §19.6) |
 
-The request schema is `schema/rules/0.1/request.schema.json`, published at
-`https://d3cloud.io/floorspec/schema/rules/0.1/request.schema.json`. It checks the request's own
+The request schema is `schema/rules/0.2/request.schema.json`, published at
+`https://d3cloud.io/floorspec/schema/rules/0.2/request.schema.json`. It checks the request's own
 members; each pack and the profile are checked by their own schemas later (2.1, 10.1), so that one
 malformed pack does not stop the others.
 
@@ -27,13 +27,13 @@ An evaluator MUST evaluate a request only when it is a well-formed JSON text, as
 
 ## 1.2 The document
 
-An evaluator reads the document as a Core 0.3 reader (Core §1.2.6), with the official extensions
+An evaluator reads the document as a Core 0.4 reader (Core §1.2.8), with the official extensions
 it implements: an extension is **evaluated** for a document exactly when that extension's own
 specification says its validator evaluates it (each official extension's §1.2) — for the official
-extensions at 0.1.0, when the document declares `"0.2"` or `"0.3"` and uses the extension at a
+extensions at 0.1.0, when the document declares `"0.2"`, `"0.3"` or `"0.4"` and uses the extension at a
 version the evaluator both implements and knows.
 
-An evaluator MUST evaluate rules only for a valid document — one that a Core 0.3 validator implementing the same extensions, configured with the same known extensions, reports valid (Core §10.1) — and for any other document MUST report `FS-RULES-003` and no finding. {#FS-RULES-1.2.1 MUST}
+An evaluator MUST evaluate rules only for a valid document — one that a Core 0.4 validator implementing the same extensions, configured with the same known extensions, reports valid (Core §10.1) — and for any other document MUST report `FS-RULES-003` and no finding. {#FS-RULES-1.2.3 MUST}
 
 A document is valid or not before any rule is read: rules never make one valid or invalid (1.5).
 

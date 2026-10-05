@@ -1,0 +1,9 @@
+{
+  "description": "A tray ceiling in a room with two oblique walls: each moved vertex is an intersection of two moved lines, exact, rounded once - the apex moves straight down by 300 mm times the square root of 5 over 2.",
+  "covers": [
+    "FS-CORE-15.4.2",
+    "FS-CORE-15.5.1",
+    "FS-CORE-15.4.1",
+    "FS-CORE-2.2.1"
+  ]
+}

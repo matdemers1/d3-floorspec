@@ -1,0 +1,41 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "ff21cb3540e80808b67a89b9c236f498661f7014d681f7af2e32dd955d357649",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setAdjacency",
+      "a": "PAN",
+      "b": "DIN",
+      "kind": "preferred",
+      "weight": 2
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/program/adjacency",
+      "value": [
+        {
+          "a": "KIT",
+          "b": "DIN",
+          "kind": "required"
+        },
+        {
+          "a": "KIT",
+          "b": "PAN",
+          "kind": "preferred",
+          "weight": 3
+        },
+        {
+          "a": "GAR",
+          "b": "KIT",
+          "kind": "forbidden"
+        }
+      ]
+    }
+  ]
+}

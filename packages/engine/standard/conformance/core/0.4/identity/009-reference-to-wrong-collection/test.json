@@ -1,0 +1,6 @@
+{
+  "description": "An opening hosted on separator S1: \"wall\" must resolve in the walls collection, and S1 is a separator - a separator has nothing to cut.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

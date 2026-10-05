@@ -1,0 +1,9 @@
+{
+  "description": "A valid document with every circulation lint. In the house B1: an office with only a window into the living room (FS-LINT-012), and a bedroom reached only through another (FS-LINT-013) - the bathroom and closet behind it are not sleeping rooms, so nothing is said of them. In the workshop B2: a cased opening between its two rooms and no way in (FS-LINT-014). No circulation condition is an error.",
+  "covers": [
+    "FS-CORE-10.1.1",
+    "FS-CORE-10.2.1",
+    "FS-CORE-14.4.1",
+    "FS-CORE-14.4.3"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A butt join at J0 naming W9, a wall elsewhere on the level.",
+  "covers": [
+    "FS-CORE-5.8.1",
+    "FS-CORE-10.2.1"
+  ]
+}

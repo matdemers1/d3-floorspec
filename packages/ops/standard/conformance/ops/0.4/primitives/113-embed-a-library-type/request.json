@@ -1,0 +1,144 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "fibre-cement-siding",
+      "element": {
+        "color": "#8f9aa1",
+        "name": "Fibre-cement lap siding, painted",
+        "roughness": 750,
+        "source": {
+          "item": "fibre-cement-siding",
+          "library": "https://d3cloud.io/floorspec/library/us-starter",
+          "version": "0.1.0"
+        }
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "weather-resistive-barrier",
+      "element": {
+        "color": "#e9edf0",
+        "name": "Weather-resistive barrier",
+        "roughness": 600,
+        "source": {
+          "item": "weather-resistive-barrier",
+          "library": "https://d3cloud.io/floorspec/library/us-starter",
+          "version": "0.1.0"
+        }
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "osb-sheathing",
+      "element": {
+        "color": "#c09a5b",
+        "name": "OSB sheathing",
+        "roughness": 900,
+        "source": {
+          "item": "osb-sheathing",
+          "library": "https://d3cloud.io/floorspec/library/us-starter",
+          "version": "0.1.0"
+        }
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "wood-stud-framing-insulated",
+      "element": {
+        "color": "#dcc28c",
+        "name": "Wood stud framing, insulated cavities",
+        "roughness": 900,
+        "source": {
+          "item": "wood-stud-framing-insulated",
+          "library": "https://d3cloud.io/floorspec/library/us-starter",
+          "version": "0.1.0"
+        }
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "gypsum-board",
+      "element": {
+        "color": "#efede8",
+        "name": "Gypsum board, painted",
+        "roughness": 900,
+        "source": {
+          "item": "gypsum-board",
+          "library": "https://d3cloud.io/floorspec/library/us-starter",
+          "version": "0.1.0"
+        }
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "types",
+      "id": "wall-2x6-exterior-fibre-cement",
+      "element": {
+        "kind": "wallType",
+        "layers": [
+          {
+            "function": "finish",
+            "material": "fibre-cement-siding",
+            "thickness": 10160
+          },
+          {
+            "function": "membrane",
+            "material": "weather-resistive-barrier",
+            "thickness": 508
+          },
+          {
+            "function": "substrate",
+            "material": "osb-sheathing",
+            "thickness": 14224
+          },
+          {
+            "function": "core",
+            "material": "wood-stud-framing-insulated",
+            "thickness": 178816
+          },
+          {
+            "function": "finish",
+            "material": "gypsum-board",
+            "thickness": 16256
+          }
+        ],
+        "name": "2x6 exterior wall, fibre-cement siding",
+        "source": {
+          "item": "wall-2x6-exterior-fibre-cement",
+          "library": "https://d3cloud.io/floorspec/library/us-starter",
+          "version": "0.1.0"
+        }
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/type",
+      "value": "wall-2x6-exterior-fibre-cement"
+    },
+    {
+      "op": "setProperty",
+      "id": "W2",
+      "path": "/type",
+      "value": "wall-2x6-exterior-fibre-cement"
+    },
+    {
+      "op": "setProperty",
+      "id": "W3",
+      "path": "/type",
+      "value": "wall-2x6-exterior-fibre-cement"
+    },
+    {
+      "op": "setProperty",
+      "id": "W4",
+      "path": "/type",
+      "value": "wall-2x6-exterior-fibre-cement"
+    }
+  ]
+}

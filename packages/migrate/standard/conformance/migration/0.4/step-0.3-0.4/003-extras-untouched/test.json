@@ -1,0 +1,8 @@
+{
+  "description": "A 0.3 document whose extras carry a record of an earlier migration and a member that is not an array where a record would go is no obstacle either: the step moves nothing, so it adds no record and changes no extras (20.3.2, 20.3.3, 20.7.1).",
+  "covers": [
+    "FS-CORE-20.7.1",
+    "FS-CORE-20.3.2",
+    "FS-CORE-20.3.3"
+  ]
+}

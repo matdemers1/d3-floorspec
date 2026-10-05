@@ -1,0 +1,11 @@
+{
+  "description": "Opening measures on the bedroom window O1 (3' x 4', sill 2'), the door O2 (3' x 6' 8\") between bedroom and living room, the front door O3 and an empty opening O6 in R3's south wall: kind, size as drawn, area, sill and head above the floor, and whether the wall faces the outside.",
+  "covers": [
+    "FS-RULES-4.7.1",
+    "FS-RULES-6.1.1",
+    "FS-RULES-6.2.1",
+    "FS-RULES-6.3.1",
+    "FS-RULES-6.4.1",
+    "FS-RULES-9.6.1"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "description": "The kitchen house with two kitchen options: A, primary, closes the kitchen off with a wall and a door at x = 5 m; B opens it to the dining room with a separator at x = 4 m and adds a window over the sink. Valid: the primary design, A, and B's option design are both valid. What is derived is the primary design - WA, OA and the rooms either side of WA, and no SB or OB - and `options` gives, for each option, its members, the rooms of its design with their areas, and what in the primary design differs in it: the two rooms, their floors and ceilings, and the walls WA met. The window type G is used only by B's window, and is used: FS-LINT-006 is of the document, not of a design.",
+  "covers": [
+    "FS-CORE-19.1.1",
+    "FS-CORE-19.1.2",
+    "FS-CORE-19.2.1",
+    "FS-CORE-19.3.1",
+    "FS-CORE-19.4.1",
+    "FS-CORE-19.5.1",
+    "FS-CORE-19.6.1",
+    "FS-CORE-19.6.3",
+    "FS-CORE-9.2.1"
+  ]
+}

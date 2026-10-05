@@ -1,6 +1,6 @@
 /**
- * @floorspec/migrate — the reference migrator of Floorspec Core 0.3, chapter 20 (FLR-REQ-150): a
- * document of 0.1 or 0.2 migrated to a later draft, byte for byte as the migration suite says, and
+ * @floorspec/migrate — the reference migrator of Floorspec Core 0.4, chapter 20 (FLR-REQ-150): a
+ * document of 0.1, 0.2 or 0.3 migrated to a later draft, byte for byte as the migration suite says, and
  * the Floorspec Ops batch that makes exactly the same change to a stored document (FLR-ADR-008:
  * every change is an Op).
  *
@@ -8,7 +8,7 @@
  * extension, knows none and reads no file. Each step makes the document declare the next draft and
  * moves, into the record `extras["floorspec:migration"]`, the members whose meaning that draft
  * changed — 0.1 → 0.2 the opaque `collections` of top-level extension data (20.4), 0.2 → 0.3 an
- * extension element's own `option` (20.5) — so that a reader of the target reads the migration
+ * extension element's own `option` (20.5), 0.3 → 0.4 nothing (20.7) — so that a reader of the target reads the migration
  * exactly as it reads the document (20.6). Isomorphic (FLR-ADR-010): the editor, the server, MCP and
  * the CLI run the same code.
  */
@@ -17,8 +17,17 @@ import { CORE_VERSION, contentHash, evaluate, parseJson, writePretty, type Diagn
 export const PACKAGE_NAME = '@floorspec/migrate';
 
 /** The drafts this migrator reads and writes, oldest first (20.1). */
-export const DRAFTS = ['0.1', '0.2', '0.3'] as const;
+export const DRAFTS = ['0.1', '0.2', '0.3', '0.4'] as const;
 export type Draft = (typeof DRAFTS)[number];
+
+export interface MigrateOptions {
+  /**
+   * The newest draft the migrator implements: `'0.4'`, the default, a migrator of Core 0.4; `'0.3'` a
+   * migrator of Core 0.3 exactly as published, which refuses a document declaring "0.4" (FS-DOC-001)
+   * and the target "0.4" (FS-MIG-001) — what the published 0.3 migration suite tests.
+   */
+  readonly migrator?: '0.3' | '0.4';
+}
 
 /** The member of a document's `extras` where a migration records what it moved (20.3). */
 export const RECORD = 'floorspec:migration';
@@ -88,7 +97,7 @@ interface Move {
 }
 
 /** The members one step moves (20.4.1, 20.5.1). */
-const MOVES: Record<'0.1' | '0.2', (doc: Json) => Move[]> = {
+const MOVES: Record<'0.1' | '0.2' | '0.3', (doc: Json) => Move[]> = {
   // 20.4.1: the member `collections` of every extension's top-level data that is an object with one.
   '0.1': (doc) =>
     Object.entries(isObject(doc.extensions) ? doc.extensions : {})
@@ -107,9 +116,11 @@ const MOVES: Record<'0.1' | '0.2', (doc: Json) => Move[]> = {
     }
     return out;
   },
+  // 20.7.1: nothing - Core 0.4 adds members of objects core closes, and changes the meaning of none.
+  '0.3': () => [],
 };
 
-const NEXT: Record<'0.1' | '0.2', Draft> = { '0.1': '0.2', '0.2': '0.3' };
+const NEXT: Record<'0.1' | '0.2' | '0.3', Draft> = { '0.1': '0.2', '0.2': '0.3', '0.3': '0.4' };
 
 /**
  * One step (20.1), from the draft a document declares to the next: a new document and the record of
@@ -119,7 +130,7 @@ const NEXT: Record<'0.1' | '0.2', Draft> = { '0.1': '0.2', '0.2': '0.3' };
  */
 export function step(document: Json): { document: Json; record?: MigrationRecord } {
   const from = document.floorspec;
-  if (from !== '0.1' && from !== '0.2') throw new Error(`no step from ${String(from)}`);
+  if (from !== '0.1' && from !== '0.2' && from !== '0.3') throw new Error(`no step from ${String(from)}`);
   const to = NEXT[from];
   const out = copy(document);
   const paths = MOVES[from](out);
@@ -150,7 +161,7 @@ export function step(document: Json): { document: Json; record?: MigrationRecord
  * The tiers 1 to 3 of 20.2.1 — as a validator implementing every extension and knowing none reports
  * them: FS-JSON-, FS-DOC-001, FS-SCH-001 — or the parsed document when it passes them.
  */
-function read(input: string | Uint8Array | object): { value: Json } | { diagnostics: Diagnostic[] } {
+function read(input: string | Uint8Array | object, migrator: '0.3' | '0.4'): { value: Json } | { diagnostics: Diagnostic[] } {
   let value: unknown = input;
   if (typeof input === 'string' || input instanceof Uint8Array) {
     const parsed = parseJson(input);
@@ -159,7 +170,7 @@ function read(input: string | Uint8Array | object): { value: Json } | { diagnost
   }
   // A migrator needs to implement no extension (20.2.2): read as one that implements the required ones.
   const required = isObject(value) && Array.isArray(value.extensionsRequired) ? value.extensionsRequired.filter((n): n is string => typeof n === 'string') : [];
-  const ev = evaluate(input, { extensions: required });
+  const ev = evaluate(input, { extensions: required, core: migrator });
   const early = ev.diagnostics.filter((d) => /^FS-(JSON|DOC|SCH)-/.test(d.code));
   if (early.length) return { diagnostics: early };
   return { value: value as Json };
@@ -178,23 +189,25 @@ export function migrateValue(document: Json, to: Draft): { document: Json; recor
 }
 
 /**
- * Migrate a document — a JSON text, its UTF-8 bytes, or a parsed value — to the draft `to` (Core 0.3,
+ * Migrate a document — a JSON text, its UTF-8 bytes, or a parsed value — to the draft `to` (Core 0.4,
  * chapter 20): migrated, with the migration's bytes and hash, or refused, with the diagnostics a
  * conformant migrator reports.
  */
-export function migrate(input: string | Uint8Array | object, to: unknown = CORE_VERSION): MigrationResult {
-  const r = read(input);
+export function migrate(input: string | Uint8Array | object, to: unknown = CORE_VERSION, options: MigrateOptions = {}): MigrationResult {
+  const migrator = options.migrator ?? '0.4';
+  const drafts = DRAFTS.slice(0, DRAFTS.indexOf(migrator) + 1);
+  const r = read(input, migrator);
   if ('diagnostics' in r) return { status: 'refused', diagnostics: r.diagnostics };
   const declared = r.value.floorspec as Draft;
-  if (!isDraft(to) || DRAFTS.indexOf(to) < DRAFTS.indexOf(declared))
+  if (!isDraft(to) || !(drafts as readonly string[]).includes(to) || DRAFTS.indexOf(to) < DRAFTS.indexOf(declared))
     return {
       status: 'refused',
       diagnostics: [
         diagnostic(
           'FS-MIG-001',
-          isDraft(to)
+          isDraft(to) && (drafts as readonly string[]).includes(to)
             ? `The document declares ${declared}; a migration never goes back to ${to}.`
-            : `${JSON.stringify(to)} is not a draft this migrator implements (${DRAFTS.join(', ')}).`,
+            : `${JSON.stringify(to)} is not a draft this migrator implements (${drafts.join(', ')}).`,
         ),
       ],
     };
@@ -218,7 +231,7 @@ export type MigrationOp =
   | { op: 'setProperty'; id: '$document'; path: string; value: unknown };
 
 /**
- * The Floorspec Ops batch that migrates a stored document to `to` (Core 20.10): `unsetProperty` of
+ * The Floorspec Ops batch that migrates a stored document to `to` (Core 20.11): `unsetProperty` of
  * `$document` for every member a step moves, in the order the steps move them; `setProperty` of
  * `$document` `/extras/floorspec:migration` with the record, when anything moved; and `setProperty`
  * of `/floorspec`. Applied to the document, it commits exactly the migration's canonical form. Empty

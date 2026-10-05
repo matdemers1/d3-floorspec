@@ -1,0 +1,7 @@
+{
+  "description": "The inverse of the split under the outlets sets each re-hosted outlet's host back before it removes the pieces.",
+  "covers": [
+    "FS-OPS-1.6.1",
+    "FS-OPS-5.2.2"
+  ]
+}

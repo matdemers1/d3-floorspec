@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/rules/0.2/report.schema.json",
+  "$comment": "Normative (FLR-ADR-006): the report an evaluator returns (Floorspec Rules 0.2, 9.1), written as Core 9.2 step 2 writes a value (9.8).",
+  "title": "Floorspec Rules 0.2 report",
+  "description": "9.1: what was checked, what was found, the coverage that applies and the notice.",
+  "type": "object",
+  "required": [
+    "floorspecRules",
+    "notice",
+    "diagnostics",
+    "evaluated",
+    "notEvaluated",
+    "coverage",
+    "findings"
+  ],
+  "properties": {
+    "floorspecRules": {
+      "$ref": "defs.schema.json#/$defs/floorspecRules"
+    },
+    "notice": {
+      "const": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides."
+    },
+    "units": {
+      "type": "string",
+      "enum": [
+        "imperial",
+        "metric"
+      ]
+    },
+    "profile": {
+      "$ref": "defs.schema.json#/$defs/title"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "title": "Rules diagnostic",
+        "description": "11: a diagnostic about the request, its profile or its packs — never about the design.",
+        "type": "object",
+        "required": [
+          "code",
+          "severity"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^FS-RULES-[0-9]{3}$"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ]
+          },
+          "packIndex": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pack": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evaluated": {
+      "type": "array",
+      "items": {
+        "title": "Rule entry",
+        "description": "9.1.",
+        "type": "object",
+        "required": [
+          "pack",
+          "version",
+          "rule",
+          "citation",
+          "subjects",
+          "exempt",
+          "findings"
+        ],
+        "properties": {
+          "pack": {
+            "$ref": "defs.schema.json#/$defs/packName"
+          },
+          "version": {
+            "$ref": "defs.schema.json#/$defs/version"
+          },
+          "rule": {
+            "$ref": "defs.schema.json#/$defs/id"
+          },
+          "citation": {
+            "$ref": "defs.schema.json#/$defs/citation"
+          },
+          "subjects": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "exempt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "findings": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "notEvaluated": {
+      "type": "array",
+      "items": {
+        "title": "Rule entry",
+        "description": "9.1.",
+        "type": "object",
+        "required": [
+          "pack",
+          "version",
+          "rule",
+          "reason"
+        ],
+        "properties": {
+          "pack": {
+            "$ref": "defs.schema.json#/$defs/packName"
+          },
+          "version": {
+            "$ref": "defs.schema.json#/$defs/version"
+          },
+          "rule": {
+            "$ref": "defs.schema.json#/$defs/id"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "profile",
+              "invalid",
+              "deferred",
+              "edition",
+              "withdrawn",
+              "extension"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "coverage": {
+      "type": "array",
+      "items": {
+        "title": "Report coverage entry",
+        "description": "9.1: a coverage entry of a selected pack whose code and edition are in force, with its pack's name.",
+        "type": "object",
+        "required": [
+          "pack",
+          "code",
+          "edition",
+          "section",
+          "status"
+        ],
+        "properties": {
+          "pack": {
+            "$ref": "defs.schema.json#/$defs/packName"
+          },
+          "code": {
+            "$ref": "defs.schema.json#/$defs/code"
+          },
+          "edition": {
+            "$ref": "defs.schema.json#/$defs/edition"
+          },
+          "section": {
+            "$ref": "defs.schema.json#/$defs/section"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "addressed",
+              "partial",
+              "notAddressed"
+            ]
+          },
+          "note": {
+            "$ref": "defs.schema.json#/$defs/text"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "finding.schema.json"
+      }
+    }
+  },
+  "additionalProperties": false
+}

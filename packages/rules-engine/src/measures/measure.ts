@@ -35,6 +35,8 @@ export interface Measure {
   /** Whether its result lists `involved` (4.7). */
   readonly involved: boolean;
   readonly compute: (model: Model, target: Target, args: Args) => Computed;
+  /** The draft of Rules that defines it: an evaluator of an earlier draft does not know it. */
+  readonly since?: '0.2';
 }
 
 /** A measure, with the defaults most share: no arguments, reads nothing, names nothing. */

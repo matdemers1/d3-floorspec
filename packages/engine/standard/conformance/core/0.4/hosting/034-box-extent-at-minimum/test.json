@@ -1,0 +1,6 @@
+{
+  "description": "A fallback box exactly 1,280 base units (1 mm) in every extent: valid.",
+  "covers": [
+    "FS-CORE-13.2.2"
+  ]
+}

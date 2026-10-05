@@ -1,0 +1,22 @@
+{
+  "batch": [
+    {
+      "op": "addLevel",
+      "building": "B1",
+      "above": "L1",
+      "height": "8'"
+    },
+    {
+      "op": "addLevel",
+      "building": "B1",
+      "above": "L2",
+      "height": "9'"
+    },
+    {
+      "op": "addLevel",
+      "building": "B1",
+      "below": "L1",
+      "height": 3200000
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.4/junction.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.1's Junction table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Junction",
+  "description": "5.1: a node of a level's wall graph — a point on a level where walls and separators start and end. Every junction MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). That no two junctions on a level share a position (FS-CORE-5.1.1) is an invariant (FS-INV-101), not checked here.",
+  "type": "object",
+  "required": [
+    "level",
+    "position"
+  ],
+  "properties": {
+    "level": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "1.3, 5.1: a reference to the level the junction is on. Always present."
+    },
+    "position": {
+      "$ref": "defs.schema.json#/$defs/point",
+      "description": "5.1: where the junction is, in plan. Always present."
+    },
+    "join": {
+      "$ref": "#/$defs/join",
+      "description": "5.1, 5.8: how the walls meeting here are cut.",
+      "default": {
+        "kind": "mitre"
+      }
+    },
+    "option": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "19.2: a reference to the option this junction is in. Absent: it is in no option, and so in every design."
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/name",
+      "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+    },
+    "extensions": {
+      "$ref": "defs.schema.json#/$defs/extensions",
+      "description": "1.4, 1.6: extension data on this junction.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.4, 1.7: application-specific data on this junction.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "join": {
+      "title": "Join override",
+      "description": "5.8: how the walls meeting at the junction are cut — the default mitre, or a butt join naming one or two walls that run through. Whether a butt join applies to its junction (FS-CORE-5.8.1 to 5.8.3) is an invariant (FS-INV-111), not checked here.",
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "title": "Join kind",
+          "description": "5.8: \"mitre\" (the default join of 5.7) or \"butt\".",
+          "type": "string",
+          "enum": [
+            "mitre",
+            "butt"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "title": "Mitre join",
+          "description": "5.8: { \"kind\": \"mitre\" } — the default join, as 5.7.",
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "description": "5.8: \"mitre\".",
+              "const": "mitre"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Butt join",
+          "description": "5.8: { \"kind\": \"butt\", \"through\": [W] } or { \"kind\": \"butt\", \"through\": [W1, W2] } — one or two walls run through the junction and every other edge stops against them.",
+          "type": "object",
+          "required": [
+            "kind",
+            "through"
+          ],
+          "properties": {
+            "kind": {
+              "description": "5.8: \"butt\".",
+              "const": "butt"
+            },
+            "through": {
+              "title": "Through walls",
+              "description": "5.8: references to the one or two walls that run through the junction.",
+              "type": "array",
+              "items": {
+                "$ref": "defs.schema.json#/$defs/reference"
+              },
+              "minItems": 1,
+              "maxItems": 2
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

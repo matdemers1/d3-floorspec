@@ -1,0 +1,6 @@
+{
+  "description": "A straight stair of 1 riser has no tread. FS-INV-903.",
+  "covers": [
+    "FS-CORE-17.4.2"
+  ]
+}

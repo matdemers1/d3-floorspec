@@ -1,0 +1,15 @@
+{
+  "status": "migrated",
+  "diagnostics": [],
+  "hash": "350bfaa669eb700fd8922e27765d8fa21c128e615cecd8761eadfbceb79ab244",
+  "validation": {
+    "valid": true,
+    "diagnostics": [
+      {
+        "code": "FS-LINT-003",
+        "severity": "info",
+        "elements": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A spiral stair of 1 riser through 10 microdegrees: its riser count does not fit (FS-INV-903), and FS-INV-906 is not evaluated for it (10.3).",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-17.4.2"
+  ]
+}

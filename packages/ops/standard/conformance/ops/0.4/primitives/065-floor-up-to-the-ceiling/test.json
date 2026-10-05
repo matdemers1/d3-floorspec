@@ -1,0 +1,7 @@
+{
+  "description": "setProperty raises R1's floor to the level's height, where its flat ceiling is: the ceiling is not above the floor (Core 15.2.2), FS-INV-701.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A texture tile has positive size.",
+  "covers": [
+    "FS-CORE-8.5.2"
+  ]
+}

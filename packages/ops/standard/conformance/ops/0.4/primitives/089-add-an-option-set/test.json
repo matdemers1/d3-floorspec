@@ -1,0 +1,7 @@
+{
+  "description": "addElement adds the Kitchen option set, naming A its primary, and its options A and B: valid, and the set derives its options.",
+  "covers": [
+    "FS-OPS-2.1.1",
+    "FS-OPS-1.3.1"
+  ]
+}

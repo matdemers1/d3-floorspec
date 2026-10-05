@@ -1,0 +1,7 @@
+{
+  "description": "EXT_a requires EXT_b at \">1.0.0-alpha.9\", and the document uses EXT_b 1.0.0-alpha.beta. An alphanumeric identifier is greater than a numeric one: alpha.beta is greater than alpha.9.",
+  "covers": [
+    "FS-CORE-12.3.1",
+    "FS-CORE-12.3.3"
+  ]
+}

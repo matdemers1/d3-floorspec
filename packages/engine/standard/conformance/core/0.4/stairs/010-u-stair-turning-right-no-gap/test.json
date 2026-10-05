@@ -1,0 +1,8 @@
+{
+  "description": "A U-shaped stair turning right with no gap - written out as \"gap\": 0, its constant default, which the canonical form omits: its second flight is beside its first, to its right.",
+  "covers": [
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.5.1",
+    "FS-CORE-9.2.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "An operation that neither list has: \"revolving\".",
+  "covers": [
+    "FS-CORE-8.4.2"
+  ]
+}

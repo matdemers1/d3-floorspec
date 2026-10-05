@@ -1,0 +1,10 @@
+{
+  "status": "refused",
+  "diagnostics": [
+    {
+      "code": "FS-MIG-002",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

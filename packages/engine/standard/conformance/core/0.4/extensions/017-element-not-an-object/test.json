@@ -1,0 +1,6 @@
+{
+  "description": "An extension element is an object.",
+  "covers": [
+    "FS-CORE-12.5.1"
+  ]
+}

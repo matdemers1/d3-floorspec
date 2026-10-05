@@ -1,0 +1,7 @@
+{
+  "description": "Rules applying to every room (3 subjects), to sleeping rooms (1), to windows (2: O1 and O5), to the panels of FS_electrical (1), to every FS_electrical element (4: the panel, the alarm and two receptacles), to every extension element (5) and to every level (1). The windows, whose sills are 2', the panel, whose top is 5' 3\", and the level, with 3 rooms, each give a finding.",
+  "covers": [
+    "FS-RULES-3.4.1",
+    "FS-RULES-3.6.1"
+  ]
+}

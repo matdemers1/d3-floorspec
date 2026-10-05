@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-OPS-004",
+      "severity": "error",
+      "elements": ["B1R", "B2R"]
+    }
+  ]
+}

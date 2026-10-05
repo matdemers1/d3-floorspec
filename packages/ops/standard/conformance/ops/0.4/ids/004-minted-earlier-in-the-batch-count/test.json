@@ -1,0 +1,7 @@
+{
+  "description": "A junction minted (J5) and removed in the same batch still counts: the next one is J6.",
+  "covers": [
+    "FS-OPS-1.5.1",
+    "FS-OPS-2.1.2"
+  ]
+}

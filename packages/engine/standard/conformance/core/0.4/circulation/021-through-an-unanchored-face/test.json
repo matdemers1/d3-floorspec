@@ -1,0 +1,7 @@
+{
+  "description": "A vestibule with the front door that nobody has made a room, and a door from it to the living room. Only rooms are nodes of the door graph, so no path passes through the vestibule: the building has no entry (FS-LINT-014), beside the unanchored face (FS-LINT-003).",
+  "covers": [
+    "FS-CORE-14.3.1",
+    "FS-CORE-14.4.2"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "removeElement",
+      "id": "R2"
+    },
+    {
+      "op": "addRoom",
+      "level": "L1",
+      "at": ["25'", "5'"],
+      "brief": "Office",
+      "function": "office"
+    }
+  ]
+}

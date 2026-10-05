@@ -1,0 +1,19 @@
+{
+  "results": [
+    {
+      "display": "yes",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "display": "no",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "display": "no",
+      "type": "boolean",
+      "value": false
+    }
+  ]
+}

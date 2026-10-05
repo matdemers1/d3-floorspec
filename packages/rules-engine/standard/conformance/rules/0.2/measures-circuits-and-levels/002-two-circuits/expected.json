@@ -1,0 +1,27 @@
+{
+  "results": [
+    {
+      "display": "2",
+      "involved": [
+        "C1",
+        "C2"
+      ],
+      "type": "count",
+      "value": 2
+    },
+    {
+      "display": "1",
+      "involved": [
+        "C2"
+      ],
+      "type": "count",
+      "value": 1
+    },
+    {
+      "display": "no",
+      "involved": [],
+      "type": "boolean",
+      "value": false
+    }
+  ]
+}

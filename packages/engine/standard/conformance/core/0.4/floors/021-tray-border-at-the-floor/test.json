@@ -1,0 +1,7 @@
+{
+  "description": "A tray whose border is at 1000 mm over a floor raised 1000 mm: its raised centre is above the floor, but its border is not, and the least of the ceiling is what is tested. FS-INV-701.",
+  "covers": [
+    "FS-CORE-15.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

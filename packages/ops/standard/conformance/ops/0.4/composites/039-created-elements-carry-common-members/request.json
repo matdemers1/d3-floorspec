@@ -1,0 +1,26 @@
+{
+  "batch": [
+    {
+      "op": "addOpening",
+      "wall": "W3",
+      "at": "2'",
+      "width": "2'",
+      "height": "3'",
+      "sill": "3'",
+      "name": "Pantry window",
+      "extras": {
+        "glazing": "double"
+      }
+    },
+    {
+      "op": "drawSeparator",
+      "level": "L1",
+      "from": ["24'", "6'"],
+      "to": ["28'", "6'"],
+      "name": "Patio edge",
+      "extensions": {
+        "EXT_acoustics": {}
+      }
+    }
+  ]
+}

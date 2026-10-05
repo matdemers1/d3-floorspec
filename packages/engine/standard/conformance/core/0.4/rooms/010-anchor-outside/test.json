@@ -1,0 +1,7 @@
+{
+  "description": "A room anchored outside every wall: in the unbounded face.",
+  "covers": [
+    "FS-CORE-6.3.1",
+    "FS-CORE-10.2.1"
+  ]
+}

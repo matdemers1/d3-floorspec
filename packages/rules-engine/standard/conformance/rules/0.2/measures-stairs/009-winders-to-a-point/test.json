@@ -1,0 +1,6 @@
+{
+  "description": "A winder stair with no newel: its winders meet at the pivot, so its narrowGoing is 0 and the narrow-end rule finds it; at the walkline its winders are as deep as with a newel.",
+  "covers": [
+    "FS-RULES-8.5.2"
+  ]
+}

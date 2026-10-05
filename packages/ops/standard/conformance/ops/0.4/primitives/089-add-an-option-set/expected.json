@@ -1,0 +1,50 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "a2d0d46c4aa97b92aedf4d355a987053c030c285a0b3c36c8b49a627e6e127b5",
+  "created": ["KA", "KB", "KS"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "optionSets",
+      "id": "KS",
+      "element": {
+        "name": "Kitchen",
+        "primary": "KA"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "KA",
+      "element": {
+        "name": "A",
+        "set": "KS"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "KB",
+      "element": {
+        "name": "B",
+        "set": "KS"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "KA"
+    },
+    {
+      "op": "removeElement",
+      "id": "KB"
+    },
+    {
+      "op": "removeElement",
+      "id": "KS"
+    }
+  ]
+}

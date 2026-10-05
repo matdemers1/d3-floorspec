@@ -1,0 +1,7 @@
+{
+  "description": "The notched rectangle with a 2-foot overhang all round: the notch is 2 feet wide, so its sides' moved lines cross and its bottom edge runs backwards. FS-INV-805.",
+  "covers": [
+    "FS-CORE-16.3.1",
+    "FS-CORE-10.2.1"
+  ]
+}

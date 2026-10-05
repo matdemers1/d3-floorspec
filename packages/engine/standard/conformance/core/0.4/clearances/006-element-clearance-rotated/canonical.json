@@ -1,0 +1,146 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "extensions": {
+    "FS_plumbing": {
+      "collections": {
+        "fixtures": {
+          "WC": {
+            "clearances": {
+              "front": {
+                "max": [
+                  1664000,
+                  512000,
+                  1280000
+                ],
+                "min": [
+                  896000,
+                  -512000,
+                  0
+                ],
+                "purpose": "fixtureClearance",
+                "shape": "box"
+              }
+            },
+            "fallback": {
+              "box": {
+                "max": [
+                  896000,
+                  256000,
+                  1024000
+                ],
+                "min": [
+                  0,
+                  -256000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "mode": "surface",
+              "position": [
+                1280000,
+                1280000
+              ],
+              "room": "R1",
+              "rotation": 30000000,
+              "surface": "floor"
+            }
+          }
+        }
+      }
+    }
+  },
+  "extensionsUsed": {
+    "FS_plumbing": "0.1"
+  },
+  "floorspec": "0.4",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "level": "L1"
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    }
+  }
+}

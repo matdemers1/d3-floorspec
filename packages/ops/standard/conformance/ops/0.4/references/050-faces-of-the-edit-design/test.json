@@ -1,0 +1,8 @@
+{
+  "description": "B draws a short wall WB across A's wall WA: the level as a whole is not planar, but each design is. With context.option KA, \"wall between DIN and KIT\" reads the faces of A's design, and is WA: the door is added there, in A.",
+  "covers": [
+    "FS-OPS-2.8.2",
+    "FS-OPS-3.4.1",
+    "FS-OPS-2.8.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A newel of 318 mm: 8 x 318^2 is less than 900^2, so its far corner is inside the walkline's circle (17.7.4).",
+  "covers": [
+    "FS-CORE-17.7.4",
+    "FS-CORE-17.7.3"
+  ]
+}

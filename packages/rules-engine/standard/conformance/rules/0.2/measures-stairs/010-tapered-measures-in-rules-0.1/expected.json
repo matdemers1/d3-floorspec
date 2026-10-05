@@ -1,0 +1,18 @@
+{
+  "coverage": [],
+  "diagnostics": [
+    {
+      "code": "FS-RULES-004",
+      "packIndex": 0,
+      "severity": "error"
+    }
+  ],
+  "evaluated": [],
+  "findings": [],
+  "floorspecRules": "0.2",
+  "hash": "e909b56ce13795ef26827734e8d0a9027762b62aa5ff8be4c2d5a2c89a82cde6",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

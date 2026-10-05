@@ -1,0 +1,7 @@
+{
+  "description": "Two rooms anchored in the same face: FS-INV-202 names both, and Floorspec does not choose which survives.",
+  "covers": [
+    "FS-CORE-6.3.2",
+    "FS-CORE-10.2.1"
+  ]
+}

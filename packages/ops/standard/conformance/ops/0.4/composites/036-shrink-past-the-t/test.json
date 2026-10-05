@@ -1,0 +1,7 @@
+{
+  "description": "Shrinking the Kitchen from the south by 8': W8, the edge leaving J7 in the direction of v, is 8' long - not longer than |v| - so FS-OPS-008.",
+  "covers": [
+    "FS-OPS-4.4.1",
+    "FS-OPS-7.1.1"
+  ]
+}

@@ -13,7 +13,7 @@ import { api } from '../lib/api';
 type Json = Record<string, unknown>;
 
 /** The Core version a new project starts at (the server's FLOORSPEC_VERSION). */
-const FLOORSPEC_VERSION = '0.3';
+const FLOORSPEC_VERSION = '0.4';
 
 /**
  * The batch that turns the empty document named `name` into `document` (named `name`). It lives in

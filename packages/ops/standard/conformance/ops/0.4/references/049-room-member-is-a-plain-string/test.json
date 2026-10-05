@@ -1,0 +1,7 @@
+{
+  "description": "A room member is read only as an ID or a room name: the Pantry is named \"North wall of Kitchen\", and \"toward\" names it - not the Kitchen's north wall, W10 - so W10 moves 1' north, into the Pantry.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-4.2.1"
+  ]
+}

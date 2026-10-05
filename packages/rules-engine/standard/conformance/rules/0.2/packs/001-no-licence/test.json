@@ -1,0 +1,7 @@
+{
+  "description": "Two packs, the first without `license`: it does not match the pack schema (FS-RULES-004, `packIndex` 0) and is not evaluated; the second is.",
+  "covers": [
+    "FS-RULES-11.1.1",
+    "FS-RULES-2.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "With context.option KB, drawWall across A's wall WA: two options of one set are never in one design, so neither wall is split.",
+  "covers": [
+    "FS-OPS-5.5.1"
+  ]
+}

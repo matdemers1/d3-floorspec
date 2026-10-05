@@ -1,0 +1,47 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "58abde32ea68c673cf3c2cd4953c28b180b8d61d73cf40dd8f96f2e4f81ec5a8",
+  "created": [],
+  "removed": ["O1", "W5"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "W5",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "G2",
+      "path": "/join",
+      "value": {
+        "kind": "butt",
+        "through": ["W5"]
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W5",
+      "element": {
+        "level": "L1",
+        "start": "G1",
+        "end": "G2",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "height": 1560576,
+        "offset": 390144,
+        "wall": "W5",
+        "width": 1170432
+      }
+    }
+  ]
+}

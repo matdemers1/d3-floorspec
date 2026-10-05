@@ -1,0 +1,15 @@
+{
+  "coverage": [],
+  "diagnostics": [
+    {
+      "code": "FS-RULES-002",
+      "severity": "error"
+    }
+  ],
+  "evaluated": [],
+  "findings": [],
+  "floorspecRules": "0.2",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "units": "imperial"
+}

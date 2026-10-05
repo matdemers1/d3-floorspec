@@ -1,0 +1,7 @@
+{
+  "description": "The rules house as it is, a Core 0.2 document: it declares no operation and no clear opening, so every net clear measure has no value - none is computed from the openings' sizes.",
+  "covers": [
+    "FS-RULES-6.1.1",
+    "FS-RULES-6.5.1"
+  ]
+}

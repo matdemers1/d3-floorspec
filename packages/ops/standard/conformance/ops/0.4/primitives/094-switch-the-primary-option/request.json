@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "KS",
+      "path": "/primary",
+      "value": "KB"
+    }
+  ]
+}

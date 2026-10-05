@@ -1,0 +1,6 @@
+{
+  "description": "A context with an unknown member beside option is still malformed: option is the only member 0.3 adds.",
+  "covers": [
+    "FS-OPS-1.1.3"
+  ]
+}

@@ -9,11 +9,11 @@ import type * as R from '../generated/registry-types.js';
 import { big } from '../exact/bigint.js';
 
 /**
- * A document this engine reads: Core 0.3's shape, declaring any draft it implements. A document
- * that declares "0.1" or "0.2" passed that draft's schema, so none of the members a later draft
- * adds is present in it (1.2.6).
+ * A document this engine reads: Core 0.4's shape, declaring any draft it implements. A document
+ * that declares "0.1", "0.2" or "0.3" passed that draft's schema, so none of the members a later
+ * draft adds is present in it (1.2.8).
  */
-export type FloorspecDocument = Omit<G.FloorspecCore03Document, 'floorspec'> & { floorspec: '0.1' | '0.2' | '0.3' };
+export type FloorspecDocument = Omit<G.FloorspecCore04Document, 'floorspec'> & { floorspec: '0.1' | '0.2' | '0.3' | '0.4' };
 export type Project = G.Project;
 export type Site = G.Site;
 export type Building = G.Building;
@@ -215,7 +215,7 @@ export interface ExtElement {
 
 /**
  * 12.5: every extension element of a document, sorted by ID — only in a document that declares
- * "0.2" or "0.3"; in a 0.1 document top-level extension data is opaque, `collections` or not (1.2.6).
+ * "0.2", "0.3" or "0.4"; in a 0.1 document top-level extension data is opaque, `collections` or not (1.2.8).
  */
 export function extElements(doc: FloorspecDocument): ExtElement[] {
   const out: ExtElement[] = [];

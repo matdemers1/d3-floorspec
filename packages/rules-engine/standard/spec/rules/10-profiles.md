@@ -10,7 +10,7 @@ findings follow a change of jurisdiction or a code cycle.
 
 | Member | Type | Default | Meaning |
 |---|---|---|---|
-| `floorspecRules` | `"0.1"` | — (always present) | the draft the profile targets |
+| `floorspecRules` | `"0.2"` | — (always present) | the draft the profile targets |
 | `name` | string, 1–200 characters | — (always present) | the profile's name: `"Model Codes (latest)"` |
 | `jurisdiction` | string, 1–200 characters | absent | where it applies: `"Town of Example, MA"` |
 | `adopts` | array of adoptions | — (always present) | the editions it adopts (10.2) |
@@ -22,8 +22,8 @@ findings follow a change of jurisdiction or a code cycle.
 An **adoption** is `{ "code", "edition", "effective"? }`: a code (3.2), the edition adopted, and
 the date it takes effect, absent when it is not stated.
 
-The profile schema is `schema/rules/0.1/profile.schema.json`, published at
-`https://d3cloud.io/floorspec/schema/rules/0.1/profile.schema.json`. A profile's **text** is its
+The profile schema is `schema/rules/0.2/profile.schema.json`, published at
+`https://d3cloud.io/floorspec/schema/rules/0.2/profile.schema.json`. A profile's **text** is its
 `name`, its `jurisdiction`, and each amendment's `note`.
 
 A profile MUST match the profile schema; two of its adoptions MUST NOT have the same `code` and the same `effective` (or both none); two of its `packs` MUST NOT have the same `name`; and its text MUST NOT contain a match of the assurance pattern (2.5). For a request whose profile breaks any of these, an evaluator MUST report `FS-RULES-002`. {#FS-RULES-10.1.1 MUST}
@@ -93,7 +93,7 @@ the latest model codes the first rule packs are written for (FLR-ADR-011, FLR-RE
     { "code": "IRC", "edition": "2024" },
     { "code": "NEC", "edition": "2026" }
   ],
-  "floorspecRules": "0.1",
+  "floorspecRules": "0.2",
   "name": "Model Codes (latest)"
 }
 ```

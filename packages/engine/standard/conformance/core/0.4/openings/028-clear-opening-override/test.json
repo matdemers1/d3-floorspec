@@ -1,0 +1,8 @@
+{
+  "description": "A window whose own clear opening - 500 mm by 1000 mm, no area - overrides its type's, which has an area. The override is resolved whole (8.2): the derived clear opening has no area, and the type's 0.55 m2 is not its.",
+  "covers": [
+    "FS-CORE-7.4.2",
+    "FS-CORE-8.2.1",
+    "FS-CORE-7.2.2"
+  ]
+}

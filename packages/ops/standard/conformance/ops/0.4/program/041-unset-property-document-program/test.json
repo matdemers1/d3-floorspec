@@ -1,0 +1,6 @@
+{
+  "description": "unsetProperty of $document /program removes the whole program; the rooms' briefs are removed too, first, or the result would name missing items.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

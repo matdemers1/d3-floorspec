@@ -21,7 +21,7 @@ import {
 } from '@floorspec/package';
 
 export const PACKAGE_NAME = '@floorspec/cli';
-export const VERSION = '0.3.0';
+export const VERSION = '0.4.0';
 
 export const USAGE = `usage: floorspec <command> <file> [options]
 
@@ -42,7 +42,7 @@ commands:
                              refused, and nothing written, unless it is a valid package
   unpack <file> -o <dir>     write a .floorspec package as its folder — model.json and its assets,
                              byte for byte the archive's — into a new or empty <dir>
-  migrate <file> [--to 0.3]  print the document migrated to a later Core draft (Core 20): it
+  migrate <file> [--to 0.4]  print the document migrated to a later Core draft (Core 20): it
                              declares the target, and what that draft reads differently - 0.1's
                              opaque extension collections, a 0.2 extension element's own option -
                              is moved into extras["floorspec:migration"]; refused (exit 1) when the
@@ -51,7 +51,7 @@ commands:
 options:
   --registry <file>          the known extensions (Core 0.2, 12.2): a JSON array of registry
                              entries; FS-CFG-001 when they are not a valid registry
-  --core 0.1|0.2|0.3         the newest Core draft to read as (default 0.3, which reads 0.2 and 0.1 too)
+  --core 0.1|0.2|0.3|0.4     the newest Core draft to read as (default 0.4, which reads 0.3, 0.2 and 0.1 too)
   --extensions <names>       the extensions to read as implementing, comma-separated: any of
                              FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage, FS_furniture,
                              FS_structural, each
@@ -65,7 +65,7 @@ options:
   --assets <dir>             package: the folder the document's asset paths are relative to
   -o, --out <path>           package: the archive to write; unpack: the folder to write
   --json                     validate: print the conformance-shaped result
-  --to 0.1|0.2|0.3           migrate: the target draft (default 0.3); no other option applies
+  --to 0.1|0.2|0.3|0.4       migrate: the target draft (default 0.4); no other option applies
 
 exit status: 0 valid (migrate: migrated), 1 invalid (migrate: refused), 2 usage or I/O error
 `;
@@ -165,7 +165,7 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
   }
   if (command === 'migrate') return migrateFile(file, bytes, values.get('--to') ?? CORE_VERSION, io);
   const core = values.get('--core');
-  if (core !== undefined && core !== '0.1' && core !== '0.2' && core !== '0.3') {
+  if (core !== undefined && core !== '0.1' && core !== '0.2' && core !== '0.3' && core !== '0.4') {
     io.err(USAGE);
     return 2;
   }

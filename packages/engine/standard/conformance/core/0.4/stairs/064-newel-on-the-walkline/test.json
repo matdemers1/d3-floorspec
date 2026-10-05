@@ -1,0 +1,6 @@
+{
+  "description": "A half turn 800 mm wide with a 200 mm gap and a newel of 300 mm: the newel's far corners are 400 mm along and 500 mm across from the pivot - exactly the walkline's radius of 500 mm, which is not inside it. FS-INV-905.",
+  "covers": [
+    "FS-CORE-17.7.4"
+  ]
+}

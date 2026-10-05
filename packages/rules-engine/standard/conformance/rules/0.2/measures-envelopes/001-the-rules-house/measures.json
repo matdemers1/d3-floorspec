@@ -1,0 +1,98 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopePurpose"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopeDepth"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopeWidth"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopeHeight"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopeBottomAboveFloor"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X2",
+        "envelope": "service"
+      },
+      "measure": "envelopeDepth"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopeObstructions"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X2",
+        "envelope": "service"
+      },
+      "measure": "envelopeObstructions"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "clearDepthInFront",
+      "args": {
+        "limit": 1170432
+      }
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "clearDepthInFront",
+      "args": {
+        "limit": 3901440
+      }
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopeOverlaps"
+    }
+  ]
+}

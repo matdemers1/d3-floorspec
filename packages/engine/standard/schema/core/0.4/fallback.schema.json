@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.4/fallback.schema.json",
+  "$comment": "Normative (FLR-ADR-006). A fallback has no constant defaults.",
+  "title": "Fallback",
+  "description": "12.6: what a reader without an extension shows for one of its elements: a box in the element's frame, and optionally a glTF model and a 2D symbol. That its references resolve, its media types (FS-CORE-12.6.1), its level (FS-CORE-13.3.5) and its extents (FS-CORE-13.2.2) are invariants, not checked here.",
+  "type": "object",
+  "required": [
+    "level",
+    "box"
+  ],
+  "properties": {
+    "level": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "12.6: a reference to the level the element is on. Always present."
+    },
+    "box": {
+      "$ref": "defs.schema.json#/$defs/box",
+      "description": "12.6, 13.2: the space the element occupies, in its frame. Always present."
+    },
+    "asset": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "12.6: a reference to an asset holding a glTF 2.0 model of the element. Absent by default."
+    },
+    "symbol": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "12.6: a reference to an asset holding a 2D plan symbol. Absent by default."
+    }
+  },
+  "additionalProperties": false
+}

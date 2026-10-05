@@ -1,0 +1,7 @@
+{
+  "description": "A 3' wall W11 standing out from the living room's north wall: the wall line runs down its east face, across its free end - a return 100 mm long - and up its west face. The long stretch, from O4 round to O2, is 10,540,032; a receptacle X8 on W11's east face, 1' from the north wall, is 4,425,728 along it, so the longest run is the other 6,114,304.",
+  "covers": [
+    "FS-RULES-8.1.1",
+    "FS-RULES-8.2.1"
+  ]
+}

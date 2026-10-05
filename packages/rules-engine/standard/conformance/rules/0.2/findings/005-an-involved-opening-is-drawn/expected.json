@@ -1,0 +1,137 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§6.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "SERVICE",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "candidates": [
+        {
+          "envelope": "service",
+          "id": "X2",
+          "kind": "envelope"
+        }
+      ],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§6.1"
+      },
+      "elements": [
+        "O4",
+        "X2"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                9759744,
+                786432
+              ],
+              [
+                10527744,
+                786432
+              ],
+              [
+                10527744,
+                1554432
+              ],
+              [
+                9759744,
+                1554432
+              ]
+            ]
+          },
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                10527744,
+                690432
+              ],
+              [
+                11487744,
+                690432
+              ],
+              [
+                11487744,
+                1650432
+              ],
+              [
+                10527744,
+                1650432
+              ]
+            ]
+          },
+          {
+            "kind": "segment",
+            "points": [
+              [
+                9363456,
+                1560576
+              ],
+              [
+                9363456,
+                2731008
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "1",
+          "holds": false,
+          "involved": [
+            "O4"
+          ],
+          "measure": "envelopeOverlaps",
+          "op": "=",
+          "target": {
+            "envelope": "service",
+            "id": "X2",
+            "kind": "envelope"
+          },
+          "threshold": 0,
+          "thresholdDisplay": "0",
+          "type": "count",
+          "value": 1
+        }
+      ],
+      "message": "X2 may not meet TEST-CODE 2024 §6.1 (Service space clear of other spaces).",
+      "pack": "test-pack",
+      "rule": "SERVICE",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "X2",
+        "kind": "element"
+      },
+      "title": "Service space clear of other spaces",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.2",
+  "hash": "a2e7021b774fe91693822de0d45424f70219060c699a795ce43ff44f171f43d0",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

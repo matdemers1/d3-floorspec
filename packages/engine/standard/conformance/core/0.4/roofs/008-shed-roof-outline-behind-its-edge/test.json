@@ -1,0 +1,7 @@
+{
+  "description": "A shed roof whose sloped edge is the north edge of an L's short wing, edge 2, with the long wing beyond its line: the plane would fall below its eave there. Its surface is not derived - FS-LINT-015 - and the document is valid.",
+  "covers": [
+    "FS-CORE-16.4.1",
+    "FS-CORE-10.2.1"
+  ]
+}

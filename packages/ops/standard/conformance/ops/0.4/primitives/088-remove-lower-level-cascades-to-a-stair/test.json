@@ -1,0 +1,6 @@
+{
+  "description": "Removing L1 with cascade takes the stair that rises from it, as well as the box on it; L2 and its loft stay.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

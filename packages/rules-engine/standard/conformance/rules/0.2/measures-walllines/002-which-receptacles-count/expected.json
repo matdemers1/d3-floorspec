@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "display": "43' 8 1/4\"",
+      "involved": [],
+      "type": "length",
+      "value": 17044480
+    },
+    {
+      "display": "43' 8 1/4\"",
+      "involved": [],
+      "type": "length",
+      "value": 17044480
+    },
+    {
+      "display": "22' 4 1/8\"",
+      "involved": [
+        "X4",
+        "X5"
+      ],
+      "type": "length",
+      "value": 8717312
+    },
+    {
+      "display": "22' 4 1/8\"",
+      "involved": [
+        "X4",
+        "X5"
+      ],
+      "type": "length",
+      "value": 8717312
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A roof added to a Core 0.2 document that does not declare \"0.3\": the request is well formed under Ops 0.3, but Core 0.2's schema has no \"roofs\" (Core 1.2.8), so the result is invalid: FS-SCH-001.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-1.1.3"
+  ]
+}

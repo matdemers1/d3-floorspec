@@ -1,0 +1,9 @@
+{
+  "description": "The grid house - four 4 m by 3 m rooms of 100 mm walls around a centre junction - against a brief: two bedrooms of at least 11 m2 (each has 11.31 m2, so minAreaMet; the 12 m2 target is not met), a kitchen (preferred on L1) and a dining room. The kitchen and dining room are divided by a separator, and a door joins a bedroom to the kitchen. KIT-DIN is adjacent and connected (the separator); BED-KIT is adjacent and connected (the door on EV1); DIN-BED is adjacent across the wall EV2, which has no opening, so it is not connected. No program lint is reported. The house has a door but none to the outside, so its building has no entry (FS-LINT-014, 14.4).",
+  "covers": [
+    "FS-CORE-11.1.1",
+    "FS-CORE-11.3.1",
+    "FS-CORE-11.4.1",
+    "FS-CORE-6.4.1"
+  ]
+}

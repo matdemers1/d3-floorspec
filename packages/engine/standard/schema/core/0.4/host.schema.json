@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.4/host.schema.json",
+  "$comment": "Normative (FLR-ADR-006). `rotation` defaults to 0 for `surface` and `free` hosts; hosts live in extension elements, which the canonical form never changes (9.2), so the default carries no `default` keyword here: the canonicalizer does not omit it.",
+  "title": "Host",
+  "description": "13.3: what an extension element is placed on. A host MUST have exactly the members of one of its three forms (FS-CORE-13.3.1). That its wall, room or level resolves (FS-CORE-3.2.1), and that it fits its host (FS-CORE-13.3.2 to 13.3.5), are invariants, not checked here.",
+  "type": "object",
+  "required": [
+    "mode"
+  ],
+  "properties": {
+    "mode": {
+      "title": "Mode",
+      "description": "13.3: which of the three forms this host has.",
+      "type": "string",
+      "enum": [
+        "wallFace",
+        "surface",
+        "free"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/wallFace"
+    },
+    {
+      "$ref": "#/$defs/surface"
+    },
+    {
+      "$ref": "#/$defs/free"
+    }
+  ],
+  "$defs": {
+    "wallFace": {
+      "title": "Wall-face host",
+      "description": "13.3: on a face of a wall.",
+      "type": "object",
+      "required": [
+        "mode",
+        "wall",
+        "side",
+        "offset",
+        "height"
+      ],
+      "properties": {
+        "mode": {
+          "const": "wallFace",
+          "description": "13.3: \"wallFace\"."
+        },
+        "wall": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "13.3: a reference to the host wall."
+        },
+        "side": {
+          "title": "Side",
+          "description": "13.3: which face of the wall, seen along its direction.",
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ]
+        },
+        "offset": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "13.3: the distance along the wall's location line from its start junction; not negative."
+        },
+        "height": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "13.3: the height above the wall's base elevation; not negative."
+        }
+      },
+      "additionalProperties": false
+    },
+    "surface": {
+      "title": "Surface host",
+      "description": "13.3: on the floor or the ceiling of a room.",
+      "type": "object",
+      "required": [
+        "mode",
+        "room",
+        "surface",
+        "position"
+      ],
+      "properties": {
+        "mode": {
+          "const": "surface",
+          "description": "13.3: \"surface\"."
+        },
+        "room": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "13.3: a reference to the host room."
+        },
+        "surface": {
+          "title": "Surface",
+          "description": "13.3: the floor or the ceiling.",
+          "type": "string",
+          "enum": [
+            "floor",
+            "ceiling"
+          ]
+        },
+        "position": {
+          "$ref": "defs.schema.json#/$defs/point",
+          "description": "13.3: where it is, in plan."
+        },
+        "rotation": {
+          "$ref": "defs.schema.json#/$defs/angleHalfOpen",
+          "description": "13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."
+        }
+      },
+      "additionalProperties": false
+    },
+    "free": {
+      "title": "Free host",
+      "description": "13.3: standing free on a level.",
+      "type": "object",
+      "required": [
+        "mode",
+        "level",
+        "position"
+      ],
+      "properties": {
+        "mode": {
+          "const": "free",
+          "description": "13.3: \"free\"."
+        },
+        "level": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "13.3: a reference to the level."
+        },
+        "position": {
+          "$ref": "defs.schema.json#/$defs/point",
+          "description": "13.3: where it is, in plan."
+        },
+        "rotation": {
+          "$ref": "defs.schema.json#/$defs/angleHalfOpen",
+          "description": "13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

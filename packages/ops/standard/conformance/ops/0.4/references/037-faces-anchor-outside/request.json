@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/anchor",
+      "value": [-390144, -390144]
+    },
+    {
+      "op": "resizeRoom",
+      "room": "Kitchen",
+      "side": "north",
+      "by": "2'"
+    }
+  ]
+}

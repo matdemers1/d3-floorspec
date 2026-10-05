@@ -1,0 +1,41 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "3a1c0f85452f953adf281b122542903662b201938c22d45a369c4e419fc86902",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/floorspec",
+      "value": "0.4"
+    },
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form/newel",
+      "value": 130048
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/form",
+      "value": {
+        "angle": "quarter",
+        "kind": "winder",
+        "risersBeforeTurn": 4,
+        "turn": "left",
+        "winders": 3
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/floorspec",
+      "value": "0.3"
+    }
+  ]
+}

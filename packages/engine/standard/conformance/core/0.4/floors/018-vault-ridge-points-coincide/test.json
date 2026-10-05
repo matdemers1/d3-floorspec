@@ -1,0 +1,8 @@
+{
+  "description": "A vault whose two ridge points are the same point: there is no ridge line. FS-INV-702 names the room; FS-INV-701 is not evaluated for it, though its 500 mm height is below its floor, raised 1 m.",
+  "covers": [
+    "FS-CORE-15.3.1",
+    "FS-CORE-10.2.1",
+    "FS-CORE-10.3.1"
+  ]
+}

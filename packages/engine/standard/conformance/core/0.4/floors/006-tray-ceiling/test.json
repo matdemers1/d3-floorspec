@@ -1,0 +1,9 @@
+{
+  "description": "A tray ceiling with a 300 mm border and a 200 mm depth: the border is flat at 2700 mm and the centre - the room polygon shrunk by 300 mm, 350 mm to 3650 mm by 350 mm to 2650 mm - is raised to 2900 mm, the ceiling's high.",
+  "covers": [
+    "FS-CORE-15.4.2",
+    "FS-CORE-15.5.1",
+    "FS-CORE-15.2.2",
+    "FS-CORE-15.4.1"
+  ]
+}

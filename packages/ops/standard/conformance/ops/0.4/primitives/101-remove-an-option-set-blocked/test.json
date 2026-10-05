@@ -1,0 +1,6 @@
+{
+  "description": "Removing the set without cascade is blocked by its options.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "An array is not a document: refused with FS-SCH-001, as a validator of the newest draft reports it (20.2.1).",
+  "covers": [
+    "FS-CORE-20.2.1"
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Example pack: a spiral stair under a floor"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000,
+      "ceilingHeight": 3072000
+    },
+    "L2": {
+      "building": "B1",
+      "elevation": 3456000,
+      "height": 3456000,
+      "floorThickness": 384000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "DJ1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "DJ2": {
+      "level": "L1",
+      "position": [
+        0,
+        5120000
+      ]
+    },
+    "DJ3": {
+      "level": "L1",
+      "position": [
+        7680000,
+        5120000
+      ]
+    },
+    "DJ4": {
+      "level": "L1",
+      "position": [
+        7680000,
+        0
+      ]
+    },
+    "UJ1": {
+      "level": "L2",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "UJ2": {
+      "level": "L2",
+      "position": [
+        0,
+        5120000
+      ]
+    },
+    "UJ3": {
+      "level": "L2",
+      "position": [
+        1280000,
+        5120000
+      ]
+    },
+    "UJ4": {
+      "level": "L2",
+      "position": [
+        3840000,
+        5120000
+      ]
+    },
+    "UJ5": {
+      "level": "L2",
+      "position": [
+        7680000,
+        5120000
+      ]
+    },
+    "UJ6": {
+      "level": "L2",
+      "position": [
+        7680000,
+        0
+      ]
+    },
+    "UJ7": {
+      "level": "L2",
+      "position": [
+        1280000,
+        1920000
+      ]
+    },
+    "UJ8": {
+      "level": "L2",
+      "position": [
+        3840000,
+        1920000
+      ]
+    }
+  },
+  "walls": {
+    "DW1": {
+      "level": "L1",
+      "start": "DJ1",
+      "end": "DJ2",
+      "type": "WT"
+    },
+    "DW2": {
+      "level": "L1",
+      "start": "DJ2",
+      "end": "DJ3",
+      "type": "WT"
+    },
+    "DW3": {
+      "level": "L1",
+      "start": "DJ3",
+      "end": "DJ4",
+      "type": "WT"
+    },
+    "DW4": {
+      "level": "L1",
+      "start": "DJ4",
+      "end": "DJ1",
+      "type": "WT"
+    },
+    "UW1": {
+      "level": "L2",
+      "start": "UJ1",
+      "end": "UJ2",
+      "type": "WT"
+    },
+    "UW2": {
+      "level": "L2",
+      "start": "UJ2",
+      "end": "UJ3",
+      "type": "WT"
+    },
+    "UW3": {
+      "level": "L2",
+      "start": "UJ3",
+      "end": "UJ4",
+      "type": "WT"
+    },
+    "UW4": {
+      "level": "L2",
+      "start": "UJ4",
+      "end": "UJ5",
+      "type": "WT"
+    },
+    "UW5": {
+      "level": "L2",
+      "start": "UJ5",
+      "end": "UJ6",
+      "type": "WT"
+    },
+    "UW6": {
+      "level": "L2",
+      "start": "UJ6",
+      "end": "UJ1",
+      "type": "WT"
+    }
+  },
+  "separators": {
+    "US1": {
+      "level": "L2",
+      "start": "UJ3",
+      "end": "UJ7"
+    },
+    "US2": {
+      "level": "L2",
+      "start": "UJ7",
+      "end": "UJ8"
+    },
+    "US3": {
+      "level": "L2",
+      "start": "UJ8",
+      "end": "UJ4"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [
+        3840000,
+        3200000
+      ]
+    },
+    "R2": {
+      "level": "L2",
+      "anchor": [
+        5760000,
+        3840000
+      ]
+    }
+  },
+  "stairs": {
+    "ST1": {
+      "level": "L1",
+      "to": "L2",
+      "position": [
+        2560000,
+        1280000
+      ],
+      "width": 1024000,
+      "tread": 281600,
+      "risers": 10,
+      "form": {
+        "kind": "spiral",
+        "turn": "left",
+        "diameter": 2304000,
+        "sweep": 225000000
+      }
+    }
+  }
+}

@@ -37,14 +37,18 @@ export const CORE03_COLLECTIONS: readonly CollectionName[] = ['roofs', 'stairs',
 export const IN_OPTIONS: readonly CollectionName[] = ['junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'roofs', 'stairs'];
 
 /** The collections addElement may name in a request of this draft: Ops 0.3 adds roofs, stairs, option sets and options. */
-export const collectionsOf = (ops: OpsVersion): readonly CollectionName[] => (ops === '0.3' ? COLLECTIONS : COLLECTIONS.filter((c) => !CORE03_COLLECTIONS.includes(c)));
+export const collectionsOf = (ops: OpsVersion): readonly CollectionName[] => (atLeast03(ops) ? COLLECTIONS : COLLECTIONS.filter((c) => !CORE03_COLLECTIONS.includes(c)));
 
 /**
  * The draft of Floorspec Ops a transaction follows. Ops 0.3 adds no operation and no member: it is
  * Ops 0.2 applied with a Core 0.3 reader (Ops 0.3 §0.4), and addElement may name Core 0.3's roofs
- * and stairs, so everything this package says of "Ops 0.2" holds of 0.3 too.
+ * and stairs, so everything this package says of "Ops 0.2" holds of 0.3 too. Ops 0.4 is Ops 0.3
+ * applied with a Core 0.4 reader (Ops 0.4 §0.4): its requests match Ops 0.3's schema.
  */
-export type OpsVersion = '0.1' | '0.2' | '0.3';
+export type OpsVersion = '0.1' | '0.2' | '0.3' | '0.4';
+
+/** Ops 0.3 or later: design options, roofs and stairs (Ops 0.3 §0.4), which Ops 0.4 keeps. */
+export const atLeast03 = (ops: OpsVersion): boolean => ops === '0.3' || ops === '0.4';
 
 /** Ops 0.2 or later: the program and extension elements are elements (0.3). */
 export const atLeast02 = (ops: OpsVersion): boolean => ops !== '0.1';
@@ -94,12 +98,12 @@ export interface ExtCollection {
 
 /**
  * Does this document, read by this draft, hold program items and extension elements (0.3)? Only
- * under Ops 0.2 or later, and only when it declares "0.2" or "0.3" (Core §1.2.6).
+ * under Ops 0.2 or later, and only when it declares "0.2", "0.3" or "0.4" (Core §1.2.8).
  */
 export const holds02 = (doc: unknown, ops: OpsVersion): boolean => {
   if (!atLeast02(ops)) return false;
   const v = getMember(doc, 'floorspec');
-  return v === '0.2' || v === '0.3';
+  return v === '0.2' || v === '0.3' || v === '0.4';
 };
 
 /** The program's items of a document, or {} where there are none to address. */

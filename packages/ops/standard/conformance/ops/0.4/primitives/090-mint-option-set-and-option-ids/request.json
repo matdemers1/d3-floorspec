@@ -1,0 +1,25 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "optionSets",
+      "element": {
+        "primary": "OP1"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "element": {
+        "set": "OS1"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "element": {
+        "set": "OS1"
+      }
+    }
+  ]
+}

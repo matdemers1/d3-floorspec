@@ -1,0 +1,6 @@
+{
+  "description": "setProperty sets the tile's texture to 6 inches, turned 45 degrees, and declares it metallic 0: a material is edited like any other element.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

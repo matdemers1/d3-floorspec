@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "stairs",
+      "element": {
+        "level": "L1",
+        "to": "L2",
+        "position": [390144, 780288],
+        "width": 1170432,
+        "tread": 292608,
+        "risers": 14
+      }
+    }
+  ]
+}

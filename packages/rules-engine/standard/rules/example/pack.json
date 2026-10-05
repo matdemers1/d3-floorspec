@@ -1,0 +1,88 @@
+{
+  "floorspecRules": "0.2",
+  "name": "example",
+  "version": "0.2.0",
+  "title": "Example pack (synthetic codes)",
+  "description": "A tiny pack that exercises the rule-pack format end to end: build, lint, fixtures and the coverage matrix. It cites only the synthetic codes TEST-CODE and TEST-ELEC, which stand for no real code, and its thresholds are invented.",
+  "license": "CC-BY-4.0",
+  "attribution": "Floorspec example pack (example 0.2.0) by the Floorspec contributors, CC BY 4.0, https://github.com/matdemers1/floorspec/tree/main/rules/example",
+  "jurisdiction": "Nowhere: synthetic codes for testing the format",
+  "editions": [
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "title": "Synthetic building code"
+    },
+    {
+      "code": "TEST-ELEC",
+      "edition": "2026",
+      "title": "Synthetic electrical code"
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "Floorspec contributors",
+      "url": "https://github.com/matdemers1/floorspec"
+    }
+  ],
+  "synthetic": true,
+  "domains": [
+    {
+      "id": "room-sizes",
+      "title": "Room sizes"
+    },
+    {
+      "id": "alarms",
+      "title": "Alarms"
+    },
+    {
+      "id": "stairs",
+      "title": "Stairs"
+    }
+  ],
+  "coverage": [
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "section": "§1",
+      "status": "addressed",
+      "domain": "room-sizes",
+      "note": "Floor area of sleeping rooms."
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "section": "§2",
+      "status": "notAddressed",
+      "domain": "room-sizes",
+      "note": "Ceiling heights are left to a later version of the pack; Core derives them since Core 0.3 (`ceilingHeight`)."
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "section": "§3",
+      "status": "notAddressed",
+      "domain": "room-sizes",
+      "note": "Room widths at every point of a room that is not convex: the measure is deferred.",
+      "needs": [
+        "roomNarrowestDimension"
+      ]
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "section": "§4",
+      "status": "addressed",
+      "domain": "stairs",
+      "note": "Riser heights of every stair; the goings of winders at the walkline and at their narrow ends; and the width, going at the walkline, risers and headroom of spiral stairs."
+    },
+    {
+      "code": "TEST-ELEC",
+      "edition": "2026",
+      "section": "§3",
+      "status": "partial",
+      "domain": "alarms",
+      "note": "Smoke alarms in sleeping rooms only; carbon monoxide alarms are not checked."
+    }
+  ]
+}

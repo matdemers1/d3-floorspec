@@ -1,0 +1,6 @@
+{
+  "description": "A document that declares \"0.2\" and whose room has a tray ceiling, which 0.3 added: Core 0.2's schema applies to it, and has no \"ceiling\" member.",
+  "covers": [
+    "FS-CORE-1.2.8"
+  ]
+}

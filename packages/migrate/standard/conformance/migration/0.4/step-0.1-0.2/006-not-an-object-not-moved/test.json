@@ -1,0 +1,7 @@
+{
+  "description": "Extension data that is an array, or a string, has no members: nothing is moved, and the step only changes the version (20.4.1, 20.3.2).",
+  "covers": [
+    "FS-CORE-20.4.1",
+    "FS-CORE-20.3.2"
+  ]
+}

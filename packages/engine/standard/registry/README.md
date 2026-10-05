@@ -160,8 +160,8 @@ suite the engine passes; it becomes a Release Candidate by its own pull request,
 `tools/oracle/ext/` implements all six, and is evidence for none.
 
 Every official extension follows the same conventions, each stated in its own specification's
-chapter 1: its rules apply to a document of a Core draft it lists — all six list Core 0.2 and
-0.3 — that uses it at a version a validator both implements and knows; its diagnostics are `FS-<CODE>-SCH-`, `-INV-` and `-LINT-`, evaluated after
+chapter 1: its rules apply to a document of a Core draft it lists — all six list Core 0.2, 0.3
+and 0.4 — that uses it at a version a validator both implements and knows; its diagnostics are `FS-<CODE>-SCH-`, `-INV-` and `-LINT-`, evaluated after
 Core's invariants and never with a Core error; its errors make a document invalid; and what it
 derives is `extensions.<NAME>` of the derived values. Records that are not elements — circuits,
 stacks, gas sources — share the document's one space of IDs, so diagnostics can name them. Data an

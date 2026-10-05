@@ -1,0 +1,35 @@
+{
+  "title": "Spiral risers not too tall",
+  "citation": {
+    "code": "TEST-CODE",
+    "edition": "2024",
+    "section": "§4.9",
+    "link": "https://example.org/test-code/2024/4.9"
+  },
+  "paraphrase": "Each riser of a spiral stair rises no more than 9 1/2 inches. The rule reads the riser height Floorspec derives for the stair from the floors at its foot and its head and its riser count.",
+  "applies": {
+    "to": "stair",
+    "where": {
+      "measure": "stairForm",
+      "op": "=",
+      "value": "spiral"
+    }
+  },
+  "requirement": {
+    "measure": "stairRiserHeight",
+    "op": "<=",
+    "value": 308864
+  },
+  "severity": "mayNotMeet",
+  "provenance": {
+    "verifiedBy": "Floorspec contributors",
+    "verifiedOn": "2026-10-05",
+    "edition": "2024",
+    "method": "synthetic",
+    "certifiedBy": "Floorspec contributors",
+    "certification": "original-paraphrase-v1",
+    "review": {
+      "status": "unreviewed"
+    }
+  }
+}

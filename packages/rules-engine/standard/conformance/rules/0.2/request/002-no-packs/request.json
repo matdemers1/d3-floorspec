@@ -1,0 +1,17 @@
+{
+  "floorspecRules": "0.2",
+  "profile": {
+    "floorspecRules": "0.2",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

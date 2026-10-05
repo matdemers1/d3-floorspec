@@ -1,0 +1,114 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "64c0741a3289e0031b93d0a63103a077340dac18cb4ef0e5a77bbac8f2cd3c36",
+  "created": ["J1", "J2", "J3", "J4", "R1", "W1", "W2", "W3", "W4"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R1",
+      "element": {
+        "level": "L1",
+        "anchor": [1950720, 1950720],
+        "function": "sleeping",
+        "name": "Bedroom"
+      }
+    },
+    {
+      "op": "addJunction",
+      "id": "J1",
+      "level": "L1",
+      "position": [0, 0]
+    },
+    {
+      "op": "addJunction",
+      "id": "J2",
+      "level": "L1",
+      "position": [0, 3901440]
+    },
+    {
+      "op": "addWall",
+      "id": "W1",
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    {
+      "op": "addJunction",
+      "id": "J3",
+      "level": "L1",
+      "position": [3901440, 3901440]
+    },
+    {
+      "op": "addWall",
+      "id": "W2",
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    {
+      "op": "addJunction",
+      "id": "J4",
+      "level": "L1",
+      "position": [3901440, 0]
+    },
+    {
+      "op": "addWall",
+      "id": "W3",
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    {
+      "op": "addWall",
+      "id": "W4",
+      "level": "L1",
+      "start": "J4",
+      "end": "J1",
+      "type": "WT"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "R1"
+    },
+    {
+      "op": "removeElement",
+      "id": "W1"
+    },
+    {
+      "op": "removeElement",
+      "id": "W2"
+    },
+    {
+      "op": "removeElement",
+      "id": "W3"
+    },
+    {
+      "op": "removeElement",
+      "id": "W4"
+    },
+    {
+      "op": "removeElement",
+      "id": "J1"
+    },
+    {
+      "op": "removeElement",
+      "id": "J2"
+    },
+    {
+      "op": "removeElement",
+      "id": "J3"
+    },
+    {
+      "op": "removeElement",
+      "id": "J4"
+    }
+  ]
+}

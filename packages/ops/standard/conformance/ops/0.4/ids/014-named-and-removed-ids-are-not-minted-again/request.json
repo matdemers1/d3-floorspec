@@ -1,0 +1,21 @@
+{
+  "batch": [
+    {
+      "op": "addJunction",
+      "id": "J9",
+      "level": "L1",
+      "position": ["3'", "3'"]
+    },
+    {
+      "op": "removeElement",
+      "id": "J9"
+    },
+    {
+      "op": "drawWall",
+      "level": "L1",
+      "from": ["-1'", "5'"],
+      "to": ["1'", "5'"],
+      "type": "WT"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A window whose own clear opening is exactly the window, 1200 mm by 1200 mm: valid.",
+  "covers": [
+    "FS-CORE-7.2.2"
+  ]
+}

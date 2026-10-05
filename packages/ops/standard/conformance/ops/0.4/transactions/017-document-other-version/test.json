@@ -1,0 +1,6 @@
+{
+  "description": "Document A declares Floorspec 0.5, which a Core 0.4 reader does not implement (FS-DOC-001): FS-OPS-002.",
+  "covers": [
+    "FS-OPS-1.2.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "moveOpening with \"by\" moves the opening along its wall: the new offset is the old plus \"by\", so a positive \"by\" moves the door 2' toward the end of its wall W4.",
+  "covers": [
+    "FS-OPS-4.5.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "9e7 microdegrees written with an exponent is not a JSON integer.",
+  "covers": [
+    "FS-CORE-2.4.1"
+  ]
+}

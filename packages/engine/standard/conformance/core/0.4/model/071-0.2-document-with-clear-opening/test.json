@@ -1,0 +1,6 @@
+{
+  "description": "A document that declares \"0.2\" and whose door type has a clear opening, which 0.3 added: it is checked against Core 0.2's schema, which has no \"clearOpening\" member.",
+  "covers": [
+    "FS-CORE-1.2.8"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "Fourteen rooms divided by separators, one for every room function of 4.1.",
+  "covers": [
+    "FS-CORE-4.1.1",
+    "FS-CORE-6.2.1"
+  ]
+}

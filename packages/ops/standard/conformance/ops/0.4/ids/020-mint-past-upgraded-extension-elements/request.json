@@ -1,0 +1,31 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/floorspec",
+      "value": "0.2"
+    },
+    {
+      "op": "placeElement",
+      "extension": "FS_electrical",
+      "collection": "devices",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W2",
+        "at": "2'",
+        "height": 384000,
+        "side": "right"
+      },
+      "element": {
+        "fallback": {
+          "box": {
+            "min": [0, -51200, 0],
+            "max": [25600, 51200, 128000]
+          }
+        },
+        "device": "receptacle"
+      }
+    }
+  ]
+}

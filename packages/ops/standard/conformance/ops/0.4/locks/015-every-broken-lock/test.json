@@ -1,0 +1,8 @@
+{
+  "description": "Two locks broken at once: one FS-OPS-011 for each, sorted.",
+  "covers": [
+    "FS-OPS-6.1.2",
+    "FS-OPS-7.1.1",
+    "FS-OPS-7.1.2"
+  ]
+}

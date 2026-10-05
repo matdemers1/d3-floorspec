@@ -1,0 +1,7 @@
+{
+  "description": "addElement into stairs with no id: the applier mints ST1, the prefix of the stairs collection being ST.",
+  "covers": [
+    "FS-OPS-1.5.1",
+    "FS-OPS-2.1.1"
+  ]
+}

@@ -2,7 +2,7 @@
  * The named-measure library (Rules chapters 4 to 8): every measure, by name and target kind, and
  * the deferred measures of 4.8.
  */
-import type { TargetKind } from '../types.js';
+import type { RulesDraft, TargetKind } from '../types.js';
 import type { Measure } from './measure.js';
 import { ROOM_MEASURES } from './rooms.js';
 import { OPENING_MEASURES } from './openings.js';
@@ -16,9 +16,10 @@ export const MEASURES: readonly Measure[] = [...ROOM_MEASURES, ...OPENING_MEASUR
 const BY_KIND = new Map<string, Measure>();
 for (const m of MEASURES) for (const k of m.kinds) BY_KIND.set(`${m.name}\u0000${k}`, m);
 
-/** The measure `name` defined for targets of `kind`, if there is one. */
-export function measureFor(name: string, kind: TargetKind): Measure | undefined {
-  return BY_KIND.get(`${name}\u0000${kind}`);
+/** The measure `name` defined for targets of `kind` in a draft of Rules (0.2 by default), if there is one. */
+export function measureFor(name: string, kind: TargetKind, draft: RulesDraft = '0.2'): Measure | undefined {
+  const m = BY_KIND.get(`${name}\u0000${kind}`);
+  return m !== undefined && (draft === '0.2' || m.since !== '0.2') ? m : undefined;
 }
 
 /**

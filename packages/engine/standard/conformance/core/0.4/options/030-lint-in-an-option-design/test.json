@@ -1,0 +1,7 @@
+{
+  "description": "Option B also draws an island of separators in the kitchen: in B's design the island is an unanchored face, FS-LINT-003, reported with \"design\": \"KB\"; the kitchen's polygon has a hole there in B's design only.",
+  "covers": [
+    "FS-CORE-19.5.2",
+    "FS-CORE-6.6.1"
+  ]
+}

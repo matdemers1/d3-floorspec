@@ -1,8 +1,18 @@
 /**
- * Stairs (Core 0.3, chapter 17): the layout of a stair in its frame, its foot and head, its rise and
- * riser count, the steps, run and walkline of a straight, L-shaped or U-shaped stair, its headroom,
- * the stair invariants FS-INV-901 to FS-INV-904, the lint FS-LINT-016, the derived `stairs`, and the
- * links a stair adds to the door graph (14.1).
+ * Stairs (Core 0.3 and 0.4, chapter 17): the layout of a stair in its frame, its foot and head, its
+ * rise and riser count, the steps, run and walkline of a straight, L-shaped or U-shaped stair, its
+ * headroom, the stair invariants FS-INV-901 to FS-INV-904, the lint FS-LINT-016, the derived `stairs`,
+ * and the links a stair adds to the door graph (14.1). A Core 0.4 reader also derives the tapered
+ * treads of winder and spiral stairs (17.7) — their steps, walkline, goings and headroom — and the
+ * opening a stair with a `minHeadroom` needs (17.6), checks FS-INV-905 and FS-INV-906, and reports
+ * FS-LINT-018 and FS-LINT-019 in place of FS-LINT-016.
+ *
+ * Tapered treads are exact too. A winder's nosing lines lie on rays from the pivot of its turn in the
+ * directions F(β) of whole-microdegree angles (13.1), so where a ray meets the sides of the turn or
+ * of its newel is rational; a spiral's lie on rays from its centre in the directions F(φ). A point
+ * on a walkline arc adds one radicand, |F|². A going is the square root of a value with one radicand,
+ * decided by exact comparison with the squares of half-integers; a walkline's length includes an arc,
+ * r · θ in radians, which π makes irrational and so never a tie (angle.ts, roundArc).
  *
  * A stair is laid out in its own frame (13.1): the origin is its `position` — the middle of its first
  * nosing line — facing F(rotation), the direction the first flight rises in. Local coordinates
@@ -17,8 +27,8 @@
  * an edge of a room polygon, a well, a tray's centre or a vault's ridge line, and each is linear
  * there, so the infimum of the clearance is reached at the ends of those pieces (17.6).
  */
-import { facingVector } from '../exact/angle.js';
-import { floorDiv, toSafeNumber } from '../exact/bigint.js';
+import { facingVector, roundArc } from '../exact/angle.js';
+import { floorDiv, isqrt, roundHalfEvenRational, toSafeNumber } from '../exact/bigint.js';
 import { Q } from '../exact/rational.js';
 import { Surd } from '../exact/surd.js';
 import { cross, dot, locate, type IPoint } from '../geometry/predicates.js';
@@ -31,11 +41,15 @@ import type { LevelAnalysis } from '../validate/invariants.js';
 const STRAIGHT: StairForm = { kind: 'straight' };
 const DERIVED_FORMS = new Set(['straight', 'lShaped', 'uShaped']);
 const QUARTER = 90_000_000n;
+const HALF = 180_000_000n;
 
 export const formOf = (st: Stair): StairForm => st.form ?? STRAIGHT;
 
-/** Is this a form whose steps, run, walkline and headroom this draft derives (17.5, 17.7)? */
+/** Is this a form whose steps, run, walkline and headroom Core 0.3 derives (17.5, 17.7 of 0.3)? A Core 0.4 reader derives every form's. */
 export const stepsDerived = (st: Stair): boolean => DERIVED_FORMS.has(formOf(st).kind);
+
+/** Is this a winder or a spiral stair — one with tapered treads (Core 0.4, 17.7)? */
+export const isTapered = (st: Stair): boolean => !stepsDerived(st);
 
 /** An angle in (−180°, 180°], in microdegrees. */
 function normalize(theta: bigint): bigint {
@@ -360,15 +374,17 @@ function fits(st: Stair, n: number): boolean {
 
 // ── invariants (FS-INV-901 … 904) ───────────────────────────────────────────────
 
-export type StairCode = 'FS-INV-901' | 'FS-INV-902' | 'FS-INV-903' | 'FS-INV-904';
+export type StairCode = 'FS-INV-901' | 'FS-INV-902' | 'FS-INV-903' | 'FS-INV-904' | 'FS-INV-905' | 'FS-INV-906';
 
 /**
  * FS-INV-901 for every stair; FS-INV-904 for every spiral stair; FS-INV-902 and FS-INV-903 for a stair
  * without FS-INV-901 whose two levels are levels where room invariants are evaluated and have no room
  * with FS-INV-201 to FS-INV-204, and FS-INV-903 not for one with FS-INV-902 (10.3). `badRoomLevels`
- * are the levels of rooms with FS-INV-201 to FS-INV-204.
+ * are the levels of rooms with FS-INV-201 to FS-INV-204. A Core 0.4 reader (`core04`) also checks
+ * FS-INV-905 for every winder stair, and FS-INV-906 where FS-INV-903 is evaluated, for a stair with
+ * neither FS-INV-902 nor FS-INV-903.
  */
-export function stairInvariants(ctx: StairContext, badRoomLevels: ReadonlySet<string>): { id: string; code: StairCode }[] {
+export function stairInvariants(ctx: StairContext, badRoomLevels: ReadonlySet<string>, core04 = false): { id: string; code: StairCode }[] {
   const doc = ctx.doc;
   const out: { id: string; code: StairCode }[] = [];
   for (const [id, st] of entries(doc.stairs)) {
@@ -376,6 +392,7 @@ export function stairInvariants(ctx: StairContext, badRoomLevels: ReadonlySet<st
     const to = get(doc.levels, st.to)!;
     const f = formOf(st);
     if (f.kind === 'spiral' && 2 * st.width > f.diameter) out.push({ id, code: 'FS-INV-904' });
+    if (core04 && f.kind === 'winder' && !newelInside(st)) out.push({ id, code: 'FS-INV-905' });
     if (st.to === st.level || to.building !== lv.building) {
       out.push({ id, code: 'FS-INV-901' });
       continue;
@@ -388,6 +405,7 @@ export function stairInvariants(ctx: StairContext, badRoomLevels: ReadonlySet<st
     const r = resolve(ctx, st);
     if (r.rise <= 0n) out.push({ id, code: 'FS-INV-902' });
     else if (!fits(st, r.n)) out.push({ id, code: 'FS-INV-903' });
+    else if (core04 && isTapered(st) && !anglesOk(st, r.n)) out.push({ id, code: 'FS-INV-906' });
   }
   return out;
 }
@@ -562,14 +580,321 @@ function lanes(lay: Layout, fr: StairFrame, r: Resolved): [IPoint, IPoint, Q, Q]
   return out;
 }
 
-function headroom(ctx: StairContext, st: Stair, lay: Layout, fr: StairFrame, r: Resolved): bigint | undefined {
+/** 17.6: the exact headroom over the lanes of the laid-out stair and of its tapered treads, or undefined when nothing is above any. */
+function headroomOf(ctx: StairContext, st: Stair, lay: Layout, fr: StairFrame, r: Resolved, extra: readonly [IPoint, IPoint, Q, Q][] = []): Surd | undefined {
   const above = new Above(ctx, st);
   let best: Surd | undefined;
-  for (const [a, b, za, zb] of lanes(lay, fr, r)) {
+  for (const [a, b, za, zb] of [...lanes(lay, fr, r), ...extra]) {
     const v = laneClearance(above, a, b, za, zb);
     if (v && (!best || v.cmp(best) < 0)) best = v;
   }
-  return best?.round();
+  return best;
+}
+
+/** The exact headroom of any stair as a Core 0.4 reader derives it, or undefined. */
+function exactHeadroom(ctx: StairContext, st: Stair): Surd | undefined {
+  const r = resolve(ctx, st);
+  const fr = frameOf(st);
+  if (isTapered(st)) {
+    const tp = tapered(st, r.n);
+    return headroomOf(ctx, st, { pieces: tp.flights.map((flight) => ({ kind: 'flight', flight })), head: [Q.ZERO, Q.ZERO], rects: [], walk: [] }, fr, r, taperedLanes(tp, r));
+  }
+  return headroomOf(ctx, st, layout(st, r.n), fr, r);
+}
+
+/**
+ * Core 0.4's stair lints (17.6.4, 17.7.6): FS-LINT-018 for a winder stair without a newel or a spiral
+ * whose width is half its diameter, FS-LINT-019 for a stair whose headroom is less than its minHeadroom.
+ */
+export function stairLints(ctx: StairContext): { id: string; code: 'FS-LINT-018' | 'FS-LINT-019' }[] {
+  const out: { id: string; code: 'FS-LINT-018' | 'FS-LINT-019' }[] = [];
+  for (const [id, st] of entries(ctx.doc.stairs)) {
+    const f = formOf(st);
+    if ((f.kind === 'winder' && f.newel === undefined) || (f.kind === 'spiral' && 2 * st.width === f.diameter)) out.push({ id, code: 'FS-LINT-018' });
+    if (st.minHeadroom !== undefined) {
+      const h = exactHeadroom(ctx, st);
+      if (h && h.cmp(Surd.of(BigInt(st.minHeadroom))) < 0) out.push({ id, code: 'FS-LINT-019' });
+    }
+  }
+  return out;
+}
+
+// ── tapered treads (Core 0.4, 17.7) ────────────────────────────────────────────
+
+/** An exact plan or local point whose coordinates may carry square roots. */
+type SP = readonly [Surd, Surd];
+type Dir = readonly [bigint, bigint];
+
+/** round(j · total / k) for j = 0 … k: an angle divided into k parts, each end a whole microdegree (17.7). */
+function divisions(total: bigint, k: bigint): bigint[] {
+  const out: bigint[] = [];
+  for (let j = 0n; j <= k; j++) out.push(roundHalfEvenRational(j * total, k));
+  return out;
+}
+
+/**
+ * FS-INV-906 (17.7.5): every winder turns through an angle greater than zero — round(j·A/W) −
+ * round((j − 1)·A/W) is at least 1 exactly when W ≤ A — and every spiral tread through more than zero
+ * and less than 180°.
+ */
+export function anglesOk(st: Stair, n: number): boolean {
+  const f = formOf(st);
+  if (f.kind === 'winder') return BigInt(f.winders) <= (f.angle === 'half' ? HALF : QUARTER);
+  if (f.kind !== 'spiral') return true;
+  const cuts = divisions(BigInt(f.sweep), BigInt(n - 1));
+  for (let i = 1; i < cuts.length; i++) {
+    const a = cuts[i]! - cuts[i - 1]!;
+    if (a <= 0n || a >= HALF) return false;
+  }
+  return true;
+}
+
+/** FS-INV-905 (17.7.4): the newel lies inside the walkline's circle, and a half turn's gap is no wider than the stair. */
+export function newelInside(st: Stair): boolean {
+  const f = formOf(st) as Extract<StairForm, { kind: 'winder' }>;
+  const w = BigInt(st.width);
+  const a = BigInt(f.newel ?? 0);
+  const g = f.angle === 'half' ? BigInt(f.gap ?? 0) : 0n;
+  return (2n * a) ** 2n + (2n * a + g) ** 2n < (w + g) ** 2n && g <= w;
+}
+
+/** round(√x) for an exact x ≥ 0, ties to even: x compared with (k + ½)² exactly. */
+export function roundSqrt(x: Surd): bigint {
+  const fl = x.floor();
+  const k = isqrt(fl > 0n ? fl : 0n);
+  const c = x.sub(Surd.of((2n * k + 1n) ** 2n, 4n)).sign();
+  if (c > 0) return k + 1n;
+  if (c < 0) return k;
+  return k % 2n === 0n ? k : k + 1n;
+}
+
+/** |g₀/|g₀| − g₁/|g₁||² = 2 − 2·(g₀·g₁)/√(|g₀|²·|g₁|²), exact, in one radicand. */
+function unitSqGap(g0: Dir, g1: Dir): Surd {
+  const M = (g0[0] * g0[0] + g0[1] * g0[1]) * (g1[0] * g1[0] + g1[1] * g1[1]);
+  const G = g0[0] * g1[0] + g0[1] * g1[1];
+  return Surd.of(2n).add(Surd.sqrt(M).mulInt(-2n * G).divInt(M));
+}
+
+const timesQ = (x: Surd, r: Q): Surd => x.mulInt(r.n).divInt(r.d);
+
+/** o + r · d / |d|, exact. */
+function onRay(o: SP, d: Dir, r: Q): SP {
+  const m = d[0] * d[0] + d[1] * d[1];
+  const k = Surd.sqrt(m);
+  return [o[0].add(k.mulInt(r.n * d[0]).divInt(r.d * m)), o[1].add(k.mulInt(r.n * d[1]).divInt(r.d * m))];
+}
+
+/** The exact plan point of local (p, q), each a surd (13.1). */
+function planS(fr: StairFrame, p: Surd, q: Surd): SP {
+  const [fx, fy] = fr.f;
+  const D = fx * fx + fy * fy;
+  const k = Surd.sqrt(D);
+  return [fr.ox.add(p.mulInt(fx).sub(q.mulInt(fy)).mul(k).divInt(D)), fr.oy.add(p.mulInt(fy).add(q.mulInt(fx)).mul(k).divInt(D))];
+}
+
+const sp = (p: LP): SP => [p[0].toSurd(), p[1].toSurd()];
+const roundSP = (p: SP): IPoint => [p[0].round(), p[1].round()];
+const samePt = (a: IPoint, b: IPoint): boolean => a[0] === b[0] && a[1] === b[1];
+
+/** A tapered tread's outline (17.7): its exact points rounded once, repeats removed, counter-clockwise from its least vertex. */
+function ringOfPoints(points: readonly SP[]): IPoint[] {
+  let ring: IPoint[] = [];
+  for (const p of points.map(roundSP)) if (!ring.length || !samePt(ring[ring.length - 1]!, p)) ring.push(p);
+  while (ring.length > 1 && samePt(ring[0]!, ring[ring.length - 1]!)) ring.pop();
+  let a2 = 0n;
+  for (let i = 0; i < ring.length; i++) {
+    const p = ring[i]!;
+    const q = ring[(i + 1) % ring.length]!;
+    a2 += p[0] * q[1] - p[1] * q[0];
+  }
+  if (a2 < 0n) ring = [...ring].reverse();
+  return startAtLeast(ring);
+}
+
+const crossQ = (d: Dir, v: LP): Q => v[1].mul(d[0]).sub(v[0].mul(d[1]));
+const sameLP = (a: LP, b: LP): boolean => a[0].eq(b[0]) && a[1].eq(b[1]);
+
+/** The turn of a winder stair (17.7), in the local coordinates of a left turn. */
+class Turn {
+  readonly P: Q;
+  readonly half: boolean;
+  readonly A: bigint;
+  readonly W: number;
+  readonly O: LP;
+  readonly r: Q;
+  readonly dirs: Dir[];
+  readonly inner: LP[];
+  readonly outer: LP[];
+  readonly outerCorners: LP[];
+  readonly newelCorners: LP[];
+
+  constructor(st: Stair) {
+    const f = formOf(st) as Extract<StairForm, { kind: 'winder' }>;
+    const w = BigInt(st.width);
+    this.half = f.angle === 'half';
+    const g = f.angle === 'half' ? BigInt(f.gap ?? 0) : 0n;
+    const a = BigInt(f.newel ?? 0);
+    const hw = Q.of(w, 2n);
+    this.P = Q.of(BigInt(f.risersBeforeTurn - 1) * BigInt(st.tread));
+    this.W = f.winders;
+    this.A = this.half ? HALF : QUARTER;
+    this.O = [this.P, hw.add(Q.of(g, 2n))];
+    this.r = Q.of(w + g, 2n);
+    const qLo = hw.neg();
+    const top = this.half ? hw.mul(3n).add(g) : hw;
+    const nLo = hw.sub(a);
+    const nHi = this.half ? hw.add(g + a) : hw;
+    this.dirs = divisions(this.A, BigInt(this.W)).map((b) => facingVector(-QUARTER + b));
+    this.inner = this.dirs.map((d) => (a > 0n ? this.end(d, this.P.add(a), nLo, nHi) : this.O));
+    this.outer = this.dirs.map((d) => this.end(d, this.P.add(w), qLo, top));
+    this.outerCorners = [[this.P.add(w), qLo], ...(this.half ? [[this.P.add(w), top] as LP] : [])];
+    this.newelCorners = a > 0n ? [[this.P.add(a), nLo], ...(this.half ? [[this.P.add(a), nHi] as LP] : [])] : [];
+  }
+
+  /** Where the ray from O in the direction d leaves the rectangle [P, pHi] × [qLo, qHi]. */
+  private end(d: Dir, pHi: Q, qLo: Q, qHi: Q): LP {
+    const [px, qy] = this.O;
+    const [dx, dy] = d;
+    let best: Q | undefined;
+    const cand = (x: Q): void => {
+      if (!best || x.cmp(best) < 0) best = x;
+    };
+    if (dx > 0n) cand(pHi.sub(px).div(dx));
+    if (dy < 0n) cand(qLo.sub(qy).div(dy));
+    if (dy > 0n) cand(qHi.sub(qy).div(dy));
+    return [px.add(best!.mul(dx)), qy.add(best!.mul(dy))];
+  }
+
+  private between(j: number, c: LP): boolean {
+    const v: LP = [c[0].sub(this.O[0]), c[1].sub(this.O[1])];
+    const d0 = this.dirs[j - 1]!;
+    const d1 = this.dirs[j]!;
+    // d₀ × v > 0 and v × d₁ > 0
+    return crossQ(d0, v).sign() > 0 && v[0].mul(d1[1]).sub(v[1].mul(d1[0])).sign() > 0;
+  }
+
+  /** Winder j (1 … W): out along nosing line j − 1, along the turn's sides, in along nosing line j, back along the newel. */
+  winder(j: number): LP[] {
+    const pts: LP[] = [this.inner[j - 1]!, this.outer[j - 1]!, ...this.outerCorners.filter((c) => this.between(j, c)), this.outer[j]!, this.inner[j]!];
+    pts.push(...[...this.newelCorners].reverse().filter((c) => this.between(j, c)));
+    const out: LP[] = [];
+    for (const p of pts) if (!out.length || !sameLP(out[out.length - 1]!, p)) out.push(p);
+    if (out.length > 1 && sameLP(out[0]!, out[out.length - 1]!)) out.pop();
+    return out;
+  }
+
+  /** Where the walkline — the arc of radius (w + g)/2 about O — crosses nosing line j. */
+  walk(j: number): SP {
+    return onRay(sp(this.O), this.dirs[j]!, this.r);
+  }
+
+  /** (the square of winder j's going at the walkline, the square of its going at its narrow end). */
+  goings(j: number): [Surd, Surd] {
+    const walk = timesQ(unitSqGap(this.dirs[j - 1]!, this.dirs[j]!), this.r.mul(this.r));
+    const a = this.inner[j - 1]!;
+    const b = this.inner[j]!;
+    const dp = a[0].sub(b[0]);
+    const dq = a[1].sub(b[1]);
+    return [walk, dp.mul(dp).add(dq.mul(dq)).toSurd()];
+  }
+}
+
+interface TaperedTread {
+  readonly outline: readonly SP[];
+  /** The riser it is the top of. */
+  readonly index: number;
+  readonly chord: readonly [SP, SP];
+  readonly walk: Surd;
+  readonly narrow: Surd;
+}
+
+interface Tapered {
+  /** A winder stair's two flights, local and mirrored for a right turn; a spiral has none. */
+  readonly flights: Flight[];
+  readonly treads: TaperedTread[];
+  readonly walk: SP[];
+  readonly length: bigint;
+  readonly centre?: SP;
+}
+
+/** 17.7: the tapered treads of a winder or a spiral stair of n risers, exactly. */
+function tapered(st: Stair, n: number): Tapered {
+  const f = formOf(st);
+  const fr = frameOf(st);
+  const t = BigInt(st.tread);
+  const w = BigInt(st.width);
+  const hw = Q.of(w, 2n);
+  if (f.kind === 'spiral') {
+    const { cx, cy } = spiralPoints(st);
+    const C: SP = [cx, cy];
+    const R = Q.of(BigInt(f.diameter), 2n);
+    const rc = R.sub(hw);
+    const ri = R.sub(Q.of(w));
+    const left = f.turn === 'left';
+    const rot = BigInt(st.rotation ?? 0);
+    const base = left ? rot - QUARTER : rot + QUARTER;
+    const dirs = divisions(BigInt(f.sweep), BigInt(n - 1)).map((b) => facingVector(normalize(left ? base + b : base - b)));
+    const walk = dirs.map((d) => onRay(C, d, rc));
+    const treads: TaperedTread[] = [];
+    for (let k = 1; k < n; k++) {
+      const d0 = dirs[k - 1]!;
+      const d1 = dirs[k]!;
+      const outline = ri.sign() > 0 ? [onRay(C, d0, ri), onRay(C, d0, R), onRay(C, d1, R), onRay(C, d1, ri)] : [C, onRay(C, d0, R), onRay(C, d1, R)];
+      const gap = unitSqGap(d0, d1);
+      treads.push({ outline, index: k, chord: [walk[k - 1]!, walk[k]!], walk: timesQ(gap, rc.mul(rc)), narrow: timesQ(gap, ri.mul(ri)) });
+    }
+    return { flights: [], treads, walk, length: roundArc(0n, 1n, rc.n, rc.d, BigInt(f.sweep)), centre: C };
+  }
+  // A winder stair: its first flight, the winders of its turn, and its second flight.
+  const wf = f as Extract<StairForm, { kind: 'winder' }>;
+  const m = wf.risersBeforeTurn;
+  const W = wf.winders;
+  const turn = new Turn(st);
+  const P = turn.P;
+  const g = wf.angle === 'half' ? BigInt(wf.gap ?? 0) : 0n;
+  const s2 = BigInt(n - m - W) * t;
+  const right = wf.turn === 'right';
+  const mir = (p: SP): SP => (right ? [p[0], p[1].neg()] : p);
+  const plan = (p: SP): SP => {
+    const q = mir(p);
+    return planS(fr, q[0], q[1]);
+  };
+  const f1 = new Flight([Q.ZERO, Q.ZERO], [1n, 0n], m, 0, t, w);
+  const f2 = turn.half ? new Flight([P, Q.of(w + g)], [-1n, 0n], n - m - W + 1, m + W - 1, t, w) : new Flight([P.add(hw), hw], [0n, 1n], n - m - W + 1, m + W - 1, t, w);
+  const crossings = Array.from({ length: W + 1 }, (_, j) => plan(turn.walk(j)));
+  const treads: TaperedTread[] = [];
+  for (let j = 1; j <= W; j++) {
+    const [walk, narrow] = turn.goings(j);
+    treads.push({ outline: turn.winder(j).map((p) => plan(sp(p))), index: m + j - 1, chord: [crossings[j - 1]!, crossings[j]!], walk, narrow });
+  }
+  const head = f2.at(f2.length, Q.ZERO);
+  return {
+    flights: right ? [f1.mirrored(), f2.mirrored()] : [f1, f2],
+    treads,
+    walk: [plan(sp([Q.ZERO, Q.ZERO])), ...crossings, plan(sp(head))],
+    length: ((straight: Q) => roundArc(straight.n, straight.d, turn.r.n, turn.r.d, turn.A))(P.add(s2)),
+  };
+}
+
+/** 17.6: each tapered tread's lanes — the edges of its outline and its walkline chord, level at its top. */
+function taperedLanes(tp: Tapered, r: Resolved): [IPoint, IPoint, Q, Q][] {
+  const out: [IPoint, IPoint, Q, Q][] = [];
+  for (const tr of tp.treads) {
+    const z = riserZ(r, tr.index);
+    const ring = ringOfPoints(tr.outline);
+    for (let i = 0; i < ring.length; i++) out.push([ring[i]!, ring[(i + 1) % ring.length]!, z, z]);
+    out.push([roundSP(tr.chord[0]), roundSP(tr.chord[1]), z, z]);
+  }
+  return out;
+}
+
+/** 17.6: the index of the first step whose top is less than minHeadroom below the floor at the head, or undefined. */
+function openingFrom(ctx: StairContext, st: Stair, r: Resolved, tops: readonly Q[]): number | undefined {
+  if (st.minHeadroom === undefined) return undefined;
+  const thick = r.headRoom !== undefined ? floorThickness(ctx.doc, get(ctx.doc.rooms, r.headRoom)!) : BigInt(get(ctx.doc.levels, st.to)!.floorThickness ?? 0);
+  const limit = r.top - thick - BigInt(st.minHeadroom);
+  const i = tops.findIndex((z) => z.cmp(limit) > 0);
+  return i < 0 ? undefined : i;
 }
 
 // ── derived values (17.4–17.6) ──────────────────────────────────────────────────
@@ -586,10 +911,17 @@ export interface DerivedStair {
   footRoom?: string;
   headRoom?: string;
   box: { min: [number, number, number]; max: [number, number, number] };
-  steps?: { outline: P2[]; top: number; landing?: true }[];
+  steps?: { outline: P2[]; top: number; landing?: true; winder?: true }[];
   run?: number;
   walkline?: { points: P2[]; length: number };
+  /** Core 0.4 (17.7): the least going of a winder or spiral stair's tapered treads at the walkline, and at their narrow ends. */
+  walklineGoing?: number;
+  narrowGoing?: number;
+  /** Core 0.4 (17.7): a spiral stair's centre. */
+  centre?: P2;
   headroom?: number;
+  /** Core 0.4 (17.6): the index in `steps` of the first step the floor above must be open over. */
+  opening?: { first: number };
 }
 
 const num = toSafeNumber;
@@ -603,8 +935,8 @@ function boxOf(points: readonly IPoint[], z0: bigint, z1: bigint): DerivedStair[
   return { min: [num(mn(xs)), num(mn(ys)), num(z0)], max: [num(mx(xs)), num(mx(ys)), num(z1)] };
 }
 
-/** 17.4–17.6: one stair of a valid document. */
-export function deriveStair(ctx: StairContext, st: Stair): DerivedStair {
+/** 17.4–17.7: one stair of a valid document, as a Core 0.4 reader derives it, or (`core04` false) as a Core 0.3 reader does. */
+export function deriveStair(ctx: StairContext, st: Stair, core04 = true): DerivedStair {
   const f = formOf(st);
   const r = resolve(ctx, st);
   const fr = frameOf(st);
@@ -627,14 +959,15 @@ export function deriveStair(ctx: StairContext, st: Stair): DerivedStair {
       min: [num(cx.sub(rad).round()), num(cy.sub(rad).round()), num(r.bottom)],
       max: [num(cx.add(rad).round()), num(cy.add(rad).round()), num(r.top)],
     };
-    return v;
+    return core04 ? deriveTapered(ctx, st, r, fr, v) : v;
   }
   const lay = layout(st, r.n);
   if (f.kind === 'winder') {
     v.box = boxOf(lay.rects.flatMap((rect) => rect.corners().map((c) => rpt(fr, c))), r.bottom, r.top);
-    return v;
+    return core04 ? deriveTapered(ctx, st, r, fr, v) : v;
   }
   const steps: NonNullable<DerivedStair['steps']> = [];
+  const tops: Q[] = [];
   const pts: IPoint[] = [];
   const ringOf = (rect: Rect): IPoint[] => startAtLeast(rect.corners().map((c) => rpt(fr, c)));
   for (const piece of lay.pieces) {
@@ -642,11 +975,13 @@ export function deriveStair(ctx: StairContext, st: Stair): DerivedStair {
       for (const [rect, index] of piece.flight.treads()) {
         const ring = ringOf(rect);
         steps.push({ outline: ring.map(p2), top: num(riserZ(r, index).round()) });
+        tops.push(riserZ(r, index));
         pts.push(...ring);
       }
     } else {
       const ring = ringOf(piece.rect);
       steps.push({ outline: ring.map(p2), top: num(riserZ(r, piece.index).round()), landing: true });
+      tops.push(riserZ(r, piece.index));
       pts.push(...ring);
     }
   }
@@ -661,15 +996,58 @@ export function deriveStair(ctx: StairContext, st: Stair): DerivedStair {
   v.steps = steps;
   v.run = num(BigInt(treads) * BigInt(st.tread));
   v.walkline = { points: lay.walk.map((p) => p2(rpt(fr, p))), length: num(length.n / length.d) };
-  const h = headroom(ctx, st, lay, fr, r);
-  if (h !== undefined) v.headroom = num(h);
+  const h = headroomOf(ctx, st, lay, fr, r);
+  if (h !== undefined) v.headroom = num(h.round());
+  const first = openingFrom(ctx, st, r, tops);
+  if (first !== undefined) v.opening = { first };
   return v;
 }
 
-/** 17.4: every stair of a valid document (empty for one that has none). */
-export function deriveStairs(ctx: StairContext): Record<string, DerivedStair> {
+/** 17.7: the steps, run, walkline and goings of a winder or a spiral stair, its headroom (17.6), its opening, and a spiral's centre. */
+function deriveTapered(ctx: StairContext, st: Stair, r: Resolved, fr: StairFrame, v: DerivedStair): DerivedStair {
+  const tp = tapered(st, r.n);
+  const steps: NonNullable<DerivedStair['steps']> = [];
+  const tops: Q[] = [];
+  const walks: Surd[] = [];
+  const narrows: Surd[] = [];
+  const pushTapered = (tr: TaperedTread, winder: boolean): void => {
+    steps.push({ outline: ringOfPoints(tr.outline).map(p2), top: num(riserZ(r, tr.index).round()), ...(winder && { winder: true as const }) });
+    tops.push(riserZ(r, tr.index));
+    walks.push(tr.walk);
+    narrows.push(tr.narrow);
+  };
+  const flightSteps = (fl: Flight): void => {
+    for (const [rect, index] of fl.treads()) {
+      steps.push({ outline: startAtLeast(rect.corners().map((c) => rpt(fr, c))).map(p2), top: num(riserZ(r, index).round()) });
+      tops.push(riserZ(r, index));
+    }
+  };
+  if (tp.flights.length) {
+    flightSteps(tp.flights[0]!);
+    for (const tr of tp.treads) pushTapered(tr, true);
+    flightSteps(tp.flights[1]!);
+  } else for (const tr of tp.treads) pushTapered(tr, false);
+  const least = (xs: Surd[]): Surd => xs.reduce((a, b) => (b.cmp(a) < 0 ? b : a));
+  const points: IPoint[] = [];
+  for (const p of tp.walk.map(roundSP)) if (!points.length || !samePt(points[points.length - 1]!, p)) points.push(p);
+  if (tp.centre) v.centre = p2(roundSP(tp.centre));
+  v.steps = steps;
+  v.run = num(tp.length);
+  v.walkline = { points: points.map(p2), length: num(tp.length) };
+  v.walklineGoing = num(roundSqrt(least(walks)));
+  v.narrowGoing = num(roundSqrt(least(narrows)));
+  const lay: Layout = { pieces: tp.flights.map((flight) => ({ kind: 'flight', flight })), head: [Q.ZERO, Q.ZERO], rects: [], walk: [] };
+  const h = headroomOf(ctx, st, lay, fr, r, taperedLanes(tp, r));
+  if (h !== undefined) v.headroom = num(h.round());
+  const first = openingFrom(ctx, st, r, tops);
+  if (first !== undefined) v.opening = { first };
+  return v;
+}
+
+/** 17.4: every stair of a valid document (empty for one that has none) — as a Core 0.4 reader derives them, or a Core 0.3 reader. */
+export function deriveStairs(ctx: StairContext, core04 = true): Record<string, DerivedStair> {
   const out: Record<string, DerivedStair> = {};
-  for (const [id, st] of entries(ctx.doc.stairs)) Object.defineProperty(out, id, { value: deriveStair(ctx, st), enumerable: true, writable: true, configurable: true });
+  for (const [id, st] of entries(ctx.doc.stairs)) Object.defineProperty(out, id, { value: deriveStair(ctx, st, core04), enumerable: true, writable: true, configurable: true });
   return out;
 }
 

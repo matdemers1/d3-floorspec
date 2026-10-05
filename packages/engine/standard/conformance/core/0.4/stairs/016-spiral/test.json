@@ -1,0 +1,8 @@
+{
+  "description": "A spiral stair 1800 mm across, 800 mm wide, turning left through 270 degrees from its first nosing line at (2000 mm, 1000 mm): its centre is 500 mm to the left, at (2000 mm, 1500 mm), and its head is turned 270 degrees about it, to (1500 mm, 1500 mm), in the well. Its 12 treads each turn 22.5 degrees, from its column of 100 mm radius out to its 900 mm edge; their going on the walkline, 500 mm from the centre, is 1000 sin 11.25 mm, and at the column 200 sin 11.25 mm. Its walkline is three quarters of a circle of 500 mm.",
+  "covers": [
+    "FS-CORE-17.2.1",
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.7.3"
+  ]
+}

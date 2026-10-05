@@ -1,0 +1,44 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "fd8d6d990601628595c5162bcbf1ee60517c5fc6e185888237d5558d8a97e56e",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R3",
+      "path": "/wallFinish",
+      "value": "PAINT"
+    },
+    {
+      "op": "setProperty",
+      "id": "R3",
+      "path": "/floorFinish",
+      "value": "OAK"
+    },
+    {
+      "op": "setProperty",
+      "id": "R3",
+      "path": "/ceilingFinish",
+      "value": "PLASTER"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "R3",
+      "path": "/ceilingFinish"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R3",
+      "path": "/floorFinish"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R3",
+      "path": "/wallFinish"
+    }
+  ]
+}

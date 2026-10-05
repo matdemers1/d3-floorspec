@@ -1,0 +1,6 @@
+{
+  "description": "A wall drawn across the south wall at 8' splits it; the door at 6' moves to the second piece, W7, at offset 2' (5.2), with its own clear opening unchanged.",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

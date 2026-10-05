@@ -1,0 +1,6 @@
+{
+  "description": "The Dining room's east wall W5 and the Kitchen's east wall W8 are locked 12' apart; the resize makes it 10'.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

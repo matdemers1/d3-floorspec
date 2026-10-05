@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "addSeparator",
+      "level": "L1",
+      "start": "J5",
+      "end": "J6"
+    }
+  ]
+}

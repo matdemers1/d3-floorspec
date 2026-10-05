@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "R9",
+      "element": {
+        "color": "#aabbcc"
+      }
+    }
+  ],
+  "context": {
+    "retired": ["R9"]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "description": "A quarter-turn winder stair: 4 risers east, 3 winders in the 900 mm square at the turn, and 7 straight treads north, to its head at (2200 mm, 2800 mm). It has no newel, so its winders are 30 degrees each about the inner corner of the turn, (1750 mm, 1050 mm): their nosing lines meet the outer sides at 900 tan 30 mm, and their narrow ends have no depth (FS-LINT-018). Its walkline runs 450 mm from that corner, so each winder's going there is 900 sin 15 mm, and its length is 10 x 250 mm plus a quarter of the circle, rounded once. The well covers it, so it has no headroom.",
+  "covers": [
+    "FS-CORE-17.1.1",
+    "FS-CORE-17.2.1",
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.7.3",
+    "FS-CORE-10.2.1"
+  ]
+}

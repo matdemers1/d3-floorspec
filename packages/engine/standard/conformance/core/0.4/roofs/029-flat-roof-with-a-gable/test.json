@@ -1,0 +1,6 @@
+{
+  "description": "A roof with no pitch and a gable: a gable is not level, so the roof is part flat. FS-INV-802.",
+  "covers": [
+    "FS-CORE-16.2.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "One through wall where the two edges are collinear: nothing to butt against.",
+  "covers": [
+    "FS-CORE-5.8.2"
+  ]
+}

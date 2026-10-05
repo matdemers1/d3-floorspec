@@ -1,0 +1,6 @@
+{
+  "description": "A source that is the item's URI as a string, not an object.",
+  "covers": [
+    "FS-CORE-8.1.3"
+  ]
+}

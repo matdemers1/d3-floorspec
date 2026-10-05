@@ -1,0 +1,6 @@
+{
+  "description": "Removing L2 without cascade is blocked by everything on it and by the stair that rises to it: a stair depends on both its levels.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

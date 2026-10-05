@@ -1,0 +1,73 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "a741b9a2adf8b17707a11421bf9adfdf7e3f14034955523cfd0ec79080b3dd18",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [88795, -64000],
+        "endRight": [5120000, -64000],
+        "endLeft": [5120000, 64000],
+        "startLeft": [88795, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [88795, 64000],
+        "endRight": [1340716, 3819761],
+        "endLeft": [1219284, 3860239],
+        "startLeft": [-27969, 118479],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [-27969, 118479],
+        "endRight": [-2514745, 2605255],
+        "endLeft": [-2605255, 2514745],
+        "startLeft": [-118479, 27969],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [-118479, 27969],
+        "endRight": [-3860239, -1219284],
+        "endLeft": [-3819761, -1340716],
+        "startLeft": [-40477, -80954],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [-40477, -80954],
+        "endRight": [1219284, -3860239],
+        "endLeft": [1340716, -3819761],
+        "startLeft": [88795, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J0": [[-118479, 27969], [-40477, -80954], [88795, -64000], [88795, 64000], [-27969, 118479]]
+    },
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {},
+    "circulation": {},
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {},
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

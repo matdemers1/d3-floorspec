@@ -1,0 +1,35 @@
+{
+  "title": "Winders not too narrow at the inside",
+  "citation": {
+    "code": "TEST-CODE",
+    "edition": "2024",
+    "section": "§4.6",
+    "link": "https://example.org/test-code/2024/4.6"
+  },
+  "paraphrase": "Each winder keeps at least 2 inches of depth at its narrow end, so that no tread runs out to a point. The rule reads the least going at the narrow end that Floorspec derives for the winders: where they stand on the newel at the inside of the turn, or nothing at all when the turn has no newel.",
+  "applies": {
+    "to": "stair",
+    "where": {
+      "measure": "stairForm",
+      "op": "=",
+      "value": "winder"
+    }
+  },
+  "requirement": {
+    "measure": "stairNarrowGoing",
+    "op": ">=",
+    "value": 65024
+  },
+  "severity": "mayNotMeet",
+  "provenance": {
+    "verifiedBy": "Floorspec contributors",
+    "verifiedOn": "2026-10-05",
+    "edition": "2024",
+    "method": "synthetic",
+    "certifiedBy": "Floorspec contributors",
+    "certification": "original-paraphrase-v1",
+    "review": {
+      "status": "unreviewed"
+    }
+  }
+}

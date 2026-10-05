@@ -1,0 +1,6 @@
+{
+  "description": "An element lock on a type holds while the type is unchanged.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

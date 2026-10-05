@@ -1,0 +1,7 @@
+{
+  "description": "A document with a wall whose start junction does not exist is invalid (Core FS-INV-002): the report has FS-RULES-003, its units and profile, no hash and no finding.",
+  "covers": [
+    "FS-RULES-1.2.3",
+    "FS-RULES-11.1.1"
+  ]
+}

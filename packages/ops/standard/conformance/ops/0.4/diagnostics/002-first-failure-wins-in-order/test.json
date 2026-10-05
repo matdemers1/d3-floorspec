@@ -1,0 +1,7 @@
+{
+  "description": "The same two operations the other way round: FS-OPS-012 alone.",
+  "covers": [
+    "FS-OPS-7.1.1",
+    "FS-OPS-3.1.1"
+  ]
+}

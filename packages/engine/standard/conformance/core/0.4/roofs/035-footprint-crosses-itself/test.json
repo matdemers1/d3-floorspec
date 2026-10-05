@@ -1,0 +1,8 @@
+{
+  "description": "A roof whose footprint is a bow tie: an authored polygon is simple. FS-INV-009 names the roof, and no other invariant is evaluated.",
+  "covers": [
+    "FS-CORE-2.6.1",
+    "FS-CORE-10.2.1",
+    "FS-CORE-10.3.1"
+  ]
+}

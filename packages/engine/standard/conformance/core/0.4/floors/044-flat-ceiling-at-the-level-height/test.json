@@ -1,0 +1,7 @@
+{
+  "description": "A flat ceiling whose own height equals its level's: kept in the canonical form - its default is derived, and omitting it would bind it to the level.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-15.5.1"
+  ]
+}

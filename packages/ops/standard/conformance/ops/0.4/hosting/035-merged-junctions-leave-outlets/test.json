@@ -1,0 +1,7 @@
+{
+  "description": "The garden wall's end G3 is dragged onto the box's corner J3. The two junctions merge into G3 (both were in A; G3 sorts first), and W2 and W3, which ended and started at J3, are redirected to G3 at the same position: the outlets on them do not move or change (5.1).",
+  "covers": [
+    "FS-OPS-2.7.1",
+    "FS-OPS-5.1.1"
+  ]
+}

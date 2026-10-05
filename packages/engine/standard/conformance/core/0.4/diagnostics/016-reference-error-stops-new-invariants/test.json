@@ -1,0 +1,6 @@
+{
+  "description": "A dangling brief, beside a self-adjacency and a host beyond its wall: once a reference invariant is reported no other invariant is evaluated, so only FS-INV-002.",
+  "covers": [
+    "FS-CORE-10.3.1"
+  ]
+}

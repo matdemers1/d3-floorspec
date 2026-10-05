@@ -1,0 +1,6 @@
+{
+  "description": "drawWall passes every wall member it is given to addWall.",
+  "covers": [
+    "FS-OPS-4.1.1"
+  ]
+}

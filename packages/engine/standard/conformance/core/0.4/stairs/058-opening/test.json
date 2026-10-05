@@ -1,0 +1,7 @@
+{
+  "description": "The straight stair designed for 1800 mm of headroom. The floor above has its bottom at 2400 mm, 3072000, so a step needs it open when its top is above 600 mm, 768000: the third tread's, 740571.43, is not, and the fourth's, 987428.57, is - the opening starts at the fourth step, index 3, and every step after it needs it too. Its headroom, 2331428.57 - about 1821 mm - is more than it declares, so there is no FS-LINT-019.",
+  "covers": [
+    "FS-CORE-17.6.3",
+    "FS-CORE-17.1.3"
+  ]
+}

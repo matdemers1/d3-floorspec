@@ -1,0 +1,7 @@
+{
+  "description": "A straight stair has no tapered treads: its form is \"straight\", and the two goings of tapered treads have no value (4.2).",
+  "covers": [
+    "FS-RULES-4.7.1",
+    "FS-RULES-8.5.2"
+  ]
+}

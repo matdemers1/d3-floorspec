@@ -1,0 +1,7 @@
+{
+  "description": "A package validator checks every asset located by path: the photo and an unused spare are in the package, and match; the oak, located by uri, is not checked - it is warned (FS-LINT-007) and never fetched. Valid, and the spare is unused (FS-LINT-006).",
+  "covers": [
+    "FS-CORE-18.4.2",
+    "FS-CORE-18.4.3"
+  ]
+}

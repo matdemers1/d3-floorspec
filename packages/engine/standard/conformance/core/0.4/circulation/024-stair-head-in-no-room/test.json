@@ -1,0 +1,7 @@
+{
+  "description": "A stair from the hall whose head, at x = 4000 mm, is on the wall between the landing and the bedroom - in neither room: it joins nothing, and the building has a stair, so the two circulation rooms are not joined either. Both rooms on L2 are unreachable.",
+  "covers": [
+    "FS-CORE-14.1.1",
+    "FS-CORE-17.4.3"
+  ]
+}

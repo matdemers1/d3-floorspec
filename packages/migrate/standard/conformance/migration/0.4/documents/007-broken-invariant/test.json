@@ -1,0 +1,7 @@
+{
+  "description": "A 0.1 document whose wall W3 ends at a junction that does not exist. It matches the 0.1 schema, so it is migrated (20.2.2), and its migration breaks the same invariant: a reader of 0.3 reports FS-INV-002 for both (20.6.1).",
+  "covers": [
+    "FS-CORE-20.2.2",
+    "FS-CORE-20.6.1"
+  ]
+}

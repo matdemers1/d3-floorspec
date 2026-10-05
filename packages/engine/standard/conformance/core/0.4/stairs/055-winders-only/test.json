@@ -1,0 +1,7 @@
+{
+  "description": "A winder stair whose first riser rises onto the first winder - its first flight has no tread - and whose last winder rises onto the floor at its head: 1 riser before the turn, 3 winders and 4 risers in all, each 675 mm. Its walkline starts at the first nosing line and ends at the head, on the turn's arc: a quarter of a circle of 450 mm, with no straight part.",
+  "covers": [
+    "FS-CORE-17.7.3",
+    "FS-CORE-17.4.2"
+  ]
+}

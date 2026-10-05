@@ -1,0 +1,7 @@
+{
+  "description": "W2's top is not above its base (FS-INV-112), and its backsplash reaches twice the level's height: FS-INV-1002 does not test a region's top on a wall that has FS-INV-112 (10.3), so FS-INV-112 alone is reported.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-18.5.3"
+  ]
+}

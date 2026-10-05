@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/name",
+      "value": "x"
+    }
+  ],
+  "context": {
+    "option": 2
+  }
+}

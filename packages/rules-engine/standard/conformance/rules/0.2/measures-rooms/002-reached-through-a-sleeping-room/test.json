@@ -1,0 +1,6 @@
+{
+  "description": "The rules house with R2 made a sleeping room: R1 is reachable only through it, so `roomThroughSleeping` is true for R1; R2, an entry, is not reached through another; R3 is not a sleeping room, so false.",
+  "covers": [
+    "FS-RULES-5.4.1"
+  ]
+}

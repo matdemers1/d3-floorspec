@@ -1,0 +1,21 @@
+{
+  "batch": [
+    {
+      "op": "drawWall",
+      "id": "PARTY",
+      "level": "L1",
+      "from": ["2'", "7'"],
+      "to": ["8'", "7'"],
+      "type": "WT"
+    },
+    {
+      "op": "addOpening",
+      "id": "HATCH",
+      "wall": "PARTY",
+      "at": "centered",
+      "width": "2'",
+      "height": "2'",
+      "sill": "3'"
+    }
+  ]
+}

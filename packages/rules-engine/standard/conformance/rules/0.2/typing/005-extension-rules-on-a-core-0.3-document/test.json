@@ -1,0 +1,7 @@
+{
+  "description": "The same document and pack, declaring Core \"0.3\", for an evaluator that knows FS_electrical and FS_mechanical: the official extensions at 0.1.0 are evaluated for Core 0.3 documents too (each one's 1.2), so every FS_electrical rule is evaluated, exactly as for the \"0.2\" document; only the EXT_furniture rule is FS-RULES-009.",
+  "covers": [
+    "FS-RULES-1.2.3",
+    "FS-RULES-3.10.1"
+  ]
+}

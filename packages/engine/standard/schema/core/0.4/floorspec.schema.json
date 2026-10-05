@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.4/floorspec.schema.json",
+  "$comment": "Normative (FLR-ADR-006): this hand-written schema is the source; TypeScript types are generated from it, never the reverse. The `default` keywords in these schemas are exactly the constant defaults of Floorspec Core 0.4 (1.5) — the reference canonicalizer reads them as its table of constant defaults (9.2 step 1). A member whose default is derived, and every typed property (8.2), carries no `default`; never add one for documentation.",
+  "title": "Floorspec Core 0.4 document",
+  "description": "1.1: a Floorspec document is a JSON object (FS-CORE-1.1.1) whose members are the version declaration, the project, an optional site, the element collections, the program, the extension declarations and extras, and no other member (FS-CORE-1.1.2). This schema checks structure only — tier 3 of chapter 10, reported as FS-SCH-001. The invariants of chapter 10 (references resolve, IDs are unique, the wall graph is planar, rooms, openings and hosted elements fit, the program is consistent, extensions are declared and used as their registry entries say) need a validator. Every length is an integer (2.1): a number written with a fraction or an exponent must be mapped to a non-number before this schema is applied.",
+  "type": "object",
+  "required": [
+    "floorspec",
+    "project"
+  ],
+  "properties": {
+    "floorspec": {
+      "title": "Version declaration",
+      "description": "1.2: the version of Floorspec Core the document targets, as \"<major>.<minor>\". A document that targets this draft MUST declare \"0.4\" (FS-CORE-1.2.7). A reader of 0.4 applies Core 0.1's, Core 0.2's or Core 0.3's schema, at its own URL, to a document that declares \"0.1\", \"0.2\" or \"0.3\" (FS-CORE-1.2.8); a string naming a version the reader does not implement is rejected before any schema is applied, with FS-DOC-001 (FS-CORE-1.2.2).",
+      "const": "0.4"
+    },
+    "project": {
+      "$ref": "project.schema.json",
+      "description": "1.1, 1.8: the project the document describes. Present in every document."
+    },
+    "site": {
+      "$ref": "site.schema.json",
+      "description": "1.1, 1.8: the project's site. Absent: the project has no site."
+    },
+    "buildings": {
+      "title": "Buildings",
+      "description": "1.1, 1.8: the collection of buildings (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "building.schema.json"
+      },
+      "default": {}
+    },
+    "levels": {
+      "title": "Levels",
+      "description": "1.1, 1.8: the collection of levels (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "level.schema.json"
+      },
+      "default": {}
+    },
+    "junctions": {
+      "title": "Junctions",
+      "description": "1.1, 5.1: the collection of junctions (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "junction.schema.json"
+      },
+      "default": {}
+    },
+    "walls": {
+      "title": "Walls",
+      "description": "1.1, 5.2: the collection of walls (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "wall.schema.json"
+      },
+      "default": {}
+    },
+    "separators": {
+      "title": "Separators",
+      "description": "1.1, 5.2: the collection of room separators (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "separator.schema.json"
+      },
+      "default": {}
+    },
+    "openings": {
+      "title": "Openings",
+      "description": "1.1, 7.1: the collection of openings (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "opening.schema.json"
+      },
+      "default": {}
+    },
+    "rooms": {
+      "title": "Rooms",
+      "description": "1.1, 6.5: the collection of rooms (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "room.schema.json"
+      },
+      "default": {}
+    },
+    "slabs": {
+      "title": "Slabs",
+      "description": "1.1, 6.7: the collection of slabs (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "slab.schema.json"
+      },
+      "default": {}
+    },
+    "roofs": {
+      "title": "Roofs",
+      "description": "1.1, 16.1: the collection of roofs (1.4), keyed by element ID. New in 0.3.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "roof.schema.json"
+      },
+      "default": {}
+    },
+    "types": {
+      "title": "Types",
+      "description": "1.1, 8.1: the collection of types (1.4), keyed by element ID; each type's kind is given by its `kind` member.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "type.schema.json"
+      },
+      "default": {}
+    },
+    "materials": {
+      "title": "Materials",
+      "description": "1.1, 8.5: the collection of materials (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "material.schema.json"
+      },
+      "default": {}
+    },
+    "assets": {
+      "title": "Assets",
+      "description": "1.1, 8.6: the collection of assets (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "asset.schema.json"
+      },
+      "default": {}
+    },
+    "stairs": {
+      "title": "Stairs",
+      "description": "1.1, 17.1: the collection of stairs (1.4), keyed by element ID.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "stair.schema.json"
+      },
+      "default": {}
+    },
+    "optionSets": {
+      "title": "Option sets",
+      "description": "1.1, 19.1: the collection of option sets (1.4), keyed by element ID. New in 0.3.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "option.schema.json#/$defs/optionSet"
+      },
+      "default": {}
+    },
+    "options": {
+      "title": "Options",
+      "description": "1.1, 19.1: the collection of options (1.4), keyed by element ID; each option is of one option set. New in 0.3.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "option.schema.json#/$defs/option"
+      },
+      "default": {}
+    },
+    "program": {
+      "$ref": "program.schema.json",
+      "description": "1.1, 11.1: the program — the items the building is meant to provide and the adjacency graph between them.",
+      "default": {}
+    },
+    "extensionsUsed": {
+      "title": "Extensions used",
+      "description": "1.6, 12.1: maps the name of every extension the document uses (FS-CORE-1.6.1) to its declaration: a version string, or a declaration object with the version and, optionally, the URL of the extension's schema (FS-CORE-12.1.1).",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/extensionName"
+      },
+      "additionalProperties": {
+        "$ref": "extension.schema.json#/$defs/declaration"
+      },
+      "default": {}
+    },
+    "extensionsRequired": {
+      "title": "Extensions required",
+      "description": "1.6: the extensions a reader must implement to read the document correctly, each named once (FS-CORE-1.6.1). That each is also in extensionsUsed (FS-CORE-1.6.2) is an invariant (FS-INV-004), not checked here.",
+      "type": "array",
+      "items": {
+        "$ref": "defs.schema.json#/$defs/extensionName"
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "extensions": {
+      "$ref": "extension.schema.json#/$defs/topLevel",
+      "description": "1.6, 12.5: document-level extension data, keyed by extension name; an extension's kinds of element are in its `collections` member.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.7: application-specific data for the document as a whole.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

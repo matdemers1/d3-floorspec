@@ -1,0 +1,6 @@
+{
+  "description": "setProperty makes the stair an L, turning left after 7 risers, and declares its handrail: valid, and derived with a landing.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

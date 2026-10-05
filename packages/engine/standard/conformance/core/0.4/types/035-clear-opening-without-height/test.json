@@ -1,0 +1,6 @@
+{
+  "description": "A clear opening with a width and no height: both are always present.",
+  "covers": [
+    "FS-CORE-8.4.3"
+  ]
+}

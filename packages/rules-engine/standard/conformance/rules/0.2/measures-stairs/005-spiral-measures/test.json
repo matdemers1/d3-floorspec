@@ -1,0 +1,7 @@
+{
+  "description": "The same measures on a spiral stair 1800 mm across and 800 mm wide, with a 100 mm column, under a floor: its form, its going at the walkline, 1000 sin 11.25 mm, and at its column, 200 sin 11.25 mm; its width, the clear width from its column to its edge; and its headroom, which Core 0.4 derives for a spiral and Core 0.3 did not.",
+  "covers": [
+    "FS-RULES-4.7.1",
+    "FS-RULES-8.5.2"
+  ]
+}

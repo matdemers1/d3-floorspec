@@ -11,7 +11,7 @@ const applyFixturesInNode: BrowserCommand = () => fixtures().map((f) => ({ name:
 
 /** The vendored Ops conformance cases of every suite, each with its draft, input and request bytes in base64. */
 const opsConformanceCases: BrowserCommand = () =>
-  (['0.1', '0.2', '0.3'] as const).flatMap((ops) =>
+  (['0.1', '0.2', '0.3', '0.4'] as const).flatMap((ops) =>
     listCases(SUITES[ops]).map((name) => {
       const dir = join(SUITES[ops], name);
       const output = join(dir, 'output.json');
@@ -27,7 +27,7 @@ const opsConformanceCases: BrowserCommand = () =>
   );
 
 /** Whether every suite is vendored at all. */
-const opsSuiteVendored: BrowserCommand = () => existsSync(SUITES['0.1']) && existsSync(SUITES['0.2']) && existsSync(SUITES['0.3']);
+const opsSuiteVendored: BrowserCommand = () => existsSync(SUITES['0.1']) && existsSync(SUITES['0.2']) && existsSync(SUITES['0.3']) && existsSync(SUITES['0.4']);
 
 /**
  * The official extensions' Ops cases (each suite's `ops` group), with the one extension the
@@ -67,7 +67,7 @@ export const nodeCommands = { applyFixturesInNode, opsConformanceCases, opsSuite
 declare module 'vitest/browser' {
   interface BrowserCommands {
     applyFixturesInNode: () => Promise<{ name: string; result: string }[]>;
-    opsConformanceCases: () => Promise<{ ops: '0.1' | '0.2' | '0.3'; name: string; input: string; request: string; expected: string; output: string | null }[]>;
+    opsConformanceCases: () => Promise<{ ops: '0.1' | '0.2' | '0.3' | '0.4'; name: string; input: string; request: string; expected: string; output: string | null }[]>;
     opsSuiteVendored: () => Promise<boolean>;
     extensionOpsCases: () => Promise<{ extension: string; name: string; input: string; request: string; registry: string; expected: string; output: string | null }[]>;
   }

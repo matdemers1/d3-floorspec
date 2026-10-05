@@ -1,0 +1,94 @@
+{
+  "results": [
+    {
+      "display": "sleeping",
+      "type": "term",
+      "value": "sleeping"
+    },
+    {
+      "display": "mechanical",
+      "type": "term",
+      "value": "mechanical"
+    },
+    {
+      "display": "136.23 sq ft",
+      "type": "area",
+      "value": "20736438697984"
+    },
+    {
+      "display": "89.55 sq ft",
+      "type": "area",
+      "value": "13630000070656"
+    },
+    {
+      "display": "11' 8 1/16\"",
+      "type": "length",
+      "value": 4553728
+    },
+    {
+      "display": "7' 8 1/16\"",
+      "type": "length",
+      "value": 2993152
+    },
+    {
+      "display": "yes",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "display": "no",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "display": "yes",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "display": "no",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "display": "no",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "display": "yes",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "display": "no",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "display": "yes",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "display": "3",
+      "type": "count",
+      "value": 3
+    },
+    {
+      "display": "1",
+      "type": "count",
+      "value": 1
+    },
+    {
+      "display": "0",
+      "type": "count",
+      "value": 0
+    },
+    {
+      "display": "1",
+      "type": "count",
+      "value": 1
+    }
+  ]
+}

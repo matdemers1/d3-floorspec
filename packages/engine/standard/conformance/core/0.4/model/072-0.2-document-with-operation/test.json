@@ -1,0 +1,6 @@
+{
+  "description": "A 0.2 document whose door type declares its operation: \"operation\" is a member 0.3 added.",
+  "covers": [
+    "FS-CORE-1.2.8"
+  ]
+}

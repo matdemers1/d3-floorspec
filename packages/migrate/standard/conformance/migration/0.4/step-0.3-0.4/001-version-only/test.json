@@ -1,0 +1,9 @@
+{
+  "description": "A 0.3 house with a winder stair: the step makes it declare \"0.4\" and changes nothing else - no record, no extras (20.7.1, 20.3.2). A reader of 0.4 reads both alike: it derives the stair's winders, walkline, goings and headroom for the 0.3 document as for its migration, and reports FS-LINT-018 for both, since the winders meet at a point (20.6.1).",
+  "covers": [
+    "FS-CORE-20.7.1",
+    "FS-CORE-20.3.2",
+    "FS-CORE-20.1.4",
+    "FS-CORE-20.6.1"
+  ]
+}

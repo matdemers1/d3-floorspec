@@ -1,0 +1,74 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairRiserHeight"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairTreadDepth"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairWidth"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairHeadroom"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST1"
+      },
+      "measure": "stairHandrailHeight"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST2"
+      },
+      "measure": "stairRiserHeight"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST2"
+      },
+      "measure": "stairTreadDepth"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST2"
+      },
+      "measure": "stairWidth"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST2"
+      },
+      "measure": "stairHeadroom"
+    },
+    {
+      "target": {
+        "kind": "stair",
+        "id": "ST2"
+      },
+      "measure": "stairHandrailHeight"
+    }
+  ]
+}

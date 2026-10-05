@@ -1,0 +1,122 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 6400000]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [7680000, 6400000]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [7680000, 0]
+    },
+    "CJ1": {
+      "level": "L1",
+      "position": [3200000, 2560000]
+    },
+    "CJ2": {
+      "level": "L1",
+      "position": [3200000, 3840000]
+    },
+    "CJ3": {
+      "level": "L1",
+      "position": [4480000, 3840000]
+    },
+    "CJ4": {
+      "level": "L1",
+      "position": [4480000, 2560000]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J1",
+      "type": "WT"
+    },
+    "CW1": {
+      "level": "L1",
+      "start": "CJ1",
+      "end": "CJ2",
+      "type": "WT"
+    },
+    "CW2": {
+      "level": "L1",
+      "start": "CJ2",
+      "end": "CJ3",
+      "type": "WT"
+    },
+    "CW3": {
+      "level": "L1",
+      "start": "CJ3",
+      "end": "CJ4",
+      "type": "WT"
+    },
+    "CW4": {
+      "level": "L1",
+      "start": "CJ4",
+      "end": "CJ1",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [1280000, 1280000],
+      "ceiling": {
+        "kind": "tray",
+        "border": 640000,
+        "depth": 192000
+      }
+    }
+  }
+}

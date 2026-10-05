@@ -1,0 +1,6 @@
+{
+  "description": "A winder stair whose newel is 0 deep: a newel is greater than zero, and a turn without one has none.",
+  "covers": [
+    "FS-CORE-17.2.3"
+  ]
+}

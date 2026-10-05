@@ -1,0 +1,8 @@
+{
+  "description": "An L-shaped stair that rises north (rotation 90 degrees) from (600 mm, 500 mm) and turns right: in its frame the mirror image of a left turn. Its landing is from y = 2500 mm to 3400 mm, and its second flight runs east from it to its head at (2050 mm, 2950 mm). With no well, the floor of R2 is over all of it and its headroom is 0: L2's floor declares no thickness, so its bottom is its top.",
+  "covers": [
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.5.1",
+    "FS-CORE-17.6.1"
+  ]
+}

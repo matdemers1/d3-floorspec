@@ -1,0 +1,6 @@
+{
+  "description": "Laying the backsplash on a wall with no finishes: the inverse unsets what the setProperty created, and applying it gives back A exactly (1.6.1).",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

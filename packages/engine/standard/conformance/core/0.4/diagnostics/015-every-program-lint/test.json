@@ -1,0 +1,8 @@
+{
+  "description": "A valid document with every program lint: three bedrooms asked for and two drawn (FS-LINT-008), both under 12 m2 (FS-LINT-009 twice), a garage nothing fulfils (FS-LINT-008), a required adjacency from it that cannot be met (FS-LINT-010), and the kitchen and dining room forbidden but adjacent (FS-LINT-011). No program condition is an error. (The house also has no entry, FS-LINT-014.)",
+  "covers": [
+    "FS-CORE-10.1.1",
+    "FS-CORE-10.2.1",
+    "FS-CORE-11.5.2"
+  ]
+}

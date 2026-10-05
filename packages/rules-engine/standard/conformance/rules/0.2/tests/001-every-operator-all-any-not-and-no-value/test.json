@@ -1,0 +1,8 @@
+{
+  "description": "Tests on the bedroom and its receptacles: twelve conditions, one of each operator and type - an area compared exactly with integers just either side of it, `in` on a length and a term, booleans and a count - all hold, so `not` of their `all` fails, and the finding lists all twelve; `any` of two false conditions fails and of one true one passes; and a receptacle's `watts`, which it does not state and has no default, has no value: `=`, `<` and `has` on it fail and `!=` holds, and `features` (default `[]`) displays as `none`.",
+  "covers": [
+    "FS-RULES-3.8.1",
+    "FS-RULES-9.3.1",
+    "FS-RULES-9.6.1"
+  ]
+}

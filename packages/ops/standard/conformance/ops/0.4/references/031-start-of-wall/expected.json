@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "43e66df8f5634a1a13be500df94a153fd6e2c759ca4c7c862c9390ab74661776",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "J7",
+      "path": "/name",
+      "value": "T"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "J7",
+      "path": "/name"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "addLevel with an explicit elevation, a named ID and extras: lengths in the reference grammar - -8' and 7' 6\" - are resolved to integers.",
+  "covers": [
+    "FS-OPS-4.8.1",
+    "FS-OPS-3.1.1"
+  ]
+}

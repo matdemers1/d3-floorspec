@@ -1,0 +1,7 @@
+{
+  "description": "A light on a flat ceiling at the room's own 2400 mm, under a level 2700 mm high: it hangs from 2400 mm.",
+  "covers": [
+    "FS-CORE-15.6.1",
+    "FS-CORE-13.4.1"
+  ]
+}

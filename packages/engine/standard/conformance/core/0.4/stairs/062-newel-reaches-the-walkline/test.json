@@ -1,0 +1,6 @@
+{
+  "description": "A quarter turn whose newel is 320 mm deep: its far corner is 320 sqrt 2 mm from the pivot, beyond the walkline 450 mm away. FS-INV-905.",
+  "covers": [
+    "FS-CORE-17.7.4"
+  ]
+}

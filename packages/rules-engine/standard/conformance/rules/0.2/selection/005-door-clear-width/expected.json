@@ -1,0 +1,81 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "DOOR-WIDTH",
+      "subjects": 3,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.1"
+      },
+      "elements": [
+        "O2"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                4681728,
+                1560576
+              ],
+              [
+                4681728,
+                2600960
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "2' 6\"",
+          "holds": false,
+          "measure": "doorClearWidth",
+          "op": ">=",
+          "target": {
+            "id": "O2",
+            "kind": "opening"
+          },
+          "threshold": 1040384,
+          "thresholdDisplay": "2' 8\"",
+          "type": "length",
+          "value": 975360
+        }
+      ],
+      "message": "O2 may not meet TEST-CODE 2024 §4.1 (Door clear width).",
+      "pack": "test-pack",
+      "rule": "DOOR-WIDTH",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O2",
+        "kind": "opening"
+      },
+      "title": "Door clear width",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.2",
+  "hash": "a9a748ea202d625189df609e7bffd4bc485632a5513d17b56c3968a6e3590eab",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

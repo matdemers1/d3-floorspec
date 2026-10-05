@@ -1,0 +1,7 @@
+{
+  "description": "joins/015's inapplicable one-through join, at a junction where W3 has no effective layers: FS-INV-111 is not evaluated for a junction with a wall that has FS-INV-107, so only FS-INV-107 is reported.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-5.4.1"
+  ]
+}

@@ -26,14 +26,17 @@ export interface CheckedDesign {
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-/** Whether a document has design options at all (a Core 0.3 document with an option set or an option). */
+/** Whether a document declares a draft with design options (Core 0.3 and later, 19.1). */
+export const optionDraft = (floorspec: unknown): boolean => floorspec === '0.3' || floorspec === '0.4';
+
+/** Whether a document has design options at all (a Core 0.3 or 0.4 document with an option set or an option). */
 export function hasOptions(doc: { floorspec?: unknown; optionSets?: unknown; options?: unknown }): boolean {
-  return doc.floorspec === '0.3' && ((isObject(doc.optionSets) && Object.keys(doc.optionSets).length > 0) || (isObject(doc.options) && Object.keys(doc.options).length > 0));
+  return optionDraft(doc.floorspec) && ((isObject(doc.optionSets) && Object.keys(doc.optionSets).length > 0) || (isObject(doc.options) && Object.keys(doc.options).length > 0));
 }
 
-/** Every extension collection object of a 0.3 document (12.5). */
+/** Every extension collection object of a 0.3 or 0.4 document (12.5). */
 function extCollections(doc: { floorspec?: unknown; extensions?: unknown }): Record<string, unknown>[] {
-  if (doc.floorspec !== '0.3' || !isObject(doc.extensions)) return [];
+  if (!optionDraft(doc.floorspec) || !isObject(doc.extensions)) return [];
   const out: Record<string, unknown>[] = [];
   for (const data of Object.values(doc.extensions))
     if (isObject(data) && isObject(data.collections)) for (const c of Object.values(data.collections)) if (isObject(c)) out.push(c);
@@ -94,7 +97,7 @@ export function viewOf<T>(doc: T, design: Design): T {
   const v: Record<string, unknown> = {};
   for (const [k, x] of Object.entries(d)) if (k !== 'optionSets' && k !== 'options') v[k] = x;
   for (const c of IN_OPTIONS) if (isObject(d[c])) v[c] = filter(d[c]);
-  if (d.floorspec === '0.3' && isObject(d.extensions)) {
+  if (optionDraft(d.floorspec) && isObject(d.extensions)) {
     const exts: Record<string, unknown> = {};
     for (const [name, data] of Object.entries(d.extensions)) {
       if (isObject(data) && isObject(data.collections)) {

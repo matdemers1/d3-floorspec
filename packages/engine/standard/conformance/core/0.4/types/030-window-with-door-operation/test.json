@@ -1,0 +1,6 @@
+{
+  "description": "A window type whose operation is \"swing\", a door operation.",
+  "covers": [
+    "FS-CORE-8.4.2"
+  ]
+}

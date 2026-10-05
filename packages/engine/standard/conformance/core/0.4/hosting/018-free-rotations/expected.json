@@ -1,0 +1,167 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "8521c5e68fbc6c78a3d8caf51810dba59302a95d91a0a2111d87e497e99ff3fc",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "R0": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2240000, 1600000], [2880000, 1600000], [2880000, 2240000], [2240000, 2240000]],
+        "bottom": 0,
+        "top": 1024000
+      },
+      "R180": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2291200, 1600000], [2931200, 1600000], [2931200, 2240000], [2291200, 2240000]],
+        "bottom": 0,
+        "top": 1024000
+      },
+      "R30": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2148472, 2037128], [2468472, 1482872], [3022728, 1802872], [2702728, 2357128]],
+        "bottom": 0,
+        "top": 1024000
+      },
+      "R45": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2120252, 1920000], [2572800, 1467452], [3025348, 1920000], [2572800, 2372548]],
+        "bottom": 0,
+        "top": 1024000
+      },
+      "RM135": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2145852, 1920000], [2598400, 1467452], [3050948, 1920000], [2598400, 2372548]],
+        "bottom": 0,
+        "top": 1024000
+      },
+      "ROD": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2180605, 2010558], [2533442, 1476605], [3067395, 1829442], [2714558, 2363395]],
+        "bottom": 0,
+        "top": 1024000
+      }
+    },
+    "placements": {
+      "R0": {
+        "point": [2560000, 1920000, 0],
+        "facing": 0
+      },
+      "R180": {
+        "point": [2611200, 1920000, 0],
+        "facing": 180000000
+      },
+      "R30": {
+        "point": [2585600, 1920000, 0],
+        "facing": 30000000
+      },
+      "R45": {
+        "point": [2572800, 1920000, 0],
+        "facing": 45000000
+      },
+      "RM135": {
+        "point": [2598400, 1920000, 0],
+        "facing": -135000000
+      },
+      "ROD": {
+        "point": [2624000, 1920000, 0],
+        "facing": 123456789
+      }
+    },
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [5056000, 3776000, 3456000],
+          "min": [64000, 64000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5056000, 3776000, 0],
+          "min": [64000, 64000, 0]
+        }
+      }
+    },
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

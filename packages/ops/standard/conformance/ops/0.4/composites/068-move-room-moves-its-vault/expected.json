@@ -1,0 +1,87 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "6011d0a78f6626fdb4bc13f5ea5d6e6536726334e49b95fdbe800e8932bab121",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "moveJunction",
+      "id": "J1",
+      "to": [1170432, 0]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J2",
+      "to": [1170432, 3901440]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J3",
+      "to": [5852160, 3901440]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J4",
+      "to": [5852160, 0]
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/anchor",
+      "value": [3511296, 1950720]
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/ceiling/ridge",
+      "value": [[1170432, 1950720], [5852160, 1950720]]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/anchor",
+      "value": [2340864, 1950720]
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/ceiling",
+      "value": {
+        "height": 4096000,
+        "kind": "vaulted",
+        "pitch": {
+          "rise": 4,
+          "run": 12
+        },
+        "ridge": [[0, 1950720], [4681728, 1950720]]
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "J1",
+      "path": "/position",
+      "value": [0, 0]
+    },
+    {
+      "op": "setProperty",
+      "id": "J2",
+      "path": "/position",
+      "value": [0, 3901440]
+    },
+    {
+      "op": "setProperty",
+      "id": "J3",
+      "path": "/position",
+      "value": [4681728, 3901440]
+    },
+    {
+      "op": "setProperty",
+      "id": "J4",
+      "path": "/position",
+      "value": [4681728, 0]
+    }
+  ]
+}

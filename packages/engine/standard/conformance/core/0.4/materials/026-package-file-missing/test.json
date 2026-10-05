@@ -1,0 +1,7 @@
+{
+  "description": "The package has no file at the photo's path: FS-INV-1005. Its digest and its (wrong) byteLength are not evaluated (10.3).",
+  "covers": [
+    "FS-CORE-18.4.2",
+    "FS-CORE-10.3.1"
+  ]
+}

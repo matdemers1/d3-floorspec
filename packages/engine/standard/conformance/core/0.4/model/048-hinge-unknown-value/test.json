@@ -1,0 +1,6 @@
+{
+  "description": "An opening's hinge is \"start\" or \"end\".",
+  "covers": [
+    "FS-CORE-1.4.4"
+  ]
+}

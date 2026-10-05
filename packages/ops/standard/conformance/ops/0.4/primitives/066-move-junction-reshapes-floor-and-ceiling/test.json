@@ -1,0 +1,6 @@
+{
+  "description": "moveJunction drags the box's north-east corner J3 2' east: R1's floor and tray ceiling are its room polygon, so their boxes and the tray's centre follow, and the document does not change otherwise.",
+  "covers": [
+    "FS-OPS-2.4.1"
+  ]
+}

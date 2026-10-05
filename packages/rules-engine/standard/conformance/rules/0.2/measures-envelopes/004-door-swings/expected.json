@@ -1,0 +1,45 @@
+{
+  "results": [
+    {
+      "display": "swing",
+      "type": "term",
+      "value": "swing"
+    },
+    {
+      "display": "0",
+      "involved": [],
+      "type": "count",
+      "value": 0
+    },
+    {
+      "display": "7' 10 1/16\"",
+      "involved": [
+        "W5"
+      ],
+      "type": "length",
+      "value": 3057152
+    },
+    {
+      "display": "1",
+      "involved": [
+        "X2"
+      ],
+      "type": "count",
+      "value": 1
+    },
+    {
+      "display": "1",
+      "involved": [
+        "O4"
+      ],
+      "type": "count",
+      "value": 1
+    },
+    {
+      "display": "0",
+      "involved": [],
+      "type": "count",
+      "value": 0
+    }
+  ]
+}

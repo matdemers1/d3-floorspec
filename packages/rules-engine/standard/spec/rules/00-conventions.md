@@ -1,6 +1,6 @@
 # 0. Conventions
 
-> [!warning] Floorspec Rules 0.1 — Draft
+> [!warning] Floorspec Rules 0.2 — Draft
 > This is a working draft. It carries no compatibility promise: a later 0.x draft may change any
 > part of it. Floorspec Rules is versioned independently of Core and Ops (FLR-ADR-008), and stays
 > 0.x until the 1.0 criteria are met (FLR-ADR-017).
@@ -28,7 +28,7 @@ document invalid and never stop an edit.
 The key words `MUST`, `MUST NOT`, `SHOULD`, `SHOULD NOT` and `MAY` are used as in Floorspec Core
 §0.1, and every normative statement ends with a tag `{#FS-RULES-<chapter>.<section>.<n> LEVEL}`.
 An identifier is never reused, including after the statement it named is retired. Every `MUST`
-and `MUST NOT` is exercised by the conformance suite in `conformance/rules/0.1/`, and the build
+and `MUST NOT` is exercised by the conformance suite in `conformance/rules/0.2/`, and the build
 that publishes this specification fails if one is not.
 
 ## 0.2 Conformance classes
@@ -63,8 +63,8 @@ valid. Terms from Floorspec Ops are not needed: Rules reads documents, and never
 
 ## 0.4 Relation to Floorspec Core and Ops
 
-Floorspec Rules 0.1 evaluates documents that a **Core 0.3 reader** reads — Core 0.3 documents, and
-Core 0.2 and 0.1 documents read as Core 0.3 reads them (Core §1.2.6) — with the official extensions
+Floorspec Rules 0.2 evaluates documents that a **Core 0.4 reader** reads — Core 0.4 documents, and
+Core 0.3, 0.2 and 0.1 documents read as Core 0.4 reads them (Core §1.2.8) — with the official extensions
 (`registry/`) that the evaluator implements. Every measure is defined in terms of what Core and
 those extensions derive, so two evaluators that agree on Core agree on every measure.
 
@@ -95,7 +95,8 @@ over named measures (3.8), so that a pack is data a reviewer can read, never cod
   travel distances, a room's narrowest dimension and a difference of floor elevations. A rule that
   uses one is not evaluated (11.1, `FS-RULES-008`). Ceiling heights were reserved until Core 0.3
   derived ceilings (Core §15), and are `ceilingHeight` (5.7); stairs were reserved until Core 0.3
-  defined them (Core §17), and are the five measures of 8.5, on a new kind of target, the stair.
+  defined them (Core §17), and are the measures of 8.5, on a new kind of target, the stair — with,
+  from 0.2, the goings of tapered treads that Core 0.4 derives (Core §17.7).
 - **The pack format in full**: how a pack is laid out on disk, its per-rule provenance and review
   records, contributor certification and the coverage matrix a pack publishes are the rule-pack
   format's (FLR-T-6.3). This draft defines only what an evaluator reads: the pack object of chapter
@@ -114,8 +115,36 @@ states them here rather than as tagged statements.
 
 ## 0.8 Changes
 
-Floorspec Rules 0.1 is the first draft. No statement has been retired; when a later draft retires
-one, it is listed here, in a table whose first column is the retired ID.
+**From 0.1 to 0.2.** Floorspec Rules 0.2 is a new draft, not an edit of 0.1. The text of Rules 0.1
+stays published, unchanged, at its own URLs, built from the commit that pinned it (`8a99d02` in the
+standard's repository); its schemas are at `/floorspec/schema/rules/0.1/` and its suite at
+`conformance/rules/0.1/`, and none of them changes. This draft's schemas are at
+`/floorspec/schema/rules/0.2/` — 0.1's, every object declaring `"floorspecRules": "0.2"` — and its
+suite at `conformance/rules/0.2/`, which holds every 0.1 test carried forward as well as the new ones.
+
+What 0.2 adds:
+
+- **Core 0.4 documents**: an evaluator reads a document as a Core 0.4 reader (1.2), which derives the
+  steps, walkline, goings and headroom of winder and spiral stairs (Core §17.7) — so `stairHeadroom`
+  has a value for a winder or a spiral stair with something above it, where under 0.1 it had none
+  (8.5);
+- three stair measures (8.5): `stairForm`, the kind of a stair's form, so that a rule can apply to
+  winder or spiral stairs alone; `stairWalklineGoing`, the least going of its tapered treads at the
+  walkline; and `stairNarrowGoing`, the least going of its tapered treads at their narrow ends — the
+  quantities a code's rules for winders and spiral stairs compare with thresholds;
+- requests, packs, profiles and reports that declare `"0.2"`: an evaluator of 0.2 reads a request, a
+  pack or a profile of 0.1 as it reads one of any other draft — not at all (`FS-RULES-001`,
+  `FS-RULES-004`, `FS-RULES-002`) — since what 0.1's `stairHeadroom` measured is not what 0.2's does.
+
+Statements whose meaning changed were given new IDs, and their old IDs are retired, never reused:
+
+| Retired | Replaced by | Why |
+|---|---|---|
+| `FS-RULES-1.2.1` | `FS-RULES-1.2.3` | a document is read, and is valid or not, as a Core 0.4 validator reads it |
+| `FS-RULES-8.5.1` | `FS-RULES-8.5.2` | the stair measures are those of 0.2, `stairHeadroom` among them with a value for a tapered stair |
+
+Every other statement of 0.1 keeps its ID and its meaning; where a schema or a table it refers to has
+grown or now names `"0.2"`, the statement applies to the new draft's.
 
 ## 0.9 Related
 

@@ -1,0 +1,7 @@
+{
+  "description": "A backsplash laid on a wall of a Core 0.2 document that does not declare \"0.3\": Core 0.2's schema has no wall finishes (Core 1.2.8), so the result is invalid: FS-SCH-001.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

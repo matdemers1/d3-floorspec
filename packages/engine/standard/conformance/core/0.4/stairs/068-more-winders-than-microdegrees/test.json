@@ -1,0 +1,6 @@
+{
+  "description": "A quarter turn on 90000001 winders - more than its 90000000 microdegrees - with risers enough for them: some winder turns through no angle. FS-INV-906.",
+  "covers": [
+    "FS-CORE-17.7.5"
+  ]
+}

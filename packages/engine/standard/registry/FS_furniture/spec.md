@@ -4,7 +4,7 @@
 > FS_furniture 0.1.0 is a **Release Candidate** (`registry/README.md`): specified, with a schema
 > and a conformance suite, and frozen unless implementations find a problem. It becomes Ratified
 > only when a second, independent implementation passes its conformance suite (FLR-REQ-092). It
-> builds on Floorspec Core 0.2 and 0.3, which are Drafts.
+> builds on Floorspec Core 0.2, 0.3 and 0.4, which are Drafts.
 
 FS_furniture describes what is put into a house rather than built into its systems: **furniture**
 — sofas, tables, beds, wardrobes — **appliances** — a refrigerator, a range, a dishwasher, a washer
@@ -52,7 +52,7 @@ every `MUST` and `MUST NOT` is exercised by the conformance suite in
 | Registry entry | `registry/FS_furniture/extension.json` |
 | Schema | `registry/FS_furniture/furniture.schema.json`, published at `https://d3cloud.io/floorspec/schema/ext/FS_furniture/0.1.0/furniture.schema.json` |
 | Requires | nothing |
-| Core drafts | `0.2` and `0.3`: the drafts whose documents it is evaluated for (1.2) |
+| Core drafts | `0.2`, `0.3` and `0.4`: the drafts whose documents it is evaluated for (1.2) |
 | Kinds | `pieces`, `appliances`, `casework` (each requires an asset and a symbol, Core §12.4.2) |
 | Statement IDs | `FS-FURN-` |
 | Diagnostic codes | `FS-FURN-SCH-`, `FS-FURN-INV-`, `FS-FURN-LINT-` |
@@ -65,7 +65,7 @@ specification says; it is then also a reader that implements FS_furniture (Core 
 apply when the validator knows the version the document targets (Core §12.2) — normally because it
 is configured with this specification's registry entry.
 
-A validator that implements FS_furniture 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"` or `"0.3"` — a Core draft this version lists (1.1) — and uses FS_furniture at a version at which FS_furniture is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-FURN-1.2.1 MUST}
+A validator that implements FS_furniture 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"`, `"0.3"` or `"0.4"` — a Core draft this version lists (1.1) — and uses FS_furniture at a version at which FS_furniture is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-FURN-1.2.1 MUST}
 
 Such a validator MUST NOT evaluate FS_furniture's diagnostics for a document for which Core's tiers 0 to 4 reported an error, MUST NOT evaluate its invariants (`FS-FURN-INV-`) when it reported `FS-FURN-SCH-001`, and MUST NOT evaluate its lints (`FS-FURN-LINT-`) unless the document is valid. {#FS-FURN-1.2.2 MUST NOT}
 FS_furniture's errors are part of tier 4 (Core §10.1) and its lints part of tier 5: an `FS-FURN-`
@@ -442,5 +442,5 @@ attribution for it.
 FLR-T-8.3, FLR-REQ-119 (furniture and appliances with a glTF model, a plan symbol and clearance
 envelopes), FLR-REQ-092 (Release Candidate until a second independent implementation), FLR-ADR-001
 (building systems and furniture are `FS_` extensions), FLR-ADR-007 (the extension model),
-FLR-ADR-025 (the conventions of the official extensions). Floorspec Core 0.2 and 0.3 chapters 12
+FLR-ADR-025 (the conventions of the official extensions). Floorspec Core 0.2, 0.3 and 0.4 chapters 12
 and 13, and Core 0.3 chapters 18 (assets and the package) and 19 (design options).

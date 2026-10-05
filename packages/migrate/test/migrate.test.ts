@@ -84,13 +84,15 @@ describe('migrate', () => {
 
 describe('migrationBatch', () => {
   it('is empty for a document that declares the target', () => {
-    expect(migrationBatch(house('0.3'))).toEqual([]);
-    expect(needsMigration(house('0.3'))).toBe(false);
+    expect(migrationBatch(house('0.4'))).toEqual([]);
+    expect(needsMigration(house('0.4'))).toBe(false);
+    expect(needsMigration(house('0.3'))).toBe(true);
     expect(needsMigration(house('0.1'))).toBe(true);
   });
 
   it('is a version bump when nothing moves', () => {
-    expect(migrationBatch(house('0.2'))).toEqual([{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }]);
+    expect(migrationBatch(house('0.2'))).toEqual([{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.4' }]);
+    expect(migrationBatch(house('0.3'))).toEqual([{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.4' }]);
   });
 
   it('commits exactly the migration, and its inverse restores the document', () => {
@@ -98,7 +100,7 @@ describe('migrationBatch', () => {
     expect(batch).toEqual([
       { op: 'unsetProperty', id: '$document', path: '/extensions/FS_furniture/collections' },
       { op: 'setProperty', id: '$document', path: '/extras/floorspec:migration', value: expect.any(Array) as unknown },
-      { op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' },
+      { op: 'setProperty', id: '$document', path: '/floorspec', value: '0.4' },
     ]);
     const r = apply(opaque, { batch });
     expect(r.status).toBe('committed');

@@ -1,0 +1,6 @@
+{
+  "description": "A room whose function is an extension term, reached only through a bedroom: only the core term sleeping makes a sleeping room, so the room has no throughSleeping and no lint.",
+  "covers": [
+    "FS-CORE-14.3.1"
+  ]
+}

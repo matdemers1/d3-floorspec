@@ -1,0 +1,104 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "WIDE",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "3558 mm",
+          "holds": false,
+          "measure": "roomLeastWidth",
+          "op": ">=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 5120000,
+          "thresholdDisplay": "4000 mm",
+          "type": "length",
+          "value": 4553728
+        },
+        {
+          "display": "12.66 m²",
+          "holds": false,
+          "measure": "roomNetArea",
+          "op": ">=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 32768000000000,
+          "thresholdDisplay": "20.00 m²",
+          "type": "area",
+          "value": "20736438697984"
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §1.1 (A synthetic rule).",
+      "pack": "test-pack",
+      "rule": "WIDE",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "A synthetic rule",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.2",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "metric"
+}

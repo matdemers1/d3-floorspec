@@ -1,0 +1,6 @@
+{
+  "description": "Separator S1 is on L1 but both its junctions are on L2: one diagnostic for each.",
+  "covers": [
+    "FS-CORE-3.3.1"
+  ]
+}

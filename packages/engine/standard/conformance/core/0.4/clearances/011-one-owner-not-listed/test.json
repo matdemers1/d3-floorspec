@@ -1,0 +1,6 @@
+{
+  "description": "A door type with two envelopes that overlap each other: only envelopes of different owners are compared, so nothing is listed.",
+  "covers": [
+    "FS-CORE-13.6.1"
+  ]
+}

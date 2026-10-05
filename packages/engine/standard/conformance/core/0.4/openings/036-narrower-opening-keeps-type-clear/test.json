@@ -1,0 +1,8 @@
+{
+  "description": "A door that overrides its width to 800 mm but not its clear opening keeps its type's 32-inch (812.8 mm) clear width, which no longer fits: FS-INV-305.",
+  "covers": [
+    "FS-CORE-7.2.2",
+    "FS-CORE-8.2.1",
+    "FS-CORE-10.2.1"
+  ]
+}

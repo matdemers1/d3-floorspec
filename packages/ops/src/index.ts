@@ -1,6 +1,6 @@
 /**
- * @floorspec/ops — the reference applier of Floorspec Ops 0.3 (and, with `{ ops: '0.2' }` or
- * `{ ops: '0.1' }`, of Ops 0.2 or 0.1 as published): the edit operations of a Floorspec Core document, as one atomic,
+ * @floorspec/ops — the reference applier of Floorspec Ops 0.4 (and, with `{ ops: '0.3' }`, `{ ops: '0.2' }` or
+ * `{ ops: '0.1' }`, of Ops 0.3, 0.2 or 0.1 as published): the edit operations of a Floorspec Core document, as one atomic,
  * deterministic transaction (FLR-ADR-008).
  *
  * Isomorphic like @floorspec/engine (FLR-ADR-010): the same package applies edits in the editor,
@@ -8,9 +8,9 @@
  */
 export const PACKAGE_NAME = '@floorspec/ops';
 /** The Floorspec Ops draft this applier implements by default. */
-export const OPS_VERSION = '0.3';
+export const OPS_VERSION = '0.4';
 /** Every Floorspec Ops draft this applier implements (`apply(…, { ops })`). */
-export const OPS_VERSIONS = ['0.1', '0.2', '0.3'] as const;
+export const OPS_VERSIONS = ['0.1', '0.2', '0.3', '0.4'] as const;
 
 export { apply, resolveBatch, type JsonInput } from './apply.js';
 export { checkRequest, OP_SHAPES, OP_SHAPES_BY_VERSION, HOST_SHAPES } from './request.js';

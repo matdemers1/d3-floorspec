@@ -1,0 +1,337 @@
+{
+  "floorspecRules": "0.2",
+  "packs": [
+    {
+      "floorspecRules": "0.2",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "OUTSIDE-DOOR": {
+          "title": "A door to the outside",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a door to the outside); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "args": {
+              "to": "outside"
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "openingKind",
+            "op": "=",
+            "value": "door"
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ANY-DOOR": {
+          "title": "Any door",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (any door); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "openingKind",
+            "op": "=",
+            "value": "door"
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ALL-WINDOWS": {
+          "title": "Only windows",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (only windows); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "need": "all"
+          },
+          "requirement": {
+            "measure": "openingKind",
+            "op": "=",
+            "value": "window"
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "NONE-ANY": {
+          "title": "An empty opening",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (an empty opening); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "where": {
+              "measure": "openingKind",
+              "op": "=",
+              "value": "empty"
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "openingWidth",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "NONE-ALL": {
+          "title": "Every empty opening",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (every empty opening); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "where": {
+              "measure": "openingKind",
+              "op": "=",
+              "value": "empty"
+            },
+            "need": "all"
+          },
+          "requirement": {
+            "measure": "openingWidth",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "RECEPTACLES-LOW": {
+          "title": "Receptacles low",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (receptacles low); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "elements",
+            "args": {
+              "extension": "FS_electrical",
+              "collection": "receptacles"
+            },
+            "need": "all"
+          },
+          "requirement": {
+            "measure": "elementBottomAboveFloor",
+            "op": "<=",
+            "value": 256000
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "LEVEL-SLEEPING": {
+          "title": "A big bedroom",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a big bedroom); it states no requirement of any real code.",
+          "applies": {
+            "to": "level"
+          },
+          "select": {
+            "from": "rooms",
+            "args": {
+              "function": "sleeping"
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">=",
+            "value": 30442468147200
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "LEVEL-CO": {
+          "title": "A carbon monoxide alarm on every level",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a carbon monoxide alarm on every level); it states no requirement of any real code.",
+          "applies": {
+            "to": "level"
+          },
+          "select": {
+            "from": "elements",
+            "args": {
+              "extension": "FS_electrical",
+              "collection": "alarms"
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "elementMember",
+            "op": "has",
+            "value": "carbonMonoxide",
+            "args": {
+              "name": "detects",
+              "type": "terms"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "DOOR-SWINGS": {
+          "title": "A door swing",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a door swing); it states no requirement of any real code.",
+          "applies": {
+            "to": "opening",
+            "where": {
+              "measure": "openingKind",
+              "op": "=",
+              "value": "door"
+            }
+          },
+          "select": {
+            "from": "envelopes",
+            "args": {
+              "purpose": "swing"
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "envelopeDepth",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.2",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

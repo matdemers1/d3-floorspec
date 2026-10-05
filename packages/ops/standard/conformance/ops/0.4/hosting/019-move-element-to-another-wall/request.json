@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "moveElement",
+      "element": "X1",
+      "host": {
+        "mode": "wallFace",
+        "wall": "east wall of Living",
+        "at": "1' from start",
+        "height": 576000,
+        "toward": "Living"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The kitchen house with the Pantry set, whose option PB adds a wall in the dining room that would cross KB's separator. The document is valid - PB is checked against KA, the primary, and KB against PA - but the design {\"KS\": \"KB\", \"PS\": \"PB\"} has the two crossing: its view is not valid, and nothing is derived for it.",
+  "covers": [
+    "FS-CORE-19.6.2",
+    "FS-CORE-19.5.1"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "east separator of Kitchen",
+      "path": "/name",
+      "value": "Counter line"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "separator between Dining and Kitchen",
+      "path": "/name"
+    }
+  ]
+}

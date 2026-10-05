@@ -1,0 +1,7 @@
+{
+  "description": "A properly paired escape \\ud83c\\udfe0 is one character, U+1F3E0, written literally in canonical form.",
+  "covers": [
+    "FS-CORE-9.1.3",
+    "FS-CORE-9.2.1"
+  ]
+}

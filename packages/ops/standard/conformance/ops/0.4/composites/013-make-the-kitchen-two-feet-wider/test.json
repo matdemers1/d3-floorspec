@@ -1,0 +1,7 @@
+{
+  "description": "\"Make the kitchen 2 ft wider\": resizeRoom east by 2'. The Kitchen's east side is W8 alone (J7 -> J8). At J7 the side does not continue, so J7 moves 2' east; at J8 it continues north as the Pantry's W9, so J8 stays and the run is reconnected to a new junction J9 at (14', 8') by a jog W11 with W8's type. The Kitchen's anchor and the Dining room's - across W8 - move 1' east.",
+  "covers": [
+    "FS-OPS-4.4.1",
+    "FS-OPS-1.4.1"
+  ]
+}

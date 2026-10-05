@@ -1,0 +1,7 @@
+{
+  "description": "An L-shaped stair has a landing, not a newel the treads stand on.",
+  "covers": [
+    "FS-CORE-17.2.3",
+    "FS-CORE-17.2.1"
+  ]
+}

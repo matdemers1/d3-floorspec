@@ -1,0 +1,36 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "3a1c0f85452f953adf281b122542903662b201938c22d45a369c4e419fc86902",
+  "created": ["ST1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "stairs",
+      "id": "ST1",
+      "element": {
+        "level": "L1",
+        "position": [390144, 780288],
+        "to": "L2",
+        "form": {
+          "angle": "quarter",
+          "kind": "winder",
+          "newel": 130048,
+          "risersBeforeTurn": 4,
+          "turn": "left",
+          "winders": 3
+        },
+        "risers": 14,
+        "tread": 292608,
+        "width": 1170432
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "ST1"
+    }
+  ]
+}

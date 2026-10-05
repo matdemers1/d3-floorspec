@@ -1,0 +1,6 @@
+{
+  "description": "A window type nothing uses: FS-LINT-006 is of the document, so it is reported once, without design.",
+  "covers": [
+    "FS-CORE-19.5.2"
+  ]
+}

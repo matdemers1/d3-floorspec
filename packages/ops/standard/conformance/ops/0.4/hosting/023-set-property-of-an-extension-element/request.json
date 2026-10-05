@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/host/height",
+      "value": 768000
+    }
+  ]
+}

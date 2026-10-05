@@ -1,0 +1,6 @@
+{
+  "description": "An extras string containing a lone low surrogate \\udfe0.",
+  "covers": [
+    "FS-CORE-9.1.3"
+  ]
+}

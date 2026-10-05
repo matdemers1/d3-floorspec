@@ -1,0 +1,7 @@
+{
+  "description": "A window with sill 900 mm and height 2000 mm in a 2700 mm wall.",
+  "covers": [
+    "FS-CORE-7.3.2",
+    "FS-CORE-10.2.1"
+  ]
+}

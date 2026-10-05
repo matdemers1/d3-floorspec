@@ -1,0 +1,7 @@
+{
+  "description": "An option set added to a document that declares \"0.2\": Core 0.2's schema has no optionSets, so the result is invalid: FS-SCH-001.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.1.1"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "description": "The baseline model: one 4 m by 3 m room of 100 mm centred walls with an empty opening, every defaulted member absent. model/018 states the same model with every default written out; a reader treats them identically, so both derive the same values and have the same hash.",
+  "covers": [
+    "FS-CORE-1.5.1",
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-5.9.3",
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1",
+    "FS-CORE-7.4.1",
+    "FS-CORE-9.3.1"
+  ]
+}

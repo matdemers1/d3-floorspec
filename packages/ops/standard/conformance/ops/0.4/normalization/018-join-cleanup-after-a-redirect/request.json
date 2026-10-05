@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "addJunction",
+      "level": "L1",
+      "position": ["20'", "1'"]
+    },
+    {
+      "op": "setProperty",
+      "id": "W5",
+      "path": "/end",
+      "value": "J5"
+    }
+  ]
+}

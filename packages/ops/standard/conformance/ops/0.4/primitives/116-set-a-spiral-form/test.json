@@ -1,0 +1,6 @@
+{
+  "description": "setProperty makes the stair a spiral 5' across turning left through 270 degrees, and sets its width to 2'3\": valid, and every one of its treads is derived about its centre.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

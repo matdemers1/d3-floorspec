@@ -1,0 +1,6 @@
+{
+  "description": "IDs of one digit (\"0\"), with every permitted punctuation (\"a.b_c-D\"), and of exactly 64 characters are valid, and are opaque: nothing is inferred from their spelling.",
+  "covers": [
+    "FS-CORE-3.1.1"
+  ]
+}

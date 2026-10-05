@@ -1,0 +1,144 @@
+{
+  "floorspecRules": "0.2",
+  "packs": [
+    {
+      "floorspecRules": "0.2",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "RISER": {
+          "title": "Risers no taller than 7 3/4 in",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§4.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (risers no taller than 7 3/4 in); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair"
+          },
+          "requirement": {
+            "measure": "stairRiserHeight",
+            "op": "<=",
+            "value": 251968
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "HEADROOM": {
+          "title": "Headroom of 6 ft 8 in",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§4.2"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (headroom of 6 ft 8 in); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair",
+            "where": {
+              "measure": "stairHeadroom",
+              "op": ">=",
+              "value": 0
+            }
+          },
+          "requirement": {
+            "measure": "stairHeadroom",
+            "op": ">=",
+            "value": 2600960
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "HANDRAIL": {
+          "title": "A handrail 34 to 38 in high",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§4.3"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a handrail 34 to 38 in high); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair"
+          },
+          "requirement": {
+            "all": [
+              {
+                "measure": "stairHandrailHeight",
+                "op": ">=",
+                "value": 1105408
+              },
+              {
+                "measure": "stairHandrailHeight",
+                "op": "<=",
+                "value": 1235456
+              }
+            ]
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "TREAD": {
+          "title": "Treads at least 10 in deep",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§4.4"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (treads at least 10 in deep); it states no requirement of any real code.",
+          "applies": {
+            "to": "stair"
+          },
+          "requirement": {
+            "measure": "stairTreadDepth",
+            "op": ">=",
+            "value": 325120
+          },
+          "exceptions": [
+            {
+              "when": {
+                "measure": "stairWidth",
+                "op": "<",
+                "value": 1170432
+              },
+              "note": "Synthetic: narrow stairs are exempt."
+            }
+          ],
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.2",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

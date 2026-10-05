@@ -1,0 +1,7 @@
+{
+  "description": "The request's profile is a profile that adopts TEST-CODE 2021 and 2024, neither with an effective date: FS-RULES-002, the report has its units but no profile name, and nothing is evaluated.",
+  "covers": [
+    "FS-RULES-10.1.1",
+    "FS-RULES-11.1.1"
+  ]
+}

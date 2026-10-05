@@ -1,0 +1,7 @@
+{
+  "description": "A toilet turned 30 degrees, with a fixture clearance in front of it: the envelope's corners are irrational, from the facing vector (866025404, 500000000), and rounded once.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.5.2"
+  ]
+}

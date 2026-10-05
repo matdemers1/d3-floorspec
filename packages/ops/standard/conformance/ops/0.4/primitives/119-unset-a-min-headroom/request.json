@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/minHeadroom"
+    }
+  ]
+}

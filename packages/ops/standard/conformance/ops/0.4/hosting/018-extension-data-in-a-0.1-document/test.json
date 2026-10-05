@@ -1,0 +1,6 @@
+{
+  "description": "In a document that declares \"0.1\" top-level extension data is opaque (Core 1.2.8): the device is added where it is asked to be, the result is a valid 0.1 document, and nothing is created - it is not an element there.",
+  "covers": [
+    "FS-OPS-2.1.3"
+  ]
+}

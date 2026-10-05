@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.4/level.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Level table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Level",
+  "description": "1.8: a level of a building. Every level MUST reference a building (FS-CORE-1.3.1). It has only the members of its table (FS-CORE-1.4.1).",
+  "type": "object",
+  "required": [
+    "building",
+    "elevation",
+    "height"
+  ],
+  "properties": {
+    "building": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "1.3, 1.8: a reference to the building the level is in. Always present."
+    },
+    "elevation": {
+      "$ref": "defs.schema.json#/$defs/length",
+      "description": "1.8: the level's datum — the height of its finished floor above project zero, a length (2.1). Always present."
+    },
+    "height": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "1.8: floor-to-floor height, the default top of the level's walls (5.9). Always present, and MUST be greater than zero (FS-CORE-1.8.3)."
+    },
+    "floorThickness": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "1.8, 15.1: the thickness of the floors of the level's rooms, unless a room's floor states its own; greater than zero when present (FS-CORE-1.8.4). Absent by default: not declared."
+    },
+    "ceilingHeight": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "1.8, 15.2: the height of the ceilings of the level's rooms above its elevation, unless a room's ceiling states its own; greater than zero when present (FS-CORE-1.8.4). Its default is derived — the level's height — so it carries no `default` here."
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/name",
+      "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+    },
+    "extensions": {
+      "$ref": "defs.schema.json#/$defs/extensions",
+      "description": "1.4, 1.6: extension data on this level.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.4, 1.7: application-specific data on this level.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

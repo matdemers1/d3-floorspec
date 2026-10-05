@@ -1,0 +1,6 @@
+{
+  "description": "An L-shaped stair without its turn.",
+  "covers": [
+    "FS-CORE-17.2.1"
+  ]
+}

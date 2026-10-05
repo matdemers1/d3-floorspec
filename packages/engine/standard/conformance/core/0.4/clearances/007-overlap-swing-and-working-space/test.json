@@ -1,0 +1,7 @@
+{
+  "description": "A door swing and the working space of an electrical panel beside the door, on the same face: the envelopes overlap by 131 mm, and clearanceOverlaps lists the pair. Overlap is a measure, not a diagnostic: the document is valid and has no warning.",
+  "covers": [
+    "FS-CORE-13.6.1",
+    "FS-CORE-13.5.2"
+  ]
+}

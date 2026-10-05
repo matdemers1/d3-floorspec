@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "drawSeparator",
+      "level": "L1",
+      "from": ["8'", 0],
+      "to": ["8'", "10'"]
+    },
+    {
+      "op": "addRoom",
+      "level": "L1",
+      "at": ["10'", "5'"],
+      "name": "Kitchen",
+      "function": "kitchen"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A source whose item is \"2x4 partition\": a space is not in the pattern of an ID.",
+  "covers": [
+    "FS-CORE-8.1.3"
+  ]
+}

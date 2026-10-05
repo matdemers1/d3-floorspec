@@ -1,0 +1,9 @@
+{
+  "description": "The framed house declaring Core \"0.4\", a draft FS_structural 0.1.0 lists (1.1): FS_structural is evaluated, reports nothing, and derives exactly what it derives for the house declaring \"0.2\".",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.2.3",
+    "FS-STRC-1.2.4",
+    "FS-STRC-5.1.1"
+  ]
+}

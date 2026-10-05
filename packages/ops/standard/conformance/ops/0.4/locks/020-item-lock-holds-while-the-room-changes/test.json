@@ -1,0 +1,6 @@
+{
+  "description": "The Kitchen item is locked while the Kitchen room is made 2' wider: the item is unchanged, so the batch commits.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

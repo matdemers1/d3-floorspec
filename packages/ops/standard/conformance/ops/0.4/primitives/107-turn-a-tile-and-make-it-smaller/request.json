@@ -1,0 +1,22 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "TILE",
+      "path": "/texture/size",
+      "value": [195072, 195072]
+    },
+    {
+      "op": "setProperty",
+      "id": "TILE",
+      "path": "/texture/rotation",
+      "value": 45000000
+    },
+    {
+      "op": "setProperty",
+      "id": "TILE",
+      "path": "/metallic",
+      "value": 0
+    }
+  ]
+}

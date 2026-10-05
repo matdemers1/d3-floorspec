@@ -1,0 +1,6 @@
+{
+  "description": "A door at offset 8' on an oblique wall W5 from (1', 1') to (11', 9'). A wall drawn across it at x = 6' crosses W5 at (6', 5') - exactly, so the hot pixel's centre J9 is on W5's line - and W5 is split there: W5 keeps J5 -> J9, W7 is J9 -> J6. The first piece covers [0, sqrt(41) ft] = [0, 2498140.50] of the original line, so the door's interval [3121152, 4291584] lies in the second; it moves to W7, and its offset becomes 8 ft - sqrt(41) ft = 623011.50, rounded once to 623011.",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

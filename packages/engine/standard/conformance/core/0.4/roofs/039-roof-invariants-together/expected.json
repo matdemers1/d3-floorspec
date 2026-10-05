@@ -1,0 +1,25 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-801",
+      "severity": "error",
+      "elements": ["RF1"]
+    },
+    {
+      "code": "FS-INV-802",
+      "severity": "error",
+      "elements": ["RF2"]
+    },
+    {
+      "code": "FS-INV-803",
+      "severity": "error",
+      "elements": ["RF1"]
+    },
+    {
+      "code": "FS-INV-804",
+      "severity": "error",
+      "elements": ["RF3"]
+    }
+  ]
+}

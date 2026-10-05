@@ -1,0 +1,7 @@
+{
+  "description": "A region covering the whole of W2's left face, behind the backsplash on its right face: regions of different faces do not overlap.",
+  "covers": [
+    "FS-CORE-18.5.4",
+    "FS-CORE-18.6.1"
+  ]
+}

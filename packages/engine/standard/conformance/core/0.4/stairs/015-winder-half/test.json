@@ -1,0 +1,8 @@
+{
+  "description": "A half-turn winder stair turning left with a 100 mm gap and no newel: 4 risers east from (1000 mm, 600 mm), 6 winders of 30 degrees about the middle of the gap's side, then 5 straight treads west to its head at (500 mm, 1600 mm). Its walkline's arc has a radius of 500 mm - half the width and the gap - and its box spans x = 500 mm to 2650 mm and y = 150 mm to 2050 mm. FS-LINT-018.",
+  "covers": [
+    "FS-CORE-17.2.1",
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.7.3"
+  ]
+}

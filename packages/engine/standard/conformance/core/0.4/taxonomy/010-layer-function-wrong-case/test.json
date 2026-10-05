@@ -1,0 +1,6 @@
+{
+  "description": "Layer functions are case-sensitive.",
+  "covers": [
+    "FS-CORE-4.3.1"
+  ]
+}

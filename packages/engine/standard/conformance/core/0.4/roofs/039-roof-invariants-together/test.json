@@ -1,0 +1,11 @@
+{
+  "description": "Three roofs: one with an edge out of range and every edge a gable, one part flat, and one with collinear edges: each is reported, sorted by code.",
+  "covers": [
+    "FS-CORE-10.2.1",
+    "FS-CORE-10.3.1",
+    "FS-CORE-16.1.2",
+    "FS-CORE-16.2.1",
+    "FS-CORE-16.2.2",
+    "FS-CORE-16.2.3"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A pack with a coverage note that says \"up to code\": its text matches the assurance pattern, so FS-RULES-006 and it is not evaluated.",
+  "covers": [
+    "FS-RULES-11.1.1",
+    "FS-RULES-2.5.1"
+  ]
+}

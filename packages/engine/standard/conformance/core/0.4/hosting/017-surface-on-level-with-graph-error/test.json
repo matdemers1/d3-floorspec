@@ -1,0 +1,7 @@
+{
+  "description": "Two junctions share a position on L1 (FS-INV-101): room invariants are not evaluated on L1, and neither is FS-INV-503.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-13.3.4"
+  ]
+}

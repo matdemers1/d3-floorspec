@@ -1,0 +1,6 @@
+{
+  "description": "A schema URL is https.",
+  "covers": [
+    "FS-CORE-12.1.2"
+  ]
+}

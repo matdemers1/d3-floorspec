@@ -1,0 +1,6 @@
+{
+  "description": "Removing option KB without cascade is blocked by what is in it.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

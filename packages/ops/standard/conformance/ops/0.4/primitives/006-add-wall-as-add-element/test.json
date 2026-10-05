@@ -1,0 +1,6 @@
+{
+  "description": "addElement into walls: a free-standing wall inside the room.",
+  "covers": [
+    "FS-OPS-2.1.2"
+  ]
+}

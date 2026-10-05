@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "moveWall",
+      "wall": "W3",
+      "by": "1'"
+    }
+  ],
+  "context": {
+    "locks": [
+      {
+        "element": "X1"
+      }
+    ]
+  }
+}

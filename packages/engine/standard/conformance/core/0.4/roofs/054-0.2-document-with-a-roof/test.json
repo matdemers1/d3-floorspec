@@ -1,0 +1,7 @@
+{
+  "description": "A document that declares \"0.2\" and has a roof: \"roofs\" is a collection 0.3 added, and Core 0.2's schema has no such member.",
+  "covers": [
+    "FS-CORE-1.2.8",
+    "FS-CORE-1.1.2"
+  ]
+}

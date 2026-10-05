@@ -1,0 +1,8 @@
+{
+  "description": "Receptacle measures on the rules house. R1's wall line is 4 x 4,553,728 long, broken once by the door O2, so one stretch of 17,044,480 starting at the door's north jamb; its receptacles X4 and X5 are at 8,717,312 and 13,271,040 along it, so the longest run with no receptacle is the first 8,717,312, which is also the greatest reach. R2 has three doors and no receptacle, so its measures are its longest stretch, 8,327,168; R3, one door, 13,923,328.",
+  "covers": [
+    "FS-RULES-4.7.1",
+    "FS-RULES-8.1.1",
+    "FS-RULES-8.2.1"
+  ]
+}

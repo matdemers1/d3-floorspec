@@ -1,0 +1,6 @@
+{
+  "description": "A lock is exactly one of the three kinds.",
+  "covers": [
+    "FS-OPS-1.1.3"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A latitude is an angle, not a string.",
+  "covers": [
+    "FS-CORE-1.4.4",
+    "FS-CORE-2.4.1"
+  ]
+}

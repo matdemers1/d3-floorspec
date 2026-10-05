@@ -1,0 +1,7 @@
+{
+  "description": "R2 with no `function` is `unspecified`; R3 with the extension term `EXT_furniture:sauna` has it as written; the level counts one room of each.",
+  "covers": [
+    "FS-RULES-5.1.1",
+    "FS-RULES-8.4.1"
+  ]
+}

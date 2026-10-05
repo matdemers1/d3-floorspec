@@ -1,0 +1,6 @@
+{
+  "description": "hosting/032 with the north wall W2 moved 500 mm north: the outlet's placement and fallback move with it, though its own members are unchanged.",
+  "covers": [
+    "FS-CORE-13.4.1"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-202",
+      "severity": "error",
+      "elements": ["KIT", "PANTRY"],
+      "design": "KB"
+    },
+    {
+      "code": "FS-INV-302",
+      "severity": "error",
+      "elements": ["O1"]
+    }
+  ]
+}

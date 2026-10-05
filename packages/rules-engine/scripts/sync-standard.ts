@@ -7,8 +7,10 @@
  *
  * Copies, from a floorspec checkout (default: ../floorspec beside this repository):
  *
- *   schema/rules/0.1/       → standard/schema/rules/0.1/       (request, pack, rule, profile, report, finding)
- *   conformance/rules/0.1/  → standard/conformance/rules/0.1/  (the 85 tests: reports and measure calls)
+ *   schema/rules/0.1/, 0.2/      → standard/schema/rules/0.1/, 0.2/      (request, pack, rule, profile, report, finding)
+ *   conformance/rules/0.1/, 0.2/ → standard/conformance/rules/0.1/, 0.2/ (reports and measure calls)
+ *   rules/example/          → standard/rules/example/          (the synthetic example pack: its built pack and
+ *                                                               fixtures, which the engine evaluates too)
  *   spec/rules/             → standard/spec/rules/             (the text: the diagnostic catalogue,
  *                                                               the notice, the default profile and
  *                                                               the deferred measures are checked
@@ -27,7 +29,7 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
-export const PATHS = ['schema/rules/0.1', 'conformance/rules/0.1', 'spec/rules'] as const;
+export const PATHS = ['schema/rules/0.1', 'schema/rules/0.2', 'conformance/rules/0.1', 'conformance/rules/0.2', 'spec/rules', 'rules/example'] as const;
 
 const here = dirname(new URL(import.meta.url).pathname);
 const root = resolve(here, '..');

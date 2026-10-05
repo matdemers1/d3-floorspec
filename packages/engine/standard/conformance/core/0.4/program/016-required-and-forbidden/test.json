@@ -1,0 +1,7 @@
+{
+  "description": "A pair both required and forbidden: FS-INV-403 names both items.",
+  "covers": [
+    "FS-CORE-11.2.3",
+    "FS-CORE-10.2.1"
+  ]
+}

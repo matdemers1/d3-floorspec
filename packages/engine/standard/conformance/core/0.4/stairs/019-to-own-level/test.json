@@ -1,0 +1,7 @@
+{
+  "description": "A stair from L1 to L1. FS-INV-901; its rise and risers are not tested.",
+  "covers": [
+    "FS-CORE-17.1.2",
+    "FS-CORE-10.3.1"
+  ]
+}

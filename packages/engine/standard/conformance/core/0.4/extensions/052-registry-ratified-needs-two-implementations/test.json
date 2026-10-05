@@ -1,0 +1,6 @@
+{
+  "description": "A ratified entry listing one implementation: ratification needs two (FLR-ADR-007), so the entry is malformed.",
+  "covers": [
+    "FS-CORE-12.2.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A has roofs RF1 and RF7; a roof added without an ID is RF8, one more than the largest (1.5).",
+  "covers": [
+    "FS-OPS-1.5.1"
+  ]
+}

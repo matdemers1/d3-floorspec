@@ -1,0 +1,7 @@
+{
+  "description": "The same stair on 14 risers of 192.86 mm, over 7 inches.",
+  "outcome": "fail",
+  "findings": [
+    "ST1"
+  ]
+}

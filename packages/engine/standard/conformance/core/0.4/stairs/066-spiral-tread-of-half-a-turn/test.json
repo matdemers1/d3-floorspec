@@ -1,0 +1,6 @@
+{
+  "description": "A spiral stair of 3 risers through 360 degrees: each of its 2 treads turns 180 degrees, which no tread can. FS-INV-906.",
+  "covers": [
+    "FS-CORE-17.7.5"
+  ]
+}

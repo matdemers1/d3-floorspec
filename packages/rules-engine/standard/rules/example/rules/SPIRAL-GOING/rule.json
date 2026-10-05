@@ -1,0 +1,35 @@
+{
+  "title": "Spiral treads deep enough at the walkline",
+  "citation": {
+    "code": "TEST-CODE",
+    "edition": "2024",
+    "section": "§4.8",
+    "link": "https://example.org/test-code/2024/4.8"
+  },
+  "paraphrase": "Each tread of a spiral stair is at least 7 1/2 inches deep on the walkline. The rule reads the least going at the walkline that Floorspec derives for the spiral, on the circle through the middle of its treads; the declared tread depth of a spiral is not used.",
+  "applies": {
+    "to": "stair",
+    "where": {
+      "measure": "stairForm",
+      "op": "=",
+      "value": "spiral"
+    }
+  },
+  "requirement": {
+    "measure": "stairWalklineGoing",
+    "op": ">=",
+    "value": 243840
+  },
+  "severity": "mayNotMeet",
+  "provenance": {
+    "verifiedBy": "Floorspec contributors",
+    "verifiedOn": "2026-10-05",
+    "edition": "2024",
+    "method": "synthetic",
+    "certifiedBy": "Floorspec contributors",
+    "certification": "original-paraphrase-v1",
+    "review": {
+      "status": "unreviewed"
+    }
+  }
+}

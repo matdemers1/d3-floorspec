@@ -16,7 +16,7 @@
  * validation does. The shapes match the vendored schemas, and a test holds them to them.
  */
 import { fail } from './diagnostics.js';
-import { collectionsOf, ITEMS, type OpsVersion } from './model/working.js';
+import { atLeast03, collectionsOf, ITEMS, type OpsVersion } from './model/working.js';
 import { isObject, toPointer } from './lib/json.js';
 import type { ApplyRequest, OperationName } from './types.js';
 
@@ -105,7 +105,7 @@ const SHAPES_02: Readonly<Record<OperationName, OpShape>> = {
  * Ops 0.3 adds no operation and no member: its requests have Ops 0.2's shape, except that addElement
  * may name the collections roofs and stairs (schema/ops/0.3, Ops 0.3 §0.4, §1.1.3).
  */
-export const OP_SHAPES_BY_VERSION: Readonly<Record<OpsVersion, Readonly<Partial<Record<OperationName, OpShape>>>>> = { '0.1': SHAPES_01, '0.2': SHAPES_02, '0.3': SHAPES_02 };
+export const OP_SHAPES_BY_VERSION: Readonly<Record<OpsVersion, Readonly<Partial<Record<OperationName, OpShape>>>>> = { '0.1': SHAPES_01, '0.2': SHAPES_02, '0.3': SHAPES_02, '0.4': SHAPES_02 };
 /** The operations of Ops 0.3 — the current draft, whose operations are Ops 0.2's — and their members. */
 export const OP_SHAPES: Readonly<Record<OperationName, OpShape>> = SHAPES_02;
 
@@ -185,7 +185,7 @@ function checkHost(host: Record<string, unknown>, base: string, tokens: (string 
  * Check a request's shape (1.1.1), throwing FS-OPS-001 at the first problem. `nonInteger` holds the
  * pointers of numbers written with a fraction or an exponent, which are not JSON integers.
  */
-export function checkRequest(request: unknown, nonInteger: ReadonlySet<string> = new Set(), ops: OpsVersion = '0.3'): ApplyRequest {
+export function checkRequest(request: unknown, nonInteger: ReadonlySet<string> = new Set(), ops: OpsVersion = '0.4'): ApplyRequest {
   const shapes = OP_SHAPES_BY_VERSION[ops];
   if (!isObject(request)) return fail('FS-OPS-001', 'an apply request is an object { "batch": [...], "context"?: {...} }', [], '');
   for (const k of Object.keys(request))
@@ -209,7 +209,7 @@ export function checkRequest(request: unknown, nonInteger: ReadonlySet<string> =
     const ctx = request.context;
     if (!isObject(ctx)) return fail('FS-OPS-001', 'the context is an object { "locks"?: [...], "retired"?: [...] }', [], '/context');
     for (const k of Object.keys(ctx))
-      if (k !== 'locks' && k !== 'retired' && !(k === 'option' && ops === '0.3')) fail('FS-OPS-001', `the context has no member ${JSON.stringify(k)}`, [], toPointer(['context', k]));
+      if (k !== 'locks' && k !== 'retired' && !(k === 'option' && atLeast03(ops))) fail('FS-OPS-001', `the context has no member ${JSON.stringify(k)}`, [], toPointer(['context', k]));
     // Ops 0.3, 2.8: the option the batch edits in.
     if (Object.hasOwn(ctx, 'option') && typeof ctx.option !== 'string') fail('FS-OPS-001', 'context.option is the ID of an option', [], '/context/option');
     if (Object.hasOwn(ctx, 'retired')) {

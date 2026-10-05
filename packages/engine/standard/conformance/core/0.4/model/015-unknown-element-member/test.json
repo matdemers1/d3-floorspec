@@ -1,0 +1,6 @@
+{
+  "description": "A wall with a \"thickness\" member - thickness comes from layers - has a member its kind's table does not list.",
+  "covers": [
+    "FS-CORE-1.4.1"
+  ]
+}

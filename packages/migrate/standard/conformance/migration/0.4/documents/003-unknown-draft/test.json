@@ -1,0 +1,6 @@
+{
+  "description": "The document declares \"0.5\", a draft this migrator does not implement: refused with FS-DOC-001 (20.2.1), whatever the target.",
+  "covers": [
+    "FS-CORE-20.2.1"
+  ]
+}

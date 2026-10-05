@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "moveRoom",
+      "room": "R1",
+      "by": "1' north"
+    }
+  ]
+}

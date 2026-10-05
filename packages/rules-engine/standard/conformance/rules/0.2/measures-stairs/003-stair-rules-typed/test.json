@@ -1,0 +1,7 @@
+{
+  "description": "A stair measure on a room, a room measure on a stair, a candidate set a stair does not have and an extension on a stair subject are not well typed (FS-RULES-007); the stair measures are no longer deferred, so a well-typed rule on stairs is evaluated - on a document with none it has no subject.",
+  "covers": [
+    "FS-RULES-3.9.1",
+    "FS-RULES-4.8.1"
+  ]
+}

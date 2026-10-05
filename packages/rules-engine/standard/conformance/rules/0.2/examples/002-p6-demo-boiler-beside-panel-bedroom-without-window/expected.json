@@ -1,0 +1,274 @@
+{
+  "coverage": [
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "note": "The escape opening is measured as drawn; net clear openings are not checked.",
+      "pack": "test-pack",
+      "section": "§3",
+      "status": "partial"
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "pack": "test-pack",
+      "section": "§5",
+      "status": "addressed"
+    },
+    {
+      "code": "TEST-ELEC",
+      "edition": "2026",
+      "pack": "test-pack",
+      "section": "§4",
+      "status": "partial"
+    },
+    {
+      "code": "TEST-ELEC",
+      "edition": "2026",
+      "pack": "test-pack",
+      "section": "§9",
+      "status": "notAddressed"
+    }
+  ],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.com/test-code/2024/3.1",
+        "section": "§3.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "ESCAPE",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§5.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "SMOKE",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-ELEC",
+        "edition": "2026",
+        "section": "§4.2"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "WORKSPACE",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "candidates": [],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "link": "https://example.com/test-code/2024/3.1",
+        "section": "§3.1"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [],
+      "message": "R1 may not meet TEST-CODE 2024 §3.1 (Escape opening in every sleeping room). Check it with a professional or the authority having jurisdiction.",
+      "pack": "test-pack",
+      "rule": "ESCAPE",
+      "severity": "check",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "Escape opening in every sleeping room",
+      "version": "0.1.0"
+    },
+    {
+      "candidates": [
+        {
+          "envelope": "working",
+          "id": "X1",
+          "kind": "envelope"
+        }
+      ],
+      "citation": {
+        "code": "TEST-ELEC",
+        "edition": "2026",
+        "section": "§4.2"
+      },
+      "elements": [
+        "X1",
+        "X2"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                12292608,
+                3255296
+              ],
+              [
+                12420608,
+                3255296
+              ],
+              [
+                12420608,
+                3767296
+              ],
+              [
+                12292608,
+                3767296
+              ]
+            ]
+          },
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                11140608,
+                2999296
+              ],
+              [
+                12420608,
+                2999296
+              ],
+              [
+                12420608,
+                4023296
+              ],
+              [
+                11140608,
+                4023296
+              ]
+            ]
+          },
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                11652608,
+                2487296
+              ],
+              [
+                12420608,
+                2487296
+              ],
+              [
+                12420608,
+                3255296
+              ],
+              [
+                11652608,
+                3255296
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "1",
+          "holds": false,
+          "involved": [
+            "X2"
+          ],
+          "measure": "envelopeObstructions",
+          "op": "=",
+          "target": {
+            "envelope": "working",
+            "id": "X1",
+            "kind": "envelope"
+          },
+          "threshold": 0,
+          "thresholdDisplay": "0",
+          "type": "count",
+          "value": 1
+        },
+        {
+          "args": {
+            "limit": 975360
+          },
+          "display": "0' 0\"",
+          "holds": false,
+          "involved": [
+            "X2"
+          ],
+          "measure": "clearDepthInFront",
+          "op": ">=",
+          "target": {
+            "envelope": "working",
+            "id": "X1",
+            "kind": "envelope"
+          },
+          "threshold": 975360,
+          "thresholdDisplay": "2' 6\"",
+          "type": "length",
+          "value": 0
+        }
+      ],
+      "message": "X1 may not meet TEST-ELEC 2026 §4.2 (Clear working space in front of a panel).",
+      "pack": "test-pack",
+      "rule": "WORKSPACE",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "X1",
+        "kind": "element"
+      },
+      "title": "Clear working space in front of a panel",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.2",
+  "hash": "2c7da4ff34712284bfac1a531b04f9aea2b726d89cbd833998f7d56da1933476",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

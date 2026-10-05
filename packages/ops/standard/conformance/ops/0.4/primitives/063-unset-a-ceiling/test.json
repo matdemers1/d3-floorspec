@@ -1,0 +1,7 @@
+{
+  "description": "unsetProperty of R1's /ceiling: its ceiling is flat at the level's height again, and the inverse sets the tray back.",
+  "covers": [
+    "FS-OPS-2.3.1",
+    "FS-OPS-1.6.1"
+  ]
+}

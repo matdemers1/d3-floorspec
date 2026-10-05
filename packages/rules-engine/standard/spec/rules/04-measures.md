@@ -40,8 +40,9 @@ one owner, by envelope name.
 A measure's type is fixed by its definition, except `elementMember`'s, which its arguments fix
 (7.1). Only some measures can have **no value**: `elementMember`, when the element has no such
 member and its extension gives it no default; and `openingOperation` and the net clear measures of
-an opening (6.1, 6.5), when nothing is declared for them; and `stairHeadroom` and
-`stairHandrailHeight` (8.5), when Core derives no headroom or the stair declares no handrail. A
+an opening (6.1, 6.5), when nothing is declared for them; and `stairHeadroom`,
+`stairHandrailHeight`, `stairWalklineGoing` and `stairNarrowGoing` (8.5), when Core derives no
+headroom, the stair declares no handrail, or it has no tapered tread. A
 measure with no value is reported as `null`.
 
 ## 4.3 Exactness
@@ -112,7 +113,7 @@ measure calls — a target, a measure and its arguments — and comparing the re
 
 ## 4.8 Deferred measures
 
-These measures are reserved. Each needs something Core 0.3 does not yet describe, and is defined
+These measures are reserved. Each needs something Core 0.4 does not yet describe, and is defined
 when it does. A rule may name one; it is not evaluated (3.9), so a pack can be written ahead of
 the library without a finding that measures the wrong thing.
 

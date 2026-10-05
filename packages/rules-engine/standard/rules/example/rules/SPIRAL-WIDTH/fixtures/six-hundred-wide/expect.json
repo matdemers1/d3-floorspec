@@ -1,0 +1,7 @@
+{
+  "description": "The same spiral 600 mm wide, under 26 inches.",
+  "outcome": "fail",
+  "findings": [
+    "ST1"
+  ]
+}

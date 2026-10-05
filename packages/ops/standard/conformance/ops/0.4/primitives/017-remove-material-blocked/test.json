@@ -1,0 +1,6 @@
+{
+  "description": "A material is blocked by the room that uses it as a finish and the wall type that uses it in a layer.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "addOpening's wall is \"Kitchen\", which names a room, not a wall: FS-OPS-003.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-4.5.3"
+  ]
+}

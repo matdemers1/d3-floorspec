@@ -1,0 +1,7 @@
+{
+  "description": "W1 runs north, exactly perpendicular to east: the window on it cannot move toward the east along it, so FS-OPS-008 names the wall.",
+  "covers": [
+    "FS-OPS-4.5.2",
+    "FS-OPS-7.1.1"
+  ]
+}

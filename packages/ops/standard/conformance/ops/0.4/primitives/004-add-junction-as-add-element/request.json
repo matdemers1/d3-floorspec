@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "junctions",
+      "element": {
+        "level": "L1",
+        "position": [390144, 390144],
+        "name": "Post"
+      }
+    }
+  ]
+}

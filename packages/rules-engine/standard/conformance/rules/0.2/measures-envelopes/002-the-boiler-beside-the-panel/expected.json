@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "display": "1",
+      "involved": [
+        "X2"
+      ],
+      "type": "count",
+      "value": 1
+    },
+    {
+      "display": "0' 0\"",
+      "involved": [
+        "X2"
+      ],
+      "type": "length",
+      "value": 0
+    },
+    {
+      "display": "1",
+      "involved": [
+        "X2"
+      ],
+      "type": "count",
+      "value": 1
+    },
+    {
+      "display": "0",
+      "involved": [],
+      "type": "count",
+      "value": 0
+    }
+  ]
+}

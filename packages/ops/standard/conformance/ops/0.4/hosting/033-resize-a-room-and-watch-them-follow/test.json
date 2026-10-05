@@ -1,0 +1,7 @@
+{
+  "description": "The Kitchen made 2' wider, with an outlet on its east wall W8: W8 now runs from the moved J7 to the new junction of the jog, so the outlet, 4' from W8's start, follows it 2' east and is unchanged.",
+  "covers": [
+    "FS-OPS-2.7.1",
+    "FS-OPS-4.4.1"
+  ]
+}

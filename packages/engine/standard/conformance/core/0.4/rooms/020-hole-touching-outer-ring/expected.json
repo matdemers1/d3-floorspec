@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-203",
+      "severity": "error",
+      "elements": ["R1"]
+    }
+  ]
+}

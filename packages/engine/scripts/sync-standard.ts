@@ -9,10 +9,12 @@
  *   schema/core/0.1/            → standard/schema/core/0.1/
  *   schema/core/0.2/            → standard/schema/core/0.2/
  *   schema/core/0.3/            → standard/schema/core/0.3/
+ *   schema/core/0.4/            → standard/schema/core/0.4/
  *   schema/registry/0.1/        → standard/schema/registry/0.1/   (registry entries, Core 0.2 12.2)
  *   conformance/core/0.1/       → standard/conformance/core/0.1/
  *   conformance/core/0.2/       → standard/conformance/core/0.2/
  *   conformance/core/0.3/       → standard/conformance/core/0.3/
+ *   conformance/core/0.4/       → standard/conformance/core/0.4/
  *   spec/core/10-diagnostics.md → standard/spec/core/10-diagnostics.md
  *   registry/                   → standard/registry/              (the official extensions: entries, specs, schemas)
  *   conformance/ext/            → standard/conformance/ext/       (their suites)
@@ -31,10 +33,12 @@ export const PATHS = [
   'schema/core/0.1',
   'schema/core/0.2',
   'schema/core/0.3',
+  'schema/core/0.4',
   'schema/registry/0.1',
   'conformance/core/0.1',
   'conformance/core/0.2',
   'conformance/core/0.3',
+  'conformance/core/0.4',
   'spec/core/10-diagnostics.md',
   'registry',
   'conformance/ext',

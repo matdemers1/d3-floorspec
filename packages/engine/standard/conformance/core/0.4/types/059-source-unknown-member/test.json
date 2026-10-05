@@ -1,0 +1,7 @@
+{
+  "description": "A source with a \"sha256\" member: a source has exactly library, version and item.",
+  "covers": [
+    "FS-CORE-8.1.3",
+    "FS-CORE-1.4.3"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A wall-face host takes exactly one of \"side\" and \"toward\": FS-OPS-001.",
+  "covers": [
+    "FS-OPS-1.1.3"
+  ]
+}

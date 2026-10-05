@@ -1,0 +1,224 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "element",
+        "id": "X1"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "rating",
+        "type": "integer",
+        "unit": "A"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X1"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "volts",
+        "type": "integer"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X3"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "detects",
+        "type": "terms"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X4"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "amps",
+        "type": "integer",
+        "unit": "A"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X4"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "watts",
+        "type": "integer",
+        "unit": "W"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X3"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "power",
+        "type": "term"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X4"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "features",
+        "type": "terms"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X2"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "equipment",
+        "type": "term"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X6"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "wireless",
+        "type": "boolean"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X7"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "wireless",
+        "type": "boolean"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X4"
+      },
+      "measure": "elementRoomFunction"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X5"
+      },
+      "measure": "elementRoomFunction"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X1"
+      },
+      "measure": "elementRoomFunction"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X3"
+      },
+      "measure": "elementRoomFunction"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "P1"
+      },
+      "measure": "elementRoomFunction"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "P2"
+      },
+      "measure": "elementRoomFunction"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "P3"
+      },
+      "measure": "elementRoomFunction"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X1"
+      },
+      "measure": "elementBottomAboveFloor"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X1"
+      },
+      "measure": "elementTopAboveFloor"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X3"
+      },
+      "measure": "elementBottomAboveFloor"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "P3"
+      },
+      "measure": "elementBottomAboveFloor"
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X4"
+      },
+      "measure": "elementProtectedBy",
+      "args": {
+        "protection": "afci"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X4"
+      },
+      "measure": "elementProtectedBy",
+      "args": {
+        "protection": "gfci"
+      }
+    },
+    {
+      "target": {
+        "kind": "element",
+        "id": "X5"
+      },
+      "measure": "elementProtectedBy",
+      "args": {
+        "protection": "gfci"
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "display": "spiral",
+      "type": "term",
+      "value": "spiral"
+    },
+    {
+      "display": "0' 7 11/16\"",
+      "type": "length",
+      "value": 249716
+    },
+    {
+      "display": "0' 1 9/16\"",
+      "type": "length",
+      "value": 49943
+    },
+    {
+      "display": "2' 7 1/2\"",
+      "type": "length",
+      "value": 1024000
+    },
+    {
+      "display": "5' 1 3/4\"",
+      "type": "length",
+      "value": 2008615
+    },
+    {
+      "display": "0' 8 3/16\"",
+      "type": "length",
+      "value": 265846
+    }
+  ]
+}

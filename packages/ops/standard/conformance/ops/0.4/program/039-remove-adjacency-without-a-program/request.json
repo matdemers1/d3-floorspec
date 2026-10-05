@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "removeAdjacency",
+      "a": "KIT",
+      "b": "DIN",
+      "kind": "required"
+    }
+  ]
+}

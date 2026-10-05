@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "WT",
+      "path": "/layers/0/thickness",
+      "value": 192000
+    }
+  ]
+}

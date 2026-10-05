@@ -1,0 +1,176 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.4",
+  "junctions": {
+    "AJ1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "AJ2": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "AJ3": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "AJ4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    },
+    "BJ1": {
+      "level": "L2",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "BJ2": {
+      "level": "L2",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "BJ3": {
+      "level": "L2",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "BJ4": {
+      "level": "L2",
+      "position": [
+        5120000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    },
+    "L2": {
+      "building": "B1",
+      "elevation": 3456000,
+      "height": 3456000
+    }
+  },
+  "program": {
+    "adjacency": [
+      {
+        "a": "LIV",
+        "b": "BED",
+        "kind": "forbidden"
+      }
+    ],
+    "items": {
+      "BED": {
+        "function": "sleeping",
+        "level": "L2"
+      },
+      "LIV": {
+        "function": "living"
+      }
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "brief": "LIV",
+      "level": "L1"
+    },
+    "R2": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "brief": "BED",
+      "level": "L2"
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "AW1": {
+      "end": "AJ2",
+      "level": "L1",
+      "start": "AJ1",
+      "type": "WT"
+    },
+    "AW2": {
+      "end": "AJ3",
+      "level": "L1",
+      "start": "AJ2",
+      "type": "WT"
+    },
+    "AW3": {
+      "end": "AJ4",
+      "level": "L1",
+      "start": "AJ3",
+      "type": "WT"
+    },
+    "AW4": {
+      "end": "AJ1",
+      "level": "L1",
+      "start": "AJ4",
+      "type": "WT"
+    },
+    "BW1": {
+      "end": "BJ2",
+      "level": "L2",
+      "start": "BJ1",
+      "type": "WT"
+    },
+    "BW2": {
+      "end": "BJ3",
+      "level": "L2",
+      "start": "BJ2",
+      "type": "WT"
+    },
+    "BW3": {
+      "end": "BJ4",
+      "level": "L2",
+      "start": "BJ3",
+      "type": "WT"
+    },
+    "BW4": {
+      "end": "BJ1",
+      "level": "L2",
+      "start": "BJ4",
+      "type": "WT"
+    }
+  }
+}

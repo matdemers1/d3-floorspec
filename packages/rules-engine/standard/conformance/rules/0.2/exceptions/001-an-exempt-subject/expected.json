@@ -1,0 +1,90 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 1,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "SLEEP-EVERYWHERE",
+      "subjects": 3,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R2"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                4745728,
+                64000
+              ],
+              [
+                9299456,
+                64000
+              ],
+              [
+                9299456,
+                4617728
+              ],
+              [
+                4745728,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "living",
+          "holds": false,
+          "measure": "roomFunction",
+          "op": "=",
+          "target": {
+            "id": "R2",
+            "kind": "room"
+          },
+          "threshold": "sleeping",
+          "thresholdDisplay": "sleeping",
+          "type": "term",
+          "value": "living"
+        }
+      ],
+      "message": "R2 may not meet TEST-CODE 2024 §1.1 (Every room is a bedroom).",
+      "pack": "test-pack",
+      "rule": "SLEEP-EVERYWHERE",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R2",
+        "kind": "room"
+      },
+      "title": "Every room is a bedroom",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.2",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

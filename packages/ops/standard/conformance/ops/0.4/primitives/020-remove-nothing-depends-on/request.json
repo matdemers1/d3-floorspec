@@ -1,0 +1,18 @@
+{
+  "batch": [
+    {
+      "op": "removeElement",
+      "id": "O1"
+    },
+    {
+      "op": "removeElement",
+      "id": "SL1",
+      "cascade": true
+    },
+    {
+      "op": "removeElement",
+      "id": "R2",
+      "cascade": true
+    }
+  ]
+}

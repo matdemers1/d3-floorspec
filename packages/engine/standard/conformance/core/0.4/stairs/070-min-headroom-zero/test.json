@@ -1,0 +1,6 @@
+{
+  "description": "A stair designed for 0 headroom: minHeadroom is greater than zero.",
+  "covers": [
+    "FS-CORE-17.1.3"
+  ]
+}

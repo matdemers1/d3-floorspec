@@ -1,0 +1,6 @@
+{
+  "description": "The same stair with no well: the floor of R2 covers it, so near its head the nosing line rises through the floor's 300 mm, and the headroom is -384000 - the floor's bottom, 2400 mm, less the head's 2700 mm. A negative headroom says the floor is in the way.",
+  "covers": [
+    "FS-CORE-17.6.1"
+  ]
+}

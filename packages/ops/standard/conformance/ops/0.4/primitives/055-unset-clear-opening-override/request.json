@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "O1",
+      "path": "/clearOpening"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "784b8ee361ce2c9269a2cce9ea241bc4b76d3358b3f745e47295732b5ac3539a",
+  "created": ["T1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "types",
+      "id": "T1",
+      "element": {
+        "height": 1560576,
+        "kind": "windowType",
+        "width": 1170432
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "T1"
+    }
+  ]
+}

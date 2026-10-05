@@ -1,0 +1,7 @@
+{
+  "description": "A door type with a width and no height, filling an opening that states no height either.",
+  "covers": [
+    "FS-CORE-7.2.1",
+    "FS-CORE-8.2.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A join that has none of the three forms of 5.8: through names one or two walls, not none.",
+  "covers": [
+    "FS-CORE-5.8.5"
+  ]
+}

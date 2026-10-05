@@ -1,0 +1,7 @@
+{
+  "description": "addElement adds a stair to the stairs collection Core 0.3 adds: the result is valid, and its stair is derived.",
+  "covers": [
+    "FS-OPS-2.1.1",
+    "FS-OPS-1.3.1"
+  ]
+}

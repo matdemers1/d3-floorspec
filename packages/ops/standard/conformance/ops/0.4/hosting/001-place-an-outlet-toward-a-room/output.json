@@ -1,0 +1,135 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "extensions": {
+    "FS_electrical": {
+      "collections": {
+        "devices": {
+          "X1": {
+            "device": "receptacle",
+            "fallback": {
+              "box": {
+                "max": [
+                  25600,
+                  51200,
+                  128000
+                ],
+                "min": [
+                  0,
+                  -51200,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "height": 390144,
+              "mode": "wallFace",
+              "offset": 780288,
+              "side": "right",
+              "wall": "W2"
+            }
+          }
+        }
+      }
+    }
+  },
+  "extensionsUsed": {
+    "FS_electrical": "0.1.0",
+    "FS_furniture": "0.1.0"
+  },
+  "floorspec": "0.2",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3901440
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        4681728,
+        3901440
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        4681728,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2340864,
+        1950720
+      ],
+      "level": "L1",
+      "name": "Living"
+    }
+  },
+  "types": {
+    "T-door-36": {
+      "height": 2600960,
+      "kind": "doorType",
+      "width": 1170432
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    }
+  }
+}

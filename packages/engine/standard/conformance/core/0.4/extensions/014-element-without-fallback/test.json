@@ -1,0 +1,6 @@
+{
+  "description": "Every extension element has a fallback.",
+  "covers": [
+    "FS-CORE-12.5.2"
+  ]
+}

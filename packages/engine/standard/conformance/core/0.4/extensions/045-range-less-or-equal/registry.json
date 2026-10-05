@@ -1,0 +1,17 @@
+[
+  {
+    "name": "EXT_a",
+    "version": "1.0.0",
+    "status": "draft",
+    "schema": "https://example.com/floorspec/EXT_a/1.0.0/schema.json",
+    "requires": {
+      "EXT_b": "<=1.5.0"
+    }
+  },
+  {
+    "name": "EXT_b",
+    "version": "9.9.9",
+    "status": "draft",
+    "schema": "https://example.com/floorspec/EXT_b/9.9.9/schema.json"
+  }
+]

@@ -1,0 +1,46 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d8005357f86ef4904c96d3e255f645e6c37eabeddca978d24e44f3bd9ded0ff3",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/floor",
+      "value": {
+        "offset": -195072
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "L1",
+      "path": "/floorThickness",
+      "value": 384000
+    },
+    {
+      "op": "setProperty",
+      "id": "L1",
+      "path": "/ceilingHeight",
+      "value": 3072000
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/floor"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "L1",
+      "path": "/ceilingHeight"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "L1",
+      "path": "/floorThickness"
+    }
+  ]
+}

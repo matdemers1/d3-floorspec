@@ -1,0 +1,44 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "fe3dd6832bfaef30fbc7b2e0a27507ff83a344ec4f488117a661df633d75f041",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/ceiling",
+      "value": {
+        "height": 4096000,
+        "kind": "vaulted",
+        "pitch": {
+          "rise": 4,
+          "run": 12
+        },
+        "ridge": [[0, 1950720], [4681728, 1950720]]
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/floor",
+      "value": {
+        "offset": -195072,
+        "thickness": 384000
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/ceiling"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/floor"
+    }
+  ]
+}

@@ -8,6 +8,7 @@
  * Copies, from a floorspec checkout (default: ../floorspec beside this repository):
  *
  *   conformance/migration/0.3/  → standard/conformance/migration/0.3/
+ *   conformance/migration/0.4/  → standard/conformance/migration/0.4/
  *   spec/core/20-migration.md   → standard/spec/core/20-migration.md
  *
  * and records the checkout's commit in standard/LOCK.json. It refuses a checkout with uncommitted
@@ -19,7 +20,7 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
-export const PATHS = ['conformance/migration/0.3', 'spec/core/20-migration.md'] as const;
+export const PATHS = ['conformance/migration/0.3', 'conformance/migration/0.4', 'spec/core/20-migration.md'] as const;
 
 const here = dirname(new URL(import.meta.url).pathname);
 const packageRoot = resolve(here, '..');

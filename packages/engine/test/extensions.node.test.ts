@@ -60,9 +60,10 @@ function options(name: string, dir: string): ValidateOptions {
   };
 }
 
-function coreOf(text: string): '0.2' | '0.3' {
+function coreOf(text: string): '0.2' | '0.3' | '0.4' {
   try {
-    return (JSON.parse(text) as { floorspec?: unknown }).floorspec === '0.3' ? '0.3' : '0.2';
+    const v = (JSON.parse(text) as { floorspec?: unknown }).floorspec;
+    return v === '0.3' || v === '0.4' ? v : '0.2';
   } catch {
     return '0.2';
   }

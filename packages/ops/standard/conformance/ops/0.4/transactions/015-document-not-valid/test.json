@@ -1,0 +1,7 @@
+{
+  "description": "Document A has crossing walls (FS-INV-104): the batch is rejected with FS-OPS-002 before any operation is looked at.",
+  "covers": [
+    "FS-OPS-1.2.1",
+    "FS-OPS-7.1.1"
+  ]
+}

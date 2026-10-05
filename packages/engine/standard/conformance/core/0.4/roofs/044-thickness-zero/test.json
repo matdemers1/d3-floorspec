@@ -1,0 +1,6 @@
+{
+  "description": "A roof 0 thick: \"not declared\" is an absent member.",
+  "covers": [
+    "FS-CORE-16.1.1"
+  ]
+}

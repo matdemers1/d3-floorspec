@@ -1,0 +1,15 @@
+{
+  "status": "migrated",
+  "diagnostics": [],
+  "hash": "4d392f4ce80ff64b64487d6ae13c418f00f8a133f949652271e3e6e968f9f43b",
+  "validation": {
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "FS-INV-002",
+        "severity": "error",
+        "elements": ["W3"]
+      }
+    ]
+  }
+}

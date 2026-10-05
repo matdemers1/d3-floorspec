@@ -1,0 +1,7 @@
+{
+  "description": "KIT-DIN required is repeated as DIN-KIT required: the pair is undirected, so it is the same pair and kind. FS-INV-402 is reported once, for the later adjacency, naming both items.",
+  "covers": [
+    "FS-CORE-11.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

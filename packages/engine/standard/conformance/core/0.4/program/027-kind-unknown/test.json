@@ -1,0 +1,6 @@
+{
+  "description": "\"adjacent\" is not an adjacency kind.",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

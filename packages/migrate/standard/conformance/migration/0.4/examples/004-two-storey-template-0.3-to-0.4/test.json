@@ -1,0 +1,7 @@
+{
+  "description": "The two-storey starter template (core/0.3/examples/005-two-storey-template, templates/two-storey.floorspec.json), migrated to 0.4: its L-shaped stair, its well and its vaulted bedroom read the same under 0.4 (20.7.1, 20.6.1).",
+  "covers": [
+    "FS-CORE-20.7.1",
+    "FS-CORE-20.6.1"
+  ]
+}

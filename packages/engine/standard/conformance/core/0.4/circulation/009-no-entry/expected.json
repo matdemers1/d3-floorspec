@@ -1,0 +1,166 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-014",
+      "severity": "warning",
+      "elements": ["B1"]
+    }
+  ],
+  "hash": "674be6254b1680028da7206ac1293fea202652420e791d034012ae60014aa686",
+  "derived": {
+    "walls": {
+      "H00": {
+        "startRight": [-64000, -64000],
+        "endRight": [5120000, -64000],
+        "endLeft": [5056000, 64000],
+        "startLeft": [64000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H01": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5120000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H10": {
+        "startRight": [5120000, -64000],
+        "endRight": [10304000, -64000],
+        "endLeft": [10176000, 64000],
+        "startLeft": [5184000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "H11": {
+        "startRight": [5184000, 3776000],
+        "endRight": [10176000, 3776000],
+        "endLeft": [10304000, 3904000],
+        "startLeft": [5120000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V00": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V10": {
+        "startRight": [5184000, 64000],
+        "endRight": [5184000, 3776000],
+        "endLeft": [5056000, 3776000],
+        "startLeft": [5056000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "V20": {
+        "startRight": [10304000, -64000],
+        "endRight": [10304000, 3904000],
+        "endLeft": [10176000, 3776000],
+        "startLeft": [10176000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J10": [[5056000, 64000], [5120000, -64000], [5184000, 64000]],
+      "J11": [[5056000, 3776000], [5184000, 3776000], [5120000, 3904000]]
+    },
+    "rooms": {
+      "BED": {
+        "outer": [[5184000, 64000], [10176000, 64000], [10176000, 3776000], [5184000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      },
+      "LIV": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "DV10": {
+        "start": [5120000, 1280000],
+        "end": [5120000, 2432000],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      },
+      "NH00": {
+        "start": [1280000, 0],
+        "end": [2816000, 0],
+        "sillElevation": 1152000,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "BED": {
+        "kind": "flat",
+        "box": {
+          "max": [10176000, 3776000, 3456000],
+          "min": [5184000, 64000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      },
+      "LIV": {
+        "kind": "flat",
+        "box": {
+          "max": [5056000, 3776000, 3456000],
+          "min": [64000, 64000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "BED": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "LIV": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {
+      "BED": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [10176000, 3776000, 0],
+          "min": [5184000, 64000, 0]
+        }
+      },
+      "LIV": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5056000, 3776000, 0],
+          "min": [64000, 64000, 0]
+        }
+      }
+    },
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A 0.3 document migrated to 0.3 is the document itself (20.1.2), extension elements in an option included: the option member of a 0.3 extension element is core's, and no step runs.",
+  "covers": [
+    "FS-CORE-20.1.2"
+  ]
+}

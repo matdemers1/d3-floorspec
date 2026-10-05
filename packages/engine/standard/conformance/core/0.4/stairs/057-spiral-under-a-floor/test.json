@@ -1,0 +1,7 @@
+{
+  "description": "The spiral stair of 1800 mm under L2's 300 mm floor, rising into a well that starts at y = 1500 mm, its centre's line: the treads of its first half-turn, south of that line, are under the floor, and its lanes - each tread's edges and its walkline chord, level at its top - meet the floor's bottom, at 2400 mm; the least clearance is where the treads pass under the edge of the well.",
+  "covers": [
+    "FS-CORE-17.6.2",
+    "FS-CORE-17.7.3"
+  ]
+}

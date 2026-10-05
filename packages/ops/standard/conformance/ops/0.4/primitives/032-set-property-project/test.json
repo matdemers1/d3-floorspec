@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of $project.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

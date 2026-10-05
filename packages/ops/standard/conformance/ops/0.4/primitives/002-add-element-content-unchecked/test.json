@@ -1,0 +1,7 @@
+{
+  "description": "addElement adds an opening on wall W5 before W5 exists; its content is not checked when it is added, and by the end of the batch W5 exists, so the batch commits.",
+  "covers": [
+    "FS-OPS-2.1.1",
+    "FS-OPS-5.4.1"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "status": "refused",
+  "diagnostics": [
+    {
+      "code": "FS-JSON-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

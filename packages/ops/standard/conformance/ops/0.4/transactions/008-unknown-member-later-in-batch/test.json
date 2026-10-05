@@ -1,0 +1,7 @@
+{
+  "description": "The second operation of a valid-looking batch has a member its definition does not list; the whole request is malformed, and nothing is applied.",
+  "covers": [
+    "FS-OPS-1.1.3",
+    "FS-OPS-1.2.2"
+  ]
+}

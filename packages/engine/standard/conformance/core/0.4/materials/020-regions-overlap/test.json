@@ -1,0 +1,6 @@
+{
+  "description": "Two regions of W2's right face overlap the backsplash, one at its east end and one at its west: FS-INV-1003 once for each pair. A region on the other face may be anywhere.",
+  "covers": [
+    "FS-CORE-18.5.4"
+  ]
+}

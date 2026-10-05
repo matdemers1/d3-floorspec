@@ -16,9 +16,9 @@ import type { FloorspecDocument } from './model/document.js';
 import type { Analysis } from './validate/invariants.js';
 import { deriveOptions } from './options/options.js';
 
-export const ENGINE_VERSION = '0.3.0-draft';
+export const ENGINE_VERSION = '0.4.0-draft';
 /** The newest Floorspec Core draft this engine implements; it reads every draft in IMPLEMENTED_VERSIONS. */
-export const CORE_VERSION = '0.3';
+export const CORE_VERSION = '0.4';
 
 export { parseJson, type ParseResult } from './json/parse.js';
 export { writeJcs, writePretty } from './json/serialize.js';

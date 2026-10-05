@@ -94,6 +94,8 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
   e('FS-INV-902', 'error', 'invariant', "a stair's rise is not greater than zero", 'the stair', '17.4.1'),
   e('FS-INV-903', 'error', 'invariant', "a stair's riser count does not fit its form", 'the stair', '17.4.2'),
   e('FS-INV-904', 'error', 'invariant', "a spiral stair's width is more than half its diameter", 'the stair', '17.2.2'),
+  e('FS-INV-905', 'error', 'invariant', "a winder stair's newel is not inside the circle of its walkline, or a half-turn winder stair's gap is wider than the stair", 'the stair', '17.7.4'),
+  e('FS-INV-906', 'error', 'invariant', "a winder turns through no angle, or a spiral stair's tread through none or through 180° or more", 'the stair', '17.7.5'),
   e('FS-INV-1001', 'error', 'invariant', "a region of a wall's finishes is empty: its `to` is not greater than its `from`, or its `top` not greater than its `bottom`; once for each such region", 'the wall', '18.5.2'),
   e('FS-INV-1002', 'error', 'invariant', "a region extends past its wall's length or above its wall's height; once for each such region", 'the wall', '18.5.3'),
   e('FS-INV-1003', 'error', 'invariant', 'two regions of one face overlap; once for each such pair', 'the wall', '18.5.4'),
@@ -118,8 +120,10 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
   e('FS-LINT-013', 'warning', 'lint', 'a sleeping room reachable only through another sleeping room', 'the room', '14.4'),
   e('FS-LINT-014', 'warning', 'lint', 'an evaluated building (14.4) that has rooms but no entry', 'the building', '14.4'),
   e('FS-LINT-015', 'info', 'lint', 'a roof whose surface this draft does not derive (16.4.4)', 'the roof', '16.4.1'),
-  e('FS-LINT-016', 'info', 'lint', 'a winder or a spiral stair, whose steps, run, walkline and headroom this draft does not derive', 'the stair', '17.7'),
+  e('FS-LINT-016', 'info', 'lint', 'Core 0.3 only: a winder or a spiral stair, whose steps 0.3 did not derive. A reader of 0.4 does not report it', 'the stair', '—'),
   e('FS-LINT-017', 'info', 'lint', 'an option set with exactly one option', 'the option set', '19.8'),
+  e('FS-LINT-018', 'warning', 'lint', 'a winder stair without a newel, or a spiral stair whose width is half its diameter: its tapered treads narrow to a point', 'the stair', '17.7.6'),
+  e('FS-LINT-019', 'warning', 'lint', 'a stair whose headroom is less than its `minHeadroom`', 'the stair', '17.6.4'),
 ];
 
 const BY_CODE = new Map(CATALOGUE.map((c) => [c.code, c]));

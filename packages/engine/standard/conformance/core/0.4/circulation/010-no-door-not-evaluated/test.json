@@ -1,0 +1,8 @@
+{
+  "description": "Two rooms with windows - one between them, one to the outside - and no door or cased opening anywhere: the building is not evaluated, so no circulation lint is reported, though no room is an entry and none is reachable.",
+  "covers": [
+    "FS-CORE-14.3.1",
+    "FS-CORE-14.4.2",
+    "FS-CORE-10.3.1"
+  ]
+}

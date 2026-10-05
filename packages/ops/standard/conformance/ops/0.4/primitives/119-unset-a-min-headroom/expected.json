@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "818297f6f667883bb0dc85cdcb504989deb5ddbf845701e826f05974e5b901d6",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "ST1",
+      "path": "/minHeadroom"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "ST1",
+      "path": "/minHeadroom",
+      "value": 2600960
+    }
+  ]
+}
