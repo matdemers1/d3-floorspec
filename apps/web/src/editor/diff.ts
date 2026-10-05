@@ -1,4 +1,4 @@
-import type { Collection, EditorModel, LevelView, Point } from './model';
+import type { EditorModel, LevelView, Place, Point } from './model';
 import { labelOf } from './model';
 import { dist } from './geometry';
 import { formatArea, formatLen, type UnitSystem } from './units';
@@ -22,7 +22,8 @@ export type ChangeKind = 'added' | 'removed' | 'moved' | 'changed';
 export interface ElementChange {
   id: string;
   kind: ChangeKind;
-  collection: Collection | 'project';
+  /** Where it is; `adjacency` for a line of the bubble diagram (its ID is `a|b|kind`). */
+  collection: Place | 'adjacency' | 'project';
   /** The level the element is on, in the version that has it (the newer when both do). */
   level: string | undefined;
   label: string;
@@ -41,8 +42,9 @@ export interface ModelDiff {
 
 type Json = Record<string, unknown>;
 
-/** Collections whose elements the diff lists, in the order it lists them. */
-const LISTED: readonly Collection[] = ['buildings', 'levels', 'rooms', 'walls', 'openings', 'separators', 'junctions', 'slabs', 'types', 'materials', 'assets'];
+/** Collections whose elements the diff lists, in the order it lists them: the plan, then the brief and the extensions. */
+const LISTED: readonly Place[] = ['buildings', 'levels', 'rooms', 'walls', 'openings', 'separators', 'junctions', 'slabs', 'types', 'materials', 'assets', 'items', 'extension'];
+const ORDERED: readonly (Place | 'adjacency' | 'project')[] = [...LISTED, 'adjacency', 'project'];
 
 const ORDER: Record<ChangeKind, number> = { added: 0, removed: 1, moved: 2, changed: 3 };
 
@@ -79,13 +81,38 @@ function corners(ring: readonly Point[]): string {
 
 const stable = (v: unknown): string => JSON.stringify(v, (_k, value: unknown) => (value !== null && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.entries(value as Json).sort(([a], [b]) => (a < b ? -1 : 1))) : value));
 
-function elements(model: EditorModel, c: Collection): Map<string, Json> {
+function elements(model: EditorModel, c: Place): Map<string, Json> {
+  if (c === 'items') return new Map(Object.entries((model.document.program?.items ?? {}) as Record<string, Json | undefined>).filter((e): e is [string, Json] => e[1] !== undefined));
+  if (c === 'extension') {
+    const out = new Map<string, Json>();
+    for (const [id, at] of model.ext) {
+      const data = (model.document.extensions as Record<string, Json | undefined> | undefined)?.[at.extension];
+      const element = ((data?.['collections'] as Record<string, Record<string, Json> | undefined> | undefined)?.[at.collection])?.[id];
+      if (element !== undefined) out.set(id, element);
+    }
+    return out;
+  }
   const raw = (model.document as unknown as Json)[c] as Record<string, Json | undefined> | undefined;
   return new Map(Object.entries(raw ?? {}).filter((e): e is [string, Json] => e[1] !== undefined));
 }
 
-function levelOf(model: EditorModel, id: string, c: Collection, element: Json): string | undefined {
+/** The bubble diagram's lines (Core 0.2, 11.2), keyed by pair and kind, with their weights. */
+function adjacencies(model: EditorModel): Map<string, { a: string; b: string; kind: string; weight: number }> {
+  const out = new Map<string, { a: string; b: string; kind: string; weight: number }>();
+  for (const x of model.document.program?.adjacency ?? []) {
+    const [a, b] = x.a < x.b ? [x.a, x.b] : [x.b, x.a];
+    out.set(`${a}|${b}|${x.kind}`, { a: x.a, b: x.b, kind: x.kind, weight: x.weight ?? 5 });
+  }
+  return out;
+}
+
+function levelOf(model: EditorModel, id: string, c: Place, element: Json): string | undefined {
   if (c === 'levels') return id;
+  if (c === 'items') return undefined;
+  if (c === 'extension') {
+    const fallback = element['fallback'] as Json | undefined;
+    return typeof fallback?.['level'] === 'string' ? fallback['level'] : undefined;
+  }
   if (c === 'openings') {
     const wall = model.document.walls?.[String(element['wall'])] as Json | undefined;
     return wall === undefined ? undefined : String(wall['level']);
@@ -109,7 +136,7 @@ function roomArea(model: EditorModel, id: string): bigint | undefined {
   return undefined;
 }
 
-function detailOf(kind: ChangeKind, c: Collection, id: string, from: EditorModel, to: EditorModel, units: UnitSystem): string | undefined {
+function detailOf(kind: ChangeKind, c: Place, id: string, from: EditorModel, to: EditorModel, units: UnitSystem): string | undefined {
   if (c === 'rooms') {
     const a = roomArea(from, id);
     const b = roomArea(to, id);
@@ -177,9 +204,23 @@ export function diffModels(from: EditorModel, to: EditorModel, units: UnitSystem
       return e?.['start'] === j || e?.['end'] === j;
     });
   const kept = changes.filter((ch) => !(ch.collection === 'junctions' && ch.kind !== 'changed' && onChangedWall(ch.id)));
-  const project = stable(from.document.project) !== stable(to.document.project) || stable(from.document.extras ?? null) !== stable(to.document.extras ?? null);
-  if (project) kept.push({ id: '$project', kind: 'changed', collection: 'project', level: undefined, label: 'Project settings', detail: from.document.project.name !== to.document.project.name ? `${from.document.project.name} → ${to.document.project.name}` : undefined });
-  kept.sort((x, y) => ORDER[x.kind] - ORDER[y.kind] || LISTED.indexOf(x.collection as Collection) - LISTED.indexOf(y.collection as Collection) || (x.id < y.id ? -1 : 1));
+  // The bubble diagram: a line added, removed or reweighted.
+  const ea = adjacencies(from);
+  const eb = adjacencies(to);
+  const edgeLabel = (m: EditorModel, e: { a: string; b: string; kind: string }) => `${labelOf(m, e.a)} ↔ ${labelOf(m, e.b)} (${e.kind})`;
+  for (const [key, e] of eb) {
+    const before = ea.get(key);
+    if (before === undefined) kept.push({ id: key, kind: 'added', collection: 'adjacency', level: undefined, label: edgeLabel(to, e), detail: undefined });
+    else if (before.weight !== e.weight) kept.push({ id: key, kind: 'changed', collection: 'adjacency', level: undefined, label: edgeLabel(to, e), detail: `weight ${String(before.weight)} → ${String(e.weight)}` });
+  }
+  for (const [key, e] of ea) if (!eb.has(key)) kept.push({ id: key, kind: 'removed', collection: 'adjacency', level: undefined, label: edgeLabel(from, e), detail: undefined });
+  const upgraded = from.document.floorspec !== to.document.floorspec;
+  const project = upgraded || stable(from.document.project) !== stable(to.document.project) || stable(from.document.extras ?? null) !== stable(to.document.extras ?? null);
+  if (project) {
+    const detail = upgraded ? `Floorspec ${from.document.floorspec} → ${to.document.floorspec}` : from.document.project.name !== to.document.project.name ? `${from.document.project.name} → ${to.document.project.name}` : undefined;
+    kept.push({ id: '$project', kind: 'changed', collection: 'project', level: undefined, label: 'Project settings', detail });
+  }
+  kept.sort((x, y) => ORDER[x.kind] - ORDER[y.kind] || ORDERED.indexOf(x.collection) - ORDERED.indexOf(y.collection) || (x.id < y.id ? -1 : 1));
   const counts: Record<ChangeKind, number> = { added: 0, removed: 0, moved: 0, changed: 0 };
   const ids: Record<ChangeKind, Set<string>> = { added: new Set(), removed: new Set(), moved: new Set(), changed: new Set() };
   for (const ch of kept) {

@@ -5,7 +5,7 @@ import threeRoomHouse from './templates/three-room-house.floorspec.json?raw';
  *
  * Phase 3 ships one real house: the conformance suite's three-room house
  * (`conformance/core/0.1/examples/001-three-room-house`, vendored in the engine), bundled as its
- * canonical form. A template is loaded into a new project as Floorspec Ops — every change is an op
+ * canonical form and declared Core 0.2, as every new project is (it uses nothing 0.2 changed). A template is loaded into a new project as Floorspec Ops — every change is an op
  * (FLR-ADR-008): the project is created blank, then the template is applied as one batch
  * (fromDocument.ts) at `POST /api/projects/:id/ops`.
  */

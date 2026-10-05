@@ -188,7 +188,7 @@ function Effect({ store, review, main, target, effects }: { store: EditorStore; 
           <ul>
             {g.changes.map((c) => (
               <li key={c.id}>
-                <button type="button" className="fs-linkish" disabled={g.kind === 'removed' || c.collection === 'project'} onClick={() => { store.select(c.id, { keepSide: true }); }}>
+                <button type="button" className="fs-linkish" disabled={g.kind === 'removed' || c.collection === 'project' || c.collection === 'adjacency'} onClick={() => { store.select(c.id, { keepSide: true }); }}>
                   {c.label}
                 </button>
                 {c.detail === undefined ? null : <span className="fs-changes__detail">{c.detail}</span>}

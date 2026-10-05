@@ -33,7 +33,13 @@ function length(v: unknown, units: UnitSystem): string {
 
 const SINGULAR: Record<string, string> = {
   buildings: 'building', levels: 'level', junctions: 'junction', walls: 'wall', separators: 'separator', openings: 'opening',
-  rooms: 'room', slabs: 'slab', types: 'type', materials: 'material', assets: 'asset',
+  rooms: 'room', slabs: 'slab', types: 'type', materials: 'material', assets: 'asset', items: 'brief item',
+};
+
+/** An extension element's noun: `devices` → `device`. */
+const extNoun = (collection: unknown): string => {
+  const c = String(collection);
+  return c.endsWith('s') ? c.slice(0, -1) : c;
 };
 
 /** One operation as `[name, what]`: `['moveWall', 'W14 · +6"']`. */
@@ -70,9 +76,26 @@ export function describeOp(op: Json, units: UnitSystem, name: Namer): [string, s
       return [kind, `${n(op['id'])} ${String(op['path'])}`];
     case 'moveJunction':
       return [kind, `${n(op['id'])} → ${point(op['to'], units, name)}`];
+    case 'addProgramItem':
+      return [kind, `${typeof op['name'] === 'string' ? `“${op['name']}”` : String(op['function'])}${typeof op['count'] === 'number' && op['count'] > 1 ? ` ×${String(op['count'])}` : ''}${op['targetArea'] === undefined ? '' : ` · ${typeof op['targetArea'] === 'string' ? op['targetArea'] : 'target area'}`}`];
+    case 'setAdjacency':
+      return [kind, `${n(op['a'])} ↔ ${n(op['b'])} · ${String(op['kind'])}${typeof op['weight'] === 'number' ? ` · weight ${String(op['weight'])}` : ''}`];
+    case 'removeAdjacency':
+      return [kind, `${n(op['a'])} ↔ ${n(op['b'])} · ${String(op['kind'])}`];
+    case 'setRoomBrief':
+      return [kind, `${n(op['room'])} → ${n(op['item'])}`];
+    case 'placeElement':
+      {
+      const mode = ((op['host'] ?? {}) as Json)['mode'];
+      return [kind, `${extNoun(op['collection'])} on ${typeof mode === 'string' ? mode : 'a host'}`];
+    }
+    case 'moveElement':
+      return [kind, n(op['element'])];
+    case 'addLevel':
+      return [kind, typeof op['name'] === 'string' ? `“${op['name']}”` : typeof op['id'] === 'string' ? op['id'] : 'a level'];
     case 'addElement': {
       const element = (op['element'] ?? {}) as Json;
-      const what = SINGULAR[String(op['collection'])] ?? String(op['collection']);
+      const what = op['extension'] !== undefined ? extNoun(op['collection']) : (SINGULAR[String(op['collection'])] ?? String(op['collection']));
       const label = typeof element['name'] === 'string' ? `“${element['name']}”` : typeof op['id'] === 'string' ? op['id'] : '';
       return [kind, `${what} ${label}`.trim()];
     }
@@ -105,6 +128,13 @@ const VERBS: Record<string, [string, string]> = {
   setProperty: ['Changed a property', 'Changed {n} properties'],
   unsetProperty: ['Reset a property', 'Reset {n} properties'],
   addElement: ['Added an element', 'Added {n} elements'],
+  addProgramItem: ['Added a brief item', 'Added {n} brief items'],
+  setAdjacency: ['Related two brief items', 'Set {n} adjacencies'],
+  removeAdjacency: ['Removed an adjacency', 'Removed {n} adjacencies'],
+  setRoomBrief: ['Linked a room to the brief', 'Linked {n} rooms to the brief'],
+  placeElement: ['Placed an element', 'Placed {n} elements'],
+  moveElement: ['Moved an element', 'Moved {n} elements'],
+  addLevel: ['Added a level', 'Added {n} levels'],
 };
 
 /** A single op, in a sentence where one reads better than a verb and a count. */
@@ -128,13 +158,25 @@ function sentence(op: Json, units: UnitSystem, name: Namer): string | null {
       return typeof op['name'] === 'string' ? `Named a room “${op['name']}”` : null;
     case 'setProperty':
       if (op['path'] === '/name') return `Renamed ${ref(op['id'], name)} “${String(op['value'])}”`;
+      if (op['id'] === '$document' && op['path'] === '/floorspec') return `Upgraded the plan to Floorspec ${String(op['value'])}`;
+      if (op['path'] === '/brief') return `Linked ${ref(op['id'], name)} to ${ref(op['value'], name)}`;
       if (op['path'] === '/extras/d3floorspec/units') return op['value'] === 'metric' ? 'Showed metric units' : 'Showed feet and inches';
       return `Set ${String(op['path']).replace(/^\//, '')} of ${ref(op['id'], name)}`;
     case 'addElement': {
       const element = (op['element'] ?? {}) as Json;
-      const what = SINGULAR[String(op['collection'])] ?? 'element';
+      const what = op['extension'] !== undefined ? extNoun(op['collection']) : (SINGULAR[String(op['collection'])] ?? 'element');
       return `Added ${what}${typeof element['name'] === 'string' ? ` “${element['name']}”` : ''}`;
     }
+    case 'addProgramItem':
+      return `Added ${typeof op['name'] === 'string' ? `“${op['name']}”` : `a ${String(op['function'])} item`} to the brief`;
+    case 'setAdjacency':
+      return `Related ${ref(op['a'], name)} and ${ref(op['b'], name)} (${String(op['kind'])})`;
+    case 'removeAdjacency':
+      return `Unrelated ${ref(op['a'], name)} and ${ref(op['b'], name)}`;
+    case 'setRoomBrief':
+      return `Linked ${ref(op['room'], name)} to ${ref(op['item'], name)}`;
+    case 'placeElement':
+      return `Placed a ${extNoun(op['collection'])}`;
     default:
       return null;
   }

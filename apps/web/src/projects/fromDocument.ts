@@ -1,5 +1,5 @@
 import type { Diagnostic } from '@floorspec/engine';
-import { INVERSE_ORDER, type Operation } from '@floorspec/ops';
+import type { Operation } from '@floorspec/ops';
 import { api } from '../lib/api';
 
 /**
@@ -11,8 +11,18 @@ import { api } from '../lib/api';
 
 type Json = Record<string, unknown>;
 
-/** The members of `$document` other than the collections and the version (Ops 2.3). */
-const DOCUMENT_MEMBERS = ['site', 'extensionsUsed', 'extensionsRequired', 'extensions', 'extras'] as const;
+/** The members of `$document` other than the collections, the program and the version (Ops 2.3). */
+const DOCUMENT_MEMBERS = ['site', 'extensionsUsed', 'extensionsRequired', 'extras'] as const;
+
+/**
+ * Where elements are added from: what is referred to before what refers — the reverse of the
+ * inverse's removal order (Ops 0.2, 1.6), program items (`items`) after the levels they may prefer
+ * and before the rooms that fulfil them. Extension elements follow, on the walls and rooms that host them.
+ */
+const ADD_ORDER = ['assets', 'materials', 'types', 'buildings', 'levels', 'items', 'junctions', 'walls', 'separators', 'slabs', 'rooms', 'openings'] as const;
+
+const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
+const byId = ([a]: [string, unknown], [b]: [string, unknown]) => (a < b ? -1 : 1);
 
 /** The batch that turns the empty document named `name` into `document` (named `name`). */
 export function documentToBatch(document: Json, name: string): Operation[] {
@@ -28,11 +38,31 @@ export function documentToBatch(document: Json, name: string): Operation[] {
     if (key !== 'name') batch.push({ op: 'setProperty', id: '$project', path: `/${key}`, value });
   }
   if (project?.['name'] !== name) batch.push({ op: 'setProperty', id: '$project', path: '/name', value: name });
-  // Elements in the reverse of the inverse's removal order: what is referred to before what refers.
-  for (const collection of [...INVERSE_ORDER].reverse()) {
-    const elements = document[collection] as Record<string, Json | undefined> | undefined;
-    for (const [id, element] of Object.entries(elements ?? {}).sort(([a], [b]) => (a < b ? -1 : 1))) {
+  // An extension's own data, without its elements: those are added as elements, below.
+  const extensions = isObject(document['extensions']) ? document['extensions'] : {};
+  for (const [extension, data] of Object.entries(extensions).sort(byId)) {
+    if (!isObject(data)) continue;
+    for (const [member, value] of Object.entries(data).sort(byId)) {
+      if (member !== 'collections') batch.push({ op: 'setProperty', id: '$document', path: `/extensions/${extension}/${member}`, value });
+    }
+  }
+  const program = isObject(document['program']) ? document['program'] : {};
+  for (const collection of ADD_ORDER) {
+    const elements = (collection === 'items' ? program['items'] : document[collection]) as Record<string, Json | undefined> | undefined;
+    for (const [id, element] of Object.entries(elements ?? {}).sort(byId)) {
       if (element !== undefined) batch.push({ op: 'addElement', collection, id, element });
+    }
+  }
+  // The bubble diagram's lines, in the order the document has them (setAdjacency appends).
+  for (const edge of Array.isArray(program['adjacency']) ? (program['adjacency'] as Json[]) : []) {
+    batch.push({ op: 'setAdjacency', a: String(edge['a']), b: String(edge['b']), kind: edge['kind'] as 'required' | 'preferred' | 'forbidden', ...(edge['weight'] === undefined ? {} : { weight: edge['weight'] }) });
+  }
+  for (const [extension, data] of Object.entries(extensions).sort(byId)) {
+    const collections = isObject(data) && isObject(data['collections']) ? data['collections'] : {};
+    for (const [collection, elements] of Object.entries(collections).sort(byId)) {
+      for (const [id, element] of Object.entries(isObject(elements) ? elements : {}).sort(byId)) {
+        if (isObject(element)) batch.push({ op: 'addElement', extension, collection, id, element });
+      }
     }
   }
   return batch;

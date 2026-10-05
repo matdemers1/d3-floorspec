@@ -1,4 +1,4 @@
-import { check, type Derived, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
+import { check, extElements, type Derived, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
 import { twiceArea } from './units';
 
 /**
@@ -19,9 +19,15 @@ export const COLLECTIONS: readonly Collection[] = [
   'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'types', 'materials', 'assets',
 ];
 
+/**
+ * Where an ID lives: a Core collection, the program's items (Core 0.2, 11.1), or an extension's
+ * collection (12.5) — one space of IDs (3.1.3).
+ */
+export type Place = Collection | 'items' | 'extension';
+
 export type Kind =
   | 'building' | 'level' | 'junction' | 'wall' | 'separator' | 'opening' | 'room' | 'slab'
-  | 'wallType' | 'doorType' | 'windowType' | 'material' | 'asset';
+  | 'wallType' | 'doorType' | 'windowType' | 'material' | 'asset' | 'item' | 'extensionElement';
 
 type Json = Record<string, unknown>;
 
@@ -112,7 +118,9 @@ export interface EditorModel {
   diagnostics: Diagnostic[];
   levels: LevelView[];
   /** Which collection every ID is in. */
-  index: Map<string, Collection>;
+  index: Map<string, Place>;
+  /** The extension and collection of every extension element. */
+  ext: Map<string, { extension: string; collection: string }>;
 }
 
 const entriesOf = (c: unknown): [string, Json][] =>
@@ -122,8 +130,14 @@ const entriesOf = (c: unknown): [string, Json][] =>
 export function readModel(hash: string, text: string | object): EditorModel {
   const result = check(text);
   const document = (typeof text === 'string' ? JSON.parse(text) : text) as FloorspecDocument;
-  const index = new Map<string, Collection>();
+  const index = new Map<string, Place>();
   for (const c of COLLECTIONS) for (const [id] of entriesOf((document as unknown as Json)[c])) index.set(id, c);
+  for (const [id] of entriesOf(document.program?.items)) index.set(id, 'items');
+  const ext = new Map<string, { extension: string; collection: string }>();
+  for (const e of extElements(document)) {
+    index.set(e.id, 'extension');
+    ext.set(e.id, { extension: e.extension, collection: e.collection });
+  }
   const derived = result.valid ? (result.derived ?? null) : null;
   return {
     hash,
@@ -133,12 +147,15 @@ export function readModel(hash: string, text: string | object): EditorModel {
     diagnostics: result.diagnostics,
     levels: derived === null ? levelsWithoutGeometry(document) : levelViews(document, derived),
     index,
+    ext,
   };
 }
 
 export function kindOf(model: EditorModel, id: string): Kind | null {
   const c = model.index.get(id);
   if (c === undefined) return null;
+  if (c === 'items') return 'item';
+  if (c === 'extension') return 'extensionElement';
   if (c === 'types') {
     const kind = (model.document.types?.[id] as Json | undefined)?.['kind'];
     return kind === 'wallType' || kind === 'doorType' || kind === 'windowType' ? kind : null;
@@ -154,6 +171,12 @@ export function kindOf(model: EditorModel, id: string): Kind | null {
 export function elementOf(model: EditorModel, id: string): Json | undefined {
   const c = model.index.get(id);
   if (c === undefined) return undefined;
+  if (c === 'items') return model.document.program?.items?.[id] as Json | undefined;
+  if (c === 'extension') {
+    const at = model.ext.get(id);
+    const data = at === undefined ? undefined : ((model.document.extensions as Record<string, Json | undefined> | undefined)?.[at.extension]);
+    return ((data?.['collections'] as Record<string, Record<string, Json> | undefined> | undefined)?.[at?.collection ?? ''])?.[id];
+  }
   return ((model.document as unknown as Json)[c] as Record<string, Json> | undefined)?.[id];
 }
 
@@ -163,6 +186,12 @@ export function levelOfElement(model: EditorModel, id: string): string | undefin
   const element = elementOf(model, id);
   if (element === undefined) return undefined;
   if (c === 'levels') return id;
+  // An item's level is a preference, not where it is (11.1); an extension element is where its fallback is (12.6).
+  if (c === 'items') return undefined;
+  if (c === 'extension') {
+    const fallback = element['fallback'] as Json | undefined;
+    return typeof fallback?.['level'] === 'string' ? fallback['level'] : undefined;
+  }
   if (c === 'openings') {
     const wall = model.document.walls?.[String(element['wall'])] as Json | undefined;
     return wall === undefined ? undefined : String(wall['level']);
@@ -330,6 +359,12 @@ export function labelOf(model: EditorModel, id: string): string {
     case 'doorType': return name ?? `Door type ${id}`;
     case 'windowType': return name ?? `Window type ${id}`;
     case 'material': return name ?? `Material ${id}`;
+    case 'item': return name ?? `Item ${id}`;
+    case 'extensionElement': {
+      const collection = model.ext.get(id)?.collection ?? 'element';
+      const noun = collection.endsWith('s') ? collection.slice(0, -1) : collection;
+      return name ?? `${noun.charAt(0).toUpperCase()}${noun.slice(1)} ${id}`;
+    }
     default: return name ?? id;
   }
 }
