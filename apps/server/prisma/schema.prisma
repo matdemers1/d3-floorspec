@@ -501,3 +501,47 @@ model JobOutput {
 
   @@map("job_outputs")
 }
+
+// ─── Operations: backups, restore drills and alerts (FLR-T-12.1, FLR-T-12.2) ─
+
+enum MaintenanceStatus {
+  running
+  succeeded
+  failed
+}
+
+/// One run of a maintenance job — the nightly `backup` or the weekly `restore-drill` — and its
+/// recorded result. `key` is the idempotency key (`backup:2026-10-05`, `restore-drill:2026-W41`,
+/// `manual:backup:<time>`): inserting it is the claim, so a day gets one backup however many
+/// processes ask. A drill's row is the drill's record (FLR-REQ-171).
+model MaintenanceRun {
+  id         String            @id @default(uuid(7)) @db.Uuid
+  kind       String
+  key        String            @unique
+  /// `schedule` or `manual` (the run-job CLI).
+  trigger    String
+  status     MaintenanceStatus @default(running)
+  /// What it did: the dump, its manifest, the project the drill opened.
+  result     Json?
+  /// Why it failed, in words for a person.
+  error      String?
+  startedAt  DateTime          @default(now()) @map("started_at") @db.Timestamptz(6)
+  finishedAt DateTime?         @map("finished_at") @db.Timestamptz(6)
+
+  @@index([kind, startedAt])
+  @@map("maintenance_runs")
+}
+
+/// Every alert raised, sent or not: the hourly suppression reads it, and so does the operator.
+model AlertLog {
+  id        BigInt   @id @default(autoincrement())
+  kind      String
+  subject   String
+  sent      Boolean
+  /// Why it was not sent, when it was not.
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([kind, createdAt])
+  @@map("alerts")
+}
