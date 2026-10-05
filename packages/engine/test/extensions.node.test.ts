@@ -112,7 +112,8 @@ describe('the official extensions', () => {
       .map((s) => JSON.parse(readFileSync(join(standard, 'registry', s.name, 'extension.json'), 'utf8')) as unknown);
     expect(OFFICIAL_EXTENSIONS).toEqual(vendored);
     for (const e of OFFICIAL_EXTENSIONS) {
-      expect(e.status).toBe('releaseCandidate');
+      // FS_structural 0.1.0 is a Draft; the others are Release Candidates.
+      expect(e.status).toBe(e.name === 'FS_structural' ? 'draft' : 'releaseCandidate');
       expect(EXTENSION_IMPLEMENTATIONS.get(e.name)?.version).toBe(e.version);
     }
   });

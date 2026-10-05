@@ -26,9 +26,10 @@ options:
                              entries; FS-CFG-001 when they are not a valid registry
   --core 0.1|0.2|0.3         the newest Core draft to read as (default 0.3, which reads 0.2 and 0.1 too)
   --extensions <names>       the extensions to read as implementing, comma-separated: any of
-                             FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage, FS_furniture, each
+                             FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage, FS_furniture,
+                             FS_structural, each
                              evaluated for a document that uses it at a version the validator
-                             knows (--registry); or "official": all five, knowing their registry
+                             knows (--registry); or "official": all six, knowing their registry
                              entries unless --registry is given
   --design <json|file>       (Core 0.3, 19.6) the design to derive: a JSON object of option set →
                              option, given inline or as a file; default the primary design

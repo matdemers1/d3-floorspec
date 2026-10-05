@@ -41,7 +41,7 @@ describe('in the browser', () => {
 
   it("passes the official extensions' Ops cases, each applied by an applier that implements it", async () => {
     const cases = await commands.extensionOpsCases();
-    expect(cases.length).toBe(12);
+    expect(cases.length).toBe(18);
     for (const c of cases) {
       const result = apply(fromBase64(c.input), fromBase64(c.request), { extensions: [c.extension], knownExtensions: fromBase64(c.registry) });
       const problems = checkCase({ ...c, input: fromBase64(c.input), request: fromBase64(c.request) }, result);
