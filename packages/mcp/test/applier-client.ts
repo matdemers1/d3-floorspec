@@ -25,7 +25,7 @@ export class ApplierClient implements FloorspecClient {
   }
   apply(_projectId: string, input: ApplyInput): Promise<Committed> {
     const before = contentHash(this.document);
-    const r = apply(this.document, { batch: input.batch as never }, { ops: '0.2', ...OFFICIAL_READER });
+    const r = apply(this.document, { batch: input.batch as never }, { ops: '0.3', ...OFFICIAL_READER });
     if (r.status === 'rejected')
       return Promise.reject(new FloorspecApiError(422, { type: '/problems/ops-rejected', error: 'the batch was rejected and nothing changed', diagnostics: r.diagnostics }));
     this.document = JSON.parse(r.document) as object;

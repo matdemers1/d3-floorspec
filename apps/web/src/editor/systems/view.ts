@@ -81,7 +81,7 @@ export function recordsOf(document: FloorspecDocument, extension: string, collec
 /** Every record of every official extension, by ID. */
 export function recordIndex(document: FloorspecDocument): Map<string, RecordRef> {
   const out = new Map<string, RecordRef>();
-  if (document.floorspec !== '0.2') return out;
+  if (document.floorspec === '0.1') return out;
   for (const r of RECORD_COLLECTIONS) for (const [id] of recordsOf(document, r.extension, r.collection)) out.set(id, { extension: r.extension, collection: r.collection });
   return out;
 }

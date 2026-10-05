@@ -11,9 +11,9 @@ export interface Doc {
   levels?: Record<string, { name?: string }>;
   junctions?: Record<string, { level?: string; position: [number, number] }>;
   walls?: Record<string, { start: string; end: string; name?: string; level?: string }>;
-  openings?: Record<string, { wall: string; fill?: string; offset?: number }>;
+  openings?: Record<string, { wall: string; fill?: string; offset?: number; clearOpening?: { width: number; height: number; area?: number } }>;
   rooms?: Record<string, { name?: string; anchor?: [number, number] }>;
-  types?: Record<string, { kind: string; name?: string }>;
+  types?: Record<string, { kind: string; name?: string; operation?: string; clearOpening?: { width: number; height: number; area?: number } }>;
 }
 
 export const count = (c: Record<string, unknown> | undefined) => Object.keys(c ?? {}).length;

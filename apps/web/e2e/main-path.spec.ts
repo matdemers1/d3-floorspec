@@ -155,6 +155,37 @@ test('setup to a compared undo: draw a room by hand, accept an agent’s proposa
   await expect.poll(async () => Object.values((await modelOf(page, project)).rooms ?? {})[0]?.name).toBe('Great room');
   await settled(page);
   await page.keyboard.press('Escape');
+
+  // ── Floorspec 0.3, in the inspector: the door's type says how it opens and its net clear
+  //    opening as declared (width, then height: the clear opening is sent once it has both); the
+  //    door then overrides the clear opening for itself, starting from the type's.
+  doc = await modelOf(page, project);
+  const doorId = Object.keys(doc.openings ?? {}).find((id) => doc.types?.[doc.openings?.[id]?.fill ?? '']?.kind === 'doorType') ?? '';
+  const doorType = doc.openings?.[doorId]?.fill ?? '';
+  const tree = page.getByRole('tree');
+  const inspector = page.getByRole('complementary', { name: 'Inspector' });
+  const typesRow = tree.getByRole('treeitem', { name: /^Types/ });
+  if ((await typesRow.getAttribute('aria-expanded')) === 'false') await typesRow.click();
+  await tree.getByRole('treeitem', { name: new RegExp(doc.types?.[doorType]?.name ?? doorType) }).click();
+  await inspector.getByRole('combobox', { name: 'Operation' }).click();
+  await page.getByRole('option', { name: 'Pocket', exact: true }).click();
+  await expect.poll(async () => (await modelOf(page, project)).types?.[doorType]?.operation).toBe('pocket');
+  await settled(page);
+  await inspector.getByRole('textbox', { name: 'Clear width' }).fill('2\' 7"');
+  await inspector.getByRole('textbox', { name: 'Clear width' }).press('Enter');
+  await inspector.getByRole('textbox', { name: 'Clear height' }).fill('6\' 7"');
+  await inspector.getByRole('textbox', { name: 'Clear height' }).press('Enter');
+  await expect.poll(async () => (await modelOf(page, project)).types?.[doorType]?.clearOpening).toEqual({ width: 31 * 32512, height: 79 * 32512 });
+  await settled(page);
+  await page.keyboard.press('Escape');
+  const openingsRow = tree.getByRole('treeitem', { name: /^Openings/ });
+  if ((await openingsRow.getAttribute('aria-expanded')) === 'false') await openingsRow.click();
+  await tree.getByRole('treeitem', { name: `Door ${doorId}` }).click();
+  await expect(inspector.getByText(`Pocket · from ${doc.types?.[doorType]?.name ?? doorType}`)).toBeVisible();
+  await inspector.getByRole('switch', { name: /Uses the type/ }).click();
+  await expect.poll(async () => (await modelOf(page, project)).openings?.[doorId]?.clearOpening).toEqual({ width: 31 * 32512, height: 79 * 32512 });
+  await settled(page);
+  await page.keyboard.press('Escape');
   const drawn = await modelOf(page, project);
   const drawnHead = (await historyOf(page, project))[0];
 

@@ -71,15 +71,15 @@ export class ApplierUnavailable extends Error {
 }
 
 /**
- * The reference applier, `@floorspec/ops`, as Ops 0.2 (conformance/ops/0.2, 359/359): it applies to
- * the Core 0.2 documents new projects start as and to the Core 0.1 documents stored before, keeps
+ * The reference applier, `@floorspec/ops`, as Ops 0.3 (conformance/ops/0.3, 380/380): it applies to
+ * the Core 0.3 documents new projects start as and to the Core 0.2 and 0.1 documents stored before, keeps
  * each document's declared version (see FLOORSPEC_VERSION), and implements and knows the four
  * official extensions (FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage 0.1.0): a batch that
  * leaves a circuit naming a removed receptacle is rejected, as each extension's Ops cases say.
  */
 export const opsApplier: Applier = {
   apply(document, request) {
-    return opsApply(document as Parameters<typeof opsApply>[0], request, { ops: '0.2', ...OFFICIAL_READER }) as ApplyResult;
+    return opsApply(document as Parameters<typeof opsApply>[0], request, { ops: '0.3', ...OFFICIAL_READER }) as ApplyResult;
   },
 };
 

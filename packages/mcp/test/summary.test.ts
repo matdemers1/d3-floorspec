@@ -335,3 +335,18 @@ group('Core 0.2: circulation', () => {
     }
   });
 });
+
+group('Core 0.3: operation and declared clear openings', () => {
+  it('says how each door and window operates and its clear opening as declared, never computed', () => {
+    const d = load('three-room-house') as Record<string, unknown> & { types: Record<string, Record<string, unknown>>; openings: Record<string, Record<string, unknown>> };
+    d.floorspec = '0.3';
+    const [doorType, windowType] = ['doorType', 'windowType'].map((k) => Object.keys(d.types).find((id) => d.types[id]!['kind'] === k)!);
+    d.types[doorType!] = { ...d.types[doorType!], operation: 'swing', clearOpening: { width: 32 * 32512, height: 79 * 32512 } };
+    d.types[windowType!] = { ...d.types[windowType!], operation: 'casement' };
+    expect(check(d).valid).toBe(true);
+    const out = describe(JSON.stringify(d));
+    expect(out).toContain(`operation swing, clear opening 2' 8" (1040384) × 6' 7" (2568448) (declared)`);
+    expect(out).toContain('operation casement');
+    expect(out).not.toMatch(/casement, clear opening/);
+  });
+});

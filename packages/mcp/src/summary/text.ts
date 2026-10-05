@@ -36,6 +36,11 @@ function opening(o: OpeningSummary, self: string): string {
     s += `, hinge ${o.hinge ?? 'start'}, swing ${o.swing ?? 'right'}`;
     if (o.swingsInto) s += `, opens into ${neighbour(o.swingsInto, self)}`;
   }
+  if (o.operation) s += `, operation ${o.operation}`;
+  if (o.clearOpening) {
+    const c = o.clearOpening;
+    s += `, clear opening ${lengthText(c.width)} × ${lengthText(c.height)}${c.area ? `, ${c.area.squareFeet} ft² clear` : ''} (declared)`;
+  }
   return s;
 }
 

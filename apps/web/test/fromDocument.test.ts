@@ -9,8 +9,8 @@ describe('a document as a batch', () => {
   const template = JSON.parse(readFileSync(new URL('../src/projects/templates/three-room-house.floorspec.json', import.meta.url), 'utf8')) as Record<string, unknown>;
 
   it('turns the empty document into the template, byte for byte, under the chosen name', () => {
-    // What the server creates: a new project is Core 0.2.
-    const blank = { floorspec: '0.2', project: { name: 'My house' } };
+    // What the server creates: a new project is Core 0.3.
+    const blank = { floorspec: '0.3', project: { name: 'My house' } };
     const result = apply(blank, { batch: documentToBatch(template, 'My house') });
     expect(result.status).toBe('committed');
     if (result.status !== 'committed') return;
@@ -23,8 +23,8 @@ describe('a document as a batch', () => {
     expect([...ops].sort()).toEqual(['addElement', 'setProperty']);
   });
 
-  it('is Core 0.2, as a new project is', () => {
-    expect(template['floorspec']).toBe('0.2');
+  it('is Core 0.3, as a new project is', () => {
+    expect(template['floorspec']).toBe('0.3');
   });
 
   it('carries a brief — items, the rooms that fulfil them, the bubble diagram — and extension elements', () => {
@@ -49,7 +49,7 @@ describe('a document as a batch', () => {
     expect(withBrief.status, JSON.stringify(withBrief.status === 'rejected' ? withBrief.diagnostics : [])).toBe('committed');
     if (withBrief.status !== 'committed') return;
     const source = JSON.parse(withBrief.document) as Record<string, unknown>;
-    const blank = { floorspec: '0.2', project: { name: 'Imported' } };
+    const blank = { floorspec: '0.3', project: { name: 'Imported' } };
     const result = apply(blank, { batch: documentToBatch(source, 'Imported') });
     expect(result.status, JSON.stringify(result.status === 'rejected' ? result.diagnostics : [])).toBe('committed');
     if (result.status !== 'committed') return;

@@ -32,7 +32,13 @@ import type { Batch } from '../src/editor/ops';
 
 const IN = 32_512;
 const FT = 12 * IN;
-const HOUSE = readFileSync(new URL('../src/projects/templates/three-room-house.floorspec.json', import.meta.url), 'utf8');
+const TEMPLATE = readFileSync(new URL('../src/projects/templates/three-room-house.floorspec.json', import.meta.url), 'utf8');
+/**
+ * The template house as a Core 0.2 plan: the official extensions at 0.1.0 are evaluated only for
+ * documents that declare "0.2" (each one's 1.2; `officialExtensionsEvaluatedFor`), and these tests
+ * are about what they check and derive. When the extensions take Core 0.3, use TEMPLATE as it is.
+ */
+const HOUSE = TEMPLATE.replace('"floorspec": "0.3"', '"floorspec": "0.2"');
 
 function commit(doc: string, batch: Batch): string {
   const r = apply(doc, { batch }, OFFICIAL_READER);
@@ -73,8 +79,19 @@ describe('placing devices', () => {
     expect(json(doc).extensionsUsed).toEqual({ FS_electrical: '0.1.0' });
     expect(declarationOps(json(doc), 'FS_electrical')).toEqual([]);
     expect(declarationOps(json(doc), 'FS_plumbing')).toHaveLength(1);
-    // A Core 0.1 plan is moved to 0.2 first: extension elements are 0.2's (Core 1.2.4).
+    // A Core 0.1 plan is moved to 0.2 first: extension elements are 0.2's (Core 1.2.6).
     expect(declarationOps({ ...json(HOUSE), floorspec: '0.1' }, 'FS_plumbing')[0]).toEqual({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.2' });
+    // A Core 0.3 plan keeps its version: nothing is ever declared back to an earlier draft.
+    expect(declarationOps(json(TEMPLATE), 'FS_plumbing')).toEqual([{ op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_plumbing', value: '0.1.0' }]);
+  });
+
+  it('places devices in a Core 0.3 plan, which Core places and draws but the extensions at 0.1.0 do not yet check', () => {
+    const doc = commit(TEMPLATE, placeDevice(json(TEMPLATE), kind('receptacle'), { mode: 'wallFace', wall: 'WN2', toward: 'Kitchen', at: 3 * FT, height: 12 * IN }));
+    const m = model(doc);
+    expect(json(doc).floorspec).toBe('0.3');
+    expect(m.valid).toBe(true);
+    expect(device(m, 'X1')).toBeDefined();
+    expect(m.derived?.extensions).toEqual({});
   });
 
   it('gives a new element its fallback box, its members and the default envelopes', () => {

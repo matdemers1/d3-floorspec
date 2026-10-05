@@ -18,9 +18,9 @@ export const SEEDS_DIR = join(EVAL_ROOT, 'seeds');
 
 export type Doc = Record<string, unknown>;
 
-/** The document the server creates a project with: Core 0.2, as apps/server's emptyDocument. */
+/** The document the server creates a project with: Core 0.3, as apps/server's emptyDocument. */
 export function emptyDocument(name: string): Doc {
-  return { floorspec: '0.2', project: { name } };
+  return { floorspec: '0.3', project: { name } };
 }
 
 /** Apply batches to a document with the reference applier; throws with the diagnostics on a rejection. */

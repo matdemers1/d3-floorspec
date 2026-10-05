@@ -16,7 +16,7 @@ export function BriefPanel({ store, view, selection, onSelect }: { store: Editor
   const pending = useEditor(store, (s) => s.pending);
   const units = useEditor(store, () => store.units);
   const [adding, setAdding] = useState(false);
-  const old = view.version !== '0.2';
+  const old = view.version === '0.1';
   const editable = readOnly === null && !old;
   const summary = [
     `${String(view.items.length)} ${view.items.length === 1 ? 'item' : 'items'}`,

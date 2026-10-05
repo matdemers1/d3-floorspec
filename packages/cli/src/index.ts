@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { CATALOGUE, OFFICIAL_EXTENSIONS, OFFICIAL_EXTENSION_NAMES, check, type Diagnostic, type ValidateOptions } from '@floorspec/engine';
 
 export const PACKAGE_NAME = '@floorspec/cli';
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0';
 
 export const USAGE = `usage: floorspec <command> <file> [options]
 
@@ -16,12 +16,12 @@ commands:
   hash <file>                print the content hash (9.3)
   derive <file>              print everything derived as JSON: walls, fills, rooms, openings, and
                              (Core 0.2) the program, fallbacks, placements, clearances, overlaps
-                             and circulation
+                             and circulation, and (Core 0.3) each opening's declared clear opening
 
 options:
   --registry <file>          the known extensions (Core 0.2, 12.2): a JSON array of registry
                              entries; FS-CFG-001 when they are not a valid registry
-  --core 0.1|0.2             the newest Core draft to read as (default 0.2, which reads 0.1 too)
+  --core 0.1|0.2|0.3         the newest Core draft to read as (default 0.3, which reads 0.2 and 0.1 too)
   --extensions <names>       the extensions to read as implementing, comma-separated: any of
                              FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage, each
                              evaluated for a document that uses it at a version the validator
@@ -94,7 +94,7 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
     return 2;
   }
   const core = values.get('--core');
-  if (core !== undefined && core !== '0.1' && core !== '0.2') {
+  if (core !== undefined && core !== '0.1' && core !== '0.2' && core !== '0.3') {
     io.err(USAGE);
     return 2;
   }

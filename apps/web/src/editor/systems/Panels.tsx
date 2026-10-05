@@ -17,6 +17,7 @@ import { addCircuit, addGasSource, addStack, assignCircuit, moveDevice, nextReco
 import { memberSpecs, type MemberSpec } from './schema';
 import { AssistantCard } from './Assistant';
 import { circuitsOf, compareIds, elementsOfExtension, recordsOf, switchesOf, type DeviceView } from './view';
+import { pausedExtensions } from '../openings';
 
 /**
  * The inspector for the building systems (FLR-T-5.7, the board's "23 · Building systems"): the
@@ -752,6 +753,7 @@ export function SystemsSummary({ store, model, units }: { store: EditorStore; mo
   const devices = model.levels.flatMap((l) => l.devices);
   const used = Object.keys((model.document as { extensionsUsed?: object }).extensionsUsed ?? {});
   if (devices.length === 0 && used.length === 0) return null;
+  const paused = pausedExtensions(model.document);
   return (
     <Section title="Building systems">
       <ul className="fs-reflist">
@@ -770,6 +772,11 @@ export function SystemsSummary({ store, model, units }: { store: EditorStore; mo
         })}
       </ul>
       <p className="fs-note">{SYSTEMS.filter((s) => used.includes(s.extension)).map((s) => `${s.extension} ${extensionVersion(s.extension)}`).join(' · ')} · Release Candidates</p>
+      {paused.length > 0 ? (
+        <p className="fs-note" role="note">
+          {paused.join(', ')} {paused.length === 1 ? 'checks' : 'check'} only Floorspec 0.2 plans at 0.1.0. In this Floorspec {model.document.floorspec} plan the devices are placed and drawn, but circuits, loads, rooms and their checks are not derived until {paused.length === 1 ? 'it takes' : 'they take'} 0.3.
+        </p>
+      ) : null}
       {used.includes('FS_electrical') ? <ElectricalOverview store={store} model={model} units={units} /> : null}
     </Section>
   );

@@ -66,7 +66,7 @@ function briefed(): EditorModel {
 describe('reading a brief', () => {
   it('lists items in reading order with what the engine derived for each', () => {
     const v = view(briefed());
-    expect(v.version).toBe('0.2');
+    expect(v.version).toBe('0.3');
     expect(v.derived).toBe(true);
     expect(v.items.map((i) => i.id)).toEqual(['P1', 'P2', 'P3', 'P4', 'P10']);
     const by = Object.fromEntries(v.items.map((i) => [i.id, i]));

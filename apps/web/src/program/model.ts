@@ -289,8 +289,8 @@ export function edgeState(edge: EdgeRow): string {
   return edge.connected === true ? 'Met: adjacent, and a door or opening connects them' : 'Met: adjacent (no door between them)';
 }
 
-/** Whether a document is a Core 0.1 plan, which holds no brief until it is upgraded. */
-export const needsUpgrade = (model: EditorModel): boolean => model.document.floorspec !== '0.2';
+/** Whether a document is a Core 0.1 plan, which holds no brief until it is upgraded (0.2 and 0.3 hold one). */
+export const needsUpgrade = (model: EditorModel): boolean => model.document.floorspec === '0.1';
 
 /** The levels an item may prefer, in elevation order. */
 export function levelChoices(model: EditorModel): { value: string; label: string }[] {

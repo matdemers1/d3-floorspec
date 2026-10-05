@@ -24,12 +24,14 @@ export type HostRef =
   | { mode: 'free'; level: string; at: [number, number] | string; rotation?: number };
 
 /**
- * What a batch that adds to `extension` needs first: the document at Core 0.2 (a 0.1 plan holds no
- * extension elements, Core 1.2.4) and the extension declared in `extensionsUsed`.
+ * What a batch that adds to `extension` needs first: the document at Core 0.2 or later (a 0.1 plan
+ * holds no extension elements, Core 1.2.6: it becomes 0.2, the draft the official extensions at
+ * 0.1.0 are evaluated for; a 0.3 plan keeps its version) and the extension declared in
+ * `extensionsUsed`.
  */
 export function declarationOps(document: FloorspecDocument, extension: string): Batch {
   const ops: Batch = [];
-  if (document.floorspec !== '0.2') ops.push({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.2' });
+  if (document.floorspec === '0.1') ops.push({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.2' });
   const used = (document as { extensionsUsed?: Record<string, unknown> }).extensionsUsed;
   if (used === undefined || !Object.hasOwn(used, extension)) ops.push({ op: 'setProperty', id: '$document', path: `/extensionsUsed/${extension}`, value: extensionVersion(extension) });
   return ops;
