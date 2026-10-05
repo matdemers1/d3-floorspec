@@ -12,10 +12,15 @@
 #                                 DATABASE_URL=postgresql://floorspec:<same password>@postgres:5432/floorspec
 #                                 KEK=<openssl rand -base64 32>   PEPPER=<openssl rand -base64 32>
 #                                 D3AUTH_ISSUER=https://auth.d3cloud.io  D3AUTH_CLIENT_ID=…  D3AUTH_CLIENT_SECRET=…
+#                                 MAIL_RELAY_URL=<D3 Auth's mail relay>  MAIL_RELAY_TOKEN=…  ALERT_TO=<operator>
+#                                   (optional, all three or none: alert email, FLR-T-12.2; the
+#                                   worker reads them too, for its health watchdog)
 #   /DATA/floorspec/tunnel.env    TUNNEL_TOKEN=<the floorspec tunnel's token>
 #
 # The api migrates on boot, after a pre-migration pg_dump into the backups volume. The editor is
-# served by the api: there is no separate web container.
+# served by the api: there is no separate web container. The api also takes the nightly backup into
+# that volume and runs the weekly restore drill (FLR-T-12.1, docs/runbooks/restore.md); the worker
+# watches the api's /health and the database and emails the operator when they fail (FLR-T-12.2).
 name: floorspec
 
 services:

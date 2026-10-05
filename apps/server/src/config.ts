@@ -74,6 +74,29 @@ const Env = z.object({
     .default('false')
     .transform((v) => v === 'true'),
 
+  /**
+   * The nightly backup and weekly restore drill (FLR-T-12.1): `on` runs them from this process on
+   * their schedule, `off` leaves them to `node dist/cli/run-job.js`. Default: on in production.
+   */
+  BACKUP_SCHEDULE: optional(z.enum(['on', 'off'])),
+  /** The hour (UTC) from which the day's backup may run. Default 7 — the small hours in the US. */
+  BACKUP_HOUR_UTC: z.preprocess((v) => (v === '' ? undefined : v), z.coerce.number().int().min(0).max(23).default(7)),
+  /** Nightly dumps older than this are pruned after a successful backup; the newest is always kept. */
+  BACKUP_RETENTION_DAYS: z.preprocess((v) => (v === '' ? undefined : v), z.coerce.number().int().positive().max(3650).default(30)),
+  /**
+   * The asset volume (FLR-REQ-147), mirrored into `BACKUP_DIR/assets` by the nightly backup. Unset
+   * until the asset store exists (FLR-T-8.2): the backup then records that there are no assets.
+   */
+  ASSET_DIR: optional(z.string()),
+
+  /**
+   * Alert email through the D3 Auth mail relay (FLR-T-12.2) — the same three names Foreman and
+   * Shipyard use. All three or none; unset, alerts are logged only, and the boot log says so.
+   */
+  MAIL_RELAY_URL: optional(z.url({ error: 'MAIL_RELAY_URL must be an absolute URL' })),
+  MAIL_RELAY_TOKEN: optional(z.string()),
+  ALERT_TO: optional(z.email({ error: 'ALERT_TO must be an email address' })),
+
   /** The built editor. Set in the image; absent in development, where Vite serves it. */
   WEB_DIST: optional(z.string()),
 

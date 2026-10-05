@@ -28,6 +28,8 @@ import { checkRoutes } from './routes/checks.js';
 import { profileRoutes, projectProfileRoutes, rulePackRoutes } from './routes/rules.js';
 import { tokenRoutes } from './routes/tokens.js';
 import { exportRoutes } from './routes/exports.js';
+import { maintenanceRoutes } from './routes/maintenance.js';
+import { latestRuns } from './maintenance/runs.js';
 import { mountMcp } from './routes/mcp.js';
 import { ProblemError, sendProblem } from './http/problem.js';
 import { ApplierUnavailable, unavailableApplier, type Applier } from './ops/applier.js';
@@ -107,6 +109,7 @@ export function createApp({
   mount(app, '/api/projects', eventRoutes(db, events, eventStream));
   mount(app, '/api/projects', exportRoutes(db));
   mount(app, '/api/tokens', tokenRoutes(db));
+  mount(app, '/api/maintenance', maintenanceRoutes(db, config));
   mountMcp(app, config);
 
   /**
@@ -138,11 +141,15 @@ export function createApp({
    * (the newest applied migration), which must equal the image's `dev.d3cloud.shipyard.schema`.
    */
   app.get('/health', (_req, res, next) => {
-    schemaRevision(config.DATABASE_URL)
-      .then((revision) => {
+    // The newest backup and drill ride along (FLR-T-12.1) but never decide the status: a failed
+    // backup must not make Shipyard roll a good deploy back. It alerts instead (FLR-T-12.2).
+    Promise.all([schemaRevision(config.DATABASE_URL), latestRuns(db).catch(() => null)])
+      .then(([revision, runs]) => {
         res.status(revision === null ? 503 : 200).json({
           status: revision === null ? 'degraded' : 'ok',
           schemaRevision: revision,
+          backup: runs?.backup ?? null,
+          drill: runs?.['restore-drill'] ?? null,
         });
       })
       .catch(next);

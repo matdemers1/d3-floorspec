@@ -265,8 +265,14 @@ Either answers with the tools: `floorspec_describe`, `floorspec_apply`, `floorsp
 
 ## 10. Backups
 
-Everything is in PostgreSQL (the `pgdata` volume). The api already takes a `pg_dump` into the
-`backups` volume before every migration. Take your own, regularly, and keep them off the machine:
+Everything is in PostgreSQL (the `pgdata` volume). The api takes a `pg_dump` into the `backups`
+volume before every migration, takes a nightly backup there (`floorspec-<time>.dump` with a
+manifest, kept `BACKUP_RETENTION_DAYS`), and once a week restores the newest into a scratch database
+and opens a project from it — the restore drill. `docs/runbooks/restore.md` has both, a real
+restore step by step, and the alert email (`MAIL_RELAY_URL`, `MAIL_RELAY_TOKEN`, `ALERT_TO`) that
+tells you when either fails. Run them now with
+`… exec api node dist/cli/run-job.js backup` or `… restore-drill`. They are all on this machine's
+disk, so keep copies off it:
 
 ```bash
 # A dump file, with the api's own pinned pg_dump, into the backups volume; prints its path

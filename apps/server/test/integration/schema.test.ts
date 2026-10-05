@@ -66,6 +66,7 @@ describe('the schema', () => {
       .at(-1);
     const res = await new Browser(running.url).get('/health');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: 'ok', schemaRevision: newest });
+    // The newest backup and drill ride along (FLR-T-12.1); maintenance.test.ts covers them.
+    expect(res.body).toMatchObject({ status: 'ok', schemaRevision: newest });
   });
 });
