@@ -379,7 +379,7 @@ describe('alerting a boot that fails (a failed deploy)', () => {
     const second = await boot();
     expect(second.code).toBe(1);
     expect(posted).toHaveLength(1);
-  }, 60_000);
+  }, 180_000); // two real api boots: generous, the CI runner and a busy machine are slow
 
   it('does not email when the alert ledger is unreachable (the watchdog reports a database that is down)', async () => {
     const relay = fakeRelay();
