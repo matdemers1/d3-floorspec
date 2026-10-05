@@ -1,0 +1,65 @@
+{
+  "id": "003",
+  "title": "36-inch door centred between kitchen and bedroom",
+  "category": "add-opening",
+  "prompt": "Add a 36-inch door in the middle of the wall between the kitchen and the bedroom.",
+  "seed": "three-room-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingAdded",
+      "on": {
+        "between": [
+          "KIT",
+          "BED"
+        ]
+      },
+      "type": "door",
+      "width": "36\"",
+      "centred": true
+    },
+    {
+      "kind": "openingsUnchanged"
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "BED"
+      ]
+    }
+  ],
+  "notes": "Centred is accepted on the wall's location line or on either finished face, within 1/16\".",
+  "references": [
+    {
+      "label": "36 in door type",
+      "batches": [
+        [
+          {
+            "op": "addOpening",
+            "wall": "wall between Kitchen and Bedroom",
+            "at": "centered",
+            "fill": "D36"
+          }
+        ]
+      ]
+    },
+    {
+      "label": "32 in type widened to 36 in",
+      "batches": [
+        [
+          {
+            "op": "addOpening",
+            "wall": "WI2",
+            "at": "centered",
+            "fill": "D32",
+            "width": "36\""
+          }
+        ]
+      ]
+    }
+  ]
+}

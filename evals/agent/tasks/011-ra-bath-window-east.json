@@ -1,0 +1,49 @@
+{
+  "id": "011",
+  "title": "Move the bath window toward the east end",
+  "category": "move-opening",
+  "prompt": "Move the bathroom window 1 foot toward the east end of its wall.",
+  "seed": "two-bedroom-ranch",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingMoved",
+      "opening": "WB",
+      "by": {
+        "east": "1'"
+      }
+    },
+    {
+      "kind": "openingsUnchanged",
+      "except": [
+        "WB"
+      ]
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "HALL",
+        "BATH",
+        "BED1",
+        "BED2"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "moveOpening",
+            "opening": "WB",
+            "at": "2' 6\" from start"
+          }
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "023",
+  "title": "Great room 3 feet wider on the west",
+  "category": "resize-room",
+  "prompt": "Make the great room 3 feet wider on the west side.",
+  "seed": "l-shaped-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomEdges",
+      "room": "LIV",
+      "delta": {
+        "minX": "-3'"
+      },
+      "keepTol": "1 1/2\""
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "BED",
+        "KIT",
+        "BATH",
+        "LAU"
+      ]
+    }
+  ],
+  "notes": "The west wall continues into the primary suite's, so the suite must not move. The jog is an exterior wall whose face sits about 1\" off the partition's, so the great room's north side may move by up to 1 1/2\".",
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "resizeRoom",
+            "room": "Great room",
+            "side": "west",
+            "by": "3'"
+          }
+        ]
+      ]
+    }
+  ]
+}

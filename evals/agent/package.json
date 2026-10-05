@@ -2,7 +2,7 @@
   "name": "@d3-floorspec/agent-eval",
   "private": true,
   "version": "0.1.0",
-  "description": "The 30-task agent eval that tests the project kill criterion (FLR-REQ-055).",
+  "description": "The agent eval that tests the project kill criterion (FLR-REQ-054, FLR-REQ-055): scripted design-edit tasks run Claude against seeded models through the MCP tools, scored by assertions over the resulting model.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
@@ -19,6 +19,19 @@
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "tsx src/run.ts"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*",
+    "@floorspec/mcp": "workspace:*",
+    "@floorspec/mcp-stdio": "workspace:*",
+    "@floorspec/ops": "workspace:*",
+    "@modelcontextprotocol/client": "2.1.0",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.13"
   }
 }

@@ -1,0 +1,74 @@
+{
+  "id": "025",
+  "title": "Make the kitchen opening bigger (by how much?)",
+  "category": "ambiguous",
+  "prompt": "Make the kitchen opening bigger.",
+  "seed": "l-shaped-house",
+  "assertions": [
+    {
+      "kind": "anyOf",
+      "label": "ask, or widen the opening and say by how much",
+      "groups": [
+        [
+          {
+            "kind": "asked"
+          }
+        ],
+        [
+          {
+            "kind": "valid"
+          },
+          {
+            "kind": "openingAt",
+            "near": "LK",
+            "type": "opening",
+            "widthAbove": "6'",
+            "tol": "1'"
+          },
+          {
+            "kind": "openingsUnchanged",
+            "except": [
+              "LK"
+            ]
+          },
+          {
+            "kind": "roomsUnchanged",
+            "rooms": [
+              "BED",
+              "LIV",
+              "KIT",
+              "BATH",
+              "LAU"
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  "notes": "No amount is given: asking is right, and so is widening it by an amount the agent states (centre within 1').",
+  "references": [
+    {
+      "label": "asks",
+      "reply": "How much wider would you like it — 8 feet, or open most of the wall?"
+    },
+    {
+      "label": "widens to 8 ft and says so",
+      "batches": [
+        [
+          {
+            "op": "setProperty",
+            "id": "LK",
+            "path": "/width",
+            "value": 3121152
+          },
+          {
+            "op": "moveOpening",
+            "opening": "LK",
+            "at": "centered"
+          }
+        ]
+      ],
+      "reply": "I widened it from 6' to 8', centred in the wall."
+    }
+  ]
+}

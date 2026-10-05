@@ -1,0 +1,27 @@
+{
+  "id": "019",
+  "title": "How many exterior doors",
+  "category": "read",
+  "prompt": "How many doors to the outside does the house have?",
+  "seed": "l-shaped-house",
+  "assertions": [
+    {
+      "kind": "unchanged"
+    },
+    {
+      "kind": "answer",
+      "expect": {
+        "number": 2,
+        "tol": 0
+      }
+    }
+  ],
+  "answer": {
+    "format": "number"
+  },
+  "references": [
+    {
+      "reply": "Two: the front door into the great room and the back door into the kitchen.\n\nANSWER: 2"
+    }
+  ]
+}

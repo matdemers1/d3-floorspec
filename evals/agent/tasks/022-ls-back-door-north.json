@@ -1,0 +1,48 @@
+{
+  "id": "022",
+  "title": "Move the back door north",
+  "category": "move-opening",
+  "prompt": "Move the back door 2 feet to the north.",
+  "seed": "l-shaped-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingMoved",
+      "opening": "BK",
+      "by": {
+        "north": "2'"
+      }
+    },
+    {
+      "kind": "openingsUnchanged",
+      "except": [
+        "BK"
+      ]
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "BED",
+        "LIV",
+        "KIT",
+        "BATH",
+        "LAU"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "moveOpening",
+            "opening": "BK",
+            "at": "2' from start"
+          }
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "id": "032",
+  "title": "Split a pantry off the kitchen",
+  "category": "split-room",
+  "prompt": "Split the kitchen to make a pantry: a wall running north–south, 5 feet in from the east wall, and the part east of it becomes the pantry.",
+  "seed": "two-storey-colonial.ops",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomCount",
+      "delta": 1
+    },
+    {
+      "kind": "wallLine",
+      "level": "L1",
+      "orientation": "ns",
+      "at": [
+        "26' 3\"",
+        "27' 1\""
+      ],
+      "span": [
+        "12'",
+        "24'"
+      ],
+      "tol": "1\""
+    },
+    {
+      "kind": "roomExists",
+      "name": "pantry",
+      "new": true,
+      "level": "L1",
+      "size": {
+        "eastWest": [
+          "4'",
+          "5' 1\""
+        ]
+      },
+      "bbox": {
+        "minY": [
+          "12'",
+          "13'"
+        ],
+        "maxY": [
+          "23'",
+          "24'"
+        ]
+      }
+    },
+    {
+      "kind": "roomExists",
+      "name": "kitchen",
+      "level": "L1",
+      "bbox": {
+        "minX": [
+          "14'",
+          "15'"
+        ],
+        "maxX": [
+          "26'",
+          "27'"
+        ]
+      }
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "DIN",
+        "FOY",
+        "PWD",
+        "PBR",
+        "BR3",
+        "BR2",
+        "HAL",
+        "BTH"
+      ]
+    }
+  ],
+  "notes": "'5 feet in from the east wall' is read from the location line or the inner face, to the new wall's centre or near face.",
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "drawWall",
+            "level": "L1",
+            "from": [
+              "27'",
+              "12'"
+            ],
+            "to": [
+              "27'",
+              "24'"
+            ],
+            "type": "INT24"
+          }
+        ],
+        [
+          {
+            "op": "addRoom",
+            "level": "L1",
+            "at": [
+              "29' 6\"",
+              "18'"
+            ],
+            "name": "Pantry",
+            "function": "storage"
+          }
+        ]
+      ]
+    }
+  ]
+}

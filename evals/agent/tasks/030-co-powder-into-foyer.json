@@ -1,0 +1,60 @@
+{
+  "id": "030",
+  "title": "Deepen the powder room into the foyer",
+  "category": "resize-room",
+  "prompt": "Make the powder room 2 feet deeper by taking the space from the foyer.",
+  "seed": "two-storey-colonial.ops",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomEdges",
+      "room": "PWD",
+      "delta": {
+        "minY": "-2'"
+      }
+    },
+    {
+      "kind": "roomEdges",
+      "room": "FOY",
+      "delta": {
+        "maxY": "-2'"
+      }
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "DIN",
+        "PBR",
+        "BR3",
+        "BR2",
+        "HAL",
+        "BTH"
+      ]
+    }
+  ],
+  "notes": "The dining–foyer cased opening sits in the wall that shortens, and no longer fits where it is: the applier rejects a plain resize with FS-INV-302, and a correct edit moves (or narrows) that opening too.",
+  "references": [
+    {
+      "label": "resize, and re-centre the foyer opening that no longer fits",
+      "batches": [
+        [
+          {
+            "op": "resizeRoom",
+            "room": "Powder room",
+            "side": "south",
+            "by": "2'"
+          },
+          {
+            "op": "moveOpening",
+            "opening": "DFO",
+            "at": "centered"
+          }
+        ]
+      ]
+    }
+  ]
+}

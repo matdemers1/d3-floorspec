@@ -1,0 +1,60 @@
+{
+  "id": "002",
+  "title": "Move the kitchen window a foot east",
+  "category": "move-opening",
+  "prompt": "Move the kitchen window over 1 foot toward the east.",
+  "seed": "three-room-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingMoved",
+      "opening": "KW",
+      "by": {
+        "east": "1'"
+      }
+    },
+    {
+      "kind": "openingsUnchanged",
+      "except": [
+        "KW"
+      ]
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "BED"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "label": "moveOpening",
+      "batches": [
+        [
+          {
+            "op": "moveOpening",
+            "opening": "KW",
+            "at": "7' from start"
+          }
+        ]
+      ]
+    },
+    {
+      "label": "setProperty offset",
+      "batches": [
+        [
+          {
+            "op": "setProperty",
+            "id": "KW",
+            "path": "/offset",
+            "value": 2731008
+          }
+        ]
+      ]
+    }
+  ]
+}

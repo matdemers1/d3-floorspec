@@ -1,0 +1,74 @@
+{
+  "id": "014",
+  "title": "Widen the hall–living cased opening to 6 ft",
+  "category": "resize-opening",
+  "prompt": "Widen the cased opening between the hall and the living room to 6 feet, keeping it centred where it is now.",
+  "seed": "two-bedroom-ranch",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingAt",
+      "near": "LH",
+      "type": "opening",
+      "width": "6'"
+    },
+    {
+      "kind": "openingsUnchanged",
+      "except": [
+        "LH"
+      ]
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "HALL",
+        "BATH",
+        "BED1",
+        "BED2"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "label": "set width and offset",
+      "batches": [
+        [
+          {
+            "op": "setProperty",
+            "id": "LH",
+            "path": "/width",
+            "value": 2340864
+          },
+          {
+            "op": "setProperty",
+            "id": "LH",
+            "path": "/offset",
+            "value": 1170432
+          }
+        ]
+      ]
+    },
+    {
+      "label": "set width, then moveOpening",
+      "batches": [
+        [
+          {
+            "op": "setProperty",
+            "id": "LH",
+            "path": "/width",
+            "value": 2340864
+          },
+          {
+            "op": "moveOpening",
+            "opening": "LH",
+            "at": "3' from start"
+          }
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "012",
+  "title": "32-inch door from kitchen to hall",
+  "category": "add-opening",
+  "prompt": "Add a 32-inch door from the kitchen into the hall, centred in the wall between them.",
+  "seed": "two-bedroom-ranch",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingAdded",
+      "on": {
+        "between": [
+          "KIT",
+          "HALL"
+        ]
+      },
+      "type": "door",
+      "width": "32\"",
+      "centred": true
+    },
+    {
+      "kind": "openingsUnchanged"
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "HALL",
+        "BATH",
+        "BED1",
+        "BED2"
+      ]
+    }
+  ],
+  "notes": "There is no 32-inch door type: a door type with a width override is the expected way, and adding a type is fine too.",
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "addOpening",
+            "wall": "wall between Kitchen and Hall",
+            "at": "centered",
+            "fill": "D30",
+            "width": "32\""
+          }
+        ]
+      ]
+    }
+  ]
+}

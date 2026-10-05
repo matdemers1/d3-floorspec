@@ -1,0 +1,60 @@
+{
+  "id": "016",
+  "title": "Primary bedroom 18 inches longer to the north",
+  "category": "resize-room",
+  "prompt": "Make the primary bedroom 18 inches longer to the north.",
+  "seed": "two-bedroom-ranch",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomEdges",
+      "room": "BED1",
+      "delta": {
+        "maxY": "18\""
+      }
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "HALL",
+        "BATH",
+        "BED2"
+      ]
+    },
+    {
+      "kind": "openingsUnchanged",
+      "only": [
+        "FD",
+        "LH",
+        "D1",
+        "D2",
+        "DB",
+        "WL1",
+        "WL2",
+        "WK",
+        "WB",
+        "W2S",
+        "W2E"
+      ]
+    }
+  ],
+  "notes": "The bedroom's north wall continues into the bath's, so a correct edit jogs it and leaves the bath alone.",
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "resizeRoom",
+            "room": "BED1",
+            "side": "north",
+            "by": "18\""
+          }
+        ]
+      ]
+    }
+  ]
+}

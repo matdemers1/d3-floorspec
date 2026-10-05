@@ -1,0 +1,49 @@
+{
+  "id": "020",
+  "title": "4-foot window centred on the laundry's east wall",
+  "category": "add-opening",
+  "prompt": "Add a 4-foot wide window centred on the east wall of the laundry room.",
+  "seed": "l-shaped-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingAdded",
+      "on": {
+        "side": "east",
+        "of": "LAU"
+      },
+      "type": "window",
+      "width": "4'",
+      "centred": true
+    },
+    {
+      "kind": "openingsUnchanged"
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "BED",
+        "LIV",
+        "KIT",
+        "BATH",
+        "LAU"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "addOpening",
+            "wall": "east wall of Laundry",
+            "at": "centered",
+            "fill": "W4848"
+          }
+        ]
+      ]
+    }
+  ]
+}

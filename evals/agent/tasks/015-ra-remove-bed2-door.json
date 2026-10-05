@@ -1,0 +1,45 @@
+{
+  "id": "015",
+  "title": "Take out the bedroom 2 door",
+  "category": "remove-opening",
+  "prompt": "Take out the door between the hall and the second bedroom.",
+  "seed": "two-bedroom-ranch",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingRemoved",
+      "opening": "D2"
+    },
+    {
+      "kind": "openingsUnchanged",
+      "except": [
+        "D2"
+      ]
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "HALL",
+        "BATH",
+        "BED1",
+        "BED2"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "removeElement",
+            "id": "D2"
+          }
+        ]
+      ]
+    }
+  ]
+}

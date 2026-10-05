@@ -1,0 +1,59 @@
+{
+  "id": "001",
+  "title": "Bump the kitchen out to the east",
+  "category": "resize-room",
+  "prompt": "Bump the kitchen out 2 feet to the east.",
+  "seed": "three-room-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomEdges",
+      "room": "KIT",
+      "delta": {
+        "maxX": "2'"
+      },
+      "keepTol": "1 1/2\""
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "BED"
+      ]
+    },
+    {
+      "kind": "openingsUnchanged"
+    }
+  ],
+  "notes": "The kitchen's east wall continues into the bedroom's, so a correct edit jogs the wall and leaves the bedroom exactly as it was. The jog is an exterior wall (Ops 4.4: the run edge's type), whose face sits 1 1/16\" off the partition's, so the kitchen's other sides may move by up to 1 1/2\".",
+  "references": [
+    {
+      "label": "resizeRoom by name",
+      "batches": [
+        [
+          {
+            "op": "resizeRoom",
+            "room": "Kitchen",
+            "side": "east",
+            "by": "2'"
+          }
+        ]
+      ]
+    },
+    {
+      "label": "resizeRoom by ID, base units",
+      "batches": [
+        [
+          {
+            "op": "resizeRoom",
+            "room": "KIT",
+            "side": "east",
+            "by": 780288
+          }
+        ]
+      ]
+    }
+  ]
+}

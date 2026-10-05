@@ -1,0 +1,46 @@
+{
+  "id": "008",
+  "title": "Slide the bedroom door south",
+  "category": "move-opening",
+  "prompt": "Slide the bedroom door 2 feet to the south.",
+  "seed": "three-room-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingMoved",
+      "opening": "BD",
+      "by": {
+        "south": "2'"
+      }
+    },
+    {
+      "kind": "openingsUnchanged",
+      "except": [
+        "BD"
+      ]
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "BED"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "moveOpening",
+            "opening": "BD",
+            "at": "6' from start"
+          }
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "id": "033",
+  "title": "Swap the kitchen window for a 4-foot one",
+  "category": "resize-opening",
+  "prompt": "Swap the kitchen window for a bigger 4-foot one, centred in the same spot.",
+  "seed": "two-storey-colonial.ops",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingAt",
+      "near": "KW",
+      "type": "window",
+      "width": "4'"
+    },
+    {
+      "kind": "openingsUnchanged",
+      "except": [
+        "KW"
+      ]
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "DIN",
+        "FOY",
+        "PWD",
+        "PBR",
+        "BR3",
+        "BR2",
+        "HAL",
+        "BTH"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "label": "change the fill and offset",
+      "batches": [
+        [
+          {
+            "op": "setProperty",
+            "id": "KW",
+            "path": "/fill",
+            "value": "W4848"
+          },
+          {
+            "op": "setProperty",
+            "id": "KW",
+            "path": "/offset",
+            "value": 2731008
+          }
+        ]
+      ]
+    },
+    {
+      "label": "remove and add",
+      "batches": [
+        [
+          {
+            "op": "removeElement",
+            "id": "KW"
+          },
+          {
+            "op": "addOpening",
+            "wall": "north wall of Kitchen",
+            "at": "7' from start",
+            "fill": "W4848"
+          }
+        ]
+      ]
+    }
+  ]
+}

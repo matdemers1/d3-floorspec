@@ -1,0 +1,26 @@
+{
+  "id": "035",
+  "title": "Is there a bathroom downstairs",
+  "category": "read",
+  "prompt": "Is there a bathroom on the first floor?",
+  "seed": "two-storey-colonial.ops",
+  "assertions": [
+    {
+      "kind": "unchanged"
+    },
+    {
+      "kind": "answer",
+      "expect": {
+        "yesno": "yes"
+      }
+    }
+  ],
+  "answer": {
+    "format": "yesno"
+  },
+  "references": [
+    {
+      "reply": "Yes — the powder room off the foyer.\n\nANSWER: yes"
+    }
+  ]
+}

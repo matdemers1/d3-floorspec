@@ -1,0 +1,28 @@
+{
+  "id": "004",
+  "title": "How big is the living room",
+  "category": "read",
+  "prompt": "How many square feet is the living room?",
+  "seed": "three-room-house",
+  "assertions": [
+    {
+      "kind": "unchanged"
+    },
+    {
+      "kind": "answer",
+      "expect": {
+        "number": 446.3,
+        "tol": 3
+      }
+    }
+  ],
+  "answer": {
+    "format": "number"
+  },
+  "notes": "Net area is 446.3 ft²; ±3 ft² also accepts its 19' 6\" × 23' bounding box (448.5). The 480 ft² of the location lines is not the room's size.",
+  "references": [
+    {
+      "reply": "The living room is about 446 square feet net.\n\nANSWER: 446.3"
+    }
+  ]
+}

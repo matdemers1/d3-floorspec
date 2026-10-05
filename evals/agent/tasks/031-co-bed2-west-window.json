@@ -1,0 +1,54 @@
+{
+  "id": "031",
+  "title": "3-foot window on bedroom 2's west wall",
+  "category": "add-opening",
+  "prompt": "Add a 3-foot window centred on the west wall of bedroom 2.",
+  "seed": "two-storey-colonial.ops",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingAdded",
+      "on": {
+        "side": "west",
+        "of": "BR2"
+      },
+      "type": "window",
+      "width": "3'",
+      "centred": true
+    },
+    {
+      "kind": "openingsUnchanged"
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "DIN",
+        "FOY",
+        "PWD",
+        "PBR",
+        "BR3",
+        "BR2",
+        "HAL",
+        "BTH"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "addOpening",
+            "wall": "west wall of Bedroom 2",
+            "at": "centered",
+            "fill": "W3636"
+          }
+        ]
+      ]
+    }
+  ]
+}

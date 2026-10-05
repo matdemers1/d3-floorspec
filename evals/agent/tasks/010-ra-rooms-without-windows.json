@@ -1,0 +1,28 @@
+{
+  "id": "010",
+  "title": "Which rooms have no window",
+  "category": "read",
+  "prompt": "Which rooms don't have a window?",
+  "seed": "two-bedroom-ranch",
+  "assertions": [
+    {
+      "kind": "unchanged"
+    },
+    {
+      "kind": "answer",
+      "expect": {
+        "rooms": [
+          "HALL"
+        ]
+      }
+    }
+  ],
+  "answer": {
+    "format": "rooms"
+  },
+  "references": [
+    {
+      "reply": "Only the hall has no window.\n\nANSWER: Hall"
+    }
+  ]
+}

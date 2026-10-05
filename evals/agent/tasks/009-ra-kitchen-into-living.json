@@ -1,0 +1,49 @@
+{
+  "id": "009",
+  "title": "Grow the kitchen into the living room",
+  "category": "resize-room",
+  "prompt": "Make the kitchen 2 feet bigger by pushing it into the living room.",
+  "seed": "two-bedroom-ranch",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomEdges",
+      "room": "KIT",
+      "delta": {
+        "minY": "-2'"
+      }
+    },
+    {
+      "kind": "roomEdges",
+      "room": "LIV",
+      "delta": {
+        "maxY": "-2'"
+      }
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "HALL",
+        "BATH",
+        "BED1",
+        "BED2"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "resizeRoom",
+            "room": "Kitchen",
+            "side": "south",
+            "by": "2'"
+          }
+        ]
+      ]
+    }
+  ]
+}

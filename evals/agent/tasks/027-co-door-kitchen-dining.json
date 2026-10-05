@@ -1,0 +1,56 @@
+{
+  "id": "027",
+  "title": "36-inch door centred between kitchen and dining",
+  "category": "add-opening",
+  "prompt": "Add a 36-inch door centred in the wall between the kitchen and the dining room.",
+  "seed": "two-storey-colonial.ops",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "openingAdded",
+      "on": {
+        "between": [
+          "KIT",
+          "DIN"
+        ]
+      },
+      "type": "door",
+      "width": "36\"",
+      "centred": true
+    },
+    {
+      "kind": "openingsUnchanged"
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "DIN",
+        "FOY",
+        "PWD",
+        "PBR",
+        "BR3",
+        "BR2",
+        "HAL",
+        "BTH"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "addOpening",
+            "wall": "wall between Kitchen and Dining room",
+            "at": "centered",
+            "fill": "D36"
+          }
+        ]
+      ]
+    }
+  ]
+}

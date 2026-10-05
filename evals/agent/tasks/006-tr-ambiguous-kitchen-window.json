@@ -1,0 +1,65 @@
+{
+  "id": "006",
+  "title": "Add a window to the kitchen (no size or wall given)",
+  "category": "ambiguous",
+  "prompt": "Add a window to the kitchen.",
+  "seed": "three-room-house",
+  "assertions": [
+    {
+      "kind": "anyOf",
+      "label": "ask, or add one window to a kitchen exterior wall",
+      "groups": [
+        [
+          {
+            "kind": "asked"
+          }
+        ],
+        [
+          {
+            "kind": "valid"
+          },
+          {
+            "kind": "openingAdded",
+            "on": {
+              "of": "KIT",
+              "exterior": true
+            },
+            "type": "window"
+          },
+          {
+            "kind": "openingsUnchanged"
+          },
+          {
+            "kind": "roomsUnchanged",
+            "rooms": [
+              "LIV",
+              "KIT",
+              "BED"
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  "notes": "Ambiguous on purpose: no wall and no size. Asking is right; so is adding one window to one of the kitchen's exterior walls.",
+  "references": [
+    {
+      "label": "asks",
+      "reply": "Which wall would you like it on — the north wall, or the east wall facing the yard — and what size?"
+    },
+    {
+      "label": "picks the east wall and says so",
+      "batches": [
+        [
+          {
+            "op": "addOpening",
+            "wall": "east wall of Kitchen",
+            "at": "centered",
+            "fill": "W3636"
+          }
+        ]
+      ],
+      "reply": "I added a 36 x 36 window centred on the east wall, matching the existing kitchen window."
+    }
+  ]
+}

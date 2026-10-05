@@ -1,0 +1,37 @@
+{
+  "id": "036",
+  "title": "Which bedroom walls are exterior",
+  "category": "read",
+  "prompt": "Which sides of the bedroom are outside walls?",
+  "seed": "three-room-house",
+  "assertions": [
+    {
+      "kind": "unchanged"
+    },
+    {
+      "kind": "answer",
+      "expect": {
+        "set": {
+          "universe": [
+            "north",
+            "east",
+            "south",
+            "west"
+          ],
+          "expect": [
+            "east",
+            "south"
+          ]
+        }
+      }
+    }
+  ],
+  "answer": {
+    "format": "list"
+  },
+  "references": [
+    {
+      "reply": "The east and south walls are exterior.\n\nANSWER: east, south"
+    }
+  ]
+}

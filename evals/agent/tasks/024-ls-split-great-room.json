@@ -1,0 +1,140 @@
+{
+  "id": "024",
+  "title": "Split the great room with a cased opening",
+  "category": "split-room",
+  "prompt": "Split the great room into a living room and a dining room with a wall running north–south, 10 feet east of the west wall, and put a 6-foot cased opening centred in the new wall. The east part is the dining room.",
+  "seed": "l-shaped-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomCount",
+      "delta": 1
+    },
+    {
+      "kind": "wallLine",
+      "level": "MAIN",
+      "orientation": "ns",
+      "at": [
+        "9' 9\"",
+        "10' 11\""
+      ],
+      "span": [
+        "0'",
+        "24'"
+      ],
+      "tol": "1\""
+    },
+    {
+      "kind": "roomExists",
+      "name": "dining",
+      "bbox": {
+        "minX": [
+          "9' 6\"",
+          "11' 6\""
+        ],
+        "maxX": [
+          "19'",
+          "20'"
+        ]
+      }
+    },
+    {
+      "kind": "roomExists",
+      "name": "living|great",
+      "bbox": {
+        "minX": [
+          "0'",
+          "1'"
+        ],
+        "maxX": [
+          "9' 6\"",
+          "11' 6\""
+        ]
+      }
+    },
+    {
+      "kind": "openingAdded",
+      "on": {
+        "between": [
+          {
+            "name": "living|great"
+          },
+          {
+            "name": "dining"
+          }
+        ]
+      },
+      "type": "opening",
+      "width": "6'",
+      "centred": true
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "BED",
+        "KIT",
+        "BATH",
+        "LAU"
+      ]
+    }
+  ],
+  "notes": "The great room's anchor sits exactly on the new wall's line, so a correct edit also moves it into one half; the name check accepts 'living' or 'great' for the west half.",
+  "references": [
+    {
+      "label": "wall, anchors and rooms, then the opening",
+      "batches": [
+        [
+          {
+            "op": "drawWall",
+            "level": "MAIN",
+            "from": [
+              "10'",
+              "0'"
+            ],
+            "to": [
+              "10'",
+              "24'"
+            ],
+            "type": "INT24"
+          },
+          {
+            "op": "setProperty",
+            "id": "LIV",
+            "path": "/anchor",
+            "value": [
+              1950720,
+              4681728
+            ]
+          },
+          {
+            "op": "setProperty",
+            "id": "LIV",
+            "path": "/name",
+            "value": "Living room"
+          },
+          {
+            "op": "addRoom",
+            "level": "MAIN",
+            "at": [
+              "15'",
+              "12'"
+            ],
+            "name": "Dining room",
+            "function": "dining"
+          }
+        ],
+        [
+          {
+            "op": "addOpening",
+            "wall": "wall between LIV and Dining room",
+            "at": "centered",
+            "width": "6'",
+            "height": "6' 8\""
+          }
+        ]
+      ]
+    }
+  ]
+}

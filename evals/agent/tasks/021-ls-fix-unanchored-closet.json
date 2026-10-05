@@ -1,0 +1,58 @@
+{
+  "id": "021",
+  "title": "Fix the empty-space diagnostic: name the closet",
+  "category": "fix-diagnostic",
+  "prompt": "The plan check says there's an empty space with no room in it — it's the closet inside the primary suite. Fix that by making it a walk-in closet.",
+  "seed": "l-shaped-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "diagnosticAbsent",
+      "code": "FS-LINT-003"
+    },
+    {
+      "kind": "roomCount",
+      "delta": 1
+    },
+    {
+      "kind": "roomExists",
+      "new": true,
+      "name": "closet",
+      "areaSqft": [
+        30,
+        33
+      ]
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "BED",
+        "LIV",
+        "KIT",
+        "BATH",
+        "LAU"
+      ]
+    }
+  ],
+  "notes": "Floorspec Rules arrive in Phase 6, so this 'reported finding' is the validator's FS-LINT-003 diagnostic instead.",
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "addRoom",
+            "level": "MAIN",
+            "at": [
+              5462016,
+              13264896
+            ],
+            "name": "Walk-in closet",
+            "function": "storage"
+          }
+        ]
+      ]
+    }
+  ]
+}

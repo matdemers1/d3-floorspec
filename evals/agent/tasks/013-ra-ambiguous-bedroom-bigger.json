@@ -1,0 +1,18 @@
+{
+  "id": "013",
+  "title": "Make the bedroom bigger (which one, how much?)",
+  "category": "ambiguous",
+  "prompt": "Make the bedroom bigger.",
+  "seed": "two-bedroom-ranch",
+  "assertions": [
+    {
+      "kind": "asked"
+    }
+  ],
+  "notes": "Two bedrooms and no amount: there is no obvious reading, so the right behaviour is to ask and change nothing.",
+  "references": [
+    {
+      "reply": "There are two bedrooms — the primary bedroom and bedroom 2. Which one, and by how much?"
+    }
+  ]
+}

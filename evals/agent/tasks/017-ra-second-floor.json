@@ -1,0 +1,116 @@
+{
+  "id": "017",
+  "title": "Add a second floor on the same footprint",
+  "category": "create-level",
+  "prompt": "Add a second floor with the same exterior walls as the main floor.",
+  "seed": "two-bedroom-ranch",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "levelCount",
+      "delta": 1
+    },
+    {
+      "kind": "levelExists",
+      "new": true,
+      "elevation": [
+        "9'",
+        "10'"
+      ]
+    },
+    {
+      "kind": "footprintCopied",
+      "from": "MAIN"
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "HALL",
+        "BATH",
+        "BED1",
+        "BED2"
+      ]
+    }
+  ],
+  "notes": "A second floor sits on the first: its elevation is the main floor's 9' height (up to 10' allows for a floor system). Its walls must lie along every exterior wall line of the main floor.",
+  "references": [
+    {
+      "label": "level, then four walls",
+      "batches": [
+        [
+          {
+            "op": "addElement",
+            "collection": "levels",
+            "id": "UP",
+            "element": {
+              "name": "Second floor",
+              "building": "HOUSE",
+              "elevation": 3511296,
+              "height": 3121152
+            }
+          },
+          {
+            "op": "drawWall",
+            "level": "UP",
+            "from": [
+              "0'",
+              "0'"
+            ],
+            "to": [
+              "0'",
+              "28'"
+            ],
+            "type": "EXT26",
+            "justification": "coreFace"
+          },
+          {
+            "op": "drawWall",
+            "level": "UP",
+            "from": [
+              "0'",
+              "28'"
+            ],
+            "to": [
+              "44'",
+              "28'"
+            ],
+            "type": "EXT26",
+            "justification": "coreFace"
+          },
+          {
+            "op": "drawWall",
+            "level": "UP",
+            "from": [
+              "44'",
+              "28'"
+            ],
+            "to": [
+              "44'",
+              "0'"
+            ],
+            "type": "EXT26",
+            "justification": "coreFace"
+          },
+          {
+            "op": "drawWall",
+            "level": "UP",
+            "from": [
+              "44'",
+              "0'"
+            ],
+            "to": [
+              "0'",
+              "0'"
+            ],
+            "type": "EXT26",
+            "justification": "coreFace"
+          }
+        ]
+      ]
+    }
+  ]
+}

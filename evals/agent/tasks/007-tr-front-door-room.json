@@ -1,0 +1,28 @@
+{
+  "id": "007",
+  "title": "Which room the front door opens into",
+  "category": "read",
+  "prompt": "Which room does the front door open into?",
+  "seed": "three-room-house",
+  "assertions": [
+    {
+      "kind": "unchanged"
+    },
+    {
+      "kind": "answer",
+      "expect": {
+        "rooms": [
+          "LIV"
+        ]
+      }
+    }
+  ],
+  "answer": {
+    "format": "rooms"
+  },
+  "references": [
+    {
+      "reply": "The front door opens straight into the living room.\n\nANSWER: Living room"
+    }
+  ]
+}

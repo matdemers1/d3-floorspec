@@ -1,0 +1,62 @@
+{
+  "id": "018",
+  "title": "Widen the laundry into the bath",
+  "category": "move-wall",
+  "prompt": "Make the laundry room 2 feet wider by moving the wall between it and the bathroom.",
+  "seed": "l-shaped-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomEdges",
+      "room": "LAU",
+      "delta": {
+        "minX": "-2'"
+      }
+    },
+    {
+      "kind": "roomEdges",
+      "room": "BATH",
+      "delta": {
+        "maxX": "-2'"
+      }
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "BED",
+        "LIV",
+        "KIT"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "label": "moveWall toward the bath",
+      "batches": [
+        [
+          {
+            "op": "moveWall",
+            "wall": "wall between Laundry and Bath",
+            "by": "2'",
+            "toward": "Bath"
+          }
+        ]
+      ]
+    },
+    {
+      "label": "resizeRoom",
+      "batches": [
+        [
+          {
+            "op": "resizeRoom",
+            "room": "Laundry",
+            "side": "west",
+            "by": "2'"
+          }
+        ]
+      ]
+    }
+  ]
+}

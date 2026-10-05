@@ -1,0 +1,28 @@
+{
+  "id": "029",
+  "title": "Total bedroom area upstairs",
+  "category": "read",
+  "prompt": "What's the total floor area of the bedrooms upstairs, in square feet?",
+  "seed": "two-storey-colonial.ops",
+  "assertions": [
+    {
+      "kind": "unchanged"
+    },
+    {
+      "kind": "answer",
+      "expect": {
+        "number": 474.4,
+        "tol": 3
+      }
+    }
+  ],
+  "answer": {
+    "format": "number"
+  },
+  "notes": "Net areas from the summary: 173.2 + 173.2 + 128.0.",
+  "references": [
+    {
+      "reply": "Primary 173.2 + bedroom 3 173.2 + bedroom 2 128.0.\n\nANSWER: 474.4"
+    }
+  ]
+}

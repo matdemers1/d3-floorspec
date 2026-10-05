@@ -1,0 +1,63 @@
+{
+  "id": "034",
+  "title": "Add an 8-foot basement level",
+  "category": "create-level",
+  "prompt": "Add a basement level, 8 feet tall, under the first floor.",
+  "seed": "two-storey-colonial.ops",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "levelCount",
+      "delta": 1
+    },
+    {
+      "kind": "levelExists",
+      "new": true,
+      "elevation": [
+        "-9'",
+        "-8'"
+      ],
+      "height": [
+        "7' 11\"",
+        "8' 1\""
+      ]
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "DIN",
+        "FOY",
+        "PWD",
+        "PBR",
+        "BR3",
+        "BR2",
+        "HAL",
+        "BTH"
+      ]
+    }
+  ],
+  "notes": "A basement 8 feet tall under a first floor at 0' sits at −8' (to −9' allows for a floor system).",
+  "references": [
+    {
+      "batches": [
+        [
+          {
+            "op": "addElement",
+            "collection": "levels",
+            "id": "B1",
+            "element": {
+              "name": "Basement",
+              "building": "HOUSE",
+              "elevation": -3121152,
+              "height": 3121152
+            }
+          }
+        ]
+      ]
+    }
+  ]
+}

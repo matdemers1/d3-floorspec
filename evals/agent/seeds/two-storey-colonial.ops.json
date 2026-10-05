@@ -1,0 +1,690 @@
+{
+ "batches": [
+  [
+   {
+    "op": "setProperty",
+    "id": "$project",
+    "path": "/name",
+    "value": "Two-storey colonial"
+   },
+   {
+    "op": "addElement",
+    "collection": "buildings",
+    "id": "HOUSE",
+    "element": {
+     "name": "House"
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "materials",
+    "id": "SIDING",
+    "element": {
+     "name": "Fibre-cement lap siding",
+     "color": "#5b6d7a"
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "materials",
+    "id": "OSB",
+    "element": {
+     "name": "OSB sheathing",
+     "color": "#c9a66b"
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "materials",
+    "id": "STUD",
+    "element": {
+     "name": "SPF framing",
+     "color": "#e8d3a3"
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "materials",
+    "id": "GWB",
+    "element": {
+     "name": "Gypsum board",
+     "color": "#f2f0eb"
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "types",
+    "id": "EXT26",
+    "element": {
+     "kind": "wallType",
+     "name": "2x6 exterior wall",
+     "layers": [
+      {
+       "thickness": 24384,
+       "function": "finish",
+       "material": "SIDING"
+      },
+      {
+       "thickness": 14224,
+       "function": "substrate",
+       "material": "OSB"
+      },
+      {
+       "thickness": 178816,
+       "function": "core",
+       "material": "STUD"
+      },
+      {
+       "thickness": 16256,
+       "function": "finish",
+       "material": "GWB"
+      }
+     ]
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "types",
+    "id": "INT24",
+    "element": {
+     "kind": "wallType",
+     "name": "2x4 partition",
+     "layers": [
+      {
+       "thickness": 16256,
+       "function": "finish",
+       "material": "GWB"
+      },
+      {
+       "thickness": 113792,
+       "function": "core",
+       "material": "STUD"
+      },
+      {
+       "thickness": 16256,
+       "function": "finish",
+       "material": "GWB"
+      }
+     ]
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "types",
+    "id": "D36",
+    "element": {
+     "kind": "doorType",
+     "name": "36 in entry door",
+     "width": 1170432,
+     "height": 2600960
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "types",
+    "id": "D30",
+    "element": {
+     "kind": "doorType",
+     "name": "30 in interior door",
+     "width": 975360,
+     "height": 2600960
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "types",
+    "id": "W4848",
+    "element": {
+     "kind": "windowType",
+     "name": "48 x 48 in window",
+     "width": 1560576,
+     "height": 1560576,
+     "sill": 1170432
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "types",
+    "id": "W3636",
+    "element": {
+     "kind": "windowType",
+     "name": "36 x 36 in window",
+     "width": 1170432,
+     "height": 1170432,
+     "sill": 1365504
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "types",
+    "id": "W2424",
+    "element": {
+     "kind": "windowType",
+     "name": "24 x 24 in window",
+     "width": 780288,
+     "height": 780288,
+     "sill": 1755648
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "levels",
+    "id": "L1",
+    "element": {
+     "name": "First floor",
+     "building": "HOUSE",
+     "elevation": 0,
+     "height": 3511296
+    }
+   },
+   {
+    "op": "addElement",
+    "collection": "levels",
+    "id": "L2",
+    "element": {
+     "name": "Second floor",
+     "building": "HOUSE",
+     "elevation": 3511296,
+     "height": 3121152
+    }
+   },
+   {
+    "op": "drawWall",
+    "level": "L1",
+    "from": [
+     "0'",
+     "0'"
+    ],
+    "to": [
+     "0'",
+     "24'"
+    ],
+    "type": "EXT26",
+    "justification": "coreFace"
+   },
+   {
+    "op": "drawWall",
+    "level": "L1",
+    "from": [
+     "0'",
+     "24'"
+    ],
+    "to": [
+     "32'",
+     "24'"
+    ],
+    "type": "EXT26",
+    "justification": "coreFace"
+   },
+   {
+    "op": "drawWall",
+    "level": "L1",
+    "from": [
+     "32'",
+     "24'"
+    ],
+    "to": [
+     "32'",
+     "0'"
+    ],
+    "type": "EXT26",
+    "justification": "coreFace"
+   },
+   {
+    "op": "drawWall",
+    "level": "L1",
+    "from": [
+     "32'",
+     "0'"
+    ],
+    "to": [
+     "0'",
+     "0'"
+    ],
+    "type": "EXT26",
+    "justification": "coreFace"
+   },
+   {
+    "op": "drawWall",
+    "level": "L1",
+    "from": [
+     "14'",
+     "0'"
+    ],
+    "to": [
+     "14'",
+     "24'"
+    ],
+    "type": "INT24"
+   },
+   {
+    "op": "drawWall",
+    "level": "L1",
+    "from": [
+     "14'",
+     "12'"
+    ],
+    "to": [
+     "32'",
+     "12'"
+    ],
+    "type": "INT24"
+   },
+   {
+    "op": "drawWall",
+    "level": "L1",
+    "from": [
+     "24'",
+     "0'"
+    ],
+    "to": [
+     "24'",
+     "12'"
+    ],
+    "type": "INT24"
+   },
+   {
+    "op": "drawWall",
+    "level": "L1",
+    "from": [
+     "24'",
+     "7'"
+    ],
+    "to": [
+     "32'",
+     "7'"
+    ],
+    "type": "INT24"
+   },
+   {
+    "op": "drawWall",
+    "level": "L2",
+    "from": [
+     "0'",
+     "0'"
+    ],
+    "to": [
+     "0'",
+     "24'"
+    ],
+    "type": "EXT26",
+    "justification": "coreFace"
+   },
+   {
+    "op": "drawWall",
+    "level": "L2",
+    "from": [
+     "0'",
+     "24'"
+    ],
+    "to": [
+     "32'",
+     "24'"
+    ],
+    "type": "EXT26",
+    "justification": "coreFace"
+   },
+   {
+    "op": "drawWall",
+    "level": "L2",
+    "from": [
+     "32'",
+     "24'"
+    ],
+    "to": [
+     "32'",
+     "0'"
+    ],
+    "type": "EXT26",
+    "justification": "coreFace"
+   },
+   {
+    "op": "drawWall",
+    "level": "L2",
+    "from": [
+     "32'",
+     "0'"
+    ],
+    "to": [
+     "0'",
+     "0'"
+    ],
+    "type": "EXT26",
+    "justification": "coreFace"
+   },
+   {
+    "op": "drawWall",
+    "level": "L2",
+    "from": [
+     "0'",
+     "12'"
+    ],
+    "to": [
+     "32'",
+     "12'"
+    ],
+    "type": "INT24"
+   },
+   {
+    "op": "drawWall",
+    "level": "L2",
+    "from": [
+     "12'",
+     "0'"
+    ],
+    "to": [
+     "12'",
+     "12'"
+    ],
+    "type": "INT24"
+   },
+   {
+    "op": "drawWall",
+    "level": "L2",
+    "from": [
+     "20'",
+     "0'"
+    ],
+    "to": [
+     "20'",
+     "12'"
+    ],
+    "type": "INT24"
+   },
+   {
+    "op": "drawWall",
+    "level": "L2",
+    "from": [
+     "16'",
+     "12'"
+    ],
+    "to": [
+     "16'",
+     "24'"
+    ],
+    "type": "INT24"
+   }
+  ],
+  [
+   {
+    "op": "addRoom",
+    "id": "LIV",
+    "level": "L1",
+    "at": [
+     "7'",
+     "12'"
+    ],
+    "name": "Living room",
+    "function": "living"
+   },
+   {
+    "op": "addRoom",
+    "id": "KIT",
+    "level": "L1",
+    "at": [
+     "23'",
+     "18'"
+    ],
+    "name": "Kitchen",
+    "function": "kitchen"
+   },
+   {
+    "op": "addRoom",
+    "id": "DIN",
+    "level": "L1",
+    "at": [
+     "19'",
+     "6'"
+    ],
+    "name": "Dining room",
+    "function": "dining"
+   },
+   {
+    "op": "addRoom",
+    "id": "FOY",
+    "level": "L1",
+    "at": [
+     "28'",
+     "3.5'"
+    ],
+    "name": "Foyer",
+    "function": "circulation"
+   },
+   {
+    "op": "addRoom",
+    "id": "PWD",
+    "level": "L1",
+    "at": [
+     "28'",
+     "9.5'"
+    ],
+    "name": "Powder room",
+    "function": "bath"
+   },
+   {
+    "op": "addOpening",
+    "wall": "south wall of FOY",
+    "at": "centered",
+    "id": "FD",
+    "fill": "D36",
+    "name": "Front door"
+   },
+   {
+    "op": "addOpening",
+    "wall": "wall between DIN and FOY",
+    "at": "centered",
+    "id": "DFO",
+    "width": "4'",
+    "height": "6' 8\"",
+    "name": "Foyer opening"
+   },
+   {
+    "op": "addOpening",
+    "wall": "wall between FOY and PWD",
+    "at": "centered",
+    "id": "DPW",
+    "fill": "D30"
+   },
+   {
+    "op": "addOpening",
+    "wall": "wall between LIV and DIN",
+    "at": "centered",
+    "id": "LDO",
+    "width": "6'",
+    "height": "6' 8\"",
+    "name": "Dining opening"
+   },
+   {
+    "op": "addOpening",
+    "wall": "wall between LIV and KIT",
+    "at": "centered",
+    "id": "LKO",
+    "width": "4'",
+    "height": "6' 8\"",
+    "name": "Kitchen opening"
+   },
+   {
+    "op": "addOpening",
+    "wall": "east wall of KIT",
+    "at": "centered",
+    "id": "BKD",
+    "fill": "D36",
+    "name": "Back door"
+   },
+   {
+    "op": "addOpening",
+    "wall": "west wall of LIV",
+    "at": "4' from start",
+    "id": "LW1",
+    "fill": "W4848"
+   },
+   {
+    "op": "addOpening",
+    "wall": "west wall of LIV",
+    "at": "4' from end",
+    "id": "LW2",
+    "fill": "W4848"
+   },
+   {
+    "op": "addOpening",
+    "wall": "south wall of LIV",
+    "at": "centered",
+    "id": "LW3",
+    "fill": "W4848"
+   },
+   {
+    "op": "addOpening",
+    "wall": "north wall of KIT",
+    "at": "centered",
+    "id": "KW",
+    "fill": "W3636"
+   },
+   {
+    "op": "addOpening",
+    "wall": "south wall of DIN",
+    "at": "centered",
+    "id": "DW",
+    "fill": "W4848"
+   },
+   {
+    "op": "addOpening",
+    "wall": "east wall of PWD",
+    "at": "centered",
+    "id": "PW",
+    "fill": "W2424"
+   },
+   {
+    "op": "addRoom",
+    "id": "PBR",
+    "level": "L2",
+    "at": [
+     "8'",
+     "18'"
+    ],
+    "name": "Primary bedroom",
+    "function": "sleeping"
+   },
+   {
+    "op": "addRoom",
+    "id": "BR3",
+    "level": "L2",
+    "at": [
+     "24'",
+     "18'"
+    ],
+    "name": "Bedroom 3",
+    "function": "sleeping"
+   },
+   {
+    "op": "addRoom",
+    "id": "BR2",
+    "level": "L2",
+    "at": [
+     "6'",
+     "6'"
+    ],
+    "name": "Bedroom 2",
+    "function": "sleeping"
+   },
+   {
+    "op": "addRoom",
+    "id": "HAL",
+    "level": "L2",
+    "at": [
+     "16'",
+     "6'"
+    ],
+    "name": "Upstairs hall",
+    "function": "circulation"
+   },
+   {
+    "op": "addRoom",
+    "id": "BTH",
+    "level": "L2",
+    "at": [
+     "26'",
+     "6'"
+    ],
+    "name": "Bathroom",
+    "function": "bath"
+   },
+   {
+    "op": "addOpening",
+    "wall": "wall between PBR and HAL",
+    "at": "centered",
+    "id": "DP",
+    "fill": "D30"
+   },
+   {
+    "op": "addOpening",
+    "wall": "wall between BR3 and HAL",
+    "at": "centered",
+    "id": "D3",
+    "fill": "D30"
+   },
+   {
+    "op": "addOpening",
+    "wall": "wall between BR2 and HAL",
+    "at": "centered",
+    "id": "D2",
+    "fill": "D30"
+   },
+   {
+    "op": "addOpening",
+    "wall": "wall between BTH and HAL",
+    "at": "centered",
+    "id": "DBT",
+    "fill": "D30"
+   },
+   {
+    "op": "addOpening",
+    "wall": "north wall of PBR",
+    "at": "centered",
+    "id": "PW1",
+    "fill": "W4848"
+   },
+   {
+    "op": "addOpening",
+    "wall": "west wall of PBR",
+    "at": "centered",
+    "id": "PW2",
+    "fill": "W3636"
+   },
+   {
+    "op": "addOpening",
+    "wall": "north wall of BR3",
+    "at": "centered",
+    "id": "B3W1",
+    "fill": "W4848"
+   },
+   {
+    "op": "addOpening",
+    "wall": "east wall of BR3",
+    "at": "centered",
+    "id": "B3W2",
+    "fill": "W3636"
+   },
+   {
+    "op": "addOpening",
+    "wall": "south wall of BR2",
+    "at": "centered",
+    "id": "B2W",
+    "fill": "W4848"
+   },
+   {
+    "op": "addOpening",
+    "wall": "south wall of BTH",
+    "at": "centered",
+    "id": "BTW",
+    "fill": "W2424"
+   },
+   {
+    "op": "addOpening",
+    "wall": "south wall of HAL",
+    "at": "centered",
+    "id": "HW",
+    "fill": "W2424"
+   }
+  ]
+ ]
+}

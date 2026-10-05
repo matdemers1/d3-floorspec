@@ -1,0 +1,67 @@
+{
+  "id": "028",
+  "title": "Move the upstairs bath wall into the bath",
+  "category": "move-wall",
+  "prompt": "Upstairs, move the wall between the bathroom and the hall 1 foot into the bathroom.",
+  "seed": "two-storey-colonial.ops",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomEdges",
+      "room": "HAL",
+      "delta": {
+        "maxX": "1'"
+      }
+    },
+    {
+      "kind": "roomEdges",
+      "room": "BTH",
+      "delta": {
+        "minX": "1'"
+      }
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "LIV",
+        "KIT",
+        "DIN",
+        "FOY",
+        "PWD",
+        "PBR",
+        "BR3",
+        "BR2"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "label": "moveWall toward",
+      "batches": [
+        [
+          {
+            "op": "moveWall",
+            "wall": "wall between Bathroom and Upstairs hall",
+            "by": "1'",
+            "toward": "Bathroom"
+          }
+        ]
+      ]
+    },
+    {
+      "label": "resizeRoom",
+      "batches": [
+        [
+          {
+            "op": "resizeRoom",
+            "room": "HAL",
+            "side": "east",
+            "by": "1'"
+          }
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "id": "026",
+  "title": "Move the primary suite's closet 2 feet east",
+  "category": "move-walls",
+  "prompt": "Move the closet in the primary suite 2 feet to the east.",
+  "seed": "l-shaped-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "wallLine",
+      "level": "MAIN",
+      "orientation": "ns",
+      "at": [
+        "13'",
+        "13'"
+      ],
+      "span": [
+        "31'",
+        "37'"
+      ]
+    },
+    {
+      "kind": "wallLine",
+      "level": "MAIN",
+      "orientation": "ns",
+      "at": [
+        "19'",
+        "19'"
+      ],
+      "span": [
+        "31'",
+        "37'"
+      ]
+    },
+    {
+      "kind": "wallLine",
+      "level": "MAIN",
+      "orientation": "ew",
+      "at": [
+        "37'",
+        "37'"
+      ],
+      "span": [
+        "13'",
+        "19'"
+      ]
+    },
+    {
+      "kind": "wallLine",
+      "level": "MAIN",
+      "orientation": "ew",
+      "at": [
+        "31'",
+        "31'"
+      ],
+      "span": [
+        "13'",
+        "19'"
+      ]
+    },
+    {
+      "kind": "openingMoved",
+      "opening": "CD",
+      "by": {
+        "east": "2'"
+      }
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "BED",
+        "LIV",
+        "KIT",
+        "BATH",
+        "LAU"
+      ]
+    }
+  ],
+  "notes": "The closet is a freestanding box of four walls (an unanchored face); the suite's own outline and area do not change.",
+  "references": [
+    {
+      "label": "move the four junctions",
+      "batches": [
+        [
+          {
+            "op": "moveJunction",
+            "id": "C1",
+            "to": "2' east of C1"
+          },
+          {
+            "op": "moveJunction",
+            "id": "C2",
+            "to": "2' east of C2"
+          },
+          {
+            "op": "moveJunction",
+            "id": "C3",
+            "to": "2' east of C3"
+          },
+          {
+            "op": "moveJunction",
+            "id": "C4",
+            "to": "2' east of C4"
+          }
+        ]
+      ]
+    },
+    {
+      "label": "absolute points",
+      "batches": [
+        [
+          {
+            "op": "moveJunction",
+            "id": "C1",
+            "to": [
+              "13'",
+              "31'"
+            ]
+          },
+          {
+            "op": "moveJunction",
+            "id": "C2",
+            "to": [
+              "13'",
+              "37'"
+            ]
+          },
+          {
+            "op": "moveJunction",
+            "id": "C3",
+            "to": [
+              "19'",
+              "37'"
+            ]
+          },
+          {
+            "op": "moveJunction",
+            "id": "C4",
+            "to": [
+              "19'",
+              "31'"
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+}

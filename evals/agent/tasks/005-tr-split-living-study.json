@@ -1,0 +1,107 @@
+{
+  "id": "005",
+  "title": "Split the living room to make a study",
+  "category": "split-room",
+  "prompt": "Split the living room in two with a new wall running east–west, 7 feet north of the south wall, and make the southern part a study.",
+  "seed": "three-room-house",
+  "assertions": [
+    {
+      "kind": "valid"
+    },
+    {
+      "kind": "roomCount",
+      "delta": 1
+    },
+    {
+      "kind": "wallLine",
+      "level": "MAIN",
+      "orientation": "ew",
+      "at": [
+        "6' 9\"",
+        "7' 11\""
+      ],
+      "span": [
+        "0'",
+        "20'"
+      ],
+      "tol": "1\""
+    },
+    {
+      "kind": "roomExists",
+      "name": "study|office",
+      "new": true,
+      "bbox": {
+        "minY": [
+          "0'",
+          "1'"
+        ],
+        "maxY": [
+          "6'",
+          "8'"
+        ]
+      },
+      "size": {
+        "eastWest": [
+          "18'",
+          "20'"
+        ]
+      }
+    },
+    {
+      "kind": "roomExists",
+      "name": "living",
+      "bbox": {
+        "minY": [
+          "6' 9\"",
+          "8' 6\""
+        ],
+        "maxY": [
+          "23'",
+          "24'"
+        ]
+      }
+    },
+    {
+      "kind": "roomsUnchanged",
+      "rooms": [
+        "KIT",
+        "BED"
+      ]
+    }
+  ],
+  "notes": "\"7 feet north of the south wall\" is read from the wall's location line, its inner face, or to the new wall's near face: any location line between 6' 9\" and 7' 11\" passes.",
+  "references": [
+    {
+      "label": "drawWall, then name the new face",
+      "batches": [
+        [
+          {
+            "op": "drawWall",
+            "level": "MAIN",
+            "from": [
+              "0'",
+              "7'"
+            ],
+            "to": [
+              "20'",
+              "7'"
+            ],
+            "type": "INT24"
+          }
+        ],
+        [
+          {
+            "op": "addRoom",
+            "level": "MAIN",
+            "at": [
+              "10'",
+              "3' 6\""
+            ],
+            "name": "Study",
+            "function": "office"
+          }
+        ]
+      ]
+    }
+  ]
+}
