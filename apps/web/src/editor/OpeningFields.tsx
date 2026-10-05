@@ -76,16 +76,19 @@ export function ClearOpeningFields({
   const width = value?.width ?? draft.width;
   const height = value?.height ?? draft.height;
   const commit = (key: 'width' | 'height', v: number | null) => {
+    // The draft as it stands now — kept by element, so a closure from an earlier render cannot lose
+    // the other dimension.
+    const current = drafts.get(draftKey) ?? {};
     if (v === null) {
       if (value !== undefined) onSet(undefined, 'Remove the clear opening');
-      else setDraft({ ...draft, [key]: undefined });
+      else if (current[key] !== undefined) setDraft({ ...current, [key]: undefined });
       return;
     }
     if (value !== undefined) {
       onSet({ ...value, [key]: v }, `Set the clear ${key}`);
       return;
     }
-    const next = { ...draft, [key]: v };
+    const next = { ...current, [key]: v };
     if (next.width !== undefined && next.height !== undefined) {
       setDraft({});
       onSet({ width: next.width, height: next.height }, 'Declare the clear opening');
