@@ -45,7 +45,8 @@ export const Position = describe(
 
 const Id = describe(z.string().min(1).max(64), 'The ID to create the element under; omitted, the applier mints the next one (W13).');
 const Side = z.enum(['north', 'south', 'east', 'west']);
-const Json = z.unknown();
+/** Any JSON value — present: a missing `value` is not `null`. */
+const Json = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.unknown()), z.record(z.string(), z.unknown())]);
 const Obj = z.record(z.string(), z.unknown());
 
 export const COLLECTIONS = [
@@ -55,6 +56,13 @@ export const Collection = z.enum(COLLECTIONS);
 
 const Justification = z.enum(['center', 'exteriorFace', 'interiorFace', 'coreFace']);
 
+/** The members every element may carry, accepted on the operations that create one (Ops 0.1). */
+const elementMembers = {
+  name: z.string().max(200).optional(),
+  extensions: Obj.optional(),
+  extras: Obj.optional(),
+};
+
 /** The members a wall may carry beside its endpoints (Core 5.2). */
 const wallMembers = {
   type: Element.optional(),
@@ -62,9 +70,7 @@ const wallMembers = {
   justification: Justification.optional(),
   base: Obj.optional(),
   top: Obj.optional(),
-  name: z.string().max(200).optional(),
-  extensions: Obj.optional(),
-  extras: Obj.optional(),
+  ...elementMembers,
 };
 
 // ─── Primitives (chapter 2) ────────────────────────────────────────────────
@@ -82,6 +88,7 @@ export const AddJunction = z.strictObject({
   level: Element,
   position: Point,
   join: Obj.optional(),
+  ...elementMembers,
 }).describe('Add a junction: addElement into junctions (Ops 2.1).');
 
 export const AddWall = z.strictObject({
@@ -99,6 +106,7 @@ export const AddSeparator = z.strictObject({
   level: Element,
   start: Element,
   end: Element,
+  ...elementMembers,
 }).describe('Add a zero-thickness room separator between two junctions (Ops 2.1).');
 
 export const RemoveElement = z.strictObject({
@@ -143,6 +151,7 @@ export const DrawSeparator = z.strictObject({
   level: Element,
   from: Point,
   to: Point,
+  ...elementMembers,
 }).describe('Draw a room separator, like drawWall (Ops 4.1).');
 
 export const MoveWall = z.strictObject({
@@ -176,7 +185,7 @@ export const AddOpening = z.strictObject({
   sill: Length.optional(),
   hinge: z.string().max(32).optional(),
   swing: z.string().max(32).optional(),
-  name: z.string().max(200).optional(),
+  ...elementMembers,
 }).describe('Put a door, window or cased opening in a wall at a position (Ops 4.5).');
 
 export const MoveOpening = z.strictObject({
@@ -195,6 +204,8 @@ export const AddRoom = z.strictObject({
   wallFinish: Element.optional(),
   floorFinish: Element.optional(),
   ceilingFinish: Element.optional(),
+  extensions: Obj.optional(),
+  extras: Obj.optional(),
 }).describe('Name the face that contains a point as a room (Ops 4.6).');
 
 export const SetRoomFinish = z.strictObject({
