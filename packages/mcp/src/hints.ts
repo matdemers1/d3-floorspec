@@ -20,6 +20,10 @@ const UNDECLARED_EXTENSION = /extension (\S+), which is not in extensionsUsed/;
 const FALLBACK_BOX = /\/fallback\b.*required property 'box'/;
 const OPENING_SCHEMA = /\/openings\/[^/\s:]+:? .*required property '(width|height)'/;
 const ROOM_FUNCTION = /\/rooms\/[^/\s:]+\/function\b/;
+/** A stair, or its form, with a member its draft's schema does not have. */
+const STAIR_MEMBER = /^\/stairs\/[^/]+(\/form)?$/;
+/** A batch that gives a stair a Core 0.4 member: a newel, or a minHeadroom. */
+const STAIR_04_MEMBERS = /"(newel|minHeadroom)"|\/(newel|minHeadroom)"/;
 
 const DEFAULTS = {
   height: "An opening without a fill type needs `height` — door height is usually 6' 8\" (a cased opening 6' 8\" to 7' 0\").",
@@ -32,12 +36,23 @@ export const SET_PROPERTY_HINT =
 
 /** The hint for a program or a hosted element sent to a plan that is still a Floorspec 0.1 document. */
 export const UPGRADE_HINT =
-  'This plan is a Floorspec 0.1 document, which holds no program and no extension elements. Upgrade it first, in the same batch: {"op":"setProperty","id":"$document","path":"/floorspec","value":"0.3"}.';
+  'This plan is a Floorspec 0.1 document, which holds no program and no extension elements. Upgrade it first, in the same batch: {"op":"setProperty","id":"$document","path":"/floorspec","value":"0.4"}.';
+
+/** The hint for a winder's newel or a stair's minHeadroom sent to a plan earlier than Floorspec 0.4. */
+export const STAIR_04_HINT =
+  'A winder\'s "newel" and a stair\'s "minHeadroom" are Floorspec 0.4 members. Upgrade the plan first, in the same batch: {"op":"setProperty","id":"$document","path":"/floorspec","value":"0.4"} — it moves nothing.';
+
+/** The hints for the invariants of tapered treads (Core 0.4, 17.7: FS-INV-905, FS-INV-906). */
+export const NEWEL_HINT =
+  "A winder's newel reaches its walkline (FS-INV-905): make the newel smaller — about a fifth of the stair's width or less — or leave it out; a half turn's gap may be no wider than the stair.";
+export const TAPER_HINT =
+  "Each of a spiral stair's treads must turn through more than nothing and less than 180° (FS-INV-906): give it more risers, or a smaller sweep. A winder stair's winders each turn a share of the turn — never more winders than the turn has microdegrees.";
 
 export function hintsFor(diagnostics: readonly Diagnostic[], batch?: readonly { op: string; [member: string]: unknown }[]): string[] {
   const hints = new Set<string>();
   const drew = batch?.some((o) => DRAWING_OPS.has(o.op)) ?? false;
   const setsValues = batch?.some((o) => o.op === 'setProperty') ?? false;
+  const stairs04 = batch !== undefined && STAIR_04_MEMBERS.test(JSON.stringify(batch));
   const programmed = batch?.some((o) => PROGRAM_OPS.has(o.op) || (o.op === 'addElement' && (o['collection'] === 'items' || o['extension'] !== undefined)) || (o.op === 'addRoom' && o['brief'] !== undefined)) ?? false;
   for (const d of diagnostics) {
     const message = d.message;
@@ -60,10 +75,16 @@ export function hintsFor(diagnostics: readonly Diagnostic[], batch?: readonly { 
       if (ROOM_FUNCTION.test(message)) hints.add(`${ROOM_FUNCTIONS_TEXT} An extension term looks like EXT_wellness:sauna.`);
       // A program or extension data at the top of a Core 0.1 document is not a member it has.
       if (programmed && d.location?.['pointer'] === '' && /additional properties/.test(message)) hints.add(UPGRADE_HINT);
+      // A winder's newel or a stair's minHeadroom in a plan earlier than 0.4 is not a member it has.
+      if (stairs04 && STAIR_MEMBER.test(typeof d.location?.['pointer'] === 'string' ? d.location['pointer'] : '') && /additional properties/.test(message)) hints.add(STAIR_04_HINT);
       if (FALLBACK_BOX.test(message)) hints.add('A placed element needs element.fallback.box: {"min":[x,y,z],"max":[x,y,z]} in base units around its host point — an outlet is about 1" × 3" × 4".');
       const opening = OPENING_SCHEMA.exec(message);
       const member = opening?.[1];
       if (member === 'height' || member === 'width') hints.add(DEFAULTS[member]);
+    } else if (d.code === 'FS-INV-905') {
+      hints.add(NEWEL_HINT);
+    } else if (d.code === 'FS-INV-906') {
+      hints.add(TAPER_HINT);
     } else if (d.code === 'FS-OPS-007' && !/there is no level/.test(message)) {
       hints.add(
         drew

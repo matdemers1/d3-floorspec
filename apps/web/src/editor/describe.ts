@@ -188,7 +188,7 @@ function sentence(op: Json, units: UnitSystem, name: Namer): string | null {
  */
 export function summarizeBatch(batch: readonly Json[], units: UnitSystem, name: Namer): string {
   // A migration (Core chapter 20) reads as the upgrade it is: the members it moves into
-  // extras["floorspec:migration"] are part of "Upgraded the plan to Floorspec 0.3".
+  // extras["floorspec:migration"] are part of "Upgraded the plan to Floorspec 0.4".
   const migrating = batch.some((op) => op['op'] === 'setProperty' && op['id'] === '$document' && op['path'] === '/floorspec');
   const migrationPart = (op: Json): boolean =>
     migrating && op['id'] === '$document' && (op['op'] === 'unsetProperty' ? String(op['path']).startsWith('/extensions/') : op['path'] === '/extras/floorspec:migration');

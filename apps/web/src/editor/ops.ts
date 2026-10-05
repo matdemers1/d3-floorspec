@@ -1,6 +1,6 @@
 import type { FixOp, FloorspecDocument } from '@floorspec/engine';
 import type { Operation } from '@floorspec/ops';
-import { migrationBatch } from '@floorspec/migrate';
+import { upgradeAtLeast } from './openings';
 import type { Point } from './model';
 import { signedArea } from './geometry';
 import { UNITS_PATH, type UnitSystem } from './units';
@@ -260,7 +260,7 @@ export function addRoof(document: FloorspecDocument, level: string, footprint: r
  * migrated to 0.3 in the same batch (Core chapter 20), which changes nothing it means, and Undo takes
  * it back with the element.
  */
-const upgradeFor = (document: FloorspecDocument): Batch => migrationBatch(document, '0.3');
+const upgradeFor = (document: FloorspecDocument): Batch => upgradeAtLeast(document, '0.3');
 
 /** The level a stair on `level` rises to: the next one up in the same building, or none. */
 export function levelAbove(document: FloorspecDocument, level: string): string | undefined {
@@ -272,11 +272,32 @@ export function levelAbove(document: FloorspecDocument, level: string): string |
     .sort(([ia, a], [ib, b]) => a.elevation - b.elevation || (ia < ib ? -1 : 1))[0]?.[0];
 }
 
+/** One inch, in base units (Core 2.1). */
+const INCH = 32_512;
+
+/**
+ * A new stair's form (Core 17.2) for `n` risers: an L or U turns halfway, with at least two risers
+ * before the turn; a winder turns a quarter through three winders, the flight before them a riser
+ * short of half; a spiral sweeps 270° about a 3" column — its diameter twice the width and 6" more.
+ */
+export function stairForm(kind: 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral', turn: 'left' | 'right', n: number, width: number): Record<string, unknown> | undefined {
+  switch (kind) {
+    case 'straight':
+      return undefined;
+    case 'lShaped':
+    case 'uShaped':
+      return { kind, turn, risersBeforeTurn: Math.max(2, Math.floor(n / 2)) };
+    case 'winder':
+      return { kind, turn, angle: 'quarter', risersBeforeTurn: Math.max(1, Math.floor(n / 2) - 1), winders: 3 };
+    case 'spiral':
+      return { kind, turn, diameter: 2 * width + 6 * INCH, sweep: 270_000_000 };
+  }
+}
+
 /**
  * A stair (Core 17.1) from `level` to `to`: its first nosing line's middle at `position`, rising in
  * `rotation` (microdegrees), with the tool's width, tread and greatest riser height — the engine
- * derives its riser count (17.4). An L or U stair turns halfway: its first flight has half the
- * risers the levels' difference needs at that greatest riser, and at least two.
+ * derives its riser count (17.4); its form is `stairForm`'s.
  */
 export function addStair(
   document: FloorspecDocument,
@@ -284,12 +305,12 @@ export function addStair(
   to: string,
   position: Point,
   rotation: number,
-  o: { form: 'straight' | 'lShaped' | 'uShaped'; turn: 'left' | 'right'; width: number; tread: number; maxRiser: number },
+  o: { form: 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral'; turn: 'left' | 'right'; width: number; tread: number; maxRiser: number },
 ): Batch {
   const levels = (document.levels ?? {}) as Record<string, { elevation: number } | undefined>;
   const rise = (levels[to]?.elevation ?? 0) - (levels[level]?.elevation ?? 0);
   const n = Math.max(2, Math.ceil(rise / o.maxRiser));
-  const form = o.form === 'straight' ? undefined : { kind: o.form, turn: o.turn, risersBeforeTurn: Math.max(2, Math.floor(n / 2)) };
+  const form = stairForm(o.form, o.turn, n, o.width);
   return [
     ...upgradeFor(document),
     {

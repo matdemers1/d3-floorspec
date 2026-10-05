@@ -942,7 +942,11 @@ function ProjectPanel({ store, model, units, readOnly }: { store: EditorStore; m
         </Row>
         <p className="fs-note">Display only: every length is stored exactly, in 1/1280 mm. Typed values accept either system.</p>
         <ReadOnlyField label="Floorspec" value={`Core ${model.document.floorspec}`} />
-        {model.document.floorspec !== CURRENT_CORE ? <CoreUpgradeNotice store={store} model={model} what="Door and window operation and declared net clear openings" /> : null}
+        {!holdsClearOpenings(model.document) ? (
+          <CoreUpgradeNotice store={store} model={model} what="Door and window operation and declared net clear openings" />
+        ) : model.document.floorspec !== CURRENT_CORE ? (
+          <CoreUpgradeNotice store={store} model={model} since="0.4" what="A winder's newel and a stair's design headroom" />
+        ) : null}
       </Section>
       <SiteSection store={store} model={model} readOnly={readOnly} />
       <SystemsSummary store={store} model={model} units={units} />

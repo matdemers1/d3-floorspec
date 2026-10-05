@@ -295,8 +295,9 @@ describe('the history and the diff name the brief', () => {
     expect(r.status).toBe('committed');
     if (r.status !== 'committed') return;
     const doc = JSON.parse(r.document) as { floorspec: string; extras: Record<string, unknown> };
-    expect(doc.floorspec).toBe('0.3');
+    // To the current draft, 0.4: the steps from 0.2 to 0.3 and from 0.3 to 0.4 move nothing (20.6, 20.7).
+    expect(doc.floorspec).toBe('0.4');
     expect(doc.extras['floorspec:migration']).toEqual([{ from: '0.1', to: '0.2', moved: [{ pointer: '/extensions/EXT_notes/collections', value: { pinned: 'not an element' } }] }]);
-    expect(summarizeBatch(batch as unknown as Record<string, unknown>[], 'imperial', (id) => id)).toBe('Upgraded the plan to Floorspec 0.3');
+    expect(summarizeBatch(batch as unknown as Record<string, unknown>[], 'imperial', (id) => id)).toBe('Upgraded the plan to Floorspec 0.4');
   });
 });

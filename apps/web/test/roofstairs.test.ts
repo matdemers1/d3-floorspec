@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { apply } from '@floorspec/ops';
 import { exteriorOutline, type FloorspecDocument } from '@floorspec/engine';
 import { readModel } from '../src/editor/model';
-import { addLevel, addRoof, addStair, levelAbove } from '../src/editor/ops';
+import { addLevel, addRoof, addStair, levelAbove, stairForm } from '../src/editor/ops';
+import { upgradeToCurrent } from '../src/editor/openings';
 import { stairsSchedule } from '../src/schedules/derive';
 
 /** Roofs and stairs as the editor writes them (Core 0.3, chapters 16 and 17) — each batch through the real applier. */
@@ -81,5 +82,47 @@ describe('stairs in the editor', () => {
     expect(st?.form).toBe('lShaped');
     expect(st?.derived.steps?.filter((s) => s.landing)).toHaveLength(1);
     expect(st?.derived.walkline?.points).toHaveLength(3);
+  });
+
+  it('draws a quarter-turn winder: three winders between its flights, tapered on rays from the turn (Core 0.4, 17.7)', () => {
+    const batch = addStair(doc(twoLevels), 'MAIN', upper!, [2 * FT, 2 * FT], 90_000_000, { ...STAIR, form: 'winder' });
+    expect((batch[0] as unknown as { element: Record<string, unknown> }).element).toMatchObject({ form: { kind: 'winder', turn: 'left', angle: 'quarter', risersBeforeTurn: 6, winders: 3 } });
+    const st = readModel('w', commit(twoLevels, batch)).levels.find((l) => l.id === 'MAIN')?.stairs[0];
+    expect(st?.form).toBe('winder');
+    expect(st?.derived.steps?.filter((s) => s.winder)).toHaveLength(3);
+    expect(st?.derived.steps?.some((s) => s.landing)).toBe(false);
+    // Without a newel the winders meet at the pivot: their narrow ends have no going.
+    expect(st?.derived.narrowGoing).toBe(0);
+    expect(st?.derived.walklineGoing).toBeGreaterThan(0);
+    expect(Number.isInteger(st?.derived.walkline?.length)).toBe(true);
+  });
+
+  it('draws a spiral sweeping 270° about a 3" column, its centre derived', () => {
+    expect(stairForm('spiral', 'right', 14, 26 * IN)).toEqual({ kind: 'spiral', turn: 'right', diameter: 58 * IN, sweep: 270_000_000 });
+    const batch = addStair(doc(twoLevels), 'MAIN', upper!, [10 * FT, 10 * FT], 0, { ...STAIR, form: 'spiral', width: 26 * IN });
+    const st = readModel('p', commit(twoLevels, batch)).levels.find((l) => l.id === 'MAIN')?.stairs[0];
+    expect(st?.form).toBe('spiral');
+    expect(st?.column).toBe(3 * IN);
+    expect(st?.derived.centre).toBeDefined();
+    // 14 risers: 13 treads, the last riser reaching the floor above.
+    expect(st?.derived.risers).toBe(14);
+    expect(st?.derived.steps).toHaveLength(13);
+    expect(st?.derived.steps?.every((s) => s.outline.length === 4)).toBe(true);
+  });
+
+  it('gives a winder a newel and a stair its design headroom only in a Core 0.4 plan: upgraded in the same batch', () => {
+    const text = commit(twoLevels, addStair(doc(twoLevels), 'MAIN', upper!, [2 * FT, 2 * FT], 90_000_000, { ...STAIR, form: 'winder' }));
+    const form = (doc(text).stairs?.['ST1'] as unknown as { form: Record<string, unknown> }).form;
+    const edits = [
+      { op: 'setProperty', id: 'ST1', path: '/form', value: { ...form, newel: 4 * IN } },
+      { op: 'setProperty', id: 'ST1', path: '/minHeadroom', value: 80 * IN },
+    ];
+    const as03 = JSON.stringify({ ...doc(text), floorspec: '0.3' });
+    expect(apply(as03, { batch: edits }).status).toBe('rejected');
+    const up = commit(as03, [...upgradeToCurrent(doc(as03)), ...edits]);
+    expect(doc(up).floorspec).toBe('0.4');
+    const st = readModel('n', up).levels.find((l) => l.id === 'MAIN')?.stairs[0];
+    expect(st?.derived.narrowGoing).toBeGreaterThan(0);
+    expect(st?.derived.opening?.first).toBeGreaterThanOrEqual(0);
   });
 });

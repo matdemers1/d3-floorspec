@@ -13,7 +13,9 @@ import {
   setClearOpening,
   setOperation,
   swingApplies,
-  upgradeTo03,
+  holdsCore04,
+  upgradeAtLeast,
+  upgradeToCurrent,
 } from '../src/editor/openings';
 
 /** Core 0.3's door and window data as the editor reads and writes it — each batch through the real applier. */
@@ -22,7 +24,7 @@ const IN = 32_512;
 const TEMPLATE = JSON.parse(readFileSync(new URL('../src/projects/templates/three-room-house.floorspec.json', import.meta.url), 'utf8')) as FloorspecDocument;
 const as02 = { ...TEMPLATE, floorspec: '0.2' } as FloorspecDocument;
 
-function commit(doc: object, batch: ReturnType<typeof upgradeTo03>): FloorspecDocument {
+function commit(doc: object, batch: ReturnType<typeof upgradeToCurrent>): FloorspecDocument {
   const r = apply(doc, { batch });
   if (r.status !== 'committed') throw new Error(r.diagnostics.map((d) => `${d.code} ${d.message}`).join('; '));
   return JSON.parse(r.document) as FloorspecDocument;
@@ -32,8 +34,21 @@ describe('door and window data (Core 0.3)', () => {
   it('is held by a 0.3 plan, and a 0.2 plan gets it by one op that changes nothing else', () => {
     expect(holdsClearOpenings(TEMPLATE)).toBe(true);
     expect(holdsClearOpenings(as02)).toBe(false);
-    const up = commit(as02, upgradeTo03(as02));
+    const up = commit(as02, upgradeAtLeast(as02, '0.3'));
     expect(up).toEqual(TEMPLATE);
+  });
+
+  it('upgrades any earlier plan to 0.4 by its migration, and never declares a plan back to an earlier draft', () => {
+    expect(holdsCore04(TEMPLATE)).toBe(TEMPLATE.floorspec === '0.4');
+    const as03 = { ...TEMPLATE, floorspec: '0.3' } as FloorspecDocument;
+    expect(holdsCore04(as03)).toBe(false);
+    const up = commit(as02, upgradeToCurrent(as02));
+    expect(up.floorspec).toBe('0.4');
+    expect(holdsCore04(up)).toBe(true);
+    expect(commit(as03, upgradeToCurrent(as03))).toEqual({ ...as03, floorspec: '0.4' });
+    // A 0.4 plan is at least 0.3 already: nothing to do, where a migration to 0.3 would be refused.
+    expect(upgradeAtLeast(up, '0.3')).toEqual([]);
+    expect(upgradeToCurrent(up)).toEqual([]);
   });
 
   it('sets and unsets an operation, and a clear opening whole', () => {

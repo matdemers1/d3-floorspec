@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { firstRunSetup, password, projectIn, settled } from './support.js';
+import { firstRunSetup, IN, modelOf, password, projectIn, settled } from './support.js';
 
 /**
  * FLR-T-7.5, the P7 exit demo: "Toggle to 3D and walk through your house at eye height, up an
@@ -15,6 +15,10 @@ import { firstRunSetup, password, projectIn, settled } from './support.js';
  * flight to the landing, a left turn, up the second to the loft — under the roof, and Escape ends
  * it. Touch: the stick walks. The walker is read through the view's test hook (navigator.webdriver
  * only): position, the floor under it and the room it is in.
+ *
+ * Then FLR-T-11.3 (Core 0.4, 17.7): the stair made a winder with a newel and a design headroom from
+ * its inspector, then a spiral — each seen in the plan (winders, the spiral's column) and in 3D (the
+ * mesh's flights, and the spiral's centre column).
  *
  * Chromium draws WebGL with SwiftShader here (playwright.config.ts). Screenshots of each state, in
  * both themes, land in test-results/three-*.png.
@@ -47,6 +51,7 @@ declare global {
     __floorspec3d?: {
       ready: boolean;
       parts: number;
+      kinds: Record<string, number>;
       walking: boolean;
       walker: Walker | null;
       screenPoint(id: string): { x: number; y: number } | null;
@@ -282,5 +287,57 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
   // ── Back to the plan: the URL forgets the view.
   await page.keyboard.press('1');
   await expect(page).not.toHaveURL(/view=/);
-  await expect(page.getByRole('application', { name: /^Plan of / })).toBeVisible();
+  const plan = page.getByRole('application', { name: /^Plan of / });
+  await expect(plan).toBeVisible();
+
+  // ── FLR-T-11.3: the stair, from its inspector, made a quarter-turn winder (Core 0.4, 17.7)…
+  const tree = page.getByRole('tree');
+  const stairsRow = tree.getByRole('treeitem', { name: /^Stairs/ });
+  if ((await stairsRow.getAttribute('aria-expanded')) === 'false') await stairsRow.click();
+  await tree.getByRole('treeitem', { name: /^Stair(?!s)/ }).first().click();
+  const form = inspector.getByRole('combobox', { name: 'Form' });
+  await expect(form).toBeVisible();
+  await form.click();
+  await page.getByRole('option', { name: 'Winder', exact: true }).click();
+  await expect.poll(async () => (await modelOf(page, project)).stairs?.['ST1']?.form?.kind).toBe('winder');
+  await settled(page);
+  // …its three winders drawn in the plan, tapered between the two flights…
+  await expect(plan.locator('[data-stair="ST1"] [data-step="winder"]')).toHaveCount(3);
+  await expect(plan.locator('[data-stair="ST1"] [data-step="landing"]')).toHaveCount(0);
+  // …a 4" newel at the turn, and the headroom it is designed for, 6'-8".
+  await inspector.getByRole('textbox', { name: 'Newel' }).fill('4"');
+  await inspector.getByRole('textbox', { name: 'Newel' }).press('Enter');
+  await expect.poll(async () => (await modelOf(page, project)).stairs?.['ST1']?.form?.newel).toBe(4 * IN);
+  await settled(page);
+  await inspector.getByRole('textbox', { name: 'Design headroom' }).fill('6\' 8"');
+  await inspector.getByRole('textbox', { name: 'Design headroom' }).press('Enter');
+  await expect.poll(async () => (await modelOf(page, project)).stairs?.['ST1']?.minHeadroom).toBe(80 * IN);
+  await settled(page);
+  await expect(inspector.getByText('Least going at the narrow end')).toBeVisible();
+  await expect(inspector.getByText('Floor above open from')).toBeVisible();
+  await shoot(page, 'plan-winder');
+  // In 3D: the winders are part of the stair's flight.
+  await views.getByRole('radio', { name: '3D' }).click();
+  await ready(page);
+  await expect(description).toContainText('1 stair');
+  await expect.poll(() => page.evaluate(() => window.__floorspec3d?.kinds['stairFlight'] ?? 0)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.__floorspec3d?.kinds['stairLanding'] ?? 0)).toBe(0);
+  await shoot(page, '3d-winder');
+
+  // ── …and then a spiral: its circle and centre column in the plan, its column in 3D.
+  await views.getByRole('radio', { name: '2D plan' }).click();
+  await expect(plan).toBeVisible();
+  await form.click();
+  await page.getByRole('option', { name: 'Spiral', exact: true }).click();
+  await expect.poll(async () => (await modelOf(page, project)).stairs?.['ST1']?.form?.kind).toBe('spiral');
+  await settled(page);
+  await expect(plan.locator('[data-column="ST1"]')).toBeVisible();
+  await expect(inspector.getByRole('textbox', { name: 'Diameter' })).toBeVisible();
+  await expect(inspector.getByRole('textbox', { name: 'Sweep' })).toHaveValue('270');
+  await shoot(page, 'plan-spiral');
+  await views.getByRole('radio', { name: '3D' }).click();
+  await ready(page);
+  await expect.poll(() => page.evaluate(() => window.__floorspec3d?.kinds['stairColumn'] ?? 0)).toBe(1);
+  await expect(description).toContainText('1 stair');
+  await shoot(page, '3d-spiral');
 });
