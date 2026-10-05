@@ -28,6 +28,8 @@ import {
 } from './links.js';
 import { hashToken } from '../auth/sessions.js';
 import { openFilteredStream, type StreamOptions } from './stream.js';
+import { SHA256, type AssetStore } from '../assets/store.js';
+import { digestsNamed, reachableFiles, sendAssetBytes } from '../assets/access.js';
 
 /**
  * Sharing (FLR-T-9.6): two sets of routes.
@@ -50,6 +52,8 @@ export interface ShareDeps {
   readonly rules?: InstalledPacks;
   readonly limits?: ShareLimits;
   readonly stream?: StreamOptions;
+  /** The asset store, for the shared version's textures (FLR-T-9.1's follow-up to FLR-T-9.6). */
+  readonly assets?: AssetStore | null;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -152,6 +156,25 @@ export function shareRoutes(db: Db, deps: ShareDeps): Routes {
     // Asked again every time, so a revoked link stops at once; answered with a 304 when unchanged.
     res.setHeader('Cache-Control', 'private, no-cache');
     res.send(Buffer.from(canonicalize(document), 'utf8'));
+  }, pub);
+
+  /**
+   * A texture of the shared version (FLR-T-9.6, FLR-T-9.1): only a file the version's document
+   * names, and only one the project can reach (src/assets/access.ts) — a digest never reaches
+   * anything else through a link. Headers as the owner's asset route (sandbox CSP, `nosniff`), but
+   * revalidated every time like the model, so a revoked link stops at once.
+   */
+  routes.read('/:token/assets/:sha256', async (req, res) => {
+    const { link, project } = shareOf(req);
+    if (!link.showPlan && !link.show3d) throw new HttpError(404, 'this link does not share the model');
+    const sha256 = String(req.params['sha256'] ?? '');
+    if (!SHA256.test(sha256)) throw new HttpError(404, 'asset not found');
+    const { document } = await documentOf(link);
+    if (!digestsNamed(document).includes(sha256)) throw new HttpError(404, 'asset not found');
+    const file = (await reachableFiles(db, project, document)).get(sha256);
+    const bytes = file === undefined || deps.assets === undefined || deps.assets === null ? null : await deps.assets.get(sha256);
+    if (file === undefined || bytes === null) throw new HttpError(404, 'asset not found');
+    sendAssetBytes(req, res, file, bytes, 'private, no-cache');
   }, pub);
 
   routes.read('/:token/findings', async (req, res) => {

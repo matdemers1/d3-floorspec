@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { packageEntries, packageZip, writeZip } from '@floorspec/package';
 import { readImportBytes } from '../src/projects/importPackage';
+import { textureUrl } from '../src/editor/three/textures';
 
-/** The import dialog's reading of a file (FLR-T-9.1). */
+/** The import dialog's reading of a file (FLR-T-9.1), and where the 3D view finds a texture (FLR-T-9.6). */
 
 const conformance = new URL('../../../packages/engine/standard/conformance/core/0.3/materials/008-tile-photo-on-the-backsplash/', import.meta.url);
 const document = new Uint8Array(readFileSync(new URL('input.json', conformance)));
@@ -41,5 +42,13 @@ describe('reading an import', () => {
     const zip = packageZip(packageEntries(document, new Map([['cf77abf784e1b49ffad62638d0117883502d08e4f0b8b1e7beb10fe1f70eab6c', tile]])));
     const outcome = readImportBytes('download', zip);
     expect(outcome.status === 'read' && outcome.read.summary.valid).toBe(true);
+  });
+});
+
+describe('texture URLs', () => {
+  it('are the project’s asset route for its owner, and the link’s own in the shared viewer', () => {
+    const sha = 'a'.repeat(64);
+    expect(textureUrl('0199aaaa-0000-7000-8000-000000000000', sha)).toBe(`/api/projects/0199aaaa-0000-7000-8000-000000000000/assets/${sha}`);
+    expect(textureUrl('share:AbC_d-1', sha)).toBe(`/api/share/AbC_d-1/assets/${sha}`);
   });
 });

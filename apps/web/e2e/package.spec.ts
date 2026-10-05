@@ -70,7 +70,7 @@ async function audit(page: Page, state: string): Promise<void> {
   await page.emulateMedia({ colorScheme: 'light' });
 }
 
-test('exports a textured kitchen as a .floorspec package and imports it as a new project, the texture drawn in 3D', async ({ page }) => {
+test('exports a textured kitchen as a .floorspec package and imports it as a new project, the texture drawn in 3D', async ({ page, browser, baseURL }) => {
   test.setTimeout(180_000);
   await firstRunSetup(page, { name: 'Packer', email: 'packer@example.test', password: password('package') });
   await page.getByRole('button', { name: 'New project' }).first().click();
@@ -151,4 +151,22 @@ test('exports a textured kitchen as a .floorspec package and imports it as a new
   expect(textured[0]).toMatchObject({ part: 'wall:W3', sha256, loaded: true });
   await page.waitForTimeout(400);
   await page.screenshot({ path: 'test-results/package-imported-3d.png' });
+
+  // ── FLR-T-9.6's follow-up: somebody with no account, through a share link, sees the texture too —
+  // from the link's own asset route, which serves only the files the shared version names.
+  const shared = await page.request.post(`/api/projects/${copy}/shares`, { data: {} });
+  expect(shared.status(), await shared.text()).toBe(201);
+  const { url } = (await shared.json()) as { url: string };
+  const stranger = await browser.newContext({ baseURL: baseURL! });
+  const viewer = await stranger.newPage();
+  const fetched: string[] = [];
+  viewer.on('request', (r) => { const path = new URL(r.url()).pathname; if (path.startsWith('/api/') && path.includes('/assets/')) fetched.push(path); });
+  await viewer.goto(url);
+  await viewer.getByRole('radio', { name: '3D' }).click();
+  await viewer.waitForFunction(() => (window as unknown as { __floorspec3d?: { ready: boolean } }).__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
+  await viewer.waitForFunction(() => ((window as unknown as { __floorspec3d?: { textured: Textured[] } }).__floorspec3d?.textured ?? []).some((t) => t.loaded), undefined, { timeout: 30_000 });
+  expect(fetched).toEqual([`/api/share/${url.split('/s/')[1]!}/assets/${sha256}`]);
+  await viewer.waitForTimeout(400);
+  await viewer.screenshot({ path: 'test-results/package-shared-3d.png' });
+  await stranger.close();
 });

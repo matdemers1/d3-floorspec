@@ -127,7 +127,7 @@ export function createApp({
   mount(app, '/api/tokens', tokenRoutes(db));
   mount(app, '/api/maintenance', maintenanceRoutes(db, config));
   // Sharing (FLR-T-9.6): the owner's links and comments, and what a share link reaches.
-  const share = { config, events, rules: rulePacks, stream: eventStream, ...(shareLimits === undefined ? {} : { limits: shareLimits }) };
+  const share = { config, events, rules: rulePacks, stream: eventStream, assets, ...(shareLimits === undefined ? {} : { limits: shareLimits }) };
   mount(app, '/api/projects', projectShareRoutes(db, share));
   mount(app, '/api/share', shareRoutes(db, share));
   // The .floorspec package (FLR-T-9.1): export, always free, and import as a new project.

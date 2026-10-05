@@ -13,7 +13,8 @@ import { shareOf } from './share-support.js';
 import { jpegWithExif, tilePng } from '../support/images.js';
 
 /**
- * The `.floorspec` package over HTTP (FLR-T-9.1; FLR-REQ-126, 135, 151).
+ * The `.floorspec` package over HTTP (FLR-T-9.1; FLR-REQ-126, 135, 151) and the shared viewer's
+ * textures (FLR-T-9.6's follow-up).
  *
  * Export: model.json and every asset's file, byte for byte what the project serves, deterministic,
  * a valid package to the engine's package validator — and always available: on every state a
@@ -343,6 +344,51 @@ describe('the .floorspec package', () => {
         expect(res.status).toBe(403);
         expect(await db.project.count()).toBe(1);
       });
+    });
+  });
+
+  describe("the shared viewer's textures (FLR-T-9.6)", () => {
+    it('serves a file the shared version names, with the owner route’s headers, and nothing else', async () => {
+      const { id, asset, before } = await textured();
+      const share = await shareOf(alice, id);
+      const anon = new Browser(running.url);
+      const res = await fetchBytes(running.url, anon, `/api/share/${share.token}/assets/${asset.sha256}`);
+      expect(res.status).toBe(200);
+      expect(Buffer.from(res.bytes).equals(Buffer.from(TILE))).toBe(true);
+      expect(res.headers.get('content-type')).toBe('image/png');
+      expect(res.headers.get('content-security-policy')).toBe("default-src 'none'; sandbox");
+      expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+      expect(res.headers.get('etag')).toBe(`"${asset.sha256}"`);
+      expect(res.headers.get('cache-control')).toBe('private, no-cache');
+      expect(res.headers.get('x-robots-tag')).toContain('noindex');
+      expect((await fetchBytes(running.url, anon, `/api/share/${share.token}/assets/${asset.sha256}`, { 'if-none-match': `"${asset.sha256}"` })).status).toBe(304);
+
+      // A digest the shared version does not name — even one of this project's own uploads.
+      const other = tilePng(16, 16, { colour: [200, 10, 10] });
+      const uploaded = ((await upload(running.url, alice, id, other)).body as { asset: UploadedAsset }).asset;
+      expect((await fetchBytes(running.url, anon, `/api/share/${share.token}/assets/${uploaded.sha256}`)).status).toBe(404);
+      expect((await fetchBytes(running.url, anon, `/api/share/${share.token}/assets/nothex`)).status).toBe(404);
+
+      // A link pinned before the texture was added does not reach it.
+      await db.shareLink.update({ where: { id: share.id }, data: { versionHash: before, versionSeq: 1 } });
+      expect((await fetchBytes(running.url, anon, `/api/share/${share.token}/assets/${asset.sha256}`)).status).toBe(404);
+    });
+
+    it('needs a link that shows the model, a live one, and a file the project can reach', async () => {
+      const { id, asset } = await textured();
+      const findingsOnly = await shareOf(alice, id, { shows: { plan: false, threeD: false, findings: true }, comments: false });
+      const anon = new Browser(running.url);
+      expect((await fetchBytes(running.url, anon, `/api/share/${findingsOnly.token}/assets/${asset.sha256}`)).status).toBe(404);
+      const live = await shareOf(alice, id);
+      await alice.request('DELETE', `/api/projects/${id}/shares/${live.id}`);
+      expect((await fetchBytes(running.url, anon, `/api/share/${live.token}/assets/${asset.sha256}`)).status).toBe(410);
+
+      // Bob's model names Alice's file by its digest; his link does not reach her bytes.
+      const bob = await inviteMember(running, alice, 'bob@example.test');
+      const { id: bobs } = await createProjectAs(bob, "Bob's");
+      expect((await bob.post(`/api/projects/${bobs}/ops`, { batch: textureOps(asset) })).status).toBe(201);
+      const his = await shareOf(bob, bobs);
+      expect((await fetchBytes(running.url, anon, `/api/share/${his.token}/assets/${asset.sha256}`)).status).toBe(404);
     });
   });
 });

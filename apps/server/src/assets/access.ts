@@ -1,4 +1,6 @@
+import type { Request, Response } from 'express';
 import type { Tx } from '../db.js';
+import { EXTENSIONS } from './media.js';
 import { SHA256 } from './store.js';
 
 /**
@@ -6,7 +8,7 @@ import { SHA256 } from './store.js';
  * files the project itself uploaded or imported, and the files its document names that its owner
  * uploaded into another of their projects (a material copied from one house to the next). A digest
  * alone is never enough — a file somebody else uploaded is unreachable even when a document names
- * it — so a package export (FLR-T-9.1) cannot be used to ask the
+ * it — so neither a package export (FLR-T-9.1) nor a share link (FLR-T-9.6) can be used to ask the
  * store for another account's file.
  *
  * The owner's own route (src/routes/assets.ts) applies the same rule to main's head.
@@ -44,4 +46,24 @@ export async function reachableFiles(db: Pick<Tx, 'projectAsset'>, project: { re
     for (const r of owners) if (!out.has(r.sha256)) out.set(r.sha256, r);
   }
   return out;
+}
+
+/**
+ * Send a stored file the way the owner's asset route does: its media type, its digest as the ETag,
+ * `nosniff`, and a sandbox CSP — opened on its own, an image is shown and nothing in it runs.
+ */
+export function sendAssetBytes(req: Request, res: Response, file: ReachableFile, bytes: Uint8Array, cacheControl: string): void {
+  const ext = (EXTENSIONS as Readonly<Record<string, string | undefined>>)[file.mediaType] ?? 'bin';
+  res.setHeader('Content-Type', file.mediaType);
+  res.setHeader('Content-Length', String(bytes.length));
+  res.setHeader('ETag', `"${file.sha256}"`);
+  res.setHeader('Cache-Control', cacheControl);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+  res.setHeader('Content-Disposition', `inline; filename="${file.sha256}.${ext}"`);
+  if (req.get('if-none-match') === `"${file.sha256}"`) {
+    res.status(304).end();
+    return;
+  }
+  res.send(Buffer.from(bytes.buffer, bytes.byteOffset, bytes.length));
 }
