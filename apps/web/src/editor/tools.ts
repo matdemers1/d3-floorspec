@@ -15,7 +15,9 @@ import {
   typeChoices,
   type ChainVertex,
 } from './ops';
-import { gridStep, lengthText, parseLen } from './units';
+import { gridStep, lengthText, parseLen, parseSegment } from './units';
+import { interiorPoint } from './geometry';
+import type { FaceView } from './model';
 import { kindOf, labelOf } from './model';
 import { requestRemove } from './actions';
 
@@ -79,7 +81,7 @@ export class ToolController {
 
   private get editable(): boolean {
     const s = this.store.get();
-    return s.readOnly === null && s.model !== null && s.level !== null;
+    return s.readOnly === null && s.model !== null && s.level !== null && s.compare === null;
   }
 
   // ─── Pointer events ──────────────────────────────────────────────────────────────────────
@@ -476,10 +478,10 @@ export class ToolController {
   /** Typed lengths while drawing or dragging. Returns true when the key was taken. */
   typeKey(key: string): boolean {
     const s = this.store.get();
-    const draft = s.draft;
+    // Drawing from the keyboard: the wall tool takes a typed start point before any click.
+    const draft = s.draft === null && (s.tool === 'wall' || s.tool === 'separator') && this.editable ? { tool: s.tool, chain: [] as ChainVertex[], cursor: null, typed: '' } : s.draft;
     if (draft === null || draft.tool === 'room') return false;
     if (draft.tool === 'select' && draft.drag === null) return false;
-    if ((draft.tool === 'wall' || draft.tool === 'separator') && draft.chain.length === 0) return false;
     if ((draft.tool === 'door' || draft.tool === 'window') && draft.hover === null) return false;
     const typed = draft.typed;
     if (key === 'Backspace') {
@@ -488,7 +490,8 @@ export class ToolController {
       return true;
     }
     const starts = /^[0-9.-]$/.test(key);
-    const continues = /^[0-9.'"/ \-a-zA-Z]$/.test(key);
+    const drawing = draft.tool === 'wall' || draft.tool === 'separator';
+    const continues = /^[0-9.'"/ \-a-zA-Z]$/.test(key) || (drawing && /^[,<@]$/.test(key));
     if ((typed === '' && starts) || (typed !== '' && continues)) {
       this.store.set({ draft: { ...draft, typed: typed + key } });
       return true;
@@ -501,6 +504,15 @@ export class ToolController {
     const s = this.store.get();
     const draft = s.draft;
     const units = this.store.units;
+    if (s.tool === 'room' && this.editable) {
+      const face = this.unnamedSpaces()[0];
+      if (face === undefined) {
+        this.store.set({ notice: { tone: 'info', text: 'Every closed space on this level already has a room.' } });
+        return true;
+      }
+      this.nameRoomIn(face);
+      return true;
+    }
     if (draft === null || draft.tool === 'room') return false;
     if (draft.tool === 'wall' || draft.tool === 'separator') {
       if (draft.typed.trim() === '') {
@@ -508,21 +520,31 @@ export class ToolController {
         return true;
       }
       const last = draft.chain[draft.chain.length - 1];
-      const parsed = parseLen(draft.typed, units);
-      if (last === undefined) return false;
+      const parsed = parseSegment(draft.typed, units);
       if (!parsed.ok) {
         this.store.set({ notice: { tone: 'danger', text: parsed.reason } });
         return true;
       }
-      const angle = draft.cursor?.angle ?? 0;
-      const point = pointAtLength(last.point, angle, parsed.value);
-      const chain = [...draft.chain, { point }];
+      if (last === undefined && parsed.kind !== 'point') {
+        this.store.set({ notice: { tone: 'info', text: 'Type where the first wall starts, as x, y — for example 0, 0.' } });
+        return true;
+      }
+      const angle = parsed.kind === 'length' ? (parsed.angle ?? draft.cursor?.angle ?? 0) : (draft.cursor?.angle ?? 0);
+      const point: Point = parsed.kind === 'point' ? parsed.point : pointAtLength((last as ChainVertex).point, angle, parsed.length);
+      // A typed point on an existing junction joins it, as a click there would.
+      const junction = this.level?.junctions.find((j) => j.position[0] === point[0] && j.position[1] === point[1])?.id;
+      const chain = [...draft.chain, { point, junction }];
       this.store.set({ draft: { ...draft, chain, typed: '', cursor: { point, kind: 'angle', guides: [], angle } } });
-      if (isClosed(chain) || !s.draw.chain) this.finishChain();
+      if (isClosed(chain) || (!s.draw.chain && chain.length >= 2)) this.finishChain();
       return true;
     }
     if (draft.tool === 'door' || draft.tool === 'window') {
-      if (draft.hover === null || draft.typed.trim() === '') return false;
+      if (draft.hover === null) return false;
+      // Nothing typed: place it where it shows — the centre of a wall chosen from the keyboard.
+      if (draft.typed.trim() === '') {
+        this.openingDown();
+        return true;
+      }
       const parsed = parseLen(draft.typed, units);
       if (!parsed.ok) {
         this.store.set({ notice: { tone: 'danger', text: parsed.reason } });
@@ -591,7 +613,67 @@ export class ToolController {
   setTool(tool: ToolId): void {
     const draft = this.store.get().draft;
     if ((draft?.tool === 'wall' || draft?.tool === 'separator') && draft.chain.length >= 2) this.finishChain();
+    const selection = this.store.get().selection;
     this.store.setTool(tool);
+    // A door or a window with a wall selected starts on that wall, centred: Enter places it there,
+    // a typed length places it that far from the start (FLR-T-3.7, the keyboard's way in).
+    if ((tool === 'door' || tool === 'window') && selection !== null) this.aimOpeningAt(selection, tool);
+  }
+
+  private aimOpeningAt(wallId: string, tool: 'door' | 'window'): void {
+    const s = this.store.get();
+    const wall = this.level?.walls.find((w) => w.id === wallId);
+    if (wall === undefined || s.model === null) return;
+    const fill = this.store.chosenType(typeChoices(s.model.document, tool === 'door' ? 'doorType' : 'windowType'), tool === 'door' ? s.draw.doorType : s.draw.windowType);
+    const width = Number(fill?.element['width'] ?? 0);
+    const L = dist(wall.a, wall.b);
+    const offset = Math.round((L - width) / 2);
+    this.store.set({ draft: { tool, hover: { wall: wall.id, offset, centered: true, width, side: 'right', nearer: 'start', fits: width <= L }, typed: '' } });
+  }
+
+  /**
+   * The arrows while drawing walls: point the next segment east, north, west or south, so a
+   * length typed next goes that way. Returns false when there is no chain to aim.
+   */
+  aim(key: string): boolean {
+    const draft = this.store.get().draft;
+    if ((draft?.tool !== 'wall' && draft?.tool !== 'separator') || draft.chain.length === 0) return false;
+    const angles: Record<string, number> = { ArrowRight: 0, ArrowUp: 90, ArrowLeft: 180, ArrowDown: 270 };
+    const angle = angles[key];
+    if (angle === undefined) return false;
+    const last = draft.chain[draft.chain.length - 1] as ChainVertex;
+    this.store.set({ draft: { ...draft, cursor: { point: last.point, kind: 'angle', guides: [], angle } } });
+    return true;
+  }
+
+  /** Start drawing walls at a typed point (the palette's "Draw walls from a point…"). */
+  startChainAt(point: Point): void {
+    if (!this.editable) return;
+    this.setTool('wall');
+    const junction = this.level?.junctions.find((j) => j.position[0] === point[0] && j.position[1] === point[1])?.id;
+    this.store.set({ draft: { tool: 'wall', chain: [{ point, junction }], cursor: { point, kind: 'angle', guides: [], angle: 0 }, typed: '' } });
+  }
+
+  /** Name a room in an unnamed space (the keyboard's room tool). */
+  nameRoomIn(face: FaceView): void {
+    const s = this.store.get();
+    if (s.model === null || s.level === null || !this.editable) return;
+    const at = interiorPoint(face);
+    if (at === null) {
+      this.store.set({ notice: { tone: 'info', text: 'That space is too thin to hold a room.' } });
+      return;
+    }
+    const name = nextRoomName(s.model.document);
+    void this.store
+      .apply('Name a room', addRoom({ level: s.level, at, name }), { select: (created) => created.find((id) => /^R\d+$/.test(id)) ?? created[0] ?? null, focus: 'room-name' })
+      .then((ok) => {
+        if (ok && this.store.get().tool === 'room') this.store.setTool('select');
+      });
+  }
+
+  /** The level's unnamed spaces, largest first. */
+  unnamedSpaces(): FaceView[] {
+    return (this.level?.faces ?? []).filter((f) => f.room === null).sort((a, b) => (a.area2 > b.area2 ? -1 : a.area2 < b.area2 ? 1 : 0));
   }
 }
 

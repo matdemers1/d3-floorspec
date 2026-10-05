@@ -127,3 +127,127 @@ export async function postUndo(projectId: string, head: string, mode: 'undo' | '
     return { status: 'failed', message: 'The server did not answer. Nothing was changed.' };
   }
 }
+
+// ─── History (FLR-T-3.6) ─────────────────────────────────────────────────────────────────────
+
+export interface HistoryEntry {
+  seq: number;
+  kind: 'create' | 'apply' | 'undo' | 'redo' | 'merge';
+  author: { kind: 'account' | 'agent' | 'token'; account: string | null; name: string | null; token: string | null };
+  ops: Record<string, unknown>[];
+  resolved: Record<string, unknown>[] | null;
+  created: string[];
+  removed: string[];
+  before: string | null;
+  after: string;
+  undoOf: number | null;
+  changeset: { id: string; name: string } | null;
+  at: string;
+}
+
+export interface HistoryLog extends History {
+  ops: HistoryEntry[];
+}
+
+export async function fetchHistoryLog(projectId: string, limit = 200): Promise<HistoryLog> {
+  const res = await fetch(`/api/projects/${projectId}/history?limit=${String(limit)}`, { credentials: 'same-origin', cache: 'no-store' });
+  if (!res.ok) throw new HttpFailure(res.status, messageOf(await json(res), res.status));
+  const body = (await res.json()) as { head: string | null; undo: number | null; redo: number | null; ops: HistoryEntry[] };
+  return { head: body.head, undo: body.undo, redo: body.redo, seq: body.ops[0]?.seq ?? null, ops: body.ops };
+}
+
+/** The account's token names by ID, so the history can say which token wrote an op. */
+export async function fetchTokenNames(): Promise<Map<string, string>> {
+  const res = await fetch('/api/tokens', { credentials: 'same-origin', cache: 'no-store' });
+  if (!res.ok) return new Map();
+  const body = (await res.json()) as { tokens: { id: string; name: string }[] };
+  return new Map(body.tokens.map((t) => [t.id, t.name]));
+}
+
+// ─── Changesets (FLR-T-3.5) ──────────────────────────────────────────────────────────────────
+
+export interface ChangesetRow {
+  id: string;
+  name: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  base: string;
+  head: string | null;
+  ops: number | null;
+  createdBy: string | null;
+  createdAt: string;
+  fastForward: boolean | null;
+}
+
+export interface ChangesetLogEntry {
+  seq: number;
+  authorKind: 'account' | 'agent' | 'token';
+  authorAgent: string | null;
+  ops: Record<string, unknown>[];
+  resolved: Record<string, unknown>[] | null;
+  created: string[];
+  removed: string[];
+  beforeHash: string | null;
+  afterHash: string;
+  createdAt: string;
+}
+
+export interface ChangesetDetail extends ChangesetRow {
+  main: string | null;
+  log: ChangesetLogEntry[];
+}
+
+async function getJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+  if (!res.ok) throw new HttpFailure(res.status, messageOf(await json(res), res.status));
+  return (await res.json()) as T;
+}
+
+export async function fetchChangesets(projectId: string): Promise<ChangesetRow[]> {
+  return (await getJson<{ changesets: ChangesetRow[] }>(`/api/projects/${projectId}/changesets`)).changesets;
+}
+
+export async function fetchChangeset(projectId: string, id: string): Promise<ChangesetDetail> {
+  return getJson<ChangesetDetail>(`/api/projects/${projectId}/changesets/${id}`);
+}
+
+/** The scratch head's document, and its hash; null once the changeset is no longer pending. */
+export async function fetchChangesetModel(projectId: string, id: string): Promise<{ hash: string; text: string } | null> {
+  const res = await fetch(`/api/projects/${projectId}/changesets/${id}/model.json`, { credentials: 'same-origin', cache: 'no-store' });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new HttpFailure(res.status, messageOf(await json(res), res.status));
+  return { hash: (res.headers.get('etag') ?? '').replace(/^W\//, '').replace(/"/g, ''), text: await res.text() };
+}
+
+export type DecideAnswer =
+  | { status: 'accepted'; hash: string; mode: 'fast-forward' | 'replay' }
+  | { status: 'rejected' }
+  | { status: 'replay-failed'; detail: string; diagnostics: Diagnostic[]; failedIndex: number | null }
+  | { status: 'stale' }
+  | { status: 'failed'; message: string };
+
+/** Accept (with `If-Match` on the main the person reviewed against) or reject a changeset. */
+export async function decideChangeset(projectId: string, id: string, verb: 'accept' | 'reject', main?: string): Promise<DecideAnswer> {
+  let res: Response;
+  try {
+    res = await fetch(`/api/projects/${projectId}/changesets/${id}/${verb}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json', ...(main === undefined ? {} : { 'if-match': `"${main}"` }) },
+      body: '{}',
+    });
+  } catch {
+    return { status: 'failed', message: 'The server did not answer. Nothing was changed.' };
+  }
+  const body = await json(res);
+  if (res.ok) return verb === 'accept' ? { status: 'accepted', hash: String(body['hash']), mode: body['mode'] === 'replay' ? 'replay' : 'fast-forward' } : { status: 'rejected' };
+  if (res.status === 409 && Array.isArray(body['diagnostics'])) {
+    return {
+      status: 'replay-failed',
+      detail: typeof body['detail'] === 'string' ? body['detail'] : 'The changeset no longer applies to main.',
+      diagnostics: body['diagnostics'] as Diagnostic[],
+      failedIndex: typeof body['failedIndex'] === 'number' ? body['failedIndex'] : null,
+    };
+  }
+  if (res.status === 412) return { status: 'stale' };
+  return { status: 'failed', message: messageOf(body, res.status) };
+}

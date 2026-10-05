@@ -5,35 +5,44 @@ import { api } from '../lib/api';
 import { timeAgo } from '../projects/model';
 import { DashCard } from './DashCard';
 import { describeOps } from './describe';
+import { useLiveTick } from './live';
 
 /**
- * PLACEHOLDER REGION — "Versions". The design calls it "Recent changes" with a quiet "History"
- * action; the lead wires it to versions/history when that endpoint lands.
- *
- * Until then it reads the op log that exists today (`GET /api/projects/:id/ops`, newest first) and
- * shows the last three entries. If the op log does not answer, the card says so and the rest of
- * the dashboard is unaffected. Keep `region="versions"`: tests find it by that.
+ * "Recent changes": the newest entries of main's history (`GET /api/projects/:id/history`), who
+ * made each — you, a token, or an agent by name — and when. Live (FLR-T-3.5): an edit in the
+ * editor, an undo or an accepted changeset shows up here as it lands. The full history, with the
+ * version diff, is the editor's (FLR-T-3.6). Keep `region="versions"`: tests find it by that.
  */
 
 interface OpRow {
   seq: number;
-  authorKind: 'account' | 'agent';
-  authorAgent?: string | null;
+  kind: 'create' | 'apply' | 'undo' | 'redo' | 'merge';
+  author: { kind: 'account' | 'agent' | 'token'; name: string | null };
   ops: { op: string }[];
-  createdAt: string;
+  undoOf: number | null;
+  changeset: { name: string } | null;
+  at: string;
 }
 
 const SHOWN = 3;
 
+function what(row: OpRow): string {
+  if (row.kind === 'undo') return `Undid v${String(row.undoOf ?? '?')}`;
+  if (row.kind === 'redo') return `Redid v${String(row.undoOf ?? '?')}`;
+  if (row.changeset !== null) return `Accepted “${row.changeset.name}”`;
+  return describeOps(row.ops);
+}
+
 export function VersionsSlot({ projectId, you }: { projectId: string; you: string }) {
   const [rows, setRows] = useState<OpRow[] | null | 'failed'>(null);
+  const tick = useLiveTick(projectId);
 
   useEffect(() => {
     api
-      .get<{ ops: OpRow[] }>(`/api/projects/${projectId}/ops`)
+      .get<{ ops: OpRow[] }>(`/api/projects/${projectId}/history?limit=${String(SHOWN)}`)
       .then(({ ops }) => { setRows(ops.slice(0, SHOWN)); })
       .catch(() => { setRows('failed'); });
-  }, [projectId]);
+  }, [projectId, tick]);
 
   return (
     <DashCard region="versions" icon={<RotateCcw aria-hidden="true" />} title="Recent changes">
@@ -46,12 +55,12 @@ export function VersionsSlot({ projectId, you }: { projectId: string; you: strin
       ) : (
         <ul className="fs-list">
           {rows.map((row) => {
-            const who = row.authorKind === 'agent' ? (row.authorAgent ?? 'Claude') : you;
+            const who = row.author.kind === 'account' ? you : (row.author.name ?? (row.author.kind === 'agent' ? 'Claude' : 'A token'));
             return (
               <li key={row.seq} className="fs-change">
                 <Avatar name={who} size="xs" />
-                <span className="fs-change__what">{describeOps(row.ops)}</span>
-                <span className="fs-change__when">{timeAgo(row.createdAt)}</span>
+                <span className="fs-change__what">{what(row)}</span>
+                <span className="fs-change__when">{timeAgo(row.at)}</span>
               </li>
             );
           })}

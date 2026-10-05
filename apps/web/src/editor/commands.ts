@@ -2,17 +2,23 @@ import type { EditorStore, ToolId } from './store';
 import type { ToolController } from './tools';
 import { newLevel, switchUnits } from './actions';
 import { fit, zoomAt } from './viewport';
+import { kindOf } from './model';
+import { accept, openReview, reject } from './review';
+import { compareOp, refreshLog, toggleHistory } from './history';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
- * keyboard dispatches through it now; the command palette (next round) lists it, so a command added
- * here is reachable from both without being wired twice.
+ * keyboard dispatches through it and the command palette (⌘K, FLR-T-3.7) lists it, so a command
+ * added here is reachable from both without being wired twice. The palette adds what depends on
+ * the model — each level, each proposal, each unnamed space, each element — around these.
  */
 
 export interface Command {
   id: string;
   label: string;
-  group: 'Tools' | 'Edit' | 'View' | 'Model';
+  group: 'Tools' | 'Edit' | 'View' | 'Model' | 'Review' | 'History';
+  /** More words the palette matches on. */
+  keywords?: string;
   /** Keys as KeyboardEvent.key, with `Mod+` for ⌘ on macOS and Ctrl elsewhere, `Shift+` for shift. */
   keys?: readonly string[];
   /** A key hint for a tooltip: "W", "⌘Z". */
@@ -23,7 +29,15 @@ export interface Command {
 
 const editable = (store: EditorStore) => {
   const s = store.get();
-  return s.readOnly === null && s.model !== null && s.pending === null;
+  return s.readOnly === null && s.model !== null && s.pending === null && s.compare === null;
+};
+const selectedKind = (store: EditorStore) => {
+  const { model, selection } = store.get();
+  return model === null || selection === null ? null : kindOf(model, selection);
+};
+const reviewing = (store: EditorStore) => {
+  const r = store.get().review;
+  return r !== null && r.busy === null && !r.loading;
 };
 const hasLevel = (store: EditorStore) => editable(store) && store.get().level !== null;
 
@@ -109,6 +123,168 @@ export const COMMANDS: readonly Command[] = [
     },
   },
   {
+    id: 'edit.rename',
+    label: 'Rename the selection',
+    group: 'Edit',
+    keys: ['F2'],
+    hint: 'F2',
+    enabled: (store) => editable(store) && store.get().selection !== null,
+    run: (store) => {
+      store.set({ renaming: store.get().selection, treeOpen: true, left: 'tree' });
+    },
+  },
+  {
+    id: 'edit.addDoor',
+    label: 'Add a door to the selected wall',
+    group: 'Edit',
+    keywords: 'opening centred',
+    enabled: (store) => hasLevel(store) && selectedKind(store) === 'wall',
+    run: (_store, tools) => {
+      tools.setTool('door');
+      tools.enter();
+    },
+  },
+  {
+    id: 'edit.addWindow',
+    label: 'Add a window to the selected wall',
+    group: 'Edit',
+    keywords: 'opening centred',
+    enabled: (store) => hasLevel(store) && selectedKind(store) === 'wall',
+    run: (_store, tools) => {
+      tools.setTool('window');
+      tools.enter();
+    },
+  },
+  {
+    id: 'edit.nameRoom',
+    label: 'Name a room in the largest unnamed space',
+    group: 'Edit',
+    keywords: 'add room face',
+    enabled: (store) => hasLevel(store) && (store.levelView?.faces.some((f) => f.room === null) ?? false),
+    run: (_store, tools) => {
+      const face = tools.unnamedSpaces()[0];
+      if (face !== undefined) tools.nameRoomIn(face);
+    },
+  },
+  {
+    id: 'edit.selectNone',
+    label: 'Clear the selection',
+    group: 'Edit',
+    enabled: (store) => store.get().selection !== null,
+    run: (store) => {
+      store.select(null);
+    },
+  },
+  {
+    id: 'view.palette',
+    label: 'Command palette',
+    group: 'View',
+    keys: ['Mod+k'],
+    hint: '⌘K',
+    run: (store) => {
+      store.set({ palette: !store.get().palette });
+    },
+  },
+  {
+    id: 'view.tree',
+    label: 'Show or hide the project tree',
+    group: 'View',
+    keys: ['Mod+\\'],
+    hint: '⌘\\',
+    run: (store) => {
+      store.set({ treeOpen: !store.get().treeOpen, left: 'tree' });
+    },
+  },
+  {
+    id: 'view.levelUp',
+    label: 'Go to the level above',
+    group: 'View',
+    keys: ['PageUp'],
+    hint: 'PgUp',
+    enabled: (store) => stepLevel(store, 1) !== null,
+    run: (store) => {
+      const next = stepLevel(store, 1);
+      if (next !== null) store.setLevel(next);
+    },
+  },
+  {
+    id: 'view.levelDown',
+    label: 'Go to the level below',
+    group: 'View',
+    keys: ['PageDown'],
+    hint: 'PgDn',
+    enabled: (store) => stepLevel(store, -1) !== null,
+    run: (store) => {
+      const next = stepLevel(store, -1);
+      if (next !== null) store.setLevel(next);
+    },
+  },
+  {
+    id: 'history.toggle',
+    label: 'Show the history',
+    group: 'History',
+    keys: ['h'],
+    hint: 'H',
+    keywords: 'versions log undo',
+    run: (store) => {
+      toggleHistory(store);
+    },
+  },
+  {
+    id: 'history.compareLast',
+    label: 'Compare the last change with the version before it',
+    group: 'History',
+    keywords: 'diff versions',
+    enabled: (store) => store.get().history.seq !== null,
+    run: (store) => {
+      void (async () => {
+        await refreshLog(store);
+        const last = store.get().log?.find((e) => e.before !== null);
+        if (last !== undefined) compareOp(store, last);
+      })();
+    },
+  },
+  {
+    id: 'history.endCompare',
+    label: 'Close the comparison',
+    group: 'History',
+    enabled: (store) => store.get().compare !== null,
+    run: (store) => {
+      store.set((s) => ({ compare: null, level: s.model?.levels.some((l) => l.id === s.level) === true ? s.level : (s.model?.levels[0]?.id ?? null) }));
+    },
+  },
+  {
+    id: 'review.open',
+    label: 'Review the proposal',
+    group: 'Review',
+    keywords: 'changeset claude agent',
+    enabled: (store) => store.get().proposals.length > 0,
+    run: (store) => {
+      const s = store.get();
+      void openReview(store, s.review?.id ?? (s.proposals[0]?.id as string));
+    },
+  },
+  {
+    id: 'review.accept',
+    label: 'Accept the proposal',
+    group: 'Review',
+    keywords: 'changeset merge',
+    enabled: (store) => reviewing(store),
+    run: (store) => {
+      void accept(store);
+    },
+  },
+  {
+    id: 'review.reject',
+    label: 'Reject the proposal',
+    group: 'Review',
+    keywords: 'changeset discard',
+    enabled: (store) => reviewing(store),
+    run: (store) => {
+      void reject(store);
+    },
+  },
+  {
     id: 'model.newLevel',
     label: 'Add a level',
     group: 'Model',
@@ -136,6 +312,15 @@ export const COMMANDS: readonly Command[] = [
     },
   },
 ];
+
+/** The level `dir` steps above (1) or below (-1) the current one, by elevation. */
+function stepLevel(store: EditorStore, dir: 1 | -1): string | null {
+  const { model, level } = store.get();
+  if (model === null) return null;
+  const ids = model.levels.map((l) => l.id);
+  const i = level === null ? -1 : ids.indexOf(level);
+  return ids[i + dir] ?? null;
+}
 
 /** The key a KeyboardEvent names, in the registry's spelling. */
 export function keyOf(e: Pick<KeyboardEvent, 'key' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>, mac: boolean): string {
