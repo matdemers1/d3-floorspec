@@ -297,9 +297,10 @@ group('Core 0.2: the program and extension elements', () => {
 
   it('lists extension elements by level, with their hosts and placements, and in a room section', () => {
     const s = describeJson(briefed());
-    expect(s.levels[0]!.elements).toEqual([
-      { id: 'BED1', name: 'Queen bed', kind: 'FS_furniture:pieces', host: { mode: 'surface', room: 'BED', surface: 'floor' }, placement: expect.objectContaining({ facing: 90000000 }) },
-    ]);
+    const [bed, ...more] = s.levels[0]!.elements!;
+    expect(more).toEqual([]);
+    expect(bed).toMatchObject({ id: 'BED1', name: 'Queen bed', kind: 'FS_furniture:pieces', host: { mode: 'surface', room: 'BED', surface: 'floor' } });
+    expect(bed!.placement).toEqual({ point: [10924032, 2340864, 0], facing: 90000000 });
     expect(describe(briefed())).toContain('- FS_furniture:pieces BED1 "Queen bed": on the floor of BED; at [');
     expect(describeJson(briefed(), { room: 'BED' }).levels[0]!.elements!.map((e) => e.id)).toEqual(['BED1']);
     expect(describeJson(briefed(), { room: 'KIT' }).levels[0]!.elements).toEqual([]);

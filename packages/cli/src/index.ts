@@ -53,7 +53,7 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
   const flags = new Set<string>();
   const values = new Map<string, string>();
   for (let i = 0; i < argv.length; i++) {
-    const a = argv[i]!;
+    const a = argv[i] ?? '';
     if (!a.startsWith('--')) args.push(a);
     else if (VALUED.has(a)) {
       const v = argv[i + 1];
