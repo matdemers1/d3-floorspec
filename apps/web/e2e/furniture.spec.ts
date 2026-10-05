@@ -127,6 +127,8 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   const hostBefore = JSON.stringify((furniture(await modelOf(page, project))[0] as unknown as { host: unknown }).host);
   await page.keyboard.press('ArrowLeft');
   await expect.poll(async () => JSON.stringify((furniture(await modelOf(page, project))[0] as unknown as { host: unknown }).host)).not.toBe(hostBefore);
+  // The server has the move before the editor hears back; Undo waits for the edit to finish.
+  await settled(page);
   await page.keyboard.press('ControlOrMeta+z');
   await expect.poll(async () => JSON.stringify((furniture(await modelOf(page, project))[0] as unknown as { host: unknown }).host)).toBe(hostBefore);
 
