@@ -1,0 +1,7 @@
+{
+  "description": "addRoom with \"brief\": the item is named, and a plain name in \"brief\" is an item's name - here \"Office\", though no room is called that.",
+  "covers": [
+    "FS-OPS-4.6.1",
+    "FS-OPS-3.3.1"
+  ]
+}

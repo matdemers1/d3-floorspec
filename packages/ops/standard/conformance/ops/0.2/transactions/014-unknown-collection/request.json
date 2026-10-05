@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "roofs",
+      "element": {}
+    }
+  ]
+}

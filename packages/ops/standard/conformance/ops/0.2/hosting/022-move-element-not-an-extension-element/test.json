@@ -1,0 +1,7 @@
+{
+  "description": "\"element\" expects an extension element: R1 is a room, so it does not count as a match.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-3.3.1"
+  ]
+}

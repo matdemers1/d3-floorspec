@@ -1,0 +1,6 @@
+{
+  "description": "A width member overrides the fill's: a 36\" door type hung in a 32\" opening is centred by 32\".",
+  "covers": [
+    "FS-OPS-4.5.3"
+  ]
+}

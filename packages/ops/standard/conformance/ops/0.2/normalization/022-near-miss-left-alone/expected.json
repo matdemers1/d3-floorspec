@@ -1,0 +1,23 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "cea7c1286c03574927dcca2fc7b93e9ebb3313c9297f512be2a123d33a7a511c",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/name",
+      "value": "Sitting room"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/name",
+      "value": "Living"
+    }
+  ]
+}

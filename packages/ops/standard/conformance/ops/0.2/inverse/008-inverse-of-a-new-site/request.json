@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$site",
+      "path": "/location",
+      "value": {
+        "latitude": 42360100,
+        "longitude": -71058900
+      }
+    }
+  ]
+}

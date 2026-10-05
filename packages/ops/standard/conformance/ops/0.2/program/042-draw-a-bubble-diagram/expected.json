@@ -1,0 +1,101 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "1f6e20fd5ae958b3d1564421821cdb45a92ae90938f089fdf52ff8c41cfbf0f9",
+  "created": ["P1", "P2", "P3", "P4"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P1",
+      "element": {
+        "function": "living",
+        "minArea": 30442468147200,
+        "name": "Living room"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P2",
+      "element": {
+        "function": "kitchen",
+        "minArea": 13107200000000,
+        "name": "Kitchen"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P3",
+      "element": {
+        "function": "dining",
+        "name": "Dining"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P4",
+      "element": {
+        "function": "garage",
+        "name": "Garage",
+        "targetArea": 36044800000000
+      }
+    },
+    {
+      "op": "setAdjacency",
+      "a": "P2",
+      "b": "P3",
+      "kind": "required",
+      "weight": 10
+    },
+    {
+      "op": "setAdjacency",
+      "a": "P1",
+      "b": "P3",
+      "kind": "preferred"
+    },
+    {
+      "op": "setAdjacency",
+      "a": "P4",
+      "b": "P1",
+      "kind": "forbidden"
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/brief",
+      "value": "P1"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/brief"
+    },
+    {
+      "op": "removeElement",
+      "id": "P1"
+    },
+    {
+      "op": "removeElement",
+      "id": "P2"
+    },
+    {
+      "op": "removeElement",
+      "id": "P3"
+    },
+    {
+      "op": "removeElement",
+      "id": "P4"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/program"
+    }
+  ]
+}

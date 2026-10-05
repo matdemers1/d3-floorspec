@@ -1,0 +1,7 @@
+{
+  "description": "The chamfer W3 runs from (6', 10') to (10', 6'), 4' x sqrt(2) long: \"centered\" is 2' x sqrt(2), 1103493.87..., rounded once: 1103494.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-3.5.1"
+  ]
+}

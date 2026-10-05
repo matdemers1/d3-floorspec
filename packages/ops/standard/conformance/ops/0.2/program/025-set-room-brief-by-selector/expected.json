@@ -1,0 +1,23 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "5652455ec7e4367bf97bac7ab084bfc26c1628523a54ec3f48276b603e513345",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R2",
+      "path": "/brief",
+      "value": "KIT"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R2",
+      "path": "/brief",
+      "value": "PAN"
+    }
+  ]
+}

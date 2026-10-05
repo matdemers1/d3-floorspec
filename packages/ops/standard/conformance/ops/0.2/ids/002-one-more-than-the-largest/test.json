@@ -1,0 +1,6 @@
+{
+  "description": "Junctions J1, J2, J3 and J7: the next junction is J8, never the free J4.",
+  "covers": [
+    "FS-OPS-1.5.1"
+  ]
+}

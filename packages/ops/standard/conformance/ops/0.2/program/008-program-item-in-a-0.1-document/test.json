@@ -1,0 +1,7 @@
+{
+  "description": "A declares \"0.1\", which has no program: the item is added, and the result is checked against Core 0.1's schema, which has no \"program\" member.",
+  "covers": [
+    "FS-OPS-2.1.3",
+    "FS-OPS-1.2.3"
+  ]
+}

@@ -2,7 +2,7 @@
   "name": "@floorspec/ops",
   "private": true,
   "version": "0.1.0",
-  "description": "Floorspec Ops 0.1 reference applier: reference grammar, primitives, composites, normalization, locks, atomic transactions. Isomorphic, exact, deterministic.",
+  "description": "Floorspec Ops 0.2 (and 0.1) reference applier: reference grammar, primitives, composites, the program and extension elements, normalization, locks, atomic transactions. Isomorphic, exact, deterministic.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,

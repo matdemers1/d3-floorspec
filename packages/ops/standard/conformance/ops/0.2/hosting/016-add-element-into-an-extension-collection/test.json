@@ -1,0 +1,8 @@
+{
+  "description": "addElement with \"extension\" adds an extension element to that extension's collection, creating its data, \"collections\" and the collection; the ID is minted with X.",
+  "covers": [
+    "FS-OPS-2.1.3",
+    "FS-OPS-2.1.1",
+    "FS-OPS-1.5.1"
+  ]
+}

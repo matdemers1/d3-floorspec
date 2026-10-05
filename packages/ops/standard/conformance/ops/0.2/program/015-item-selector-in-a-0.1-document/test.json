@@ -1,0 +1,6 @@
+{
+  "description": "Under \"0.1\" there are no program items (0.3), so \"item Kitchen\" resolves to nothing.",
+  "covers": [
+    "FS-OPS-3.3.1"
+  ]
+}

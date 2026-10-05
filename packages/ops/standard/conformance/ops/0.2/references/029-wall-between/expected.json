@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "ec47517503dc6a00280a910f2b1b22631412eb2cee52d12fc4ea78d8e421c306",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W10",
+      "path": "/name",
+      "value": "Pantry wall"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "W10",
+      "path": "/name"
+    }
+  ]
+}

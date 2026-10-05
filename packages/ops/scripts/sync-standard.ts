@@ -7,8 +7,8 @@
  *
  * Copies, from a floorspec checkout (default: ../floorspec beside this repository):
  *
- *   schema/ops/0.1/            → standard/schema/ops/0.1/
- *   conformance/ops/0.1/       → standard/conformance/ops/0.1/
+ *   schema/ops/0.1/, 0.2/      → standard/schema/ops/0.1/, 0.2/
+ *   conformance/ops/0.1/, 0.2/ → standard/conformance/ops/0.1/, 0.2/
  *   spec/ops/07-diagnostics.md → standard/spec/ops/07-diagnostics.md
  *
  * and records the checkout's commit in standard/LOCK.json. It refuses a checkout with uncommitted
@@ -19,7 +19,7 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
-export const PATHS = ['schema/ops/0.1', 'conformance/ops/0.1', 'spec/ops/07-diagnostics.md'] as const;
+export const PATHS = ['schema/ops/0.1', 'schema/ops/0.2', 'conformance/ops/0.1', 'conformance/ops/0.2', 'spec/ops/07-diagnostics.md'] as const;
 
 const here = dirname(new URL(import.meta.url).pathname);
 const opsRoot = resolve(here, '..');

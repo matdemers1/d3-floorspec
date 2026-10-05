@@ -1,0 +1,32 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_electrical",
+      "value": "legacy"
+    },
+    {
+      "op": "addElement",
+      "extension": "FS_electrical",
+      "collection": "devices",
+      "element": {
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "min": [0, -51200, 0],
+            "max": [25600, 51200, 128000]
+          }
+        },
+        "host": {
+          "mode": "wallFace",
+          "wall": "W2",
+          "side": "right",
+          "offset": 780288,
+          "height": 384000
+        },
+        "device": "receptacle"
+      }
+    }
+  ]
+}

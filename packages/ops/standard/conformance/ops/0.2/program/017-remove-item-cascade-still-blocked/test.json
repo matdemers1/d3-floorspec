@@ -1,0 +1,7 @@
+{
+  "description": "cascade does not apply to a program item: a room that names it still blocks it.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-2.2.2"
+  ]
+}

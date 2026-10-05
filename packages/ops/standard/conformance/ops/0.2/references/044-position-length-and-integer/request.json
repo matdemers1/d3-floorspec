@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "addOpening",
+      "wall": "W2",
+      "at": "3'",
+      "fill": "T-door-36"
+    },
+    {
+      "op": "addOpening",
+      "wall": "W4",
+      "at": 128000,
+      "fill": "T-door-36"
+    }
+  ]
+}

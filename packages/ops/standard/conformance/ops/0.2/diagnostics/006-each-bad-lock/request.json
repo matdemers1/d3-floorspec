@@ -1,0 +1,20 @@
+{
+  "batch": [
+    {
+      "op": "resizeRoom",
+      "room": "Kitchen",
+      "side": "east",
+      "by": "2'"
+    }
+  ],
+  "context": {
+    "locks": [
+      {
+        "element": "R9"
+      },
+      {
+        "length": "J1"
+      }
+    ]
+  }
+}

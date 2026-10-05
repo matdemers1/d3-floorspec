@@ -1,0 +1,1129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/ops/0.2/operation.schema.json",
+  "$comment": "Normative (FLR-ADR-006). One operation of Floorspec Ops 0.2: a discriminated union on `op` over the ten primitives and shorthands of chapter 2 and the fifteen composites of chapter 4. Every operation is a closed object with exactly the members its definition lists, and exactly one of each group of alternatives (FS-OPS-1.1.2). A member the reference grammar resolves is typed by reference.schema.json; a member that is only passed into an element is any JSON value. Every operation that creates an element may also carry `name`, `extensions` and `extras` (2.1).",
+  "title": "Floorspec Ops 0.2 operation",
+  "description": "1.1: an operation is a JSON object whose `op` member names it. A request with an operation this schema rejects is malformed: FS-OPS-001.",
+  "type": "object",
+  "required": [
+    "op"
+  ],
+  "properties": {
+    "op": {
+      "enum": [
+        "addElement",
+        "addJunction",
+        "addWall",
+        "addSeparator",
+        "removeElement",
+        "setProperty",
+        "unsetProperty",
+        "moveJunction",
+        "setAdjacency",
+        "removeAdjacency",
+        "drawWall",
+        "drawSeparator",
+        "moveWall",
+        "moveRoom",
+        "resizeRoom",
+        "addOpening",
+        "moveOpening",
+        "addRoom",
+        "setRoomFinish",
+        "setRoomBrief",
+        "removeWall",
+        "addLevel",
+        "addProgramItem",
+        "placeElement",
+        "moveElement"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/addElement"
+    },
+    {
+      "$ref": "#/$defs/addJunction"
+    },
+    {
+      "$ref": "#/$defs/addWall"
+    },
+    {
+      "$ref": "#/$defs/addSeparator"
+    },
+    {
+      "$ref": "#/$defs/removeElement"
+    },
+    {
+      "$ref": "#/$defs/setProperty"
+    },
+    {
+      "$ref": "#/$defs/unsetProperty"
+    },
+    {
+      "$ref": "#/$defs/moveJunction"
+    },
+    {
+      "$ref": "#/$defs/setAdjacency"
+    },
+    {
+      "$ref": "#/$defs/removeAdjacency"
+    },
+    {
+      "$ref": "#/$defs/drawWall"
+    },
+    {
+      "$ref": "#/$defs/drawSeparator"
+    },
+    {
+      "$ref": "#/$defs/moveWall"
+    },
+    {
+      "$ref": "#/$defs/moveRoom"
+    },
+    {
+      "$ref": "#/$defs/resizeRoom"
+    },
+    {
+      "$ref": "#/$defs/addOpening"
+    },
+    {
+      "$ref": "#/$defs/moveOpening"
+    },
+    {
+      "$ref": "#/$defs/addRoom"
+    },
+    {
+      "$ref": "#/$defs/setRoomFinish"
+    },
+    {
+      "$ref": "#/$defs/setRoomBrief"
+    },
+    {
+      "$ref": "#/$defs/removeWall"
+    },
+    {
+      "$ref": "#/$defs/addLevel"
+    },
+    {
+      "$ref": "#/$defs/addProgramItem"
+    },
+    {
+      "$ref": "#/$defs/placeElement"
+    },
+    {
+      "$ref": "#/$defs/moveElement"
+    }
+  ],
+  "$defs": {
+    "addElement": {
+      "title": "addElement",
+      "description": "2.1: adds `element` to `collection` under `id`, or under a minted ID (1.5): one of the eleven collections of Core 1.1, the program's `items`, or - with `extension` - a collection of that extension's top-level data. The element is added exactly as given; it is not checked until the batch is validated.",
+      "type": "object",
+      "required": [
+        "op",
+        "collection",
+        "element"
+      ],
+      "properties": {
+        "op": {
+          "const": "addElement"
+        },
+        "collection": {
+          "description": "One of the collections of Core 1.1, or \"items\" (the program's items, Core 11.1); with `extension`, the name of one of that extension's collections (Core 12.5).",
+          "type": "string"
+        },
+        "element": {
+          "description": "The element, added exactly as given.",
+          "type": "object"
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "extension": {
+          "description": "An extension name (Core 1.6): `collection` is then one of its collections, and the element an extension element (2.1.3).",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "extension"
+          ]
+        },
+        {
+          "properties": {
+            "collection": {
+              "enum": [
+                "buildings",
+                "levels",
+                "junctions",
+                "walls",
+                "separators",
+                "openings",
+                "rooms",
+                "slabs",
+                "types",
+                "materials",
+                "assets",
+                "items"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "addJunction": {
+      "title": "addJunction",
+      "description": "2.1: addElement into `junctions`, its members written inline.",
+      "type": "object",
+      "required": [
+        "op",
+        "level",
+        "position"
+      ],
+      "properties": {
+        "op": {
+          "const": "addJunction"
+        },
+        "level": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The level: a reference, resolved to an ID."
+        },
+        "position": {
+          "$ref": "reference.schema.json#/$defs/point",
+          "description": "The junction's position: a point, resolved to [x, y]."
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "join": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A junction member (Core 5.8), passed through as given."
+        },
+        "name": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extensions": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extras": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "addWall": {
+      "title": "addWall",
+      "description": "2.1: addElement into `walls`, its members written inline.",
+      "type": "object",
+      "required": [
+        "op",
+        "level",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "op": {
+          "const": "addWall"
+        },
+        "level": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The level."
+        },
+        "start": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The start junction."
+        },
+        "end": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The end junction."
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "type": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member (Core 5.2), passed into the wall as given: the wall type."
+        },
+        "layers": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member, passed through as given."
+        },
+        "justification": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member, passed through as given."
+        },
+        "base": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member, passed through as given."
+        },
+        "top": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member, passed through as given."
+        },
+        "name": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member, passed through as given."
+        },
+        "extensions": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "Element content, passed through as given."
+        },
+        "extras": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "Element content, passed through as given."
+        }
+      },
+      "additionalProperties": false
+    },
+    "addSeparator": {
+      "title": "addSeparator",
+      "description": "2.1: addElement into `separators`, its members written inline.",
+      "type": "object",
+      "required": [
+        "op",
+        "level",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "op": {
+          "const": "addSeparator"
+        },
+        "level": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The level."
+        },
+        "start": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The start junction."
+        },
+        "end": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The end junction."
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "name": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extensions": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extras": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "removeElement": {
+      "title": "removeElement",
+      "description": "2.2: removes an element; with `cascade`, also what the cascade table of 2.2 says it takes.",
+      "type": "object",
+      "required": [
+        "op",
+        "id"
+      ],
+      "properties": {
+        "op": {
+          "const": "removeElement"
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The element to remove."
+        },
+        "cascade": {
+          "description": "Whether the removal takes its dependents with it (2.2).",
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "setProperty": {
+      "title": "setProperty",
+      "description": "2.3: sets the member at `path`, creating it and any missing objects on the way.",
+      "type": "object",
+      "required": [
+        "op",
+        "id",
+        "path",
+        "value"
+      ],
+      "properties": {
+        "op": {
+          "const": "setProperty"
+        },
+        "id": {
+          "description": "An element reference, or one of the reserved targets \"$project\", \"$site\" and \"$document\".",
+          "type": "string"
+        },
+        "path": {
+          "description": "A JSON Pointer (RFC 6901), relative to the element. An empty path is FS-OPS-003.",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "The value, set as given."
+        }
+      },
+      "additionalProperties": false
+    },
+    "unsetProperty": {
+      "title": "unsetProperty",
+      "description": "2.3: removes the member at `path`, so its default applies again.",
+      "type": "object",
+      "required": [
+        "op",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "op": {
+          "const": "unsetProperty"
+        },
+        "id": {
+          "description": "An element reference, or \"$project\", \"$site\" or \"$document\".",
+          "type": "string"
+        },
+        "path": {
+          "description": "A JSON Pointer (RFC 6901), relative to the element.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "moveJunction": {
+      "title": "moveJunction",
+      "description": "2.4: setProperty of the junction's /position.",
+      "type": "object",
+      "required": [
+        "op",
+        "id",
+        "to"
+      ],
+      "properties": {
+        "op": {
+          "const": "moveJunction"
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The junction."
+        },
+        "to": {
+          "$ref": "reference.schema.json#/$defs/point",
+          "description": "Where it moves to."
+        }
+      },
+      "additionalProperties": false
+    },
+    "setAdjacency": {
+      "title": "setAdjacency",
+      "description": "2.6: writes the adjacency of the pair a, b and its kind - replacing one with that pair and kind where it stands, or appending it.",
+      "type": "object",
+      "required": [
+        "op",
+        "a",
+        "b",
+        "kind"
+      ],
+      "properties": {
+        "op": {
+          "const": "setAdjacency"
+        },
+        "a": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "A program item (3.3)."
+        },
+        "b": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The other program item."
+        },
+        "kind": {
+          "description": "Whether rooms of the two items must, should or must not be adjacent (Core 11.2).",
+          "enum": [
+            "required",
+            "preferred",
+            "forbidden"
+          ]
+        },
+        "weight": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "How much it matters (Core 11.2), passed into the adjacency as given."
+        }
+      },
+      "additionalProperties": false
+    },
+    "removeAdjacency": {
+      "title": "removeAdjacency",
+      "description": "2.6: removes every adjacency of the pair a, b with that kind; FS-OPS-003 when there is none.",
+      "type": "object",
+      "required": [
+        "op",
+        "a",
+        "b",
+        "kind"
+      ],
+      "properties": {
+        "op": {
+          "const": "removeAdjacency"
+        },
+        "a": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "A program item (3.3)."
+        },
+        "b": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The other program item."
+        },
+        "kind": {
+          "description": "Whether rooms of the two items must, should or must not be adjacent (Core 11.2).",
+          "enum": [
+            "required",
+            "preferred",
+            "forbidden"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "drawWall": {
+      "title": "drawWall",
+      "description": "4.1: adds a junction at each end that is a point no junction on the level occupies, then a wall between the two, with the wall members and the members every element may carry as given.",
+      "type": "object",
+      "required": [
+        "op",
+        "level",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "op": {
+          "const": "drawWall"
+        },
+        "level": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The level."
+        },
+        "from": {
+          "$ref": "reference.schema.json#/$defs/point",
+          "description": "A point or a junction."
+        },
+        "to": {
+          "$ref": "reference.schema.json#/$defs/point",
+          "description": "A point or a junction."
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "type": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member (Core 5.2), passed into the wall as given: the wall type."
+        },
+        "layers": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member, passed through as given."
+        },
+        "justification": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member, passed through as given."
+        },
+        "base": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member, passed through as given."
+        },
+        "top": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A wall member, passed through as given."
+        },
+        "name": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extensions": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extras": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "drawSeparator": {
+      "title": "drawSeparator",
+      "description": "4.1: drawWall with addSeparator and no wall members.",
+      "type": "object",
+      "required": [
+        "op",
+        "level",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "op": {
+          "const": "drawSeparator"
+        },
+        "level": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The level."
+        },
+        "from": {
+          "$ref": "reference.schema.json#/$defs/point",
+          "description": "A point or a junction."
+        },
+        "to": {
+          "$ref": "reference.schema.json#/$defs/point",
+          "description": "A point or a junction."
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "name": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extensions": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extras": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "moveWall": {
+      "title": "moveWall",
+      "description": "4.2: moves a wall sideways by `by` along its unit left normal; with `toward`, into that room.",
+      "type": "object",
+      "required": [
+        "op",
+        "wall",
+        "by"
+      ],
+      "properties": {
+        "op": {
+          "const": "moveWall"
+        },
+        "wall": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The wall."
+        },
+        "by": {
+          "$ref": "reference.schema.json#/$defs/length",
+          "description": "Positive towards the wall's left (exterior) side."
+        },
+        "toward": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "A room: the wall moves into its face, whatever the sign of `by`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "moveRoom": {
+      "title": "moveRoom",
+      "description": "4.3: moves every junction on the room's outer cycle, and its anchor, by a vector.",
+      "type": "object",
+      "required": [
+        "op",
+        "room",
+        "by"
+      ],
+      "properties": {
+        "op": {
+          "const": "moveRoom"
+        },
+        "room": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The room."
+        },
+        "by": {
+          "$ref": "reference.schema.json#/$defs/vector",
+          "description": "The vector."
+        }
+      },
+      "additionalProperties": false
+    },
+    "resizeRoom": {
+      "title": "resizeRoom",
+      "description": "4.4: moves one side of a room outwards by `by` (inwards when negative).",
+      "type": "object",
+      "required": [
+        "op",
+        "room",
+        "side",
+        "by"
+      ],
+      "properties": {
+        "op": {
+          "const": "resizeRoom"
+        },
+        "room": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The room."
+        },
+        "side": {
+          "description": "The side.",
+          "enum": [
+            "north",
+            "south",
+            "east",
+            "west"
+          ]
+        },
+        "by": {
+          "$ref": "reference.schema.json#/$defs/length",
+          "description": "How far."
+        }
+      },
+      "additionalProperties": false
+    },
+    "addOpening": {
+      "title": "addOpening",
+      "description": "4.5: addElement into `openings`, placed at a position along its wall.",
+      "type": "object",
+      "required": [
+        "op",
+        "wall",
+        "at"
+      ],
+      "properties": {
+        "op": {
+          "const": "addOpening"
+        },
+        "wall": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The host wall."
+        },
+        "at": {
+          "$ref": "reference.schema.json#/$defs/position",
+          "description": "Where its near edge is (3.5)."
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "fill": {
+          "description": "A door or window type's ID; its width places the opening when `width` is absent.",
+          "type": "string"
+        },
+        "width": {
+          "$ref": "reference.schema.json#/$defs/length",
+          "description": "Its own width."
+        },
+        "height": {
+          "$ref": "reference.schema.json#/$defs/length",
+          "description": "Its own height."
+        },
+        "sill": {
+          "$ref": "reference.schema.json#/$defs/length",
+          "description": "Its own sill."
+        },
+        "hinge": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "An opening member, passed through as given."
+        },
+        "swing": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "An opening member, passed through as given."
+        },
+        "name": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extensions": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extras": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "moveOpening": {
+      "title": "moveOpening",
+      "description": "4.5: setProperty of the opening's /offset - to a position (`at`), or to its offset moved along the wall (`by`, with `toward` choosing the sign). Exactly one of `at` and `by`; `toward` only with `by`.",
+      "type": "object",
+      "required": [
+        "op",
+        "opening"
+      ],
+      "properties": {
+        "op": {
+          "const": "moveOpening"
+        },
+        "opening": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The opening."
+        },
+        "at": {
+          "$ref": "reference.schema.json#/$defs/position",
+          "description": "Where its near edge moves to (3.5)."
+        },
+        "by": {
+          "$ref": "reference.schema.json#/$defs/length",
+          "description": "How far it moves along its wall: positive toward the wall's end junction, negative toward its start."
+        },
+        "toward": {
+          "description": "Chooses the sign of `by` instead: toward the wall's start or end, or in whichever direction along the wall points more north, south, east or west. A direction the wall is perpendicular to is FS-OPS-008.",
+          "enum": [
+            "start",
+            "end",
+            "north",
+            "south",
+            "east",
+            "west"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "at"
+          ]
+        },
+        {
+          "required": [
+            "by"
+          ]
+        }
+      ],
+      "dependentRequired": {
+        "toward": [
+          "by"
+        ]
+      },
+      "additionalProperties": false
+    },
+    "addRoom": {
+      "title": "addRoom",
+      "description": "4.6: addElement into `rooms` with its anchor at `at`; `brief` resolved to the ID of a program item.",
+      "type": "object",
+      "required": [
+        "op",
+        "level",
+        "at"
+      ],
+      "properties": {
+        "op": {
+          "const": "addRoom"
+        },
+        "level": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The level."
+        },
+        "at": {
+          "$ref": "reference.schema.json#/$defs/point",
+          "description": "The anchor."
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "name": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "function": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A room member, passed through as given."
+        },
+        "wallFinish": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A room member, passed through as given."
+        },
+        "floorFinish": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A room member, passed through as given."
+        },
+        "ceilingFinish": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A room member, passed through as given."
+        },
+        "extensions": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extras": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "brief": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The program item the room fulfils (3.3, Core 11.3)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "setRoomFinish": {
+      "title": "setRoomFinish",
+      "description": "4.6: setProperty of the room's /wallFinish, /floorFinish or /ceilingFinish.",
+      "type": "object",
+      "required": [
+        "op",
+        "room",
+        "surface",
+        "material"
+      ],
+      "properties": {
+        "op": {
+          "const": "setRoomFinish"
+        },
+        "room": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The room."
+        },
+        "surface": {
+          "description": "Which finish.",
+          "enum": [
+            "wall",
+            "floor",
+            "ceiling"
+          ]
+        },
+        "material": {
+          "description": "The material's ID, set as given.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "setRoomBrief": {
+      "title": "setRoomBrief",
+      "description": "4.6: setProperty of the room's /brief to the ID of a program item.",
+      "type": "object",
+      "required": [
+        "op",
+        "room",
+        "item"
+      ],
+      "properties": {
+        "op": {
+          "const": "setRoomBrief"
+        },
+        "room": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The room."
+        },
+        "item": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The program item it fulfils (3.3): an ID or a name."
+        }
+      },
+      "additionalProperties": false
+    },
+    "removeWall": {
+      "title": "removeWall",
+      "description": "4.7: removes a wall and its openings, and - when it divides two rooms - the room `keep` does not name.",
+      "type": "object",
+      "required": [
+        "op",
+        "wall"
+      ],
+      "properties": {
+        "op": {
+          "const": "removeWall"
+        },
+        "wall": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The wall."
+        },
+        "keep": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The room that survives."
+        }
+      },
+      "additionalProperties": false
+    },
+    "addLevel": {
+      "title": "addLevel",
+      "description": "4.8: addElement into `levels`, its elevation given, or taken from the level it sits above or below. Exactly one of `elevation`, `above` and `below`.",
+      "type": "object",
+      "required": [
+        "op",
+        "building",
+        "height"
+      ],
+      "properties": {
+        "op": {
+          "const": "addLevel"
+        },
+        "building": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The building."
+        },
+        "height": {
+          "$ref": "reference.schema.json#/$defs/length",
+          "description": "The new level's floor-to-floor height."
+        },
+        "elevation": {
+          "$ref": "reference.schema.json#/$defs/length",
+          "description": "The new level's elevation."
+        },
+        "above": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "A level: the new level's elevation is its elevation plus its height."
+        },
+        "below": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "A level: the new level's elevation is its elevation minus the new level's height."
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "name": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extensions": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extras": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "elevation"
+          ]
+        },
+        {
+          "required": [
+            "above"
+          ]
+        },
+        {
+          "required": [
+            "below"
+          ]
+        }
+      ],
+      "additionalProperties": false
+    },
+    "addProgramItem": {
+      "title": "addProgramItem",
+      "description": "4.9: addElement into the program's `items`, its areas resolved (3.6) and its level resolved.",
+      "type": "object",
+      "required": [
+        "op",
+        "function"
+      ],
+      "properties": {
+        "op": {
+          "const": "addProgramItem"
+        },
+        "function": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "The room function of the item (Core 11.1), passed into the item as given."
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        },
+        "count": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "How many rooms the item asks for, passed into the item as given."
+        },
+        "targetArea": {
+          "$ref": "reference.schema.json#/$defs/area",
+          "description": "The net area each of its rooms is meant to have."
+        },
+        "minArea": {
+          "$ref": "reference.schema.json#/$defs/area",
+          "description": "The least net area each of its rooms may have."
+        },
+        "level": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The level its rooms are preferred on."
+        },
+        "name": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extensions": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        },
+        "extras": {
+          "$ref": "reference.schema.json#/$defs/content",
+          "description": "A member every element may carry (Core 1.4), passed into the element as given (2.1)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "placeElement": {
+      "title": "placeElement",
+      "description": "4.10: addElement of an extension element, its host resolved and its fallback's level set to the host's level.",
+      "type": "object",
+      "required": [
+        "op",
+        "extension",
+        "collection",
+        "host",
+        "element"
+      ],
+      "properties": {
+        "op": {
+          "const": "placeElement"
+        },
+        "extension": {
+          "description": "The extension name (Core 1.6).",
+          "type": "string"
+        },
+        "collection": {
+          "description": "One of the extension's collections (Core 12.5).",
+          "type": "string"
+        },
+        "host": {
+          "$ref": "reference.schema.json#/$defs/host"
+        },
+        "element": {
+          "description": "The extension element, without its host: passed in as given, with `host` and `fallback.level` set.",
+          "type": "object"
+        },
+        "id": {
+          "$ref": "reference.schema.json#/$defs/newId"
+        }
+      },
+      "additionalProperties": false
+    },
+    "moveElement": {
+      "title": "moveElement",
+      "description": "4.10: setProperty of an extension element's /host to the resolved host, then of its /fallback/level to the host's level.",
+      "type": "object",
+      "required": [
+        "op",
+        "element",
+        "host"
+      ],
+      "properties": {
+        "op": {
+          "const": "moveElement"
+        },
+        "element": {
+          "$ref": "reference.schema.json#/$defs/selector",
+          "description": "The extension element (3.3): an ID or a name."
+        },
+        "host": {
+          "$ref": "reference.schema.json#/$defs/host"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

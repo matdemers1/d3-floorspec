@@ -1,0 +1,6 @@
+{
+  "description": "\"1' from J1 toward J1\" has no direction: two junctions with the same position are rejected with FS-OPS-003.",
+  "covers": [
+    "FS-OPS-3.2.1"
+  ]
+}

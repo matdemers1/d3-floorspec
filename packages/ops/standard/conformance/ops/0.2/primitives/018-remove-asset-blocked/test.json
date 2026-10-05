@@ -1,0 +1,6 @@
+{
+  "description": "An asset is blocked by the material whose texture it is.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

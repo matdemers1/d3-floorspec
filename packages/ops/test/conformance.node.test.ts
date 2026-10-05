@@ -8,13 +8,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { apply } from '../src/index.js';
-import { checkCase, listCases, SUITE, type OpsCase } from './suite.js';
+import { checkCase, listCases, SUITES, type OpsCase } from './suite.js';
 
-const all = listCases();
-const results = new Map<string, boolean>();
-
-function load(name: string): OpsCase {
-  const dir = join(SUITE, name);
+function load(suite: string, name: string): OpsCase {
+  const dir = join(suite, name);
   const output = join(dir, 'output.json');
   return {
     name,
@@ -25,21 +22,27 @@ function load(name: string): OpsCase {
   };
 }
 
-describe('conformance suite (Ops 0.1)', () => {
-  it.runIf(existsSync(SUITE))('is vendored', () => {
-    expect(all.length).toBeGreaterThan(0);
-  });
+for (const ops of ['0.1', '0.2'] as const) {
+  const suite = SUITES[ops];
+  const all = listCases(suite);
+  const results = new Map<string, boolean>();
 
-  it.each(all.map((n) => [n]))('%s', (name) => {
-    results.set(name, false);
-    const c = load(name);
-    const problems = checkCase(c, apply(c.input, c.request));
-    expect(problems, problems.join('\n')).toEqual([]);
-    results.set(name, true);
-  });
+  describe(`conformance suite (Ops ${ops}, applied as Ops ${ops})`, () => {
+    it.runIf(existsSync(suite))('is vendored', () => {
+      expect(all.length).toBeGreaterThan(0);
+    });
 
-  afterAll(() => {
-    const passed = [...results.values()].filter(Boolean).length;
-    process.stderr.write(`\nops conformance: ${passed}/${all.length} cases pass (${all.length ? Math.floor((100 * passed) / all.length) : 0}%)\n`);
+    it.each(all.map((n) => [n]))('%s', (name) => {
+      results.set(name, false);
+      const c = load(suite, name);
+      const problems = checkCase(c, apply(c.input, c.request, { ops }));
+      expect(problems, problems.join('\n')).toEqual([]);
+      results.set(name, true);
+    });
+
+    afterAll(() => {
+      const passed = [...results.values()].filter(Boolean).length;
+      process.stderr.write(`\nops ${ops} conformance: ${passed}/${all.length} cases pass (${all.length ? Math.floor((100 * passed) / all.length) : 0}%)\n`);
+    });
   });
-});
+}

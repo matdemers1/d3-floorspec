@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "$site",
+      "path": "/trueNorth"
+    }
+  ]
+}

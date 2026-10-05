@@ -259,6 +259,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
+      '@floorspec/ops':
+        specifier: workspace:*
+        version: link:../ops
       '@modelcontextprotocol/client':
         specifier: 2.1.0
         version: 2.1.0

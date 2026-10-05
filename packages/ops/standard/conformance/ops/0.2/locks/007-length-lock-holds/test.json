@@ -1,0 +1,6 @@
+{
+  "description": "W8 is locked to its length: resizing the Kitchen moves W8 bodily (J7 east, its end reconnected to J9 at (14', 8')), so it stays 8' long.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

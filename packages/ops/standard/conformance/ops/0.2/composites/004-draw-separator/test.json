@@ -1,0 +1,7 @@
+{
+  "description": "An open kitchen: a separator drawn across the room between two new junctions on its walls (which normalization splits there), and a room added in the new face.",
+  "covers": [
+    "FS-OPS-4.1.1",
+    "FS-OPS-4.6.1"
+  ]
+}

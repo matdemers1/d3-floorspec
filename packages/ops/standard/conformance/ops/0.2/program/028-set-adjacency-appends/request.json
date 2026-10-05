@@ -1,0 +1,11 @@
+{
+  "batch": [
+    {
+      "op": "setAdjacency",
+      "a": "Pantry",
+      "b": "Dining",
+      "kind": "preferred",
+      "weight": 2
+    }
+  ]
+}

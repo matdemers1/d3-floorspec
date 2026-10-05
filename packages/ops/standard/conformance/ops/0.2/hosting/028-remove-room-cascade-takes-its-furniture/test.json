@@ -1,0 +1,6 @@
+{
+  "description": "With cascade, the room takes what is on its floor and ceiling, and nothing else: the bench standing free outside stays.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

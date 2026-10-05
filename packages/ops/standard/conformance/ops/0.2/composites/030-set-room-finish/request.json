@@ -1,0 +1,22 @@
+{
+  "batch": [
+    {
+      "op": "setRoomFinish",
+      "room": "Dining",
+      "surface": "wall",
+      "material": "PAINT"
+    },
+    {
+      "op": "setRoomFinish",
+      "room": "Dining",
+      "surface": "floor",
+      "material": "OAK"
+    },
+    {
+      "op": "setRoomFinish",
+      "room": "Dining",
+      "surface": "ceiling",
+      "material": "PLASTER"
+    }
+  ]
+}

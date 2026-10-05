@@ -1,0 +1,24 @@
+{
+  "batch": [
+    {
+      "op": "placeElement",
+      "extension": "FS_furniture",
+      "collection": "pieces",
+      "host": {
+        "mode": "surface",
+        "room": "living",
+        "surface": "ceiling",
+        "at": ["6'", "5'"]
+      },
+      "element": {
+        "fallback": {
+          "box": {
+            "min": [-384000, -384000, 0],
+            "max": [384000, 384000, 1024000]
+          }
+        },
+        "piece": "side table"
+      }
+    }
+  ]
+}

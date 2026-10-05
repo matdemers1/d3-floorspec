@@ -1,0 +1,6 @@
+{
+  "description": "Placing the first device creates the extension's data; the inverse removes the device, then - comparing A with what that leaves, as it is - removes the data it emptied.",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

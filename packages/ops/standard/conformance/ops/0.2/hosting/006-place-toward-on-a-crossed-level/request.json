@@ -1,0 +1,31 @@
+{
+  "batch": [
+    {
+      "op": "drawWall",
+      "level": "L1",
+      "from": ["-2'", "5'"],
+      "to": ["14'", "5'"]
+    },
+    {
+      "op": "placeElement",
+      "extension": "FS_electrical",
+      "collection": "devices",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W2",
+        "at": "2'",
+        "height": 384000,
+        "toward": "Living"
+      },
+      "element": {
+        "fallback": {
+          "box": {
+            "min": [0, -51200, 0],
+            "max": [25600, 51200, 128000]
+          }
+        },
+        "device": "receptacle"
+      }
+    }
+  ]
+}

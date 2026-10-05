@@ -1,0 +1,19 @@
+{
+  "batch": [
+    {
+      "op": "placeElement",
+      "extension": "FS_electrical",
+      "collection": "devices",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W2",
+        "at": "2'",
+        "height": 384000,
+        "side": "right"
+      },
+      "element": {
+        "device": "receptacle"
+      }
+    }
+  ]
+}

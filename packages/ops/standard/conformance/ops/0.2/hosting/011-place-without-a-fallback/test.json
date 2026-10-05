@@ -1,0 +1,7 @@
+{
+  "description": "An element with no fallback gets one of its host's level only - and a fallback needs a box, so the result is invalid.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-1.2.3"
+  ]
+}

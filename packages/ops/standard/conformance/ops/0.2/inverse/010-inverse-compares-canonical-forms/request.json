@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/justification",
+      "value": "center"
+    },
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/name",
+      "value": "West"
+    }
+  ]
+}

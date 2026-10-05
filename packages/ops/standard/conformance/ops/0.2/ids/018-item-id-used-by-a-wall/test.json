@@ -1,0 +1,7 @@
+{
+  "description": "An item named W1 - a wall's ID: FS-OPS-005.",
+  "covers": [
+    "FS-OPS-1.5.2",
+    "FS-OPS-2.1.1"
+  ]
+}

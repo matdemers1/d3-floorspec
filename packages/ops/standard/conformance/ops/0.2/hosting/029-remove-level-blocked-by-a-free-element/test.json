@@ -1,0 +1,6 @@
+{
+  "description": "L3 holds only a bench standing free on it: the bench blocks the level's removal.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

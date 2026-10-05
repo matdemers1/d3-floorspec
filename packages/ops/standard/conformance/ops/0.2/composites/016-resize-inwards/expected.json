@@ -1,0 +1,45 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "aab61f0bd6e99226c0a137a4f7b174e30690e92118eac472624c2690ecb341f7",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "moveJunction",
+      "id": "J5",
+      "to": [8583168, 4681728]
+    },
+    {
+      "op": "moveJunction",
+      "id": "J6",
+      "to": [8583168, 0]
+    },
+    {
+      "op": "setProperty",
+      "id": "R3",
+      "path": "/anchor",
+      "value": [6632448, 2340864]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R3",
+      "path": "/anchor",
+      "value": [7022592, 2340864]
+    },
+    {
+      "op": "setProperty",
+      "id": "J5",
+      "path": "/position",
+      "value": [9363456, 4681728]
+    },
+    {
+      "op": "setProperty",
+      "id": "J6",
+      "path": "/position",
+      "value": [9363456, 0]
+    }
+  ]
+}

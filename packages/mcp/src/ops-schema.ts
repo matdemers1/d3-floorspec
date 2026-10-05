@@ -2,14 +2,15 @@ import { z } from 'zod';
 import { ROOM_FUNCTIONS } from './vocabulary.js';
 
 /**
- * The Floorspec Ops 0.1 vocabulary as typed input schemas (Ops chapters 2–4), so `floorspec_apply`
+ * The Floorspec Ops 0.2 vocabulary as typed input schemas (Ops chapters 2–4), so `floorspec_apply`
  * and `floorspec_propose` advertise exactly the operations the standard defines — a discriminated
- * union on `op`, each with exactly its members (Ops 1.1.1).
+ * union on `op`, each with exactly its members (Ops 1.1.2) — the program (items, adjacencies,
+ * briefs) and placing extension elements (devices, fixtures, furniture) on hosts included.
  *
- * Hand-written from the spec until the standard's `schema/ops/0.1` is vendored; then this file
- * imports that schema instead. The shapes are deliberately loose where the reference grammar is
- * (a length may be an integer of base units or a string such as `2' 6"`), and the applier is the
- * judge of every value: a schema that resolved references would be a second applier.
+ * Hand-written from the spec; a test holds every operation's members to the vendored
+ * `schema/ops/0.2`. The shapes are deliberately loose where the reference grammar is (a length may
+ * be an integer of base units or a string such as `2' 6"`), and the applier is the judge of every
+ * value: a schema that resolved references would be a second applier.
  */
 
 const describe = <T extends z.ZodType>(schema: T, text: string) => schema.describe(text);
@@ -60,6 +61,9 @@ export const Position = shared(
   'Along a wall: "centered", "2\' from start", "18\\" from end", or an offset length.',
 );
 
+/** An area: an integer of square base units, or a string such as `11 m2`, `120 sq ft`. */
+export const Area = shared(z.union([z.int(), z.string().min(1).max(64)]), 'Area', '"11 m2", "120 sq ft", or square base units.');
+
 const Id = shared(z.string().min(1).max(64), 'NewId', 'An ID for the new element; omitted, the next is minted (W13).');
 const Side = shared(z.enum(['north', 'south', 'east', 'west']), 'Side');
 /** Any JSON value — present: a missing `value` is not `null`. */
@@ -71,6 +75,35 @@ export const COLLECTIONS = [
   'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'types', 'materials', 'assets',
 ] as const;
 export const Collection = shared(z.enum(COLLECTIONS), 'Collection');
+/** Core 4.1's room functions, said once for addRoom and addProgramItem. */
+const RoomFunction = shared(z.string().max(64), 'Function', `One of ${ROOM_FUNCTIONS.join(', ')}; or an extension term.`);
+/** A program item: its ID or name, or `item <item>`, `brief of <room>`. */
+const Item = shared(z.string().min(1).max(200), 'Item', 'A program item: its ID or name, "item Kitchen", or "brief of R2".');
+const AdjacencyKind = shared(z.enum(['required', 'preferred', 'forbidden']), 'AdjacencyKind');
+/** An extension's name and one of its collections. */
+const Extension = shared(z.string().min(1).max(64), 'Extension', 'An extension name: FS_electrical, FS_plumbing, FS_furniture.');
+const ExtCollection = z.string().min(1).max(64).describe('Its collection: devices, fixtures, pieces.');
+
+/**
+ * A host reference (Ops 4.10): where a hosted element is placed, written with the reference grammar.
+ * A wall face takes exactly one of `side` and `toward`.
+ */
+export const Host = shared(
+  z.discriminatedUnion('mode', [
+    z.strictObject({
+      mode: z.literal('wallFace'),
+      wall: Element,
+      side: z.enum(['left', 'right']).optional(),
+      toward: describe(Element, 'The room the face looks into.').optional(),
+      at: describe(Position, '"2\' from start", "centered": a point along the wall.'),
+      height: describe(Length, 'Above the wall base.'),
+    }),
+    z.strictObject({ mode: z.literal('surface'), room: Element, surface: z.enum(['floor', 'ceiling']), at: Point, rotation: z.int().optional() }),
+    z.strictObject({ mode: z.literal('free'), level: Element, at: Point, rotation: z.int().optional() }),
+  ]),
+  'Host',
+  'wallFace: exactly one of side and toward. rotation: microdegrees.',
+);
 
 const Justification = shared(z.enum(['center', 'exteriorFace', 'interiorFace', 'coreFace']), 'Justification');
 const Name = shared(z.string().max(200), 'Name');
@@ -78,7 +111,7 @@ const Name = shared(z.string().max(200), 'Name');
 const Target = shared(z.string().min(1).max(200), 'Target', 'An element ID or selector, or $project, $site, $document.');
 const Pointer = shared(z.string().regex(/^\//).max(200), 'Pointer', 'A JSON Pointer into it: "/name".');
 
-/** The members every element may carry, accepted on the operations that create one (Ops 0.1). */
+/** The members every element may carry, accepted on the operations that create one (Ops 2.1). */
 const elementMembers = {
   name: Name.optional(),
   extensions: Obj.optional(),
@@ -99,7 +132,8 @@ const wallMembers = {
 
 export const AddElement = z.strictObject({
   op: z.literal('addElement'),
-  collection: Collection,
+  collection: describe(z.string().min(1).max(64), 'A Core collection, "items" (the program), or with extension one of its collections.'),
+  extension: Extension.optional(),
   id: Id.optional(),
   element: describe(Obj, 'The element, exactly as Floorspec Core defines it for the collection.'),
 });
@@ -156,6 +190,21 @@ export const MoveJunction = z.strictObject({
   to: Point,
 });
 
+export const SetAdjacency = z.strictObject({
+  op: z.literal('setAdjacency'),
+  a: Item,
+  b: Item,
+  kind: AdjacencyKind,
+  weight: z.number().optional(),
+}).describe('Adds, or replaces, the line between two program items.');
+
+export const RemoveAdjacency = z.strictObject({
+  op: z.literal('removeAdjacency'),
+  a: Item,
+  b: Item,
+  kind: AdjacencyKind,
+});
+
 // ─── Composites (chapter 4) ────────────────────────────────────────────────
 
 export const DrawWall = z.strictObject({
@@ -208,7 +257,7 @@ export const AddOpening = z.strictObject({
   hinge: z.string().max(32).optional(),
   swing: z.string().max(32).optional(),
   ...elementMembers,
-}).describe('Without a fill type, give width and height.');
+}).describe('No fill: an empty cased opening (give width, height). A door/window of another size: fill the nearest type, override width/height.');
 
 export const MoveOpening = z.strictObject({
   op: z.literal('moveOpening'),
@@ -224,13 +273,20 @@ export const AddRoom = z.strictObject({
   level: Element,
   at: Point,
   name: Name.optional(),
-  function: describe(z.string().max(64), `One of ${ROOM_FUNCTIONS.join(', ')}; or an extension term.`).optional(),
+  function: RoomFunction.optional(),
   wallFinish: Element.optional(),
   floorFinish: Element.optional(),
   ceilingFinish: Element.optional(),
+  brief: describe(Item, 'The program item it fulfils.').optional(),
   extensions: Obj.optional(),
   extras: Obj.optional(),
 }).describe('Makes the face containing at a room.');
+
+export const SetRoomBrief = z.strictObject({
+  op: z.literal('setRoomBrief'),
+  room: Element,
+  item: Item,
+});
 
 export const SetRoomFinish = z.strictObject({
   op: z.literal('setRoomFinish'),
@@ -256,11 +312,40 @@ export const AddLevel = z.strictObject({
   ...elementMembers,
 }).describe('Exactly one of elevation, above and below (a level).');
 
-/** Every operation Floorspec Ops 0.1 defines — one `$defs` entry per tool, referenced by the batch. */
+export const AddProgramItem = z.strictObject({
+  op: z.literal('addProgramItem'),
+  id: Id.optional(),
+  function: RoomFunction,
+  name: Name.optional(),
+  count: z.int().min(1).optional(),
+  targetArea: Area.optional(),
+  minArea: Area.optional(),
+  level: describe(Element, 'Preferred level.').optional(),
+  extensions: Obj.optional(),
+  extras: Obj.optional(),
+}).describe('A bubble of the brief.');
+
+export const PlaceElement = z.strictObject({
+  op: z.literal('placeElement'),
+  id: Id.optional(),
+  extension: Extension,
+  collection: ExtCollection,
+  host: Host,
+  element: describe(Obj, 'Its members besides host: fallback.box, the extension\'s own.'),
+}).describe('Adds an outlet, fixture or piece on a host.');
+
+export const MoveElement = z.strictObject({
+  op: z.literal('moveElement'),
+  element: describe(Element, 'An extension element: its ID or name.'),
+  host: Host,
+});
+
+/** Every operation Floorspec Ops 0.2 defines — one `$defs` entry per tool, referenced by the batch. */
 export const OpUnion = shared(
   z.discriminatedUnion('op', [
-    AddElement, AddJunction, AddWall, AddSeparator, RemoveElement, SetProperty, UnsetProperty, MoveJunction,
-    DrawWall, DrawSeparator, MoveWall, MoveRoom, ResizeRoom, AddOpening, MoveOpening, AddRoom, SetRoomFinish, RemoveWall, AddLevel,
+    AddElement, AddJunction, AddWall, AddSeparator, RemoveElement, SetProperty, UnsetProperty, MoveJunction, SetAdjacency, RemoveAdjacency,
+    DrawWall, DrawSeparator, MoveWall, MoveRoom, ResizeRoom, AddOpening, MoveOpening, AddRoom, SetRoomFinish, SetRoomBrief, RemoveWall, AddLevel,
+    AddProgramItem, PlaceElement, MoveElement,
   ]),
   'Op',
 );
@@ -270,7 +355,7 @@ export const OP_NAMES = OpUnion.options.map((o) => o.shape.op.value);
 
 /**
  * The operation union as `floorspec_propose` advertises it: the op names, with the members left to
- * `floorspec_apply`'s schema, so the 19-way union is spelled out once in `tools/list` rather than
+ * `floorspec_apply`'s schema, so the 25-way union is spelled out once in `tools/list` rather than
  * twice. Only the advertisement is lighter — propose validates its batch against `OpUnion` exactly
  * as apply does, so a member that apply refuses, propose refuses too.
  */

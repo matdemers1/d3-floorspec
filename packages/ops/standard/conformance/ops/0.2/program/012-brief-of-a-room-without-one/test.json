@@ -1,0 +1,7 @@
+{
+  "description": "The Living room of the box fulfils no item, so \"brief of Living\" resolves to nothing: FS-OPS-003 names the room.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-7.1.1"
+  ]
+}

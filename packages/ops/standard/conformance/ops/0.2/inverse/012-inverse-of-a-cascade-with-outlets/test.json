@@ -1,0 +1,6 @@
+{
+  "description": "The inverse of removing a wall that took an outlet with it adds the wall back, then the outlet - extension elements come last in step 3, after what they are hosted on.",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

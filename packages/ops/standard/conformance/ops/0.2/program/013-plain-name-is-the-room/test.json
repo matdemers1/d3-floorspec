@@ -1,0 +1,7 @@
+{
+  "description": "A plain name names a room, not an item, where any element is expected: \"Kitchen\" in setProperty is the Kitchen room R1, though an item is named Kitchen too.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-2.3.1"
+  ]
+}

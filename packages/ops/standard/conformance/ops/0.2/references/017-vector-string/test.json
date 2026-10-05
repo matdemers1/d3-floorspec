@@ -1,0 +1,7 @@
+{
+  "description": "moveRoom by \"1' 6\\\" west\": [-585216, 0].",
+  "covers": [
+    "FS-OPS-3.2.1",
+    "FS-OPS-4.3.1"
+  ]
+}

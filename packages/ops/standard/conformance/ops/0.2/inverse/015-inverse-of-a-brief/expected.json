@@ -1,0 +1,40 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "c7f8feecf9a6036defcb86c8749667bcd79e4bf831d862196e5c7539be2ca5db",
+  "created": ["P1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P1",
+      "element": {
+        "function": "living",
+        "name": "Living"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/brief",
+      "value": "P1"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/brief"
+    },
+    {
+      "op": "removeElement",
+      "id": "P1"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/program"
+    }
+  ]
+}

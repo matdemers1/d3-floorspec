@@ -1,0 +1,11 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "element": {
+        "building": "B1"
+      }
+    }
+  ]
+}

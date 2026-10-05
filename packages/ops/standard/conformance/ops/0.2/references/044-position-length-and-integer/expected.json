@@ -1,0 +1,39 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "872efb2e6ea8a4948862df3deddcb38eb244d55f8fa7f8f330ea7d235cc4b7fc",
+  "created": ["O1", "O2"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 1170432,
+        "wall": "W2"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O2",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 128000,
+        "wall": "W4"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "O1"
+    },
+    {
+      "op": "removeElement",
+      "id": "O2"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A junction named J9, removed again, then a junction minted: J9 was named earlier in the batch, so the new one is J10 - and replaying the resolved echo, which names every ID, mints the same.",
+  "covers": [
+    "FS-OPS-1.5.1",
+    "FS-OPS-1.4.1"
+  ]
+}

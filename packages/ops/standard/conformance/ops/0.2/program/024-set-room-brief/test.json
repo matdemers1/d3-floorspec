@@ -1,0 +1,7 @@
+{
+  "description": "setRoomBrief makes the Dining room fulfil the Kitchen item: \"Dining\" is the room in \"room\", and \"Kitchen\" is the item in \"item\".",
+  "covers": [
+    "FS-OPS-4.6.2",
+    "FS-OPS-3.3.1"
+  ]
+}

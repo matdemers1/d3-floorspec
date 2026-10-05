@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "addOpening",
+      "wall": "W2",
+      "at": "centered",
+      "fill": "T-door-36",
+      "width": "32\"",
+      "hinge": "end",
+      "swing": "left"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "An earlier operation sets the adjacency to a string: FS-OPS-003.",
+  "covers": [
+    "FS-OPS-2.6.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A lock on R9, which A does not have: FS-OPS-010.",
+  "covers": [
+    "FS-OPS-6.1.1",
+    "FS-OPS-7.1.1"
+  ]
+}

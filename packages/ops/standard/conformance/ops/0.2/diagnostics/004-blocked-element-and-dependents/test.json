@@ -1,0 +1,7 @@
+{
+  "description": "FS-OPS-006 names the blocked element and every dependent: J8 and the three walls that end at it.",
+  "covers": [
+    "FS-OPS-7.1.1",
+    "FS-OPS-2.2.1"
+  ]
+}

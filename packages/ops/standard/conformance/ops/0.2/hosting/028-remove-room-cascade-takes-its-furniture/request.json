@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "removeElement",
+      "id": "R1",
+      "cascade": true
+    }
+  ]
+}

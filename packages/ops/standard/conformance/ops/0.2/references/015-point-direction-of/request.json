@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "addJunction",
+      "level": "L1",
+      "position": "12' east of J4"
+    }
+  ]
+}

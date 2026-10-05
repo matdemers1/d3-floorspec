@@ -218,3 +218,27 @@ export function formatLength(value: number | bigint, options: FormatLengthOption
 export function describeRounding(p: Extract<LengthParse, { ok: true }>): string | undefined {
   return p.roundedBy.n === 0n ? undefined : `${qString(p.exact)} base units, rounded to ${p.value}`;
 }
+
+// ── 3.6 areas (Ops 0.2) ───────────────────────────────────────────────────────
+
+/** Square base units per square unit (3.6). */
+export const SQUARE_UNITS = {
+  mm: UNITS.mm * UNITS.mm,
+  cm: UNITS.cm * UNITS.cm,
+  m: UNITS.m * UNITS.m,
+  in: UNITS.in * UNITS.in,
+  ft: UNITS.ft * UNITS.ft,
+} as const;
+
+const AREA_RE = /^[ \t]*([0-9]+(?:\.[0-9]+)?|\.[0-9]+)[ \t]*(?:(mm|cm|m|in|ft)(?:2|²)|sq[ \t]+(mm|cm|m|in|ft))[ \t]*$/i;
+
+/**
+ * An area string (3.6): `<decimal> <unit>2`, `<decimal> <unit>²` or `<decimal> sq <unit>`, the
+ * units mm, cm, m, in and ft; computed exactly and rounded once, ties to even. Never negative.
+ */
+export function parseArea(src: string): { ok: true; value: bigint } | { ok: false; reason: string } {
+  const m = AREA_RE.exec(src);
+  if (!m) return { ok: false, reason: 'write a number and a square unit, such as "11 m2", "11 m²" or "120 sq ft"' };
+  const unit = (m[2] ?? m[3])!.toLowerCase() as keyof typeof SQUARE_UNITS;
+  return { ok: true, value: qround(qmul(qDecimal(m[1]!), q(SQUARE_UNITS[unit]))) };
+}

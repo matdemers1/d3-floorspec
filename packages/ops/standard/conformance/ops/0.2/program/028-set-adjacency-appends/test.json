@@ -1,0 +1,7 @@
+{
+  "description": "setAdjacency of a pair the program does not relate appends the adjacency: the Pantry is preferred next to the Dining room, with weight 2. Items are named as they are called.",
+  "covers": [
+    "FS-OPS-2.6.1",
+    "FS-OPS-3.3.1"
+  ]
+}

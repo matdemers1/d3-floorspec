@@ -1,0 +1,42 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d7207686545bd7fb4ddc9812a8b782debbca4aeeb9d84e085c82f7551e0952f3",
+  "created": ["P1", "P2"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P1",
+      "element": {
+        "function": "storage",
+        "minArea": 2
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P2",
+      "element": {
+        "function": "storage",
+        "minArea": 2
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "P1"
+    },
+    {
+      "op": "removeElement",
+      "id": "P2"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/program"
+    }
+  ]
+}

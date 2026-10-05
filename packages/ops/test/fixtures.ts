@@ -74,6 +74,35 @@ export function fixtures(): Fixture[] {
       request: { batch: [{ op: 'drawWall', level: 'L1', from: [0, 0], to: [7654321, 1234567], layers: core }, { op: 'drawWall', level: 'L1', from: [0, 1234567], to: [7654321, 3], layers: core }] },
     },
     { name: 'a point toward a junction', doc: box(), request: { batch: [{ op: 'moveJunction', id: 'J2', to: "1' 1/3\" from J1 toward J3" }] } },
+    {
+      name: 'Ops 0.2: a brief, its bubbles and lines',
+      doc: { ...pair(), floorspec: '0.2' },
+      request: {
+        batch: [
+          { op: 'addProgramItem', function: 'kitchen', name: 'Cook', minArea: '8.25 m2' },
+          { op: 'addProgramItem', function: 'dining', name: 'Eat', targetArea: '120.5 sq ft', level: 'L1' },
+          { op: 'setAdjacency', a: 'Cook', b: 'Eat', kind: 'required', weight: 10 },
+          { op: 'setRoomBrief', room: 'Kitchen', item: 'Cook' },
+          { op: 'setRoomBrief', room: 'Dining', item: 'Eat' },
+        ],
+      },
+    },
+    {
+      name: 'Ops 0.2: outlets on a wall split by a crossing wall',
+      doc: { ...pair(), floorspec: '0.2', extensionsUsed: { FS_electrical: '0.1.0' } },
+      request: {
+        batch: [
+          ...[0, 1, 2].map((i) => ({
+            op: 'placeElement',
+            extension: 'FS_electrical',
+            collection: 'devices',
+            host: { mode: 'wallFace', wall: 'south wall of Kitchen', toward: 'Kitchen', at: `${3 * i + 1}' 1/3" from start`, height: '12"' },
+            element: { fallback: { box: { min: [0, -51200, 0], max: [25600, 51200, 128000] } } },
+          })),
+          { op: 'drawWall', level: 'L1', from: [1234567, -500000], to: [2765431, 3300001], layers: core },
+        ],
+      },
+    },
   ];
   for (let seed = 1; seed <= 60; seed++) out.push(random(seed));
   return out;

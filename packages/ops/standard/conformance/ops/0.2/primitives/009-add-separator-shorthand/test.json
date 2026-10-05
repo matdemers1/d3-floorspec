@@ -1,0 +1,6 @@
+{
+  "description": "addSeparator is addElement into separators.",
+  "covers": [
+    "FS-OPS-2.1.2"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The door at offset 3' spans [3', 6'], across the new junction at 4': no piece contains it, FS-OPS-009.",
+  "covers": [
+    "FS-OPS-5.2.1",
+    "FS-OPS-7.1.1"
+  ]
+}

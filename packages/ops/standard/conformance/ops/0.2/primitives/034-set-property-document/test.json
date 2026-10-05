@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of $document addresses the document's top-level members other than its collections.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

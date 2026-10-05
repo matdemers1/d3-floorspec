@@ -1,0 +1,7 @@
+{
+  "description": "The Dining room is locked: its anchor moves with the Kitchen's east wall, so its content changes. FS-OPS-011 names R3.",
+  "covers": [
+    "FS-OPS-6.1.2",
+    "FS-OPS-7.1.1"
+  ]
+}

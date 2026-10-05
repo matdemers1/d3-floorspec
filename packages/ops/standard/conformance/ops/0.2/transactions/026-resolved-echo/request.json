@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "moveWall",
+      "wall": "east wall of Kitchen",
+      "by": "1'",
+      "toward": "Dining"
+    }
+  ]
+}

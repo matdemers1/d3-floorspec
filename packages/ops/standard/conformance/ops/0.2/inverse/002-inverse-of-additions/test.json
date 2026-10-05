@@ -1,0 +1,6 @@
+{
+  "description": "The inverse of a drawn wall and a door in it removes them - openings, then walls, then junctions, by ID.",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

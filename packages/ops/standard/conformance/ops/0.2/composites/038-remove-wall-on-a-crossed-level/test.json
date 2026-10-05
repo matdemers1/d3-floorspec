@@ -1,0 +1,7 @@
+{
+  "description": "removeWall by ID reads the faces either side of the wall; after the first operation makes W8 cross the north wall, its level has none to give: FS-OPS-007.",
+  "covers": [
+    "FS-OPS-3.4.1",
+    "FS-OPS-4.7.1"
+  ]
+}

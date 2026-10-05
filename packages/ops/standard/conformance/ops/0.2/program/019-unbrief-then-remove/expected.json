@@ -1,0 +1,59 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "14fb79e671429d1d41ccb58e8919e6c8a415b90bccfa1ed72ae90afd28924a2f",
+  "created": [],
+  "removed": ["KIT"],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/brief"
+    },
+    {
+      "op": "removeElement",
+      "id": "KIT"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/brief",
+      "value": "KIT"
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "KIT",
+      "element": {
+        "function": "kitchen",
+        "minArea": 13107200000000,
+        "name": "Kitchen"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/program/adjacency",
+      "value": [
+        {
+          "a": "KIT",
+          "b": "DIN",
+          "kind": "required"
+        },
+        {
+          "a": "KIT",
+          "b": "PAN",
+          "kind": "preferred",
+          "weight": 3
+        },
+        {
+          "a": "GAR",
+          "b": "KIT",
+          "kind": "forbidden"
+        }
+      ]
+    }
+  ]
+}

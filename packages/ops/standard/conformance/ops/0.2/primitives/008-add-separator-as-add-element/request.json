@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "separators",
+      "element": {
+        "level": "L1",
+        "start": "J5",
+        "end": "J6"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The item's function is passed in as given; \"bedroom\" is not a room function of Core 4.1 (\"sleeping\" is), so the result is invalid.",
+  "covers": [
+    "FS-OPS-4.9.1",
+    "FS-OPS-1.2.3"
+  ]
+}

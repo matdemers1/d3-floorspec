@@ -1,0 +1,7 @@
+{
+  "description": "\"brief of Kitchen\" is the item the Kitchen room fulfils, KIT; and \"item pantry\" is the item named Pantry, PAN.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-2.3.1"
+  ]
+}

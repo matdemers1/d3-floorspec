@@ -1,0 +1,7 @@
+{
+  "description": "The wall between the Kitchen and the Dining room removed, keeping the Kitchen: the dining table is re-hosted on the Kitchen's floor before the Dining room is removed, and the outlet on the wall goes with the wall.",
+  "covers": [
+    "FS-OPS-4.7.1",
+    "FS-OPS-2.2.2"
+  ]
+}

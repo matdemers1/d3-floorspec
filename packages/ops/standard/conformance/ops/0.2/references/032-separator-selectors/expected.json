@@ -1,0 +1,21 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "9c3ffae0f9e0e610fab0675259bd839a82486e3afe9d60c1854536174f1e3787",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "S1",
+      "path": "/name",
+      "value": "Counter line"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "S1",
+      "path": "/name"
+    }
+  ],
+  "inverse": []
+}

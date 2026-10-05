@@ -1,0 +1,6 @@
+{
+  "description": "An opening with neither a width nor a fill: FS-OPS-003.",
+  "covers": [
+    "FS-OPS-4.5.3"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "element": {
+        "wall": "W5",
+        "offset": 0,
+        "width": 390144,
+        "height": 1170432
+      }
+    },
+    {
+      "op": "addJunction",
+      "level": "L1",
+      "position": ["2'", "7'"]
+    },
+    {
+      "op": "addJunction",
+      "level": "L1",
+      "position": ["5'", "7'"]
+    },
+    {
+      "op": "addWall",
+      "id": "W5",
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    }
+  ]
+}

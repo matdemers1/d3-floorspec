@@ -1,0 +1,6 @@
+{
+  "description": "A bare array of operations is not an apply request: the batch goes in \"batch\".",
+  "covers": [
+    "FS-OPS-1.1.2"
+  ]
+}

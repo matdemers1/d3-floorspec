@@ -1,0 +1,7 @@
+{
+  "description": "An outlet set 13' along the 12' wall W2 earlier in the batch, then W2 split at 4': no piece contains it, so it stays on W2, the first piece, unchanged - and the result is invalid.",
+  "covers": [
+    "FS-OPS-5.2.2",
+    "FS-OPS-1.2.3"
+  ]
+}

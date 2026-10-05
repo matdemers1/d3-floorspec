@@ -1,0 +1,7 @@
+{
+  "description": "A bench standing free on L1, 3' east of the box's corner J4, outside every room.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-3.2.1"
+  ]
+}

@@ -1,25 +1,47 @@
 /**
- * The five primitives and three shorthands (chapter 2), applied to the working copy. Each changes it
- * in exactly one way, or fails the batch.
+ * The seven primitives and three shorthands (chapter 2), applied to the working copy. Each changes
+ * it in exactly one way, or fails the batch. Ops 0.2 adds program items and extension elements to
+ * what they add and remove, and the adjacency primitives (2.6).
  */
 import { fail } from './diagnostics.js';
-import { type CollectionName, type WorkingCopy } from './model/working.js';
+import { ITEMS, type CollectionName, type Place, type WorkingCopy } from './model/working.js';
 import type { ResolvedPrimitive } from './types.js';
-import { clone, cmpStr, deleteMember, getMember, isObject, parsePointer, setMember, type JsonObject } from './lib/json.js';
+import { clone, cmpStr, deleteMember, escapeToken, getMember, isObject, parsePointer, setMember, type JsonObject } from './lib/json.js';
 
-/** The collection and element an add primitive (or shorthand) adds (2.1.2). */
-export function addTarget(p: Extract<ResolvedPrimitive, { op: 'addElement' | 'addJunction' | 'addWall' | 'addSeparator' }>): { collection: CollectionName; element: unknown } {
+type AddPrimitive = Extract<ResolvedPrimitive, { op: 'addElement' | 'addJunction' | 'addWall' | 'addSeparator' }>;
+
+/** Where an add primitive (or shorthand) puts its element, and the element (2.1, 2.1.2). */
+export function addTarget(p: AddPrimitive): { place: Place; element: unknown } {
   switch (p.op) {
     case 'addElement':
-      return { collection: p.collection, element: p.element };
+      if (p.extension !== undefined) return { place: { kind: 'ext', extension: p.extension, collection: p.collection }, element: p.element };
+      return { place: p.collection === ITEMS ? { kind: ITEMS } : { kind: p.collection as CollectionName }, element: p.element };
     case 'addJunction':
     case 'addWall':
     case 'addSeparator': {
       const element: JsonObject = {};
       for (const k of Object.keys(p)) if (k !== 'op' && k !== 'id') setMember(element, k, (p as unknown as JsonObject)[k]);
-      return { collection: p.op === 'addJunction' ? 'junctions' : p.op === 'addWall' ? 'walls' : 'separators', element };
+      return { place: { kind: p.op === 'addJunction' ? 'junctions' : p.op === 'addWall' ? 'walls' : 'separators' }, element };
     }
   }
+}
+
+/**
+ * 2.1.3: the object a new element goes into, creating `program` and its `items`, or `extensions`,
+ * the extension's data, its `collections` and the collection, where they are missing; FS-OPS-003
+ * when one of them is present and is not an object.
+ */
+function container(wc: WorkingCopy, place: Place, ptr: string): JsonObject {
+  if (place.kind !== ITEMS && place.kind !== 'ext') return wc.ensureCollection(place.kind);
+  const path = place.kind === ITEMS ? ['program', 'items'] : ['extensions', place.extension, 'collections', place.collection];
+  let cur: JsonObject = wc.doc;
+  for (const k of path) {
+    if (!Object.hasOwn(cur, k)) setMember(cur, k, {});
+    const next = cur[k];
+    if (!isObject(next)) return fail('FS-OPS-003', `/${path.map(escapeToken).join('/')} leads through a value that is not an object`, [], ptr);
+    cur = next;
+  }
+  return cur;
 }
 
 /** Apply one resolved primitive. `ptr` points at the request member a failure is reported on. */
@@ -32,8 +54,9 @@ export function applyPrimitive(wc: WorkingCopy, p: ResolvedPrimitive, ptr: { op:
       // 2.1.1: fail only when the ID is in use (1.5.2); never check the content.
       if (wc.unavailable(p.id))
         fail('FS-OPS-005', `${p.id} is ${wc.exists(p.id) ? 'already used in this document' : 'retired: it once named an element of this document'}`, [], ptr.id);
-      const { collection, element } = addTarget(p);
-      setMember(wc.ensureCollection(collection), p.id, clone(element));
+      const { place, element } = addTarget(p);
+      const target = container(wc, place, `${ptr.op}/collection`);
+      setMember(target, p.id, clone(element));
       wc.named(p.id);
       wc.touch();
       return;
@@ -51,6 +74,10 @@ export function applyPrimitive(wc: WorkingCopy, p: ResolvedPrimitive, ptr: { op:
       // 2.4.1: exactly setProperty of /position.
       setProperty(wc, p.id, '/position', p.to, ptr.op);
       return;
+    case 'setAdjacency':
+    case 'removeAdjacency':
+      adjacency(wc, p, ptr.op);
+      return;
   }
 }
 
@@ -66,14 +93,42 @@ function where(wc: WorkingCopy, c: CollectionName, test: (e: JsonObject) => bool
   });
 }
 
+/** Extension elements (Ops 0.2) satisfying a test, by ID. */
+function extWhere(wc: WorkingCopy, test: (e: JsonObject) => boolean): string[] {
+  return wc
+    .extElements()
+    .filter((x) => isObject(x.element) && test(x.element))
+    .map((x) => x.id);
+}
+
+const hostIs = (member: string, id: string) => (e: JsonObject): boolean => getMember(getMember(e, 'host'), member) === id;
+const fallbackIs = (members: readonly string[], id: string) => (e: JsonObject): boolean => {
+  const f = getMember(e, 'fallback');
+  return isObject(f) && members.some((m) => getMember(f, m) === id);
+};
+
 const layerMaterials = (e: JsonObject): unknown[] => {
   const layers = getMember(e, 'layers');
   return Array.isArray(layers) ? layers.map((l) => getMember(l, 'material')) : [];
 };
 
-/** Every element that refers to a type, material or asset (2.2: they block its removal). */
-function referrers(wc: WorkingCopy, id: string, c: CollectionName): string[] {
-  switch (c) {
+/** What blocks removing an element without cascade — and always, for a type, material, asset or program item (2.2). */
+function blockers(wc: WorkingCopy, id: string, kind: Place['kind']): string[] {
+  const onLevel = (e: JsonObject): boolean => hostIs('level', id)(e) || fallbackIs(['level'], id)(e);
+  switch (kind) {
+    case 'buildings':
+      return where(wc, 'levels', (e) => getMember(e, 'building') === id);
+    case 'levels': {
+      const on = (['junctions', 'walls', 'separators', 'rooms', 'slabs'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'level') === id));
+      const vertical = where(wc, 'walls', (e) => getMember(getMember(e, 'base'), 'level') === id || getMember(getMember(e, 'top'), 'level') === id);
+      return [...on, ...vertical, ...extWhere(wc, onLevel)];
+    }
+    case 'junctions':
+      return (['walls', 'separators'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'start') === id || getMember(e, 'end') === id));
+    case 'walls':
+      return [...where(wc, 'openings', (e) => getMember(e, 'wall') === id), ...extWhere(wc, hostIs('wall', id))];
+    case 'rooms':
+      return extWhere(wc, hostIs('room', id));
     case 'types':
       return [...where(wc, 'walls', (e) => getMember(e, 'type') === id), ...where(wc, 'openings', (e) => getMember(e, 'fill') === id)];
     case 'materials':
@@ -84,81 +139,122 @@ function referrers(wc: WorkingCopy, id: string, c: CollectionName): string[] {
         ...where(wc, 'slabs', (e) => getMember(e, 'material') === id),
       ];
     case 'assets':
-      return where(wc, 'materials', (e) => getMember(getMember(e, 'texture'), 'asset') === id);
-    default:
-      return [];
-  }
-}
-
-/** What removing an element would leave pointing at nothing: the "Blocks, otherwise" column of 2.2. */
-function blockers(wc: WorkingCopy, id: string, c: CollectionName): string[] {
-  switch (c) {
-    case 'buildings':
-      return where(wc, 'levels', (e) => getMember(e, 'building') === id);
-    case 'levels': {
-      const on = (['junctions', 'walls', 'separators', 'rooms', 'slabs'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'level') === id));
-      const vertical = where(wc, 'walls', (e) => getMember(getMember(e, 'base'), 'level') === id || getMember(getMember(e, 'top'), 'level') === id);
-      return [...new Set([...on, ...vertical])];
-    }
-    case 'junctions':
-      return (['walls', 'separators'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'start') === id || getMember(e, 'end') === id));
-    case 'walls':
-      return where(wc, 'openings', (e) => getMember(e, 'wall') === id);
+      return [...where(wc, 'materials', (e) => getMember(getMember(e, 'texture'), 'asset') === id), ...extWhere(wc, fallbackIs(['asset', 'symbol'], id))];
+    case ITEMS:
+      return where(wc, 'rooms', (e) => getMember(e, 'brief') === id);
     default:
       return [];
   }
 }
 
 /** What removing an element takes with it when `cascade` is true: the "Takes with it" column of 2.2. */
-function takes(wc: WorkingCopy, id: string, c: CollectionName): string[] {
-  switch (c) {
+function takes(wc: WorkingCopy, id: string, kind: Place['kind']): string[] {
+  switch (kind) {
     case 'buildings':
       return where(wc, 'levels', (e) => getMember(e, 'building') === id);
     case 'levels': {
       const on = (['junctions', 'walls', 'separators', 'rooms', 'slabs'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'level') === id));
-      const walls = new Set(where(wc, 'walls', (e) => getMember(e, 'level') === id));
-      return [...on, ...where(wc, 'openings', (e) => walls.has(str(getMember(e, 'wall')) ?? ''))];
+      return [...on, ...extWhere(wc, (e) => hostIs('level', id)(e) || fallbackIs(['level'], id)(e))];
     }
     case 'junctions':
+      return (['walls', 'separators'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'start') === id || getMember(e, 'end') === id));
     case 'walls':
-      return blockers(wc, id, c);
+      return [...where(wc, 'openings', (e) => getMember(e, 'wall') === id), ...extWhere(wc, hostIs('wall', id))];
+    case 'rooms':
+      return extWhere(wc, hostIs('room', id));
     default:
       return [];
   }
 }
 
 export function removeElement(wc: WorkingCopy, id: string, cascade: boolean, ptr: string): void {
-  const c = wc.collectionOf(id);
-  if (!c) return fail('FS-OPS-003', `there is no element ${id} to remove`, [], ptr);
-  if (c === 'types' || c === 'materials' || c === 'assets') {
-    const refs = referrers(wc, id, c);
-    if (refs.length) fail('FS-OPS-006', `${id} cannot be removed while ${refs.join(', ')} refer to it`, [id, ...refs], ptr);
-  } else if (!cascade) {
-    const b = blockers(wc, id, c);
-    if (b.length) fail('FS-OPS-006', `${id} cannot be removed while ${b.join(', ')} depend on it; remove them first, or use cascade`, [id, ...b], ptr);
-  }
+  const loc = wc.locate(id);
+  if (!loc) return fail('FS-OPS-003', `there is no element ${id} to remove`, [], ptr);
+  const kind = loc.place.kind;
   // The elements to remove: id, and with cascade what it takes with it, transitively (2.2.2).
-  const gone = new Map<string, CollectionName>([[id, c]]);
-  if (cascade) {
+  const gone = new Map<string, { place: Place; container: JsonObject }>([[id, loc]]);
+  if (!cascade || kind === 'types' || kind === 'materials' || kind === 'assets' || kind === ITEMS) {
+    const b = [...new Set(blockers(wc, id, kind))].filter((x) => x !== id);
+    if (b.length)
+      fail(
+        'FS-OPS-006',
+        `${id} cannot be removed while ${b.join(', ')} ${kind === 'types' || kind === 'materials' || kind === 'assets' || kind === ITEMS ? 'refer to it' : 'depend on it; remove them first, or use cascade'}`,
+        [id, ...b],
+        ptr,
+      );
+  } else {
     const work = [id];
     while (work.length) {
       const x = work.pop()!;
-      for (const y of takes(wc, x, gone.get(x)!))
+      for (const y of takes(wc, x, gone.get(x)!.place.kind))
         if (!gone.has(y)) {
-          gone.set(y, wc.collectionOf(y)!);
+          gone.set(y, wc.locate(y)!);
           work.push(y);
         }
     }
   }
-  for (const [x, cx] of gone) deleteMember(wc.collection(cx)!, x);
+  for (const [x, l] of gone) deleteMember(l.container, x);
   // A wall is always removed from join.through, which unsets that join (2.2).
-  const goneWalls = new Set([...gone].filter(([, cx]) => cx === 'walls').map(([x]) => x));
+  const goneWalls = new Set([...gone].filter(([, l]) => l.place.kind === 'walls').map(([x]) => x));
   if (goneWalls.size)
     for (const j of wc.ids('junctions')) {
       const e = wc.elementIn('junctions', j);
       const through = getMember(getMember(e, 'join'), 'through');
       if (e && Array.isArray(through) && through.some((w) => typeof w === 'string' && goneWalls.has(w))) deleteMember(e, 'join');
     }
+  if (wc.v02) {
+    // 2.2.3: whether cascade or not, an adjacency naming a removed item goes with it, and an item's
+    // `level` with the level it names.
+    const goneItems = new Set([...gone].filter(([, l]) => l.place.kind === ITEMS).map(([x]) => x));
+    const program = getMember(wc.doc, 'program');
+    const adjacency = getMember(program, 'adjacency');
+    if (goneItems.size && isObject(program) && Array.isArray(adjacency))
+      setMember(
+        program,
+        'adjacency',
+        adjacency.filter((a) => !(isObject(a) && (goneItems.has(str(getMember(a, 'a')) ?? '\u0000') || goneItems.has(str(getMember(a, 'b')) ?? '\u0000')))),
+      );
+    const goneLevels = new Set([...gone].filter(([, l]) => l.place.kind === 'levels').map(([x]) => x));
+    if (goneLevels.size)
+      for (const item of Object.values(wc.items())) {
+        const level = getMember(item, 'level');
+        if (isObject(item) && typeof level === 'string' && goneLevels.has(level)) deleteMember(item, 'level');
+      }
+  }
+  wc.touch();
+}
+
+// ── 2.6 setAdjacency and removeAdjacency (Ops 0.2) ────────────────────────────
+
+const samePair = (e: unknown, a: string, b: string, kind: string): boolean => {
+  if (!isObject(e) || getMember(e, 'kind') !== kind) return false;
+  const x = getMember(e, 'a');
+  const y = getMember(e, 'b');
+  return typeof x === 'string' && typeof y === 'string' && ((x === a && y === b) || (x === b && y === a));
+};
+
+function adjacency(wc: WorkingCopy, p: Extract<ResolvedPrimitive, { op: 'setAdjacency' | 'removeAdjacency' }>, ptr: string): void {
+  const create = p.op === 'setAdjacency';
+  let program = getMember(wc.doc, 'program');
+  if (program === undefined && create) {
+    program = {};
+    setMember(wc.doc, 'program', program);
+  }
+  if (!isObject(program)) return fail('FS-OPS-003', 'the document has no program', [], ptr);
+  if (!Object.hasOwn(program, 'adjacency') && create) setMember(program, 'adjacency', []);
+  const list: unknown = getMember(program, 'adjacency');
+  if (!Array.isArray(list)) return fail('FS-OPS-003', "the program's adjacency is not an array", [], ptr);
+  if (p.op === 'setAdjacency') {
+    const entry: JsonObject = { a: p.a, b: p.b, kind: p.kind };
+    if (Object.hasOwn(p, 'weight')) setMember(entry, 'weight', clone(p.weight));
+    const i = list.findIndex((e) => samePair(e, p.a, p.b, p.kind));
+    if (i >= 0) list[i] = entry;
+    else list.push(entry);
+  } else {
+    const keep: unknown[] = list.filter((e) => !samePair(e, p.a, p.b, p.kind));
+    if (keep.length === list.length) return fail('FS-OPS-003', `the program has no ${p.kind} adjacency of ${p.a} and ${p.b}`, [], ptr);
+    list.splice(0, list.length, ...keep);
+  }
   wc.touch();
 }
 
@@ -183,23 +279,25 @@ function target(wc: WorkingCopy, id: string, create: boolean, ptr: string): Json
     }
     return fail('FS-OPS-003', 'the project has no site', [], ptr);
   }
-  const c = wc.collectionOf(id);
-  if (!c) return fail('FS-OPS-003', `there is no element ${id}`, [], ptr);
-  const e = wc.collection(c)![id];
+  const loc = wc.locate(id);
+  if (!loc) return fail('FS-OPS-003', `there is no element ${id}`, [], ptr);
+  const e = loc.container[id];
   if (!isObject(e)) return fail('FS-OPS-003', `${id} is not an object, so it has no members`, [id], ptr);
   return e;
 }
 
 /** The members $document addresses (2.3): the document's top-level members other than its collections. */
 const DOCUMENT_MEMBERS: readonly string[] = ['floorspec', 'project', 'site', 'extensionsUsed', 'extensionsRequired', 'extensions', 'extras'];
+/** Ops 0.2 adds the program. */
+const DOCUMENT_MEMBERS_02: readonly string[] = [...DOCUMENT_MEMBERS, 'program'];
 
-function tokensOf(id: string, path: string, ptr: string): string[] {
+function tokensOf(wc: WorkingCopy, id: string, path: string, ptr: string): string[] {
+  const members = wc.v02 ? DOCUMENT_MEMBERS_02 : DOCUMENT_MEMBERS;
   const own = id.startsWith('$') ? [] : [id];
   const tokens = parsePointer(path);
   if (tokens === undefined) return fail('FS-OPS-003', `${JSON.stringify(path)} is not a JSON Pointer`, own, ptr);
   if (tokens.length === 0) return fail('FS-OPS-003', 'the path is empty: it must name a member', own, ptr);
-  if (id === '$document' && !DOCUMENT_MEMBERS.includes(tokens[0]!))
-    fail('FS-OPS-003', `$document addresses ${DOCUMENT_MEMBERS.join(', ')}; ${tokens[0]} is not one of them`, [], ptr);
+  if (id === '$document' && !members.includes(tokens[0]!)) fail('FS-OPS-003', `$document addresses ${members.join(', ')}; ${tokens[0]} is not one of them`, [], ptr);
   return tokens;
 }
 
@@ -212,7 +310,7 @@ const arrayIndex = (t: string, length: number): number | undefined => {
 
 export function setProperty(wc: WorkingCopy, id: string, path: string, value: unknown, ptr: string): void {
   let node: unknown = target(wc, id, true, ptr);
-  const tokens = tokensOf(id, path, ptr);
+  const tokens = tokensOf(wc, id, path, ptr);
   const own = id.startsWith('$') ? [] : [id];
   for (let i = 0; i < tokens.length - 1; i++) {
     const t = tokens[i]!;
@@ -237,7 +335,7 @@ export function setProperty(wc: WorkingCopy, id: string, path: string, value: un
 
 export function unsetProperty(wc: WorkingCopy, id: string, path: string, ptr: string): void {
   let node: unknown = target(wc, id, false, ptr);
-  const tokens = tokensOf(id, path, ptr);
+  const tokens = tokensOf(wc, id, path, ptr);
   const own = id.startsWith('$') ? [] : [id];
   for (let i = 0; i < tokens.length - 1; i++) {
     const t = tokens[i]!;

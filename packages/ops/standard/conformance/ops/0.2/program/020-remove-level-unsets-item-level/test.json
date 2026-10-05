@@ -1,0 +1,7 @@
+{
+  "description": "Removing the level an item prefers removes the item's \"level\", whether cascade is true or not: L3 has nothing on it, so it is removed without cascade.",
+  "covers": [
+    "FS-OPS-2.2.3",
+    "FS-OPS-2.2.1"
+  ]
+}
