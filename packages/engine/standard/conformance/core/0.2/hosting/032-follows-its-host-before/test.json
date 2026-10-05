@@ -1,0 +1,6 @@
+{
+  "description": "An outlet on the interior face of the north wall W2, 1 m from its start. hosting/033 moves the north wall 500 mm north and changes nothing about the outlet: its placement follows.",
+  "covers": [
+    "FS-CORE-13.4.1"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "A cabinet on the right face of a wall along (2, 1) of odd thickness 128,005: the origin, 1 m along and half the thickness off the location line, has coordinates in sqrt(5), rounded once; the facing is the direction of (1, -2), -63.434949 degrees, rounded to the microdegree. The box's footprint corners are rounded once each.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.4.1",
+    "FS-CORE-12.6.2",
+    "FS-CORE-2.2.1"
+  ]
+}

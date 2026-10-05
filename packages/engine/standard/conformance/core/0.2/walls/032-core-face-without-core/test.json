@@ -1,0 +1,7 @@
+{
+  "description": "A \"coreFace\" wall whose only layer is insulation has no core face.",
+  "covers": [
+    "FS-CORE-5.4.2",
+    "FS-CORE-10.2.1"
+  ]
+}

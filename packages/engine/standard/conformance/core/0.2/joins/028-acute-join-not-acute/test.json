@@ -1,0 +1,7 @@
+{
+  "description": "At about 31 degrees the join is not acute: no lint.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

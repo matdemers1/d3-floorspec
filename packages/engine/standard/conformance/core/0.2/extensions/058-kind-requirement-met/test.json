@@ -1,0 +1,6 @@
+{
+  "description": "The same fixture with a symbol: valid.",
+  "covers": [
+    "FS-CORE-12.4.2"
+  ]
+}

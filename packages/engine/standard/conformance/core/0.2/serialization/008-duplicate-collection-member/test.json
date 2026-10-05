@@ -1,0 +1,6 @@
+{
+  "description": "Two rooms with the same ID: the second R1 is a duplicate member of the rooms object.",
+  "covers": [
+    "FS-CORE-9.1.2"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A fallback with a glTF binary model and an SVG symbol: valid. The assets are referred to, so FS-LINT-006 does not name them.",
+  "covers": [
+    "FS-CORE-12.6.1",
+    "FS-CORE-12.6.2"
+  ]
+}

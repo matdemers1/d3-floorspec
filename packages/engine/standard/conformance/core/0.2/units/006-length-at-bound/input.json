@@ -1,0 +1,22 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [9007199254740991, -9007199254740991]
+    }
+  }
+}

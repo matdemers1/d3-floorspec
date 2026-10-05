@@ -1,0 +1,7 @@
+{
+  "description": "Two identical self-adjacencies: FS-INV-401 for each, and FS-INV-402 is not evaluated for an adjacency that has FS-INV-401.",
+  "covers": [
+    "FS-CORE-11.2.1",
+    "FS-CORE-10.3.1"
+  ]
+}

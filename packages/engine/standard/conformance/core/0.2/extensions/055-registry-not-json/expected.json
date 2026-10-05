@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-CFG-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

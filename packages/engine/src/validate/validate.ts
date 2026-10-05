@@ -2,20 +2,34 @@
  * The validator (10.1): parse → document → schema → invariants → lints, each tier evaluated only
  * when every earlier tier reported no error (10.3).
  */
-import { validate as schemaValidate } from '../generated/validate.js';
+import { validate as schema01 } from '../generated/validate-0.1.js';
+import { validate as schema02 } from '../generated/validate-0.2.js';
 import { parseJson } from '../json/parse.js';
 import type { JsonPath } from '../json/pointer.js';
 import type { FloorspecDocument } from '../model/document.js';
 import { sortDiagnostics, type Diagnostic } from './diagnostic.js';
 import { invariants, Reporter, type Analysis } from './invariants.js';
 import { lints } from './lints.js';
+import { loadKnownExtensions } from './registry.js';
 
-/** The Floorspec Core versions this reader implements (1.2.2). */
-export const IMPLEMENTED_VERSIONS: readonly string[] = ['0.1'];
+/** The Floorspec Core versions this reader implements (1.2.2): Core 0.2, which also reads 0.1 (1.2.4). */
+export const IMPLEMENTED_VERSIONS: readonly string[] = ['0.1', '0.2'];
 
 export interface ValidateOptions {
-  /** Extensions this reader implements (1.6.4). Core 0.1 defines none, and the engine implements none. */
+  /** Extensions this reader implements (1.6.4). The engine implements none: it is a core-only reader. */
   readonly extensions?: readonly string[];
+  /**
+   * The newest Core draft the reader implements. `'0.2'`, the default, reads documents declaring
+   * "0.1" or "0.2" (1.2.4) and derives chapters 11–13; `'0.1'` is a Core 0.1 reader, which rejects
+   * "0.2" with FS-DOC-001 — what the published Core 0.1 suite tests.
+   */
+  readonly core?: '0.1' | '0.2';
+  /**
+   * The validator's known extensions (12.2): a JSON array of registry entries, as text, UTF-8
+   * bytes or a parsed value. Absent: none, and nothing defined in terms of known extensions is
+   * checked. Known extensions that break 12.2.1 make every document report FS-CFG-001 alone.
+   */
+  readonly knownExtensions?: string | Uint8Array | readonly unknown[];
 }
 
 export interface ValidationResult {
@@ -69,6 +83,17 @@ function finish(r: Reporter, extra: Omit<Evaluation, 'valid' | 'diagnostics'> = 
  */
 export function evaluate(input: string | Uint8Array | object, options: ValidateOptions = {}): Evaluation {
   const r = new Reporter();
+  const versions = options.core === '0.1' ? ['0.1'] : IMPLEMENTED_VERSIONS;
+  // Tier 0: configuration — the known extensions must be a valid registry (12.2.2).
+  let known: ReturnType<typeof loadKnownExtensions>;
+  if (options.knownExtensions !== undefined && versions.includes('0.2')) {
+    known = loadKnownExtensions(options.knownExtensions);
+    if (!known) {
+      r.report('FS-CFG-001', 'The known extensions this validator is configured with are not a valid registry (12.2.1).', []);
+      return finish(r);
+    }
+  }
+
   // Tier 1: parsing.
   let value: unknown;
   let nonInteger: readonly JsonPath[] = [];
@@ -85,8 +110,8 @@ export function evaluate(input: string | Uint8Array | object, options: ValidateO
   // Tier 2: document — can this reader read it at all?
   if (isObject(value)) {
     const v = value.floorspec;
-    if (typeof v === 'string' && !IMPLEMENTED_VERSIONS.includes(v))
-      r.report('FS-DOC-001', `The document declares Floorspec ${v}; this reader implements ${IMPLEMENTED_VERSIONS.join(', ')}.`, [], { pointer: '/floorspec' });
+    if (typeof v === 'string' && !versions.includes(v))
+      r.report('FS-DOC-001', `The document declares Floorspec ${v}; this reader implements ${versions.join(', ')}.`, [], { pointer: '/floorspec' });
     // FS-DOC-002 only for a well-formed extensionsRequired — an array of distinct names, each a
     // member of extensionsUsed (an object); any other is left to the schema tier and FS-INV-004.
     const req = value.extensionsRequired;
@@ -105,8 +130,11 @@ export function evaluate(input: string | Uint8Array | object, options: ValidateO
     if (r.diagnostics.length) return finish(r, { value });
   }
 
-  // Tier 3: schema.
-  const fn = schemaValidate as unknown as SchemaFn;
+  // Tier 3: schema — of the draft the document declares (1.2.4); of the newest draft the reader
+  // implements when it declares none it can read.
+  const declared = isObject(value) ? value.floorspec : undefined;
+  const draft = typeof declared === 'string' && versions.includes(declared) ? declared : versions[versions.length - 1];
+  const fn = (draft === '0.1' ? schema01 : schema02) as unknown as SchemaFn;
   if (!fn(schemaView(value, nonInteger))) {
     for (const e of fn.errors ?? [])
       r.report('FS-SCH-001', `${e.instancePath || '/'}: ${e.message ?? e.keyword}`, [], { pointer: e.instancePath });
@@ -116,7 +144,7 @@ export function evaluate(input: string | Uint8Array | object, options: ValidateO
   const document = value as FloorspecDocument;
 
   // Tier 4: invariants.
-  const analysis = invariants(document, r);
+  const analysis = invariants(document, r, { core02: versions.includes('0.2'), ...(known && { known }) });
   if (!analysis) return finish(r, { value, document });
 
   // Tier 5: lints, only for a valid document.

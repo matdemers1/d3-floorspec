@@ -1,0 +1,9 @@
+{
+  "description": "An outlet on the exterior (left) face of the west wall W1 - which runs north from J1 at (0, 0) - 1 m along it and 300 mm up. Its frame's origin is on the face, 50 mm west of the location line, and faces west: facing 180,000,000. The fallback box sits in front of the face.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.3.1",
+    "FS-CORE-13.4.1",
+    "FS-CORE-12.6.2"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A document declaring \"0.1\" that uses EXT_electrical without its dependency: a 0.2 reader applies 12.3 to it as to any document (1.2.4), so FS-INV-601 is reported.",
+  "covers": [
+    "FS-CORE-1.2.4",
+    "FS-CORE-12.3.2"
+  ]
+}

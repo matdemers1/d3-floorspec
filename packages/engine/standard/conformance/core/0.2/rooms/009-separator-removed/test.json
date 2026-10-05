@@ -1,0 +1,6 @@
+{
+  "description": "rooms/003 with the separator removed: kitchen and dining are now in one face, so the document is invalid until a room is removed or the space divided again.",
+  "covers": [
+    "FS-CORE-6.3.2"
+  ]
+}

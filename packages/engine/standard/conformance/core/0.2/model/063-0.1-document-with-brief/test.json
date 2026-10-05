@@ -1,0 +1,6 @@
+{
+  "description": "A 0.1 document whose room names a program item: \"brief\" is a 0.2 member.",
+  "covers": [
+    "FS-CORE-1.2.4"
+  ]
+}

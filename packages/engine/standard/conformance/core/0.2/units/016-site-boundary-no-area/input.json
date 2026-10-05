@@ -1,0 +1,9 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Conformance"
+  },
+  "site": {
+    "boundary": [[0, 0], [5120000, 0], [10240000, 0]]
+  }
+}

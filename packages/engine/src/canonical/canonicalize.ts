@@ -1,11 +1,15 @@
 /**
  * Canonical form (9.2) and content hash (9.3).
  *
- * Step 1 — omit constant defaults — walks the document beside the bundled schema, whose `default`
- * keywords are exactly the constant defaults of Core 0.1 (schema/core/README.md). Members with a
- * derived default and typed properties carry no `default`, so they are never removed. Extension
- * data and `extras` are described by schemas with no members, so their content is never touched;
- * the member itself goes only when it is `{}`, its default.
+ * Step 1 — omit constant defaults — walks the document beside the bundled Core 0.2 schema, whose
+ * `default` keywords are exactly the constant defaults of Core 0.2 (schema/core/README.md). Members
+ * with a derived default and typed properties carry no `default`, so they are never removed. The
+ * content of extension data — including Core 0.2's extension elements (12.5) — and of `extras` is
+ * never touched; the member itself goes only when it is `{}`, its default. A declaration object
+ * in `extensionsUsed` without a `schema` is written as its version string (12.1).
+ *
+ * One canonicalizer serves both drafts: Core 0.2 only adds members, each with Core 0.1's meaning
+ * when absent (1.2.4), and none of the rules 0.2 adds can apply to a valid 0.1 document.
  */
 import { SCHEMA } from '../generated/schema.js';
 import { sha256Hex } from '../hash/sha256.js';
@@ -127,7 +131,8 @@ function stripSchemaKeywords(value: unknown, schema: Schema): unknown {
     const sub = memberSchema(s, key);
     let v = value[key];
     if (sub) {
-      v = strip(v, sub);
+      // Extension data and extras are never changed (9.2), whatever their schemas describe.
+      if (key !== 'extensions' && key !== 'extras') v = strip(v, sub);
       const d = defaultOf(sub);
       if (d && jsonEqual(v, d.value)) continue;
     }
@@ -150,7 +155,17 @@ function strip(value: unknown, schema: Schema): unknown {
 /** 9.2 step 1: the document with every member equal to its constant default removed. */
 export function omitDefaults(doc: unknown): unknown {
   const schema: Schema = SCHEMA;
-  return strip(doc, schema);
+  const out = strip(doc, schema);
+  // 12.1: `{ "version": v }` is written `v`.
+  if (isObject(out) && isObject(out.extensionsUsed)) {
+    const used = out.extensionsUsed;
+    for (const k of Object.keys(used)) {
+      const d = used[k];
+      if (isObject(d) && Object.keys(d).length === 1 && Object.hasOwn(d, 'version'))
+        Object.defineProperty(used, k, { value: d.version, enumerable: true, writable: true, configurable: true });
+    }
+  }
+  return out;
 }
 
 /** The canonical form (9.2) of a valid document, as a string ending in one line feed. */

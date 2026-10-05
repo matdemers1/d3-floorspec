@@ -1,0 +1,7 @@
+{
+  "description": "A fallback whose asset does not exist and whose symbol names a room: one FS-INV-002 for each.",
+  "covers": [
+    "FS-CORE-3.2.1",
+    "FS-CORE-10.2.1"
+  ]
+}

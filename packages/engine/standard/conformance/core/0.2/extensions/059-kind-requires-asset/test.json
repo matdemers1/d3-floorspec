@@ -1,0 +1,6 @@
+{
+  "description": "Two panels without the glTF asset EXT_electrical's \"panels\" kind requires: FS-INV-603 for each.",
+  "covers": [
+    "FS-CORE-12.4.2"
+  ]
+}

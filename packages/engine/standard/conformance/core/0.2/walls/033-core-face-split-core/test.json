@@ -1,0 +1,6 @@
+{
+  "description": "A \"coreFace\" wall whose two core layers are separated by insulation.",
+  "covers": [
+    "FS-CORE-5.4.2"
+  ]
+}

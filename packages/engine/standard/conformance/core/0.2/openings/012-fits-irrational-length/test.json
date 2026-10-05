@@ -1,0 +1,8 @@
+{
+  "description": "A wall along (1, 1), 2000 mm by 2000 mm: its length is 2,560,000 sqrt(2) = 3,620,386.7... base units, irrational. An opening reaching 3620386 fits.",
+  "covers": [
+    "FS-CORE-7.3.1",
+    "FS-CORE-7.4.1",
+    "FS-CORE-2.2.1"
+  ]
+}

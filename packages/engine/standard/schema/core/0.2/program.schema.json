@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.2/program.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 11.1's and 11.2's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Program",
+  "description": "11.1: the program — what the building is meant to provide (its items) and which items should, may or must not be next to each other (its adjacency graph). A program, a program item and an adjacency MUST have only the members of their tables (FS-CORE-11.1.1). That references resolve, that an adjacency relates two different items, and that adjacencies neither repeat nor contradict each other (FS-CORE-11.2.1 to 11.2.3) are invariants, not checked here.",
+  "type": "object",
+  "properties": {
+    "items": {
+      "title": "Program items",
+      "description": "11.1: the program items, keyed by ID. An item ID shares the document's single space of IDs (FS-CORE-3.1.3).",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/item"
+      },
+      "default": {}
+    },
+    "adjacency": {
+      "title": "Adjacency graph",
+      "description": "11.2: the adjacencies between items, in an order the derived values keep.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/adjacency"
+      },
+      "default": []
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "item": {
+      "title": "Program item",
+      "description": "11.1: a space the building is meant to provide: what for, how many, how large, and on which level preferably.",
+      "type": "object",
+      "required": [
+        "function"
+      ],
+      "properties": {
+        "function": {
+          "$ref": "room.schema.json#/$defs/function",
+          "description": "11.1: what the space is for: a room function (FS-CORE-11.1.2). That an extension term's extension is in extensionsUsed is an invariant (FS-INV-006). Always present."
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "11.1: what its owners call it, 1–200 characters. Absent by default."
+        },
+        "count": {
+          "title": "Count",
+          "description": "11.1: how many rooms the item asks for; at least 1.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "default": 1
+        },
+        "targetArea": {
+          "$ref": "defs.schema.json#/$defs/area",
+          "description": "11.1: the net area each of its rooms is meant to have, in square base units. Absent by default."
+        },
+        "minArea": {
+          "$ref": "defs.schema.json#/$defs/area",
+          "description": "11.1: the least net area each of its rooms may have, in square base units. Absent by default."
+        },
+        "level": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "11.1: a reference to the level its rooms are preferred on. Absent by default."
+        },
+        "extensions": {
+          "$ref": "defs.schema.json#/$defs/extensions",
+          "description": "1.6, 11.1: extension data on this item.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.7, 11.1: application-specific data on this item.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    },
+    "adjacency": {
+      "title": "Adjacency",
+      "description": "11.2: an undirected relation between two program items.",
+      "type": "object",
+      "required": [
+        "a",
+        "b",
+        "kind"
+      ],
+      "properties": {
+        "a": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "11.2: a reference to one program item. Always present."
+        },
+        "b": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "11.2: a reference to the other program item. Always present."
+        },
+        "kind": {
+          "title": "Kind",
+          "description": "11.2: whether rooms of a and b must, should or must not be adjacent (11.4). Always present.",
+          "type": "string",
+          "enum": [
+            "required",
+            "preferred",
+            "forbidden"
+          ]
+        },
+        "weight": {
+          "title": "Weight",
+          "description": "11.2: how much the adjacency matters, from 1 to 10.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 5
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A join that has none of the three forms of 5.8: \"miter\" is not a join kind; the spelling is \"mitre\".",
+  "covers": [
+    "FS-CORE-5.8.5"
+  ]
+}

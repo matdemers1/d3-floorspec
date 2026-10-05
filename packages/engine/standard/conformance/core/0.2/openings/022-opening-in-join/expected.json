@@ -1,0 +1,67 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-005",
+      "severity": "warning",
+      "elements": ["O1"]
+    },
+    {
+      "code": "FS-LINT-005",
+      "severity": "warning",
+      "elements": ["O2"]
+    }
+  ],
+  "hash": "ebc8c672f8d07ac69ca042af2c82e2a65f2425727c376021a85b1ba8ffd249ae",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [0, -64000],
+        "endRight": [5184000, -64000],
+        "endLeft": [5056000, 64000],
+        "startLeft": [0, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [5184000, -64000],
+        "endRight": [5184000, 3840000],
+        "endLeft": [5056000, 3840000],
+        "startLeft": [5056000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [5120000, 0],
+        "end": [5120000, 1152000],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      },
+      "O2": {
+        "start": [3929600, 0],
+        "end": [5081600, 0],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      },
+      "O3": {
+        "start": [1280000, 0],
+        "end": [2432000, 0],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": []
+  }
+}

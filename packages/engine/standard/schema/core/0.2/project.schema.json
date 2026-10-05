@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.2/project.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Project table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Project",
+  "description": "1.8: the one project a document describes. It is not an element: it carries no extensions, and only the members of its table.",
+  "type": "object",
+  "required": [
+    "name"
+  ],
+  "properties": {
+    "name": {
+      "title": "Project name",
+      "description": "1.8: the project's name, 1–200 characters. Always present.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "title": "Project description",
+      "description": "1.8: free text, up to 2000 characters. Absent by default.",
+      "type": "string",
+      "maxLength": 2000
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.7, 1.8: application-specific data for the project.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

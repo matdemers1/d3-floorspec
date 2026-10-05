@@ -33,9 +33,15 @@ function readRequest(input: JsonInput): ApplyRequest {
   return checkRequest(input);
 }
 
+/**
+ * Ops 0.1 applies to Floorspec Core 0.1 documents: the engine reads as a Core 0.1 reader here until
+ * Ops 0.2 is ported (a document declaring "0.2" is FS-DOC-001, so FS-OPS-002).
+ */
+const CORE = { core: '0.1' } as const;
+
 /** Step 1: A must be a valid Floorspec Core document (FS-OPS-002). Returns its parsed value. */
 function readDocument(input: JsonInput): JsonObject {
-  const ev = evaluate(input);
+  const ev = evaluate(input, CORE);
   if (!ev.valid) {
     const codes = [...new Set(ev.diagnostics.filter((d) => d.severity === 'error').map((d) => d.code))];
     throw new OpsFailure([opsDiagnostic('FS-OPS-002', `the document is not a valid Floorspec Core document (${codes.join(', ')})`, [], '')]);
@@ -93,7 +99,7 @@ export function apply(document: JsonInput, request: JsonInput): ApplyResult {
     const straddles = normalize(p.wc);
     if (straddles.length) return rejected(straddles);
     // Step 6: validate (Core tiers 3 and 4), then the locks in force.
-    const ev = evaluate(p.wc.doc);
+    const ev = evaluate(p.wc.doc, CORE);
     if (!ev.valid) return rejected(ev.diagnostics.filter((d) => d.severity === 'error'));
     const aCanon = omitDefaults(p.a) as JsonObject;
     const bCanon = omitDefaults(p.wc.doc) as JsonObject;

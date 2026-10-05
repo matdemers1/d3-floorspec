@@ -1,0 +1,47 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "934606a49d98184281f46738ce34b6ba2a28b64e5785e88ff6e5c1c72f7a73e9",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [2624000, -64000],
+        "endRight": [5120000, -64000],
+        "endLeft": [5120000, 64000],
+        "startLeft": [2560000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [0, -64000],
+        "endRight": [2496000, -64000],
+        "endLeft": [2560000, 64000],
+        "startLeft": [0, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [2624000, -3840000],
+        "endRight": [2624000, -64000],
+        "endLeft": [2496000, -64000],
+        "startLeft": [2496000, -3840000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J0": [[2496000, -64000], [2624000, -64000], [2560000, 64000]]
+    },
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": []
+  }
+}

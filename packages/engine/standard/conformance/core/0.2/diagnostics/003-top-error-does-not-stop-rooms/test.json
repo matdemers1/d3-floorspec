@@ -1,0 +1,8 @@
+{
+  "description": "FS-INV-112 is the one graph invariant that does not stop the room invariants of its level: W1's top is not above its base, and R2, anchored outside, is still reported.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-5.9.2",
+    "FS-CORE-6.3.1"
+  ]
+}

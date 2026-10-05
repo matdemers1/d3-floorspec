@@ -1,0 +1,8 @@
+{
+  "description": "A T with W1 and W2 running through: their faces end square at the feet of J0, so they read as one wall, and the stem W3 stops against their common face. A butt join has no junction fill.",
+  "covers": [
+    "FS-CORE-5.8.3",
+    "FS-CORE-5.8.4",
+    "FS-CORE-5.7.3"
+  ]
+}

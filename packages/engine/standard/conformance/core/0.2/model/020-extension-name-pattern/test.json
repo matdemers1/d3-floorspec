@@ -1,0 +1,6 @@
+{
+  "description": "An extension name without a registered prefix (\"acoustics\") fails the schema.",
+  "covers": [
+    "FS-CORE-1.6.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "An element ID is ASCII: \"Küche\" is not an ID (it is a fine name).",
+  "covers": [
+    "FS-CORE-3.1.1"
+  ]
+}

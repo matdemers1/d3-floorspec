@@ -1,0 +1,6 @@
+{
+  "description": "\"Ext_acoustics\": the prefix is case-sensitive.",
+  "covers": [
+    "FS-CORE-1.6.1"
+  ]
+}

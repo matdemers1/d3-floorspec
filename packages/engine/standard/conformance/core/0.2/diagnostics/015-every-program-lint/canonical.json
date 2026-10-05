@@ -1,0 +1,255 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.2",
+  "junctions": {
+    "J00": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J01": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J02": {
+      "level": "L1",
+      "position": [
+        0,
+        7680000
+      ]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    },
+    "J11": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J12": {
+      "level": "L1",
+      "position": [
+        5120000,
+        7680000
+      ]
+    },
+    "J20": {
+      "level": "L1",
+      "position": [
+        10240000,
+        0
+      ]
+    },
+    "J21": {
+      "level": "L1",
+      "position": [
+        10240000,
+        3840000
+      ]
+    },
+    "J22": {
+      "level": "L1",
+      "position": [
+        10240000,
+        7680000
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "openings": {
+    "O1": {
+      "fill": "D",
+      "offset": 1280000,
+      "wall": "EV1"
+    }
+  },
+  "program": {
+    "adjacency": [
+      {
+        "a": "KIT",
+        "b": "DIN",
+        "kind": "forbidden"
+      },
+      {
+        "a": "BED",
+        "b": "KIT",
+        "kind": "preferred"
+      },
+      {
+        "a": "GAR",
+        "b": "BED",
+        "kind": "required"
+      }
+    ],
+    "items": {
+      "BED": {
+        "count": 3,
+        "function": "sleeping",
+        "minArea": 19660800000000,
+        "name": "Bedroom",
+        "targetArea": 19660800000000
+      },
+      "DIN": {
+        "function": "dining"
+      },
+      "GAR": {
+        "function": "garage"
+      },
+      "KIT": {
+        "function": "kitchen",
+        "level": "L1"
+      }
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "RNE": {
+      "anchor": [
+        7680000,
+        5760000
+      ],
+      "brief": "DIN",
+      "function": "dining",
+      "level": "L1"
+    },
+    "RNW": {
+      "anchor": [
+        2560000,
+        5760000
+      ],
+      "brief": "BED",
+      "function": "sleeping",
+      "level": "L1"
+    },
+    "RSE": {
+      "anchor": [
+        7680000,
+        1920000
+      ],
+      "brief": "KIT",
+      "function": "kitchen",
+      "level": "L1"
+    },
+    "RSW": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "brief": "BED",
+      "function": "sleeping",
+      "level": "L1"
+    }
+  },
+  "separators": {
+    "EH2": {
+      "end": "J21",
+      "level": "L1",
+      "start": "J11"
+    }
+  },
+  "types": {
+    "D": {
+      "height": 2688000,
+      "kind": "doorType",
+      "width": 1152000
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "EH1": {
+      "end": "J11",
+      "level": "L1",
+      "start": "J01",
+      "type": "WT"
+    },
+    "EV1": {
+      "end": "J11",
+      "level": "L1",
+      "start": "J10",
+      "type": "WT"
+    },
+    "EV2": {
+      "end": "J12",
+      "level": "L1",
+      "start": "J11",
+      "type": "WT"
+    },
+    "WO0": {
+      "end": "J01",
+      "level": "L1",
+      "start": "J00",
+      "type": "WT"
+    },
+    "WO1": {
+      "end": "J02",
+      "level": "L1",
+      "start": "J01",
+      "type": "WT"
+    },
+    "WO2": {
+      "end": "J12",
+      "level": "L1",
+      "start": "J02",
+      "type": "WT"
+    },
+    "WO3": {
+      "end": "J22",
+      "level": "L1",
+      "start": "J12",
+      "type": "WT"
+    },
+    "WO4": {
+      "end": "J21",
+      "level": "L1",
+      "start": "J22",
+      "type": "WT"
+    },
+    "WO5": {
+      "end": "J20",
+      "level": "L1",
+      "start": "J21",
+      "type": "WT"
+    },
+    "WO6": {
+      "end": "J10",
+      "level": "L1",
+      "start": "J20",
+      "type": "WT"
+    },
+    "WO7": {
+      "end": "J00",
+      "level": "L1",
+      "start": "J10",
+      "type": "WT"
+    }
+  }
+}

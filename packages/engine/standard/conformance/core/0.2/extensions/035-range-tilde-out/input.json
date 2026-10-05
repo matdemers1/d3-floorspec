@@ -1,0 +1,10 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Conformance"
+  },
+  "extensionsUsed": {
+    "EXT_a": "1.0.0",
+    "EXT_b": "1.3.0"
+  }
+}

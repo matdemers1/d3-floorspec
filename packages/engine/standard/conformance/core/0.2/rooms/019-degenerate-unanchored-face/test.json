@@ -1,0 +1,7 @@
+{
+  "description": "The same sliver without a room: valid. It is an unanchored face (FS-LINT-003) and a degenerate one (FS-LINT-004), and it is not listed among the unanchored faces of derived, which lists only faces whose polygon is not degenerate.",
+  "covers": [
+    "FS-CORE-6.2.1",
+    "FS-CORE-10.1.1"
+  ]
+}

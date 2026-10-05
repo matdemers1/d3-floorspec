@@ -1,0 +1,6 @@
+{
+  "description": "A declaration has only version and schema.",
+  "covers": [
+    "FS-CORE-12.1.1"
+  ]
+}

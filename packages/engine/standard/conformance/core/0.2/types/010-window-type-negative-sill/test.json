@@ -1,0 +1,6 @@
+{
+  "description": "A window type's sill is not negative.",
+  "covers": [
+    "FS-CORE-8.4.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "EXT_electrical used at 3.0, a version no known entry describes: the rules of known extensions do not apply, so its missing dependency is not reported.",
+  "covers": [
+    "FS-CORE-12.3.2"
+  ]
+}

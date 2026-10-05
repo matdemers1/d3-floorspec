@@ -1,0 +1,7 @@
+{
+  "description": "A room and a program item whose function is EXT_electrical:serverRoom, a term the entry does not list: FS-INV-605 for each. The item whose function is electricalRoom, which is listed, is valid.",
+  "covers": [
+    "FS-CORE-12.4.3",
+    "FS-CORE-10.2.1"
+  ]
+}

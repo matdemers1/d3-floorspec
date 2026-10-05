@@ -1,0 +1,7 @@
+{
+  "description": "extensionsRequired names EXT_acoustics, which extensionsUsed does not declare. FS-DOC-002 applies only when every required name is declared, so the document reaches the invariant tier and FS-INV-004 is reported.",
+  "covers": [
+    "FS-CORE-1.6.2",
+    "FS-CORE-10.2.1"
+  ]
+}

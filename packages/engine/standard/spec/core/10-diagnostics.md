@@ -4,17 +4,22 @@
 
 Validation runs in tiers:
 
+0. **Configuration** — are the known extensions the validator is configured with a valid
+   registry (12.2)? (`FS-CFG-`)
 1. **Parsing** — is it JSON, as 9.1 requires? (`FS-JSON-`)
 2. **Document** — can this reader read it at all: its version and its required extensions? (`FS-DOC-`)
-3. **Schema** — does it match the JSON Schema of this draft? (`FS-SCH-`)
+3. **Schema** — does it match the JSON Schema of the draft it declares? (`FS-SCH-`)
 4. **Invariants** — the rules no schema can express: references resolve, the wall graph is planar,
-   rooms and openings fit. (`FS-INV-`)
+   rooms, openings and hosted elements fit, the program is consistent, and the extensions known to
+   the validator are used as their registry entries say. (`FS-INV-`)
 5. **Lints** — conditions that make a valid document worse. (`FS-LINT-`)
 
 The schema is applied to the parsed document, in which a number written with a fraction or an
-exponent is not an integer: `1.0` is not a length.
+exponent is not an integer: `1.0` is not a length. A document that declares `"0.1"` is checked
+against Core 0.1's schema (1.2.4); every other document reaching the schema tier, against this
+draft's.
 
-A document is **valid** when the first four tiers report no error. Lints never make a document
+A document is **valid** when the first five tiers, 0 to 4, report no error. Lints never make a document
 invalid.
 
 A validator MUST report a document as valid if, and only if, it reports no diagnostic with severity `error`. {#FS-CORE-10.1.1 MUST}
@@ -39,7 +44,7 @@ A validator MUST report each condition the catalogue lists as a diagnostic with 
 
 A condition that occurs several times is reported once for each occurrence: once for each
 unresolved reference, each undeclared extension name, each pair of crossing edges, each pair of
-coincident junctions. A validator reports diagnostics sorted by code and then by `elements`, compared as sequences of
+coincident junctions, each missing or out-of-range dependency, each missing fallback part. A validator reports diagnostics sorted by code and then by `elements`, compared as sequences of
 strings. For schema violations the catalogue lists a single code, `FS-SCH-001`; validators differ
 in how they break a schema violation into parts, so what is compared is only that at least one
 `FS-SCH-001` is reported.
@@ -50,8 +55,18 @@ A tier only makes sense when the one before it passed: a dangling reference make
 graph planar?" unanswerable. Each tier is evaluated only when every earlier tier reported no
 error, with these refinements inside tier 4:
 
+- **Configuration** (`FS-CFG-001`) is evaluated before every tier, parsing included. If it is
+  reported, nothing else is evaluated.
 - **Reference invariants** (`FS-INV-001` to `FS-INV-009`) are evaluated first. If any is reported,
   no other invariant is evaluated.
+- **Program invariants** (`FS-INV-401` to `FS-INV-403`) are evaluated for every adjacency, except
+  that `FS-INV-402` and `FS-INV-403` are not evaluated for an adjacency that has `FS-INV-401`.
+- **Extension invariants** (`FS-INV-601` to `FS-INV-605`) are evaluated for every extension the
+  document uses at a version at which it is known (12.2).
+- **Hosting invariants** (`FS-INV-501` to `FS-INV-506`) are evaluated for every extension element
+  and every type, except that `FS-INV-502` is not evaluated for a host wall that has `FS-INV-112`,
+  and `FS-INV-503` is evaluated only for a `surface` host whose room is on a level where room
+  invariants are evaluated and has none of `FS-INV-201` to `FS-INV-204`.
 - **Graph invariants** (`FS-INV-101` to `FS-INV-108`, `FS-INV-111` and `FS-INV-112`) are evaluated
   for every level and wall, except that `FS-INV-111` is not evaluated for a junction with a wall
   that has `FS-INV-107` or `FS-INV-108`: without layers there are no face lines to compare.
@@ -70,23 +85,24 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 
 | Code | Severity | Condition | Elements | Rule |
 |---|---|---|---|---|
+| `FS-CFG-001` | error | the validator's known extensions are not a valid registry: an entry does not match the registry entry schema, two entries have the same name and version, or `requires` forms a cycle | — | 12.2.1, 12.2.2 |
 | `FS-JSON-001` | error | not a well-formed UTF-8 JSON text, or begins with a byte order mark | — | 9.1.1 |
 | `FS-JSON-002` | error | an object has a duplicate member name | — | 9.1.2 |
 | `FS-JSON-003` | error | a string has an unpaired surrogate | — | 9.1.3 |
 | `FS-DOC-001` | error | the root is an object whose `floorspec` member is a string naming a version this reader does not implement | — | 1.2.2 |
 | `FS-DOC-002` | error | `extensionsRequired` is an array of distinct extension names, each a member of `extensionsUsed`, and one of them names an extension this reader does not implement; one diagnostic for each such name. Any other `extensionsRequired` is left to the schema tier and `FS-INV-004` | — | 1.6.4 |
-| `FS-SCH-001` | error | the document does not match the schema of this draft | — | 1.1, 1.2.1, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 7.1, 8.1, 8.3–8.6 |
+| `FS-SCH-001` | error | the document does not match the schema of the draft it declares (1.2.4) | — | 1.1, 1.2.3, 1.2.4, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 7.1, 8.1, 8.3–8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1 |
 
 **Reference invariants.**
 
 | Code | Severity | Condition | Elements | Rule |
 |---|---|---|---|---|
-| `FS-INV-001` | error | an ID is used in more than one collection | the ID | 3.1.2 |
-| `FS-INV-002` | error | a reference does not resolve to an element of the right collection | the referring element | 3.2.1 |
+| `FS-INV-001` | error | an ID is used in more than one collection — counting program items and every extension collection | the ID | 3.1.2, 3.1.3 |
+| `FS-INV-002` | error | a reference does not resolve to an element of the right collection | the referring element, program item or extension element; none for an adjacency | 3.2.1 |
 | `FS-INV-003` | error | a type reference resolves to a type of the wrong kind | the referring element | 3.2.2 |
 | `FS-INV-004` | error | an `extensionsRequired` name is not in `extensionsUsed` | — | 1.6.2 |
 | `FS-INV-005` | error | extension data names an extension not in `extensionsUsed` | the element, or none at top level | 1.6.3 |
-| `FS-INV-006` | error | a room function names an extension not in `extensionsUsed` | the room | 4.2.1 |
+| `FS-INV-006` | error | a room's or a program item's function names an extension not in `extensionsUsed` | the room or item | 4.2.1, 11.1.2 |
 | `FS-INV-007` | error | an edge's junction is on another level | the edge and the junction | 3.3.1 |
 | `FS-INV-008` | error | a wall's base or top level is in another building | the wall and the level | 3.3.2 |
 | `FS-INV-009` | error | an authored polygon is not simple or has no area | the slab, or none for the site boundary | 2.6.1 |
@@ -131,6 +147,35 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 
 `FS-INV-302`, `FS-INV-303` and `FS-INV-304` are evaluated only for openings without `FS-INV-301`.
 
+**Program invariants.**
+
+| Code | Severity | Condition | Elements | Rule |
+|---|---|---|---|---|
+| `FS-INV-401` | error | an adjacency relates an item to itself | the item | 11.2.1 |
+| `FS-INV-402` | error | an adjacency has the pair and kind of an earlier one; once for each such adjacency | both items | 11.2.2 |
+| `FS-INV-403` | error | a pair has a `"forbidden"` adjacency and a `"required"` or `"preferred"` one; once for each such pair | both items | 11.2.3 |
+
+**Hosting invariants.**
+
+| Code | Severity | Condition | Elements | Rule |
+|---|---|---|---|---|
+| `FS-INV-501` | error | a `wallFace` host's offset exceeds its wall's length | the extension element | 13.3.2 |
+| `FS-INV-502` | error | a `wallFace` host's height exceeds its wall's height | the extension element | 13.3.3 |
+| `FS-INV-503` | error | a `surface` host's position is not strictly inside its room's polygon | the extension element | 13.3.4 |
+| `FS-INV-504` | error | an extension element's fallback level is not its host's level | the extension element | 13.3.5 |
+| `FS-INV-505` | error | a box — a fallback's or a clearance envelope's — has an extent of less than 1,280; once for each such box | the extension element or type | 13.2.2 |
+| `FS-INV-506` | error | a fallback's `asset` or `symbol` has a media type 12.6.1 does not allow; once for each | the extension element | 12.6.1 |
+
+**Extension invariants.** These are evaluated only for extensions known to the validator (12.2).
+
+| Code | Severity | Condition | Elements | Rule |
+|---|---|---|---|---|
+| `FS-INV-601` | error | an extension that a used, known extension requires is not used; once for each such pair | — | 12.3.2 |
+| `FS-INV-602` | error | an extension that a used, known extension requires is used at a version outside the range; once for each such pair | — | 12.3.1, 12.3.3 |
+| `FS-INV-603` | error | an element of a known extension lacks a fallback part its kind requires; once for each missing part | the extension element | 12.4.2 |
+| `FS-INV-604` | error | a known extension's data has a collection its entry does not name; once for each | — | 12.4.1 |
+| `FS-INV-605` | error | a function uses a term of a known extension that its entry does not list | the room or item | 12.4.3 |
+
 **Lints.**
 
 | Code | Severity | Condition | Elements | Rule |
@@ -140,8 +185,12 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-LINT-003` | info | a bounded face with no anchor | — (location: its level and a point of it) | 6.6 |
 | `FS-LINT-004` | warning | a bounded face with no anchor whose room polygon is degenerate | — (location: its level) | 6.6 |
 | `FS-LINT-005` | warning | an opening reaches into a join | the opening | 7.5 |
-| `FS-LINT-006` | info | a type, material or asset nothing refers to | it | 8.7 |
+| `FS-LINT-006` | info | a type, material or asset nothing refers to — a fallback's `asset` and `symbol` refer to theirs | it | 8.7 |
 | `FS-LINT-007` | warning | an asset located by `uri` | the asset | 8.7 |
+| `FS-LINT-008` | warning | a program item with fewer rooms than its `count` | the item | 11.5 |
+| `FS-LINT-009` | warning | a room whose net area is less than its item's `minArea` | the item and the room | 11.5 |
+| `FS-LINT-010` | warning | a `"required"` adjacency whose items' rooms are not adjacent; once for each adjacency | both items | 11.5 |
+| `FS-LINT-011` | warning | a `"forbidden"` adjacency whose items' rooms are adjacent; once for each adjacency | both items | 11.5 |
 
 ## 10.5 Fix operations
 

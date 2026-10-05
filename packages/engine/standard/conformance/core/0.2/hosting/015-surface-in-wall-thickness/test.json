@@ -1,0 +1,7 @@
+{
+  "description": "A surface host whose position is inside the thickness of W1, in the room's face but not inside its room polygon: FS-INV-503.",
+  "covers": [
+    "FS-CORE-13.3.4",
+    "FS-CORE-10.2.1"
+  ]
+}

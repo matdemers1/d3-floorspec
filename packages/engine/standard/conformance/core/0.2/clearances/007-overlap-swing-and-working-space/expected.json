@@ -1,0 +1,101 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "662d215a53dc75b95157dd7b231f52a6a8a0f1bb0d6f7d88b864907a2d998f57",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [3840000, 0],
+        "end": [2688000, 0],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "PNL": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2112000, 64000], [2624000, 64000], [2624000, 192000], [2112000, 192000]],
+        "bottom": 1536000,
+        "top": 2304000
+      }
+    },
+    "placements": {
+      "PNL": {
+        "point": [2368000, 64000, 1536000],
+        "facing": 90000000
+      }
+    },
+    "clearances": {
+      "O1": {
+        "swing": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[2688000, 0], [3840000, 0], [3840000, 1152000], [2688000, 1152000]],
+          "bottom": 0,
+          "top": 2688000
+        }
+      },
+      "PNL": {
+        "working": {
+          "level": "L1",
+          "purpose": "workingSpace",
+          "footprint": [[1880320, 64000], [2855680, 64000], [2855680, 1216000], [1880320, 1216000]],
+          "bottom": 0,
+          "top": 2534400
+        }
+      }
+    },
+    "clearanceOverlaps": [
+      [["O1", "swing"], ["PNL", "working"]]
+    ]
+  }
+}

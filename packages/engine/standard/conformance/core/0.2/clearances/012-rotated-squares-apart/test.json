@@ -1,0 +1,6 @@
+{
+  "description": "Two 1 m squares, each turned 45 degrees - diamonds - with centres 708 mm apart in both x and y: their facing edges are parallel and about 1.3 mm apart, so they do not overlap, though their axis-aligned bounding boxes do. A test on bounding boxes would list them; the overlap measure does not.",
+  "covers": [
+    "FS-CORE-13.6.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "Bedrooms of at least 12 m2: both have 11.31 m2, so minAreaMet is false and FS-LINT-009 is reported once for each room, naming the item and the room.",
+  "covers": [
+    "FS-CORE-11.3.1",
+    "FS-CORE-11.5.2"
+  ]
+}

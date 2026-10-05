@@ -1,0 +1,6 @@
+{
+  "description": "An extension term must match ^[a-z][A-Za-z0-9]*$ after the colon.",
+  "covers": [
+    "FS-CORE-4.1.1"
+  ]
+}

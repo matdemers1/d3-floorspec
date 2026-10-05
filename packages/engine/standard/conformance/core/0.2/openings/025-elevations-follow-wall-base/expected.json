@@ -1,0 +1,74 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "a27c7faf6476eab457f2be4f2ad9a5e09781317271b74ef84bb0afaeab0efa1a",
+  "derived": {
+    "walls": {
+      "WA": {
+        "startRight": [0, -64000],
+        "endRight": [2560000, -64000],
+        "endLeft": [2560000, 64000],
+        "startLeft": [0, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "WB": {
+        "startRight": [5120000, -64000],
+        "endRight": [7680000, -64000],
+        "endLeft": [7680000, 64000],
+        "startLeft": [5120000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3584000
+      },
+      "WC": {
+        "startRight": [10240000, -64000],
+        "endRight": [12800000, -64000],
+        "endLeft": [12800000, 64000],
+        "startLeft": [10240000, 64000],
+        "baseElevation": 128000,
+        "topElevation": 1664000
+      },
+      "WD": {
+        "startRight": [15360000, -64000],
+        "endRight": [17920000, -64000],
+        "endLeft": [17920000, 64000],
+        "startLeft": [15360000, 64000],
+        "baseElevation": 3840000,
+        "topElevation": 4992000
+      },
+      "WE": {
+        "startRight": [20480000, -64000],
+        "endRight": [23040000, -64000],
+        "endLeft": [23040000, 64000],
+        "startLeft": [20480000, 64000],
+        "baseElevation": -384000,
+        "topElevation": 3840000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [10880000, 0],
+        "end": [11648000, 0],
+        "sillElevation": 512000,
+        "headElevation": 1280000
+      },
+      "O2": {
+        "start": [16000000, 0],
+        "end": [16768000, 0],
+        "sillElevation": 3840000,
+        "headElevation": 4608000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": []
+  }
+}

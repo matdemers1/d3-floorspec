@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-005",
+      "severity": "error",
+      "elements": ["KIT"]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "Strings with escapes that canonical form writes differently: \\/ becomes /, \\u0041 becomes A, and a control character U+001F stays escaped, as \\u001f.",
+  "covers": [
+    "FS-CORE-9.2.1"
+  ]
+}

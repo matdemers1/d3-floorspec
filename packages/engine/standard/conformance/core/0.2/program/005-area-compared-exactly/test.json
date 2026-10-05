@@ -1,0 +1,6 @@
+{
+  "description": "A minimum area exactly equal to each bedroom's net area (18,530,304,000,000 square base units) is met; a target one square base unit more is not.",
+  "covers": [
+    "FS-CORE-11.3.1"
+  ]
+}

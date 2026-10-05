@@ -1,0 +1,7 @@
+{
+  "description": "Wall W1 is on L1 but ends at J2, which is on L2.",
+  "covers": [
+    "FS-CORE-3.3.1",
+    "FS-CORE-10.2.1"
+  ]
+}

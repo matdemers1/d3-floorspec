@@ -1,0 +1,7 @@
+{
+  "description": "A room anchored 32,000 units inside W1's location line: in the face, but in the wall's thickness, not inside the room polygon.",
+  "covers": [
+    "FS-CORE-6.3.4",
+    "FS-CORE-10.2.1"
+  ]
+}

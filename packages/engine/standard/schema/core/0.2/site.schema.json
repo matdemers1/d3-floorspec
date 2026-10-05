@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.2/site.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 1.8's Site table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Site",
+  "description": "1.8: the project's site. A project with no site yet omits it. It is not an element: it carries no name and no extensions.",
+  "type": "object",
+  "properties": {
+    "trueNorth": {
+      "title": "True north",
+      "description": "1.8: the angle (2.4) from project north (+Y) to true north, counter-clockwise positive, in microdegrees. It MUST be greater than −180,000,000 and at most 180,000,000 (FS-CORE-1.8.1).",
+      "type": "integer",
+      "exclusiveMinimum": -180000000,
+      "maximum": 180000000,
+      "default": 0
+    },
+    "location": {
+      "title": "Location",
+      "description": "1.8: the site's WGS 84 position in microdegrees. Absent by default; when present, both members are present.",
+      "type": "object",
+      "required": [
+        "latitude",
+        "longitude"
+      ],
+      "properties": {
+        "latitude": {
+          "title": "Latitude",
+          "description": "1.8: an angle (2.4) in [−90,000,000, 90,000,000] microdegrees (FS-CORE-1.8.2).",
+          "type": "integer",
+          "minimum": -90000000,
+          "maximum": 90000000
+        },
+        "longitude": {
+          "title": "Longitude",
+          "description": "1.8: an angle (2.4) in (−180,000,000, 180,000,000] microdegrees (FS-CORE-1.8.2).",
+          "type": "integer",
+          "exclusiveMinimum": -180000000,
+          "maximum": 180000000
+        }
+      },
+      "additionalProperties": false
+    },
+    "boundary": {
+      "$ref": "defs.schema.json#/$defs/polygon",
+      "description": "1.8: the lot line, a polygon (2.6) in project coordinates. Absent by default."
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.7, 1.8: application-specific data for the site.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

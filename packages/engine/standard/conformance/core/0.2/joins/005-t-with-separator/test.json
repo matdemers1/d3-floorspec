@@ -1,0 +1,8 @@
+{
+  "description": "Two walls continue through J0 and a separator leaves it: the separator's face lines are its location line, so the fill degenerates to fewer than three distinct points and is empty.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.3",
+    "FS-CORE-5.7.4"
+  ]
+}

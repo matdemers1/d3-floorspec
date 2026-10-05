@@ -1,10 +1,10 @@
 /**
- * The diagnostic catalogue of Floorspec Core 0.1 (10.4) — the single table of codes. A test checks
+ * The diagnostic catalogue of Floorspec Core 0.2 (10.4) — a superset of 0.1's — the single table of codes. A test checks
  * it against the copy of spec/core/10-diagnostics.md vendored with the conformance suite.
  */
 import type { Severity } from './diagnostic.js';
 
-export type Tier = 'parse' | 'document' | 'schema' | 'invariant' | 'lint';
+export type Tier = 'configuration' | 'parse' | 'document' | 'schema' | 'invariant' | 'lint';
 
 export interface CatalogueEntry {
   readonly code: string;
@@ -28,18 +28,19 @@ const e = (code: string, severity: Severity, tier: Tier, condition: string, elem
 });
 
 export const CATALOGUE: readonly CatalogueEntry[] = [
+  e('FS-CFG-001', 'error', 'configuration', "the validator's known extensions are not a valid registry: an entry does not match the registry entry schema, two entries have the same name and version, or `requires` forms a cycle", '—', '12.2.1, 12.2.2'),
   e('FS-JSON-001', 'error', 'parse', 'not a well-formed UTF-8 JSON text, or begins with a byte order mark', '—', '9.1.1'),
   e('FS-JSON-002', 'error', 'parse', 'an object has a duplicate member name', '—', '9.1.2'),
   e('FS-JSON-003', 'error', 'parse', 'a string has an unpaired surrogate', '—', '9.1.3'),
   e('FS-DOC-001', 'error', 'document', 'the root is an object whose `floorspec` member is a string naming a version this reader does not implement', '—', '1.2.2'),
   e('FS-DOC-002', 'error', 'document', '`extensionsRequired` names an extension this reader does not implement', '—', '1.6.4'),
-  e('FS-SCH-001', 'error', 'schema', 'the document does not match the schema of this draft', '—', '1.1, 1.2.1, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 7.1, 8.1, 8.3–8.6'),
-  e('FS-INV-001', 'error', 'invariant', 'an ID is used in more than one collection', 'the ID', '3.1.2'),
-  e('FS-INV-002', 'error', 'invariant', 'a reference does not resolve to an element of the right collection', 'the referring element', '3.2.1'),
+  e('FS-SCH-001', 'error', 'schema', 'the document does not match the schema of the draft it declares (1.2.4)', '—', '1.1, 1.2.3, 1.2.4, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 7.1, 8.1, 8.3–8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1'),
+  e('FS-INV-001', 'error', 'invariant', 'an ID is used in more than one collection — counting program items and every extension collection', 'the ID', '3.1.2, 3.1.3'),
+  e('FS-INV-002', 'error', 'invariant', 'a reference does not resolve to an element of the right collection', 'the referring element, program item or extension element; none for an adjacency', '3.2.1'),
   e('FS-INV-003', 'error', 'invariant', 'a type reference resolves to a type of the wrong kind', 'the referring element', '3.2.2'),
   e('FS-INV-004', 'error', 'invariant', 'an `extensionsRequired` name is not in `extensionsUsed`', '—', '1.6.2'),
   e('FS-INV-005', 'error', 'invariant', 'extension data names an extension not in `extensionsUsed`', 'the element, or none at top level', '1.6.3'),
-  e('FS-INV-006', 'error', 'invariant', 'a room function names an extension not in `extensionsUsed`', 'the room', '4.2.1'),
+  e('FS-INV-006', 'error', 'invariant', "a room's or a program item's function names an extension not in `extensionsUsed`", 'the room or item', '4.2.1, 11.1.2'),
   e('FS-INV-007', 'error', 'invariant', "an edge's junction is on another level", 'the edge and the junction', '3.3.1'),
   e('FS-INV-008', 'error', 'invariant', "a wall's base or top level is in another building", 'the wall and the level', '3.3.2'),
   e('FS-INV-009', 'error', 'invariant', 'an authored polygon is not simple or has no area', 'the slab, or none for the site boundary', '2.6.1'),
@@ -63,13 +64,31 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
   e('FS-INV-302', 'error', 'invariant', "an opening extends beyond its wall's length", 'the opening', '7.3.1'),
   e('FS-INV-303', 'error', 'invariant', "an opening extends above its wall's height", 'the opening', '7.3.2'),
   e('FS-INV-304', 'error', 'invariant', 'two openings on one wall overlap', 'both openings', '7.3.3'),
+  e('FS-INV-401', 'error', 'invariant', 'an adjacency relates an item to itself', 'the item', '11.2.1'),
+  e('FS-INV-402', 'error', 'invariant', 'an adjacency has the pair and kind of an earlier one; once for each such adjacency', 'both items', '11.2.2'),
+  e('FS-INV-403', 'error', 'invariant', 'a pair has a `"forbidden"` adjacency and a `"required"` or `"preferred"` one; once for each such pair', 'both items', '11.2.3'),
+  e('FS-INV-501', 'error', 'invariant', "a `wallFace` host's offset exceeds its wall's length", 'the extension element', '13.3.2'),
+  e('FS-INV-502', 'error', 'invariant', "a `wallFace` host's height exceeds its wall's height", 'the extension element', '13.3.3'),
+  e('FS-INV-503', 'error', 'invariant', "a `surface` host's position is not strictly inside its room's polygon", 'the extension element', '13.3.4'),
+  e('FS-INV-504', 'error', 'invariant', "an extension element's fallback level is not its host's level", 'the extension element', '13.3.5'),
+  e('FS-INV-505', 'error', 'invariant', "a box — a fallback's or a clearance envelope's — has an extent of less than 1,280; once for each such box", 'the extension element or type', '13.2.2'),
+  e('FS-INV-506', 'error', 'invariant', "a fallback's `asset` or `symbol` has a media type 12.6.1 does not allow; once for each", 'the extension element', '12.6.1'),
+  e('FS-INV-601', 'error', 'invariant', 'an extension that a used, known extension requires is not used; once for each such pair', '—', '12.3.2'),
+  e('FS-INV-602', 'error', 'invariant', 'an extension that a used, known extension requires is used at a version outside the range; once for each such pair', '—', '12.3.1, 12.3.3'),
+  e('FS-INV-603', 'error', 'invariant', 'an element of a known extension lacks a fallback part its kind requires; once for each missing part', 'the extension element', '12.4.2'),
+  e('FS-INV-604', 'error', 'invariant', "a known extension's data has a collection its entry does not name; once for each", '—', '12.4.1'),
+  e('FS-INV-605', 'error', 'invariant', "a function uses a term of a known extension that its entry does not list", 'the room or item', '12.4.3'),
   e('FS-LINT-001', 'warning', 'lint', 'an acute join', 'the junction and both walls', '5.10'),
   e('FS-LINT-002', 'warning', 'lint', 'a junction no edge uses', 'the junction', '5.10'),
   e('FS-LINT-003', 'info', 'lint', 'a bounded face with no anchor', '— (location: its level and a point of it)', '6.6'),
   e('FS-LINT-004', 'warning', 'lint', 'a bounded face with no anchor whose room polygon is degenerate', '— (location: its level)', '6.6'),
   e('FS-LINT-005', 'warning', 'lint', 'an opening reaches into a join', 'the opening', '7.5'),
-  e('FS-LINT-006', 'info', 'lint', 'a type, material or asset nothing refers to', 'it', '8.7'),
+  e('FS-LINT-006', 'info', 'lint', "a type, material or asset nothing refers to — a fallback's `asset` and `symbol` refer to theirs", 'it', '8.7'),
   e('FS-LINT-007', 'warning', 'lint', 'an asset located by `uri`', 'the asset', '8.7'),
+  e('FS-LINT-008', 'warning', 'lint', 'a program item with fewer rooms than its `count`', 'the item', '11.5'),
+  e('FS-LINT-009', 'warning', 'lint', "a room whose net area is less than its item's `minArea`", 'the item and the room', '11.5'),
+  e('FS-LINT-010', 'warning', 'lint', "a `\"required\"` adjacency whose items' rooms are not adjacent; once for each adjacency", 'both items', '11.5'),
+  e('FS-LINT-011', 'warning', 'lint', "a `\"forbidden\"` adjacency whose items' rooms are adjacent; once for each adjacency", 'both items', '11.5'),
 ];
 
 const BY_CODE = new Map(CATALOGUE.map((c) => [c.code, c]));

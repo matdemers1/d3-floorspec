@@ -1,0 +1,6 @@
+{
+  "description": "A door type's width, when present, is greater than zero.",
+  "covers": [
+    "FS-CORE-8.4.1"
+  ]
+}

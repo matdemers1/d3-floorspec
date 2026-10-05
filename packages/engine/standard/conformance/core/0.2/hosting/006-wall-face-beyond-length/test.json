@@ -1,0 +1,7 @@
+{
+  "description": "An offset of 3000 mm and one base unit on a 3000 mm wall: FS-INV-501.",
+  "covers": [
+    "FS-CORE-13.3.2",
+    "FS-CORE-10.2.1"
+  ]
+}

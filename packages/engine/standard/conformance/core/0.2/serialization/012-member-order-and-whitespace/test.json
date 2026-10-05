@@ -1,0 +1,8 @@
+{
+  "description": "The baseline model (model/017) with every object's members in a different order, four-space and tab indentation and spaces before colons. Its canonical form, hash and derived values are exactly model/017's.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.2.2",
+    "FS-CORE-9.3.1"
+  ]
+}

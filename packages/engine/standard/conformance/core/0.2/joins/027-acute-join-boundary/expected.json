@@ -1,0 +1,43 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-001",
+      "severity": "warning",
+      "elements": ["J1", "W1", "W2"]
+    }
+  ],
+  "hash": "d262ee5297e1d95b5163c2ab589adfc2ea62d52cc9d43abb79009567282923e1",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [5120000, 64000],
+        "endRight": [249166, 64000],
+        "endLeft": [-249166, -64000],
+        "startLeft": [5120000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [249166, 64000],
+        "endRight": [5150843, 2759922],
+        "endLeft": [5089157, 2872078],
+        "startLeft": [-249166, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": []
+  }
+}

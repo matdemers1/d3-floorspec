@@ -5,9 +5,14 @@
  * Everything here assumes a document that passed the schema tier: every length is a safe integer.
  */
 import type * as G from '../generated/types.js';
+import type * as R from '../generated/registry-types.js';
 import { big } from '../exact/bigint.js';
 
-export type FloorspecDocument = G.FloorspecCore01Document;
+/**
+ * A document this engine reads: Core 0.2's shape, declaring either draft. A document that declares
+ * "0.1" passed Core 0.1's schema, so none of the members 0.2 adds is present in it (1.2.4).
+ */
+export type FloorspecDocument = Omit<G.FloorspecCore02Document, 'floorspec'> & { floorspec: '0.1' | '0.2' };
 export type Project = G.Project;
 export type Site = G.Site;
 export type Building = G.Building;
@@ -26,6 +31,20 @@ export type DoorType = G.DoorType;
 export type WindowType = G.WindowType;
 export type Material = G.Material;
 export type Asset = G.Asset;
+export type Program = G.Program;
+export type ProgramItem = G.ProgramItem;
+export type Adjacency = G.Adjacency;
+export type ExtensionDeclaration = G.ExtensionDeclaration;
+export type ExtensionElement = G.ExtensionElement;
+export type Fallback = G.Fallback;
+export type Box = G.Box;
+export type Host = G.Host;
+export type WallFaceHost = G.WallFaceHost;
+export type SurfaceHost = G.SurfaceHost;
+export type FreeHost = G.FreeHost;
+export type ClearanceEnvelope = G.ClearanceEnvelope;
+/** A registry entry (12.2): one version of one extension, as a validator's known extensions list it. */
+export type RegistryEntry = R.FloorspecExtensionRegistryEntry;
 
 /** The element collections of 1.1, in table order. */
 export const COLLECTIONS = [
@@ -124,3 +143,37 @@ export function openingDimensions(doc: FloorspecDocument, o: Opening): { width?:
 
 /** A point of the document as BigInts. */
 export const ipoint = (p: readonly [number, number]): readonly [bigint, bigint] => [big(p[0]), big(p[1])];
+
+/** 12.1: the version a declaration in `extensionsUsed` names — a version string, or an object's `version`. */
+export const declaredVersion = (d: ExtensionDeclaration): string => (typeof d === 'string' ? d : d.version);
+
+/** One extension element (12.5), with the extension and collection that hold it. */
+export interface ExtElement {
+  readonly extension: string;
+  readonly collection: string;
+  readonly id: string;
+  readonly element: ExtensionElement;
+}
+
+/**
+ * 12.5: every extension element of a document, sorted by ID — only in a document that declares
+ * "0.2"; in a 0.1 document top-level extension data is opaque, `collections` or not (1.2.4).
+ */
+export function extElements(doc: FloorspecDocument): ExtElement[] {
+  const out: ExtElement[] = [];
+  if (doc.floorspec !== '0.2') return out;
+  for (const [extension, data] of entries(doc.extensions as Record<string, unknown> | undefined)) {
+    if (typeof data !== 'object' || data === null || Array.isArray(data)) continue;
+    const cs = (data as { collections?: unknown }).collections;
+    if (typeof cs !== 'object' || cs === null || Array.isArray(cs)) continue;
+    for (const [collection, coll] of entries(cs as Record<string, Record<string, ExtensionElement> | undefined>))
+      for (const [id, element] of entries(coll)) out.push({ extension, collection, id, element });
+  }
+  return out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
+/** 11.1: the program's items, sorted by ID. */
+export const programItems = (doc: FloorspecDocument): [string, ProgramItem][] => entries(doc.program?.items);
+
+/** 11.2: the program's adjacencies, in document order. */
+export const adjacencies = (doc: FloorspecDocument): readonly Adjacency[] => doc.program?.adjacency ?? [];

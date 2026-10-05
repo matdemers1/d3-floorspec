@@ -1,0 +1,36 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "21b05332da00efdd76087ec9961df1bcbc4cf9187697db1c93691bd1df4f781e",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [45255, -45255],
+        "endRight": [2605255, 2514745],
+        "endLeft": [2514745, 2605255],
+        "startLeft": [-45255, 45255],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [0, 0],
+        "end": [2559999, 2559999],
+        "sillElevation": 0,
+        "headElevation": 2560000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": []
+  }
+}

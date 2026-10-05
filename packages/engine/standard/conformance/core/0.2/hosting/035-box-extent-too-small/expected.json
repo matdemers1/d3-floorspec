@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-505",
+      "severity": "error",
+      "elements": ["PIN"]
+    }
+  ]
+}

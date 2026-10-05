@@ -1,0 +1,6 @@
+{
+  "description": "A wall type with no layers.",
+  "covers": [
+    "FS-CORE-8.3.1"
+  ]
+}

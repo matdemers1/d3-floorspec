@@ -1,0 +1,6 @@
+{
+  "description": "A level's height must be greater than zero.",
+  "covers": [
+    "FS-CORE-1.8.3"
+  ]
+}

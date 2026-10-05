@@ -1,0 +1,8 @@
+{
+  "description": "Known extensions in which EXT_a requires EXT_b, EXT_b requires EXT_c and EXT_c requires EXT_a: a cycle. The validator reports FS-CFG-001 and nothing else, for any document - here a valid one.",
+  "covers": [
+    "FS-CORE-12.2.1",
+    "FS-CORE-12.2.2",
+    "FS-CORE-10.1.1"
+  ]
+}

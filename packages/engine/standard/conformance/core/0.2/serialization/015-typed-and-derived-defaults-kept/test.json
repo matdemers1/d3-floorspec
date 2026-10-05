@@ -1,0 +1,8 @@
+{
+  "description": "Members that look like defaults but are not constant defaults are kept: base.level naming the wall's own level (a derived default), a top at L2 with offset 0 (only the offset goes), a wall's own layers equal to its type's, and \"sill\": 0 on two openings - typed properties are never omitted.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.2.2",
+    "FS-CORE-8.2.1"
+  ]
+}

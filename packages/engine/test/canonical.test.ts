@@ -38,8 +38,30 @@ const B = `{
 }`;
 
 describe('canonical form (9.2) and content hash (9.3)', () => {
-  it('reads exactly the 53 constant defaults of Core 0.1 from the schema', () => {
-    expect(countDefaults(SCHEMA)).toBe(53);
+  it('reads exactly the 62 constant defaults of Core 0.2 from the schema', () => {
+    // Core 0.1's 53, and 0.2's nine: the program, its items and adjacency, an item's count,
+    // extensions and extras, an adjacency's weight, and a door or window type's clearances.
+    expect(countDefaults(SCHEMA)).toBe(62);
+  });
+
+  it('writes a declaration without a schema as its version string, and never touches extension elements (12.1, 12.5)', () => {
+    const doc = {
+      floorspec: '0.2',
+      project: { name: 'x' },
+      extensionsUsed: { FS_a: { version: '1.0' }, FS_b: { version: '2.0', schema: 'https://example.com/b.json' }, FS_c: '3.0' },
+      extensions: {
+        FS_a: { collections: { pieces: { P: { fallback: { level: 'L', box: { min: [0, 0, 0], max: [1280, 1280, 1280] } }, clearances: {}, extras: {}, host: { mode: 'free', level: 'L', position: [0, 0], rotation: 0 } } } } },
+      },
+      program: { items: { K: { function: 'kitchen', count: 1, extras: {} } }, adjacency: [] },
+      types: { D: { kind: 'doorType', clearances: {} } },
+    };
+    const c = omitDefaults(doc) as Record<string, unknown>;
+    expect(c.extensionsUsed).toEqual({ FS_a: '1.0', FS_b: { version: '2.0', schema: 'https://example.com/b.json' }, FS_c: '3.0' });
+    expect(c.extensions).toEqual(doc.extensions);
+    expect(c.program).toEqual({ items: { K: { function: 'kitchen' } } });
+    expect(c.types).toEqual({ D: { kind: 'doorType' } });
+    // the input is not changed
+    expect(doc.extensionsUsed.FS_a).toEqual({ version: '1.0' });
   });
 
   it('two differently formatted inputs canonicalise to identical bytes and the same hash', () => {

@@ -1,0 +1,9 @@
+{
+  "description": "One 4 m by 3 m room of 100 mm centred walls drawn clockwise: its polygon is the rectangle of the walls' inner faces, counter-clockwise from its least vertex, and its net area is 4,992,000 x 3,712,000 square base units.",
+  "covers": [
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.3.1",
+    "FS-CORE-6.3.4",
+    "FS-CORE-6.4.1"
+  ]
+}

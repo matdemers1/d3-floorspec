@@ -1,0 +1,7 @@
+{
+  "description": "SE and NE are divided by a separator and SW and NW by a wall: both forbidden adjacencies are present (FS-LINT-011), whatever divides the rooms. SW and NE are not adjacent.",
+  "covers": [
+    "FS-CORE-11.4.1",
+    "FS-CORE-11.5.2"
+  ]
+}

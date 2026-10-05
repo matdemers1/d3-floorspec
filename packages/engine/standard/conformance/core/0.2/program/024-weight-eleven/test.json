@@ -1,0 +1,6 @@
+{
+  "description": "An adjacency's weight of 11 is out of range.",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

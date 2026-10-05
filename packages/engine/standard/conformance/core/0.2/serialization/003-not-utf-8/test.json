@@ -1,0 +1,6 @@
+{
+  "description": "A project name containing the byte 0xE9 (Latin-1 \"e acute\"), which is not UTF-8.",
+  "covers": [
+    "FS-CORE-9.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A host on W1, whose top is not above its base: FS-INV-112, and FS-INV-502 is not evaluated for a host wall that has FS-INV-112.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-13.3.3"
+  ]
+}

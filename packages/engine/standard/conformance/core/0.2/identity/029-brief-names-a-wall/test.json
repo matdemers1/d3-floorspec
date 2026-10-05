@@ -1,0 +1,6 @@
+{
+  "description": "A room's brief names a wall: it must resolve to a program item.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

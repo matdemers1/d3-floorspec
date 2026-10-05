@@ -1,0 +1,7 @@
+{
+  "description": "EXT_a requires EXT_b at \">1.0.0-alpha.10\", and the document uses EXT_b 1.0.0-alpha.9. Numeric prerelease identifiers compare as numbers: alpha.9 is less than alpha.10.",
+  "covers": [
+    "FS-CORE-12.3.1",
+    "FS-CORE-12.3.3"
+  ]
+}

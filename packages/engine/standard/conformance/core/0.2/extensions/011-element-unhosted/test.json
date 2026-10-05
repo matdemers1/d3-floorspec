@@ -1,0 +1,10 @@
+{
+  "description": "An FS_furniture sofa with only a fallback: a 2 m by 900 mm by 800 mm box in L1's frame, 1 m east and 500 mm north of project zero. A reader that does not implement FS_furniture derives its fallback - footprint, bottom and top - and nothing else.",
+  "covers": [
+    "FS-CORE-12.5.1",
+    "FS-CORE-12.5.2",
+    "FS-CORE-12.6.2",
+    "FS-CORE-1.6.9",
+    "FS-CORE-13.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A slab boundary that touches itself at a vertex lying on another edge.",
+  "covers": [
+    "FS-CORE-2.6.1"
+  ]
+}

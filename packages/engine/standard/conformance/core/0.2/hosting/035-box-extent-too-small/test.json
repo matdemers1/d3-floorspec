@@ -1,0 +1,7 @@
+{
+  "description": "A fallback box 1,279 base units tall: FS-INV-505.",
+  "covers": [
+    "FS-CORE-13.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}
