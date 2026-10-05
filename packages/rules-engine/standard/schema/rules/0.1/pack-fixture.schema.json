@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/rules/0.1/pack-fixture.schema.json",
+  "$comment": "The rule-pack format (FLR-T-6.3, rules/README.md): what one fixture of a rule expects, rules/<pack>/rules/<rule ID>/fixtures/<slug>/expect.json. The fixture's document is document.json beside it, or the pack's documents/<document>.json. tools/build-pack.ts evaluates every fixture with the oracle and compares.",
+  "title": "Floorspec rule fixture",
+  "description": "A Floorspec document and the outcome one rule is expected to have on it.",
+  "type": "object",
+  "required": [
+    "description",
+    "outcome"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "defs.schema.json#/$defs/text"
+    },
+    "outcome": {
+      "title": "Outcome",
+      "description": "pass: the rule is evaluated, has at least one subject (or exactly subjects) and no finding; fail: it is evaluated and its findings are on exactly the subjects listed; deferred: it uses a deferred measure and is not evaluated (FS-RULES-008).",
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "deferred"
+      ]
+    },
+    "findings": {
+      "title": "Subjects with findings",
+      "description": "For fail: the IDs of exactly the subjects that get a finding.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "defs.schema.json#/$defs/id"
+      }
+    },
+    "subjects": {
+      "title": "Subjects",
+      "description": "The exact number of subjects, when the fixture means to pin it.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "exempt": {
+      "title": "Exempt",
+      "description": "The exact number of exempt subjects, when the fixture means to pin it.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "document": {
+      "title": "Shared document",
+      "description": "The name of a document in the pack's documents/ directory, instead of document.json beside this file.",
+      "$ref": "defs.schema.json#/$defs/packName"
+    },
+    "extensions": {
+      "title": "Known extensions",
+      "description": "The official extensions (registry/) the evaluator is configured with; default every one.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "defs.schema.json#/$defs/extensionName"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "outcome",
+        "findings"
+      ],
+      "properties": {
+        "outcome": {
+          "const": "fail"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "outcome": {
+          "enum": [
+            "pass",
+            "deferred"
+          ]
+        },
+        "findings": false
+      }
+    }
+  ]
+}

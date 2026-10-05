@@ -4,7 +4,8 @@
  *
  * Values are kept exact and typed by the measure's type: a length, count or integer is a BigInt; an
  * area is a BigInt holding **twice** the area, so a half is exact (4.2); a boolean, a term and a
- * sorted list of terms are themselves; `null` is no value (only `elementMember` has none).
+ * sorted list of terms are themselves; `null` is no value (only `elementMember`, `openingOperation`
+ * and the net clear measures of 6.5 can have none).
  */
 import type { Model } from '../model.js';
 import type { MeasureType, Target, TargetKind } from '../types.js';

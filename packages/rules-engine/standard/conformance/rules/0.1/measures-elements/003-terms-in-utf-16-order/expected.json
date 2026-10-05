@@ -1,0 +1,14 @@
+{
+  "results": [
+    {
+      "display": "A, z, 😀, ﬁ",
+      "type": "terms",
+      "value": [
+        "A",
+        "z",
+        "😀",
+        "ﬁ"
+      ]
+    }
+  ]
+}

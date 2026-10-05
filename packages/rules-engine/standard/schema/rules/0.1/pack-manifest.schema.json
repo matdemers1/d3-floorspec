@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/rules/0.1/pack-manifest.schema.json",
+  "$comment": "The rule-pack format (FLR-T-6.3, rules/README.md): a pack's manifest on disk, rules/<name>/pack.json. tools/build-pack.ts assembles it and the pack's rule files into the one pack object an evaluator reads (pack.schema.json, spec/rules chapter 2), which stays the single definition of that object; what this file adds beyond it travels in the built pack's extras.packFormat.",
+  "title": "Floorspec rule-pack manifest",
+  "description": "A pack's name, version, licence and attribution, the jurisdiction and editions it addresses, its maintainers and domains, and its declared coverage.",
+  "type": "object",
+  "required": [
+    "floorspecRules",
+    "name",
+    "version",
+    "title",
+    "license",
+    "attribution",
+    "jurisdiction",
+    "editions",
+    "maintainers",
+    "domains",
+    "coverage"
+  ],
+  "properties": {
+    "floorspecRules": {
+      "$ref": "defs.schema.json#/$defs/floorspecRules"
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/packName"
+    },
+    "version": {
+      "$ref": "defs.schema.json#/$defs/version"
+    },
+    "title": {
+      "$ref": "defs.schema.json#/$defs/title"
+    },
+    "description": {
+      "$ref": "defs.schema.json#/$defs/text"
+    },
+    "license": {
+      "title": "Licence",
+      "description": "Every pack is CC BY 4.0 (FLR-ADR-011, spec/rules 2.3).",
+      "const": "CC-BY-4.0"
+    },
+    "attribution": {
+      "title": "Attribution",
+      "description": "The attribution CC BY 4.0 asks a reuser to give: who made the pack, its name and version, and where it is published.",
+      "$ref": "defs.schema.json#/$defs/text"
+    },
+    "jurisdiction": {
+      "title": "Jurisdiction scope",
+      "description": "Where the pack is meant to apply, in words: \"United States: model codes as published, before local amendment\".",
+      "$ref": "defs.schema.json#/$defs/title"
+    },
+    "editions": {
+      "title": "Editions covered",
+      "description": "Every code edition a rule or coverage entry of the pack cites.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "edition"
+        ],
+        "properties": {
+          "code": {
+            "$ref": "defs.schema.json#/$defs/code"
+          },
+          "edition": {
+            "$ref": "defs.schema.json#/$defs/edition"
+          },
+          "title": {
+            "$ref": "defs.schema.json#/$defs/title"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "maintainers": {
+      "title": "Maintainers",
+      "description": "Who answers for the pack.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "defs.schema.json#/$defs/title"
+          },
+          "url": {
+            "$ref": "defs.schema.json#/$defs/httpsUri"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "synthetic": {
+      "title": "Synthetic",
+      "description": "True for an example or test pack that cites only synthetic codes (TEST-...) and no real requirement; such a pack is left out of the repository's coverage matrix.",
+      "type": "boolean",
+      "default": false
+    },
+    "domains": {
+      "title": "Domains",
+      "description": "The subject areas the coverage matrix summarises by: egress, room sizes, receptacles.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "defs.schema.json#/$defs/packName"
+          },
+          "title": {
+            "$ref": "defs.schema.json#/$defs/title"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "coverage": {
+      "title": "Coverage",
+      "description": "spec/rules 2.4's coverage entries, each with the domain it belongs to and, for what is not checked yet for want of data, the deferred measures it needs (spec/rules 4.8).",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/coverageEntry"
+      }
+    },
+    "extras": {
+      "type": "object",
+      "default": {},
+      "propertyNames": {
+        "not": {
+          "const": "packFormat"
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "coverageEntry": {
+      "title": "Coverage entry on disk",
+      "description": "spec/rules 2.4's entry, plus its domain and the deferred measures it waits on.",
+      "type": "object",
+      "required": [
+        "code",
+        "edition",
+        "section",
+        "status",
+        "domain"
+      ],
+      "properties": {
+        "code": {
+          "$ref": "defs.schema.json#/$defs/code"
+        },
+        "edition": {
+          "$ref": "defs.schema.json#/$defs/edition"
+        },
+        "section": {
+          "$ref": "defs.schema.json#/$defs/section"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "addressed",
+            "partial",
+            "notAddressed"
+          ]
+        },
+        "note": {
+          "$ref": "defs.schema.json#/$defs/text"
+        },
+        "domain": {
+          "$ref": "defs.schema.json#/$defs/packName"
+        },
+        "needs": {
+          "title": "Deferred measures needed",
+          "description": "The deferred measures (spec/rules 4.8) whose data would let the pack check what it does not yet.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]*$"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

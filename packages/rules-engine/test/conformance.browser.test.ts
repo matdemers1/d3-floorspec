@@ -13,7 +13,7 @@ describe('in the browser', () => {
   it('passes the Rules 0.1 conformance suite, and agrees with Node byte for byte', async () => {
     const cases = await commands.rulesConformanceCases();
     const node = new Map((await commands.rulesInNode()).map((r) => [r.name, r.out]));
-    expect(cases.length).toBe(85);
+    expect(cases.length).toBe(92);
     let passed = 0;
     for (const w of cases) {
       const c = {

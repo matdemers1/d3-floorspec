@@ -1,0 +1,60 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "SERVICE": {
+          "title": "Service space clear of other spaces",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§6.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (service space clear of other spaces); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "FS_mechanical",
+            "collection": "equipment"
+          },
+          "select": {
+            "from": "envelopes",
+            "args": {
+              "purpose": "workingSpace"
+            },
+            "need": "all"
+          },
+          "requirement": {
+            "measure": "envelopeOverlaps",
+            "op": "=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

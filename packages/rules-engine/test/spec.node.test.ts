@@ -38,7 +38,7 @@ describe('the measure library against chapters 5–8', () => {
   const rows = ['05-rooms.md', '06-openings.md', '07-elements.md', '08-wall-lines.md'].flatMap(measureRows);
 
   it('defines exactly the measures the specification defines, each of its type, for its kind of target', () => {
-    expect(rows.length).toBe(34); // 33 measures, elementCount in both 5.6 and 8.4
+    expect(rows.length).toBe(39); // 38 measures, elementCount in both 5.6 and 8.4
     const specified = new Set(rows.map(([s, n]) => `${n}/${kindOf(s)}`));
     const built = new Set(MEASURES.flatMap((m) => m.kinds.map((k) => `${m.name}/${k}`)));
     expect([...built].sort()).toEqual([...specified].sort());
@@ -47,9 +47,9 @@ describe('the measure library against chapters 5–8', () => {
       if (type === 'as `type`') expect(m.type).toBeNull();
       else expect(typeOf(m, {})).toBe(type);
     }
-    // 33 measures by name (elementCount is one measure of rooms and levels).
-    expect(new Set(rows.map(([, n]) => n)).size).toBe(33);
-    expect(MEASURES.length).toBe(33);
+    // 38 measures by name (elementCount is one measure of rooms and levels).
+    expect(new Set(rows.map(([, n]) => n)).size).toBe(38);
+    expect(MEASURES.length).toBe(38);
   });
 
   it('defers exactly the measures of 4.8, and builds none of them', () => {
@@ -61,7 +61,7 @@ describe('the measure library against chapters 5–8', () => {
       if (cell) for (const n of cell[1]!.matchAll(/`([a-zA-Z]+)`/g)) names.add(n[1]!);
     }
     expect([...DEFERRED].sort()).toEqual([...names].sort());
-    expect(DEFERRED.size).toBe(15);
+    expect(DEFERRED.size).toBe(11);
     for (const m of MEASURES) expect(DEFERRED.has(m.name)).toBe(false);
   });
 });

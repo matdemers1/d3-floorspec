@@ -1,11 +1,12 @@
 /**
- * Chapter 6: measures of openings — kind (6.1), size as drawn (6.2), heights above the floor (6.3)
- * and whether the opening's wall faces the outside (6.4).
+ * Chapter 6: measures of openings — kind and operation (6.1), size as drawn (6.2), heights above
+ * the floor (6.3), whether the opening's wall faces the outside (6.4) and the net clear opening
+ * (6.5).
  *
- * The net clear opening and a door's clear width (`openingNetClearArea`, `…Width`, `…Height`,
- * `doorClearWidth`) are deferred in Rules 0.1 (4.8): Core 0.2 describes no sash, frame, leaf or
- * stop. When a later Rules draft defines them over the net-clear data a later Core draft adds, each
- * becomes one more entry of OPENING_MEASURES and leaves DEFERRED (library.ts); nothing else moves.
+ * The net clear measures read only what Core 0.3 derives — the opening's effective clear opening,
+ * exactly as its door or window type declares it or the opening overrides it (Core §7.2, §7.4) —
+ * and have no value where nothing is declared: never a figure computed from the opening's own size
+ * (FS-RULES-6.5.1). A Core 0.1 or 0.2 document declares none.
  */
 import { own, type Model } from '../model.js';
 import { measure, type Measure } from './measure.js';
@@ -16,7 +17,18 @@ export function wallToOutside(model: Model, wid: string): boolean {
   return lv.halfEdges(wid).some((h) => lv.faceOf(h) === undefined);
 }
 
-const derivedOpening = (m: Model, oid: string): { sillElevation: number; headElevation: number } => own(m.derived.openings, oid)!;
+const derivedOpening = (m: Model, oid: string): { sillElevation: number; headElevation: number; clearOpening?: { width: number; height: number; area?: number } } =>
+  own(m.derived.openings, oid)!;
+
+/** 6.1: the kind of an opening — what fills it. */
+const kindOf = (m: Model, oid: string): 'door' | 'window' | 'empty' => {
+  const fill = m.opening(oid).fill;
+  if (fill === undefined) return 'empty';
+  return own(m.doc.types, fill)!.kind === 'doorType' ? 'door' : 'window';
+};
+
+/** 6.5: the opening's clear opening as Core derives it (Core §7.4), or undefined when none is declared. */
+const clearOf = (m: Model, oid: string): { width: number; height: number; area?: number } | undefined => derivedOpening(m, oid).clearOpening;
 const floorOf = (m: Model, oid: string): bigint => m.floor(m.wallLevel(m.opening(oid).wall));
 
 export const OPENING_MEASURES: readonly Measure[] = [
@@ -24,10 +36,19 @@ export const OPENING_MEASURES: readonly Measure[] = [
     name: 'openingKind',
     kinds: ['opening'],
     type: 'term',
+    compute: (m, t) => ({ value: kindOf(m, t.id) }),
+  }),
+  measure({
+    name: 'openingOperation',
+    kinds: ['opening'],
+    type: 'term',
     compute: (m, t) => {
+      // 6.1: the operation of the door or window type that fills it; no value for an empty opening
+      // or a type that declares none (Core §8.4: an absent operation is not declared).
       const fill = m.opening(t.id).fill;
-      if (fill === undefined) return { value: 'empty' };
-      return { value: own(m.doc.types, fill)!.kind === 'doorType' ? 'door' : 'window' };
+      const type = fill === undefined ? undefined : own(m.doc.types, fill);
+      const op = type && type.kind !== 'wallType' ? type.operation : undefined;
+      return { value: op ?? null };
     },
   }),
   measure({
@@ -68,5 +89,45 @@ export const OPENING_MEASURES: readonly Measure[] = [
     kinds: ['opening'],
     type: 'boolean',
     compute: (m, t) => ({ value: wallToOutside(m, m.opening(t.id).wall) }),
+  }),
+  // 6.5: the net clear opening, as declared.
+  measure({
+    name: 'openingNetClearWidth',
+    kinds: ['opening'],
+    type: 'length',
+    compute: (m, t) => {
+      const c = clearOf(m, t.id);
+      return { value: c ? BigInt(c.width) : null };
+    },
+  }),
+  measure({
+    name: 'openingNetClearHeight',
+    kinds: ['opening'],
+    type: 'length',
+    compute: (m, t) => {
+      const c = clearOf(m, t.id);
+      return { value: c ? BigInt(c.height) : null };
+    },
+  }),
+  measure({
+    name: 'openingNetClearArea',
+    kinds: ['opening'],
+    type: 'area',
+    compute: (m, t) => {
+      // The declared area — never the clear width times the clear height. An area is held doubled (4.2).
+      const area = clearOf(m, t.id)?.area;
+      return { value: area === undefined ? null : 2n * BigInt(area) };
+    },
+  }),
+  measure({
+    name: 'doorClearWidth',
+    kinds: ['opening'],
+    type: 'length',
+    compute: (m, t) => {
+      // For a door, the clear width of the whole opening, every leaf open, as declared; no value
+      // for a door without one, a window or an empty opening.
+      const c = kindOf(m, t.id) === 'door' ? clearOf(m, t.id) : undefined;
+      return { value: c ? BigInt(c.width) : null };
+    },
   }),
 ];

@@ -1,0 +1,8 @@
+{
+  "description": "A furniture piece whose `tags` member is the strings U+FB01, \"z\", U+1F600 and \"A\": a `terms` value is sorted as sequences of UTF-16 code units (9.7), so U+1F600 - the surrogates 0xD83D 0xDE00 - comes before U+FB01, although its code point is the larger; and the display lists them in the same order.",
+  "covers": [
+    "FS-RULES-4.7.1",
+    "FS-RULES-7.1.1",
+    "FS-RULES-9.7.1"
+  ]
+}

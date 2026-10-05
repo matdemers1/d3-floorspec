@@ -1,0 +1,8 @@
+{
+  "description": "A synthetic escape rule on net clear openings, of any opening to the outside that is not fixed: the bedroom's casement O1 declares 8 sq ft, 30\" by 44\" clear, so R1 passes and the rule gives no finding.",
+  "covers": [
+    "FS-RULES-3.5.1",
+    "FS-RULES-3.8.1",
+    "FS-RULES-6.5.1"
+  ]
+}

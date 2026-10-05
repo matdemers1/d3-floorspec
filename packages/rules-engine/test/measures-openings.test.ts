@@ -81,3 +81,47 @@ describe('openingToOutside (6.4)', () => {
     expect(r.map((x) => x.value)).toEqual([true, false, true, true]);
   });
 });
+
+describe('operation and net clear opening (6.1, 6.5) — as declared, never computed', () => {
+  // A Core 0.3 document: the window type declares a casement with a clear opening and an area; the
+  // door type a swing with a clear width and height; O4 overrides the window's clear opening whole,
+  // with no area; O3, empty, declares none.
+  const v03 = (): Record<string, unknown> => {
+    const d = doc(spec());
+    const types = d.types as Record<string, Record<string, unknown>>;
+    types.WIN = { ...types.WIN, operation: 'casement', clearOpening: { width: 30 * IN, height: 44 * IN, area: 1200 * IN * IN } };
+    types.DOOR = { ...types.DOOR, operation: 'swing', clearOpening: { width: 32 * IN, height: 79 * IN } };
+    const openings = d.openings as Record<string, Record<string, unknown>>;
+    openings.O4 = { ...openings.O4, clearOpening: { width: 20 * IN, height: 44 * IN } };
+    return { ...d, floorspec: '0.3' };
+  };
+  const call = (id: string, measure: string) => ({ target: opening(id), measure });
+
+  it('reads the fill type operation, with no value for an empty opening', () => {
+    const r = measures(v03(), ['O1', 'O2', 'O3'].map((id) => call(id, 'openingOperation')));
+    expect(r.map((x) => x.value)).toEqual(['casement', 'swing', null]);
+  });
+
+  it('reads the effective clear opening — the opening’s own, resolved whole, else its type’s', () => {
+    const r = measures(v03(), [
+      call('O1', 'openingNetClearWidth'),
+      call('O1', 'openingNetClearHeight'),
+      call('O1', 'openingNetClearArea'),
+      call('O4', 'openingNetClearWidth'),
+      call('O4', 'openingNetClearArea'),
+      call('O3', 'openingNetClearWidth'),
+    ]);
+    expect(r.map((x) => x.value)).toEqual([30 * IN, 44 * IN, String(1200 * IN * IN), 20 * IN, null, null]); // an area is a decimal string (4.2)
+    expect(r[4]!.display).toBe('not stated');
+  });
+
+  it('gives doorClearWidth for a door only', () => {
+    const r = measures(v03(), ['O1', 'O2', 'O3'].map((id) => call(id, 'doorClearWidth')));
+    expect(r.map((x) => x.value)).toEqual([null, 32 * IN, null]);
+  });
+
+  it('has no value for any of them in a 0.2 document, which declares none', () => {
+    const r = measures(doc(spec()), ['openingOperation', 'openingNetClearWidth', 'openingNetClearArea', 'doorClearWidth'].map((m) => call('O2', m)));
+    expect(r.map((x) => x.value)).toEqual([null, null, null, null]);
+  });
+});

@@ -63,8 +63,8 @@ valid. Terms from Floorspec Ops are not needed: Rules reads documents, and never
 
 ## 0.4 Relation to Floorspec Core and Ops
 
-Floorspec Rules 0.1 evaluates documents that a **Core 0.2 reader** reads — Core 0.2 documents, and
-Core 0.1 documents read as Core 0.2 reads them (Core §1.2.4) — with the official extensions
+Floorspec Rules 0.1 evaluates documents that a **Core 0.3 reader** reads — Core 0.3 documents, and
+Core 0.2 and 0.1 documents read as Core 0.3 reads them (Core §1.2.6) — with the official extensions
 (`registry/`) that the evaluator implements. Every measure is defined in terms of what Core and
 those extensions derive, so two evaluators that agree on Core agree on every measure.
 
@@ -92,8 +92,7 @@ over named measures (3.8), so that a pack is data a reviewer can read, never cod
 ## 0.6 What this draft does not yet define
 
 - **Measures that need data Core does not yet have**, named in 4.8 and reserved: ceiling heights
-  (Core derives no ceilings), stairs (Core has none), net clear openings and door clear widths
-  (Core models no sash, frame or leaf), countertops and travel distances. A rule that uses one is
+  (Core derives no ceilings), stairs (Core has none), countertops and travel distances. A rule that uses one is
   not evaluated (11.1, `FS-RULES-008`).
 - **The pack format in full**: how a pack is laid out on disk, its per-rule provenance and review
   records, contributor certification and the coverage matrix a pack publishes are the rule-pack

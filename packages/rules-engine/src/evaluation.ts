@@ -217,9 +217,18 @@ export class Evaluator {
     };
     for (const t of [subject, ...candidates]) draw(t.kind, t.id, t.kind === 'envelope' ? t.envelope : undefined);
     for (const i of involved) {
-      // What `involved` can name that has a shape: walls (7.6, 7.7) and extension elements. An
-      // opening named as an envelope's owner (7.8) is not drawn, as the reference oracle does not.
-      const kind = own(m.doc.walls, i) !== undefined ? 'wall' : m.ext.has(i) ? 'element' : undefined;
+      // 9.4: every involved ID that has a shape — walls (7.6, 7.7), extension elements, an opening
+      // named as an envelope's owner (7.8), drawn as its segment, and a room, as its polygon.
+      const kind =
+        own(m.doc.walls, i) !== undefined
+          ? 'wall'
+          : m.ext.has(i)
+            ? 'element'
+            : own(m.doc.openings, i) !== undefined
+              ? 'opening'
+              : own(m.doc.rooms, i) !== undefined
+                ? 'room'
+                : undefined;
       if (kind !== undefined) draw(kind, i);
     }
     let message = `${subject.id} may not meet ${c.code} ${c.edition} ${c.section} (${rule.title}).`;
