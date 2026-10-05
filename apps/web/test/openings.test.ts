@@ -10,11 +10,9 @@ import {
   holdsClearOpenings,
   operationOptions,
   parseClearArea,
-  pausedExtensions,
   setClearOpening,
   setOperation,
   swingApplies,
-  upgradePauses,
   upgradeTo03,
 } from '../src/editor/openings';
 
@@ -36,13 +34,6 @@ describe('door and window data (Core 0.3)', () => {
     expect(holdsClearOpenings(as02)).toBe(false);
     const up = commit(as02, upgradeTo03());
     expect(up).toEqual(TEMPLATE);
-  });
-
-  it('says which official extensions an upgrade pauses, and which a 0.3 plan has paused', () => {
-    const uses = { ...as02, extensionsUsed: { FS_electrical: '0.1.0', EXT_x: '1.0' } } as FloorspecDocument;
-    expect(upgradePauses(uses)).toEqual(['FS_electrical']);
-    expect(pausedExtensions(uses)).toEqual([]);
-    expect(pausedExtensions({ ...uses, floorspec: '0.3' })).toEqual(['FS_electrical']);
   });
 
   it('sets and unsets an operation, and a clear opening whole', () => {

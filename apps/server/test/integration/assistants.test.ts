@@ -87,10 +87,6 @@ describe('the electrical assistant', () => {
   it('groups the loads into circuits once there is a panel, and an agent token may ask', async () => {
     const panel = await operator.post(path('/ops'), {
       batch: [
-        // The circuits are checked against what FS_electrical derives, and FS_electrical 0.1.0 is
-        // evaluated only for Core 0.2 plans: this one declares 0.2 (a new project is 0.3). When the
-        // extension takes Core 0.3, drop this op.
-        { op: 'setProperty', id: '$document', path: '/floorspec', value: '0.2' },
         { op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_electrical', value: '0.1.0' },
         { op: 'placeElement', extension: 'FS_electrical', collection: 'panels', id: 'P1', host: { mode: 'wallFace', wall: 'west wall of Kitchen', toward: 'Kitchen', at: "4'", height: "5'" }, element: { fallback: { box: { min: [0, -256000, -512000], max: [128000, 256000, 512000] } }, volts: [120, 240], rating: 100, spaces: 20 } },
       ],

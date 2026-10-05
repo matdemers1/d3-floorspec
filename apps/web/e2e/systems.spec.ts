@@ -124,12 +124,6 @@ test('the P5 demo: a panel, receptacles on two 20 A circuits, a toilet and a wat
   await page.getByRole('dialog').getByRole('button', { name: 'Create project' }).click();
   await expect(page).toHaveURL(/\/projects\/[0-9a-f-]{36}$/);
   const project = projectIn(page.url());
-  // A new project is Floorspec 0.3, and the official extensions at 0.1.0 check and derive only
-  // Floorspec 0.2 plans (each one's 1.2): this demo is about what they derive — circuits, loads,
-  // devices by room — so its house declares 0.2, by an op like any other. When the extensions take
-  // Core 0.3, drop this and run the demo on the template as it is.
-  const pinned = await page.request.post(`/api/projects/${project}/ops`, { data: { batch: [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.2' }] } });
-  expect(pinned.status(), await pinned.text()).toBe(201);
   await page.goto(`/projects/${project}/editor`);
   await expect(page.locator('.fs-statusbar')).toContainText('Live');
   await settled(page);

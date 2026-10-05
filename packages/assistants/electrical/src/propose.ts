@@ -10,7 +10,7 @@
  * such, and the proposal never claims a design meets a code (FLR-ADR-011). Deterministic: integer
  * arithmetic, IDs and rooms in order, no clock and no randomness.
  */
-import { officialExtensionsEvaluatedFor, type FloorspecDocument } from '@floorspec/engine';
+import type { FloorspecDocument } from '@floorspec/engine';
 import { formatLength, type Operation } from '@floorspec/ops';
 import { withDefaults, type ElectricalDefaults } from './defaults.js';
 import { readPlan, usedIds, type RoomPlan, type WallRun } from './plan.js';
@@ -178,10 +178,6 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
   const added = { receptacles: [] as string[], switches: [] as string[], lights: [] as string[] };
   const upgraded: string[] = [];
   const notes: string[] = [];
-  // FS_electrical 0.1.0 is evaluated only for Core 0.2 plans (its 1.2): on a 0.3 plan nothing of it
-  // is checked or derived — which room a device is in, a circuit's load — so say so.
-  if (!officialExtensionsEvaluatedFor(doc.floorspec) && doc.floorspec !== '0.1')
-    notes.push(`This plan is Floorspec ${doc.floorspec}, which FS_electrical 0.1.0 does not check yet: the layout is proposed from the walls and rooms alone, and circuits are not checked until it does.`);
   const gaps: Gap[] = [];
   const roomOf = new Map<string, RoomPlan>();
   const receptacleRoom = new Map<string, string>();
@@ -374,11 +370,11 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
     }
   }
 
-  // Declarations first: a 0.1 plan becomes 0.2 (a later one keeps its version), and FS_electrical is
-  // declared, before anything of it.
+  // Declarations first: a 0.1 plan becomes 0.3, the current draft (a later one keeps its version),
+  // and FS_electrical is declared, before anything of it.
   const changes = placements.length + edits.length;
   if (changes > 0) {
-    if (doc.floorspec === '0.1') batch.push({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.2' });
+    if (doc.floorspec === '0.1') batch.push({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' });
     if (!Object.hasOwn((doc.extensionsUsed ?? {}), 'FS_electrical')) batch.push({ op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_electrical', value: '0.1.0' });
   }
   batch.push(...placements, ...edits);

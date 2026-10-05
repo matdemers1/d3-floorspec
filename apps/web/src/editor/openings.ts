@@ -1,4 +1,4 @@
-import { DOOR_OPERATIONS, effectiveClearOpening, officialExtensionsEvaluatedFor, WINDOW_OPERATIONS, type FloorspecDocument, type Opening } from '@floorspec/engine';
+import { DOOR_OPERATIONS, effectiveClearOpening, WINDOW_OPERATIONS, type FloorspecDocument, type Opening } from '@floorspec/engine';
 import { parseArea } from '@floorspec/ops';
 import type { Batch } from './ops';
 import { formatLen, type UnitSystem } from './units';
@@ -19,18 +19,6 @@ export const holdsClearOpenings = (document: { floorspec: string }): boolean => 
 /** Ops 0.3, 2.3: what makes a 0.2 (or 0.1) plan a Core 0.3 one. Changes nothing else, and Undo takes it back. */
 export function upgradeTo03(): Batch {
   return [{ op: 'setProperty', id: '$document', path: '/floorspec', value: CURRENT_CORE }];
-}
-
-/** The official extensions this plan uses that are not evaluated for the Core draft it declares. */
-export function pausedExtensions(document: FloorspecDocument): string[] {
-  const used = Object.keys((document as { extensionsUsed?: object }).extensionsUsed ?? {}).filter((x) => x.startsWith('FS_')).sort();
-  return document.floorspec === '0.1' || officialExtensionsEvaluatedFor(document.floorspec) ? [] : used;
-}
-
-/** Would upgrading to 0.3 stop the official extensions this plan uses from being checked? */
-export function upgradePauses(document: FloorspecDocument): string[] {
-  const used = Object.keys((document as { extensionsUsed?: object }).extensionsUsed ?? {}).filter((x) => x.startsWith('FS_')).sort();
-  return officialExtensionsEvaluatedFor(CURRENT_CORE) ? [] : used;
 }
 
 export const DOOR_OPERATION_LABELS: Readonly<Record<(typeof DOOR_OPERATIONS)[number], string>> = {

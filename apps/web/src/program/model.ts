@@ -189,9 +189,9 @@ export function parseAreaInput(text: string, units: UnitSystem): AreaInput {
 
 // ─── Operations ──────────────────────────────────────────────────────────────────────────────
 
-/** Ops 0.2, 2.3: what turns a Core 0.1 plan into a 0.2 one that can hold a brief. */
+/** Ops 0.3, 2.3: what turns a Core 0.1 plan into a 0.3 one — the current draft — that can hold a brief. */
 export function upgrade(): Batch {
-  return [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.2' }];
+  return [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }];
 }
 
 export interface NewItem {

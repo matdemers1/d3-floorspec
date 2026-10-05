@@ -4,7 +4,7 @@ import { useEditor, type EditorStore } from './store';
 import type { EditorModel } from './model';
 import { LengthField, Row } from './fields';
 import type { UnitSystem } from './units';
-import { CURRENT_CORE, clearAreaText, formatClearArea, parseClearArea, upgradePauses, upgradeTo03, type ClearOpening } from './openings';
+import { CURRENT_CORE, clearAreaText, formatClearArea, parseClearArea, upgradeTo03, type ClearOpening } from './openings';
 
 /**
  * The inspector's fields for Floorspec Core 0.3's door and window data: the offer to upgrade a 0.2
@@ -13,18 +13,15 @@ import { CURRENT_CORE, clearAreaText, formatClearArea, parseClearArea, upgradePa
 
 /**
  * The offer to upgrade a plan to Floorspec 0.3: one op, `setProperty $document /floorspec "0.3"`,
- * which changes nothing else and which Undo takes back. A plan that uses an official extension is
- * told what the upgrade pauses: the extensions at 0.1.0 check Floorspec 0.2 plans only.
+ * which changes nothing else and which Undo takes back.
  */
 export function CoreUpgradeNotice({ store, model, what }: { store: EditorStore; model: EditorModel; what: string }) {
   const readOnly = useEditor(store, (s) => s.readOnly);
   const pending = useEditor(store, (s) => s.pending);
-  const paused = upgradePauses(model.document);
   return (
     <Alert tone="info" title={`This plan is Floorspec ${model.document.floorspec}`}>
       <p>
         {what} are part of Floorspec {CURRENT_CORE}. Upgrading changes nothing else in the plan, and Undo takes it back.
-        {paused.length > 0 ? ` This plan uses ${paused.join(', ')}, which at 0.1.0 checks only Floorspec 0.2 plans: after upgrading, its devices are still placed and drawn, but their circuits, loads and checks wait until it takes 0.3.` : ''}
       </p>
       <Button size="sm" variant="primary" loading={pending !== null} disabled={readOnly !== null} onClick={() => void store.apply(`Upgrade to Floorspec ${CURRENT_CORE}`, upgradeTo03())}>
         Upgrade to Floorspec {CURRENT_CORE}

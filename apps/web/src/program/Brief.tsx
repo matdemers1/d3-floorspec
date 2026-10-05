@@ -40,9 +40,9 @@ export function BriefPanel({ store, view, selection, onSelect }: { store: Editor
       </div>
       {old ? (
         <Alert tone="info" title={`This plan is Floorspec ${view.version}`}>
-          <p>A brief is part of Floorspec 0.2. Upgrading changes nothing else in the plan, and Undo takes it back.</p>
-          <Button size="sm" variant="primary" loading={pending !== null} disabled={readOnly !== null} onClick={() => void store.apply('Upgrade to Floorspec 0.2', upgrade())}>
-            Upgrade to Floorspec 0.2
+          <p>A brief is part of Floorspec 0.2 and later. Upgrading to 0.3 changes nothing else in the plan, and Undo takes it back.</p>
+          <Button size="sm" variant="primary" loading={pending !== null} disabled={readOnly !== null} onClick={() => void store.apply('Upgrade to Floorspec 0.3', upgrade())}>
+            Upgrade to Floorspec 0.3
           </Button>
         </Alert>
       ) : null}
