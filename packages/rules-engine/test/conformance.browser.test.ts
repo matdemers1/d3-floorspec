@@ -1,7 +1,7 @@
 /**
  * The evaluator in a real browser (FLR-ADR-010). Runs only in the `browser` project: the whole
- * Rules 0.1 conformance suite, byte for byte, in Chromium — and every result compared with what
- * Node produced for the same inputs.
+ * Rules 0.1 and 0.2 conformance suites, byte for byte, in Chromium — and every result compared with
+ * what Node produced for the same inputs, as the same draft.
  */
 import { describe, expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
@@ -10,14 +10,18 @@ import { firstDifference, runCase } from './suite.js';
 const fromBase64 = (s: string): Uint8Array => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
 describe('in the browser', () => {
-  it('passes the Rules 0.1 conformance suite, and agrees with Node byte for byte', async () => {
-    const cases = await commands.rulesConformanceCases();
-    const node = new Map((await commands.rulesInNode()).map((r) => [r.name, r.out]));
-    expect(cases.length).toBe(103);
+  it.each([
+    ['0.1', 103],
+    ['0.2', 112],
+  ] as const)('passes the Rules %s conformance suite, and agrees with Node byte for byte', async (rules, count) => {
+    const cases = await commands.rulesConformanceCases(rules);
+    const node = new Map((await commands.rulesInNode(rules)).map((r) => [r.name, r.out]));
+    expect(cases.length).toBe(count);
     let passed = 0;
     for (const w of cases) {
       const c = {
         name: w.name,
+        rules,
         input: fromBase64(w.input),
         registry: w.registry === null ? null : fromBase64(w.registry),
         request: w.request === null ? null : fromBase64(w.request),
@@ -30,7 +34,7 @@ describe('in the browser', () => {
       expect(actual).toBe(node.get(w.name));
       passed++;
     }
-    console.log(`rules 0.1 conformance (browser): ${passed}/${cases.length} cases pass`);
+    console.log(`rules ${rules} conformance (browser): ${passed}/${cases.length} cases pass`);
     expect(passed).toBe(cases.length);
   });
 });
