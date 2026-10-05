@@ -14,6 +14,7 @@ renderPlan(doc, {
   ghost: { before: mainDoc }, // changeset ghosting: added/moved in the accent, removed/old dashed
   dimensions: true,           // overall exterior dimensions, ft-in
   labels: true,               // room name (or function), net ft², ft-in size, ID
+  roof: false,                // the roof layer: eave outline dashed, ridges, hips, valleys, gable ends
 }); // → a standalone SVG string
 ```
 
@@ -22,6 +23,11 @@ renderPlan(doc, {
   (door leaves, swings, glazing) relative to them.
 - **Wall poché is one body:** an outline layer under a fill layer, so wall pieces and junction fills
   join without seams. Openings are cut through one mask, and the floor runs through them.
+- **Stairs and roofs (Core 0.3):** a stair is drawn on the level it rises from — its treads and
+  landings, dashed above the cut plane 4 ft up, a break line across the first tread above it, and
+  an UP arrow along its walkline; a winder or spiral stair, whose steps Core does not derive, as its
+  box (and a spiral's circle). Roofs are on the optional roof layer. `stairSymbol` and `roofSymbol`
+  are exported so the editor's canvas draws the same symbols.
 - **Deterministic:** elements drawn in ID order, every number through one two-decimal formatter, no
   clock, no randomness, no trigonometry. Identical input gives identical bytes; the golden SVGs in
   `test/golden` hold it to that.

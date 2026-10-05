@@ -4,7 +4,7 @@
  * points. Nothing here recomputes geometry; the only arithmetic left for the drawing is placing
  * symbols (door leaves, glazing lines) relative to those points.
  */
-import { deriveFrom, evaluate, InvalidDocumentError, type FloorspecDocument } from '@floorspec/engine';
+import { deriveFrom, evaluate, InvalidDocumentError, type DerivedRoof, type DerivedStair, type FloorspecDocument } from '@floorspec/engine';
 
 export type Pt = readonly [number, number];
 
@@ -102,6 +102,10 @@ export interface Scene {
   readonly clearances: readonly SceneClearance[];
   /** Slabs on this level, by ID (Core 0.3, 15.7). */
   readonly slabs: ReadonlyMap<string, SceneSlab>;
+  /** Roofs on this level, by ID, as derived (Core 0.3, 16.5). */
+  readonly roofs: ReadonlyMap<string, DerivedRoof>;
+  /** Stairs rising from this level, by ID, as derived (Core 0.3, 17.4–17.6), with their form. */
+  readonly stairs: ReadonlyMap<string, { readonly derived: DerivedStair; readonly form: string }>;
 }
 
 /** A collection as [id, element] pairs sorted by ID (absent: empty). */
@@ -208,6 +212,17 @@ export function buildScene(input: string | Uint8Array | object, level?: string):
     if (sl.level === lid && d !== undefined) slabs.set(id, { id, outline: d.outline, purpose: sl.purpose });
   }
 
+  const roofs = new Map<string, DerivedRoof>();
+  for (const [id, rf] of entries(doc.roofs)) {
+    const d = derived.roofs?.[id];
+    if (rf.level === lid && d !== undefined) roofs.set(id, d);
+  }
+  const stairs = new Map<string, { derived: DerivedStair; form: string }>();
+  for (const [id, st] of entries(doc.stairs)) {
+    const d = derived.stairs?.[id];
+    if (st.level === lid && d !== undefined) stairs.set(id, { derived: d, form: st.form?.kind ?? 'straight' });
+  }
+
   return {
     projectName: doc.project.name,
     levelId: lid,
@@ -222,5 +237,7 @@ export function buildScene(input: string | Uint8Array | object, level?: string):
     fallbacks: byId(fallbacks),
     clearances,
     slabs: byId(slabs),
+    roofs: byId(roofs),
+    stairs: byId(stairs),
   };
 }
