@@ -1,0 +1,218 @@
+import { createDrain, type Drain } from '@d3-floorspec/worker/queue';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { MAX_PENDING } from '../../src/routes/exports.js';
+import { Browser, reset, setupOperator, start, testDb, tokenFor, TEST_ENV, type Reply, type Running } from './helpers.js';
+import { projectWithDocument } from './drawings-support.js';
+
+/**
+ * FLR-T-9.3 end to end: an export is asked for over the API, queued on the Postgres job queue,
+ * drained by the worker's drain (the same code the worker container runs), and downloaded — a PDF
+ * with a sheet per level and a schedule sheet, and DXF drawings, one per level, in a ZIP.
+ */
+
+interface ExportView {
+  id: string;
+  kind: string;
+  status: string;
+  version: string;
+  levels: string[] | null;
+  page: string | null;
+  error: string | null;
+  result: { name: string; contentType: string; size: number; sha256: string; sheets?: { number: string; title: string }[]; files?: string[] } | null;
+  download: string | null;
+}
+
+const db = testDb();
+const view = (r: Reply): ExportView => (r.body as { export: ExportView }).export;
+
+async function download(browser: Browser, url: string): Promise<{ status: number; type: string | null; disposition: string | null; bytes: Uint8Array }> {
+  const cookie = [...browser.cookies].map(([k, v]) => `${k}=${v}`).join('; ');
+  const res = await fetch(url, { headers: { cookie } });
+  return { status: res.status, type: res.headers.get('content-type'), disposition: res.headers.get('content-disposition'), bytes: new Uint8Array(await res.arrayBuffer()) };
+}
+
+/** Local ZIP entries' names. */
+function zipNames(zip: Uint8Array): string[] {
+  const v = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+  const names: string[] = [];
+  let at = 0;
+  while (v.getUint32(at, true) === 0x04034b50) {
+    const size = v.getUint32(at + 18, true);
+    const n = v.getUint16(at + 26, true);
+    const extra = v.getUint16(at + 28, true);
+    names.push(new TextDecoder().decode(zip.subarray(at + 30, at + 30 + n)));
+    at += 30 + n + extra + size;
+  }
+  return names;
+}
+
+describe('drawing exports', () => {
+  let running: Running;
+  let drain: Drain;
+
+  beforeAll(async () => {
+    running = await start();
+  });
+  afterAll(async () => {
+    await running.close();
+  });
+  beforeEach(async () => {
+    await reset(db);
+    drain = createDrain({ databaseUrl: TEST_ENV.DATABASE_URL, log: () => undefined });
+  });
+  afterEach(async () => {
+    await drain.stop();
+  });
+
+  it('queues a PDF, drains it, and serves a sheet per level with a schedule sheet', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator);
+    const asked = await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' });
+    expect(asked.status, asked.text).toBe(202);
+    const queued = view(asked);
+    expect(queued).toMatchObject({ kind: 'pdf', status: 'queued', version: hash, page: 'tabloid', download: null });
+    expect(asked.headers.get('location')).toBe(`/api/projects/${id}/exports/${queued.id}`);
+
+    // Not finished: the file is not there yet.
+    expect((await operator.get(`/api/projects/${id}/exports/${queued.id}/file`)).status).toBe(409);
+
+    expect(await drain.runOnce()).toBe(1);
+    const done = view(await operator.get(`/api/projects/${id}/exports/${queued.id}`));
+    expect(done.status, done.error ?? '').toBe('done');
+    expect(done.result?.sheets).toEqual([
+      { number: 'A-101', title: 'Main floor plan' },
+      { number: 'A-102', title: 'Upper floor plan' },
+      { number: 'A-601', title: 'Door and window schedule' },
+    ]);
+    expect(done.download).toBe(`/api/projects/${id}/exports/${queued.id}/file`);
+
+    const file = await download(operator, `${running.url}${done.download ?? ''}`);
+    expect(file.status).toBe(200);
+    expect(file.type).toBe('application/pdf');
+    // No number on main (the head was seeded, not edited): the file is named by the hash.
+    expect(file.disposition).toBe(`attachment; filename="two-storey-ranch-${hash.slice(0, 8)}-plans.pdf"`);
+    const latin = Buffer.from(file.bytes).toString('latin1');
+    expect(latin.startsWith('%PDF-1.7')).toBe(true);
+    expect((latin.match(/\/Type \/Page\b/g) ?? []).length).toBe(3);
+    expect(file.bytes.byteLength).toBe(done.result?.size);
+
+    // The list shows it, newest first; the request was audited.
+    const list = (await operator.get(`/api/projects/${id}/exports`)).body as { exports: ExportView[] };
+    expect(list.exports.map((e) => e.id)).toEqual([queued.id]);
+    expect(await db.auditLog.count({ where: { action: 'export.request', targetId: queued.id } })).toBe(1);
+  });
+
+  it('draws the same version to the same bytes, whenever it is drawn', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    const a = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', levels: ['MAIN'], page: 'letter' }));
+    const b = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', levels: ['MAIN'], page: 'letter' }));
+    expect(await drain.runOnce()).toBe(2);
+    const [ra, rb] = await Promise.all([a, b].map(async (j) => view(await operator.get(`/api/projects/${id}/exports/${j.id}`))));
+    expect(ra?.result?.sha256).toBe(rb?.result?.sha256);
+    expect(ra?.result?.sheets?.map((s) => s.number)).toEqual(['A-101', 'A-601']);
+  });
+
+  it('queues DXF drawings: a ZIP of one DXF per level, or one DXF for one level', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    const all = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf' }));
+    const one = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf', levels: ['UPPER'] }));
+    expect(all.page).toBeNull();
+    await drain.runOnce();
+
+    const zipped = view(await operator.get(`/api/projects/${id}/exports/${all.id}`));
+    expect(zipped.status, zipped.error ?? '').toBe('done');
+    const zip = await download(operator, `${running.url}${zipped.download ?? ''}`);
+    expect(zip.type).toBe('application/zip');
+    expect(zipNames(zip.bytes)).toEqual(zipped.result?.files);
+    expect(zipped.result?.files).toHaveLength(2);
+
+    const single = view(await operator.get(`/api/projects/${id}/exports/${one.id}`));
+    const dxf = await download(operator, `${running.url}${single.download ?? ''}`);
+    expect(dxf.type).toBe('image/vnd.dxf');
+    const text = new TextDecoder().decode(dxf.bytes);
+    expect(text).toContain('AC1015');
+    expect(text).toContain('\r\nA-WALL-EXTR\r\n');
+    expect(text).toContain('\r\nE-POWR-DEVC\r\n');
+    expect(text).toContain('FAMILY ROOM');
+    expect(text.endsWith('  0\r\nEOF\r\n')).toBe(true);
+  });
+
+  it('refuses what cannot be drawn before it is queued', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'svg' })).status).toBe(400);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', page: 'napkin' })).status).toBe(400);
+    const level = await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', levels: ['ATTIC'] });
+    expect(level.status).toBe(400);
+    expect(level.text).toContain('no level ATTIC');
+    // A version this project never had.
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', version: 'a'.repeat(64) })).status).toBe(404);
+    // A model with nothing to draw.
+    const { id: empty } = (await operator.post('/api/projects', { name: 'Empty' })).body as { id: string };
+    expect((await operator.post(`/api/projects/${empty}/exports`, { kind: 'pdf' })).status).toBe(422);
+    expect(await db.job.count()).toBe(0);
+  });
+
+  it('holds a project to a few exports waiting at once', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    for (let i = 0; i < MAX_PENDING; i++) expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf' })).status).toBe(202);
+    const refused = await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf' });
+    expect(refused.status).toBe(429);
+  });
+
+  it('says why a job failed, and that an expired file is gone', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator);
+    // A job the api would not have queued — a level that is not there — fails in the worker with its reason.
+    const bad = await db.job.create({ data: { projectId: id, kind: 'export.pdf', params: { levels: ['ATTIC'], versionAt: new Date(0).toISOString() }, versionHash: hash } });
+    await drain.runOnce();
+    const failed = view(await operator.get(`/api/projects/${id}/exports/${bad.id}`));
+    expect(failed).toMatchObject({ status: 'failed', error: 'the model has no level ATTIC', download: null });
+    const refused = await operator.get(`/api/projects/${id}/exports/${bad.id}/file`);
+    expect(refused.status).toBe(409);
+    expect(refused.text).toContain('no level ATTIC');
+
+    const ok = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf', levels: ['MAIN'] }));
+    await drain.runOnce();
+    await db.jobOutput.delete({ where: { jobId: ok.id } });
+    expect((await operator.get(`/api/projects/${id}/exports/${ok.id}/file`)).status).toBe(410);
+  });
+
+  it('takes a running job back from a worker that died, and gives up after three tries', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator);
+    const stale = new Date(Date.now() - 11 * 60_000);
+    const retried = await db.job.create({ data: { projectId: id, kind: 'export.dxf', status: 'running', attempts: 1, lockedBy: 'dead', lockedAt: stale, params: { levels: ['MAIN'], versionAt: stale.toISOString() }, versionHash: hash } });
+    const abandoned = await db.job.create({ data: { projectId: id, kind: 'export.dxf', status: 'running', attempts: 3, lockedBy: 'dead', lockedAt: stale, params: { versionAt: stale.toISOString() }, versionHash: hash } });
+    await drain.runOnce();
+    expect(await db.job.findUniqueOrThrow({ where: { id: retried.id } })).toMatchObject({ status: 'done', attempts: 2 });
+    expect(await db.job.findUniqueOrThrow({ where: { id: abandoned.id } })).toMatchObject({ status: 'failed', error: 'The export stopped part-way 3 times and was not tried again.' });
+  });
+
+  it('wakes on the queue’s notification, without waiting for a poll', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    await drain.start();
+    const job = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf', levels: ['MAIN'] }));
+    const deadline = Date.now() + 4_000;
+    let status = job.status;
+    while (status !== 'done' && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 100));
+      status = view(await operator.get(`/api/projects/${id}/exports/${job.id}`)).status;
+    }
+    expect(status).toBe('done');
+  });
+
+  it('lets a read token export and download', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    const token = Browser.bearer(running.url, await tokenFor(operator, id, 'read'));
+    const asked = await token.post(`/api/projects/${id}/exports`, { kind: 'dxf', levels: ['MAIN'] });
+    expect(asked.status, asked.text).toBe(202);
+    await drain.runOnce();
+    expect((await token.get(`/api/projects/${id}/exports/${view(asked).id}/file`)).status).toBe(200);
+  });
+});

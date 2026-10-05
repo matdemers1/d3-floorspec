@@ -26,6 +26,7 @@ import { layoutRoutes } from './routes/layouts.js';
 import { assistantRoutes } from './routes/assistants.js';
 import { checkRoutes } from './routes/checks.js';
 import { tokenRoutes } from './routes/tokens.js';
+import { exportRoutes } from './routes/exports.js';
 import { mountMcp } from './routes/mcp.js';
 import { ProblemError, sendProblem } from './http/problem.js';
 import { ApplierUnavailable, unavailableApplier, type Applier } from './ops/applier.js';
@@ -100,6 +101,7 @@ export function createApp({
   mount(app, '/api/projects', assistantRoutes(db, applier));
   mount(app, '/api/projects', checkRoutes(db, renderer, rulePacks));
   mount(app, '/api/projects', eventRoutes(db, events, eventStream));
+  mount(app, '/api/projects', exportRoutes(db));
   mount(app, '/api/tokens', tokenRoutes(db));
   mountMcp(app, config);
 

@@ -50,6 +50,16 @@ events.start().catch((error: unknown) => {
   logger.warn({ err: error instanceof Error ? error.message : String(error) }, 'event listener did not start; will retry on the first subscriber');
 });
 
+// The job queue (FLR-T-9.3): drained by the worker container in production; by this process when
+// no worker runs (development, the end-to-end suites).
+const drainInline = (config.JOB_DRAIN ?? (config.NODE_ENV === 'production' ? 'worker' : 'inline')) === 'inline';
+const drain = drainInline ? (await import('@d3-floorspec/worker/queue')).createDrain({ databaseUrl: config.DATABASE_URL, log: (m) => { logger.info(m); } }) : null;
+if (drain !== null) {
+  drain.start().catch((error: unknown) => {
+    logger.warn({ err: error instanceof Error ? error.message : String(error) }, 'the inline job drain did not start');
+  });
+}
+
 const server = app.listen(config.PORT, () => {
   logger.info(
     { port: config.PORT, publicUrl: config.PUBLIC_URL, oidcConfigured: config.oidcConfigured, oidcReachable: oidc !== null, rulePacks: rulePacks.sources, ruleProfile: rulePacks.profile?.name ?? 'default' },
@@ -62,6 +72,7 @@ for (const signal of ['SIGTERM', 'SIGINT'] as const) {
     logger.info({ signal }, 'shutting down');
     // Open event streams would hold the server open forever: end them first.
     void events.close();
+    void drain?.stop();
     server.close(() => {
       void db.$disconnect().then(() => process.exit(0));
     });

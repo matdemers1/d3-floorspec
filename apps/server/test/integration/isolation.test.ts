@@ -46,6 +46,12 @@ const CALLS: Record<string, Call> = {
   'POST /api/projects/:projectId/changesets/:changesetId/accept': { body: {}, ownerStatus: 200 },
   // After the accept above, the same changeset is already decided: the route works and says so.
   'POST /api/projects/:projectId/changesets/:changesetId/reject': { body: {}, ownerStatus: 409 },
+  // Answered, by a route that works: A's model has a building but no level to draw.
+  'POST /api/projects/:projectId/exports': { body: { kind: 'pdf' }, ownerStatus: 422 },
+  'GET /api/projects/:projectId/exports': { ownerStatus: 200 },
+  'GET /api/projects/:projectId/exports/:jobId': { ownerStatus: 200 },
+  // Answered, by a route that works: A's export is still queued.
+  'GET /api/projects/:projectId/exports/:jobId/file': { ownerStatus: 409 },
   // Last: it is the one that changes the project, so the owner's call to it goes at the end.
   'DELETE /api/projects/:projectId': { ownerStatus: 204 },
 };
@@ -58,10 +64,11 @@ describe('per-account isolation', () => {
   let projectId: string;
   let changesetId: string;
   let head: string;
+  let jobId: string;
 
   /** A route's path with A's project, version and changeset filled in. */
   const fill = (path: string, project = projectId) =>
-    path.replace(':projectId', project).replace(':hash', head).replace(':changesetId', changesetId);
+    path.replace(':projectId', project).replace(':hash', head).replace(':changesetId', changesetId).replace(':jobId', jobId);
 
   beforeAll(async () => {
     running = await start();
@@ -75,6 +82,8 @@ describe('per-account isolation', () => {
     bob = await inviteMember(running, alice, 'bob@example.test');
     ({ id: projectId, head } = (await alice.post('/api/projects', { name: "Alice's house" })).body as { id: string; head: string });
     changesetId = ((await alice.post(`/api/projects/${projectId}/changesets`, { name: 'An idea', batch: ROOM })).body as { changeset: { id: string } }).changeset.id;
+    // An export of A's, queued (no drain runs here), so its routes have something to answer about.
+    jobId = (await db.job.create({ data: { projectId, kind: 'export.pdf', params: { versionAt: new Date(0).toISOString() }, versionHash: head } })).id;
   });
 
   it('covers every project-scoped route the app declares', () => {

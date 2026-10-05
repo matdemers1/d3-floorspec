@@ -87,6 +87,13 @@ const Env = z.object({
    * default profile, the model codes' latest editions (Rules 10.6).
    */
   RULE_PROFILE: optional(z.string()),
+
+  /**
+   * Who drains the job queue (FLR-T-9.3): `worker`, the worker container (production), or `inline`,
+   * this api process — for development and the end-to-end suites, where no worker runs. Default:
+   * `worker` in production, `inline` otherwise.
+   */
+  JOB_DRAIN: optional(z.enum(['inline', 'worker'])),
 });
 
 export type Config = z.infer<typeof Env> & {
