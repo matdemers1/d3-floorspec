@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { apply } from '../src/index.js';
 import { fixtures } from './fixtures.js';
 
+// Every fixture is applied several times in one test: allow for slow CI runners.
+const EVERY_FIXTURE = 60_000;
+
 describe('determinism (1.3.2)', () => {
   it('gives the same bytes on every run, and never mutates its inputs', () => {
     for (const f of fixtures()) {
@@ -13,7 +16,7 @@ describe('determinism (1.3.2)', () => {
       expect(JSON.stringify(apply(JSON.stringify(f.doc), JSON.stringify(f.request))), f.name).toBe(first);
       expect(JSON.stringify([f.doc, f.request])).toBe(before);
     }
-  });
+  }, EVERY_FIXTURE);
 
   it('puts no floating-point number in any output', () => {
     for (const f of fixtures()) {
@@ -23,5 +26,5 @@ describe('determinism (1.3.2)', () => {
         return v;
       });
     }
-  });
+  }, EVERY_FIXTURE);
 });
