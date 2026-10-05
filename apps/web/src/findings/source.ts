@@ -34,7 +34,11 @@ class Source {
   private stopLive: (() => void) | null = null;
   private generation = 0;
 
-  constructor(readonly projectId: string) {}
+  constructor(
+    readonly projectId: string,
+    /** Where the report comes from, and whether a project stream refreshes it — a share link's own route, and its own stream (FLR-T-9.6). */
+    private readonly from: { url: string | null; live: boolean } = { url: `/api/projects/${projectId}/findings`, live: true },
+  ) {}
 
   set(patch: Partial<FindingsState>): void {
     this.state = { ...this.state, ...patch };
@@ -50,8 +54,14 @@ class Source {
 
   load(): void {
     const generation = ++this.generation;
+    const url = this.from.url;
+    // A share link that does not show findings: there is nothing to fetch, and nothing to draw.
+    if (url === null) {
+      this.set({ status: 'ready', report: null, error: null });
+      return;
+    }
     api
-      .get<FindingsReport>(`/api/projects/${this.projectId}/findings`)
+      .get<FindingsReport>(url)
       .then((report) => {
         if (generation !== this.generation) return;
         this.set({ status: 'ready', report, error: null });
@@ -67,7 +77,7 @@ class Source {
     if (this.users === 1) {
       this.load();
       // Every tick is something that moved after the stream opened.
-      this.stopLive = onLive(this.projectId, () => { this.load(); });
+      if (this.from.live) this.stopLive = onLive(this.projectId, () => { this.load(); });
     }
     return () => {
       this.users -= 1;
@@ -86,6 +96,19 @@ export function findingsSource(projectId: string): Source {
   if (s === undefined) {
     s = new Source(projectId);
     sources.set(projectId, s);
+  }
+  return s;
+}
+
+/**
+ * The findings a share link shows (FLR-T-9.6), under a key of the viewer's own: fetched from the
+ * link's route, never from a project's, and refreshed by the viewer when its stream says so.
+ */
+export function sharedFindingsSource(key: string, url: string | null): Source {
+  let s = sources.get(key);
+  if (s === undefined) {
+    s = new Source(key, { url, live: false });
+    sources.set(key, s);
   }
   return s;
 }

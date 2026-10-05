@@ -27,9 +27,12 @@ import { FindingsReportScreen } from './findings/Report';
 import { Coverage } from './findings/Coverage';
 import { Setup } from './screens/Setup';
 import { SignIn } from './screens/SignIn';
+import { SHARE_PATH, takeReturn } from './share/returnTo';
 
 const Editor = lazy(() => import('./editor/Editor'));
 const Program = lazy(() => import('./program/Program'));
+// The shared viewer (FLR-T-9.6): a chunk of its own, opened by people with no account at all.
+const ShareViewer = lazy(() => import('./share/Viewer'));
 // The profile builder carries the rules engine's checker: a chunk of its own (FLR-T-6.8).
 const Jurisdictions = lazy(() => import('./profiles/Jurisdictions').then((m) => ({ default: m.Jurisdictions })));
 
@@ -76,6 +79,17 @@ function Root() {
     );
   }
 
+  // A share link is for anybody, signed in or not: what it shows does not depend on who asks, only
+  // whether they may comment does — and the viewer asks the server that itself.
+  const shared = SHARE_PATH.exec(path)?.[1];
+  if (shared !== undefined) {
+    return (
+      <Suspense fallback={<Spinner label="Opening the shared project" />}>
+        <ShareViewer key={`${shared}:${state.status}`} token={shared} />
+      </Suspense>
+    );
+  }
+
   const invite = /^\/invite\/([A-Za-z0-9_-]+)$/.exec(path)?.[1];
 
   if (state.status === 'anonymous') {
@@ -83,6 +97,14 @@ function Root() {
     if (invite !== undefined) return <AcceptInvite token={invite} onDone={load} />;
     if (state.session.setupRequired) return <Setup tokenRequired={state.session.setupTokenRequired} onDone={load} />;
     return <SignIn oidcAvailable={state.session.oidcAvailable} onSignedIn={load} />;
+  }
+
+  // Signed in from a share link's "Sign in to comment" — by password or through D3 Auth, which comes
+  // back to `/` — goes back to the link.
+  const back = path === '/' || path === '/signin' ? takeReturn() : null;
+  if (back !== null) {
+    navigate(back, { replace: true });
+    return null;
   }
 
   // Signed in: the anonymous-only screens are not places to be.

@@ -20,6 +20,8 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `options`   — FLR-T-8.4, 8.1: an option set drawn, compared side by side and switched; a backsplash region.
  *   - `three`     — FLR-T-7.5: the P7 exit demo — the 3D view, split view with synced selection, and a
  *                   walkthrough up an L stair under a hip roof. WebGL through SwiftShader (see GL_ARGS).
+ *   - `share`     — FLR-T-9.6: a share link made, opened with no account (plan, 3D, findings), a comment
+ *                   pinned to a wall by an invited account, seen live and resolved by the owner, revoked.
  *
  * Run with:
  *
@@ -27,7 +29,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`). E2E_PORT is the keyboard suite's port; the others take the next nine.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`). E2E_PORT is the keyboard suite's port; the others take the next ten.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -78,6 +80,8 @@ const SUITES: Suite[] = [
   { name: 'exports', spec: 'exports.spec.ts', port: PORT + 7, database: databaseFor('exports'), setupToken: true },
   { name: 'options', spec: 'options.spec.ts', port: PORT + 8, database: databaseFor('options'), setupToken: true },
   { name: 'three', spec: 'three.spec.ts', port: PORT + 9, database: databaseFor('three'), setupToken: true, gl: true },
+  // FLR-T-9.6: share links, the shared viewer (plan, 3D, findings — so packs installed and WebGL) and comments.
+  { name: 'share', spec: 'share.spec.ts', port: PORT + 10, database: databaseFor('share'), setupToken: true, gl: true, env: { RULE_PACKS_DIR: `${web}e2e/fixtures/rule-packs` } },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;

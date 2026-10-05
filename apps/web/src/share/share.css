@@ -1,0 +1,521 @@
+/* Sharing (FLR-T-9.6): the shared viewer, the share dialog and the comments, after the board's
+   "18 · Share settings", "19 · Shared viewer — no account" and "20 · Comments — architect review"
+   frames. Tokens only (d3-check-usage), so both themes work. */
+
+/* ─── The shared viewer's frame ───────────────────────────────────────────────────────────── */
+.fs-editor.fs-share {
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: 56px minmax(0, 1fr);
+  grid-template-areas:
+    'top top'
+    'canvas side';
+}
+.fs-editor.fs-share[data-walk='on'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 56px minmax(0, 1fr);
+  grid-template-areas:
+    'top'
+    'canvas';
+}
+.fs-editor.fs-share[data-walk='on'] > .fs-share__side {
+  display: none;
+}
+.fs-share__bar {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+  padding: 0 var(--space-16);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+.fs-share__mark {
+  display: inline-flex;
+  color: var(--color-accent);
+}
+.fs-editor .fs-share__mark svg {
+  width: var(--icon-20);
+  height: var(--icon-20);
+}
+.fs-share__title {
+  min-width: 0;
+}
+.fs-share__title h1,
+.fs-share__title p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-share__you {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-share__canvas {
+  background: var(--color-bg-sunken);
+}
+.fs-share__nocanvas {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-24);
+}
+.fs-share__level {
+  position: absolute;
+  top: var(--space-16);
+  left: var(--space-16);
+  width: 180px;
+  z-index: 2;
+}
+.fs-share__side {
+  grid-area: side;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Not a scroll container: only the tab panel scrolls, so the tabs stay put. */
+  overflow: clip;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+.fs-share__tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: clip;
+  padding: var(--space-12) var(--space-16) 0;
+}
+.fs-share__tabs [role='tabpanel'] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-16) 0;
+}
+.fs-share__note {
+  margin: var(--space-12) var(--space-16) var(--space-16);
+  padding: var(--space-12);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-share__h {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-14);
+  line-height: var(--leading-14);
+  font-weight: var(--weight-semibold);
+}
+.fs-share__overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+.fs-share__facts {
+  display: grid;
+  gap: var(--space-8);
+  margin: 0 0 var(--space-12);
+}
+.fs-share__facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-share__facts dt {
+  color: var(--color-fg-muted);
+}
+.fs-share__facts dd {
+  margin: 0;
+  text-align: end;
+}
+.fs-share__findings {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-share__finding {
+  display: flex;
+  width: 100%;
+  min-block-size: 28px;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-13);
+  text-align: start;
+  cursor: pointer;
+}
+.fs-share__finding:hover {
+  background: var(--color-surface-hover);
+}
+.fs-share__report,
+.fs-share__cards {
+  display: grid;
+  gap: var(--space-12);
+}
+.fs-share__cards {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-share__coverage {
+  display: grid;
+  gap: var(--space-8);
+}
+.fs-share__packs {
+  margin: 0;
+  padding-inline-start: var(--space-16);
+  font-size: var(--text-13);
+}
+.fs-share__matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-12);
+}
+.fs-share__matrix caption {
+  text-align: start;
+  padding-block-end: var(--space-4);
+}
+.fs-share__matrix th,
+.fs-share__matrix td {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  text-align: start;
+}
+
+/* ─── Pins on the plan ────────────────────────────────────────────────────────────────────── */
+.fs-pins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.fs-pin {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 var(--space-6);
+  border: 2px solid var(--color-bg);
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  box-shadow: var(--shadow-float);
+  font: inherit;
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.fs-pin[data-resolved='true'] {
+  background: var(--color-success-muted);
+  color: var(--color-fg);
+}
+.fs-pin[data-detached='true'] {
+  border: 2px dashed var(--color-warning);
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+}
+.fs-pin[data-focus='true'] {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-pin:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+
+/* ─── The comments column ─────────────────────────────────────────────────────────────────── */
+.fs-comments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-height: 100%;
+}
+.fs-comments__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+.fs-comments__title {
+  margin: 0;
+  font-size: var(--text-14);
+  line-height: var(--leading-14);
+  font-weight: var(--weight-semibold);
+}
+.fs-comments__body {
+  flex: 1 1 auto;
+}
+.fs-comments__list {
+  display: grid;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-thread {
+  display: grid;
+  gap: var(--space-8);
+  padding: var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+}
+.fs-thread[data-focus='true'] {
+  border-color: var(--color-accent);
+}
+.fs-thread__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-block-size: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.fs-thread__n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: var(--text-11);
+  font-weight: var(--weight-semibold);
+}
+.fs-thread[data-resolved='true'] .fs-thread__n {
+  background: var(--color-success-muted);
+  color: var(--color-fg);
+}
+.fs-thread__who {
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  font-weight: var(--weight-medium);
+}
+.fs-thread__el {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+.fs-thread__replies {
+  display: grid;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0 0 0 var(--space-12);
+  border-left: 2px solid var(--color-border);
+  list-style: none;
+}
+.fs-reply {
+  display: flex;
+  gap: var(--space-8);
+  align-items: flex-start;
+}
+.fs-reply__body {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.fs-thread__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-comment {
+  display: grid;
+  gap: var(--space-4);
+}
+.fs-comment__text {
+  overflow-wrap: anywhere;
+  font-size: var(--text-13);
+  line-height: var(--leading-20);
+}
+.fs-comment__text p {
+  margin: 0 0 var(--space-4);
+}
+.fs-comment__text p:last-child {
+  margin: 0;
+}
+.fs-comment__text code {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--color-fill-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+.fs-comment__deleted {
+  margin: 0;
+  color: var(--color-fg-faint);
+  font-size: var(--text-13);
+  font-style: italic;
+}
+.fs-comment__tools {
+  display: flex;
+  gap: var(--space-12);
+  font-size: var(--text-12);
+}
+.fs-linkish--danger {
+  color: var(--color-danger);
+}
+.fs-comment__edit {
+  display: grid;
+  gap: var(--space-8);
+}
+.fs-comments__compose {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  gap: var(--space-8);
+  padding-block: var(--space-12) 0;
+  background: var(--color-bg);
+}
+.fs-comments__context {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-comments__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.fs-comments__signin {
+  display: grid;
+  gap: var(--space-8);
+}
+
+/* The owner's column in the editor. */
+.fs-editor-comments {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  padding: var(--space-16);
+}
+.fs-editor-comments__close {
+  position: absolute;
+  top: var(--space-12);
+  right: var(--space-12);
+}
+
+/* ─── The share dialog and the dashboard card ─────────────────────────────────────────────── */
+.fs-share-dialog {
+  display: grid;
+  gap: var(--space-16);
+}
+.fs-share-dialog__made {
+  display: grid;
+  gap: var(--space-8);
+  justify-items: start;
+}
+.fs-share-dialog__url {
+  display: flex;
+  gap: var(--space-8);
+  width: 100%;
+}
+.fs-share-dialog__url > :first-child {
+  flex: 1 1 auto;
+  font-family: var(--font-mono);
+}
+.fs-share-dialog__form {
+  display: grid;
+  gap: var(--space-8);
+}
+.fs-share-dialog__shows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}
+.fs-share-dialog__create {
+  display: flex;
+  justify-content: flex-end;
+}
+.fs-share-links {
+  display: grid;
+  gap: var(--space-8);
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-share-links__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.fs-share-links__row--ended {
+  opacity: 0.8;
+}
+.fs-share-links__row > svg {
+  flex: none;
+  width: var(--icon-16);
+  height: var(--icon-16);
+  color: var(--color-fg-muted);
+}
+.fs-share-links__text {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.fs-share-links__name {
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  font-weight: var(--weight-medium);
+}
+.fs-share-links__ended summary {
+  margin-top: var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  cursor: pointer;
+}
+.fs-share-links--card .fs-share-links__row {
+  padding: var(--space-8) var(--space-12);
+}
+
+/* ─── A phone or a narrow window: the column goes under the plan ──────────────────────────── */
+@media (max-width: 860px) {
+  .fs-editor.fs-share {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(280px, 1fr) minmax(0, 45%);
+    grid-template-areas:
+      'top'
+      'canvas'
+      'side';
+  }
+  .fs-share__bar {
+    flex-wrap: wrap;
+    padding-block: var(--space-8);
+    row-gap: var(--space-8);
+  }
+  .fs-share__side {
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+  }
+  .fs-share__level {
+    width: 150px;
+  }
+}

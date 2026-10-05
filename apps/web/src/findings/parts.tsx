@@ -16,7 +16,18 @@ import type { Finding, Severity } from './types';
 /** Where the coverage matrix lives in the app. */
 export const COVERAGE_PATH = '/rule-packs';
 
-export function FindingsNotice({ notice = NOTICE, compact = false, children }: { notice?: string; compact?: boolean; children?: ReactNode }) {
+export function FindingsNotice({
+  notice = NOTICE,
+  compact = false,
+  children,
+  coverageLink,
+}: {
+  notice?: string;
+  compact?: boolean;
+  children?: ReactNode;
+  /** In place of the link to the coverage screen: a shared viewer's own, for a reader with no account (FLR-T-9.6). */
+  coverageLink?: ReactNode;
+}) {
   return (
     <div className={compact ? 'fs-notice fs-notice--compact' : 'fs-notice'} role="note" aria-label="About these findings" data-testid="findings-notice">
       <Info aria-hidden="true" />
@@ -24,7 +35,7 @@ export function FindingsNotice({ notice = NOTICE, compact = false, children }: {
         <p className="fs-notice__text">{notice}</p>
         {children}
         <p className="fs-notice__link">
-          <Link href={COVERAGE_PATH}>What the installed rule packs check, and what they do not</Link>
+          {coverageLink ?? <Link href={COVERAGE_PATH}>What the installed rule packs check, and what they do not</Link>}
         </p>
       </div>
     </div>
