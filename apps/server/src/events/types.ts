@@ -55,10 +55,32 @@ export interface ProfileEventData {
   readonly change: 'chosen' | 'edited' | 'deleted';
 }
 
+/**
+ * A comment changed (FLR-T-9.6): who may see it is the stream's business — the owner's comments
+ * stream passes every one, a share link's stream only its own link's. Never the text: a subscriber
+ * fetches the thread.
+ */
+export interface CommentEventData {
+  readonly id: string;
+  /** The thread's root. */
+  readonly thread: string;
+  /** The share link the thread was made through. */
+  readonly link: string | null;
+  readonly change: 'created' | 'replied' | 'edited' | 'deleted' | 'resolved' | 'reopened';
+}
+
+/** A share link was made or revoked (FLR-T-9.6): a revoked link's open streams end. */
+export interface ShareEventData {
+  readonly id: string;
+  readonly change: 'created' | 'revoked';
+}
+
 export type ProjectEvent =
   | { readonly projectId: string; readonly type: 'head'; readonly data: HeadEventData }
   | { readonly projectId: string; readonly type: 'changeset'; readonly data: ChangesetEventData }
-  | { readonly projectId: string; readonly type: 'profile'; readonly data: ProfileEventData };
+  | { readonly projectId: string; readonly type: 'profile'; readonly data: ProfileEventData }
+  | { readonly projectId: string; readonly type: 'comment'; readonly data: CommentEventData }
+  | { readonly projectId: string; readonly type: 'share'; readonly data: ShareEventData };
 
 export type ProjectEventType = ProjectEvent['type'];
 

@@ -17,6 +17,7 @@ import {
   type Running,
 } from './helpers.js';
 import { projectWithDocument } from './drawings-support.js';
+import { commentOn, shareOf } from './share-support.js';
 
 /**
  * The audit walk (FLR-T-0.4): every mutating route, called successfully, writes an audit row with
@@ -218,6 +219,65 @@ const EXERCISES: Record<string, Exercise> = {
     const project = await createProjectAs(operator);
     const { id } = (await operator.post('/api/profiles', { profile: PROFILE })).body as { id: string };
     return { reply: await operator.request('PUT', `/api/projects/${project.id}/profile`, { profileId: id }), action: 'project.profile' };
+  },
+  // Sharing (FLR-T-9.6): the owner's links and the comments made through them.
+  'POST /api/projects/:projectId/shares': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    return { reply: await operator.post(`/api/projects/${id}/shares`, { label: 'Architect' }), action: 'share.create' };
+  },
+  'DELETE /api/projects/:projectId/shares/:shareId': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    const share = await shareOf(operator, id);
+    return { reply: await operator.request('DELETE', `/api/projects/${id}/shares/${share.id}`), action: 'share.revoke' };
+  },
+  'POST /api/share/:token/comments': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(running.db, operator);
+    const share = await shareOf(operator, id);
+    return { reply: await operator.post(`/api/share/${share.token}/comments`, { body: 'A 6" wall here?', element: 'W1', level: 'MAIN' }), action: 'comment.create' };
+  },
+  'POST /api/share/:token/comments/:commentId/replies': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { share, comment } = await commentOn(running, operator);
+    return { reply: await operator.post(`/api/share/${share.token}/comments/${comment}/replies`, { body: 'Agreed.' }), action: 'comment.reply' };
+  },
+  'PATCH /api/share/:token/comments/:commentId': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { share, comment } = await commentOn(running, operator);
+    return { reply: await operator.request('PATCH', `/api/share/${share.token}/comments/${comment}`, { body: 'A 2×6 wall here?' }), action: 'comment.edit' };
+  },
+  'DELETE /api/share/:token/comments/:commentId': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { share, comment } = await commentOn(running, operator);
+    return { reply: await operator.request('DELETE', `/api/share/${share.token}/comments/${comment}`), action: 'comment.delete' };
+  },
+  'POST /api/projects/:projectId/comments/:commentId/replies': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { project, comment } = await commentOn(running, operator);
+    return { reply: await operator.post(`/api/projects/${project}/comments/${comment}/replies`, { body: 'Kept.' }), action: 'comment.reply' };
+  },
+  'PATCH /api/projects/:projectId/comments/:commentId': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { project, comment } = await commentOn(running, operator);
+    return { reply: await operator.request('PATCH', `/api/projects/${project}/comments/${comment}`, { body: 'Edited.' }), action: 'comment.edit' };
+  },
+  'DELETE /api/projects/:projectId/comments/:commentId': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { project, comment } = await commentOn(running, operator);
+    return { reply: await operator.request('DELETE', `/api/projects/${project}/comments/${comment}`), action: 'comment.delete' };
+  },
+  'POST /api/projects/:projectId/comments/:commentId/resolve': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { project, comment } = await commentOn(running, operator);
+    return { reply: await operator.post(`/api/projects/${project}/comments/${comment}/resolve`), action: 'comment.resolve' };
+  },
+  'POST /api/projects/:projectId/comments/:commentId/reopen': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { project, comment } = await commentOn(running, operator);
+    await operator.post(`/api/projects/${project}/comments/${comment}/resolve`);
+    return { reply: await operator.post(`/api/projects/${project}/comments/${comment}/reopen`), action: 'comment.reopen' };
   },
   'DELETE /api/account/d3auth': async ({ running, d3auth }) => {
     const operator = await setupOperator(running);

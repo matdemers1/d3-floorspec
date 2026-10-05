@@ -60,6 +60,9 @@ model Account {
   changesetsClosed Changeset[]   @relation("ChangesetClosedBy")
   ruleProfiles     RuleProfile[]
   jobsRequested    Job[]
+  shareLinks       ShareLink[]
+  comments         Comment[]     @relation("CommentAuthor")
+  commentsResolved Comment[]     @relation("CommentResolvedBy")
 
   @@map("accounts")
 }
@@ -188,6 +191,8 @@ model Project {
   changesets  Changeset[]
   retiredIds  RetiredId[]
   jobs        Job[]
+  shareLinks  ShareLink[]
+  comments    Comment[]
 
   @@index([ownerAccountId])
   @@index([ruleProfileId])
@@ -207,6 +212,8 @@ model Version {
   opsTo          OpLog[]     @relation("OpAfter")
   changesetBases Changeset[] @relation("ChangesetBase")
   jobs           Job[]
+  shareLinks     ShareLink[]
+  comments       Comment[]
 
   @@map("versions")
 }
@@ -547,4 +554,90 @@ model AlertLog {
 
   @@index([kind, createdAt])
   @@map("alerts")
+}
+
+// ─── Sharing and comments (FLR-T-9.6) ──────────────────────────────────────
+
+/// A read-only link to one project, made by its owner (FLR-REQ-133): `/s/<token>`. The token is 32
+/// random bytes; only its SHA-256 is stored, and it is shown once. A link shows what it says and
+/// nothing else — the plan, the 3D view, the findings, in any combination — of either `main` as it
+/// moves (`version_hash` null) or one version pinned when the link was made. It always expires
+/// (at most a year out) and is revoked at once. Commenting through it needs an account
+/// (FLR-REQ-134); a link is never a credential for anything but its own read routes.
+model ShareLink {
+  id                 String  @id @default(uuid(7)) @db.Uuid
+  projectId          String  @map("project_id") @db.Uuid
+  createdByAccountId String  @map("created_by_account_id") @db.Uuid
+  /// The owner's own name for it ("Architect review"): never shown to a viewer.
+  label              String?
+  tokenHash          String  @unique @map("token_hash")
+  /// The first characters of the token, so the owner can tell two links apart.
+  prefix             String
+  /// A pinned version; null shows `main` as it moves.
+  versionHash        String? @map("version_hash")
+  /// The pinned version's number on main, for display.
+  versionSeq         Int?    @map("version_seq")
+
+  showPlan      Boolean @map("show_plan")
+  show3d        Boolean @map("show_3d")
+  showFindings  Boolean @map("show_findings")
+  allowComments Boolean @map("allow_comments")
+
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(6)
+  /// Times the shared viewer was opened through it.
+  viewCount  Int       @default(0) @map("view_count")
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  createdBy Account   @relation(fields: [createdByAccountId], references: [id], onDelete: Restrict)
+  version   Version?  @relation(fields: [versionHash], references: [hash], onDelete: Restrict, onUpdate: Restrict)
+  comments  Comment[]
+
+  @@index([projectId, createdAt])
+  @@map("share_links")
+}
+
+/// A comment on a shared project, by a signed-in account (FLR-REQ-134). A thread's root is pinned
+/// to an element (FLR-REQ-167) — its ID, the level it is on, the version the commenter was looking
+/// at, and the point on the plan — so a comment on an element that later disappears is still drawn
+/// where it was, as detached. Replies point at their root. Deleting one blanks it and keeps the row,
+/// so a thread keeps its shape; the owner resolves and reopens threads.
+model Comment {
+  id              String  @id @default(uuid(7)) @db.Uuid
+  projectId       String  @map("project_id") @db.Uuid
+  /// The link it was made through: what a viewer of that link sees. Replies carry their root's.
+  shareLinkId     String? @map("share_link_id") @db.Uuid
+  /// Null for a thread's root.
+  parentId        String? @map("parent_id") @db.Uuid
+  authorAccountId String  @map("author_account_id") @db.Uuid
+  /// Markdown-lite plain text, sanitised before it is stored; empty once deleted.
+  body            String
+
+  elementId   String? @map("element_id")
+  levelId     String? @map("level_id")
+  versionHash String  @map("version_hash")
+  /// The point on the plan, base units (FLR-ADR-004).
+  pointX      Int?    @map("point_x")
+  pointY      Int?    @map("point_y")
+
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  editedAt            DateTime? @map("edited_at") @db.Timestamptz(6)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
+  resolvedAt          DateTime? @map("resolved_at") @db.Timestamptz(6)
+  resolvedByAccountId String?   @map("resolved_by_account_id") @db.Uuid
+
+  project    Project    @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  shareLink  ShareLink? @relation(fields: [shareLinkId], references: [id], onDelete: Restrict)
+  parent     Comment?   @relation("CommentThread", fields: [parentId], references: [id], onDelete: Restrict)
+  replies    Comment[]  @relation("CommentThread")
+  author     Account    @relation("CommentAuthor", fields: [authorAccountId], references: [id], onDelete: Restrict)
+  resolvedBy Account?   @relation("CommentResolvedBy", fields: [resolvedByAccountId], references: [id], onDelete: SetNull)
+  version    Version    @relation(fields: [versionHash], references: [hash], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([projectId, createdAt])
+  @@index([shareLinkId, createdAt])
+  @@index([parentId])
+  @@map("comments")
 }
