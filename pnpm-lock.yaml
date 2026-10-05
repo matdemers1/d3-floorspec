@@ -126,6 +126,9 @@ importers:
       '@floorspec/ops':
         specifier: workspace:*
         version: link:../../packages/ops
+      '@floorspec/render2d':
+        specifier: workspace:*
+        version: link:../../packages/render2d
       lucide-react:
         specifier: ^1.44.0
         version: 1.48.0(react@19.3.0)

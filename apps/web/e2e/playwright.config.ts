@@ -13,6 +13,7 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `a11y`      — FLR-T-3.9: axe on every screen and significant state, in both themes.
  *   - `program`   — FLR-T-4.2, 4.3: the P4 exit demo, a brief to an accepted layout that meets it.
  *   - `systems`   — FLR-T-5.7, 5.8: the P5 exit demo, devices and circuits to a moved wall and schedules.
+ *   - `roofs-stairs` — FLR-T-7.2, 7.3: a hip roof over the walls and an L stair, checked through model.json.
  *
  * Run with:
  *
@@ -20,7 +21,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`). E2E_PORT is the keyboard suite's port; the others take the next four.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_roofs_test`). E2E_PORT is the keyboard suite's port; the others take the next five.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -55,6 +56,7 @@ const SUITES: Suite[] = [
   { name: 'a11y', spec: 'a11y.spec.ts', port: PORT + 2, database: databaseFor('a11y'), setupToken: true },
   { name: 'program', spec: 'program.spec.ts', port: PORT + 3, database: databaseFor('program'), setupToken: true },
   { name: 'systems', spec: 'systems.spec.ts', port: PORT + 4, database: databaseFor('systems'), setupToken: true },
+  { name: 'roofs-stairs', spec: 'roofs-stairs.spec.ts', port: PORT + 5, database: databaseFor('roofs'), setupToken: true },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;

@@ -1,6 +1,6 @@
 import type { EditorStore, ToolId } from './store';
 import type { ToolController } from './tools';
-import { newLevel, switchUnits } from './actions';
+import { newLevel, roofOverLevel, switchUnits } from './actions';
 import { fit, zoomAt } from './viewport';
 import { kindOf } from './model';
 import { accept, openReview, reject } from './review';
@@ -78,6 +78,8 @@ export const COMMANDS: readonly Command[] = [
   tool('room', 'Name a room', 'R'),
   tool('separator', 'Draw a room separator', 'S'),
   tool('slab', 'Draw a slab', 'B'),
+  tool('roof', 'Draw a roof', 'O'),
+  tool('stair', 'Place a stair', 'T'),
   systemTool('electrical', 'Place electrical devices', 'E', 'receptacle switch light panel outlet'),
   systemTool('plumbing', 'Place plumbing fixtures', 'P', 'toilet sink lavatory shower tub water heater'),
   systemTool('mechanical', 'Place mechanical equipment', 'M', 'furnace register return fan range hvac'),
@@ -90,6 +92,26 @@ export const COMMANDS: readonly Command[] = [
     run: (store) => {
       const layers = store.get().layers;
       store.set({ layers: { ...layers, coreOnly: !layers.coreOnly } });
+    },
+  },
+  {
+    id: 'view.roof',
+    label: 'Show the roof layer',
+    group: 'View',
+    keywords: 'roofs eave ridge hip valley gable',
+    run: (store) => {
+      const layers = store.get().layers;
+      store.set({ layers: { ...layers, roof: !layers.roof } });
+    },
+  },
+  {
+    id: 'model.roofOverLevel',
+    label: 'Roof over this level',
+    group: 'Model',
+    keywords: 'roof hip gable footprint exterior walls',
+    enabled: hasLevel,
+    run: (store) => {
+      roofOverLevel(store);
     },
   },
   {
