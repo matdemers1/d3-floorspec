@@ -468,6 +468,7 @@ const ELEMENT_KIND: Record<PartKind, ElementKind> = {
   roofGable: 'roof',
   stairFlight: 'stair',
   stairLanding: 'stair',
+  stairColumn: 'stair',
   stairBlock: 'stair',
   extension: 'extension',
 };

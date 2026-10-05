@@ -19,6 +19,7 @@ import type { Derived, FloorspecDocument } from '@floorspec/engine';
 import { area2, clip, iarea2, Rat, rpoint, type IPoint, type RPoint } from '../src/exact.js';
 import type { Kernel } from '../src/kernel.js';
 import { UNITS_PER_METRE as BU, type Box3, type HouseMesh, type MeshPart, type PartMesh } from '../src/index.js';
+import { treadOutlines } from '../src/stairs.js';
 
 const own = <T>(c: Record<string, T | undefined> | undefined, id: string): T => {
   if (!c || !Object.hasOwn(c, id)) throw new Error(`no ${id}`);
@@ -289,7 +290,9 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
     case 'stairLanding': {
       const s = own(d.stairs, p.id);
       const steps = s.steps!;
-      const pieces = steps.map((st, k) => ({ ...st, lo: k >= 2 ? steps[k - 2]!.top : s.bottom }));
+      // Tapered treads stop short of the point they meet at, and share their faces exactly (treadOutlines).
+      const outlines = treadOutlines(own(doc.stairs, p.id), s);
+      const pieces = steps.map((st, k) => ({ ...st, outline: outlines[k]!, lo: k >= 2 ? steps[k - 2]!.top : s.bottom }));
       // The pieces of this part: flights are the runs between landings, numbered from 1.
       const groups: { kind: 'stairFlight' | 'stairLanding'; n: number; pieces: typeof pieces }[] = [];
       let flights = 0;

@@ -41,7 +41,9 @@ describe('the conformance suites', () => {
     }
     // Every kind of part was produced and checked — a roof's gable ends among them, which only a roof
     // with a thickness has as parts of their own: the starter templates (examples/005 and 006) declare one.
-    expect([...kinds].sort()).toEqual(['ceiling', 'extension', 'floor', 'junctionFill', 'opening', 'roof', 'roofGable', 'slab', 'stairBlock', 'stairFlight', 'stairLanding', 'wall'].sort());
+    // A Core 0.4 reader derives every stair's steps (17.7), so none is a placeholder block here; a
+    // spiral's column is a part of its own.
+    expect([...kinds].sort()).toEqual(['ceiling', 'extension', 'floor', 'junctionFill', 'opening', 'roof', 'roofGable', 'slab', 'stairColumn', 'stairFlight', 'stairLanding', 'wall'].sort());
     expect(solids).toBeGreaterThan(1000);
     expect(openings).toBeGreaterThan(50);
   });
