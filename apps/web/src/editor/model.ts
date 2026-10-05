@@ -195,6 +195,8 @@ export interface EditorModel {
   optionSets: OptionSetView[];
   /** Whether the design shown derives (19.6.2): false for a design whose view is not valid. */
   designDerives: boolean;
+  /** The design's view (19.3): the document `derived` and `levels` describe. The whole document without options. */
+  view: FloorspecDocument;
   valid: boolean;
   derived: Derived | null;
   /** The head's own findings: lints when it is valid, every diagnostic when it is not. */
@@ -264,6 +266,7 @@ export function readModel(hash: string, text: string | object, wanted: Design = 
     valid: result.valid,
     derived,
     diagnostics: result.diagnostics,
+    view: shown,
     levels: derived === null ? levelsWithoutGeometry(shown) : levelViews(shown, derived),
     index,
     ext,

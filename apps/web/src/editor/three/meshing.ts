@@ -66,7 +66,7 @@ export function useHouseMesh(model: EditorModel | null, originRef: { current: Ve
             if (cancelled || model.derived === null) return;
             const started = performance.now();
             originRef.current ??= originOf(model);
-            const mesh = m.meshDerived(model.document, model.derived, { origin: originRef.current });
+            const mesh = m.meshDerived(model.view, model.derived, { origin: originRef.current });
             const world = buildWorld(model, mesh);
             setState({ status: 'ready', mesh, world, model, ms: performance.now() - started });
           })

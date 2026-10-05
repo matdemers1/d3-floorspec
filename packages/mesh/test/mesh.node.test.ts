@@ -21,8 +21,9 @@ beforeAll(async () => {
 function meshAndCheck(input: string | object, name: string): ReturnType<typeof checkHouse> & { kinds: Set<string> } {
   const ev = evaluate(input);
   const derived = deriveEvaluation(ev);
-  const mesh = mesher.meshDerived(ev.document!, derived, { stats: true });
-  return { ...checkHouse(kernel, ev.document!, derived, mesh, name), kinds: new Set(mesh.parts.map((p) => p.kind)) };
+  const doc = (ev.view ?? ev.document)!;
+  const mesh = mesher.meshDerived(doc, derived, { stats: true });
+  return { ...checkHouse(kernel, doc, derived, mesh, name), kinds: new Set(mesh.parts.map((p) => p.kind)) };
 }
 
 describe('the conformance suites', () => {
