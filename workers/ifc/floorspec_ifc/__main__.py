@@ -6,6 +6,9 @@
     python -m floorspec_ifc export PAYLOAD OUT    a payload file to an IFC file ("-" for stdin, stdout)
     python -m floorspec_ifc check FILE.ifc        validate an IFC file; print its summary
     python -m floorspec_ifc samples [DIR]         the sample IFCs from tests/fixtures (default samples/)
+    python -m floorspec_ifc reconcile PAYLOAD FILE.ifc
+                                                  an edited export against the payload of the version
+                                                  it came from: the Ops batch and the report, as JSON
 """
 
 from __future__ import annotations
@@ -56,6 +59,16 @@ def _check(path: str) -> int:
     return 1 if errors else 0
 
 
+def _reconcile(src: str, path: str) -> int:
+    from .importer import read_ifc, reconcile
+    from .payload import parse
+
+    payload = parse(json.load(open(src, encoding="utf-8")))
+    result = reconcile(payload, read_ifc(Path(path).read_bytes()))
+    print(json.dumps(result.view(), indent=2, ensure_ascii=False))
+    return 0
+
+
 def _samples(target: str) -> int:
     here = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
     out = Path(target)
@@ -81,6 +94,9 @@ def main(argv: list[str]) -> int:
     c.add_argument("file")
     m = sub.add_parser("samples")
     m.add_argument("dir", nargs="?", default="samples")
+    r = sub.add_parser("reconcile")
+    r.add_argument("payload")
+    r.add_argument("file")
     args = parser.parse_args(argv)
     port = int(os.environ.get("IFC_WORKER_PORT", "3410"))
     if args.command in (None, "serve"):
@@ -94,6 +110,8 @@ def main(argv: list[str]) -> int:
         return _export(args.payload, args.out)
     if args.command == "check":
         return _check(args.file)
+    if args.command == "reconcile":
+        return _reconcile(args.payload, args.file)
     return _samples(args.dir)
 
 
