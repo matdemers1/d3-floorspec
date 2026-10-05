@@ -7,6 +7,7 @@ import { accept, openReview, reject } from './review';
 import { compareOp, refreshLog, toggleHistory } from './history';
 import { kindById, kindsOf, type SystemId } from './systems/catalog';
 import { navigate } from '../lib/router';
+import { threeOf } from './three/mode';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -84,6 +85,67 @@ export const COMMANDS: readonly Command[] = [
   systemTool('plumbing', 'Place plumbing fixtures', 'P', 'toilet sink lavatory shower tub water heater'),
   systemTool('mechanical', 'Place mechanical equipment', 'M', 'furnace register return fan range hvac'),
   systemTool('lowvoltage', 'Place low-voltage outlets', 'L', 'data coax network'),
+  // The 3D view, the split view and the walkthrough (FLR-T-7.5).
+  {
+    id: 'view.plan',
+    label: 'Show the 2D plan',
+    group: 'View',
+    keywords: 'view 2d plan',
+    keys: ['1'],
+    hint: '1',
+    run: (store) => {
+      threeOf(store).setMode('plan');
+    },
+  },
+  {
+    id: 'view.3d',
+    label: 'Show the 3D view',
+    group: 'View',
+    keywords: 'three model orbit render',
+    keys: ['2'],
+    hint: '2',
+    enabled: (store) => store.get().model !== null,
+    run: (store) => {
+      threeOf(store).setMode('3d');
+    },
+  },
+  {
+    id: 'view.split',
+    label: 'Show the plan and 3D side by side',
+    group: 'View',
+    keywords: 'split 3d both synced',
+    keys: ['3'],
+    hint: '3',
+    enabled: (store) => store.get().model !== null,
+    run: (store) => {
+      threeOf(store).setMode('split');
+    },
+  },
+  {
+    id: 'view.walk',
+    label: 'Walk through in 3D',
+    group: 'View',
+    keywords: 'walkthrough first person eye height tour',
+    keys: ['4'],
+    hint: '4',
+    enabled: (store) => store.get().model !== null,
+    run: (store) => {
+      const three = threeOf(store);
+      if (three.get().walking) three.stopWalking();
+      else three.walk(null);
+    },
+  },
+  {
+    id: 'view.cutaway',
+    label: 'Cut away the levels above in 3D',
+    group: 'View',
+    keywords: '3d cutaway whole house levels roof',
+    enabled: (store) => threeOf(store).get().mode !== 'plan',
+    run: (store) => {
+      const three = threeOf(store);
+      three.set({ cutaway: !three.get().cutaway });
+    },
+  },
   {
     id: 'view.coreOnly',
     label: 'Show as core-only',

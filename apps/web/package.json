@@ -17,13 +17,16 @@
     "@d3cloud/ui": "https://github.com/matdemers1/d3-design-system/releases/download/v1.5.0/d3cloud-ui-1.5.0.tgz",
     "@floorspec/assistant-electrical": "workspace:*",
     "@floorspec/engine": "workspace:*",
+    "@floorspec/mesh": "workspace:*",
     "@floorspec/ops": "workspace:*",
     "@floorspec/render2d": "workspace:*",
     "@floorspec/rules-engine": "workspace:*",
+    "@react-three/fiber": "9.8.1",
     "lucide-react": "^1.44.0",
     "qrcode-generator": "2.0.4",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "three": "0.186.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
@@ -31,6 +34,7 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "0.186.0",
     "@vitejs/plugin-react": "^6.1.1",
     "axe-core": "4.13.0",
     "pg": "8.23.0",

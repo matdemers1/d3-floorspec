@@ -18,6 +18,8 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `roofs-stairs` — FLR-T-7.2, 7.3: a hip roof over the walls and an L stair, checked through model.json.
  *   - `exports`   — FLR-T-9.3: a PDF sheet per level and DXF drawings, from the editor and the dashboard.
  *   - `options`   — FLR-T-8.4, 8.1: an option set drawn, compared side by side and switched; a backsplash region.
+ *   - `three`     — FLR-T-7.5: the P7 exit demo — the 3D view, split view with synced selection, and a
+ *                   walkthrough up an L stair under a hip roof. WebGL through SwiftShader (see GL_ARGS).
  *
  * Run with:
  *
@@ -25,7 +27,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`). E2E_PORT is the keyboard suite's port; the others take the next eight.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`). E2E_PORT is the keyboard suite's port; the others take the next nine.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -54,12 +56,20 @@ interface Suite {
   setupToken: boolean;
   /** More of the server's environment. */
   env?: Record<string, string>;
+  /** Draws WebGL (the 3D view): Chromium is started with a software GPU. */
+  gl?: boolean;
 }
+
+/**
+ * Headless Chromium has no GPU; SwiftShader draws WebGL in software. Recent Chromium no longer
+ * falls back to it for WebGL on its own, so the suites that open the 3D view ask for it.
+ */
+const GL_ARGS = ['--enable-unsafe-swiftshader', '--use-angle=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'];
 
 const SUITES: Suite[] = [
   { name: 'keyboard', spec: 'keyboard.spec.ts', port: PORT, database: databaseFor(null), setupToken: false },
   { name: 'main-path', spec: 'main-path.spec.ts', port: PORT + 1, database: databaseFor('main'), setupToken: true },
-  { name: 'a11y', spec: 'a11y.spec.ts', port: PORT + 2, database: databaseFor('a11y'), setupToken: true },
+  { name: 'a11y', spec: 'a11y.spec.ts', port: PORT + 2, database: databaseFor('a11y'), setupToken: true, gl: true },
   { name: 'program', spec: 'program.spec.ts', port: PORT + 3, database: databaseFor('program'), setupToken: true },
   { name: 'systems', spec: 'systems.spec.ts', port: PORT + 4, database: databaseFor('systems'), setupToken: true },
   // The only suite with rule packs installed: the standard's synthetic example pack and an e2e pack.
@@ -67,6 +77,7 @@ const SUITES: Suite[] = [
   { name: 'roofs-stairs', spec: 'roofs-stairs.spec.ts', port: PORT + 6, database: databaseFor('roofs'), setupToken: true },
   { name: 'exports', spec: 'exports.spec.ts', port: PORT + 7, database: databaseFor('exports'), setupToken: true },
   { name: 'options', spec: 'options.spec.ts', port: PORT + 8, database: databaseFor('options'), setupToken: true },
+  { name: 'three', spec: 'three.spec.ts', port: PORT + 9, database: databaseFor('three'), setupToken: true, gl: true },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;
@@ -88,7 +99,7 @@ export default defineConfig({
   projects: SUITES.map((suite) => ({
     name: suite.name,
     testMatch: suite.spec,
-    use: { baseURL: origin(suite.port) },
+    use: { baseURL: origin(suite.port), ...(suite.gl === true ? { launchOptions: { args: GL_ARGS } } : {}) },
   })),
   webServer: SUITES.map((suite) => ({
     // Reset the database, then boot the API on it: it migrates, and serves the built editor.

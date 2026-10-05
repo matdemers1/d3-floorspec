@@ -1,6 +1,6 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
-import { Avatar, Button, EmptyState, IconButton, Modal, SegmentedControl, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
+import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
 import { ArrowLeft, CircleCheck, Command as CommandIcon, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Share, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
 import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
 import { MaterialsModal } from './Materials';
@@ -25,6 +25,8 @@ import { labelOf, sortedLevels } from './model';
 import { formatLen, gridStepLabel } from './units';
 import { kindById, type SystemId } from './systems/catalog';
 import { ExportButton } from '../exports/ExportButton';
+import { Views, ViewSwitch } from './three/Views';
+import { useThreeState } from './three/mode';
 import { FindingsPanel, openAtFinding } from '../findings/Panel';
 import { findingsSource, useFindings } from '../findings/source';
 import {
@@ -84,6 +86,8 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   );
   const optionCompare = useEditor(store, (s) => s.optionCompare !== null);
   const toast = useToast();
+  const viewMode = useThreeState(store, (s) => s.mode);
+  const walking = useThreeState(store, (s) => s.walking);
 
   useEffect(() => {
     if (notice === null) return;
@@ -115,11 +119,11 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   }
 
   return (
-    <div className="fs-editor" tabIndex={-1} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle ? 'idle' : 'active'}>
+    <div className="fs-editor" tabIndex={-1} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle ? 'idle' : 'active'} data-walk={walking ? 'on' : undefined}>
       <TopBar store={store} you={you} />
       <ToolRail store={store} tools={tools} />
       <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : left === 'history' ? <HistoryPanel store={store} you={you} /> : <ProjectTree store={store} />}</aside>
-      <main className="fs-editor__canvas" aria-label="Plan">
+      <main className="fs-editor__canvas" aria-label={viewMode === '3d' || walking ? '3D view' : viewMode === 'split' ? 'Plan and 3D view' : 'Plan'}>
         {status === 'loading' ? (
           <div className="fs-canvas fs-canvas--loading">
             <Spinner size="lg" label="Loading the model" />
@@ -185,7 +189,7 @@ function CanvasArea({ store, tools }: { store: EditorStore; tools: ToolControlle
   const blank = view !== undefined && view.walls.length === 0 && view.separators.length === 0;
   return (
     <>
-      <PlanCanvas store={store} tools={tools} />
+      <Views store={store} plan={<PlanCanvas store={store} tools={tools} />} />
       <RejectionBanner store={store} />
       <ToolHint store={store} />
       {empty ? (
@@ -308,17 +312,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
       ) : null}
       <OptionsChip store={store} />
       <span className="fs-spacer" />
-      <SegmentedControl
-        aria-label="View"
-        className="fs-topbar__views"
-        value="2d"
-        items={[
-          { value: '2d', label: '2D plan' },
-          { value: '3d', label: '3D', disabled: true },
-          { value: 'split', label: 'Split', disabled: true },
-        ]}
-        onValueChange={() => undefined}
-      />
+      <ViewSwitch store={store} />
       <Tooltip content="Rooms, doors, windows, receptacles and fixtures, live">
         <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<TableIcon />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}/schedules`); }}>
           Schedules

@@ -450,6 +450,24 @@ test('every screen and state has no axe violations, in light and in dark', async
   await page.getByRole('switch', { name: 'Show as core-only' }).click();
   await page.getByRole('button', { name: 'Clearances' }).click();
 
+  // ── The 3D view (FLR-T-7.5): 3D with its toolbar, the split view with a room selected, a walkthrough.
+  await page.goto(`/projects/${house}/editor?view=3d`);
+  await page.waitForFunction(() => window.__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
+  await expect(page.getByRole('toolbar', { name: '3D view' })).toBeVisible();
+  await audit(page, 'editor, 3D view');
+  await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: 'Split' }).click();
+  await expect(page.getByText('Selection synced · click in either view')).toBeVisible();
+  await page.getByRole('tree').getByRole('treeitem', { name: /^Great room/ }).first().click();
+  await expect(page.getByRole('button', { name: 'Walk through from here' })).toBeVisible();
+  await audit(page, 'editor, split view with a room selected');
+  await page.getByRole('button', { name: 'Walk through from here' }).click();
+  await expect(page.getByRole('button', { name: 'Exit walkthrough' })).toBeVisible();
+  await audit(page, 'editor, walkthrough');
+  await page.getByRole('button', { name: 'Exit walkthrough' }).click();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('1');
+  await expect(page.getByRole('application', { name: /^Plan of / })).toBeVisible();
+
   // ── The schedules (FLR-T-5.8): rooms, and receptacles with their circuits.
   await page.goto(`/projects/${house}/schedules`);
   await expect(page.getByRole('heading', { name: 'Schedules', level: 1 })).toBeVisible();
