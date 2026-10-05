@@ -175,7 +175,7 @@ export function Project({ id, you }: { id: string; you: string }) {
             <FindingsCard projectId={project.id} />
             <VersionsSlot projectId={project.id} you={you} />
             <ExportsCard projectId={project.id} hasModel={project.head !== null} />
-            <ShareCard />
+            <ShareCard projectId={project.id} projectName={project.name} versionLabel={null} />
           </div>
         </div>
       </div>

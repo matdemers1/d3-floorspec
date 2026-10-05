@@ -38,6 +38,9 @@ import type { PlanRenderer } from './render.js';
 import { EventHub } from './events/hub.js';
 import { eventRoutes, type EventRouteOptions } from './events/routes.js';
 import { NO_PACKS, type InstalledPacks } from './rules/packs.js';
+import { projectShareRoutes, shareRoutes } from './share/routes.js';
+import { privateShareHeaders } from './share/guards.js';
+import type { ShareLimits } from './share/limit.js';
 
 export interface AppDeps {
   readonly config: Config;
@@ -70,6 +73,8 @@ export interface AppDeps {
   readonly rulePacks?: InstalledPacks;
   /** How long a 3D render waits for the worker (FLR-T-8.5); tests shorten it. */
   readonly render3d?: Render3dWait;
+  /** The share routes' rate limits (FLR-T-9.6); tests tighten them. */
+  readonly shareLimits?: ShareLimits;
 }
 
 /** The paths the API owns. Anything else is a screen of the editor. */
@@ -86,6 +91,7 @@ export function createApp({
   eventStream = {},
   rulePacks = NO_PACKS,
   render3d = {},
+  shareLimits,
 }: AppDeps): Express {
   const app = express();
   (app.locals as { events?: EventHub }).events = events;
@@ -113,6 +119,10 @@ export function createApp({
   mount(app, '/api/projects', exportRoutes(db));
   mount(app, '/api/tokens', tokenRoutes(db));
   mount(app, '/api/maintenance', maintenanceRoutes(db, config));
+  // Sharing (FLR-T-9.6): the owner's links and comments, and what a share link reaches.
+  const share = { config, events, rules: rulePacks, stream: eventStream, ...(shareLimits === undefined ? {} : { limits: shareLimits }) };
+  mount(app, '/api/projects', projectShareRoutes(db, share));
+  mount(app, '/api/share', shareRoutes(db, share));
   mountMcp(app, config);
 
   /**
@@ -162,6 +172,12 @@ export function createApp({
 
   // The editor is served by the API, not by a second process: one origin, one cookie, no CORS. In
   // development Vite serves it instead and WEB_DIST is unset.
+  // The shared viewer's page (FLR-T-9.6): not indexed, and never the Referer of a page it links to.
+  app.use('/s', (_req, res, next) => {
+    privateShareHeaders(res);
+    next();
+  });
+
   const webDist = config.WEB_DIST;
   if (webDist !== undefined && existsSync(webDist)) {
     app.use(express.static(webDist, { index: false, maxAge: '1h' }));

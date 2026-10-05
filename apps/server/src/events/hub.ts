@@ -23,6 +23,9 @@ import type { Envelope } from './publish.js';
 
 export type StreamEventType = ProjectEventType | 'resync' | 'ready';
 
+/** Every type a project event may have; anything else on the channel is ignored. */
+const EVENT_TYPES: ReadonlySet<ProjectEventType> = new Set<ProjectEventType>(['head', 'changeset', 'profile', 'comment', 'share']);
+
 export interface StreamEvent {
   readonly id: string;
   readonly type: StreamEventType;
@@ -183,7 +186,7 @@ export class EventHub {
       logger.warn('ignored an event that is not JSON');
       return;
     }
-    if (parsed?.v !== 1 || typeof parsed.p !== 'string' || (parsed.t !== 'head' && parsed.t !== 'changeset' && parsed.t !== 'profile')) {
+    if (parsed?.v !== 1 || typeof parsed.p !== 'string' || !EVENT_TYPES.has(parsed.t as ProjectEventType)) {
       logger.warn('ignored an event in an unknown shape');
       return;
     }

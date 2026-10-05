@@ -55,6 +55,17 @@ const CALLS: Record<string, Call> = {
   'GET /api/projects/:projectId/exports/:jobId': { ownerStatus: 200 },
   // Answered, by a route that works: A's export is still queued.
   'GET /api/projects/:projectId/exports/:jobId/file': { ownerStatus: 409 },
+  // Sharing (FLR-T-9.6): A's links and the comments made through them.
+  'GET /api/projects/:projectId/shares': { ownerStatus: 200 },
+  'POST /api/projects/:projectId/shares': { body: { label: 'Builder' }, ownerStatus: 201 },
+  'DELETE /api/projects/:projectId/shares/:shareId': { ownerStatus: 204 },
+  'GET /api/projects/:projectId/comments': { ownerStatus: 200 },
+  'GET /api/projects/:projectId/comments/events': { ownerStatus: 200, stream: true },
+  'POST /api/projects/:projectId/comments/:commentId/replies': { body: { body: 'Kept.' }, ownerStatus: 201 },
+  'PATCH /api/projects/:projectId/comments/:commentId': { body: { body: 'Edited.' }, ownerStatus: 200 },
+  'POST /api/projects/:projectId/comments/:commentId/resolve': { body: {}, ownerStatus: 200 },
+  'POST /api/projects/:projectId/comments/:commentId/reopen': { body: {}, ownerStatus: 200 },
+  'DELETE /api/projects/:projectId/comments/:commentId': { ownerStatus: 204 },
   // Last: it is the one that changes the project, so the owner's call to it goes at the end.
   'DELETE /api/projects/:projectId': { ownerStatus: 204 },
 };
@@ -68,10 +79,18 @@ describe('per-account isolation', () => {
   let changesetId: string;
   let head: string;
   let jobId: string;
+  let shareId: string;
+  let commentId: string;
 
   /** A route's path with A's project, version and changeset filled in. */
   const fill = (path: string, project = projectId) =>
-    path.replace(':projectId', project).replace(':hash', head).replace(':changesetId', changesetId).replace(':jobId', jobId);
+    path
+      .replace(':projectId', project)
+      .replace(':hash', head)
+      .replace(':changesetId', changesetId)
+      .replace(':jobId', jobId)
+      .replace(':shareId', shareId)
+      .replace(':commentId', commentId);
 
   beforeAll(async () => {
     running = await start();
@@ -87,6 +106,13 @@ describe('per-account isolation', () => {
     changesetId = ((await alice.post(`/api/projects/${projectId}/changesets`, { name: 'An idea', batch: ROOM })).body as { changeset: { id: string } }).changeset.id;
     // An export of A's, queued (no drain runs here), so its routes have something to answer about.
     jobId = (await db.job.create({ data: { projectId, kind: 'export.pdf', params: { versionAt: new Date(0).toISOString() }, versionHash: head } })).id;
+    // A share link of A's, and a comment made through it — written directly: A's empty house has
+    // no element to pin one to through the route.
+    shareId = ((await alice.post(`/api/projects/${projectId}/shares`, {})).body as { link: { id: string } }).link.id;
+    const owner = await db.project.findUniqueOrThrow({ where: { id: projectId } });
+    commentId = (
+      await db.comment.create({ data: { projectId, shareLinkId: shareId, authorAccountId: owner.ownerAccountId, body: 'A wall here?', elementId: 'W1', levelId: 'L1', versionHash: head } })
+    ).id;
   });
 
   it('covers every project-scoped route the app declares', () => {

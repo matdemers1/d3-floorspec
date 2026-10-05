@@ -1,7 +1,7 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Share, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
 import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
 import { MaterialsModal } from './Materials';
 import { navigate, takeParam } from '../lib/router';
@@ -29,6 +29,7 @@ import { Views, ViewSwitch } from './three/Views';
 import { useThreeState } from './three/mode';
 import { FindingsPanel, openAtFinding } from '../findings/Panel';
 import { findingsSource, useFindings } from '../findings/source';
+import { CommentsButton, EditorComments, OwnerPins, ShareButton, useCommentsOpen } from '../share/editor';
 import {
   AirIcon,
   DataIcon,
@@ -88,6 +89,8 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   const toast = useToast();
   const viewMode = useThreeState(store, (s) => s.mode);
   const walking = useThreeState(store, (s) => s.walking);
+  // Comments from share links (FLR-T-9.6) take the inspector's place while they are open.
+  const comments = useCommentsOpen(store) && right === 'inspector';
 
   useEffect(() => {
     if (notice === null) return;
@@ -119,7 +122,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   }
 
   return (
-    <div className="fs-editor" tabIndex={-1} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle ? 'idle' : 'active'} data-walk={walking ? 'on' : undefined}>
+    <div className="fs-editor" tabIndex={-1} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle && !comments ? 'idle' : 'active'} data-walk={walking ? 'on' : undefined}>
       <TopBar store={store} you={you} />
       <ToolRail store={store} tools={tools} />
       <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : left === 'history' ? <HistoryPanel store={store} you={you} /> : <ProjectTree store={store} />}</aside>
@@ -142,10 +145,12 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
       </main>
       <aside
         className="fs-editor__inspector"
-        aria-label={right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : right === 'options' || right === 'optionCompare' ? 'Design options' : 'Inspector'}
+        aria-label={comments ? 'Comments' : right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : right === 'options' || right === 'optionCompare' ? 'Design options' : 'Inspector'}
       >
         {status === 'loading' ? (
           <TreeSkeleton />
+        ) : comments ? (
+          <EditorComments store={store} />
         ) : right === 'compare' ? (
           <ComparePanel store={store} />
         ) : right === 'optionCompare' ? (
@@ -189,7 +194,15 @@ function CanvasArea({ store, tools }: { store: EditorStore; tools: ToolControlle
   const blank = view !== undefined && view.walls.length === 0 && view.separators.length === 0;
   return (
     <>
-      <Views store={store} plan={<PlanCanvas store={store} tools={tools} />} />
+      <Views
+        store={store}
+        plan={
+          <>
+            <PlanCanvas store={store} tools={tools} />
+            <OwnerPins store={store} />
+          </>
+        }
+      />
       <RejectionBanner store={store} />
       <ToolHint store={store} />
       {empty ? (
@@ -354,12 +367,9 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
       <Tooltip content="Redo (⇧⌘Z)">
         <IconButton label="Redo" icon={<Redo2 />} disabled={!editable || history.redo === null} onClick={() => void store.undo('redo')} />
       </Tooltip>
+      <CommentsButton store={store} />
       <Avatar className="fs-topbar__avatar" name={you} size="sm" />
-      <Tooltip content="Sharing arrives with P9">
-        <Button className="fs-topbar__share" size="sm" variant="secondary" icon={<Share />} disabled>
-          Share
-        </Button>
-      </Tooltip>
+      {project !== null ? <ShareButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} /> : null}
       {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} /> : null}
     </header>
   );

@@ -3,7 +3,7 @@ import type { Derived, FloorspecDocument } from '@floorspec/engine';
 import { navigate } from '../lib/router';
 import { formatArea, readProgram } from '../program/model';
 import { unitsOf } from '../editor/units';
-import { GitBranch, LayoutGrid, Share, Waypoints } from 'lucide-react';
+import { GitBranch, LayoutGrid, Waypoints } from 'lucide-react';
 import { DashCard } from './DashCard';
 
 /**
@@ -95,16 +95,8 @@ export function OptionsCard() {
   );
 }
 
-/** Share (FLR-P-9): a read-only link for an architect or builder. */
-export function ShareCard() {
-  return (
-    <DashCard region="share" icon={<Share aria-hidden="true" />} title="Share" aside={<Phase n={9} />}>
-      <EmptyState kind="empty" size="row" heading="Not shared">
-        A read-only link lets an architect or builder see the plan and comment, without an account.
-      </EmptyState>
-    </DashCard>
-  );
-}
+/** Share (FLR-T-9.6): the project's live share links and the dialog that makes them — see share/ShareCard. */
+export { ShareCard } from '../share/ShareCard';
 
 /** Exports (FLR-T-9.3): the model, the dimensioned PDF and the DXF drawings — see exports/ExportsCard. */
 export { ExportsCard } from '../exports/ExportsCard';
