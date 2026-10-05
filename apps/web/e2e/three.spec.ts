@@ -230,6 +230,8 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
 
   // Shift walks faster; a wall still stops it.
   await holdUntil(page, 'ArrowLeft', 'w.yaw >= 0');
+  // A slow frame can turn past 0°; face east exactly, so the wall ahead is the one this checks.
+  await page.evaluate(() => { window.__floorspec3d!.face(0); });
   await page.keyboard.down('Shift');
   await page.keyboard.down('KeyW');
   await page.waitForTimeout(3000);
