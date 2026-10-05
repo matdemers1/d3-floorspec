@@ -41,9 +41,21 @@ const suites = OFFICIAL_EXTENSION_NAMES.map((name) => {
   return { name, version, dir: join(standard, 'conformance', 'ext', name, version) };
 });
 
+/**
+ * The reader a test is read by: one that implements that one extension, of the Core draft the test's
+ * document declares — Core 0.3 for "0.3", Core 0.2 for every other (conformance/README.md).
+ */
 function options(name: string, dir: string): ValidateOptions {
   const registry = join(dir, 'registry.json');
-  return { extensions: [name], ...(existsSync(registry) && { knownExtensions: new Uint8Array(readFileSync(registry)) }) };
+  return { extensions: [name], core: coreOf(readFileSync(join(dir, 'input.json'), 'utf8')), ...(existsSync(registry) && { knownExtensions: new Uint8Array(readFileSync(registry)) }) };
+}
+
+function coreOf(text: string): '0.2' | '0.3' {
+  try {
+    return (JSON.parse(text) as { floorspec?: unknown }).floorspec === '0.3' ? '0.3' : '0.2';
+  } catch {
+    return '0.2';
+  }
 }
 
 const view = (ds: { code: string; severity: string; elements: string[] }[]) => ds.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));

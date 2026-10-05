@@ -27,8 +27,8 @@ check(input, { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_E
 defaultClearances('FS_electrical', 'panels', element);  // Floorspec's default envelopes for a new element
 ```
 
-An official extension is **evaluated** for a document that declares "0.2" (its 0.1.0 spec, 1.2,
-takes no Core 0.3 document yet) and uses it at a version
+An official extension is **evaluated** for a document that declares "0.2" or "0.3" (its 0.1.0
+spec, 1.1 and 1.2) and uses it at a version
 the reader implements (`extensions`) and the validator knows (`knownExtensions`) — each extension's
 spec, 1.2. Its schema is checked, then its invariants, after Core's and only without a Core error;
 its lints only for a valid document. A reader that implements one gets `derived.extensions` (empty
@@ -43,6 +43,15 @@ window type's `operation` and the declared net clear opening (`clearOpening` on 
 whole on an opening): `derived.openings[O].clearOpening` is the effective one, exactly as declared,
 present only when one resolves (7.4) — never computed. `effectiveClearOpening(doc, opening)` and
 `openingDimensions(doc, opening)` resolve them (8.2).
+
+A 0.3 reader also derives, for a document of any draft, every room's floor and ceiling and every
+slab (chapter 15, `src/slabs/floors.ts`): `derived.floors[R]` (top, bottom, box),
+`derived.ceilings[R]` (kind, low, high, box, and a tray's centre) and `derived.slabs[S]` (outline,
+top, bottom, box) — from a room's `floor` and `ceiling`, a level's `floorThickness` and
+`ceilingHeight`, and their defaults. A vault's elevation is exact in one radicand and a tray's
+centre is the room polygon moved in by its border, rounded once; FS-INV-701 to 703 check them. A
+`surface` host sits on its room's floor top or under its ceiling at its position (15.6). A 0.2 or
+0.1 reader (`core: '0.2'`, `'0.1'`) derives none of these members.
 
 | Directory | What |
 |---|---|

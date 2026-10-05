@@ -3,7 +3,7 @@
  * FS_lowvoltage 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
  *
  * An extension is **evaluated** for a document when the reader implements it (its name is in
- * `ValidateOptions.extensions`), the document declares "0.2" and uses it at a version equal to the
+ * `ValidateOptions.extensions`), the document declares "0.2" or "0.3" and uses it at a version equal to the
  * implemented one, and the validator knows it at that version (`knownExtensions`, Core 12.2). Its
  * schema is checked (FS-<CODE>-SCH-001) and, when that passes, its invariants — after Core's
  * invariants, and only when Core reported no error; its lints only for a valid document; and what
@@ -28,11 +28,10 @@ export const OFFICIAL_EXTENSIONS: readonly RegistryEntry[] = OFFICIAL_ENTRIES as
 
 /**
  * The Core drafts a document may declare for the official extensions to be evaluated for it: each
- * one's 0.1.0 spec, 1.2 (FS-ELEC-1.2.1 and its siblings), says "0.2" and only "0.2" — so for a
- * document that declares "0.3" none of them is evaluated, and nothing of theirs is derived, until
- * their specs take Core 0.3 documents. The one place that changes when they do.
+ * one's 0.1.0 spec lists them (1.1) and evaluates a document that declares one (1.2, FS-ELEC-1.2.1
+ * and its siblings) — "0.2" and "0.3". A 0.1 document has no extension elements.
  */
-export const OFFICIAL_EXTENSION_CORE_VERSIONS: readonly string[] = ['0.2'];
+export const OFFICIAL_EXTENSION_CORE_VERSIONS: readonly string[] = ['0.2', '0.3'];
 
 /** Are the official extensions evaluated for a document that declares this Core version? */
 export const officialExtensionsEvaluatedFor = (floorspec: unknown): boolean => typeof floorspec === 'string' && OFFICIAL_EXTENSION_CORE_VERSIONS.includes(floorspec);

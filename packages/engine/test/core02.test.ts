@@ -204,12 +204,13 @@ describe('program, hosting and clearances through the API', () => {
 });
 
 describe('the official extensions and Core 0.3 (each extension spec, 1.2)', () => {
-  it('are evaluated for a document that declares "0.2" and not yet for one that declares "0.3"', () => {
+  it('are evaluated for a document that declares "0.2" or "0.3", and not for a 0.1 one', () => {
     expect(officialExtensionsEvaluatedFor('0.2')).toBe(true);
-    expect(officialExtensionsEvaluatedFor('0.3')).toBe(false);
+    expect(officialExtensionsEvaluatedFor('0.3')).toBe(true);
+    expect(officialExtensionsEvaluatedFor('0.1')).toBe(false);
     const d = { ...doc(box(1e6, 1e6)), extensionsUsed: { FS_electrical: '0.1.0' }, extensions: { FS_electrical: { collections: {} } } };
     const opts = { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_EXTENSIONS as unknown[] };
     expect(Object.keys(check({ ...d, floorspec: '0.2' }, opts).derived!.extensions!)).toEqual(['FS_electrical']);
-    expect(check({ ...d, floorspec: '0.3' }, opts).derived!.extensions).toEqual({});
+    expect(Object.keys(check({ ...d, floorspec: '0.3' }, opts).derived!.extensions!)).toEqual(['FS_electrical']);
   });
 });

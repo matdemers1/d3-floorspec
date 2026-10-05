@@ -60,9 +60,17 @@ const conformanceCases: BrowserCommand = () => {
           else if (entry === 'test.json' && !existsSync(join(dir, 'request.json'))) {
             const c = join(dir, 'canonical.json');
             const reg = join(dir, 'registry.json');
+            const input = readFileSync(join(dir, 'input.json'));
+            let core: '0.2' | '0.3' = '0.2';
+            try {
+              if ((JSON.parse(input.toString('utf8')) as { floorspec?: unknown }).floorspec === '0.3') core = '0.3';
+            } catch {
+              // a malformed document: read as the default for every other, Core 0.2
+            }
             out.push({
               name: `${name}/${relative(root, dir)}`,
-              core: '0.3',
+              // A reader of the Core draft the document declares: 0.3 for "0.3", 0.2 for every other.
+              core,
               input: readFileSync(join(dir, 'input.json')).toString('base64'),
               registry: existsSync(reg) ? readFileSync(reg).toString('base64') : null,
               extensions: [name],
