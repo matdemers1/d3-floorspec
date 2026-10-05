@@ -1,0 +1,7 @@
+{
+  "description": "A batch whose result has two errors - an anchor moved outside the house and an opening reaching past its wall's end - carries both Core diagnostics, sorted by code.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-7.1.1"
+  ]
+}

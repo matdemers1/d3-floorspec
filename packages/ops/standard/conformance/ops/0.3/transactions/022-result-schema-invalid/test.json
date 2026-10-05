@@ -1,0 +1,7 @@
+{
+  "description": "setProperty does not check values: \"sideways\" is not a justification, and the result fails the schema. The rejection is FS-SCH-001.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

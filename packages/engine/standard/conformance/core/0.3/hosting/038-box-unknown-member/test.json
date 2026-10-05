@@ -1,0 +1,6 @@
+{
+  "description": "A box has only min and max.",
+  "covers": [
+    "FS-CORE-13.2.1"
+  ]
+}

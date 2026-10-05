@@ -176,7 +176,7 @@ export const SetProperty = z.strictObject({
   id: Target,
   path: Pointer,
   value: Json,
-});
+}).describe('Core 0.3: a door/window type\'s /operation and /clearOpening {width,height,area?} (area: windows; an opening may override it); a room\'s /floor {offset,thickness} and /ceiling {kind:flat|tray|vaulted,...}; a level\'s /ceilingHeight; a slab\'s /purpose.');
 
 export const UnsetProperty = z.strictObject({
   op: z.literal('unsetProperty'),

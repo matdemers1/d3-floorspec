@@ -1,0 +1,7 @@
+{
+  "description": "The inverse of making the Kitchen wider: properties first (anchors, W8's end, J7), then the jog W11 and J9 removed.",
+  "covers": [
+    "FS-OPS-1.6.1",
+    "FS-OPS-4.4.1"
+  ]
+}

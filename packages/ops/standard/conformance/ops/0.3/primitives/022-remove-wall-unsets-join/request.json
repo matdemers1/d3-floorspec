@@ -1,0 +1,12 @@
+{
+  "batch": [
+    {
+      "op": "removeElement",
+      "id": "O1"
+    },
+    {
+      "op": "removeElement",
+      "id": "W5"
+    }
+  ]
+}

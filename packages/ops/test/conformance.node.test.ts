@@ -22,7 +22,7 @@ function load(suite: string, name: string): OpsCase {
   };
 }
 
-for (const ops of ['0.1', '0.2'] as const) {
+for (const ops of ['0.1', '0.2', '0.3'] as const) {
   const suite = SUITES[ops];
   const all = listCases(suite);
   const results = new Map<string, boolean>();

@@ -5,7 +5,7 @@ import { useEditor, type EditorStore, type Layers } from './store';
 import { elementOf, labelOf, sortedLevels, type EditorModel } from './model';
 import { setOrUnset } from './ops';
 import { formatArea, formatLen } from './units';
-import { DoorIcon, EyeIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon } from './icons';
+import { DoorIcon, EyeIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon, SlabIcon } from './icons';
 import { newLevel } from './actions';
 import { SYSTEMS } from './systems/catalog';
 import { SystemIcon } from './systems/Panels';
@@ -97,6 +97,7 @@ export function ProjectTree({ store }: { store: EditorStore }) {
           ['walls', 'Walls', <WallIcon key="w" />, view.walls],
           ['openings', 'Openings', <DoorIcon key="o" />, view.openings],
           ['separators', 'Separators', <SeparatorIcon key="s" />, view.separators],
+          ['slabs', 'Slabs', <SlabIcon key="sl" />, view.slabs],
           ['junctions', 'Junctions', <JunctionIcon key="j" />, view.junctions],
           // The building systems' devices (FLR-T-5.7), one group per extension.
           ...SYSTEMS.map((sys): [string, string, ReactNode, { id: string }[]] => [sys.id, sys.label, <SystemIcon key={sys.id} system={sys.id} />, view.devices.filter((d) => d.system === sys.id)]),

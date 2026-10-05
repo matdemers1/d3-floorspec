@@ -1,0 +1,8 @@
+{
+  "description": "A piece standing on the floor of a room sunk 150 mm: its frame is at the floor's top, so its placement is at -150 mm and its fallback from -150 mm up.",
+  "covers": [
+    "FS-CORE-15.6.1",
+    "FS-CORE-13.4.1",
+    "FS-CORE-12.6.2"
+  ]
+}

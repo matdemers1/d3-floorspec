@@ -1,0 +1,8 @@
+{
+  "description": "A synthetic door-width rule on every door: O3 and O4 have their type's 32\" clear and pass; O2, a 32\" door with its own 30\" clear opening, may not meet it. The window and the empty opening are not subjects.",
+  "covers": [
+    "FS-RULES-3.4.1",
+    "FS-RULES-3.6.1",
+    "FS-RULES-6.5.1"
+  ]
+}

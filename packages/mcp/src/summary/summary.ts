@@ -10,7 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
-import { analyseCirculation, deriveEvaluation, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { analyseCirculation, deriveEvaluation, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -36,6 +36,10 @@ export interface OpeningSummary {
   readonly swing?: 'left' | 'right';
   /** For a door: the space its leaf opens into. */
   readonly swingsInto?: Neighbour;
+  /** Core 0.3: how its door or window operates, when its type declares it (Core 8.4). */
+  readonly operation?: string;
+  /** Core 0.3: its net clear opening as declared — its own, else its type's (Core 7.2, 7.4); never computed. */
+  readonly clearOpening?: { readonly width: Length; readonly height: Length; readonly area?: { readonly squareFeet: string; readonly squareBaseUnits: string } };
 }
 
 export interface EdgeSummary {
@@ -114,6 +118,12 @@ export interface RoomSummary {
   readonly inside: readonly EdgeSummary[];
   /** Devices on its floor or ceiling; absent when there are none. Wall devices are listed under their walls. */
   readonly devices?: readonly SurfaceDeviceSummary[];
+  /**
+   * Core 0.3 (chapter 15): its floor's top above the level and its ceiling — kind, and its least and
+   * greatest height above that floor — as derived; present when the room or its level declares a
+   * floor or ceiling of its own.
+   */
+  readonly ceiling?: { readonly kind: 'flat' | 'tray' | 'vaulted'; readonly floorOffset: Length; readonly low: Length; readonly high: Length };
 }
 
 export interface FaceSummary {
@@ -431,6 +441,7 @@ class LevelTopology {
         const t = fill && fill.kind !== 'wallType' ? fill : undefined;
         const width = o.width ?? t?.width ?? 0;
         const swing = o.swing ?? 'right';
+        const clear = effectiveClearOpening(this.doc, o);
         const s: OpeningSummary = {
           id,
           ...(o.name !== undefined && { name: o.name }),
@@ -439,6 +450,14 @@ class LevelTopology {
           width: length(BigInt(width)),
           offset: length(BigInt(o.offset)),
           ...(kind === 'door' && { hinge: o.hinge ?? 'start', swing, ...(sides && { swingsInto: swing === 'left' ? sides.left : sides.right }) }),
+          ...(t?.operation !== undefined && { operation: t.operation }),
+          ...(clear && {
+            clearOpening: {
+              width: length(BigInt(clear.width)),
+              height: length(BigInt(clear.height)),
+              ...(clear.area !== undefined && { area: { squareFeet: squareFeet(2n * BigInt(clear.area)), squareBaseUnits: String(clear.area) } }),
+            },
+          }),
         };
         return s;
       })
@@ -685,8 +704,26 @@ export function describeJson(document: string | Uint8Array | object, options: De
       ]);
     }
   }
+  // Core 0.3: a room's floor and ceiling, where the room or its level declares one (chapter 15).
+  const declares = (rid: string): boolean => {
+    const r = doc.rooms?.[rid];
+    const L = r === undefined ? undefined : doc.levels?.[r.level];
+    return r !== undefined && (r.floor !== undefined || r.ceiling !== undefined || L?.ceilingHeight !== undefined || L?.floorThickness !== undefined);
+  };
+  const ceilingOf = (rid: string): RoomSummary['ceiling'] => {
+    const c = derived?.ceilings?.[rid];
+    const f = derived?.floors?.[rid];
+    const r = doc.rooms?.[rid];
+    if (c === undefined || f === undefined || r === undefined || !declares(rid)) return undefined;
+    const elevation = doc.levels![r.level]!.elevation;
+    return { kind: c.kind, floorOffset: length(BigInt(f.top - elevation)), low: length(BigInt(c.low - f.top)), high: length(BigInt(c.high - f.top)) };
+  };
   levels = levels.map((l) => ({
     ...l,
+    rooms: l.rooms.map((r) => {
+      const ceiling = ceilingOf(r.id);
+      return ceiling === undefined ? r : { ...r, ceiling };
+    }),
     ...(elements.has(l.id) && { elements: elements.get(l.id)! }),
     ...(byLevel.has(l.id) && { circuits: byLevel.get(l.id)!.sort((a, b) => cmp(a.id, b.id)) }),
   }));

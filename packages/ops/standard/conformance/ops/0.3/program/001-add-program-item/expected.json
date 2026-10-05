@@ -1,0 +1,33 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "454f3315f9b8bb221f30d203c71ea9e233f6689148946a0e242f2bd7486c74ab",
+  "created": ["P1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P1",
+      "element": {
+        "level": "L1",
+        "count": 3,
+        "function": "sleeping",
+        "minArea": 18022400000000,
+        "name": "Bedroom",
+        "targetArea": 22831851110400
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "P1"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/program"
+    }
+  ]
+}

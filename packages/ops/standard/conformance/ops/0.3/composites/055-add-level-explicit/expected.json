@@ -1,0 +1,28 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "603bd334230bddc2c23054b820ba794c15eb95b87c14e4bb767834704dd68fc7",
+  "created": ["L0"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L0",
+      "element": {
+        "building": "B1",
+        "elevation": -3121152,
+        "extras": {
+          "use": "storage"
+        },
+        "height": 2926080
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "L0"
+    }
+  ]
+}

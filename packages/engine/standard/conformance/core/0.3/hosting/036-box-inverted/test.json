@@ -1,0 +1,6 @@
+{
+  "description": "A fallback box whose max is below its min on x: its extent is negative, FS-INV-505.",
+  "covers": [
+    "FS-CORE-13.2.2"
+  ]
+}

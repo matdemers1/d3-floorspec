@@ -1,0 +1,7 @@
+{
+  "description": "A document with no program has no adjacency to remove: FS-OPS-003 - the items do not resolve first.",
+  "covers": [
+    "FS-OPS-2.6.1",
+    "FS-OPS-3.3.1"
+  ]
+}

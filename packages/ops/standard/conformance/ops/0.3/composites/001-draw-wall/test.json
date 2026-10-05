@@ -1,0 +1,6 @@
+{
+  "description": "drawWall between two new points: two junctions are added at the points, then the wall.",
+  "covers": [
+    "FS-OPS-4.1.1"
+  ]
+}

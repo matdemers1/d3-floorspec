@@ -1,0 +1,219 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "D": {
+      "kind": "doorType",
+      "width": 1152000,
+      "height": 2688000
+    }
+  },
+  "junctions": {
+    "J00": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J01": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "J02": {
+      "level": "L1",
+      "position": [0, 7680000]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [5120000, 0]
+    },
+    "J11": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "J12": {
+      "level": "L1",
+      "position": [5120000, 7680000]
+    },
+    "J20": {
+      "level": "L1",
+      "position": [10240000, 0]
+    },
+    "J21": {
+      "level": "L1",
+      "position": [10240000, 3840000]
+    },
+    "J22": {
+      "level": "L1",
+      "position": [10240000, 7680000]
+    }
+  },
+  "walls": {
+    "WO0": {
+      "level": "L1",
+      "start": "J00",
+      "end": "J01",
+      "type": "WT"
+    },
+    "WO1": {
+      "level": "L1",
+      "start": "J01",
+      "end": "J02",
+      "type": "WT"
+    },
+    "WO2": {
+      "level": "L1",
+      "start": "J02",
+      "end": "J12",
+      "type": "WT"
+    },
+    "WO3": {
+      "level": "L1",
+      "start": "J12",
+      "end": "J22",
+      "type": "WT"
+    },
+    "WO4": {
+      "level": "L1",
+      "start": "J22",
+      "end": "J21",
+      "type": "WT"
+    },
+    "WO5": {
+      "level": "L1",
+      "start": "J21",
+      "end": "J20",
+      "type": "WT"
+    },
+    "WO6": {
+      "level": "L1",
+      "start": "J20",
+      "end": "J10",
+      "type": "WT"
+    },
+    "WO7": {
+      "level": "L1",
+      "start": "J10",
+      "end": "J00",
+      "type": "WT"
+    },
+    "EV1": {
+      "level": "L1",
+      "start": "J10",
+      "end": "J11",
+      "type": "WT"
+    },
+    "EV2": {
+      "level": "L1",
+      "start": "J11",
+      "end": "J12",
+      "type": "WT"
+    },
+    "EH1": {
+      "level": "L1",
+      "start": "J01",
+      "end": "J11",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "RSW": {
+      "level": "L1",
+      "anchor": [2560000, 1920000],
+      "function": "sleeping",
+      "brief": "BED"
+    },
+    "RSE": {
+      "level": "L1",
+      "anchor": [7680000, 1920000],
+      "function": "kitchen",
+      "brief": "KIT"
+    },
+    "RNW": {
+      "level": "L1",
+      "anchor": [2560000, 5760000],
+      "function": "sleeping",
+      "brief": "BED"
+    },
+    "RNE": {
+      "level": "L1",
+      "anchor": [7680000, 5760000],
+      "function": "dining",
+      "brief": "DIN"
+    }
+  },
+  "separators": {
+    "EH2": {
+      "level": "L1",
+      "start": "J11",
+      "end": "J21"
+    }
+  },
+  "openings": {
+    "O1": {
+      "wall": "EV1",
+      "offset": 1280000,
+      "fill": "D"
+    }
+  },
+  "program": {
+    "items": {
+      "BED": {
+        "function": "sleeping",
+        "name": "Bedroom",
+        "count": 2,
+        "minArea": 18022400000000,
+        "targetArea": 19660800000000
+      },
+      "KIT": {
+        "function": "kitchen",
+        "level": "L1",
+        "extensions": {
+          "EXT_kitchens": {
+            "island": true
+          }
+        }
+      },
+      "DIN": {
+        "function": "dining"
+      }
+    },
+    "adjacency": [
+      {
+        "a": "KIT",
+        "b": "DIN",
+        "kind": "required"
+      },
+      {
+        "a": "BED",
+        "b": "KIT",
+        "kind": "preferred",
+        "weight": 8
+      },
+      {
+        "a": "DIN",
+        "b": "BED",
+        "kind": "preferred"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "description": "A vault on the oblique ridge at 1780995 base units: at the room's far corner it comes down to 0.22 of a base unit above the floor - above it, so valid - and its low, rounded once, is 0, the floor's top. The test of 15.2.2 is made on the exact value.",
+  "covers": [
+    "FS-CORE-15.2.2",
+    "FS-CORE-15.3.2",
+    "FS-CORE-2.2.1"
+  ]
+}

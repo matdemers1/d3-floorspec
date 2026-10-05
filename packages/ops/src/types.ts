@@ -314,9 +314,11 @@ export type ResolvedPrimitive =
 /** How `apply` and `resolveBatch` run. */
 export interface ApplyOptions {
   /**
-   * The draft of Floorspec Ops to follow. `'0.2'`, the default, applies to Core 0.2 documents (and
-   * 0.1 ones) and has the program and extension elements; `'0.1'` is Ops 0.1 exactly as published:
-   * Core 0.1 documents only, and the 0.2 operations and members are FS-OPS-001.
+   * The draft of Floorspec Ops to follow. `'0.3'`, the default, applies to Core 0.3 documents (and
+   * 0.2 and 0.1 ones) with Ops 0.2's operations; `'0.2'` is Ops 0.2 exactly as published: Core 0.2
+   * documents (and 0.1 ones) — a document declaring "0.3" is FS-OPS-002 — with the program and
+   * extension elements; `'0.1'` is Ops 0.1 exactly as published: Core 0.1 documents only, and the
+   * 0.2 operations and members are FS-OPS-001.
    */
   readonly ops?: OpsVersion;
   /** Ops 0.2: the validator's known extensions (Core §12.2), as the engine takes them. Absent: none. */

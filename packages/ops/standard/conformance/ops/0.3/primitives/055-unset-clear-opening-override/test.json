@@ -1,0 +1,7 @@
+{
+  "description": "unsetProperty of O1's own /clearOpening: the door has its type's again, and the inverse sets the override back.",
+  "covers": [
+    "FS-OPS-2.3.1",
+    "FS-OPS-1.6.1"
+  ]
+}

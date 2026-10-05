@@ -1,0 +1,41 @@
+[
+  {
+    "name": "FS_lowvoltage",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_lowvoltage/0.1.0/lowvoltage.schema.json",
+    "title": "Low voltage",
+    "requires": {},
+    "kinds": {
+      "outlets": {
+        "title": "Data, coax or phone outlet",
+        "fallback": {}
+      },
+      "doorbells": {
+        "title": "Doorbell button or chime",
+        "fallback": {}
+      },
+      "security": {
+        "title": "Security device",
+        "fallback": {}
+      },
+      "speakers": {
+        "title": "Speaker",
+        "fallback": {}
+      },
+      "headEnds": {
+        "title": "Head-end",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  }
+]

@@ -1,0 +1,6 @@
+{
+  "description": "setProperty addresses a program item by ID like any element: the Kitchen item now asks for 10 m2.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

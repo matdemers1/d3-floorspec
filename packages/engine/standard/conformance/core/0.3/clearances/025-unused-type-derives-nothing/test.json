@@ -1,0 +1,6 @@
+{
+  "description": "A second door type with clearances that no opening uses: envelopes are placed in the frames of openings, so it derives none, and FS-LINT-006 names it.",
+  "covers": [
+    "FS-CORE-13.5.2"
+  ]
+}

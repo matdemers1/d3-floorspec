@@ -1,0 +1,7 @@
+{
+  "description": "Two collinear walls of the same thickness and justification: at J2 the face lines are parallel and the two feet coincide, so the walls continue as one with a square seam.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1"
+  ]
+}

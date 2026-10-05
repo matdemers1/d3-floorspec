@@ -1,0 +1,7 @@
+{
+  "description": "Two parallel 100 mm walls only 40 mm apart, closed at their ends by separators, enclose an anchored sliver: the walls' inner faces cross, so the outer ring turns clockwise and the room polygon is degenerate.",
+  "covers": [
+    "FS-CORE-6.3.3",
+    "FS-CORE-10.2.1"
+  ]
+}

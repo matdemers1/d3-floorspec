@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-DOC-002",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

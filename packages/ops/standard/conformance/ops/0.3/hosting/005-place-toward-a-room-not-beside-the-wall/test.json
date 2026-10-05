@@ -1,0 +1,7 @@
+{
+  "description": "W2 is the Living room's north wall; the Office is a separate room 8' east, so its face is on neither side of W2: FS-OPS-008 names the wall.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-7.1.1"
+  ]
+}

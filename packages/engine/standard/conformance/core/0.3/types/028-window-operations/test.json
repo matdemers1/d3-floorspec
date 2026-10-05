@@ -1,0 +1,7 @@
+{
+  "description": "A window type of every window operation of 8.4, none of them used: valid.",
+  "covers": [
+    "FS-CORE-8.4.2",
+    "FS-CORE-8.1.1"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "451fee0adf1aae58dbc7b74a656a41e779316f2f872b823e2e3a862ccef772a7",
+  "created": [],
+  "removed": ["W7", "X1"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "W7",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W7",
+      "element": {
+        "level": "L1",
+        "start": "NE",
+        "end": "J7",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "devices",
+      "id": "X1",
+      "element": {
+        "device": "receptacle",
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [25600, 51200, 128000],
+            "min": [0, -51200, 0]
+          }
+        },
+        "host": {
+          "height": 384000,
+          "mode": "wallFace",
+          "offset": 780288,
+          "side": "left",
+          "wall": "W7"
+        }
+      },
+      "extension": "FS_electrical"
+    }
+  ]
+}

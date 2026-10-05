@@ -1,0 +1,6 @@
+{
+  "description": "An element does not repeat its ID inside itself: an \"id\" member is unknown.",
+  "covers": [
+    "FS-CORE-1.4.1"
+  ]
+}

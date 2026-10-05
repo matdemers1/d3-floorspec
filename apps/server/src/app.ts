@@ -33,6 +33,7 @@ import { createVerifier, protectedResourceMetadata, type Verifier } from './auth
 import type { PlanRenderer } from './render.js';
 import { EventHub } from './events/hub.js';
 import { eventRoutes, type EventRouteOptions } from './events/routes.js';
+import { NO_PACKS, type InstalledPacks } from './rules/packs.js';
 
 export interface AppDeps {
   readonly config: Config;
@@ -61,6 +62,8 @@ export interface AppDeps {
   readonly events?: EventHub;
   /** Heartbeat and stream lifetime; tests shorten them. */
   readonly eventStream?: EventRouteOptions;
+  /** The installed rule packs (RULE_PACKS_DIR, read at boot). Default: none. */
+  readonly rulePacks?: InstalledPacks;
 }
 
 /** The paths the API owns. Anything else is a screen of the editor. */
@@ -75,6 +78,7 @@ export function createApp({
   renderer = null,
   events = new EventHub(config.DATABASE_URL),
   eventStream = {},
+  rulePacks = NO_PACKS,
 }: AppDeps): Express {
   const app = express();
   (app.locals as { events?: EventHub }).events = events;
@@ -94,7 +98,7 @@ export function createApp({
   mount(app, '/api/projects', changesetRoutes(db, applier));
   mount(app, '/api/projects', layoutRoutes(db, applier));
   mount(app, '/api/projects', assistantRoutes(db, applier));
-  mount(app, '/api/projects', checkRoutes(db, renderer));
+  mount(app, '/api/projects', checkRoutes(db, renderer, rulePacks));
   mount(app, '/api/projects', eventRoutes(db, events, eventStream));
   mount(app, '/api/tokens', tokenRoutes(db));
   mountMcp(app, config);

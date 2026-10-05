@@ -1,0 +1,40 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "2d16ea667291a429aa499a9803eedd5e8bba9bc3a701ce8c5bb53ef2dddf3419",
+  "created": ["P1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/floorspec",
+      "value": "0.2"
+    },
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P1",
+      "element": {
+        "function": "living"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "P1"
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/floorspec",
+      "value": "0.1"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/program"
+    }
+  ]
+}

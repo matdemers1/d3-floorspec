@@ -1,0 +1,6 @@
+{
+  "description": "addElement into separators: a line marking a paved area outside.",
+  "covers": [
+    "FS-OPS-2.1.2"
+  ]
+}

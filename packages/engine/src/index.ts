@@ -1,7 +1,7 @@
 /**
  * @floorspec/engine — the isomorphic Floorspec engine (FLR-ADR-010): the reference Reader,
- * Canonicalizer, Validator and Deriver of Floorspec Core 0.2, which also reads Core 0.1 documents
- * (1.2.4) and, configured with `core: '0.1'`, is a Core 0.1 reader.
+ * Canonicalizer, Validator and Deriver of Floorspec Core 0.3, which also reads Core 0.2 and 0.1
+ * documents (1.2.6) and, configured with `core: '0.2'` or `core: '0.1'`, is a reader of that draft.
  *
  * The same package runs in the browser, the server, the MCP server and the CLI, so nothing in it
  * reaches for a Node-only API. Lengths are integers in 1/1280 mm (FLR-ADR-004); every derived value
@@ -13,9 +13,9 @@ import { evaluate, type Evaluation, type ValidateOptions } from './validate/vali
 import { deriveExtensions } from './extensions/official.js';
 import type { Diagnostic } from './validate/diagnostic.js';
 
-export const ENGINE_VERSION = '0.2.0-draft';
+export const ENGINE_VERSION = '0.3.0-draft';
 /** The newest Floorspec Core draft this engine implements; it reads every draft in IMPLEMENTED_VERSIONS. */
-export const CORE_VERSION = '0.2';
+export const CORE_VERSION = '0.3';
 
 export { parseJson, type ParseResult } from './json/parse.js';
 export { writeJcs, writePretty } from './json/serialize.js';
@@ -48,6 +48,9 @@ export {
   OFFICIAL_EXTENSIONS,
   OFFICIAL_EXTENSION_NAMES,
   OFFICIAL_EXTENSION_SCHEMAS,
+  OFFICIAL_EXTENSION_CORE_VERSIONS,
+  officialExtensionsEvaluatedFor,
+  officialElementRooms,
   IMPLEMENTATIONS as EXTENSION_IMPLEMENTATIONS,
   type DerivedExtensions,
 } from './extensions/official.js';
@@ -59,7 +62,16 @@ export * as plumbing from './extensions/fs/plumbing.js';
 export * as mechanical from './extensions/fs/mechanical.js';
 export * as lowvoltage from './extensions/fs/lowvoltage.js';
 export { extentsOk, footprintsOverlap, type Frame, type Footprint } from './derive/frames.js';
-export { extElements, declaredVersion, type ExtElement } from './model/document.js';
+export {
+  extElements,
+  declaredVersion,
+  effectiveClearOpening,
+  openingDimensions,
+  hasCore02Members,
+  DOOR_OPERATIONS,
+  WINDOW_OPERATIONS,
+  type ExtElement,
+} from './model/document.js';
 export { LevelGeometry } from './derive/level.js';
 export { Surd } from './exact/surd.js';
 export { abs, floorDiv, gcd, isqrt, exactSqrt, roundHalfEvenRational, toSafeNumber, big } from './exact/bigint.js';

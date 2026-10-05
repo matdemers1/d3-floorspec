@@ -1,0 +1,103 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "b02772c12f69e45bd35eccd278c0dd407c772b773a9a8fae7bc537fb3f018601",
+  "created": ["P1", "X2"],
+  "removed": ["X1"],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "P1",
+      "element": {
+        "function": "office"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "devices",
+      "id": "X2",
+      "element": {
+        "device": "receptacle",
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [25600, 51200, 128000],
+            "min": [0, -51200, 0]
+          }
+        },
+        "host": {
+          "height": 384000,
+          "mode": "wallFace",
+          "offset": 780288,
+          "side": "right",
+          "wall": "W1"
+        }
+      },
+      "extension": "FS_electrical"
+    },
+    {
+      "op": "removeElement",
+      "id": "X1"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "X2"
+    },
+    {
+      "op": "removeElement",
+      "id": "P1"
+    },
+    {
+      "op": "addElement",
+      "collection": "pieces",
+      "id": "X1",
+      "element": {
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [384000, 384000, 1024000],
+            "min": [-384000, -384000, 0]
+          }
+        },
+        "host": {
+          "position": [1170432, 1560576],
+          "mode": "surface",
+          "room": "R1",
+          "surface": "floor"
+        }
+      },
+      "extension": "FS_furniture"
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions",
+      "value": {
+        "FS_furniture": {
+          "collections": {
+            "pieces": {
+              "X1": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [384000, 384000, 1024000],
+                    "min": [-384000, -384000, 0]
+                  }
+                },
+                "host": {
+                  "position": [1170432, 1560576],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "floor"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

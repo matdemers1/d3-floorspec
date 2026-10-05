@@ -1,0 +1,6 @@
+{
+  "description": "addElement puts a patio slab south of the box, with its purpose: valid, and derived with its bounding geometry.",
+  "covers": [
+    "FS-OPS-2.1.1"
+  ]
+}

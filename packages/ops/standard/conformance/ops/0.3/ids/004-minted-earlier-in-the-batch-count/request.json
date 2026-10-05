@@ -1,0 +1,18 @@
+{
+  "batch": [
+    {
+      "op": "addJunction",
+      "level": "L1",
+      "position": ["3'", "3'"]
+    },
+    {
+      "op": "removeElement",
+      "id": "J5"
+    },
+    {
+      "op": "addJunction",
+      "level": "L1",
+      "position": ["4'", "3'"]
+    }
+  ]
+}

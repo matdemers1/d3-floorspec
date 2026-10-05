@@ -1,0 +1,7 @@
+{
+  "description": "addOpening names its door O2 on the north wall, and the same batch gives it a clear opening of its own: addOpening has no member for one, and setProperty sets it.",
+  "covers": [
+    "FS-OPS-2.3.1",
+    "FS-OPS-1.5.1"
+  ]
+}

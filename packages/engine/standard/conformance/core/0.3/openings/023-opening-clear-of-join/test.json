@@ -1,0 +1,6 @@
+{
+  "description": "O2 ending exactly 50 mm before the corner junction - at the farther of W1's end face ends, measured along the location line - does not reach into the join.",
+  "covers": [
+    "FS-CORE-7.4.1"
+  ]
+}

@@ -284,9 +284,14 @@ test('every screen and state has no axe violations, in light and in dark', async
   await pick(/^Main floor/, 'editor, a level selected');
   await pick(/^House/, 'editor, a building selected');
   await pick(/^Types/, 'editor, a type selected', true);
+  await tree.getByRole('treeitem', { name: /32 in interior door/ }).click();
+  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('combobox', { name: 'Operation' })).toBeVisible();
+  await audit(page, 'editor, a door type selected: its operation and clear opening (Core 0.3)');
   await pick(/^Materials/, 'editor, a material selected', true);
   await page.keyboard.press('Escape');
   const rail = page.getByRole('navigation', { name: 'Tools' });
+  await rail.getByRole('button', { name: 'Draw a slab' }).click();
+  await audit(page, 'editor, slab tool (Core 0.3)');
   await rail.getByRole('button', { name: 'Draw walls' }).click();
   await audit(page, 'editor, wall tool');
   await page.keyboard.type('0,0');

@@ -1,0 +1,6 @@
+{
+  "description": "Every level references a building.",
+  "covers": [
+    "FS-CORE-1.3.1"
+  ]
+}

@@ -77,6 +77,7 @@ export const COMMANDS: readonly Command[] = [
   tool('window', 'Place a window', 'N'),
   tool('room', 'Name a room', 'R'),
   tool('separator', 'Draw a room separator', 'S'),
+  tool('slab', 'Draw a slab', 'B'),
   systemTool('electrical', 'Place electrical devices', 'E', 'receptacle switch light panel outlet'),
   systemTool('plumbing', 'Place plumbing fixtures', 'P', 'toilet sink lavatory shower tub water heater'),
   systemTool('mechanical', 'Place mechanical equipment', 'M', 'furnace register return fan range hvac'),

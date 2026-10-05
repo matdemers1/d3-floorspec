@@ -58,7 +58,7 @@ export function ProgramInspector({ store, view, selection, onSelect, onRelating 
 
 function useEditable(store: EditorStore, view: ProgramView): boolean {
   const readOnly = useEditor(store, (s) => s.readOnly);
-  return readOnly === null && view.version === '0.2';
+  return readOnly === null && view.version !== '0.1';
 }
 
 function Head({ icon, title, subtitle, onClose }: { icon: ReactNode; title: string; subtitle: string; onClose: () => void }) {

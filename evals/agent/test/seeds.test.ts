@@ -17,6 +17,6 @@ describe('seeding a project', () => {
   }
 
   it("starts from the document the server creates a project with", () => {
-    expect(emptyDocument('x')).toEqual({ floorspec: '0.2', project: { name: 'x' } });
+    expect(emptyDocument('x')).toEqual({ floorspec: '0.3', project: { name: 'x' } });
   });
 });

@@ -1,0 +1,7 @@
+{
+  "description": "addElement adds a level with no elevation or height: the operation does not check it, and the result fails the schema (FS-SCH-001), not the request (FS-OPS-001).",
+  "covers": [
+    "FS-OPS-2.1.1",
+    "FS-OPS-1.2.3"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The door at offset 6' spans [6', 9'], inside the second piece [4', 12'] - the new wall W7 from J5 (8', 0) to J1. It moves there, and its offset becomes 6' - 4' = 2'.",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

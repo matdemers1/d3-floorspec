@@ -370,10 +370,11 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
     }
   }
 
-  // Declarations first: a 0.1 plan becomes 0.2, and FS_electrical is declared, before anything of it.
+  // Declarations first: a 0.1 plan becomes 0.3, the current draft (a later one keeps its version),
+  // and FS_electrical is declared, before anything of it.
   const changes = placements.length + edits.length;
   if (changes > 0) {
-    if (doc.floorspec !== '0.2') batch.push({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.2' });
+    if (doc.floorspec === '0.1') batch.push({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' });
     if (!Object.hasOwn((doc.extensionsUsed ?? {}), 'FS_electrical')) batch.push({ op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_electrical', value: '0.1.0' });
   }
   batch.push(...placements, ...edits);

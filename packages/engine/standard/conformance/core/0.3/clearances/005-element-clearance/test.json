@@ -1,0 +1,7 @@
+{
+  "description": "A panel on the interior face of W1 with a working space 900 mm deep, 762 mm wide and 1980 mm high in its frame - in front of the face, from the floor.",
+  "covers": [
+    "FS-CORE-13.5.1",
+    "FS-CORE-13.5.2"
+  ]
+}

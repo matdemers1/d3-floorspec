@@ -1,0 +1,7 @@
+{
+  "description": "A wall whose unconnected height is zero: its top is not above its base.",
+  "covers": [
+    "FS-CORE-5.9.2",
+    "FS-CORE-10.2.1"
+  ]
+}

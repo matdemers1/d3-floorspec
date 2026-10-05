@@ -1,5 +1,5 @@
 {
-  "description": "A rule for each of the fifteen deferred measures of 4.8, each with an argument no measure takes: a deferred measure counts as taking any arguments, so each rule is well typed, and each is reported with FS-RULES-008 (an `info`) and listed as \"deferred\". None is evaluated.",
+  "description": "A rule for each of the ten deferred measures of 4.8, each with an argument no measure takes: a deferred measure counts as taking any arguments, so each rule is well typed, and each is reported with FS-RULES-008 (an `info`) and listed as \"deferred\". None is evaluated.",
   "covers": [
     "FS-RULES-11.1.1",
     "FS-RULES-3.9.2",

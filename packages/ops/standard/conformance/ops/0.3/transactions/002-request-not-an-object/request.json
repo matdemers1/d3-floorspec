@@ -1,0 +1,8 @@
+[
+  {
+    "op": "setRoomFinish",
+    "room": "Kitchen",
+    "surface": "floor",
+    "material": "M1"
+  }
+]

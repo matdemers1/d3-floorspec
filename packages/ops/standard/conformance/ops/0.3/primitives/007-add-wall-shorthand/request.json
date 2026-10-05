@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "addWall",
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT",
+      "justification": "exteriorFace",
+      "name": "Half wall"
+    }
+  ]
+}

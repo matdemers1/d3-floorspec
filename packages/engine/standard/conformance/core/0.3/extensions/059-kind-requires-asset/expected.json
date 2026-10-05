@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-603",
+      "severity": "error",
+      "elements": ["P1"]
+    },
+    {
+      "code": "FS-INV-603",
+      "severity": "error",
+      "elements": ["P2"]
+    }
+  ]
+}

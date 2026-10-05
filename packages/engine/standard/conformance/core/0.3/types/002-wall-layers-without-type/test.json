@@ -1,0 +1,7 @@
+{
+  "description": "Every wall states its own layers and has no type: the same room as rooms/001, with the same derived values.",
+  "covers": [
+    "FS-CORE-8.2.1",
+    "FS-CORE-5.4.1"
+  ]
+}

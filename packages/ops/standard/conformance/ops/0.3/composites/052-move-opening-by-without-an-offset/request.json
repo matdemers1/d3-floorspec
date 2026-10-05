@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "O1",
+      "path": "/offset"
+    },
+    {
+      "op": "moveOpening",
+      "opening": "O1",
+      "by": "1'"
+    }
+  ]
+}

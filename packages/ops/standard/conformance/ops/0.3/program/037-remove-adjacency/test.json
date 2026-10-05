@@ -1,0 +1,6 @@
+{
+  "description": "removeAdjacency of the forbidden pair, written the other way round: it is removed and the other two keep their order.",
+  "covers": [
+    "FS-OPS-2.6.1"
+  ]
+}

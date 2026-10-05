@@ -1,0 +1,8 @@
+{
+  "description": "A cathedral ceiling: a ridge along the room's centre line at 3200 mm, falling 6 in 12 to both sides. At the walls, 1450 mm from the ridge, it is 725 mm lower: its low is 2475 mm, and its high is the ridge's 3200 mm, since the ridge line crosses the room.",
+  "covers": [
+    "FS-CORE-15.3.2",
+    "FS-CORE-15.5.1",
+    "FS-CORE-15.2.2"
+  ]
+}

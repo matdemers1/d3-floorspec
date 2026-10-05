@@ -1,0 +1,7 @@
+{
+  "description": "Where an extension element is expected, a plain string also matches extension elements by name: \"fridge outlet\" is X1.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-3.3.1"
+  ]
+}

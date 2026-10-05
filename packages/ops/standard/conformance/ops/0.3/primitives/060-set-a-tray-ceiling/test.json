@@ -1,0 +1,6 @@
+{
+  "description": "setProperty gives R1 a tray ceiling - a 1' border, 6\" deep: the room's derived ceiling is a tray whose centre is the room polygon shrunk by 1'.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

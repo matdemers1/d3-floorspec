@@ -1,0 +1,8 @@
+{
+  "description": "J3 is a butt join through the north wall W2. A wall drawn from the middle of W2 splits it, so W2 (J2 -> J5) no longer ends at J3 and J3's join is removed; the default join applies.",
+  "covers": [
+    "FS-OPS-5.3.1",
+    "FS-OPS-5.4.1",
+    "FS-OPS-5.2.1"
+  ]
+}

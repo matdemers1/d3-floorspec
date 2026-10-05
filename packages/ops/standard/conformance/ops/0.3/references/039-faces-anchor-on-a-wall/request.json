@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "R3",
+      "path": "/anchor",
+      "value": [9363456, 2340864]
+    },
+    {
+      "op": "removeWall",
+      "wall": "wall between Kitchen and Dining",
+      "keep": "Kitchen"
+    }
+  ]
+}

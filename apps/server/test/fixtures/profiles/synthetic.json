@@ -1,0 +1,9 @@
+{
+  "adopts": [
+    { "code": "TEST-CODE", "edition": "2024" },
+    { "code": "TEST-ELEC", "edition": "2026" }
+  ],
+  "floorspecRules": "0.1",
+  "jurisdiction": "Nowhere: the synthetic codes of the Floorspec example pack",
+  "name": "Synthetic codes (test)"
+}

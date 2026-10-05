@@ -1,0 +1,113 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "5deec0e5bd13c5d488005fdfd3aabff75d0e4354a5be9834ccc70db718abf8a0",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [3840000, 0],
+        "end": [2688000, 0],
+        "sillElevation": 0,
+        "headElevation": 2688000
+      }
+    },
+    "program": {
+      "items": {
+        "K": {
+          "rooms": ["R1"],
+          "countMet": true
+        }
+      },
+      "adjacency": []
+    },
+    "fallbacks": {
+      "SOFA": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2560000, 1920000], [3328000, 1920000], [3328000, 2688000], [2560000, 2688000]],
+        "bottom": 0,
+        "top": 1152000
+      }
+    },
+    "placements": {
+      "SOFA": {
+        "point": [2560000, 1920000, 0],
+        "facing": 0
+      }
+    },
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [5056000, 3776000, 3456000],
+          "min": [64000, 64000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      }
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5056000, 3776000, 0],
+          "min": [64000, 64000, 0]
+        }
+      }
+    },
+    "slabs": {}
+  }
+}

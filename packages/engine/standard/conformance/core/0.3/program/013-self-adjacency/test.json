@@ -1,0 +1,7 @@
+{
+  "description": "An adjacency relating the kitchen to itself: FS-INV-401 names the item.",
+  "covers": [
+    "FS-CORE-11.2.1",
+    "FS-CORE-10.2.1"
+  ]
+}

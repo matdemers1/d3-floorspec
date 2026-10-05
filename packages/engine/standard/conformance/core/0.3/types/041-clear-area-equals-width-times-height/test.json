@@ -1,0 +1,6 @@
+{
+  "description": "A window's clear area exactly its clear width times its clear height, 963379200000: not more, so valid.",
+  "covers": [
+    "FS-CORE-8.4.4"
+  ]
+}

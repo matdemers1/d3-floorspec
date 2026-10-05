@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.3/type.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.3's and 8.4's tables (clearances, extensions, extras). A type's `layers`, `width`, `height`, `sill` and `clearOpening` have no default, and neither has `operation`, whose absence means that none is declared. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).",
+  "title": "Type",
+  "description": "8.1: a reusable definition that elements refer to instead of repeating — a wall assembly, a door or a window. A type MUST have a `kind` from 8.1's table (FS-CORE-8.1.1), and has only the members of that kind's table (FS-CORE-1.4.1).",
+  "type": "object",
+  "required": [
+    "kind"
+  ],
+  "properties": {
+    "kind": {
+      "title": "Kind",
+      "description": "8.1: which kind of type this is.",
+      "type": "string",
+      "enum": [
+        "wallType",
+        "doorType",
+        "windowType"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/wallType"
+    },
+    {
+      "$ref": "#/$defs/doorType"
+    },
+    {
+      "$ref": "#/$defs/windowType"
+    }
+  ],
+  "$defs": {
+    "wallType": {
+      "title": "Wall type",
+      "description": "8.3: a wall assembly, used by a wall's `type`.",
+      "type": "object",
+      "required": [
+        "kind",
+        "layers"
+      ],
+      "properties": {
+        "kind": {
+          "description": "8.1, 8.3: \"wallType\".",
+          "const": "wallType"
+        },
+        "layers": {
+          "$ref": "layer.schema.json#/$defs/layers",
+          "description": "8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
+        },
+        "extensions": {
+          "$ref": "defs.schema.json#/$defs/extensions",
+          "description": "1.4, 1.6, 8.1: extension data on this type.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.4, 1.7, 8.1: application-specific data on this type.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    },
+    "doorType": {
+      "title": "Door type",
+      "description": "8.4: a door, used by an opening's `fill`.",
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "description": "8.1, 8.4: \"doorType\".",
+          "const": "doorType"
+        },
+        "width": {
+          "$ref": "defs.schema.json#/$defs/positiveLength",
+          "description": "8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."
+        },
+        "height": {
+          "$ref": "defs.schema.json#/$defs/positiveLength",
+          "description": "8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."
+        },
+        "sill": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."
+        },
+        "operation": {
+          "title": "Door operation",
+          "description": "8.4: how the door's leaves move — one of 8.4's door operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.",
+          "type": "string",
+          "enum": [
+            "swing",
+            "doubleSwing",
+            "doubleActing",
+            "bypassSlide",
+            "pocket",
+            "surfaceSlide",
+            "bifold",
+            "overhead",
+            "cased"
+          ]
+        },
+        "clearOpening": {
+          "$ref": "defs.schema.json#/$defs/doorClearOpening",
+          "description": "8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width and height, never an area (FS-CORE-8.4.3). Absent by default: none declared."
+        },
+        "clearances": {
+          "$ref": "clearance.schema.json",
+          "description": "8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).",
+          "default": {}
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
+        },
+        "extensions": {
+          "$ref": "defs.schema.json#/$defs/extensions",
+          "description": "1.4, 1.6, 8.1: extension data on this type.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.4, 1.7, 8.1: application-specific data on this type.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    },
+    "windowType": {
+      "title": "Window type",
+      "description": "8.4: a window, used by an opening's `fill`.",
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "description": "8.1, 8.4: \"windowType\".",
+          "const": "windowType"
+        },
+        "width": {
+          "$ref": "defs.schema.json#/$defs/positiveLength",
+          "description": "8.4: the width of every opening the type fills, unless the opening overrides it; when present, greater than zero (FS-CORE-8.4.1). Absent by default."
+        },
+        "height": {
+          "$ref": "defs.schema.json#/$defs/positiveLength",
+          "description": "8.4: likewise, the height; when present, greater than zero (FS-CORE-8.4.1). Absent by default."
+        },
+        "sill": {
+          "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+          "description": "8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default."
+        },
+        "operation": {
+          "title": "Window operation",
+          "description": "8.4: how the window's sashes move — one of 8.4's window operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.",
+          "type": "string",
+          "enum": [
+            "fixed",
+            "casement",
+            "awning",
+            "hopper",
+            "singleHung",
+            "doubleHung",
+            "horizontalSlider",
+            "tiltTurn",
+            "pivot"
+          ]
+        },
+        "clearOpening": {
+          "$ref": "defs.schema.json#/$defs/clearOpening",
+          "description": "8.4: the net clear opening of every opening the type fills, as its maker declares it, unless the opening overrides it (7.2) — width, height and, when declared, area. Absent by default: none declared."
+        },
+        "clearances": {
+          "$ref": "clearance.schema.json",
+          "description": "8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).",
+          "default": {}
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
+        },
+        "extensions": {
+          "$ref": "defs.schema.json#/$defs/extensions",
+          "description": "1.4, 1.6, 8.1: extension data on this type.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.4, 1.7, 8.1: application-specific data on this type.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

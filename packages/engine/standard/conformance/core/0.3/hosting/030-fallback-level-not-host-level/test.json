@@ -1,0 +1,7 @@
+{
+  "description": "A wall-face host on W1, on L1, whose fallback names L2; and a free host on L2 whose fallback names L1: FS-INV-504 for each.",
+  "covers": [
+    "FS-CORE-13.3.5",
+    "FS-CORE-10.2.1"
+  ]
+}

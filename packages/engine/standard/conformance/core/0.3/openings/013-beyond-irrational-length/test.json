@@ -1,0 +1,6 @@
+{
+  "description": "The same opening reaching 3620387: (offset + width)^2 exceeds dx^2 + dy^2.",
+  "covers": [
+    "FS-CORE-7.3.1"
+  ]
+}

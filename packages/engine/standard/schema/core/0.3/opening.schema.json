@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.3/opening.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 7.1's table (hinge, swing, extensions, extras). `width`, `height`, `sill` and `clearOpening` are typed properties (8.2) that resolve from `fill`, so they deliberately have none — an opening that states \"sill\": 0 keeps it. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).",
+  "title": "Opening",
+  "description": "7.1: a hole in a wall — a door, a window or a plain cased opening — hosted on its wall and placed by distances along it. It has only the members of its table (FS-CORE-1.4.1). That its width and height resolve (FS-CORE-7.2.1), that it fits its wall (7.3), that its clear opening fits it (FS-CORE-7.2.2) and that its own clear opening has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.",
+  "type": "object",
+  "required": [
+    "wall",
+    "offset"
+  ],
+  "properties": {
+    "wall": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "7.1: a reference to the host wall. Always present."
+    },
+    "offset": {
+      "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+      "description": "7.1: the distance from the wall's start junction along its location line to the opening's near edge. Always present, and MUST NOT be negative (FS-CORE-7.1.1)."
+    },
+    "width": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "7.1: the opening's width along the wall, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."
+    },
+    "height": {
+      "$ref": "defs.schema.json#/$defs/positiveLength",
+      "description": "7.1: the opening's height, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2)."
+    },
+    "sill": {
+      "$ref": "defs.schema.json#/$defs/nonNegativeLength",
+      "description": "7.1: the height of the opening's bottom above the wall's base, which MUST NOT be negative (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill`, else 0 (7.2)."
+    },
+    "fill": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "7.1: a reference to a type of kind doorType or windowType that fills the opening. Absent: an empty opening."
+    },
+    "hinge": {
+      "title": "Hinge",
+      "description": "7.1: for a door, the jamb its leaf hangs from — the one nearer the wall's start or its end.",
+      "type": "string",
+      "enum": [
+        "start",
+        "end"
+      ],
+      "default": "start"
+    },
+    "swing": {
+      "title": "Swing",
+      "description": "7.1: for a door, the side of the wall, seen along the wall's direction, that its leaf opens into.",
+      "type": "string",
+      "enum": [
+        "left",
+        "right"
+      ],
+      "default": "right"
+    },
+    "clearOpening": {
+      "$ref": "defs.schema.json#/$defs/clearOpening",
+      "description": "7.1, 8.4: the net clear opening of what fills it, as declared. A typed property (8.2): absent, it resolves from `fill` (7.2), and an opening that resolves none has no clear opening. Replaces its type's whole: an own clear opening without an area has no declared area."
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/name",
+      "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+    },
+    "extensions": {
+      "$ref": "defs.schema.json#/$defs/extensions",
+      "description": "1.4, 1.6: extension data on this opening.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.4, 1.7: application-specific data on this opening.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

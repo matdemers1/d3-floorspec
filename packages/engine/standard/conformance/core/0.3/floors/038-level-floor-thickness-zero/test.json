@@ -1,0 +1,6 @@
+{
+  "description": "A level whose floors are 0 thick.",
+  "covers": [
+    "FS-CORE-1.8.4"
+  ]
+}

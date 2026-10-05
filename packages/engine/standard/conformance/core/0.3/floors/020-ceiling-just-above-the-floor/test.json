@@ -1,0 +1,6 @@
+{
+  "description": "A floor raised 2700 mm less one base unit: the ceiling is above it, by one base unit, and the document is valid.",
+  "covers": [
+    "FS-CORE-15.2.2"
+  ]
+}

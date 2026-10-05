@@ -1,0 +1,7 @@
+{
+  "description": "A door at 3500 mm on a 4000 mm wall: it ends at 4400 mm.",
+  "covers": [
+    "FS-CORE-7.3.1",
+    "FS-CORE-10.2.1"
+  ]
+}

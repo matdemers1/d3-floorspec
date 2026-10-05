@@ -1,0 +1,6 @@
+{
+  "description": "A fallback has only level, box, asset and symbol.",
+  "covers": [
+    "FS-CORE-12.5.2"
+  ]
+}

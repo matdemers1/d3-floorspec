@@ -1,0 +1,6 @@
+{
+  "description": "A document that declares \"0.1\" and has a program, which 0.2 added: it is checked against Core 0.1's schema, which has no \"program\" member.",
+  "covers": [
+    "FS-CORE-1.2.6"
+  ]
+}

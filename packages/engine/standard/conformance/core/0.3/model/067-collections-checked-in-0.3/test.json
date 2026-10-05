@@ -1,0 +1,6 @@
+{
+  "description": "The same data in a 0.3 document: \"collections\" holds extension elements, and this one's fallback is not a fallback.",
+  "covers": [
+    "FS-CORE-12.5.2"
+  ]
+}

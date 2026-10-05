@@ -1,0 +1,87 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "69c8fda5e11c3ef4120082a52874a6e0a45ac733778e054f46648a3071e63742",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [128000, 128000],
+        "endRight": [128000, 3712000],
+        "endLeft": [0, 3840000],
+        "startLeft": [0, 0],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [128000, 3712000],
+        "endRight": [4992000, 3712000],
+        "endLeft": [5120000, 3840000],
+        "startLeft": [0, 3840000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4992000, 3712000],
+        "endRight": [4992000, 128000],
+        "endLeft": [5120000, 0],
+        "startLeft": [5120000, 3840000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [4992000, 128000],
+        "endRight": [128000, 128000],
+        "endLeft": [0, 0],
+        "startLeft": [5120000, 0],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[128000, 128000], [4992000, 128000], [4992000, 3712000], [128000, 3712000]],
+        "holes": [],
+        "area": "17432576000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [4992000, 3712000, 3456000],
+          "min": [128000, 128000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [4992000, 3712000, 0],
+          "min": [128000, 128000, 0]
+        }
+      }
+    },
+    "slabs": {}
+  }
+}

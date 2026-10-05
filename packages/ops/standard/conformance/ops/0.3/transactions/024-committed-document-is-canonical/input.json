@@ -1,0 +1,21 @@
+{
+  "walls": {
+    "W2": { "start": "J2", "end": "J3", "level": "L1", "type": "WT", "justification": "center", "extras": {} },
+    "W1": { "end": "J2", "start": "J1", "type": "WT", "level": "L1", "base": { "offset": 0 } },
+    "W4": { "level": "L1", "start": "J4", "end": "J1", "type": "WT" },
+    "W3": { "level": "L1", "start": "J3", "end": "J4", "type": "WT" }
+  },
+  "junctions": {
+    "J4": { "position": [4681728, 0], "level": "L1" },
+    "J3": { "position": [4681728, 3901440], "level": "L1", "join": { "kind": "mitre" } },
+    "J2": { "position": [0, 3901440], "level": "L1" },
+    "J1": { "position": [0, 0], "level": "L1" }
+  },
+  "rooms": { "R1": { "level": "L1", "anchor": [2340864, 1950720], "name": "Living", "function": "unspecified" } },
+  "types": { "WT": { "kind": "wallType", "layers": [ { "thickness": 128000, "function": "core" } ] } },
+  "levels": { "L1": { "building": "B1", "elevation": 0, "height": 3456000 } },
+  "buildings": { "B1": { "extras": {} } },
+  "project": { "name": "Conformance" },
+  "extensionsRequired": [],
+  "floorspec": "0.1"
+}

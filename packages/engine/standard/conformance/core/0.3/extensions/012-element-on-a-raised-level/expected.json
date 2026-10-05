@@ -1,0 +1,33 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "8aaccc58d85aac32706a32a505de197dd8fbea4519aae7ae6c3789c9a4d3e097",
+  "derived": {
+    "walls": {},
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "LAMP": {
+        "level": "L2",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[-256000, -256000], [256000, -256000], [256000, 256000], [-256000, 256000]],
+        "bottom": 3968000,
+        "top": 6016000
+      }
+    },
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {},
+    "circulation": {},
+    "floors": {},
+    "slabs": {}
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "description": "A synthetic rule that a sleeping room's ceiling is at least 7' high, on the rules house whose bedroom has a flat ceiling at 6' 10\": the bedroom may not meet it, and its finding shows 6' 10\" against 7' 0\". Under the cathedral ceiling - about 7' 7\" at its walls - it would meet it.",
+  "covers": [
+    "FS-RULES-3.8.1",
+    "FS-RULES-5.7.1",
+    "FS-RULES-9.6.1"
+  ]
+}

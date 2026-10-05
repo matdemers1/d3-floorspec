@@ -1,0 +1,6 @@
+{
+  "description": "The same A, with a wall drawn across the south wall elsewhere: the level now breaks Core 5.3 and is snap-rounded as a whole, so W5, passing through P's pixel, is routed through P and split there.",
+  "covers": [
+    "FS-OPS-5.2.1"
+  ]
+}

@@ -1,13 +1,15 @@
 import { roomsBeside } from '../editor/geometry';
-import { labelOf, openingWidth, type EditorModel, type LevelView } from '../editor/model';
+import { labelOf, openingWidth, type EditorModel, type LevelView, type RoomView } from '../editor/model';
 import { formatArea, formatLen, type UnitSystem } from '../editor/units';
 import { kindLabel, words } from '../editor/systems/catalog';
 import { compareIds, elementsOfExtension, recordsOf } from '../editor/systems/view';
+import { clearOpeningOf, formatClearArea, operationLabel } from '../editor/openings';
 
 /**
  * The schedules (FLR-T-5.8, FLR-REQ-091): rooms, doors, windows, plumbing fixtures and receptacles,
  * each a table derived from one version of the model by the engine — net areas (Core 6.4), sizes
- * from a type and the opening's own overrides (Core 7.2), the rooms either side of a wall, a
+ * from a type and the opening's own overrides (Core 7.2), a door's or window's operation and its
+ * declared net clear opening (Core 0.3, 7.2, 8.4 — never computed), the rooms either side of a wall, a
  * device's room and circuits as its extension derives them (FS_electrical 6.1, FS_plumbing 5.1).
  * Nothing here is entered by hand, and nothing the document does not hold is shown: a column whose
  * data Core has no member for (hardware, notes) is not here, and the name column appears only when
@@ -58,8 +60,24 @@ function levelOfWall(model: EditorModel, wall: string): LevelView | undefined {
 
 const roomName = (model: EditorModel, id: string | null): string => (id === null ? 'Exterior' : labelOf(model, id));
 
+const CEILING_KIND: Record<string, string> = { flat: 'Flat', tray: 'Tray', vaulted: 'Vaulted' };
+
+/**
+ * Whether the plan says anything of its floors and ceilings (Core 0.3, chapter 15): a room's own
+ * floor or ceiling, or a level's ceiling height or floor thickness. Only then do the room schedule's
+ * ceiling columns appear — every plan has ceilings, but one that declares none has only defaults.
+ */
+function declaresCeilings(model: EditorModel): boolean {
+  const doc = model.document as unknown as { rooms?: Record<string, Json | undefined>; levels?: Record<string, Json | undefined> };
+  return (
+    Object.values(doc.rooms ?? {}).some((r) => r?.['ceiling'] !== undefined || r?.['floor'] !== undefined) ||
+    Object.values(doc.levels ?? {}).some((l) => l?.['ceilingHeight'] !== undefined || l?.['floorThickness'] !== undefined)
+  );
+}
+
 export function roomsSchedule(model: EditorModel, units: UnitSystem): Schedule {
   const doc = model.document;
+  const ceilings = declaresCeilings(model);
   const finish = (r: Json, member: string) => {
     const m = str(r[member]);
     return m === undefined ? none : text(labelOf(model, m));
@@ -76,9 +94,10 @@ export function roomsSchedule(model: EditorModel, units: UnitSystem): Schedule {
           area: { text: formatArea(room.area2, units), value: Number(room.area2) },
           level: text(level.name),
           brief: brief === undefined ? none : text(labelOf(model, brief)),
+          ...ceilingCells(room, level, units, ceilings),
           floor: finish(r, 'floorFinish'),
           walls: finish(r, 'wallFinish'),
-          ceiling: finish(r, 'ceilingFinish'),
+          ceilingFinish: finish(r, 'ceilingFinish'),
         },
       };
     }),
@@ -89,16 +108,32 @@ export function roomsSchedule(model: EditorModel, units: UnitSystem): Schedule {
     { key: 'area', header: 'Net area', numeric: true },
     { key: 'level', header: 'Level' },
     { key: 'brief', header: 'Brief item' },
+    { key: 'ceiling', header: 'Ceiling' },
+    { key: 'ceilingHeight', header: 'Ceiling height', numeric: true },
     { key: 'floor', header: 'Floor' },
     { key: 'walls', header: 'Walls' },
-    { key: 'ceiling', header: 'Ceiling' },
+    { key: 'ceilingFinish', header: 'Ceiling finish' },
   ];
   return {
     id: 'rooms',
     label: 'Rooms',
-    columns: present(columns, rows, ['brief', 'floor', 'walls', 'ceiling']),
+    columns: present(columns, rows, ['brief', 'ceiling', 'ceilingHeight', 'floor', 'walls', 'ceilingFinish']),
     rows,
-    footnote: 'Net areas inside the finished wall faces, derived by the engine (Floorspec Core 6.4).',
+    footnote: ceilings
+      ? 'Net areas inside the finished wall faces, derived by the engine (Floorspec Core 6.4); ceiling heights above each room’s floor, least to greatest — a tray’s border and centre, a vault’s lowest corner and its ridge (Core 0.3, chapter 15).'
+      : 'Net areas inside the finished wall faces, derived by the engine (Floorspec Core 6.4).',
+  };
+}
+
+/** A room's ceiling kind and its height above the floor, least to greatest (Core 0.3, 15.1, 15.5). */
+function ceilingCells(room: RoomView, _level: LevelView, units: UnitSystem, declared: boolean): Record<string, Cell> {
+  const c = room.ceiling;
+  if (!declared || c === null || room.floorTop === null) return { ceiling: none, ceilingHeight: none };
+  const low = c.low - room.floorTop;
+  const high = c.high - room.floorTop;
+  return {
+    ceiling: text(CEILING_KIND[c.kind] ?? c.kind),
+    ceilingHeight: { text: low === high ? formatLen(low, units) : `${formatLen(low, units)} – ${formatLen(high, units)}`, value: low },
   };
 }
 
@@ -124,6 +159,8 @@ function openingRows(model: EditorModel, units: UnitSystem, kind: 'doorType' | '
       const into = swing === 'left' ? sides.left : sides.right;
       const from = swing === 'left' ? sides.right : sides.left;
       const name = str(o['name']);
+      const operation = operationLabel(str(type['operation']));
+      const clear = clearOpeningOf(doc, o as never);
       return {
         key: id,
         cells: {
@@ -131,6 +168,9 @@ function openingRows(model: EditorModel, units: UnitSystem, kind: 'doorType' | '
           name: name === undefined ? none : text(name),
           type: text(str(type['name']) ?? fill),
           size: { text: `${formatLen(width, units)} × ${formatLen(height, units)}`, value: width * 1e9 + height },
+          operation: operation === undefined ? none : text(operation),
+          clear: clear === undefined ? none : { text: `${formatLen(clear.width, units)} × ${formatLen(clear.height, units)}${o['clearOpening'] === undefined ? '' : ' (own)'}`, value: clear.width * 1e9 + clear.height },
+          clearArea: clear?.area === undefined ? none : { text: formatClearArea(clear.area, units), value: clear.area },
           swing: text(`Hinged at the ${o['hinge'] === 'end' ? 'end' : 'start'} jamb`),
           between: kind === 'doorType' ? text(`${roomName(model, from)} → ${roomName(model, into)}`) : text([roomName(model, sides.left), roomName(model, sides.right)].sort().join(' · ')),
           sill: { text: formatLen(sill, units), value: sill },
@@ -151,15 +191,18 @@ export function doorsSchedule(model: EditorModel, units: UnitSystem): Schedule {
         { key: 'name', header: 'Name' },
         { key: 'type', header: 'Type' },
         { key: 'size', header: 'Size (W × H)' },
+        { key: 'operation', header: 'Operation' },
+        { key: 'clear', header: 'Clear opening (W × H)' },
         { key: 'swing', header: 'Swing' },
         { key: 'between', header: 'Between (swings into)' },
         { key: 'wall', header: 'Wall' },
       ],
       rows,
-      ['name'],
+      ['name', 'operation', 'clear'],
     ),
     rows,
-    footnote: 'Sizes from the door type, overridden by the opening’s own width and height (Floorspec Core 7.2); the rooms either side of its wall as the plan derives them.',
+    footnote:
+      'Sizes from the door type, overridden by the opening’s own width and height (Floorspec Core 7.2); operation and clear opening as the type declares them, or the opening overrides the clear opening (Core 0.3, 8.4) — declared, never computed; the rooms either side of its wall as the plan derives them.',
   };
 }
 
@@ -175,14 +218,18 @@ export function windowsSchedule(model: EditorModel, units: UnitSystem): Schedule
         { key: 'type', header: 'Type' },
         { key: 'size', header: 'Size (W × H)' },
         { key: 'sill', header: 'Sill', numeric: true },
+        { key: 'operation', header: 'Operation' },
+        { key: 'clear', header: 'Clear opening (W × H)' },
+        { key: 'clearArea', header: 'Clear area', numeric: true },
         { key: 'between', header: 'Between' },
         { key: 'wall', header: 'Wall' },
       ],
       rows,
-      ['name'],
+      ['name', 'operation', 'clear', 'clearArea'],
     ),
     rows,
-    footnote: 'Sizes and sills from the window type, overridden by the opening’s own (Floorspec Core 7.2). Core holds no window operation, so none is listed.',
+    footnote:
+      'Sizes and sills from the window type, overridden by the opening’s own (Floorspec Core 7.2); operation, clear opening and clear area as the type declares them, or the opening overrides them (Core 0.3, 8.4) — declared, never computed: a window with no declared area has none here.',
   };
 }
 

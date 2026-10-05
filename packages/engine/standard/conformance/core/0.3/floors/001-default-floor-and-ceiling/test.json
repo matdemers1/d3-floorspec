@@ -1,0 +1,8 @@
+{
+  "description": "The standard room with no floor or ceiling member, on a level with no floor thickness or ceiling height: its floor is its room polygon at the level's elevation, 0, with no declared thickness - its bottom is its top - and its ceiling is flat at the level's height, 2700 mm; each box spans the room polygon, 50 mm to 3950 mm by 50 mm to 2950 mm.",
+  "covers": [
+    "FS-CORE-15.1.2",
+    "FS-CORE-15.5.1",
+    "FS-CORE-15.2.2"
+  ]
+}

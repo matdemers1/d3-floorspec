@@ -578,7 +578,7 @@ function CircuitSection({ ctx }: { ctx: SystemsCtx }) {
 
 function ControlsSection({ ctx }: { ctx: SystemsCtx }) {
   const { model, id, element, readOnly, store } = ctx;
-  const picking = useEditor(store, (s) => s.picking?.switch === id);
+  const picking = useEditor(store, (s) => s.picking !== null && 'switch' in s.picking && s.picking.switch === id);
   const controls = Array.isArray(element['controls']) ? (element['controls'] as string[]) : [];
   const options = deviceOptions(model, (d) => d.id !== id && !controls.includes(d.id) && !(d.extension === 'FS_electrical' && d.collection !== 'lights' && d.collection !== 'receptacles'));
   const label = labelOf(model, id);

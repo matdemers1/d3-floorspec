@@ -1,0 +1,94 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "bbc6525f2bba36907e0485a9f5e6fb18494a89dcbbbc974630b4ff54de8d33f2",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {},
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [5056000, 64000], [5056000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "18530304000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [640000, 3840000],
+        "end": [2560000, 3840000],
+        "sillElevation": 0,
+        "headElevation": 3072000
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "R1": {
+        "kind": "flat",
+        "box": {
+          "max": [5056000, 3776000, 3456000],
+          "min": [64000, 64000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      }
+    },
+    "floors": {
+      "R1": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5056000, 3776000, 0],
+          "min": [64000, 64000, 0]
+        }
+      }
+    },
+    "slabs": {}
+  }
+}

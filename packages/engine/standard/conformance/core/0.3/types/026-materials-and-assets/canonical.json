@@ -1,0 +1,147 @@
+{
+  "assets": {
+    "A1": {
+      "mediaType": "image/png",
+      "path": "textures/oak floor.png",
+      "sha256": "abababababababababababababababababababababababababababababababab"
+    },
+    "A2": {
+      "mediaType": "image/jpeg",
+      "sha256": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "uri": "https://example.com/tile%20grey.jpg"
+    },
+    "A3": {
+      "mediaType": "image/webp",
+      "path": "spare/x:y.webp",
+      "sha256": "efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef"
+    }
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.3",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "materials": {
+    "OAK": {
+      "color": "#c8a165",
+      "name": "White oak",
+      "texture": {
+        "asset": "A1",
+        "size": [
+          192000,
+          1536000
+        ]
+      }
+    },
+    "SPARE": {
+      "color": "#ffffff"
+    },
+    "TILE": {
+      "texture": {
+        "asset": "A2",
+        "size": [
+          384000,
+          384000
+        ]
+      }
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "floorFinish": "OAK",
+      "function": "bath",
+      "level": "L1",
+      "name": "Bath",
+      "wallFinish": "TILE"
+    }
+  },
+  "types": {
+    "DT": {
+      "extras": {
+        "sku": "D-900"
+      },
+      "height": 2688000,
+      "kind": "doorType",
+      "name": "Unused door",
+      "width": 1152000
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    }
+  }
+}

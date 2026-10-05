@@ -3,7 +3,7 @@
  * FS_lowvoltage 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
  *
  * An extension is **evaluated** for a document when the reader implements it (its name is in
- * `ValidateOptions.extensions`), the document declares "0.2" and uses it at a version equal to the
+ * `ValidateOptions.extensions`), the document declares "0.2" or "0.3" and uses it at a version equal to the
  * implemented one, and the validator knows it at that version (`knownExtensions`, Core 12.2). Its
  * schema is checked (FS-<CODE>-SCH-001) and, when that passes, its invariants — after Core's
  * invariants, and only when Core reported no error; its lints only for a valid document; and what
@@ -25,6 +25,16 @@ import { FS_PLUMBING, type DerivedPlumbing } from './fs/plumbing.js';
  * pass as `knownExtensions`: `validate(doc, { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_EXTENSIONS })`.
  */
 export const OFFICIAL_EXTENSIONS: readonly RegistryEntry[] = OFFICIAL_ENTRIES as unknown as RegistryEntry[];
+
+/**
+ * The Core drafts a document may declare for the official extensions to be evaluated for it: each
+ * one's 0.1.0 spec lists them (1.1) and evaluates a document that declares one (1.2, FS-ELEC-1.2.1
+ * and its siblings) — "0.2" and "0.3". A 0.1 document has no extension elements.
+ */
+export const OFFICIAL_EXTENSION_CORE_VERSIONS: readonly string[] = ['0.2', '0.3'];
+
+/** Are the official extensions evaluated for a document that declares this Core version? */
+export const officialExtensionsEvaluatedFor = (floorspec: unknown): boolean => typeof floorspec === 'string' && OFFICIAL_EXTENSION_CORE_VERSIONS.includes(floorspec);
 
 /**
  * The official extensions' schemas (registry/<NAME>/<name>.schema.json, vendored), by name: each
@@ -75,7 +85,7 @@ export function evaluateExtensions(
   schemaView: unknown,
   out: Diagnostic[],
 ): ExtensionRun[] {
-  if (doc.floorspec !== '0.2') return [];
+  if (!officialExtensionsEvaluatedFor(doc.floorspec)) return [];
   const runs: ExtensionRun[] = [];
   const used = (doc.extensionsUsed ?? {}) as Record<string, Parameters<typeof declaredVersion>[0]>;
   for (const impl of [...implemented].sort((a, b) => (a.name < b.name ? -1 : 1))) {
@@ -105,4 +115,19 @@ export function deriveExtensions(runs: readonly ExtensionRun[]): DerivedExtensio
   const out: Record<string, unknown> = {};
   for (const run of runs) Object.defineProperty(out, run.impl.name, { value: run.impl.derive(run.ctx), enumerable: true, writable: true, configurable: true });
   return out;
+}
+
+/**
+ * The room of each element of an official extension, by room — what that extension derives as
+ * `rooms` (FS_electrical 6.1 and its siblings), from Core's geometry alone: a surface host's room, a
+ * wall face's room on the host's side, a free position's room. For a tool that needs it whether or
+ * not the extension was evaluated for the document — as for a Core 0.3 document, which the
+ * extensions at 0.1.0 do not evaluate. Empty for an extension the engine does not implement, or a
+ * document whose geometry was not derived.
+ */
+export function officialElementRooms(document: FloorspecDocument, analysis: Analysis, extension: string): Record<string, string[]> {
+  const impl = IMPLEMENTATIONS.get(extension);
+  if (!impl) return {};
+  for (const la of analysis.levels.values()) if (la.geometry === undefined) return {};
+  return new ExtensionContext(document, analysis, impl, []).roomsDerived();
 }

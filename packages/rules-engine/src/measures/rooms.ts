@@ -150,4 +150,12 @@ export const ROOM_MEASURES: readonly Measure[] = [
       return { value: n };
     },
   }),
+  // 5.7: the least height of the room's ceiling above its floor — its ceiling's low minus its
+  // floor's top, both as Core derives them (Core §15.1, §15.5): integers, so no rounding.
+  measure({
+    name: 'ceilingHeight',
+    kinds: ['room'],
+    type: 'length',
+    compute: (m, t) => ({ value: BigInt(own(m.derived.ceilings, t.id)!.low) - BigInt(own(m.derived.floors, t.id)!.top) }),
+  }),
 ];

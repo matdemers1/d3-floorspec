@@ -1,0 +1,6 @@
+{
+  "description": "A surface host on a room that does not exist.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

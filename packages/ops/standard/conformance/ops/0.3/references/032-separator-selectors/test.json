@@ -1,0 +1,7 @@
+{
+  "description": "In an open plan, \"east separator of Kitchen\" and \"separator between Dining and Kitchen\" are both S1.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-3.4.1"
+  ]
+}

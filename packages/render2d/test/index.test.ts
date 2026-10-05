@@ -343,3 +343,38 @@ describe('Core 0.2: fallbacks and clearance envelopes', () => {
     expect(renderPlan(d, { clearances: true })).toBe(renderPlan(d));
   });
 });
+
+describe('Core 0.3: slabs and ceilings that are not flat', () => {
+  /** The three-room house as a 0.3 document, with a patio, a tray in the living room and a vault in the bedroom. */
+  function layered(): Doc {
+    const d = load('three-room-house');
+    d.floorspec = '0.3';
+    (d.rooms['LIV'] as Record<string, unknown>).ceiling = { kind: 'tray', border: FT, depth: 195072 };
+    (d.rooms['BED'] as Record<string, unknown>).ceiling = { kind: 'vaulted', ridge: [[7 * FT, 6 * FT], [36 * FT, 6 * FT]], pitch: { rise: 4, run: 12 }, height: 3_500_000 };
+    d.slabs = { PAT: { level: 'MAIN', boundary: [[0, -10 * FT], [12 * FT, -10 * FT], [12 * FT, -2 * FT], [0, -2 * FT]], thickness: 130048, purpose: 'patio' } };
+    return d;
+  }
+
+  it('builds them into the scene from what the engine derived', () => {
+    const scene = buildScene(layered());
+    expect(scene.slabs.get('PAT')).toMatchObject({ purpose: 'patio', outline: [[0, -10 * FT], [12 * FT, -10 * FT], [12 * FT, -2 * FT], [0, -2 * FT]] });
+    expect(scene.rooms.get('LIV')?.ceiling?.kind).toBe('tray');
+    expect(scene.rooms.get('BED')?.ceiling).toMatchObject({ kind: 'vaulted', ridge: [[7 * FT, 6 * FT], [36 * FT, 6 * FT]] });
+    expect(scene.rooms.get('KIT')?.ceiling?.kind).toBe('flat');
+  });
+
+  it('draws the slab under the rooms, the tray centre and the ridge, and names the ceiling on the label', () => {
+    const svg = renderPlan(layered());
+    expect(svg).toContain('<g id="slabs">');
+    expect(svg.indexOf('<g id="slabs">')).toBeLessThan(svg.indexOf('<g id="floors">'));
+    expect(svg).toContain('data-purpose="patio"');
+    expect(svg).toContain('data-id="LIV:tray"');
+    expect(svg).toContain('data-id="BED:ridge"');
+    expect(svg).toContain('Tray ceiling');
+    expect(svg).toContain('Vaulted ceiling');
+    // A plan with neither draws no group for them.
+    const plain = renderPlan(load('three-room-house'));
+    expect(plain).not.toContain('<g id="slabs">');
+    expect(plain).not.toContain('<g id="ceilings">');
+  });
+});

@@ -1,0 +1,7 @@
+{
+  "description": "Removing L2 with cascade takes exactly what the table lists: the wall W1 on L1, whose top is level L2, is not taken, so it is left referring to a missing level and the result is invalid (FS-INV-002).",
+  "covers": [
+    "FS-OPS-2.2.2",
+    "FS-OPS-1.2.3"
+  ]
+}

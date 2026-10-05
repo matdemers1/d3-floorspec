@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "9189c1f2fba33f1d7a5066603cd6bbf8f0bd7964e2b6b224089d64882bcd158a",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "moveJunction",
+      "id": "J3",
+      "to": [5462016, 3901440]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "J3",
+      "path": "/position",
+      "value": [4681728, 3901440]
+    }
+  ]
+}

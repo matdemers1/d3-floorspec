@@ -1,0 +1,69 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "A": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 256000,
+          "function": "core"
+        }
+      ]
+    },
+    "B": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [5120000, 0],
+      "join": {
+        "kind": "butt",
+        "through": ["W1"]
+      }
+    },
+    "J3": {
+      "level": "L1",
+      "position": [3840000, 2560000]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "A"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "B",
+      "justification": "interiorFace"
+    }
+  }
+}

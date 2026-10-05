@@ -1,0 +1,6 @@
+{
+  "description": "The first operation moves the Kitchen's anchor outside the house; \"north wall of Kitchen\" then finds the anchor in no bounded face: FS-OPS-007.",
+  "covers": [
+    "FS-OPS-3.4.1"
+  ]
+}

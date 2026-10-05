@@ -1,0 +1,7 @@
+{
+  "description": "A setProperty value is taken as given, never resolved (2.5): the clear width \"34\"\" stays a string, which is not a length, so the result is invalid: FS-SCH-001.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

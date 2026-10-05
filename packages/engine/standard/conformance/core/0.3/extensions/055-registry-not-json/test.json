@@ -1,0 +1,6 @@
+{
+  "description": "Known extensions that are not well-formed JSON: FS-CFG-001.",
+  "covers": [
+    "FS-CORE-12.2.2"
+  ]
+}

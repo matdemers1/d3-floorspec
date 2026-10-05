@@ -26,12 +26,13 @@ An evaluator MUST evaluate a request only when it is a well-formed JSON text, as
 
 ## 1.2 The document
 
-An evaluator reads the document as a Core 0.2 reader (Core §1.2.4), with the official extensions
+An evaluator reads the document as a Core 0.3 reader (Core §1.2.6), with the official extensions
 it implements: an extension is **evaluated** for a document exactly when that extension's own
-specification says its validator evaluates it (each official extension's §1.2) — the document
-declares `"0.2"` and uses the extension at a version the evaluator both implements and knows.
+specification says its validator evaluates it (each official extension's §1.2) — for the official
+extensions at 0.1.0, when the document declares `"0.2"` or `"0.3"` and uses the extension at a
+version the evaluator both implements and knows.
 
-An evaluator MUST evaluate rules only for a valid document — one that a Core 0.2 validator implementing the same extensions, configured with the same known extensions, reports valid (Core §10.1) — and for any other document MUST report `FS-RULES-003` and no finding. {#FS-RULES-1.2.1 MUST}
+An evaluator MUST evaluate rules only for a valid document — one that a Core 0.3 validator implementing the same extensions, configured with the same known extensions, reports valid (Core §10.1) — and for any other document MUST report `FS-RULES-003` and no finding. {#FS-RULES-1.2.1 MUST}
 
 A document is valid or not before any rule is read: rules never make one valid or invalid (1.5).
 

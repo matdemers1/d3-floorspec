@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-603",
+      "severity": "error",
+      "elements": ["L1A"]
+    }
+  ]
+}

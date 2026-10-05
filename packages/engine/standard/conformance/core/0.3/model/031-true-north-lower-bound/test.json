@@ -1,0 +1,6 @@
+{
+  "description": "trueNorth must be greater than -180,000,000: the bound itself is out.",
+  "covers": [
+    "FS-CORE-1.8.1"
+  ]
+}

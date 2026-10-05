@@ -21,17 +21,13 @@ export function measureFor(name: string, kind: TargetKind): Measure | undefined 
 }
 
 /**
- * 4.8: the reserved measures. Each needs something Core 0.2 does not yet describe; a rule that uses
+ * 4.8: the reserved measures. Each needs something Core 0.3 does not yet describe (ceilingHeight left
+ * the list when Core 0.3 derived ceilings: 5.7); a rule that uses
  * one is not evaluated (FS-RULES-008). A measure leaves this list only when a later Rules draft
  * defines it — then it is added to its chapter's module like any other.
  */
 export const DEFERRED: ReadonlySet<string> = new Set([
-  'ceilingHeight',
   'roomNarrowestDimension',
-  'openingNetClearArea',
-  'openingNetClearWidth',
-  'openingNetClearHeight',
-  'doorClearWidth',
   'stairRiserHeight',
   'stairTreadDepth',
   'stairWidth',

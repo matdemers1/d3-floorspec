@@ -1,0 +1,7 @@
+{
+  "description": "A batch whose result depends on exact rounding - a junction one metre from a corner toward the opposite corner of a 12' x 10' room, on an irrational diagonal - gives the same bytes everywhere: 1280000 * 12 / sqrt(244) = 983323.24... and 1280000 * 10 / sqrt(244) = 819436.03..., so the junction is at [983323, 819436].",
+  "covers": [
+    "FS-OPS-1.3.2",
+    "FS-OPS-3.2.1"
+  ]
+}

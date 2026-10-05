@@ -4,10 +4,11 @@
  * as conformance/README.md says), Canonicalizer (the bytes of canonical.json), the content hash, and
  * Deriver (deep-equal `derived`).
  *
- * Core 0.2's suite runs against the engine as it ships — a 0.2 reader — with a case's
- * registry.json, when it has one, as the validator's known extensions (12.2). Core 0.1's suite is
- * the published 0.1 suite, unchanged, and runs against the engine configured as a Core 0.1 reader:
- * it holds a document declaring "0.2" that a 0.1 reader rejects with FS-DOC-001.
+ * Core 0.3's suite runs against the engine as it ships — a 0.3 reader — with a case's
+ * registry.json, when it has one, as the validator's known extensions (12.2). Core 0.2's and 0.1's
+ * suites are the published suites, unchanged, and run against the engine configured as a reader of
+ * that draft: each holds a document declaring a later draft, which that reader rejects with
+ * FS-DOC-001.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -37,7 +38,7 @@ function cases(dir: string): string[] {
   return out;
 }
 
-for (const core of ['0.1', '0.2'] as const) {
+for (const core of ['0.1', '0.2', '0.3'] as const) {
   const suite = join(import.meta.dirname, '..', 'standard', 'conformance', 'core', core);
   const all = cases(suite);
   const results = new Map<string, boolean>();

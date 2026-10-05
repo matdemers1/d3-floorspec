@@ -1,0 +1,34 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "3122ebd753c2fffe2b2e786c26e973cfc36ececcc7715c7905bc88a7f7b141db",
+  "derived": {
+    "walls": {},
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {},
+    "circulation": {},
+    "floors": {},
+    "slabs": {
+      "SL1": {
+        "bottom": -192000,
+        "top": 0,
+        "box": {
+          "max": [5120000, 3840000, 0],
+          "min": [0, 0, -192000]
+        },
+        "outline": [[0, 0], [5120000, 0], [5120000, 3840000], [0, 3840000]]
+      }
+    }
+  }
+}

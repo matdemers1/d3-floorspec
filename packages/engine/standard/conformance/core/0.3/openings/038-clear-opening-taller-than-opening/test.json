@@ -1,0 +1,7 @@
+{
+  "description": "A window whose own clear opening is 1 base unit taller than the window: FS-INV-305.",
+  "covers": [
+    "FS-CORE-7.2.2",
+    "FS-CORE-10.2.1"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "Kitchen",
+      "path": "/brief"
+    },
+    {
+      "op": "removeElement",
+      "id": "KIT"
+    }
+  ]
+}

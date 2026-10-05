@@ -30,6 +30,7 @@
     "@floorspec/layout-solver": "workspace:*",
     "@floorspec/mcp": "workspace:*",
     "@floorspec/ops": "workspace:*",
+    "@floorspec/rules-engine": "workspace:*",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "argon2": "^0.45.1",

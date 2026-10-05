@@ -1,0 +1,19 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "T-door-36",
+      "path": "/operation",
+      "value": "pocket"
+    },
+    {
+      "op": "setProperty",
+      "id": "T-door-36",
+      "path": "/clearOpening",
+      "value": {
+        "width": 1105408,
+        "height": 2568448
+      }
+    }
+  ]
+}

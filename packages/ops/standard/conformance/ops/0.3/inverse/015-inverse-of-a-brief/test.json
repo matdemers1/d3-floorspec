@@ -1,0 +1,6 @@
+{
+  "description": "The inverse of adding an item and making the Living room fulfil it: the room's brief is removed first (step 1), so that the item can be removed (step 2), and then the program the batch created.",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

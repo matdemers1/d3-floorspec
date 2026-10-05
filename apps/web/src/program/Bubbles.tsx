@@ -52,7 +52,7 @@ export function BubbleCanvas({
 }) {
   const readOnly = useEditor(store, (s) => s.readOnly);
   const units = useEditor(store, () => store.units);
-  const editable = readOnly === null && view.version === '0.2';
+  const editable = readOnly === null && view.version !== '0.1';
   // Before any room fulfils the brief, everything is unmet: the rings would only be noise.
   const judged = view.items.some((i) => i.rooms.length > 0);
   const [placed, setPlaced] = useState(() => loadPositions(store.projectId));

@@ -214,11 +214,12 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
   const doc = parseDocument(document);
   const program = options.program ?? (isObject(doc['program']) ? doc['program'] : undefined);
   if (program === undefined || Object.keys(program.items ?? {}).length === 0) throw new SolverError('there is no program to lay out: give the document a program (Core 0.2, chapter 11) or pass one');
-  // The program must be valid against this document (references, IDs): check it as Core 0.2.
-  // A program the document does not hold is laid out against the document with it, as Core 0.2;
-  // rooms already linked to the document's own items are left unlinked in that view.
+  // The program must be valid against this document (references, IDs): check it as Core 0.2 or later.
+  // A program the document does not hold is laid out against the document with it — a 0.1 document
+  // read as 0.2, a later one at its own version; rooms already linked to the document's own items
+  // are left unlinked in that view.
   const own = isObject(doc['program']) && jsonEqual(programOf(doc['program']), programOf(program));
-  const withProgram: Json = own ? doc : { ...structuredClone(doc), floorspec: '0.2', program: structuredClone(program) };
+  const withProgram: Json = own ? doc : { ...structuredClone(doc), floorspec: doc['floorspec'] === '0.1' ? '0.2' : doc['floorspec'], program: structuredClone(program) };
   if (!own) {
     const items = new Set(Object.keys(program.items ?? {}));
     for (const room of Object.values(collection(withProgram, 'rooms'))) if (typeof room['brief'] === 'string' && !items.has(room['brief'])) delete room['brief'];

@@ -1,0 +1,7 @@
+{
+  "description": "EXT_a requires EXT_b at \"^0.3.1\", and the document uses EXT_b 0.3.9. ^0.3.1 admits 0.3.9: for 0.x, a caret fixes the minor version.",
+  "covers": [
+    "FS-CORE-12.3.1",
+    "FS-CORE-12.3.3"
+  ]
+}

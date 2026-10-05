@@ -1,0 +1,6 @@
+{
+  "description": "\"sq\" and its unit are two words: \"120 sqft\" is not an area.",
+  "covers": [
+    "FS-OPS-3.6.1"
+  ]
+}

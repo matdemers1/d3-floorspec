@@ -1,7 +1,7 @@
 # @floorspec/engine
 
-The reference Reader, Canonicalizer, Validator and Deriver of Floorspec Core 0.2 — which reads Core
-0.1 documents too, with 0.1's schema and hash (1.2.4). Isomorphic: the same package runs in the
+The reference Reader, Canonicalizer, Validator and Deriver of Floorspec Core 0.3 — which reads Core
+0.2 and 0.1 documents too, each with its own draft's schema and hash (1.2.6). Isomorphic: the same package runs in the
 browser, the server, MCP and the CLI (FLR-ADR-010) — no Node APIs in `src/`.
 
 ```ts
@@ -16,7 +16,8 @@ planarize({ junctions, edges, mintJunction, mintEdge }); // snap rounding (5.3 n
 // Options, on validate / check / derive / evaluate:
 check(input, { knownExtensions: registryEntries }); // 12.2: an array of registry entries (value, text or bytes);
                                                     // a bad registry → FS-CFG-001 alone
-check(input, { core: '0.1' });                      // a Core 0.1 reader: rejects "0.2", derives no 0.2 members
+check(input, { core: '0.2' });                      // a Core 0.2 reader: rejects "0.3"
+check(input, { core: '0.1' });                      // a Core 0.1 reader: rejects "0.2" and "0.3", derives no 0.2 members
 check(input, { extensions: ['FS_x'] });             // 1.6.4: extensions this reader implements (none by default)
 
 // The official extensions (FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage 0.1.0):
@@ -26,7 +27,8 @@ check(input, { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_E
 defaultClearances('FS_electrical', 'panels', element);  // Floorspec's default envelopes for a new element
 ```
 
-An official extension is **evaluated** for a document that declares "0.2" and uses it at a version
+An official extension is **evaluated** for a document that declares "0.2" or "0.3" (its 0.1.0
+spec, 1.1 and 1.2) and uses it at a version
 the reader implements (`extensions`) and the validator knows (`knownExtensions`) — each extension's
 spec, 1.2. Its schema is checked, then its invariants, after Core's and only without a Core error;
 its lints only for a valid document. A reader that implements one gets `derived.extensions` (empty
@@ -34,9 +36,22 @@ when nothing was evaluated); a core-only reader never does. The implementations 
 `src/extensions/fs/`, each registered by name and version in `src/extensions/official.ts`, with its
 schema's standalone validator and types generated from `standard/registry/`.
 
-A 0.2 reader's `derived` has six more members — `program`, `fallbacks`, `placements`,
+A 0.2 or 0.3 reader's `derived` has six more members — `program`, `fallbacks`, `placements`,
 `clearances`, `clearanceOverlaps`, `circulation` (conformance/README.md) — present for a 0.1
-document too: empty, except `circulation`, which needs no 0.2 member (14).
+document too: empty, except `circulation`, which needs no 0.2 member (14). Core 0.3 adds a door or
+window type's `operation` and the declared net clear opening (`clearOpening` on a type, overridable
+whole on an opening): `derived.openings[O].clearOpening` is the effective one, exactly as declared,
+present only when one resolves (7.4) — never computed. `effectiveClearOpening(doc, opening)` and
+`openingDimensions(doc, opening)` resolve them (8.2).
+
+A 0.3 reader also derives, for a document of any draft, every room's floor and ceiling and every
+slab (chapter 15, `src/slabs/floors.ts`): `derived.floors[R]` (top, bottom, box),
+`derived.ceilings[R]` (kind, low, high, box, and a tray's centre) and `derived.slabs[S]` (outline,
+top, bottom, box) — from a room's `floor` and `ceiling`, a level's `floorThickness` and
+`ceilingHeight`, and their defaults. A vault's elevation is exact in one radicand and a tray's
+centre is the room polygon moved in by its border, rounded once; FS-INV-701 to 703 check them. A
+`surface` host sits on its room's floor top or under its ceiling at its position (15.6). A 0.2 or
+0.1 reader (`core: '0.2'`, `'0.1'`) derives none of these members.
 
 | Directory | What |
 |---|---|
@@ -47,14 +62,14 @@ document too: empty, except `circulation`, which needs no 0.2 member (14).
 | `src/extensions` | the official extensions: the shared context (one space of IDs, the room of an element), their registry (`official.ts`), default clearances, and one module each in `fs/` |
 | `src/validate` | the tiers, the invariants (`invariants02.ts`: program, extension, hosting), the lints, known extensions and version ranges (`registry.ts`), and `catalogue.ts` — the single table of codes |
 | `src/json`, `src/hash`, `src/canonical` | strict I-JSON parser, RFC 8785 writers, SHA-256, canonical form |
-| `src/generated` | types, standalone schema validators (Core 0.1, Core 0.2, registry entry, each official extension), the official registry entries and the bundled 0.2 schema, generated from `standard/` |
-| `standard/` | the floorspec schemas (core 0.1 and 0.2, registry 0.1), both Core conformance suites and the catalogue, and the registry (`registry/`: the official extensions' entries, specs and schemas) with their suites (`conformance/ext/`), vendored at the commit in `LOCK.json` |
+| `src/generated` | types, standalone schema validators (Core 0.1, 0.2 and 0.3, registry entry, each official extension), the official registry entries and the bundled 0.3 schema, generated from `standard/` |
+| `standard/` | the floorspec schemas (core 0.1, 0.2 and 0.3, registry 0.1), the three Core conformance suites and the catalogue, and the registry (`registry/`: the official extensions' entries, specs and schemas) with their suites (`conformance/ext/`), vendored at the commit in `LOCK.json` |
 
 ```sh
 pnpm --filter @floorspec/engine sync-standard [../floorspec] [--allow-dirty]   # re-vendor the standard
 pnpm --filter @floorspec/engine generate          # regenerate src/generated from standard/schema
 pnpm --filter @floorspec/engine check:generated   # CI: fails if regenerating changes anything
-pnpm conformance                                  # every vendored case of both suites, must be 100%
+pnpm conformance                                  # every vendored case of every suite, must be 100%
 pnpm --filter @floorspec/engine test:browser      # the same tests in headless Chromium, and Node≡browser
 ```
 

@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/function",
+      "value": "living"
+    }
+  ]
+}

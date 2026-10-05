@@ -1,0 +1,6 @@
+{
+  "description": "A room and a wall both called \"W1\".",
+  "covers": [
+    "FS-CORE-3.1.2"
+  ]
+}

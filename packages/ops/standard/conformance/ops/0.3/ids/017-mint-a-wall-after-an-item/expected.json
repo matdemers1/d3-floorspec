@@ -1,0 +1,43 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "4d00409517de920f9fc90ef71a3da98e153612a0331c8d42e4d9e49e0e88217d",
+  "created": ["J5", "J6", "W10"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "J5",
+      "level": "L1",
+      "position": [5462016, 0]
+    },
+    {
+      "op": "addJunction",
+      "id": "J6",
+      "level": "L1",
+      "position": [5462016, 1560576]
+    },
+    {
+      "op": "addWall",
+      "id": "W10",
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "W10"
+    },
+    {
+      "op": "removeElement",
+      "id": "J5"
+    },
+    {
+      "op": "removeElement",
+      "id": "J6"
+    }
+  ]
+}

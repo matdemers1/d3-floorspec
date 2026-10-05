@@ -1,0 +1,9 @@
+{
+  "description": "A 0.3 document using every member 0.3 adds - a door type and a window type that declare their operation and clear opening, and a window whose own clear opening overrides its type's - valid, with each opening's clear opening derived exactly as declared. None of them has a constant default, so the canonical form keeps them all.",
+  "covers": [
+    "FS-CORE-1.2.5",
+    "FS-CORE-7.4.2",
+    "FS-CORE-8.2.1",
+    "FS-CORE-9.2.1"
+  ]
+}

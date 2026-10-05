@@ -1,0 +1,7 @@
+{
+  "description": "W1 justified on its exterior face: the left face is the location line (a = 0), so a left wall-face host's origin is on it; the right face is the full 100 mm away.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.4.1"
+  ]
+}

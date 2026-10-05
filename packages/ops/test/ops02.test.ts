@@ -21,8 +21,8 @@ const devices = (d: Record<string, unknown>): Record<string, { host: Record<stri
   (d.extensions as Record<string, { collections: Record<string, unknown> }>).FS_electrical!.collections.devices as never;
 
 describe('choosing the draft', () => {
-  it('applies Ops 0.2 by default', () => {
-    expect(OPS_VERSION).toBe('0.2');
+  it('applies Ops 0.3 by default, which has every Ops 0.2 operation', () => {
+    expect(OPS_VERSION).toBe('0.3');
     committed(apply(pair02(), { batch: [{ op: 'addProgramItem', function: 'kitchen' }] }));
   });
 
@@ -62,7 +62,7 @@ describe('choosing the draft', () => {
   });
 
   it('refuses a draft it does not implement', () => {
-    expect(() => apply(pair(), { batch: [{ op: 'removeElement', id: 'RA' }] }, { ops: '0.3' as never })).toThrow(RangeError);
+    expect(() => apply(pair(), { batch: [{ op: 'removeElement', id: 'RA' }] }, { ops: '0.4' as never })).toThrow(RangeError);
   });
 });
 

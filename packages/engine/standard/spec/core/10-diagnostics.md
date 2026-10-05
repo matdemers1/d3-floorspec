@@ -10,14 +10,14 @@ Validation runs in tiers:
 2. **Document** — can this reader read it at all: its version and its required extensions? (`FS-DOC-`)
 3. **Schema** — does it match the JSON Schema of the draft it declares? (`FS-SCH-`)
 4. **Invariants** — the rules no schema can express: references resolve, the wall graph is planar,
-   rooms, openings and hosted elements fit, the program is consistent, and the extensions known to
-   the validator are used as their registry entries say. (`FS-INV-`)
+   rooms, openings, hosted elements, floors and ceilings fit, the program is consistent, and the
+   extensions known to the validator are used as their registry entries say. (`FS-INV-`)
 5. **Lints** — conditions that make a valid document worse. (`FS-LINT-`)
 
 The schema is applied to the parsed document, in which a number written with a fraction or an
-exponent is not an integer: `1.0` is not a length. A document that declares `"0.1"` is checked
-against Core 0.1's schema (1.2.4); every other document reaching the schema tier, against this
-draft's.
+exponent is not an integer: `1.0` is not a length. A document that declares `"0.1"` or `"0.2"`
+is checked against that draft's schema (1.2.6); every other document reaching the schema tier,
+against this draft's.
 
 A document is **valid** when the first five tiers, 0 to 4, report no error. Lints never make a document
 invalid.
@@ -73,8 +73,13 @@ error, with these refinements inside tier 4:
 - **Join invariants** (`FS-INV-109`, `FS-INV-110`) and **room invariants** (`FS-INV-201` to
   `FS-INV-204`) are evaluated only for levels on which no graph invariant other than
   `FS-INV-112` was reported.
-- **Opening invariants** (`FS-INV-301` to `FS-INV-304`) are evaluated for every opening, except
-  that `FS-INV-303` is not evaluated for an opening whose wall has `FS-INV-112`.
+- **Opening and type invariants** (`FS-INV-301` to `FS-INV-308`) are evaluated for every opening
+  and every door or window type, except that `FS-INV-303` is not evaluated for an opening whose
+  wall has `FS-INV-112`.
+- **Floor and ceiling invariants** (`FS-INV-701` to `FS-INV-703`) are evaluated only for a room on
+  a level where room invariants are evaluated, and that has none of `FS-INV-201` to `FS-INV-204`:
+  they are tested on its room polygon. `FS-INV-701` is not evaluated for a room that has
+  `FS-INV-702`: a vault without a ridge line has no elevation.
 - **Lints** are evaluated only for a valid document. The circulation lints (`FS-LINT-012` to
   `FS-LINT-014`) are evaluated only for a building that is evaluated (14.4), and `FS-LINT-012` and
   `FS-LINT-013` only for a building that has an entry (14.2).
@@ -93,7 +98,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-JSON-003` | error | a string has an unpaired surrogate | — | 9.1.3 |
 | `FS-DOC-001` | error | the root is an object whose `floorspec` member is a string naming a version this reader does not implement | — | 1.2.2 |
 | `FS-DOC-002` | error | `extensionsRequired` is an array of distinct extension names, each a member of `extensionsUsed`, and one of them names an extension this reader does not implement; one diagnostic for each such name. Any other `extensionsRequired` is left to the schema tier and `FS-INV-004` | — | 1.6.4 |
-| `FS-SCH-001` | error | the document does not match the schema of the draft it declares (1.2.4) | — | 1.1, 1.2.3, 1.2.4, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 7.1, 8.1, 8.3–8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1 |
+| `FS-SCH-001` | error | the document does not match the schema of the draft it declares (1.2.6) | — | 1.1, 1.2.5, 1.2.6, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 6.7.2, 7.1.1, 7.1.2, 8.1, 8.3, 8.4.1–8.4.3, 8.5, 8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1, 15.1.1, 15.2.1 |
 
 **Reference invariants.**
 
@@ -138,7 +143,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 `FS-INV-203` and `FS-INV-204` are evaluated only for rooms with neither `FS-INV-201` nor
 `FS-INV-202`; `FS-INV-204` only for a room without `FS-INV-203`.
 
-**Opening invariants.**
+**Opening and type invariants.**
 
 | Code | Severity | Condition | Elements | Rule |
 |---|---|---|---|---|
@@ -146,8 +151,13 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-INV-302` | error | an opening extends beyond its wall's length | the opening | 7.3.1 |
 | `FS-INV-303` | error | an opening extends above its wall's height | the opening | 7.3.2 |
 | `FS-INV-304` | error | two openings on one wall overlap | both openings | 7.3.3 |
+| `FS-INV-305` | error | an opening's effective clear opening is wider or taller than the opening | the opening | 7.2.2 |
+| `FS-INV-306` | error | a clear opening's area exceeds its width times its height; once for each such clear opening, on a type or on an opening | the type or the opening | 8.4.4 |
+| `FS-INV-307` | error | a door or window type's clear opening is wider or taller than the type | the type | 8.4.5 |
+| `FS-INV-308` | error | an opening's own clear opening has an area, and the opening's fill is not a window type | the opening | 7.1.3 |
 
-`FS-INV-302`, `FS-INV-303` and `FS-INV-304` are evaluated only for openings without `FS-INV-301`.
+`FS-INV-302`, `FS-INV-303`, `FS-INV-304` and `FS-INV-305` are evaluated only for openings without
+`FS-INV-301`.
 
 **Program invariants.**
 
@@ -177,6 +187,14 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-INV-603` | error | an element of a known extension lacks a fallback part its kind requires; once for each missing part | the extension element | 12.4.2 |
 | `FS-INV-604` | error | a known extension's data has a collection its entry does not name; once for each | — | 12.4.1 |
 | `FS-INV-605` | error | a function uses a term of a known extension that its entry does not list | the room or item | 12.4.3 |
+
+**Floor and ceiling invariants.**
+
+| Code | Severity | Condition | Elements | Rule |
+|---|---|---|---|---|
+| `FS-INV-701` | error | a room's ceiling is not above its floor: its least exact elevation over the room polygon is not greater than its floor's top | the room | 15.2.2 |
+| `FS-INV-702` | error | a vaulted ceiling's two ridge points are the same point | the room | 15.3.1 |
+| `FS-INV-703` | error | a tray ceiling's border does not fit its room: an edge of the centre runs backwards, or the centre is degenerate | the room | 15.4.1 |
 
 **Lints.**
 

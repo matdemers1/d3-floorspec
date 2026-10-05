@@ -1,0 +1,68 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "3c9d973a6b268494c76150397c81bce12d6a883bd5d35b659a2ab28abb121081",
+  "created": [],
+  "removed": ["R1", "X1", "X2"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "R1",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R1",
+      "element": {
+        "level": "L1",
+        "anchor": [2340864, 1950720],
+        "name": "Living"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "pieces",
+      "id": "X1",
+      "element": {
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [384000, 384000, 1024000],
+            "min": [-384000, -384000, 0]
+          }
+        },
+        "host": {
+          "position": [1170432, 1560576],
+          "mode": "surface",
+          "room": "R1",
+          "surface": "floor"
+        }
+      },
+      "extension": "FS_furniture"
+    },
+    {
+      "op": "addElement",
+      "collection": "pieces",
+      "id": "X2",
+      "element": {
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [384000, 384000, 1024000],
+            "min": [-384000, -384000, 0]
+          }
+        },
+        "host": {
+          "position": [2340864, 1950720],
+          "mode": "surface",
+          "room": "R1",
+          "surface": "ceiling"
+        }
+      },
+      "extension": "FS_furniture"
+    }
+  ]
+}

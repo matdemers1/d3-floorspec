@@ -1,0 +1,7 @@
+{
+  "description": "An item related to itself is written as asked, and makes the result invalid (Core 11.2.1).",
+  "covers": [
+    "FS-OPS-2.6.1",
+    "FS-OPS-1.2.3"
+  ]
+}

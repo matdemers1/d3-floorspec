@@ -1,0 +1,7 @@
+{
+  "description": "Two versions of one extension may both be known: the entry whose version equals the one the document uses applies - here 1.0.0, which requires nothing.",
+  "covers": [
+    "FS-CORE-12.2.1",
+    "FS-CORE-12.3.2"
+  ]
+}

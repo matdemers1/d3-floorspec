@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d36a2dbca93ba070c0f75c9954b236546c724c2b0395f01a592b6cd92c7a8c94",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/floorFinish",
+      "value": "OAK"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/floorFinish"
+    }
+  ]
+}

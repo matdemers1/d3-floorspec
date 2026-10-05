@@ -146,7 +146,7 @@ describe('typing (3.9)', () => {
   });
 
   it('marks a deferred measure, typed as anything, wherever it is used', () => {
-    expect(typeRule(base({ requirement: { measure: 'ceilingHeight', args: { anything: true }, op: 'has', value: 'x' } }))).toEqual({ ok: true, deferred: true, reads: new Set() });
+    expect(typeRule(base({ requirement: { measure: 'stairRiserHeight', args: { anything: true }, op: 'has', value: 'x' } }))).toEqual({ ok: true, deferred: true, reads: new Set() });
     expect(typeRule(base({ applies: { to: 'room', where: { not: { measure: 'travelDistance', op: '<', value: 1 } } } })).deferred).toBe(true);
   });
 

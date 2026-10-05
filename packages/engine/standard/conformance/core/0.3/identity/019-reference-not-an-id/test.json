@@ -1,0 +1,6 @@
+{
+  "description": "A reference that does not match the ID pattern (\"Wall 1\") is a schema error, not a dangling reference.",
+  "covers": [
+    "FS-CORE-3.2.3"
+  ]
+}

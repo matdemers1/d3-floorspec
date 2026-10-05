@@ -1,0 +1,6 @@
+{
+  "description": "moveRoom moves every junction on the Office's outer cycle, by ID, and its anchor.",
+  "covers": [
+    "FS-OPS-4.3.1"
+  ]
+}

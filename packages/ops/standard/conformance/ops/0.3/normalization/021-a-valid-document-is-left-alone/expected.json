@@ -1,0 +1,23 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "ecad99e6471eb09a5064a922da83d9a7481bd5e54e75fe099a102b86b256a813",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/name",
+      "value": "Kitchen & breakfast"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "R1",
+      "path": "/name",
+      "value": "Kitchen"
+    }
+  ]
+}

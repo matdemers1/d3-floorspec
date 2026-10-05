@@ -5,7 +5,7 @@
  * its location line from its start junction, as a wall-face host states them (Core 13.3), computed
  * exactly from integers and rounded once.
  */
-import { deriveEvaluation, evaluate, extElements, isqrt, OFFICIAL_READER, predicates, type Derived, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
+import { deriveEvaluation, evaluate, extElements, isqrt, OFFICIAL_READER, officialElementRooms, predicates, type Derived, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
 
 type Point = readonly [number, number];
 type Json = Record<string, unknown>;
@@ -136,8 +136,9 @@ export function readPlan(input: string | Uint8Array | FloorspecDocument | object
   if (options.level !== undefined && !Object.hasOwn(doc.levels ?? {}, options.level)) throw new PlanError(`there is no level ${options.level}`);
   for (const r of options.rooms ?? []) if (!Object.hasOwn(doc.rooms ?? {}, r)) throw new PlanError(`there is no room ${r}`);
 
-  // FS_electrical's elements by room, as it derives them — empty when the plan does not use it.
-  const electricalRooms = derived.extensions?.FS_electrical?.rooms ?? {};
+  // FS_electrical's elements by room, as it derives them — empty when the plan does not use it. A
+  // plan FS_electrical 0.1.0 does not evaluate (Core 0.3) gets the same rooms from Core's geometry.
+  const electricalRooms = derived.extensions?.FS_electrical?.rooms ?? officialElementRooms(doc, evaluation.analysis, 'FS_electrical');
   const pos = (j: string): Point => doc.junctions![j]!.position;
 
   // Receptacles hosted on wall faces.

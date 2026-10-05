@@ -1,0 +1,8 @@
+{
+  "description": "drawWall naming its wall \"PARTY\" and addOpening naming \"HATCH\": named IDs are used as given; only the junctions are minted.",
+  "covers": [
+    "FS-OPS-1.5.1",
+    "FS-OPS-4.1.1",
+    "FS-OPS-4.5.3"
+  ]
+}

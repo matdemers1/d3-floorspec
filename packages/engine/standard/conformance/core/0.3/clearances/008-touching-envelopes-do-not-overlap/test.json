@@ -1,0 +1,6 @@
+{
+  "description": "The door's swing envelope spans x from 2100 mm to 3000 mm and y from 0 to 900 mm; an access envelope from x = 1600 mm to 2100 mm shares only the edge x = 2100 mm with it: interiors do not intersect, so nothing is listed.",
+  "covers": [
+    "FS-CORE-13.6.1"
+  ]
+}

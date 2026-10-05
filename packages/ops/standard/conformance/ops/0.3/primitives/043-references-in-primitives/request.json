@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "moveJunction",
+      "id": "end of wall between Kitchen and Pantry",
+      "to": "1' north of J8"
+    }
+  ]
+}

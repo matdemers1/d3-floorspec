@@ -97,7 +97,7 @@ export function Layouts({ store, view, tick }: { store: EditorStore; view: Progr
   ]
     .filter((x) => x !== null)
     .join(' · ');
-  const editable = readOnly === null && view.version === '0.2';
+  const editable = readOnly === null && view.version !== '0.1';
 
   return (
     <main className="fs-layouts" aria-label="Layouts" aria-busy={busy === 'solve'}>

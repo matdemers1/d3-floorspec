@@ -1,0 +1,7 @@
+{
+  "description": "A sunken living room: its floor 150 mm below the level, 250 mm thick - its own thickness overrides the level's 300 mm - so its top is -150 mm and its bottom -400 mm. Its ceiling stays at the level's 2400 mm: a ceiling's height is measured from the level, not from the floor.",
+  "covers": [
+    "FS-CORE-15.1.2",
+    "FS-CORE-15.5.1"
+  ]
+}

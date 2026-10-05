@@ -1,0 +1,64 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.3",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        2560000,
+        0
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        8960000,
+        2560000
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    }
+  }
+}

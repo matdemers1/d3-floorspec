@@ -1,0 +1,19 @@
+{
+  "batch": [
+    {
+      "op": "drawSeparator",
+      "level": "L1",
+      "from": "J007",
+      "to": ["24'", "3'"]
+    },
+    {
+      "op": "addElement",
+      "collection": "slabs",
+      "element": {
+        "level": "L1",
+        "boundary": [[0, 0], [0, -390144], [-390144, 0]],
+        "thickness": 256000
+      }
+    }
+  ]
+}

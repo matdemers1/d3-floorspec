@@ -78,6 +78,23 @@ export interface RoomView {
   outer: Ring;
   holes: Ring[];
   area2: bigint;
+  /**
+   * Its ceiling as the engine derived it (Core 0.3, 15.5) — the kind, a tray's centre (outer ring
+   * and holes), a vault's ridge points as declared — or null when the reader derived none.
+   */
+  ceiling: { kind: 'flat' | 'tray' | 'vaulted'; low: number; high: number; tray?: Ring[]; ridge?: [Point, Point] } | null;
+  /** Its floor's top (Core 0.3, 15.1), or null when the reader derived none. */
+  floorTop: number | null;
+}
+
+/** A slab (Core 6.7) as the engine derived its bounding geometry (Core 0.3, 15.7). */
+export interface SlabView {
+  id: string;
+  /** Its outline, counter-clockwise from its least vertex. */
+  outline: Ring;
+  purpose: string | undefined;
+  top: number;
+  bottom: number;
 }
 
 export interface FaceView {
@@ -112,6 +129,8 @@ export interface LevelView {
   faces: FaceView[];
   /** The extension elements on this level, as derived (Core 12.6, 13.4, 13.5). */
   devices: DeviceView[];
+  /** The slabs on this level, as derived (Core 0.3, 15.7). */
+  slabs: SlabView[];
   bounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
 }
 
@@ -268,7 +287,7 @@ function levelsWithoutGeometry(document: FloorspecDocument): LevelView[] {
     building: String(level['building']),
     elevation: Number(level['elevation']),
     height: Number(level['height']),
-    junctions: [], walls: [], fills: [], separators: [], openings: [], rooms: [], faces: [], devices: [],
+    junctions: [], walls: [], fills: [], separators: [], openings: [], rooms: [], faces: [], devices: [], slabs: [],
     bounds: null,
   }));
 }
@@ -341,15 +360,32 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
     const d = derived.rooms[id];
     if (view === undefined || d === undefined) continue;
     const area2 = twiceArea(d.area);
-    view.rooms.push({ id, name: typeof r['name'] === 'string' ? r['name'] : id, anchor: r['anchor'] as Point, outer: d.outer, holes: d.holes, area2 });
+    const c = derived.ceilings?.[id];
+    const declared = r['ceiling'] as { kind?: string; ridge?: [Point, Point] } | undefined;
+    const ceiling: RoomView['ceiling'] =
+      c === undefined
+        ? null
+        : {
+            kind: c.kind,
+            low: c.low,
+            high: c.high,
+            ...(c.tray === undefined ? {} : { tray: [c.tray.outer, ...c.tray.holes] }),
+            ...(c.kind === 'vaulted' && declared?.ridge !== undefined ? { ridge: declared.ridge } : {}),
+          };
+    view.rooms.push({ id, name: typeof r['name'] === 'string' ? r['name'] : id, anchor: r['anchor'] as Point, outer: d.outer, holes: d.holes, area2, ceiling, floorTop: derived.floors?.[id]?.top ?? null });
     view.faces.push({ room: id, outer: d.outer, holes: d.holes, area2 });
   }
   for (const device of deviceViews(document, derived)) views.get(device.level)?.devices.push(device);
+  for (const [id, s] of entriesOf(document.slabs)) {
+    const d = derived.slabs?.[id];
+    if (d === undefined) continue;
+    views.get(String(s['level']))?.slabs.push({ id, outline: d.outline, purpose: typeof s['purpose'] === 'string' ? s['purpose'] : undefined, top: d.top, bottom: d.bottom });
+  }
   for (const free of derived.unanchored) {
     views.get(free.level)?.faces.push({ room: null, outer: free.outer, holes: free.holes, area2: twiceArea(free.area) });
   }
   for (const view of views.values()) {
-    const pts: Point[] = [...view.junctions.map((j) => j.position), ...view.walls.flatMap((w) => w.ring)];
+    const pts: Point[] = [...view.junctions.map((j) => j.position), ...view.walls.flatMap((w) => w.ring), ...view.slabs.flatMap((s) => s.outline)];
     if (pts.length > 0) {
       const xs = pts.map((p) => p[0]);
       const ys = pts.map((p) => p[1]);
@@ -375,6 +411,7 @@ export function labelOf(model: EditorModel, id: string): string {
     }
     case 'wall': return name ?? `Wall ${id}`;
     case 'separator': return name ?? `Separator ${id}`;
+    case 'slab': return name ?? `Slab ${id}`;
     case 'junction': return name ?? `Junction ${id}`;
     case 'level': return name ?? `Level ${id}`;
     case 'building': return name ?? `Building ${id}`;

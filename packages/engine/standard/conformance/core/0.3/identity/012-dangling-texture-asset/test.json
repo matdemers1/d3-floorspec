@@ -1,0 +1,6 @@
+{
+  "description": "A material's texture names an asset that does not exist.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

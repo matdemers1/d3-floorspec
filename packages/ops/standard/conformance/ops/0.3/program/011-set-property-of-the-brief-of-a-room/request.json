@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "brief of Kitchen",
+      "path": "/targetArea",
+      "value": 19660800000000
+    },
+    {
+      "op": "unsetProperty",
+      "id": "item pantry",
+      "path": "/name"
+    }
+  ]
+}

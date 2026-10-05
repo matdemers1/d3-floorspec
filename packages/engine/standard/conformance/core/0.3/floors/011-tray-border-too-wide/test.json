@@ -1,0 +1,7 @@
+{
+  "description": "A border of 2 m: the moved edges cross over and run backwards. FS-INV-703.",
+  "covers": [
+    "FS-CORE-15.4.1",
+    "FS-CORE-10.2.1"
+  ]
+}

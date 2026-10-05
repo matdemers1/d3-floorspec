@@ -1,0 +1,6 @@
+{
+  "description": "Removing L2 with cascade takes its junctions, walls, room and slab, and the window on its wall V1; L1 is untouched.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

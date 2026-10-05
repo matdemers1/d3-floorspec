@@ -1,0 +1,8 @@
+{
+  "description": "A wall type using every layer function of 4.3; the room is bounded by its 253 mm centred walls.",
+  "covers": [
+    "FS-CORE-4.3.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-6.2.1"
+  ]
+}

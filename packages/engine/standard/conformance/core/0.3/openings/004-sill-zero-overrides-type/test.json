@@ -1,0 +1,8 @@
+{
+  "description": "A window whose own \"sill\": 0 overrides its type's 900 mm: the sill is 0, and the canonical form keeps \"sill\": 0 because sill is a typed property.",
+  "covers": [
+    "FS-CORE-8.2.1",
+    "FS-CORE-7.4.1",
+    "FS-CORE-9.2.1"
+  ]
+}

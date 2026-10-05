@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setAdjacency",
+      "a": "item Kitchen",
+      "b": "item Dining",
+      "kind": "forbidden"
+    }
+  ]
+}

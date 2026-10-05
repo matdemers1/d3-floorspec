@@ -1,0 +1,7 @@
+{
+  "description": "KIT and DIN have a required adjacency, not a preferred one: removeAdjacency matches nothing, FS-OPS-003.",
+  "covers": [
+    "FS-OPS-2.6.1",
+    "FS-OPS-7.1.1"
+  ]
+}

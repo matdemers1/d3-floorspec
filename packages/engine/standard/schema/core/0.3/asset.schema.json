@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.3/asset.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.6's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Asset",
+  "description": "8.6: a file the document refers to — a texture image in this draft. An asset MUST have exactly one of `path` and `uri` (FS-CORE-8.6.1). It has only the members of its table (FS-CORE-1.4.1).",
+  "type": "object",
+  "required": [
+    "sha256",
+    "mediaType"
+  ],
+  "properties": {
+    "path": {
+      "title": "Path",
+      "description": "8.6: where the file is, relative to the document. A path MUST be relative, use / as its separator, and contain no empty, . or .. segment (FS-CORE-8.6.2): so it does not start with /, contains no \\, has no colon in its first segment (which would make it a URI with a scheme or a drive-letter path), and has no // and no trailing /.",
+      "type": "string",
+      "pattern": "^(?:[^/\\\\.:]|[^/\\\\.:][^/\\\\:]|\\.[^/\\\\.:]|[^/\\\\:]{3,})(?:/(?:[^/\\\\.]|[^/\\\\.][^/\\\\]|\\.[^/\\\\.]|[^/\\\\]{3,}))*$"
+    },
+    "uri": {
+      "title": "URI",
+      "description": "8.6: where the file is on the web, an absolute https: URI (RFC 3986) with an authority: only the characters RFC 3986 allows, with every % starting a percent-encoding.",
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"
+    },
+    "sha256": {
+      "title": "SHA-256 digest",
+      "description": "8.6: the SHA-256 digest of the file's bytes, 64 lowercase hexadecimal digits. Always present.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "mediaType": {
+      "title": "Media type",
+      "description": "8.6: what kind of file it is, a media type such as \"image/png\" — a type and a subtype as RFC 6838 §4.2 names them, without parameters. Always present.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}$"
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/name",
+      "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+    },
+    "extensions": {
+      "$ref": "defs.schema.json#/$defs/extensions",
+      "description": "1.4, 1.6: extension data on this asset.",
+      "default": {}
+    },
+    "extras": {
+      "$ref": "defs.schema.json#/$defs/extras",
+      "description": "1.4, 1.7: application-specific data on this asset.",
+      "default": {}
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "title": "Packaged asset",
+      "description": "8.6.1: located by `path`, and not by `uri`.",
+      "required": [
+        "path"
+      ]
+    },
+    {
+      "title": "External asset",
+      "description": "8.6.1: located by `uri`, and not by `path`.",
+      "required": [
+        "uri"
+      ]
+    }
+  ]
+}

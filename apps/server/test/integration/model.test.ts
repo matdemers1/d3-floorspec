@@ -5,7 +5,7 @@ import { reset, setupOperator, start, testDb, type Running } from './helpers.js'
 
 /**
  * FLR-T-0.8, the code side: a signed-in account creates a project and downloads a model.json that
- * is a valid Floorspec Core 0.2 document by the reference engine — canonical bytes, keyed by the hash of its JCS form.
+ * is a valid Floorspec Core 0.3 document by the reference engine — canonical bytes, keyed by the hash of its JCS form.
  */
 describe('create a project, download its model', () => {
   const db = testDb();
@@ -27,19 +27,19 @@ describe('create a project, download its model', () => {
     expect(created.status).toBe(201);
     const { id, head } = created.body as { id: string; head: string };
 
-    const jcs = '{"floorspec":"0.2","project":{"name":"Lake house"}}';
+    const jcs = '{"floorspec":"0.3","project":{"name":"Lake house"}}';
     const expectedHash = createHash('sha256').update(jcs, 'utf8').digest('hex');
     expect(head).toBe(expectedHash);
 
     const version = await db.version.findUniqueOrThrow({ where: { hash: expectedHash } });
-    expect(version.document).toEqual({ floorspec: '0.2', project: { name: 'Lake house' } });
+    expect(version.document).toEqual({ floorspec: '0.3', project: { name: 'Lake house' } });
     expect(await db.head.findUniqueOrThrow({ where: { projectId_name: { projectId: id, name: 'main' } } })).toMatchObject({
       versionHash: expectedHash,
     });
     const ops = await db.opLog.findMany({ where: { projectId: id } });
     expect(ops).toHaveLength(1);
     expect(ops[0]).toMatchObject({ seq: 1, authorKind: 'account', beforeHash: null, afterHash: expectedHash });
-    expect(ops[0]?.ops).toEqual([{ op: 'createProject', name: 'Lake house', floorspec: '0.2' }]);
+    expect(ops[0]?.ops).toEqual([{ op: 'createProject', name: 'Lake house', floorspec: '0.3' }]);
 
     const download = await operator.get(`/api/projects/${id}/model.json`);
     expect(download.status).toBe(200);
@@ -47,7 +47,7 @@ describe('create a project, download its model', () => {
     expect(download.headers.get('content-disposition')).toBe('attachment; filename="model.json"');
     expect(download.headers.get('etag')).toBe(`"${expectedHash}"`);
     // The canonical file form, byte for byte: sorted keys, two spaces, LF, a final newline.
-    expect(download.text).toBe('{\n  "floorspec": "0.2",\n  "project": {\n    "name": "Lake house"\n  }\n}\n');
+    expect(download.text).toBe('{\n  "floorspec": "0.3",\n  "project": {\n    "name": "Lake house"\n  }\n}\n');
 
     // Not a stub any more: the reference engine, all three tiers (FLR-T-1.10).
     const result = validate(download.text);
@@ -79,7 +79,7 @@ describe('create a project, download its model', () => {
     await db.head.update({ where: { projectId_name: { projectId: id, name: 'main' } }, data: { versionHash: oldHash } });
     const model = async (): Promise<Record<string, unknown>> => JSON.parse((await operator.get(`/api/projects/${id}/model.json`)).text) as Record<string, unknown>;
 
-    // An edit applies (Ops 0.2 applies to 0.1 documents) and does not change the declared version.
+    // An edit applies (Ops 0.3 applies to 0.1 documents) and does not change the declared version.
     const renamed = await operator.post(`/api/projects/${id}/ops`, { batch: [{ op: 'setProperty', id: '$project', path: '/name', value: 'Older house' }] });
     expect(renamed.status, renamed.text).toBe(201);
     expect(await model()).toEqual({ floorspec: '0.1', project: { name: 'Older house' } });
@@ -103,8 +103,32 @@ describe('create a project, download its model', () => {
     expect(await model()).toEqual({ floorspec: '0.1', project: { name: 'Older house' } });
   });
 
+  it('upgrades a Core 0.2 project to 0.3 only by an op that says so, after which its doors can declare a clear opening', async () => {
+    const operator = await setupOperator(running);
+    const { id } = (await operator.post('/api/projects', { name: 'Middle house' })).body as { id: string };
+    // A project created while new projects started at Core 0.2.
+    const v02 = { floorspec: '0.2', project: { name: 'Middle house' }, types: { D: { kind: 'doorType', width: 1170432, height: 2633472 } } };
+    const hash02 = contentHash(v02);
+    await db.version.create({ data: { hash: hash02, document: v02 } });
+    await db.head.update({ where: { projectId_name: { projectId: id, name: 'main' } }, data: { versionHash: hash02 } });
+    const model = async (): Promise<Record<string, unknown>> => JSON.parse((await operator.get(`/api/projects/${id}/model.json`)).text) as Record<string, unknown>;
+    const clear = [{ op: 'setProperty', id: 'D', path: '/clearOpening', value: { width: 1040384, height: 2568448 } }];
+
+    // A clear opening is not a Core 0.2 member: rejected until the plan declares 0.3.
+    expect((await operator.post(`/api/projects/${id}/ops`, { batch: clear })).status).toBe(422);
+    const upgraded = await operator.post(`/api/projects/${id}/ops`, { batch: [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }, { op: 'setProperty', id: 'D', path: '/operation', value: 'swing' }, ...clear] });
+    expect(upgraded.status, upgraded.text).toBe(201);
+    expect(await model()).toMatchObject({ floorspec: '0.3', types: { D: { operation: 'swing', clearOpening: { width: 1040384, height: 2568448 } } } });
+    // Core 0.3's invariants judge the result: a clear opening wider than the door is refused.
+    const wide = await operator.post(`/api/projects/${id}/ops`, { batch: [{ op: 'setProperty', id: 'D', path: '/clearOpening/width', value: 1200000 }] });
+    expect(wide.status).toBe(422);
+    expect(JSON.stringify(wide.body)).toContain('FS-INV-307');
+    expect((await operator.post(`/api/projects/${id}/undo`)).status).toBe(201);
+    expect(await model()).toEqual(v02);
+  });
+
   it('agrees with the engine that a document of another version is not one it can read', () => {
-    expect(validate(JSON.stringify({ floorspec: '0.3', project: { name: 'x' } })).diagnostics.map((d) => d.code)).toEqual(['FS-DOC-001']);
+    expect(validate(JSON.stringify({ floorspec: '0.4', project: { name: 'x' } })).diagnostics.map((d) => d.code)).toEqual(['FS-DOC-001']);
     expect(validate(JSON.stringify({ floorspec: '0.1' })).valid).toBe(false);
   });
 });

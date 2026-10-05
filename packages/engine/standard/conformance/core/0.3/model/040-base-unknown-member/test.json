@@ -1,0 +1,6 @@
+{
+  "description": "A wall's base has level and offset only.",
+  "covers": [
+    "FS-CORE-1.4.3"
+  ]
+}

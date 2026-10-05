@@ -1,0 +1,7 @@
+{
+  "description": "A is written with members out of order, explicit constant defaults and empty extras. B is returned exactly in canonical form (Core 9.2): sorted members, no constant defaults, indented by two spaces, one line feed at the end.",
+  "covers": [
+    "FS-OPS-1.3.1",
+    "FS-OPS-1.6.1"
+  ]
+}

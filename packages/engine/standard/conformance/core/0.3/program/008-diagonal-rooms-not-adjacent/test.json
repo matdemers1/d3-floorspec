@@ -1,0 +1,7 @@
+{
+  "description": "Rooms that meet only at the centre junction J11 share no edge, so they are not adjacent: the required SW-NE adjacency is unmet (FS-LINT-010) and the preferred SE-NW one is unmet without a lint.",
+  "covers": [
+    "FS-CORE-11.4.1",
+    "FS-CORE-11.5.2"
+  ]
+}

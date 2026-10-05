@@ -1,0 +1,6 @@
+{
+  "description": "A wall drawn down to the chamfer W3 ends on it at (8', 8'), 2' x sqrt(2) from W3's start: the outlet 2' along W3 stays; the one 3' along goes to the second piece at 3' - 2' x sqrt(2), 66938.13..., rounded once: 66938.",
+  "covers": [
+    "FS-OPS-5.2.2"
+  ]
+}

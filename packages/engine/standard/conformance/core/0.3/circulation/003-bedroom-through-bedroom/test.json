@@ -1,0 +1,8 @@
+{
+  "description": "Living room, bedroom, bedroom in a row, with the front door into the living room: the second bedroom is reachable only through the first, so its throughSleeping is true and FS-LINT-013 names it. The first bedroom is not reached through a sleeping room. A warning, never an error.",
+  "covers": [
+    "FS-CORE-14.3.1",
+    "FS-CORE-14.4.3",
+    "FS-CORE-10.2.1"
+  ]
+}

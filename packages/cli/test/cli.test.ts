@@ -9,7 +9,8 @@ import { describe, expect, it } from 'vitest';
 
 const bin = join(import.meta.dirname, '..', 'dist', 'bin.js');
 const suites = join(import.meta.dirname, '..', '..', 'engine', 'standard', 'conformance', 'core');
-const suite = join(suites, '0.2');
+const suite = join(suites, '0.3');
+const suite02 = join(suites, '0.2');
 const suite01 = join(suites, '0.1');
 
 function cases(dir: string): string[] {
@@ -23,15 +24,17 @@ function cases(dir: string): string[] {
 }
 
 const all = existsSync(suite) ? cases(suite) : [];
-// The published Core 0.1 suite, read as a Core 0.1 reader: a sample, since the engine's own
-// conformance test runs every case of both suites in process.
+// The published Core 0.2 and 0.1 suites, read as a reader of that draft: a sample, since the
+// engine's own conformance test runs every case of every suite in process.
+const all02 = existsSync(suite02) ? cases(suite02).filter((_, i) => i % 4 === 0) : [];
 const all01 = existsSync(suite01) ? cases(suite01).filter((_, i) => i % 4 === 0) : [];
 const floorspec = (...args: string[]) => spawnSync(process.execPath, [bin, ...args], { encoding: 'utf8' });
 /** A case's registry.json, when it has one, as --registry. */
 const registryArgs = (dir: string): string[] => (existsSync(join(dir, 'registry.json')) ? ['--registry', join(dir, 'registry.json')] : []);
 
 describe.each([
-  ['Core 0.2', suite, all, [] as string[]],
+  ['Core 0.3', suite, all, [] as string[]],
+  ['Core 0.2, --core 0.2', suite02, all02, ['--core', '0.2']],
   ['Core 0.1, --core 0.1', suite01, all01, ['--core', '0.1']],
 ] as const)('floorspec validate --json (%s)', (_s, root, list, extra) => {
   it.each(list.map((d) => [relative(root, d), d]))('%s', (_n, dir) => {
@@ -81,7 +84,7 @@ describe('human output and exit codes', () => {
     expect(floorspec('frobnicate', 'x').status).toBe(2);
     expect(floorspec('validate').status).toBe(2);
     expect(floorspec('hash', 'x.json', '--json').status).toBe(2);
-    expect(floorspec('validate', 'x.json', '--core', '0.3').status).toBe(2);
+    expect(floorspec('validate', 'x.json', '--core', '0.4').status).toBe(2);
     expect(floorspec('validate', 'x.json', '--registry').status).toBe(2);
     const p = floorspec('validate', '/nonexistent/file.floorspec.json');
     expect(p.status).toBe(2);
@@ -89,7 +92,7 @@ describe('human output and exit codes', () => {
   });
   it('--help and --version exit 0', () => {
     expect(floorspec('--help').status).toBe(0);
-    expect(floorspec('--version').stdout).toBe('floorspec 0.2.0\n');
+    expect(floorspec('--version').stdout).toBe('floorspec 0.3.0\n');
   });
   it('--registry is read as the known extensions; a bad one is FS-CFG-001', () => {
     const dir = join(suite, 'extensions', '047-registry-cycle');
@@ -98,9 +101,9 @@ describe('human output and exit codes', () => {
     expect(p.stdout).toMatch(/error FS-CFG-001/);
     expect(floorspec('validate', join(dir, 'input.json'), '--registry', '/nonexistent/registry.json').status).toBe(2);
   });
-  it('derive prints the Core 0.2 members', () => {
+  it('derive prints the Core 0.2 and 0.3 members', () => {
     const out = JSON.parse(execFileSync(process.execPath, [bin, 'derive', join(suite, 'program', '001-house-brief', 'input.json')], { encoding: 'utf8' })) as Record<string, unknown>;
-    expect(Object.keys(out)).toEqual(['walls', 'junctionFills', 'rooms', 'unanchored', 'openings', 'program', 'fallbacks', 'placements', 'clearances', 'clearanceOverlaps', 'circulation']);
+    expect(Object.keys(out)).toEqual(['walls', 'junctionFills', 'rooms', 'unanchored', 'openings', 'program', 'fallbacks', 'placements', 'clearances', 'clearanceOverlaps', 'circulation', 'floors', 'ceilings', 'slabs']);
   });
 });
 
@@ -110,7 +113,8 @@ describe('floorspec --extensions', () => {
 
   it('evaluates an official extension for a document that uses it, with its entry known', () => {
     const expected = JSON.parse(readFileSync(join(demo, 'expected.json'), 'utf8')) as { derived: unknown };
-    const p = floorspec('validate', join(demo, 'input.json'), '--json', '--extensions', 'FS_electrical', '--registry', join(demo, 'registry.json'));
+    // The demo house declares "0.2": its suite reads it as a Core 0.2 reader (conformance/README.md).
+    const p = floorspec('validate', join(demo, 'input.json'), '--json', '--core', '0.2', '--extensions', 'FS_electrical', '--registry', join(demo, 'registry.json'));
     expect(p.status).toBe(0);
     expect((JSON.parse(p.stdout) as { derived: unknown }).derived).toEqual(expected.derived);
   });

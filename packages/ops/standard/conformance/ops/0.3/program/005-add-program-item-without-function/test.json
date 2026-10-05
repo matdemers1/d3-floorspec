@@ -1,0 +1,6 @@
+{
+  "description": "addProgramItem without \"function\": FS-OPS-001.",
+  "covers": [
+    "FS-OPS-1.1.2"
+  ]
+}

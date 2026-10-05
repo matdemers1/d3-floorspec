@@ -1,0 +1,9 @@
+{
+  "description": "placeElement puts a receptacle on the face of the Living room's north wall that looks into the room: W2 runs east, the room is on its right, so the side is \"right\"; 2' from its start and 12\" above its base. The element is passed in as given, with its host and its fallback's level set; its ID is minted, X1, and the extension's data is created.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-2.1.3",
+    "FS-OPS-1.5.1",
+    "FS-OPS-3.5.1"
+  ]
+}

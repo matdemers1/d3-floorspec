@@ -1,0 +1,9 @@
+{
+  "description": "A room drawn clockwise with every wall justified \"exteriorFace\": the location line is the exterior (left) face, so the room is the location-line rectangle shrunk by the full 100 mm.",
+  "covers": [
+    "FS-CORE-5.6.1",
+    "FS-CORE-5.7.1",
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1"
+  ]
+}

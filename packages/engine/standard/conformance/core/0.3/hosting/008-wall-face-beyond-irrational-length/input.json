@@ -1,0 +1,72 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [2560000, 1280000]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    }
+  },
+  "extensionsUsed": {
+    "FS_furniture": "0.1"
+  },
+  "extensions": {
+    "FS_furniture": {
+      "collections": {
+        "pieces": {
+          "A": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, 0, 0],
+                "max": [768000, 768000, 1152000]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W1",
+              "side": "left",
+              "offset": 2862168,
+              "height": 384000
+            }
+          }
+        }
+      }
+    }
+  }
+}

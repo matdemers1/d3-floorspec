@@ -1,0 +1,11 @@
+{
+  "batch": [
+    {
+      "op": "drawWall",
+      "level": "L1",
+      "from": ["-4'", "10'"],
+      "to": "end of W1",
+      "type": "WT"
+    }
+  ]
+}

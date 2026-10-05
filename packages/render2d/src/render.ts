@@ -341,6 +341,7 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   for (const r of scene.rooms.values()) all = grow(all, r.outer);
   for (const s of scene.separators.values()) all = grow(all, [s.start, s.end]);
   for (const u of scene.unanchored) all = grow(all, u.outer);
+  for (const sl of scene.slabs.values()) all = grow(all, sl.outline);
   for (const fb of scene.fallbacks.values()) all = grow(all, fb.footprint);
   const showClearances = options.clearances ?? false;
   if (showClearances) for (const c of scene.clearances) all = grow(all, c.footprint);
@@ -386,6 +387,19 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
     ),
   );
 
+  // ── slabs (Core 6.7): authored floors outside the rooms, drawn first and hatched ──
+  if (scene.slabs.size) {
+    let slabs = '';
+    for (const sl of scene.slabs.values()) {
+      const d = ringsPath([P(sl.outline)]);
+      const a = hi.has(sl.id);
+      slabs +=
+        el('path', { 'data-id': sl.id, ...(sl.purpose === undefined ? {} : { 'data-purpose': sl.purpose }), d, fill: a ? pal.accent : pal.unanchored, 'fill-opacity': a ? 0.35 : 1, stroke: pal.faint, 'stroke-width': 1 }) +
+        el('path', { d, fill: 'url(#fs-hatch)' });
+    }
+    parts.push(el('g', { id: 'slabs' }, slabs));
+  }
+
   // ── floors ──
   let floors = '';
   for (const r of scene.rooms.values()) {
@@ -402,6 +416,17 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
     floors += el('path', { d, fill: pal.unanchored, 'fill-rule': 'evenodd' }) + el('path', { d, fill: 'url(#fs-hatch)', 'fill-rule': 'evenodd' });
   }
   parts.push(el('g', { id: 'floors' }, floors));
+
+  // ── ceilings that are not flat (Core 0.3, 15.3, 15.4): a tray's centre dashed, a vault's ridge dash-dotted ──
+  let ceilings = '';
+  for (const r of scene.rooms.values()) {
+    const c = r.ceiling;
+    if (c?.kind === 'tray' && c.tray !== undefined)
+      ceilings += el('path', { 'data-id': `${r.id}:tray`, d: ringsPath(c.tray.map(P)), fill: 'none', stroke: pal.faint, 'stroke-width': 1, 'stroke-dasharray': '2 3', 'fill-rule': 'evenodd' });
+    if (c?.kind === 'vaulted' && c.ridge !== undefined)
+      ceilings += el('path', { 'data-id': `${r.id}:ridge`, d: linePath(f.P(c.ridge[0]), f.P(c.ridge[1])), stroke: pal.faint, 'stroke-width': 1.25, 'stroke-dasharray': '8 3 2 3', fill: 'none' });
+  }
+  if (ceilings !== '') parts.push(el('g', { id: 'ceilings' }, ceilings));
 
   // ── separators ──
   let seps = '';
@@ -532,6 +557,7 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
         { text: roomTitle(r), size: 13, mono: false, weight: 500, color: pal.text },
         { text: `${squareFeet(r.area)} ft²`, size: 11, mono: true, color: pal.muted },
         { text: `${feetInches(rb.maxX - rb.minX)} × ${feetInches(rb.maxY - rb.minY)}`, size: 10, mono: true, color: pal.faint },
+        ...(r.ceiling?.kind === 'tray' || r.ceiling?.kind === 'vaulted' ? [{ text: r.ceiling.kind === 'tray' ? 'Tray ceiling' : 'Vaulted ceiling', size: 9, mono: false, color: pal.faint }] : []),
         accented(r.id, diff?.rooms)
           ? { text: r.id, size: 9, mono: true, weight: 600, color: pal.accentInk, spacing: 0.6, pill: pal.accent }
           : { text: r.id, size: 9, mono: true, color: pal.faint, spacing: 0.6 },

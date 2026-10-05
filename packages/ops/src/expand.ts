@@ -189,6 +189,19 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       const onSurface = onSurfaceOf(ctx, room, true);
       for (const { j, p } of plan) emit({ op: 'moveJunction', id: j, to: pt([p[0] + by[0], p[1] + by[1]], `${base}/by`) }, `${base}/room`);
       emit({ op: 'setProperty', id: room, path: '/anchor', value: pt([anchor[0] + by[0], anchor[1] + by[1]], `${base}/by`) }, `${base}/room`);
+      // Step 3 (Ops 0.3, FS-OPS-4.3.2): a vaulted ceiling's ridge is a plan point, and moves with its
+      // room; nothing else of the ceiling or the floor changes. A 0.2 or 0.1 document has no vault.
+      const ceiling = getMember(ctx.wc.element(room), 'ceiling');
+      if (getMember(ceiling, 'kind') === 'vaulted') {
+        const ridge = getMember(ceiling, 'ridge');
+        const a = Array.isArray(ridge) && ridge.length === 2 ? asPoint(ridge[0]) : undefined;
+        const b = Array.isArray(ridge) && ridge.length === 2 ? asPoint(ridge[1]) : undefined;
+        if (a && b)
+          emit(
+            { op: 'setProperty', id: room, path: '/ceiling/ridge', value: [pt([a[0] + by[0], a[1] + by[1]], `${base}/by`), pt([b[0] + by[0], b[1] + by[1]], `${base}/by`)] },
+            `${base}/room`,
+          );
+      }
       for (const id of onSurface) {
         const p = asPoint(getMember(getMember(ctx.wc.element(id), 'host'), 'position'))!;
         emit({ op: 'setProperty', id, path: '/host/position', value: pt([p[0] + by[0], p[1] + by[1]], `${base}/by`) }, `${base}/room`);

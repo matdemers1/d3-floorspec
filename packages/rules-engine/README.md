@@ -51,6 +51,12 @@ pnpm --filter @floorspec/rules-engine test:browser    # measure tests and the su
 pnpm --filter @floorspec/rules-engine perf            # timings over the suite's largest document and a grid
 ```
 
-Net clear openings and door clear widths are deferred in Rules 0.1 (4.8). When a later Rules draft
-defines them over the net-clear data Core 0.2 is gaining, each is one more entry of
-`src/measures/openings.ts` and leaves `DEFERRED`.
+The evaluator reads documents as a Core 0.3 reader (Rules 1.2): the engine's default. The net clear
+measures of 6.5 — `openingNetClearWidth`, `openingNetClearHeight`, `openingNetClearArea` and
+`doorClearWidth` — and `openingOperation` (6.1) read only what Core 0.3 declares and derives
+(`derived.openings[O].clearOpening`, the fill type's `operation`), and have no value — displayed as
+`not stated` — where nothing is declared: never a figure computed from the opening's own size. A
+Core 0.1 or 0.2 document declares none. `ceilingHeight` (5.7) is the room's ceiling's `low` minus
+its floor's `top`, as Core 0.3 derives them (Core §15) for a document of any draft. Ten measures
+stay deferred (4.8). The official extensions at 0.1.0 are evaluated for documents that declare
+"0.2" or "0.3" (each one's 1.2).

@@ -1,0 +1,7 @@
+{
+  "description": "A vector [dx, dy] of lengths: [\"1'\", \"-6\\\"\"] is [390144, -195072].",
+  "covers": [
+    "FS-OPS-3.2.1",
+    "FS-OPS-4.3.1"
+  ]
+}

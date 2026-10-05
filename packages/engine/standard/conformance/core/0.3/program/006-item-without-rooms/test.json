@@ -1,0 +1,6 @@
+{
+  "description": "A storage item no room fulfils: countMet is false (FS-LINT-008), and minAreaMet and targetAreaMet are true, because every one of its rooms - there are none - meets them.",
+  "covers": [
+    "FS-CORE-11.3.1"
+  ]
+}

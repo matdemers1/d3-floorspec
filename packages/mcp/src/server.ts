@@ -494,7 +494,10 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
       try {
         const project = await resolveProject(client, args.project);
         const result = await client.findings(project.id, await changesetId(client, project.id, args.changeset));
-        return ok(`${String(result.findings.length)} finding(s). ${result.note}`, { project: project.id, ...result });
+        // Each finding's message names its subject, the rule and the edition it was checked against.
+        const lines = result.findings.slice(0, 50).map((f) => `- ${f.message}`);
+        if (result.findings.length > lines.length) lines.push(`- …and ${String(result.findings.length - lines.length)} more in structuredContent.`);
+        return ok([`${String(result.findings.length)} finding(s). ${result.note}`, ...lines].join('\n'), { project: project.id, ...result });
       } catch (error) {
         return failure(error);
       }

@@ -1,0 +1,6 @@
+{
+  "description": "An area is at least 1 square base unit.",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

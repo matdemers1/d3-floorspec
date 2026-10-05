@@ -1,0 +1,6 @@
+{
+  "description": "Clearances appear only on door and window types and extension elements: a wall type's \"clearances\" is an unknown member.",
+  "covers": [
+    "FS-CORE-13.5.1"
+  ]
+}

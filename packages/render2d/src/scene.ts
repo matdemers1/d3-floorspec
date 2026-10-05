@@ -46,6 +46,19 @@ export interface SceneRoom {
   readonly holes: readonly (readonly Pt[])[];
   /** Net area in square base units, as the engine derives it (`N` or `N.5`). */
   readonly area: string;
+  /**
+   * Its ceiling, as the engine derives it (Core 0.3, 15.5): the kind, a tray's centre (its rings),
+   * a vault's ridge points as the document declares them.
+   */
+  readonly ceiling: { readonly kind: 'flat' | 'tray' | 'vaulted'; readonly tray?: readonly (readonly Pt[])[]; readonly ridge?: readonly [Pt, Pt] } | undefined;
+}
+
+/** A slab (Core 6.7) as the engine derives its outline (Core 0.3, 15.7). */
+export interface SceneSlab {
+  readonly id: string;
+  /** Counter-clockwise from its least vertex. */
+  readonly outline: readonly Pt[];
+  readonly purpose: string | undefined;
 }
 
 export interface SceneFace {
@@ -87,6 +100,8 @@ export interface Scene {
   readonly fallbacks: ReadonlyMap<string, SceneFallback>;
   /** Clearance envelopes on this level, by owner then name. */
   readonly clearances: readonly SceneClearance[];
+  /** Slabs on this level, by ID (Core 0.3, 15.7). */
+  readonly slabs: ReadonlyMap<string, SceneSlab>;
 }
 
 /** A collection as [id, element] pairs sorted by ID (absent: empty). */
@@ -165,7 +180,17 @@ export function buildScene(input: string | Uint8Array | object, level?: string):
   for (const [id, r] of entries(doc.rooms)) {
     if (r.level !== lid) continue;
     const p = derived.rooms[id]!;
-    rooms.set(id, { id, name: r.name, function: r.function ?? 'unspecified', outer: p.outer, holes: p.holes, area: p.area });
+    const c = derived.ceilings?.[id];
+    const ridge = c?.kind === 'vaulted' && r.ceiling?.kind === 'vaulted' ? (r.ceiling.ridge as unknown as readonly [Pt, Pt]) : undefined;
+    rooms.set(id, {
+      id,
+      name: r.name,
+      function: r.function ?? 'unspecified',
+      outer: p.outer,
+      holes: p.holes,
+      area: p.area,
+      ceiling: c === undefined ? undefined : { kind: c.kind, ...(c.tray === undefined ? {} : { tray: [c.tray.outer, ...c.tray.holes] }), ...(ridge === undefined ? {} : { ridge }) },
+    });
   }
 
   const unanchored = derived.unanchored.filter((u) => u.level === lid).map((u) => ({ outer: u.outer, holes: u.holes, area: u.area }));
@@ -176,6 +201,12 @@ export function buildScene(input: string | Uint8Array | object, level?: string):
   const clearances: SceneClearance[] = [];
   for (const [owner, envs] of entries(derived.clearances))
     for (const [name, env] of entries(envs)) if (env.level === lid) clearances.push({ owner, name, purpose: env.purpose, footprint: env.footprint });
+
+  const slabs = new Map<string, SceneSlab>();
+  for (const [id, sl] of entries(doc.slabs)) {
+    const d = derived.slabs?.[id];
+    if (sl.level === lid && d !== undefined) slabs.set(id, { id, outline: d.outline, purpose: sl.purpose });
+  }
 
   return {
     projectName: doc.project.name,
@@ -190,5 +221,6 @@ export function buildScene(input: string | Uint8Array | object, level?: string):
     unanchored,
     fallbacks: byId(fallbacks),
     clearances,
+    slabs: byId(slabs),
   };
 }

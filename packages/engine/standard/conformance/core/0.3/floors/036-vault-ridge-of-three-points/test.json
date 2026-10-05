@@ -1,0 +1,6 @@
+{
+  "description": "A ridge is exactly two points.",
+  "covers": [
+    "FS-CORE-15.2.1"
+  ]
+}

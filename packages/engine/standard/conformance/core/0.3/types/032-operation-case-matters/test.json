@@ -1,0 +1,6 @@
+{
+  "description": "\"Swing\" is not \"swing\": operations are compared exactly.",
+  "covers": [
+    "FS-CORE-8.4.2"
+  ]
+}

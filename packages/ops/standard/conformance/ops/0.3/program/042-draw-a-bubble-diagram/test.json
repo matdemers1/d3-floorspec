@@ -1,0 +1,9 @@
+{
+  "description": "A brief drawn as a bubble diagram from nothing, in one batch: four items, three lines between them by name, and the existing room given the living item. Every ID is minted, P1 to P4.",
+  "covers": [
+    "FS-OPS-4.9.1",
+    "FS-OPS-2.6.1",
+    "FS-OPS-4.6.2",
+    "FS-OPS-1.5.1"
+  ]
+}

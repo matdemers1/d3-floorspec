@@ -1,0 +1,6 @@
+{
+  "description": "Two operations name the same new ID J9; the second is rejected.",
+  "covers": [
+    "FS-OPS-1.5.2"
+  ]
+}

@@ -540,7 +540,7 @@
           "requirement": {
             "all": [
               {
-                "measure": "ceilingHeight",
+                "measure": "roomNarrowestDimension",
                 "op": ">=",
                 "value": 1
               },

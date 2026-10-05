@@ -36,22 +36,23 @@ function readRequest(input: JsonInput, ops: OpsVersion): ApplyRequest {
 /**
  * How A and the result are validated (0.2, 1.2 steps 1 and 6): Ops 0.1 applies to Core 0.1
  * documents, with a Core 0.1 reader (a document declaring "0.2" is FS-DOC-001, so FS-OPS-002); Ops
- * 0.2 with a Core 0.2 reader, which reads 0.1 documents too, and the known and implemented
- * extensions it is given.
+ * 0.2 with a Core 0.2 reader, which reads 0.1 documents too (and rejects "0.3" the same way); Ops
+ * 0.3 with a Core 0.3 reader, which reads 0.2 and 0.1 documents too — each with the known and
+ * implemented extensions it is given.
  */
 interface Settings {
   readonly ops: OpsVersion;
-  readonly core: { core: '0.1' | '0.2'; knownExtensions?: string | Uint8Array | readonly unknown[]; extensions?: readonly string[] };
+  readonly core: { core: '0.1' | '0.2' | '0.3'; knownExtensions?: string | Uint8Array | readonly unknown[]; extensions?: readonly string[] };
 }
 
 function settings(options: ApplyOptions): Settings {
-  const ops: string = options.ops ?? '0.2';
-  if (ops !== '0.1' && ops !== '0.2') throw new RangeError(`@floorspec/ops applies Floorspec Ops 0.1 and 0.2, not ${ops}`);
+  const ops: string = options.ops ?? '0.3';
+  if (ops !== '0.1' && ops !== '0.2' && ops !== '0.3') throw new RangeError(`@floorspec/ops applies Floorspec Ops 0.1, 0.2 and 0.3, not ${ops}`);
   if (ops === '0.1') return { ops, core: { core: '0.1' } };
   return {
     ops,
     core: {
-      core: '0.2',
+      core: ops,
       ...(options.knownExtensions === undefined ? {} : { knownExtensions: options.knownExtensions }),
       ...(options.extensions === undefined ? {} : { extensions: options.extensions }),
     },
@@ -100,7 +101,7 @@ const rejected = (diagnostics: Diagnostic[]): ApplyResult => ({ status: 'rejecte
  * The document and the request may be JSON texts (strings or UTF-8 bytes) or parsed values. The
  * result is committed — B in canonical form, its hash, the resolved echo, what was created and
  * removed, and the inverse — or rejected with diagnostics, and A is never changed either way.
- * `options.ops` chooses the draft: Ops 0.2 by default, or Ops 0.1 exactly as published.
+ * `options.ops` chooses the draft: Ops 0.3 by default, or Ops 0.2 or 0.1 exactly as published.
  */
 export function apply(document: JsonInput, request: JsonInput, options: ApplyOptions = {}): ApplyResult {
   const s = settings(options);

@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of O1's /clearOpening overrides the type's for that door alone (Core 7.2): O1 is 30 inches clear, the type still 32.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

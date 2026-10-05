@@ -1,0 +1,152 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§3.2"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "NET-ESCAPE",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "candidates": [
+        {
+          "id": "O1",
+          "kind": "opening"
+        }
+      ],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§3.2"
+      },
+      "elements": [
+        "O1",
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          },
+          {
+            "kind": "segment",
+            "points": [
+              [
+                1560576,
+                4681728
+              ],
+              [
+                2731008,
+                4681728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "not stated",
+          "holds": false,
+          "measure": "openingNetClearArea",
+          "op": ">=",
+          "target": {
+            "id": "O1",
+            "kind": "opening"
+          },
+          "threshold": 761061703680,
+          "thresholdDisplay": "5.00 sq ft",
+          "type": "area",
+          "value": null
+        },
+        {
+          "display": "2' 6\"",
+          "holds": true,
+          "measure": "openingNetClearWidth",
+          "op": ">=",
+          "target": {
+            "id": "O1",
+            "kind": "opening"
+          },
+          "threshold": 650240,
+          "thresholdDisplay": "1' 8\"",
+          "type": "length",
+          "value": 975360
+        },
+        {
+          "display": "3' 8\"",
+          "holds": true,
+          "measure": "openingNetClearHeight",
+          "op": ">=",
+          "target": {
+            "id": "O1",
+            "kind": "opening"
+          },
+          "threshold": 780288,
+          "thresholdDisplay": "2' 0\"",
+          "type": "length",
+          "value": 1430528
+        },
+        {
+          "display": "2' 0\"",
+          "holds": true,
+          "measure": "openingSillHeight",
+          "op": "<=",
+          "target": {
+            "id": "O1",
+            "kind": "opening"
+          },
+          "threshold": 1430528,
+          "thresholdDisplay": "3' 8\"",
+          "type": "length",
+          "value": 780288
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §3.2 (Net clear escape opening in every sleeping room).",
+      "pack": "test-pack",
+      "rule": "NET-ESCAPE",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "Net clear escape opening in every sleeping room",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.1",
+  "hash": "afa0bfbdc840b113c801aa86f55c12f38fd14f6dfceedf5055c6f026d96f005c",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

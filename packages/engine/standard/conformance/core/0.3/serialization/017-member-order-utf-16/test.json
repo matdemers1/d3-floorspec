@@ -1,0 +1,7 @@
+{
+  "description": "Members are sorted by UTF-16 code units, not code points: U+1F600 (the surrogates 0xD83D 0xDE00) sorts before U+FB01 (one unit, 0xFB01) although its code point is larger; capitals sort before lowercase, \"a\" before \"a\\u0000\", and U+007F after \"b\". An escaped \\u00e9 in the input is written literally, U+007F literally, and U+0000 as \\u0000.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1"
+  ]
+}

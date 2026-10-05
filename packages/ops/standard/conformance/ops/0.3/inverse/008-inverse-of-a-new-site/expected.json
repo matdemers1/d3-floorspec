@@ -1,0 +1,25 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "198066efc32b3a64ab0deba9fd50b312b7bbbfadefeb5617b030a230eb603209",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$site",
+      "path": "/location",
+      "value": {
+        "latitude": 42360100,
+        "longitude": -71058900
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/site"
+    }
+  ]
+}

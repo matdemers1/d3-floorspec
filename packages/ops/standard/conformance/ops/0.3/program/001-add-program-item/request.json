@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "addProgramItem",
+      "function": "sleeping",
+      "name": "Bedroom",
+      "count": 3,
+      "minArea": "11 m2",
+      "targetArea": "150 sq ft",
+      "level": "L1"
+    }
+  ]
+}

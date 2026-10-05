@@ -1,0 +1,6 @@
+{
+  "description": "An opening's sill is not negative.",
+  "covers": [
+    "FS-CORE-7.1.2"
+  ]
+}

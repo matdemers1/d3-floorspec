@@ -1,0 +1,15 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "element",
+        "id": "P1"
+      },
+      "measure": "elementMember",
+      "args": {
+        "name": "tags",
+        "type": "terms"
+      }
+    }
+  ]
+}

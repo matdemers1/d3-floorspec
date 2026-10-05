@@ -6,7 +6,8 @@ import { Surd } from '../exact/surd.js';
 import { toSafeNumber } from '../exact/bigint.js';
 import { roundPoint, toNumbers } from '../geometry/exact-point.js';
 import type { IPoint } from '../geometry/predicates.js';
-import { entries, extElements, get, ipoint, openingDimensions, wallElevations, type FloorspecDocument } from '../model/document.js';
+import { deriveFloors, roomRings, type DerivedCeiling, type DerivedFloor, type DerivedSlab } from '../slabs/floors.js';
+import { effectiveClearOpening, entries, extElements, get, ipoint, openingDimensions, wallElevations, type ClearOpening, type FloorspecDocument } from '../model/document.js';
 import type { Analysis } from '../validate/invariants.js';
 import { elementFrame, envelopesOverlap, footprintOf, openingFrame, placementOf, type Footprint, type Placement } from './frames.js';
 import { comparePoints } from './level.js';
@@ -45,6 +46,11 @@ export interface DerivedOpening {
   end: Point;
   sillElevation: number;
   headElevation: number;
+  /**
+   * 7.4 (Core 0.3): the opening's effective clear opening, exactly as declared — present only when
+   * one resolves, and with an `area` only when one is declared. Never computed.
+   */
+  clearOpening?: { width: number; height: number; area?: number };
 }
 
 /** 12.6: an extension element's fallback box, in its frame. */
@@ -87,6 +93,13 @@ export interface Derived {
   clearanceOverlaps?: [EnvelopeRef, EnvelopeRef][];
   /** 14.3: every room — whether it is an entry, whether it is reachable, and for a sleeping room whether only through another. */
   circulation?: Record<string, DerivedCirculationRoom>;
+  // Core 0.3 — present whenever the reader implements 0.3, for a document of any draft.
+  /** 15.1: every room's floor: its top, bottom and box. */
+  floors?: Record<string, DerivedFloor>;
+  /** 15.5: every room's ceiling: its kind, low, high, box and a tray's centre. */
+  ceilings?: Record<string, DerivedCeiling>;
+  /** 15.7: every slab's outline, top, bottom and box. */
+  slabs?: Record<string, DerivedSlab>;
 }
 
 /** Half of a BigInt, as a decimal string (6.4: a net area is a multiple of one half). */
@@ -160,11 +173,25 @@ export function deriveFrom(doc: FloorspecDocument, analysis: Analysis): Derived 
       end: at(BigInt(o.offset) + BigInt(dim.width!)),
       sillElevation: toSafeNumber(sill),
       headElevation: toSafeNumber(sill + BigInt(dim.height!)),
+      ...clearOpeningOf(effectiveClearOpening(doc, o)),
     });
   }
   if (analysis.core02) Object.assign(out, derive02(doc, analysis));
+  // Core 0.3 (chapter 15): every room's floor and ceiling and every slab, for a document of any draft.
+  if (analysis.core03)
+    Object.assign(
+      out,
+      deriveFloors(doc, (id, room) => {
+        const la = analysis.levels.get(room.level)!;
+        return roomRings(la.geometry!, la.roomFaces.get(id)!);
+      }),
+    );
   return out;
 }
+
+/** 7.4.2: a derived clear opening has exactly the members declared. */
+const clearOpeningOf = (c: ClearOpening | undefined): Pick<DerivedOpening, 'clearOpening'> =>
+  c ? { clearOpening: { width: c.width, height: c.height, ...(c.area !== undefined && { area: c.area }) } } : {};
 
 const cmpRef = (a: EnvelopeRef, b: EnvelopeRef): number =>
   a[0] !== b[0] ? (a[0] < b[0] ? -1 : 1) : a[1] !== b[1] ? (a[1] < b[1] ? -1 : 1) : 0;

@@ -1,0 +1,6 @@
+{
+  "description": "Junctions on different levels may share a position - a corner directly above another. J3 is unused, a lint.",
+  "covers": [
+    "FS-CORE-5.1.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "Lights on a tray ceiling: X1 under the centre hangs from 2900 mm; X2 under the border from 2700 mm; X3 on the step - on the centre's outer ring, 350 mm from the south wall's line - is of the centre, so from 2900 mm.",
+  "covers": [
+    "FS-CORE-15.6.1",
+    "FS-CORE-15.4.2",
+    "FS-CORE-13.4.1"
+  ]
+}

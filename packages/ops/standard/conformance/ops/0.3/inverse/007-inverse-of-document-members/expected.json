@@ -1,0 +1,48 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "14dd2cc568d2aaf09f65df1a536eacd79a33839a9ed618cd6b0799ea7dc0ee87",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$project",
+      "path": "/name",
+      "value": "Cottage"
+    },
+    {
+      "op": "setProperty",
+      "id": "$site",
+      "path": "/trueNorth",
+      "value": 2000000
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extras"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "$project",
+      "path": "/name",
+      "value": "Conformance"
+    },
+    {
+      "op": "setProperty",
+      "id": "$site",
+      "path": "/trueNorth",
+      "value": 1000000
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extras",
+      "value": {
+        "importer": "dwg"
+      }
+    }
+  ]
+}

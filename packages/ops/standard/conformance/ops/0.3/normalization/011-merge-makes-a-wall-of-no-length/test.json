@@ -1,0 +1,7 @@
+{
+  "description": "The box's corner J3 dragged onto J2: they merge, and W2 now starts and ends at J2. Normalization does not decide what was meant; validation rejects the result.",
+  "covers": [
+    "FS-OPS-5.1.1",
+    "FS-OPS-1.2.3"
+  ]
+}

@@ -335,3 +335,32 @@ group('Core 0.2: circulation', () => {
     }
   });
 });
+
+group('Core 0.3: operation and declared clear openings', () => {
+  it('says how each door and window operates and its clear opening as declared, never computed', () => {
+    const d = load('three-room-house') as Record<string, unknown> & { types: Record<string, Record<string, unknown>>; openings: Record<string, Record<string, unknown>> };
+    d.floorspec = '0.3';
+    const [doorType, windowType] = ['doorType', 'windowType'].map((k) => Object.keys(d.types).find((id) => d.types[id]!['kind'] === k)!);
+    d.types[doorType!] = { ...d.types[doorType!], operation: 'swing', clearOpening: { width: 32 * 32512, height: 79 * 32512 } };
+    d.types[windowType!] = { ...d.types[windowType!], operation: 'casement' };
+    expect(check(d).valid).toBe(true);
+    const out = describe(JSON.stringify(d));
+    expect(out).toContain(`operation swing, clear opening 2' 8" (1040384) × 6' 7" (2568448) (declared)`);
+    expect(out).toContain('operation casement');
+    expect(out).not.toMatch(/casement, clear opening/);
+  });
+});
+
+group('Core 0.3: floors and ceilings', () => {
+  it("says a room's ceiling and floor when the room or its level declares them, and nothing otherwise", () => {
+    const d = load('three-room-house') as Record<string, unknown> & { rooms: Record<string, Record<string, unknown>> };
+    d.floorspec = '0.3';
+    d.rooms['LIV']!.ceiling = { kind: 'tray', border: FT, depth: 6 * 32512 };
+    d.rooms['BED']!.floor = { offset: -6 * 32512 };
+    expect(check(d).valid).toBe(true);
+    const out = describe(JSON.stringify(d));
+    expect(out).toMatch(/Ceiling tray, [^\n]* to [^\n]* above the floor\./);
+    expect(out).toMatch(/Ceiling flat, [^\n]* above the floor; floor -0' 6" \(-195072\) from the level\./);
+    expect(describe(text('three-room-house'))).not.toContain('Ceiling ');
+  });
+});

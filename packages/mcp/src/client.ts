@@ -74,12 +74,47 @@ export interface Validation {
   readonly diagnostics: readonly Diagnostic[];
 }
 
+/** A rule a finding cites: code, edition and section (Floorspec Rules 3.2). */
+export interface FindingCitation {
+  readonly code: string;
+  readonly edition: string;
+  readonly section: string;
+  readonly link?: string;
+}
+
+/** One advisory finding (Floorspec Rules 9.2): what may not meet which rule, never a verdict. */
+export interface Finding {
+  readonly pack: string;
+  readonly version: string;
+  readonly rule: string;
+  readonly title: string;
+  readonly citation: FindingCitation;
+  readonly severity: 'mayNotMeet' | 'check' | 'note';
+  readonly subject: { readonly kind: string; readonly id: string; readonly envelope?: string };
+  readonly elements: readonly string[];
+  readonly message: string;
+  readonly measures?: readonly unknown[];
+  readonly location?: unknown;
+  readonly candidates?: readonly unknown[];
+}
+
+/**
+ * `GET /findings`: the installed rule packs evaluated against a head. With none installed, no
+ * findings and a note saying so; with packs, the report's notice as `note` (and `notice`), and what
+ * was evaluated, not evaluated, covered and diagnosed (Floorspec Rules 9.1).
+ */
 export interface Findings {
   readonly head: string;
   readonly hash: string;
-  readonly findings: readonly unknown[];
-  readonly rulePacks: readonly unknown[];
+  readonly findings: readonly Finding[];
+  readonly rulePacks: readonly { readonly name: string; readonly version: string; readonly title: string }[];
   readonly note: string;
+  readonly notice?: string;
+  readonly profile?: string;
+  readonly diagnostics?: readonly { readonly code: string; readonly severity: string; readonly pack?: string; readonly rule?: string }[];
+  readonly evaluated?: readonly { readonly pack: string; readonly version: string; readonly rule: string; readonly citation: FindingCitation; readonly subjects: number; readonly exempt: number; readonly findings: number }[];
+  readonly notEvaluated?: readonly { readonly pack: string; readonly version: string; readonly rule: string; readonly reason: string }[];
+  readonly coverage?: readonly unknown[];
 }
 
 /** What `POST /layouts` takes: where to lay the brief out, and how many candidates. */

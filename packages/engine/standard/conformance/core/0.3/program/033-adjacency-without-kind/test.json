@@ -1,0 +1,6 @@
+{
+  "description": "Every adjacency has a kind.",
+  "covers": [
+    "FS-CORE-11.1.1"
+  ]
+}

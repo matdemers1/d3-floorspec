@@ -1,0 +1,8 @@
+{
+  "description": "A program item with the ID of a room: items share the document's space of IDs, so FS-INV-001 names the ID.",
+  "covers": [
+    "FS-CORE-3.1.3",
+    "FS-CORE-3.1.2",
+    "FS-CORE-10.2.1"
+  ]
+}

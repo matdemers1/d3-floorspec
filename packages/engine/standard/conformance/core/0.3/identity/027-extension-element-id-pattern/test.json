@@ -1,0 +1,6 @@
+{
+  "description": "An extension element ID with a space does not match the ID pattern.",
+  "covers": [
+    "FS-CORE-3.1.3"
+  ]
+}

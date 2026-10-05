@@ -22,12 +22,27 @@ import {
   type TypeChoice,
 } from './ops';
 import { requestRemove, switchUnits } from './actions';
-import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon } from './icons';
+import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, WallIcon, WindowIcon } from './icons';
 import { FindingsList } from './Diagnostics';
 import { Layers as LayersIcon, Palette, House } from 'lucide-react';
 import type { ToolController } from './tools';
 import { DeviceBody, DevicePanel, RecordBody, SystemIcon, SystemsSummary } from './systems/Panels';
 import { systemOfExtension } from './systems/catalog';
+import { ClearOpeningFields, CoreUpgradeNotice } from './OpeningFields';
+import { LevelFloorCeiling, RoomFloorCeiling, SlabBody, SlabDrawSettings } from './FloorFields';
+import {
+  clearOpeningOf,
+  clearOpeningText,
+  CURRENT_CORE,
+  hingeApplies,
+  holdsClearOpenings,
+  operationLabel,
+  operationOptions,
+  setClearOpening,
+  setOperation,
+  swingApplies,
+  type ClearOpening,
+} from './openings';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -138,6 +153,8 @@ function kindIcon(kind: Kind): ReactNode {
       return <RoomIcon />;
     case 'separator':
       return <SeparatorIcon />;
+    case 'slab':
+      return <SlabIcon />;
     case 'junction':
       return <JunctionIcon />;
     case 'level':
@@ -199,6 +216,13 @@ function bodyFor(kind: Kind, ctx: Ctx, focus: string | null): ReactNode {
       return <RoomBody ctx={ctx} focusName={focus === 'room-name'} />;
     case 'level':
       return <LevelBody ctx={ctx} />;
+    case 'slab':
+      return (
+        <>
+          <SlabBody ctx={ctx} />
+          <NameOnly ctx={ctx} />
+        </>
+      );
     case 'building':
       return <NameOnly ctx={ctx} />;
     case 'wallType':
@@ -479,6 +503,8 @@ function OpeningBody({ ctx }: { ctx: Ctx }) {
   const wallLength = wall === undefined ? 0 : dist(wall.a, wall.b);
   const width = num(element['width']) ?? num(fillType?.['width']);
   const kind: TypeChoice['kind'] = fillType?.['kind'] === 'windowType' ? 'windowType' : 'doorType';
+  const v03 = holdsClearOpenings(model.document);
+  const operation = str(fillType?.['operation']);
   const dim = (key: 'width' | 'height' | 'sill', label: string) => (
     <LengthField
       label={label}
@@ -540,8 +566,32 @@ function OpeningBody({ ctx }: { ctx: Ctx }) {
           onCommit={(v) => { if (v !== null) ctx.edit(`Move ${id}`, moveOpening(id, `${formatLen(v, units)} from end`)); }}
         />
       </Section>
-      {isDoor ? (
+      {fill !== undefined && v03 ? (
         <Section title="Operation">
+          <ReadOnlyField label="How it opens" value={operation === undefined ? `Not declared on ${labelOf(model, fill)}` : `${operationLabel(operation) ?? operation} · from ${labelOf(model, fill)}`} />
+          {isDoor && hingeApplies(operation) ? <HingeRow ctx={ctx} /> : null}
+          {isDoor && swingApplies(operation) ? <SwingRow ctx={ctx} /> : null}
+        </Section>
+      ) : isDoor ? (
+        <Section title="Operation">
+          <HingeRow ctx={ctx} />
+          <SwingRow ctx={ctx} />
+        </Section>
+      ) : null}
+      {v03 ? <OpeningClearSection ctx={ctx} fillType={fillType} /> : fill !== undefined ? (
+        <Section title="Clear opening">
+          <CoreUpgradeNotice store={ctx.store} model={model} what="A door's or window's operation and its declared net clear opening" />
+        </Section>
+      ) : null}
+      <NameOnly ctx={ctx} />
+    </>
+  );
+}
+
+/** Core 7.1: the jamb a single swinging leaf hangs from. */
+function HingeRow({ ctx }: { ctx: Ctx }) {
+  const { element, id, readOnly } = ctx;
+  return (
           <Row label="Hinge">
             <SegmentedControl
               aria-label="Hinge"
@@ -551,6 +601,13 @@ function OpeningBody({ ctx }: { ctx: Ctx }) {
               onValueChange={(v) => { if (!readOnly) ctx.edit(`Hinge ${id}`, v === 'start' ? unsetProperty(id, '/hinge') : setProperty(id, '/hinge', v)); }}
             />
           </Row>
+  );
+}
+
+/** Core 7.1: the side of the wall a door's leaves open into. */
+function SwingRow({ ctx }: { ctx: Ctx }) {
+  const { element, id, readOnly } = ctx;
+  return (
           <Row label="Swing">
             <SegmentedControl
               aria-label="Swing"
@@ -560,10 +617,56 @@ function OpeningBody({ ctx }: { ctx: Ctx }) {
               onValueChange={(v) => { if (!readOnly) ctx.edit(`Swing ${id}`, v === 'right' ? unsetProperty(id, '/swing') : setProperty(id, '/swing', v)); }}
             />
           </Row>
-        </Section>
+  );
+}
+
+/**
+ * Core 0.3, 7.1–7.4: the opening's clear opening — its type's, as declared, or its own, which
+ * replaces the type's whole. An empty opening states its own or has none; only a window's has an
+ * area (FS-INV-308).
+ */
+function OpeningClearSection({ ctx, fillType }: { ctx: Ctx; fillType: Json | undefined }) {
+  const { element, model, id, units, readOnly } = ctx;
+  const own = element['clearOpening'] as ClearOpening | undefined;
+  const fromType = fillType?.['clearOpening'] as ClearOpening | undefined;
+  const effective = clearOpeningOf(model.document, element as never);
+  const isWindow = fillType?.['kind'] === 'windowType';
+  const fill = str(element['fill']);
+  const set = (next: ClearOpening | undefined, label: string) => {
+    ctx.edit(`${label} of ${id}`, setClearOpening(id, next, own !== undefined));
+  };
+  return (
+    <Section title="Clear opening">
+      {fill !== undefined ? (
+        <Row label="Own clear opening">
+          <Switch
+            checked={own !== undefined}
+            disabled={readOnly || (own === undefined && fromType === undefined)}
+            onCheckedChange={(on) => {
+              if (on) {
+                // Start from the type's, as declared (an area only for a window); with none, type both.
+                if (fromType !== undefined) set({ width: fromType.width, height: fromType.height, ...(isWindow && fromType.area !== undefined ? { area: fromType.area } : {}) }, 'Override the clear opening');
+              } else set(undefined, 'Use the type’s clear opening');
+            }}
+          >
+            {own !== undefined ? 'Overrides the type’s' : fromType !== undefined ? 'Uses the type’s' : 'None declared on the type'}
+          </Switch>
+        </Row>
       ) : null}
-      <NameOnly ctx={ctx} />
-    </>
+      {fill !== undefined && own === undefined ? (
+        <ReadOnlyField label="From type" value={fromType === undefined ? 'None declared' : clearOpeningText(fromType, units)} />
+      ) : (
+        <ClearOpeningFields draftKey={`${id}/own`} value={own} isWindow={isWindow} units={units} disabled={readOnly} onSet={set} />
+      )}
+      {fill !== undefined && own === undefined && fromType === undefined ? (
+        <ClearOpeningFields draftKey={`${id}/own`} value={undefined} isWindow={false} units={units} disabled={readOnly} onSet={set} labelPrefix="Own clear" />
+      ) : null}
+      <p className="fs-note">
+        {effective === undefined
+          ? 'No clear opening is declared, so a check that needs one reports it as not stated. Floorspec never computes one from the opening’s size.'
+          : 'The net clear opening as declared — what a person or an object can pass through, open as far as it goes. Never computed.'}
+      </p>
+    </Section>
   );
 }
 
@@ -625,6 +728,7 @@ function RoomBody({ ctx, focusName }: { ctx: Ctx; focusName: boolean }) {
         <ReadOnlyField label="Net area" value={room === undefined ? '—' : formatArea(room.area2, units)} />
         <ReadOnlyField label="Anchor" value={`${formatLen(anchor[0], units)}, ${formatLen(anchor[1], units)}`} />
       </Section>
+      <RoomFloorCeiling ctx={ctx} room={room} />
       <Section title="Finishes">
         {finish('floor', 'Floor')}
         {finish('wall', 'Walls')}
@@ -636,11 +740,11 @@ function RoomBody({ ctx, focusName }: { ctx: Ctx; focusName: boolean }) {
 
 /**
  * Which brief item the room fulfils (Core 0.2, 6.5 and 11.3): setRoomBrief, or unsetting `brief`.
- * A Core 0.1 plan has no brief to link to, so the row is only there on a 0.2 one.
+ * A Core 0.1 plan has no brief to link to, so the row is only there on a 0.2 or 0.3 one.
  */
 function BriefRow({ ctx }: { ctx: Ctx }) {
   const { element, model, id, readOnly } = ctx;
-  if (model.document.floorspec !== '0.2') return null;
+  if (model.document.floorspec === '0.1') return null;
   const items = Object.entries((model.document.program?.items ?? {}) as Record<string, Json | undefined>);
   const brief = str(element['brief']);
   return (
@@ -671,6 +775,7 @@ function LevelBody({ ctx }: { ctx: Ctx }) {
         <LengthField label="Height" value={num(element['height'])} units={units} positive disabled={readOnly} hint="Floor to floor: walls without a top follow it" onCommit={(v) => { if (v !== null) ctx.edit(`Set height of ${labelOf(model, id)}`, setProperty(id, '/height', v)); }} />
         <ReadOnlyField label="Building" value={labelOf(model, String(element['building']))} />
       </Section>
+      <LevelFloorCeiling ctx={ctx} />
     </>
   );
 }
@@ -708,6 +813,8 @@ function WallTypeBody({ ctx }: { ctx: Ctx }) {
 
 function FillTypeBody({ ctx }: { ctx: Ctx }) {
   const { element, id, units, readOnly, model } = ctx;
+  const kind = element['kind'] === 'windowType' ? 'windowType' : 'doorType';
+  const clear = element['clearOpening'] as ClearOpening | undefined;
   const field = (key: 'width' | 'height' | 'sill', label: string) => (
     <LengthField
       label={label}
@@ -728,6 +835,41 @@ function FillTypeBody({ ctx }: { ctx: Ctx }) {
         {field('height', 'Height')}
         {field('sill', 'Sill')}
       </Section>
+      {holdsClearOpenings(model.document) ? (
+        <>
+          <Section title="Operation">
+            <Row label="How it opens">
+              <Select
+                aria-label="Operation"
+                appearance="filled"
+                options={operationOptions(kind)}
+                value={str(element['operation']) ?? ''}
+                disabled={readOnly}
+                onValueChange={(v) => {
+                  if (v !== (str(element['operation']) ?? '')) ctx.edit(`Set operation of ${labelOf(model, id)}`, setOperation(id, v, element['operation'] !== undefined));
+                }}
+              />
+            </Row>
+          </Section>
+          <Section title="Clear opening">
+            <ClearOpeningFields
+              draftKey={id}
+              value={clear}
+              isWindow={kind === 'windowType'}
+              units={units}
+              disabled={readOnly}
+              onSet={(next, label) => { ctx.edit(`${label} of ${labelOf(model, id)}`, setClearOpening(id, next, clear !== undefined)); }}
+            />
+            <p className="fs-note">
+              The net clear opening of every opening this {kind === 'doorType' ? 'door' : 'window'} fills, as its maker declares it{kind === 'windowType' ? ' — the area too, when declared' : ''}. An opening can override it. Floorspec never computes one.
+            </p>
+          </Section>
+        </>
+      ) : (
+        <Section title="Operation and clear opening">
+          <CoreUpgradeNotice store={ctx.store} model={model} what="A door's or window's operation and its declared net clear opening" />
+        </Section>
+      )}
     </>
   );
 }
@@ -788,6 +930,8 @@ function ProjectPanel({ store, model, units, readOnly }: { store: EditorStore; m
           />
         </Row>
         <p className="fs-note">Display only: every length is stored exactly, in 1/1280 mm. Typed values accept either system.</p>
+        <ReadOnlyField label="Floorspec" value={`Core ${model.document.floorspec}`} />
+        {model.document.floorspec !== CURRENT_CORE ? <CoreUpgradeNotice store={store} model={model} what="Door and window operation and declared net clear openings" /> : null}
       </Section>
       <SystemsSummary store={store} model={model} units={units} />
       <Section title="Findings">
@@ -846,6 +990,28 @@ function DrawPanel({ store, model }: { store: EditorStore; model: EditorModel })
         <div className="fs-callout-card" role="note">
           <strong>Splitting is automatic</strong>
           <p>A {tool === 'wall' ? 'wall' : 'separator'} that crosses or ends on another is split there when the batch is applied (Floorspec Ops 5.2). Closing a loop makes a face — name it with the room tool.</p>
+        </div>
+        <KeyHints />
+      </div>
+    );
+  }
+  if (tool === 'slab') {
+    const chain = draft?.tool === 'slab' ? draft.chain : [];
+    return (
+      <div className="fs-inspector__body">
+        <div className="fs-inspector__head">
+          <span className="fs-inspector__icon">
+            <SlabIcon />
+          </span>
+          <div className="fs-inspector__title">
+            <h2>Draw slab</h2>
+            <p>{chain.length === 0 ? 'Click its corners; click the first again or press Enter to finish' : `${String(chain.length)} ${chain.length === 1 ? 'corner' : 'corners'}`}</p>
+          </div>
+        </div>
+        <SlabDrawSettings store={store} model={model} units={units} />
+        <div className="fs-callout-card" role="note">
+          <strong>Slabs are authored</strong>
+          <p>A patio, a deck or a landing outside the rooms: its outline is what you draw, its top is above the level by the offset (Floorspec Core 6.7). Rooms' own floors and ceilings are set on each room.</p>
         </div>
         <KeyHints />
       </div>

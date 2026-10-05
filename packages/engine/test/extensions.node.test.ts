@@ -18,6 +18,8 @@ import {
   check,
   defaultClearances,
   derive,
+  evaluate,
+  officialElementRooms,
   type ValidateOptions,
 } from '../src/index.js';
 
@@ -39,9 +41,21 @@ const suites = OFFICIAL_EXTENSION_NAMES.map((name) => {
   return { name, version, dir: join(standard, 'conformance', 'ext', name, version) };
 });
 
+/**
+ * The reader a test is read by: one that implements that one extension, of the Core draft the test's
+ * document declares — Core 0.3 for "0.3", Core 0.2 for every other (conformance/README.md).
+ */
 function options(name: string, dir: string): ValidateOptions {
   const registry = join(dir, 'registry.json');
-  return { extensions: [name], ...(existsSync(registry) && { knownExtensions: new Uint8Array(readFileSync(registry)) }) };
+  return { extensions: [name], core: coreOf(readFileSync(join(dir, 'input.json'), 'utf8')), ...(existsSync(registry) && { knownExtensions: new Uint8Array(readFileSync(registry)) }) };
+}
+
+function coreOf(text: string): '0.2' | '0.3' {
+  try {
+    return (JSON.parse(text) as { floorspec?: unknown }).floorspec === '0.3' ? '0.3' : '0.2';
+  } catch {
+    return '0.2';
+  }
 }
 
 const view = (ds: { code: string; severity: string; elements: string[] }[]) => ds.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));
@@ -130,6 +144,19 @@ describe('the official extensions', () => {
     const inA = JSON.parse(readFileSync(join(dir, 'input.json'), 'utf8')) as { extensions: unknown };
     const inB = JSON.parse(readFileSync(join(dir, 'output.json'), 'utf8')) as { extensions: unknown };
     expect(inB.extensions).toEqual(inA.extensions);
+  });
+
+  it('places each element in its room from Core geometry alone, as the extensions derive it — for a Core 0.3 document too', () => {
+    const input = JSON.parse(readFileSync(join(s0().dir, 'examples', '001-p5-demo-house', 'input.json'), 'utf8')) as Record<string, unknown>;
+    const opts = { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_EXTENSIONS as unknown[] };
+    const ev = evaluate(input, opts);
+    const derived = check(input, opts).derived!.extensions!;
+    for (const name of OFFICIAL_EXTENSION_NAMES)
+      expect(officialElementRooms(ev.document!, ev.analysis!, name), name).toEqual((derived as Record<string, { rooms: unknown }>)[name]!.rooms);
+    const v03 = evaluate({ ...input, floorspec: '0.3' }, opts);
+    expect(v03.valid).toBe(true);
+    expect(officialElementRooms(v03.document!, v03.analysis!, 'FS_electrical')).toEqual(derived.FS_electrical!.rooms);
+    expect(officialElementRooms(v03.document!, v03.analysis!, 'EXT_unknown')).toEqual({});
   });
 
   it('evaluates nothing for a reader that implements no extension, as before', () => {

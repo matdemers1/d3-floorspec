@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/walls",
+      "value": {}
+    }
+  ]
+}

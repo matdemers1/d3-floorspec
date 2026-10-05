@@ -9,7 +9,7 @@
  * - FS-INV-503 (13.3.4), only for a `surface` host whose room is on a level where room invariants
  *   were evaluated and has none of FS-INV-201 … 204.
  */
-import { get, entries, extElements, adjacencies, declaredVersion, programItems, ipoint, wallElevations, type FloorspecDocument, type RegistryEntry } from '../model/document.js';
+import { get, entries, extElements, adjacencies, declaredVersion, hasCore02Members, programItems, ipoint, wallElevations, type FloorspecDocument, type RegistryEntry } from '../model/document.js';
 import { extentsOk } from '../derive/frames.js';
 import { knownEntry, satisfies } from './registry.js';
 import { ptr, strictlyInside, type Analysis, type Reporter } from './invariants.js';
@@ -60,7 +60,7 @@ export function extensionInvariants(doc: FloorspecDocument, known: readonly Regi
     }
     const kinds = e.kinds ?? {};
     const data = get(doc.extensions as Record<string, unknown> | undefined, x);
-    if (doc.floorspec === '0.2' && typeof data === 'object' && data !== null && !Array.isArray(data)) {
+    if (hasCore02Members(doc) && typeof data === 'object' && data !== null && !Array.isArray(data)) {
       const cs = (data as { collections?: unknown }).collections;
       if (typeof cs === 'object' && cs !== null && !Array.isArray(cs))
         for (const c of Object.keys(cs).sort())

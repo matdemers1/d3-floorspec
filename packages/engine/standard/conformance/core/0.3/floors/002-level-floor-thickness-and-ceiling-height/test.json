@@ -1,0 +1,8 @@
+{
+  "description": "A level whose rooms have 300 mm floors and 2400 mm ceilings: the room's floor runs from -300 mm to 0, and its ceiling is flat at 2400 mm, not at the level's 2700 mm height.",
+  "covers": [
+    "FS-CORE-1.8.4",
+    "FS-CORE-15.1.2",
+    "FS-CORE-15.5.1"
+  ]
+}

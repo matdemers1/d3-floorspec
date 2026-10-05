@@ -1,0 +1,6 @@
+{
+  "description": "Removing wall W5 without cascade is blocked by its gate O1.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

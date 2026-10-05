@@ -1,0 +1,6 @@
+{
+  "description": "A required extension, properly declared, that the reader does not implement: rejected with FS-DOC-002. (The suite's readers implement no extension.)",
+  "covers": [
+    "FS-CORE-1.6.4"
+  ]
+}

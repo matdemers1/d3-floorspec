@@ -4,12 +4,6 @@
     {
       "code": "FS-RULES-008",
       "pack": "test-pack",
-      "rule": "D-ceilingHeight",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
       "rule": "D-countertopReceptacleReach",
       "severity": "info"
     },
@@ -22,31 +16,7 @@
     {
       "code": "FS-RULES-008",
       "pack": "test-pack",
-      "rule": "D-doorClearWidth",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
       "rule": "D-floorElevationDifference",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
-      "rule": "D-openingNetClearArea",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
-      "rule": "D-openingNetClearHeight",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
-      "rule": "D-openingNetClearWidth",
       "severity": "info"
     },
     {
@@ -100,12 +70,6 @@
     {
       "pack": "test-pack",
       "reason": "deferred",
-      "rule": "D-ceilingHeight",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
       "rule": "D-countertopReceptacleReach",
       "version": "0.1.0"
     },
@@ -118,31 +82,7 @@
     {
       "pack": "test-pack",
       "reason": "deferred",
-      "rule": "D-doorClearWidth",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
       "rule": "D-floorElevationDifference",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
-      "rule": "D-openingNetClearArea",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
-      "rule": "D-openingNetClearHeight",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
-      "rule": "D-openingNetClearWidth",
       "version": "0.1.0"
     },
     {

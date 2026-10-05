@@ -1,0 +1,25 @@
+{
+  "batch": [
+    {
+      "op": "placeElement",
+      "extension": "FS_electrical",
+      "collection": "devices",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W1",
+        "at": "3'",
+        "height": 384000,
+        "side": "left"
+      },
+      "element": {
+        "fallback": {
+          "box": {
+            "min": [0, -51200, 0],
+            "max": [25600, 51200, 128000]
+          }
+        },
+        "device": "receptacle"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "eb3905ae61daa3c7cbd3b21eb905b7ee229c813dd8c4bd04ae5131edf7ea8d31",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/host/height",
+      "value": 768000
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/host",
+      "value": {
+        "height": 384000,
+        "mode": "wallFace",
+        "offset": 780288,
+        "side": "right",
+        "wall": "W2"
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "resizeRoom of the Dining room east by 2': both ends of its east side W5 are corners that do not continue, so both move, and the walls meeting them stretch.",
+  "covers": [
+    "FS-OPS-4.4.1"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "brief of Living",
+      "path": "/count",
+      "value": 2
+    }
+  ]
+}

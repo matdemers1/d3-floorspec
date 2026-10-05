@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/floorFinish"
+    }
+  ]
+}

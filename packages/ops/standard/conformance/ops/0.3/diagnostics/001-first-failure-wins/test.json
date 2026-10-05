@@ -1,0 +1,7 @@
+{
+  "description": "The first operation names a room that does not exist (FS-OPS-003); the second has a malformed length (FS-OPS-012). Only the first failure is reported.",
+  "covers": [
+    "FS-OPS-7.1.1",
+    "FS-OPS-7.1.2"
+  ]
+}

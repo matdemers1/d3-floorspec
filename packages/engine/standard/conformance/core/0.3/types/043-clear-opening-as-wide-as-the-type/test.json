@@ -1,0 +1,7 @@
+{
+  "description": "A door type whose clear opening is exactly as wide and as high as the type itself: valid.",
+  "covers": [
+    "FS-CORE-8.4.5",
+    "FS-CORE-7.2.2"
+  ]
+}

@@ -142,7 +142,8 @@ export type Applied =
 /** The probe view: one synthetic item per room on the level, every pair a preferred adjacency. */
 function probeView(committed: Json, roomIds: readonly string[]): Json {
   const view = structuredClone(committed);
-  view['floorspec'] = '0.2';
+  // A program needs Core 0.2 or later: a 0.1 document is read as 0.2, a later one keeps its version.
+  if (view['floorspec'] === '0.1') view['floorspec'] = '0.2';
   const rooms = collection(view, 'rooms');
   // The rooms' own briefs name the real program's items, which the probe's program replaces.
   for (const room of Object.values(rooms)) delete room['brief'];

@@ -1,0 +1,7 @@
+{
+  "description": "A flat ceiling at 3000 mm in a room on a level whose ceilings are 2400 mm: the room's own height wins.",
+  "covers": [
+    "FS-CORE-15.5.1",
+    "FS-CORE-15.2.2"
+  ]
+}

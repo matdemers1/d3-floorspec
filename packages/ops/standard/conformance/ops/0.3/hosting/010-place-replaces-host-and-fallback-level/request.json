@@ -1,0 +1,28 @@
+{
+  "batch": [
+    {
+      "op": "placeElement",
+      "extension": "FS_electrical",
+      "collection": "devices",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W2",
+        "at": "2'",
+        "height": 384000,
+        "side": "right"
+      },
+      "element": {
+        "fallback": {
+          "level": "L9",
+          "box": {
+            "min": [0, -51200, 0],
+            "max": [25600, 51200, 128000]
+          }
+        },
+        "host": {
+          "mode": "free"
+        }
+      }
+    }
+  ]
+}

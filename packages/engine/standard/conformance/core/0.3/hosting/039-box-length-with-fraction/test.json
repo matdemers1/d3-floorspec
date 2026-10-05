@@ -1,0 +1,7 @@
+{
+  "description": "A box's lengths are JSON integers: 1152000.0 is not one.",
+  "covers": [
+    "FS-CORE-13.2.1",
+    "FS-CORE-2.1.1"
+  ]
+}

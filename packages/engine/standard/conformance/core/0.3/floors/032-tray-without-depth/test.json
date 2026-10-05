@@ -1,0 +1,6 @@
+{
+  "description": "A tray ceiling with a border and no depth.",
+  "covers": [
+    "FS-CORE-15.2.1"
+  ]
+}

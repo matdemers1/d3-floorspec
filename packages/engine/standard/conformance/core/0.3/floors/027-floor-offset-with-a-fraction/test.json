@@ -1,0 +1,7 @@
+{
+  "description": "An offset written with a fraction is not a length.",
+  "covers": [
+    "FS-CORE-15.1.1",
+    "FS-CORE-2.1.1"
+  ]
+}

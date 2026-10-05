@@ -32,7 +32,7 @@ export const SET_PROPERTY_HINT =
 
 /** The hint for a program or a hosted element sent to a plan that is still a Floorspec 0.1 document. */
 export const UPGRADE_HINT =
-  'This plan is a Floorspec 0.1 document, which holds no program and no extension elements. Upgrade it first, in the same batch: {"op":"setProperty","id":"$document","path":"/floorspec","value":"0.2"}.';
+  'This plan is a Floorspec 0.1 document, which holds no program and no extension elements. Upgrade it first, in the same batch: {"op":"setProperty","id":"$document","path":"/floorspec","value":"0.3"}.';
 
 export function hintsFor(diagnostics: readonly Diagnostic[], batch?: readonly { op: string; [member: string]: unknown }[]): string[] {
   const hints = new Set<string>();

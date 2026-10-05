@@ -36,8 +36,10 @@ one owner, by envelope name.
 | terms | a set of strings | a JSON array of strings, sorted |
 
 A measure's type is fixed by its definition, except `elementMember`'s, which its arguments fix
-(7.1). Only `elementMember` can have **no value** — when the element has no such member and its
-extension gives it no default — and a measure with no value is reported as `null`.
+(7.1). Only some measures can have **no value**: `elementMember`, when the element has no such
+member and its extension gives it no default; and `openingOperation` and the net clear measures of
+an opening (6.1, 6.5), when nothing is declared for them. A measure with no value is reported as
+`null`.
 
 ## 4.3 Exactness
 
@@ -107,19 +109,16 @@ measure calls — a target, a measure and its arguments — and comparing the re
 
 ## 4.8 Deferred measures
 
-These measures are reserved. Each needs something Core 0.2 does not yet describe, and is defined
+These measures are reserved. Each needs something Core 0.3 does not yet describe, and is defined
 when it does. A rule may name one; it is not evaluated (3.9), so a pack can be written ahead of
 the library without a finding that measures the wrong thing.
 
 | Measure | Target | Needs |
 |---|---|---|
-| `ceilingHeight` | room | ceilings: Core derives no floors or ceilings (Core §0.5); a level's height is floor to floor |
 | `roomNarrowestDimension` | room | the dimension at every point of a room that is not convex — `roomLeastWidth` (5.3) measures the whole room |
-| `openingNetClearArea`, `openingNetClearWidth`, `openingNetClearHeight` | opening | operation, sash and frame of door and window types (Core §8.4: "defined in a later draft") |
-| `doorClearWidth` | opening | a door's leaf and stops |
 | `stairRiserHeight`, `stairTreadDepth`, `stairWidth`, `stairHeadroom`, `stairHandrailHeight` | stair | stairs (Core §0.5) |
 | `countertopReceptacleReach`, `countertopWallRunBetweenReceptacles` | room | countertops, which no extension yet describes |
 | `travelDistance` | room | a path through the door graph measured in length: Core's door graph (Core §14.1) has no geometry along its links |
-| `floorElevationDifference` | room | floors, and so a room's own floor elevation |
+| `floorElevationDifference` | room | which difference it is: Core derives each room's floor (Core §15.1), but not yet the change of level across a doorway, the threshold between two floors |
 
 An evaluator MUST treat every measure of this table as deferred. {#FS-RULES-4.8.1 MUST}

@@ -1,4 +1,4 @@
-import type { EditorStore, ToolId } from './store';
+import { isChainDraft, isChainTool, type ChainTool, type EditorStore, type ToolId } from './store';
 import type { LevelView, Point } from './model';
 import { dist, hitTest, faceAt, leftNormal, project, roomsBeside } from './geometry';
 import { pointAtLength, snapOpening, snapPoint, type Snap } from './snap';
@@ -6,6 +6,7 @@ import { panBy, toWorld, zoomAt } from './viewport';
 import {
   addOpening,
   addRoom,
+  addSlab,
   drawChain,
   isClosed,
   moveJunction,
@@ -257,6 +258,7 @@ export class ToolController {
         return;
       case 'wall':
       case 'separator':
+      case 'slab':
         this.chainDown(p, s.tool);
         return;
       case 'door':
@@ -292,8 +294,9 @@ export class ToolController {
         this.deviceHover(p);
         return;
       case 'wall':
-      case 'separator': {
-        const draft = s.draft?.tool === s.tool ? s.draft : { tool: s.tool, chain: [], cursor: null, typed: '' };
+      case 'separator':
+      case 'slab': {
+        const draft = isChainDraft(s.draft) && s.draft.tool === s.tool ? s.draft : { tool: s.tool, chain: [], cursor: null, typed: '' };
         const last = draft.chain[draft.chain.length - 1];
         const cursor = this.snapFor(p, last?.point, draft.chain.map((v) => v.point));
         this.store.set({ draft: { ...draft, cursor } });
@@ -320,7 +323,7 @@ export class ToolController {
       return;
     }
     // Drawing by dragging: press at one end, lift at the other.
-    if ((s.tool === 'wall' || s.tool === 'separator') && moved) this.chainDown(p, s.tool);
+    if (isChainTool(s.tool) && moved) this.chainDown(p, s.tool);
   }
 
   // ── select ──
@@ -330,6 +333,11 @@ export class ToolController {
     if (level === undefined) return;
     const world = this.world(p);
     const picking = this.store.get().picking;
+    if (picking !== null && 'ridge' in picking) {
+      this.pickRidge(picking, this.snapFor(p, picking.first ?? undefined).point);
+      this.dragStart = null;
+      return;
+    }
     if (picking !== null) {
       this.pickControl(picking.switch, this.deviceUnder(p));
       this.dragStart = null;
@@ -419,11 +427,31 @@ export class ToolController {
     }
   }
 
+  // ── a vaulted ceiling's ridge (Core 0.3, 15.3) ──
+
+  /** One click of the ridge pick: the first point is kept, the second sets the ridge through both. */
+  private pickRidge(picking: { ridge: string; first: Point | null }, point: Point): void {
+    const s = this.store.get();
+    if (s.model === null || !this.editable) return;
+    if (picking.first === null) {
+      this.store.set({ picking: { ridge: picking.ridge, first: point } });
+      return;
+    }
+    if (picking.first[0] === point[0] && picking.first[1] === point[1]) {
+      this.store.set({ notice: { tone: 'info', text: 'A ridge runs through two different points: click a second one along it.' } });
+      return;
+    }
+    const room = picking.ridge;
+    const ridge: [Point, Point] = [picking.first, point];
+    this.store.set({ picking: null });
+    void this.store.apply(`Set the ridge of ${labelOf(s.model, room)}`, [{ op: 'setProperty', id: room, path: '/ceiling/ridge', value: ridge }], { select: () => room });
+  }
+
   // ── walls and separators ──
 
-  private chainDown(p: PointerInfo, tool: 'wall' | 'separator'): void {
+  private chainDown(p: PointerInfo, tool: ChainTool): void {
     const s = this.store.get();
-    const draft = s.draft?.tool === tool ? s.draft : { tool, chain: [] as ChainVertex[], cursor: null, typed: '' };
+    const draft = isChainDraft(s.draft) && s.draft.tool === tool ? s.draft : { tool, chain: [] as ChainVertex[], cursor: null, typed: '' };
     const last = draft.chain[draft.chain.length - 1];
     const snap = this.snapFor(p, last?.point, draft.chain.map((v) => v.point));
     const vertex: ChainVertex = { point: snap.point, junction: snap.kind === 'junction' && snap.ref?.startsWith('~') !== true ? snap.ref : undefined };
@@ -434,15 +462,26 @@ export class ToolController {
     }
     const chain = [...draft.chain, vertex];
     this.store.set({ draft: { ...draft, chain, cursor: snap, typed: '' } });
-    if (isClosed(chain) || (!s.draw.chain && chain.length >= 2)) this.finishChain();
+    if (isClosed(chain) || (tool !== 'slab' && !s.draw.chain && chain.length >= 2)) this.finishChain();
   }
 
-  /** Commit the chain drawn so far as one batch of drawWall (or drawSeparator) composites. */
+  /** Commit the chain drawn so far as one batch of drawWall (or drawSeparator) composites, or as one slab. */
   finishChain(): void {
     const s = this.store.get();
     const draft = s.draft;
-    if ((draft?.tool !== 'wall' && draft?.tool !== 'separator') || s.model === null || s.level === null) return;
+    if (!isChainDraft(draft) || s.model === null || s.level === null) return;
     this.store.set({ draft: { ...draft, chain: [], typed: '' } });
+    if (draft.tool === 'slab') {
+      // A slab's outline is the chain's points, closed or not: at least three (Core 6.7).
+      const points = isClosed(draft.chain) ? draft.chain.slice(0, -1) : draft.chain;
+      if (points.length < 3) {
+        if (points.length > 0) this.store.set({ notice: { tone: 'info', text: 'A slab needs at least three corners: click them, then click the first again or press Enter.' } });
+        return;
+      }
+      const slab = s.draw.slab;
+      void this.store.apply('Draw a slab', addSlab(s.model.document, s.level, points.map((v) => v.point), slab), { select: (created) => created[0] ?? null });
+      return;
+    }
     if (draft.chain.length < 2) return;
     const document = s.model.document;
     const type = draft.tool === 'wall' ? this.store.chosenType(typeChoices(document, 'wallType'), s.draw.wallType) : undefined;
@@ -521,7 +560,7 @@ export class ToolController {
   typeKey(key: string): boolean {
     const s = this.store.get();
     // Drawing from the keyboard: the wall tool takes a typed start point before any click.
-    const draft = s.draft === null && (s.tool === 'wall' || s.tool === 'separator') && this.editable ? { tool: s.tool, chain: [] as ChainVertex[], cursor: null, typed: '' } : s.draft;
+    const draft = s.draft === null && isChainTool(s.tool) && this.editable ? { tool: s.tool, chain: [] as ChainVertex[], cursor: null, typed: '' } : s.draft;
     if (draft === null || draft.tool === 'room') return false;
     if (draft.tool === 'select' && draft.drag === null) return false;
     if ((draft.tool === 'door' || draft.tool === 'window') && draft.hover === null) return false;
@@ -533,7 +572,7 @@ export class ToolController {
       return true;
     }
     const starts = /^[0-9.-]$/.test(key);
-    const drawing = draft.tool === 'wall' || draft.tool === 'separator';
+    const drawing = isChainTool(draft.tool);
     const continues = /^[0-9.'"/ \-a-zA-Z]$/.test(key) || (drawing && /^[,<@]$/.test(key));
     if ((typed === '' && starts) || (typed !== '' && continues)) {
       this.store.set({ draft: { ...draft, typed: typed + key } });
@@ -572,7 +611,7 @@ export class ToolController {
       this.deviceDown(`${lengthText(draft.typed, units)} from ${draft.hover.nearer ?? 'start'}`);
       return true;
     }
-    if (draft.tool === 'wall' || draft.tool === 'separator') {
+    if (isChainDraft(draft)) {
       if (draft.typed.trim() === '') {
         this.finishChain();
         return true;
@@ -593,7 +632,7 @@ export class ToolController {
       const junction = this.level?.junctions.find((j) => j.position[0] === point[0] && j.position[1] === point[1])?.id;
       const chain = [...draft.chain, { point, junction }];
       this.store.set({ draft: { ...draft, chain, typed: '', cursor: { point, kind: 'angle', guides: [], angle } } });
-      if (isClosed(chain) || (!s.draw.chain && chain.length >= 2)) this.finishChain();
+      if (isClosed(chain) || (draft.tool !== 'slab' && !s.draw.chain && chain.length >= 2)) this.finishChain();
       return true;
     }
     if (draft.tool === 'door' || draft.tool === 'window') {
@@ -640,8 +679,8 @@ export class ToolController {
       this.store.set({ draft: { ...draft, typed: '' } });
       return;
     }
-    if ((draft?.tool === 'wall' || draft?.tool === 'separator') && draft.chain.length > 0) {
-      if (draft.chain.length >= 2) this.finishChain();
+    if (isChainDraft(draft) && draft.chain.length > 0) {
+      if (draft.chain.length >= (draft.tool === 'slab' ? 3 : 2)) this.finishChain();
       else this.store.set({ draft: { ...draft, chain: [] } });
       return;
     }
@@ -674,7 +713,7 @@ export class ToolController {
   /** Switch tool, finishing a chain in progress first. */
   setTool(tool: ToolId): void {
     const draft = this.store.get().draft;
-    if ((draft?.tool === 'wall' || draft?.tool === 'separator') && draft.chain.length >= 2) this.finishChain();
+    if (isChainDraft(draft) && draft.chain.length >= (draft.tool === 'slab' ? 3 : 2)) this.finishChain();
     const selection = this.store.get().selection;
     this.store.setTool(tool);
     // A door or a window with a wall selected starts on that wall, centred: Enter places it there,
@@ -773,7 +812,7 @@ export class ToolController {
    */
   aim(key: string): boolean {
     const draft = this.store.get().draft;
-    if ((draft?.tool !== 'wall' && draft?.tool !== 'separator') || draft.chain.length === 0) return false;
+    if (!isChainDraft(draft) || draft.chain.length === 0) return false;
     const angles: Record<string, number> = { ArrowRight: 0, ArrowUp: 90, ArrowLeft: 180, ArrowDown: 270 };
     const angle = angles[key];
     if (angle === undefined) return false;

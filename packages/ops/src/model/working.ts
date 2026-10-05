@@ -3,9 +3,9 @@
  * primitive, and the bookkeeping ID minting needs (1.5).
  *
  * The document's one space of IDs (0.3): an element of one of Core's eleven collections, and — in
- * Ops 0.2, in a working copy that declares "0.2" — a program item (Core §11.1) or an extension
- * element (Core §12.5). Which a working copy declares is read from it as it stands; under Ops 0.1,
- * or in a document that declares "0.1", only the eleven collections hold elements.
+ * Ops 0.2 and 0.3, in a working copy that declares "0.2" or "0.3" — a program item (Core §11.1) or
+ * an extension element (Core §12.5). Which a working copy declares is read from it as it stands;
+ * under Ops 0.1, or in a document that declares "0.1", only the eleven collections hold elements.
  */
 import { cmpStr, getMember, isObject, setMember, type JsonObject } from '../lib/json.js';
 
@@ -25,8 +25,15 @@ export const COLLECTIONS = [
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 
-/** The draft of Floorspec Ops a transaction follows. */
-export type OpsVersion = '0.1' | '0.2';
+/**
+ * The draft of Floorspec Ops a transaction follows. Ops 0.3 adds no operation and no member: it is
+ * Ops 0.2 applied with a Core 0.3 reader (Ops 0.3 §0.4), so everything this package says of "Ops
+ * 0.2" holds of 0.3 too, and only the Core reader differs.
+ */
+export type OpsVersion = '0.1' | '0.2' | '0.3';
+
+/** Ops 0.2 or later: the program and extension elements are elements (0.3). */
+export const atLeast02 = (ops: OpsVersion): boolean => ops !== '0.1';
 
 /** Ops 0.2: the program's items, as addElement names them (2.1). */
 export const ITEMS = 'items';
@@ -67,8 +74,15 @@ export interface ExtCollection {
   readonly elements: JsonObject;
 }
 
-/** Does this document, read by this draft, hold program items and extension elements (0.3)? */
-export const holds02 = (doc: unknown, ops: OpsVersion): boolean => ops === '0.2' && getMember(doc, 'floorspec') === '0.2';
+/**
+ * Does this document, read by this draft, hold program items and extension elements (0.3)? Only
+ * under Ops 0.2 or later, and only when it declares "0.2" or "0.3" (Core §1.2.6).
+ */
+export const holds02 = (doc: unknown, ops: OpsVersion): boolean => {
+  if (!atLeast02(ops)) return false;
+  const v = getMember(doc, 'floorspec');
+  return v === '0.2' || v === '0.3';
+};
 
 /** The program's items of a document, or {} where there are none to address. */
 export function itemsOf(doc: unknown, ops: OpsVersion): JsonObject {
@@ -144,8 +158,9 @@ export class WorkingCopy {
     this.junctionsInA = new Set(Object.keys(this.collection('junctions') ?? {}));
   }
 
+  /** Ops 0.2 or later (Ops 0.3 has 0.2's operations and members). */
   get v02(): boolean {
-    return this.ops === '0.2';
+    return atLeast02(this.ops);
   }
 
   touch(): void {

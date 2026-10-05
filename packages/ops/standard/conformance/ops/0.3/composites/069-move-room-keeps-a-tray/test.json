@@ -1,0 +1,7 @@
+{
+  "description": "moveRoom moves a room whose ceiling is a tray: nothing of the ceiling is set, since a tray's centre is derived from the room polygon, which moves with the walls.",
+  "covers": [
+    "FS-OPS-4.3.1",
+    "FS-OPS-4.3.2"
+  ]
+}

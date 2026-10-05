@@ -1,0 +1,6 @@
+{
+  "description": "A butt join whose through wall still ends at its junction is kept.",
+  "covers": [
+    "FS-OPS-5.3.1"
+  ]
+}

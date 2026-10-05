@@ -1,0 +1,12 @@
+{
+  "description": "The 0.2 suite's document using every member 0.2 adds (model/068 of conformance/core/0.2), exactly as it is there, declaring \"0.2\", read by a reader of 0.3: valid, with the same diagnostics, hash and canonical form as in the 0.2 suite, every value the 0.2 suite derives - the placements of its surface hosts included - and no clear opening; and, derived from the defaults, its rooms' floors at the level's elevation and flat ceilings at its height.",
+  "covers": [
+    "FS-CORE-1.2.2",
+    "FS-CORE-1.2.6",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1",
+    "FS-CORE-15.1.2",
+    "FS-CORE-15.5.1",
+    "FS-CORE-15.6.1"
+  ]
+}

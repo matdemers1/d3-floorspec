@@ -66,7 +66,7 @@ function briefed(): EditorModel {
 describe('reading a brief', () => {
   it('lists items in reading order with what the engine derived for each', () => {
     const v = view(briefed());
-    expect(v.version).toBe('0.2');
+    expect(v.version).toBe('0.3');
     expect(v.derived).toBe(true);
     expect(v.items.map((i) => i.id)).toEqual(['P1', 'P2', 'P3', 'P4', 'P10']);
     const by = Object.fromEntries(v.items.map((i) => [i.id, i]));
@@ -277,7 +277,7 @@ describe('the history and the diff name the brief', () => {
     expect(describeOp({ op: 'addProgramItem', function: 'sleeping', name: 'Bedroom', count: 2, targetArea: '130 sq ft' }, 'imperial', name)).toEqual(['addProgramItem', '“Bedroom” ×2 · 130 sq ft']);
     expect(summarizeBatch([{ op: 'addProgramItem', function: 'kitchen', name: 'Kitchen' }], 'imperial', name)).toBe('Added “Kitchen” to the brief');
     expect(summarizeBatch([{ op: 'removeAdjacency', a: 'P1', b: 'P2', kind: 'required' }], 'imperial', name)).toBe('Unrelated Living and Kitchen');
-    expect(summarizeBatch([{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.2' }], 'imperial', name)).toBe('Upgraded the plan to Floorspec 0.2');
+    expect(summarizeBatch([{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }], 'imperial', name)).toBe('Upgraded the plan to Floorspec 0.3');
     expect(summarizeBatch([{ op: 'setProperty', id: 'R1', path: '/brief', value: 'P2' }], 'imperial', name)).toBe('Linked Kitchen room to Kitchen');
   });
 });

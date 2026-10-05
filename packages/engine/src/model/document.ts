@@ -9,10 +9,11 @@ import type * as R from '../generated/registry-types.js';
 import { big } from '../exact/bigint.js';
 
 /**
- * A document this engine reads: Core 0.2's shape, declaring either draft. A document that declares
- * "0.1" passed Core 0.1's schema, so none of the members 0.2 adds is present in it (1.2.4).
+ * A document this engine reads: Core 0.3's shape, declaring any draft it implements. A document
+ * that declares "0.1" or "0.2" passed that draft's schema, so none of the members a later draft
+ * adds is present in it (1.2.6).
  */
-export type FloorspecDocument = Omit<G.FloorspecCore02Document, 'floorspec'> & { floorspec: '0.1' | '0.2' };
+export type FloorspecDocument = Omit<G.FloorspecCore03Document, 'floorspec'> & { floorspec: '0.1' | '0.2' | '0.3' };
 export type Project = G.Project;
 export type Site = G.Site;
 export type Building = G.Building;
@@ -25,10 +26,27 @@ export type Separator = G.Separator;
 export type Opening = G.Opening;
 export type Room = G.Room;
 export type Slab = G.Slab;
+/** 15.1 (Core 0.3): a room's floor. */
+export type RoomFloor = G.Floor;
+/** 15.2 (Core 0.3): a room's ceiling — flat, tray or vaulted. */
+export type Ceiling = G.Ceiling;
+export type FlatCeiling = G.FlatCeiling;
+export type TrayCeiling = G.TrayCeiling;
+export type VaultedCeiling = G.VaultedCeiling;
 export type Type = G.Type;
 export type WallType = G.WallType;
 export type DoorType = G.DoorType;
 export type WindowType = G.WindowType;
+/** 8.4 (0.3): a door type's operation. */
+export type DoorOperation = G.DoorOperation;
+/** 8.4 (0.3): a window type's operation. */
+export type WindowOperation = G.WindowOperation;
+/** 7.1, 8.4 (0.3): a declared net clear opening — width, height and, for a window only, area. */
+export interface ClearOpening {
+  readonly width: number;
+  readonly height: number;
+  readonly area?: number;
+}
 export type Material = G.Material;
 export type Asset = G.Asset;
 export type Program = G.Program;
@@ -141,6 +159,26 @@ export function openingDimensions(doc: FloorspecDocument, o: Opening): { width?:
   return { ...(width !== undefined && { width }), ...(height !== undefined && { height }), sill };
 }
 
+/**
+ * 7.2, 8.2 (0.3): an opening's effective clear opening — its own `clearOpening`, resolved whole,
+ * else its fill type's; undefined when neither declares one. Never computed (7.4).
+ */
+export function effectiveClearOpening(doc: FloorspecDocument, o: Opening): ClearOpening | undefined {
+  if (o.clearOpening) return o.clearOpening;
+  const fill = o.fill === undefined ? undefined : get(doc.types, o.fill);
+  return fill && fill.kind !== 'wallType' ? fill.clearOpening : undefined;
+}
+
+/** The door and window operations of 8.4 (0.3), in the order of its tables. */
+export const DOOR_OPERATIONS: readonly DoorOperation[] = ['swing', 'doubleSwing', 'doubleActing', 'bypassSlide', 'pocket', 'surfaceSlide', 'bifold', 'overhead', 'cased'];
+export const WINDOW_OPERATIONS: readonly WindowOperation[] = ['fixed', 'casement', 'awning', 'hopper', 'singleHung', 'doubleHung', 'horizontalSlider', 'tiltTurn', 'pivot'];
+
+/**
+ * 1.2.6, 12.5: does the document have a program and extension elements — does it declare "0.2" or a
+ * later draft? In a 0.1 document the program is not a member and top-level extension data is opaque.
+ */
+export const hasCore02Members = (doc: { floorspec: string }): boolean => doc.floorspec !== '0.1';
+
 /** A point of the document as BigInts. */
 export const ipoint = (p: readonly [number, number]): readonly [bigint, bigint] => [big(p[0]), big(p[1])];
 
@@ -157,11 +195,11 @@ export interface ExtElement {
 
 /**
  * 12.5: every extension element of a document, sorted by ID — only in a document that declares
- * "0.2"; in a 0.1 document top-level extension data is opaque, `collections` or not (1.2.4).
+ * "0.2" or "0.3"; in a 0.1 document top-level extension data is opaque, `collections` or not (1.2.6).
  */
 export function extElements(doc: FloorspecDocument): ExtElement[] {
   const out: ExtElement[] = [];
-  if (doc.floorspec !== '0.2') return out;
+  if (!hasCore02Members(doc)) return out;
   for (const [extension, data] of entries(doc.extensions as Record<string, unknown> | undefined)) {
     if (typeof data !== 'object' || data === null || Array.isArray(data)) continue;
     const cs = (data as { collections?: unknown }).collections;

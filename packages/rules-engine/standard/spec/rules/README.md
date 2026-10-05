@@ -1,8 +1,8 @@
 # Floorspec Rules
 
 The normative specification of advisory building-code rules — **Draft 0.1**: rule records, the
-named-measure library, findings and jurisdiction profiles. It evaluates Floorspec Core 0.2
-documents (and so Core 0.1 documents) with the official extensions, and is versioned independently
+named-measure library, findings and jurisdiction profiles. It evaluates Floorspec Core 0.3
+documents (and so Core 0.2 and 0.1 documents) with the official extensions, and is versioned independently
 of Core and Ops (FLR-ADR-008). Findings are advice: they never make a document invalid, never stop
 an edit, and never say that a design meets a code (FLR-ADR-011).
 
@@ -13,8 +13,8 @@ an edit, and never say that a design meets a code (FLR-ADR-011).
 | [2. Rule packs](02-packs.md) | the pack object, names, the CC BY 4.0 licence, coverage, wording and the assurance pattern |
 | [3. Rule records](03-rules.md) | citation, paraphrase, applicability, selection, requirement, exceptions, tests, typing, extension data, severity, provenance |
 | [4. Measures](04-measures.md) | targets, types, exactness, the room of an element, extension members and matches, measure results, deferred measures |
-| [5. Measures of rooms](05-rooms.md) | function, net area, least width, circulation, neighbours, elements in a room |
-| [6. Measures of openings](06-openings.md) | kind, size as drawn, heights above the floor, outside |
+| [5. Measures of rooms](05-rooms.md) | function, net area, least width, circulation, neighbours, elements in a room, ceiling height |
+| [6. Measures of openings](06-openings.md) | kind and operation, size as drawn, heights above the floor, outside, net clear opening |
 | [7. Measures of elements and envelopes](07-elements.md) | members, room, heights, protection, envelopes as declared, obstructions, clear depth in front, overlaps |
 | [8. Wall lines, receptacles, circuits and levels](08-wall-lines.md) | the wall line of a room, receptacle reach, wall run between receptacles, circuits, levels |
 | [9. Findings and the report](09-findings.md) | the report, findings, measured conditions, location, wording, display, order, serialization, the notice |

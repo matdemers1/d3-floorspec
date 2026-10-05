@@ -1,0 +1,74 @@
+{
+  "results": [
+    {
+      "display": "casement",
+      "type": "term",
+      "value": "casement"
+    },
+    {
+      "display": "2' 6\"",
+      "type": "length",
+      "value": 975360
+    },
+    {
+      "display": "3' 8\"",
+      "type": "length",
+      "value": 1430528
+    },
+    {
+      "display": "8.00 sq ft",
+      "type": "area",
+      "value": "1217698725888"
+    },
+    {
+      "display": "not stated",
+      "type": "length",
+      "value": null
+    },
+    {
+      "display": "swing",
+      "type": "term",
+      "value": "swing"
+    },
+    {
+      "display": "2' 8\"",
+      "type": "length",
+      "value": 1040384
+    },
+    {
+      "display": "not stated",
+      "type": "area",
+      "value": null
+    },
+    {
+      "display": "2' 8\"",
+      "type": "length",
+      "value": 1040384
+    },
+    {
+      "display": "2' 4\"",
+      "type": "length",
+      "value": 910336
+    },
+    {
+      "display": "not stated",
+      "type": "area",
+      "value": null
+    },
+    {
+      "display": "not stated",
+      "type": "term",
+      "value": null
+    },
+    {
+      "display": "6' 10\"",
+      "type": "length",
+      "value": 2665984
+    },
+    {
+      "display": "not stated",
+      "type": "length",
+      "value": null
+    }
+  ]
+}

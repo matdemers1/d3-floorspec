@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "addProgramItem",
+      "id": "OFF",
+      "function": "office",
+      "minArea": 14745600000000,
+      "extras": {
+        "source": "interview"
+      }
+    }
+  ]
+}

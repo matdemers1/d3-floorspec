@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "moveOpening",
+      "opening": "O1",
+      "at": "2' from end"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A vault with a ridge and no pitch.",
+  "covers": [
+    "FS-CORE-15.2.1"
+  ]
+}

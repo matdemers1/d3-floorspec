@@ -1,0 +1,6 @@
+{
+  "description": "The Pantry is locked while the Kitchen is made 2' wider: J8 stays (the jog), so the Pantry's content and every junction on its cycle are unchanged, and the batch commits.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

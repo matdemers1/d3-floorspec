@@ -1,0 +1,8 @@
+{
+  "description": "A slab overlapping the room: slabs take no part in room derivation, so the room is exactly rooms/001's.",
+  "covers": [
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.7.1",
+    "FS-CORE-2.6.1"
+  ]
+}

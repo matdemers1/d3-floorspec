@@ -1,0 +1,7 @@
+{
+  "description": "The same wall through addElement: its content is not resolved or checked when it is added, and the result fails validation, FS-INV-002.",
+  "covers": [
+    "FS-OPS-2.1.1",
+    "FS-OPS-2.1.2"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A balcony on a second level at 2700 mm, written counter-clockwise, flush with the level: top 2700 mm, bottom 2500 mm.",
+  "covers": [
+    "FS-CORE-15.7.1",
+    "FS-CORE-6.7.2"
+  ]
+}

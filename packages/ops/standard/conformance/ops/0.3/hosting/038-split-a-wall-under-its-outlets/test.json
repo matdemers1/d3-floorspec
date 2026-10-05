@@ -1,0 +1,8 @@
+{
+  "description": "A wall drawn across the box at x = 4' splits the north wall W2 at (4', 10'). The outlet at 2' stays on W2; the one exactly at 4' goes to the piece that starts there, at 0; those at 9' and at the wall's very end, 12', to that piece at 5' and 8'. W4 is split too, 8' from its start: the outlet 9' along it goes to its second piece. Every outlet derives the same placement as before.",
+  "covers": [
+    "FS-OPS-5.2.2",
+    "FS-OPS-5.2.1",
+    "FS-OPS-2.7.1"
+  ]
+}

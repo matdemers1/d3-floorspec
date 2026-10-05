@@ -1,0 +1,7 @@
+{
+  "description": "W1's top is below its base, and its window would rise above it: FS-INV-303 is not evaluated for an opening whose wall has FS-INV-112.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-5.9.2"
+  ]
+}

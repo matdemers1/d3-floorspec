@@ -1,9 +1,10 @@
 /**
- * The request checker (Ops 0.1: 1.1.1; Ops 0.2: 1.1.2) agrees with schema/ops/0.1 and
+ * The request checker (Ops 0.1: 1.1.1; Ops 0.2 and 0.3: 1.1.2) agrees with schema/ops/0.1 and
  * schema/ops/0.2, the normative shapes of an apply request: for every request of each draft's
  * conformance suite and a corpus of malformed ones, checkRequest — run as that draft — accepts
  * exactly what that draft's schema accepts (numbers written with a fraction or an exponent mapped
- * to non-numbers first, as the schema's $comment says).
+ * to non-numbers first, as the schema's $comment says). Ops 0.3 has no schema of its own: its
+ * requests are Ops 0.2's, so its suite is checked against schema/ops/0.2 (Ops 0.3 §0.4, §1.1).
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -13,7 +14,9 @@ import { describe, expect, it } from 'vitest';
 import { checkRequest, OpsFailure, OP_SHAPES_BY_VERSION, type OpsVersion } from '../src/index.js';
 import { listCases, SUITES } from './suite.js';
 
-const schemaDir = (ops: OpsVersion): string => join(import.meta.dirname, '..', 'standard', 'schema', 'ops', ops);
+/** The schema of each draft's requests: Ops 0.3's is Ops 0.2's. */
+const SCHEMA_OF: Record<OpsVersion, '0.1' | '0.2'> = { '0.1': '0.1', '0.2': '0.2', '0.3': '0.2' };
+const schemaDir = (ops: OpsVersion): string => join(import.meta.dirname, '..', 'standard', 'schema', 'ops', SCHEMA_OF[ops]);
 
 const validators = new Map<OpsVersion, (v: unknown) => boolean>();
 function validator(ops: OpsVersion): (v: unknown) => boolean {
@@ -21,7 +24,7 @@ function validator(ops: OpsVersion): (v: unknown) => boolean {
   if (cached) return cached;
   const ajv = new Ajv2020({ strict: false, allErrors: false });
   for (const f of readdirSync(schemaDir(ops)).filter((n) => n.endsWith('.json'))) ajv.addSchema(JSON.parse(readFileSync(join(schemaDir(ops), f), 'utf8')) as object);
-  const v = ajv.getSchema(`https://d3cloud.io/floorspec/schema/ops/${ops}/request.schema.json`);
+  const v = ajv.getSchema(`https://d3cloud.io/floorspec/schema/ops/${SCHEMA_OF[ops]}/request.schema.json`);
   if (!v) throw new Error('request.schema.json not found');
   const out = (x: unknown): boolean => v(x) as boolean;
   validators.set(ops, out);
@@ -125,8 +128,8 @@ const WELL_FORMED = [
   '{"batch":[{"op":"removeElement","id":"R1"}],"context":{"locks":[{"element":"W1"},{"length":"W1"},{"distance":["W1","W3"]}],"retired":["W9"]}}',
 ];
 
-for (const ops of ['0.1', '0.2'] as const) {
-  describe.runIf(existsSync(schemaDir(ops)))(`the request shape agrees with schema/ops/${ops}`, () => {
+for (const ops of ['0.1', '0.2', '0.3'] as const) {
+  describe.runIf(existsSync(schemaDir(ops)))(`the request shape of Ops ${ops} agrees with schema/ops/${SCHEMA_OF[ops]}`, () => {
     it('lists the same operations', () => {
       const schema = JSON.parse(readFileSync(join(schemaDir(ops), 'operation.schema.json'), 'utf8')) as { $defs: Record<string, { properties?: { op?: { const?: string } } }> };
       const names = Object.values(schema.$defs)

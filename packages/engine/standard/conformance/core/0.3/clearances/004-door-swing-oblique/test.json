@@ -1,0 +1,8 @@
+{
+  "description": "A door on the oblique wall W4, from (4u, 2u) to (0, 0) with u = 1 m: the frame's origin and axes involve sqrt(5), and every footprint corner is rounded once.",
+  "covers": [
+    "FS-CORE-13.1.1",
+    "FS-CORE-13.5.2",
+    "FS-CORE-2.2.1"
+  ]
+}

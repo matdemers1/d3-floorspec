@@ -1,0 +1,6 @@
+{
+  "description": "A door type that declares an operation but no clear opening: nothing is derived for the door's clear opening.",
+  "covers": [
+    "FS-CORE-7.4.2"
+  ]
+}

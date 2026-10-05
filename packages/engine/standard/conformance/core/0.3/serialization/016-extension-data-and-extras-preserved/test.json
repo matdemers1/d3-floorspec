@@ -1,0 +1,11 @@
+{
+  "description": "Extension data and extras keep their content exactly - empty objects and arrays inside them, members named like core defaults, null and booleans - while canonical form only sorts their members and writes their numbers and strings as RFC 8785 does: 1.50 as 1.5, 1E2 as 100, -0 as 0, 1e-7 as 1e-7, 12345678901234567890 as 12345678901234567000. An element's empty extras is removed; a non-empty one stays. None of it is read by derivation: the derived values are exactly model/017's.",
+  "covers": [
+    "FS-CORE-1.6.9",
+    "FS-CORE-1.6.6",
+    "FS-CORE-1.7.1",
+    "FS-CORE-1.7.2",
+    "FS-CORE-9.2.1",
+    "FS-CORE-9.3.1"
+  ]
+}

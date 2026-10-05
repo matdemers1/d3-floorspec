@@ -1,0 +1,8 @@
+{
+  "description": "\"Add a 36-inch door centered between the kitchen and dining room\": the wall between them is W8, 8' long, so the door's near edge is at (3121152 - 1170432) / 2 = 975360. Its width comes from the fill type.",
+  "covers": [
+    "FS-OPS-4.5.3",
+    "FS-OPS-3.5.1",
+    "FS-OPS-3.3.1"
+  ]
+}

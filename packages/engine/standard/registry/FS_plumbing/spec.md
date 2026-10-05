@@ -4,7 +4,7 @@
 > FS_plumbing 0.1.0 is a **Release Candidate** (`registry/README.md`): specified, with a schema and
 > a conformance suite, and frozen unless implementations find a problem. It becomes Ratified only
 > when a second, independent implementation passes its conformance suite (FLR-REQ-092). It builds
-> on Floorspec Core 0.2, which is a Draft.
+> on Floorspec Core 0.2 and 0.3, which are Drafts.
 
 FS_plumbing describes a house's plumbing as a designer draws it: the **fixtures** — water closets,
 lavatories, sinks, tubs, showers, appliance connections — the **water heaters** that feed them hot
@@ -44,6 +44,7 @@ every `MUST` and `MUST NOT` is exercised by the conformance suite in
 | Registry entry | `registry/FS_plumbing/extension.json` |
 | Schema | `registry/FS_plumbing/plumbing.schema.json`, published at `https://d3cloud.io/floorspec/schema/ext/FS_plumbing/0.1.0/plumbing.schema.json` |
 | Requires | nothing |
+| Core drafts | `0.2` and `0.3`: the drafts whose documents it is evaluated for (1.2) |
 | Kinds | `fixtures`, `waterHeaters`, `drains`, `cleanouts` (none requires an asset or a symbol) |
 | Statement IDs | `FS-PLMB-` |
 | Diagnostic codes | `FS-PLMB-SCH-`, `FS-PLMB-INV-`, `FS-PLMB-LINT-` |
@@ -56,7 +57,7 @@ specification says; it is then also a reader that implements FS_plumbing (Core �
 apply when the validator knows the version the document targets (Core §12.2) — normally because it
 is configured with this specification's registry entry.
 
-A validator that implements FS_plumbing 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"` and uses FS_plumbing at a version at which FS_plumbing is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-PLMB-1.2.1 MUST}
+A validator that implements FS_plumbing 0.1.0 MUST evaluate the diagnostics of this specification for a document that declares Floorspec `"0.2"` or `"0.3"` — a Core draft this version lists (1.1) — and uses FS_plumbing at a version at which FS_plumbing is known (Core §12.2) and which equals `0.1.0` (Core §12.3), and MUST NOT evaluate them for any other document. {#FS-PLMB-1.2.1 MUST}
 
 Such a validator MUST NOT evaluate FS_plumbing's diagnostics for a document for which Core's tiers 0 to 4 reported an error, MUST NOT evaluate its invariants (`FS-PLMB-INV-`) when it reported `FS-PLMB-SCH-001`, and MUST NOT evaluate its lints (`FS-PLMB-LINT-`) unless the document is valid. {#FS-PLMB-1.2.2 MUST NOT}
 FS_plumbing's errors are part of tier 4 (Core §10.1) and its lints part of tier 5: an `FS-PLMB-`
@@ -304,5 +305,5 @@ distribution check are built from.
 
 FLR-T-5.4, FLR-REQ-092 (Release Candidate until a second independent implementation), FLR-ADR-001
 (building systems are `FS_` extensions), FLR-ADR-007 (the extension model), FLR-ADR-011 (rules
-advise). Floorspec Core 0.2 chapters 12 and 13; FS_electrical (whose circuits may feed an electric
+advise). Floorspec Core 0.2 and 0.3 chapters 12 and 13; FS_electrical (whose circuits may feed an electric
 water heater); FS_mechanical (fuel-burning appliances and their combustion air).

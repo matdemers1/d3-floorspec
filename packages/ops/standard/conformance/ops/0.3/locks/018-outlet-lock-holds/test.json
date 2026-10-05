@@ -1,0 +1,6 @@
+{
+  "description": "The same lock while the opposite wall W1 moves: W3's junctions stay, the lock holds.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}
