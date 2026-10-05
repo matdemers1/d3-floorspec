@@ -399,6 +399,47 @@ test('every screen and state has no axe violations, in light and in dark', async
   await audit(page, `editor, tablet width, tree ${treeWas === 'true' ? 'folded' : 'open'}`);
   await page.setViewportSize({ width: 1440, height: 900 });
 
+  // ── Building systems (FLR-T-5.7): devices on the plan, the device tool, a device, a panel, a
+  //    circuit, a switch picking what it controls, clearances and the core-only view.
+  const plate = { min: [0, -51200, -76800], max: [32000, 51200, 76800] };
+  await commit([
+    { op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_electrical', value: '0.1.0' },
+    { op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_plumbing', value: '0.1.0' },
+    { op: 'placeElement', id: 'X1', extension: 'FS_electrical', collection: 'panels', host: { mode: 'wallFace', wall: 'WW', side: 'right', at: "4'", height: "5'" }, element: { name: 'P1', fallback: { box: { min: [0, -256000, -512000], max: [128000, 256000, 512000] } }, volts: [120, 240], rating: 200, spaces: 40, clearances: { working: { purpose: 'workingSpace', shape: 'box', min: [0, -512000, -1950720], max: [1280000, 512000, 609280] } } } },
+    { op: 'placeElement', id: 'X2', extension: 'FS_electrical', collection: 'receptacles', host: { mode: 'wallFace', wall: 'WN2', toward: 'Galley', at: "3' from start", height: '42"' }, element: { fallback: { box: plate }, features: ['gfci'] } },
+    { op: 'placeElement', id: 'X3', extension: 'FS_electrical', collection: 'switches', host: { mode: 'wallFace', wall: 'WW', side: 'right', at: "8'", height: "4'" }, element: { fallback: { box: plate }, control: 'threeWay', controls: ['X4'] } },
+    { op: 'placeElement', id: 'X4', extension: 'FS_electrical', collection: 'lights', host: { mode: 'surface', room: 'Great room', surface: 'ceiling', at: [3 * 390144, 15 * 390144] }, element: { fallback: { box: { min: [-128000, -128000, -192000], max: [128000, 128000, 0] } } } },
+    { op: 'placeElement', id: 'X5', extension: 'FS_plumbing', collection: 'waterHeaters', host: { mode: 'surface', room: 'Great room', surface: 'floor', at: [2 * 390144, 2 * 390144] }, element: { fallback: { box: { min: [-358400, -358400, 0], max: [358400, 358400, 1920000] } }, heater: 'storage', energy: 'electric' } },
+    { op: 'setProperty', id: '$document', path: '/extensions/FS_electrical/circuits/C5', value: { panel: 'X1', breaker: 20, volts: 120, space: 1, loads: ['X2'], name: 'Kitchen counter 1' } },
+    { op: 'setProperty', id: '$document', path: '/extensions/FS_electrical/circuits/C6', value: { panel: 'X1', breaker: 15, volts: 120, space: 2, loads: ['X4'], name: 'Lights', protection: ['afci'] } },
+  ]);
+  await expect(tree.getByRole('treeitem', { name: /^Electrical/ })).toBeVisible();
+  await settled(page);
+  await audit(page, 'editor, building systems on the plan');
+  await page.keyboard.press('e');
+  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'Electrical' })).toBeVisible();
+  await audit(page, 'editor, electrical device tool');
+  await page.keyboard.press('Escape');
+  await pick(/^Electrical/, 'editor, a panel selected', true);
+  await page.getByRole('button', { name: /^C5 · Kitchen counter 1/ }).click();
+  await expect(page.getByRole('heading', { name: 'C5 · Kitchen counter 1' })).toBeVisible();
+  await audit(page, 'editor, a circuit selected');
+  await tree.getByRole('treeitem', { name: /^Receptacle X2/ }).click();
+  await expect(page.getByRole('heading', { name: 'Receptacle X2' })).toBeVisible();
+  await audit(page, 'editor, a receptacle selected');
+  await tree.getByRole('treeitem', { name: /^Switch X3/ }).click();
+  await page.getByRole('button', { name: 'Pick on the plan' }).click();
+  await expect(page.getByRole('button', { name: 'Done picking' })).toBeVisible();
+  await audit(page, 'editor, a switch picking what it controls');
+  await page.getByRole('button', { name: 'Done picking' }).click();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Clearances' }).click();
+  await page.getByRole('switch', { name: 'Show as core-only' }).click();
+  await expect(page.locator('.fs-core-note')).toBeVisible();
+  await audit(page, 'editor, clearances and the core-only view');
+  await page.getByRole('switch', { name: 'Show as core-only' }).click();
+  await page.getByRole('button', { name: 'Clearances' }).click();
+
   // ── The dashboard with a pending proposal and a history.
   await page.goto(`/projects/${house}`);
   await expect(page.getByText('Rename the kitchen')).toBeVisible();

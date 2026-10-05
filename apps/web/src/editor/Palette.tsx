@@ -9,6 +9,10 @@ import { formatArea, formatLen, parseLen, parsePoint, prettyLen } from './units'
 import { moveJunction, moveWall } from './ops';
 import { accept, openReview, reject } from './review';
 import { DoorIcon, JunctionIcon, RoomIcon, SelectIcon, SeparatorIcon, WallIcon, WindowIcon } from './icons';
+import { DEVICE_KINDS } from './systems/catalog';
+import { SystemIcon } from './systems/Panels';
+import { parsePlacement } from './systems/typed';
+import { placeDevice } from './systems/ops';
 
 /**
  * The command palette (FLR-T-3.7), ⌘K, the board's "07 · Editor — command palette": every command
@@ -23,7 +27,8 @@ type Step =
   | { kind: 'nudge' }
   | { kind: 'drawFrom' }
   | { kind: 'moveWall'; id: string }
-  | { kind: 'moveJunction'; id: string };
+  | { kind: 'moveJunction'; id: string }
+  | { kind: 'place' };
 
 const ICONS: Partial<Record<string, ReactNode>> = {
   'tool.select': <SelectIcon />,
@@ -121,7 +126,16 @@ export function Palette({ store, tools }: { store: EditorStore; tools: ToolContr
       if (group === 'Tools' && matches(query, 'draw walls from point start typed coordinates')) {
         items.push({ id: 'draw.from', label: 'Draw walls from a point…', description: 'type x, y', leading: <WallIcon />, disabled: state.level === null || state.readOnly !== null || state.compare !== null, onSelect: () => { setStep({ kind: 'drawFrom' }); setQuery(''); return false; } });
       }
+      if (group === 'Tools' && matches(query, 'Place a device by typing… type typed receptacle switch outlet fixture position')) {
+        items.push({ id: 'place.typed', label: 'Place a device by typing…', description: 'receptacle on W12 at 3\' from start, 12" high', leading: <SystemIcon system="electrical" />, disabled: state.level === null || state.readOnly !== null || state.compare !== null, onSelect: () => { setStep({ kind: 'place' }); setQuery(''); return false; } });
+      }
       if (items.length > 0) out.push({ id: group, label: group, items });
+    }
+
+    // Every device kind the systems tools place (FLR-T-5.7), once something is typed.
+    if (query.trim() !== '' && state.readOnly === null && state.compare === null && state.level !== null) {
+      const kinds = DEVICE_KINDS.filter((k) => matches(query, 'place', k.label, k.aliases.join(' '), k.extension)).map((k): CommandPaletteItem => ({ id: `kind.${k.id}`, label: `Place a ${k.label.toLowerCase()}`, description: k.extension, leading: <SystemIcon system={k.system} />, onSelect: () => { tools.useDevice(k.id); } }));
+      if (kinds.length > 0) out.push({ id: 'devices', label: 'Building systems', items: kinds.slice(0, 8) });
     }
 
     if (model !== null) {
@@ -158,7 +172,7 @@ export function Palette({ store, tools }: { store: EditorStore; tools: ToolContr
       onQueryChange={setQuery}
       groups={shown}
       label={LABEL}
-      placeholder={step === null ? 'Type a command, a level, a room…' : step.kind === 'nudge' ? 'A length: 1", 1/2", 10mm' : step.kind === 'moveWall' ? 'A distance: 6", -1\'' : 'A point: x, y'}
+      placeholder={step === null ? 'Type a command, a level, a room…' : step.kind === 'nudge' ? 'A length: 1", 1/2", 10mm' : step.kind === 'moveWall' ? 'A distance: 6", -1\'' : step.kind === 'place' ? 'receptacle on W12 at 3\' from start, 12" high' : 'A point: x, y'}
       emptyMessage={step === null ? `Nothing matches “${query}”` : 'Type a value'}
       footer={
         <>
@@ -173,7 +187,7 @@ export function Palette({ store, tools }: { store: EditorStore; tools: ToolContr
 }
 
 /** Items that open a second step in place rather than run. */
-const OPENS_STEP = new Set(['sel.moveWall', 'sel.moveJunction', 'set.nudge', 'draw.from']);
+const OPENS_STEP = new Set(['sel.moveWall', 'sel.moveJunction', 'set.nudge', 'draw.from', 'place.typed']);
 
 const LABEL = 'Search commands and the plan';
 
@@ -191,8 +205,8 @@ function afterClose(fn: () => unknown): void {
 function elementsOnLevel(model: EditorModel, levelId: string | null): { id: string; label: string; kind: string }[] {
   const level = model.levels.find((l) => l.id === levelId);
   if (level === undefined) return [];
-  const ids = [...level.rooms.map((r) => r.id), ...level.walls.map((w) => w.id), ...level.openings.map((o) => o.id), ...level.separators.map((s) => s.id), ...level.junctions.map((j) => j.id)];
-  return ids.map((id) => ({ id, label: labelOf(model, id), kind: kindOf(model, id) ?? '' }));
+  const ids = [...level.rooms.map((r) => r.id), ...level.walls.map((w) => w.id), ...level.openings.map((o) => o.id), ...level.separators.map((s) => s.id), ...level.junctions.map((j) => j.id), ...level.devices.map((d) => d.id), ...model.records.keys()];
+  return ids.map((id) => ({ id, label: labelOf(model, id), kind: `${kindOf(model, id) ?? ''} ${level.devices.find((d) => d.id === id)?.kindLabel ?? ''}` }));
 }
 
 /** The second step: one item that applies the typed value, or says why it cannot. */
@@ -219,6 +233,15 @@ function stepGroups(store: EditorStore, tools: ToolController, step: Step, query
         : { id: 'bad', label: query.trim() === '' ? 'Type a distance; negative moves it inward' : parsed.ok ? 'Type a distance other than zero' : parsed.reason, disabled: true, onSelect: () => undefined },
     );
     return [{ id: 'move', label: 'Move wall', items }];
+  }
+  if (step.kind === 'place') {
+    const placed = model === null ? null : parsePlacement(query, model, store.get().level, units);
+    items.push(
+      placed?.ok === true && model !== null
+        ? { id: 'place', label: `Place: ${placed.summary}`, description: placed.kind.extension, leading: <SystemIcon system={placed.kind.system} />, onSelect: () => void store.apply(`Place ${placed.kind.label.toLowerCase()}`, placeDevice(model.document, placed.kind, placed.host, { receptacle: placed.receptacle }), { select: (created) => created.find((id) => model.index.get(id) === undefined && /^X\d+$/.test(id)) ?? null }) }
+        : { id: 'bad', label: query.trim() === '' ? 'Type what and where: receptacle on W3 at 2\' from start' : (placed?.ok === false ? placed.reason : 'Nothing to place on'), disabled: true, onSelect: () => undefined },
+    );
+    return [{ id: 'place', label: 'Place a device', items }];
   }
   const parsed = parsePoint(query, units);
   if (step.kind === 'moveJunction') {

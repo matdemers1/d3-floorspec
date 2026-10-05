@@ -1,5 +1,5 @@
 import { apply as applyLocally } from '@floorspec/ops';
-import type { Diagnostic } from '@floorspec/engine';
+import { OFFICIAL_READER, type Diagnostic } from '@floorspec/engine';
 import { decideChangeset, fetchChangeset, fetchChangesetModel, fetchChangesets, HttpFailure, type ChangesetLogEntry } from './api';
 import { readModel, type EditorModel } from './model';
 import type { EditorStore, Review } from './store';
@@ -86,7 +86,7 @@ export function replay(main: EditorModel, log: readonly ChangesetLogEntry[]): { 
   const differs: number[] = [];
   const created: string[] = [];
   for (const [index, entry] of log.entries()) {
-    const result = applyLocally(document, { batch: entry.ops, context: { retired: created } });
+    const result = applyLocally(document, { batch: entry.ops, context: { retired: created } }, OFFICIAL_READER);
     if (result.status === 'rejected') return { status: 'failed', index, diagnostics: result.diagnostics };
     if (JSON.stringify(result.resolved) !== JSON.stringify(entry.resolved)) differs.push(index);
     created.push(...result.created);

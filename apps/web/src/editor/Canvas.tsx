@@ -13,6 +13,9 @@ import { typeChoices } from './ops';
 import { commandById } from './commands';
 import { diffModels, type ModelDiff } from './diff';
 import { reviewDiagnostics, reviewTarget } from './review';
+import { DeviceGhost, DeviceOutline, SystemsLayer } from './systems/Symbols';
+import { kindById } from './systems/catalog';
+import { anchorOf, circuitsOf } from './systems/view';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -119,10 +122,14 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
     };
   };
 
-  const cursor = tool === 'select' ? 'default' : 'crosshair';
+  const picking = useEditor(store, (s) => s.picking !== null);
+  const selection = useEditor(store, (s) => s.selection);
+  const cursor = picking ? 'copy' : tool === 'select' ? 'default' : 'crosshair';
+  // The plan steps back while the systems are being worked on (the board's "23").
+  const focusSystems = tool === 'device' || picking;
 
   return (
-    <div className="fs-canvas" ref={host} data-tool={tool}>
+    <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined}>
       {view !== null ? (
         <svg
           ref={svg}
@@ -153,6 +160,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
             <>
               <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} />
               {layers.dimensions ? <Dimensions view={view} level={level} units={units} /> : null}
+              <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} />
               <DiffLayer store={store} view={view} levelId={level.id} />
               <Findings store={store} view={view} level={level} />
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
@@ -165,6 +173,11 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       ) : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={model} units={units} /> : null}
       <DiffLegend store={store} />
+      {layers.coreOnly ? (
+        <div className="fs-core-note" role="status">
+          Core-only view: each building-system element drawn as a reader without its extension draws it — its fallback box (Floorspec Core 12.6).
+        </div>
+      ) : null}
       {view !== null ? <CanvasChrome store={store} view={view} units={units} /> : null}
     </div>
   );
@@ -390,6 +403,8 @@ export function Outline({ view, level, id, className, pad = 0 }: { view: Viewpor
     const p = S(view, junction.position);
     return <circle className={className} cx={p[0]} cy={p[1]} r={8 + pad} />;
   }
+  const device = level.devices.find((d) => d.id === id);
+  if (device !== undefined) return <DeviceOutline view={view} d={device} className={`${className} fs-hl--ring`} />;
   return null;
 }
 
@@ -570,6 +585,16 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
       </g>
     );
   }
+  if (draft.tool === 'device') {
+    const kind = kindById(draw.device);
+    if (draft.hover === null || kind === undefined) return null;
+    return (
+      <g className="fs-draw" aria-hidden="true">
+        {draft.hover.host.mode === 'wallFace' ? <polygon className="fs-hl fs-hl--hover" points={pts(view, level.walls.find((w) => w.id === (draft.hover?.host as { wall: string }).wall)?.ring ?? [])} /> : null}
+        <DeviceGhost view={view} level={level.id} hover={draft.hover} kind={kind} receptacle={draw.receptacle} />
+      </g>
+    );
+  }
   if (draft.tool === 'room') {
     const hover = draft.hover;
     if (hover === null) return null;
@@ -577,6 +602,16 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
     return (
       <g className="fs-draw" aria-hidden="true">
         <path className={hover.free ? 'fs-draw__anchor' : 'fs-draw__anchor fs-draw__anchor--bad'} d={`M${String(p[0])},${String(p[1] - 8)}l8,8l-8,8l-8,-8z`} />
+      </g>
+    );
+  }
+  // Select: a dragged device, where it would go.
+  if ('drag' in draft && draft.drag?.kind === 'device') {
+    const device = level.devices.find((d) => d.id === (draft.drag as { id: string }).id);
+    if (device?.kind === null || device === undefined) return null;
+    return (
+      <g className="fs-draw" aria-hidden="true">
+        <DeviceGhost view={view} level={level.id} hover={draft.drag.hover} kind={device.kind} receptacle={{ gfci: false, afci: false, usb: false, v240: false }} />
       </g>
     );
   }
@@ -657,6 +692,24 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
       );
     }
   }
+  if (draft?.tool === 'device' && draft.hover !== null) {
+    const hover = draft.hover;
+    const p = S(view, hover.point);
+    const where =
+      hover.problem ??
+      (hover.host.mode === 'wallFace'
+        ? `${hover.host.wall} · ${formatLen(Number(hover.host.at), units)} from start · ${formatLen(Number(hover.host.height), units)} high`
+        : hover.host.mode === 'surface'
+          ? `${labelOf(model, hover.host.room)} · ${hover.host.surface}`
+          : 'Free on the level');
+    out.push(
+      <div key="dev" className="fs-entry" style={{ left: Math.min(p[0] + 14, view.w - 360), top: p[1] - 46 }} role="status" aria-live="polite">
+        <span className="fs-entry__label">{draft.typed !== '' ? `Offset from ${hover.nearer ?? 'start'}` : 'At'}</span>
+        <span className="fs-entry__value">{draft.typed !== '' ? draft.typed : where}</span>
+        {draft.typed !== '' ? <span className="fs-entry__caret" /> : null}
+      </div>,
+    );
+  }
   if (draft?.tool === 'select' && draft.drag?.kind === 'wall') {
     const wall = level.walls.find((w) => w.id === draft.drag?.id);
     if (wall !== undefined) {
@@ -702,6 +755,8 @@ function hoverAnchor(level: LevelView, id: string): Point | null {
   if (o !== undefined) return [(o.start[0] + o.end[0]) / 2, (o.start[1] + o.end[1]) / 2];
   const j = level.junctions.find((x) => x.id === id);
   if (j !== undefined) return j.position;
+  const d = level.devices.find((x) => x.id === id);
+  if (d !== undefined) return anchorOf(d);
   return null;
 }
 
@@ -713,6 +768,11 @@ function describeHover(model: EditorModel, level: LevelView, id: string, units: 
   }
   const opening = level.openings.find((o) => o.id === id);
   if (opening !== undefined) return `${labelOf(model, id)} · ${prettyLen(opening.width, units)} wide`;
+  const device = level.devices.find((d) => d.id === id);
+  if (device !== undefined) {
+    const circuits = circuitsOf(model.document, id);
+    return [labelOf(model, id), device.kindLabel === labelOf(model, id) ? null : device.kindLabel, circuits.length > 0 ? `on ${circuits.join(', ')}` : null].filter((x) => x !== null).join(' · ');
+  }
   return labelOf(model, id);
 }
 

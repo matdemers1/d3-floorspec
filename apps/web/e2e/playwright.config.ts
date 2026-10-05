@@ -12,6 +12,7 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `main-path` — FLR-T-3.9: the P3 exit demo, setup to a compared undo, with the setup token gate.
  *   - `a11y`      — FLR-T-3.9: axe on every screen and significant state, in both themes.
  *   - `program`   — FLR-T-4.2, 4.3: the P4 exit demo, a brief to an accepted layout that meets it.
+ *   - `systems`   — FLR-T-5.7, 5.8: the P5 exit demo, devices and circuits to a moved wall and schedules.
  *
  * Run with:
  *
@@ -19,7 +20,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`). E2E_PORT is the keyboard suite's port; the others take the next three.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`). E2E_PORT is the keyboard suite's port; the others take the next four.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -53,6 +54,7 @@ const SUITES: Suite[] = [
   { name: 'main-path', spec: 'main-path.spec.ts', port: PORT + 1, database: databaseFor('main'), setupToken: true },
   { name: 'a11y', spec: 'a11y.spec.ts', port: PORT + 2, database: databaseFor('a11y'), setupToken: true },
   { name: 'program', spec: 'program.spec.ts', port: PORT + 3, database: databaseFor('program'), setupToken: true },
+  { name: 'systems', spec: 'systems.spec.ts', port: PORT + 4, database: databaseFor('systems'), setupToken: true },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;
