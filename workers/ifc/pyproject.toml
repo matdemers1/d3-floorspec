@@ -1,14 +1,23 @@
 [project]
 name = "floorspec-ifc"
-version = "0.1.0"
-description = "D3 Floorspec IFC worker: Floorspec documents to and from IFC via IfcOpenShell (a separate process, because IfcOpenShell is LGPL)"
+version = "0.2.0"
+description = "D3 Floorspec IFC worker: Floorspec designs to IFC4 ADD2 TC1 Reference View via IfcOpenShell (a separate process, because IfcOpenShell is LGPL)"
 license = "Apache-2.0"
 requires-python = ">=3.13"
-# IfcOpenShell arrives with the IFC export task, not in Phase 0.
-dependencies = []
+# Exact pins, as requirements.in; requirements.lock (with hashes) is what is installed.
+dependencies = [
+  "ifcopenshell==0.8.5",
+  "isodate==0.7.2",
+  "lark==1.3.1",
+  "numpy==2.5.3",
+  "python-dateutil==2.9.0.post0",
+  "shapely==2.1.2",
+  "six==1.17.0",
+  "typing-extensions==4.16.0",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest==9.1.1"]
 
 [build-system]
 requires = ["setuptools>=75"]

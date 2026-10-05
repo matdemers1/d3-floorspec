@@ -1,0 +1,748 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Every IFC mapping",
+    "description": "Floorspec IFC export fixture: one of each Core kind Annex A maps"
+  },
+  "buildings": {
+    "B1": {
+      "name": "House"
+    }
+  },
+  "levels": {
+    "L1": {
+      "name": "Level 1",
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000,
+      "ceilingHeight": 3072000
+    },
+    "L2": {
+      "name": "Level 2",
+      "building": "B1",
+      "elevation": 3456000,
+      "height": 3456000,
+      "floorThickness": 384000,
+      "ceilingHeight": 3072000
+    }
+  },
+  "materials": {
+    "SIDING": {
+      "name": "Lap siding",
+      "color": "#d9d2c3"
+    },
+    "GWB": {
+      "name": "Paint \u00b7 warm white",
+      "color": "#eeebe4"
+    },
+    "STUD": {
+      "name": "Framing",
+      "color": "#e2cfa2"
+    },
+    "OAK": {
+      "name": "White oak strip",
+      "color": "#b98d5f",
+      "metallic": 0,
+      "roughness": 620,
+      "texture": {
+        "asset": "OAKIMG",
+        "size": [
+          97536,
+          1560576
+        ],
+        "rotation": 90000000
+      }
+    },
+    "TILE": {
+      "name": "Porcelain tile",
+      "color": "#cfd3da"
+    },
+    "ROOF": {
+      "name": "Asphalt shingle",
+      "color": "#4d5361",
+      "source": {
+        "library": "https://library.floorspec.org/materials",
+        "version": "0.1.0",
+        "item": "asphalt-shingle"
+      }
+    },
+    "CONC": {
+      "name": "Concrete",
+      "color": "#a8a8a3"
+    },
+    "ACCENT": {
+      "name": "Accent tile",
+      "color": "#2f6f8f"
+    }
+  },
+  "types": {
+    "EXT": {
+      "kind": "wallType",
+      "name": "Exterior wall",
+      "layers": [
+        {
+          "thickness": 32000,
+          "function": "finish",
+          "material": "SIDING"
+        },
+        {
+          "thickness": 204800,
+          "function": "core",
+          "material": "STUD"
+        },
+        {
+          "thickness": 19200,
+          "function": "finish",
+          "material": "GWB"
+        }
+      ],
+      "source": {
+        "library": "https://library.floorspec.org/walls",
+        "version": "0.1.0",
+        "item": "2x8-lap-siding"
+      }
+    },
+    "INT": {
+      "kind": "wallType",
+      "name": "Partition",
+      "layers": [
+        {
+          "thickness": 19200,
+          "function": "finish",
+          "material": "GWB"
+        },
+        {
+          "thickness": 89600,
+          "function": "core",
+          "material": "STUD"
+        },
+        {
+          "thickness": 19200,
+          "function": "finish",
+          "material": "GWB"
+        }
+      ]
+    },
+    "DE": {
+      "kind": "doorType",
+      "name": "Entry door",
+      "width": 1152000,
+      "height": 2688000,
+      "operation": "swing",
+      "clearOpening": {
+        "width": 1036800,
+        "height": 2611200
+      }
+    },
+    "DI": {
+      "kind": "doorType",
+      "name": "Interior door",
+      "width": 1024000,
+      "height": 2688000,
+      "operation": "pocket"
+    },
+    "WN": {
+      "kind": "windowType",
+      "name": "Window",
+      "width": 1536000,
+      "height": 1536000,
+      "sill": 1152000,
+      "operation": "doubleHung",
+      "clearOpening": {
+        "width": 1408000,
+        "height": 640000,
+        "area": 901120000000
+      }
+    },
+    "WC": {
+      "kind": "windowType",
+      "name": "Casement",
+      "width": 768000,
+      "height": 1536000,
+      "sill": 1152000,
+      "operation": "casement"
+    }
+  },
+  "junctions": {
+    "GA": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "GB": {
+      "level": "L1",
+      "position": [
+        0,
+        6912000
+      ]
+    },
+    "GC": {
+      "level": "L1",
+      "position": [
+        9216000,
+        6912000
+      ]
+    },
+    "GD": {
+      "level": "L1",
+      "position": [
+        9216000,
+        0
+      ]
+    },
+    "GE": {
+      "level": "L1",
+      "position": [
+        5376000,
+        0
+      ]
+    },
+    "GF": {
+      "level": "L1",
+      "position": [
+        5376000,
+        6912000
+      ]
+    },
+    "UA": {
+      "level": "L2",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "UB": {
+      "level": "L2",
+      "position": [
+        0,
+        6912000
+      ]
+    },
+    "UC": {
+      "level": "L2",
+      "position": [
+        9216000,
+        6912000
+      ]
+    },
+    "UD": {
+      "level": "L2",
+      "position": [
+        9216000,
+        0
+      ]
+    },
+    "UE": {
+      "level": "L2",
+      "position": [
+        6144000,
+        0
+      ]
+    },
+    "UF": {
+      "level": "L2",
+      "position": [
+        6144000,
+        6912000
+      ]
+    },
+    "UG": {
+      "level": "L2",
+      "position": [
+        4480000,
+        0
+      ]
+    },
+    "UH": {
+      "level": "L2",
+      "position": [
+        1152000,
+        0
+      ]
+    },
+    "UI": {
+      "level": "L2",
+      "position": [
+        1152000,
+        3264000
+      ]
+    },
+    "UK": {
+      "level": "L2",
+      "position": [
+        4480000,
+        3264000
+      ]
+    }
+  },
+  "walls": {
+    "GAB": {
+      "level": "L1",
+      "start": "GA",
+      "end": "GB",
+      "type": "EXT"
+    },
+    "GBF": {
+      "level": "L1",
+      "start": "GB",
+      "end": "GF",
+      "type": "EXT"
+    },
+    "GFC": {
+      "level": "L1",
+      "start": "GF",
+      "end": "GC",
+      "type": "EXT"
+    },
+    "GCD": {
+      "level": "L1",
+      "start": "GC",
+      "end": "GD",
+      "type": "EXT",
+      "finishes": {
+        "right": {
+          "material": "TILE",
+          "regions": [
+            {
+              "from": 640000,
+              "to": 2560000,
+              "bottom": 1152000,
+              "top": 1920000,
+              "material": "ACCENT"
+            }
+          ]
+        }
+      }
+    },
+    "GDE": {
+      "level": "L1",
+      "start": "GD",
+      "end": "GE",
+      "type": "EXT"
+    },
+    "GEA": {
+      "level": "L1",
+      "start": "GE",
+      "end": "GA",
+      "type": "EXT"
+    },
+    "GEF": {
+      "level": "L1",
+      "start": "GE",
+      "end": "GF",
+      "type": "INT"
+    },
+    "UAB": {
+      "level": "L2",
+      "start": "UA",
+      "end": "UB",
+      "type": "EXT"
+    },
+    "UBF": {
+      "level": "L2",
+      "start": "UB",
+      "end": "UF",
+      "type": "EXT"
+    },
+    "UFC": {
+      "level": "L2",
+      "start": "UF",
+      "end": "UC",
+      "type": "EXT"
+    },
+    "UCD": {
+      "level": "L2",
+      "start": "UC",
+      "end": "UD",
+      "type": "EXT"
+    },
+    "UDE": {
+      "level": "L2",
+      "start": "UD",
+      "end": "UE",
+      "type": "EXT"
+    },
+    "UEG": {
+      "level": "L2",
+      "start": "UE",
+      "end": "UG",
+      "type": "EXT"
+    },
+    "UGH": {
+      "level": "L2",
+      "start": "UG",
+      "end": "UH",
+      "type": "EXT"
+    },
+    "UHA": {
+      "level": "L2",
+      "start": "UH",
+      "end": "UA",
+      "type": "EXT"
+    },
+    "UEF": {
+      "level": "L2",
+      "start": "UE",
+      "end": "UF",
+      "type": "INT"
+    }
+  },
+  "separators": {
+    "S1": {
+      "level": "L2",
+      "start": "UH",
+      "end": "UI"
+    },
+    "S2": {
+      "level": "L2",
+      "start": "UI",
+      "end": "UK"
+    },
+    "S3": {
+      "level": "L2",
+      "start": "UK",
+      "end": "UG"
+    }
+  },
+  "openings": {
+    "FRONT": {
+      "wall": "GDE",
+      "offset": 1024000,
+      "fill": "DE",
+      "name": "Front door",
+      "hinge": "end",
+      "swing": "left"
+    },
+    "KITD": {
+      "wall": "GEF",
+      "offset": 4608000,
+      "fill": "DI",
+      "name": "Kitchen door",
+      "hinge": "start"
+    },
+    "GW1": {
+      "wall": "GAB",
+      "offset": 3840000,
+      "fill": "WN"
+    },
+    "GW2": {
+      "wall": "GBF",
+      "offset": 1920000,
+      "fill": "WN",
+      "clearOpening": {
+        "width": 1300000,
+        "height": 600000,
+        "area": 780000000000
+      }
+    },
+    "GW3": {
+      "wall": "GFC",
+      "offset": 1152000,
+      "fill": "WC"
+    },
+    "GW4": {
+      "wall": "GCD",
+      "offset": 1920000,
+      "fill": "WN"
+    },
+    "BEDD": {
+      "wall": "UEF",
+      "offset": 4608000,
+      "fill": "DI",
+      "name": "Bedroom door"
+    },
+    "UW1": {
+      "wall": "UAB",
+      "offset": 4096000,
+      "fill": "WN"
+    },
+    "UW2": {
+      "wall": "UBF",
+      "offset": 2304000,
+      "fill": "WN"
+    },
+    "UW3": {
+      "wall": "UFC",
+      "offset": 768000,
+      "fill": "WN"
+    },
+    "UW4": {
+      "wall": "UCD",
+      "offset": 1920000,
+      "fill": "WN"
+    },
+    "HOLE": {
+      "wall": "UGH",
+      "offset": 640000,
+      "width": 768000,
+      "height": 2048000,
+      "name": "Pass-through"
+    }
+  },
+  "rooms": {
+    "LIV": {
+      "level": "L1",
+      "anchor": [
+        2560000,
+        5120000
+      ],
+      "name": "Living",
+      "function": "living",
+      "floorFinish": "OAK",
+      "wallFinish": "GWB",
+      "brief": "PL"
+    },
+    "KIT": {
+      "level": "L1",
+      "anchor": [
+        7296000,
+        3840000
+      ],
+      "name": "Kitchen",
+      "function": "kitchen",
+      "floorFinish": "TILE",
+      "ceiling": {
+        "kind": "tray",
+        "border": 384000,
+        "depth": 192000
+      },
+      "ceilingFinish": "GWB",
+      "brief": "PK"
+    },
+    "LOFT": {
+      "level": "L2",
+      "anchor": [
+        3072000,
+        5120000
+      ],
+      "name": "Loft",
+      "function": "living",
+      "floorFinish": "OAK",
+      "floor": {
+        "offset": 0,
+        "thickness": 384000
+      }
+    },
+    "BED": {
+      "level": "L2",
+      "anchor": [
+        7680000,
+        3456000
+      ],
+      "name": "Bedroom",
+      "function": "sleeping",
+      "floorFinish": "OAK",
+      "ceiling": {
+        "kind": "vaulted",
+        "ridge": [
+          [
+            7680000,
+            0
+          ],
+          [
+            7680000,
+            6912000
+          ]
+        ],
+        "pitch": {
+          "rise": 4,
+          "run": 12
+        }
+      },
+      "brief": "PB"
+    }
+  },
+  "stairs": {
+    "ST1": {
+      "level": "L1",
+      "to": "L2",
+      "position": [
+        1280000,
+        768000
+      ],
+      "width": 1152000,
+      "tread": 320000,
+      "risers": 14,
+      "form": {
+        "kind": "lShaped",
+        "turn": "left",
+        "risersBeforeTurn": 7
+      },
+      "name": "Stair",
+      "handrail": {
+        "height": 1088000
+      }
+    }
+  },
+  "roofs": {
+    "RF": {
+      "level": "L2",
+      "footprint": [
+        [
+          -128000,
+          -128000
+        ],
+        [
+          9344000,
+          -128000
+        ],
+        [
+          9344000,
+          7040000
+        ],
+        [
+          -128000,
+          7040000
+        ]
+      ],
+      "pitch": {
+        "rise": 6,
+        "run": 12
+      },
+      "overhang": 384000,
+      "material": "ROOF",
+      "name": "Hip roof",
+      "thickness": 256000
+    }
+  },
+  "site": {
+    "trueNorth": 15000000,
+    "location": {
+      "latitude": 42360100,
+      "longitude": -71058900
+    },
+    "boundary": [
+      [
+        -3840000,
+        -7680000
+      ],
+      [
+        16640000,
+        -7680000
+      ],
+      [
+        16640000,
+        12800000
+      ],
+      [
+        -3840000,
+        12800000
+      ]
+    ]
+  },
+  "assets": {
+    "OAKIMG": {
+      "path": "textures/white-oak.png",
+      "mediaType": "image/png",
+      "sha256": "3f6c2a8e9d1b4c7f0a5e8d2b6c9f1a4e7d0b3c6f9a2e5d8b1c4f7a0e3d6b9c2f"
+    }
+  },
+  "slabs": {
+    "PATIO": {
+      "level": "L1",
+      "boundary": [
+        [
+          1280000,
+          -3840000
+        ],
+        [
+          5120000,
+          -3840000
+        ],
+        [
+          5120000,
+          -128000
+        ],
+        [
+          1280000,
+          -128000
+        ]
+      ],
+      "thickness": 128000,
+      "purpose": "patio",
+      "material": "CONC",
+      "option": "OPA"
+    },
+    "STOOP": {
+      "level": "L1",
+      "boundary": [
+        [
+          5888000,
+          -1536000
+        ],
+        [
+          7424000,
+          -1536000
+        ],
+        [
+          7424000,
+          -128000
+        ],
+        [
+          5888000,
+          -128000
+        ]
+      ],
+      "thickness": 192000,
+      "purpose": "landing",
+      "material": "CONC"
+    }
+  },
+  "optionSets": {
+    "OS": {
+      "name": "Patio",
+      "primary": "OPA"
+    }
+  },
+  "options": {
+    "OPA": {
+      "set": "OS",
+      "name": "Patio"
+    },
+    "OPB": {
+      "set": "OS",
+      "name": "No patio"
+    }
+  },
+  "program": {
+    "items": {
+      "PL": {
+        "function": "living",
+        "name": "Living room",
+        "count": 1,
+        "targetArea": 32768000000000,
+        "level": "L1"
+      },
+      "PK": {
+        "function": "kitchen",
+        "name": "Kitchen",
+        "minArea": 16384000000000
+      },
+      "PB": {
+        "function": "sleeping",
+        "name": "Bedroom",
+        "count": 1
+      }
+    },
+    "adjacency": [
+      {
+        "a": "PK",
+        "b": "PL",
+        "kind": "required",
+        "weight": 8
+      },
+      {
+        "a": "PB",
+        "b": "PK",
+        "kind": "forbidden"
+      },
+      {
+        "a": "PL",
+        "b": "PB",
+        "kind": "preferred"
+      }
+    ]
+  }
+}
