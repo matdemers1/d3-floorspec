@@ -40,8 +40,11 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   from thousandths); a wall's faces take their resolved finishes (18.6) with each finish region cut
   out of its face; surfaces whose material has a texture carry UVs exactly as 18.3 places them
   (`u = s′/w`, `v = −t′/h`), and tangents when a normal map is embedded. Maps are embedded when the
-  exporter is given their bytes (`images`) and they are PNG or JPEG; **the worker has no asset store
-  to read yet**, so a job's export carries colours and lists the maps it left out in its summary.
+  exporter is given their bytes (`images`) and they are PNG or JPEG. A job reads them from the asset
+  store (`ASSET_DIR`, `ab/cd/<sha256>`; the worker mounts the api's `assets` volume read-only) by
+  the digest the document records, checks the bytes against that digest and their signature
+  against the declared media type, and embeds only digests the job's project has uploaded
+  (`project_assets`); anything else is left out and listed in the job's summary.
   An extension element's fallback model is marked by a child node at its 12.6 placement; the model
   itself is not merged in. USDZ is a stored ZIP, every file 64-byte aligned, root layer `model.usda`
   (metersPerUnit 1, upAxis Y, UsdPreviewSurface), moved so the footprint is centred on the origin

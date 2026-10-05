@@ -19,7 +19,8 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm --filter @d3-floorspec/worker deploy --prod --config.minimum-release-age=0 --config.inject-workspace-packages=true /out
 
 FROM ${NODE_IMAGE} AS runtime
-ENV NODE_ENV=production WORKER_HEARTBEAT_FILE=/tmp/worker-heartbeat
+# ASSET_DIR: the api's asset volume, mounted read-only (deploy/compose.yml), for the maps a 3D export embeds.
+ENV NODE_ENV=production WORKER_HEARTBEAT_FILE=/tmp/worker-heartbeat ASSET_DIR=/assets
 WORKDIR /app
 COPY --from=build /out ./
 USER node

@@ -10,6 +10,7 @@ export { buildScene, sceneOf, getMesher, linear, tileUV, DEFAULTS, MAP_ROLES, ty
 export { writeGlb, readGlb, type GlbOptions, type GlbResult, type ImageSource } from './glb.js';
 export { writeUsdz, usdaOf, type UsdzResult } from './usdz.js';
 export { storeZip, readStoreZip } from './zip.js';
+export { assetDirImages, looksLike } from './assets.js';
 
 export interface VersionFacts {
   readonly hash: string;

@@ -3,8 +3,25 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { MAX_PENDING } from '../../src/routes/exports.js';
 import { Browser, reset, setupOperator, start, testDb, tokenFor, TEST_ENV, type Reply, type Running } from './helpers.js';
 import { readFileSync } from 'node:fs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { Prisma } from '../../src/generated/prisma/client.js';
 import { projectWithDocument } from './drawings-support.js';
+import { upload, type UploadedAsset } from './assets-support.js';
+import { tilePng } from '../support/images.js';
+import { contentHash } from '@floorspec/engine';
+
+/** The Khronos glTF validator, as the worker's tests load it (a dev dependency of the worker). */
+const { validateBytes } = createRequire(new URL('../../../worker/package.json', import.meta.url))('gltf-validator') as {
+  validateBytes: (bytes: Uint8Array, options: Record<string, unknown>) => Promise<{ issues: { numErrors: number; numWarnings: number; messages: { code: string; message: string }[] } }>;
+};
+
+/** Core 0.3's tiled backsplash: a material with a photo texture (FLR-T-9.2 embeds it from the asset store). */
+const BACKSPLASH = JSON.parse(
+  readFileSync(new URL('../../../../packages/engine/standard/conformance/core/0.3/materials/008-tile-photo-on-the-backsplash/input.json', import.meta.url), 'utf8'),
+) as Prisma.InputJsonObject;
 
 /** The L-shaped stair and hip roof house (FLR-T-9.7): a roof plan sheet and file. */
 const L_STAIR = JSON.parse(readFileSync(new URL('../../../web/e2e/fixtures/l-stair-hip-roof.json', import.meta.url), 'utf8')) as Prisma.InputJsonObject;
@@ -35,6 +52,7 @@ interface ExportView {
     size: number;
     sha256: string;
     sheets?: { number: string; title: string }[];
+    textures?: { embedded: string[]; omitted: { asset: string; reason: string }[] };
     files?: string[];
     design?: Record<string, string> | null;
     levels?: string[];
@@ -329,5 +347,56 @@ describe('drawing exports', () => {
     expect(asked.status, asked.text).toBe(202);
     await drain.runOnce();
     expect((await token.get(`/api/projects/${id}/exports/${view(asked).id}/file`)).status).toBe(200);
+  });
+});
+
+describe('3D exports embed the maps in the asset store (FLR-T-9.2)', () => {
+  let running: Running;
+  let dir: string;
+
+  beforeAll(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'flr-export-assets-'));
+    running = await start({ env: { ASSET_DIR: dir } });
+  });
+  afterAll(async () => {
+    await running.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+  beforeEach(async () => {
+    await reset(db);
+  });
+
+  it('reads an uploaded texture from the store by its SHA-256 and embeds it: a .glb with no validator errors', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, BACKSPLASH, 'Backsplash tile');
+    const up = await upload(running.url, operator, id, tilePng(64, 64, { tile: 16 }), { name: 'tile.png', contentType: 'image/png' });
+    expect(up.status, up.text).toBe(201);
+    const a = (up.body as { asset: UploadedAsset }).asset;
+    // The model now names the uploaded file, as the editor's ops would put it there.
+    const doc = { ...BACKSPLASH, assets: { 'TILE-PHOTO': { path: a.path, sha256: a.sha256, mediaType: a.mediaType, byteLength: a.byteLength } } } as Prisma.InputJsonObject;
+    const hash = contentHash(doc);
+    await db.version.upsert({ where: { hash }, create: { hash, document: doc }, update: {} });
+    await db.head.update({ where: { projectId_name: { projectId: id, name: 'main' } }, data: { versionHash: hash } });
+    const asked = await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf' });
+    expect(asked.status, asked.text).toBe(202);
+    // Another project naming the same digest has not uploaded it: its export carries no map.
+    const { id: other } = await projectWithDocument(db, operator, doc, 'Borrowed tile');
+    const borrowed = view(await operator.post(`/api/projects/${other}/exports`, { kind: 'gltf' }));
+
+    // The worker's drain, reading the same directory the api writes (the compose file mounts it read-only).
+    const drain = createDrain({ databaseUrl: TEST_ENV.DATABASE_URL, assetDir: dir, log: () => undefined });
+    try {
+      expect(await drain.runOnce()).toBe(2);
+    } finally {
+      await drain.stop();
+    }
+    const done = view(await operator.get(`/api/projects/${id}/exports/${view(asked).id}`));
+    expect(done.status, done.error ?? '').toBe('done');
+    expect(done.result?.textures).toEqual({ embedded: ['TILE-PHOTO'], omitted: [] });
+    const glb = await download(operator, `${running.url}${done.download ?? ''}`);
+    const report = await validateBytes(glb.bytes, { maxIssues: 0, writeTimestamp: false, format: 'glb' });
+    expect(report.issues.numErrors, report.issues.messages.map((m) => `${m.code} ${m.message}`).join('\n')).toBe(0);
+    const theirs = view(await operator.get(`/api/projects/${other}/exports/${borrowed.id}`));
+    expect(theirs.result?.textures).toEqual({ embedded: [], omitted: [{ asset: 'TILE-PHOTO', reason: 'its bytes were not available to the exporter' }] });
   });
 });

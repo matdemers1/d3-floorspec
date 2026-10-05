@@ -67,6 +67,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      # The api's uploaded textures, read-only: glTF and USDZ exports embed their PNG and JPEG maps
+      # (FLR-T-9.2). The image sets ASSET_DIR=/assets.
+      - assets:/assets:ro
     # Its healthcheck is the image's own: the heartbeat file must be younger than two minutes.
 
   # IFC4 exports (FLR-T-9.4): IfcOpenShell is LGPL, so it runs here, in its own image. It listens on
