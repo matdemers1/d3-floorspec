@@ -253,3 +253,61 @@ group('oblique walls', () => {
     expect(describe(doc)).toContain(`wall WC, ≈8' 5-13/16"`);
   });
 });
+
+group('Core 0.2: the program and extension elements', () => {
+  function briefed(): Record<string, unknown> {
+    const d = load('three-room-house') as Record<string, unknown> & { rooms: Record<string, Record<string, unknown>> };
+    d.floorspec = '0.2';
+    d.rooms['BED']!.brief = 'BEDS';
+    d.rooms['KIT']!.brief = 'KITCHEN';
+    d.program = {
+      items: { BEDS: { function: 'sleeping', name: 'Bedrooms', count: 2, minArea: 1 }, KITCHEN: { function: 'kitchen' } },
+      adjacency: [{ a: 'KITCHEN', b: 'BEDS', kind: 'forbidden' }],
+    };
+    d.extensionsUsed = { FS_furniture: '0.1' };
+    d.extensions = {
+      FS_furniture: {
+        collections: {
+          pieces: {
+            BED1: {
+              name: 'Queen bed',
+              fallback: { level: 'MAIN', box: { min: [0, 0, 0], max: [1600000, 2000000, 600000] } },
+              host: { mode: 'surface', room: 'BED', surface: 'floor', position: d.rooms['BED']!.anchor, rotation: 90000000 },
+            },
+          },
+        },
+      },
+    };
+    return d;
+  }
+
+  it('lists every item with its rooms, met or unmet, and every adjacency', () => {
+    const s = describeJson(briefed());
+    expect(s.valid).toBe(true);
+    expect(s.program!.items).toEqual([
+      { id: 'BEDS', name: 'Bedrooms', function: 'sleeping', count: 2, rooms: ['BED'], countMet: false, minAreaMet: true },
+      { id: 'KITCHEN', function: 'kitchen', count: 1, rooms: ['KIT'], countMet: true },
+    ]);
+    expect(s.program!.adjacency).toHaveLength(1);
+    expect(s.program!.adjacency[0]).toMatchObject({ a: 'KITCHEN', b: 'BEDS', kind: 'forbidden' });
+    const t = describe(briefed());
+    expect(t).toContain('## Program');
+    expect(t).toContain('- BEDS "Bedrooms" — sleeping: 1 of 2 rooms (BED), count NOT met, minimum area met');
+  });
+
+  it('lists extension elements by level, with their hosts and placements, and in a room section', () => {
+    const s = describeJson(briefed());
+    expect(s.levels[0]!.elements).toEqual([
+      { id: 'BED1', name: 'Queen bed', kind: 'FS_furniture:pieces', host: { mode: 'surface', room: 'BED', surface: 'floor' }, placement: expect.objectContaining({ facing: 90000000 }) },
+    ]);
+    expect(describe(briefed())).toContain('- FS_furniture:pieces BED1 "Queen bed": on the floor of BED; at [');
+    expect(describeJson(briefed(), { room: 'BED' }).levels[0]!.elements!.map((e) => e.id)).toEqual(['BED1']);
+    expect(describeJson(briefed(), { room: 'KIT' }).levels[0]!.elements).toEqual([]);
+  });
+
+  it('says nothing new about a 0.1 document', () => {
+    const s = describeJson(text('three-room-house'));
+    expect(s.program).toBeUndefined();
+    expect(s.levels[0]!.elements).toBeUndefined();
+  });
+});
