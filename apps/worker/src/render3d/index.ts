@@ -206,6 +206,34 @@ export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design
   return { png: encodePng(rgb, width, height), width, height, camera: camera.label, design: scene.design };
 }
 
+export interface ViewOptions {
+  readonly camera?: Preset;
+  /** Cut away above this level (as `renderScene`). */
+  readonly level?: string;
+  /** Pixels, any aspect: a drawing sheet's 3D panel is the panel's shape. */
+  readonly width: number;
+  readonly height: number;
+  /** Linear RGB behind the model. Default white: a drawing's paper. */
+  readonly background?: Vec3;
+  /** A ground plate under the house. Default false. */
+  readonly ground?: boolean;
+}
+
+/**
+ * A named view of a scene at any size, for a drawing (FLR-T-9.7): the model alone on the paper's
+ * colour, framed on what is drawn. Null when nothing is drawn (an empty model, or a cut below it).
+ */
+export function renderView(scene: Scene, options: ViewOptions): { png: Uint8Array; width: number; height: number; camera: string } | null {
+  const { width, height } = options;
+  for (const v of [width, height]) if (!Number.isInteger(v) || v < 16 || v > MAX_WIDTH) throw new RangeError(`a view is 16 to ${String(MAX_WIDTH)} pixels each way`);
+  const tris = sceneTriangles(scene, { ...(options.level === undefined ? {} : { level: options.level }), ground: options.ground ?? false });
+  if (tris.every((t) => t.key === -2)) return null;
+  const camera = presetCamera(options.camera ?? 'sw', boundsOf(tris), width / height);
+  const bg = options.background ?? [1, 1, 1];
+  const rgb = rasterize(drawList(tris), camera, { width, height, supersample: 2, sky: [bg, bg] });
+  return { png: encodePng(rgb, width, height), width, height, camera: camera.label };
+}
+
 /** Render a version's 3D model (FLR-T-8.5). Throws for an invalid model, an unknown room or level. */
 export async function render3dPng(document: object, options: Render3dOptions = {}): Promise<Render3dResult> {
   if (options.camera !== undefined && !PRESETS.includes(options.camera)) throw new RangeError(`camera is one of ${PRESETS.join(', ')}`);

@@ -32,7 +32,7 @@ export interface ExportParams {
   /** The version's number on main, when it has one, and when it was made (ISO 8601). */
   readonly versionSeq?: number | null;
   readonly versionAt: string;
-  /** glTF and USDZ (FLR-T-9.2): the design to export, option set → option; default the primary. */
+  /** The design to export or draw (FLR-T-9.2, FLR-T-9.7), option set → option; default the primary. IFC ignores it. */
   readonly design?: Record<string, string>;
 }
 
@@ -101,17 +101,18 @@ function options(job: JobRow) {
     version: { hash: job.versionHash, seq: p.versionSeq ?? null, at: new Date(p.versionAt) },
     ...(p.levels === undefined ? {} : { levels: p.levels }),
     ...(p.page === undefined ? {} : { page: p.page }),
+    ...(p.design === undefined ? {} : { design: p.design }),
   };
 }
 
 export const handlers: Readonly<Record<string, Handler>> = {
   'export.pdf': async (document, job) => {
     const pdf = await exportPdf(document, options(job));
-    return { name: pdf.name, contentType: pdf.contentType, bytes: pdf.bytes, summary: { sheets: pdf.sheets.map((s) => ({ number: s.number, title: s.title })) } };
+    return { name: pdf.name, contentType: pdf.contentType, bytes: pdf.bytes, summary: { sheets: pdf.sheets.map((s) => ({ number: s.number, title: s.title })), design: pdf.design } };
   },
   'export.dxf': (document, job) => {
     const dxf = exportDxf(document, options(job));
-    return Promise.resolve({ name: dxf.name, contentType: dxf.contentType, bytes: dxf.bytes, summary: { files: dxf.files.map((f) => f.name) } });
+    return Promise.resolve({ name: dxf.name, contentType: dxf.contentType, bytes: dxf.bytes, summary: { files: dxf.files.map((f) => f.name), design: dxf.design } });
   },
   // FLR-T-9.4: derived here, written by the Python IFC worker (IfcOpenShell is LGPL: its own process).
   'export.ifc': async (document, job) => {

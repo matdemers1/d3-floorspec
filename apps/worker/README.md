@@ -11,6 +11,21 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   NOT FOR CONSTRUCTION mark; PDFKit, fonts embedded) and `exportDxf` (AutoCAD 2000 DXF per level in
   millimetres on NCS-pattern layers; a ZIP for several). Both are pure functions of the document
   and the version's facts: the same version gives the same bytes, on a laptop or in the image.
+  FLR-T-9.7: **stairs** on the plan of the level they rise from — treads under the 4 ft cut solid,
+  above it dashed, the cut line across the first tread above it with a break, UP along the
+  walkline from the foot — and again on the level they arrive at, every tread solid with DN from
+  the head (render2d's `stairSymbol` geometry; `symbols.ts` adds only the break and the labels).
+  **Roofs**: each roof's eave dashed on its own level's plan (it is above the cut), and a **roof
+  plan** sheet (`A-1nn` after the floor plans) and DXF file whenever a drawn level carries a roof:
+  eave and gable ends, ridges, hips and valleys (render2d's `roofSymbol`), a slope arrow downhill
+  on every pitched face with its pitch (`6:12`; degrees for a metric project), the exterior walls
+  below dashed. DXF layers `A-FLOR-STRS`, `A-FLOR-STRS-OVHD` (hidden linetype), `A-FLOR-STRS-IDEN`,
+  `A-ROOF-OVHD` (dashed), `A-ROOF-OTLN`, `A-ROOF-RIDG`, `A-ROOF-VLLY`, `A-ROOF-IDEN`. **Designs**:
+  the job's `design` (Core 19.6) chooses which design is drawn, the primary by default; the title
+  block's DESIGN line and the DXF note say which (`Deck — Deck · Kitchen — B: open`). The sheet's
+  **3D view** is the mesh — `render3d`'s `renderView` over the same scene the glTF export writes,
+  cut away above the sheet's level (the whole model on the roof plan and schedule sheets) — as a
+  PNG at 300 dpi of the panel, replacing the painter's-algorithm axonometric.
 - `src/export/ifc/` — FLR-T-9.4: `exportIfc` evaluates and derives the version with the engine and
   POSTs `{document, derived, hash, design, file}` to the Python IFC worker (`workers/ifc`,
   `IFC_WORKER_URL`, default `http://ifc-worker:3410` in production and `http://127.0.0.1:3410`

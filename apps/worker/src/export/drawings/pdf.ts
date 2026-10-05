@@ -3,7 +3,8 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="./pdfkit.d.ts" />
 /**
- * The PDF writer (FLR-T-9.3): draws composed sheets with PDFKit, vector throughout, with the plan
+ * The PDF writer (FLR-T-9.3): draws composed sheets with PDFKit, vector throughout but for the 3D
+ * view (a PNG, FLR-T-9.7), with the plan
  * fonts (Inter and JetBrains Mono, from @fontsource at pinned versions) embedded as subsets.
  *
  * Deterministic: the document's dates are the version's time, not the clock, so its file ID —
@@ -82,6 +83,10 @@ export function openPdf(info: PdfInfo, fontDir?: string): PdfCanvas {
         doc.path(p.d).clip();
         draw(p.children);
         doc.restore();
+        continue;
+      }
+      if (p.t === 'image') {
+        doc.image(Buffer.from(p.png.buffer, p.png.byteOffset, p.png.byteLength), p.x, p.y, { width: p.w, height: p.h });
         continue;
       }
       if (p.t === 'text') {

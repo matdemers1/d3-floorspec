@@ -46,6 +46,7 @@ declare module 'pdfkit' {
     fill(color?: string, rule?: 'even-odd' | 'nonzero'): this;
     stroke(color?: string): this;
     fillAndStroke(fill?: string, stroke?: string, rule?: 'even-odd' | 'nonzero'): this;
+    image(src: Buffer, x: number, y: number, options?: { width?: number; height?: number }): this;
     end(): void;
   }
 

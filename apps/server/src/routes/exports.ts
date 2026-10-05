@@ -11,8 +11,9 @@ import { MAIN } from '../domain/projects.js';
 /**
  * Drawing exports (FLR-T-9.3): a dimensioned PDF sheet per level, or DXF drawings on NCS-pattern
  * layers; the IFC4 Reference View model (FLR-T-9.4), written by the Python IFC worker; and the 3D
- * model (FLR-T-9.2) as glTF 2.0 binary or USDZ, in one design — the primary unless another is named —
- * which the job records. Asking for one queues a job on the Postgres job queue and answers 202; the worker drains
+ * model (FLR-T-9.2) as glTF 2.0 binary or USDZ. Drawings and 3D models are made in one design — the
+ * primary unless another is named (FLR-T-9.7 for drawings) — which the job records; an IFC export
+ * is of the primary design. Asking for one queues a job on the Postgres job queue and answers 202; the worker drains
  * the queue, and the file is downloaded once the job is done. A job reads one immutable version —
  * main's head unless another version of this project is named — so its file is reproducible.
  */
@@ -28,7 +29,7 @@ const ExportBody = z.strictObject({
   levels: z.array(z.string().min(1).max(64)).min(1).max(64).optional(),
   /** PDF paper; default tabloid (17 × 11 in). */
   page: z.enum(PAGE_NAMES).optional(),
-  /** glTF and USDZ: the design (Core 19.6), option set → option; default the primary design. */
+  /** PDF, DXF, glTF and USDZ: the design (Core 19.6), option set → option; default the primary design. */
   design: z.record(z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/), z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/)).optional(),
 });
 
@@ -106,7 +107,7 @@ export function exportRoutes(db: Db): Routes {
       if (!parsed.success) throw new HttpError(400, 'the export request is not valid', { fields: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) });
       const body = parsed.data;
       const version = await versionFor(tx, project.id, body.version);
-      if (body.design !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'a design is chosen for a glTF or USDZ export');
+      if (body.design !== undefined && body.kind === 'ifc') throw new HttpError(400, 'a design is chosen for a drawing or a 3D model, not an IFC export');
       // Drawn only from geometry the engine can derive: an invalid model is refused now, not as a failed job.
       const ev = evaluate(version.document as object, body.design === undefined ? {} : { design: body.design });
       if (!ev.valid || ev.document === undefined)

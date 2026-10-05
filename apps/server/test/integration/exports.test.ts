@@ -6,6 +6,9 @@ import { readFileSync } from 'node:fs';
 import type { Prisma } from '../../src/generated/prisma/client.js';
 import { projectWithDocument } from './drawings-support.js';
 
+/** The L-shaped stair and hip roof house (FLR-T-9.7): a roof plan sheet and file. */
+const L_STAIR = JSON.parse(readFileSync(new URL('../../../web/e2e/fixtures/l-stair-hip-roof.json', import.meta.url), 'utf8')) as Prisma.InputJsonObject;
+
 /** Core 0.3's kitchen with two option sets: a design to choose (FLR-T-9.2). */
 const KITCHEN_OPTIONS = JSON.parse(
   readFileSync(new URL('../../../../packages/engine/standard/conformance/core/0.3/examples/002-kitchen-options/input.json', import.meta.url), 'utf8'),
@@ -188,21 +191,67 @@ describe('drawing exports', () => {
     expect(await db.auditLog.count({ where: { action: 'export.request', targetId: { in: [gltf.id, usdz.id] } } })).toBe(2);
   });
 
-  it('exports the design asked for, and refuses a design for a drawing or one the model does not have', async () => {
+  it('exports the design asked for, and refuses a design for an IFC export or one the model does not have', async () => {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(db, operator, KITCHEN_OPTIONS, 'Kitchen options');
     const primary = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf' }));
     const chosen = await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf', design: { KS: 'KB' } });
     expect(chosen.status, chosen.text).toBe(202);
     expect(view(chosen).design).toEqual({ KS: 'KB' });
-    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', design: { KS: 'KB' } })).status).toBe(400);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'ifc', design: { KS: 'KB' } })).status).toBe(400);
     expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'usdz', design: { KS: 'NOPE' } })).status).toBe(422);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', design: { KS: 'NOPE' } })).status).toBe(422);
     await drain.runOnce();
     const a = view(await operator.get(`/api/projects/${id}/exports/${primary.id}`));
     const b = view(await operator.get(`/api/projects/${id}/exports/${view(chosen).id}`));
     expect(a.result?.design).toMatchObject({ KS: 'KA' });
     expect(b.result?.design).toMatchObject({ KS: 'KB' });
     expect(a.result?.sha256).not.toBe(b.result?.sha256);
+  });
+
+  it('draws PDF and DXF drawings in the design asked for, and the file says which (FLR-T-9.7)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, KITCHEN_OPTIONS, 'Kitchen options');
+    const pdfA = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' }));
+    const pdfB = await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', design: { KS: 'KB' } });
+    expect(pdfB.status, pdfB.text).toBe(202);
+    expect(view(pdfB)).toMatchObject({ kind: 'pdf', design: { KS: 'KB' } });
+    const dxfB = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf', design: { KS: 'KB' } }));
+    expect(await drain.runOnce()).toBe(3);
+    const state = async (j: ExportView): Promise<ExportView> => view(await operator.get(`/api/projects/${id}/exports/${j.id}`));
+    const a = await state(pdfA);
+    const b = await state(view(pdfB));
+    const d = await state(dxfB);
+    expect(a.status, a.error ?? '').toBe('done');
+    expect(b.status, b.error ?? '').toBe('done');
+    expect(d.status, d.error ?? '').toBe('done');
+    expect(a.result?.design).toEqual({ DS: 'DA', KS: 'KA' });
+    expect(b.result?.design).toEqual({ DS: 'DA', KS: 'KB' });
+    expect(d.result?.design).toEqual({ DS: 'DA', KS: 'KB' });
+    expect(a.result?.sha256).not.toBe(b.result?.sha256);
+    const dxf = new TextDecoder().decode((await download(operator, `${running.url}${d.download ?? ''}`)).bytes);
+    expect(dxf).toContain('DESIGN: Deck \\U+2014 Deck \\U+00B7 Kitchen \\U+2014 B: open');
+  });
+
+  it('draws stairs and a roof plan: a sheet and a DXF of their own (FLR-T-9.7)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, L_STAIR, 'Stair and hip roof house');
+    const pdf = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' }));
+    const dxf = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf' }));
+    expect(await drain.runOnce()).toBe(2);
+    const p = view(await operator.get(`/api/projects/${id}/exports/${pdf.id}`));
+    expect(p.status, p.error ?? '').toBe('done');
+    expect(p.result?.sheets).toEqual([
+      { number: 'A-101', title: 'Level 1 floor plan' },
+      { number: 'A-102', title: 'Level 2 floor plan' },
+      { number: 'A-103', title: 'Roof plan' },
+    ]);
+    const file = await download(operator, `${running.url}${p.download ?? ''}`);
+    // Every sheet's 3D view is a picture of the mesh, embedded.
+    expect((Buffer.from(file.bytes).toString('latin1').match(/\/Subtype \/Image/g) ?? []).length).toBe(3);
+    const x = view(await operator.get(`/api/projects/${id}/exports/${dxf.id}`));
+    expect(x.result?.files).toEqual([expect.stringMatching(/-level-1\.dxf$/), expect.stringMatching(/-level-2\.dxf$/), expect.stringMatching(/-roof-plan\.dxf$/)]);
+    expect(zipNames((await download(operator, `${running.url}${x.download ?? ''}`)).bytes)).toEqual(x.result?.files);
   });
 
   it('refuses what cannot be drawn before it is queued', async () => {
