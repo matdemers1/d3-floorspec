@@ -471,12 +471,14 @@ function SourceRecordButtons({ ctx, extension }: { ctx: SystemsCtx; extension: s
   return null;
 }
 
-function PlacementSection({ ctx, device }: { ctx: SystemsCtx; device: DeviceView | undefined }) {
+export function PlacementSection({ ctx, device }: { ctx: SystemsCtx; device: DeviceView | undefined }) {
   const { model, id, element, units, readOnly } = ctx;
   const host = isObject(element['host']) ? element['host'] : null;
   const label = labelOf(model, id);
   const move = (h: HostRef, what: string) => { ctx.edit(`${what} ${label}`, moveDevice(id, h)); };
-  const room = Object.entries(model.derived?.extensions?.[(model.ext.get(id)?.extension ?? '') as 'FS_electrical']?.rooms ?? {}).find(([, ids]) => ids.includes(id))?.[0];
+  // An extension's rooms are lists of IDs (FS_electrical 6.1) or, for FS_furniture (6.2), objects with `items`.
+  const rooms = (model.derived?.extensions?.[(model.ext.get(id)?.extension ?? '') as 'FS_electrical']?.rooms ?? {}) as Record<string, unknown>;
+  const room = Object.entries(rooms).find(([, v]) => (Array.isArray(v) ? v : Array.isArray((v as { items?: unknown } | null)?.items) ? (v as { items: unknown[] }).items : []).includes(id))?.[0];
   if (host === null) {
     return (
       <Section title="Placement">

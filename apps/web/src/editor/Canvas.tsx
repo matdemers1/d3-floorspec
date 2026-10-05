@@ -14,6 +14,7 @@ import { commandById } from './commands';
 import { diffModels, type ModelDiff } from './diff';
 import { reviewDiagnostics, reviewTarget } from './review';
 import { DeviceGhost, DeviceOutline, SystemsLayer } from './systems/Symbols';
+import { FurnitureLayer } from '../furniture/Plan';
 import { GapMarkers } from './systems/Assistant';
 import { kindById } from './systems/catalog';
 import { anchorOf, circuitsOf } from './systems/view';
@@ -164,6 +165,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
             <>
               <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} />
               {layers.dimensions ? <Dimensions view={view} level={level} units={units} /> : null}
+              <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} />
               <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} />
               {electricalTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={model} units={units} /> : null}
               <DiffLayer store={store} view={view} levelId={level.id} />

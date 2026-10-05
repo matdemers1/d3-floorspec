@@ -25,7 +25,7 @@ import { requestRemove, switchUnits } from './actions';
 import { MaterialSurface } from './Materials';
 import { OptionMembership } from './Options';
 import { WallFinishes } from './Finishes';
-import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, StairIcon, WallIcon, WindowIcon } from './icons';
+import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, SofaIcon, StairIcon, WallIcon, WindowIcon } from './icons';
 import { RoofBody, RoofDrawSettings, StairBody, StairDrawSettings } from './RoofStairFields';
 import { FindingsList } from './Diagnostics';
 import { Layers as LayersIcon, Palette, House } from 'lucide-react';
@@ -48,6 +48,7 @@ import {
   type ClearOpening,
 } from './openings';
 import { ThreeSection } from './three/ThreeSection';
+import { FurnitureBody } from '../furniture/Inspector';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -202,7 +203,7 @@ function Header({ ctx, kind }: { ctx: Ctx; kind: Kind }) {
   const title = kind === 'room' ? labelOf(model, id) : `${labelOf(model, id)}${labelOf(model, id).includes(id) ? '' : ` · ${id}`}`;
   return (
     <div className="fs-inspector__head">
-      <span className="fs-inspector__icon">{kind === 'opening' && level?.openings.find((o) => o.id === id)?.kind === 'window' ? <WindowIcon /> : kind === 'extensionElement' ? <SystemIcon system={systemOfExtension(model.ext.get(id)?.extension ?? '')} /> : kindIcon(kind)}</span>
+      <span className="fs-inspector__icon">{kind === 'opening' && level?.openings.find((o) => o.id === id)?.kind === 'window' ? <WindowIcon /> : kind === 'extensionElement' ? (model.ext.get(id)?.extension === 'FS_furniture' ? <SofaIcon /> : <SystemIcon system={systemOfExtension(model.ext.get(id)?.extension ?? '')} />) : kindIcon(kind)}</span>
       <div className="fs-inspector__title">
         <h2>{title}</h2>
         <p>{subtitle}</p>
@@ -258,6 +259,8 @@ function bodyFor(kind: Kind, ctx: Ctx, focus: string | null): ReactNode {
     case 'material':
       return <MaterialBody ctx={ctx} />;
     case 'extensionElement':
+      // FS_furniture has an inspector of its own (FLR-T-8.3).
+      if (ctx.model.ext.get(ctx.id)?.extension === 'FS_furniture') return <FurnitureBody ctx={ctx} device={ctx.model.levels.flatMap((l) => l.devices).find((d) => d.id === ctx.id)} />;
       return <DeviceBody ctx={ctx} device={ctx.model.levels.flatMap((l) => l.devices).find((d) => d.id === ctx.id)} />;
     case 'circuit':
     case 'stack':

@@ -160,6 +160,8 @@ export function kindOfElement(extension: string, collection: string, element: Js
 
 /** "Receptacle", "Toilet", or the collection's singular for a kind the catalogue does not name. */
 export function kindLabel(extension: string, collection: string, element: Json): string {
+  // An FS_furniture element says what it is by its category (FS_furniture 2.5): "Refrigerator".
+  if (extension === 'FS_furniture' && typeof element['category'] === 'string') return words(element['category']);
   const kind = kindOfElement(extension, collection, element);
   if (kind === null) return collection;
   if (collection === 'fixtures' && typeof element['fixture'] === 'string' && kind.members['fixture'] !== element['fixture']) return words(element['fixture']);

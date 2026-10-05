@@ -4,6 +4,8 @@ import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinne
 import { ArrowLeft, CircleCheck, Command as CommandIcon, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
 import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
 import { MaterialsModal } from './Materials';
+import { FurnitureLibrary } from '../furniture/Browser';
+import { furnitureOf, useFurniture } from '../furniture/state';
 import { navigate, takeParam } from '../lib/router';
 import { EditorStore, useEditor, type ToolId } from './store';
 import { ToolController } from './tools';
@@ -166,6 +168,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
         )}
       </aside>
       <MaterialsModal store={store} />
+      <FurnitureLibrary store={store} />
       <StatusBar store={store} />
       <PromptModal store={store} />
       {status === 'ready' ? <Palette store={store} tools={tools} /> : null}
@@ -409,6 +412,7 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
   const level = useEditor(store, (s) => s.level);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const canDraw = level !== null && readOnly === null;
+  const furnitureOpen = useFurniture(store, (f) => f.open);
   return (
     <nav className="fs-rail" aria-label="Tools">
       {RAIL.map((t) => {
@@ -446,8 +450,8 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
           </Tooltip>
         );
       })}
-      <Tooltip content="Furniture — arrives in P8" side="right">
-        <IconButton label="Furniture" icon={<SofaIcon />} disabled className="fs-rail__later" />
+      <Tooltip content="Furniture and appliances (F)" side="right">
+        <IconButton label="Furniture and appliances" icon={<SofaIcon />} pressed={furnitureOpen} disabled={!canDraw} onClick={() => { furnitureOf(store).set({ open: true, uploading: false }); }} />
       </Tooltip>
       <span className="fs-rail__rule" />
       <Tooltip content="Measure — arrives with dimensions in P4" side="right">

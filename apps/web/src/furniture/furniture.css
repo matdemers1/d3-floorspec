@@ -1,0 +1,238 @@
+/* Furniture (FLR-T-8.3; the board's frame 14 · Furniture & appliances). Tokens only. */
+
+.fs-furn {
+  /* Frame 14: cards and a detail panel side by side, wider than a confirmation. */
+  width: min(1120px, calc(100vw - var(--space-32)));
+}
+.fs-furn__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8) var(--space-12);
+  margin-bottom: var(--space-16);
+}
+.fs-furn__search {
+  flex: 1 1 220px;
+  max-width: 320px;
+}
+.fs-furn__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: var(--space-16);
+  align-items: start;
+}
+.fs-furn__body--upload {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+}
+@media (max-width: 760px) {
+  .fs-furn__body,
+  .fs-furn__body--upload {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.fs-furn__none {
+  margin: 0;
+}
+.fs-furn__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-block-size: 60vh;
+  overflow-y: auto;
+}
+.fs-furn-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  inline-size: 100%;
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  color: var(--color-fg);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.fs-furn-card:hover {
+  background: var(--color-surface-hover);
+}
+.fs-furn-card[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+.fs-furn-card:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-furn-card__symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 96px;
+  padding: var(--space-8);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-sunken);
+}
+.fs-furn-card__symbol img {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+}
+.fs-furn-card__name {
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+.fs-furn-card__size {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+
+.fs-furn__detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-16);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  min-inline-size: 0;
+}
+.fs-furn__title {
+  margin: 0;
+  font-size: var(--text-16);
+  font-weight: var(--weight-semibold);
+}
+.fs-furn__sub {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-furn__stage {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-sunken);
+}
+.fs-furn__stage--inspector {
+  margin: var(--space-8) 0;
+}
+.fs-furn-preview,
+/* Above the editor's rule that sizes every svg as an icon. */
+.fs-editor .fs-furn__stage svg.fs-furn-preview {
+  inline-size: 100%;
+  block-size: 200px;
+}
+.fs-furn-preview__box {
+  fill: var(--color-surface);
+  stroke: var(--color-fg);
+}
+.fs-furn-preview__envelope {
+  fill: var(--color-info);
+  fill-opacity: 0.12;
+  stroke: var(--color-info);
+}
+.fs-furn-preview__label {
+  fill: var(--color-fg);
+  font-family: var(--font-mono);
+  paint-order: stroke;
+  stroke: var(--color-bg-sunken);
+  stroke-width: 0.15em;
+}
+.fs-furn__facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  font-size: var(--text-12);
+}
+.fs-furn__facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+.fs-furn__facts dt {
+  color: var(--color-fg-muted);
+  white-space: nowrap;
+}
+.fs-furn__facts dd {
+  margin: 0;
+  text-align: end;
+}
+.fs-furn__place {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+.fs-furn__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-inline-size: 0;
+}
+.fs-furn__file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-furn__error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-12);
+}
+.fs-furn__turn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-8);
+  margin: var(--space-4) 0 var(--space-8);
+}
+.fs-furn-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-12);
+}
+.fs-furn-notes li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* A plan symbol is line art drawn black on white (FS_furniture 3.3): turned light on the dark theme. */
+[data-theme='dark'] .fs-furn__symbol {
+  filter: invert(0.86) hue-rotate(180deg);
+}
+
+/* On the plan. */
+.fs-furn-item__fill {
+  fill: var(--color-surface-card);
+}
+.fs-furn-item__outline {
+  fill: none;
+  stroke: var(--color-fg-muted);
+  stroke-width: 1.25;
+}
+.fs-furn-item .fs-furn__symbol {
+  opacity: 0.92;
+}
+.fs-furn-item--blocked .fs-furn-item__outline {
+  stroke: var(--color-warning);
+  stroke-width: 2;
+}
+.fs-clearance--blocked {
+  fill: var(--color-warning);
+  fill-opacity: 0.22;
+  stroke: var(--color-warning);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}

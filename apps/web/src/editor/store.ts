@@ -110,6 +110,8 @@ export interface Layers {
   coreOnly: boolean;
   /** The roof layer (Core 0.3, 16): each roof's eave outline, ridges, hips and valleys over the plan. */
   roof: boolean;
+  /** FS_furniture's items (FLR-T-8.3); absent: shown. */
+  furniture?: boolean;
 }
 
 export interface DrawSettings {
