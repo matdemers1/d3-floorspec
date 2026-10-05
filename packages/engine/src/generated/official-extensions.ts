@@ -77,7 +77,12 @@ export const OFFICIAL_ENTRIES = [
     "terms": {
       "roomFunctions": []
     },
-    "implementations": []
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
   },
   {
     "name": "FS_lowvoltage",
@@ -199,7 +204,12 @@ export const OFFICIAL_ENTRIES = [
     "terms": {
       "roomFunctions": []
     },
-    "implementations": []
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
   }
 ] as const;
 

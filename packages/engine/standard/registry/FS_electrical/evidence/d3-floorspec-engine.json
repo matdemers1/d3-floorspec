@@ -3,21 +3,21 @@
   "implementation": {
     "name": "D3 Floorspec (@floorspec/engine)",
     "url": "https://github.com/matdemers1/d3-floorspec",
-    "version": "ee6939f64cbfbf92f0ade7112cbe8df62744853a"
+    "version": "bafeefa33519ccff0fb5dd54478e496fc5b76a58"
   },
   "maintainer": "matdemers1",
   "sharesCodeWith": [],
   "extension": "FS_electrical",
   "extensionVersion": "0.1.0",
   "suite": {
-    "commit": "441a066de5285ce7998e045e1add1bffa92d58a0",
-    "tests": 59
+    "commit": "3b8d35a0287a4f8ad3f934abaf494bc42fd9646a",
+    "tests": 60
   },
   "result": {
-    "passed": 59,
+    "passed": 60,
     "failed": 0
   },
   "ran": "2026-10-05",
-  "run": "https://github.com/matdemers1/d3-floorspec/actions/runs/37276088906",
+  "run": "https://github.com/matdemers1/d3-floorspec/actions/runs/37302079499",
   "command": "pnpm --filter @floorspec/engine conformance (test/extensions.node.test.ts)"
 }

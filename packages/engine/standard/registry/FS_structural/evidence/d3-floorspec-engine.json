@@ -7,14 +7,14 @@
   },
   "maintainer": "matdemers1",
   "sharesCodeWith": [],
-  "extension": "FS_lowvoltage",
+  "extension": "FS_structural",
   "extensionVersion": "0.1.0",
   "suite": {
     "commit": "3b8d35a0287a4f8ad3f934abaf494bc42fd9646a",
-    "tests": 32
+    "tests": 72
   },
   "result": {
-    "passed": 32,
+    "passed": 72,
     "failed": 0
   },
   "ran": "2026-10-05",

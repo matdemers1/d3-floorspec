@@ -69,7 +69,7 @@ requirements of the one before it.
 **The oracle is not evidence.** The conformance oracle (`tools/oracle/ext/`) implements every
 official extension, but it wrote the expected outputs its suite is checked against, so its passing
 proves nothing about the suite. An implementation is software that someone uses: D3 Floorspec's
-engine is one, and is listed for the four building systems.
+engine is one, and is listed for every official extension.
 
 ### Changes by pull request
 
@@ -123,9 +123,9 @@ An owner may waive one gate for one version of one extension, by an entry in
 [`exceptions.json`](exceptions.json) that names the decision and the condition that ends it. Only
 the Release Candidate's implementation rule can be waived (`releaseCandidate.implementation`);
 nothing of Ratified can. The gates fail when an exception names an entry or version that is not
-there, or a rule that now passes, so an exception is removed when it ends. There is one:
-FS_furniture 0.1.0 is a Release Candidate with no implementation, by the owner's decision when it
-was published (FLR-T-8.3), until D3 Floorspec's engine passes its suite and is listed.
+there, or a rule that now passes, so an exception is removed when it ends. There are none: the
+last, FS_furniture 0.1.0's, published as a Release Candidate with no implementation (FLR-T-8.3),
+ended when D3 Floorspec's engine passed its suite and was listed.
 
 ### Who decides
 
@@ -153,12 +153,10 @@ mechanical, low-voltage, structural, furniture — ship as first-party `FS_` ext
 | [`FS_furniture`](FS_furniture/spec.md) | 0.1.0 | Release Candidate | furniture, appliances and casework, each with a glTF model, a plan symbol and clearance envelopes — a refrigerator's door swing, the access beside a bed — with a starter library ([`library/`](FS_furniture/library/), CC0 1.0) | `FS-FURN-` |
 | [`FS_structural`](FS_structural/spec.md) | 0.1.0 | Draft | bearing and shear flags, framing (material, system, member size, spacing), floor spans and headers, recorded on walls, openings, slabs, rooms' floors and roofs for handoff to an engineer — never a structural design or a check of one | `FS-STRC-` |
 
-The four building systems list one implementation, D3 Floorspec's engine, with evidence of its
-passing their suites at 441a066 (`<NAME>/evidence/`); each suite has gained a test since — an
-element in a design option — so the gates warn until the engine runs them again. Each stays a Release
-Candidate until a second, independent implementation passes its suite (FLR-REQ-092). FS_furniture
-lists none yet, by recorded exception (above). FS_structural is a Draft: the oracle passes its
-suite, and it becomes a Release Candidate when an implementation does. The conformance oracle in
+All six list one implementation, D3 Floorspec's engine, with evidence of its passing their
+suites at 3b8d35a in a public CI run (`<NAME>/evidence/`). Each Release Candidate stays one until a
+second, independent implementation passes its suite (FLR-REQ-092). FS_structural is a Draft whose
+suite the engine passes; it becomes a Release Candidate by its own pull request, which freezes it. The conformance oracle in
 `tools/oracle/ext/` implements all six, and is evidence for none.
 
 Every official extension follows the same conventions, each stated in its own specification's
