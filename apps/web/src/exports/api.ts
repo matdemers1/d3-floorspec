@@ -6,7 +6,29 @@ import { api } from '../lib/api';
  * attachment` — so the page stays put and the browser names it.
  */
 
-export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz';
+export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz' | 'still';
+
+/**
+ * A still's sizes and qualities, as the worker offers them (apps/worker/src/pathtrace/presets.ts) —
+ * repeated here so the editor does not load the worker; the api refuses anything else.
+ */
+export const SIZES = { small: [640, 480], medium: [1024, 768], large: [1600, 1200] } as const;
+export type StillSize = keyof typeof SIZES;
+export const QUALITIES = { draft: 16, standard: 64, high: 256 } as const;
+export type StillQuality = keyof typeof QUALITIES;
+const MAX_WORK = 1024 * 768 * 256;
+export const stillWithinBudget = (size: StillSize, quality: StillQuality): boolean => SIZES[size][0] * SIZES[size][1] * QUALITIES[quality] <= MAX_WORK;
+
+/** A path-traced still's options (FLR-T-12.6): a named view or a room, a size, a quality, the sun. */
+export interface StillRequest {
+  camera?: 'sw' | 'se' | 'ne' | 'nw' | 'top';
+  room?: string;
+  level?: string;
+  size: StillSize;
+  quality: StillQuality;
+  /** Degrees: azimuth clockwise from true north, altitude above the horizon. */
+  sun?: { azimuth: number; altitude: number };
+}
 export type PageName = 'tabloid' | 'arch-c' | 'arch-d' | 'letter' | 'a4' | 'a3';
 
 export interface ExportJob {
@@ -19,8 +41,27 @@ export interface ExportJob {
   page: PageName | null;
   /** The design it was made in (Core 19.6): option set → option; null for the primary design asked for implicitly, or an IFC export. */
   design: Record<string, string> | null;
+  /** A still's options, as asked for; null for any other export. */
+  still?: (Omit<StillRequest, 'camera' | 'room' | 'level' | 'sun'> & { camera: string | null; room: string | null; level: string | null; sun: { azimuth: number; altitude: number } | null }) | null;
+  /** While a still renders: the passes done and in all. */
+  progress?: { pass: number; passes: number } | null;
   error: string | null;
-  result: { name: string; size: number; sheets?: { number: string; title: string }[]; files?: string[]; ifc?: { entities: Record<string, number> }; elements?: number } | null;
+  result: {
+    name: string;
+    size: number;
+    sheets?: { number: string; title: string }[];
+    files?: string[];
+    ifc?: { entities: Record<string, number> };
+    elements?: number;
+    /** A still's: its label, pixels, samples, camera in words, the sun, and how long it took (ms). */
+    label?: string;
+    width?: number;
+    height?: number;
+    samples?: number;
+    camera?: string;
+    sun?: { azimuth: number; altitude: number; source: 'yours' | 'default' };
+    ms?: number;
+  } | null;
   createdAt: string;
   finishedAt: string | null;
   download: string | null;
@@ -41,6 +82,8 @@ export interface ExportRequest {
   page?: PageName;
   /** PDF, DXF, glTF and USDZ: one option per set (FLR-T-9.7); the server refuses one for IFC. */
   design?: Record<string, string>;
+  /** A still's options (FLR-T-12.6). */
+  still?: StillRequest;
 }
 
 /** The kinds made in one design: every export but the IFC model, which is of the primary. */
@@ -128,11 +171,12 @@ export function describeJob(job: ExportJob, sets: readonly DesignSet[] = []): st
 }
 
 function describeStatus(job: ExportJob): string {
-  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ' }[job.kind];
+  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ', still: 'Still' }[job.kind];
   switch (job.status) {
     case 'queued':
-      return job.kind === 'ifc' ? `${what} waiting to be written` : `${what} waiting to be drawn`;
+      return job.kind === 'ifc' ? `${what} waiting to be written` : job.kind === 'still' ? 'Still waiting to be rendered' : `${what} waiting to be drawn`;
     case 'running':
+      if (job.kind === 'still') return job.progress ? `Rendering the still… pass ${String(job.progress.pass)} of ${String(job.progress.passes)}` : 'Rendering the still…';
       return job.kind === 'ifc' ? `Writing the ${what}…` : `Drawing the ${what}…`;
     case 'failed':
       return `${what} failed: ${job.error ?? 'no reason was recorded'}`;

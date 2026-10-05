@@ -22,6 +22,7 @@ import { Account } from './screens/Account';
 import { Project } from './screens/Project';
 import { Projects } from './screens/Projects';
 import { Schedules } from './screens/Schedules';
+import { EnergyScreen } from './energy/EnergyScreen';
 import { Invites } from './screens/Invites';
 import { FindingsReportScreen } from './findings/Report';
 import { Coverage } from './findings/Coverage';
@@ -186,6 +187,8 @@ function Screen({ path, session, reload }: { path: string; session: SignedIn; re
   if (project !== undefined) return <Project key={project} id={project} you={session.account.displayName} />;
   const scheduled = /^\/projects\/([0-9a-f-]{36})\/schedules$/.exec(path)?.[1];
   if (scheduled !== undefined) return <Schedules key={scheduled} id={scheduled} />;
+  const energy = /^\/projects\/([0-9a-f-]{36})\/energy$/.exec(path)?.[1];
+  if (energy !== undefined) return <EnergyScreen key={energy} id={energy} />;
   const reported = /^\/projects\/([0-9a-f-]{36})\/findings$/.exec(path)?.[1];
   if (reported !== undefined) return <FindingsReportScreen key={reported} id={reported} />;
   if (path === '/rule-packs') return <Coverage />;

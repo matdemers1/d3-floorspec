@@ -22,6 +22,10 @@
       "types": "./src/export/ifc/roundtrip.ts",
       "default": "./dist/export/ifc/roundtrip.js"
     },
+    "./stills": {
+      "types": "./src/pathtrace/presets.ts",
+      "default": "./dist/pathtrace/presets.js"
+    },
     "./alerts": {
       "types": "./src/alerts/index.ts",
       "default": "./dist/alerts/index.js"

@@ -191,6 +191,16 @@ test('every screen and state has no axe violations, in light and in dark', async
   await audit(page, 'dashboard, delete confirmation');
   await page.getByRole('button', { name: 'Keep it' }).click();
 
+  // FLR-T-12.6: the advisory energy estimate and its climate dialog.
+  await page.locator('[data-region="energy"]').getByRole('button', { name: 'Open estimate' }).click();
+  await expect(page.getByRole('heading', { name: 'Energy & comfort', level: 1 })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await audit(page, 'energy estimate');
+  await page.getByRole('button', { name: 'Climate & assumptions' }).click();
+  await expect(page.getByRole('dialog', { name: 'Climate & assumptions' })).toBeVisible();
+  await audit(page, 'energy, climate and assumptions');
+  await page.getByRole('dialog', { name: 'Climate & assumptions' }).getByRole('button', { name: 'Cancel' }).click();
+
   await page.getByRole('link', { name: 'Projects' }).first().click();
   await expect(page.getByRole('list', { name: 'Projects' })).toBeVisible();
   await page.waitForLoadState('networkidle');
@@ -455,6 +465,11 @@ test('every screen and state has no axe violations, in light and in dark', async
   await page.waitForFunction(() => window.__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
   await expect(page.getByRole('toolbar', { name: '3D view' })).toBeVisible();
   await audit(page, 'editor, 3D view');
+  // FLR-T-12.6: the path-traced still's options.
+  await page.getByRole('button', { name: 'Render still' }).click();
+  await expect(page.getByRole('dialog', { name: 'Render a still' })).toBeVisible();
+  await audit(page, 'editor, render a still');
+  await page.getByRole('dialog', { name: 'Render a still' }).getByRole('button', { name: 'Cancel' }).click();
   await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: 'Split' }).click();
   await expect(page.getByText('Selection synced · click in either view')).toBeVisible();
   await page.getByRole('tree').getByRole('treeitem', { name: /^Great room/ }).first().click();

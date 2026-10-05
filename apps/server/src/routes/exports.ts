@@ -1,4 +1,5 @@
 import { evaluate } from '@floorspec/engine';
+import { QUALITIES, SIZES, withinBudget, type Quality, type Size } from '@d3-floorspec/worker/stills';
 import type { Request } from 'express';
 import { z } from 'zod';
 import type { Db, Tx } from '../db.js';
@@ -16,9 +17,28 @@ import { MAIN } from '../domain/projects.js';
  * is of the primary design. Asking for one queues a job on the Postgres job queue and answers 202; the worker drains
  * the queue, and the file is downloaded once the job is done. A job reads one immutable version —
  * main's head unless another version of this project is named — so its file is reproducible.
+ *
+ * A path-traced still (FLR-T-12.6, FLR-REQ-154) is asked for the same way, `kind: "still"` with the
+ * view, size and quality in `still`: the worker renders it offline, writing its passes to the job's
+ * `progress` as it goes, and its PNG is downloaded like any export. One still renders at a time per
+ * project, and a size and quality over the work budget are refused here, before anything is queued.
  */
 
-const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz'] as const;
+const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still'] as const;
+const VIEWS = ['sw', 'se', 'ne', 'nw', 'top'] as const;
+const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+
+/** A still's view, size and quality, and the sun (degrees, azimuth clockwise from true north). */
+const StillBody = z.strictObject({
+  camera: z.enum(VIEWS).optional(),
+  /** Stand in this room (its ID or name) instead of a named view. */
+  room: z.string().min(1).max(200).optional(),
+  /** Cut away above this level. */
+  level: z.string().regex(ID).optional(),
+  size: z.enum(Object.keys(SIZES) as [Size, ...Size[]]).default('medium'),
+  quality: z.enum(Object.keys(QUALITIES) as [Quality, ...Quality[]]).default('standard'),
+  sun: z.strictObject({ azimuth: z.number().min(0).max(360), altitude: z.number().gt(0).max(90) }).optional(),
+});
 export const PAGE_NAMES = ['tabloid', 'arch-c', 'arch-d', 'letter', 'a4', 'a3'] as const;
 
 const ExportBody = z.strictObject({
@@ -30,7 +50,9 @@ const ExportBody = z.strictObject({
   /** PDF paper; default tabloid (17 × 11 in). */
   page: z.enum(PAGE_NAMES).optional(),
   /** PDF, DXF, glTF and USDZ: the design (Core 19.6), option set → option; default the primary design. */
-  design: z.record(z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/), z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/)).optional(),
+  design: z.record(z.string().regex(ID), z.string().regex(ID)).optional(),
+  /** A still: what to render (FLR-T-12.6). */
+  still: StillBody.optional(),
 });
 
 /** How many exports a project may have waiting or running at once. */
@@ -45,6 +67,12 @@ type Params = {
   readonly versionSeq?: number | null;
   readonly versionAt?: string;
   readonly design?: Record<string, string>;
+  readonly camera?: string;
+  readonly room?: string;
+  readonly level?: string;
+  readonly size?: string;
+  readonly quality?: string;
+  readonly sun?: { azimuth: number; altitude: number };
 };
 
 /** A job as the API shows it: no worker internals, and where to get the file once there is one. */
@@ -59,6 +87,8 @@ export function exportView(projectId: string, job: Job) {
     levels: p.levels ?? null,
     page: job.kind === 'export.pdf' ? (p.page ?? 'tabloid') : null,
     design: p.design ?? null,
+    still: job.kind === 'export.still' ? { camera: p.camera ?? null, room: p.room ?? null, level: p.level ?? null, size: p.size ?? 'medium', quality: p.quality ?? 'standard', sun: p.sun ?? null } : null,
+    progress: job.status === 'running' ? (job.progress ?? null) : null,
     error: job.error,
     result: job.result,
     createdAt: job.createdAt.toISOString(),
@@ -117,6 +147,22 @@ export function exportRoutes(db: Db): Routes {
       const levels = Object.keys(ev.document.levels ?? {});
       if (levels.length === 0) throw new ProblemError({ status: 422, type: 'not-drawable', title: 'this version has no levels to draw' });
       if (body.kind === 'ifc' && body.levels !== undefined) throw new HttpError(400, 'an IFC export is of the whole model: it takes no levels');
+      if (body.still !== undefined && body.kind !== 'still') throw new HttpError(400, 'only a still takes still options');
+      const still = body.kind === 'still' ? StillBody.parse(body.still ?? {}) : undefined;
+      if (still !== undefined) {
+        if (body.levels !== undefined || body.page !== undefined) throw new HttpError(400, 'a still takes a view, a size and a quality, not levels or a page');
+        if (still.room !== undefined && still.camera !== undefined) throw new HttpError(400, 'a still is from a named view or from a room, not both');
+        if (!withinBudget(still.size, still.quality)) throw new HttpError(400, `a ${still.size} still at ${still.quality} quality is more work than a still may take: choose a smaller size or a lower quality`);
+        const view = ev.view ?? ev.document;
+        if (still.level !== undefined && !Object.hasOwn(view.levels ?? {}, still.level)) throw new HttpError(400, `the model has no level ${still.level}`);
+        if (still.room !== undefined) {
+          const key = still.room.toLowerCase();
+          const known = Object.entries(view.rooms ?? {}).some(([rid, r]) => rid.toLowerCase() === key || r?.name?.toLowerCase() === key);
+          if (!known) throw new HttpError(400, `the model has no room ${still.room}`);
+        }
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: 'export.still', status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a still is already rendering for this project; wait for it to finish');
+      }
       const missing = (body.levels ?? []).filter((l) => !levels.includes(l));
       if (missing.length > 0) throw new HttpError(400, `the model has no level ${missing.join(', ')}`);
       const pending = await tx.job.count({ where: { projectId: project.id, kind: { startsWith: 'export.' }, status: { in: ['queued', 'running'] } } });
@@ -125,6 +171,16 @@ export function exportRoutes(db: Db): Routes {
         ...(body.levels === undefined ? {} : { levels: [...new Set(body.levels)] }),
         ...(body.kind === 'pdf' ? { page: body.page ?? 'tabloid' } : {}),
         ...(body.design === undefined ? {} : { design: body.design }),
+        ...(still === undefined
+          ? {}
+          : {
+              ...(still.camera === undefined ? {} : { camera: still.camera }),
+              ...(still.room === undefined ? {} : { room: still.room }),
+              ...(still.level === undefined ? {} : { level: still.level }),
+              size: still.size,
+              quality: still.quality,
+              ...(still.sun === undefined ? {} : { sun: still.sun }),
+            }),
         versionSeq: version.seq,
         versionAt: version.at.toISOString(),
       };
@@ -140,7 +196,7 @@ export function exportRoutes(db: Db): Routes {
       });
       return {
         reply: (res) => res.status(202).location(`/api/projects/${project.id}/exports/${job.id}`).json({ export: exportView(project.id, job) }),
-        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }) } },
+        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }) } },
       };
     },
     { token: 'read' },

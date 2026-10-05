@@ -7,6 +7,6 @@ export default defineConfig(...root, {
   // noUncheckedIndexedAccess each such lookup is `T | undefined`, and the non-null assertion is the
   // honest way to say it is present — the same reasoning as render2d and the engine. The 3D export
   // and render (FLR-T-9.2, FLR-T-8.5) index vertex arrays and triangle lists the same way.
-  files: ['src/export/**/*.ts', 'src/render3d/**/*.ts', 'test/drawings.test.ts', 'test/gltf.test.ts', 'test/render3d.test.ts'],
+  files: ['src/export/**/*.ts', 'src/render3d/**/*.ts', 'src/pathtrace/**/*.ts', 'test/drawings.test.ts', 'test/gltf.test.ts', 'test/render3d.test.ts', 'test/pathtrace.test.ts'],
   rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
 });
