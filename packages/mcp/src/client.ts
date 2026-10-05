@@ -107,6 +107,25 @@ export interface Layouts {
   readonly candidates: readonly LayoutCandidate[];
 }
 
+export interface ElectricalInput {
+  readonly rooms?: readonly string[];
+  readonly level?: string;
+}
+
+/** The electrical assistant's answer (FLR-T-5.8): its proposal, and the changeset it became — none when there was nothing to add. */
+export interface ElectricalProposal {
+  readonly main: string;
+  readonly changeset: ChangesetView | null;
+  readonly proposal: {
+    readonly name: string;
+    readonly explanation: readonly string[];
+    readonly added: { readonly receptacles: readonly string[]; readonly switches: readonly string[]; readonly lights: readonly string[] };
+    readonly circuits: readonly { readonly id: string; readonly name: string; readonly loads: readonly string[] }[];
+    readonly notes: readonly string[];
+    readonly ops: number;
+  };
+}
+
 export interface FloorspecClient {
   listProjects(): Promise<readonly ProjectSummary[]>;
   model(projectId: string, changeset?: string): Promise<Model>;
@@ -116,6 +135,7 @@ export interface FloorspecClient {
   accept(projectId: string, changesetId: string): Promise<{ changeset: ChangesetView; mode: string; hash: string; merged: readonly number[] }>;
   reject(projectId: string, changesetId: string): Promise<{ changeset: ChangesetView }>;
   proposeLayouts(projectId: string, input: LayoutsInput): Promise<Layouts>;
+  proposeElectrical(projectId: string, input: ElectricalInput): Promise<ElectricalProposal>;
   validate(projectId: string, changeset?: string): Promise<Validation>;
   findings(projectId: string, changeset?: string): Promise<Findings>;
   render(projectId: string, options: RenderOptions): Promise<Uint8Array>;
@@ -246,6 +266,10 @@ export class HttpFloorspecClient implements FloorspecClient {
 
   proposeLayouts(projectId: string, input: LayoutsInput): Promise<Layouts> {
     return this.json<Layouts>('POST', this.project(projectId, '/layouts'), input);
+  }
+
+  proposeElectrical(projectId: string, input: ElectricalInput): Promise<ElectricalProposal> {
+    return this.json<ElectricalProposal>('POST', this.project(projectId, '/assistants/electrical'), input);
   }
 
   validate(projectId: string, changeset?: string): Promise<Validation> {

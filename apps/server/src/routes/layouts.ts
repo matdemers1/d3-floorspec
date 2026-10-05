@@ -37,7 +37,7 @@ function baseUnits(value: number | string, field: string): number {
 }
 
 /** A name for a candidate's changeset that no pending changeset of the project has. */
-function freeName(name: string, taken: ReadonlySet<string>): string {
+export function freeName(name: string, taken: ReadonlySet<string>): string {
   if (!taken.has(name)) return name;
   for (let n = 2; ; n++) {
     const suffix = ` (${String(n)})`;
