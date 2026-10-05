@@ -1,7 +1,7 @@
 /** The D3 Floorspec MCP server (MCP 2026-07-28), mounted by the API at `/mcp`. */
 export const PACKAGE_NAME = '@floorspec/mcp';
 
-export { createFloorspecServer, modelUri, SERVER_NAME, SERVER_VERSION, TOOL_NAMES } from './server.js';
+export { createFloorspecServer, layoutsText, modelUri, SERVER_NAME, SERVER_VERSION, TOOL_NAMES } from './server.js';
 export { createFloorspecMcpHandler } from './handler.js';
 export {
   FloorspecApiError,
@@ -11,6 +11,9 @@ export {
   type Committed,
   type FloorspecClient,
   type HttpClientOptions,
+  type LayoutCandidate,
+  type Layouts,
+  type LayoutsInput,
   type Model,
   type ProjectSummary,
   type RenderOptions,

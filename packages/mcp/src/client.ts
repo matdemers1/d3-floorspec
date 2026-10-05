@@ -82,6 +82,31 @@ export interface Findings {
   readonly note: string;
 }
 
+/** What `POST /layouts` takes: where to lay the brief out, and how many candidates. */
+export interface LayoutsInput {
+  readonly level?: string;
+  readonly footprint?: { readonly width: number | string; readonly depth: number | string };
+  readonly count?: number;
+}
+
+/** One layout candidate as the API answers it: the solver's report, and the changeset it became. */
+export interface LayoutCandidate {
+  readonly rank: number;
+  readonly label: string;
+  readonly level: string;
+  readonly footprint: { readonly width: number; readonly depth: number };
+  readonly score: { readonly total: number; readonly briefFit: number; readonly circulation: number; readonly findings: number };
+  readonly explanation: readonly string[];
+  readonly unplaced: readonly { readonly item: string; readonly count: number; readonly reason: string }[];
+  readonly changeset: ChangesetView;
+  readonly reused: boolean;
+}
+
+export interface Layouts {
+  readonly solved: { readonly main: string; readonly items: number; readonly adjacencies: number };
+  readonly candidates: readonly LayoutCandidate[];
+}
+
 export interface FloorspecClient {
   listProjects(): Promise<readonly ProjectSummary[]>;
   model(projectId: string, changeset?: string): Promise<Model>;
@@ -90,6 +115,7 @@ export interface FloorspecClient {
   changesets(projectId: string): Promise<readonly ChangesetView[]>;
   accept(projectId: string, changesetId: string): Promise<{ changeset: ChangesetView; mode: string; hash: string; merged: readonly number[] }>;
   reject(projectId: string, changesetId: string): Promise<{ changeset: ChangesetView }>;
+  proposeLayouts(projectId: string, input: LayoutsInput): Promise<Layouts>;
   validate(projectId: string, changeset?: string): Promise<Validation>;
   findings(projectId: string, changeset?: string): Promise<Findings>;
   render(projectId: string, options: RenderOptions): Promise<Uint8Array>;
@@ -216,6 +242,10 @@ export class HttpFloorspecClient implements FloorspecClient {
 
   reject(projectId: string, changesetId: string) {
     return this.json<{ changeset: ChangesetView }>('POST', this.project(projectId, `/changesets/${encodeURIComponent(changesetId)}/reject`), {});
+  }
+
+  proposeLayouts(projectId: string, input: LayoutsInput): Promise<Layouts> {
+    return this.json<Layouts>('POST', this.project(projectId, '/layouts'), input);
   }
 
   validate(projectId: string, changeset?: string): Promise<Validation> {

@@ -69,6 +69,9 @@ class ApplierClient implements FloorspecClient {
   reject(): never {
     throw new Error('not used');
   }
+  proposeLayouts(): never {
+    throw new Error('not used');
+  }
   validate() {
     return Promise.resolve({ head: 'main', hash: contentHash(this.document), valid: true, diagnostics: [] });
   }

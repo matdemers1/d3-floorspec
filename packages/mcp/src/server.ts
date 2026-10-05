@@ -1,6 +1,6 @@
 import { McpServer, ResourceTemplate, type CallToolResult } from '@modelcontextprotocol/server';
 import { z } from 'zod';
-import { FloorspecApiError, type Committed, type FloorspecClient, type ProjectSummary, type RenderOptions } from './client.js';
+import { FloorspecApiError, type Committed, type FloorspecClient, type Layouts, type ProjectSummary, type RenderOptions } from './client.js';
 import { Batch, Lock, OP_BY_NAME_ONLY } from './ops-schema.js';
 import { hintsFor } from './hints.js';
 import { compactSchema } from './tool-schema.js';
@@ -10,10 +10,10 @@ import { findRoom } from './model.js';
 import { DESIGN_PARTNER_PROMPT } from './prompts.js';
 
 /**
- * The D3 Floorspec MCP server (FLR-T-2.6): ten verbs over one operation vocabulary.
+ * The D3 Floorspec MCP server (FLR-T-2.6): eleven verbs over one operation vocabulary.
  *
  * Perception — describe, query, validate, findings, render, export — reads; action — apply,
- * propose, accept, reject — writes Floorspec Ops, nothing else (FLR-ADR-008). **There is no tool
+ * propose, propose_layouts, accept, reject — writes Floorspec Ops, nothing else (FLR-ADR-008). **There is no tool
  * that runs code** (FLR-REQ-058): an agent changes the house by sending typed operations, and a
  * test enumerates the tools to keep it that way.
  *
@@ -32,6 +32,7 @@ export const TOOL_NAMES = [
   'floorspec_propose',
   'floorspec_accept',
   'floorspec_reject',
+  'floorspec_propose_layouts',
   'floorspec_validate',
   'floorspec_findings',
   'floorspec_render',
@@ -81,7 +82,8 @@ function failure(error: unknown, batch?: readonly { op: string }[]): CallToolRes
           : `Refused (${String(error.status)}).`;
     return {
       isError: true,
-      content: [text([`${lead} ${error.message}`, ...diagnostics].join('\n')), text(structured)],
+      // A problem without diagnostics says why in its detail: "there is no program to lay out".
+      content: [text([`${lead} ${error.message}${diagnostics.length === 0 && typeof error.body['detail'] === 'string' ? `: ${error.body['detail']}` : ''}`, ...diagnostics].join('\n')), text(structured)],
       structuredContent: structured,
     };
   }
@@ -158,6 +160,24 @@ export function emptyOpenings(result: Pick<Committed, 'resolved' | 'created'>): 
     ` Note: ${ids.join(', ')} ${ids.length === 1 ? 'is an empty cased opening' : 'are empty cased openings'} — no fill, so no door or window. ` +
     `If a door or window was meant, set its fill to the nearest doorType or windowType ({"op":"setProperty","id":"${String(first)}","path":"/fill","value":"<type>"}) and keep its width and height, which override the type's.`
   );
+}
+
+const pct = (x: number): string => `${String(Math.round(x * 100))}%`;
+
+/** The candidates in words: each changeset, its scores, and what the solver says of it. */
+export function layoutsText(result: Layouts): string {
+  const lines = [
+    `${String(result.candidates.length)} layout candidates from ${String(result.solved.items)} brief items and ${String(result.solved.adjacencies)} adjacencies, each a pending changeset; main has not changed until a person accepts one, and accepting one stops the others applying.`,
+  ];
+  for (const c of result.candidates) {
+    lines.push(
+      '',
+      `${String(c.rank)}. "${c.changeset.name}" (${c.changeset.id})${c.reused ? ', already open' : ''}: score ${c.score.total.toFixed(1)} — brief fit ${pct(c.score.briefFit)}, circulation ${pct(c.score.circulation)}, findings ${pct(c.score.findings)}.`,
+      ...c.explanation.map((line) => `   - ${line}`),
+      ...(c.unplaced.length > 0 ? [`   - not placed here: ${c.unplaced.map((u) => `${u.item} x${String(u.count)} (${u.reason})`).join('; ')}`] : []),
+    );
+  }
+  return lines.join('\n');
 }
 
 async function renderContent(client: FloorspecClient, projectId: string, options: Omit<RenderOptions, 'view'>) {
@@ -377,6 +397,40 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
       },
     );
   }
+
+  server.registerTool(
+    'floorspec_propose_layouts',
+    {
+      title: 'Propose layouts',
+      description:
+        'Lay out main\'s brief (its program and adjacencies) as ranked candidate plans, each opened as a pending changeset for a person to compare and accept. Lays out on an empty level, or adds one. Read the reports, then render a changeset to look at it.',
+      inputSchema: compactSchema(
+        z.strictObject({
+          project: ProjectHandle,
+          level: z.string().min(1).max(64).optional().describe('An empty level to lay out on.'),
+          footprint: z
+            .strictObject({ width: z.union([z.int().min(1), z.string().min(1).max(64)]), depth: z.union([z.int().min(1), z.string().min(1).max(64)]) })
+            .optional()
+            .describe('East–west width and north–south depth, e.g. "44\'"; default sized from the brief.'),
+          count: z.int().min(3).max(6).optional().describe('Candidates; default 3.'),
+        }),
+      ),
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async (args) => {
+      try {
+        const project = await resolveProject(client, args.project);
+        const result = await client.proposeLayouts(project.id, {
+          ...(args.level === undefined ? {} : { level: args.level }),
+          ...(args.footprint === undefined ? {} : { footprint: args.footprint }),
+          ...(args.count === undefined ? {} : { count: args.count }),
+        });
+        return ok(layoutsText(result), { project: project.id, ...result });
+      } catch (error) {
+        return failure(error);
+      }
+    },
+  );
 
   server.registerTool(
     'floorspec_validate',

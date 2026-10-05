@@ -81,7 +81,8 @@ describe('layout candidates', () => {
     expect(body.candidates.every((c) => c.level === 'L1')).toBe(true);
     expect(body.candidates.length).toBeGreaterThanOrEqual(3);
     expect(body.candidates.map((c) => c.rank)).toEqual(body.candidates.map((_, i) => i + 1));
-    for (let i = 1; i < body.candidates.length; i++) expect(body.candidates[i - 1]!.score.total).toBeGreaterThanOrEqual(body.candidates[i]!.score.total);
+    const totals = body.candidates.map((c) => c.score.total);
+    expect(totals).toEqual([...totals].sort((a, b) => b - a));
     // Main has not moved: a candidate is a proposal.
     expect(await main()).toBe(before);
 
@@ -93,7 +94,7 @@ describe('layout candidates', () => {
       const detail = (await operator.get(path(`/changesets/${c.changeset.id}`))).body as { log: { ops: unknown[] }[] };
       expect(detail.log).toHaveLength(1);
       // The batch replays onto main as the server's accept would, and the result checks.
-      const replayed = apply(document, { batch: detail.log[0]!.ops as never });
+      const replayed = apply(document, { batch: detail.log[0]?.ops as never });
       expect(replayed.status).toBe('committed');
       if (replayed.status === 'committed') expect(check(replayed.document).valid).toBe(true);
       expect(JSON.parse((await operator.get(path(`/changesets/${c.changeset.id}/model.json`))).text)).toBeDefined();
@@ -101,20 +102,22 @@ describe('layout candidates', () => {
     const audit = await db.auditLog.findMany({ where: { action: 'layouts.propose' } });
     expect(audit).toHaveLength(1);
     expect(audit[0]).toMatchObject({ targetType: 'project', targetId: project.id });
-    expect((audit[0]!.detail as { candidates: unknown[] }).candidates).toHaveLength(body.candidates.length);
+    expect((audit[0]?.detail as { candidates: unknown[] }).candidates).toHaveLength(body.candidates.length);
   });
 
   it('accepting the top candidate meets the brief — every item has a room, no FS-LINT-008…011 — and the others stop applying', async () => {
     await brief();
     const body = (await operator.post(path('/layouts'), {})).body as Solved;
     const [top, ...rest] = body.candidates;
-    const accepted = await operator.post(path(`/changesets/${top!.changeset.id}/accept`));
+    if (top === undefined) throw new Error('no candidates');
+    const accepted = await operator.post(path(`/changesets/${top.changeset.id}/accept`));
     expect(accepted.status, accepted.text).toBe(200);
     expect(accepted.body).toMatchObject({ mode: 'fast-forward' });
 
     const result = check(await model());
     expect(result.valid).toBe(true);
-    for (const [id, item] of Object.entries(result.derived!.program!.items)) {
+    expect(Object.keys(result.derived?.program?.items ?? {}).sort()).toEqual(['BED', 'BTH', 'KIT', 'LIV']);
+    for (const [id, item] of Object.entries(result.derived?.program?.items ?? {})) {
       expect(item.rooms.length, id).toBeGreaterThan(0);
       expect(item.countMet, id).toBe(true);
     }

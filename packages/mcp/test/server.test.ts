@@ -13,6 +13,7 @@ import {
   TOOL_NAMES,
   type Committed,
   type FloorspecClient,
+  type LayoutsInput,
   type RenderOptions,
 } from '../src/index.js';
 
@@ -101,6 +102,31 @@ class MemoryClient implements FloorspecClient {
     this.record('accept', projectId, changesetId);
     return Promise.reject(new FloorspecApiError(403, { error: 'an agent cannot accept or reject a changeset: a person does (FLR-ADR-016)' }));
   }
+  /** The next layouts call is answered as a project with no brief is. */
+  noBrief = false;
+  proposeLayouts(projectId: string, input: LayoutsInput) {
+    this.record('proposeLayouts', projectId, input);
+    if (this.noBrief) {
+      return Promise.reject(
+        new FloorspecApiError(422, { type: '/problems/layout-unsolvable', error: 'no layout could be made from this brief', detail: 'There is no program to lay out.' }),
+      );
+    }
+    const candidate = (rank: number, total: number, label: string) => ({
+      rank,
+      label,
+      level: 'L1',
+      footprint: { width: 13_655_040, depth: 10_924_032 },
+      score: { total, briefFit: 0.951, circulation: 1, findings: 1 },
+      explanation: ['required Kitchen – Living room: adjacent', 'engine findings: none'],
+      unplaced: rank === 3 ? [{ item: 'GAR', count: 1, reason: 'exterior spaces are not laid out' }] : [],
+      changeset: { id: `cs-${String(rank)}`, name: `Layout ${String(rank)} of 3 (${total.toFixed(1)}): ${label}`, status: 'pending' as const, base: PROJECT.head, head: 'd'.repeat(64), ops: 1 },
+      reused: rank === 2,
+    });
+    return Promise.resolve({
+      solved: { main: PROJECT.head, items: 4, adjacencies: 3 },
+      candidates: [candidate(1, 97.56, 'Bedroom wing along a hall'), candidate(2, 97.23, 'Compact, no hall'), candidate(3, 96.88, 'Split bedrooms')],
+    });
+  }
   reject(projectId: string, changesetId: string) {
     this.record('reject', projectId, changesetId);
     return Promise.resolve({ changeset: { id: changesetId, name: 'x', status: 'rejected' as const, base: '', head: null, ops: 0 } });
@@ -134,7 +160,7 @@ const texts = (result: { content?: unknown }) => ((result.content ?? []) as Cont
 
 describe('the MCP server', () => {
   for (const era of ['legacy', 'modern'] as const) {
-    it(`lists exactly the ten verbs to a ${era} client`, async () => {
+    it(`lists exactly the eleven verbs to a ${era} client`, async () => {
       const mcp = await connect(new MemoryClient(), era);
       const { tools } = await mcp.listTools();
       expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
@@ -158,6 +184,33 @@ describe('the MCP server', () => {
     expect(propose.properties.batch.items.$ref).toBe('#/$defs/Op');
     expect(propose.$defs['Op']?.properties?.op.enum).toEqual([...OP_NAMES]);
     expect(JSON.stringify(propose)).not.toContain('"Length"');
+  });
+
+  it('lays out the brief as candidate changesets, through the API, and reports each one', async () => {
+    const client = new MemoryClient();
+    const mcp = await connect(client);
+    const result = await mcp.callTool({ name: 'floorspec_propose_layouts', arguments: { count: 3, footprint: { width: "44'", depth: 9_000_000 } } });
+    expect(result.isError ?? false, texts(result)).toBe(false);
+    expect(client.calls.at(-1)).toEqual({ method: 'proposeLayouts', args: [PROJECT.id, { count: 3, footprint: { width: "44'", depth: 9_000_000 } }] });
+    const said = texts(result);
+    expect(said).toContain('3 layout candidates from 4 brief items and 3 adjacencies, each a pending changeset');
+    expect(said).toContain('1. "Layout 1 of 3 (97.6): Bedroom wing along a hall" (cs-1): score 97.6 — brief fit 95%, circulation 100%, findings 100%.');
+    expect(said).toContain('(cs-2), already open');
+    expect(said).toContain('   - required Kitchen – Living room: adjacent');
+    expect(said).toContain('not placed here: GAR x1 (exterior spaces are not laid out)');
+    expect(result.structuredContent).toMatchObject({ project: PROJECT.id, solved: { items: 4 }, candidates: [{ rank: 1 }, { rank: 2 }, { rank: 3 }] });
+
+    // Nothing to lay out: the API's reason, as a tool error.
+    client.noBrief = true;
+    const refused = await mcp.callTool({ name: 'floorspec_propose_layouts', arguments: {} });
+    expect(refused.isError).toBe(true);
+    expect(texts(refused)).toContain('no layout could be made from this brief: There is no program to lay out.');
+    // The schema holds the count to what the API takes.
+    const { tools } = await mcp.listTools();
+    const check = new AjvJsonSchemaValidator().getValidator(tools.find((t) => t.name === 'floorspec_propose_layouts')?.inputSchema as never);
+    expect(check({ count: 3 }).valid).toBe(true);
+    expect(check({ count: 40 }).valid).toBe(false);
+    expect(check({ code: 'x' }).valid).toBe(false);
   });
 
   it('keeps tools/list within its budget', async () => {

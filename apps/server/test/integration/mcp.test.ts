@@ -86,7 +86,7 @@ describe('the MCP endpoint', () => {
   });
 
   for (const era of ['legacy', 'modern'] as const) {
-    it(`serves the ten tools to a ${era} client with a project token`, async () => {
+    it(`serves the eleven tools to a ${era} client with a project token`, async () => {
       const mcp = await connect(`Bearer ${await tokenFor(operator, project.id, 'read')}`, era);
       const { tools } = await mcp.listTools();
       expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
@@ -111,6 +111,29 @@ describe('the MCP endpoint', () => {
     expect(row).toMatchObject({ head: 'main', authorKind: 'token' });
     // Audited through the ordinary REST route the tool called.
     expect(await db.auditLog.count({ where: { action: 'ops.apply', actor: { startsWith: 'token:' } } })).toBe(1);
+  });
+
+  it('lays out main\'s brief for an agent as candidate changesets, leaving main as it was', async () => {
+    const brief = [
+      { op: 'addProgramItem', id: 'LIV', function: 'living', name: 'Living room', targetArea: '240 sq ft' },
+      { op: 'addProgramItem', id: 'KIT', function: 'kitchen', name: 'Kitchen', targetArea: '130 sq ft' },
+      { op: 'addProgramItem', id: 'BED', function: 'sleeping', name: 'Bedroom', targetArea: '130 sq ft' },
+      { op: 'setAdjacency', a: 'KIT', b: 'LIV', kind: 'required' },
+    ];
+    expect((await operator.post(`/api/projects/${project.id}/ops`, { batch: brief })).status).toBe(201);
+    const before = (await db.head.findUniqueOrThrow({ where: { projectId_name: { projectId: project.id, name: 'main' } } })).versionHash;
+    const mcp = await connect(`Bearer ${await tokenFor(operator, project.id, 'agent', 'Claude Code')}`);
+    const result = await mcp.callTool({ name: 'floorspec_propose_layouts', arguments: {} });
+    expect(result.isError, texts(result)).toBeFalsy();
+    const { candidates } = result.structuredContent as { candidates: { changeset: { id: string; name: string } }[] };
+    expect(candidates.length).toBeGreaterThanOrEqual(3);
+    const [first] = candidates;
+    expect(texts(result)).toContain(`1. "${first?.changeset.name ?? ''}" (${first?.changeset.id ?? ''})`);
+    const rows = await db.changeset.findMany({ where: { projectId: project.id, status: 'pending' } });
+    expect(rows.map((r) => r.id).sort()).toEqual(candidates.map((c) => c.changeset.id).sort());
+    expect(rows.every((r) => r.createdByAgent === 'Claude Code')).toBe(true);
+    expect((await db.head.findUniqueOrThrow({ where: { projectId_name: { projectId: project.id, name: 'main' } } })).versionHash).toBe(before);
+    expect(await db.auditLog.count({ where: { action: 'layouts.propose', actor: { startsWith: 'agent:' } } })).toBe(1);
   });
 
   it('puts an agent token\'s batch in a changeset, draws it ghosted, and refuses to let the agent accept it', async () => {
