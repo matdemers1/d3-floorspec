@@ -257,7 +257,7 @@ export const AddOpening = z.strictObject({
   hinge: z.string().max(32).optional(),
   swing: z.string().max(32).optional(),
   ...elementMembers,
-}).describe('Without a fill type, give width and height.');
+}).describe('No fill: an empty cased opening (give width, height). A door/window of another size: fill the nearest type, override width/height.');
 
 export const MoveOpening = z.strictObject({
   op: z.literal('moveOpening'),

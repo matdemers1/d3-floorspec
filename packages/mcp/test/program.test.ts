@@ -2,7 +2,7 @@ import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/cli
 import { canonicalize, contentHash } from '@floorspec/engine';
 import { apply } from '@floorspec/ops';
 import { describe, expect, it } from 'vitest';
-import { createFloorspecMcpHandler, FloorspecApiError, UPGRADE_HINT, type ApplyInput, type Committed, type FloorspecClient } from '../src/index.js';
+import { createFloorspecMcpHandler, FloorspecApiError, SET_PROPERTY_HINT, UPGRADE_HINT, type ApplyInput, type Committed, type FloorspecClient } from '../src/index.js';
 
 /**
  * The Ops 0.2 vocabulary end to end through the tool path: an agent sends floorspec_apply batches
@@ -191,5 +191,46 @@ describe('a brief and a device, through floorspec_apply', () => {
       },
     });
     expect(texts(result)).toContain('"path":"/extensionsUsed/FS_electrical"');
+  });
+});
+
+/** The agent eval's misses (2026-10-05 run): a door that came out a cased opening, and an anchor under a new wall. */
+describe('what the first agent eval taught the tools', () => {
+  const WITH_DOORS = { ...HOUSE, types: { ...HOUSE.types, D30: { kind: 'doorType', name: '30 in interior door', width: 975360, height: 2600960 } } };
+
+  it('says when a committed opening has no fill: an empty cased opening, not a door', async () => {
+    const mcp = await connect(new ApplierClient(WITH_DOORS));
+    const cased = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [{ op: 'addOpening', wall: 'W2', at: 'centered', width: '32"', height: "6' 8\"" }] } });
+    expect(cased.isError, texts(cased)).toBeFalsy();
+    expect(texts(cased)).toContain('Note: O1 is an empty cased opening — no fill, so no door or window.');
+    expect(texts(cased)).toContain('"path":"/fill"');
+  });
+
+  it('makes a door of a size the library lacks from the nearest type, its width overriding the type\'s, with no note', async () => {
+    const client = new ApplierClient(WITH_DOORS);
+    const mcp = await connect(client);
+    const door = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [{ op: 'addOpening', wall: 'W2', at: 'centered', fill: 'D30', width: '32"' }] } });
+    expect(door.isError, texts(door)).toBeFalsy();
+    expect(texts(door)).not.toContain('cased opening');
+    expect((client.document as { openings: Record<string, unknown> }).openings['O1']).toMatchObject({ fill: 'D30', width: 32 * 32512 });
+  });
+
+  it("says a wall drawn through a room's anchor must move the anchor, and that setProperty values are integers", async () => {
+    const mcp = await connect(new ApplierClient(HOUSE));
+    const hints = (result: { content?: unknown }) => texts(result).split('\n').filter((l) => l.startsWith('Hint: '));
+    const through = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [{ op: 'drawWall', level: 'L1', from: [2560000, 0], to: [2560000, 3840000], type: 'WT' }] } });
+    expect(texts(through)).toContain('FS-INV-201');
+    expect(hints(through)).toEqual([expect.stringContaining("A wall drawn in this batch runs through a room's anchor")]);
+    const strings = await mcp.callTool({
+      name: 'floorspec_apply',
+      arguments: { batch: [{ op: 'drawWall', level: 'L1', from: [2560000, 0], to: [2560000, 3840000], type: 'WT' }, { op: 'setProperty', id: 'R1', path: '/anchor', value: ["5'", "4'"] }] },
+    });
+    expect(texts(strings)).toContain('must be integer');
+    expect(hints(strings)).toContain(`Hint: ${SET_PROPERTY_HINT}`);
+    const fixed = await mcp.callTool({
+      name: 'floorspec_apply',
+      arguments: { batch: [{ op: 'drawWall', level: 'L1', from: [2560000, 0], to: [2560000, 3840000], type: 'WT' }, { op: 'setProperty', id: 'R1', path: '/anchor', value: [1280000, 1920000] }] },
+    });
+    expect(fixed.isError, texts(fixed)).toBeFalsy();
   });
 });

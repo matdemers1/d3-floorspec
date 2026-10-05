@@ -137,7 +137,27 @@ function landed(result: Committed): string {
     result.created.length > 0 ? `created ${result.created.join(', ')}` : '',
     result.removed.length > 0 ? `removed ${result.removed.join(', ')}` : '',
   ].filter((s) => s.length > 0);
-  return `${where} New version ${result.hash}.${changes.length > 0 ? ` It ${changes.join('; ')}.` : ''}`;
+  return `${where} New version ${result.hash}.${changes.length > 0 ? ` It ${changes.join('; ')}.` : ''}${emptyOpenings(result)}`;
+}
+
+/**
+ * A note on every opening the batch created without a `fill`: an empty cased opening, not a door or
+ * window — what an agent asked for "a 32-inch door" made when no type of that size existed. Read
+ * from the resolved echo, so it names exactly what the batch added.
+ */
+export function emptyOpenings(result: Pick<Committed, 'resolved' | 'created'>): string {
+  const ids = result.resolved
+    .filter((p) => {
+      const element = p['element'];
+      return p.op === 'addElement' && p['collection'] === 'openings' && typeof p['id'] === 'string' && result.created.includes(p['id']) && element !== null && typeof element === 'object' && !('fill' in element);
+    })
+    .map((p) => p['id'] as string);
+  if (ids.length === 0) return '';
+  const [first] = ids;
+  return (
+    ` Note: ${ids.join(', ')} ${ids.length === 1 ? 'is an empty cased opening' : 'are empty cased openings'} — no fill, so no door or window. ` +
+    `If a door or window was meant, set its fill to the nearest doorType or windowType ({"op":"setProperty","id":"${String(first)}","path":"/fill","value":"<type>"}) and keep its width and height, which override the type's.`
+  );
 }
 
 async function renderContent(client: FloorspecClient, projectId: string, options: Omit<RenderOptions, 'view'>) {
