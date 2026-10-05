@@ -6,30 +6,33 @@
 import { predicates, roundHalfEvenRational, Surd } from '@floorspec/engine';
 import { fail } from './diagnostics.js';
 import { asPoint, SIDE_UNIT, type LevelFaces } from './model/faces.js';
-import { RESERVED_TARGETS, type CollectionName, type ReservedTarget } from './model/working.js';
+import { EXTENSION_PREFIX, ITEMS, RESERVED_TARGETS, type CollectionName, type ReservedTarget } from './model/working.js';
 import { applyPrimitive } from './primitives.js';
 import {
   ANY,
   BUILDING,
-  EDGE,
   JUNCTION,
   edgeGeometry,
+  EXTENSION_ELEMENT,
   LEVEL,
   OPENING,
+  resolveArea,
   resolveElement,
+  resolveItem,
   resolveLength,
   resolvePoint,
   resolvePosition,
+  resolveRoom,
   resolveVector,
-  ROOM,
   roomFace,
+  sideToward,
   toJsonInt,
   WALL,
   type Ctx,
   type IPoint,
 } from './references/resolve.js';
-import type { Operation, Point, ResolvedPrimitive, Side } from './types.js';
-import { cmpStr, getMember, setMember, type JsonObject } from './lib/json.js';
+import type { HostRef, Operation, Point, ResolvedPrimitive, Side } from './types.js';
+import { clone, cmpStr, getMember, isObject, setMember, type JsonObject } from './lib/json.js';
 
 const pt = (p: IPoint, ptr: string): Point => [toJsonInt(p[0], ptr), toJsonInt(p[1], ptr)];
 const sortIds = (ids: Iterable<string>): string[] => [...new Set(ids)].sort(cmpStr);
@@ -54,9 +57,14 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
   switch (op.op) {
     // ── primitives (2.5: references are resolved first, like any composite's) ──
     case 'addElement': {
-      const id = op.id ?? ctx.wc.mint(op.collection);
       // 2.5: never resolved inside `element` — it is added exactly as given.
-      emit({ op: 'addElement', collection: op.collection, id, element: op.element });
+      if (op.extension !== undefined) {
+        const id = op.id ?? ctx.wc.mint({ prefix: EXTENSION_PREFIX });
+        emit({ op: 'addElement', extension: op.extension, collection: op.collection, id, element: op.element });
+      } else {
+        const id = op.id ?? ctx.wc.mint(op.collection as CollectionName | typeof ITEMS);
+        emit({ op: 'addElement', collection: op.collection, id, element: op.element });
+      }
       break;
     }
     case 'addJunction':
@@ -95,6 +103,15 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       const id = resolveElement(op.id, `${base}/id`, ctx, JUNCTION);
       const to = resolvePoint(op.to, `${base}/to`, ctx).point;
       emit({ op: 'moveJunction', id, to: pt(to, `${base}/to`) });
+      break;
+    }
+    // 2.6 (Ops 0.2): `a` and `b` are program items, resolved in that order.
+    case 'setAdjacency':
+    case 'removeAdjacency': {
+      const a = resolveItem(op.a, `${base}/a`, ctx);
+      const b = resolveItem(op.b, `${base}/b`, ctx);
+      if (op.op === 'removeAdjacency') emit({ op: 'removeAdjacency', a, b, kind: op.kind });
+      else emit({ op: 'setAdjacency', a, b, kind: op.kind, ...(has('weight') && { weight: op.weight }) });
       break;
     }
 
@@ -136,19 +153,18 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
 
     // ── 4.2 moveWall ──
     case 'moveWall': {
-      const wall = resolveElement(op.wall, `${base}/wall`, ctx, EDGE);
+      const wall = resolveElement(op.wall, `${base}/wall`, ctx, WALL);
       let by = resolveLength(op.by, `${base}/by`);
       const g = edgeGeometry(ctx, wall, `${base}/wall`);
-      if (g.m === 0n) fail('FS-OPS-008', `${wall} has no length, so it has no direction to move across`, [wall], `${base}/wall`);
       if (op.toward !== undefined) {
-        const room = resolveElement(op.toward, `${base}/toward`, ctx, ROOM);
-        const rf = roomFace(ctx, room, `${base}/toward`);
-        const { left, right } = sidesOf(ctx, rf.faces, wall, `${base}/wall`);
+        const room = resolveRoom(op.toward, `${base}/toward`, ctx);
+        const side = sideToward(ctx, wall, room, `${base}/toward`);
         const mag = by < 0n ? -by : by;
-        if (left === rf.face && right !== rf.face) by = mag;
-        else if (right === rf.face && left !== rf.face) by = -mag;
+        if (side === 'left') by = mag;
+        else if (side === 'right') by = -mag;
         else fail('FS-OPS-008', `${room} is not on one side of ${wall}, so there is no way to move it toward ${room}`, [wall], `${base}/toward`);
       }
+      if (g.m === 0n) fail('FS-OPS-008', `${wall} has no length, so it has no direction to move across`, [wall], `${base}/wall`);
       // by × the unit left normal (−dy, dx)/|d|, each coordinate rounded once (4.2).
       const k = Surd.sqrt(g.m).mulInt(by).divInt(g.m);
       const disp: IPoint = [k.mulInt(-g.d[1]).round(), k.mulInt(g.d[0]).round()];
@@ -164,13 +180,19 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
 
     // ── 4.3 moveRoom ──
     case 'moveRoom': {
-      const room = resolveElement(op.room, `${base}/room`, ctx, ROOM);
+      const room = resolveRoom(op.room, `${base}/room`, ctx);
       const by = resolveVector(op.by, `${base}/by`);
       const rf = roomFace(ctx, room, `${base}/room`);
       const anchor = asPoint(getMember(ctx.wc.element(room), 'anchor'))!;
       const plan = sortIds(rf.faces.faces[rf.face]!.outer.vertices).map((j) => ({ j, p: rf.faces.positions.get(j)! }));
+      // What stands on the room's floor or hangs from its ceiling (Ops 0.2), found before anything moves.
+      const onSurface = onSurfaceOf(ctx, room, true);
       for (const { j, p } of plan) emit({ op: 'moveJunction', id: j, to: pt([p[0] + by[0], p[1] + by[1]], `${base}/by`) }, `${base}/room`);
       emit({ op: 'setProperty', id: room, path: '/anchor', value: pt([anchor[0] + by[0], anchor[1] + by[1]], `${base}/by`) }, `${base}/room`);
+      for (const id of onSurface) {
+        const p = asPoint(getMember(getMember(ctx.wc.element(id), 'host'), 'position'))!;
+        emit({ op: 'setProperty', id, path: '/host/position', value: pt([p[0] + by[0], p[1] + by[1]], `${base}/by`) }, `${base}/room`);
+      }
       break;
     }
 
@@ -233,20 +255,29 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       const level = resolveElement(op.level, `${base}/level`, ctx, LEVEL);
       const at = resolvePoint(op.at, `${base}/at`, ctx).point;
       const element: JsonObject = { level, anchor: pt(at, `${base}/at`) };
+      // Ops 0.2: the program item the room fulfils, resolved after `level` and `at`.
+      if (op.brief !== undefined) setMember(element, 'brief', resolveItem(op.brief, `${base}/brief`, ctx));
       for (const m of ['name', 'function', 'wallFinish', 'floorFinish', 'ceilingFinish', 'extensions', 'extras'] as const) if (has(m)) setMember(element, m, o[m]);
       emit({ op: 'addElement', collection: 'rooms', id: op.id ?? ctx.wc.mint('rooms'), element });
       break;
     }
     case 'setRoomFinish': {
-      const room = resolveElement(op.room, `${base}/room`, ctx, ROOM);
+      const room = resolveRoom(op.room, `${base}/room`, ctx);
       emit({ op: 'setProperty', id: room, path: `/${op.surface}Finish`, value: op.material }, `${base}/room`);
+      break;
+    }
+    // 4.6.2 (Ops 0.2)
+    case 'setRoomBrief': {
+      const room = resolveRoom(op.room, `${base}/room`, ctx);
+      const item = resolveItem(op.item, `${base}/item`, ctx);
+      emit({ op: 'setProperty', id: room, path: '/brief', value: item }, `${base}/room`);
       break;
     }
 
     // ── 4.7 removeWall ──
     case 'removeWall': {
       const wall = resolveElement(op.wall, `${base}/wall`, ctx, WALL);
-      const keep = op.keep === undefined ? undefined : resolveElement(op.keep, `${base}/keep`, ctx, ROOM);
+      const keep = op.keep === undefined ? undefined : resolveRoom(op.keep, `${base}/keep`, ctx);
       const level = getMember(ctx.wc.element(wall), 'level');
       if (typeof level !== 'string') return fail('FS-OPS-007', `${wall} is on no level, so it has no faces either side`, [], `${base}/wall`);
       const faces = ctx.faces.get(level);
@@ -257,7 +288,11 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       if (left !== right && roomsL.length > 0 && roomsR.length > 0) {
         if (keep === undefined || (!roomsL.includes(keep) && !roomsR.includes(keep)))
           fail('FS-OPS-008', `${wall} has ${roomsL.join(', ')} on one side and ${roomsR.join(', ')} on the other: say which to keep`, [wall], has('keep') ? `${base}/keep` : base);
-        for (const r of roomsL.includes(keep) ? roomsR : roomsL) emit({ op: 'removeElement', id: r }, `${base}/keep`);
+        for (const r of roomsL.includes(keep) ? roomsR : roomsL) {
+          // Ops 0.2: what stood in the room not kept now stands in the one kept.
+          for (const id of onSurfaceOf(ctx, r, false)) emit({ op: 'setProperty', id, path: '/host/room', value: keep }, `${base}/keep`);
+          emit({ op: 'removeElement', id: r }, `${base}/keep`);
+        }
       }
       emit({ op: 'removeElement', id: wall, cascade: true }, `${base}/wall`);
       break;
@@ -289,8 +324,90 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       emit({ op: 'addElement', collection: 'levels', id: op.id ?? ctx.wc.mint('levels'), element });
       break;
     }
+
+    // ── 4.9 addProgramItem (Ops 0.2) ──
+    case 'addProgramItem': {
+      // References in the order 4.9 lists them: targetArea, minArea, level.
+      const element: JsonObject = { function: op.function };
+      if (has('count')) setMember(element, 'count', op.count);
+      for (const m of ['targetArea', 'minArea'] as const) if (has(m)) setMember(element, m, resolveArea(o[m], `${base}/${m}`));
+      if (op.level !== undefined) setMember(element, 'level', resolveElement(op.level, `${base}/level`, ctx, LEVEL));
+      for (const m of COMMON_MEMBERS) if (has(m)) setMember(element, m, o[m]);
+      emit({ op: 'addElement', collection: ITEMS, id: op.id ?? ctx.wc.mint(ITEMS), element });
+      break;
+    }
+
+    // ── 4.10 placeElement and moveElement (Ops 0.2) ──
+    case 'placeElement': {
+      const { host, level } = resolveHost(ctx, op.host, `${base}/host`);
+      const element = clone(op.element) as JsonObject;
+      setMember(element, 'host', host);
+      const fallback = getMember(element, 'fallback');
+      if (!Object.hasOwn(element, 'fallback')) setMember(element, 'fallback', { level });
+      else if (isObject(fallback)) setMember(fallback, 'level', level);
+      emit({ op: 'addElement', extension: op.extension, collection: op.collection, id: op.id ?? ctx.wc.mint({ prefix: EXTENSION_PREFIX }), element });
+      break;
+    }
+    case 'moveElement': {
+      const id = resolveElement(op.element, `${base}/element`, ctx, EXTENSION_ELEMENT);
+      const { host, level } = resolveHost(ctx, op.host, `${base}/host`);
+      emit({ op: 'setProperty', id, path: '/host', value: host }, `${base}/element`);
+      emit({ op: 'setProperty', id, path: '/fallback/level', value: level }, `${base}/element`);
+      break;
+    }
   }
   return out;
+}
+
+/**
+ * Ops 0.2: the extension elements on a room's floor or ceiling — a `surface` host on the room — by
+ * ID; with `pointOnly`, only those whose position is an integer point (4.3).
+ */
+function onSurfaceOf(ctx: Ctx, room: string, pointOnly: boolean): string[] {
+  return ctx.wc
+    .extElements()
+    .filter((x) => {
+      const h = getMember(x.element, 'host');
+      return isObject(h) && getMember(h, 'mode') === 'surface' && getMember(h, 'room') === room && (!pointOnly || asPoint(getMember(h, 'position')) !== undefined);
+    })
+    .map((x) => x.id);
+}
+
+/** 4.10: a host reference resolved to a Core host (Core §13.3), and the host's level. */
+function resolveHost(ctx: Ctx, h: HostRef, ptr: string): { host: JsonObject; level: string } {
+  let host: JsonObject;
+  let owner: { kind: 'walls' | 'rooms'; id: string; member: string } | undefined;
+  if (h.mode === 'wallFace') {
+    const wall = resolveElement(h.wall, `${ptr}/wall`, ctx, WALL);
+    const g = edgeGeometry(ctx, wall, `${ptr}/wall`);
+    let side: 'left' | 'right';
+    if (h.side !== undefined) side = h.side;
+    else {
+      const room = resolveRoom(h.toward, `${ptr}/toward`, ctx);
+      const s = sideToward(ctx, wall, room, `${ptr}/toward`);
+      if (s === undefined) return fail('FS-OPS-008', `${room} is not on one side of ${wall}, so neither face of it looks into ${room}`, [wall], `${ptr}/toward`);
+      side = s;
+    }
+    // A hosted element is placed by a point: its position is resolved with w = 0 (3.5).
+    const offset = resolvePosition(h.at, `${ptr}/at`, g.m, 0n);
+    const height = resolveLength(h.height, `${ptr}/height`);
+    host = { mode: 'wallFace', wall, side, offset: toJsonInt(offset, `${ptr}/at`), height: toJsonInt(height, `${ptr}/height`) };
+    owner = { kind: 'walls', id: wall, member: 'wall' };
+  } else if (h.mode === 'surface') {
+    const room = resolveRoom(h.room, `${ptr}/room`, ctx);
+    const at = resolvePoint(h.at, `${ptr}/at`, ctx).point;
+    host = { mode: 'surface', room, surface: h.surface, position: pt(at, `${ptr}/at`) };
+    owner = { kind: 'rooms', id: room, member: 'room' };
+  } else {
+    const level = resolveElement(h.level, `${ptr}/level`, ctx, LEVEL);
+    const at = resolvePoint(h.at, `${ptr}/at`, ctx).point;
+    host = { mode: 'free', level, position: pt(at, `${ptr}/at`) };
+  }
+  if (Object.hasOwn(h, 'rotation')) setMember(host, 'rotation', clone((h as { rotation?: unknown }).rotation));
+  if (owner === undefined) return { host, level: host.level as string };
+  const level = getMember(ctx.wc.elementIn(owner.kind, owner.id), 'level');
+  if (typeof level !== 'string') return fail('FS-OPS-003', `${owner.id} is on no level, so the element placed on it has none`, [owner.id], `${ptr}/${owner.member}`);
+  return { host, level };
 }
 
 /** A junction on `level` at exactly `p` (4.1), the first by ID if (mid-batch) there are several. */
@@ -323,7 +440,7 @@ function fillWidth(ctx: Ctx, fill: unknown): number | undefined {
 
 /** 4.4 resizeRoom. */
 function resizeRoom(ctx: Ctx, roomRef: string, side: Side, byRef: unknown, base: string, emit: (p: ResolvedPrimitive, idPtr?: string) => void): void {
-  const room = resolveElement(roomRef, `${base}/room`, ctx, ROOM);
+  const room = resolveRoom(roomRef, `${base}/room`, ctx);
   const by = resolveLength(byRef, `${base}/by`);
   const rf = roomFace(ctx, room, `${base}/room`);
   const { faces, level } = rf;

@@ -6,9 +6,9 @@
 import { jsonEqual, predicates, type Diagnostic } from '@floorspec/engine';
 import { opsDiagnostic } from './diagnostics.js';
 import { asPoint, LevelFaces } from './model/faces.js';
-import { WorkingCopy, type CollectionName } from './model/working.js';
+import { samePlace, WorkingCopy } from './model/working.js';
 import type { Lock } from './types.js';
-import { getMember, isObject, type JsonObject } from './lib/json.js';
+import { getMember, type JsonObject } from './lib/json.js';
 
 type IPoint = readonly [bigint, bigint];
 
@@ -67,21 +67,20 @@ export function brokenLocks(a: WorkingCopy, b: WorkingCopy, aCanon: JsonObject, 
     const pb = asPoint(getMember(b.elementIn('junctions', j), 'position'));
     return pa !== undefined && pb !== undefined && pa[0] === pb[0] && pa[1] === pb[1];
   };
-  const canonElement = (doc: JsonObject, c: CollectionName, id: string): unknown => {
-    const coll = getMember(doc, c);
-    return isObject(coll) && Object.hasOwn(coll, id) ? coll[id] : undefined;
-  };
+  // The canonical contents, read as working copies of the same draft: where an element is, and what.
+  const ca = new WorkingCopy(aCanon, [], a.ops);
+  const cb = new WorkingCopy(bCanon, [], a.ops);
   locks.forEach((l, i) => {
     const ptr = `/context/locks/${i}`;
     const els = lockElements(l);
     let held: boolean;
     let why: string;
     if ('element' in l) {
-      const c = a.collectionOf(l.element)!;
-      const ea = canonElement(aCanon, c, l.element);
-      const eb = canonElement(bCanon, c, l.element);
-      held = eb !== undefined && jsonEqual(ea, eb);
-      why = held ? '' : eb === undefined ? `${l.element} is gone` : `${l.element} changed`;
+      const la = ca.locate(l.element)!;
+      const lb = cb.locate(l.element);
+      const c = la.place.kind;
+      held = lb !== undefined && samePlace(la.place, lb.place) && jsonEqual(la.container[l.element], lb.container[l.element]);
+      why = held ? '' : lb === undefined ? `${l.element} is gone` : `${l.element} changed`;
       if (held && (c === 'walls' || c === 'separators')) {
         const ends = ['start', 'end'].map((m) => getMember(a.element(l.element), m)).filter((j): j is string => typeof j === 'string');
         held = ends.every(unmoved);
@@ -90,6 +89,15 @@ export function brokenLocks(a: WorkingCopy, b: WorkingCopy, aCanon: JsonObject, 
       if (held && c === 'rooms') {
         held = roomCycle(a, l.element).every(unmoved);
         if (!held) why = `a corner of ${l.element} moved`;
+      }
+      // Ops 0.2: an extension element on a wall face also holds its wall's start and end (6.1).
+      const host = getMember(la.container[l.element], 'host');
+      if (held && c === 'ext' && getMember(host, 'mode') === 'wallFace') {
+        const wall = getMember(host, 'wall');
+        const w = typeof wall === 'string' ? a.elementIn('walls', wall) : undefined;
+        const ends = ['start', 'end'].map((m) => getMember(w, m));
+        held = w !== undefined && ends.every((j) => typeof j === 'string' && unmoved(j));
+        if (!held) why = `${l.element} is on ${String(wall)}, and an end of it moved`;
       }
     } else if ('length' in l) {
       const la = line(a, l.length);

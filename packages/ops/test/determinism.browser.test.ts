@@ -1,7 +1,7 @@
 /**
  * The applier in a real browser (FLR-ADR-010). Runs only in the `browser` project: applies every
  * determinism fixture in Chromium and compares the results, byte for byte, with Node's (1.3.2);
- * then runs the Ops conformance suite in the browser too.
+ * then runs both Ops conformance suites in the browser too, each as its own draft.
  */
 import { describe, expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
@@ -22,12 +22,18 @@ describe('in the browser', () => {
     expect(here.some((h) => h.result.startsWith('{"status":"rejected"'))).toBe(true);
   });
 
-  it('passes the Ops conformance suite', async () => {
+  it('passes both Ops conformance suites, each as its own draft', async () => {
     const cases = await commands.opsConformanceCases();
-    if (await commands.opsSuiteVendored()) expect(cases.length).toBeGreaterThan(0);
-    for (const c of cases) {
-      const problems = checkCase({ ...c, input: fromBase64(c.input), request: fromBase64(c.request) }, apply(fromBase64(c.input), fromBase64(c.request)));
-      expect({ name: c.name, problems }).toEqual({ name: c.name, problems: [] });
+    if (await commands.opsSuiteVendored()) {
+      expect(cases.filter((c) => c.ops === '0.1').length).toBe(230);
+      expect(cases.filter((c) => c.ops === '0.2').length).toBe(359);
     }
-  });
+    let passed = 0;
+    for (const c of cases) {
+      const problems = checkCase({ ...c, input: fromBase64(c.input), request: fromBase64(c.request) }, apply(fromBase64(c.input), fromBase64(c.request), { ops: c.ops }));
+      expect({ name: c.name, problems }).toEqual({ name: c.name, problems: [] });
+      passed++;
+    }
+    console.log(`ops conformance in the browser: ${passed}/${cases.length} cases pass`);
+  }, 120_000);
 });

@@ -228,7 +228,10 @@ function planarize(wc: WorkingCopy, level: string): Diagnostic[] {
         }
       }
       wc.touch();
-      if (kind === 'walls') diagnostics.push(...rehost(wc, s, route, ids));
+      if (kind === 'walls') {
+        diagnostics.push(...rehost(wc, s, route, ids));
+        rehostHosted(wc, s, route, ids);
+      }
     }
   return diagnostics;
 }
@@ -277,6 +280,40 @@ function rehost(wc: WorkingCopy, s: Seg, route: IPoint[], ids: string[]): Diagno
   }
   wc.touch();
   return out;
+}
+
+/**
+ * 5.2 step 6 (Ops 0.2): an extension element on a face of a split wall, with an integer offset,
+ * moves to the piece whose interval [s, e) along the original location line contains its offset —
+ * the last piece's interval includes its end — and its offset becomes offset − s, exact and
+ * rounded once. Its side and height do not change. One that no piece contains stays on the first
+ * piece, unchanged, for validation to judge.
+ */
+function rehostHosted(wc: WorkingCopy, s: Seg, route: IPoint[], ids: string[]): void {
+  const d = sub(s.b, s.a);
+  const m = d[0] * d[0] + d[1] * d[1];
+  const rootM = Surd.sqrt(m);
+  const t = route.map((c) => rootM.mulInt(predicates.dot(sub(c, s.a), d)).divInt(m));
+  const last = ids.length - 1;
+  let changed = false;
+  for (const x of wc.extElements()) {
+    const h = getMember(x.element, 'host');
+    if (!isObject(h) || getMember(h, 'mode') !== 'wallFace' || getMember(h, 'wall') !== s.id) continue;
+    const off = getMember(h, 'offset');
+    if (typeof off !== 'number' || !Number.isSafeInteger(off)) continue;
+    const o = Surd.of(BigInt(off));
+    for (let i = 0; i <= last; i++) {
+      if (o.cmp(t[i]!) >= 0 && (o.cmp(t[i + 1]!) < 0 || (i === last && o.cmp(t[i + 1]!) <= 0))) {
+        if (i > 0) {
+          setMember(h, 'wall', ids[i]!);
+          setMember(h, 'offset', Number(o.sub(t[i]!).round()));
+          changed = true;
+        }
+        break;
+      }
+    }
+  }
+  if (changed) wc.touch();
 }
 
 // ── 5.3 join cleanup ──────────────────────────────────────────────────────────

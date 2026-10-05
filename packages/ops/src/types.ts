@@ -1,15 +1,20 @@
 /**
- * The TypeScript types of Floorspec Ops 0.1 requests, operations and results (chapters 1–7),
- * written to match the specification's member tables (and schema/ops/0.1 when it is vendored).
+ * The TypeScript types of Floorspec Ops requests, operations and results (chapters 1–7), written to
+ * match the specification's member tables and schema/ops/0.2. Ops 0.1 is a subset: it has no
+ * adjacency primitives, no addLevel, addProgramItem, setRoomBrief, placeElement or moveElement,
+ * no `by`/`toward` on moveOpening, no `brief` on addRoom, and no `extension` on addElement.
  *
  * A `Length` is a JSON integer of base units or a length string (3.1); a `PointRef` a point (3.2);
  * an `ElementRef` an ID or a selector (3.3). Resolved operations — the `resolved` echo and the
  * `inverse` — carry only integers, points and IDs.
  */
 import type { Diagnostic } from '@floorspec/engine';
-import type { CollectionName, ReservedTarget } from './model/working.js';
+import type { CollectionName, OpsVersion, ReservedTarget } from './model/working.js';
 
-export type { CollectionName, ReservedTarget };
+export type { CollectionName, OpsVersion, ReservedTarget };
+
+/** An area (3.6, Ops 0.2): square base units, or a string such as `11 m2`, `120 sq ft`. */
+export type Area = number | string;
 
 /** A length: base units, or a string such as `12' 6 1/2"`, `3/4 in`, `3810 mm` (3.1). */
 export type Length = number | string;
@@ -33,9 +38,14 @@ export interface CommonMembers {
 
 // ── primitives (chapter 2) ─────────────────────────────────────────────────────
 
+/**
+ * 2.1: into one of the eleven collections, or (Ops 0.2) `"items"` — the program's items — or, with
+ * `extension`, one of that extension's collections.
+ */
 export interface AddElement {
   op: 'addElement';
-  collection: CollectionName;
+  collection: CollectionName | 'items' | (string & {});
+  extension?: string;
   id?: string;
   element: Record<string, unknown>;
 }
@@ -95,7 +105,24 @@ export interface MoveJunction {
   to: PointRef;
 }
 
-export type Primitive = AddElement | AddJunction | AddWall | AddSeparator | RemoveElement | SetProperty | UnsetProperty | MoveJunction;
+export type AdjacencyKind = 'required' | 'preferred' | 'forbidden';
+/** 2.6 (Ops 0.2): write the adjacency of an unordered pair of program items and a kind. */
+export interface SetAdjacency {
+  op: 'setAdjacency';
+  a: ElementRef;
+  b: ElementRef;
+  kind: AdjacencyKind;
+  weight?: unknown;
+}
+/** 2.6 (Ops 0.2): remove every adjacency of that pair and kind. */
+export interface RemoveAdjacency {
+  op: 'removeAdjacency';
+  a: ElementRef;
+  b: ElementRef;
+  kind: AdjacencyKind;
+}
+
+export type Primitive = AddElement | AddJunction | AddWall | AddSeparator | RemoveElement | SetProperty | UnsetProperty | MoveJunction | SetAdjacency | RemoveAdjacency;
 
 // ── composites (chapter 4) ─────────────────────────────────────────────────────
 
@@ -163,12 +190,20 @@ export interface AddRoom extends CommonMembers {
   wallFinish?: string;
   floorFinish?: string;
   ceilingFinish?: string;
+  /** Ops 0.2: the program item the room fulfils (3.3). */
+  brief?: ElementRef;
 }
 export interface SetRoomFinish {
   op: 'setRoomFinish';
   room: ElementRef;
   surface: 'wall' | 'floor' | 'ceiling';
   material: string;
+}
+/** 4.6 (Ops 0.2): the room now fulfils that program item. */
+export interface SetRoomBrief {
+  op: 'setRoomBrief';
+  room: ElementRef;
+  item: ElementRef;
 }
 export interface RemoveWall {
   op: 'removeWall';
@@ -187,6 +222,48 @@ export interface AddLevel extends CommonMembers {
   below?: ElementRef;
 }
 
+/** 4.9 (Ops 0.2): a program item — a bubble of the brief. */
+export interface AddProgramItem {
+  op: 'addProgramItem';
+  function: unknown;
+  id?: string;
+  name?: unknown;
+  count?: unknown;
+  targetArea?: Area;
+  minArea?: Area;
+  level?: ElementRef;
+  extensions?: Record<string, unknown>;
+  extras?: Record<string, unknown>;
+}
+
+/** 4.10 (Ops 0.2): a host written with the reference grammar. */
+export type HostRef =
+  | ({ mode: 'wallFace'; wall: ElementRef; at: Position; height: Length } & ({ side: 'left' | 'right'; toward?: never } | { toward: ElementRef; side?: never }))
+  | { mode: 'surface'; room: ElementRef; surface: 'floor' | 'ceiling'; at: PointRef; rotation?: unknown }
+  | { mode: 'free'; level: ElementRef; at: PointRef; rotation?: unknown };
+
+/** A resolved host (Core §13.3). */
+export type Host =
+  | { mode: 'wallFace'; wall: string; side: 'left' | 'right'; offset: number; height: number }
+  | { mode: 'surface'; room: string; surface: 'floor' | 'ceiling'; position: Point; rotation?: unknown }
+  | { mode: 'free'; level: string; position: Point; rotation?: unknown };
+
+/** 4.10 (Ops 0.2): add an extension element placed on a host. */
+export interface PlaceElement {
+  op: 'placeElement';
+  extension: string;
+  collection: string;
+  host: HostRef;
+  element: Record<string, unknown>;
+  id?: string;
+}
+/** 4.10 (Ops 0.2): place an existing extension element on a host. */
+export interface MoveElement {
+  op: 'moveElement';
+  element: ElementRef;
+  host: HostRef;
+}
+
 export type Composite =
   | DrawWall
   | DrawSeparator
@@ -197,8 +274,12 @@ export type Composite =
   | MoveOpening
   | AddRoom
   | SetRoomFinish
+  | SetRoomBrief
   | RemoveWall
-  | AddLevel;
+  | AddLevel
+  | AddProgramItem
+  | PlaceElement
+  | MoveElement;
 export type Operation = Primitive | Composite;
 export type OperationName = Operation['op'];
 
@@ -219,14 +300,28 @@ export interface ApplyRequest {
 // ── resolved primitives (1.4) ─────────────────────────────────────────────────
 
 export type ResolvedPrimitive =
-  | { op: 'addElement'; collection: CollectionName; id: string; element: Record<string, unknown> }
+  | { op: 'addElement'; collection: string; extension?: string; id: string; element: Record<string, unknown> }
   | ({ op: 'addJunction'; id: string; level: string; position: unknown; join?: unknown })
   | ({ op: 'addWall'; id: string; level: string; start: string; end: string } & WallMembers)
   | { op: 'addSeparator'; id: string; level: string; start: string; end: string }
   | { op: 'removeElement'; id: string; cascade?: boolean }
   | { op: 'setProperty'; id: string; path: string; value: unknown }
   | { op: 'unsetProperty'; id: string; path: string }
-  | { op: 'moveJunction'; id: string; to: Point };
+  | { op: 'moveJunction'; id: string; to: Point }
+  | { op: 'setAdjacency'; a: string; b: string; kind: AdjacencyKind; weight?: unknown }
+  | { op: 'removeAdjacency'; a: string; b: string; kind: AdjacencyKind };
+
+/** How `apply` and `resolveBatch` run. */
+export interface ApplyOptions {
+  /**
+   * The draft of Floorspec Ops to follow. `'0.2'`, the default, applies to Core 0.2 documents (and
+   * 0.1 ones) and has the program and extension elements; `'0.1'` is Ops 0.1 exactly as published:
+   * Core 0.1 documents only, and the 0.2 operations and members are FS-OPS-001.
+   */
+  readonly ops?: OpsVersion;
+  /** Ops 0.2: the validator's known extensions (Core §12.2), as the engine takes them. Absent: none. */
+  readonly knownExtensions?: string | Uint8Array | readonly unknown[];
+}
 
 // ── results (1.3) ─────────────────────────────────────────────────────────────
 
