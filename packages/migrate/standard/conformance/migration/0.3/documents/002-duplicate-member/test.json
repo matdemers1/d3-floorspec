@@ -1,0 +1,6 @@
+{
+  "description": "The document names \"floorspec\" twice. A migrator refuses it with FS-JSON-002, and never guesses which of the two drafts it declares (20.2.1).",
+  "covers": [
+    "FS-CORE-20.2.1"
+  ]
+}

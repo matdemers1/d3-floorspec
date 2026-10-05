@@ -185,7 +185,8 @@ function referenceInvariants(doc: FloorspecDocument, r: Reporter): void {
     if (h?.mode === 'free') ref(x.id, `${base}/host/level`, 'levels', h.level);
     const fb = x.element.fallback;
     ref(x.id, `${base}/fallback/level`, 'levels', fb.level);
-    ref(x.id, `${base}/option`, 'options', x.element.option);
+    // Core 0.3 (19.2): core's only in a 0.3 document; in a 0.2 one the extension's own member (1.2.6).
+    if (doc.floorspec === '0.3') ref(x.id, `${base}/option`, 'options', x.element.option);
     ref(x.id, `${base}/fallback/asset`, 'assets', fb.asset);
     ref(x.id, `${base}/fallback/symbol`, 'assets', fb.symbol);
   }

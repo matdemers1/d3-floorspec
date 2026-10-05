@@ -2,7 +2,7 @@
   "name": "@floorspec/cli",
   "private": true,
   "version": "0.1.0",
-  "description": "The floorspec command line: validate, canonicalize, hash and derive Floorspec documents, and write and unpack .floorspec packages.",
+  "description": "The floorspec command line: validate, canonicalize, hash, derive and migrate Floorspec documents, and write and unpack .floorspec packages.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@floorspec/engine": "workspace:*",
+    "@floorspec/migrate": "workspace:*",
     "@floorspec/package": "workspace:*"
   }
 }

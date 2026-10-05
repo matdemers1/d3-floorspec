@@ -1,4 +1,5 @@
 import { DOOR_OPERATIONS, effectiveClearOpening, WINDOW_OPERATIONS, type FloorspecDocument, type Opening } from '@floorspec/engine';
+import { migrationBatch } from '@floorspec/migrate';
 import { parseArea } from '@floorspec/ops';
 import type { Batch } from './ops';
 import { formatLen, type UnitSystem } from './units';
@@ -16,9 +17,13 @@ export const CURRENT_CORE = '0.3';
 /** Does this plan hold operations and clear openings — does it declare Core 0.3 or later? */
 export const holdsClearOpenings = (document: { floorspec: string }): boolean => document.floorspec !== '0.1' && document.floorspec !== '0.2';
 
-/** Ops 0.3, 2.3: what makes a 0.2 (or 0.1) plan a Core 0.3 one. Changes nothing else, and Undo takes it back. */
-export function upgradeTo03(): Batch {
-  return [{ op: 'setProperty', id: '$document', path: '/floorspec', value: CURRENT_CORE }];
+/**
+ * What makes a 0.2 (or 0.1) plan a Core 0.3 one: its migration (Core chapter 20) as one batch — the
+ * version, and whatever 0.3 reads differently moved into `extras["floorspec:migration"]` — so it means
+ * exactly what it meant, and Undo takes it back.
+ */
+export function upgradeTo03(document: object): Batch {
+  return migrationBatch(document, CURRENT_CORE);
 }
 
 export const DOOR_OPERATION_LABELS: Readonly<Record<(typeof DOOR_OPERATIONS)[number], string>> = {

@@ -1,5 +1,6 @@
 import type { FixOp, FloorspecDocument } from '@floorspec/engine';
 import type { Operation } from '@floorspec/ops';
+import { migrationBatch } from '@floorspec/migrate';
 import type { Point } from './model';
 import { signedArea } from './geometry';
 import { UNITS_PATH, type UnitSystem } from './units';
@@ -255,12 +256,11 @@ export function addRoof(document: FloorspecDocument, level: string, footprint: r
 }
 
 /**
- * Roofs and stairs are Floorspec Core 0.3's (chapters 16, 17): a plan of an earlier draft is made
- * to declare "0.3" in the same batch, which changes nothing else in it (Core 1.2.6) and Undo takes
- * back with the element.
+ * Roofs and stairs are Floorspec Core 0.3's (chapters 16, 17): a plan of an earlier draft is
+ * migrated to 0.3 in the same batch (Core chapter 20), which changes nothing it means, and Undo takes
+ * it back with the element.
  */
-const upgradeFor = (document: FloorspecDocument): Batch =>
-  document.floorspec === '0.1' || document.floorspec === '0.2' ? [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }] : [];
+const upgradeFor = (document: FloorspecDocument): Batch => migrationBatch(document, '0.3');
 
 /** The level a stair on `level` rises to: the next one up in the same building, or none. */
 export function levelAbove(document: FloorspecDocument, level: string): string | undefined {

@@ -12,8 +12,8 @@ import { CURRENT_CORE, clearAreaText, formatClearArea, parseClearArea, upgradeTo
  */
 
 /**
- * The offer to upgrade a plan to Floorspec 0.3: one op, `setProperty $document /floorspec "0.3"`,
- * which changes nothing else and which Undo takes back.
+ * The offer to upgrade a plan to Floorspec 0.3: its migration (Core chapter 20) as one batch, which
+ * changes nothing the plan means and which Undo takes back.
  */
 export function CoreUpgradeNotice({ store, model, what }: { store: EditorStore; model: EditorModel; what: string }) {
   const readOnly = useEditor(store, (s) => s.readOnly);
@@ -23,7 +23,7 @@ export function CoreUpgradeNotice({ store, model, what }: { store: EditorStore; 
       <p>
         {what} are part of Floorspec {CURRENT_CORE}. Upgrading changes nothing else in the plan, and Undo takes it back.
       </p>
-      <Button size="sm" variant="primary" loading={pending !== null} disabled={readOnly !== null} onClick={() => void store.apply(`Upgrade to Floorspec ${CURRENT_CORE}`, upgradeTo03())}>
+      <Button size="sm" variant="primary" loading={pending !== null} disabled={readOnly !== null} onClick={() => void store.apply(`Upgrade to Floorspec ${CURRENT_CORE}`, upgradeTo03(model.document))}>
         Upgrade to Floorspec {CURRENT_CORE}
       </Button>
     </Alert>

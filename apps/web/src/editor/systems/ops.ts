@@ -1,4 +1,5 @@
 import { defaultClearances, type FloorspecDocument } from '@floorspec/engine';
+import { migrationBatch } from '@floorspec/migrate';
 import type { Operation } from '@floorspec/ops';
 import type { Batch } from '../ops';
 import { extensionVersion, membersFor, type DeviceKind, type ReceptacleOptions } from './catalog';
@@ -30,7 +31,7 @@ export type HostRef =
  */
 export function declarationOps(document: FloorspecDocument, extension: string): Batch {
   const ops: Batch = [];
-  if (document.floorspec === '0.1') ops.push({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' });
+  if (document.floorspec === '0.1') ops.push(...migrationBatch(document, '0.3')); // Core chapter 20
   const used = (document as { extensionsUsed?: Record<string, unknown> }).extensionsUsed;
   if (used === undefined || !Object.hasOwn(used, extension)) ops.push({ op: 'setProperty', id: '$document', path: `/extensionsUsed/${extension}`, value: extensionVersion(extension) });
   return ops;

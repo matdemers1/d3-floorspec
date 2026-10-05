@@ -134,6 +134,30 @@ jobs:
         run: pnpm --filter @floorspec/rules-engine check:generated
       - name: Rules conformance suite (Node)
         run: pnpm --filter @floorspec/rules-engine conformance
+      # Migration (FLR-T-12.4, Core 0.3 chapter 20): the same pin again, for the migration suite
+      # vendored in packages/migrate/standard. It may pin yet another floorspec commit.
+      - name: Read the pinned floorspec commit for migration
+        id: migratepin
+        run: |
+          lock=packages/migrate/standard/LOCK.json
+          if [ "$(jq -r .dirty "$lock")" != "false" ]; then
+            echo "::error::$lock records a dirty sync; re-run the migrate sync-standard against a clean floorspec commit"
+            exit 1
+          fi
+          echo "commit=$(jq -r .commit "$lock")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: matdemers1/floorspec
+          ref: ${{ steps.migratepin.outputs.commit }}
+          path: .floorspec-migrate-pinned
+          persist-credentials: false
+      - name: The vendored migration suite matches the pinned commit
+        run: |
+          status=0
+          for p in $(jq -r '.paths[]' packages/migrate/standard/LOCK.json); do
+            diff -r ".floorspec-migrate-pinned/$p" "packages/migrate/standard/$p" || status=1
+          done
+          exit $status
       - name: Install Chromium for the browser runner
         run: pnpm --filter @floorspec/engine exec playwright install --with-deps chromium
       - name: Engine tests and conformance suite in the browser

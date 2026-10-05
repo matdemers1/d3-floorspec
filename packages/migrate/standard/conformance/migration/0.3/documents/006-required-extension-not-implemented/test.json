@@ -1,0 +1,7 @@
+{
+  "description": "A 0.2 document that requires EXT_acoustics, which neither this migrator nor the reader implements. A reader rejects it with FS-DOC-002 (1.6.4), and so does a reader of 0.3 reading its migration; a migrator never reports FS-DOC-002 and migrates it (20.2.2).",
+  "covers": [
+    "FS-CORE-20.2.2",
+    "FS-CORE-20.6.1"
+  ]
+}

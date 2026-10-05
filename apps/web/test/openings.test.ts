@@ -32,7 +32,7 @@ describe('door and window data (Core 0.3)', () => {
   it('is held by a 0.3 plan, and a 0.2 plan gets it by one op that changes nothing else', () => {
     expect(holdsClearOpenings(TEMPLATE)).toBe(true);
     expect(holdsClearOpenings(as02)).toBe(false);
-    const up = commit(as02, upgradeTo03());
+    const up = commit(as02, upgradeTo03(as02));
     expect(up).toEqual(TEMPLATE);
   });
 

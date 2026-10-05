@@ -1,0 +1,6 @@
+{
+  "description": "The target 0.3 is a number, not the string \"0.3\": it names no draft (20.2.3).",
+  "covers": [
+    "FS-CORE-20.2.3"
+  ]
+}

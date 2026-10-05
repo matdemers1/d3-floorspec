@@ -1,0 +1,9 @@
+{
+  "description": "In a 0.1 document FS_furniture's top-level \"collections\" is opaque data that would be malformed in 0.2 (Core model/066). The step moves it into the record (20.4.1, 20.3.1): the migration is valid under 0.2, SOFA is no element of it, and nothing is derived from it, as in the document (20.6.1). FS_furniture stays declared, its data {}.",
+  "covers": [
+    "FS-CORE-20.4.1",
+    "FS-CORE-20.3.1",
+    "FS-CORE-20.6.1",
+    "FS-CORE-1.2.6"
+  ]
+}

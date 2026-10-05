@@ -5,7 +5,8 @@
 import { lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join, resolve, sep } from 'node:path';
-import { CATALOGUE, OFFICIAL_EXTENSIONS, OFFICIAL_EXTENSION_NAMES, Package, check, type Diagnostic, type ValidateOptions } from '@floorspec/engine';
+import { CATALOGUE, CORE_VERSION, OFFICIAL_EXTENSIONS, OFFICIAL_EXTENSION_NAMES, Package, check, type Diagnostic, type ValidateOptions } from '@floorspec/engine';
+import { RECORD, migrate } from '@floorspec/migrate';
 import {
   DEFAULT_LIMITS,
   DOCUMENT_NAME,
@@ -41,6 +42,11 @@ commands:
                              refused, and nothing written, unless it is a valid package
   unpack <file> -o <dir>     write a .floorspec package as its folder — model.json and its assets,
                              byte for byte the archive's — into a new or empty <dir>
+  migrate <file> [--to 0.3]  print the document migrated to a later Core draft (Core 20): it
+                             declares the target, and what that draft reads differently - 0.1's
+                             opaque extension collections, a 0.2 extension element's own option -
+                             is moved into extras["floorspec:migration"]; refused (exit 1) when the
+                             document cannot be read or the target is earlier or unknown
 
 options:
   --registry <file>          the known extensions (Core 0.2, 12.2): a JSON array of registry
@@ -59,8 +65,9 @@ options:
   --assets <dir>             package: the folder the document's asset paths are relative to
   -o, --out <path>           package: the archive to write; unpack: the folder to write
   --json                     validate: print the conformance-shaped result
+  --to 0.1|0.2|0.3           migrate: the target draft (default 0.3); no other option applies
 
-exit status: 0 valid, 1 invalid, 2 usage or I/O error
+exit status: 0 valid (migrate: migrated), 1 invalid (migrate: refused), 2 usage or I/O error
 `;
 
 export interface Io {
@@ -89,7 +96,7 @@ export function formatDiagnostic(file: string, d: Diagnostic): string {
 }
 
 /** Options that take a value. */
-const VALUED = new Set(['--registry', '--core', '--extensions', '--design', '--package', '--assets', '--out', '-o']);
+const VALUED = new Set(['--registry', '--core', '--extensions', '--design', '--package', '--assets', '--out', '-o', '--to']);
 
 export function run(argv: readonly string[], io: Io = nodeIo): number {
   const args: string[] = [];
@@ -118,7 +125,7 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
     return 0;
   }
   const [command, file, ...rest] = args;
-  const known = ['validate', 'canonicalize', 'hash', 'derive', 'package', 'unpack'];
+  const known = ['validate', 'canonicalize', 'hash', 'derive', 'package', 'unpack', 'migrate'];
   const unknownFlags = [...flags].filter((f) => f !== '--json');
   const packing = command === 'package' || command === 'unpack';
   if (
@@ -129,7 +136,10 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
     unknownFlags.length ||
     (flags.has('--json') && command !== 'validate') ||
     packing !== values.has('--out') ||
-    (values.has('--assets') && command !== 'package')
+    (values.has('--assets') && command !== 'package') ||
+    // A migration depends on the document and the target alone (Core 20.1): --to and nothing else.
+    (values.has('--to') && command !== 'migrate') ||
+    (command === 'migrate' && [...values.keys()].some((k) => k !== '--to'))
   ) {
     io.err(USAGE);
     return 2;
@@ -153,6 +163,7 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
       return 1;
     }
   }
+  if (command === 'migrate') return migrateFile(file, bytes, values.get('--to') ?? CORE_VERSION, io);
   const core = values.get('--core');
   if (core !== undefined && core !== '0.1' && core !== '0.2' && core !== '0.3') {
     io.err(USAGE);
@@ -223,6 +234,23 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
     io.err(`${file}: nothing is derived for this design: it is not one of the document's, or its view is not valid (Core 19.6.2)\n`);
     return 1;
   } else io.out(JSON.stringify(r.derived, null, 2) + '\n');
+  return 0;
+}
+
+/**
+ * `floorspec migrate <file> --to <draft>` (Core 0.3, chapter 20): the migration on standard output,
+ * written as 20.1.1 says, or the diagnostics that refuse it on standard error.
+ */
+function migrateFile(file: string, bytes: Uint8Array, to: string, io: Io): number {
+  const r = migrate(bytes, to);
+  if (r.status === 'refused') {
+    for (const d of r.diagnostics) io.err(formatDiagnostic(file, d));
+    io.err(`${file}: not migrated to ${to}\n`);
+    return 1;
+  }
+  io.out(r.text);
+  for (const rec of r.records)
+    io.err(`${file}: from ${rec.from} to ${rec.to}, moved into extras["${RECORD}"]: ${rec.moved.map((m) => m.pointer).join(', ')}\n`);
   return 0;
 }
 

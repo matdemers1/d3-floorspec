@@ -12,6 +12,7 @@
  */
 import type { FloorspecDocument } from '@floorspec/engine';
 import { formatLength, type Operation } from '@floorspec/ops';
+import { migrationBatch } from '@floorspec/migrate';
 import { withDefaults, type ElectricalDefaults } from './defaults.js';
 import { readPlan, usedIds, type RoomPlan, type WallRun } from './plan.js';
 
@@ -374,7 +375,7 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
   // and FS_electrical is declared, before anything of it.
   const changes = placements.length + edits.length;
   if (changes > 0) {
-    if (doc.floorspec === '0.1') batch.push({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' });
+    if (doc.floorspec === '0.1') batch.push(...migrationBatch(doc, '0.3')); // Core chapter 20
     if (!Object.hasOwn((doc.extensionsUsed ?? {}), 'FS_electrical')) batch.push({ op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_electrical', value: '0.1.0' });
   }
   batch.push(...placements, ...edits);

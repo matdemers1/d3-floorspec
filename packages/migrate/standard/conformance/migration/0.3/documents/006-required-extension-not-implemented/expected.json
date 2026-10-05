@@ -1,0 +1,15 @@
+{
+  "status": "migrated",
+  "diagnostics": [],
+  "hash": "db3eb93ca068b84f367105f3ec670ff6762c56ecc16e507c1194854cc0f3bbd5",
+  "validation": {
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "FS-DOC-002",
+        "severity": "error",
+        "elements": []
+      }
+    ]
+  }
+}

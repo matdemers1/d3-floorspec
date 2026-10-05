@@ -1,0 +1,7 @@
+{
+  "description": "Three extensions have a \"collections\" member, declared out of order; the record lists the three moves sorted by pointer (20.3.1). A \"collections\" whose value is not an object is moved too: it is the member that is moved, whatever its value (20.4.1).",
+  "covers": [
+    "FS-CORE-20.4.1",
+    "FS-CORE-20.3.1"
+  ]
+}
