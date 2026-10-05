@@ -58,6 +58,11 @@ describe('golden SVG', () => {
         await expect(renderPlan(load(h), { theme })).toMatchFileSnapshot(`./golden/${h}-${theme}.svg`);
       });
 
+  it('a house with a curved bay and a curved partition (Core 0.4, arcs), light', async () => {
+    expect(check(load('bay-house')).valid).toBe(true);
+    await expect(renderPlan(load('bay-house'), { theme: 'light' })).toMatchFileSnapshot('./golden/bay-house-light.svg');
+  });
+
   it('a changeset on the ranch, ghosted, light', async () => {
     const { before, after } = ranchChangeset();
     expect(check(after).valid).toBe(true);
@@ -431,5 +436,47 @@ describe('Core 0.3: stairs and roofs', () => {
     expect(svg.match(/data-line="hip"/g)).toBeNull();
     expect(svg.match(/data-gable="RF1"/g)).toHaveLength(2);
     expect(svg).toContain('data-eave="RF1"');
+  });
+});
+
+describe('arc walls (Core 0.4, chapter 21)', () => {
+  it('outlines an arc wall through its face vertices, as the engine derives them', () => {
+    const d = check(load('bay-house')).derived!;
+    const w = buildScene(load('bay-house')).walls.get('W2')!;
+    const dw = d.walls.W2!;
+    expect(w.line).toEqual(dw.polyline);
+    expect(w.outline).toEqual([dw.startRight, ...dw.right!, dw.endRight, dw.endLeft, ...[...dw.left!].reverse(), dw.startLeft]);
+    expect(w.outline.length).toBeGreaterThan(20);
+  });
+
+  it('draws an arc wall as a curved poché and its openings cut across their chords', () => {
+    const svg = renderPlan(load('bay-house'), { theme: 'light' });
+    const walls = /<g id="walls"[^>]*>(.*?)<\/g>/s.exec(svg)![1]!;
+    const scene = buildScene(load('bay-house'));
+    const points = [...scene.walls.values()].reduce((n, w) => n + w.outline.length, 0);
+    // Every vertex of every outline - the bay's face vertices included - is in the poché, twice (outline and fill layers).
+    expect(walls.split('L').length).toBeGreaterThanOrEqual(2 * (points - scene.walls.size - scene.fills.size));
+    expect(scene.walls.get('W2')!.outline.length).toBeGreaterThan(40);
+  });
+
+  it('draws an arc separator along its polyline', () => {
+    const J = (x: number, y: number) => ({ level: 'L1', position: [x * FT, y * FT] });
+    const W = (start: string, end: string) => ({ level: 'L1', start, end, layers: [{ thickness: 6 * 32512, function: 'core' }] });
+    const doc = {
+      floorspec: '0.4',
+      project: { name: 'Split room' },
+      buildings: { B1: {} },
+      levels: { L1: { building: 'B1', elevation: 0, height: 9 * FT } },
+      junctions: { A: J(0, 0), B: J(0, 16), C: J(24, 16), D: J(24, 0), M: J(12, 0), N: J(12, 16) },
+      walls: { W1: W('A', 'B'), W2: W('B', 'N'), W3: W('N', 'C'), W4: W('C', 'D'), W5: W('D', 'M'), W6: W('M', 'A') },
+      separators: { S1: { level: 'L1', start: 'M', end: 'N', arc: { sagitta: 3 * FT } } },
+      rooms: { R1: { level: 'L1', anchor: [4 * FT, 8 * FT] }, R2: { level: 'L1', anchor: [20 * FT, 8 * FT] } },
+    };
+    expect(check(doc).valid).toBe(true);
+    const scene = buildScene(doc);
+    expect(scene.separators.get('S1')!.line.length).toBeGreaterThan(10);
+    const svg = renderPlan(doc, { theme: 'light' });
+    const sep = /<g id="separators">(.*?)<\/g>/s.exec(svg)![1]!;
+    expect(sep.split('L').length).toBeGreaterThan(10);
   });
 });

@@ -37,3 +37,6 @@ export function ringsPath(rings: readonly (readonly XY[])[]): string {
 }
 
 export const linePath = (a: XY, b: XY): string => `M${num(a[0])} ${num(a[1])}L${num(b[0])} ${num(b[1])}`;
+
+/** An open path through drawing points: an arc edge's polyline (Core 21.2). */
+export const polylinePath = (pts: readonly XY[]): string => (pts.length ? `M${pts.map(([x, y]) => `${num(x)} ${num(y)}`).join('L')}` : '');
