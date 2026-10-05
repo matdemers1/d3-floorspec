@@ -22,6 +22,7 @@ import type { Snap } from './snap';
 import { unitsOf, type UnitSystem } from './units';
 import { NO_OPTIONS, type ReceptacleOptions } from './systems/catalog';
 import type { DeviceHover } from './systems/placement';
+import type { ImportReport } from '../exports/ifcImport';
 
 /**
  * The editor's state and its one write path. Every edit is a batch handed to `apply`, which posts
@@ -154,6 +155,8 @@ export interface Review {
   busy: 'accept' | 'reject' | null;
   /** The second confirmation a rebased accept asks for is showing. */
   confirming: boolean;
+  /** What an IFC import could not bring across, when the changeset is one (FLR-T-9.5). */
+  report?: ImportReport | null;
 }
 
 /** Two versions compared on the canvas (FLR-T-3.6). */
