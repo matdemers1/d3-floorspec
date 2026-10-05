@@ -165,7 +165,7 @@ mechanical, low-voltage, structural, furniture — ship as first-party `FS_` ext
 | [`FS_structural`](FS_structural/spec.md) | 0.1.0 | Draft | bearing and shear flags, framing (material, system, member size, spacing), floor spans and headers, recorded on walls, openings, slabs, rooms' floors and roofs for handoff to an engineer — never a structural design or a check of one | `FS-STRC-` |
 
 All six list one implementation, D3 Floorspec's engine, with evidence of its passing their
-suites at 3b8d35a in a public CI run (`<NAME>/evidence/`). Each Release Candidate stays one until a
+suites at e5fd4ca in a public CI run (`<NAME>/evidence/`). Each Release Candidate stays one until a
 second, independent implementation passes its suite (FLR-REQ-092). FS_structural is a Draft whose
 suite the engine passes; it becomes a Release Candidate by its own pull request, which freezes it. The conformance oracle in
 `tools/oracle/ext/` implements all six, and is evidence for none.
