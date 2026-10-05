@@ -17,6 +17,7 @@ import { DeviceGhost, DeviceOutline, SystemsLayer } from './systems/Symbols';
 import { GapMarkers } from './systems/Assistant';
 import { kindById } from './systems/catalog';
 import { anchorOf, circuitsOf } from './systems/view';
+import { RuleFindingLabels, RuleFindingsLayer } from '../findings/Overlay';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -165,6 +166,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} />
               {electricalTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={model} units={units} /> : null}
               <DiffLayer store={store} view={view} levelId={level.id} />
+              <RuleFindingsLayer store={store} view={view} level={level} />
               <Findings store={store} view={view} level={level} />
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
               {layers.rooms ? <RoomLabels view={view} level={level} document={model.document} units={units} /> : null}
@@ -176,6 +178,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
         </svg>
       ) : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={model} units={units} /> : null}
+      {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
       <DiffLegend store={store} />
       {layers.coreOnly ? (
         <div className="fs-core-note" role="status">

@@ -455,6 +455,31 @@ test('every screen and state has no axe violations, in light and in dark', async
   await expect(page.getByRole('tabpanel')).toContainText('C5');
   await audit(page, 'schedules, receptacles');
 
+  // ── Code findings with no rule pack installed (FLR-T-6.9): the report, the editor's panel and the
+  //    coverage page say nothing was checked; jurisdiction profiles and the builder (FLR-T-6.8).
+  //    The states with findings are audited in findings.spec.ts, whose server has packs installed.
+  await page.goto(`/projects/${house}/findings`);
+  await expect(page.getByRole('heading', { name: 'No rule pack is installed' })).toBeVisible();
+  await expect(page.getByTestId('findings-notice')).toBeVisible();
+  await audit(page, 'findings report, no pack installed');
+  await page.goto(`/projects/${house}/editor?findings=open`);
+  await expect(page.getByTestId('findings-panel')).toContainText('No rule pack is installed');
+  await audit(page, 'editor, findings panel, no pack installed');
+  await page.goto('/rule-packs');
+  await expect(page.getByRole('heading', { name: 'No rule pack is installed on this server' })).toBeVisible();
+  await audit(page, 'rule packs, none installed');
+  await page.goto(`/jurisdictions?project=${house}`);
+  await expect(page.getByRole('heading', { name: 'Model Codes (latest)', level: 2 })).toBeVisible();
+  await audit(page, 'jurisdiction profiles, the default');
+  await page.getByRole('button', { name: 'New profile' }).click();
+  await expect(page.getByRole('form', { name: 'New profile' })).toBeVisible();
+  await audit(page, 'jurisdiction profiles, the builder');
+  await page.getByLabel('Name').fill('');
+  await page.getByRole('button', { name: 'Add an amendment' }).click();
+  await page.getByRole('button', { name: 'Save profile' }).click();
+  await expect(page.getByRole('alert').first()).toBeVisible();
+  await audit(page, 'jurisdiction profiles, the builder with problems');
+
   // ── The dashboard with a pending proposal and a history.
   await page.goto(`/projects/${house}`);
   await expect(page.getByText('Rename the kitchen')).toBeVisible();

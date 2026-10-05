@@ -1,0 +1,199 @@
+{
+  "floorspecRules": "0.1",
+  "name": "e2e-overlays",
+  "version": "0.1.0",
+  "title": "Synthetic overlay rules (e2e)",
+  "license": "CC-BY-4.0",
+  "description": "Synthetic rules for D3 Floorspec's end-to-end tests: a clear working space in front of a panel, an escape opening in every sleeping room, and receptacles along the walls of living spaces. They cite the made-up codes TEST-CODE and TEST-ELEC and state no requirement of any real code.",
+  "rules": {
+    "WORKSPACE": {
+      "title": "Clear working space in front of a panel",
+      "citation": {
+        "code": "TEST-ELEC",
+        "edition": "2026",
+        "section": "§4.2",
+        "link": "https://example.org/test-elec/2026/4.2"
+      },
+      "paraphrase": "Synthetic: a panel has a declared working space that nothing stands in, clear for 30 in in front of it. It states no requirement of any real code.",
+      "applies": {
+        "to": "element",
+        "extension": "FS_electrical",
+        "collection": "panels"
+      },
+      "select": {
+        "from": "envelopes",
+        "args": {
+          "purpose": "workingSpace"
+        },
+        "need": "any"
+      },
+      "requirement": {
+        "all": [
+          {
+            "measure": "envelopeObstructions",
+            "op": "=",
+            "value": 0
+          },
+          {
+            "measure": "clearDepthInFront",
+            "op": ">=",
+            "value": 975360,
+            "args": {
+              "limit": 975360
+            }
+          }
+        ]
+      },
+      "severity": "mayNotMeet",
+      "provenance": {
+        "verifiedBy": "D3 Floorspec e2e",
+        "verifiedOn": "2026-10-04",
+        "edition": "2026"
+      }
+    },
+    "ESCAPE": {
+      "title": "Escape opening in every sleeping room",
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§3.1",
+        "link": "https://example.com/test-code/2024/3.1"
+      },
+      "paraphrase": "Synthetic: every sleeping room has a window or door to the outside of at least 5 sq ft, with its sill no higher than 40 in, at least 18 in wide and 22 in high. The rule measures the opening as drawn, not its net clear opening. It states no requirement of any real code.",
+      "applies": {
+        "to": "room",
+        "where": {
+          "measure": "roomFunction",
+          "op": "=",
+          "value": "sleeping"
+        }
+      },
+      "select": {
+        "from": "openings",
+        "args": {
+          "to": "outside"
+        },
+        "where": {
+          "measure": "openingKind",
+          "op": "in",
+          "value": [
+            "window",
+            "door"
+          ]
+        },
+        "need": "any"
+      },
+      "requirement": {
+        "all": [
+          {
+            "measure": "openingArea",
+            "op": ">=",
+            "value": 761061703680
+          },
+          {
+            "measure": "openingSillHeight",
+            "op": "<=",
+            "value": 1300480
+          },
+          {
+            "measure": "openingWidth",
+            "op": ">=",
+            "value": 585216
+          },
+          {
+            "measure": "openingHeight",
+            "op": ">=",
+            "value": 715264
+          }
+        ]
+      },
+      "severity": "check",
+      "provenance": {
+        "verifiedBy": "D3 Floorspec e2e",
+        "verifiedOn": "2026-10-04",
+        "edition": "2024"
+      }
+    },
+    "SPACING": {
+      "title": "Receptacles along the walls of living spaces",
+      "citation": {
+        "code": "TEST-ELEC",
+        "edition": "2026",
+        "section": "§5.1",
+        "link": "https://example.org/test-elec/2026/5.1"
+      },
+      "paraphrase": "Synthetic: along the walls of a living or sleeping room, no run of wall between receptacles is longer than 12 ft. It states no requirement of any real code.",
+      "applies": {
+        "to": "room",
+        "where": {
+          "measure": "roomFunction",
+          "op": "in",
+          "value": [
+            "living",
+            "sleeping"
+          ]
+        }
+      },
+      "requirement": {
+        "measure": "wallRunBetweenReceptacles",
+        "op": "<=",
+        "value": 4681728
+      },
+      "severity": "check",
+      "provenance": {
+        "verifiedBy": "D3 Floorspec e2e",
+        "verifiedOn": "2026-10-05",
+        "edition": "2026"
+      }
+    }
+  },
+  "coverage": [
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "section": "§3",
+      "status": "partial",
+      "note": "The escape opening is measured as drawn."
+    },
+    {
+      "code": "TEST-ELEC",
+      "edition": "2026",
+      "section": "§4",
+      "status": "partial"
+    },
+    {
+      "code": "TEST-ELEC",
+      "edition": "2026",
+      "section": "§5",
+      "status": "addressed"
+    }
+  ],
+  "extras": {
+    "packFormat": {
+      "synthetic": true,
+      "jurisdiction": "Nowhere: synthetic codes for D3 Floorspec's end-to-end tests",
+      "attribution": "Synthetic overlay rules (e2e-overlays 0.1.0) by the D3 Floorspec contributors, CC BY 4.0",
+      "domains": [
+        {
+          "id": "egress",
+          "title": "Egress"
+        },
+        {
+          "id": "electrical",
+          "title": "Electrical"
+        }
+      ],
+      "coverage": [
+        {
+          "domain": "egress"
+        },
+        {
+          "domain": "electrical"
+        },
+        {
+          "domain": "electrical"
+        }
+      ]
+    }
+  }
+}

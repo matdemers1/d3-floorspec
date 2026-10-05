@@ -13,6 +13,7 @@ import type { EventHub, StreamEvent } from './hub.js';
  *   - `ready`     `{ resumed, replayed }` — the stream is live; sent once, after any replay.
  *   - `head`      main moved (see `HeadEventData`).
  *   - `changeset` a changeset opened, took more ops, was accepted or rejected, or failed to replay.
+ *   - `profile`   the jurisdiction profile the findings are evaluated under changed: fetch them again.
  *   - `resync`    `{ reason }` — what was missed cannot be replayed: re-fetch, then carry on.
  * Every event has an ID; reconnecting with `Last-Event-ID` (or `?lastEventId=`, for a client that
  * cannot set headers) replays what was missed, or answers `resync`.

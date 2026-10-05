@@ -15,7 +15,8 @@ interface Shared {
 
 const streams = new Map<string, Shared>();
 
-function join(projectId: string, listener: (tick: number) => void): () => void {
+/** Listen to a project's shared stream: `listener` gets the new tick whenever something moved. */
+export function onLive(projectId: string, listener: (tick: number) => void): () => void {
   let shared = streams.get(projectId);
   if (shared === undefined) {
     const created: Shared = { tick: 0, listeners: new Set(), stop: () => undefined };
@@ -48,6 +49,6 @@ function join(projectId: string, listener: (tick: number) => void): () => void {
 /** A number that changes whenever something the dashboard shows moved on the server. */
 export function useLiveTick(projectId: string): number {
   const [tick, setTick] = useState(0);
-  useEffect(() => join(projectId, setTick), [projectId]);
+  useEffect(() => onLive(projectId, setTick), [projectId]);
   return tick;
 }

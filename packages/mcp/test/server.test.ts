@@ -152,7 +152,17 @@ class MemoryClient implements FloorspecClient {
   }
   findings(projectId: string, changeset?: string) {
     this.record('findings', projectId, changeset);
-    return Promise.resolve({ head: 'main', hash: PROJECT.head, findings: [], rulePacks: [], note: 'No rule packs are installed yet.' });
+    return Promise.resolve({
+      head: 'main',
+      hash: PROJECT.head,
+      findings: [],
+      rulePacks: [],
+      note: 'Nothing was checked: no rule pack is installed on this server yet.',
+      notice: 'Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.',
+      profile: 'Model Codes (latest)',
+      profileId: null,
+      coverageUrl: 'https://floorspec.example.test/rule-packs',
+    });
   }
   render(projectId: string, options: RenderOptions) {
     this.record('render', projectId, options);
@@ -199,6 +209,16 @@ describe('the MCP server', () => {
     expect(propose.properties.batch.items.$ref).toBe('#/$defs/Op');
     expect(propose.$defs['Op']?.properties?.op.enum).toEqual([...OP_NAMES]);
     expect(JSON.stringify(propose)).not.toContain('"Length"');
+  });
+
+  it('says, with every findings answer, that findings are not a plan review, and where the pack coverage is (FLR-REQ-105, 096)', async () => {
+    const mcp = await connect(new MemoryClient());
+    const said = texts(await mcp.callTool({ name: 'floorspec_findings', arguments: {} }));
+    expect(said).toContain('0 finding(s). Nothing was checked');
+    expect(said).toContain('Profile: Model Codes (latest).');
+    expect(said).toContain('They are not a plan review, and the authority having jurisdiction decides.');
+    expect(said).toContain('What the installed packs check, and do not: https://floorspec.example.test/rule-packs');
+    expect(said).not.toMatch(/\bcomplian|\bcomplies\b|passes code/i);
   });
 
   it('lays out the brief as candidate changesets, through the API, and reports each one', async () => {

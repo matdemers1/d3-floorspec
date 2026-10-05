@@ -27,9 +27,10 @@ export function connectLive(store: EditorStore, options: { createEventSource?: E
     if (wanted !== null && store.get().proposals.some((p) => p.id === wanted)) await openReview(store, wanted);
     else if (review !== null) await openReview(store, review.id, { show: false });
     else {
-      // A proposal already waiting when the editor opens is shown, as if it had just arrived.
+      // A proposal already waiting when the editor opens is shown, as if it had just arrived —
+      // unless the editor was opened on its findings (FLR-T-6.9): then it waits in the top bar.
       const first = store.get().proposals[0];
-      if (first !== undefined) await openReview(store, first.id);
+      if (first !== undefined) await openReview(store, first.id, { show: !store.get().findingsOpen });
     }
     if (store.get().left === 'history') await refreshLog(store);
   };

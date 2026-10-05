@@ -40,8 +40,17 @@ export interface ChangesetEvent {
   mergeMode: 'fast-forward' | 'replay' | null;
 }
 
+/** The jurisdiction profile the project's findings are evaluated under changed (FLR-T-6.8): fetch them again. */
+export interface ProfileEvent {
+  /** The profile now in use; null for the default. */
+  id: string | null;
+  name: string;
+  change: 'chosen' | 'edited' | 'deleted';
+}
+
 export type FloorspecEvent =
   | { type: 'ready'; id: string; data: { resumed: boolean; replayed: number } }
+  | { type: 'profile'; id: string; data: ProfileEvent }
   | { type: 'head'; id: string; data: HeadEvent }
   | { type: 'changeset'; id: string; data: ChangesetEvent }
   | { type: 'resync'; id: string; data: { reason: string } };
@@ -67,7 +76,7 @@ export interface SubscribeOptions {
   createEventSource?: EventSourceFactory;
 }
 
-const TYPES = ['ready', 'head', 'changeset', 'resync'] as const;
+const TYPES = ['ready', 'head', 'changeset', 'profile', 'resync'] as const;
 const CLOSED = 2;
 
 export function eventsUrl(projectId: string, lastEventId: string | null): string {

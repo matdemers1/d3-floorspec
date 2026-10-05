@@ -22,7 +22,8 @@ import {
 import { ChevronRight, Ellipsis, Pencil, Table as TableIcon } from 'lucide-react';
 import { ChangesetsSlot } from '../dashboard/ChangesetsSlot';
 import { PlanCard } from '../dashboard/PlanCard';
-import { BriefCard, ExportsCard, FindingsCard, OptionsCard, ShareCard } from '../dashboard/Sections';
+import { BriefCard, ExportsCard, OptionsCard, ShareCard } from '../dashboard/Sections';
+import { FindingsCard, useFindingsStat } from '../findings/DashboardCard';
 import { VersionsSlot } from '../dashboard/VersionsSlot';
 import { api, ApiError, messageOf } from '../lib/api';
 import { navigate } from '../lib/router';
@@ -168,10 +169,10 @@ export function Project({ id, you }: { id: string; you: string }) {
                 {...(model === null || !model.valid ? {} : { unit: 'ft²' })}
                 footnote={model === null || !model.valid ? 'No rooms derived' : `${plural(model.rooms, 'room')}, derived exactly`}
               />
-              <Stat label="Findings" value="—" footnote="No rule packs installed yet" />
+              <FindingsStat projectId={project.id} />
             </StatGroup>
             <ChangesetsSlot projectId={project.id} onDecided={load} />
-            <FindingsCard />
+            <FindingsCard projectId={project.id} />
             <VersionsSlot projectId={project.id} you={you} />
             <ExportsCard projectId={project.id} hasModel={project.head !== null} />
             <ShareCard />
@@ -218,6 +219,12 @@ export function Project({ id, you }: { id: string; you: string }) {
       </Modal>
     </Page>
   );
+}
+
+/** Findings (FLR-T-6.9): the real count under the project's profile, or why there is none. */
+function FindingsStat({ projectId }: { projectId: string }) {
+  const { value, footnote } = useFindingsStat(projectId);
+  return <Stat label="Findings" value={value} footnote={footnote} />;
 }
 
 function Breadcrumb({ name }: { name: string }) {

@@ -497,7 +497,14 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         // Each finding's message names its subject, the rule and the edition it was checked against.
         const lines = result.findings.slice(0, 50).map((f) => `- ${f.message}`);
         if (result.findings.length > lines.length) lines.push(`- …and ${String(result.findings.length - lines.length)} more in structuredContent.`);
-        return ok([`${String(result.findings.length)} finding(s). ${result.note}`, ...lines].join('\n'), { project: project.id, ...result });
+        // The notice and the coverage link travel with every answer, as on every other findings
+        // surface (FLR-REQ-105, FLR-REQ-096): advice, not a plan review, and what was not checked.
+        const about = [
+          ...(result.profile === undefined ? [] : [`Profile: ${result.profile}.`]),
+          ...(result.notice === undefined || result.notice === result.note ? [] : [result.notice]),
+          ...(result.coverageUrl === undefined ? [] : [`What the installed packs check, and do not: ${result.coverageUrl}`]),
+        ];
+        return ok([`${String(result.findings.length)} finding(s). ${result.note}`, ...about, ...lines].join('\n'), { project: project.id, ...result });
       } catch (error) {
         return failure(error);
       }

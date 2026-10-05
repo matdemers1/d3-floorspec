@@ -13,6 +13,8 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `a11y`      — FLR-T-3.9: axe on every screen and significant state, in both themes.
  *   - `program`   — FLR-T-4.2, 4.3: the P4 exit demo, a brief to an accepted layout that meets it.
  *   - `systems`   — FLR-T-5.7, 5.8: the P5 exit demo, devices and circuits to a moved wall and schedules.
+ *   - `findings`  — FLR-T-6.8, 6.9: with synthetic rule packs installed (e2e/fixtures/rule-packs), a
+ *                   profile built and chosen, the findings report, the plan overlay and the notice.
  *
  * Run with:
  *
@@ -20,7 +22,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`). E2E_PORT is the keyboard suite's port; the others take the next four.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`). E2E_PORT is the keyboard suite's port; the others take the next five.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -47,6 +49,8 @@ interface Suite {
   port: number;
   database: string;
   setupToken: boolean;
+  /** More of the server's environment. */
+  env?: Record<string, string>;
 }
 
 const SUITES: Suite[] = [
@@ -55,6 +59,8 @@ const SUITES: Suite[] = [
   { name: 'a11y', spec: 'a11y.spec.ts', port: PORT + 2, database: databaseFor('a11y'), setupToken: true },
   { name: 'program', spec: 'program.spec.ts', port: PORT + 3, database: databaseFor('program'), setupToken: true },
   { name: 'systems', spec: 'systems.spec.ts', port: PORT + 4, database: databaseFor('systems'), setupToken: true },
+  // The only suite with rule packs installed: the standard's synthetic example pack and an e2e pack.
+  { name: 'findings', spec: 'findings.spec.ts', port: PORT + 5, database: databaseFor('findings'), setupToken: true, env: { RULE_PACKS_DIR: `${web}e2e/fixtures/rule-packs` } },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;
@@ -96,6 +102,7 @@ export default defineConfig({
       KEK: randomBytes(32).toString('base64'),
       PEPPER: randomBytes(32).toString('base64'),
       ...(suite.setupToken ? { SETUP_TOKEN } : {}),
+      ...suite.env,
       NODE_ENV: 'test',
       LOG_LEVEL: 'warn',
     },

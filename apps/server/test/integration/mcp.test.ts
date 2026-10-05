@@ -217,7 +217,10 @@ describe('the MCP endpoint', () => {
     const mcp = await connect(`Bearer ${await tokenFor(operator, project.id, 'read')}`);
     const findings = await mcp.callTool({ name: 'floorspec_findings', arguments: {} });
     expect(findings.structuredContent).toMatchObject({ findings: [] });
-    expect(texts(findings)).toContain('No rule packs are installed yet');
+    expect(texts(findings)).toContain('Nothing was checked: no rule pack is installed on this server yet.');
+    // The notice and the pack coverage link, as on every findings surface (FLR-REQ-105, FLR-REQ-096).
+    expect(texts(findings)).toContain('They are not a plan review, and the authority having jurisdiction decides.');
+    expect(texts(findings)).toMatch(/What the installed packs check, and do not: https?:\/\/\S+\/rule-packs/);
     expect(texts(findings)).not.toMatch(/is compliant/i);
     const threeD = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d' } });
     expect(threeD.isError).toBe(true);

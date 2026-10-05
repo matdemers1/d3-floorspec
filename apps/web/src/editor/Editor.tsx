@@ -22,6 +22,8 @@ import { proposerOf } from './api';
 import { labelOf, sortedLevels } from './model';
 import { formatLen, gridStepLabel } from './units';
 import { kindById, type SystemId } from './systems/catalog';
+import { FindingsPanel, openAtFinding } from '../findings/Panel';
+import { findingsSource, useFindings } from '../findings/source';
 import {
   AirIcon,
   DataIcon,
@@ -51,6 +53,9 @@ export default function Editor({ id, you }: { id: string; you: string }) {
     const created = new EditorStore(id);
     // `?review=<changeset>`: open with that proposal under review (a layout candidate, FLR-T-4.3).
     created.wanted = takeParam('review');
+    // `?finding=<key>` or `?findings=open`: open with the findings panel, focused on that finding (FLR-T-6.9).
+    const finding = takeParam('finding');
+    if (finding !== null || takeParam('findings') !== null) openAtFinding(created, findingsSource(id), finding);
     return created;
   }, [id]);
   const tools = useMemo(() => new ToolController(store), [store]);
@@ -69,9 +74,9 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   const treeOpen = useEditor(store, (s) => s.treeOpen);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const notice = useEditor(store, (s) => s.notice);
-  const idle = useEditor(store, (s) => s.selection === null && s.tool === 'select' && s.compare === null && !(s.side === 'review' && s.review !== null));
+  const idle = useEditor(store, (s) => s.selection === null && s.tool === 'select' && s.compare === null && !(s.side === 'review' && s.review !== null) && !s.findingsOpen);
   const left = useEditor(store, (s) => s.left);
-  const right = useEditor(store, (s) => (s.compare !== null ? 'compare' : s.side === 'review' && s.review !== null ? 'review' : 'inspector'));
+  const right = useEditor(store, (s) => (s.compare !== null ? 'compare' : s.side === 'review' && s.review !== null ? 'review' : s.findingsOpen ? 'findings' : 'inspector'));
   const toast = useToast();
 
   useEffect(() => {
@@ -123,8 +128,8 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
           </div>
         ) : null}
       </main>
-      <aside className="fs-editor__inspector" aria-label={right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : 'Inspector'}>
-        {status === 'loading' ? <TreeSkeleton /> : right === 'compare' ? <ComparePanel store={store} /> : right === 'review' ? <ProposalPanel store={store} /> : <Inspector store={store} tools={tools} />}
+      <aside className="fs-editor__inspector" aria-label={right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : 'Inspector'}>
+        {status === 'loading' ? <TreeSkeleton /> : right === 'compare' ? <ComparePanel store={store} /> : right === 'review' ? <ProposalPanel store={store} /> : right === 'findings' ? <FindingsPanel store={store} /> : <Inspector store={store} tools={tools} />}
       </aside>
       <StatusBar store={store} />
       <PromptModal store={store} />
@@ -431,7 +436,13 @@ function StatusBar({ store }: { store: EditorStore }) {
   const units = useEditor(store, () => store.units);
   const live = useEditor(store, (s) => s.live);
   const proposals = useEditor(store, (s) => s.proposals.length);
-  const findings = model?.diagnostics.length ?? 0;
+  // The model's own lints (Core chapter 10), listed in the project panel; and the advisory code
+  // findings of the rule packs (FLR-T-6.9), drawn on the plan and listed in the findings panel.
+  const lints = model?.diagnostics.length ?? 0;
+  const findingsOpen = useEditor(store, (s) => s.findingsOpen);
+  const showing = useEditor(store, (s) => s.layers.findings);
+  const [rules] = useFindings(store.projectId);
+  const findings = rules.report?.findings.length ?? 0;
   return (
     <footer className="fs-statusbar">
       <span className="fs-statusbar__mono fs-statusbar__cursor">{cursor === null ? 'Cursor —' : `Cursor ${formatLen(Math.round(cursor[0]), units)}, ${formatLen(Math.round(cursor[1]), units)}`}</span>
@@ -447,21 +458,32 @@ function StatusBar({ store }: { store: EditorStore }) {
       </button>
       <span className="fs-spacer" />
       {model !== null ? (
-        <span className="fs-statusbar__item">
+        <button
+          type="button"
+          className="fs-statusbar__item fs-statusbar__findings"
+          title="The model's own checks, listed in the project panel"
+          onClick={() => {
+            store.set({ findingsOpen: false });
+            store.select(null);
+            store.setTool('select');
+          }}
+        >
           {model.valid ? <CircleCheck className="fs-ok" aria-hidden="true" /> : <TriangleAlert className="fs-bad" aria-hidden="true" />}
           {model.valid ? 'Model valid' : 'Model invalid'}
-        </span>
+          {lints > 0 ? ` · ${String(lints)} ${lints === 1 ? 'note' : 'notes'}` : ''}
+        </button>
       ) : null}
       <button
         type="button"
         className="fs-statusbar__item fs-statusbar__findings"
-        onClick={() => {
-          store.select(null);
-          store.setTool('select');
-        }}
+        aria-pressed={findingsOpen}
+        title="Advisory code findings: not a plan review"
+        // Opening the findings brings them over a proposal under review; the proposal stays in the top bar.
+        onClick={() => { store.set(findingsOpen ? { findingsOpen: false } : { findingsOpen: true, side: 'inspector' }); }}
       >
         <TriangleAlert className={findings > 0 ? 'fs-warn' : 'fs-faint'} aria-hidden="true" />
-        {findings === 1 ? '1 finding' : `${String(findings)} findings`}
+        {rules.report === null ? 'Findings' : findings === 1 ? '1 finding' : `${String(findings)} findings`}
+        {findings > 0 && showing ? ' · on the plan' : ''}
       </button>
       {proposals > 0 ? (
         <span className="fs-statusbar__item fs-statusbar__proposals">

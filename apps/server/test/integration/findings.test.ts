@@ -111,6 +111,18 @@ describe('findings with no rule pack installed', () => {
     const id = await projectWith(operator, HOUSE);
     const res = await operator.get(`/api/projects/${id}/findings`);
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ head: 'main', hash: contentHash(HOUSE), findings: [], rulePacks: [], note: NO_RULE_PACKS });
+    expect(res.body).toEqual({
+      head: 'main',
+      hash: contentHash(HOUSE),
+      findings: [],
+      rulePacks: [],
+      note: NO_RULE_PACKS,
+      // Every findings answer carries the notice, the profile and where the coverage is (FLR-REQ-105, 096).
+      notice: NOTICE,
+      profile: 'Model Codes (latest)',
+      profileId: null,
+      coverageUrl: `${running.config.PUBLIC_URL.replace(/\/$/, '')}/rule-packs`,
+    });
+    expect(res.text).not.toMatch(/\bcomplian|\bcomplies\b|passes code/i);
   });
 });

@@ -3,7 +3,7 @@ import type { Derived, FloorspecDocument } from '@floorspec/engine';
 import { navigate } from '../lib/router';
 import { formatArea, readProgram } from '../program/model';
 import { unitsOf } from '../editor/units';
-import { Download, FileBox, GitBranch, LayoutGrid, Share, TriangleAlert, Waypoints } from 'lucide-react';
+import { Download, FileBox, GitBranch, LayoutGrid, Share, Waypoints } from 'lucide-react';
 import { DashCard } from './DashCard';
 
 /**
@@ -80,17 +80,6 @@ export function BriefCard({ projectId, document, derived }: { projectId: string;
           Layouts
         </Button>
       </div>
-    </DashCard>
-  );
-}
-
-/** Findings (FLR-P-6): advisory code rules. Rules advise and never block (FLR-ADR-011). */
-export function FindingsCard() {
-  return (
-    <DashCard region="findings" icon={<TriangleAlert aria-hidden="true" />} title="Findings" aside={<Phase n={6} />}>
-      <EmptyState kind="empty" size="row" heading="No rule packs installed yet">
-        Install a rule pack for your jurisdiction and findings appear here, each with its code citation. They advise; they never block a change.
-      </EmptyState>
     </DashCard>
   );
 }
