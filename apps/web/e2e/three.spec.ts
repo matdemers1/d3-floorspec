@@ -291,10 +291,15 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
   await expect(plan).toBeVisible();
 
   // ── FLR-T-11.3: the stair, from its inspector, made a quarter-turn winder (Core 0.4, 17.7)…
+  // The tree opened down to the level's stairs: the project, its building and level, then the group.
   const tree = page.getByRole('tree');
+  for (let depth = 1; depth <= 3; depth++) {
+    const closed = tree.locator(`[role="treeitem"][aria-level="${String(depth)}"][aria-expanded="false"]`);
+    while ((await closed.count()) > 0) await closed.first().click();
+  }
   const stairsRow = tree.getByRole('treeitem', { name: /^Stairs/ });
   if ((await stairsRow.getAttribute('aria-expanded')) === 'false') await stairsRow.click();
-  await tree.getByRole('treeitem', { name: /^Stair(?!s)/ }).first().click();
+  await tree.getByRole('treeitem').filter({ hasText: 'ST1' }).first().click();
   const form = inspector.getByRole('combobox', { name: 'Form' });
   await expect(form).toBeVisible();
   await form.click();
@@ -317,9 +322,11 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
   await expect(inspector.getByText('Floor above open from')).toBeVisible();
   await shoot(page, 'plan-winder');
   // In 3D: the winders are part of the stair's flight.
+  // The 3D view is mounted afresh: its description is found again from the canvas.
+  const described = async () => page.locator(`[id="${(await canvas.getAttribute('aria-describedby'))!}"]`);
   await views.getByRole('radio', { name: '3D' }).click();
   await ready(page);
-  await expect(description).toContainText('1 stair');
+  await expect(await described()).toContainText('1 stair');
   await expect.poll(() => page.evaluate(() => window.__floorspec3d?.kinds['stairFlight'] ?? 0)).toBeGreaterThan(0);
   expect(await page.evaluate(() => window.__floorspec3d?.kinds['stairLanding'] ?? 0)).toBe(0);
   await shoot(page, '3d-winder');
@@ -338,6 +345,6 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
   await views.getByRole('radio', { name: '3D' }).click();
   await ready(page);
   await expect.poll(() => page.evaluate(() => window.__floorspec3d?.kinds['stairColumn'] ?? 0)).toBe(1);
-  await expect(description).toContainText('1 stair');
+  await expect(await described()).toContainText('1 stair');
   await shoot(page, '3d-spiral');
 });
