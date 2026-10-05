@@ -18,7 +18,7 @@ import { FT, firstRunSetup, historyOf, password, projectIn, settled } from './su
  * model. Undo takes the island away in one step and the note goes with it. axe runs on the library
  * and the inspector in both themes; screenshots of each land in test-results/furniture-*.png.
  * Through a share link, with no account, the symbol and the model load from the link's own asset
- * route (FLR-T-9.6).
+ * route (FLR-T-9.6); a glTF export merges the model at its placement (FLR-T-9.2).
  */
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -207,6 +207,15 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   await viewer.waitForTimeout(400); // the frame the model arrived in, so the picture is of the model
   await viewer.screenshot({ path: 'test-results/furniture-shared-3d.png' });
   await stranger.close();
+
+  // ── FLR-T-9.2's follow-up: the glTF export draws the refrigerator's own model, merged from the
+  // asset store at its placement, not only a marker where it goes.
+  const queued = await page.request.post(`/api/projects/${project}/exports`, { data: { kind: 'gltf' } });
+  expect(queued.status(), await queued.text()).toBe(202);
+  const { export: job } = (await queued.json()) as { export: { id: string } };
+  const exported = async () => ((await (await page.request.get(`/api/projects/${project}/exports/${job.id}`)).json()) as { export: { status: string; result: { models?: unknown } | null } }).export;
+  await expect.poll(async () => (await exported()).status, { timeout: 30_000 }).toBe('done');
+  expect((await exported()).result?.models).toEqual({ merged: [fridge!.fallback.asset], omitted: [] });
 
   // ── Upload your own: a model made facing +Z, turned to face +X; a symbol with a script in it.
   await page.keyboard.press('f');
