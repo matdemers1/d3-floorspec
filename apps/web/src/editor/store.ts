@@ -284,7 +284,8 @@ export class EditorStore {
         this.set({ notice: { tone: 'info', text: 'The model changed since you last read it, so nothing was applied. It has been reloaded — try again.' } });
         return false;
       case 'forbidden':
-        this.set({ readOnly: 'You can view this project but not change it.', notice: { tone: 'danger', text: answer.message } });
+        this.preview(null);
+        this.set({ readOnly: 'You can view this project but not change it.', notice: { tone: 'danger', text: answer.message }, tool: 'select', draft: null });
         return false;
       case 'nothing':
         this.set({ notice: { tone: 'info', text: answer.message.charAt(0).toUpperCase() + answer.message.slice(1) } });

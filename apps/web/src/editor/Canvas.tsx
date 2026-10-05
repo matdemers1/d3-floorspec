@@ -530,7 +530,7 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
     const to = draft.cursor.point;
     const mid = S(view, [(last[0] + to[0]) / 2, (last[1] + to[1]) / 2]);
     const length = Math.round(dist(last, to));
-    out.push(
+    if (length > 0 || draft.typed !== '') out.push(
       <div key="len" className="fs-entry" style={{ left: mid[0] + 14, top: mid[1] - 46 }} role="status" aria-live="polite">
         <span className="fs-entry__label">Length</span>
         <span className="fs-entry__value">{draft.typed !== '' ? draft.typed : formatLen(length, units)}</span>
