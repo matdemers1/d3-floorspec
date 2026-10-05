@@ -52,6 +52,11 @@
   color: var(--color-fg-faint);
 }
 .fs-linkish {
+  /* A pointer target at least 24 px each way (WCAG 2.2, 2.5.8), however short its label. */
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 24px;
+  min-inline-size: 24px;
   padding: 0;
   border: 0;
   background: none;
@@ -1392,6 +1397,11 @@ line.fs-diff {
   flex-direction: column;
   min-height: 0;
   height: 100%;
+}
+.fs-history__actions {
+  display: flex;
+  gap: var(--space-8);
+  padding: 0 var(--space-8) var(--space-8);
 }
 .fs-history__rows {
   display: flex;

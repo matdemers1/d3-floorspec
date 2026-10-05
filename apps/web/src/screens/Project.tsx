@@ -156,7 +156,9 @@ export function Project({ id, you }: { id: string; you: string }) {
             <OptionsCard />
           </div>
           <div className="fs-dashboard__col">
-            <StatGroup aria-label="At a glance" className="fs-dashboard__stats">
+            {/* StatGroup renders a plain div, where aria-label is prohibited: role="group" gives the label
+                an element it may name (an upstream @d3cloud/ui issue). */}
+            <StatGroup role="group" aria-label="At a glance" className="fs-dashboard__stats">
               <Stat
                 label="Net room area"
                 value={model === null || !model.valid ? '—' : formatSquareFeet(model.area2)}
