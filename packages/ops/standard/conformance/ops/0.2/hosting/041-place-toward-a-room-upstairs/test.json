@@ -1,0 +1,6 @@
+{
+  "description": "A wall-face host \"toward\" the Loft, a room on L2, for a wall on L1: the room is not beside the wall (4.10, as 4.2), so FS-OPS-008 names the wall.",
+  "covers": [
+    "FS-OPS-4.10.1"
+  ]
+}

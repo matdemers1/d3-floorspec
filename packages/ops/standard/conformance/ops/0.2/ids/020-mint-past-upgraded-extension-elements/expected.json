@@ -1,0 +1,84 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "6354e083aa6c3ecbcbb0e58d12ab1e302f710e74ee0e98e6c854471b257a7a06",
+  "created": ["X4", "X5"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/floorspec",
+      "value": "0.2"
+    },
+    {
+      "op": "addElement",
+      "collection": "devices",
+      "id": "X5",
+      "element": {
+        "device": "receptacle",
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [25600, 51200, 128000],
+            "min": [0, -51200, 0]
+          }
+        },
+        "host": {
+          "height": 384000,
+          "mode": "wallFace",
+          "offset": 780288,
+          "side": "right",
+          "wall": "W2"
+        }
+      },
+      "extension": "FS_electrical"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "X4"
+    },
+    {
+      "op": "removeElement",
+      "id": "X5"
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions",
+      "value": {
+        "FS_electrical": {
+          "collections": {
+            "devices": {
+              "X4": {
+                "device": "receptacle",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [25600, 51200, 128000],
+                    "min": [0, -51200, 0]
+                  }
+                },
+                "host": {
+                  "height": 384000,
+                  "mode": "wallFace",
+                  "offset": 2340864,
+                  "side": "right",
+                  "wall": "W2"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/floorspec",
+      "value": "0.1"
+    }
+  ]
+}

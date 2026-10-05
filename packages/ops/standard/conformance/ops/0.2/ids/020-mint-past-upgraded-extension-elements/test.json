@@ -1,0 +1,6 @@
+{
+  "description": "A declares \"0.1\", so its top-level extension data is opaque and the outlet X4 in it is no element of A (0.3). The batch makes the document declare \"0.2\", which turns X4 into an extension element of the working copy; the next device placed is X5, because minting counts the IDs in the working copy as it stands (1.5). \"created\" lists both: X4 is an element of B and was none of A (1.3).",
+  "covers": [
+    "FS-OPS-1.5.1"
+  ]
+}
