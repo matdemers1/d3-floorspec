@@ -1,8 +1,8 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, SegmentedControl, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, TriangleAlert, Undo2 } from 'lucide-react';
-import { navigate } from '../lib/router';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Download, History as HistoryIcon, PanelLeft, Redo2, Share, Sparkles, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { navigate, takeParam } from '../lib/router';
 import { EditorStore, useEditor, type ToolId } from './store';
 import { ToolController } from './tools';
 import { PlanCanvas } from './Canvas';
@@ -18,6 +18,7 @@ import { Palette } from './Palette';
 import { isArrow, nudge, nudgeable } from './nudge';
 import { endCompare, toggleHistory } from './history';
 import { openReview } from './review';
+import { proposerOf } from './api';
 import { labelOf, sortedLevels } from './model';
 import { formatLen, gridStepLabel } from './units';
 import {
@@ -43,7 +44,12 @@ import {
  * status bar. On a tablet the tree folds away and the inspector floats over the canvas.
  */
 export default function Editor({ id, you }: { id: string; you: string }) {
-  const store = useMemo(() => new EditorStore(id), [id]);
+  const store = useMemo(() => {
+    const created = new EditorStore(id);
+    // `?review=<changeset>`: open with that proposal under review (a layout candidate, FLR-T-4.3).
+    created.wanted = takeParam('review');
+    return created;
+  }, [id]);
   const tools = useMemo(() => new ToolController(store), [store]);
   // Subscribe first, load on `ready` (FLR-T-3.5).
   useEffect(() => connectLive(store), [store]);
@@ -243,7 +249,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
     .filter((x) => x !== null)
     .join(' · ');
   const editable = readOnly === null && pending === null && !comparing;
-  const proposer = proposals[0]?.createdBy ?? null;
+  const proposer = proposals[0] === undefined ? null : proposerOf(proposals[0].createdBy);
   return (
     <header className="fs-topbar">
       <IconButton label="Back to the project" icon={<ArrowLeft />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}`); }} />
@@ -273,6 +279,11 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
         ]}
         onValueChange={() => undefined}
       />
+      <Tooltip content="The brief and its bubble diagram">
+        <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<Waypoints />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}/program`); }}>
+          Brief
+        </Button>
+      </Tooltip>
       <span className="fs-spacer" />
       {proposals.length > 0 ? (
         <button

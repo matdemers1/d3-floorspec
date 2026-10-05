@@ -1,0 +1,634 @@
+/* The brief, the bubble diagram and the layout candidates (FLR-T-4.2, 4.3), after the board's
+   "05 · Program & bubble diagram" and "06 · Layout candidates". Tokens only (d3-check-usage). */
+
+.fs-program {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 440px minmax(0, 1fr) 320px;
+  grid-template-rows: 52px minmax(0, 1fr);
+  grid-template-areas:
+    'top top top'
+    'brief canvas inspector';
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+}
+.fs-program[data-screen='layouts'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'top'
+    'main';
+}
+.fs-program svg:not(.fs-bubbles__svg, .fs-plan) {
+  width: var(--icon-16);
+  height: var(--icon-16);
+  flex: none;
+}
+.fs-program__loading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fs-program__views {
+  flex: none;
+}
+.fs-program__live {
+  display: inline-flex;
+  margin-inline-end: var(--space-4);
+}
+.fs-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── Panels ─────────────────────────────────────────────────────────────────────────────── */
+.fs-program__brief {
+  grid-area: brief;
+  min-height: 0;
+  overflow: auto;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+}
+.fs-program__canvas {
+  grid-area: canvas;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-bg-sunken);
+}
+.fs-program__inspector {
+  grid-area: inspector;
+  min-height: 0;
+  overflow: auto;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+}
+.fs-program__rooms {
+  margin: 0;
+  padding-inline-start: var(--space-16);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  color: var(--color-fg-muted);
+}
+
+/* ─── The brief table ────────────────────────────────────────────────────────────────────── */
+.fs-brief {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16);
+}
+.fs-brief__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-brief__head h2 {
+  margin: 0;
+  font-size: var(--text-16);
+  line-height: var(--leading-16);
+  font-weight: var(--weight-semibold);
+}
+.fs-brief__head p {
+  margin: 0;
+  color: var(--color-fg-faint);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-brief__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 var(--space-2);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-brief__table thead th {
+  padding: var(--space-6) var(--space-8);
+  color: var(--color-fg-faint);
+  font-size: var(--text-11);
+  line-height: var(--leading-11);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-align: start;
+}
+.fs-brief__table tbody tr {
+  cursor: pointer;
+}
+.fs-brief__table tbody th,
+.fs-brief__table tbody td {
+  padding: var(--space-6) var(--space-8);
+  font-weight: var(--weight-regular);
+  text-align: start;
+  white-space: nowrap;
+}
+.fs-brief__table tbody th {
+  border-start-start-radius: var(--radius-sm);
+  border-end-start-radius: var(--radius-sm);
+  width: 100%;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fs-brief__table tbody td:last-child {
+  border-start-end-radius: var(--radius-sm);
+  border-end-end-radius: var(--radius-sm);
+}
+.fs-brief__table tbody tr:hover > * {
+  background: var(--color-surface-hover);
+}
+.fs-brief__table tbody tr.is-selected > * {
+  background: var(--color-accent-muted);
+}
+.fs-brief__name {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 24px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  text-align: start;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fs-brief__name:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-brief__mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  color: var(--color-fg-muted);
+}
+.fs-brief__claude {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  color: var(--color-fg-muted);
+}
+.fs-brief__claude p {
+  margin: 0;
+}
+.fs-brief__claude-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--color-accent);
+  font-weight: var(--weight-medium);
+}
+.fs-brief__claude-head svg {
+  width: var(--icon-14) !important;
+  height: var(--icon-14) !important;
+}
+
+/* ─── The bubble canvas ──────────────────────────────────────────────────────────────────── */
+.fs-bubbles {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.fs-bubbles--empty {
+  justify-content: center;
+  padding: var(--space-32);
+}
+.fs-bubbles__empty {
+  max-width: 360px;
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  text-align: center;
+}
+.fs-bubbles__svg {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  touch-action: none;
+  user-select: none;
+}
+.fs-bubbles__legend,
+.fs-bubbles__hint {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  white-space: nowrap;
+  z-index: 1;
+}
+.fs-bubbles__legend {
+  top: var(--space-16);
+}
+.fs-bubbles__hint {
+  bottom: var(--space-16);
+  color: var(--color-fg-muted);
+}
+.fs-bubbles__hint kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-xs);
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  font-size: var(--text-11);
+}
+.fs-bubbles__refusal {
+  color: var(--color-danger);
+}
+.fs-legend__swatch {
+  display: inline-block;
+  width: 16px;
+  height: 0;
+  border-top: 2.5px solid var(--color-accent);
+  margin-inline-start: var(--space-6);
+}
+.fs-legend__swatch--preferred {
+  border-top: 2px dashed var(--color-fg-faint);
+}
+.fs-legend__swatch--forbidden {
+  border-top: 2px dotted var(--color-danger);
+}
+.fs-legend__ring {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-inline-start: var(--space-6);
+  border: 2px solid var(--color-warning);
+  border-radius: var(--radius-full);
+}
+
+.fs-bubble {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-border-field);
+  stroke-width: 1.5;
+  transition: fill var(--dur-1) var(--ease-out);
+}
+.fs-bubble.is-unmet {
+  stroke-dasharray: 5 4;
+}
+.fs-bubble.is-selected,
+.fs-bubble.is-relating {
+  fill: var(--color-accent-muted);
+  stroke: var(--color-accent);
+  stroke-width: 2;
+}
+.fs-bubble.is-target {
+  stroke: var(--color-accent);
+  stroke-width: 3;
+}
+.fs-bubble.is-dragging {
+  opacity: 0.85;
+}
+.fs-bubble__target {
+  cursor: grab;
+  outline: none;
+}
+.fs-bubble__target:active {
+  cursor: grabbing;
+}
+.fs-bubble__hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 6;
+}
+.fs-bubble__target:focus-visible .fs-bubble__hit {
+  stroke: var(--color-focus);
+  stroke-width: 3;
+}
+.fs-bubble__name {
+  fill: var(--color-fg);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  pointer-events: none;
+}
+.fs-bubble__count {
+  fill: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  pointer-events: none;
+}
+
+.fs-edge {
+  cursor: pointer;
+  outline: none;
+}
+.fs-edge__hit {
+  stroke: transparent;
+  stroke-width: 16;
+}
+.fs-edge__line {
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.fs-edge--preferred .fs-edge__line {
+  stroke: var(--color-fg-faint);
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+}
+.fs-edge--forbidden .fs-edge__line {
+  stroke: var(--color-danger);
+  stroke-width: 2;
+  stroke-dasharray: 2 5;
+}
+.fs-edge__marker {
+  fill: var(--color-danger);
+}
+.fs-edge__unmet {
+  fill: none;
+  stroke: var(--color-warning);
+  stroke-width: 2;
+}
+.fs-edge.is-selected .fs-edge__line {
+  stroke-width: 4.5;
+}
+.fs-edge:focus-visible .fs-edge__hit {
+  stroke: var(--color-focus);
+  stroke-width: 10;
+  stroke-opacity: 0.5;
+}
+.fs-edge__ghost {
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+  pointer-events: none;
+}
+
+/* ─── Solve ──────────────────────────────────────────────────────────────────────────────── */
+.fs-solve {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── Layout candidates ──────────────────────────────────────────────────────────────────── */
+.fs-layouts {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-24) var(--space-32);
+}
+.fs-layouts--loading {
+  align-items: center;
+  justify-content: center;
+}
+.fs-layouts__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+.fs-layouts__head h2 {
+  margin: 0;
+  font-size: var(--text-20);
+  line-height: var(--leading-20);
+  font-weight: var(--weight-semibold);
+}
+.fs-layouts__head p {
+  margin: var(--space-2) 0 0;
+  color: var(--color-fg-faint);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-layouts__empty {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-48) 0;
+}
+.fs-layouts__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-20);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-candidate {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-card);
+}
+.fs-candidate.is-best {
+  border: 1.5px solid var(--color-accent);
+}
+.fs-candidate__plan {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 240px;
+  padding: var(--space-12);
+  background: var(--color-bg-sunken);
+}
+.fs-candidate__plan .fs-plan {
+  width: 100%;
+  height: 100%;
+}
+.fs-candidate__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16) var(--space-20) var(--space-20);
+}
+.fs-candidate__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-candidate__title h3 {
+  margin: 0;
+  font-size: var(--text-16);
+  line-height: var(--leading-16);
+  font-weight: var(--weight-semibold);
+}
+.fs-candidate__desc,
+.fs-candidate__score {
+  margin: 0;
+  color: var(--color-fg-faint);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-candidate__why {
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  color: var(--color-fg-muted);
+}
+.fs-candidate__why summary {
+  cursor: pointer;
+  color: var(--color-fg-muted);
+}
+.fs-candidate__why ul {
+  margin: var(--space-8) 0 0;
+  padding-inline-start: var(--space-16);
+}
+.fs-candidate__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-candidate__actions > :first-child {
+  flex: 1 1 auto;
+}
+.fs-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.fs-bar__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-bar__value {
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+}
+.fs-bar__track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+}
+.fs-bar__fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-fg-faint);
+}
+.fs-bar__track.is-strong .fs-bar__fill {
+  background: var(--color-accent);
+}
+.fs-layouts__stale {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-layouts__stale p {
+  margin: 0;
+}
+.fs-layouts__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-layouts__foot svg {
+  width: var(--icon-14) !important;
+  height: var(--icon-14) !important;
+  color: var(--color-accent);
+}
+.fs-layouts__faint {
+  color: var(--color-fg-faint);
+}
+
+/* ─── A tablet on its side: the brief and the inspector share the left column ────────────── */
+@media (max-width: 1199px) {
+  .fs-program {
+    grid-template-columns: 360px minmax(0, 1fr);
+    grid-template-rows: 60px minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'top top'
+      'brief canvas'
+      'inspector canvas';
+  }
+  .fs-program[data-screen='layouts'] {
+    grid-template-rows: 60px minmax(0, 1fr);
+  }
+  .fs-program__inspector {
+    border-left: 0;
+    border-right: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-border);
+  }
+  .fs-brief__fn {
+    display: none;
+  }
+  .fs-bubbles__hint {
+    max-width: calc(100% - 32px);
+    white-space: normal;
+    text-align: center;
+  }
+  .fs-layouts {
+    padding: var(--space-20);
+  }
+}
+
+/* ─── Upright: one column, the page scrolls ──────────────────────────────────────────────── */
+@media (max-width: 899px) {
+  .fs-program {
+    overflow: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 60px max-content 520px max-content;
+    grid-template-areas:
+      'top'
+      'brief'
+      'canvas'
+      'inspector';
+  }
+  .fs-program__brief,
+  .fs-program__inspector {
+    min-height: auto;
+    overflow: visible;
+    border-right: 0;
+  }
+  .fs-program__canvas {
+    border-top: 1px solid var(--color-border);
+  }
+  .fs-brief__fn {
+    display: table-cell;
+  }
+  .fs-program .fs-topbar__export,
+  .fs-program .fs-program__live {
+    display: none;
+  }
+}

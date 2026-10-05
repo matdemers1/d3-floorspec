@@ -238,6 +238,9 @@ export class EditorStore {
   private previewFrame = 0;
   private previewBatch: Batch | null = null;
 
+  /** A changeset to open for review once the model loads, instead of the newest proposal. */
+  wanted: string | null = null;
+
   constructor(readonly projectId: string) {}
 
   get = (): EditorState => this.state;

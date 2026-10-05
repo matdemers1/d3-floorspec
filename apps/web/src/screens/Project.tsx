@@ -152,7 +152,7 @@ export function Project({ id, you }: { id: string; you: string }) {
         <div className="fs-dashboard">
           <div className="fs-dashboard__col fs-dashboard__col--main">
             <PlanCard projectId={project.id} name={project.name} summary={model} />
-            <BriefCard />
+            <BriefCard projectId={project.id} document={model?.document ?? null} derived={model?.derived ?? null} />
             <OptionsCard />
           </div>
           <div className="fs-dashboard__col">

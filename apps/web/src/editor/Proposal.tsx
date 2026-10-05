@@ -7,6 +7,7 @@ import { describeOp } from './describe';
 import { diffModels, groupChanges, roomEffects } from './diff';
 import { accept, closeReview, needsRebase, openReview, reject, reviewTarget } from './review';
 import { timeAgo } from '../projects/model';
+import { proposerOf } from './api';
 
 /**
  * The proposal panel (FLR-T-3.5), the board's "09 · Changeset review": what an agent proposed,
@@ -37,7 +38,7 @@ export function ProposalPanel({ store }: { store: EditorStore }) {
         <div className="fs-inspector__title">
           <h2>{review.name}</h2>
           <p>
-            {review.createdBy === '' ? 'Loading…' : `${review.createdBy} · ${timeAgo(review.createdAt)} · ${String(ops.length)} ${ops.length === 1 ? 'op' : 'ops'}`}
+            {review.createdBy === '' ? 'Loading…' : `${proposerOf(review.createdBy)} · ${timeAgo(review.createdAt)} · ${String(ops.length)} ${ops.length === 1 ? 'op' : 'ops'}`}
           </p>
         </div>
         {status}
@@ -48,7 +49,7 @@ export function ProposalPanel({ store }: { store: EditorStore }) {
         <Select
           aria-label="Proposal"
           appearance="filled"
-          options={proposals.map((p) => ({ value: p.id, label: `${p.name} · ${p.createdBy ?? 'agent'}` }))}
+          options={proposals.map((p) => ({ value: p.id, label: `${p.name} · ${proposerOf(p.createdBy)}` }))}
           value={review.id}
           onValueChange={(id) => void openReview(store, id)}
         />
