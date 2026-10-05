@@ -81,6 +81,7 @@ function prepare(document: JsonInput, request: JsonInput, s: Settings): Prepared
   const req = readRequest(request, s.ops);
   const a = readDocument(document, s);
   const wc = new WorkingCopy(clone(a), req.context?.retired ?? [], s.ops);
+  if (s.ops === '0.3') wc.editOption = req.context?.option;
   const locks = req.context?.locks ?? [];
   const bad = invalidLocks(new WorkingCopy(a, [], s.ops), locks);
   if (bad.length) throw new OpsFailure(bad);
@@ -116,7 +117,7 @@ export function apply(document: JsonInput, request: JsonInput, options: ApplyOpt
     if (!ev.valid) return rejected(ev.diagnostics.filter((d) => d.severity === 'error'));
     const aCanon = omitDefaults(p.a) as JsonObject;
     const bCanon = omitDefaults(p.wc.doc) as JsonObject;
-    const broken = brokenLocks(new WorkingCopy(p.a, [], s.ops), p.wc, aCanon, bCanon, p.request.context?.locks ?? []);
+    const broken = brokenLocks(new WorkingCopy(p.a, [], s.ops), p.wc, aCanon, bCanon, p.request.context?.locks ?? [], p.wc.editOption);
     if (broken.length) return rejected(broken);
     const before = idsOf(p.a, s.ops);
     const after = idsOf(p.wc.doc, s.ops);

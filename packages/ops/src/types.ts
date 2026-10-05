@@ -290,6 +290,8 @@ export type Lock = { element: string } | { length: string } | { distance: [strin
 export interface ApplyContext {
   locks?: Lock[];
   retired?: string[];
+  /** Ops 0.3, 2.8: the design option the batch edits in. */
+  option?: string;
 }
 
 export interface ApplyRequest {

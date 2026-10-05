@@ -101,8 +101,28 @@ export function inverseOf(aCanon: JsonObject, bCanon: JsonObject, ops: OpsVersio
   return out;
 }
 
-/** Ops 0.2, 1.6 step 2's order: program items before levels; Ops 0.3's roofs and then stairs after slabs (a 0.2 document has neither). */
-const INVERSE_ORDER_02: readonly (CollectionName | typeof ITEMS)[] = ['openings', 'rooms', 'slabs', 'roofs', 'stairs', 'separators', 'walls', 'junctions', ITEMS, 'levels', 'buildings', 'types', 'materials', 'assets'];
+/**
+ * Ops 0.2, 1.6 step 2's order: program items before levels; Ops 0.3's roofs and then stairs after
+ * slabs, and options and then option sets after junctions (a 0.2 document has none of them).
+ */
+const INVERSE_ORDER_02: readonly (CollectionName | typeof ITEMS)[] = [
+  'openings',
+  'rooms',
+  'slabs',
+  'roofs',
+  'stairs',
+  'separators',
+  'walls',
+  'junctions',
+  'options',
+  'optionSets',
+  ITEMS,
+  'levels',
+  'buildings',
+  'types',
+  'materials',
+  'assets',
+];
 
 const placeKey = (p: Place): string => (p.kind === 'ext' ? `ext\u0000${p.extension}\u0000${p.collection}` : p.kind);
 

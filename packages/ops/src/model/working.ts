@@ -25,13 +25,18 @@ export const COLLECTIONS = [
   'materials',
   'assets',
   'stairs',
+  'optionSets',
+  'options',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 
-/** Core 0.3's collections (chapters 16, 17), which only an Ops 0.3 request may add to (Ops 0.3 §1.1.3). */
-export const CORE03_COLLECTIONS: readonly CollectionName[] = ['roofs', 'stairs'];
+/** Core 0.3's collections (chapters 16, 17, 19), which only an Ops 0.3 request may add to (Ops 0.3 §1.1.3). */
+export const CORE03_COLLECTIONS: readonly CollectionName[] = ['roofs', 'stairs', 'optionSets', 'options'];
 
-/** The collections addElement may name in a request of this draft: Ops 0.3 adds roofs and stairs. */
+/** Ops 0.3, 2.8 (Core §19.2): the collections whose elements may be in a design option, beside extension elements. */
+export const IN_OPTIONS: readonly CollectionName[] = ['junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'roofs', 'stairs'];
+
+/** The collections addElement may name in a request of this draft: Ops 0.3 adds roofs, stairs, option sets and options. */
 export const collectionsOf = (ops: OpsVersion): readonly CollectionName[] => (ops === '0.3' ? COLLECTIONS : COLLECTIONS.filter((c) => !CORE03_COLLECTIONS.includes(c)));
 
 /**
@@ -69,6 +74,8 @@ export const PREFIX: Readonly<Record<CollectionName, string>> & { readonly items
   assets: 'A',
   roofs: 'RF',
   stairs: 'ST',
+  optionSets: 'OS',
+  options: 'OP',
   items: 'P',
 };
 /** 1.5 (Ops 0.2): every extension collection shares one prefix. */
@@ -160,6 +167,12 @@ export class WorkingCopy {
   readonly used = new Set<string>();
   /** Bumped on every change, so derived views (faces) can be cached between changes. */
   version = 0;
+  /**
+   * Ops 0.3, 2.8: `context.option`, the option the batch edits in — every element a primitive adds
+   * to a collection that may be in an option, without an `option` of its own, is added in it; and
+   * faces, rooms and the junctions at a point are read in the edit design.
+   */
+  editOption: string | undefined;
 
   constructor(doc: JsonObject, retired: readonly string[], ops: OpsVersion = '0.2') {
     this.doc = doc;

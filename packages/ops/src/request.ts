@@ -209,7 +209,9 @@ export function checkRequest(request: unknown, nonInteger: ReadonlySet<string> =
     const ctx = request.context;
     if (!isObject(ctx)) return fail('FS-OPS-001', 'the context is an object { "locks"?: [...], "retired"?: [...] }', [], '/context');
     for (const k of Object.keys(ctx))
-      if (k !== 'locks' && k !== 'retired') fail('FS-OPS-001', `the context has no member ${JSON.stringify(k)}`, [], toPointer(['context', k]));
+      if (k !== 'locks' && k !== 'retired' && !(k === 'option' && ops === '0.3')) fail('FS-OPS-001', `the context has no member ${JSON.stringify(k)}`, [], toPointer(['context', k]));
+    // Ops 0.3, 2.8: the option the batch edits in.
+    if (Object.hasOwn(ctx, 'option') && typeof ctx.option !== 'string') fail('FS-OPS-001', 'context.option is the ID of an option', [], '/context/option');
     if (Object.hasOwn(ctx, 'retired')) {
       const r = ctx.retired;
       if (!Array.isArray(r) || !r.every((x) => typeof x === 'string')) fail('FS-OPS-001', 'context.retired is an array of IDs', [], '/context/retired');

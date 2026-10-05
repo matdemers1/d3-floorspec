@@ -4,7 +4,7 @@
  * what they add and remove, and the adjacency primitives (2.6).
  */
 import { fail } from './diagnostics.js';
-import { ITEMS, type CollectionName, type Place, type WorkingCopy } from './model/working.js';
+import { IN_OPTIONS, ITEMS, type CollectionName, type Place, type WorkingCopy } from './model/working.js';
 import type { ResolvedPrimitive } from './types.js';
 import { clone, cmpStr, deleteMember, escapeToken, getMember, isObject, parsePointer, setMember, type JsonObject } from './lib/json.js';
 
@@ -56,7 +56,11 @@ export function applyPrimitive(wc: WorkingCopy, p: ResolvedPrimitive, ptr: { op:
         fail('FS-OPS-005', `${p.id} is ${wc.exists(p.id) ? 'already used in this document' : 'retired: it once named an element of this document'}`, [], ptr.id);
       const { place, element } = addTarget(p);
       const target = container(wc, place, `${ptr.op}/collection`);
-      setMember(target, p.id, clone(element));
+      const added = clone(element);
+      // Ops 0.3, 2.8.1: added in context.option, unless it names an option of its own.
+      if (wc.editOption !== undefined && (place.kind === 'ext' || IN_OPTIONS.includes(place.kind as CollectionName)) && isObject(added) && !Object.hasOwn(added, 'option'))
+        setMember(added, 'option', wc.editOption);
+      setMember(target, p.id, added);
       wc.named(p.id);
       wc.touch();
       return;
@@ -107,6 +111,26 @@ const fallbackIs = (members: readonly string[], id: string) => (e: JsonObject): 
   return isObject(f) && members.some((m) => getMember(f, m) === id);
 };
 
+/** Core 0.3, 18.5: the materials a wall's face finishes and their regions name. */
+const finishMaterials = (e: JsonObject): unknown[] => {
+  const f = getMember(e, 'finishes');
+  if (!isObject(f)) return [];
+  return Object.values(f).flatMap((face) => {
+    if (!isObject(face)) return [];
+    const regions = getMember(face, 'regions');
+    return [getMember(face, 'material'), ...(Array.isArray(regions) ? regions.map((r) => getMember(r, 'material')) : [])];
+  });
+};
+
+/** Core 0.3, 18.2: a texture's every map. */
+const MAPS = ['asset', 'normal', 'metallicRoughness', 'occlusion'] as const;
+
+/** Ops 0.3 (2.2): every element in an option — of the collections that may be, and of every extension. */
+const inOption = (wc: WorkingCopy, id: string): string[] => [
+  ...IN_OPTIONS.flatMap((c) => where(wc, c, (e) => getMember(e, 'option') === id)),
+  ...extWhere(wc, (e) => getMember(e, 'option') === id),
+];
+
 const layerMaterials = (e: JsonObject): unknown[] => {
   const layers = getMember(e, 'layers');
   return Array.isArray(layers) ? layers.map((l) => getMember(l, 'material')) : [];
@@ -141,11 +165,16 @@ function blockers(wc: WorkingCopy, id: string, kind: Place['kind']): string[] {
         ...where(wc, 'rooms', (e) => ['wallFinish', 'floorFinish', 'ceilingFinish'].some((m) => getMember(e, m) === id)),
         ...where(wc, 'slabs', (e) => getMember(e, 'material') === id),
         ...where(wc, 'roofs', (e) => getMember(e, 'material') === id),
+        ...where(wc, 'walls', (e) => finishMaterials(e).includes(id)),
       ];
     case 'assets':
-      return [...where(wc, 'materials', (e) => getMember(getMember(e, 'texture'), 'asset') === id), ...extWhere(wc, fallbackIs(['asset', 'symbol'], id))];
+      return [...where(wc, 'materials', (e) => MAPS.some((m) => getMember(getMember(e, 'texture'), m) === id)), ...extWhere(wc, fallbackIs(['asset', 'symbol'], id))];
     case ITEMS:
       return where(wc, 'rooms', (e) => getMember(e, 'brief') === id);
+    case 'optionSets':
+      return where(wc, 'options', (e) => getMember(e, 'set') === id);
+    case 'options':
+      return inOption(wc, id);
     default:
       return [];
   }
@@ -166,6 +195,10 @@ function takes(wc: WorkingCopy, id: string, kind: Place['kind']): string[] {
       return [...where(wc, 'openings', (e) => getMember(e, 'wall') === id), ...extWhere(wc, hostIs('wall', id))];
     case 'rooms':
       return extWhere(wc, hostIs('room', id));
+    case 'optionSets':
+      return where(wc, 'options', (e) => getMember(e, 'set') === id);
+    case 'options':
+      return inOption(wc, id);
     default:
       return [];
   }

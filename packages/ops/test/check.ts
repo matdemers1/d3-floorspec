@@ -1,6 +1,6 @@
 /**
  * Comparing an applier's result with a conformance case (isomorphic: Node and the browser both use
- * it). Diagnostics are compared on code, severity and elements, as conformance/README.md says for
+ * it). Diagnostics are compared on code, severity, elements and design, as conformance/README.md says for
  * Core — and an expected `[FS-SCH-001]` matches one or more FS-SCH-001 and nothing else. A commit
  * is compared on the exact bytes of output.json, the hash, and `resolved`, `created`, `removed`
  * and `inverse` as JSON values.
@@ -17,7 +17,7 @@ export interface OpsCase {
 
 interface Expected {
   status: 'committed' | 'rejected';
-  diagnostics?: { code: string; severity: string; elements: string[] }[];
+  diagnostics?: { code: string; severity: string; elements: string[]; design?: string }[];
   hash?: string;
   resolved?: unknown;
   created?: string[];
@@ -47,7 +47,7 @@ export function checkCase(c: OpsCase, r: ApplyResult): string[] {
     return problems;
   }
   if (r.status === 'rejected') {
-    const actual = r.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));
+    const actual = r.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements, ...(d.design !== undefined && { design: d.design }) }));
     const want = expected.diagnostics ?? [];
     const schemaOnly = want.length === 1 && want[0]!.code === 'FS-SCH-001';
     const ok = schemaOnly ? actual.length > 0 && actual.every((d) => d.code === 'FS-SCH-001' && d.severity === 'error') : same(actual, want);
