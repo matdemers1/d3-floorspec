@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { buildScene } from '../src/export/gltf/index.js';
 import { createHandlers, stillParams } from '../src/queue/handlers.js';
@@ -235,6 +235,28 @@ describe('stills of a house', () => {
     expect(pngSize(file.bytes)).toEqual({ width: 640, height: 480 });
     expect(file.summary).toMatchObject({ label: 'Offline path-traced render — approximate lighting', samples: 16, size: 'small', quality: 'draft', camera: 'SE iso' });
     expect(progress.at(-1)).toEqual({ pass: 16, passes: 16 });
+  });
+});
+
+describe('threads', () => {
+  // The compiled build starts threads; from sources a still is traced in-process. When the build is
+  // here, the two must make the same PNG, byte for byte.
+  const built = new URL('../dist/pathtrace/index.js', import.meta.url);
+  it.skipIf(!existsSync(built))('four threads make the PNG one thread makes', async () => {
+    const mod = (await import(built.href)) as typeof import('../src/pathtrace/index.js');
+    const doc = template('ranch');
+    const before = process.env['STILL_THREADS'];
+    try {
+      process.env['STILL_THREADS'] = '1';
+      const one = await mod.renderStill(doc, { pixels: { width: 96, height: 72 }, samples: 4, room: 'LIV' });
+      process.env['STILL_THREADS'] = '4';
+      const four = await mod.renderStill(doc, { pixels: { width: 96, height: 72 }, samples: 4, room: 'LIV' });
+      expect([one.threads, four.threads]).toEqual([1, 4]);
+      expect(Buffer.from(one.png).equals(Buffer.from(four.png))).toBe(true);
+    } finally {
+      if (before === undefined) delete process.env['STILL_THREADS'];
+      else process.env['STILL_THREADS'] = before;
+    }
   });
 });
 

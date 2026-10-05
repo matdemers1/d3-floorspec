@@ -7,8 +7,8 @@
  * - At each diffuse bounce the sun is sampled directly (next-event estimation, a shadow ray to a
  *   point on its disc), and the path continues in a cosine-weighted direction; a path that escapes
  *   sees the sky. Russian roulette ends paths after the third bounce.
- * - Glass reflects a little and lets the rest through, tinted by its colour; a shadow ray passes
- *   through glass the same way, so sun reaches the floor through a window.
+ * - Glass shows a glint of the sky (8%) and lets the rest through, tinted by its colour; a shadow
+ *   ray passes through glass the same way, so sun reaches the floor through a window.
  * - The image is exposed to its own log-average luminance and tone-mapped with an ACES-style
  *   filmic curve, then written in sRGB.
  *
@@ -66,6 +66,12 @@ export interface TraceOptions {
   readonly onPass?: (done: number, total: number) => void | Promise<void>;
   /** Stop with an error once this much time (ms) has passed. */
   readonly budgetMs?: number;
+  /**
+   * Trace only every `of`-th row, starting at `index`: one thread's share of the image. The rows
+   * left out stay zero, and every pixel draws from its own seeded stream, so the shares add up to
+   * exactly the image one thread would trace.
+   */
+  readonly rows?: { readonly of: number; readonly index: number };
 }
 
 const EPS = 1e-4;
@@ -160,7 +166,8 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   const light = new Float64Array(3);
 
   for (let pass = 0; pass < samples; pass++) {
-    for (let py = 0; py < H; py++) {
+    const step = options.rows?.of ?? 1;
+    for (let py = options.rows?.index ?? 0; py < H; py += step) {
       for (let px = 0; px < W; px++) {
         const pixel = py * W + px;
         rng.reseed(seed, pass, pixel);
@@ -213,16 +220,15 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           tMin = EPS;
           if (m.glass) {
             if (++crossings > 8) break;
-            if (rng.next() < 0.08) {
-              const k = 2 * (dx * nx + dy * ny + dz * nz);
-              dx -= k * nx;
-              dy -= k * ny;
-              dz -= k * nz;
-            } else {
-              tr *= 0.92 * (0.7 + 0.3 * m.rgb[0]);
-              tg *= 0.92 * (0.7 + 0.3 * m.rgb[1]);
-              tb *= 0.92 * (0.7 + 0.3 * m.rgb[2]);
-            }
+            // A glint of the sky (8%, not traced further), and the rest straight through, tinted.
+            const k = 2 * (dx * nx + dy * ny + dz * nz);
+            skyRadiance(dx - k * nx, dy - k * ny, dz - k * nz, sun, sky);
+            r += tr * 0.08 * sky[0]!;
+            g += tg * 0.08 * sky[1]!;
+            b += tb * 0.08 * sky[2]!;
+            tr *= 0.92 * (0.7 + 0.3 * m.rgb[0]);
+            tg *= 0.92 * (0.7 + 0.3 * m.rgb[1]);
+            tb *= 0.92 * (0.7 + 0.3 * m.rgb[2]);
             ox = hx;
             oy = hy;
             oz = hz;
@@ -329,6 +335,8 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
     if (options.budgetMs !== undefined && Date.now() - started > options.budgetMs)
       throw new Error(`the still was stopped after ${String(Math.round(options.budgetMs / 60_000))} minutes, at pass ${String(pass + 1)} of ${String(samples)}: choose a smaller size or a lower quality`);
     await options.onPass?.(pass + 1, samples);
+    // Let the process breathe between passes: its heartbeat, and the queue's progress writes.
+    await new Promise((resolve) => setTimeout(resolve, 0));
   }
   for (let i = 0; i < accum.length; i++) accum[i] = accum[i]! / samples;
   const depthOut = new Float32Array(W * H);

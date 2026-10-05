@@ -18,13 +18,15 @@ import { encodePng } from '../render3d/png.js';
 import { denoise } from './denoise.js';
 import { BUDGET_MS, DEFAULT_SUN, MAX_WORK, QUALITIES, SIZES, withinBudget, type Quality, type Size, type SunInput } from './presets.js';
 import { decodeTexture, type Texture } from './textures.js';
-import { toneMap, trace, type PtMaterial, type PtScene, type Sun } from './trace.js';
+import { toneMap, type PtMaterial, type PtScene, type Sun } from './trace.js';
+import { traceParallel } from './threads.js';
 
 export { trace, toneMap, skyRadiance, type PtScene, type PtMaterial, type Sun, type TraceOptions } from './trace.js';
 export { Bvh, type Hit } from './bvh.js';
 export { Rng, hash32 } from './rng.js';
 export { decodeTexture, imageSize, sample, type Texture } from './textures.js';
 export { denoise, type Features } from './denoise.js';
+export { traceParallel, stillThreads, canThread } from './threads.js';
 export * from './presets.js';
 
 /** The seed every still is traced with: the picture depends on the version and the options alone. */
@@ -60,6 +62,8 @@ export interface StillResult {
   readonly sun: SunInput & { readonly source: 'yours' | 'default' };
   readonly design: Record<string, string> | null;
   readonly triangles: number;
+  /** The threads it was traced on. */
+  readonly threads: number;
   /** Base-colour maps drawn, and those the store did not have (their material's colour was used). */
   readonly maps: { readonly used: string[]; readonly missing: string[] };
   readonly ms: number;
@@ -76,7 +80,7 @@ export function sunOf(input: SunInput, trueNorthDeg: number): Sun {
   const dir: Vec3 = [Math.sin(b) * Math.cos(alt), Math.sin(alt), -Math.cos(b) * Math.cos(alt)];
   // Warmer and weaker near the horizon.
   const low = Math.max(0, Math.min(1, (25 - input.altitude) / 25));
-  return { dir, irradiance: 5.5 * (1 - 0.35 * low), radius: 0.6 * DEG, color: [1, 0.96 - 0.12 * low, 0.9 - 0.25 * low] };
+  return { dir, irradiance: 8 * (1 - 0.35 * low), radius: 0.6 * DEG, color: [1, 0.96 - 0.12 * low, 0.9 - 0.25 * low] };
 }
 
 /** The scene's triangles as the tracer reads them, cut away above `level`, on a ground plate. */
@@ -212,7 +216,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   const camera = cameraFor(scene, pt, options, width / height);
   const sunIn = options.sun ?? DEFAULT_SUN;
   const sun = sunOf(sunIn, options.trueNorth ?? 0);
-  const traced = await trace(pt, { width, height, samples, camera, sun, seed: SEED, budgetMs: options.budgetMs ?? BUDGET_MS, ...(options.onPass === undefined ? {} : { onPass: options.onPass }) });
+  const traced = await traceParallel(pt, { width, height, samples, camera, sun, seed: SEED, budgetMs: options.budgetMs ?? BUDGET_MS, ...(options.onPass === undefined ? {} : { onPass: options.onPass }) });
   const hdr = options.denoise === false ? traced.color : denoise(traced.color, traced.features, width, height);
   const png = encodePng(toneMap(hdr, width, height), width, height);
   return {
@@ -224,6 +228,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     sun: { azimuth: sunIn.azimuth, altitude: sunIn.altitude, source: options.sun === undefined ? 'default' : 'yours' },
     design: scene.design,
     triangles: pt.count,
+    threads: traced.threads,
     maps: { used: maps.used, missing: maps.missing },
     ms: Date.now() - started,
   };

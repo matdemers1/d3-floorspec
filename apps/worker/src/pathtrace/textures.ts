@@ -55,7 +55,8 @@ export function decodeTexture(bytes: Uint8Array, mediaType: string): Texture | u
   } catch {
     return undefined;
   }
-  const data = new Float32Array(width * height * 3);
+  // Shared memory: the tracer's threads read the same texels rather than a copy each.
+  const data = new Float32Array(new SharedArrayBuffer(width * height * 3 * 4));
   for (let i = 0; i < width * height; i++) {
     data[3 * i] = SRGB[pixels[4 * i]!]!;
     data[3 * i + 1] = SRGB[pixels[4 * i + 1]!]!;
