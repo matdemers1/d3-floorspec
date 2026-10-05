@@ -1,6 +1,8 @@
 {
-  "description": "The same house with the top wing 4 feet from the gable: its south eave is inside the gable's clearance, and the roof is not derived. FS-LINT-015.",
+  "description": "The same house with the top wing 4 feet from the gable. Core 0.3 did not derive it, because a pointwise distance would have reached the gable through the gap; 0.4's wavefront moves inside the outline, so the top wing never reaches the gable, and the roof is derived like the one 5 feet away: the arm's ridge runs to its gable's midpoint, and there is no FS-LINT-015.",
   "covers": [
-    "FS-CORE-16.4.1"
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
   ]
 }

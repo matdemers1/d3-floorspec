@@ -1,6 +1,6 @@
 {
-  "description": "A U-shaped house with a gable on the inner face of its west arm, edge 5: both ends of that edge are reflex corners, so it is not the end of a wing. FS-LINT-015.",
+  "description": "A U-shaped house with a gable on the inner face of its west arm, edge 5: both ends of that edge are reflex corners beside sloped edges, so the wavefront would move its ends away from each other along its line, past the ends of the gable, and the roof would need a vertical step inside its outline (16.4.6, condition 3). Its surface is not derived: FS-LINT-015.",
   "covers": [
-    "FS-CORE-16.4.1"
+    "FS-CORE-16.4.2"
   ]
 }

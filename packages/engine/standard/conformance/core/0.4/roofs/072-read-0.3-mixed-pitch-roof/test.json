@@ -1,0 +1,8 @@
+{
+  "description": "The 0.3 suite's mixed-pitch hip roof (roofs/011 of conformance/core/0.3), exactly as it is there, declaring \"0.3\", read by a reader of 0.4: valid, and its surface derived as 0.4 derives it, with no FS-LINT-015, which a reader of 0.3 reports for it.",
+  "covers": [
+    "FS-CORE-1.2.8",
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.5.2"
+  ]
+}

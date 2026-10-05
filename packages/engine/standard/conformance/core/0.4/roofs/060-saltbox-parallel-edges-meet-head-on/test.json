@@ -1,0 +1,8 @@
+{
+  "description": "The saltbox's two sloped edges are parallel and face each other: their wavefront edges reach one line at the same elevation, cover it once in each direction, and close up together with the gables between them (16.4.4) - here at a 6 in 12 front and a 2 in 12 back, the ridge 6 feet from the front of a house 24 feet deep and 3 feet above the eave.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

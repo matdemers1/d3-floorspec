@@ -1,0 +1,8 @@
+{
+  "description": "A house 20 feet by 8 with a 6-foot bay a foot deep on its south side and a notch 2 feet wide and 2 deep in its north, at 6 in 12. Three feet in, the bay's front has closed - its wavefront edge has no length - and the bay's two sides overlap head on, at (7 feet, 3 feet), just as the notch's east reflex corner reaches that point: an edge event and a split event at one point and one elevation, resolved together (16.4.4). The roof is the one Core 0.3 derived for the house, value for value.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

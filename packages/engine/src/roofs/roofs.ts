@@ -28,6 +28,7 @@ import { roundHalfEvenRational, toSafeNumber } from '../exact/bigint.js';
 import { intersect, roundPoint, type Line } from '../geometry/exact-point.js';
 import { area2, cross, dot, isSimple, onSegment, type IPoint } from '../geometry/predicates.js';
 import { entries, get, type FloorspecDocument, type Roof } from '../model/document.js';
+import { weightedFaces, weightedReason, weightedSurface } from './weighted/surface.js';
 
 type EdgeKind = 'gable' | 'sloped' | 'level';
 export type RoofKind = 'flat' | 'shed' | 'gable' | 'hip';
@@ -152,10 +153,18 @@ class Outline {
   }
 }
 
-type Method = 'flat' | 'shed' | 'skeleton';
+type Method = 'flat' | 'shed' | 'skeleton' | 'weighted';
 
-/** 16.4: how the surface is derived — or undefined when this draft does not derive it. */
-function methodOf(roof: Roof, outline: readonly IPoint[]): Method | undefined {
+/** The effective pitch of every edge of the counter-clockwise outline, undefined for a gable. */
+const ringPitches = (roof: Roof, o: Outline): ((readonly [bigint, bigint]) | undefined)[] =>
+  o.kind.map((k, j) => (k === 'sloped' ? pitchOf(roof, o.index[j]!) : undefined));
+
+/**
+ * 16.4: how the surface is derived — or undefined when the draft does not derive it. A Core 0.4
+ * reader (`core04`) derives every roof with two or more sloped edges by the weighted straight
+ * skeleton (16.4.3 to 16.4.6 of 0.4); a Core 0.3 reader only equal pitches on a rectilinear outline.
+ */
+function methodOf(roof: Roof, outline: readonly IPoint[], core04 = false): Method | undefined {
   const ks = edgeKinds(roof);
   if (ks.every((k) => k === 'level')) return 'flat';
   const o = new Outline(outline, ks);
@@ -165,6 +174,7 @@ function methodOf(roof: Roof, outline: readonly IPoint[]): Method | undefined {
     const nrm: IPoint = [-(b[1] - a[1]), b[0] - a[0]];
     return o.ring.every((v) => dot(nrm, dir(a, v)) >= 0n) ? 'shed' : undefined;
   }
+  if (core04) return weightedFaces(o, ringPitches(roof, o)) ? 'weighted' : undefined;
   const [r0, n0] = pitchOf(roof, o.index[sloped[0]!]!)!;
   if (!sloped.every((j) => {
     const [r, n] = pitchOf(roof, o.index[j]!)!;
@@ -557,9 +567,23 @@ function union(polys: readonly P4[][], verts: VertexIndex): P4[][] {
 
 // ── lints (FS-LINT-015) ─────────────────────────────────────────────────────────
 
-/** 16.4.4: is this roof's surface derived? The roof has no FS-INV-801 … 805. */
-export function surfaceDerived(roof: Roof): boolean {
-  return methodOf(roof, eaveOutline(roof)!) !== undefined;
+/** 16.4.4 (0.3), 16.4.6 (0.4): is this roof's surface derived? The roof has no FS-INV-801 … 805. */
+export function surfaceDerived(roof: Roof, core04 = false): boolean {
+  return methodOf(roof, eaveOutline(roof)!, core04) !== undefined;
+}
+
+/**
+ * Why a roof's surface is not derived, in words, or undefined when it is: for a Core 0.4 reader the
+ * condition of 16.4.6 it meets; for a Core 0.3 reader the class of 16.4.3 of 0.3 it is outside.
+ */
+export function surfaceNotDerivedReason(roof: Roof, core04 = false): string | undefined {
+  const outline = eaveOutline(roof)!;
+  if (methodOf(roof, outline, core04) !== undefined) return undefined;
+  const ks = edgeKinds(roof);
+  const o = new Outline(outline, ks);
+  if (o.kind.filter((k) => k === 'sloped').length === 1) return 'part of its outline lies outside the line of its one sloped edge';
+  if (!core04) return 'its pitches differ, its outline has an oblique edge, or a gable is not at the end of a wing';
+  return weightedReason(o, ringPitches(roof, o)) ?? 'it is not derived';
 }
 
 // ── derived values (16.5) ───────────────────────────────────────────────────────
@@ -572,7 +596,8 @@ export interface DerivedRoofFace {
   area: string;
 }
 export interface DerivedRoofLine {
-  kind: 'ridge' | 'hip' | 'valley';
+  /** `break` (Core 0.4): a level line where the roof over one side changes pitch. */
+  kind: 'ridge' | 'break' | 'hip' | 'valley';
   from: P3;
   to: P3;
 }
@@ -635,15 +660,15 @@ const areaOf = (ring: readonly B3[]): string => halfString(area2(ring.map((p) =>
 /** A ×4 coordinate rounded once. */
 const r4 = (v: bigint): bigint => roundHalfEvenRational(v, 4n);
 
-/** 16.5: every roof of a valid document. */
-export function deriveRoofs(doc: FloorspecDocument): Record<string, DerivedRoof> {
+/** 16.5: every roof of a valid document, as a Core 0.4 reader (`core04`) or a Core 0.3 reader derives it. */
+export function deriveRoofs(doc: FloorspecDocument, core04 = false): Record<string, DerivedRoof> {
   const out: Record<string, DerivedRoof> = {};
   for (const [id, roof] of entries(doc.roofs)) {
     const ks = edgeKinds(roof);
     const outline = eaveOutline(roof)!;
     const e = eaveOf(doc, roof);
     const ring = area2(outline) > 0n ? outline : [...outline].reverse();
-    const m = methodOf(roof, outline);
+    const m = methodOf(roof, outline, core04);
     const v: DerivedRoof = {
       kind: roofKind(ks),
       outline: leastFirst2(ring).map((p) => [toSafeNumber(p[0]), toSafeNumber(p[1])]),
@@ -687,6 +712,12 @@ function surfaceOf(roof: Roof, outline: readonly IPoint[], ks: readonly EdgeKind
         const [ga, gb] = o.seg(g);
         gables.push(gableEnd(o.index[g]!, ga, gb, [ga, gb].map((p): B3 => [p[0], p[1], z(p).round()]), e));
       }
+  } else if (m === 'weighted') {
+    const w = weightedSurface(o, ringPitches(roof, o), e);
+    faces.push(...w.faces);
+    for (const g of w.gables) gables.push({ edge: g.edge, polygon: g.poly.map(num3) });
+    lines = w.lines.map((l) => ({ kind: l.kind, from: num3(l.from), to: num3(l.to) }));
+    high = w.high;
   } else {
     const j0 = o.kind.indexOf('sloped');
     const [rise, run] = pitchOf(roof, o.index[j0]!)!;

@@ -64,7 +64,7 @@ const DEFS: readonly LayerDef[] = [
   { name: LAYERS.stairTag, color: 7, weight: 18, linetype: 'CONTINUOUS', description: 'Stair arrows: UP from the foot, DN from the head' },
   { name: LAYERS.roofAbove, color: 8, weight: 25, linetype: 'DASHED', description: 'Roof eave above the plan (overhead)' },
   { name: LAYERS.roofOutline, color: 7, weight: 50, linetype: 'CONTINUOUS', description: 'Roof plan: eave outline and gable ends' },
-  { name: LAYERS.roofRidge, color: 7, weight: 35, linetype: 'CONTINUOUS', description: 'Roof plan: ridges and hips' },
+  { name: LAYERS.roofRidge, color: 7, weight: 35, linetype: 'CONTINUOUS', description: 'Roof plan: ridges, hips and breaks' },
   { name: LAYERS.roofValley, color: 7, weight: 35, linetype: 'CONTINUOUS', description: 'Roof plan: valleys' },
   { name: LAYERS.roofTag, color: 3, weight: 18, linetype: 'CONTINUOUS', description: 'Roof plan: slope arrows and pitches' },
   { name: 'E-POWR-DEVC', color: 1, weight: 18, linetype: 'CONTINUOUS', description: 'Receptacles and power devices' },

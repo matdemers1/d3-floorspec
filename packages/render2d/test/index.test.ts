@@ -433,3 +433,40 @@ describe('Core 0.3: stairs and roofs', () => {
     expect(svg).toContain('data-eave="RF1"');
   });
 });
+
+describe('Core 0.4: roofs at mixed pitches', () => {
+  const FT = 390144;
+  const withRoof = (roof: object): Doc => {
+    const d = load('three-room-house') as Doc & { roofs?: unknown };
+    d.floorspec = '0.4';
+    d.roofs = { RF1: { level: 'MAIN', ...roof } };
+    expect(check(d).valid).toBe(true);
+    return d;
+  };
+
+  it('draws a saltbox: one ridge off centre between its two faces, two gable ends', () => {
+    const d = withRoof({ footprint: [[0, 0], [36 * FT, 0], [36 * FT, 24 * FT], [0, 24 * FT]], pitch: { rise: 6, run: 12 }, edges: { '0': { pitch: { rise: 12, run: 12 } }, '1': { gable: true }, '3': { gable: true } } });
+    expect(check(d).diagnostics.map((x) => x.code)).not.toContain('FS-LINT-015');
+    const svg = renderPlan(d, { roof: true });
+    expect(svg).toContain('data-kind="gable"');
+    expect(svg.match(/data-line="ridge"/g)).toHaveLength(1);
+    expect(svg.match(/data-gable="RF1"/g)).toHaveLength(2);
+    const roof = (check(d).derived as { roofs: { RF1: { surface: { lines: { from: number[] }[] } } } }).roofs.RF1;
+    expect(roof.surface.lines[0]!.from[1]).toBe(8 * FT); // a third of the way back from the steep front
+  });
+
+  it('draws an L-shaped hip with its wings at two pitches: two ridges, a valley, hips', () => {
+    const L = [[0, 0], [40 * FT, 0], [40 * FT, 24 * FT], [24 * FT, 24 * FT], [24 * FT, 48 * FT], [0, 48 * FT]];
+    const d = withRoof({ footprint: L, pitch: { rise: 6, run: 12 }, edges: { '3': { pitch: { rise: 9, run: 12 } }, '4': { pitch: { rise: 9, run: 12 } }, '5': { pitch: { rise: 9, run: 12 } } } });
+    const svg = renderPlan(d, { roof: true });
+    expect(svg).toContain('data-kind="hip"');
+    expect(svg.match(/data-line="ridge"/g)).toHaveLength(2);
+    expect(svg.match(/data-line="valley"/g)).toHaveLength(1);
+    expect(svg.match(/data-line="hip"/g)).toHaveLength(6);
+  });
+
+  it('draws a stepped eave\'s break where the faster edge overtakes the slower', () => {
+    const d = withRoof({ footprint: [[0, 0], [10 * FT, 0], [10 * FT, FT], [30 * FT, FT], [30 * FT, 20 * FT], [0, 20 * FT]], pitch: { rise: 12, run: 12 }, edges: { '0': { pitch: { rise: 3, run: 12 } } } });
+    expect(renderPlan(d, { roof: true }).match(/data-line="break"/g)).toHaveLength(1);
+  });
+});

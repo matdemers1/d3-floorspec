@@ -60,7 +60,7 @@ export interface PlanRoof {
   readonly kind: string;
   readonly name: string | undefined;
   readonly eave: readonly Pt[];
-  readonly lines: readonly { readonly kind: 'ridge' | 'hip' | 'valley'; readonly from: Pt; readonly to: Pt }[];
+  readonly lines: readonly { readonly kind: 'ridge' | 'break' | 'hip' | 'valley'; readonly from: Pt; readonly to: Pt }[];
   readonly gables: readonly (readonly [Pt, Pt])[];
   /** False when Core does not derive the roof's surface (FS-LINT-015): only its eave outline is drawn. */
   readonly derived: boolean;

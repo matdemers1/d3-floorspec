@@ -1,7 +1,7 @@
 {
-  "description": "A hip roof on the five-sided footprint: an equal-pitch roof with an oblique edge has skeleton nodes irrational in more than one radicand, and its surface is not derived in this draft. FS-LINT-015.",
+  "description": "A hip roof on the five-sided footprint: its oblique edges run 2000 mm by 1000 mm, so each is the square root of 5 times 1000 mm long, which is not an integer, and the planes rising from them have irrational coefficients. Its surface is not derived (16.4.6, condition 2): FS-LINT-015.",
   "covers": [
-    "FS-CORE-16.4.1",
+    "FS-CORE-16.4.2",
     "FS-CORE-10.2.1"
   ]
 }

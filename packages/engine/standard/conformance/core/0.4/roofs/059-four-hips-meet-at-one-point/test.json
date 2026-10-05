@@ -1,0 +1,8 @@
+{
+  "description": "A rectangle 24 feet by 12 whose long edges rise at 12 in 12 and short ones at 6 in 12: every plane reaches the centre 6 feet above the eave at once, so the four edges of the wavefront vanish together at one point, at one event elevation, and the roof is a pyramid with no ridge - four hips, from the corners, in two directions in plan.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

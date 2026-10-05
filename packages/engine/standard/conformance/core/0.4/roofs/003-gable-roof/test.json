@@ -1,8 +1,8 @@
 {
   "description": "A gable roof: the room's short edges, 1 and 3, are gables, and its long edges slope at 6 in 12. The eaves overhang 300 mm and the gables, at the rake, 150 mm of their own: the ridge runs the whole length of the outline, and each gable end is a triangle rising to it.",
   "covers": [
-    "FS-CORE-16.5.1",
-    "FS-CORE-16.4.1",
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.4.2",
     "FS-CORE-16.2.2",
     "FS-CORE-16.3.1"
   ]

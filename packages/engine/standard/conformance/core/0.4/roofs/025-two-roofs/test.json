@@ -1,6 +1,6 @@
 {
   "description": "Two roofs: a gable roof over the room and a flat roof over a porch south of it. Each is derived on its own.",
   "covers": [
-    "FS-CORE-16.5.1"
+    "FS-CORE-16.5.2"
   ]
 }

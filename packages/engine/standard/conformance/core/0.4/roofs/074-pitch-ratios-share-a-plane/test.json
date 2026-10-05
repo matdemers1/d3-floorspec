@@ -1,0 +1,9 @@
+{
+  "description": "The rectangle with the 2-foot bay, edge 0 at 1 in 2 and edge 4 at 6 in 12: one pitch, compared as a ratio, so the two collinear edges share a plane and their faces meet in a seam, as if both said 6 in 12.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.4.4"
+  ]
+}

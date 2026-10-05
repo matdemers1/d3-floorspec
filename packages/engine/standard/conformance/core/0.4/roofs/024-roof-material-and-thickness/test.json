@@ -1,6 +1,6 @@
 {
   "description": "A hip roof with a material - which counts as referred, so no unused-material lint - and a thickness of 250 mm, which lowers its box's floor below its eave.",
   "covers": [
-    "FS-CORE-16.5.1"
+    "FS-CORE-16.5.2"
   ]
 }

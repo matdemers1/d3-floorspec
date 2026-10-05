@@ -1,6 +1,8 @@
 {
-  "description": "A rectangle with gables on edges 1 and 2, which meet at a corner: a gable's neighbours must both be sloped. FS-LINT-015.",
+  "description": "A rectangle with gables on edges 1 and 2, the east and the north, which meet at a corner. Core 0.3 derived a gable only at the end of a wing; 0.4 derives this one: the corner of the two gables stands still, and the south and west planes, at 6 in 12, meet in one hip from the south-west corner, 3100 mm up the room, to (3050 mm, 3050 mm) on the north gable, 1550 mm above the eave. From there the south plane runs on to the north-east corner, level along the north gable, so the east gable end is a triangle and the north one a quadrilateral.",
   "covers": [
-    "FS-CORE-16.4.1"
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
   ]
 }
