@@ -235,7 +235,8 @@ describe('stills of a house', () => {
     expect(pngSize(file.bytes)).toEqual({ width: 640, height: 480 });
     expect(file.summary).toMatchObject({ label: 'Offline path-traced render — approximate lighting', samples: 16, size: 'small', quality: 'draft', camera: 'SE iso' });
     expect(progress.at(-1)).toEqual({ pass: 16, passes: 16 });
-  });
+    // A whole 640 × 480 still in one thread: seconds here, past half a minute on CI's runners.
+  }, 180_000);
 });
 
 describe('threads', () => {
