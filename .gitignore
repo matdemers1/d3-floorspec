@@ -40,3 +40,6 @@ __pycache__/
 
 # vitest browser-mode failure screenshots
 .vitest/
+
+# workers/ifc: sample IFC files, made by `python -m floorspec_ifc samples`
+workers/ifc/samples/

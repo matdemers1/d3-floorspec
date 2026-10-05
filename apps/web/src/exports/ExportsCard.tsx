@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, StatusDot } from '@d3cloud/ui';
-import { Download, FileBox, FileText, Ruler } from 'lucide-react';
+import { Download, FileBox, FileText, Layers, Ruler } from 'lucide-react';
 import { DashCard } from '../dashboard/DashCard';
 import { messageOf } from '../lib/api';
 import { describeJob, listExports, requestExport, startDownload, untilFinished, type ExportJob, type ExportKind } from './api';
@@ -9,7 +9,8 @@ import './exports.css';
 /**
  * Exports on the dashboard (FLR-T-9.3): the canonical model, and the drawings — a dimensioned PDF
  * (a sheet per level) and DXF drawings — made from the head version on the server's job queue,
- * with the latest few kept to download again. glTF, USDZ and IFC follow in FLR-P-9.
+ * with the latest few kept to download again; and the IFC4 Reference View model (FLR-T-9.4).
+ * glTF and USDZ follow in FLR-P-9.
  */
 export function ExportsCard({ projectId, hasModel }: { projectId: string; hasModel: boolean }) {
   const [jobs, setJobs] = useState<ExportJob[]>([]);
@@ -76,7 +77,13 @@ export function ExportsCard({ projectId, hasModel }: { projectId: string; hasMod
           </Button>
         </li>
         <li className="fs-export">
-          <span>Floorspec package, glTF, USDZ, IFC</span>
+          <span>IFC4 Reference View · for your architect’s BIM tool</span>
+          <Button variant="secondary" size="sm" icon={<Layers />} disabled={!hasModel || asking !== null} loading={asking === 'ifc'} onClick={() => void ask('ifc')}>
+            IFC
+          </Button>
+        </li>
+        <li className="fs-export">
+          <span>Floorspec package, glTF, USDZ</span>
           <Badge tone="neutral" size="sm">
             Phase 9
           </Badge>

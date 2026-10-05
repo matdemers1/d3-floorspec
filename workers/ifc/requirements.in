@@ -1,0 +1,14 @@
+# The IFC worker's runtime dependencies, every one pinned exactly — IfcOpenShell and everything it
+# pulls in. scripts/lock.py turns this into requirements.lock with the sha256 of every file PyPI
+# has for each version, and refuses a version published in the last seven days (the same wait
+# pnpm-workspace.yaml's minimumReleaseAge sets for the TypeScript side).
+#
+# IfcOpenShell 0.8.5 (2026-04-13), not 0.9.0: 0.9.0 was published on 2026-09-29, inside the wait.
+ifcopenshell==0.8.5
+isodate==0.7.2
+lark==1.3.1
+numpy==2.5.3
+python-dateutil==2.9.0.post0
+shapely==2.1.2
+six==1.17.0
+typing-extensions==4.16.0
