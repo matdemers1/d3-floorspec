@@ -17,7 +17,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch --frozen-lock
 COPY . .
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm install --offline --frozen-lockfile --filter @d3-floorspec/server... --filter @d3-floorspec/web...
-RUN pnpm --filter @d3-floorspec/server... build && pnpm --filter @d3-floorspec/web build
+RUN pnpm --filter @d3-floorspec/server... --filter @d3-floorspec/web... build
 # The release-age policy gates *resolving* new versions, which happens at `pnpm install` on a
 # developer's machine. This step reproduces a lockfile that already passed it, so the check is off
 # here and only here.
