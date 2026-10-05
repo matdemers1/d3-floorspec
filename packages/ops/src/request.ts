@@ -28,43 +28,34 @@ interface OpShape {
   readonly optional: Readonly<Record<string, MemberType>>;
 }
 
-/** The members of a wall that addWall and drawWall carry through to the element (Core §5.2). */
-const WALL_MEMBERS: Record<string, MemberType> = {
-  type: 'any',
-  layers: 'any',
-  justification: 'any',
-  base: 'any',
-  top: 'any',
-  name: 'any',
-  extensions: 'any',
-  extras: 'any',
-};
+/** The members every created element may carry (2.1, Core §1.4), passed into it as given. */
+const COMMON: Record<string, MemberType> = { name: 'any', extensions: 'any', extras: 'any' };
 
-/** drawWall carries the wall members 4.1 lists: not extensions or extras. */
-const DRAW_WALL_MEMBERS: Record<string, MemberType> = { type: 'any', layers: 'any', justification: 'any', base: 'any', top: 'any', name: 'any' };
+/** The members of a wall that addWall and drawWall carry through to the element (Core §5.2). */
+const WALL_MEMBERS: Record<string, MemberType> = { type: 'any', layers: 'any', justification: 'any', base: 'any', top: 'any', ...COMMON };
 
 export const OP_SHAPES: Readonly<Record<OperationName, OpShape>> = {
   addElement: { required: { collection: 'collection', element: 'object' }, optional: { id: 'string' } },
-  addJunction: { required: { level: 'string', position: 'pair' }, optional: { id: 'string', join: 'any' } },
+  addJunction: { required: { level: 'string', position: 'pair' }, optional: { id: 'string', join: 'any', ...COMMON } },
   addWall: { required: { level: 'string', start: 'string', end: 'string' }, optional: { id: 'string', ...WALL_MEMBERS } },
-  addSeparator: { required: { level: 'string', start: 'string', end: 'string' }, optional: { id: 'string' } },
+  addSeparator: { required: { level: 'string', start: 'string', end: 'string' }, optional: { id: 'string', ...COMMON } },
   removeElement: { required: { id: 'string' }, optional: { cascade: 'boolean' } },
   setProperty: { required: { id: 'string', path: 'string', value: 'any' }, optional: {} },
   unsetProperty: { required: { id: 'string', path: 'string' }, optional: {} },
   moveJunction: { required: { id: 'string', to: 'pair' }, optional: {} },
-  drawWall: { required: { level: 'string', from: 'pair', to: 'pair' }, optional: { id: 'string', ...DRAW_WALL_MEMBERS } },
-  drawSeparator: { required: { level: 'string', from: 'pair', to: 'pair' }, optional: { id: 'string' } },
+  drawWall: { required: { level: 'string', from: 'pair', to: 'pair' }, optional: { id: 'string', ...WALL_MEMBERS } },
+  drawSeparator: { required: { level: 'string', from: 'pair', to: 'pair' }, optional: { id: 'string', ...COMMON } },
   moveWall: { required: { wall: 'string', by: 'length' }, optional: { toward: 'string' } },
   moveRoom: { required: { room: 'string', by: 'pair' }, optional: {} },
   resizeRoom: { required: { room: 'string', side: 'side', by: 'length' }, optional: {} },
   addOpening: {
     required: { wall: 'string', at: 'length' },
-    optional: { id: 'string', fill: 'string', width: 'length', height: 'length', sill: 'length', hinge: 'any', swing: 'any', name: 'any' },
+    optional: { id: 'string', fill: 'string', width: 'length', height: 'length', sill: 'length', hinge: 'any', swing: 'any', ...COMMON },
   },
   moveOpening: { required: { opening: 'string', at: 'length' }, optional: {} },
   addRoom: {
     required: { level: 'string', at: 'pair' },
-    optional: { id: 'string', name: 'any', function: 'any', wallFinish: 'any', floorFinish: 'any', ceilingFinish: 'any' },
+    optional: { id: 'string', function: 'any', wallFinish: 'any', floorFinish: 'any', ceilingFinish: 'any', ...COMMON },
   },
   setRoomFinish: { required: { room: 'string', surface: 'surface', material: 'string' }, optional: {} },
   removeWall: { required: { wall: 'string' }, optional: { keep: 'string' } },

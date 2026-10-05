@@ -20,7 +20,10 @@
       "top": {
         "level": "L2"
       },
-      "name": "Low wall"
+      "name": "Low wall",
+      "extras": {
+        "source": "sketch"
+      }
     }
   ]
 }

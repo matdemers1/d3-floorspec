@@ -3,13 +3,8 @@
     {
       "op": "addJunction",
       "level": "L1",
-      "position": ["1'", "1'"]
-    },
-    {
-      "op": "setProperty",
-      "id": "J5",
-      "path": "/name",
-      "value": "Post"
+      "position": ["1'", "1'"],
+      "name": "Post"
     }
   ]
 }

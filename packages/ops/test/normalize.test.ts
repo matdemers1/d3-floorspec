@@ -44,14 +44,22 @@ describe('5.2 planarization by snap rounding (5.2.1)', () => {
     expect([b.walls!.W2!.start, b.walls!.W2!.end, b.walls!.W4!.start, b.walls!.W4!.end]).toEqual(['J3', 'J5', 'J5', 'J4']);
   });
 
-  it('routes an edge through the pixel of a junction it passes within half a unit of', () => {
-    // A junction at (500000, 0) and a wall from (0, 0) to (1000000, 1): at x = 500000 the wall is at
-    // y = 0.5, inside the closed pixel of (500000, 0), so the wall is split there.
-    const d = doc({ junctions: { A: [0, 0], C: [1000000, 1], P: [500000, 0], Q: [500000, -1000000] }, walls: { W1: { start: 'A', end: 'C' }, W2: { start: 'Q', end: 'P' } } });
-    // Valid as it is (P is not on W1), but any batch normalizes the level.
-    const r = committed(run(d, { op: 'setProperty', id: '$project', path: '/name', value: 'x' }));
-    expect(r.created).toEqual(['W3']);
-    expect(B(r).walls!.W3).toMatchObject({ start: 'P', end: 'C' });
+  // A junction at (500000, 0) and a wall from (0, 0) to (1000000, 1): at x = 500000 the wall is at
+  // y = 0.5, inside the closed pixel of (500000, 0) — a near miss: P is not on W1.
+  const nearMiss = (): Record<string, unknown> =>
+    doc({ junctions: { A: [0, 0], C: [1000000, 1], P: [500000, 0], Q: [500000, -1000000] }, walls: { W1: { start: 'A', end: 'C' }, W2: { start: 'Q', end: 'P' } } });
+
+  it('leaves a level that satisfies Core 5.3 exactly as it is, near misses included', () => {
+    const r = committed(run(nearMiss(), { op: 'setProperty', id: '$project', path: '/name', value: 'x' }));
+    expect(r.created).toEqual([]);
+    expect(B(r).walls!.W1).toMatchObject({ start: 'A', end: 'C' });
+  });
+
+  it('on a level it planarizes, routes an edge through the pixel of a junction it passes within half a unit of', () => {
+    // A wall crossing W2 makes the level non-planar, so the whole level is snap-rounded.
+    const r = committed(run(nearMiss(), { op: 'drawWall', level: 'L1', from: [300000, -500000], to: [700000, -500000], layers: core }));
+    expect(r.created).toEqual(['J1', 'J2', 'J3', 'W3', 'W4', 'W5', 'W6']);
+    expect(B(r).walls!.W4).toMatchObject({ start: 'P', end: 'C' });
   });
 
   it('splits a wall where a new wall ends inside it, keeping its ID on the first piece', () => {

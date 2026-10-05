@@ -1,0 +1,6 @@
+{
+  "description": "The door's fill is unset, so it has no width, and moveOpening cannot place it: FS-OPS-003 names the opening.",
+  "covers": [
+    "FS-OPS-4.5.1"
+  ]
+}

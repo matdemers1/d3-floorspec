@@ -5,10 +5,10 @@
  * of the request that failed.
  */
 import { Surd } from '@floorspec/engine';
-import { fail } from '../diagnostics.js';
+import { fail, OpsFailure } from '../diagnostics.js';
 import { asPoint, FacesCache, sideOf, type LevelFaces, type Side } from '../model/faces.js';
 import { COLLECTIONS, type CollectionName, type WorkingCopy } from '../model/working.js';
-import { getMember, isObject } from '../lib/json.js';
+import { getMember } from '../lib/json.js';
 import { parseLength, MAX_LENGTH } from './length.js';
 
 export type IPoint = readonly [bigint, bigint];
@@ -57,7 +57,7 @@ export function resolveVector(v: unknown, ptr: string): IPoint {
     return [resolveLength(v[0], `${ptr}/0`), resolveLength(v[1], `${ptr}/1`)];
   }
   if (typeof v !== 'string') return fail('FS-OPS-001', 'a vector is [dx, dy] or "<length> <direction>"', [], ptr);
-  const m = new RegExp(`^\\s*(.+?)\\s+${dirRe}\\s*$`, 'i').exec(v);
+  const m = new RegExp(`^\\s*(.+?)[ \\t]+${dirRe}\\s*$`, 'i').exec(v);
   if (!m) return fail('FS-OPS-012', `${JSON.stringify(v)} is not a vector: write "<length> <direction>", such as "2' east"`, [], ptr);
   const len = resolveLength(m[1]!, ptr);
   const u = DIRECTIONS[m[2]!.toLowerCase() as Side];
@@ -73,11 +73,11 @@ export interface ResolvedPoint {
 /** A junction's position, for a point written as a junction. */
 function junctionPosition(ctx: Ctx, id: string, ptr: string): IPoint {
   const p = asPoint(getMember(ctx.wc.elementIn('junctions', id), 'position'));
-  if (!p) return fail('FS-OPS-003', `junction ${id} has no position to read`, [], ptr);
+  if (!p) return fail('FS-OPS-003', `junction ${id} has no position to read`, [id], ptr);
   return p;
 }
 
-const looksLikeReference = (s: string): boolean => /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(s) || /^(start|end)\s+of\s+/i.test(s.trim());
+const looksLikeReference = (s: string): boolean => /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(s) || /^(start|end)[ \t]+of[ \t]+/i.test(s.trim());
 
 /**
  * A point: `[x, y]` of lengths; a junction (its position); `"<length> from <junction> toward
@@ -89,7 +89,7 @@ export function resolvePoint(v: unknown, ptr: string, ctx: Ctx): ResolvedPoint {
     return { point: [resolveLength(v[0], `${ptr}/0`), resolveLength(v[1], `${ptr}/1`)] };
   }
   if (typeof v !== 'string') return fail('FS-OPS-001', 'a point is [x, y], a junction, or a point string', [], ptr);
-  const toward = /^\s*(.+?)\s+from\s+(.+?)\s+toward\s+(.+?)\s*$/i.exec(v);
+  const toward = /^\s*(.+?)[ \t]+from[ \t]+(.+?)[ \t]+toward[ \t]+(.+?)\s*$/i.exec(v);
   if (toward) {
     const len = resolveLength(toward[1]!, ptr);
     const a = resolveElement(toward[2]!, ptr, ctx, JUNCTION);
@@ -103,7 +103,7 @@ export function resolvePoint(v: unknown, ptr: string, ctx: Ctx): ResolvedPoint {
     const k = Surd.sqrt(m).mulInt(len).divInt(m);
     return { point: [k.mulInt(d[0]).addInt(A[0]).round(), k.mulInt(d[1]).addInt(A[1]).round()] };
   }
-  const of = new RegExp(`^\\s*(.+?)\\s+${dirRe}\\s+of\\s+(.+?)\\s*$`, 'i').exec(v);
+  const of = new RegExp(`^\\s*(.+?)[ \\t]+${dirRe}[ \\t]+of[ \\t]+(.+?)\\s*$`, 'i').exec(v);
   if (of) {
     const len = resolveLength(of[1]!, ptr);
     const u = DIRECTIONS[of[2]!.toLowerCase() as Side];
@@ -139,21 +139,33 @@ type Structured =
 
 function parseStructured(s: string): Structured | undefined {
   const t = s.trim();
-  let m = new RegExp(`^${dirRe}\\s+(wall|separator)\\s+of\\s+(.+)$`, 'i').exec(t);
+  let m = new RegExp(`^${dirRe}[ \\t]+(wall|separator)[ \\t]+of[ \\t]+(.+)$`, 'i').exec(t);
   if (m) return { kind: 'side', side: m[1]!.toLowerCase() as Side, edge: m[2]!.toLowerCase() === 'wall' ? 'walls' : 'separators', room: m[3]! };
-  m = /^(wall|separator)\s+between\s+(.+)$/i.exec(t);
+  m = /^(wall|separator)[ \t]+between[ \t]+(.+)$/i.exec(t);
   if (m) return { kind: 'between', edge: m[1]!.toLowerCase() === 'wall' ? 'walls' : 'separators', rest: m[2]! };
-  m = /^(start|end)\s+of\s+(.+)$/i.exec(t);
+  m = /^(start|end)[ \t]+of[ \t]+(.+)$/i.exec(t);
   if (m) return { kind: 'end', which: m[1]!.toLowerCase() as 'start' | 'end', edge: m[2]! };
   return undefined;
 }
 
 /** Rooms whose name equals s, ignoring case (3.3). */
+/**
+ * Unicode case folding (3.3), per code point: full upper-casing then lower-casing folds what
+ * simple lower-casing misses (ß → ss, ſ → s, ﬁ → fi), and per code point so no context rule (Greek
+ * final sigma) applies.
+ */
+export function caseFold(s: string): string {
+  let out = '';
+  for (const c of s) out += c.toUpperCase().toLowerCase();
+  return out;
+}
+
+/** Rooms whose name equals s under case folding (3.3). */
 function roomsNamed(ctx: Ctx, s: string): string[] {
-  const want = s.trim().toLowerCase();
+  const want = caseFold(s);
   return ctx.wc.ids('rooms').filter((id) => {
     const n = getMember(ctx.wc.elementIn('rooms', id), 'name');
-    return typeof n === 'string' && n.toLowerCase() === want;
+    return typeof n === 'string' && caseFold(n) === want;
   });
 }
 
@@ -163,32 +175,21 @@ function roomsNamed(ctx: Ctx, s: string): string[] {
  */
 export function resolveElement(s: string, ptr: string, ctx: Ctx, accept: Accept): string {
   const { wc } = ctx;
-  const wantsRooms = accept.collections.includes('rooms');
-  const coll = wc.collectionOf(s);
-  if (coll) {
-    if (wantsRooms) {
-      // An ID and a room name are both ways to name a room: when they name different rooms, the
-      // string is ambiguous (3.3.1: an applier never guesses).
-      const named = roomsNamed(ctx, s);
-      const all = [...new Set([...(coll === 'rooms' ? [s] : []), ...named])];
-      if (all.length > 1) return fail('FS-OPS-004', `${JSON.stringify(s)} names ${all.length} rooms: ${all.join(', ')}`, all, ptr);
-      if (all.length === 1 && (coll === 'rooms' || named.length === 1)) return all[0]!;
-    }
-    if (accept.collections.includes(coll)) return s;
-    if (!wantsRooms) return fail('FS-OPS-003', `${s} is in ${coll}, and this needs ${accept.what}`, [], ptr);
-  }
-  const st = coll ? undefined : parseStructured(s);
+  // A string with a keyword form is read only as that form (3.3).
+  const st = parseStructured(s);
   if (st) {
     const id = resolveStructured(st, s, ptr, ctx);
     const c = wc.collectionOf(id);
     if (!c || !accept.collections.includes(c)) return fail('FS-OPS-003', `${JSON.stringify(s)} is ${id}, and this needs ${accept.what}`, [], ptr);
     return id;
   }
-  if (wantsRooms) {
-    const named = roomsNamed(ctx, s);
-    if (named.length === 1) return named[0]!;
-    if (named.length > 1) return fail('FS-OPS-004', `${named.length} rooms are named ${JSON.stringify(s)}: ${named.join(', ')}`, named, ptr);
-  }
+  // Any other string is an ID, a room name, or both: every element of the expected collection it
+  // names that way is a match.
+  const coll = wc.collectionOf(s);
+  const matches = [...new Set([...(coll !== undefined && accept.collections.includes(coll) ? [s] : []), ...(accept.collections.includes('rooms') ? roomsNamed(ctx, s) : [])])];
+  if (matches.length === 1) return matches[0]!;
+  if (matches.length > 1) return fail('FS-OPS-004', `${JSON.stringify(s)} names ${matches.length} elements: ${[...matches].sort().join(', ')}`, matches, ptr);
+  if (coll !== undefined) return fail('FS-OPS-003', `${s} is in ${coll}, and this needs ${accept.what}`, [], ptr);
   return fail('FS-OPS-003', `nothing matches ${JSON.stringify(s)}: there is no such ${accept.what.replace(/^an? /, '')}`, [], ptr);
 }
 
@@ -235,21 +236,31 @@ function resolveStructured(st: Structured, s: string, ptr: string, ctx: Ctx): st
     case 'end': {
       const edge = resolveElement(st.edge, ptr, ctx, EDGE);
       const j = getMember(ctx.wc.element(edge), st.which);
-      if (typeof j !== 'string' || !ctx.wc.elementIn('junctions', j)) return fail('FS-OPS-003', `the ${st.which} of ${edge} is not a junction`, [], ptr);
+      if (typeof j !== 'string' || !ctx.wc.elementIn('junctions', j)) return fail('FS-OPS-003', `the ${st.which} of ${edge} is not a junction`, [edge], ptr);
       return j;
     }
   }
 }
 
-/** `<room> and <room>`: the first split at " and " whose left side is a room. */
+/** `<room> and <room>`: every split at "and" is tried, and exactly one must resolve (3.3). */
 function splitRooms(rest: string, ptr: string, ctx: Ctx): [string, string] {
-  const re = /\s+and\s+/gi;
+  const re = /[ \t]+and[ \t]+/gi;
   const splits: [string, string][] = [];
   for (let m = re.exec(rest); m; m = re.exec(rest)) splits.push([rest.slice(0, m.index), rest.slice(m.index + m[0].length)]);
-  if (splits.length === 0) return fail('FS-OPS-012', `${JSON.stringify(rest)} does not name two rooms: write "<room> and <room>"`, [], ptr);
-  const isRoom = (s: string): boolean => ctx.wc.elementIn('rooms', s) !== undefined || roomsNamed(ctx, s).length > 0;
-  const chosen = splits.find(([l, r]) => isRoom(l) && isRoom(r)) ?? splits.find(([l]) => isRoom(l)) ?? splits[0]!;
-  return [resolveElement(chosen[0], ptr, ctx, ROOM), resolveElement(chosen[1], ptr, ctx, ROOM)];
+  if (splits.length === 0) return fail('FS-OPS-003', `${JSON.stringify(rest)} does not name two rooms: write "<room> and <room>"`, [], ptr);
+  if (splits.length === 1) return [resolveElement(splits[0]![0], ptr, ctx, ROOM), resolveElement(splits[0]![1], ptr, ctx, ROOM)];
+  const resolved: [string, string][] = [];
+  for (const [l, r] of splits) {
+    try {
+      resolved.push([resolveElement(l, ptr, ctx, ROOM), resolveElement(r, ptr, ctx, ROOM)]);
+    } catch (e) {
+      if (!(e instanceof OpsFailure)) throw e;
+    }
+  }
+  if (resolved.length === 1) return resolved[0]!;
+  if (resolved.length === 0) return fail('FS-OPS-003', `no reading of ${JSON.stringify(rest)} names two rooms`, [], ptr);
+  const rooms = [...new Set(resolved.flat())];
+  return fail('FS-OPS-004', `${JSON.stringify(rest)} can be read ${resolved.length} ways`, rooms, ptr);
 }
 
 function one(matches: string[], s: string, ptr: string): string {
@@ -267,7 +278,7 @@ export function edgeGeometry(ctx: Ctx, edge: string, ptr: string): { S: IPoint; 
   const t = getMember(e, 'end');
   const S = typeof s === 'string' ? asPoint(getMember(ctx.wc.elementIn('junctions', s), 'position')) : undefined;
   const E = typeof t === 'string' ? asPoint(getMember(ctx.wc.elementIn('junctions', t), 'position')) : undefined;
-  if (!S || !E) return fail('FS-OPS-003', `${edge} does not run between two junctions with positions`, [], ptr);
+  if (!S || !E) return fail('FS-OPS-003', `${edge} does not run between two junctions with positions`, [edge], ptr);
   const d: IPoint = [E[0] - S[0], E[1] - S[1]];
   return { S, E, d, m: d[0] * d[0] + d[1] * d[1] };
 }
@@ -280,90 +291,11 @@ export function resolvePosition(v: unknown, ptr: string, m: bigint, w: bigint): 
   const L = Surd.sqrt(m);
   if (typeof v === 'string') {
     if (/^\s*centered\s*$/i.test(v)) return L.addInt(-w).divInt(2n).round();
-    const from = /^\s*(.+?)\s+from\s+(start|end)\s*$/i.exec(v);
+    const from = /^\s*(.+?)[ \t]+from[ \t]+(start|end)\s*$/i.exec(v);
     if (from) {
       const len = resolveLength(from[1]!, ptr);
       return from[2]!.toLowerCase() === 'start' ? len : L.addInt(-len - w).round();
     }
   }
   return resolveLength(v, ptr);
-}
-
-// ── references inside element content ─────────────────────────────────────────
-
-export type MemberKind = 'length' | 'point' | 'ref';
-
-/**
- * Which members of an element take a length, a point or an ID (Core chapters 1, 5–8), by collection
- * and JSON Pointer pattern (`*` an array index). The reference grammar applies there in primitives
- * (2.5) — in addElement's element, the shorthands' members and setProperty's value.
- */
-const KINDS: Readonly<Record<string, Readonly<Record<string, MemberKind>>>> = {
-  buildings: {},
-  levels: { building: 'ref', elevation: 'length', height: 'length' },
-  junctions: { level: 'ref', position: 'point', 'join/through/*': 'ref' },
-  walls: {
-    level: 'ref',
-    start: 'ref',
-    end: 'ref',
-    type: 'ref',
-    'layers/*/thickness': 'length',
-    'layers/*/material': 'ref',
-    'base/level': 'ref',
-    'base/offset': 'length',
-    'top/level': 'ref',
-    'top/offset': 'length',
-    'top/height': 'length',
-  },
-  separators: { level: 'ref', start: 'ref', end: 'ref' },
-  openings: { wall: 'ref', offset: 'length', width: 'length', height: 'length', sill: 'length', fill: 'ref' },
-  rooms: { level: 'ref', anchor: 'point', wallFinish: 'ref', floorFinish: 'ref', ceilingFinish: 'ref' },
-  slabs: { level: 'ref', 'boundary/*': 'point', thickness: 'length', offset: 'length', material: 'ref' },
-  types: { 'layers/*/thickness': 'length', 'layers/*/material': 'ref', width: 'length', height: 'length', sill: 'length' },
-  materials: { 'texture/asset': 'ref', 'texture/size/*': 'length' },
-  assets: {},
-  $project: {},
-  $site: { 'boundary/*': 'point' },
-  $document: {},
-};
-
-export function memberKind(target: string, tokens: readonly string[]): MemberKind | undefined {
-  const table = KINDS[target];
-  if (!table) return undefined;
-  const pattern = tokens.map((t) => (/^(0|[1-9][0-9]*)$/.test(t) ? '*' : t)).join('/');
-  return Object.hasOwn(table, pattern) ? table[pattern] : undefined;
-}
-
-/**
- * Resolve the reference grammar inside a value placed at `tokens` of an element of `target`
- * (a collection, or $project/$site/$document): length strings become integers, point strings and
- * points with length strings become [x, y], and selector strings in ID members become IDs. An ID
- * that does not exist yet is left as written — addElement does not check content (2.1.1), and a
- * later operation of the batch may create it.
- */
-export function resolveContent(target: string, tokens: readonly string[], value: unknown, ptr: string, ctx: Ctx): unknown {
-  const kind = memberKind(target, tokens);
-  if (kind === 'length' && typeof value === 'string') return toJsonInt(resolveLength(value, ptr), ptr);
-  if (kind === 'point' && (typeof value === 'string' || (Array.isArray(value) && value.length === 2 && value.some((c) => typeof c === 'string')))) {
-    const p = resolvePoint(value, ptr, ctx).point;
-    return [toJsonInt(p[0], ptr), toJsonInt(p[1], ptr)];
-  }
-  if (kind === 'ref' && typeof value === 'string') {
-    if (ctx.wc.exists(value)) return value;
-    const st = parseStructured(value);
-    return st ? resolveStructured(st, value, ptr, ctx) : value;
-  }
-  if (Array.isArray(value)) return value.map((v, i) => resolveContent(target, [...tokens, String(i)], v, `${ptr}/${i}`, ctx));
-  if (isObject(value)) {
-    const out: Record<string, unknown> = {};
-    for (const k of Object.keys(value))
-      Object.defineProperty(out, k, {
-        value: resolveContent(target, [...tokens, k], value[k], `${ptr}/${k.replace(/~/g, '~0').replace(/\//g, '~1')}`, ctx),
-        enumerable: true,
-        writable: true,
-        configurable: true,
-      });
-    return out;
-  }
-  return value;
 }

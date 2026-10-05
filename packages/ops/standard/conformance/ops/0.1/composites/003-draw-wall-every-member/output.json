@@ -219,6 +219,9 @@
         "offset": 12800
       },
       "end": "J6",
+      "extras": {
+        "source": "sketch"
+      },
       "justification": "interiorFace",
       "layers": [
         {

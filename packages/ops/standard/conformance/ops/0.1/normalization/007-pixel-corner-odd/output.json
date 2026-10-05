@@ -42,8 +42,15 @@
     "J6": {
       "level": "L1",
       "position": [
-        2500002,
-        1500000
+        4500002,
+        -500000
+      ]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [
+        4000002,
+        0
       ]
     },
     "P": {
@@ -110,15 +117,27 @@
       "type": "WT"
     },
     "W4": {
-      "end": "J1",
+      "end": "J7",
       "level": "L1",
       "start": "J4",
       "type": "WT"
     },
     "W5": {
-      "end": "J6",
+      "end": "J7",
       "level": "L1",
       "start": "J5",
+      "type": "WT"
+    },
+    "W6": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    },
+    "W7": {
+      "end": "J6",
+      "level": "L1",
+      "start": "J7",
       "type": "WT"
     }
   }

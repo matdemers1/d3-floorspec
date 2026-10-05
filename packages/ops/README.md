@@ -35,7 +35,7 @@ formatLength(4893056); // `12' 6 1/2"` (1/16" by default); { system: 'metric' } 
 | `src/primitives.ts` | addElement and shorthands, removeElement with the cascade table, setProperty, unsetProperty, moveJunction (ch. 2) |
 | `src/references/` | the length grammar (`length.ts`), points, vectors, selectors, sides and positions (`resolve.ts`) (ch. 3) |
 | `src/model/` | the working copy and ID minting (1.5), the faces of a level as selectors read them (3.4) |
-| `src/normalize.ts` | 5.1 merge → 5.2 snap rounding, splitting, re-hosting → 5.1 → 5.3 join cleanup |
+| `src/normalize.ts` | 5.1 merge → 5.2 snap rounding (only on a level that breaks Core §5.3), splitting, re-hosting → 5.3 join cleanup |
 | `src/locks.ts`, `src/inverse.ts` | locks (ch. 6); the inverse (1.6) |
 | `src/types.ts` | request, operation and result types |
 | `standard/` | the Ops conformance suite, schema and diagnostics chapter, vendored by `pnpm sync-standard` and pinned in `LOCK.json` |

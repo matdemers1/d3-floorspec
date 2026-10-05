@@ -1,7 +1,7 @@
 {
   "status": "committed",
   "diagnostics": [],
-  "hash": "e619d8c531391e990de6c151795a8aebfab152ccaeb4c34264212331f8862674",
+  "hash": "87249dba18c0a4c66d0d4df15ccb252dee94b91a1bd7709497164b3f8e988507",
   "created": ["J5", "J6", "W10", "W11", "W9"],
   "removed": [],
   "resolved": [
@@ -25,6 +25,9 @@
       "end": "J6",
       "base": {
         "offset": 12800
+      },
+      "extras": {
+        "source": "sketch"
       },
       "justification": "interiorFace",
       "layers": [
