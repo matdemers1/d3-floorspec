@@ -1,0 +1,8 @@
+{
+  "description": "A fin 3 base units wide and 4 feet long sticks out of the south side of a house 30 feet by 20, its end at 12 in 12 and the house's east edge at 4 in 12: the fin's two sides close up 1.5 base units in, in a ridge on x = 15 feet + 1.5 units, which is rounded once, ties to even. The fin's faces are 1.5 base units wide - its end's is 1.5 square units in area - and every coordinate of them is rounded once; lines shorter than a base unit keep the points they round to.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

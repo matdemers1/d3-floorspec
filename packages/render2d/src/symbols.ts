@@ -13,8 +13,8 @@ export const CUT_HEIGHT = 1_560_576;
 export interface RoofSymbol {
   /** The eave outline (Core 16.3): drawn dashed — it is above the plan's cut. */
   readonly eave: readonly Pt[];
-  /** Ridges, hips and valleys (Core 16.5), in plan. */
-  readonly lines: readonly { readonly kind: 'ridge' | 'hip' | 'valley'; readonly from: Pt; readonly to: Pt }[];
+  /** Ridges, hips, valleys and, from Core 0.4, breaks (Core 16.5), in plan. */
+  readonly lines: readonly { readonly kind: 'ridge' | 'break' | 'hip' | 'valley'; readonly from: Pt; readonly to: Pt }[];
   /** The eave edge of every gable end, drawn heavier: the roof stops above it in a vertical end. */
   readonly gables: readonly (readonly [Pt, Pt])[];
   /** False when Core does not derive this roof's surface (FS-LINT-015): only its eave outline is drawn. */

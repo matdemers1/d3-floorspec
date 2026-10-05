@@ -1,7 +1,7 @@
 {
   "description": "A rectangle with a notch cut into its north side: the notch's corners are reflex, and their valleys reach the south eave's wavefront before the roof closes, splitting it in two. The roof has two hipped halves joined by a ridge over the notch.",
   "covers": [
-    "FS-CORE-16.4.1",
-    "FS-CORE-16.5.1"
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.5.2"
   ]
 }

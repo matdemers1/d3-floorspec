@@ -1,0 +1,8 @@
+{
+  "description": "The chamfered house with only its two cut corners sloped, at 6 in 12, and its four sides gables: each oblique edge's wavefront edge grows as it rises, sliding along the gables beside it, until the two meet in a level ridge that runs diagonally from the south side to the north. The four gable ends are walls up to the two planes.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

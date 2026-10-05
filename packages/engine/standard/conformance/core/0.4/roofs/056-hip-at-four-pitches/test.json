@@ -1,0 +1,8 @@
+{
+  "description": "A hip roof 40 feet by 24 with every edge at its own pitch: south 12 in 12, east 8, north 6 and west 4. The planes of the north and the south meet in a ridge where the south plane, steepest, has risen 8 feet in 8 feet and the north one 8 feet in 16; the west plane, shallowest, runs in 24 feet to its end, and the east one 12 feet. Hips run from the four corners at four different angles in plan, none of them at 45 degrees.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

@@ -1,8 +1,8 @@
 {
   "description": "A shed roof: only the south edge, 0, slopes, at 2 in 12, and the other three are gables. The roof is one plane rising north from the south eave, 3100 mm across the footprint, to 516.67 mm above the eave - 3216.67 mm, rounded once to a base unit - and its three gable ends follow it.",
   "covers": [
-    "FS-CORE-16.5.1",
-    "FS-CORE-16.4.1",
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.4.2",
     "FS-CORE-2.2.1"
   ]
 }

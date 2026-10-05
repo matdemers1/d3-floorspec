@@ -1,0 +1,9 @@
+{
+  "description": "A south eave that steps: edge 0, from x = 0 to 10 feet, at 3 in 12, and edge 2, a foot further in from 10 to 30 feet, at 12 in 12, joined by edge 1, a foot long; the rest at 12 in 12. Edge 0's line moves 4 feet for each foot it rises, edge 2's 1: a third of a foot up they lie on one line and edge 1 has no length. They face the same way, so the faster, edge 0, continues over the whole run and edge 2 stops (16.4.4): edge 2's face is a strip a third of a foot deep, and above it the roof turns shallower along a level break, \"break\", from the end of edge 1's valley to the east hip.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.4.4"
+  ]
+}

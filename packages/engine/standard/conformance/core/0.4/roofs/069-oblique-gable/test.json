@@ -1,0 +1,8 @@
+{
+  "description": "A house 30 feet by 20 with its south-east corner cut at 45 degrees and that cut a gable, at 9 in 12 to its south: a gable's length is never in question, since it does not move, so the roof is derived though the gable is 4 feet times the square root of 2 long. Its gable end is a triangle up to the point where the south and east planes meet over it.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

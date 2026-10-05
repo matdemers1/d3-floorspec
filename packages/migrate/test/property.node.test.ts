@@ -5,7 +5,8 @@
  * the original (20.6.1): same validity, same diagnostics, every derived value the same. For a valid
  * original, the migration is valid under 0.4, and every value its own draft's suite says that draft
  * derives (walls, rooms, openings, and from 0.2 the program, fallbacks, placements, clearances and
- * circulation) is preserved. And the Ops batch the editor applies (migrationBatch) commits exactly the
+ * circulation) is preserved — a winder's steps and a roof's surface that 0.3 left underived aside, which a
+ * reader of 0.4 derives. And the Ops batch the editor applies (migrationBatch) commits exactly the
  * migration's canonical form.
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -63,6 +64,14 @@ for (const draft of ['0.1', '0.2', '0.3'] as const) {
           for (const [id, st] of Object.entries(value as Record<string, Record<string, unknown>>)) {
             const now = (got as Record<string, Record<string, unknown>>)[id]!;
             expect(Object.fromEntries(Object.keys(st).map((k) => [k, now[k]]))).toEqual(st);
+          }
+        } else if (member === 'roofs' && draft === '0.3') {
+          // Core 0.4 derives the surface of more roofs than 0.3 did (16.4.3, the weighted straight
+          // skeleton): a surface 0.3 derived is kept exactly, and one 0.3 left underived may now be derived.
+          for (const [id, rf] of Object.entries(value as Record<string, Record<string, unknown>>)) {
+            const now = (got as Record<string, Record<string, unknown>>)[id]!;
+            const kept = rf['surface'] === null ? Object.keys(rf).filter((k) => k !== 'surface') : Object.keys(rf);
+            expect(Object.fromEntries(kept.map((k) => [k, now[k]]))).toEqual(Object.fromEntries(kept.map((k) => [k, rf[k]])));
           }
         } else expect([member, got]).toEqual([member, value]);
       }

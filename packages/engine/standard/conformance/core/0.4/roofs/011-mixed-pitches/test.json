@@ -1,8 +1,8 @@
 {
-  "description": "A hip roof whose south edge rises at 12 in 12 and the rest at 6 in 12: a roof of unequal pitches needs the weighted straight skeleton, which this draft does not define. Its eave outline is derived and its surface is not: FS-LINT-015, an informational lint, and the document is valid.",
+  "description": "A hip roof whose south edge rises at 12 in 12 and the rest at 6 in 12. Core 0.3 did not derive it; 0.4's weighted straight skeleton does (16.4.3). The south plane, at twice the others' pitch, would meet the north plane 1033 1/3 mm above the eave, but the east and west planes meet first, 2050 mm in from each end and 1025 mm up: the roof's high, where the south plane's two hips end. The ridge between the east and west faces is 25 mm long, running north-south; there is no FS-LINT-015.",
   "covers": [
-    "FS-CORE-16.4.1",
-    "FS-CORE-10.2.1",
-    "FS-CORE-10.1.1"
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
   ]
 }

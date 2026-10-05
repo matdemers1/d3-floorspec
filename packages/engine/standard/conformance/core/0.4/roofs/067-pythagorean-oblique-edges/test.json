@@ -1,0 +1,8 @@
+{
+  "description": "A house 30 feet by 20 whose south corners are cut on a 3 : 4 slope, 3 feet by 4: each oblique edge is 5 feet long, an integer, so its plane has rational coefficients and the roof is derived (16.4.3). The two oblique edges rise at 9 in 12, the north at 4 in 12 and the rest at 6; the points where the oblique faces close are rational but not integers, and are rounded once.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

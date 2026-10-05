@@ -303,7 +303,7 @@ export const ROOF_PLAN_TITLE = 'Roof plan';
 /**
  * The roof plan (FLR-T-9.7): every roof of the drawn levels from above, at the set's scale and
  * placed by the set's frame, so it lies over the floor plans sheet to sheet — eave and gable ends,
- * ridges, hips and valleys, a slope arrow with its pitch on every pitched face, and the exterior
+ * ridges, hips, breaks and valleys, a slope arrow with its pitch on every pitched face, and the exterior
  * walls of the levels the roofs bear on, dashed below.
  */
 export function composeRoofSheet(layout: SetLayout, roofs: readonly PlanRoof[], wallsBelow: readonly Segment[], trueNorth: number, view: View3d, meta: SheetMeta, measure: Measure): Sheet {
@@ -458,7 +458,8 @@ function drawRoof(c: Ctx, rf: PlanRoof, units: UnitSystem): void {
   const { out, P } = c;
   out.push({ t: 'path', d: ring(rf.eave.map(P)), fill: '#f7f7f7', stroke: INK, width: 0.9, join: 'miter' });
   const ridges = rf.lines.filter((l) => l.kind === 'ridge');
-  const hips = rf.lines.filter((l) => l.kind === 'hip');
+  // A break (Core 0.4), where the roof over one side changes pitch, is drawn as a hip is.
+  const hips = rf.lines.filter((l) => l.kind === 'hip' || l.kind === 'break');
   const valleys = rf.lines.filter((l) => l.kind === 'valley');
   if (ridges.length > 0) out.push({ t: 'path', d: ridges.map((l) => line(P(l.from), P(l.to))).join(''), stroke: INK, width: 0.8, cap: 'round' });
   if (hips.length > 0) out.push({ t: 'path', d: hips.map((l) => line(P(l.from), P(l.to))).join(''), stroke: INK, width: 0.5, cap: 'round' });

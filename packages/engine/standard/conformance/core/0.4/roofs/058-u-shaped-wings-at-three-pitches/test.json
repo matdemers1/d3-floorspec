@@ -1,0 +1,8 @@
+{
+  "description": "A U-shaped house whose east arm rises at 9 in 12, its west arm at 4 in 12, and the rest at 6 in 12: two reflex corners, each between edges at different pitches, whose valleys run at different angles, and three ridges at three heights - 2 feet over the west arm, 3 over the base and 4 1/2 over the east arm - joined by hips.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

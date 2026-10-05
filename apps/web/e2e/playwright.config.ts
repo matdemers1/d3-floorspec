@@ -90,7 +90,7 @@ const SUITES: Suite[] = [
   { name: 'systems', spec: 'systems.spec.ts', port: PORT + 4, database: databaseFor('systems'), setupToken: true },
   // The only suite with rule packs installed: the standard's synthetic example pack and an e2e pack.
   { name: 'findings', spec: 'findings.spec.ts', port: PORT + 5, database: databaseFor('findings'), setupToken: true, env: { RULE_PACKS_DIR: `${web}e2e/fixtures/rule-packs` } },
-  { name: 'roofs-stairs', spec: 'roofs-stairs.spec.ts', port: PORT + 6, database: databaseFor('roofs'), setupToken: true },
+  { name: 'roofs-stairs', spec: 'roofs-stairs.spec.ts', port: PORT + 6, database: databaseFor('roofs'), setupToken: true, gl: true },
   { name: 'exports', spec: 'exports.spec.ts', port: PORT + 7, database: databaseFor('exports'), setupToken: true },
   { name: 'options', spec: 'options.spec.ts', port: PORT + 8, database: databaseFor('options'), setupToken: true },
   { name: 'three', spec: 'three.spec.ts', port: PORT + 9, database: databaseFor('three'), setupToken: true, gl: true },

@@ -1,0 +1,10 @@
+{
+  "description": "A saltbox: a house 32 feet by 24 under a roof whose short ends, edges 1 and 3, are gables, whose front, the south edge, rises steeply at 12 in 12, and whose back, the north edge, at 6 in 12 - the back slope twice as long in plan. With a 1-foot overhang the eave outline is 26 feet deep; the two planes meet in a level ridge 26/3 feet north of the south eave and 26/3 feet above it, and each gable end is a triangle that rises to it off centre. Every coordinate is exact and rounded once.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.2.2",
+    "FS-CORE-16.3.1"
+  ]
+}

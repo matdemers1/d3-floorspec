@@ -1,0 +1,9 @@
+{
+  "description": "The saltbox with a 2-foot overhang at the back and none elsewhere: the eave outline is computed first, 26 feet deep, and the skeleton from it, so the ridge, a third of the way across from the steep front, lies 26/3 feet north of the south eave and 26/3 feet above it.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.3.1"
+  ]
+}
