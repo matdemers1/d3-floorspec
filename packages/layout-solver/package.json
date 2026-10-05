@@ -1,0 +1,33 @@
+{
+  "name": "@floorspec/layout-solver",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Non-normative layout solver (Core 0.2 §11.6): turns a program and its adjacency graph into ranked candidate layouts, each a Floorspec Ops batch. Isomorphic and deterministic.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc -p test && tsc -p scripts",
+    "test": "vitest run",
+    "render": "tsx scripts/render.ts"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*",
+    "@floorspec/ops": "workspace:*"
+  },
+  "devDependencies": {
+    "@floorspec/render2d": "workspace:*",
+    "tsx": "^4.23.15"
+  }
+}

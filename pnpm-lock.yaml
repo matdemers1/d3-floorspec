@@ -231,6 +231,22 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
+  packages/layout-solver:
+    dependencies:
+      '@floorspec/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@floorspec/ops':
+        specifier: workspace:*
+        version: link:../ops
+    devDependencies:
+      '@floorspec/render2d':
+        specifier: workspace:*
+        version: link:../render2d
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+
   packages/mcp:
     dependencies:
       '@floorspec/engine':
