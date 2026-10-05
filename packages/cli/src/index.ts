@@ -2,8 +2,9 @@
  * The floorspec command line (FLR-T-1.11): validate, canonicalize, hash and derive Floorspec Core
  * documents with @floorspec/engine. The CLI may use Node; the engine may not.
  */
-import { readFileSync } from 'node:fs';
-import { CATALOGUE, OFFICIAL_EXTENSIONS, OFFICIAL_EXTENSION_NAMES, check, type Diagnostic, type ValidateOptions } from '@floorspec/engine';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { CATALOGUE, OFFICIAL_EXTENSIONS, OFFICIAL_EXTENSION_NAMES, Package, check, type Diagnostic, type ValidateOptions } from '@floorspec/engine';
 
 export const PACKAGE_NAME = '@floorspec/cli';
 export const VERSION = '0.3.0';
@@ -17,17 +18,22 @@ commands:
   derive <file>              print everything derived as JSON: walls, fills, rooms, openings, and
                              (Core 0.2) the program, fallbacks, placements, clearances, overlaps
                              and circulation, and (Core 0.3) each opening's declared clear opening
-                             and every room's floor and ceiling, every slab, roof and stair
+                             and every room's floor and ceiling, every slab, roof and stair,
+                             the finishes of rooms and walls, and a document's design options
 
 options:
   --registry <file>          the known extensions (Core 0.2, 12.2): a JSON array of registry
                              entries; FS-CFG-001 when they are not a valid registry
   --core 0.1|0.2|0.3         the newest Core draft to read as (default 0.3, which reads 0.2 and 0.1 too)
   --extensions <names>       the extensions to read as implementing, comma-separated: any of
-                             FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage, each
+                             FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage, FS_furniture, each
                              evaluated for a document that uses it at a version the validator
-                             knows (--registry); or "official": all four, knowing their registry
+                             knows (--registry); or "official": all five, knowing their registry
                              entries unless --registry is given
+  --design <json|file>       (Core 0.3, 19.6) the design to derive: a JSON object of option set →
+                             option, given inline or as a file; default the primary design
+  --package <dir>            (Core 0.3, 18.4) validate as a package validator, given the files
+                             under <dir>: each asset located by path is checked against its file
   --json                     validate: print the conformance-shaped result
 
 exit status: 0 valid, 1 invalid, 2 usage or I/O error
@@ -53,7 +59,7 @@ export function formatDiagnostic(file: string, d: Diagnostic): string {
 }
 
 /** Options that take a value. */
-const VALUED = new Set(['--registry', '--core', '--extensions']);
+const VALUED = new Set(['--registry', '--core', '--extensions', '--design', '--package']);
 
 export function run(argv: readonly string[], io: Io = nodeIo): number {
   const args: string[] = [];
@@ -120,6 +126,24 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
     options.extensions = names;
     if (exts === 'official' && options.knownExtensions === undefined) options.knownExtensions = OFFICIAL_EXTENSIONS;
   }
+  const design = values.get('--design');
+  if (design !== undefined) {
+    try {
+      options.design = JSON.parse(design.trim().startsWith('{') ? design : new TextDecoder().decode(io.read(design))) as unknown;
+    } catch (e) {
+      io.err(`floorspec: cannot read the design ${design}: ${(e as Error).message}\n`);
+      return 2;
+    }
+  }
+  const pkg = values.get('--package');
+  if (pkg !== undefined) {
+    try {
+      options.package = readPackage(pkg);
+    } catch (e) {
+      io.err(`floorspec: cannot read the package ${pkg}: ${(e as Error).message}\n`);
+      return 2;
+    }
+  }
   const r = check(bytes, options);
 
   if (command === 'validate') {
@@ -141,8 +165,29 @@ export function run(argv: readonly string[], io: Io = nodeIo): number {
   }
   if (command === 'canonicalize') io.out(r.canonical ?? '');
   else if (command === 'hash') io.out(`${r.hash ?? ''}\n`);
-  else io.out(JSON.stringify(r.derived, null, 2) + '\n');
+  else if (r.derived === undefined) {
+    io.err(`${file}: nothing is derived for this design: it is not one of the document's, or its view is not valid (Core 19.6.2)\n`);
+    return 1;
+  } else io.out(JSON.stringify(r.derived, null, 2) + '\n');
   return 0;
+}
+
+/**
+ * A package (Core 0.3, 18.4): every file under `dir`, by its path relative to it with `/` between
+ * names, as the directory lists them — so a path names one file, case and all, even where the file
+ * system folds case.
+ */
+export function readPackage(dir: string): Package {
+  const files = new Map<string, Uint8Array>();
+  const walk = (d: string, prefix: string): void => {
+    for (const name of readdirSync(d).sort()) {
+      const p = join(d, name);
+      if (statSync(p).isDirectory()) walk(p, `${prefix}${name}/`);
+      else files.set(`${prefix}${name}`, new Uint8Array(readFileSync(p)));
+    }
+  };
+  walk(dir, '');
+  return new Package(files);
 }
 
 /** The catalogue size, re-exported so the CLI's tests can check they run against the same engine. */

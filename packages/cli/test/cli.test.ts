@@ -30,7 +30,12 @@ const all02 = existsSync(suite02) ? cases(suite02).filter((_, i) => i % 4 === 0)
 const all01 = existsSync(suite01) ? cases(suite01).filter((_, i) => i % 4 === 0) : [];
 const floorspec = (...args: string[]) => spawnSync(process.execPath, [bin, ...args], { encoding: 'utf8' });
 /** A case's registry.json, when it has one, as --registry. */
-const registryArgs = (dir: string): string[] => (existsSync(join(dir, 'registry.json')) ? ['--registry', join(dir, 'registry.json')] : []);
+const registryArgs = (dir: string): string[] => [
+  ...(existsSync(join(dir, 'registry.json')) ? ['--registry', join(dir, 'registry.json')] : []),
+  // Core 0.3: the design to derive (19.6), and a package validator's files (18.4).
+  ...(existsSync(join(dir, 'design.json')) ? ['--design', join(dir, 'design.json')] : []),
+  ...(existsSync(join(dir, 'package')) ? ['--package', join(dir, 'package')] : []),
+];
 
 describe.each([
   ['Core 0.3', suite, all, [] as string[]],
@@ -40,7 +45,7 @@ describe.each([
   it.each(list.map((d) => [relative(root, d), d]))('%s', (_n, dir) => {
     const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as {
       valid: boolean;
-      diagnostics: { code: string; severity: string; elements: string[] }[];
+      diagnostics: { code: string; severity: string; elements: string[]; design?: string }[];
       hash?: string;
       derived?: unknown;
     };
@@ -48,7 +53,7 @@ describe.each([
     expect(p.status).toBe(expected.valid ? 0 : 1);
     const got = JSON.parse(p.stdout) as typeof expected;
     expect(got.valid).toBe(expected.valid);
-    const diags = got.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));
+    const diags = got.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements, ...(d.design !== undefined && { design: d.design }) }));
     if (expected.diagnostics.length === 1 && expected.diagnostics[0]!.code === 'FS-SCH-001') expect(diags.every((d) => d.code === 'FS-SCH-001')).toBe(true);
     else expect(diags).toEqual(expected.diagnostics);
     expect(got.hash).toBe(expected.hash);
@@ -60,10 +65,13 @@ describe('floorspec canonicalize, hash, derive', () => {
   const valid = all.filter((d) => existsSync(join(d, 'canonical.json'))).filter((_, i) => i % 4 === 0);
   it.each(valid.map((d) => [relative(suite, d), d]))('%s', (_n, dir) => {
     const input = join(dir, 'input.json');
-    const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as { hash: string; derived: unknown };
+    const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as { hash: string; derived?: unknown };
     expect(execFileSync(process.execPath, [bin, 'canonicalize', input], { encoding: 'utf8' })).toBe(readFileSync(join(dir, 'canonical.json'), 'utf8'));
     expect(execFileSync(process.execPath, [bin, 'hash', input], { encoding: 'utf8' })).toBe(`${expected.hash}\n`);
-    expect(JSON.parse(execFileSync(process.execPath, [bin, 'derive', input], { encoding: 'utf8' }))).toEqual(expected.derived);
+    const derived = floorspec('derive', input, ...registryArgs(dir));
+    // A design Core derives nothing for (19.6.2): exit 1, nothing printed.
+    if (expected.derived === undefined) expect(derived.status).toBe(1);
+    else expect(JSON.parse(derived.stdout)).toEqual(expected.derived);
   });
 });
 
@@ -103,7 +111,7 @@ describe('human output and exit codes', () => {
   });
   it('derive prints the Core 0.2 and 0.3 members', () => {
     const out = JSON.parse(execFileSync(process.execPath, [bin, 'derive', join(suite, 'program', '001-house-brief', 'input.json')], { encoding: 'utf8' })) as Record<string, unknown>;
-    expect(Object.keys(out)).toEqual(['walls', 'junctionFills', 'rooms', 'unanchored', 'openings', 'program', 'fallbacks', 'placements', 'clearances', 'clearanceOverlaps', 'circulation', 'floors', 'ceilings', 'slabs', 'roofs', 'stairs']);
+    expect(Object.keys(out)).toEqual(['walls', 'junctionFills', 'rooms', 'unanchored', 'openings', 'program', 'fallbacks', 'placements', 'clearances', 'clearanceOverlaps', 'circulation', 'floors', 'ceilings', 'slabs', 'roofs', 'stairs', 'finishes']);
   });
 });
 
@@ -133,6 +141,6 @@ describe('floorspec --extensions', () => {
   });
 
   it('refuses an extension it does not implement', () => {
-    expect(floorspec('validate', join(demo, 'input.json'), '--extensions', 'FS_furniture').status).toBe(2);
+    expect(floorspec('validate', join(demo, 'input.json'), '--extensions', 'FS_nonesuch').status).toBe(2);
   });
 });
