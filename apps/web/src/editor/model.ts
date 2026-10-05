@@ -1,0 +1,335 @@
+import { check, type Derived, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
+import { twiceArea } from './units';
+
+/**
+ * The editor's reading of one version of the model: the document as the server stored it, checked
+ * and derived by `@floorspec/engine` — the same engine the server runs (FLR-ADR-010). Nothing here
+ * computes geometry of its own; it indexes what the engine derived, per level, so the canvas, the
+ * tree and the inspector can find things.
+ */
+
+export type Point = readonly [number, number];
+export type Ring = readonly Point[];
+
+/** Every collection an element can live in (Core 1.1), in the order the tree lists them. */
+export type Collection =
+  | 'buildings' | 'levels' | 'junctions' | 'walls' | 'separators' | 'openings' | 'rooms' | 'slabs' | 'types' | 'materials' | 'assets';
+
+export const COLLECTIONS: readonly Collection[] = [
+  'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'types', 'materials', 'assets',
+];
+
+export type Kind =
+  | 'building' | 'level' | 'junction' | 'wall' | 'separator' | 'opening' | 'room' | 'slab'
+  | 'wallType' | 'doorType' | 'windowType' | 'material' | 'asset';
+
+type Json = Record<string, unknown>;
+
+export interface Layer {
+  thickness: number;
+  function: string;
+  material?: string;
+}
+
+export interface WallView {
+  id: string;
+  level: string;
+  start: string;
+  end: string;
+  a: Point;
+  b: Point;
+  /** The outline startRight → endRight → endLeft → startLeft, as the engine derived it. */
+  ring: Ring;
+  thickness: number;
+  /** Distance from the location line to the left and right faces (Core 5.4). */
+  left: number;
+  right: number;
+  type: string | undefined;
+  justification: string;
+}
+
+export interface OpeningView {
+  id: string;
+  wall: string;
+  kind: 'door' | 'window' | 'opening';
+  /** On the location line, as derived (Core 7.4). */
+  start: Point;
+  end: Point;
+  offset: number;
+  width: number;
+  hinge: 'start' | 'end';
+  swing: 'left' | 'right';
+}
+
+export interface RoomView {
+  id: string;
+  name: string;
+  anchor: Point;
+  outer: Ring;
+  holes: Ring[];
+  area2: bigint;
+}
+
+export interface FaceView {
+  /** The room anchored in it, or null for an unanchored face. */
+  room: string | null;
+  outer: Ring;
+  holes: Ring[];
+  area2: bigint;
+}
+
+export interface SeparatorView {
+  id: string;
+  start: string;
+  end: string;
+  a: Point;
+  b: Point;
+}
+
+export interface LevelView {
+  id: string;
+  name: string;
+  building: string;
+  elevation: number;
+  height: number;
+  junctions: { id: string; position: Point; edges: number }[];
+  walls: WallView[];
+  fills: { id: string; ring: Ring }[];
+  separators: SeparatorView[];
+  openings: OpeningView[];
+  rooms: RoomView[];
+  /** Every bounded face: anchored rooms and unanchored ones (Core 6.3). */
+  faces: FaceView[];
+  bounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
+}
+
+export interface EditorModel {
+  hash: string;
+  document: FloorspecDocument;
+  valid: boolean;
+  derived: Derived | null;
+  /** The head's own findings: lints when it is valid, every diagnostic when it is not. */
+  diagnostics: Diagnostic[];
+  levels: LevelView[];
+  /** Which collection every ID is in. */
+  index: Map<string, Collection>;
+}
+
+const entriesOf = (c: unknown): [string, Json][] =>
+  Object.entries((c ?? {}) as Record<string, Json | undefined>).filter((e): e is [string, Json] => e[1] !== undefined);
+
+/** Read a version: check, derive and index it. */
+export function readModel(hash: string, text: string | object): EditorModel {
+  const result = check(text);
+  const document = (typeof text === 'string' ? JSON.parse(text) : text) as FloorspecDocument;
+  const index = new Map<string, Collection>();
+  for (const c of COLLECTIONS) for (const [id] of entriesOf((document as unknown as Json)[c])) index.set(id, c);
+  const derived = result.valid ? (result.derived ?? null) : null;
+  return {
+    hash,
+    document,
+    valid: result.valid,
+    derived,
+    diagnostics: result.diagnostics,
+    levels: derived === null ? levelsWithoutGeometry(document) : levelViews(document, derived),
+    index,
+  };
+}
+
+export function kindOf(model: EditorModel, id: string): Kind | null {
+  const c = model.index.get(id);
+  if (c === undefined) return null;
+  if (c === 'types') {
+    const kind = (model.document.types?.[id] as Json | undefined)?.['kind'];
+    return kind === 'wallType' || kind === 'doorType' || kind === 'windowType' ? kind : null;
+  }
+  const singular: Record<Collection, Kind> = {
+    buildings: 'building', levels: 'level', junctions: 'junction', walls: 'wall', separators: 'separator', openings: 'opening',
+    rooms: 'room', slabs: 'slab', types: 'wallType', materials: 'material', assets: 'asset',
+  };
+  return singular[c];
+}
+
+/** The element's JSON as the document holds it. */
+export function elementOf(model: EditorModel, id: string): Json | undefined {
+  const c = model.index.get(id);
+  if (c === undefined) return undefined;
+  return ((model.document as unknown as Json)[c] as Record<string, Json> | undefined)?.[id];
+}
+
+/** The level an element sits on, if it sits on one. */
+export function levelOfElement(model: EditorModel, id: string): string | undefined {
+  const c = model.index.get(id);
+  const element = elementOf(model, id);
+  if (element === undefined) return undefined;
+  if (c === 'levels') return id;
+  if (c === 'openings') {
+    const wall = model.document.walls?.[String(element['wall'])] as Json | undefined;
+    return wall === undefined ? undefined : String(wall['level']);
+  }
+  return typeof element['level'] === 'string' ? element['level'] : undefined;
+}
+
+/** Levels by elevation, then ID: the order a level switcher lists them. */
+export function sortedLevels(document: FloorspecDocument): { id: string; level: Json }[] {
+  return entriesOf(document.levels)
+    .map(([id, level]) => ({ id, level }))
+    .sort((a, b) => Number(a.level['elevation']) - Number(b.level['elevation']) || (a.id < b.id ? -1 : 1));
+}
+
+/** A wall's effective layers (Core 5.4): its own, else its type's. */
+export function effectiveLayers(document: FloorspecDocument, wall: Json): Layer[] | undefined {
+  const own = wall['layers'] as Layer[] | undefined;
+  if (own !== undefined) return own;
+  const type = typeof wall['type'] === 'string' ? (document.types?.[wall['type']] as Json | undefined) : undefined;
+  return type?.['layers'] as Layer[] | undefined;
+}
+
+/** Face offsets (a, b) of a wall: location line to left face, and to right face (Core 5.4). */
+export function faceOffsets(layers: readonly Layer[], justification: string): { left: number; right: number } {
+  const total = layers.reduce((sum, l) => sum + l.thickness, 0);
+  switch (justification) {
+    case 'exteriorFace':
+      return { left: 0, right: total };
+    case 'interiorFace':
+      return { left: total, right: 0 };
+    case 'coreFace': {
+      const first = layers.findIndex((l) => l.function === 'core');
+      const a = layers.slice(0, Math.max(first, 0)).reduce((sum, l) => sum + l.thickness, 0);
+      return { left: a, right: total - a };
+    }
+    default:
+      return { left: total / 2, right: total / 2 };
+  }
+}
+
+/** An opening's effective width (Core 7.2): its own, else its fill's. */
+export function openingWidth(document: FloorspecDocument, opening: Json): number | undefined {
+  if (typeof opening['width'] === 'number') return opening['width'];
+  const fill = typeof opening['fill'] === 'string' ? (document.types?.[opening['fill']] as Json | undefined) : undefined;
+  return typeof fill?.['width'] === 'number' ? fill['width'] : undefined;
+}
+
+function levelsWithoutGeometry(document: FloorspecDocument): LevelView[] {
+  return sortedLevels(document).map(({ id, level }) => ({
+    id,
+    name: typeof level['name'] === 'string' ? level['name'] : id,
+    building: String(level['building']),
+    elevation: Number(level['elevation']),
+    height: Number(level['height']),
+    junctions: [], walls: [], fills: [], separators: [], openings: [], rooms: [], faces: [],
+    bounds: null,
+  }));
+}
+
+function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] {
+  const views = new Map<string, LevelView>(levelsWithoutGeometry(document).map((l) => [l.id, l]));
+  const position = (id: string): Point => (document.junctions?.[id]?.position as Point | undefined) ?? [0, 0];
+  const edgeCount = new Map<string, number>();
+  const bump = (j: string) => edgeCount.set(j, (edgeCount.get(j) ?? 0) + 1);
+
+  for (const [id, w] of entriesOf(document.walls)) {
+    const view = views.get(String(w['level']));
+    const d = derived.walls[id];
+    if (view === undefined || d === undefined) continue;
+    const layers = effectiveLayers(document, w) ?? [];
+    const justification = typeof w['justification'] === 'string' ? w['justification'] : 'center';
+    const offsets = faceOffsets(layers, justification);
+    bump(String(w['start']));
+    bump(String(w['end']));
+    view.walls.push({
+      id,
+      level: view.id,
+      start: String(w['start']),
+      end: String(w['end']),
+      a: position(String(w['start'])),
+      b: position(String(w['end'])),
+      ring: [d.startRight, d.endRight, d.endLeft, d.startLeft],
+      thickness: offsets.left + offsets.right,
+      left: offsets.left,
+      right: offsets.right,
+      type: typeof w['type'] === 'string' ? w['type'] : undefined,
+      justification,
+    });
+  }
+  for (const [id, s] of entriesOf(document.separators)) {
+    const view = views.get(String(s['level']));
+    if (view === undefined) continue;
+    bump(String(s['start']));
+    bump(String(s['end']));
+    view.separators.push({ id, start: String(s['start']), end: String(s['end']), a: position(String(s['start'])), b: position(String(s['end'])) });
+  }
+  for (const [id, j] of entriesOf(document.junctions)) {
+    const view = views.get(String(j['level']));
+    if (view === undefined) continue;
+    view.junctions.push({ id, position: j['position'] as Point, edges: edgeCount.get(id) ?? 0 });
+    const fill = derived.junctionFills[id];
+    if (fill !== undefined) view.fills.push({ id, ring: fill });
+  }
+  for (const [id, o] of entriesOf(document.openings)) {
+    const wall = document.walls?.[String(o['wall'])] as Json | undefined;
+    const view = wall === undefined ? undefined : views.get(String(wall['level']));
+    const d = derived.openings[id];
+    if (view === undefined || d === undefined) continue;
+    const fill = typeof o['fill'] === 'string' ? (document.types?.[o['fill']] as Json | undefined) : undefined;
+    const kind = fill?.['kind'] === 'doorType' ? 'door' : fill?.['kind'] === 'windowType' ? 'window' : 'opening';
+    view.openings.push({
+      id,
+      wall: String(o['wall']),
+      kind,
+      start: d.start,
+      end: d.end,
+      offset: Number(o['offset']),
+      width: openingWidth(document, o) ?? 0,
+      hinge: o['hinge'] === 'end' ? 'end' : 'start',
+      swing: o['swing'] === 'left' ? 'left' : 'right',
+    });
+  }
+  for (const [id, r] of entriesOf(document.rooms)) {
+    const view = views.get(String(r['level']));
+    const d = derived.rooms[id];
+    if (view === undefined || d === undefined) continue;
+    const area2 = twiceArea(d.area);
+    view.rooms.push({ id, name: typeof r['name'] === 'string' ? r['name'] : id, anchor: r['anchor'] as Point, outer: d.outer, holes: d.holes, area2 });
+    view.faces.push({ room: id, outer: d.outer, holes: d.holes, area2 });
+  }
+  for (const free of derived.unanchored) {
+    views.get(free.level)?.faces.push({ room: null, outer: free.outer, holes: free.holes, area2: twiceArea(free.area) });
+  }
+  for (const view of views.values()) {
+    const pts: Point[] = [...view.junctions.map((j) => j.position), ...view.walls.flatMap((w) => w.ring)];
+    if (pts.length > 0) {
+      const xs = pts.map((p) => p[0]);
+      const ys = pts.map((p) => p[1]);
+      view.bounds = { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+    }
+    view.rooms.sort((a, b) => (a.name.localeCompare(b.name) || (a.id < b.id ? -1 : 1)));
+  }
+  return [...views.values()];
+}
+
+/** A short human label for an element: "Wall W14", "Kitchen", "Door O3". */
+export function labelOf(model: EditorModel, id: string): string {
+  const kind = kindOf(model, id);
+  const element = elementOf(model, id);
+  const name = typeof element?.['name'] === 'string' ? element['name'] : undefined;
+  switch (kind) {
+    case 'room':
+      return name ?? `Room ${id}`;
+    case 'opening': {
+      const fill = typeof element?.['fill'] === 'string' ? model.document.types?.[element['fill']] : undefined;
+      const noun = (fill as Json | undefined)?.['kind'] === 'doorType' ? 'Door' : (fill as Json | undefined)?.['kind'] === 'windowType' ? 'Window' : 'Opening';
+      return name === undefined ? `${noun} ${id}` : name;
+    }
+    case 'wall': return name ?? `Wall ${id}`;
+    case 'separator': return name ?? `Separator ${id}`;
+    case 'junction': return name ?? `Junction ${id}`;
+    case 'level': return name ?? `Level ${id}`;
+    case 'building': return name ?? `Building ${id}`;
+    case 'wallType': return name ?? `Wall type ${id}`;
+    case 'doorType': return name ?? `Door type ${id}`;
+    case 'windowType': return name ?? `Window type ${id}`;
+    case 'material': return name ?? `Material ${id}`;
+    default: return name ?? id;
+  }
+}

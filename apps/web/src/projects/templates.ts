@@ -6,13 +6,10 @@ import threeRoomHouse from './templates/three-room-house.floorspec.json?raw';
  * Phase 3 ships one real house: the conformance suite's three-room house
  * (`conformance/core/0.1/examples/001-three-room-house`, vendored in the engine), bundled as its
  * canonical form. A template is loaded into a new project as Floorspec Ops — every change is an op
- * (FLR-ADR-008) — so it can only be offered once the server takes ops at
- * `POST /api/projects/:id/ops`. Until then `TEMPLATES_LOADABLE` is false and the cards say so.
- *
- * For the lead: when the ops endpoint lands, flip `TEMPLATES_LOADABLE` and implement
- * `createFromTemplate` in NewProject.tsx as create-blank-then-apply.
+ * (FLR-ADR-008): the project is created blank, then the template is applied as one batch
+ * (fromDocument.ts) at `POST /api/projects/:id/ops`.
  */
-export const TEMPLATES_LOADABLE = false as boolean;
+export const TEMPLATES_LOADABLE = true as boolean;
 
 export interface Template {
   id: string;

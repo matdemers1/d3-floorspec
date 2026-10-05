@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import {
   AccountMenu,
   AppShell,
@@ -21,9 +21,10 @@ import { Account } from './screens/Account';
 import { Project } from './screens/Project';
 import { Projects } from './screens/Projects';
 import { Invites } from './screens/Invites';
-import { EditorPlaceholder } from './projects/EditorPlaceholder';
 import { Setup } from './screens/Setup';
 import { SignIn } from './screens/SignIn';
+
+const Editor = lazy(() => import('./editor/Editor'));
 
 /**
  * The editor shell. One question decides what renders — is there a session? — and the answer comes
@@ -84,6 +85,18 @@ function Root() {
   }
 
   const { session } = state;
+
+  // The plan editor is a full-window workspace of its own (the board's "07 · Editor"), outside the
+  // app shell, and a chunk of its own so the projects screens do not load the canvas.
+  const editor = /^\/projects\/([0-9a-f-]{36})\/editor$/.exec(path)?.[1];
+  if (editor !== undefined) {
+    return (
+      <Suspense fallback={<Spinner label="Opening the editor" />}>
+        <Editor key={editor} id={editor} you={session.account.displayName} />
+      </Suspense>
+    );
+  }
+
   const operator = session.account.role === 'operator';
 
   return (
@@ -127,8 +140,6 @@ function Screen({ path, session, reload }: { path: string; session: SignedIn; re
   if (path === '/' || path === '/projects') return <Projects />;
   const project = /^\/projects\/([0-9a-f-]{36})$/.exec(path)?.[1];
   if (project !== undefined) return <Project key={project} id={project} you={session.account.displayName} />;
-  const editor = /^\/projects\/([0-9a-f-]{36})\/editor$/.exec(path)?.[1];
-  if (editor !== undefined) return <EditorPlaceholder key={editor} id={editor} />;
   if (path === '/account') return <Account session={session} onChanged={reload} />;
   if (path === '/invites' && session.account.role === 'operator') return <Invites />;
   return (

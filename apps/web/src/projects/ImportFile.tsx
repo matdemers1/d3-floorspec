@@ -4,14 +4,16 @@ import { Alert, Button, FormActions, Modal, Stack, StatusDot } from '@d3cloud/ui
 import { FileUp } from 'lucide-react';
 import { PlanThumbnail } from '../components/PlanThumbnail';
 import { describeModel, plural, summarize, type ModelSummary } from './model';
+import { createFromDocument } from './fromDocument';
+import { navigate } from '../lib/router';
 
 /**
  * Import a `.floorspec.json` file. The file is read and validated here, in the browser, by the same
  * engine the server runs — nothing is uploaded to find out whether it is valid.
  *
- * Creating a project from the file is FLR-T-9.1 (FLR-REQ-135): an import lands as Floorspec Ops
- * (FLR-ADR-008), which needs the ops endpoint. Until then the check is the whole feature, and the
- * dialog says so rather than pretending.
+ * Creating a project from a valid file lands it as Floorspec Ops (FLR-ADR-008): a blank project,
+ * then the file's document as one batch (fromDocument.ts). Packages with assets, and IFC, are
+ * FLR-T-9.1 (FLR-REQ-135).
  */
 
 /** Large enough for any house; small enough that a wrong file does not stall the tab. */
@@ -26,10 +28,14 @@ type State =
 export function ImportFile({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [state, setState] = useState<State>({ status: 'idle' });
   const [over, setOver] = useState(false);
+  const [creating, setCreating] = useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) setState({ status: 'idle' });
+    if (!open) {
+      setState({ status: 'idle' });
+      setCreating({ busy: false, error: null });
+    }
   }, [open]);
 
   const read = (file: File) => {
@@ -89,14 +95,40 @@ export function ImportFile({ open, onOpenChange }: { open: boolean; onOpenChange
         ) : null}
         {state.status === 'checked' ? <Result file={state.file} summary={state.summary} /> : null}
 
+        {creating.error !== null ? (
+          <Alert tone="danger" dynamic>
+            {creating.error}
+          </Alert>
+        ) : null}
         <p id="fs-import-later" className="fs-muted">
-          Creating a project from a file arrives with Floorspec packages, as Floorspec Ops. Today the file is checked, not stored.
+          The project is created from the file as Floorspec Ops, so the import is the first edit in its history.
         </p>
         <FormActions>
           <Button type="button" variant="secondary" onClick={() => { onOpenChange(false); }}>
             Close
           </Button>
-          <Button type="button" variant="primary" disabled aria-describedby="fs-import-later">
+          <Button
+            type="button"
+            variant="primary"
+            aria-describedby="fs-import-later"
+            disabled={state.status !== 'checked' || !state.summary.valid || state.summary.document === null}
+            loading={creating.busy}
+            onClick={() => {
+              if (state.status !== 'checked' || state.summary.document === null) return;
+              const name = (state.summary.name ?? state.file.replace(/\.floorspec\.json$|\.json$/, '')).slice(0, 200) || 'Imported house';
+              setCreating({ busy: true, error: null });
+              createFromDocument(name, state.summary.document as unknown as Record<string, unknown>)
+                .then((outcome) => {
+                  if (outcome.status === 'created') {
+                    onOpenChange(false);
+                    navigate(`/projects/${outcome.id}`);
+                    return;
+                  }
+                  setCreating({ busy: false, error: outcome.status === 'rejected' ? `The server refused the file: ${outcome.diagnostics.map((d) => `${d.code} ${d.message}`).join('; ')}` : outcome.message });
+                })
+                .catch(() => { setCreating({ busy: false, error: 'The project could not be created. Try again.' }); });
+            }}
+          >
             Create project
           </Button>
         </FormActions>
