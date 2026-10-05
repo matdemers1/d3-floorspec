@@ -1,0 +1,6 @@
+{
+  "description": "A wall type's source without \"item\": all three members are always present.",
+  "covers": [
+    "FS-CORE-8.1.3"
+  ]
+}

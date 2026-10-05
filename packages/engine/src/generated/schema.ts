@@ -369,6 +369,35 @@ export const SCHEMA = {
           "type": "string",
           "format": "uri",
           "pattern": "^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"
+        },
+        "source": {
+          "title": "Source",
+          "description": "8.1: the library item a type or a material was copied from - provenance only, never read by derivation. Exactly `library`, `version` and `item`, each always present (FS-CORE-8.1.3).",
+          "type": "object",
+          "required": [
+            "library",
+            "version",
+            "item"
+          ],
+          "properties": {
+            "library": {
+              "$ref": "#/$defs/defs/$defs/httpsUri",
+              "description": "8.1: the library, by a URI that names it across all its versions."
+            },
+            "version": {
+              "title": "Library version",
+              "description": "8.1: the version of the library it was copied from, matching the pattern of 1.6.7.",
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(-[0-9A-Za-z.-]+)?$"
+            },
+            "item": {
+              "title": "Library item",
+              "description": "8.1: the item's identifier in that version of the library, matching the pattern of an ID (3.1.1). Not a reference: it names nothing in the document.",
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
@@ -1288,6 +1317,10 @@ export const SCHEMA = {
               ]
             }
           ]
+        },
+        "source": {
+          "$ref": "#/$defs/defs/$defs/source",
+          "description": "8.1, 8.5: the library item this material was copied from. Absent by default: not recorded."
         },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
@@ -2519,6 +2552,10 @@ export const SCHEMA = {
               "$ref": "#/$defs/layer/$defs/layers",
               "description": "8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."
             },
+            "source": {
+              "$ref": "#/$defs/defs/$defs/source",
+              "description": "8.1: the library item this type was copied from. Absent by default: not recorded."
+            },
             "name": {
               "$ref": "#/$defs/defs/$defs/name",
               "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
@@ -2585,6 +2622,10 @@ export const SCHEMA = {
               "description": "8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).",
               "default": {}
             },
+            "source": {
+              "$ref": "#/$defs/defs/$defs/source",
+              "description": "8.1: the library item this type was copied from. Absent by default: not recorded."
+            },
             "name": {
               "$ref": "#/$defs/defs/$defs/name",
               "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
@@ -2650,6 +2691,10 @@ export const SCHEMA = {
               "$ref": "#/$defs/clearance",
               "description": "8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).",
               "default": {}
+            },
+            "source": {
+              "$ref": "#/$defs/defs/$defs/source",
+              "description": "8.1: the library item this type was copied from. Absent by default: not recorded."
             },
             "name": {
               "$ref": "#/$defs/defs/$defs/name",

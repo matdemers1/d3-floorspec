@@ -28,7 +28,7 @@ describe('in the browser', () => {
     if (await commands.opsSuiteVendored()) {
       expect(cases.filter((c) => c.ops === '0.1').length).toBe(230);
       expect(cases.filter((c) => c.ops === '0.2').length).toBe(359);
-      expect(cases.filter((c) => c.ops === '0.3').length).toBe(457);
+      expect(cases.filter((c) => c.ops === '0.3').length).toBe(459);
     }
     let passed = 0;
     for (const c of cases) {

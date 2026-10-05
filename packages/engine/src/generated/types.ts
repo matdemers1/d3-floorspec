@@ -481,6 +481,18 @@ export type Type1 = WallType | DoorType | WindowType;
  */
 export type Layers1 = [Layer, ...Layer[]];
 /**
+ * 8.1: the library, by a URI that names it across all its versions.
+ */
+export type HttpsURI = string;
+/**
+ * 8.1: the version of the library it was copied from, matching the pattern of 1.6.7.
+ */
+export type LibraryVersion = string;
+/**
+ * 8.1: the item's identifier in that version of the library, matching the pattern of an ID (3.1.1). Not a reference: it names nothing in the document.
+ */
+export type LibraryItem = string;
+/**
  * 1.4, 8.1: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name9 = string;
@@ -804,7 +816,7 @@ export type ExtensionDeclaration =
   | ExtensionVersion
   | {
       version: ExtensionVersion1;
-      schema?: HttpsURI;
+      schema?: HttpsURI1;
     };
 /**
  * 1.6: the version of the extension the document targets (FS-CORE-1.6.7).
@@ -817,7 +829,7 @@ export type ExtensionVersion1 = string;
 /**
  * 12.1: where the extension's JSON Schema for that version is published (FS-CORE-12.1.2).
  */
-export type HttpsURI = string;
+export type HttpsURI1 = string;
 /**
  * 1.6: a prefix and a name joined by an underscore — FS_ (official), EXT_ (multi-implementer) or a registered vendor prefix of 2 to 8 capitals or digits. Every extension name MUST match ^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$ (FS-CORE-1.6.1).
  */
@@ -1490,9 +1502,18 @@ export interface WallType {
    */
   kind: 'wallType';
   layers: Layers1;
+  source?: Source;
   name?: Name9;
   extensions?: Extensions9;
   extras?: Extras11;
+}
+/**
+ * 8.1: the library item this type was copied from. Absent by default: not recorded.
+ */
+export interface Source {
+  library: HttpsURI;
+  version: LibraryVersion;
+  item: LibraryItem;
 }
 /**
  * 1.4, 1.6, 8.1: extension data on this type.
@@ -1520,6 +1541,7 @@ export interface DoorType {
   operation?: DoorOperation;
   clearOpening?: DoorClearOpening;
   clearances?: Clearances;
+  source?: Source1;
   name?: Name10;
   extensions?: Extensions10;
   extras?: Extras12;
@@ -1547,6 +1569,14 @@ export interface ClearanceEnvelope {
   max: TripleOfLengths1;
 }
 /**
+ * 8.1: the library item this type was copied from. Absent by default: not recorded.
+ */
+export interface Source1 {
+  library: HttpsURI;
+  version: LibraryVersion;
+  item: LibraryItem;
+}
+/**
  * 1.4, 1.6, 8.1: extension data on this type.
  */
 export interface Extensions10 {
@@ -1572,6 +1602,7 @@ export interface WindowType {
   operation?: WindowOperation;
   clearOpening?: ClearOpening1;
   clearances?: Clearances1;
+  source?: Source2;
   name?: Name11;
   extensions?: Extensions11;
   extras?: Extras13;
@@ -1589,6 +1620,14 @@ export interface ClearOpening1 {
  */
 export interface Clearances1 {
   [k: string]: ClearanceEnvelope | undefined;
+}
+/**
+ * 8.1: the library item this type was copied from. Absent by default: not recorded.
+ */
+export interface Source2 {
+  library: HttpsURI;
+  version: LibraryVersion;
+  item: LibraryItem;
 }
 /**
  * 1.4, 1.6, 8.1: extension data on this type.
@@ -1619,6 +1658,7 @@ export interface Material {
   metallic?: Metallic;
   roughness?: Roughness;
   texture?: Texture;
+  source?: Source3;
   name?: Name12;
   extensions?: Extensions12;
   extras?: Extras14;
@@ -1634,6 +1674,14 @@ export interface WithAMetallicRoughnessMap {
 }
 export interface WithAOcclusionMap {
   [k: string]: unknown | undefined;
+}
+/**
+ * 8.1, 8.5: the library item this material was copied from. Absent by default: not recorded.
+ */
+export interface Source3 {
+  library: HttpsURI;
+  version: LibraryVersion;
+  item: LibraryItem;
 }
 /**
  * 1.4, 1.6: extension data on this material.

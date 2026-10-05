@@ -1,0 +1,6 @@
+{
+  "description": "A source whose library is a relative reference, not an absolute URI.",
+  "covers": [
+    "FS-CORE-8.1.3"
+  ]
+}

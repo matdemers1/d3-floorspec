@@ -214,6 +214,35 @@
       "type": "string",
       "format": "uri",
       "pattern": "^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"
+    },
+    "source": {
+      "title": "Source",
+      "description": "8.1: the library item a type or a material was copied from - provenance only, never read by derivation. Exactly `library`, `version` and `item`, each always present (FS-CORE-8.1.3).",
+      "type": "object",
+      "required": [
+        "library",
+        "version",
+        "item"
+      ],
+      "properties": {
+        "library": {
+          "$ref": "#/$defs/httpsUri",
+          "description": "8.1: the library, by a URI that names it across all its versions."
+        },
+        "version": {
+          "title": "Library version",
+          "description": "8.1: the version of the library it was copied from, matching the pattern of 1.6.7.",
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(-[0-9A-Za-z.-]+)?$"
+        },
+        "item": {
+          "title": "Library item",
+          "description": "8.1: the item's identifier in that version of the library, matching the pattern of an ID (3.1.1). Not a reference: it names nothing in the document.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }
