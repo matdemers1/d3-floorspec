@@ -18,6 +18,7 @@ come with citations.
 | `packages/rules-engine` | Floorspec Rules: measures, profiles, advisory findings |
 | `packages/mcp`, `packages/mcp-stdio` | MCP server (spec 2026-07-28) and stdio shim |
 | `packages/render2d`, `packages/mesh` | SVG plan renderer; 3D meshes via manifold-3d |
+| `packages/dsl` | the relational authoring DSL (`kitchen 14x12 east-of dining` → Floorspec Ops) and its decompiler |
 | `packages/cli` | `floorspec validate` and friends |
 | `apps/server`, `apps/web`, `apps/worker` | API + SSE + /mcp (serves the editor's build); editor; job worker |
 | `workers/ifc` | Python IfcOpenShell worker (separate process, LGPL) |

@@ -1,0 +1,19 @@
+# The app's "Three-room house" template (apps/web/src/projects/templates/three-room-house.floorspec.json),
+# said in the DSL: the same rooms, net areas and openings, exactly.
+project "Three-room house"
+level main "Main floor" at 0 height 9'
+
+wall exterior EXT26 "2x6 exterior wall": finish 3/4", substrate 7/16", core 5 1/2", finish 1/2" justify core-face
+wall interior INT24 "2x4 partition": finish 1/2", core 3 1/2", finish 1/2"
+
+living "Living room" 20x24 at 0,0
+bedroom 16x12 east-of living
+kitchen 16x12 north-of bedroom
+open living-kitchen          # the kitchen counter line: a separator, no wall
+
+door living-bedroom 32" at 8' from south hinge north swing into bedroom
+door living south 36" at 6' from east hinge east swing south "Front door"
+window kitchen north 3'x3' sill 3'6" at 6' from west
+window living west 4'x4' sill 3' at 8' from south
+window living north 6'x4' sill 3' at 6' from west "Picture window"
+window bedroom east 4'x4' sill 3' at 3' from north

@@ -234,6 +234,19 @@ importers:
         specifier: workspace:*
         version: link:../engine
 
+  packages/dsl:
+    dependencies:
+      '@floorspec/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@floorspec/ops':
+        specifier: workspace:*
+        version: link:../ops
+    devDependencies:
+      '@floorspec/layout-solver':
+        specifier: workspace:*
+        version: link:../layout-solver
+
   packages/engine:
     devDependencies:
       '@vitest/browser':
