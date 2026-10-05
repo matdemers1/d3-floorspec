@@ -113,7 +113,7 @@ export async function schemaRevision(databaseUrl: string): Promise<string | null
   try {
     const rows = await db.$queryRaw<{ migration_name: string }[]>`
       select migration_name from _prisma_migrations
-      where finished_at is not null order by finished_at desc limit 1
+      where finished_at is not null order by migration_name desc limit 1
     `;
     return rows[0]?.migration_name ?? null;
   } catch {

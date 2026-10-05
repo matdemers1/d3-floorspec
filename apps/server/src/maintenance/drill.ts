@@ -153,7 +153,7 @@ export async function runRestoreDrill(options: DrillOptions): Promise<DrillResul
       schemaRevision =
         (
           await target.query<{ name: string }>(
-            'select migration_name as name from _prisma_migrations where finished_at is not null order by finished_at desc, migration_name desc limit 1',
+            'select migration_name as name from _prisma_migrations where finished_at is not null order by migration_name desc limit 1',
           )
         ).rows[0]?.name ?? null;
     } catch (error) {
