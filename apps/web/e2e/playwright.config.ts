@@ -1,4 +1,6 @@
 import { randomBytes } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
@@ -20,6 +22,8 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `options`   — FLR-T-8.4, 8.1: an option set drawn, compared side by side and switched; a backsplash region.
  *   - `three`     — FLR-T-7.5: the P7 exit demo — the 3D view, split view with synced selection, and a
  *                   walkthrough up an L stair under a hip roof. WebGL through SwiftShader (see GL_ARGS).
+ *   - `assets`    — FLR-T-8.2: a tile photo dropped in, calibrated to 12", applied to a backsplash
+ *                   region and drawn in 3D; the asset store on a directory of its own (ASSET_DIR).
  *
  * Run with:
  *
@@ -27,7 +31,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`). E2E_PORT is the keyboard suite's port; the others take the next nine.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_assets_test`). E2E_PORT is the keyboard suite's port; the others take the next ten.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -78,6 +82,8 @@ const SUITES: Suite[] = [
   { name: 'exports', spec: 'exports.spec.ts', port: PORT + 7, database: databaseFor('exports'), setupToken: true },
   { name: 'options', spec: 'options.spec.ts', port: PORT + 8, database: databaseFor('options'), setupToken: true },
   { name: 'three', spec: 'three.spec.ts', port: PORT + 9, database: databaseFor('three'), setupToken: true, gl: true },
+  // Content-addressed, so a directory shared across runs only ever holds the same bytes under the same names.
+  { name: 'assets', spec: 'assets.spec.ts', port: PORT + 10, database: databaseFor('assets'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-assets') } },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;
