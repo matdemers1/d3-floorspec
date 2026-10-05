@@ -11,6 +11,11 @@
  * The planes are exact: the start and end points are integers and the planes' normal is the wall's
  * integer direction, so every strip corner is an integer point. Each wall is built in a local frame
  * at its outline's first vertex and base, which keeps every coordinate manifold-3d sees small.
+ *
+ * An arc wall (Core 0.4, chapter 21) is the prism of its outline through its face vertices (21.4): a
+ * curved solid of many flat faces, as the polyline it follows. An opening in it stands on its chord
+ * (21.6), so its cut is square to the chord, and reaches across the wall's thickness and the bow of the
+ * wall past the chord — no further, so it never touches another part of the curve.
  */
 import type { Derived, FloorspecDocument, Wall } from '@floorspec/engine';
 import { get } from './own.js';
@@ -31,6 +36,13 @@ interface Cut {
   c1: bigint;
   sill: number;
   head: number;
+}
+
+/** A wall's thickness: the sum of its effective layers (5.4). */
+function thicknessOf(doc: FloorspecDocument, w: Wall): number {
+  const t = w.type === undefined ? undefined : get(doc.types, w.type);
+  const layers = w.layers ?? (t?.kind === 'wallType' ? t.layers : undefined);
+  return (layers ?? []).reduce((s, l) => s + l.thickness, 0);
 }
 
 /** The layer materials of a wall's effective layers (8.2, 8.3). */
@@ -99,7 +111,8 @@ export function wallParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
     for (const id of Object.keys(derived.walls).sort()) {
       const w = get(doc.walls, id)!;
       const dw = derived.walls[id]!;
-      const ring2 = dedupe([dw.startRight, dw.endRight, dw.endLeft, dw.startLeft]);
+      const ring2 = dedupe([dw.startRight, ...(dw.right ?? []), dw.endRight, dw.endLeft, ...[...(dw.left ?? [])].reverse(), dw.startLeft]);
+      const arc = dw.polyline !== undefined && w.arc !== undefined;
       const ring = ring2.map(I);
       if (ring.length < 3 || iarea2(ring) <= 0n) continue;
       const base = dw.baseElevation;
@@ -113,20 +126,38 @@ export function wallParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
       // How far the outline reaches from the location line, with a margin: the strip spans it.
       const reach = Math.max(...ring.map((V) => Math.abs(Number(n[0] * (V[0] - S[0]) + n[1] * (V[1] - S[1]))) / nLen));
 
-      const cuts: Cut[] = [];
+      const cuts: (Cut & { d: IPoint; n: IPoint; across: [bigint, bigint] })[] = [];
       for (const oid of openingsOf.get(id) ?? []) {
         const dop = derived.openings[oid]!;
         const s = I(dop.start);
         const e = I(dop.end);
-        const c0 = d[0] * s[0] + d[1] * s[1];
-        const c1 = d[0] * e[0] + d[1] * e[1];
+        // On an arc wall, square to the opening's chord (21.6); otherwise to the wall's direction.
+        const dc: IPoint = arc ? [e[0] - s[0], e[1] - s[1]] : d;
+        if (arc && dc[0] === 0n && dc[1] === 0n) continue;
+        const gc = gcd(dc[0], dc[1]);
+        const nc: IPoint = arc ? [-dc[1] / gc, dc[0] / gc] : n;
+        const ncLen = Math.hypot(Number(nc[0]), Number(nc[1]));
+        const c0 = dc[0] * s[0] + dc[1] * s[1];
+        const c1 = dc[0] * e[0] + dc[1] * e[1];
         if (c1 <= c0) continue; // an opening so narrow that its rounded ends meet cuts nothing
-        const off = Math.abs(Number(n[0] * (s[0] - S[0]) + n[1] * (s[1] - S[1]))) / nLen;
-        const k = BigInt(Math.ceil((reach + off + 2) / nLen));
-        const at = (p: IPoint, m: bigint): IPoint => [p[0] + m * n[0], p[1] + m * n[1]];
+        let k: bigint;
+        if (arc) {
+          const c = Math.hypot(Number(d[0]), Number(d[1]));
+          const h = Math.abs(w.arc!.sagitta);
+          const R = (c * c + 4 * h * h) / (8 * h);
+          const l = Math.hypot(Number(dc[0]), Number(dc[1]));
+          const bow = R - Math.sqrt(Math.max(R * R - (l * l) / 4, 0));
+          k = BigInt(Math.ceil((thicknessOf(doc, w) + bow + 2) / ncLen));
+        } else {
+          const off = Math.abs(Number(n[0] * (s[0] - S[0]) + n[1] * (s[1] - S[1]))) / nLen;
+          k = BigInt(Math.ceil((reach + off + 2) / nLen));
+        }
+        const at = (p: IPoint, m: bigint): IPoint => [p[0] + m * nc[0], p[1] + m * nc[1]];
         let strip = [at(s, k), at(s, -k), at(e, -k), at(e, k)];
         if (iarea2(strip) < 0n) strip = strip.reverse();
-        cuts.push({ id: oid, strip, c0, c1, sill: dop.sillElevation, head: dop.headElevation });
+        const ns = nc[0] * s[0] + nc[1] * s[1];
+        const nn = nc[0] * nc[0] + nc[1] * nc[1];
+        cuts.push({ id: oid, strip, c0, c1, sill: dop.sillElevation, head: dop.headElevation, d: dc, n: nc, across: [ns - k * nn, ns + k * nn] });
       }
 
       const O = ring2[0]!;
@@ -138,14 +169,20 @@ export function wallParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
         const prism = keep(Manifold.extrude([ring.map(local)], top - base));
         const boxes = cuts.map((c) => keep(keep(Manifold.extrude([c.strip.map(local)], c.head - c.sill)).translate(0, 0, c.sill - base)));
         if (want('wall')) {
-          const box = wallBox(ring, d, BigInt(base), BigInt(top), cuts);
+          // An arc wall's cuts are square to different chords: its box is its outline's, base to top.
+          const box = arc ? grow(undefined, extent(ring.map(rpoint))!, BigInt(base), BigInt(top)) : wallBox(ring, d, BigInt(base), BigInt(top), cuts);
           const solid: Manifold = boxes.length ? Manifold.difference([prism, ...boxes]) : prism.translate(0, 0, 0);
           if (box) made.push({ kind: 'wall', id, level: w.level, closed: true, ...(layers && { layers }), manifold: solid, origin, box });
           else solid.delete();
         }
         if (want('opening'))
           cuts.forEach((c, i) => {
-            const poly = cutPolygon(ring, d, c.c0, c.c1);
+            const poly = arc
+              ? clipAll(ring.map(rpoint), [
+                  ...slab(c.d, c.c0, c.c1),
+                  ...slab(c.n, c.across[0], c.across[1]),
+                ])
+              : cutPolygon(ring, d, c.c0, c.c1);
             if (poly.length < 3 || area2(poly).sign() === 0) return;
             const e = extent(poly)!;
             const o = get(doc.openings, c.id)!;
