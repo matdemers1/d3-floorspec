@@ -103,7 +103,7 @@ describe('human output and exit codes', () => {
   });
   it('derive prints the Core 0.2 and 0.3 members', () => {
     const out = JSON.parse(execFileSync(process.execPath, [bin, 'derive', join(suite, 'program', '001-house-brief', 'input.json')], { encoding: 'utf8' })) as Record<string, unknown>;
-    expect(Object.keys(out)).toEqual(['walls', 'junctionFills', 'rooms', 'unanchored', 'openings', 'program', 'fallbacks', 'placements', 'clearances', 'clearanceOverlaps', 'circulation', 'floors', 'ceilings', 'slabs']);
+    expect(Object.keys(out)).toEqual(['walls', 'junctionFills', 'rooms', 'unanchored', 'openings', 'program', 'fallbacks', 'placements', 'clearances', 'clearanceOverlaps', 'circulation', 'floors', 'ceilings', 'slabs', 'roofs', 'stairs']);
   });
 });
 
