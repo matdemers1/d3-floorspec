@@ -91,7 +91,7 @@ async function documentAssets(db: Db, projectId: string): Promise<[string, Json]
 const sizeText = (n: number): string => (n >= 1024 * 1024 ? `${String(Math.floor(n / 1024 / 1024))} MB` : `${String(Math.floor(n / 1024))} KB`);
 
 /** The raw body, up to the limit; a body too large is a 413 that says the limit, not a 500. */
-function rawBody(limit: number): RequestHandler {
+export function rawBody(limit: number): RequestHandler {
   const parse = express.raw({ type: () => true, limit });
   return (req, res, next) => {
     parse(req, res, (error?: unknown) => {

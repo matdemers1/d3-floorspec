@@ -71,6 +71,8 @@ const CALLS: Record<string, Call> = {
   'GET /api/projects/:projectId/assets': { ownerStatus: 200 },
   // Answered, by a route that works: A's project has uploaded nothing, so no digest is A's to read.
   'GET /api/projects/:projectId/assets/:sha256': { ownerStatus: 404 },
+  // Answered, by a route that works: an IFC import is the file's bytes, never JSON (FLR-T-9.5).
+  'POST /api/projects/:projectId/imports/ifc': { body: {}, ownerStatus: 415 },
   // Last: it is the one that changes the project, so the owner's call to it goes at the end.
   'DELETE /api/projects/:projectId': { ownerStatus: 204 },
 };

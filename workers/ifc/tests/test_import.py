@@ -174,8 +174,8 @@ def test_a_new_wall_without_identity_is_drawn_onto_the_walls_it_meets():
         {
             "op": "drawWall",
             "level": "MAIN",
-            "from": [7802880, 3200000],
-            "to": [14045184, 3200000],
+            "from": [7802880, 1280000],
+            "to": [14045184, 1280000],
             "layers": [{"thickness": 145920, "function": "core"}],
             "justification": "center",
             "top": {"height": 3840000},

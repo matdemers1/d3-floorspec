@@ -360,6 +360,9 @@ model Changeset {
   closedByAccountId String?    @map("closed_by_account_id") @db.Uuid
   mergeMode         MergeMode? @map("merge_mode")
   mergedHash        String?    @map("merged_hash")
+  /// What made it, when that was an import (FLR-T-9.5): the file, and the report of every edit the
+  /// import could not map. Null for a changeset an agent proposed.
+  report            Json?
 
   project        Project   @relation(fields: [projectId], references: [id], onDelete: Restrict)
   base           Version   @relation("ChangesetBase", fields: [baseHash], references: [hash], onDelete: Restrict)

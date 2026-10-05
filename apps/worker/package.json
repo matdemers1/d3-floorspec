@@ -18,6 +18,10 @@
       "types": "./src/export/drawings/index.ts",
       "default": "./dist/export/drawings/index.js"
     },
+    "./ifc": {
+      "types": "./src/export/ifc/roundtrip.ts",
+      "default": "./dist/export/ifc/roundtrip.js"
+    },
     "./alerts": {
       "types": "./src/alerts/index.ts",
       "default": "./dist/alerts/index.js"

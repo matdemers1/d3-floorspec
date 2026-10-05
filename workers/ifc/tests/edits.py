@@ -223,8 +223,9 @@ SCENARIOS = {
     "door-width": lambda f: change_door_width(f, "FD", 100),
     "rename-space": lambda f: rename(f, "KIT", "Kitchen and pantry"),
     "delete-window": lambda f: delete_opening(f, "KW"),
-    # From the face of the partition WI1 (x = 6096 mm, 146.3 mm thick) to the east wall's axis.
-    "new-wall": lambda f: add_wall(f, "MAIN", (6096 + 73.152, 2500), (10972.8, 2500), 114, 3000, "Closet wall"),
+    # From the face of the partition WI1 (x = 6096 mm, 146.3 mm thick) to the east wall's axis, 1 m
+    # north of the south wall: clear of the bedroom's door and window.
+    "new-wall": lambda f: add_wall(f, "MAIN", (6096 + 73.152, 1000), (10972.8, 1000), 114, 3000, "Closet wall"),
     "brep-wall": lambda f: brep_wall(f, "WI2"),
 }
 
