@@ -1,0 +1,1926 @@
+{
+  "config": {
+    "startedAt": "2026-10-05T00:15:07.443Z",
+    "finishedAt": "2026-10-05T00:15:12.528Z",
+    "agent": "reference",
+    "model": "n/a",
+    "claudeVersion": null,
+    "gitSha": "303271e6f3a8ae76ab3feba8dc4b7b6ee44a145a",
+    "runs": 1,
+    "tasks": [
+      "001",
+      "002",
+      "003",
+      "004",
+      "005",
+      "006",
+      "007",
+      "008",
+      "009",
+      "010",
+      "011",
+      "012",
+      "013",
+      "014",
+      "015",
+      "016",
+      "017",
+      "018",
+      "019",
+      "020",
+      "021",
+      "022",
+      "023",
+      "024",
+      "025",
+      "026",
+      "027",
+      "028",
+      "029",
+      "030",
+      "031",
+      "032",
+      "033",
+      "034",
+      "035",
+      "036"
+    ],
+    "timeoutMs": 600000,
+    "bare": false,
+    "note": "after the three tool fixes (303271e)"
+  },
+  "summary": {
+    "total": 36,
+    "passed": 36,
+    "passRate": 1,
+    "perRun": [
+      1
+    ],
+    "min": 1,
+    "max": 1,
+    "byCategory": {
+      "resize-room": {
+        "passed": 5,
+        "total": 5
+      },
+      "move-opening": {
+        "passed": 4,
+        "total": 4
+      },
+      "add-opening": {
+        "passed": 5,
+        "total": 5
+      },
+      "read": {
+        "passed": 7,
+        "total": 7
+      },
+      "split-room": {
+        "passed": 3,
+        "total": 3
+      },
+      "ambiguous": {
+        "passed": 3,
+        "total": 3
+      },
+      "resize-opening": {
+        "passed": 2,
+        "total": 2
+      },
+      "remove-opening": {
+        "passed": 1,
+        "total": 1
+      },
+      "create-level": {
+        "passed": 2,
+        "total": 2
+      },
+      "move-wall": {
+        "passed": 2,
+        "total": 2
+      },
+      "fix-diagnostic": {
+        "passed": 1,
+        "total": 1
+      },
+      "move-walls": {
+        "passed": 1,
+        "total": 1
+      }
+    },
+    "flaky": [],
+    "averages": {
+      "toolCalls": 1.8055555555555556,
+      "opsCommitted": 1.1666666666666667,
+      "rejectedBatches": 0,
+      "renderRequests": 0.7222222222222222,
+      "turns": null,
+      "wallSeconds": 0.21222222222222223,
+      "costUsd": null
+    }
+  },
+  "results": [
+    {
+      "task": "001",
+      "title": "Bump the kitchen out to the east",
+      "category": "resize-room",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "KIT: maxX +2' 0\", minY -0' 1 1/16\""
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, BED unchanged"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "6 opening(s) unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 347,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "002",
+      "title": "Move the kitchen window a foot east",
+      "category": "move-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingMoved",
+          "pass": true,
+          "detail": "KW centre moved by 1' 0\" east"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "5 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, BED unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 341,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "003",
+      "title": "36-inch door centred between kitchen and bedroom",
+      "category": "add-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingAdded",
+          "pass": true,
+          "detail": "O1 door 3' 0\" in WI2"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "6 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, BED unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 340,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "004",
+      "title": "How big is the living room",
+      "category": "read",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "unchanged",
+          "pass": true,
+          "detail": "the model is exactly the seed"
+        },
+        {
+          "kind": "answer",
+          "pass": true,
+          "detail": "ANSWER: 446.3"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 209,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "The living room is about 446 square feet net.\n\nANSWER: 446.3"
+    },
+    {
+      "task": "005",
+      "title": "Split the living room to make a study",
+      "category": "split-room",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomCount",
+          "pass": true,
+          "detail": "4 room(s)"
+        },
+        {
+          "kind": "wallLine",
+          "pass": true,
+          "detail": "W4849 (0' 0\", 7' 0\")→(20' 0\", 7' 0\")"
+        },
+        {
+          "kind": "roomExists",
+          "pass": true,
+          "detail": "R1 \"Study\" 19' 3 3/4\" E-W × 6' 3 3/4\" N-S"
+        },
+        {
+          "kind": "roomExists",
+          "pass": true,
+          "detail": "LIV \"Living room\" 19' 6\" E-W × 16' 3 3/4\" N-S"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "KIT, BED unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 3,
+        "byTool": {
+          "floorspec_apply": 2,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 2,
+        "opsSent": 2,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 230,
+        "timedOut": false,
+        "opsCommitted": 2,
+        "batchesCommitted": 2,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "006",
+      "title": "Add a window to the kitchen (no size or wall given)",
+      "category": "ambiguous",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "anyOf",
+          "pass": true,
+          "detail": "outcome 1 of 2: nothing changed, and the reply asks"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 112,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "Which wall would you like it on — the north wall, or the east wall facing the yard — and what size?"
+    },
+    {
+      "task": "007",
+      "title": "Which room the front door opens into",
+      "category": "read",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "unchanged",
+          "pass": true,
+          "detail": "the model is exactly the seed"
+        },
+        {
+          "kind": "answer",
+          "pass": true,
+          "detail": "ANSWER: Living room"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 115,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "The front door opens straight into the living room.\n\nANSWER: Living room"
+    },
+    {
+      "task": "008",
+      "title": "Slide the bedroom door south",
+      "category": "move-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingMoved",
+          "pass": true,
+          "detail": "BD centre moved by 2' 0\" south"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "5 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, BED unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 213,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "009",
+      "title": "Grow the kitchen into the living room",
+      "category": "resize-room",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "KIT: minY -2' 0\""
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "LIV: maxY -2' 0\""
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "HALL, BATH, BED1, BED2 unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 204,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "010",
+      "title": "Which rooms have no window",
+      "category": "read",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "unchanged",
+          "pass": true,
+          "detail": "the model is exactly the seed"
+        },
+        {
+          "kind": "answer",
+          "pass": true,
+          "detail": "ANSWER: Hall"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 107,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "Only the hall has no window.\n\nANSWER: Hall"
+    },
+    {
+      "task": "011",
+      "title": "Move the bath window toward the east end",
+      "category": "move-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingMoved",
+          "pass": true,
+          "detail": "WB centre moved by 1' 0\" east"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "12 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, HALL, BATH, BED1, BED2 unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 227,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "012",
+      "title": "32-inch door from kitchen to hall",
+      "category": "add-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingAdded",
+          "pass": true,
+          "detail": "O1 door 2' 8\" in I2"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "13 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, HALL, BATH, BED1, BED2 unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 270,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "013",
+      "title": "Make the bedroom bigger (which one, how much?)",
+      "category": "ambiguous",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "asked",
+          "pass": true,
+          "detail": "nothing changed, and the reply asks"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 92,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "There are two bedrooms — the primary bedroom and bedroom 2. Which one, and by how much?"
+    },
+    {
+      "task": "014",
+      "title": "Widen the hall–living cased opening to 6 ft",
+      "category": "resize-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingAt",
+          "pass": true,
+          "detail": "LH opening 6' 0\" centred where LH was"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "12 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, HALL, BATH, BED1, BED2 unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 2,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 198,
+        "timedOut": false,
+        "opsCommitted": 2,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "015",
+      "title": "Take out the bedroom 2 door",
+      "category": "remove-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingRemoved",
+          "pass": true,
+          "detail": "D2 removed"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "12 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, HALL, BATH, BED1, BED2 unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 242,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "016",
+      "title": "Primary bedroom 18 inches longer to the north",
+      "category": "resize-room",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "BED1: maxY +1' 6\""
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, HALL, BATH, BED2 unchanged"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "11 opening(s) unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 259,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "017",
+      "title": "Add a second floor on the same footprint",
+      "category": "create-level",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "levelCount",
+          "pass": true,
+          "detail": "2 level(s)"
+        },
+        {
+          "kind": "levelExists",
+          "pass": true,
+          "detail": "UP: elevation 9' 0\", height 8' 0\""
+        },
+        {
+          "kind": "footprintCopied",
+          "pass": true,
+          "detail": "UP has walls along all 10 exterior wall lines of MAIN"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, HALL, BATH, BED1, BED2 unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 5,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 172,
+        "timedOut": false,
+        "opsCommitted": 5,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "018",
+      "title": "Widen the laundry into the bath",
+      "category": "move-wall",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "LAU: minX -2' 0\""
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "BATH: maxX -2' 0\""
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "BED, LIV, KIT unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 220,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "019",
+      "title": "How many exterior doors",
+      "category": "read",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "unchanged",
+          "pass": true,
+          "detail": "the model is exactly the seed"
+        },
+        {
+          "kind": "answer",
+          "pass": true,
+          "detail": "ANSWER: 2"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 115,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "Two: the front door into the great room and the back door into the kitchen.\n\nANSWER: 2"
+    },
+    {
+      "task": "020",
+      "title": "4-foot window centred on the laundry's east wall",
+      "category": "add-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingAdded",
+          "pass": true,
+          "detail": "O1 window 4' 0\" in X7"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "14 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "BED, LIV, KIT, BATH, LAU unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 233,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "021",
+      "title": "Fix the empty-space diagnostic: name the closet",
+      "category": "fix-diagnostic",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "diagnosticAbsent",
+          "pass": true,
+          "detail": "no FS-LINT-003"
+        },
+        {
+          "kind": "roomCount",
+          "pass": true,
+          "detail": "6 room(s)"
+        },
+        {
+          "kind": "roomExists",
+          "pass": true,
+          "detail": "R1 \"Walk-in closet\" 5' 7 1/2\" E-W × 5' 7 1/2\" N-S"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "BED, LIV, KIT, BATH, LAU unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 181,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "022",
+      "title": "Move the back door north",
+      "category": "move-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingMoved",
+          "pass": true,
+          "detail": "BK centre moved by 2' 0\" north"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "13 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "BED, LIV, KIT, BATH, LAU unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 239,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "023",
+      "title": "Great room 3 feet wider on the west",
+      "category": "resize-room",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "LIV: minX -3' 0\", maxY +0' 1 1/16\""
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "BED, KIT, BATH, LAU unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 274,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "024",
+      "title": "Split the great room with a cased opening",
+      "category": "split-room",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomCount",
+          "pass": true,
+          "detail": "6 room(s)"
+        },
+        {
+          "kind": "wallLine",
+          "pass": true,
+          "detail": "W4849 (10' 0\", 0' 0\")→(10' 0\", 24' 0\")"
+        },
+        {
+          "kind": "roomExists",
+          "pass": true,
+          "detail": "R1 \"Dining room\" 9' 7 1/2\" E-W × 23' 3 3/4\" N-S"
+        },
+        {
+          "kind": "roomExists",
+          "pass": true,
+          "detail": "LIV \"Living room\" 9' 3 3/4\" E-W × 23' 3 3/4\" N-S"
+        },
+        {
+          "kind": "openingAdded",
+          "pass": true,
+          "detail": "O1 opening 6' 0\" in W4849"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "BED, KIT, BATH, LAU unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 3,
+        "byTool": {
+          "floorspec_apply": 2,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 2,
+        "opsSent": 5,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 348,
+        "timedOut": false,
+        "opsCommitted": 5,
+        "batchesCommitted": 2,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "025",
+      "title": "Make the kitchen opening bigger (by how much?)",
+      "category": "ambiguous",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "anyOf",
+          "pass": true,
+          "detail": "outcome 1 of 2: nothing changed, and the reply asks"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 105,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "How much wider would you like it — 8 feet, or open most of the wall?"
+    },
+    {
+      "task": "026",
+      "title": "Move the primary suite's closet 2 feet east",
+      "category": "move-walls",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "wallLine",
+          "pass": true,
+          "detail": "CW (13' 0\", 31' 0\")→(13' 0\", 37' 0\")"
+        },
+        {
+          "kind": "wallLine",
+          "pass": true,
+          "detail": "CE (19' 0\", 37' 0\")→(19' 0\", 31' 0\")"
+        },
+        {
+          "kind": "wallLine",
+          "pass": true,
+          "detail": "CN (13' 0\", 37' 0\")→(19' 0\", 37' 0\")"
+        },
+        {
+          "kind": "wallLine",
+          "pass": true,
+          "detail": "CS (19' 0\", 31' 0\")→(13' 0\", 31' 0\")"
+        },
+        {
+          "kind": "openingMoved",
+          "pass": true,
+          "detail": "CD centre moved by 2' 0\" east"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "BED, LIV, KIT, BATH, LAU unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 4,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 255,
+        "timedOut": false,
+        "opsCommitted": 4,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "027",
+      "title": "36-inch door centred between kitchen and dining",
+      "category": "add-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingAdded",
+          "pass": true,
+          "detail": "O1 door 3' 0\" in W4854"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "23 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, DIN, FOY, PWD, PBR, BR3, BR2, HAL, BTH unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 243,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "028",
+      "title": "Move the upstairs bath wall into the bath",
+      "category": "move-wall",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "HAL: maxX +1' 0\""
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "BTH: minX +1' 0\""
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, DIN, FOY, PWD, PBR, BR3, BR2 unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 256,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "029",
+      "title": "Total bedroom area upstairs",
+      "category": "read",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "unchanged",
+          "pass": true,
+          "detail": "the model is exactly the seed"
+        },
+        {
+          "kind": "answer",
+          "pass": true,
+          "detail": "ANSWER: 474.4"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 122,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "Primary 173.2 + bedroom 3 173.2 + bedroom 2 128.0.\n\nANSWER: 474.4"
+    },
+    {
+      "task": "030",
+      "title": "Deepen the powder room into the foyer",
+      "category": "resize-room",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "PWD: minY -2' 0\""
+        },
+        {
+          "kind": "roomEdges",
+          "pass": true,
+          "detail": "FOY: maxY -2' 0\""
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, DIN, PBR, BR3, BR2, HAL, BTH unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 2,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 229,
+        "timedOut": false,
+        "opsCommitted": 2,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "031",
+      "title": "3-foot window on bedroom 2's west wall",
+      "category": "add-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingAdded",
+          "pass": true,
+          "detail": "O1 window 3' 0\" in W4857"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "23 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, DIN, FOY, PWD, PBR, BR3, BR2, HAL, BTH unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 229,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "032",
+      "title": "Split a pantry off the kitchen",
+      "category": "split-room",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "roomCount",
+          "pass": true,
+          "detail": "11 room(s)"
+        },
+        {
+          "kind": "wallLine",
+          "pass": true,
+          "detail": "W4881 (27' 0\", 12' 0\")→(27' 0\", 24' 0\")"
+        },
+        {
+          "kind": "roomExists",
+          "pass": true,
+          "detail": "R1 \"Pantry\" 4' 3 3/4\" E-W × 11' 3 3/4\" N-S"
+        },
+        {
+          "kind": "roomExists",
+          "pass": true,
+          "detail": "KIT \"Kitchen\" 12' 7 1/2\" E-W × 11' 3 3/4\" N-S"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, DIN, FOY, PWD, PBR, BR3, BR2, HAL, BTH unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 3,
+        "byTool": {
+          "floorspec_apply": 2,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 2,
+        "opsSent": 2,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 314,
+        "timedOut": false,
+        "opsCommitted": 2,
+        "batchesCommitted": 2,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "033",
+      "title": "Swap the kitchen window for a 4-foot one",
+      "category": "resize-opening",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "openingAt",
+          "pass": true,
+          "detail": "KW window 4' 0\" centred where KW was"
+        },
+        {
+          "kind": "openingsUnchanged",
+          "pass": true,
+          "detail": "22 opening(s) unchanged"
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, DIN, FOY, PWD, PBR, BR3, BR2, HAL, BTH unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 2,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 249,
+        "timedOut": false,
+        "opsCommitted": 2,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "034",
+      "title": "Add an 8-foot basement level",
+      "category": "create-level",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "valid",
+          "pass": true,
+          "detail": "the resulting model is valid"
+        },
+        {
+          "kind": "levelCount",
+          "pass": true,
+          "detail": "3 level(s)"
+        },
+        {
+          "kind": "levelExists",
+          "pass": true,
+          "detail": "B1: elevation -8' 0\", height 8' 0\""
+        },
+        {
+          "kind": "roomsUnchanged",
+          "pass": true,
+          "detail": "LIV, KIT, DIN, FOY, PWD, PBR, BR3, BR2, HAL, BTH unchanged"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 2,
+        "byTool": {
+          "floorspec_apply": 1,
+          "floorspec_describe": 1
+        },
+        "batchesSent": 1,
+        "opsSent": 1,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 1,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 148,
+        "timedOut": false,
+        "opsCommitted": 1,
+        "batchesCommitted": 1,
+        "changesets": 1,
+        "mainChanged": false
+      },
+      "scored": "changeset",
+      "reply": "Done: the change is in a pending changeset for you to accept."
+    },
+    {
+      "task": "035",
+      "title": "Is there a bathroom downstairs",
+      "category": "read",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "unchanged",
+          "pass": true,
+          "detail": "the model is exactly the seed"
+        },
+        {
+          "kind": "answer",
+          "pass": true,
+          "detail": "ANSWER: yes"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 103,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "Yes — the powder room off the foyer.\n\nANSWER: yes"
+    },
+    {
+      "task": "036",
+      "title": "Which bedroom walls are exterior",
+      "category": "read",
+      "run": 1,
+      "pass": true,
+      "assertions": [
+        {
+          "kind": "unchanged",
+          "pass": true,
+          "detail": "the model is exactly the seed"
+        },
+        {
+          "kind": "answer",
+          "pass": true,
+          "detail": "ANSWER: east, south"
+        }
+      ],
+      "metrics": {
+        "toolCalls": 1,
+        "byTool": {
+          "floorspec_describe": 1
+        },
+        "batchesSent": 0,
+        "opsSent": 0,
+        "rejectedBatches": 0,
+        "otherToolErrors": 0,
+        "renderRequests": 0,
+        "rejections": [],
+        "turns": null,
+        "costUsd": null,
+        "wallMs": 99,
+        "timedOut": false,
+        "opsCommitted": 0,
+        "batchesCommitted": 0,
+        "changesets": 0,
+        "mainChanged": false
+      },
+      "scored": "main",
+      "reply": "The east and south walls are exterior.\n\nANSWER: east, south"
+    }
+  ]
+}

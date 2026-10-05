@@ -1,0 +1,117 @@
+name: Agent eval
+
+# The project's kill criterion (FLR-REQ-054, FLR-REQ-055): Claude runs the scripted design-edit tasks
+# in evals/agent through the MCP tools, and each resulting model is scored by assertions. Below 80%
+# after tool fixes, the project stops and re-plans — this job publishes the number that decides it.
+#
+# GitHub-hosted only (this repo is public). Actions pinned to the SHAs ci.yml and Foreman use.
+# Needs the repository secret ANTHROPIC_API_KEY; without it the job says so and skips, rather than
+# reporting a pass rate it never measured.
+
+on:
+  schedule:
+    - cron: '17 6 * * 1' # weekly, Monday morning UTC
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Runs of every task (variance needs at least 2)
+        default: '2'
+      model:
+        description: Claude model alias or ID
+        default: sonnet
+      tasks:
+        description: Only these task IDs, comma-separated (blank for all)
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-eval
+  cancel-in-progress: false
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      EVAL_DATABASE_URL: postgresql://floorspec:floorspec@localhost:5432/floorspec_eval_test
+      # The Claude Code release the eval was written against; bump it deliberately, and note it.
+      CLAUDE_CODE_VERSION: 2.1.278
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: floorspec
+          POSTGRES_PASSWORD: floorspec
+          POSTGRES_DB: floorspec
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U floorspec" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - name: Is there a key?
+        id: key
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::notice title=Agent eval skipped::The ANTHROPIC_API_KEY secret is not set, so Claude cannot run and no pass rate is reported."
+            {
+              echo "## Agent eval — skipped"
+              echo
+              echo "The \`ANTHROPIC_API_KEY\` repository secret is not set. Nothing was measured; add the secret and re-run."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.key.outputs.present == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - if: steps.key.outputs.present == 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - if: steps.key.outputs.present == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - if: steps.key.outputs.present == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.key.outputs.present == 'true'
+        run: pnpm build
+      - if: steps.key.outputs.present == 'true'
+        name: Install the Claude Code CLI
+        run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" && claude --version
+      - if: steps.key.outputs.present == 'true'
+        name: The harness proves itself first (scripted reference solutions, no model)
+        run: pnpm --filter @d3-floorspec/agent-eval eval --agent reference --concurrency 4 --out "$GITHUB_WORKSPACE/eval-results/reference"
+      - if: steps.key.outputs.present == 'true'
+        name: Run the eval
+        id: eval
+        env:
+          RUNS: ${{ inputs.runs || '2' }}
+          MODEL: ${{ inputs.model || 'sonnet' }}
+          TASKS: ${{ inputs.tasks || '' }}
+        run: |
+          args=(--runs "$RUNS" --model "$MODEL" --concurrency 3 --out "$GITHUB_WORKSPACE/eval-results/claude")
+          if [ -n "$TASKS" ]; then args+=(--tasks "$TASKS"); fi
+          pnpm --filter @d3-floorspec/agent-eval eval "${args[@]}"
+      - if: always() && steps.key.outputs.present == 'true'
+        name: Publish the pass rate
+        env:
+          PASS_RATE: ${{ steps.eval.outputs.pass_rate }}
+        run: |
+          report="$GITHUB_WORKSPACE/eval-results/claude/report.md"
+          if [ -f "$report" ]; then
+            cat "$report" >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice title=Agent eval pass rate::${PASS_RATE}"
+            awk -v r="$PASS_RATE" 'BEGIN { exit !(r < 0.8) }' && echo "::warning title=Below the 80% tripwire::FLR-REQ-055 — record a re-plan decision in Foreman unless tool fixes are pending."
+          else
+            echo "## Agent eval — no result" >> "$GITHUB_STEP_SUMMARY"
+            if [ -f "$GITHUB_WORKSPACE/eval-results/claude/ABORTED.txt" ]; then cat "$GITHUB_WORKSPACE/eval-results/claude/ABORTED.txt" >> "$GITHUB_STEP_SUMMARY"; fi
+          fi
+          true
+      - if: always() && steps.key.outputs.present == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: agent-eval-results
+          path: eval-results
+          retention-days: 90
