@@ -152,7 +152,7 @@ function Header({ ctx, kind }: { ctx: Ctx; kind: Kind }) {
   const title = kind === 'room' ? labelOf(model, id) : `${labelOf(model, id)}${labelOf(model, id).includes(id) ? '' : ` · ${id}`}`;
   return (
     <div className="fs-inspector__head">
-      <span className="fs-inspector__icon">{kindIcon(kind)}</span>
+      <span className="fs-inspector__icon">{kind === 'opening' && level?.openings.find((o) => o.id === id)?.kind === 'window' ? <WindowIcon /> : kindIcon(kind)}</span>
       <div className="fs-inspector__title">
         <h2>{title}</h2>
         <p>{subtitle}</p>
