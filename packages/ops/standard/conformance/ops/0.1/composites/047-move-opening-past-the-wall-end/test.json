@@ -1,0 +1,7 @@
+{
+  "description": "The door at 8' on the 12' wall W4 moved 2' toward its end: 10' + 36\" runs past the end, so the result is invalid and the rejection carries FS-INV-302.",
+  "covers": [
+    "FS-OPS-4.5.2",
+    "FS-OPS-1.2.3"
+  ]
+}

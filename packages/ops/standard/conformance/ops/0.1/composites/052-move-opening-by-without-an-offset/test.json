@@ -1,0 +1,7 @@
+{
+  "description": "The door's offset is unset earlier in the batch, so there is no offset to move it from: FS-OPS-003 names the opening.",
+  "covers": [
+    "FS-OPS-4.5.2",
+    "FS-OPS-7.1.1"
+  ]
+}

@@ -12,14 +12,14 @@ locks against the result.
 
 | Code | Condition | Elements | Rule |
 |---|---|---|---|
-| `FS-OPS-001` | the request is malformed: not a batch, an empty batch, an unknown operation, a missing or unknown member | — | 1.1.1 |
+| `FS-OPS-001` | the request is malformed: not a batch, an empty batch, an unknown operation, a missing or unknown member, none or several of members of which exactly one is required | — | 1.1.1 |
 | `FS-OPS-002` | the document the batch applies to is not valid | — | 1.2.1 |
-| `FS-OPS-003` | a reference resolves to nothing: an unknown ID, a selector with no match, a member that is not there | the element whose member or reference is missing; none when the reference is in the request | 2.2.1, 2.3.1, 3.2.1, 3.3.1, 4.5.1 |
+| `FS-OPS-003` | a reference resolves to nothing: an unknown ID, a selector with no match, a member that is not there | the element whose member or reference is missing; none when the reference is in the request | 2.2.1, 2.3.1, 3.2.1, 3.3.1, 4.5.1, 4.5.2, 4.8.1 |
 | `FS-OPS-004` | a selector matches more than one element | every match | 3.3.1 |
 | `FS-OPS-005` | an operation names an ID already in use or retired | — | 1.5.2 |
 | `FS-OPS-006` | a removal is blocked by elements that depend on it | the blocked element and its dependents | 2.2.1 |
 | `FS-OPS-007` | a selector or composite needs faces on a level that has none to give | the level | 3.4.1 |
-| `FS-OPS-008` | a composite does not apply: a side missing, oblique or jogged, or too short to shrink at a T; `toward` a room not beside the wall; a wall between two rooms removed without `keep` | the room or wall | 4.2.1, 4.4.1, 4.7.1 |
+| `FS-OPS-008` | a composite does not apply: a side missing, oblique or jogged, or too short to shrink at a T; `toward` a room not beside the wall; an opening moved `toward` a direction its wall is perpendicular to; a wall between two rooms removed without `keep` | the room or wall | 4.2.1, 4.4.1, 4.5.2, 4.7.1 |
 | `FS-OPS-009` | an opening straddles a junction that planarization inserts | the opening | 5.2.1 |
 | `FS-OPS-010` | a lock names elements that do not exist, or walls that are not parallel | the lock's elements | 6.1.1 |
 | `FS-OPS-011` | the result breaks a lock | the lock's elements | 6.1.2 |

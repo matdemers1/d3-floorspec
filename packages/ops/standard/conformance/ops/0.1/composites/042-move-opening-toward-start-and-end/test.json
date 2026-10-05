@@ -1,0 +1,6 @@
+{
+  "description": "With \"toward\": \"end\" or \"start\" the sign of \"by\" is chosen, whatever is given: -1' toward the end moves the door from 4' to 5', and 2' toward the start from 5' to 3'.",
+  "covers": [
+    "FS-OPS-4.5.2"
+  ]
+}

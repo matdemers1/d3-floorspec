@@ -200,6 +200,79 @@ describe('addOpening and moveOpening (4.5.1)', () => {
   });
 });
 
+describe('moveOpening by (4.5.2)', () => {
+  const win = (wall: string): Record<string, unknown> => ({ wall, offset: 1000000, width: 500000, height: 1000000 });
+  /** A window on each wall of the box: W1 runs north, W2 east, W3 south, W4 west. */
+  const windows = (): Record<string, unknown> => box(undefined, undefined, { openings: { O1: win('W1'), O2: win('W2'), O3: win('W3'), O4: win('W4') } });
+  const offsets = (r: ReturnType<typeof run>): unknown[] => committed(r).resolved.map((p) => (p as { value?: unknown }).value);
+
+  it('adds by to the offset: positive toward the end, negative toward the start', () => {
+    expect(committed(run(windows(), { op: 'moveOpening', opening: 'O1', by: 200000 })).resolved).toEqual([{ op: 'setProperty', id: 'O1', path: '/offset', value: 1200000 }]);
+    expect(offsets(run(windows(), { op: 'moveOpening', opening: 'O1', by: '-1 cm' }))).toEqual([1000000 - 12800]);
+  });
+
+  it('takes the sign from toward start or end, whatever the sign given', () => {
+    expect(offsets(run(windows(), { op: 'moveOpening', opening: 'O2', by: -100, toward: 'end' }, { op: 'moveOpening', opening: 'O2', by: 300, toward: 'start' }))).toEqual([1000100, 999800]);
+  });
+
+  it('moves toward a direction by the sign of the wall direction dotted with it', () => {
+    const north = ['O1', 'O2', 'O3', 'O4'].map((o, i) => ({ op: 'moveOpening', opening: o, by: 100, toward: ['north', 'east', 'north', 'east'][i] }));
+    expect(offsets(run(windows(), ...north))).toEqual([1000100, 1000100, 999900, 999900]);
+    const south = ['O1', 'O2', 'O3', 'O4'].map((o, i) => ({ op: 'moveOpening', opening: o, by: 100, toward: ['south', 'west', 'south', 'west'][i] }));
+    expect(offsets(run(windows(), ...south))).toEqual([999900, 999900, 1000100, 1000100]);
+  });
+
+  it('rejects a direction the wall is perpendicular to with FS-OPS-008 naming the wall', () => {
+    rejectedWith(run(windows(), { op: 'moveOpening', opening: 'O1', by: 100, toward: 'west' }), 'FS-OPS-008', ['W1']);
+    rejectedWith(run(windows(), { op: 'moveOpening', opening: 'O2', by: 100, toward: 'north' }), 'FS-OPS-008', ['W2']);
+  });
+
+  it('leaves the offset unchecked: past the wall end is the Core FS-INV-302', () => {
+    rejectedWith(run(windows(), { op: 'moveOpening', opening: 'O2', by: W }), 'FS-INV-302', ['O2']);
+  });
+
+  it('rejects an opening with no integer offset with FS-OPS-003, and a malformed form with FS-OPS-001', () => {
+    rejectedWith(run(windows(), { op: 'unsetProperty', id: 'O1', path: '/offset' }, { op: 'moveOpening', opening: 'O1', by: 1 }), 'FS-OPS-003', ['O1']);
+    rejectedWith(run(windows(), { op: 'moveOpening', opening: 'O1', at: 0, by: 1 }), 'FS-OPS-001');
+    rejectedWith(run(windows(), { op: 'moveOpening', opening: 'O1' }), 'FS-OPS-001');
+    rejectedWith(run(windows(), { op: 'moveOpening', opening: 'O1', at: 0, toward: 'end' }), 'FS-OPS-001');
+    rejectedWith(run(windows(), { op: 'moveOpening', opening: 'O1', by: 1, toward: 'up' }), 'FS-OPS-001');
+  });
+});
+
+describe('addLevel (4.8.1)', () => {
+  const level = (id: string, element: Record<string, unknown>): unknown => ({ op: 'addElement', collection: 'levels', id, element: { building: 'B1', ...element } });
+
+  it('places a level above, below, or at an explicit elevation, against the working copy', () => {
+    const r = committed(
+      run(
+        box(),
+        { op: 'addLevel', building: 'B1', above: 'L1', height: "8'", name: 'Upstairs' },
+        { op: 'addLevel', building: 'B1', above: 'L2', height: 3000000 },
+        { op: 'addLevel', building: 'B1', below: 'L1', height: "8'" },
+        { op: 'addLevel', id: 'LX', building: 'B1', elevation: "-20'", height: '2.5 m', extras: { k: 1 } },
+      ),
+    );
+    expect(r.resolved).toEqual([
+      level('L2', { elevation: 3200000, height: 8 * FT, name: 'Upstairs' }),
+      level('L3', { elevation: 3200000 + 8 * FT, height: 3000000 }),
+      level('L4', { elevation: -8 * FT, height: 8 * FT }),
+      level('LX', { elevation: -20 * FT, height: 3200000, extras: { k: 1 } }),
+    ]);
+  });
+
+  it('rejects not exactly one of elevation, above and below with FS-OPS-001', () => {
+    rejectedWith(run(box(), { op: 'addLevel', building: 'B1', height: 1, elevation: 0, above: 'L1' }), 'FS-OPS-001');
+    rejectedWith(run(box(), { op: 'addLevel', building: 'B1', height: 1 }), 'FS-OPS-001');
+  });
+
+  it('rejects an unknown level or building, or a level with no integer height, with FS-OPS-003', () => {
+    rejectedWith(run(box(), { op: 'addLevel', building: 'B1', height: 1, above: 'L9' }), 'FS-OPS-003', []);
+    rejectedWith(run(box(), { op: 'addLevel', building: 'B9', height: 1, elevation: 0 }), 'FS-OPS-003', []);
+    rejectedWith(run(box(), { op: 'setProperty', id: 'L1', path: '/height', value: 'tall' }, { op: 'addLevel', building: 'B1', height: 1, below: 'L1' }), 'FS-OPS-003', ['L1']);
+  });
+});
+
 describe('addRoom and setRoomFinish (4.6.1)', () => {
   it('names a face, and sets a finish', () => {
     const d = box(undefined, undefined, { materials: { OAK: { color: '#996633' } } });

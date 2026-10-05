@@ -1,0 +1,26 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "4c96a8052cc888ca8e4747122da83042de96dcd4c909471e85a8ac4436711350",
+  "created": ["L2"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L2",
+      "element": {
+        "building": "B1",
+        "elevation": -3121152,
+        "height": 3121152,
+        "name": "Basement"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "L2"
+    }
+  ]
+}

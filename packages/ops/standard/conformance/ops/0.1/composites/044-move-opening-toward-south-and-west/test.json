@@ -1,0 +1,6 @@
+{
+  "description": "The same windows 1' toward south or west: O1 and O2 move toward their walls' starts (4' to 3'), O3 and O4 toward their ends (4' to 5').",
+  "covers": [
+    "FS-OPS-4.5.2"
+  ]
+}
