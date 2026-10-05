@@ -1,2 +1,15 @@
-/** 3D meshes from a Floorspec document. Skeleton until its tasks in Foreman (FLR) fill it. */
+/**
+ * @floorspec/mesh — watertight 3D meshes derived from a Floorspec document (FLR-T-7.4,
+ * FLR-REQ-112): walls with their openings cut, junction fills, floors, ceilings, slabs, roofs,
+ * stairs and extension fallback boxes, built from what @floorspec/engine derives exactly, with
+ * manifold-3d (WASM, loaded lazily) for booleans and polygon triangulation.
+ *
+ * Isomorphic, like the engine (FLR-ADR-010): the same package in the browser and in Node. Exact
+ * integers in base units (1/1280 mm) until the very end, then one conversion to Float32 metres.
+ */
 export const PACKAGE_NAME = '@floorspec/mesh';
+
+export { loadMesher, meshDocument, type Mesher } from './mesher.js';
+export { loadKernel, type KernelOptions } from './kernel.js';
+export { flatShaded } from './shading.js';
+export { PART_KINDS, UNITS_PER_METRE, type Box3, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartMesh, type PartStats, type Vec3 } from './types.js';

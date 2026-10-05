@@ -1,13 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": [
-      "node"
-    ]
+    "types": [],
+    "lib": ["ES2023"]
   },
-  "include": [
-    "src",
-    "test",
-    "*.config.ts"
-  ]
+  // Isomorphic like the engine (FLR-ADR-010): neither Node's types nor the DOM's. The engine's
+  // sources, which this package type-checks through, declare the two web globals they use.
+  "include": ["src", "*.config.ts", "../engine/src/globals.d.ts"]
 }

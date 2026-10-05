@@ -2,7 +2,7 @@
   "name": "@floorspec/mesh",
   "private": true,
   "version": "0.1.0",
-  "description": "3D meshes derived from a Floorspec document.",
+  "description": "Watertight 3D meshes derived from a Floorspec document with manifold-3d: walls with their openings cut, floors, ceilings, slabs, roofs, stairs and extension fallback boxes. Isomorphic.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
@@ -18,7 +18,21 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit && tsc -p test",
+    "test": "vitest run --project node",
+    "test:browser": "vitest run --project browser",
+    "timings": "vitest run --project node test/timings.node.test.ts --silent=false"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*",
+    "manifold-3d": "3.2.1"
+  },
+  "devDependencies": {
+    "@floorspec/layout-solver": "workspace:*",
+    "@floorspec/ops": "workspace:*",
+    "@vitest/browser": "5.0.2",
+    "@vitest/browser-playwright": "5.0.2",
+    "fast-check": "4.10.2",
+    "playwright": "1.63.0"
   }
 }
