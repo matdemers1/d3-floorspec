@@ -1,0 +1,12 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "L1",
+      "path": "/extensions/FS_structural",
+      "value": {
+        "note": "Check"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The Kitchen's recorded span is exactly its extent: no lint; one unit more, in the next test, is.",
+  "covers": [
+    "FS-STRC-1.2.3",
+    "FS-STRC-3.2.1"
+  ]
+}

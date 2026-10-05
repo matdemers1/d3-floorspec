@@ -1,0 +1,14 @@
+{
+  "extensions": {
+    "FS_furniture": {
+      "colour": "red"
+    }
+  },
+  "extensionsUsed": {
+    "FS_furniture": "0.1.0"
+  },
+  "floorspec": "0.1",
+  "project": {
+    "name": "Old"
+  }
+}

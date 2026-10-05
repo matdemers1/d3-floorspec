@@ -1,0 +1,6 @@
+{
+  "description": "An option set with no primary.",
+  "covers": [
+    "FS-CORE-19.1.1"
+  ]
+}

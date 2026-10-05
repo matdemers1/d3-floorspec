@@ -1,0 +1,6 @@
+{
+  "description": "The kitchen with a wrong byteLength, read by a validator that is not given the package: valid - FS-INV-1005 to FS-INV-1007 are a package validator's alone.",
+  "covers": [
+    "FS-CORE-18.4.4"
+  ]
+}

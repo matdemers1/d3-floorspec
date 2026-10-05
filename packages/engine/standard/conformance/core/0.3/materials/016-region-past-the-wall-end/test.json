@@ -1,0 +1,6 @@
+{
+  "description": "A region that ends one base unit past W2's 4 m location line: FS-INV-1002.",
+  "covers": [
+    "FS-CORE-18.5.3"
+  ]
+}

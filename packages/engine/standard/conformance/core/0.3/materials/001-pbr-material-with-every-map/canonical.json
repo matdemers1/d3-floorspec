@@ -1,0 +1,139 @@
+{
+  "assets": {
+    "OAK-AO": {
+      "byteLength": 65536,
+      "mediaType": "image/ktx2",
+      "path": "textures/oak/ao.ktx2",
+      "sha256": "0101010101010101010101010101010101010101010101010101010101010101"
+    },
+    "OAK-COLOR": {
+      "mediaType": "image/jpeg",
+      "path": "textures/oak/color.jpg",
+      "sha256": "abababababababababababababababababababababababababababababababab"
+    },
+    "OAK-MR": {
+      "mediaType": "image/webp",
+      "path": "textures/oak/mr.webp",
+      "sha256": "efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef"
+    },
+    "OAK-NORMAL": {
+      "mediaType": "image/png",
+      "path": "textures/oak/normal.png",
+      "sha256": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+    }
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.3",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "materials": {
+    "OAK": {
+      "color": "#c8a165",
+      "metallic": 0,
+      "name": "White oak, oiled",
+      "roughness": 450,
+      "texture": {
+        "asset": "OAK-COLOR",
+        "metallicRoughness": "OAK-MR",
+        "normal": "OAK-NORMAL",
+        "occlusion": "OAK-AO",
+        "offset": [
+          96000,
+          0
+        ],
+        "rotation": 90000000,
+        "size": [
+          192000,
+          1536000
+        ]
+      }
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "floorFinish": "OAK",
+      "level": "L1"
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    }
+  }
+}

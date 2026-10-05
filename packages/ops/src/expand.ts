@@ -5,7 +5,7 @@
  */
 import { predicates, roundHalfEvenRational, Surd } from '@floorspec/engine';
 import { fail } from './diagnostics.js';
-import { asPoint, SIDE_UNIT, type LevelFaces } from './model/faces.js';
+import { asPoint, editDesign, SIDE_UNIT, type LevelFaces } from './model/faces.js';
 import { EXTENSION_PREFIX, ITEMS, RESERVED_TARGETS, type CollectionName, type ReservedTarget } from './model/working.js';
 import { applyPrimitive } from './primitives.js';
 import {
@@ -425,9 +425,10 @@ function resolveHost(ctx: Ctx, h: HostRef, ptr: string): { host: JsonObject; lev
 
 /** A junction on `level` at exactly `p` (4.1), the first by ID if (mid-batch) there are several. */
 function junctionAt(ctx: Ctx, level: string, p: IPoint): string | undefined {
+  const keep = editDesign(ctx.wc); // Ops 0.3, 2.8.2: the junctions of the edit design
   for (const id of ctx.wc.ids('junctions')) {
     const j = ctx.wc.elementIn('junctions', id);
-    if (getMember(j, 'level') !== level) continue;
+    if (getMember(j, 'level') !== level || (j && keep && !keep(j))) continue;
     const q = asPoint(getMember(j, 'position'));
     if (q && q[0] === p[0] && q[1] === p[1]) return id;
   }

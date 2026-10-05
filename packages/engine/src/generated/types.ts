@@ -103,13 +103,13 @@ export type Reference2 = string;
  */
 export type JoinKind = 'mitre' | 'butt';
 /**
- * 1.4: a human-readable label, 1–200 characters. Absent by default.
- */
-export type Name2 = string;
-/**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
 export type Reference3 = string;
+/**
+ * 1.4: a human-readable label, 1–200 characters. Absent by default.
+ */
+export type Name2 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
@@ -122,6 +122,10 @@ export type Reference5 = string;
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
 export type Reference6 = string;
+/**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference7 = string;
 /**
  * 5.2, 8.3: the wall's own layers, which replace its type's entirely. A typed property (8.2): absent, it resolves from `type`; it has no constant default.
  *
@@ -139,7 +143,7 @@ export type LayerFunction = 'core' | 'substrate' | 'insulation' | 'membrane' | '
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference7 = string;
+export type Reference8 = string;
 /**
  * 5.2, 5.4: where the location line sits in the wall's thickness.
  */
@@ -147,7 +151,7 @@ export type Justification = 'center' | 'exteriorFace' | 'interiorFace' | 'coreFa
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference8 = string;
+export type Reference9 = string;
 /**
  * 2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.
  */
@@ -159,7 +163,7 @@ export type Top = LevelConstrainedTop | UnconnectedTop;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference9 = string;
+export type Reference10 = string;
 /**
  * 2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.
  */
@@ -169,21 +173,57 @@ export type Length3 = number;
  */
 export type Length4 = number;
 /**
+ * 18.5, 18.6: a reference to the material of the whole face. Absent: the face takes the finish of the room it faces, or of the wall's outermost layer on that side (18.6).
+ */
+export type Reference11 = string;
+/**
+ * 18.5: where the region starts, along the location line from the start junction.
+ */
+export type NonNegativeLength = number;
+/**
+ * 18.5: where it ends, along the location line from the start junction.
+ */
+export type NonNegativeLength1 = number;
+/**
+ * 18.5: the height of its bottom edge above the wall's base elevation.
+ */
+export type NonNegativeLength2 = number;
+/**
+ * 18.5: the height of its top edge above the wall's base elevation.
+ */
+export type NonNegativeLength3 = number;
+/**
+ * 18.5: a reference to the region's material.
+ */
+export type Reference12 = string;
+/**
+ * 18.5: rectangles of the face finished with another material.
+ */
+export type Regions = Region[];
+/**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference13 = string;
+/**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name3 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference10 = string;
+export type Reference14 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference11 = string;
+export type Reference15 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference12 = string;
+export type Reference16 = string;
+/**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference17 = string;
 /**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
@@ -191,11 +231,11 @@ export type Name4 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference13 = string;
+export type Reference18 = string;
 /**
  * 7.1: the distance from the wall's start junction along its location line to the opening's near edge. Always present, and MUST NOT be negative (FS-CORE-7.1.1).
  */
-export type NonNegativeLength = number;
+export type NonNegativeLength4 = number;
 /**
  * 7.1: the opening's width along the wall, which MUST be greater than zero (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill` (7.2).
  */
@@ -207,11 +247,11 @@ export type PositiveLength5 = number;
 /**
  * 7.1: the height of the opening's bottom above the wall's base, which MUST NOT be negative (FS-CORE-7.1.2). A typed property (8.2): absent, it resolves from `fill`, else 0 (7.2).
  */
-export type NonNegativeLength1 = number;
+export type NonNegativeLength5 = number;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference14 = string;
+export type Reference19 = string;
 /**
  * 7.1: for a door, the jamb its leaf hangs from — the one nearer the wall's start or its end.
  */
@@ -233,13 +273,17 @@ export type PositiveLength7 = number;
  */
 export type Area = number;
 /**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference20 = string;
+/**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name5 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference15 = string;
+export type Reference21 = string;
 /**
  * 2.6: a JSON array of exactly two lengths, [x, y], in plan coordinates (2.3).
  *
@@ -276,19 +320,19 @@ export type ExtensionTerm = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference16 = string;
+export type Reference22 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference17 = string;
+export type Reference23 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference18 = string;
+export type Reference24 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference19 = string;
+export type Reference25 = string;
 /**
  * 2.1: an integer number of base units of 1/1280 mm, with an absolute value of at most 9,007,199,254,740,991 (2^53 − 1). A length MUST be written as a JSON integer — no fraction and no exponent (FS-CORE-2.1.1). JSON Schema sees the parsed number, so `1.0` and `1e3` would pass `integer` here; a validator applying this schema maps every number written with a fraction or an exponent to a non-number (for example its source text) before validating, so that such a number fails wherever a length is expected.
  */
@@ -335,13 +379,17 @@ export type Ridge = [Point, Point];
  */
 export type CeilingKind = 'flat' | 'tray' | 'vaulted';
 /**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference26 = string;
+/**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name6 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference20 = string;
+export type Reference27 = string;
 /**
  * 6.7: the slab's outline in plan, a polygon (2.6). Always present. That it is simple with positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), not checked here.
  *
@@ -359,7 +407,7 @@ export type Length6 = number;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference21 = string;
+export type Reference28 = string;
 /**
  * 6.7: what the slab is for; when present, one of the purposes of 6.7's table (FS-CORE-6.7.2). Absent by default: not stated. It changes nothing that is derived.
  */
@@ -376,13 +424,17 @@ export type SlabPurpose =
   | 'equipmentPad'
   | 'other';
 /**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference29 = string;
+/**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name7 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference22 = string;
+export type Reference30 = string;
 /**
  * 16.1: the roof's outline in plan, before overhangs: a polygon (2.6). Always present. That it is simple with positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), and that no two consecutive edges are collinear (FS-CORE-16.2.3) another (FS-INV-804); neither is checked here.
  *
@@ -396,11 +448,11 @@ export type Length7 = number;
 /**
  * 16.1, 16.3: how far the roof overhangs every edge that has no overhang of its own; MUST NOT be negative (FS-CORE-16.1.1).
  */
-export type NonNegativeLength2 = number;
+export type NonNegativeLength6 = number;
 /**
  * 16.1, 16.3: how far the roof overhangs this edge; MUST NOT be negative. Absent by default: the roof's `overhang` (a derived default).
  */
-export type NonNegativeLength3 = number;
+export type NonNegativeLength7 = number;
 /**
  * 16.1: the thickness of the roof under its surface, measured vertically; MUST be greater than zero (FS-CORE-16.1.1). Absent by default: not declared.
  */
@@ -408,7 +460,11 @@ export type PositiveLength15 = number;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference23 = string;
+export type Reference31 = string;
+/**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference32 = string;
 /**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
@@ -425,6 +481,18 @@ export type Type1 = WallType | DoorType | WindowType;
  */
 export type Layers1 = [Layer, ...Layer[]];
 /**
+ * 8.1: the library, by a URI that names it across all its versions.
+ */
+export type HttpsURI = string;
+/**
+ * 8.1: the version of the library it was copied from, matching the pattern of 1.6.7.
+ */
+export type LibraryVersion = string;
+/**
+ * 8.1: the item's identifier in that version of the library, matching the pattern of an ID (3.1.1). Not a reference: it names nothing in the document.
+ */
+export type LibraryItem = string;
+/**
  * 1.4, 8.1: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name9 = string;
@@ -439,7 +507,7 @@ export type PositiveLength17 = number;
 /**
  * 8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default.
  */
-export type NonNegativeLength4 = number;
+export type NonNegativeLength8 = number;
 /**
  * 8.4: how the door's leaves move — one of 8.4's door operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.
  */
@@ -498,7 +566,7 @@ export type PositiveLength21 = number;
 /**
  * 8.4: likewise, the sill; when present, not negative (FS-CORE-8.4.1). Absent by default.
  */
-export type NonNegativeLength5 = number;
+export type NonNegativeLength9 = number;
 /**
  * 8.4: how the window's sashes move — one of 8.4's window operations (FS-CORE-8.4.2). Absent: not declared; a reader assumes none.
  */
@@ -513,15 +581,47 @@ export type Name11 = string;
  */
 export type Kind = 'wallType' | 'doorType' | 'windowType';
 /**
- * 8.5: the material's base colour as "#rrggbb", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). Absent by default.
+ * 8.5, 18.1: the material's base colour as "#rrggbb", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). With a base colour map, the colour to show where the map is not drawn. Absent by default.
  */
 export type Colour = string;
 /**
+ * 18.1: how metallic the surface is, in thousandths, an integer from 0 to 1000 (FS-CORE-18.1.1). Absent: the metallic-roughness map's value, or 0 without one - so it has no constant default.
+ */
+export type Metallic = number;
+/**
+ * 18.1: how rough the surface is, in thousandths, an integer from 0 to 1000 (FS-CORE-18.1.1). Absent: the metallic-roughness map's value, or 1000 without one - so it has no constant default.
+ */
+export type Roughness = number;
+/**
+ * 8.5, 18.2: images tiled across the surface - its maps - and the real-world size, offset and rotation of one tile. Absent by default. A texture MUST have at least one map (FS-CORE-18.2.1).
+ */
+export type Texture = (WithABaseColourMap | WithANormalMap | WithAMetallicRoughnessMap | WithAOcclusionMap) & {
+  asset?: Reference33;
+  normal?: Reference34;
+  metallicRoughness?: Reference35;
+  occlusion?: Reference36;
+  size: TileSize;
+  offset?: Point3;
+  rotation?: AngleIn180180;
+};
+/**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference24 = string;
+export type Reference33 = string;
 /**
- * 8.5: [w, h], the size one tile covers. It MUST be two lengths greater than zero (FS-CORE-8.5.2).
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference34 = string;
+/**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference35 = string;
+/**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference36 = string;
+/**
+ * 8.5, 18.2: [w, h], the real-world size of one tile. It MUST be two lengths greater than zero (FS-CORE-8.5.2). Always present.
  *
  * @minItems 2
  * @maxItems 2
@@ -532,16 +632,27 @@ export type TileSize = [PositiveLength22, PositiveLength22];
  */
 export type PositiveLength22 = number;
 /**
+ * 2.6: a JSON array of exactly two lengths, [x, y], in plan coordinates (2.3).
+ *
+ * @minItems 2
+ * @maxItems 2
+ */
+export type Point3 = [Length, Length];
+/**
+ * 18.2, 18.3: how far the tiles are turned, counter-clockwise as seen by someone facing the surface; in (−180,000,000, 180,000,000] (FS-CORE-18.2.1).
+ */
+export type AngleIn180180 = number;
+/**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name12 = string;
 /**
- * 8.6: a file the document refers to — a texture image in this draft. An asset MUST have exactly one of `path` and `uri` (FS-CORE-8.6.1). It has only the members of its table (FS-CORE-1.4.1).
+ * 8.6, 18.4: a file the document refers to - a texture's map, or an extension's model or symbol. An asset MUST have exactly one of `path` and `uri` (FS-CORE-8.6.1). It has only the members of its table (FS-CORE-1.4.1).
  */
 export type Asset = Asset1 & Asset2;
 export type Asset1 = PackagedAsset | ExternalAsset;
 /**
- * 8.6: where the file is, relative to the document. A path MUST be relative, use / as its separator, and contain no empty, . or .. segment (FS-CORE-8.6.2): so it does not start with /, contains no \, has no colon in its first segment (which would make it a URI with a scheme or a drive-letter path), and has no // and no trailing /.
+ * 8.6, 18.4: where the file is, relative to the document's package - the directory that holds the document's file. A path MUST be relative, use / as its separator, and contain no empty, . or .. segment (FS-CORE-8.6.2): so it does not start with /, contains no \, has no colon in its first segment (which would make it a URI with a scheme or a drive-letter path), and has no // and no trailing /.
  */
 export type Path = string;
 /**
@@ -557,6 +668,10 @@ export type SHA256Digest = string;
  */
 export type MediaType = string;
 /**
+ * 18.4: the length of the file in bytes, an integer from 0 to 2^53 − 1 (FS-CORE-18.4.1). Absent: not declared.
+ */
+export type ByteLength = number;
+/**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name13 = string;
@@ -570,22 +685,22 @@ export type Stair1 = {
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference25 = string;
+export type Reference37 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference26 = string;
+export type Reference38 = string;
 /**
  * 2.6: a JSON array of exactly two lengths, [x, y], in plan coordinates (2.3).
  *
  * @minItems 2
  * @maxItems 2
  */
-export type Point3 = [Length, Length];
+export type Point4 = [Length, Length];
 /**
  * 17.1, 17.3: the direction the first flight rises in, counter-clockwise from +X; its frame faces F(rotation) (13.1).
  */
-export type AngleIn180180 = number;
+export type AngleIn1801801 = number;
 /**
  * A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1), a stair's width, tread and greatest riser height and a handrail's height (17.1.1), a spiral stair's diameter (17.2.1).
  */
@@ -609,11 +724,11 @@ export type StairForm = (
 /**
  * 17.2: the distance between the two flights, in plan; not negative (FS-CORE-17.2.1).
  */
-export type NonNegativeLength6 = number;
+export type NonNegativeLength10 = number;
 /**
  * 17.2: the distance between the two flights, in plan; not negative (FS-CORE-17.2.1).
  */
-export type NonNegativeLength7 = number;
+export type NonNegativeLength11 = number;
 /**
  * A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1), a stair's width, tread and greatest riser height and a handrail's height (17.1.1), a spiral stair's diameter (17.2.1).
  */
@@ -627,9 +742,29 @@ export type StairKind = 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral'
  */
 export type PositiveLength27 = number;
 /**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference39 = string;
+/**
  * 1.4: a human-readable label, 1–200 characters. Absent by default.
  */
 export type Name14 = string;
+/**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference40 = string;
+/**
+ * 1.4: a human-readable label, 1–200 characters, such as "Kitchen". Absent by default.
+ */
+export type Name15 = string;
+/**
+ * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
+ */
+export type Reference41 = string;
+/**
+ * 1.4: a human-readable label, 1–200 characters, such as "A" or "Open plan". Absent by default.
+ */
+export type Name16 = string;
 /**
  * 11.1: what the space is for: a room function (FS-CORE-11.1.2). That an extension term's extension is in extensionsUsed is an invariant (FS-INV-006). Always present.
  */
@@ -637,7 +772,7 @@ export type RoomFunction1 = (CoreRoomFunction | ExtensionTerm) & string;
 /**
  * 11.1: what its owners call it, 1–200 characters. Absent by default.
  */
-export type Name15 = string;
+export type Name17 = string;
 /**
  * 11.1: how many rooms the item asks for; at least 1.
  */
@@ -653,15 +788,15 @@ export type Area2 = number;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference27 = string;
+export type Reference42 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference28 = string;
+export type Reference43 = string;
 /**
  * 3.2: a member whose value is the ID of another element, so it has the form of an ID (3.1). That it resolves to an element of the right collection and kind (FS-CORE-3.2.1, FS-CORE-3.2.2) is an invariant (FS-INV-002, FS-INV-003), not checked here.
  */
-export type Reference29 = string;
+export type Reference44 = string;
 /**
  * 11.2: whether rooms of a and b must, should or must not be adjacent (11.4). Always present.
  */
@@ -681,7 +816,7 @@ export type ExtensionDeclaration =
   | ExtensionVersion
   | {
       version: ExtensionVersion1;
-      schema?: HttpsURI;
+      schema?: HttpsURI1;
     };
 /**
  * 1.6: the version of the extension the document targets (FS-CORE-1.6.7).
@@ -694,7 +829,7 @@ export type ExtensionVersion1 = string;
 /**
  * 12.1: where the extension's JSON Schema for that version is published (FS-CORE-12.1.2).
  */
-export type HttpsURI = string;
+export type HttpsURI1 = string;
 /**
  * 1.6: a prefix and a name joined by an underscore — FS_ (official), EXT_ (multi-implementer) or a registered vendor prefix of 2 to 8 capitals or digits. Every extension name MUST match ^(FS|EXT|[A-Z0-9]{2,8})_[A-Za-z0-9]+$ (FS-CORE-1.6.1).
  */
@@ -716,7 +851,7 @@ export type ExtensionData =
 /**
  * 12.6: a reference to the level the element is on. Always present.
  */
-export type Reference30 = string;
+export type Reference45 = string;
 /**
  * 13.2: the least local x, y and z.
  *
@@ -734,11 +869,11 @@ export type TripleOfLengths3 = [Length, Length, Length];
 /**
  * 12.6: a reference to an asset holding a glTF 2.0 model of the element. Absent by default.
  */
-export type Reference31 = string;
+export type Reference46 = string;
 /**
  * 12.6: a reference to an asset holding a 2D plan symbol. Absent by default.
  */
-export type Reference32 = string;
+export type Reference47 = string;
 /**
  * 13.3: what the element is placed on. Absent: the element is placed only by its fallback.
  */
@@ -748,7 +883,7 @@ export type Host = (WallFaceHost | SurfaceHost | FreeHost) & {
 /**
  * 13.3: a reference to the host wall.
  */
-export type Reference33 = string;
+export type Reference48 = string;
 /**
  * 13.3: which face of the wall, seen along its direction.
  */
@@ -756,34 +891,19 @@ export type Side = 'left' | 'right';
 /**
  * 13.3: the distance along the wall's location line from its start junction; not negative.
  */
-export type NonNegativeLength8 = number;
+export type NonNegativeLength12 = number;
 /**
  * 13.3: the height above the wall's base elevation; not negative.
  */
-export type NonNegativeLength9 = number;
+export type NonNegativeLength13 = number;
 /**
  * 13.3: a reference to the host room.
  */
-export type Reference34 = string;
+export type Reference49 = string;
 /**
  * 13.3: the floor or the ceiling.
  */
 export type Surface = 'floor' | 'ceiling';
-/**
- * 2.6: a JSON array of exactly two lengths, [x, y], in plan coordinates (2.3).
- *
- * @minItems 2
- * @maxItems 2
- */
-export type Point4 = [Length, Length];
-/**
- * 13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0.
- */
-export type AngleIn1801801 = number;
-/**
- * 13.3: a reference to the level.
- */
-export type Reference35 = string;
 /**
  * 2.6: a JSON array of exactly two lengths, [x, y], in plan coordinates (2.3).
  *
@@ -796,13 +916,32 @@ export type Point5 = [Length, Length];
  */
 export type AngleIn1801802 = number;
 /**
+ * 13.3: a reference to the level.
+ */
+export type Reference50 = string;
+/**
+ * 2.6: a JSON array of exactly two lengths, [x, y], in plan coordinates (2.3).
+ *
+ * @minItems 2
+ * @maxItems 2
+ */
+export type Point6 = [Length, Length];
+/**
+ * 13.1, 13.3: the direction it faces, counter-clockwise from +X. Absent: 0.
+ */
+export type AngleIn1801803 = number;
+/**
  * 13.3: which of the three forms this host has.
  */
 export type Mode = 'wallFace' | 'surface' | 'free';
 /**
+ * 12.5, 19.2: a reference to the option the element is in. Absent: it is in no option, and so in every design.
+ */
+export type Reference51 = string;
+/**
  * 12.5: a human-readable label, 1–200 characters. Absent by default.
  */
-export type Name16 = string;
+export type Name18 = string;
 
 /**
  * 1.1: a Floorspec document is a JSON object (FS-CORE-1.1.1) whose members are the version declaration, the project, an optional site, the element collections, the program, the extension declarations and extras, and no other member (FS-CORE-1.1.2). This schema checks structure only — tier 3 of chapter 10, reported as FS-SCH-001. The invariants of chapter 10 (references resolve, IDs are unique, the wall graph is planar, rooms, openings and hosted elements fit, the program is consistent, extensions are declared and used as their registry entries say) need a validator. Every length is an integer (2.1): a number written with a fraction or an exponent must be mapped to a non-number before this schema is applied.
@@ -824,11 +963,13 @@ export interface FloorspecCore03Document {
   materials?: Materials;
   assets?: Assets;
   stairs?: Stairs;
+  optionSets?: OptionSets;
+  options?: Options;
   program?: Program;
   extensionsUsed?: ExtensionsUsed;
   extensionsRequired?: ExtensionsRequired;
   extensions?: TopLevelExtensionData;
-  extras?: Extras19;
+  extras?: Extras21;
 }
 /**
  * 1.1, 1.8: the project the document describes. Present in every document.
@@ -936,6 +1077,7 @@ export interface Junction {
   level: Reference1;
   position: Point1;
   join?: JoinOverride;
+  option?: Reference3;
   name?: Name2;
   extensions?: Extensions2;
   extras?: Extras4;
@@ -981,14 +1123,16 @@ export interface Walls {
  * 5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.
  */
 export interface Wall {
-  level: Reference3;
-  start: Reference4;
-  end: Reference5;
-  type?: Reference6;
+  level: Reference4;
+  start: Reference5;
+  end: Reference6;
+  type?: Reference7;
   layers?: Layers;
   justification?: Justification;
   base?: Base;
   top?: Top;
+  finishes?: WallFinishes;
+  option?: Reference13;
   name?: Name3;
   extensions?: Extensions3;
   extras?: Extras5;
@@ -999,20 +1143,20 @@ export interface Wall {
 export interface Layer {
   thickness: PositiveLength3;
   function: LayerFunction;
-  material?: Reference7;
+  material?: Reference8;
 }
 /**
  * 5.2, 5.9: the wall's bottom — `level` (absent: the wall's own level, a derived default) plus `offset`.
  */
 export interface Base {
-  level?: Reference8;
+  level?: Reference9;
   offset?: Length2;
 }
 /**
  * 5.9: the top is level `level`'s elevation plus `offset`.
  */
 export interface LevelConstrainedTop {
-  level: Reference9;
+  level: Reference10;
   offset?: Length3;
 }
 /**
@@ -1020,6 +1164,37 @@ export interface LevelConstrainedTop {
  */
 export interface UnconnectedTop {
   height: Length4;
+}
+/**
+ * 5.2, 18.5: the finishes of the wall's faces, and of regions of them, where they differ from the rooms they face.
+ */
+export interface WallFinishes {
+  left?: FaceFinish;
+  right?: FaceFinish1;
+}
+/**
+ * 18.5: the finish of the wall's left face (5.4).
+ */
+export interface FaceFinish {
+  material?: Reference11;
+  regions?: Regions;
+}
+/**
+ * 18.5: a rectangle on a face, from `from` to `to` along the wall's location line from its start junction, and from `bottom` to `top` above its base elevation, finished with `material`. Every member is always present and the four lengths MUST NOT be negative (FS-CORE-18.5.1).
+ */
+export interface Region {
+  from: NonNegativeLength;
+  to: NonNegativeLength1;
+  bottom: NonNegativeLength2;
+  top: NonNegativeLength3;
+  material: Reference12;
+}
+/**
+ * 18.5: the finish of the wall's right face (5.4).
+ */
+export interface FaceFinish1 {
+  material?: Reference11;
+  regions?: Regions;
 }
 /**
  * 1.4, 1.6: extension data on this wall.
@@ -1043,9 +1218,10 @@ export interface Separators {
  * 5.2: a room separator — a boundary of zero thickness that divides rooms without building anything, an edge of its level's wall graph. Every separator MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).
  */
 export interface Separator {
-  level: Reference10;
-  start: Reference11;
-  end: Reference12;
+  level: Reference14;
+  start: Reference15;
+  end: Reference16;
+  option?: Reference17;
   name?: Name4;
   extensions?: Extensions4;
   extras?: Extras6;
@@ -1072,15 +1248,16 @@ export interface Openings {
  * 7.1: a hole in a wall — a door, a window or a plain cased opening — hosted on its wall and placed by distances along it. It has only the members of its table (FS-CORE-1.4.1). That its width and height resolve (FS-CORE-7.2.1), that it fits its wall (7.3), that its clear opening fits it (FS-CORE-7.2.2) and that its own clear opening has an area only when a window type fills it (FS-CORE-7.1.3) are invariants, not checked here.
  */
 export interface Opening {
-  wall: Reference13;
-  offset: NonNegativeLength;
+  wall: Reference18;
+  offset: NonNegativeLength4;
   width?: PositiveLength4;
   height?: PositiveLength5;
-  sill?: NonNegativeLength1;
-  fill?: Reference14;
+  sill?: NonNegativeLength5;
+  fill?: Reference19;
   hinge?: Hinge;
   swing?: Swing;
   clearOpening?: ClearOpening;
+  option?: Reference20;
   name?: Name5;
   extensions?: Extensions5;
   extras?: Extras7;
@@ -1115,15 +1292,16 @@ export interface Rooms {
  * 6.5: a room — what cannot be derived about a bounded face of its level's wall graph: its name, its function, its finishes, the program item it fulfils, its floor and ceiling (chapter 15), and the anchor that says which face it is. Every room MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). Where its anchor lies (6.3) is an invariant, not checked here.
  */
 export interface Room {
-  level: Reference15;
+  level: Reference21;
   anchor: Point2;
   function?: RoomFunction;
-  wallFinish?: Reference16;
-  floorFinish?: Reference17;
-  ceilingFinish?: Reference18;
-  brief?: Reference19;
+  wallFinish?: Reference22;
+  floorFinish?: Reference23;
+  ceilingFinish?: Reference24;
+  brief?: Reference25;
   floor?: Floor;
   ceiling?: Ceiling;
+  option?: Reference26;
   name?: Name6;
   extensions?: Extensions6;
   extras?: Extras8;
@@ -1208,12 +1386,13 @@ export interface Slabs {
  * 6.7: an authored floor or deck that is not derived from a room — a patio, a porch deck, a landing. Every slab MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1).
  */
 export interface Slab {
-  level: Reference20;
+  level: Reference27;
   boundary: Polygon1;
   thickness: PositiveLength14;
   offset?: Length6;
-  material?: Reference21;
+  material?: Reference28;
   purpose?: SlabPurpose;
+  option?: Reference29;
   name?: Name7;
   extensions?: Extensions7;
   extras?: Extras9;
@@ -1240,14 +1419,15 @@ export interface Roofs {
  * 16.1: a roof — a footprint polygon, a pitch, and gables and overhangs edge by edge. It has only the members of its table (FS-CORE-1.4.1, FS-CORE-16.1.1).
  */
 export interface Roof {
-  level: Reference22;
+  level: Reference30;
   footprint: Polygon2;
   height?: Length7;
   pitch?: Pitch1;
-  overhang?: NonNegativeLength2;
+  overhang?: NonNegativeLength6;
   edges?: RoofEdges;
   thickness?: PositiveLength15;
-  material?: Reference23;
+  material?: Reference31;
+  option?: Reference32;
   name?: Name8;
   extensions?: Extensions8;
   extras?: Extras10;
@@ -1280,7 +1460,7 @@ export interface RoofEdge {
    */
   gable?: boolean;
   pitch?: Pitch2;
-  overhang?: NonNegativeLength3;
+  overhang?: NonNegativeLength7;
 }
 /**
  * 16.1, 16.2: the pitch the roof rises at from this edge. Absent by default: the roof's `pitch` (a derived default).
@@ -1322,9 +1502,18 @@ export interface WallType {
    */
   kind: 'wallType';
   layers: Layers1;
+  source?: Source;
   name?: Name9;
   extensions?: Extensions9;
   extras?: Extras11;
+}
+/**
+ * 8.1: the library item this type was copied from. Absent by default: not recorded.
+ */
+export interface Source {
+  library: HttpsURI;
+  version: LibraryVersion;
+  item: LibraryItem;
 }
 /**
  * 1.4, 1.6, 8.1: extension data on this type.
@@ -1348,10 +1537,11 @@ export interface DoorType {
   kind: 'doorType';
   width?: PositiveLength16;
   height?: PositiveLength17;
-  sill?: NonNegativeLength4;
+  sill?: NonNegativeLength8;
   operation?: DoorOperation;
   clearOpening?: DoorClearOpening;
   clearances?: Clearances;
+  source?: Source1;
   name?: Name10;
   extensions?: Extensions10;
   extras?: Extras12;
@@ -1379,6 +1569,14 @@ export interface ClearanceEnvelope {
   max: TripleOfLengths1;
 }
 /**
+ * 8.1: the library item this type was copied from. Absent by default: not recorded.
+ */
+export interface Source1 {
+  library: HttpsURI;
+  version: LibraryVersion;
+  item: LibraryItem;
+}
+/**
  * 1.4, 1.6, 8.1: extension data on this type.
  */
 export interface Extensions10 {
@@ -1400,10 +1598,11 @@ export interface WindowType {
   kind: 'windowType';
   width?: PositiveLength20;
   height?: PositiveLength21;
-  sill?: NonNegativeLength5;
+  sill?: NonNegativeLength9;
   operation?: WindowOperation;
   clearOpening?: ClearOpening1;
   clearances?: Clearances1;
+  source?: Source2;
   name?: Name11;
   extensions?: Extensions11;
   extras?: Extras13;
@@ -1421,6 +1620,14 @@ export interface ClearOpening1 {
  */
 export interface Clearances1 {
   [k: string]: ClearanceEnvelope | undefined;
+}
+/**
+ * 8.1: the library item this type was copied from. Absent by default: not recorded.
+ */
+export interface Source2 {
+  library: HttpsURI;
+  version: LibraryVersion;
+  item: LibraryItem;
 }
 /**
  * 1.4, 1.6, 8.1: extension data on this type.
@@ -1444,21 +1651,37 @@ export interface Materials {
   [k: string]: Material | undefined;
 }
 /**
- * 8.5: what a layer, a finish or a slab's surface is made of. It has only the members of its table (FS-CORE-1.4.1).
+ * 8.5, 18.1: what a layer, a finish or a slab's surface is made of - a physically based surface in the metallic-roughness model of glTF 2.0. It has only the members of its table (FS-CORE-1.4.1).
  */
 export interface Material {
   color?: Colour;
+  metallic?: Metallic;
+  roughness?: Roughness;
   texture?: Texture;
+  source?: Source3;
   name?: Name12;
   extensions?: Extensions12;
   extras?: Extras14;
 }
+export interface WithABaseColourMap {
+  [k: string]: unknown | undefined;
+}
+export interface WithANormalMap {
+  [k: string]: unknown | undefined;
+}
+export interface WithAMetallicRoughnessMap {
+  [k: string]: unknown | undefined;
+}
+export interface WithAOcclusionMap {
+  [k: string]: unknown | undefined;
+}
 /**
- * 8.5: an image tiled across the surface; one tile covers `size` [w, h] base units. Absent by default; when present, both members are present.
+ * 8.1, 8.5: the library item this material was copied from. Absent by default: not recorded.
  */
-export interface Texture {
-  asset: Reference24;
-  size: TileSize;
+export interface Source3 {
+  library: HttpsURI;
+  version: LibraryVersion;
+  item: LibraryItem;
 }
 /**
  * 1.4, 1.6: extension data on this material.
@@ -1495,6 +1718,7 @@ export interface Asset2 {
   uri?: URI;
   sha256: SHA256Digest;
   mediaType: MediaType;
+  byteLength?: ByteLength;
   name?: Name13;
   extensions?: Extensions13;
   extras?: Extras15;
@@ -1518,10 +1742,10 @@ export interface Stairs {
   [k: string]: Stair | undefined;
 }
 export interface Stair2 {
-  level: Reference25;
-  to: Reference26;
-  position: Point3;
-  rotation?: AngleIn180180;
+  level: Reference37;
+  to: Reference38;
+  position: Point4;
+  rotation?: AngleIn1801801;
   width: PositiveLength23;
   tread: PositiveLength24;
   /**
@@ -1531,6 +1755,7 @@ export interface Stair2 {
   maxRiser?: PositiveLength25;
   form?: StairForm;
   handrail?: Handrail;
+  option?: Reference39;
   name?: Name14;
   extensions?: Extensions14;
   extras?: Extras16;
@@ -1577,7 +1802,7 @@ export interface UShapedStair {
    * 17.2: the number of risers of the first flight, the last of which rises onto the landing or the first winder; an integer from 1 to 2^53 − 1 (FS-CORE-17.2.1). That the stair's riser count fits it (FS-CORE-17.4.2) is an invariant (FS-INV-903), not checked here. Always present.
    */
   risersBeforeTurn: number;
-  gap?: NonNegativeLength6;
+  gap?: NonNegativeLength10;
 }
 /**
  * 17.2: { "kind": "winder", "angle": "quarter", "turn", "risersBeforeTurn", "winders" } — an L that turns on winders; it has no gap (FS-CORE-17.2.1).
@@ -1628,7 +1853,7 @@ export interface HalfTurnWinderStair {
    * 17.2: the number of winder treads at the turn, an integer from 1 to 2^53 − 1 (FS-CORE-17.2.1). Always present.
    */
   winders: number;
-  gap?: NonNegativeLength7;
+  gap?: NonNegativeLength11;
 }
 /**
  * 17.2: { "kind": "spiral", "turn", "diameter", "sweep" } — treads that wind around a centre.
@@ -1671,6 +1896,60 @@ export interface Extras16 {
   [k: string]: unknown | undefined;
 }
 /**
+ * 1.1, 19.1: the collection of option sets (1.4), keyed by element ID. New in 0.3.
+ */
+export interface OptionSets {
+  [k: string]: OptionSet | undefined;
+}
+/**
+ * 19.1: an option set. It has only the members of its table (FS-CORE-1.4.1).
+ */
+export interface OptionSet {
+  primary: Reference40;
+  name?: Name15;
+  extensions?: Extensions15;
+  extras?: Extras17;
+}
+/**
+ * 1.4, 1.6: extension data on this option set.
+ */
+export interface Extensions15 {
+  [k: string]: unknown | undefined;
+}
+/**
+ * 1.4, 1.7: application-specific data on this option set.
+ */
+export interface Extras17 {
+  [k: string]: unknown | undefined;
+}
+/**
+ * 1.1, 19.1: the collection of options (1.4), keyed by element ID; each option is of one option set. New in 0.3.
+ */
+export interface Options {
+  [k: string]: Option | undefined;
+}
+/**
+ * 19.1: one alternative of an option set. It has only the members of its table (FS-CORE-1.4.1).
+ */
+export interface Option {
+  set: Reference41;
+  name?: Name16;
+  extensions?: Extensions16;
+  extras?: Extras18;
+}
+/**
+ * 1.4, 1.6: extension data on this option.
+ */
+export interface Extensions16 {
+  [k: string]: unknown | undefined;
+}
+/**
+ * 1.4, 1.7: application-specific data on this option.
+ */
+export interface Extras18 {
+  [k: string]: unknown | undefined;
+}
+/**
  * 1.1, 11.1: the program — the items the building is meant to provide and the adjacency graph between them.
  */
 export interface Program {
@@ -1688,32 +1967,32 @@ export interface ProgramItems {
  */
 export interface ProgramItem {
   function: RoomFunction1;
-  name?: Name15;
+  name?: Name17;
   count?: Count;
   targetArea?: Area1;
   minArea?: Area2;
-  level?: Reference27;
-  extensions?: Extensions15;
-  extras?: Extras17;
+  level?: Reference42;
+  extensions?: Extensions17;
+  extras?: Extras19;
 }
 /**
  * 1.6, 11.1: extension data on this item.
  */
-export interface Extensions15 {
+export interface Extensions17 {
   [k: string]: unknown | undefined;
 }
 /**
  * 1.7, 11.1: application-specific data on this item.
  */
-export interface Extras17 {
+export interface Extras19 {
   [k: string]: unknown | undefined;
 }
 /**
  * 11.2: an undirected relation between two program items.
  */
 export interface Adjacency {
-  a: Reference28;
-  b: Reference29;
+  a: Reference43;
+  b: Reference44;
   kind: Kind1;
   weight?: Weight;
 }
@@ -1740,24 +2019,25 @@ export interface Collections {
     | undefined;
 }
 /**
- * 12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.
+ * 12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members — `fallback`, `host`, `clearances`, `option` (19.2), `name` and `extras` — MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.
  */
 export interface ExtensionElement {
   fallback: Fallback;
   host?: Host;
   clearances?: Clearances2;
-  name?: Name16;
-  extras?: Extras18;
+  option?: Reference51;
+  name?: Name18;
+  extras?: Extras20;
   [k: string]: unknown | undefined;
 }
 /**
  * 12.6: what to show when the extension is not implemented. Always present.
  */
 export interface Fallback {
-  level: Reference30;
+  level: Reference45;
   box: Box;
-  asset?: Reference31;
-  symbol?: Reference32;
+  asset?: Reference46;
+  symbol?: Reference47;
 }
 /**
  * 12.6, 13.2: the space the element occupies, in its frame. Always present.
@@ -1774,10 +2054,10 @@ export interface WallFaceHost {
    * 13.3: "wallFace".
    */
   mode: 'wallFace';
-  wall: Reference33;
+  wall: Reference48;
   side: Side;
-  offset: NonNegativeLength8;
-  height: NonNegativeLength9;
+  offset: NonNegativeLength12;
+  height: NonNegativeLength13;
 }
 /**
  * 13.3: on the floor or the ceiling of a room.
@@ -1787,10 +2067,10 @@ export interface SurfaceHost {
    * 13.3: "surface".
    */
   mode: 'surface';
-  room: Reference34;
+  room: Reference49;
   surface: Surface;
-  position: Point4;
-  rotation?: AngleIn1801801;
+  position: Point5;
+  rotation?: AngleIn1801802;
 }
 /**
  * 13.3: standing free on a level.
@@ -1800,9 +2080,9 @@ export interface FreeHost {
    * 13.3: "free".
    */
   mode: 'free';
-  level: Reference35;
-  position: Point5;
-  rotation?: AngleIn1801802;
+  level: Reference50;
+  position: Point6;
+  rotation?: AngleIn1801803;
 }
 /**
  * 13.5: the space the element needs kept clear, in its frame. Absent: none.
@@ -1813,12 +2093,12 @@ export interface Clearances2 {
 /**
  * 1.7, 12.5: application-specific data on this element.
  */
-export interface Extras18 {
+export interface Extras20 {
   [k: string]: unknown | undefined;
 }
 /**
  * 1.7: application-specific data for the document as a whole.
  */
-export interface Extras19 {
+export interface Extras21 {
   [k: string]: unknown | undefined;
 }

@@ -1,0 +1,6 @@
+{
+  "description": "Removing the tile is blocked by W1, whose right face names it, with cascade or without: cascade does not apply to a material (2.2).",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

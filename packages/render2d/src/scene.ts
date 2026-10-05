@@ -138,12 +138,15 @@ export function defaultLevel(doc: FloorspecDocument): string | undefined {
 
 /**
  * Validate and derive a document, and keep one level of it. Throws InvalidDocumentError when the
- * document is not valid — a plan is only drawn from geometry the engine can derive.
+ * document is not valid — a plan is only drawn from geometry the engine can derive. A document
+ * with design options (Core 0.3, chapter 19) is drawn in one design: `design`, a design input
+ * (19.6), or the primary design; a design the engine derives nothing for is a RangeError.
  */
-export function buildScene(input: string | Uint8Array | object, level?: string): Scene {
-  const ev = evaluate(input);
-  if (!ev.valid || !ev.document || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);
-  const doc = ev.document;
+export function buildScene(input: string | Uint8Array | object, level?: string, design?: Readonly<Record<string, string>>): Scene {
+  const ev = evaluate(input, design === undefined ? {} : { design });
+  if (!ev.valid || !ev.document) throw new InvalidDocumentError(ev.diagnostics);
+  if (!ev.view || !ev.analysis) throw new RangeError('the document has no such design, or it is not valid (Core 19.6.2)');
+  const doc = ev.view;
   const derived = deriveFrom(doc, ev.analysis);
   const lid = level ?? defaultLevel(doc);
   const lvl = lid === undefined ? undefined : doc.levels?.[lid];

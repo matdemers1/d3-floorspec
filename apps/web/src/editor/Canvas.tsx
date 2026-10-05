@@ -234,7 +234,14 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
       {layers.rooms ? (
         <g className="fs-plan2__rooms">
           {level.faces.map((f, i) => (
-            <path key={f.room ?? `free-${String(i)}`} className={f.room === null ? 'fs-plan2__face--free' : undefined} d={pathOf(view, [f.outer, ...f.holes])} fillRule="evenodd" />
+            <path
+              key={f.room ?? `free-${String(i)}`}
+              className={f.room === null ? 'fs-plan2__face--free' : f.tint === undefined ? undefined : 'fs-plan2__face--tinted'}
+              // Core 0.3, 18.6: a room tinted by its floor finish's colour, faintly.
+              style={f.tint === undefined || ghost ? undefined : { fill: f.tint }}
+              d={pathOf(view, [f.outer, ...f.holes])}
+              fillRule="evenodd"
+            />
           ))}
         </g>
       ) : null}

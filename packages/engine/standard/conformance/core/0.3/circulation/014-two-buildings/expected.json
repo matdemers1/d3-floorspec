@@ -236,6 +236,10 @@
         "reachable": false
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "HALL": {
         "bottom": 0,

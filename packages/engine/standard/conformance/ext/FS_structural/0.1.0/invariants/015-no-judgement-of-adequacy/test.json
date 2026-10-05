@@ -1,0 +1,8 @@
+{
+  "description": "A house framed as no engineer would accept: the Kitchen's floor on 2x4 joists at 48\" across its 11'6 1/2\", the deck on 2x4 joists at 48\" with no span recorded, and the back door widened to 10' under one 2x4 laid flat. FS_structural compares no member with a load, a span table or a code: the document is valid, reports nothing, and derives only the values of chapter 5 - the spans as recorded and measured, and nothing that says whether anything is adequate.",
+  "covers": [
+    "FS-STRC-1.4.1",
+    "FS-STRC-1.4.2",
+    "FS-STRC-5.1.1"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "context": {
+    "option": "OP2"
+  },
+  "batch": [
+    {
+      "op": "placeElement",
+      "extension": "FS_furniture",
+      "collection": "appliances",
+      "id": "X16",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W1",
+        "toward": "Kitchen",
+        "at": "3300mm from start",
+        "height": 0
+      },
+      "element": {
+        "fallback": {
+          "box": {
+            "min": [0, -576000, 0],
+            "max": [896000, 576000, 2278400]
+          },
+          "asset": "M-refrigerator-900",
+          "symbol": "S-refrigerator-900"
+        },
+        "category": "refrigerator",
+        "catalogue": "refrigerator-900",
+        "name": "Refrigerator, 900 mm",
+        "clearances": {
+          "door": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [896000, -576000, 0],
+            "max": [2048000, 576000, 2278400]
+          }
+        }
+      }
+    }
+  ]
+}

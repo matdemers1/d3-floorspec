@@ -1,0 +1,7 @@
+{
+  "description": "The same third chair, with the table: grouped with the table and with X8, so neither lint applies.",
+  "covers": [
+    "FS-FURN-1.2.3",
+    "FS-FURN-6.1.1"
+  ]
+}

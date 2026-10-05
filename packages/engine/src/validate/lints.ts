@@ -4,12 +4,13 @@
  */
 import { Surd } from '../exact/surd.js';
 import { cross, dot, type IPoint } from '../geometry/predicates.js';
-import { entries, extElements, get, ipoint, openingDimensions, programItems, type FloorspecDocument } from '../model/document.js';
+import { entries, get, ipoint, openingDimensions, programItems, type FloorspecDocument } from '../model/document.js';
 import { analyseProgram } from '../derive/program.js';
 import { circulationLints } from '../circulation/circulation.js';
 import type { Analysis, Reporter } from './invariants.js';
 import { surfaceDerived } from '../roofs/roofs.js';
 import { stepsDerived } from '../stairs/stairs.js';
+import { references } from './references.js';
 
 const ptr = (collection: string, id: string): string => `/${collection}/${id.replace(/~/g, '~0').replace(/\//g, '~1')}`;
 
@@ -18,6 +19,10 @@ function along(S: IPoint, d: IPoint, P: IPoint): Surd {
   return Surd.of(d[0] * (P[0] - S[0]) + d[1] * (P[1] - S[1]));
 }
 
+/**
+ * The lints of one design (19.5): every lint but FS-LINT-006, FS-LINT-007 and FS-LINT-017, which
+ * are of the document as a whole (`documentLints`).
+ */
 export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): void {
   // 001: acute joins — consecutive walls at a junction whose wedge is narrower than 30° (5.10).
   for (const [, la] of analysis.levels) {
@@ -85,42 +90,6 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
       r.report('FS-LINT-005', `${id} reaches into the join at the ${reachesStart ? 'start' : 'end'} of ${o.wall}.`, [id], { pointer: ptr('openings', id) });
   }
 
-  // 006: unused types, materials and assets.
-  const referred = new Set<string>();
-  const add = (x: string | undefined): void => {
-    if (x !== undefined) referred.add(x);
-  };
-  for (const [, w] of entries(doc.walls)) {
-    add(w.type);
-    w.layers?.forEach((l) => {
-      add(l.material);
-    });
-  }
-  for (const [, t] of entries(doc.types)) if (t.kind === 'wallType')
-      t.layers.forEach((l) => {
-        add(l.material);
-      });
-  for (const [, o] of entries(doc.openings)) add(o.fill);
-  for (const [, rm] of entries(doc.rooms)) {
-    add(rm.wallFinish);
-    add(rm.floorFinish);
-    add(rm.ceilingFinish);
-  }
-  for (const [, s] of entries(doc.slabs)) add(s.material);
-  for (const [, rf] of entries(doc.roofs)) add(rf.material);
-  for (const [, m] of entries(doc.materials)) add(m.texture?.asset);
-  for (const x of extElements(doc)) {
-    add(x.element.fallback.asset);
-    add(x.element.fallback.symbol);
-  }
-  for (const c of ['types', 'materials', 'assets'] as const)
-    for (const [id] of entries(doc[c] as Record<string, unknown> | undefined))
-      if (!referred.has(id)) r.report('FS-LINT-006', `${id} is not referred to by anything.`, [id], { pointer: ptr(c, id) }, [{ op: 'remove', id }]);
-
-  // 007: assets located by uri.
-  for (const [id, a] of entries(doc.assets))
-    if (a.uri !== undefined) r.report('FS-LINT-007', `${id} is located by uri, so the document depends on someone else's server.`, [id], { pointer: ptr('assets', id) });
-
   // 008 … 011: the program; 012 … 014: circulation (Core 0.2).
   if (analysis.core02) {
     programLints(doc, analysis, r);
@@ -134,6 +103,20 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
   for (const [id, st] of entries(doc.stairs))
     if (!stepsDerived(st))
       r.report('FS-LINT-016', `${id} is a ${st.form?.kind} stair, whose steps, run, walkline and headroom this draft does not derive.`, [id], { pointer: ptr('stairs', id) });
+}
+
+/**
+ * FS-LINT-006 and FS-LINT-007 (8.7), of the document as a whole whatever its design (19.5): a type
+ * that an element of any option refers to is used.
+ */
+export function documentLints(doc: FloorspecDocument, r: Reporter): void {
+  const referred = new Set<string>();
+  for (const ref of references(doc)) if (ref.collection === 'types' || ref.collection === 'materials' || ref.collection === 'assets') referred.add(ref.target);
+  for (const c of ['types', 'materials', 'assets'] as const)
+    for (const [id] of entries(doc[c] as Record<string, unknown> | undefined))
+      if (!referred.has(id)) r.report('FS-LINT-006', `${id} is not referred to by anything.`, [id], { pointer: ptr(c, id) }, [{ op: 'remove', id }]);
+  for (const [id, a] of entries(doc.assets))
+    if (a.uri !== undefined) r.report('FS-LINT-007', `${id} is located by uri, so the document depends on someone else's server.`, [id], { pointer: ptr('assets', id) });
 }
 
 /** 11.5: an unmet program is a warning, never an error (FS-CORE-11.5.2). */

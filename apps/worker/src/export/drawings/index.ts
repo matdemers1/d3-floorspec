@@ -85,7 +85,7 @@ function levelOrder(doc: FloorspecDocument): string[] {
 function prepare(document: object, options: DrawingOptions): Prepared {
   const ev = evaluate(document);
   if (!ev.valid || !ev.document || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);
-  const doc = ev.document;
+  const doc = ev.view ?? ev.document;
   const derived = deriveFrom(doc, ev.analysis);
   const order = levelOrder(doc);
   if (order.length === 0) throw new RangeError('the model has no levels to draw');

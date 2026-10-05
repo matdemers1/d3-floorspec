@@ -1,0 +1,435 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Phase 10 framed house"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "EXT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 211328,
+          "function": "core"
+        }
+      ]
+    },
+    "INT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 146304,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 4681728]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [4681728, 4681728]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [7802880, 4681728]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [7802880, 0]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [4681728, 0]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [4681728, 2340864]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [7802880, 2340864]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "EXT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": "yes",
+          "shear": true,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x6",
+              "width": 48768,
+              "depth": 178816
+            },
+            "spacing": 520192
+          }
+        }
+      }
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "EXT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": true,
+          "shear": true,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x6",
+              "width": 48768,
+              "depth": 178816
+            },
+            "spacing": 520192
+          }
+        }
+      }
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "EXT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": true,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x6",
+              "width": 48768,
+              "depth": 178816
+            },
+            "spacing": 520192
+          }
+        }
+      }
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J8",
+      "type": "EXT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": true,
+          "shear": true,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x6",
+              "width": 48768,
+              "depth": 178816
+            },
+            "spacing": 520192
+          }
+        }
+      }
+    },
+    "W5": {
+      "level": "L1",
+      "start": "J8",
+      "end": "J5",
+      "type": "EXT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": true,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x6",
+              "width": 48768,
+              "depth": 178816
+            },
+            "spacing": 520192
+          }
+        }
+      }
+    },
+    "W6": {
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "EXT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": true,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x6",
+              "width": 48768,
+              "depth": 178816
+            },
+            "spacing": 520192
+          }
+        }
+      }
+    },
+    "W7": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J1",
+      "type": "EXT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": true,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x6",
+              "width": 48768,
+              "depth": 178816
+            },
+            "spacing": 520192
+          }
+        }
+      }
+    },
+    "W8": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J7",
+      "type": "INT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": true,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x4",
+              "width": 48768,
+              "depth": 113792
+            },
+            "spacing": 520192
+          }
+        }
+      }
+    },
+    "W9": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J3",
+      "type": "INT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": true,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x4",
+              "width": 48768,
+              "depth": 113792
+            },
+            "spacing": 520192
+          }
+        }
+      }
+    },
+    "W10": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J8",
+      "type": "INT",
+      "extensions": {
+        "FS_structural": {
+          "bearing": false,
+          "framing": {
+            "material": "wood",
+            "system": "studs",
+            "member": {
+              "designation": "2x4",
+              "width": 48768,
+              "depth": 113792
+            },
+            "spacing": 32512
+          }
+        }
+      }
+    }
+  },
+  "openings": {
+    "O1": {
+      "wall": "W7",
+      "offset": 1170432,
+      "width": 1170432,
+      "height": 2600960,
+      "name": "Back door",
+      "extensions": {
+        "FS_structural": {
+          "header": {
+            "material": "wood",
+            "member": {
+              "designation": "2x10",
+              "width": 48768,
+              "depth": 300736
+            },
+            "plies": 2
+          }
+        }
+      }
+    },
+    "O2": {
+      "wall": "W2",
+      "offset": 1560576,
+      "width": 1560576,
+      "height": 1560576,
+      "sill": 1170432,
+      "name": "Kitchen window",
+      "extensions": {
+        "FS_structural": {
+          "header": {
+            "material": "wood",
+            "member": {
+              "designation": "2x10",
+              "width": 48768,
+              "depth": 300736
+            },
+            "plies": 2
+          },
+          "needsEngineer": true,
+          "note": "Widening this window is planned: the header is to be sized by an engineer."
+        }
+      }
+    },
+    "O3": {
+      "wall": "W10",
+      "offset": 780288,
+      "width": 975360,
+      "height": 2600960,
+      "name": "Bath door"
+    },
+    "O4": {
+      "wall": "W8",
+      "offset": 390144,
+      "width": 975360,
+      "height": 2600960,
+      "name": "Utility door",
+      "extensions": {
+        "FS_structural": {
+          "header": {
+            "material": "wood",
+            "member": {
+              "designation": "2x6",
+              "width": 48768,
+              "depth": 178816
+            },
+            "plies": 2
+          }
+        }
+      }
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2340864, 2340864],
+      "name": "Kitchen",
+      "function": "kitchen",
+      "extensions": {
+        "FS_structural": {
+          "floor": {
+            "framing": {
+              "material": "wood",
+              "system": "joists",
+              "member": {
+                "designation": "2x10",
+                "width": 48768,
+                "depth": 300736
+              },
+              "spacing": 520192
+            },
+            "span": {
+              "direction": [1, 0]
+            }
+          }
+        }
+      }
+    },
+    "R2": {
+      "level": "L1",
+      "anchor": [6242304, 3511296],
+      "name": "Bath",
+      "function": "bath",
+      "extensions": {
+        "FS_structural": {
+          "floor": {
+            "framing": {
+              "material": "concrete",
+              "system": "solid"
+            }
+          }
+        }
+      }
+    },
+    "R3": {
+      "level": "L1",
+      "anchor": [6242304, 1170432],
+      "name": "Utility",
+      "function": "mechanical"
+    }
+  },
+  "slabs": {
+    "S1": {
+      "level": "L1",
+      "boundary": [[780288, -3121152], [3901440, -3121152], [3901440, -390144], [780288, -390144]],
+      "thickness": 48768,
+      "name": "Deck",
+      "extensions": {
+        "FS_structural": {
+          "framing": {
+            "material": "wood",
+            "system": "joists",
+            "member": {
+              "designation": "2x8",
+              "width": 48768,
+              "depth": 235712
+            },
+            "spacing": 520192
+          },
+          "span": {
+            "direction": [0, 1],
+            "length": 2340864
+          }
+        }
+      }
+    }
+  },
+  "extensionsUsed": {
+    "FS_structural": "0.1.0"
+  }
+}

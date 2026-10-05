@@ -8,7 +8,7 @@
  * read.
  */
 import { HalfEdgeGraph, predicates, type Face } from '@floorspec/engine';
-import { cmpStr, getMember, isObject } from '../lib/json.js';
+import { cmpStr, getMember, isObject, type JsonObject } from '../lib/json.js';
 import type { WorkingCopy } from './working.js';
 
 type IPoint = readonly [bigint, bigint];
@@ -29,13 +29,41 @@ export interface LevelEdgeRef {
   readonly end: string;
 }
 
-/** The edges (walls and separators) whose `level` is L, sorted by ID. */
-export function edgesOn(wc: WorkingCopy, level: string): LevelEdgeRef[] {
+/** Which elements a view of the working copy keeps: every one when undefined. */
+export type Keep = ((e: JsonObject) => boolean) | undefined;
+
+const FACE_COLLECTIONS = ['junctions', 'walls', 'separators', 'rooms'] as const;
+
+/**
+ * Ops 0.3, 2.8: the edit design's view, as a test of an element — `option` for its set when the
+ * context names one, and every other set's primary. An element in any other option is left out, and
+ * so is one whose option is not an option of the working copy. Undefined (keep everything) for a
+ * working copy with no junction, edge or room in an option.
+ */
+export function editDesign(wc: WorkingCopy, option: string | undefined = wc.editOption): Keep {
+  const any = FACE_COLLECTIONS.some((c) => wc.ids(c).some((id) => Object.hasOwn(wc.elementIn(c, id) ?? {}, 'option')));
+  if (!any) return undefined;
+  const opts = wc.collection('options') ?? {};
+  const sets = wc.collection('optionSets') ?? {};
+  const setOf = (o: string): unknown => getMember(opts[o], 'set');
+  const theSet = option !== undefined && Object.hasOwn(opts, option) ? setOf(option) : undefined;
+  const chosen = new Set<string>();
+  for (const sid of Object.keys(sets)) {
+    const primary = getMember(sets[sid], 'primary');
+    if (typeof primary === 'string' && (option === undefined || sid !== theSet)) chosen.add(primary);
+  }
+  if (option !== undefined) chosen.add(option);
+  for (const o of [...chosen]) if (!Object.hasOwn(opts, o)) chosen.delete(o);
+  return (e) => !Object.hasOwn(e, 'option') || (typeof e.option === 'string' && chosen.has(e.option));
+}
+
+/** The edges (walls and separators) whose `level` is L, sorted by ID — those `keep` keeps. */
+export function edgesOn(wc: WorkingCopy, level: string, keep?: Keep): LevelEdgeRef[] {
   const out: LevelEdgeRef[] = [];
   for (const kind of ['walls', 'separators'] as const)
     for (const id of wc.ids(kind)) {
       const e = wc.elementIn(kind, id);
-      if (!e || getMember(e, 'level') !== level) continue;
+      if (!e || getMember(e, 'level') !== level || (keep && !keep(e))) continue;
       const start = getMember(e, 'start');
       const end = getMember(e, 'end');
       out.push({ id, kind, start: typeof start === 'string' ? start : '', end: typeof end === 'string' ? end : '' });
@@ -43,12 +71,12 @@ export function edgesOn(wc: WorkingCopy, level: string): LevelEdgeRef[] {
   return out.sort((a, b) => cmpStr(a.id, b.id));
 }
 
-/** The junctions whose `level` is L, with their positions when they are points. */
-export function junctionsOn(wc: WorkingCopy, level: string): { id: string; pos: IPoint | undefined }[] {
+/** The junctions whose `level` is L, with their positions when they are points — those `keep` keeps. */
+export function junctionsOn(wc: WorkingCopy, level: string, keep?: Keep): { id: string; pos: IPoint | undefined }[] {
   const out: { id: string; pos: IPoint | undefined }[] = [];
   for (const id of wc.ids('junctions')) {
     const j = wc.elementIn('junctions', id);
-    if (!j || getMember(j, 'level') !== level) continue;
+    if (!j || getMember(j, 'level') !== level || (keep && !keep(j))) continue;
     out.push({ id, pos: asPoint(getMember(j, 'position')) });
   }
   return out;
@@ -65,14 +93,17 @@ export class LevelFaces {
   readonly positions: ReadonlyMap<string, IPoint>;
   /** Cycle index → bounded face index, or −1 for the unbounded face. */
   private readonly faceOfCycle: number[] = [];
+  /** The view of the working copy this level is read in (Ops 0.3, 2.8: the edit design). */
+  readonly keep: Keep;
 
-  constructor(wc: WorkingCopy, level: string) {
+  constructor(wc: WorkingCopy, level: string, keep: Keep = editDesign(wc)) {
     this.level = level;
-    this.edges = edgesOn(wc, level);
+    this.keep = keep;
+    this.edges = edgesOn(wc, level, keep);
     const positions = new Map<string, IPoint>();
     let broken: string | undefined;
     if (!wc.elementIn('levels', level)) broken = `there is no level ${level}`;
-    for (const j of junctionsOn(wc, level)) {
+    for (const j of junctionsOn(wc, level, keep)) {
       if (!j.pos) broken ??= `junction ${j.id} has no position`;
       else positions.set(j.id, j.pos);
     }
@@ -148,7 +179,7 @@ export class LevelFaces {
     const out: string[] = [];
     for (const id of wc.ids('rooms')) {
       const r = wc.elementIn('rooms', id);
-      if (!r || getMember(r, 'level') !== this.level) continue;
+      if (!r || getMember(r, 'level') !== this.level || (this.keep && !this.keep(r))) continue;
       const a = asPoint(getMember(r, 'anchor'));
       if (!a) continue;
       const pl = this.place(a);

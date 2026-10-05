@@ -1,0 +1,6 @@
+{
+  "description": "A type in an option: types are a library, not an alternative.",
+  "covers": [
+    "FS-CORE-19.2.1"
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "54827b53100efac83d931f2f325a4a8519faf227197f5231ccffa6226a8c4f5d",
+  "created": [],
+  "removed": ["X7", "X8", "X9"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "X8"
+    },
+    {
+      "op": "removeElement",
+      "id": "X9"
+    },
+    {
+      "op": "removeElement",
+      "id": "X7"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "pieces",
+      "id": "X7",
+      "element": {
+        "catalogue": "dining-table-1500",
+        "category": "diningTable",
+        "clearances": {
+          "around": {
+            "max": [2112000, 1920000, 2560000],
+            "min": [-960000, -1920000, 0],
+            "purpose": "access",
+            "shape": "box"
+          }
+        },
+        "fallback": {
+          "level": "L1",
+          "asset": "M-dining-table-1500",
+          "box": {
+            "max": [1152000, 960000, 960000],
+            "min": [0, -960000, 0]
+          },
+          "symbol": "S-dining-table-1500"
+        },
+        "host": {
+          "position": [2340864, 2731008],
+          "mode": "surface",
+          "room": "R1",
+          "surface": "floor"
+        },
+        "name": "Dining table, 1500 x 900 mm",
+        "seats": 6
+      },
+      "extension": "FS_furniture"
+    },
+    {
+      "op": "addElement",
+      "collection": "pieces",
+      "id": "X8",
+      "element": {
+        "catalogue": "dining-chair-450",
+        "category": "chair",
+        "fallback": {
+          "level": "L1",
+          "asset": "M-dining-chair-450",
+          "box": {
+            "max": [640000, 288000, 1088000],
+            "min": [0, -288000, 0]
+          },
+          "symbol": "S-dining-chair-450"
+        },
+        "host": {
+          "position": [1636864, 2731008],
+          "mode": "surface",
+          "room": "R1",
+          "surface": "floor"
+        },
+        "name": "Dining chair",
+        "seats": 1,
+        "with": "X7"
+      },
+      "extension": "FS_furniture"
+    },
+    {
+      "op": "addElement",
+      "collection": "pieces",
+      "id": "X9",
+      "element": {
+        "catalogue": "dining-chair-450",
+        "category": "chair",
+        "fallback": {
+          "level": "L1",
+          "asset": "M-dining-chair-450",
+          "box": {
+            "max": [640000, 288000, 1088000],
+            "min": [0, -288000, 0]
+          },
+          "symbol": "S-dining-chair-450"
+        },
+        "host": {
+          "position": [4196864, 2731008],
+          "mode": "surface",
+          "room": "R1",
+          "rotation": 180000000,
+          "surface": "floor"
+        },
+        "name": "Dining chair",
+        "seats": 1,
+        "with": "X7"
+      },
+      "extension": "FS_furniture"
+    }
+  ]
+}

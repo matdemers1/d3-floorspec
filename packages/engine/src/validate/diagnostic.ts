@@ -26,6 +26,11 @@ export interface Diagnostic {
   elements: string[];
   location: DiagnosticLocation;
   fix?: FixOp[];
+  /**
+   * Core 0.3 (19.5.2): the ID of the option whose design this diagnostic was found in — present
+   * only for one found in an option design and not in the primary design.
+   */
+  design?: string;
 }
 
 /** Compare two string sequences element by element (10.2), shorter first on a common prefix. */
@@ -39,10 +44,12 @@ export function compareStringSeq(a: readonly string[], b: readonly string[]): nu
   return a.length - b.length;
 }
 
-/** Sort diagnostics by code, then by elements (10.2). Stable, so equal keys keep their order. */
+/** Sort diagnostics by code, then by elements, then by design — one without first (10.2). Stable, so equal keys keep their order. */
 export function sortDiagnostics(ds: Diagnostic[]): Diagnostic[] {
   for (const d of ds) d.elements = [...d.elements].sort(cmpStr);
-  return ds.sort((a, b) => (a.code !== b.code ? cmpStr(a.code, b.code) : compareStringSeq(a.elements, b.elements)));
+  const byDesign = (a: Diagnostic, b: Diagnostic): number =>
+    a.design === b.design ? 0 : a.design === undefined ? -1 : b.design === undefined ? 1 : cmpStr(a.design, b.design);
+  return ds.sort((a, b) => (a.code !== b.code ? cmpStr(a.code, b.code) : compareStringSeq(a.elements, b.elements) || byDesign(a, b)));
 }
 
 /** Compare strings as sequences of UTF-16 code units. */

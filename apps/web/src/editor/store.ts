@@ -204,7 +204,7 @@ export interface EditorState {
   proposals: ChangesetRow[];
   review: Review | null;
   /** The right column: the inspector, or the review of a proposal. */
-  side: 'inspector' | 'review';
+  side: 'inspector' | 'review' | 'options';
   /** The left column: the project tree, or the history (FLR-T-3.6). */
   left: 'tree' | 'history';
   log: HistoryEntry[] | null;
@@ -221,6 +221,17 @@ export interface EditorState {
    * — two points, the first kept until the second is clicked.
    */
   picking: { switch: string } | { ridge: string; first: Point | null } | null;
+  /**
+   * Core 0.3, chapter 19: the design shown — option set → option, every set not named showing its
+   * primary — and the option the editor edits in (Ops 0.3, 2.8: every batch is sent with it as
+   * `context.option`), null for the common design.
+   */
+  design: Record<string, string>;
+  editOption: string | null;
+  /** Two options of one set compared side by side (FLR-T-8.4). */
+  optionCompare: { set: string; a: string; b: string } | null;
+  /** The materials list is open (FLR-T-8.1). */
+  materialsOpen: boolean;
 }
 
 const initial: EditorState = {
@@ -262,6 +273,10 @@ const initial: EditorState = {
   palette: false,
   renaming: null,
   picking: null,
+  design: {},
+  editOption: null,
+  optionCompare: null,
+  materialsOpen: false,
 };
 
 function readNudge(): number | null {
@@ -325,9 +340,10 @@ export class EditorStore {
         this.set({ status: 'error', project, error: 'This project has no model yet.' });
         return;
       }
-      const model = readModel(head.hash, head.text);
+      const model = readModel(head.hash, head.text, this.state.design);
       const history = await fetchHistory(this.projectId).catch(() => this.state.history);
       this.set({
+        ...this.optionState(model),
         status: 'ready',
         project,
         model,
@@ -356,10 +372,11 @@ export class EditorStore {
   private async adopt(hash: string): Promise<void> {
     const ticket = ++this.adopting;
     const text = await fetchVersion(this.projectId, hash);
-    const model = readModel(hash, text);
+    const model = readModel(hash, text, this.state.design);
     const history = await fetchHistory(this.projectId).catch(() => this.state.history);
     if (ticket !== this.adopting) return;
     this.set((s) => ({
+      ...this.optionState(model),
       model,
       history,
       level: this.pickLevel(model, s.level),
@@ -398,7 +415,8 @@ export class EditorStore {
         for (let attempt = 0; attempt < 5; attempt++) {
           const sent = typeof batch === 'function' ? batch(attempt) : batch;
           if (sent.length === 0) return false;
-          const answer = await postBatch(this.projectId, this.state.model?.hash ?? model.hash, sent);
+          const option = this.state.editOption;
+          const answer = await postBatch(this.projectId, this.state.model?.hash ?? model.hash, sent, option === null ? undefined : option);
           // An ID the builder chose was used or retired: build again with the next one.
           if (answer.status === 'rejected' && typeof batch === 'function' && answer.diagnostics.some((d) => d.code === 'FS-OPS-005')) continue;
           return await this.settle(answer, label, sent, options);
@@ -513,8 +531,9 @@ export class EditorStore {
       const pending = this.previewBatch;
       const model = this.state.model;
       if (pending === null || model === null) return;
-      const result = applyLocally(model.document, { batch: pending }, OFFICIAL_READER);
-      if (result.status === 'committed') this.set({ preview: { model: readModel(result.hash, result.document), diagnostics: [] } });
+      const option = this.state.editOption;
+      const result = applyLocally(model.document, { batch: pending, ...(option === null ? {} : { context: { option } }) }, OFFICIAL_READER);
+      if (result.status === 'committed') this.set({ preview: { model: readModel(result.hash, result.document, this.state.design), diagnostics: [] } });
       else this.set({ preview: { model: null, diagnostics: result.diagnostics } });
     });
   }
@@ -565,6 +584,40 @@ export class EditorStore {
   get shown(): EditorModel | null {
     const { compare, model } = this.state;
     return compare === null ? model : compare.toModel;
+  }
+
+  // ─── Design options (Core 0.3, chapter 19; FLR-T-8.4) ───────────────────────────────────
+
+  /** What a newly read model keeps of the option state: choices and an edit option that still exist. */
+  private optionState(model: EditorModel): Pick<EditorState, 'design' | 'editOption' | 'optionCompare'> {
+    const { editOption, optionCompare } = this.state;
+    const exists = (o: string) => model.optionSets.some((set) => set.options.some((x) => x.id === o));
+    const compare = optionCompare !== null && exists(optionCompare.a) && exists(optionCompare.b) ? optionCompare : null;
+    return { design: model.design, editOption: editOption !== null && exists(editOption) ? editOption : null, optionCompare: compare };
+  }
+
+  /** Show a design: `set` showing `option` (the shown design never hides the option being edited in). */
+  showOption(set: string, option: string): void {
+    const { model, editOption } = this.state;
+    if (model === null) return;
+    const design = { ...this.state.design, [set]: option };
+    const editing = editOption !== null && model.optionSets.find((s) => s.id === set)?.options.some((o) => o.id === editOption) === true && editOption !== option ? null : editOption;
+    this.preview(null);
+    this.set({ design, editOption: editing, model: readModel(model.hash, model.document, design), draft: null });
+  }
+
+  /** Edit in an option (null: the common design). Shows it, so what is drawn is what is seen. */
+  editIn(option: string | null): void {
+    const model = this.state.model;
+    if (model === null) return;
+    if (option === null) {
+      this.set({ editOption: null });
+      return;
+    }
+    const set = model.optionSets.find((s) => s.options.some((o) => o.id === option));
+    if (set === undefined) return;
+    this.showOption(set.id, option);
+    this.set({ editOption: option });
   }
 
   /** The type the draw panel has chosen, as a choice (a document type or a starter). */

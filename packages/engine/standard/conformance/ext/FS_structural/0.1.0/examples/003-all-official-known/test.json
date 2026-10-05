@@ -1,0 +1,7 @@
+{
+  "description": "The house read with every official entry known, by an implementation of FS_structural alone: only FS_structural is evaluated and derived.",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.2.4"
+  ]
+}

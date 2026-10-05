@@ -55,7 +55,16 @@ export interface ClearOpening {
   readonly area?: number;
 }
 export type Material = G.Material;
+/** 18.2 (Core 0.3): a material's texture — its maps and how one tile of them is laid. */
+export type Texture = G.Texture;
 export type Asset = G.Asset;
+/** 18.5 (Core 0.3): a wall's `finishes`, a face finish, and a region of a face. */
+export type WallFinishes = G.WallFinishes;
+export type FaceFinish = G.FaceFinish;
+export type FinishRegion = G.Region;
+/** 19.1 (Core 0.3): an option set and an option. */
+export type OptionSet = G.OptionSet;
+export type DesignOption = G.Option;
 export type Program = G.Program;
 export type ProgramItem = G.ProgramItem;
 export type Adjacency = G.Adjacency;
@@ -86,6 +95,8 @@ export const COLLECTIONS = [
   'materials',
   'assets',
   'stairs',
+  'optionSets',
+  'options',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 

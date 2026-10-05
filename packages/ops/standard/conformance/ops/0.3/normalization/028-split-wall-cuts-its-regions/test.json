@@ -1,0 +1,7 @@
+{
+  "description": "W4, the south wall, runs west from J4 (12', 0); its right face is tiled, with a backsplash from 2' to 10' along it, a band from 0 to 1' above the cabinets and a panel from 6' to 8' below the counter. A wall drawn across it at 8' east - 4' along W4 - splits it (5.2): both pieces keep the face's tile, and each takes the regions cut to its interval, measured from its own start (step 7). W4, [0, 4'], keeps the backsplash from 2' to 4' and the band; W7, [4', 12'], takes the backsplash from 0 to 6' and the panel from 2' to 4'.",
+  "covers": [
+    "FS-OPS-5.2.3",
+    "FS-OPS-5.2.1"
+  ]
+}

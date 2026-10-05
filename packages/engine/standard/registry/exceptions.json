@@ -1,0 +1,12 @@
+{
+  "$comment": "Recorded exceptions to the registry's lifecycle gates (registry/README.md, \"Exceptions\"; tools/registry-gates.ts). Each waives one rule for one version of one extension, by an owner's decision, until the condition it names; the gate fails once the rule passes, so that the exception is removed. Nothing of Ratified can be waived.",
+  "exceptions": [
+    {
+      "extension": "FS_furniture",
+      "version": "0.1.0",
+      "waives": "releaseCandidate.implementation",
+      "decision": "Owner decision with FLR-T-8.3 (merged 8cc76a9): FS_furniture 0.1.0 is published at Release Candidate with no implementation listed; the conformance oracle passes its suite but wrote its expected outputs, so it is not evidence.",
+      "until": "D3 Floorspec's engine passes the FS_furniture 0.1.0 suite and is listed, with evidence, in registry/FS_furniture/extension.json."
+    }
+  ]
+}

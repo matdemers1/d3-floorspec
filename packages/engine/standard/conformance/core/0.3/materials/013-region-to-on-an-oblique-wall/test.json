@@ -1,0 +1,6 @@
+{
+  "description": "A wall from (0, 0) to (1000 mm, 2000 mm) is 2,862,167.08... base units long. A region on its left face that ends at 2,862,167 fits; one on its right face that ends at 2,862,168 does not (18.5.3): the test is exact, to^2 <= dx^2 + dy^2.",
+  "covers": [
+    "FS-CORE-18.5.3"
+  ]
+}

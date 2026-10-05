@@ -313,6 +313,10 @@
         "reachable": true
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "BATH": {
         "bottom": 0,

@@ -1,0 +1,6 @@
+{
+  "description": "A free-standing wall W5 inside the room - an inner cycle of its face (6.1): both its sides face the room, and both inherit its paint.",
+  "covers": [
+    "FS-CORE-18.6.1"
+  ]
+}

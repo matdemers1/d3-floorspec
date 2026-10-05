@@ -1,0 +1,7 @@
+{
+  "description": "The same \"0.3\" flat with FS_furniture's data breaking one of its invariants: FS_furniture is evaluated for a Core 0.3 document, so the invariant is reported.",
+  "covers": [
+    "FS-FURN-1.2.1",
+    "FS-FURN-1.2.3"
+  ]
+}

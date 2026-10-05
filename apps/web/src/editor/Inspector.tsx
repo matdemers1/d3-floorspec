@@ -22,6 +22,9 @@ import {
   type TypeChoice,
 } from './ops';
 import { requestRemove, switchUnits } from './actions';
+import { MaterialSurface } from './Materials';
+import { OptionMembership } from './Options';
+import { WallFinishes } from './Finishes';
 import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, StairIcon, WallIcon, WindowIcon } from './icons';
 import { RoofBody, RoofDrawSettings, StairBody, StairDrawSettings } from './RoofStairFields';
 import { FindingsList } from './Diagnostics';
@@ -112,6 +115,7 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
     <div className="fs-inspector__body">
       <Header ctx={ctx} kind={kind} />
       {body}
+      <OptionMembership store={store} model={model} id={selection} element={element} readOnly={ctx.readOnly} />
       {!ctx.readOnly ? (
         <div className="fs-inspector__actions">
           <Button variant="danger-ghost" size="sm" icon={<Trash2 />} onClick={() => { requestRemove(store, selection); }}>
@@ -453,28 +457,9 @@ function WallBody({ ctx }: { ctx: Ctx }) {
           ))}
         </Section>
       ) : null}
-      <Section title="Faces">
-        <FaceRow ctx={ctx} side="Left (exterior)" room={sides.left} />
-        <FaceRow ctx={ctx} side="Right" room={sides.right} />
-      </Section>
+      <WallFinishes store={ctx.store} model={model} id={id} element={element} units={units} readOnly={readOnly} length={length} sides={sides} edit={ctx.edit} />
       {wall === undefined ? null : null}
     </>
-  );
-}
-
-function FaceRow({ ctx, side, room }: { ctx: Ctx; side: string; room: string | null }) {
-  const finish = room === null ? undefined : str(ctx.model.document.rooms?.[room]?.wallFinish);
-  return (
-    <div className="fs-face">
-      <span className="fs-face__side">{side}</span>
-      {room === null ? <span className="fs-face__room">Outside</span> : (
-        <button type="button" className="fs-face__room fs-linkish" onClick={() => { ctx.store.select(room); }}>
-          {labelOf(ctx.model, room)}
-        </button>
-      )}
-      <span className="fs-spacer" />
-      <span className="fs-face__finish">{finish === undefined ? '' : labelOf(ctx.model, finish)}</span>
-    </div>
   );
 }
 
@@ -915,6 +900,7 @@ function MaterialBody({ ctx }: { ctx: Ctx }) {
           />
         </Row>
       </Section>
+      <MaterialSurface id={id} element={element} model={model} units={ctx.units} readOnly={readOnly} edit={ctx.edit} />
     </>
   );
 }

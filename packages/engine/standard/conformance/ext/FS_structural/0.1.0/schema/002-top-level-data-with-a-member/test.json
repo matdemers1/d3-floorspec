@@ -1,0 +1,6 @@
+{
+  "description": "FS_structural 0.1 gives its top-level data no members.",
+  "covers": [
+    "FS-STRC-1.3.1"
+  ]
+}

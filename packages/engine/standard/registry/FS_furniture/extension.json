@@ -1,0 +1,35 @@
+{
+  "name": "FS_furniture",
+  "version": "0.1.0",
+  "status": "releaseCandidate",
+  "schema": "https://d3cloud.io/floorspec/schema/ext/FS_furniture/0.1.0/furniture.schema.json",
+  "title": "Furniture, appliances and casework",
+  "requires": {},
+  "kinds": {
+    "pieces": {
+      "title": "Furniture piece",
+      "fallback": {
+        "asset": true,
+        "symbol": true
+      }
+    },
+    "appliances": {
+      "title": "Appliance",
+      "fallback": {
+        "asset": true,
+        "symbol": true
+      }
+    },
+    "casework": {
+      "title": "Casework",
+      "fallback": {
+        "asset": true,
+        "symbol": true
+      }
+    }
+  },
+  "terms": {
+    "roomFunctions": []
+  },
+  "implementations": []
+}

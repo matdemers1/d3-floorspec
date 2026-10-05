@@ -34,7 +34,7 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
   e('FS-JSON-003', 'error', 'parse', 'a string has an unpaired surrogate', '—', '9.1.3'),
   e('FS-DOC-001', 'error', 'document', 'the root is an object whose `floorspec` member is a string naming a version this reader does not implement', '—', '1.2.2'),
   e('FS-DOC-002', 'error', 'document', '`extensionsRequired` names an extension this reader does not implement', '—', '1.6.4'),
-  e('FS-SCH-001', 'error', 'schema', 'the document does not match the schema of the draft it declares (1.2.6)', '—', '1.1, 1.2.5, 1.2.6, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 6.7.2, 7.1.1, 7.1.2, 8.1, 8.3, 8.4.1–8.4.3, 8.5, 8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1, 15.1.1, 15.2.1, 16.1.1, 17.1.1, 17.2.1'),
+  e('FS-SCH-001', 'error', 'schema', 'the document does not match the schema of the draft it declares (1.2.6)', '—', '1.1, 1.2.5, 1.2.6, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 6.7.2, 7.1.1, 7.1.2, 8.1, 8.3, 8.4.1–8.4.3, 8.5, 8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1, 15.1.1, 15.2.1, 16.1.1, 17.1.1, 17.2.1, 18.1.1, 18.2.1, 18.4.1, 18.5.1, 19.1.1, 19.2.1'),
   e('FS-INV-001', 'error', 'invariant', 'an ID is used in more than one collection — counting program items and every extension collection', 'the ID', '3.1.2, 3.1.3'),
   e('FS-INV-002', 'error', 'invariant', 'a reference does not resolve to an element of the right collection', 'the referring element, program item or extension element; none for an adjacency', '3.2.1'),
   e('FS-INV-003', 'error', 'invariant', 'a type reference resolves to a type of the wrong kind', 'the referring element', '3.2.2'),
@@ -94,6 +94,15 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
   e('FS-INV-902', 'error', 'invariant', "a stair's rise is not greater than zero", 'the stair', '17.4.1'),
   e('FS-INV-903', 'error', 'invariant', "a stair's riser count does not fit its form", 'the stair', '17.4.2'),
   e('FS-INV-904', 'error', 'invariant', "a spiral stair's width is more than half its diameter", 'the stair', '17.2.2'),
+  e('FS-INV-1001', 'error', 'invariant', "a region of a wall's finishes is empty: its `to` is not greater than its `from`, or its `top` not greater than its `bottom`; once for each such region", 'the wall', '18.5.2'),
+  e('FS-INV-1002', 'error', 'invariant', "a region extends past its wall's length or above its wall's height; once for each such region", 'the wall', '18.5.3'),
+  e('FS-INV-1003', 'error', 'invariant', 'two regions of one face overlap; once for each such pair', 'the wall', '18.5.4'),
+  e('FS-INV-1004', 'error', 'invariant', "a texture's map is an asset whose media type 18.2.2 does not allow; once for each such map", 'the material and the asset', '18.2.2'),
+  e('FS-INV-1005', 'error', 'invariant', "the package has no file at an asset's `path`", 'the asset', '18.4.2'),
+  e('FS-INV-1006', 'error', 'invariant', "the SHA-256 digest of an asset's file is not its `sha256`", 'the asset', '18.4.3'),
+  e('FS-INV-1007', 'error', 'invariant', "the length of an asset's file in bytes is not its `byteLength`", 'the asset', '18.4.3'),
+  e('FS-INV-1101', 'error', 'invariant', "an option set's `primary` is an option of another set", 'the option set and the option', '19.1.2'),
+  e('FS-INV-1102', 'error', 'invariant', 'an element refers to an element that is in an option, and is not in that option itself; once for each pair of an element and an element it refers to', 'both elements', '19.4.1'),
   e('FS-LINT-001', 'warning', 'lint', 'an acute join', 'the junction and both walls', '5.10'),
   e('FS-LINT-002', 'warning', 'lint', 'a junction no edge uses', 'the junction', '5.10'),
   e('FS-LINT-003', 'info', 'lint', 'a bounded face with no anchor', '— (location: its level and a point of it)', '6.6'),
@@ -110,6 +119,7 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
   e('FS-LINT-014', 'warning', 'lint', 'an evaluated building (14.4) that has rooms but no entry', 'the building', '14.4'),
   e('FS-LINT-015', 'info', 'lint', 'a roof whose surface this draft does not derive (16.4.4)', 'the roof', '16.4.1'),
   e('FS-LINT-016', 'info', 'lint', 'a winder or a spiral stair, whose steps, run, walkline and headroom this draft does not derive', 'the stair', '17.7'),
+  e('FS-LINT-017', 'info', 'lint', 'an option set with exactly one option', 'the option set', '19.8'),
 ];
 
 const BY_CODE = new Map(CATALOGUE.map((c) => [c.code, c]));

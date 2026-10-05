@@ -138,6 +138,10 @@
         "throughSleeping": true
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "BED1": {
         "bottom": 0,

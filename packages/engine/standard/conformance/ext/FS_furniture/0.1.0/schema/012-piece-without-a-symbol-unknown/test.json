@@ -1,0 +1,6 @@
+{
+  "description": "The same requirement is a known extension's: read with no known extensions, a chair without a symbol is valid, and nothing of FS_furniture is evaluated.",
+  "covers": [
+    "FS-FURN-1.2.1"
+  ]
+}

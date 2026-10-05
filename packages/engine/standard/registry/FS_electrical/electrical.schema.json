@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://d3cloud.io/floorspec/schema/ext/FS_electrical/0.1.0/electrical.schema.json",
-  "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_electrical 0.1.0, registry/FS_electrical/spec.md. Applied to the extension's top-level data, extensions.FS_electrical, by a validator that implements FS_electrical and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+  "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_electrical 0.1.0, registry/FS_electrical/spec.md. Applied to the extension's top-level data, extensions.FS_electrical, by a validator that implements FS_electrical and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, option, name, extras) are checked by Floorspec Core, so this schema only names them.",
   "title": "FS_electrical 0.1.0",
   "description": "Panels, circuits, receptacles, switches, lights, smoke and CO alarms, EV chargers and switch control.",
   "type": "object",
@@ -143,6 +143,9 @@
         "clearances": {
           "description": "Core 13.5: checked by Core, not here."
         },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+        },
         "name": {
           "description": "Core 12.5: checked by Core, not here."
         },
@@ -209,6 +212,9 @@
         "clearances": {
           "description": "Core 13.5: checked by Core, not here."
         },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+        },
         "name": {
           "description": "Core 12.5: checked by Core, not here."
         },
@@ -254,6 +260,9 @@
         },
         "clearances": {
           "description": "Core 13.5: checked by Core, not here."
+        },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
         },
         "name": {
           "description": "Core 12.5: checked by Core, not here."
@@ -305,6 +314,9 @@
         },
         "clearances": {
           "description": "Core 13.5: checked by Core, not here."
+        },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
         },
         "name": {
           "description": "Core 12.5: checked by Core, not here."
@@ -375,6 +387,9 @@
         "clearances": {
           "description": "Core 13.5: checked by Core, not here."
         },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+        },
         "name": {
           "description": "Core 12.5: checked by Core, not here."
         },
@@ -430,6 +445,9 @@
         },
         "clearances": {
           "description": "Core 13.5: checked by Core, not here."
+        },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
         },
         "name": {
           "description": "Core 12.5: checked by Core, not here."

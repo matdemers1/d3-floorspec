@@ -1,0 +1,6 @@
+{
+  "description": "With context.option KA, addElement adds a level and a type: neither may be in an option (Core 19.2.1), so neither is given one.",
+  "covers": [
+    "FS-OPS-2.8.1"
+  ]
+}

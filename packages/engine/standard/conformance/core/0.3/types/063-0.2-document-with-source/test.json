@@ -1,0 +1,6 @@
+{
+  "description": "A document that declares \"0.2\" whose door type has a source, which 0.3 adds: Core 0.2's schema has no \"source\" member.",
+  "covers": [
+    "FS-CORE-1.2.6"
+  ]
+}

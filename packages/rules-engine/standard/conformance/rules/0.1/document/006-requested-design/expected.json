@@ -1,0 +1,67 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "ROOMS",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "L1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": []
+      },
+      "measures": [
+        {
+          "display": "4",
+          "holds": false,
+          "measure": "roomCount",
+          "op": "<=",
+          "target": {
+            "id": "L1",
+            "kind": "level"
+          },
+          "threshold": 3,
+          "thresholdDisplay": "3",
+          "type": "count",
+          "value": 4
+        }
+      ],
+      "message": "L1 may not meet TEST-CODE 2024 §1.1 (At most three rooms on a level).",
+      "pack": "test-pack",
+      "rule": "ROOMS",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "L1",
+        "kind": "level"
+      },
+      "title": "At most three rooms on a level",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.1",
+  "hash": "e0718750781c0fda98d004b7568eb74393d1bef83745feaeccdfa37250f307b5",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

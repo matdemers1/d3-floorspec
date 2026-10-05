@@ -10,7 +10,7 @@
  */
 import { predicates, roundHalfEvenRational, Surd, type Diagnostic } from '@floorspec/engine';
 import { opsDiagnostic } from './diagnostics.js';
-import { edgesOn, junctionsOn } from './model/faces.js';
+import { edgesOn, junctionsOn, type Keep } from './model/faces.js';
 import type { WorkingCopy } from './model/working.js';
 import { clone, cmpStr, deleteMember, getMember, isObject, setMember, type JsonObject } from './lib/json.js';
 
@@ -19,14 +19,50 @@ const { collinearOverlap, cross, eq, inSegmentInterior, properCross, sub } = pre
 const key = (p: IPoint): string => `${p[0]},${p[1]}`;
 const cmpPoint = (a: IPoint, b: IPoint): number => (a[0] !== b[0] ? (a[0] < b[0] ? -1 : 1) : a[1] !== b[1] ? (a[1] < b[1] ? -1 : 1) : 0);
 
+/**
+ * Ops 0.3, 5.5: a level is normalized in **domains** — its common junctions and edges, then each
+ * option's together with the common ones. ALL is the whole level, as Ops 0.1 and 0.2 normalize it.
+ */
+const ALL = Symbol('all');
+type Domain = typeof ALL | null | string;
+
+/** Ops 0.3, 5.5: the option an element is in — null when it is common, BAD for an `option` that is not a string. */
+const BAD = Symbol('bad');
+function scope(e: JsonObject): string | null | typeof BAD {
+  if (!Object.hasOwn(e, 'option')) return null;
+  return typeof e.option === 'string' ? e.option : BAD;
+}
+
+/** The common domain holds the common elements; an option's, the common elements and the option's own. */
+const domainKeep = (domain: Domain): Keep => (domain === ALL ? undefined : (e) => {
+  const s = scope(e);
+  return s === null || (domain !== null && s === domain);
+});
+
+/** Ops 0.3, 5.5: the common domain, then every option with a junction or an edge on the level, by ID. */
+function domainsOf(wc: WorkingCopy, level: string): Domain[] {
+  const found = new Set<string>();
+  for (const c of ['junctions', 'walls', 'separators'] as const)
+    for (const id of wc.ids(c)) {
+      const e = wc.elementIn(c, id);
+      if (!e || getMember(e, 'level') !== level) continue;
+      const s = scope(e);
+      if (typeof s === 'string') found.add(s);
+    }
+  return [null, ...[...found].sort(cmpStr)];
+}
+
 /** Normalize the working copy; returns FS-OPS-009 diagnostics when an opening straddles a new junction. */
 export function normalize(wc: WorkingCopy): Diagnostic[] {
   const levels = wc.ids('levels');
   for (const l of levels) mergeCoincident(wc, l);
   const straddles: Diagnostic[] = [];
-  // 5.2 runs only on a level that, after 5.1, breaks Core §5.3: a level with no crossing, no
-  // junction inside an edge and no overlap is left exactly as it is (near misses included).
-  for (const l of levels) if (!isPlanar(wc, l)) straddles.push(...planarize(wc, l));
+  // 5.2 runs only on a level (with design options, a domain of one, Ops 0.3 5.5) that, after 5.1,
+  // breaks Core §5.3: one with no crossing, no junction inside an edge and no overlap is left
+  // exactly as it is (near misses included).
+  for (const l of levels)
+    for (const domain of wc.ops === '0.3' ? domainsOf(wc, l) : ([ALL] as Domain[]))
+      if (!isPlanar(wc, l, domain)) straddles.push(...planarize(wc, l, domain));
   if (straddles.length) return straddles;
   cleanJoins(wc);
   return [];
@@ -38,12 +74,32 @@ export function mergeCoincident(wc: WorkingCopy, level: string): void {
   const groups = new Map<string, string[]>();
   for (const j of junctionsOn(wc, level)) if (j.pos) groups.set(key(j.pos), [...(groups.get(key(j.pos)) ?? []), j.id]);
   const redirect = new Map<string, string>();
+  const survivorOf = (ids: readonly string[]): string => {
+    const fromA = ids.filter((id) => wc.junctionsInA.has(id));
+    return fromA.length === 1 ? fromA[0]! : [...ids].sort(cmpStr)[0]!;
+  };
+  const merges: [string, string[]][] = [];
+  const scopeOf = (id: string): string | null | typeof BAD => scope(wc.elementIn('junctions', id)!);
   for (const ids of groups.values()) {
     if (ids.length < 2) continue;
-    const fromA = ids.filter((id) => wc.junctionsInA.has(id));
-    const survivor = fromA.length === 1 ? fromA[0]! : [...ids].sort(cmpStr)[0]!;
-    for (const id of ids) if (id !== survivor) redirect.set(id, survivor);
+    // Ops 0.3, 5.5: into a common survivor when one is common; otherwise each option's among themselves.
+    if (wc.ops !== '0.3' || ids.every((id) => scopeOf(id) === null)) {
+      merges.push([survivorOf(ids), ids]);
+      continue;
+    }
+    const common = ids.filter((id) => scopeOf(id) === null);
+    if (common.length) {
+      merges.push([survivorOf(common), ids.filter((id) => scopeOf(id) !== BAD)]);
+      continue;
+    }
+    const by = new Map<string, string[]>();
+    for (const id of ids) {
+      const s = scopeOf(id);
+      if (typeof s === 'string') by.set(s, [...(by.get(s) ?? []), id]);
+    }
+    for (const sub of by.values()) if (sub.length > 1) merges.push([survivorOf(sub), sub]);
   }
+  for (const [survivor, ids] of merges) for (const id of ids) if (id !== survivor) redirect.set(id, survivor);
   if (redirect.size === 0) return;
   for (const kind of ['walls', 'separators'] as const)
     for (const id of wc.ids(kind)) {
@@ -122,16 +178,17 @@ interface Seg {
 }
 
 /** The well-formed part of a level (chapter 5): junctions with integer positions, and the edges between them. */
-function wellFormed(wc: WorkingCopy, level: string): { atPos: Map<string, string>; positions: IPoint[]; segs: Seg[] } {
+function wellFormed(wc: WorkingCopy, level: string, domain: Domain): { atPos: Map<string, string>; positions: IPoint[]; segs: Seg[] } {
+  const keep = domainKeep(domain);
   const atPos = new Map<string, string>();
   const pos = new Map<string, IPoint>();
-  for (const j of junctionsOn(wc, level))
+  for (const j of junctionsOn(wc, level, keep))
     if (j.pos) {
       pos.set(j.id, j.pos);
       if (!atPos.has(key(j.pos))) atPos.set(key(j.pos), j.id);
     }
   const segs: Seg[] = [];
-  for (const e of edgesOn(wc, level)) {
+  for (const e of edgesOn(wc, level, keep)) {
     const a = pos.get(e.start);
     const b = pos.get(e.end);
     if (!a || !b || eq(a, b)) continue;
@@ -141,8 +198,8 @@ function wellFormed(wc: WorkingCopy, level: string): { atPos: Map<string, string
 }
 
 /** Does the well-formed part of a level satisfy Core §5.3 — no crossing, no junction inside an edge, no overlap? */
-function isPlanar(wc: WorkingCopy, level: string): boolean {
-  const { positions, segs } = wellFormed(wc, level);
+function isPlanar(wc: WorkingCopy, level: string, domain: Domain): boolean {
+  const { positions, segs } = wellFormed(wc, level, domain);
   for (let i = 0; i < segs.length; i++) {
     const s = segs[i]!;
     if (positions.some((p) => inSegmentInterior(p, s.a, s.b))) return false;
@@ -154,9 +211,12 @@ function isPlanar(wc: WorkingCopy, level: string): boolean {
   return true;
 }
 
-/** 5.2 on one level. Returns FS-OPS-009 for every opening that straddles an inserted junction. */
-function planarize(wc: WorkingCopy, level: string): Diagnostic[] {
-  const { atPos, segs } = wellFormed(wc, level);
+/**
+ * 5.2 on one level — with design options, one domain of it (Ops 0.3, 5.5). Returns FS-OPS-009 for
+ * every opening that straddles an inserted junction.
+ */
+function planarize(wc: WorkingCopy, level: string, domain: Domain): Diagnostic[] {
+  const { atPos, segs } = wellFormed(wc, level, domain);
 
   // 1. Hot pixels: junction positions, and the rounded points where two edges meet at a point
   //    interior to at least one of them. An end of one edge inside another is a junction position
@@ -194,14 +254,30 @@ function planarize(wc: WorkingCopy, level: string): Diagnostic[] {
     routes.set(s.id, hits.map((h) => h.c));
   }
 
-  // 3. Junctions at hot pixels that have none, minted in order of x, then y.
+  // Ops 0.3, 5.5: in an option's domain, the hot pixels a common edge is routed through.
+  const inOption = typeof domain === 'string';
+  const commonPx = new Set<string>();
+  if (inOption)
+    for (const s of segs) if (scope(wc.elementIn(s.kind, s.id)!) === null) for (const c of routes.get(s.id)!) commonPx.add(key(c));
+
+  // 3. Junctions at hot pixels that have none, minted in order of x, then y — in an option's domain,
+  //    in the option unless a common edge passes through; and an option's junction a common edge now
+  //    passes through becomes common (5.5).
   const fresh = pixels.filter((p) => !atPos.has(key(p))).sort(cmpPoint);
   for (const p of fresh) {
     const id = wc.mint('junctions');
-    setMember(wc.ensureCollection('junctions'), id, { level, position: [Number(p[0]), Number(p[1])] });
+    const j: JsonObject = { level, position: [Number(p[0]), Number(p[1])] };
+    if (inOption && !commonPx.has(key(p))) setMember(j, 'option', domain);
+    setMember(wc.ensureCollection('junctions'), id, j);
     atPos.set(key(p), id);
   }
-  if (fresh.length) wc.touch();
+  if (inOption)
+    for (const p of pixels) {
+      if (!commonPx.has(key(p))) continue;
+      const j = wc.elementIn('junctions', atPos.get(key(p))!);
+      if (j && Object.hasOwn(j, 'option')) deleteMember(j, 'option');
+    }
+  if (fresh.length || inOption) wc.touch();
 
   // 4. Splitting, and 5. re-hosting openings on split walls.
   const diagnostics: Diagnostic[] = [];
@@ -231,6 +307,7 @@ function planarize(wc: WorkingCopy, level: string): Diagnostic[] {
       if (kind === 'walls') {
         diagnostics.push(...rehost(wc, s, route, ids));
         rehostHosted(wc, s, route, ids);
+        if (wc.ops === '0.3') cutRegions(wc, s, route, ids);
       }
     }
   return diagnostics;
@@ -314,6 +391,57 @@ function rehostHosted(wc: WorkingCopy, s: Seg, route: IPoint[], ids: string[]): 
     }
   }
   if (changed) wc.touch();
+}
+
+/**
+ * Ops 0.3, 5.2 step 7 (FS-OPS-5.2.3): each piece copied the split wall's `finishes` (step 4); the
+ * regions of each of its faces are the original's cut to the piece's interval [s, e] along the
+ * original location line — a region with from < e and to > s runs from max(from, s) − s to
+ * min(to, e) − s, each end exact and rounded once, ties to even, and is dropped when the rounded
+ * from is not less than the rounded to; every other region is dropped. A region whose from or to is
+ * not an integer is left as it is on every piece, for validation.
+ */
+function cutRegions(wc: WorkingCopy, s: Seg, route: IPoint[], ids: string[]): void {
+  const original = clone(getMember(wc.elementIn('walls', ids[0]!), 'finishes'));
+  if (!isObject(original)) return;
+  const d = sub(s.b, s.a);
+  const m = d[0] * d[0] + d[1] * d[1];
+  const rootM = Surd.sqrt(m);
+  const t = route.map((c) => rootM.mulInt(predicates.dot(sub(c, s.a), d)).divInt(m));
+  ids.forEach((piece, i) => {
+    const lo = t[i]!;
+    const hi = t[i + 1]!;
+    const f = getMember(wc.elementIn('walls', piece), 'finishes');
+    if (!isObject(f)) return;
+    for (const side of Object.keys(original)) {
+      const face = original[side];
+      const regions = getMember(face, 'regions');
+      if (!isObject(face) || !Array.isArray(regions)) continue;
+      const cut: unknown[] = [];
+      for (const r of regions) {
+        const from = getMember(r, 'from');
+        const to = getMember(r, 'to');
+        if (!isObject(r) || typeof from !== 'number' || typeof to !== 'number' || !Number.isSafeInteger(from) || !Number.isSafeInteger(to)) {
+          cut.push(clone(r));
+          continue;
+        }
+        const a = Surd.of(BigInt(from));
+        const b = Surd.of(BigInt(to));
+        if (!(a.cmp(hi) < 0 && b.cmp(lo) > 0)) continue;
+        const f0 = (a.cmp(lo) >= 0 ? a : lo).sub(lo).round();
+        const t0 = (b.cmp(hi) <= 0 ? b : hi).sub(lo).round();
+        if (f0 < t0) {
+          const piece = clone(r);
+          setMember(piece, 'from', Number(f0));
+          setMember(piece, 'to', Number(t0));
+          cut.push(piece);
+        }
+      }
+      const target = getMember(f, side);
+      if (isObject(target)) setMember(target, 'regions', cut);
+    }
+  });
+  wc.touch();
 }
 
 // ── 5.3 join cleanup ──────────────────────────────────────────────────────────

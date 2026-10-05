@@ -1,0 +1,7 @@
+{
+  "description": "The deck spans along [1, 1], with no recorded length: its corners project on the direction from -6' to 9', 15' times the direction's length, so its extent is 15' / sqrt 2 - 4138102.02... - rounded once to 4138102.",
+  "covers": [
+    "FS-STRC-3.2.1",
+    "FS-STRC-5.1.1"
+  ]
+}

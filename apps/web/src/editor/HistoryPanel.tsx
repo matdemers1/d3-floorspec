@@ -3,6 +3,7 @@ import { Avatar, Badge, Button, IconButton, Select, Spinner } from '@d3cloud/ui'
 import { GitCompareArrows, Redo2, Undo2, X } from 'lucide-react';
 import { useEditor, type EditorStore } from './store';
 import type { HistoryEntry } from './api';
+import { optionTitle } from './optionOps';
 import { labelOf } from './model';
 import { summarizeBatch } from './describe';
 import { diffModels, groupChanges } from './diff';
@@ -33,6 +34,8 @@ export function HistoryPanel({ store, you }: { store: EditorStore; you: string }
   if (log === null) return <Spinner label="Loading the history" />;
 
   const name = (id: string) => (model?.index.has(id) === true ? labelOf(model, id) : id);
+  /** "Kitchen · B": an option with its set, as the options panel names it; its ID once it is gone. */
+  const optionName = (id: string) => (model === null ? id : model.index.has(id) ? optionTitle(model, id) : id);
   // What redo would bring back: the op the newest undo took back.
   const redoEntry = history.redo === null ? undefined : log.find((e) => e.seq === history.redo);
   const redoOf = redoEntry === undefined ? null : (redoEntry.undoOf ?? redoEntry.seq);
@@ -146,6 +149,11 @@ export function HistoryPanel({ store, you }: { store: EditorStore; you: string }
                   {who.kind === 'token' ? ' · token' : who.kind === 'agent' ? ' · agent' : ''}
                   {kind === null ? '' : ` · ${kind}`} · {timeAgo(entry.at)}
                 </span>
+                {entry.option !== undefined && entry.option !== null ? (
+                  <span className="fs-history__option" title="Drawn in a design option (Ops 0.3, 2.8)">
+                    in {optionName(entry.option)}
+                  </span>
+                ) : null}
               </span>
             </div>
           );

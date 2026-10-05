@@ -10,8 +10,11 @@
 import { canonicalize, contentHash } from './canonical/canonicalize.js';
 import { deriveFrom, type Derived } from './derive/derive.js';
 import { evaluate, type Evaluation, type ValidateOptions } from './validate/validate.js';
-import { deriveExtensions } from './extensions/official.js';
+import { deriveExtensions, type ExtensionRun } from './extensions/official.js';
 import type { Diagnostic } from './validate/diagnostic.js';
+import type { FloorspecDocument } from './model/document.js';
+import type { Analysis } from './validate/invariants.js';
+import { deriveOptions } from './options/options.js';
 
 export const ENGINE_VERSION = '0.3.0-draft';
 /** The newest Floorspec Core draft this engine implements; it reads every draft in IMPLEMENTED_VERSIONS. */
@@ -21,7 +24,35 @@ export { parseJson, type ParseResult } from './json/parse.js';
 export { writeJcs, writePretty } from './json/serialize.js';
 export { sha256, sha256Hex, toHex } from './hash/sha256.js';
 export { canonicalize, contentHash, omitDefaults } from './canonical/canonicalize.js';
-export { validate, evaluate, IMPLEMENTED_VERSIONS, type ValidateOptions, type ValidationResult, type Evaluation } from './validate/validate.js';
+export { validate, evaluate, IMPLEMENTED_VERSIONS, type ValidateOptions, type ValidationResult, type Evaluation, type CheckedDesignEvaluation } from './validate/validate.js';
+export {
+  hasOptions,
+  membership,
+  optionsOf,
+  primaryDesign,
+  checkedDesigns,
+  viewOf,
+  resolveDesign,
+  checkedTagOf,
+  affected,
+  type Design,
+  type CheckedDesign,
+  type DerivedOption,
+  type DerivedOptionSet,
+} from './options/options.js';
+export {
+  Package,
+  MAP_MEDIA_TYPES,
+  deriveFinishes,
+  faceFinish,
+  facingRooms,
+  surfaceST,
+  type DerivedFinishes,
+  type DerivedFaceFinish,
+  type DerivedRoomFinish,
+  type Side as WallSide,
+} from './finishes/finishes.js';
+export { references, IN_OPTIONS, type Reference } from './validate/references.js';
 export { CATALOGUE, entry as catalogueEntry, type CatalogueEntry, type Tier } from './validate/catalogue.js';
 export type { Diagnostic, DiagnosticLocation, FixOp, Severity } from './validate/diagnostic.js';
 export {
@@ -65,6 +96,8 @@ export * as electrical from './extensions/fs/electrical.js';
 export * as plumbing from './extensions/fs/plumbing.js';
 export * as mechanical from './extensions/fs/mechanical.js';
 export * as lowvoltage from './extensions/fs/lowvoltage.js';
+export * as furniture from './extensions/fs/furniture.js';
+export * as structural from './extensions/fs/structural.js';
 export { extentsOk, footprintsOverlap, type Frame, type Footprint } from './derive/frames.js';
 export {
   extElements,
@@ -97,31 +130,54 @@ export class InvalidDocumentError extends Error {
   }
 }
 
-/** Everything a valid evaluation derives: Core's values, and the evaluated extensions' when the reader implements any. */
-function derivedOf(ev: Evaluation): Derived {
-  const derived = deriveFrom(ev.document!, ev.analysis!);
-  if (ev.extensions) derived.extensions = deriveExtensions(ev.extensions);
+/** The values one design's view derives (its document and analysis), with what its extensions derive. */
+function deriveDesign(document: FloorspecDocument, analysis: Analysis, runs: readonly ExtensionRun[] | undefined): Derived {
+  const derived = deriveFrom(document, analysis);
+  if (runs) derived.extensions = deriveExtensions(runs);
   return derived;
+}
+
+/** Everything a valid evaluation derives: Core's values of the derived design, the evaluated extensions', and `options` (19.6.3). */
+function derivedOf(ev: Evaluation): Derived {
+  const derived = deriveDesign(ev.view!, ev.analysis!, ev.extensions);
+  if (ev.designs && ev.design) {
+    const by = new Map<string, Derived>();
+    for (const d of ev.designs) {
+      const same = d.document === ev.view;
+      by.set(d.tag ?? '', same ? derived : deriveDesign(d.document, d.analysis, d.extensions));
+    }
+    derived.options = deriveOptions(ev.document!, ev.design, by as unknown as Parameters<typeof deriveOptions>[2]);
+  }
+  return derived;
+}
+
+/** Nothing is derived for the design asked for (Core 0.3, 19.6.2): it is not one of the document's, or its view is not valid. */
+export class DesignNotDerivedError extends Error {
+  constructor() {
+    super('nothing is derived for this design: it is not a design of the document, or its view is not valid (19.6.2)');
+  }
 }
 
 /**
  * What an evaluation of a valid document derives — Core's values, and those of the extensions it
  * evaluated — for a caller that evaluated once and wants both the analysis and the derived values.
- * Throws InvalidDocumentError when it is not valid.
+ * Throws InvalidDocumentError when it is not valid, and DesignNotDerivedError when nothing is
+ * derived for the design it was asked for.
  */
 export function deriveEvaluation(ev: Evaluation): Derived {
-  if (!ev.valid || !ev.document || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);
+  if (!ev.valid || !ev.document) throw new InvalidDocumentError(ev.diagnostics);
+  if (!ev.view || !ev.analysis) throw new DesignNotDerivedError();
   return derivedOf(ev);
 }
 
 /**
- * Derive every value of chapters 5–7 and 11–14 from a document — and, for a reader that implements
- * official extensions, what they derive. Throws InvalidDocumentError when it is not valid.
+ * Derive every value of chapters 5–7 and 11–19 from a document — and, for a reader that implements
+ * official extensions, what they derive. `options.design` chooses the design (Core 0.3, 19.6).
+ * Throws InvalidDocumentError when it is not valid, DesignNotDerivedError when nothing is derived
+ * for the design.
  */
 export function derive(input: string | Uint8Array | object, options: ValidateOptions = {}): Derived {
-  const ev = evaluate(input, options);
-  if (!ev.valid || !ev.document || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);
-  return derivedOf(ev);
+  return deriveEvaluation(evaluate(input, options));
 }
 
 /** The conformance-shaped result of conformance/README.md: what a conformant implementation reports and derives. */
@@ -130,7 +186,7 @@ export interface CheckResult {
   diagnostics: Diagnostic[];
   /** Present when the document is valid: its content hash (9.3). */
   hash?: string;
-  /** Present when the document is valid: everything derived from it. */
+  /** Present when the document is valid and the design asked for is derived (19.6): everything derived from it. */
   derived?: Derived;
   /** Present when the document is valid: its canonical form (9.2). */
   canonical?: string;
@@ -139,12 +195,12 @@ export interface CheckResult {
 /** Validate, and for a valid document also hash, canonicalize and derive. */
 export function check(input: string | Uint8Array | object, options: ValidateOptions = {}): CheckResult {
   const ev = evaluate(input, options);
-  if (!ev.valid || !ev.document || !ev.analysis) return { valid: ev.valid, diagnostics: ev.diagnostics };
+  if (!ev.valid || !ev.document) return { valid: ev.valid, diagnostics: ev.diagnostics };
   return {
     valid: true,
     diagnostics: ev.diagnostics,
     hash: contentHash(ev.document),
-    derived: derivedOf(ev),
+    ...(ev.view && ev.analysis && { derived: derivedOf(ev) }),
     canonical: canonicalize(ev.document),
   };
 }

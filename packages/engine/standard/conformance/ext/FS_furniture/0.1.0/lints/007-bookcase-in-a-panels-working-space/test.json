@@ -1,0 +1,6 @@
+{
+  "description": "An FS_electrical panel X16 on the Laundry's east wall, with its working space, and a bookcase X17 in it. FS_electrical is neither known nor implemented, but its envelope is Core's (Core 13.5): it runs into the bookcase.",
+  "covers": [
+    "FS-FURN-1.2.3"
+  ]
+}

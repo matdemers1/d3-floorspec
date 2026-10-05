@@ -101,7 +101,7 @@ pipe size a Core length (Core §2.1). Nothing in FS_plumbing is a fraction.
 # 2. Elements
 
 Every element below is an extension element (Core §12.5): besides the members its table lists, it
-has `fallback`, and may have `host`, `clearances`, `name` and `extras`, which Floorspec Core checks.
+has `fallback`, and may have `host`, `clearances`, `option` (Core 0.3), `name` and `extras`, which Floorspec Core checks.
 
 A fixture standing on a floor is usually hosted on the room's floor (a `surface` host); a wall-hung
 lavatory, a hose bibb or a cleanout on a wall face (a `wallFace` host). For a fixture against a wall,

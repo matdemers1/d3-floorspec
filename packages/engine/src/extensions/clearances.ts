@@ -1,10 +1,11 @@
 /**
  * Floorspec's default clearance envelopes for the official extensions' kinds (FS_electrical 2.7,
- * FS_plumbing 2.5, FS_mechanical 2.5, FS_lowvoltage 2.6): what a writer gives a new element when it
+ * FS_plumbing 2.5, FS_mechanical 2.5, FS_lowvoltage 2.6, FS_furniture 4.2): what a writer gives a new element when it
  * has no better information. These are Floorspec's own round numbers, never a code's — a code's
  * requirements are a Floorspec Rules pack's to state, with citations.
  */
 import type { Box, ClearanceEnvelope, ExtensionElement } from '../model/document.js';
+import { defaultFurnitureEnvelopes } from './fs/furniture.js';
 
 const MM = 1280;
 type Triple = [number, number, number];
@@ -50,6 +51,10 @@ export function defaultClearances(extension: string, collection: string, element
       if (['furnace', 'airHandler', 'boiler'].includes(element.equipment as string))
         return { service: front(b, 'workingSpace', 750 * MM, { width: 750 * MM, atLeast: true, height: 2000 * MM, toTop: true }) };
       return {};
+    case 'FS_furniture/pieces':
+    case 'FS_furniture/appliances':
+    case 'FS_furniture/casework':
+      return typeof element.category === 'string' ? defaultFurnitureEnvelopes(element.category, b) : {};
     case 'FS_lowvoltage/headEnds':
       return { access: front(b, 'access', 600 * MM) };
     default:

@@ -264,9 +264,9 @@ group('Core 0.2: the program and extension elements', () => {
       items: { BEDS: { function: 'sleeping', name: 'Bedrooms', count: 2, minArea: 1 }, KITCHEN: { function: 'kitchen' } },
       adjacency: [{ a: 'KITCHEN', b: 'BEDS', kind: 'forbidden' }],
     };
-    d.extensionsUsed = { FS_furniture: '0.1' };
+    d.extensionsUsed = { EXT_furniture: '0.1' };
     d.extensions = {
-      FS_furniture: {
+      EXT_furniture: {
         collections: {
           pieces: {
             BED1: {
@@ -299,9 +299,9 @@ group('Core 0.2: the program and extension elements', () => {
     const s = describeJson(briefed());
     const [bed, ...more] = s.levels[0]!.elements!;
     expect(more).toEqual([]);
-    expect(bed).toMatchObject({ id: 'BED1', name: 'Queen bed', kind: 'FS_furniture:pieces', host: { mode: 'surface', room: 'BED', surface: 'floor' } });
+    expect(bed).toMatchObject({ id: 'BED1', name: 'Queen bed', kind: 'EXT_furniture:pieces', host: { mode: 'surface', room: 'BED', surface: 'floor' } });
     expect(bed!.placement).toEqual({ point: [10924032, 2340864, 0], facing: 90000000 });
-    expect(describe(briefed())).toContain('- FS_furniture:pieces BED1 "Queen bed": on the floor of BED; at [');
+    expect(describe(briefed())).toContain('- EXT_furniture:pieces BED1 "Queen bed": on the floor of BED; at [');
     expect(describeJson(briefed(), { room: 'BED' }).levels[0]!.elements!.map((e) => e.id)).toEqual(['BED1']);
     expect(describeJson(briefed(), { room: 'KIT' }).levels[0]!.elements).toEqual([]);
   });
@@ -378,5 +378,19 @@ group('Core 0.3: roofs and stairs', () => {
     expect(out).toContain('- RF1: hip, 6:12, eave');
     expect(out).toMatch(/- ST1: lShaped to L2, 14 risers × [^\n]*, tread [^\n]*, headroom /);
     expect(out).toMatch(/Finished area after ANSI Z765-2021 \(paraphrased; an app measure, not part of Floorspec\): /);
+  });
+});
+
+group('design options (Core 0.3, chapter 19)', () => {
+  it('describes the primary design and names every option set, its primary and its options', () => {
+    const doc = JSON.parse(readFileSync(new URL('../../engine/standard/conformance/core/0.3/options/001-kitchen-a-and-b/input.json', import.meta.url), 'utf8')) as object;
+    const s = describeJson(doc);
+    expect(s.options?.[0]?.primary).toBe('KA');
+    expect(s.options?.[0]?.options.map((o) => o.id)).toEqual(['KA', 'KB']);
+    const t = describe(doc);
+    expect(t).toContain('## Design options');
+    expect(t).toContain('Described: the primary design');
+    // Option B's wall is not in the primary design, so its rooms are A's.
+    expect(t).not.toContain(' SB ');
   });
 });

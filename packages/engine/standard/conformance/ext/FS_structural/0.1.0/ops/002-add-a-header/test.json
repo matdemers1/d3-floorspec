@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of O3 /extensions/FS_structural/header, creating O3's extensions and its FS_structural data on the way (Ops 2.3): a single 2x6 header over the utility door. It commits.",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.3.2",
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "1b68613db1c52b7c011ada3f9e6d2cf203239a652a41a81e2e549e7e3fd4a225",
+  "created": ["J5", "J6", "W5", "W6", "W7"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "J5",
+      "level": "L1",
+      "position": [3121152, 0]
+    },
+    {
+      "op": "addJunction",
+      "id": "J6",
+      "level": "L1",
+      "position": [3121152, 3901440]
+    },
+    {
+      "op": "addWall",
+      "id": "W5",
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "W2",
+      "path": "/end",
+      "value": "J3"
+    },
+    {
+      "op": "setProperty",
+      "id": "W4",
+      "path": "/end",
+      "value": "J1"
+    },
+    {
+      "op": "setProperty",
+      "id": "W4",
+      "path": "/finishes",
+      "value": {
+        "right": {
+          "material": "TILE",
+          "regions": [
+            {
+              "to": 3901440,
+              "bottom": 1170432,
+              "from": 780288,
+              "material": "TILE",
+              "top": 1755648
+            },
+            {
+              "to": 390144,
+              "bottom": 1755648,
+              "from": 0,
+              "material": "TILE",
+              "top": 3456000
+            },
+            {
+              "to": 3121152,
+              "bottom": 0,
+              "from": 2340864,
+              "material": "TILE",
+              "top": 1170432
+            }
+          ]
+        }
+      }
+    },
+    {
+      "op": "removeElement",
+      "id": "W5"
+    },
+    {
+      "op": "removeElement",
+      "id": "W6"
+    },
+    {
+      "op": "removeElement",
+      "id": "W7"
+    },
+    {
+      "op": "removeElement",
+      "id": "J5"
+    },
+    {
+      "op": "removeElement",
+      "id": "J6"
+    }
+  ]
+}

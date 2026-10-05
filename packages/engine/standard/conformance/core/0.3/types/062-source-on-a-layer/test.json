@@ -1,0 +1,6 @@
+{
+  "description": "A layer with a source: the wall type has one, its layers do not.",
+  "covers": [
+    "FS-CORE-1.4.3"
+  ]
+}

@@ -78,6 +78,12 @@ export interface Outlet {
     [k: string]: unknown | undefined;
   };
   /**
+   * Core 19.2 (Core 0.3): checked by Core, not here.
+   */
+  option?: {
+    [k: string]: unknown | undefined;
+  };
+  /**
    * Core 12.5: checked by Core, not here.
    */
   name?: {
@@ -122,6 +128,12 @@ export interface Doorbell {
    * Core 13.5: checked by Core, not here.
    */
   clearances?: {
+    [k: string]: unknown | undefined;
+  };
+  /**
+   * Core 19.2 (Core 0.3): checked by Core, not here.
+   */
+  option?: {
     [k: string]: unknown | undefined;
   };
   /**
@@ -176,6 +188,12 @@ export interface SecurityDevice {
     [k: string]: unknown | undefined;
   };
   /**
+   * Core 19.2 (Core 0.3): checked by Core, not here.
+   */
+  option?: {
+    [k: string]: unknown | undefined;
+  };
+  /**
    * Core 12.5: checked by Core, not here.
    */
   name?: {
@@ -220,6 +238,12 @@ export interface Speaker {
    * Core 13.5: checked by Core, not here.
    */
   clearances?: {
+    [k: string]: unknown | undefined;
+  };
+  /**
+   * Core 19.2 (Core 0.3): checked by Core, not here.
+   */
+  option?: {
     [k: string]: unknown | undefined;
   };
   /**
@@ -268,6 +292,12 @@ export interface HeadEnd {
    * Core 13.5: checked by Core, not here.
    */
   clearances?: {
+    [k: string]: unknown | undefined;
+  };
+  /**
+   * Core 19.2 (Core 0.3): checked by Core, not here.
+   */
+  option?: {
     [k: string]: unknown | undefined;
   };
   /**

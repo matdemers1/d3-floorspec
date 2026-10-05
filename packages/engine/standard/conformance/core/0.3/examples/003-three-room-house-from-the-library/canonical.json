@@ -1,0 +1,528 @@
+{
+  "assets": {
+    "OAKIMG": {
+      "mediaType": "image/png",
+      "path": "textures/white-oak.png",
+      "sha256": "3f6c2a8e9d1b4c7f0a5e8d2b6c9f1a4e7d0b3c6f9a2e5d8b1c4f7a0e3d6b9c2f"
+    }
+  },
+  "buildings": {
+    "HOUSE": {
+      "name": "House"
+    }
+  },
+  "floorspec": "0.3",
+  "junctions": {
+    "C1": {
+      "level": "MAIN",
+      "name": "SW corner",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "C2": {
+      "level": "MAIN",
+      "position": [
+        0,
+        9363456
+      ]
+    },
+    "C3": {
+      "level": "MAIN",
+      "position": [
+        14045184,
+        9363456
+      ]
+    },
+    "C4": {
+      "level": "MAIN",
+      "position": [
+        14045184,
+        0
+      ]
+    },
+    "TE": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "WE1",
+          "WE2"
+        ]
+      },
+      "level": "MAIN",
+      "position": [
+        14045184,
+        4681728
+      ]
+    },
+    "TM": {
+      "level": "MAIN",
+      "position": [
+        7802880,
+        4681728
+      ]
+    },
+    "TN": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "WN1",
+          "WN2"
+        ]
+      },
+      "level": "MAIN",
+      "position": [
+        7802880,
+        9363456
+      ]
+    },
+    "TS": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "WS1",
+          "WS2"
+        ]
+      },
+      "level": "MAIN",
+      "position": [
+        7802880,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "MAIN": {
+      "building": "HOUSE",
+      "elevation": 0,
+      "height": 3511296,
+      "name": "Main floor"
+    }
+  },
+  "materials": {
+    "OAK": {
+      "name": "White oak strip",
+      "texture": {
+        "asset": "OAKIMG",
+        "size": [
+          97536,
+          1560576
+        ]
+      }
+    },
+    "PAINT": {
+      "color": "#cdd2ca",
+      "name": "Eggshell paint, \"Sea Salt\""
+    },
+    "TILE": {
+      "color": "#d9d6d0",
+      "name": "Porcelain tile 12 x 24"
+    },
+    "fibre-cement-siding": {
+      "color": "#8f9aa1",
+      "name": "Fibre-cement lap siding, painted",
+      "roughness": 750,
+      "source": {
+        "item": "fibre-cement-siding",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "gypsum-board": {
+      "color": "#efede8",
+      "name": "Gypsum board, painted",
+      "roughness": 900,
+      "source": {
+        "item": "gypsum-board",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "osb-sheathing": {
+      "color": "#c09a5b",
+      "name": "OSB sheathing",
+      "roughness": 900,
+      "source": {
+        "item": "osb-sheathing",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "weather-resistive-barrier": {
+      "color": "#e9edf0",
+      "name": "Weather-resistive barrier",
+      "roughness": 600,
+      "source": {
+        "item": "weather-resistive-barrier",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wood-stud-framing": {
+      "color": "#c8a46e",
+      "name": "Wood stud framing",
+      "roughness": 850,
+      "source": {
+        "item": "wood-stud-framing",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wood-stud-framing-insulated": {
+      "color": "#dcc28c",
+      "name": "Wood stud framing, insulated cavities",
+      "roughness": 900,
+      "source": {
+        "item": "wood-stud-framing-insulated",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    }
+  },
+  "openings": {
+    "BD": {
+      "fill": "door-interior-swing-32x80",
+      "hinge": "end",
+      "offset": 3121152,
+      "wall": "WI1"
+    },
+    "BW": {
+      "fill": "window-casement-30x60",
+      "offset": 1170432,
+      "wall": "WE2"
+    },
+    "FD": {
+      "fill": "door-exterior-swing-36x80",
+      "name": "Front door",
+      "offset": 2340864,
+      "swing": "left",
+      "wall": "WS2"
+    },
+    "KW": {
+      "fill": "window-slider-48x36",
+      "offset": 2340864,
+      "wall": "WN2"
+    },
+    "LW1": {
+      "fill": "window-double-hung-36x60",
+      "offset": 3121152,
+      "wall": "WW"
+    },
+    "LW2": {
+      "fill": "window-fixed-72x48",
+      "name": "Picture window",
+      "offset": 2340864,
+      "wall": "WN1"
+    }
+  },
+  "project": {
+    "name": "Three-room house, from the US starter library"
+  },
+  "rooms": {
+    "BED": {
+      "anchor": [
+        10924032,
+        2340864
+      ],
+      "floorFinish": "OAK",
+      "function": "sleeping",
+      "level": "MAIN",
+      "name": "Bedroom",
+      "wallFinish": "PAINT"
+    },
+    "KIT": {
+      "anchor": [
+        10924032,
+        7022592
+      ],
+      "floorFinish": "TILE",
+      "function": "kitchen",
+      "level": "MAIN",
+      "name": "Kitchen"
+    },
+    "LIV": {
+      "anchor": [
+        3901440,
+        4681728
+      ],
+      "floorFinish": "OAK",
+      "function": "living",
+      "level": "MAIN",
+      "name": "Living room"
+    }
+  },
+  "separators": {
+    "SK": {
+      "end": "TN",
+      "level": "MAIN",
+      "name": "Kitchen counter line",
+      "start": "TM"
+    }
+  },
+  "site": {
+    "location": {
+      "latitude": 42360100,
+      "longitude": -71058900
+    },
+    "trueNorth": -12500000
+  },
+  "types": {
+    "door-exterior-swing-36x80": {
+      "clearOpening": {
+        "height": 2568448,
+        "width": 1097280
+      },
+      "clearances": {
+        "swing": {
+          "max": [
+            1170432,
+            617728,
+            2682240
+          ],
+          "min": [
+            0,
+            -617728,
+            0
+          ],
+          "purpose": "swing",
+          "shape": "box"
+        }
+      },
+      "height": 2682240,
+      "kind": "doorType",
+      "name": "Exterior swing door, 36 x 80 in",
+      "operation": "swing",
+      "source": {
+        "item": "door-exterior-swing-36x80",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1235456
+    },
+    "door-interior-swing-32x80": {
+      "clearOpening": {
+        "height": 2600960,
+        "width": 975360
+      },
+      "clearances": {
+        "swing": {
+          "max": [
+            1040384,
+            552704,
+            2682240
+          ],
+          "min": [
+            0,
+            -552704,
+            0
+          ],
+          "purpose": "swing",
+          "shape": "box"
+        }
+      },
+      "height": 2682240,
+      "kind": "doorType",
+      "name": "Interior swing door, 32 x 80 in",
+      "operation": "swing",
+      "source": {
+        "item": "door-interior-swing-32x80",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1105408
+    },
+    "wall-2x4-interior": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        },
+        {
+          "function": "core",
+          "material": "wood-stud-framing",
+          "thickness": 113792
+        },
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x4 interior partition, gypsum both faces",
+      "source": {
+        "item": "wall-2x4-interior",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wall-2x6-exterior-fibre-cement": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "fibre-cement-siding",
+          "thickness": 10160
+        },
+        {
+          "function": "membrane",
+          "material": "weather-resistive-barrier",
+          "thickness": 508
+        },
+        {
+          "function": "substrate",
+          "material": "osb-sheathing",
+          "thickness": 14224
+        },
+        {
+          "function": "core",
+          "material": "wood-stud-framing-insulated",
+          "thickness": 178816
+        },
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x6 exterior wall, fibre-cement siding",
+      "source": {
+        "item": "wall-2x6-exterior-fibre-cement",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "window-casement-30x60": {
+      "clearOpening": {
+        "area": 1420648513536,
+        "height": 1820672,
+        "width": 780288
+      },
+      "height": 1966976,
+      "kind": "windowType",
+      "name": "Casement window, 30 x 60 in",
+      "operation": "casement",
+      "sill": 715264,
+      "source": {
+        "item": "window-casement-30x60",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 991616
+    },
+    "window-double-hung-36x60": {
+      "clearOpening": {
+        "area": 913274044416,
+        "height": 877824,
+        "width": 1040384
+      },
+      "height": 1966976,
+      "kind": "windowType",
+      "name": "Double-hung window, 36 x 60 in",
+      "operation": "doubleHung",
+      "sill": 715264,
+      "source": {
+        "item": "window-double-hung-36x60",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1186688
+    },
+    "window-fixed-72x48": {
+      "height": 1576832,
+      "kind": "windowType",
+      "name": "Fixed window, 72 x 48 in",
+      "operation": "fixed",
+      "sill": 1105408,
+      "source": {
+        "item": "window-fixed-72x48",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 2357120
+    },
+    "window-slider-48x36": {
+      "clearOpening": {
+        "area": 710324256768,
+        "height": 1040384,
+        "width": 682752
+      },
+      "height": 1186688,
+      "kind": "windowType",
+      "name": "Horizontal sliding window, 48 x 36 in",
+      "operation": "horizontalSlider",
+      "sill": 1495552,
+      "source": {
+        "item": "window-slider-48x36",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1576832
+    }
+  },
+  "walls": {
+    "WE1": {
+      "end": "TE",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "C3",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "WE2": {
+      "end": "C4",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "TE",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "WI1": {
+      "end": "TM",
+      "level": "MAIN",
+      "start": "TS",
+      "type": "wall-2x4-interior"
+    },
+    "WI2": {
+      "end": "TE",
+      "level": "MAIN",
+      "start": "TM",
+      "type": "wall-2x4-interior"
+    },
+    "WN1": {
+      "end": "TN",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "C2",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "WN2": {
+      "end": "C3",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "TN",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "WS1": {
+      "end": "TS",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "C4",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "WS2": {
+      "end": "C1",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "TS",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "WW": {
+      "end": "C2",
+      "justification": "coreFace",
+      "level": "MAIN",
+      "start": "C1",
+      "type": "wall-2x6-exterior-fibre-cement"
+    }
+  }
+}

@@ -1,4 +1,19 @@
-import { check, extElements, OFFICIAL_READER, type Derived, type DerivedRoof, type DerivedStair, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
+import {
+  check,
+  extElements,
+  hasOptions,
+  OFFICIAL_READER,
+  optionsOf,
+  primaryDesign,
+  resolveDesign,
+  viewOf,
+  type Derived,
+  type DerivedRoof,
+  type DerivedStair,
+  type Design,
+  type Diagnostic,
+  type FloorspecDocument,
+} from '@floorspec/engine';
 import { twiceArea } from './units';
 import { deviceViews, recordIndex, type DeviceView, type RecordRef } from './systems/view';
 import { kindLabel } from './systems/catalog';
@@ -15,11 +30,15 @@ export type Ring = readonly Point[];
 
 /** Every collection an element can live in (Core 1.1), in the order the tree lists them. */
 export type Collection =
-  | 'buildings' | 'levels' | 'junctions' | 'walls' | 'separators' | 'openings' | 'rooms' | 'slabs' | 'roofs' | 'stairs' | 'types' | 'materials' | 'assets';
+  | 'buildings' | 'levels' | 'junctions' | 'walls' | 'separators' | 'openings' | 'rooms' | 'slabs' | 'roofs' | 'stairs' | 'types' | 'materials' | 'assets'
+  | 'optionSets' | 'options';
 
 export const COLLECTIONS: readonly Collection[] = [
-  'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'roofs', 'stairs', 'types', 'materials', 'assets',
+  'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'roofs', 'stairs', 'types', 'materials', 'assets', 'optionSets', 'options',
 ];
+
+/** Core 0.3, 19.2: the collections whose elements may be in a design option (beside extension elements). */
+export const IN_OPTIONS: readonly Collection[] = ['junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'roofs', 'stairs'];
 
 /**
  * Where an ID lives: a Core collection, the program's items (Core 0.2, 11.1), or an extension's
@@ -29,7 +48,7 @@ export type Place = Collection | 'items' | 'extension' | 'record';
 
 export type Kind =
   | 'building' | 'level' | 'junction' | 'wall' | 'separator' | 'opening' | 'room' | 'slab' | 'roof' | 'stair'
-  | 'wallType' | 'doorType' | 'windowType' | 'material' | 'asset' | 'item' | 'extensionElement'
+  | 'wallType' | 'doorType' | 'windowType' | 'material' | 'asset' | 'item' | 'extensionElement' | 'optionSet' | 'option'
   /** A record an extension keeps beside its elements (FS_electrical's circuits …): not an element. */
   | 'circuit' | 'stack' | 'gasSource';
 
@@ -116,6 +135,8 @@ export interface StairView {
 export interface FaceView {
   /** The room anchored in it, or null for an unanchored face. */
   room: string | null;
+  /** The base colour of the room's floor finish (Core 0.3, 18.6), when it has one with a colour: the plan's tint. */
+  tint?: string;
   outer: Ring;
   holes: Ring[];
   area2: bigint;
@@ -153,9 +174,27 @@ export interface LevelView {
   bounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
 }
 
+/** Core 0.3, chapter 19: the document's option sets, each with its options, in ID order. */
+export interface OptionSetView {
+  id: string;
+  name: string;
+  primary: string;
+  options: { id: string; name: string }[];
+}
+
 export interface EditorModel {
   hash: string;
+  /** The whole document, every design option included: what the tree and the inspector read. */
   document: FloorspecDocument;
+  /**
+   * The design shown (Core 0.3, 19.3): every set's choice. Empty for a document without design
+   * options. `levels` and `derived` are of this design's view.
+   */
+  design: Design;
+  /** The option sets, empty without design options. */
+  optionSets: OptionSetView[];
+  /** Whether the design shown derives (19.6.2): false for a design whose view is not valid. */
+  designDerives: boolean;
   valid: boolean;
   derived: Derived | null;
   /** The head's own findings: lints when it is valid, every diagnostic when it is not. */
@@ -172,12 +211,37 @@ export interface EditorModel {
 const entriesOf = (c: unknown): [string, Json][] =>
   Object.entries((c ?? {}) as Record<string, Json | undefined>).filter((e): e is [string, Json] => e[1] !== undefined);
 
-/** Read a version: check, derive and index it. */
-export function readModel(hash: string, text: string | object): EditorModel {
+/** The option sets of a document (Core 0.3, 19.1), with names to show. */
+export function optionSetsOf(document: FloorspecDocument): OptionSetView[] {
+  if (!hasOptions(document)) return [];
+  return Object.entries(document.optionSets ?? {})
+    .filter((e): e is [string, NonNullable<(typeof e)[1]>] => e[1] !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([id, set]) => {
+      return {
+        id,
+        name: set.name ?? id,
+        primary: set.primary,
+        options: optionsOf(document, id).map((o) => ({ id: o, name: document.options?.[o]?.name ?? o })),
+      };
+    });
+}
+
+/**
+ * Read a version: check, derive and index it — in `wanted`, a design (Core 0.3, 19.6): every set it
+ * names takes that option, every other its primary; a choice that is not the document's is dropped.
+ */
+export function readModel(hash: string, text: string | object, wanted: Design = {}): EditorModel {
+  const document = (typeof text === 'string' ? JSON.parse(text) : text) as FloorspecDocument;
+  const optionSets = optionSetsOf(document);
+  const design: Design = {};
+  if (optionSets.length > 0) {
+    Object.assign(design, primaryDesign(document));
+    for (const [set, option] of Object.entries(wanted)) if (resolveDesign(document, { [set]: option }) !== undefined) design[set] = option;
+  }
   // The reader implements the official extensions (FS_electrical …): their derived values — circuits,
   // loads, panel spaces — are what the systems panels and schedules read (FLR-T-5.7, 5.8).
-  const result = check(text, OFFICIAL_READER);
-  const document = (typeof text === 'string' ? JSON.parse(text) : text) as FloorspecDocument;
+  const result = check(document, { ...OFFICIAL_READER, ...(optionSets.length > 0 && { design }) });
   const index = new Map<string, Place>();
   for (const c of COLLECTIONS) for (const [id] of entriesOf((document as unknown as Json)[c])) index.set(id, c);
   for (const [id] of entriesOf(document.program?.items)) index.set(id, 'items');
@@ -189,13 +253,18 @@ export function readModel(hash: string, text: string | object): EditorModel {
   const derived = result.valid ? (result.derived ?? null) : null;
   const records = recordIndex(document);
   for (const [id] of records) if (!index.has(id)) index.set(id, 'record');
+  // The plan draws the design's view: an element of an option the design does not choose is not on it.
+  const shown = optionSets.length > 0 ? viewOf(document, design) : document;
   return {
     hash,
     document,
+    design,
+    optionSets,
+    designDerives: !result.valid || derived !== null,
     valid: result.valid,
     derived,
     diagnostics: result.diagnostics,
-    levels: derived === null ? levelsWithoutGeometry(document) : levelViews(document, derived),
+    levels: derived === null ? levelsWithoutGeometry(shown) : levelViews(shown, derived),
     index,
     ext,
     records,
@@ -218,6 +287,7 @@ export function kindOf(model: EditorModel, id: string): Kind | null {
   const singular: Record<Collection, Kind> = {
     buildings: 'building', levels: 'level', junctions: 'junction', walls: 'wall', separators: 'separator', openings: 'opening',
     rooms: 'room', slabs: 'slab', roofs: 'roof', stairs: 'stair', types: 'wallType', materials: 'material', assets: 'asset',
+    optionSets: 'optionSet', options: 'option',
   };
   return singular[c];
 }
@@ -392,7 +462,9 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
             ...(c.kind === 'vaulted' && declared?.ridge !== undefined ? { ridge: declared.ridge } : {}),
           };
     view.rooms.push({ id, name: typeof r['name'] === 'string' ? r['name'] : id, anchor: r['anchor'] as Point, outer: d.outer, holes: d.holes, area2, ceiling, floorTop: derived.floors?.[id]?.top ?? null });
-    view.faces.push({ room: id, outer: d.outer, holes: d.holes, area2 });
+    const floor = derived.finishes?.rooms[id]?.floor;
+    const tint = floor === undefined ? undefined : document.materials?.[floor]?.color;
+    view.faces.push({ room: id, outer: d.outer, holes: d.holes, area2, ...(tint === undefined ? {} : { tint }) });
   }
   for (const device of deviceViews(document, derived)) views.get(device.level)?.devices.push(device);
   for (const [id, s] of entriesOf(document.slabs)) {
@@ -450,6 +522,8 @@ export function labelOf(model: EditorModel, id: string): string {
     case 'doorType': return name ?? `Door type ${id}`;
     case 'windowType': return name ?? `Window type ${id}`;
     case 'material': return name ?? `Material ${id}`;
+    case 'optionSet': return name ?? `Option set ${id}`;
+    case 'option': return name ?? `Option ${id}`;
     case 'item': return name ?? `Item ${id}`;
     case 'extensionElement': {
       const at = model.ext.get(id);

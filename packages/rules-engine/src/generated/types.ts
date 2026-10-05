@@ -126,12 +126,19 @@ export interface FloorspecRules01EvaluationRequest {
   packs: Packs;
   profile?: Profile;
   units?: Units;
+  design?: Design;
 }
 /**
  * 1.1: the profile; absent, the default profile (10.6). It is checked by the profile schema (FS-RULES-002).
  */
 export interface Profile {
   [k: string]: unknown | undefined;
+}
+/**
+ * 1.2: the design to evaluate (Core 19.6): an object mapping option set IDs to option IDs. Absent: the primary design. A design Core derives nothing for is FS-RULES-003, not this schema's.
+ */
+export interface Design {
+  [k: string]: string | undefined;
 }
 /**
  * 2.1: a named, versioned set of rule records under CC BY 4.0, with its coverage.

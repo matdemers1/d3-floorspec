@@ -1,5 +1,5 @@
 {
-  "description": "addElement's collection is one of the collections of Core 1.1 or the program's items; \"optionSets\" is reserved, not a collection of 0.3.",
+  "description": "addElement's collection is one of the collections of Core 1.1 or the program's items; \"furniture\" is not a collection of Core 0.3: furniture is an extension's.",
   "covers": [
     "FS-OPS-1.1.3"
   ]

@@ -231,6 +231,10 @@
         "reachable": true
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "BED": {
         "bottom": 3456000,

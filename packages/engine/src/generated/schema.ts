@@ -8,7 +8,7 @@ export const SCHEMA = {
     "asset": {
       "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.6's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
       "title": "Asset",
-      "description": "8.6: a file the document refers to — a texture image in this draft. An asset MUST have exactly one of `path` and `uri` (FS-CORE-8.6.1). It has only the members of its table (FS-CORE-1.4.1).",
+      "description": "8.6, 18.4: a file the document refers to - a texture's map, or an extension's model or symbol. An asset MUST have exactly one of `path` and `uri` (FS-CORE-8.6.1). It has only the members of its table (FS-CORE-1.4.1).",
       "type": "object",
       "required": [
         "sha256",
@@ -17,7 +17,7 @@ export const SCHEMA = {
       "properties": {
         "path": {
           "title": "Path",
-          "description": "8.6: where the file is, relative to the document. A path MUST be relative, use / as its separator, and contain no empty, . or .. segment (FS-CORE-8.6.2): so it does not start with /, contains no \\, has no colon in its first segment (which would make it a URI with a scheme or a drive-letter path), and has no // and no trailing /.",
+          "description": "8.6, 18.4: where the file is, relative to the document's package - the directory that holds the document's file. A path MUST be relative, use / as its separator, and contain no empty, . or .. segment (FS-CORE-8.6.2): so it does not start with /, contains no \\, has no colon in its first segment (which would make it a URI with a scheme or a drive-letter path), and has no // and no trailing /.",
           "type": "string",
           "pattern": "^(?:[^/\\\\.:]|[^/\\\\.:][^/\\\\:]|\\.[^/\\\\.:]|[^/\\\\:]{3,})(?:/(?:[^/\\\\.]|[^/\\\\.][^/\\\\]|\\.[^/\\\\.]|[^/\\\\]{3,}))*$"
         },
@@ -39,6 +39,13 @@ export const SCHEMA = {
           "description": "8.6: what kind of file it is, a media type such as \"image/png\" — a type and a subtype as RFC 6838 §4.2 names them, without parameters. Always present.",
           "type": "string",
           "pattern": "^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}$"
+        },
+        "byteLength": {
+          "title": "Byte length",
+          "description": "18.4: the length of the file in bytes, an integer from 0 to 2^53 − 1 (FS-CORE-18.4.1). Absent: not declared.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
         },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
@@ -362,6 +369,35 @@ export const SCHEMA = {
           "type": "string",
           "format": "uri",
           "pattern": "^https://(?:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})+$"
+        },
+        "source": {
+          "title": "Source",
+          "description": "8.1: the library item a type or a material was copied from - provenance only, never read by derivation. Exactly `library`, `version` and `item`, each always present (FS-CORE-8.1.3).",
+          "type": "object",
+          "required": [
+            "library",
+            "version",
+            "item"
+          ],
+          "properties": {
+            "library": {
+              "$ref": "#/$defs/defs/$defs/httpsUri",
+              "description": "8.1: the library, by a URI that names it across all its versions."
+            },
+            "version": {
+              "title": "Library version",
+              "description": "8.1: the version of the library it was copied from, matching the pattern of 1.6.7.",
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(-[0-9A-Za-z.-]+)?$"
+            },
+            "item": {
+              "title": "Library item",
+              "description": "8.1: the item's identifier in that version of the library, matching the pattern of an ID (3.1.1). Not a reference: it names nothing in the document.",
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
@@ -451,7 +487,7 @@ export const SCHEMA = {
         },
         "element": {
           "title": "Extension element",
-          "description": "12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.",
+          "description": "12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members — `fallback`, `host`, `clearances`, `option` (19.2), `name` and `extras` — MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.",
           "type": "object",
           "required": [
             "fallback"
@@ -468,6 +504,10 @@ export const SCHEMA = {
             "clearances": {
               "$ref": "#/$defs/clearance",
               "description": "13.5: the space the element needs kept clear, in its frame. Absent: none."
+            },
+            "option": {
+              "$ref": "#/$defs/defs/$defs/reference",
+              "description": "12.5, 19.2: a reference to the option the element is in. Absent: it is in no option, and so in every design."
             },
             "name": {
               "$ref": "#/$defs/defs/$defs/name",
@@ -510,6 +550,83 @@ export const SCHEMA = {
         }
       },
       "additionalProperties": false
+    },
+    "finish": {
+      "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 18.5's tables: a wall's `finishes` and each face finish `{}`, and `regions` `[]`; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1). A face finish's `material` has none: absent, the face takes its room's or its layer's (18.6).",
+      "title": "Wall finishes",
+      "description": "18.5: the finishes of a wall's two faces, where they differ from the rooms the faces face. That a region is not empty, fits its wall and overlaps no other region of its face (FS-CORE-18.5.2 to 18.5.4) are invariants, not checked here.",
+      "type": "object",
+      "properties": {
+        "left": {
+          "$ref": "#/$defs/finish/$defs/faceFinish",
+          "description": "18.5: the finish of the wall's left face (5.4).",
+          "default": {}
+        },
+        "right": {
+          "$ref": "#/$defs/finish/$defs/faceFinish",
+          "description": "18.5: the finish of the wall's right face (5.4).",
+          "default": {}
+        }
+      },
+      "additionalProperties": false,
+      "$defs": {
+        "faceFinish": {
+          "title": "Face finish",
+          "description": "18.5: the material of one face of a wall, and rectangles of it finished with other materials. It has only the members of its table (FS-CORE-18.5.1).",
+          "type": "object",
+          "properties": {
+            "material": {
+              "$ref": "#/$defs/defs/$defs/reference",
+              "description": "18.5, 18.6: a reference to the material of the whole face. Absent: the face takes the finish of the room it faces, or of the wall's outermost layer on that side (18.6)."
+            },
+            "regions": {
+              "title": "Regions",
+              "description": "18.5: rectangles of the face finished with another material.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/finish/$defs/region"
+              },
+              "default": []
+            }
+          },
+          "additionalProperties": false
+        },
+        "region": {
+          "title": "Region",
+          "description": "18.5: a rectangle on a face, from `from` to `to` along the wall's location line from its start junction, and from `bottom` to `top` above its base elevation, finished with `material`. Every member is always present and the four lengths MUST NOT be negative (FS-CORE-18.5.1).",
+          "type": "object",
+          "required": [
+            "from",
+            "to",
+            "bottom",
+            "top",
+            "material"
+          ],
+          "properties": {
+            "from": {
+              "$ref": "#/$defs/defs/$defs/nonNegativeLength",
+              "description": "18.5: where the region starts, along the location line from the start junction."
+            },
+            "to": {
+              "$ref": "#/$defs/defs/$defs/nonNegativeLength",
+              "description": "18.5: where it ends, along the location line from the start junction."
+            },
+            "bottom": {
+              "$ref": "#/$defs/defs/$defs/nonNegativeLength",
+              "description": "18.5: the height of its bottom edge above the wall's base elevation."
+            },
+            "top": {
+              "$ref": "#/$defs/defs/$defs/nonNegativeLength",
+              "description": "18.5: the height of its top edge above the wall's base elevation."
+            },
+            "material": {
+              "$ref": "#/$defs/defs/$defs/reference",
+              "description": "18.5: a reference to the region's material."
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     },
     "floorspec": {
       "$comment": "Normative (FLR-ADR-006): this hand-written schema is the source; TypeScript types are generated from it, never the reverse. The `default` keywords in these schemas are exactly the constant defaults of Floorspec Core 0.3 (1.5) — the reference canonicalizer reads them as its table of constant defaults (9.2 step 1). A member whose default is derived, and every typed property (8.2), carries no `default`; never add one for documentation.",
@@ -687,6 +804,30 @@ export const SCHEMA = {
           },
           "additionalProperties": {
             "$ref": "#/$defs/stair"
+          },
+          "default": {}
+        },
+        "optionSets": {
+          "title": "Option sets",
+          "description": "1.1, 19.1: the collection of option sets (1.4), keyed by element ID. New in 0.3.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/defs/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/option/$defs/optionSet"
+          },
+          "default": {}
+        },
+        "options": {
+          "title": "Options",
+          "description": "1.1, 19.1: the collection of options (1.4), keyed by element ID; each option is of one option set. New in 0.3.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/defs/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/option/$defs/option"
           },
           "default": {}
         },
@@ -897,6 +1038,10 @@ export const SCHEMA = {
             "kind": "mitre"
           }
         },
+        "option": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "19.2: a reference to the option this junction is in. Absent: it is in no option, and so in every design."
+        },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
           "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
@@ -1072,42 +1217,110 @@ export const SCHEMA = {
       "additionalProperties": false
     },
     "material": {
-      "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+      "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.5's table and 18.2's texture table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1). `metallic` and `roughness` have none: absent, each takes its map's value, or 0 and 1000 without a map (18.1).",
       "title": "Material",
-      "description": "8.5: what a layer, a finish or a slab's surface is made of. It has only the members of its table (FS-CORE-1.4.1).",
+      "description": "8.5, 18.1: what a layer, a finish or a slab's surface is made of - a physically based surface in the metallic-roughness model of glTF 2.0. It has only the members of its table (FS-CORE-1.4.1).",
       "type": "object",
       "properties": {
         "color": {
           "title": "Colour",
-          "description": "8.5: the material's base colour as \"#rrggbb\", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). Absent by default.",
+          "description": "8.5, 18.1: the material's base colour as \"#rrggbb\", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). With a base colour map, the colour to show where the map is not drawn. Absent by default.",
           "type": "string",
           "pattern": "^#[0-9a-f]{6}$"
         },
+        "metallic": {
+          "title": "Metallic",
+          "description": "18.1: how metallic the surface is, in thousandths, an integer from 0 to 1000 (FS-CORE-18.1.1). Absent: the metallic-roughness map's value, or 0 without one - so it has no constant default.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "roughness": {
+          "title": "Roughness",
+          "description": "18.1: how rough the surface is, in thousandths, an integer from 0 to 1000 (FS-CORE-18.1.1). Absent: the metallic-roughness map's value, or 1000 without one - so it has no constant default.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
         "texture": {
           "title": "Texture",
-          "description": "8.5: an image tiled across the surface; one tile covers `size` [w, h] base units. Absent by default; when present, both members are present.",
+          "description": "8.5, 18.2: images tiled across the surface - its maps - and the real-world size, offset and rotation of one tile. Absent by default. A texture MUST have at least one map (FS-CORE-18.2.1).",
           "type": "object",
           "required": [
-            "asset",
             "size"
           ],
           "properties": {
             "asset": {
               "$ref": "#/$defs/defs/$defs/reference",
-              "description": "8.5: a reference to the asset holding the image."
+              "description": "18.2: the base colour map, a reference to an asset holding an sRGB image of the surface's colour. Absent: no base colour map."
+            },
+            "normal": {
+              "$ref": "#/$defs/defs/$defs/reference",
+              "description": "18.2: the normal map, a reference to an asset holding a tangent-space normal map, linear, as glTF 2.0 defines it. Absent: no normal map."
+            },
+            "metallicRoughness": {
+              "$ref": "#/$defs/defs/$defs/reference",
+              "description": "18.2: the metallic-roughness map, a reference to an asset holding roughness in its green and metalness in its blue channel, linear, as glTF 2.0 defines it. Absent: no such map."
+            },
+            "occlusion": {
+              "$ref": "#/$defs/defs/$defs/reference",
+              "description": "18.2: the occlusion map, a reference to an asset holding ambient occlusion in its red channel, linear. Absent: no occlusion map."
             },
             "size": {
               "title": "Tile size",
-              "description": "8.5: [w, h], the size one tile covers. It MUST be two lengths greater than zero (FS-CORE-8.5.2).",
+              "description": "8.5, 18.2: [w, h], the real-world size of one tile. It MUST be two lengths greater than zero (FS-CORE-8.5.2). Always present.",
               "type": "array",
               "items": {
                 "$ref": "#/$defs/defs/$defs/positiveLength"
               },
               "minItems": 2,
               "maxItems": 2
+            },
+            "offset": {
+              "$ref": "#/$defs/defs/$defs/point",
+              "description": "18.2, 18.3: where a tile's corner is, in the surface's coordinates.",
+              "default": [
+                0,
+                0
+              ]
+            },
+            "rotation": {
+              "$ref": "#/$defs/defs/$defs/angleHalfOpen",
+              "description": "18.2, 18.3: how far the tiles are turned, counter-clockwise as seen by someone facing the surface; in (−180,000,000, 180,000,000] (FS-CORE-18.2.1).",
+              "default": 0
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "anyOf": [
+            {
+              "title": "With a base colour map",
+              "required": [
+                "asset"
+              ]
+            },
+            {
+              "title": "With a normal map",
+              "required": [
+                "normal"
+              ]
+            },
+            {
+              "title": "With a metallic-roughness map",
+              "required": [
+                "metallicRoughness"
+              ]
+            },
+            {
+              "title": "With a occlusion map",
+              "required": [
+                "occlusion"
+              ]
+            }
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/defs/$defs/source",
+          "description": "8.1, 8.5: the library item this material was copied from. Absent by default: not recorded."
         },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
@@ -1184,6 +1397,10 @@ export const SCHEMA = {
           "$ref": "#/$defs/defs/$defs/clearOpening",
           "description": "7.1, 8.4: the net clear opening of what fills it, as declared. A typed property (8.2): absent, it resolves from `fill` (7.2), and an opening that resolves none has no clear opening. Replaces its type's whole: an own clear opening without an area has no declared area."
         },
+        "option": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "19.2: a reference to the option this opening is in. Absent: it is in no option, and so in every design."
+        },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
           "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
@@ -1200,6 +1417,71 @@ export const SCHEMA = {
         }
       },
       "additionalProperties": false
+    },
+    "option": {
+      "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 19.1's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+      "title": "Option sets and options",
+      "description": "19.1: an option set — the alternatives for one part of a design, such as a kitchen's layout — and its options. New in 0.3. That a set's `primary` is one of its own options (FS-CORE-19.1.2), and that references between elements do not cross options (FS-CORE-19.4.1), are invariants (FS-INV-1101, FS-INV-1102), not checked here.",
+      "$defs": {
+        "optionSet": {
+          "title": "Option set",
+          "description": "19.1: an option set. It has only the members of its table (FS-CORE-1.4.1).",
+          "type": "object",
+          "required": [
+            "primary"
+          ],
+          "properties": {
+            "primary": {
+              "$ref": "#/$defs/defs/$defs/reference",
+              "description": "19.1: a reference to the set's primary option — one of its own options. Always present."
+            },
+            "name": {
+              "$ref": "#/$defs/defs/$defs/name",
+              "description": "1.4: a human-readable label, 1–200 characters, such as \"Kitchen\". Absent by default."
+            },
+            "extensions": {
+              "$ref": "#/$defs/defs/$defs/extensions",
+              "description": "1.4, 1.6: extension data on this option set.",
+              "default": {}
+            },
+            "extras": {
+              "$ref": "#/$defs/defs/$defs/extras",
+              "description": "1.4, 1.7: application-specific data on this option set.",
+              "default": {}
+            }
+          },
+          "additionalProperties": false
+        },
+        "option": {
+          "title": "Option",
+          "description": "19.1: one alternative of an option set. It has only the members of its table (FS-CORE-1.4.1).",
+          "type": "object",
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "$ref": "#/$defs/defs/$defs/reference",
+              "description": "19.1: a reference to the option set this option is of. Always present."
+            },
+            "name": {
+              "$ref": "#/$defs/defs/$defs/name",
+              "description": "1.4: a human-readable label, 1–200 characters, such as \"A\" or \"Open plan\". Absent by default."
+            },
+            "extensions": {
+              "$ref": "#/$defs/defs/$defs/extensions",
+              "description": "1.4, 1.6: extension data on this option.",
+              "default": {}
+            },
+            "extras": {
+              "$ref": "#/$defs/defs/$defs/extras",
+              "description": "1.4, 1.7: application-specific data on this option.",
+              "default": {}
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     },
     "program": {
       "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 11.1's and 11.2's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
@@ -1402,6 +1684,10 @@ export const SCHEMA = {
           "$ref": "#/$defs/defs/$defs/reference",
           "description": "16.1: a reference to the material of the roof's top surface. Absent by default."
         },
+        "option": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "19.2: a reference to the option this roof is in. Absent: it is in no option, and so in every design."
+        },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
           "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
@@ -1508,6 +1794,10 @@ export const SCHEMA = {
           "default": {
             "kind": "flat"
           }
+        },
+        "option": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "19.2: a reference to the option this room is in. Absent: it is in no option, and so in every design."
         },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
@@ -1717,6 +2007,10 @@ export const SCHEMA = {
           "$ref": "#/$defs/defs/$defs/reference",
           "description": "5.2: a reference to the junction at the other end. Always present."
         },
+        "option": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "19.2: a reference to the option this separator is in. Absent: it is in no option, and so in every design."
+        },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
           "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
@@ -1836,6 +2130,10 @@ export const SCHEMA = {
             "other"
           ]
         },
+        "option": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "19.2: a reference to the option this slab is in. Absent: it is in no option, and so in every design."
+        },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
           "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
@@ -1911,6 +2209,10 @@ export const SCHEMA = {
         "handrail": {
           "$ref": "#/$defs/stair/$defs/handrail",
           "description": "17.1: the stair's handrail. Absent: no handrail is declared."
+        },
+        "option": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "19.2: a reference to the option this stair is in. Absent: it is in no option, and so in every design."
         },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",
@@ -2250,6 +2552,10 @@ export const SCHEMA = {
               "$ref": "#/$defs/layer/$defs/layers",
               "description": "8.3: the assembly, at least one layer (FS-CORE-8.3.1), from the wall's left (exterior) face to its right (interior) face. Always present."
             },
+            "source": {
+              "$ref": "#/$defs/defs/$defs/source",
+              "description": "8.1: the library item this type was copied from. Absent by default: not recorded."
+            },
             "name": {
               "$ref": "#/$defs/defs/$defs/name",
               "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
@@ -2315,6 +2621,10 @@ export const SCHEMA = {
               "$ref": "#/$defs/clearance",
               "description": "8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).",
               "default": {}
+            },
+            "source": {
+              "$ref": "#/$defs/defs/$defs/source",
+              "description": "8.1: the library item this type was copied from. Absent by default: not recorded."
             },
             "name": {
               "$ref": "#/$defs/defs/$defs/name",
@@ -2382,6 +2692,10 @@ export const SCHEMA = {
               "description": "8.4, 13.5: the clearance envelopes every opening this type fills needs kept clear, in the opening's frame (13.1).",
               "default": {}
             },
+            "source": {
+              "$ref": "#/$defs/defs/$defs/source",
+              "description": "8.1: the library item this type was copied from. Absent by default: not recorded."
+            },
             "name": {
               "$ref": "#/$defs/defs/$defs/name",
               "description": "1.4, 8.1: a human-readable label, 1–200 characters. Absent by default."
@@ -2402,7 +2716,7 @@ export const SCHEMA = {
       }
     },
     "wall": {
-      "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Wall table and 5.9 (justification, base, base.offset, top.offset, extensions, extras). `layers` (a typed property, 8.2), `top` (derived from the level's height, 5.9) and `base.level` (derived: the wall's own level) deliberately have none. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).",
+      "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Wall table and 5.9 (justification, base, base.offset, top.offset, finishes, extensions, extras). `layers` (a typed property, 8.2), `top` (derived from the level's height, 5.9) and `base.level` (derived: the wall's own level) deliberately have none. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).",
       "title": "Wall",
       "description": "5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.",
       "type": "object",
@@ -2503,6 +2817,15 @@ export const SCHEMA = {
               "additionalProperties": false
             }
           ]
+        },
+        "finishes": {
+          "$ref": "#/$defs/finish",
+          "description": "5.2, 18.5: the finishes of the wall's faces, and of regions of them, where they differ from the rooms they face.",
+          "default": {}
+        },
+        "option": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "19.2: a reference to the option this wall is in. Absent: it is in no option, and so in every design."
         },
         "name": {
           "$ref": "#/$defs/defs/$defs/name",

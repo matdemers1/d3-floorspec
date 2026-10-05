@@ -1,0 +1,47 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "7fd1c2aabbe3c3c93b7f608e5af0d30aff3ca1174b897a6b20889e86352e8811",
+  "created": [],
+  "removed": ["KB", "OB", "SB"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "KB",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "KB",
+      "element": {
+        "name": "B",
+        "set": "KS"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "separators",
+      "id": "SB",
+      "element": {
+        "level": "L1",
+        "start": "S4",
+        "end": "N4",
+        "option": "KB"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "OB",
+      "element": {
+        "fill": "G",
+        "offset": 640000,
+        "option": "KB",
+        "wall": "W4"
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "W10 does not say whether it bears, and its door O3 has no header: no lint, since only a wall whose `bearing` is true asks for one.",
+  "covers": [
+    "FS-STRC-1.2.3"
+  ]
+}

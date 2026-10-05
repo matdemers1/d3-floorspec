@@ -1,0 +1,10 @@
+{
+  "description": "Four framings break three rules at once, and the deck's span has no direction: each is reported once, naming its element.",
+  "covers": [
+    "FS-STRC-1.2.3",
+    "FS-STRC-2.2.1",
+    "FS-STRC-2.2.2",
+    "FS-STRC-2.2.3",
+    "FS-STRC-3.1.1"
+  ]
+}

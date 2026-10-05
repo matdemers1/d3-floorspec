@@ -13,7 +13,15 @@ or window type's `operation` and `clearOpening`, an opening's own `clearOpening`
 a roof or a stair, are members `setProperty` and `unsetProperty` address like any other, and a
 result is judged by Core 0.3's invariants (`FS-INV-305` … `308`, `FS-INV-801` … `805`, `FS-INV-901`
 … `904`). Roofs mint `RF` IDs and stairs `ST`; removing a level takes or is blocked by its roofs and
-by every stair whose `level` or `to` it is; the inverse removes roofs and then stairs after slabs. **Ops 0.2** (`{ ops: '0.2' }`) is the
+by every stair whose `level` or `to` it is; the inverse removes roofs and then stairs after slabs.
+Ops 0.3 also edits **materials and finishes** (Core chapter 18: a wall's `finishes`, a texture's
+maps; a wall or material that names a material or asset blocks removing it; a wall split by
+planarization cuts its regions to its pieces, step 7) and **design options** (Core chapter 19:
+`optionSets` and `options` mint `OS` and `OP`; removing an option takes or is blocked by what is in
+it; `context.option` adds every new junction, edge, opening, room, slab, roof, stair and extension
+element in that option, and selectors, composites and `drawWall` read faces, rooms and junctions in
+the edit design; normalization merges and planarizes a level option by option, 5.5). A rejection
+found only in an option design carries its `design`. **Ops 0.2** (`{ ops: '0.2' }`) is the
 published draft: Core 0.2 documents and Core 0.1 ones (a document declaring "0.3" is `FS-OPS-002`),
 and adds the program and extension elements as things an
 edit addresses: program items (`addProgramItem`, `addElement` into `items`, `setAdjacency`,
@@ -33,7 +41,7 @@ import { apply, resolveBatch, parseLength, formatLength } from '@floorspec/ops';
 const r = apply(modelJson, {
   batch: [{ op: 'resizeRoom', room: 'Kitchen', side: 'east', by: "2'" }],
   context: { locks: [{ element: 'R5' }], retired: ['W9'] },
-}); // options: { ops: '0.1' | '0.2' | '0.3' (default), knownExtensions?, extensions? } — the validator's registry entries
+}); // options: { ops: '0.1' | '0.2' | '0.3' (default), knownExtensions?, extensions? }; request.context.option: the option a batch edits in (0.3) — the validator's registry entries
 if (r.status === 'committed') {
   r.document; // B, canonical form (Core §9.2) — the exact bytes to store
   r.hash; // B's content hash (Core §9.3)
@@ -61,7 +69,7 @@ formatLength(4893056); // `12' 6 1/2"` (1/16" by default); { system: 'metric' } 
 | `src/normalize.ts` | 5.1 merge → 5.2 snap rounding (only on a level that breaks Core §5.3), splitting, re-hosting openings and hosted elements → 5.3 join cleanup |
 | `src/locks.ts`, `src/inverse.ts` | locks (ch. 6); the inverse (1.6) |
 | `src/types.ts` | request, operation and result types |
-| `standard/` | the three Ops conformance suites (0.1: 230 cases, 0.2: 359, 0.3: 420), the three request schemas and the diagnostics chapter, vendored by `pnpm sync-standard` and pinned in `LOCK.json` |
+| `standard/` | the three Ops conformance suites (0.1: 230 cases, 0.2: 359, 0.3: 459), the three request schemas and the diagnostics chapter, vendored by `pnpm sync-standard` and pinned in `LOCK.json` |
 
 ## Exactness and determinism
 

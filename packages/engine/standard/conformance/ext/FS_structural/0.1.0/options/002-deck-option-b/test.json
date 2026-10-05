@@ -1,0 +1,8 @@
+{
+  "description": "The same document, deriving the design that chooses B (design.json): S2 spans 10' east-west, and it is flagged for an engineer.",
+  "covers": [
+    "FS-STRC-1.2.4",
+    "FS-STRC-5.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

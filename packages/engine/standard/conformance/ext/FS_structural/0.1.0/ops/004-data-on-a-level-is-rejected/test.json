@@ -1,0 +1,8 @@
+{
+  "description": "Setting a note on L1: the result breaks 1.3.3, and the batch is rejected with FS-STRC-SCH-001.",
+  "covers": [
+    "FS-STRC-1.3.3",
+    "FS-STRC-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

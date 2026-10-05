@@ -9,8 +9,11 @@ import { parseJson } from '../json/parse.js';
 import type { JsonPath } from '../json/pointer.js';
 import type { FloorspecDocument } from '../model/document.js';
 import { sortDiagnostics, type Diagnostic } from './diagnostic.js';
-import { invariants, Reporter, type Analysis } from './invariants.js';
-import { lints } from './lints.js';
+import { designInvariants, referenceTier, Reporter, type Analysis, type InvariantOptions } from './invariants.js';
+import { documentLints, lints } from './lints.js';
+import { references } from './references.js';
+import { checkedDesigns, checkedTagOf, hasOptions, mergeDesigns, optionInvariants, primaryDesign, resolveDesign, singleOptionSets, viewOf, type CheckedDesign, type Design } from '../options/options.js';
+import type { Package } from '../finishes/finishes.js';
 import { loadKnownExtensions } from './registry.js';
 import { evaluateExtensions, implementationsOf, lintExtensions, type ExtensionRun } from '../extensions/official.js';
 
@@ -42,6 +45,19 @@ export interface ValidateOptions {
    * checked. Known extensions that break 12.2.1 make every document report FS-CFG-001 alone.
    */
   readonly knownExtensions?: string | Uint8Array | readonly unknown[];
+  /**
+   * Core 0.3 (19.6): the design to derive — a design input, an object of option set ID → option ID,
+   * every set it does not name taking its primary. Absent: the primary design. Validity never
+   * depends on it; nothing is derived for a design that is not one of the document's, or whose view
+   * is not valid (19.6.2).
+   */
+  readonly design?: unknown;
+  /**
+   * Core 0.3 (18.4): the files of the document's package, which makes this a package validator —
+   * every asset located by `path` is checked against its file (FS-INV-1005 to FS-INV-1007).
+   * Absent: a validator that is not given them, which never reports those three.
+   */
+  readonly package?: Package;
 }
 
 export interface ValidationResult {
@@ -64,6 +80,26 @@ export interface Evaluation extends ValidationResult {
    * possibly empty, whenever the reader implements one; the deriver derives `extensions` from it.
    */
   extensions?: ExtensionRun[];
+  /**
+   * The document as seen in the derived design (19.3) — what `analysis` and `extensions` are of: the
+   * document itself when it has no design options. Absent when nothing is derived.
+   */
+  view?: FloorspecDocument;
+  /**
+   * Core 0.3 (19.6): for a valid document with design options, the design derived (every set's
+   * choice), or null when the design input names no design of the document or its view is not valid
+   * (19.6.2) — then nothing is derived. Absent for a document without design options.
+   */
+  design?: Design | null;
+  /** For a valid document with design options: every checked design (19.5), the primary design first, with its view and analysis. */
+  designs?: CheckedDesignEvaluation[];
+}
+
+/** One checked design of a valid document with design options: its tag (undefined for the primary design, else its option), view and analysis. */
+export interface CheckedDesignEvaluation extends CheckedDesign {
+  readonly document: FloorspecDocument;
+  readonly analysis: Analysis;
+  readonly extensions?: ExtensionRun[];
 }
 
 type SchemaError = { instancePath: string; message?: string; keyword: string };
@@ -160,26 +196,117 @@ export function evaluate(input: string | Uint8Array | object, options: ValidateO
   }
   const document = value as FloorspecDocument;
 
-  // Tier 4: invariants.
-  const analysis = invariants(document, r, { core02: versions.includes('0.2'), core03: versions.includes('0.3'), ...(known && { known }) });
-  if (!analysis) return finish(r, { value, document });
+  // Tier 4: invariants — the reference invariants and, with design options, the option invariants
+  // of the document as a whole; then the rest of tier 4 for the view of each checked design (19.5),
+  // a document without design options being its own only one.
+  if (!referenceTier(document, r)) return finish(r, { value, document });
+  const optioned = versions.includes('0.3') && hasOptions(document);
+  if (optioned) {
+    for (const p of optionInvariants(document, references(document)))
+      r.report(
+        p.code,
+        p.code === 'FS-INV-1101'
+          ? `${p.elements[0]}'s primary ${p.elements[1]} is an option of another set.`
+          : `${p.elements[0]} and ${p.elements[1]} are not in the same option, and one refers to the other, which is in an option.`,
+        p.elements,
+        p.pointer ? { pointer: p.pointer } : {},
+      );
+    if (r.diagnostics.length) return finish(r, { value, document });
+  }
+  const opts: InvariantOptions = {
+    core02: versions.includes('0.2'),
+    core03: versions.includes('0.3'),
+    ...(known && { known }),
+    ...(options.package && { package: options.package }),
+  };
+  const sv = schemaView(value, nonInteger);
+  const designs: DesignRun[] = (optioned ? checkedDesigns(document) : [{ tag: undefined, design: {} }]).map(({ tag, design }) => {
+    const view = optioned ? viewOf(document, design) : document;
+    const dr = new Reporter();
+    const analysis = designInvariants(view, dr, opts);
+    return { tag, design, view, analysis, schemaView: optioned ? viewOf(sv, design) : sv, invariants: dr.diagnostics };
+  });
+  r.diagnostics.push(...mergeDesigns(designs.map((d) => ({ tag: d.tag, diagnostics: d.invariants }))));
+  const primary = designs[0]!;
+  const keep = { value, document, view: primary.view, analysis: primary.analysis };
+  if (hasError(r)) return finish(r, keep);
 
   // The extensions this reader implements, after Core's invariants and only without a Core error:
-  // their schemas, then their invariants (each extension's spec, 1.2).
+  // their schemas, then their invariants (each extension's spec, 1.2) — for each checked design.
   const implemented = implementationsOf(options.extensions);
-  let runs: ExtensionRun[] | undefined;
   if (implemented.length) {
-    runs = [];
-    if (!r.diagnostics.some((d) => d.severity === 'error'))
-      runs = evaluateExtensions(document, analysis, known, implemented, schemaView(value, nonInteger), r.diagnostics);
+    for (const d of designs) {
+      d.extensionOut = [];
+      d.runs = evaluateExtensions(d.view, d.analysis, known, implemented, d.schemaView, d.extensionOut);
+    }
+    r.diagnostics.push(...mergeDesigns(designs.map((d) => ({ tag: d.tag, diagnostics: d.extensionOut! }))));
+    if (hasError(r)) return finish(r, { ...keep, extensions: primary.runs! });
   }
 
-  // Tier 5: lints, only for a valid document — Core's, then the extensions'.
-  if (!r.diagnostics.some((d) => d.severity === 'error')) {
-    lints(document, analysis, r);
-    if (runs) lintExtensions(runs);
+  // Tier 5: lints, only for a valid document — Core's, then the extensions', of each checked design;
+  // FS-LINT-006, FS-LINT-007 and FS-LINT-017 of the document as a whole.
+  r.diagnostics.push(
+    ...mergeDesigns(
+      designs.map((d) => {
+        const lr = new Reporter();
+        lints(d.view, d.analysis, lr);
+        if (d.runs) {
+          const before = d.extensionOut!.length;
+          lintExtensions(d.runs);
+          lr.diagnostics.push(...d.extensionOut!.slice(before));
+        }
+        return { tag: d.tag, diagnostics: lr.diagnostics };
+      }),
+    ),
+  );
+  documentLints(document, r);
+  if (optioned) for (const sid of singleOptionSets(document)) r.report('FS-LINT-017', `${sid} has one option, so there is nothing to choose between.`, [sid], { pointer: `/optionSets/${sid}` });
+
+  // The design derived (19.6): the primary design without a design input.
+  const chosen = resolveRequested(document, optioned, options.design);
+  const designsOut = optioned ? designs.map((d) => ({ tag: d.tag, design: d.design, document: d.view, analysis: d.analysis, ...(d.runs && { extensions: d.runs }) })) : undefined;
+  const base = { value, document, ...(designsOut && { designs: designsOut }) };
+  if (chosen === undefined) return finish(r, { ...base, design: null });
+  if (!optioned) return finish(r, { ...base, view: document, analysis: primary.analysis, ...(primary.runs && { extensions: primary.runs }) });
+  const tagged = checkedTagOf(document, chosen);
+  const found = tagged && designs.find((d) => d.tag === tagged.tag);
+  if (found) return finish(r, { ...base, design: chosen, view: found.view, analysis: found.analysis, ...(found.runs && { extensions: found.runs }) });
+  // A design that is not a checked one: derived only when its view is valid (19.6.2).
+  const view = viewOf(document, chosen);
+  const dr = new Reporter();
+  const analysis = designInvariants(view, dr, opts);
+  if (hasError(dr)) return finish(r, { ...base, design: null });
+  let runs: ExtensionRun[] | undefined;
+  if (implemented.length) {
+    const out: Diagnostic[] = [];
+    runs = evaluateExtensions(view, analysis, known, implemented, viewOf(sv, chosen), out);
+    if (out.some((d) => d.severity === 'error')) return finish(r, { ...base, design: null });
   }
-  return finish(r, { value, document, analysis, ...(runs && { extensions: runs }) });
+  return finish(r, { ...base, design: chosen, view, analysis, ...(runs && { extensions: runs }) });
+}
+
+/** One checked design's evaluation in progress. */
+interface DesignRun {
+  readonly tag: string | undefined;
+  readonly design: Design;
+  readonly view: FloorspecDocument;
+  readonly analysis: Analysis;
+  readonly schemaView: unknown;
+  readonly invariants: Diagnostic[];
+  extensionOut?: Diagnostic[];
+  runs?: ExtensionRun[];
+}
+
+const hasError = (r: { diagnostics: readonly Diagnostic[] }): boolean => r.diagnostics.some((d) => d.severity === 'error');
+
+/**
+ * The design a design input asks for (19.6): the primary design without one; undefined when it names
+ * an option set the document does not have or maps a set to an option that is not that set's — and,
+ * for a document without design options, when it is anything but `{}`.
+ */
+function resolveRequested(document: FloorspecDocument, optioned: boolean, input: unknown): Design | undefined {
+  if (!optioned) return input === undefined || (isObject(input) && Object.keys(input).length === 0) ? {} : undefined;
+  return input === undefined ? primaryDesign(document) : resolveDesign(document, input);
 }
 
 /** Validate a document (chapter 10): `{ valid, diagnostics }`. */

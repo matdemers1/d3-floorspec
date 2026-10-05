@@ -100,6 +100,10 @@
         "reachable": true
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "LIV": {
         "bottom": 0,

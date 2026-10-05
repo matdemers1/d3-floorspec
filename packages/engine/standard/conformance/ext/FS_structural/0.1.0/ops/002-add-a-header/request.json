@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "O3",
+      "path": "/extensions/FS_structural/header",
+      "value": {
+        "material": "wood",
+        "member": {
+          "designation": "2x6",
+          "width": 48768,
+          "depth": 178816
+        }
+      }
+    }
+  ]
+}

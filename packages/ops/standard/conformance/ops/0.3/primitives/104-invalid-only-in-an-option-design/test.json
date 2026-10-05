@@ -1,0 +1,7 @@
+{
+  "description": "With context.option KB, a pantry room anchored at x = 4.5 m: in B's design the open kitchen's face has KIT's anchor too, so B's design is invalid and the rejection carries FS-INV-202 with \"design\": \"KB\".",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.8.1"
+  ]
+}

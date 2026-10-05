@@ -1,0 +1,8 @@
+{
+  "description": "Setting W1's stud spacing to 1\": the result breaks 2.2.2, and an applier that implements FS_structural and knows it rejects the batch (Ops 1.2.3) with FS-STRC-INV-002.",
+  "covers": [
+    "FS-STRC-2.2.2",
+    "FS-STRC-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

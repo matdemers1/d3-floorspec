@@ -1,0 +1,7 @@
+{
+  "description": "A wall whose option names no option: FS-INV-002.",
+  "covers": [
+    "FS-CORE-3.2.1",
+    "FS-CORE-19.2.1"
+  ]
+}

@@ -25,6 +25,11 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
       "controls": []
     }
   },
+  "FS_furniture": {
+    "appliances": {},
+    "casework": {},
+    "pieces": {}
+  },
   "FS_lowvoltage": {
     "doorbells": {},
     "headEnds": {},
@@ -49,7 +54,8 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
     "drains": {},
     "fixtures": {},
     "waterHeaters": {}
-  }
+  },
+  "FS_structural": {}
 };
 
 export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, unknown>>>>>> = {
@@ -60,6 +66,7 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
       "protection": []
     }
   },
+  "FS_furniture": {},
   "FS_lowvoltage": {},
   "FS_mechanical": {
     "gasSources": {
@@ -70,5 +77,6 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
     "stacks": {
       "stack": "drainWasteVent"
     }
-  }
+  },
+  "FS_structural": {}
 };

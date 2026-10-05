@@ -1,0 +1,7 @@
+{
+  "description": "The deck's recorded span is 8', and it reaches only 7' along its direction.",
+  "covers": [
+    "FS-STRC-1.2.3",
+    "FS-STRC-3.2.1"
+  ]
+}

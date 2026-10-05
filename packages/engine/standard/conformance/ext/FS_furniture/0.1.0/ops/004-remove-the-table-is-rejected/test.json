@@ -1,0 +1,8 @@
+{
+  "description": "Removing the dining table leaves its two chairs with an element that is gone: the result breaks 4.3.1, and an applier that implements FS_furniture and knows it rejects the batch (Ops 1.2.3).",
+  "covers": [
+    "FS-FURN-4.3.1",
+    "FS-FURN-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

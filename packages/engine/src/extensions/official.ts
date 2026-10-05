@@ -1,6 +1,6 @@
 /**
- * The official extensions the engine implements — FS_electrical, FS_plumbing, FS_mechanical and
- * FS_lowvoltage 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
+ * The official extensions the engine implements — FS_electrical, FS_plumbing, FS_mechanical,
+ * FS_lowvoltage, FS_furniture and FS_structural (Draft) 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
  *
  * An extension is **evaluated** for a document when the reader implements it (its name is in
  * `ValidateOptions.extensions`), the document declares "0.2" or "0.3" and uses it at a version equal to the
@@ -19,6 +19,8 @@ import { FS_ELECTRICAL, type DerivedElectrical } from './fs/electrical.js';
 import { FS_LOWVOLTAGE, type DerivedLowVoltage } from './fs/lowvoltage.js';
 import { FS_MECHANICAL, type DerivedMechanical } from './fs/mechanical.js';
 import { FS_PLUMBING, type DerivedPlumbing } from './fs/plumbing.js';
+import { FS_FURNITURE, type DerivedFurniture } from './fs/furniture.js';
+import { FS_STRUCTURAL, type DerivedStructural } from './fs/structural.js';
 
 /**
  * The official extensions' registry entries (registry/<NAME>/extension.json, vendored), ready to
@@ -45,7 +47,7 @@ export const OFFICIAL_EXTENSION_SCHEMAS: Readonly<Record<string, unknown>> = OFF
 
 /** Every extension implementation the engine has, by name. */
 export const IMPLEMENTATIONS: ReadonlyMap<string, ExtensionImplementation> = new Map(
-  ([FS_ELECTRICAL, FS_PLUMBING, FS_MECHANICAL, FS_LOWVOLTAGE] as ExtensionImplementation[]).map((x) => [x.name, x]),
+  ([FS_ELECTRICAL, FS_PLUMBING, FS_MECHANICAL, FS_LOWVOLTAGE, FS_FURNITURE, FS_STRUCTURAL] as ExtensionImplementation[]).map((x) => [x.name, x]),
 );
 
 /** The names of the official extensions the engine implements. */
@@ -57,6 +59,8 @@ export interface DerivedExtensions {
   FS_plumbing?: DerivedPlumbing;
   FS_mechanical?: DerivedMechanical;
   FS_lowvoltage?: DerivedLowVoltage;
+  FS_furniture?: DerivedFurniture;
+  FS_structural?: DerivedStructural;
 }
 
 /** One evaluated extension: its implementation and its data, ready for lints and derivation. */
@@ -95,7 +99,7 @@ export function evaluateExtensions(
     const ctx = new ExtensionContext(doc, analysis, impl, out);
     const exts = isObject(schemaView) ? (schemaView as { extensions?: unknown }).extensions : undefined;
     const data = isObject(exts) && Object.hasOwn(exts, impl.name) ? exts[impl.name] : {};
-    if (!impl.validate(data)) {
+    if (!impl.validate(data, schemaView)) {
       ctx.report(`FS-${impl.code}-SCH-001`, `The ${impl.name} data does not match the ${impl.name} ${impl.version} schema.`, [], `/extensions/${impl.name}`);
       continue;
     }

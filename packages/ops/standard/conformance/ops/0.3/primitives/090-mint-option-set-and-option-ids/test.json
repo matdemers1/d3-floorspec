@@ -1,0 +1,7 @@
+{
+  "description": "An option set and two options added with no IDs: they are minted with the prefixes OS and OP - OS1, then OP1 and OP2, which the set names as its primary before it exists.",
+  "covers": [
+    "FS-OPS-1.5.1",
+    "FS-OPS-2.1.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "A pantry room in option B anchored at x = 4.5 m. B's design has the open kitchen's face from x = 4 m to 8 m, where KIT's anchor is too: FS-INV-202, found in B's design only, and reported with \"design\": \"KB\".",
+  "covers": [
+    "FS-CORE-19.5.1",
+    "FS-CORE-19.5.2",
+    "FS-CORE-10.2.1"
+  ]
+}

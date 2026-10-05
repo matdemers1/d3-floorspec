@@ -188,6 +188,140 @@
         "reachable": true
       }
     },
+    "finishes": {
+      "walls": {
+        "WE1": {
+          "left": {
+            "material": "SIDING",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "GWB",
+            "regions": [],
+            "room": "KIT",
+            "source": "layer"
+          }
+        },
+        "WE2": {
+          "left": {
+            "material": "SIDING",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "PAINT",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "WI1": {
+          "left": {
+            "material": "GWB",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          },
+          "right": {
+            "material": "PAINT",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "WI2": {
+          "left": {
+            "material": "GWB",
+            "regions": [],
+            "room": "KIT",
+            "source": "layer"
+          },
+          "right": {
+            "material": "PAINT",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "WN1": {
+          "left": {
+            "material": "SIDING",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "GWB",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          }
+        },
+        "WN2": {
+          "left": {
+            "material": "SIDING",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "GWB",
+            "regions": [],
+            "room": "KIT",
+            "source": "layer"
+          }
+        },
+        "WS1": {
+          "left": {
+            "material": "SIDING",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "PAINT",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "WS2": {
+          "left": {
+            "material": "SIDING",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "GWB",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          }
+        },
+        "WW": {
+          "left": {
+            "material": "SIDING",
+            "regions": [],
+            "source": "layer"
+          },
+          "right": {
+            "material": "GWB",
+            "regions": [],
+            "room": "LIV",
+            "source": "layer"
+          }
+        }
+      },
+      "rooms": {
+        "BED": {
+          "floor": "OAK"
+        },
+        "KIT": {
+          "floor": "TILE"
+        },
+        "LIV": {
+          "floor": "OAK"
+        }
+      }
+    },
     "floors": {
       "BED": {
         "bottom": 0,

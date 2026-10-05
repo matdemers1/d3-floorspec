@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-1102",
+      "severity": "error",
+      "elements": ["OB", "WA"]
+    }
+  ]
+}

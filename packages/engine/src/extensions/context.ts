@@ -23,8 +23,12 @@ export interface ExtensionImplementation<Derived = unknown> {
   readonly code: string;
   /** Every diagnostic it reports. */
   readonly catalogue: readonly ExtensionDiagnostic[];
-  /** Its schema (generated from the registry's schema file): does its top-level data match? */
-  validate(data: unknown): boolean;
+  /**
+   * Its schema (generated from the registry's schema file): does its top-level data match — and,
+   * for an extension whose data lives on core elements (FS_structural), the data on each element of
+   * `document` (the document as the schema sees it)?
+   */
+  validate(data: unknown, document?: unknown): boolean;
   /** Its invariants, for data that matched its schema. */
   invariants(ctx: ExtensionContext): void;
   /** Its lints, for a valid document. */

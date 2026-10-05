@@ -16,6 +16,8 @@ import { analyseCirculation, type DerivedCirculationRoom } from '../circulation/
 import type { DerivedExtensions } from '../extensions/official.js';
 import { deriveRoofs, type DerivedRoof } from '../roofs/roofs.js';
 import { deriveStairs, StairContext, type DerivedStair } from '../stairs/stairs.js';
+import { deriveFinishes, type DerivedFinishes } from '../finishes/finishes.js';
+import type { DerivedOptionSet } from '../options/options.js';
 
 export type { DerivedRoof, DerivedRoofFace, DerivedRoofLine } from '../roofs/roofs.js';
 export type { DerivedStair } from '../stairs/stairs.js';
@@ -109,6 +111,10 @@ export interface Derived {
   roofs?: Record<string, DerivedRoof>;
   /** 17.4–17.6: every stair's risers, rise, foot and head, box, and for a straight, L or U stair its steps, run, walkline and headroom. */
   stairs?: Record<string, DerivedStair>;
+  /** 18.6: every room's floor and ceiling finish, and every finished side of every wall. */
+  finishes?: DerivedFinishes;
+  /** 19.6.3: for a document with design options, every set's chosen option and every option's members, rooms and affected elements. */
+  options?: Record<string, DerivedOptionSet>;
 }
 
 /** Half of a BigInt, as a decimal string (6.4: a net area is a multiple of one half). */
@@ -194,7 +200,7 @@ export function deriveFrom(doc: FloorspecDocument, analysis: Analysis): Derived 
         const la = analysis.levels.get(room.level)!;
         return roomRings(la.geometry!, la.roomFaces.get(id)!);
       }),
-      { roofs: deriveRoofs(doc), stairs: deriveStairs(new StairContext(doc, analysis.levels)) },
+      { roofs: deriveRoofs(doc), stairs: deriveStairs(new StairContext(doc, analysis.levels)), finishes: deriveFinishes(doc, analysis.levels) },
     );
   return out;
 }

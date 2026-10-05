@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "addOpening",
+      "id": "OA2",
+      "wall": "wall between DIN and KIT",
+      "at": 3328000,
+      "fill": "T-door-36"
+    }
+  ],
+  "context": {
+    "option": "KA"
+  }
+}

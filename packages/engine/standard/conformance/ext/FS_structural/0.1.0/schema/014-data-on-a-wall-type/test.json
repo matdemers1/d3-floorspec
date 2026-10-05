@@ -1,0 +1,6 @@
+{
+  "description": "The wall type EXT carries a framing: FS_structural 0.1 records framing on walls, never on types.",
+  "covers": [
+    "FS-STRC-1.3.3"
+  ]
+}

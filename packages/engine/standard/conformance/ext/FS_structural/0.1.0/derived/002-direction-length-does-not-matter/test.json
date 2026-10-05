@@ -1,0 +1,7 @@
+{
+  "description": "The Kitchen's span along [3, 0] and the Bath's floor along [0, -7]: a direction's length changes nothing, and its sign changes nothing. The Kitchen reaches the same clear width as along [1, 0]; the Bath, from W10's north face to W3's south face, 6' less half of each wall.",
+  "covers": [
+    "FS-STRC-3.2.1",
+    "FS-STRC-5.1.1"
+  ]
+}

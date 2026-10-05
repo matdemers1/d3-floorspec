@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-1003",
+      "severity": "error",
+      "elements": ["W2"]
+    },
+    {
+      "code": "FS-INV-1003",
+      "severity": "error",
+      "elements": ["W2"]
+    }
+  ]
+}

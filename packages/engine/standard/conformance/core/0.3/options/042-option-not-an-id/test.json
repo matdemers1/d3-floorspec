@@ -1,0 +1,7 @@
+{
+  "description": "An element's option that is a number, not a reference.",
+  "covers": [
+    "FS-CORE-3.2.3",
+    "FS-CORE-19.2.1"
+  ]
+}

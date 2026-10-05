@@ -38,15 +38,17 @@ const B = `{
 }`;
 
 describe('canonical form (9.2) and content hash (9.3)', () => {
-  it('reads exactly the 81 constant defaults of Core 0.3 from the schema', () => {
+  it('reads exactly the 93 constant defaults of Core 0.3 from the schema', () => {
     // Core 0.1's 53, and 0.2's nine: the program, its items and adjacency, an item's count,
     // extensions and extras, an adjacency's weight, and a door or window type's clearances; and
     // 0.3's nineteen: a room's floor ({}) and ceiling ({ kind: flat }), a floor's offset and a vault's
     // slopes ("both"); the roofs and stairs collections ({}); a roof's overhang (0), edges ({}),
     // extensions and extras, an edge ({}) and its gable (false); and a stair's rotation (0), form
     // ({ kind: straight }), extensions and extras, the gap of a U-shaped and a half-turn winder stair
-    // (0) and a handrail's sides ("both").
-    expect(countDefaults(SCHEMA)).toBe(81);
+    // (0) and a handrail's sides ("both"); and twelve of chapters 18 and 19: a wall's finishes ({}),
+    // its left and right face ({}) and a face's regions ([]); a texture's offset ([0, 0]) and
+    // rotation (0); the optionSets and options collections ({}), and each one's extensions and extras.
+    expect(countDefaults(SCHEMA)).toBe(93);
   });
 
   it('writes a declaration without a schema as its version string, and never touches extension elements (12.1, 12.5)', () => {

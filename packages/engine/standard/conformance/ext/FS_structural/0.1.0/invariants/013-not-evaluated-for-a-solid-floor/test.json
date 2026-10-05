@@ -1,0 +1,7 @@
+{
+  "description": "The Bath's slab on grade has a 2x10 member at 1\": FS-STRC-INV-001 only, and not FS-STRC-INV-002 (4.2).",
+  "covers": [
+    "FS-STRC-4.2.1",
+    "FS-STRC-2.2.1"
+  ]
+}

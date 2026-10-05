@@ -1,0 +1,6 @@
+{
+  "description": "An option in an option: options are not nested.",
+  "covers": [
+    "FS-CORE-19.2.1"
+  ]
+}

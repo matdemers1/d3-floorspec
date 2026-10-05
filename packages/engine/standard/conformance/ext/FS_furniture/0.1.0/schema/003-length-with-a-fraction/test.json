@@ -1,0 +1,6 @@
+{
+  "description": "A number written with a fraction is not an integer, even when it is a whole number.",
+  "covers": [
+    "FS-FURN-1.3.1"
+  ]
+}

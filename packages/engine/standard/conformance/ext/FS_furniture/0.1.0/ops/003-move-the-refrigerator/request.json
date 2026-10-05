@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "moveElement",
+      "element": "X1",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W1",
+        "toward": "Kitchen",
+        "at": "3300mm from start",
+        "height": 0
+      }
+    }
+  ]
+}

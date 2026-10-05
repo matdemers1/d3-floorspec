@@ -30,6 +30,8 @@ import {
   type RegistryEntry,
 } from '../model/document.js';
 import { entry } from './catalogue.js';
+import { IN_OPTIONS, MAPS, SIDES } from './references.js';
+import { finishInvariants, packageInvariants, type Package } from '../finishes/finishes.js';
 import type { Diagnostic, DiagnosticLocation, FixOp } from './diagnostic.js';
 import { extensionInvariants, hostingInvariants, programInvariants, surfaceInvariants } from './invariants02.js';
 import { floorInvariants, roomRings } from '../slabs/floors.js';
@@ -147,7 +149,22 @@ function referenceInvariants(doc: FloorspecDocument, r: Reporter): void {
     ref(id, ptr('stairs', id, 'to'), 'levels', st.to);
   }
   for (const [id, t] of entries(doc.types)) if (t.kind === 'wallType') layerRefs(id, ptr('types', id), t.layers);
-  for (const [id, m] of entries(doc.materials)) if (m.texture) ref(id, ptr('materials', id, 'texture', 'asset'), 'assets', m.texture.asset);
+  // Core 0.3: a texture's maps (18.2) and a wall's face finishes and their regions (18.5).
+  for (const [id, m] of entries(doc.materials)) for (const k of MAPS) if (m.texture) ref(id, ptr('materials', id, 'texture', k), 'assets', m.texture[k]);
+  for (const [id, w] of entries(doc.walls))
+    for (const side of SIDES) {
+      const face = w.finishes?.[side];
+      if (!face) continue;
+      ref(id, ptr('walls', id, 'finishes', side, 'material'), 'materials', face.material);
+      face.regions?.forEach((rg, i) => {
+        ref(id, ptr('walls', id, 'finishes', side, 'regions', i, 'material'), 'materials', rg.material);
+      });
+    }
+  // Core 0.3: design options (19.1, 19.2).
+  for (const [id, o] of entries(doc.options)) ref(id, ptr('options', id, 'set'), 'optionSets', o.set);
+  for (const [id, s] of entries(doc.optionSets)) ref(id, ptr('optionSets', id, 'primary'), 'options', s.primary);
+  for (const c of IN_OPTIONS)
+    for (const [id, e] of entries(doc[c] as Record<string, { option?: string }> | undefined)) ref(id, ptr(c, id, 'option'), 'options', e.option);
 
   // Core 0.2 (3.2): room briefs, the program, and the hosts and fallbacks of extension elements.
   const items = doc.program?.items;
@@ -168,6 +185,7 @@ function referenceInvariants(doc: FloorspecDocument, r: Reporter): void {
     if (h?.mode === 'free') ref(x.id, `${base}/host/level`, 'levels', h.level);
     const fb = x.element.fallback;
     ref(x.id, `${base}/fallback/level`, 'levels', fb.level);
+    ref(x.id, `${base}/option`, 'options', x.element.option);
     ref(x.id, `${base}/fallback/asset`, 'assets', fb.asset);
     ref(x.id, `${base}/fallback/symbol`, 'assets', fb.symbol);
   }
@@ -610,13 +628,49 @@ export interface InvariantOptions {
   readonly core03?: boolean;
   /** The validator's known extensions (12.2), already checked. */
   readonly known?: readonly RegistryEntry[];
+  /** The files of the document's package, for a package validator (18.4); absent: not one. */
+  readonly package?: Package;
 }
 
-export function invariants(doc: FloorspecDocument, r: Reporter, options: InvariantOptions = { core02: false }): Analysis | undefined {
+const FINISH_MESSAGES: Record<string, string> = {
+  'FS-INV-1001': 'has a finish region that is empty: its `to` is not greater than its `from`, or its `top` not greater than its `bottom`',
+  'FS-INV-1002': 'has a finish region that extends past its length or above its height',
+  'FS-INV-1003': 'has two finish regions on one face that overlap',
+};
+
+/** Material, finish and package invariants (FS-INV-1001 … 1007, Core 0.3, chapter 18). */
+function finishAndPackageInvariants(doc: FloorspecDocument, r: Reporter, pkg: Package | undefined): void {
+  const noTop = new Set(r.diagnostics.filter((d) => d.code === 'FS-INV-112').flatMap((d) => d.elements));
+  for (const p of finishInvariants(doc, (w) => noTop.has(w))) {
+    const [c, id, ...rest] = p.path as [string, string, ...(string | number)[]];
+    const message = p.code === 'FS-INV-1004' ? `${p.elements[0]}'s ${String(rest[1])} map is ${p.elements[1]}, which is not a PNG, JPEG, WebP or KTX2 image.` : `${id} ${FINISH_MESSAGES[p.code]}.`;
+    r.report(p.code, message, p.elements, { pointer: ptr(c, id, ...rest) });
+  }
+  if (!pkg) return;
+  for (const p of packageInvariants(doc, pkg)) {
+    const a = get(doc.assets, p.asset)!;
+    const message =
+      p.code === 'FS-INV-1005'
+        ? `The package has no file at ${p.asset}'s path ${a.path}.`
+        : p.code === 'FS-INV-1006'
+          ? `The file at ${p.asset}'s path ${a.path} is not the file its sha256 names.`
+          : `The file at ${p.asset}'s path ${a.path} is not ${a.byteLength} bytes long.`;
+    r.report(p.code, message, [p.asset], { pointer: ptr('assets', p.asset, p.code === 'FS-INV-1005' ? 'path' : p.code === 'FS-INV-1006' ? 'sha256' : 'byteLength') });
+  }
+}
+
+/** Tier 4's reference invariants (FS-INV-001 … 009), of the document as a whole. True when none is reported. */
+export function referenceTier(doc: FloorspecDocument, r: Reporter): boolean {
   const before = r.diagnostics.length;
   referenceInvariants(doc, r);
-  if (r.diagnostics.length > before) return undefined;
+  return r.diagnostics.length === before;
+}
 
+/**
+ * Tier 4 after the reference and option invariants, of one document without design options — a
+ * document, or the view of one checked design (19.5) — in the order of 10.3.
+ */
+export function designInvariants(doc: FloorspecDocument, r: Reporter, options: InvariantOptions = { core02: false }): Analysis {
   const levelCodes = new Map<string, string[]>();
   const offsets = new Map<string, FaceOffsets>();
   graphInvariants(doc, r, levelCodes, offsets);
@@ -636,6 +690,7 @@ export function invariants(doc: FloorspecDocument, r: Reporter, options: Invaria
   typeInvariants(doc, r);
   floorAndCeilingInvariants(doc, r, levels);
   roofAndStairInvariants(doc, r, levels);
+  if (options.core03) finishAndPackageInvariants(doc, r, options.package);
   const analysis: Analysis = { levels, offsets, core02: options.core02, core03: options.core03 ?? false };
   if (options.core02) {
     programInvariants(doc, r);
@@ -644,4 +699,10 @@ export function invariants(doc: FloorspecDocument, r: Reporter, options: Invaria
     surfaceInvariants(doc, analysis, r);
   }
   return analysis;
+}
+
+/** Tier 4 of a document without design options: reference invariants, then everything else. */
+export function invariants(doc: FloorspecDocument, r: Reporter, options: InvariantOptions = { core02: false }): Analysis | undefined {
+  if (!referenceTier(doc, r)) return undefined;
+  return designInvariants(doc, r, options);
 }

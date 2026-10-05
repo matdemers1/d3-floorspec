@@ -1,0 +1,12 @@
+{
+  "description": "The exit demo of FLR-P-8: a photo of a tile, set to 12 inches, applied to the kitchen's backsplash - a region of W2's right face from 600 mm to 3400 mm along the wall and from the counter at 36 inches to the cabinets at 54 inches. The kitchen's paint finishes the rest of the face and the other walls. Run by a package validator: the photo is in the package at its path, with its digest and length. Valid.",
+  "covers": [
+    "FS-CORE-18.5.1",
+    "FS-CORE-18.5.2",
+    "FS-CORE-18.5.3",
+    "FS-CORE-18.6.1",
+    "FS-CORE-18.2.1",
+    "FS-CORE-18.4.2",
+    "FS-CORE-18.4.3"
+  ]
+}

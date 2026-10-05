@@ -1,0 +1,7 @@
+{
+  "description": "Removing option KA, the set's primary, with cascade: the set's `primary` blocks nothing, and names no option afterwards, so the result is invalid: FS-INV-002.",
+  "covers": [
+    "FS-OPS-2.2.2",
+    "FS-OPS-1.2.3"
+  ]
+}

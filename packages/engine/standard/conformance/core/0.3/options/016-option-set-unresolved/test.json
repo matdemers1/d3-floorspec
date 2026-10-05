@@ -1,0 +1,6 @@
+{
+  "description": "An option whose set names no option set: FS-INV-002.",
+  "covers": [
+    "FS-CORE-3.2.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "The house as a Core 0.3 document with an option set: X25 is in option A, the primary, and option B leaves it out (Core 19). FS_plumbing's data matches its schema with the element's `option` member - a Core member, checked by Core - and FS_plumbing is evaluated in each checked design: valid, nothing reported, and the primary design derived.",
+  "covers": [
+    "FS-PLMB-1.2.1",
+    "FS-PLMB-1.2.4",
+    "FS-PLMB-1.3.1"
+  ]
+}

@@ -119,7 +119,7 @@
   "$defs": {
     "addElement": {
       "title": "addElement",
-      "description": "2.1: adds `element` to `collection` under `id`, or under a minted ID (1.5): one of the thirteen collections of Core 1.1 (Core 0.3 adds `roofs` and `stairs`), the program's `items`, or - with `extension` - a collection of that extension's top-level data. The element is added exactly as given; it is not checked until the batch is validated.",
+      "description": "2.1: adds `element` to `collection` under `id`, or under a minted ID (1.5): one of the collections of Core 1.1 (Core 0.3 adds `roofs`, `stairs`, `optionSets` and `options`), the program's `items`, or - with `extension` - a collection of that extension's top-level data. The element is added exactly as given; it is not checked until the batch is validated.",
       "type": "object",
       "required": [
         "op",
@@ -167,6 +167,8 @@
                 "slabs",
                 "roofs",
                 "stairs",
+                "optionSets",
+                "options",
                 "types",
                 "materials",
                 "assets",

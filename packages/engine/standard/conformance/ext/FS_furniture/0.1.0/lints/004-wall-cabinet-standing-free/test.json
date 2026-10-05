@@ -1,0 +1,7 @@
+{
+  "description": "The wall cabinet stands free on the floor, facing south: a wall cabinet hangs on a wall face. It still does not count towards the floor area.",
+  "covers": [
+    "FS-FURN-1.2.3",
+    "FS-FURN-6.1.1"
+  ]
+}

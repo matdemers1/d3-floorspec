@@ -26,7 +26,7 @@ export async function loadMesher(options: KernelOptions = {}): Promise<Mesher> {
     meshDocument: (input, opts = {}) => {
       const ev = evaluate(input, opts.validate ?? {});
       const derived = deriveEvaluation(ev);
-      return meshWith(kernel, ev.document!, derived, opts);
+      return meshWith(kernel, (ev.view ?? ev.document)!, derived, opts);
     },
     meshDerived: (doc, derived, opts = {}) => meshWith(kernel, doc, derived, opts),
   };

@@ -5,7 +5,7 @@
  */
 import { jsonEqual, predicates, type Diagnostic } from '@floorspec/engine';
 import { opsDiagnostic } from './diagnostics.js';
-import { asPoint, LevelFaces } from './model/faces.js';
+import { asPoint, editDesign, LevelFaces } from './model/faces.js';
 import { samePlace, WorkingCopy } from './model/working.js';
 import type { Lock } from './types.js';
 import { getMember, type JsonObject } from './lib/json.js';
@@ -49,18 +49,18 @@ export function invalidLocks(a: WorkingCopy, locks: readonly Lock[]): Diagnostic
 }
 
 /** The junctions on the outer cycle of a room's face in a (valid) document. */
-function roomCycle(doc: WorkingCopy, room: string): string[] {
+function roomCycle(doc: WorkingCopy, room: string, option: string | undefined): string[] {
   const r = doc.elementIn('rooms', room);
   const level = getMember(r, 'level');
   const anchor = asPoint(getMember(r, 'anchor'));
   if (typeof level !== 'string' || !anchor) return [];
-  const faces = new LevelFaces(doc, level);
+  const faces = new LevelFaces(doc, level, editDesign(doc, option)); // Ops 0.3, 2.8: in the edit design
   const place = faces.place(anchor);
   return place.kind === 'face' ? [...faces.faces[place.face]!.outer.vertices] : [];
 }
 
 /** 6.1.2: the locks the result B breaks, compared with A; `aCanon`/`bCanon` are their canonical contents (Core §9.2 step 1). */
-export function brokenLocks(a: WorkingCopy, b: WorkingCopy, aCanon: JsonObject, bCanon: JsonObject, locks: readonly Lock[]): Diagnostic[] {
+export function brokenLocks(a: WorkingCopy, b: WorkingCopy, aCanon: JsonObject, bCanon: JsonObject, locks: readonly Lock[], option?: string): Diagnostic[] {
   const out: Diagnostic[] = [];
   const unmoved = (j: string): boolean => {
     const pa = asPoint(getMember(a.elementIn('junctions', j), 'position'));
@@ -87,7 +87,7 @@ export function brokenLocks(a: WorkingCopy, b: WorkingCopy, aCanon: JsonObject, 
         if (!held) why = `an end of ${l.element} moved`;
       }
       if (held && c === 'rooms') {
-        held = roomCycle(a, l.element).every(unmoved);
+        held = roomCycle(a, l.element, option).every(unmoved);
         if (!held) why = `a corner of ${l.element} moved`;
       }
       // Ops 0.2: an extension element on a wall face also holds its wall's start and end (6.1).

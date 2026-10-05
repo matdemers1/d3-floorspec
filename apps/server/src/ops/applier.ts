@@ -32,6 +32,8 @@ export interface ApplyRequest {
     readonly locks?: readonly Lock[];
     /** IDs that once existed in this document's history and are never minted again (Ops 1.5). */
     readonly retired?: readonly string[];
+    /** The design option the batch edits in (Ops 0.3, 2.8). */
+    readonly option?: string;
   };
 }
 

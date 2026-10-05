@@ -1,0 +1,6 @@
+{
+  "description": "An appliance's connections, when present, name at least one element.",
+  "covers": [
+    "FS-FURN-1.3.1"
+  ]
+}

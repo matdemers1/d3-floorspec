@@ -137,6 +137,10 @@
         "reachable": true
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "CLO": {
         "bottom": 0,

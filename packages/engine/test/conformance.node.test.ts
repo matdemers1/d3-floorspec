@@ -13,12 +13,14 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { check, type ValidateOptions } from '../src/index.js';
+import { check, Package, type ValidateOptions } from '../src/index.js';
+import { diagnosticView, readDesign, readPackage } from './suite-io.js';
 
 interface ExpectedDiagnostic {
   code: string;
   severity: string;
   elements: string[];
+  design?: string;
 }
 interface Expected {
   valid: boolean;
@@ -58,8 +60,12 @@ for (const core of ['0.1', '0.2', '0.3'] as const) {
         core,
         ...(existsSync(registryPath) && { knownExtensions: new Uint8Array(readFileSync(registryPath)) }),
       };
+      const pkg = readPackage(dir);
+      const design = readDesign(dir);
+      if (pkg) Object.assign(options, { package: new Package(pkg) });
+      if (design !== undefined) Object.assign(options, { design });
       const r = check(input, options);
-      const actual = r.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));
+      const actual = r.diagnostics.map(diagnosticView);
 
       // Validator: exact list, except that [FS-SCH-001] matches one or more FS-SCH-001 and nothing else.
       const schemaOnly = expected.diagnostics.length === 1 && expected.diagnostics[0]!.code === 'FS-SCH-001';

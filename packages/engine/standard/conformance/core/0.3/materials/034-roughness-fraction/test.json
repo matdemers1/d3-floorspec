@@ -1,0 +1,6 @@
+{
+  "description": "roughness 0.3 is a fraction, not thousandths.",
+  "covers": [
+    "FS-CORE-18.1.1"
+  ]
+}

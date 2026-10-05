@@ -1,0 +1,6 @@
+{
+  "description": "\"studs\" is a wall's system, not a floor's.",
+  "covers": [
+    "FS-STRC-1.3.2"
+  ]
+}

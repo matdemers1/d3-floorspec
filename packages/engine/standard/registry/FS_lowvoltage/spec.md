@@ -82,7 +82,7 @@ an implementation of this version does not read it.
 # 2. Elements
 
 Every element below is an extension element (Core §12.5): besides the members its table lists, it
-has `fallback`, and may have `host`, `clearances`, `name` and `extras`, which Floorspec Core checks.
+has `fallback`, and may have `host`, `clearances`, `option` (Core 0.3), `name` and `extras`, which Floorspec Core checks.
 Most are on a wall face or a ceiling.
 
 Every element of chapter 2 except a head-end belongs to one or more **systems** — the kinds of

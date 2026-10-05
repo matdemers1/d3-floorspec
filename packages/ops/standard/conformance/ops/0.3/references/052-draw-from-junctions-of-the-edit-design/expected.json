@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "aefb67239c4956b497bb76b42f3b3a807500fffa4e05f354932201da7f6dec7e",
+  "created": ["SB"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addSeparator",
+      "id": "SB",
+      "level": "L1",
+      "start": "S4",
+      "end": "N4"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "SB"
+    }
+  ]
+}

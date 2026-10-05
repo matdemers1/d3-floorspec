@@ -63,6 +63,8 @@ export interface Model {
 export interface ApplyInput {
   readonly batch: readonly Op[];
   readonly locks?: readonly unknown[];
+  /** The design option the batch edits in (Ops 0.3, 2.8: `context.option`). */
+  readonly option?: string;
   readonly changeset?: string;
   readonly ifMatch?: string;
 }
@@ -276,7 +278,9 @@ export class HttpFloorspecClient implements FloorspecClient {
       this.project(projectId, '/ops'),
       {
         batch: input.batch,
-        ...(input.locks === undefined ? {} : { context: { locks: input.locks } }),
+        ...(input.locks === undefined && input.option === undefined
+          ? {}
+          : { context: { ...(input.locks === undefined ? {} : { locks: input.locks }), ...(input.option === undefined ? {} : { option: input.option }) } }),
         ...(input.changeset === undefined ? {} : { changeset: input.changeset }),
       },
       input.ifMatch === undefined ? {} : { 'if-match': `"${input.ifMatch}"` },

@@ -1,0 +1,7 @@
+{
+  "description": "A common extension element hosted on the face of A's wall WA: its host reference crosses into an option. FS-INV-1102.",
+  "covers": [
+    "FS-CORE-19.4.1",
+    "FS-CORE-19.2.1"
+  ]
+}

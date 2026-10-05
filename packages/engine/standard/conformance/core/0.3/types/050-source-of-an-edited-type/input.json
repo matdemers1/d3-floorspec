@@ -1,0 +1,170 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "wall-2x4-interior": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        },
+        {
+          "function": "core",
+          "material": "wood-stud-framing",
+          "thickness": 178816
+        },
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x6 partition, edited after embedding",
+      "source": {
+        "item": "wall-2x4-interior",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "door-interior-swing-30x80": {
+      "clearOpening": {
+        "height": 2600960,
+        "width": 910336
+      },
+      "clearances": {
+        "swing": {
+          "max": [975360, 520192, 2682240],
+          "min": [0, -520192, 0],
+          "purpose": "swing",
+          "shape": "box"
+        }
+      },
+      "height": 2682240,
+      "kind": "doorType",
+      "name": "Interior swing door, 30 x 80 in",
+      "operation": "swing",
+      "source": {
+        "item": "door-interior-swing-30x80",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1040384
+    },
+    "window-double-hung-36x48": {
+      "clearOpening": {
+        "area": 710324256768,
+        "height": 682752,
+        "width": 1040384
+      },
+      "height": 1576832,
+      "kind": "windowType",
+      "name": "Double-hung window, 36 x 48 in",
+      "operation": "doubleHung",
+      "sill": 1105408,
+      "source": {
+        "item": "window-double-hung-36x48",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1186688
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [5120000, 0]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "wall-2x4-interior"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "wall-2x4-interior"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "wall-2x4-interior"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J1",
+      "type": "wall-2x4-interior"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2560000, 1920000]
+    }
+  },
+  "openings": {
+    "O1": {
+      "wall": "W4",
+      "offset": 1280000,
+      "fill": "door-interior-swing-30x80"
+    },
+    "O2": {
+      "wall": "W1",
+      "offset": 1152000,
+      "fill": "window-double-hung-36x48"
+    }
+  },
+  "materials": {
+    "gypsum-board": {
+      "color": "#efede8",
+      "name": "Gypsum board, painted",
+      "roughness": 900,
+      "source": {
+        "item": "gypsum-board",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wood-stud-framing": {
+      "color": "#c8a46e",
+      "name": "Wood stud framing",
+      "roughness": 850,
+      "source": {
+        "item": "wood-stud-framing",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A common door in A's wall, and a pantry room in B that shares B's kitchen face with KIT: once an option invariant is reported no design is evaluated, so only FS-INV-1102.",
+  "covers": [
+    "FS-CORE-10.3.1"
+  ]
+}

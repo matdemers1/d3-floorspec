@@ -1,0 +1,6 @@
+{
+  "description": "A region whose top is below its bottom: FS-INV-1001.",
+  "covers": [
+    "FS-CORE-18.5.2"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A's door runs past the end of A's wall: found in the primary design only, and reported as it is, without design.",
+  "covers": [
+    "FS-CORE-19.5.1",
+    "FS-CORE-19.5.2"
+  ]
+}

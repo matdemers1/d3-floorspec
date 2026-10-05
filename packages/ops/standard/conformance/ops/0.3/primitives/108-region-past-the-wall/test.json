@@ -1,0 +1,7 @@
+{
+  "description": "setProperty of a backsplash that runs to 13' on the 12' north wall: the result has FS-INV-1002 (Core 18.5.3), so the batch is rejected with it.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -179,6 +179,30 @@
       },
       "default": {}
     },
+    "optionSets": {
+      "title": "Option sets",
+      "description": "1.1, 19.1: the collection of option sets (1.4), keyed by element ID. New in 0.3.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "option.schema.json#/$defs/optionSet"
+      },
+      "default": {}
+    },
+    "options": {
+      "title": "Options",
+      "description": "1.1, 19.1: the collection of options (1.4), keyed by element ID; each option is of one option set. New in 0.3.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "option.schema.json#/$defs/option"
+      },
+      "default": {}
+    },
     "program": {
       "$ref": "program.schema.json",
       "description": "1.1, 11.1: the program — the items the building is meant to provide and the adjacency graph between them.",

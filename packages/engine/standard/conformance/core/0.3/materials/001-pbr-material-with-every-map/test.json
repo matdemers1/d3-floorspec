@@ -1,0 +1,13 @@
+{
+  "description": "A physically based oak floor: a colour, metallic 0, roughness 450 thousandths, and a texture with all four maps - base colour (JPEG), normal (PNG), metallic-roughness (WebP) and occlusion (KTX2, with a byteLength) - laid in 150 mm x 1200 mm tiles, offset 75 mm and turned 90 degrees. Valid; the validator is not given the package, so nothing is said of the files; every asset is used, and the room's floor derives the oak.",
+  "covers": [
+    "FS-CORE-18.1.1",
+    "FS-CORE-18.2.1",
+    "FS-CORE-18.2.2",
+    "FS-CORE-8.5.2",
+    "FS-CORE-18.4.1",
+    "FS-CORE-18.4.4",
+    "FS-CORE-18.6.1",
+    "FS-CORE-3.2.1"
+  ]
+}

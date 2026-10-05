@@ -1,0 +1,7 @@
+{
+  "description": "A document that declares \"0.2\" with a texture that is only a normal map: Core 0.2's texture has an asset and a size, nothing else (1.2.6).",
+  "covers": [
+    "FS-CORE-1.2.6",
+    "FS-CORE-18.2.1"
+  ]
+}

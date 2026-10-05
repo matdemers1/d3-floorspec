@@ -1,0 +1,6 @@
+{
+  "description": "A region whose top is one base unit above the wall's 2700 mm height: FS-INV-1002.",
+  "covers": [
+    "FS-CORE-18.5.3"
+  ]
+}

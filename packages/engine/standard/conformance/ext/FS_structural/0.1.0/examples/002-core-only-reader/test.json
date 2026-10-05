@@ -1,0 +1,8 @@
+{
+  "description": "The same house read with no known extensions: FS_structural is not evaluated, so nothing of it is derived (`derived.extensions` is empty), and Core derives the walls, rooms and openings as it would without the data (Core 1.6.9).",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.2.4",
+    "FS-CORE-1.6.9"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "description": "A fridge in each kitchen option, each with the clearance its door needs: A's stands against the east wall, B's against the north wall. Only A's is derived - its fallback, placement and clearance - and each option's members name its fridge.",
+  "covers": [
+    "FS-CORE-19.2.1",
+    "FS-CORE-19.3.1",
+    "FS-CORE-19.6.3",
+    "FS-CORE-12.6.2",
+    "FS-CORE-13.5.2"
+  ]
+}

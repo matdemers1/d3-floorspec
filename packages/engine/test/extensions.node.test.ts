@@ -20,8 +20,10 @@ import {
   derive,
   evaluate,
   officialElementRooms,
+  Package,
   type ValidateOptions,
 } from '../src/index.js';
+import { diagnosticView, readDesign, readPackage } from './suite-io.js';
 
 const standard = join(import.meta.dirname, '..', 'standard');
 
@@ -47,7 +49,15 @@ const suites = OFFICIAL_EXTENSION_NAMES.map((name) => {
  */
 function options(name: string, dir: string): ValidateOptions {
   const registry = join(dir, 'registry.json');
-  return { extensions: [name], core: coreOf(readFileSync(join(dir, 'input.json'), 'utf8')), ...(existsSync(registry) && { knownExtensions: new Uint8Array(readFileSync(registry)) }) };
+  const pkg = readPackage(dir);
+  const design = readDesign(dir);
+  return {
+    extensions: [name],
+    core: coreOf(readFileSync(join(dir, 'input.json'), 'utf8')),
+    ...(existsSync(registry) && { knownExtensions: new Uint8Array(readFileSync(registry)) }),
+    ...(pkg && { package: new Package(pkg) }),
+    ...(design !== undefined && { design }),
+  };
 }
 
 function coreOf(text: string): '0.2' | '0.3' {
@@ -58,7 +68,7 @@ function coreOf(text: string): '0.2' | '0.3' {
   }
 }
 
-const view = (ds: { code: string; severity: string; elements: string[] }[]) => ds.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));
+const view = (ds: { code: string; severity: string; elements: string[]; design?: string }[]) => ds.map(diagnosticView);
 
 for (const s of suites) {
   const all = cases(s.dir);
@@ -102,7 +112,8 @@ describe('the official extensions', () => {
       .map((s) => JSON.parse(readFileSync(join(standard, 'registry', s.name, 'extension.json'), 'utf8')) as unknown);
     expect(OFFICIAL_EXTENSIONS).toEqual(vendored);
     for (const e of OFFICIAL_EXTENSIONS) {
-      expect(e.status).toBe('releaseCandidate');
+      // FS_structural 0.1.0 is a Draft; the others are Release Candidates.
+      expect(e.status).toBe(e.name === 'FS_structural' ? 'draft' : 'releaseCandidate');
       expect(EXTENSION_IMPLEMENTATIONS.get(e.name)?.version).toBe(e.version);
     }
   });
@@ -151,7 +162,8 @@ describe('the official extensions', () => {
     const opts = { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_EXTENSIONS as unknown[] };
     const ev = evaluate(input, opts);
     const derived = check(input, opts).derived!.extensions!;
-    for (const name of OFFICIAL_EXTENSION_NAMES)
+    // The demo house uses the four building-system extensions; FS_furniture is not evaluated for it.
+    for (const name of Object.keys(input.extensionsUsed as object))
       expect(officialElementRooms(ev.document!, ev.analysis!, name), name).toEqual((derived as Record<string, { rooms: unknown }>)[name]!.rooms);
     const v03 = evaluate({ ...input, floorspec: '0.3' }, opts);
     expect(v03.valid).toBe(true);
@@ -165,7 +177,7 @@ describe('the official extensions', () => {
     expect(r.valid).toBe(true);
     expect(r.derived!.extensions).toBeUndefined();
     const all = check(input, { extensions: OFFICIAL_EXTENSION_NAMES, knownExtensions: OFFICIAL_EXTENSIONS as unknown[] });
-    expect(Object.keys(all.derived!.extensions!).sort()).toEqual([...OFFICIAL_EXTENSION_NAMES].sort());
+    expect(Object.keys(all.derived!.extensions!).sort()).toEqual(Object.keys((JSON.parse(input) as { extensionsUsed: object }).extensionsUsed).sort());
     expect(all.derived!.extensions!.FS_electrical!.circuits.C1!.loads).toEqual(['X2', 'X3']);
   });
 });

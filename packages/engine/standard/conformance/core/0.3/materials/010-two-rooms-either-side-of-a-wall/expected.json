@@ -1,0 +1,210 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "59696d0b12292a7e190d7513c79ae8b4aec12edd32ff46e9cdad35cf7c5af36e",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 3776000],
+        "endLeft": [-64000, 3904000],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 3776000],
+        "endRight": [2496000, 3776000],
+        "endLeft": [2560000, 3904000],
+        "startLeft": [-64000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [2624000, 3776000],
+        "endRight": [5056000, 3776000],
+        "endLeft": [5184000, 3904000],
+        "startLeft": [2560000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [5056000, 3776000],
+        "endRight": [5056000, 64000],
+        "endLeft": [5184000, -64000],
+        "startLeft": [5184000, 3904000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [5056000, 64000],
+        "endRight": [2624000, 64000],
+        "endLeft": [2560000, -64000],
+        "startLeft": [5184000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W6": {
+        "startRight": [2496000, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [2560000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W7": {
+        "startRight": [2624000, 64000],
+        "endRight": [2624000, 3776000],
+        "endLeft": [2496000, 3776000],
+        "startLeft": [2496000, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J3": [[2496000, 3776000], [2624000, 3776000], [2560000, 3904000]],
+      "J6": [[2496000, 64000], [2560000, -64000], [2624000, 64000]]
+    },
+    "rooms": {
+      "BED": {
+        "outer": [[64000, 64000], [2496000, 64000], [2496000, 3776000], [64000, 3776000]],
+        "holes": [],
+        "area": "9027584000000"
+      },
+      "OFF": {
+        "outer": [[2624000, 64000], [5056000, 64000], [5056000, 3776000], [2624000, 3776000]],
+        "holes": [],
+        "area": "9027584000000"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {
+      "BED": {
+        "kind": "flat",
+        "box": {
+          "max": [2496000, 3776000, 3456000],
+          "min": [64000, 64000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      },
+      "OFF": {
+        "kind": "flat",
+        "box": {
+          "max": [5056000, 3776000, 3456000],
+          "min": [2624000, 64000, 3456000]
+        },
+        "high": 3456000,
+        "low": 3456000
+      }
+    },
+    "circulation": {
+      "BED": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "OFF": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "finishes": {
+      "walls": {
+        "W1": {
+          "right": {
+            "material": "BLUE",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "W2": {
+          "right": {
+            "material": "BLUE",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "W3": {
+          "right": {
+            "material": "GREEN",
+            "regions": [],
+            "room": "OFF",
+            "source": "room"
+          }
+        },
+        "W4": {
+          "right": {
+            "material": "GREEN",
+            "regions": [],
+            "room": "OFF",
+            "source": "room"
+          }
+        },
+        "W5": {
+          "right": {
+            "material": "GREEN",
+            "regions": [],
+            "room": "OFF",
+            "source": "room"
+          }
+        },
+        "W6": {
+          "right": {
+            "material": "BLUE",
+            "regions": [],
+            "room": "BED",
+            "source": "room"
+          }
+        },
+        "W7": {
+          "left": {
+            "material": "CORK",
+            "regions": [],
+            "room": "BED",
+            "source": "face"
+          },
+          "right": {
+            "material": "GREEN",
+            "regions": [],
+            "room": "OFF",
+            "source": "room"
+          }
+        }
+      },
+      "rooms": {}
+    },
+    "floors": {
+      "BED": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [2496000, 3776000, 0],
+          "min": [64000, 64000, 0]
+        }
+      },
+      "OFF": {
+        "bottom": 0,
+        "top": 0,
+        "box": {
+          "max": [5056000, 3776000, 0],
+          "min": [2624000, 64000, 0]
+        }
+      }
+    },
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

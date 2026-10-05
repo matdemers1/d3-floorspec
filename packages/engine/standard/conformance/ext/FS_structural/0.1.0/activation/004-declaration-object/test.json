@@ -1,0 +1,7 @@
+{
+  "description": "A declaration object with a schema URI is its version string (Core 12.1.3): FS_structural is evaluated.",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.3.2"
+  ]
+}

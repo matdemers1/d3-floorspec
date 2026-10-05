@@ -93,6 +93,47 @@ describe('findings with a rule pack installed', () => {
   });
 });
 
+describe('a design of a document with design options (Core 0.3, 19.6)', () => {
+  let running: Running;
+  const KITCHEN = JSON.parse(
+    readFileSync(new URL('../../../../packages/engine/standard/conformance/core/0.3/options/001-kitchen-a-and-b/input.json', import.meta.url), 'utf8'),
+  ) as Prisma.InputJsonObject;
+
+  beforeAll(async () => {
+    running = await start({ with: { rulePacks: loadRulePacks(PACKS, PROFILE) } });
+  });
+  afterAll(async () => {
+    await running.close();
+  });
+  beforeEach(async () => {
+    await reset(db);
+  });
+
+  it('validates every checked design whatever the query, and says whether the one asked for derives', async () => {
+    const operator = await setupOperator(running);
+    const id = await projectWith(operator, KITCHEN);
+    const plain = await operator.get(`/api/projects/${id}/validate`);
+    expect(plain.body).toMatchObject({ valid: true });
+    expect(plain.body).not.toHaveProperty('derives');
+    expect((await operator.get(`/api/projects/${id}/validate?design=KS:KB`)).body).toMatchObject({ valid: true, design: { KS: 'KB' }, derives: true });
+    expect((await operator.get(`/api/projects/${id}/validate?design=${encodeURIComponent('{"KS":"KA"}')}`)).body).toMatchObject({ derives: true });
+    expect((await operator.get(`/api/projects/${id}/validate?design=KS:nope`)).body).toMatchObject({ valid: true, derives: false });
+    expect((await operator.get(`/api/projects/${id}/validate?design=KS:KB:KC`)).status).toBe(400);
+  });
+
+  it('evaluates the findings of the design asked for, and says which', async () => {
+    const operator = await setupOperator(running);
+    const id = await projectWith(operator, KITCHEN);
+    const res = await operator.get(`/api/projects/${id}/findings?design=KS:KB`);
+    expect(res.status, res.text).toBe(200);
+    expect(res.body).toMatchObject({ design: { KS: 'KB' }, notice: NOTICE });
+    // A design Core derives nothing for is FS-RULES-003, and no finding (Rules 1.2.2).
+    const none = (await operator.get(`/api/projects/${id}/findings?design=KS:nope`)).body as FindingsBody & { diagnostics: { code: string }[] };
+    expect(none.findings).toEqual([]);
+    expect(none.diagnostics.map((d) => d.code)).toContain('FS-RULES-003');
+  });
+});
+
 describe('findings with no rule pack installed', () => {
   let running: Running;
 

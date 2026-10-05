@@ -1,0 +1,8 @@
+{
+  "description": "The same document, deriving the design that chooses B (design.json): X16 is the Kitchen's refrigerator, facing east from W1, and X1 is not an item of it.",
+  "covers": [
+    "FS-FURN-1.2.4",
+    "FS-FURN-6.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

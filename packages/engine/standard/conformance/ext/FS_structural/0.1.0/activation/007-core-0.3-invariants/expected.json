@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-STRC-INV-002",
+      "severity": "error",
+      "elements": ["W10"]
+    }
+  ]
+}

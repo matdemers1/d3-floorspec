@@ -1,0 +1,7 @@
+{
+  "description": "A 0.1 document with a room's wall and floor finishes and a layer material, read by a reader of 0.3: it derives its finishes - the room's paint on every right face, the block on the left faces of the walls of type WT, and nothing on W3's left face, whose own layer has no material.",
+  "covers": [
+    "FS-CORE-1.2.6",
+    "FS-CORE-18.6.1"
+  ]
+}

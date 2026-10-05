@@ -1,0 +1,6 @@
+{
+  "description": "The file at the photo's path is another image of the same length: its SHA-256 is not the asset's sha256: FS-INV-1006.",
+  "covers": [
+    "FS-CORE-18.4.3"
+  ]
+}

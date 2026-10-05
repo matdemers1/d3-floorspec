@@ -118,7 +118,7 @@ export async function retire(tx: Tx, projectId: string, ids: readonly string[], 
 }
 
 const COLLECTION_NAMES = new Set([
-  'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'types', 'materials', 'assets', 'roofs', 'stairs',
+  'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'types', 'materials', 'assets', 'roofs', 'stairs', 'optionSets', 'options',
 ]);
 
 /** Element IDs only — the members of the document's collections. */
@@ -137,6 +137,8 @@ export interface ApplyInput {
   readonly head: string;
   readonly batch: Batch;
   readonly locks?: readonly Lock[];
+  /** The design option the batch edits in (Ops 0.3, 2.8: `context.option`). */
+  readonly option?: string;
   readonly author: Author;
   readonly kind: OpKind;
   readonly ifMatch?: string | undefined;
@@ -150,10 +152,10 @@ export type ApplyOutcome =
   | { readonly status: 'rejected'; readonly result: Rejected; readonly head: HeadState };
 
 /** Run the applier against a document and a context. Pure apart from the applier itself. */
-export function runApplier(applier: Applier, document: unknown, batch: Batch, retired: readonly string[], locks?: readonly Lock[]) {
+export function runApplier(applier: Applier, document: unknown, batch: Batch, retired: readonly string[], locks?: readonly Lock[], option?: string | null) {
   return applier.apply(document, {
     batch,
-    context: { retired, ...(locks === undefined || locks.length === 0 ? {} : { locks }) },
+    context: { retired, ...(locks === undefined || locks.length === 0 ? {} : { locks }), ...(option === undefined || option === null ? {} : { option }) },
   });
 }
 
@@ -166,13 +168,14 @@ export async function applyToHead(tx: Tx, applier: Applier, input: ApplyInput): 
   const head = await readHead(tx, input.projectId, input.head);
   checkIfMatch(input.ifMatch, head);
   const retired = await retiredFor(tx, input.projectId, input.retiredExcept);
-  const result = runApplier(applier, head.document, input.batch, retired, input.locks);
+  const result = runApplier(applier, head.document, input.batch, retired, input.locks, input.option);
   if (result.status === 'rejected') return { status: 'rejected', result, head };
   const op = await commitResult(tx, {
     projectId: input.projectId,
     head: input.head,
     before: head.hash,
     batch: input.batch,
+    ...(input.option === undefined ? {} : { option: input.option }),
     result,
     author: input.author,
     kind: input.kind,
@@ -187,6 +190,8 @@ export interface CommitInput {
   readonly head: string;
   readonly before: string;
   readonly batch: Batch;
+  /** The design option the batch was applied in (Ops 0.3, 2.8). */
+  readonly option?: string | null;
   readonly result: Pick<Committed, 'document' | 'hash' | 'resolved' | 'inverse' | 'created' | 'removed'>;
   readonly author: Author;
   readonly kind: OpKind;
@@ -214,6 +219,7 @@ export async function commitResult(tx: Tx, input: CommitInput): Promise<OpLog> {
     kind: input.kind,
     author: input.author,
     batch: input.batch,
+    option: input.option ?? null,
     resolved: input.result.resolved,
     inverse: input.result.inverse,
     created: input.result.created,
@@ -234,6 +240,8 @@ export interface AppendInput {
   readonly kind: OpKind;
   readonly author: Author;
   readonly batch: Batch;
+  /** The design option the batch was applied in (Ops 0.3, 2.8); absent or null for none. */
+  readonly option?: string | null;
   readonly resolved: Batch | null;
   readonly inverse: Batch | null;
   readonly created: readonly string[];
@@ -257,6 +265,7 @@ export async function appendOp(tx: Tx, input: AppendInput): Promise<OpLog> {
       authorAgent: input.author.agent,
       authorTokenId: input.author.tokenId,
       ops: input.batch as unknown as Prisma.InputJsonArray,
+      editOption: input.option ?? null,
       resolved: input.resolved === null ? Prisma.DbNull : (input.resolved as unknown as Prisma.InputJsonArray),
       inverse: input.inverse === null ? Prisma.DbNull : (input.inverse as unknown as Prisma.InputJsonArray),
       created: [...input.created],

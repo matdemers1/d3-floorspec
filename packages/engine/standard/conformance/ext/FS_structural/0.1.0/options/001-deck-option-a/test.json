@@ -1,0 +1,10 @@
+{
+  "description": "Deck options A and B as Core 0.3 design options (Core 19): the 8' x 7' deck S1 is in A, the primary, and a 10' x 9' deck S2 on 2x10 joists in B. FS_structural is evaluated in each checked design; the primary design is derived, with S1's span and not S2's.",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.2.4",
+    "FS-STRC-1.3.2",
+    "FS-STRC-5.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

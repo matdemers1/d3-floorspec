@@ -1,0 +1,9 @@
+{
+  "description": "The kitchen house with B as the primary option: B's design is what is derived, A's is the option design checked beside it, and `options` compares A with B - so A's `affected` names the rooms and walls, and B's is empty.",
+  "covers": [
+    "FS-CORE-19.1.2",
+    "FS-CORE-19.6.1",
+    "FS-CORE-19.6.3",
+    "FS-CORE-19.5.1"
+  ]
+}

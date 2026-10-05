@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-STRC-SCH-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

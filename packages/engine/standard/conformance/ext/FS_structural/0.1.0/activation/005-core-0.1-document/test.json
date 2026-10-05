@@ -1,0 +1,6 @@
+{
+  "description": "A document declaring \"0.1\" whose extension data is opaque (Core 1.2.4): FS_structural is not evaluated, even though it is known.",
+  "covers": [
+    "FS-STRC-1.2.1"
+  ]
+}

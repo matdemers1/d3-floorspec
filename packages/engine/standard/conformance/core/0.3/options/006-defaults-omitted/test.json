@@ -1,0 +1,7 @@
+{
+  "description": "An option set and an option with empty extras, which the canonical form omits; an option's own extras are kept, and every element's option is kept: it has no default.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-19.1.1"
+  ]
+}

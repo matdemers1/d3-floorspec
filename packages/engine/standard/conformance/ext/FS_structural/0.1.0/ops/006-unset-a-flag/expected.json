@@ -1,0 +1,37 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d9eeeece8e5dd8478541b83ffaa973ad5038d6660900af29aa938502d62e54b2",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "W2",
+      "path": "/extensions/FS_structural/shear"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "W2",
+      "path": "/extensions",
+      "value": {
+        "FS_structural": {
+          "bearing": true,
+          "framing": {
+            "material": "wood",
+            "member": {
+              "depth": 178816,
+              "designation": "2x6",
+              "width": 48768
+            },
+            "spacing": 520192,
+            "system": "studs"
+          },
+          "shear": true
+        }
+      }
+    }
+  ]
+}

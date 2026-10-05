@@ -29,7 +29,7 @@
       "texture": {
         "asset": "A1",
         "size": [384000, 384000],
-        "rotation": 0
+        "repeat": false
       }
     }
   },

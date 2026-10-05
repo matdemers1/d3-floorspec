@@ -1,0 +1,7 @@
+{
+  "description": "The same door with no context.option: the edit design is the primary design, A's, so the selector finds WA; the door is common, and WA is A's, so the result is invalid: FS-INV-1102.",
+  "covers": [
+    "FS-OPS-2.8.2",
+    "FS-OPS-1.2.3"
+  ]
+}

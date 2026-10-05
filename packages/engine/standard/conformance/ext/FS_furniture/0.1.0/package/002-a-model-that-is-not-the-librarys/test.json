@@ -1,0 +1,7 @@
+{
+  "description": "The same package, with the range's model at the path of the refrigerator's: its digest and its length are not the asset's (FS-INV-1006, FS-INV-1007), and FS_furniture is not evaluated.",
+  "covers": [
+    "FS-FURN-1.2.2",
+    "FS-CORE-18.4.3"
+  ]
+}

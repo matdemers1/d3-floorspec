@@ -1,0 +1,7 @@
+{
+  "description": "The same removal with the chairs removed in the same batch: it commits.",
+  "covers": [
+    "FS-FURN-4.3.1",
+    "FS-FURN-1.2.1"
+  ]
+}

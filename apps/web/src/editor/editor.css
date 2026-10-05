@@ -1977,3 +1977,317 @@ line.fs-diff {
   font-family: var(--font-mono);
   font-size: var(--text-11);
 }
+
+/* ── Design options (Core 0.3, chapter 19; FLR-T-8.4) ─────────────────────────────────────── */
+.fs-topbar__options {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 28px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-fg-muted);
+  font: inherit;
+  font-size: var(--text-13);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.fs-topbar__options svg {
+  width: var(--icon-14) !important;
+  height: var(--icon-14) !important;
+}
+.fs-topbar__options:hover,
+.fs-topbar__options[aria-pressed='true'] {
+  background: var(--color-fill-quiet);
+}
+.fs-topbar__options--on {
+  border-color: transparent;
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+  font-weight: var(--weight-medium);
+}
+.fs-topbar__options:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-options__editing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-md);
+  background: var(--color-fill-quiet);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-options__editing svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+  flex: none;
+}
+.fs-options__editing > span {
+  flex: 1;
+}
+.fs-options__editing--on {
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+}
+.fs-options__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-options__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 36px;
+  padding: 0 var(--space-4) 0 var(--space-8);
+  border-radius: var(--radius-md);
+}
+.fs-options__option--shown {
+  background: var(--color-fill-quiet);
+}
+.fs-options__show {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  cursor: pointer;
+}
+.fs-options__show input {
+  accent-color: var(--color-accent);
+}
+.fs-options__name {
+  overflow: hidden;
+  font-size: var(--text-13);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-options__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+.fs-options__actions--stack {
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: auto;
+}
+.fs-options__add,
+.fs-options__new {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+.fs-options__add {
+  flex-direction: row;
+  align-items: center;
+}
+.fs-options__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-8);
+}
+.fs-compare-options {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 100%;
+  overflow: hidden;
+  background: var(--color-bg-sunken);
+}
+.fs-compare-options__pane {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+.fs-compare-options__pane + .fs-compare-options__pane {
+  border-left: 1px solid var(--color-border);
+}
+.fs-compare-options__pane svg {
+  display: block;
+}
+.fs-compare-options__label {
+  position: absolute;
+  top: var(--space-16);
+  left: var(--space-16);
+  z-index: 1;
+  padding: var(--space-4) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+}
+.fs-compare-options__label--primary {
+  border-color: transparent;
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+  font-weight: var(--weight-medium);
+}
+.fs-compare-options__none {
+  padding: var(--space-64) var(--space-16) 0;
+  text-align: center;
+}
+.fs-compare-options__legend {
+  top: auto;
+  bottom: var(--space-16);
+}
+.fs-legend__dot--changed {
+  background: var(--color-info);
+}
+.fs-compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-13);
+}
+.fs-compare-table th,
+.fs-compare-table td {
+  padding: var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+.fs-compare-table thead th {
+  color: var(--color-fg-muted);
+  font-weight: var(--weight-medium);
+}
+.fs-compare-table tbody th {
+  color: var(--color-fg-muted);
+  font-weight: var(--weight-regular);
+}
+.fs-compare-table td {
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  white-space: nowrap;
+}
+.fs-history__option {
+  color: var(--color-accent);
+  font-size: var(--text-11);
+}
+
+/* ── Materials and finishes (Core 0.3, chapter 18; FLR-T-8.1) ─────────────────────────────── */
+.fs-plan2__face--tinted {
+  fill-opacity: 0.32;
+}
+/* On the dark canvas a light finish washes the room labels out: a fainter tint keeps them legible. */
+[data-theme='dark'] .fs-plan2__face--tinted {
+  fill-opacity: 0.1;
+}
+.fs-materials {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-material-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  padding: 0 0 var(--space-12);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  color: var(--color-fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fs-material-card:hover {
+  border-color: var(--color-fg-faint);
+}
+.fs-material-card:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-material-card__swatch {
+  display: block;
+  height: 96px;
+  margin-bottom: var(--space-8);
+  background: var(--color-fill-quiet);
+}
+.fs-material-card__name,
+.fs-material-card__meta,
+.fs-material-card__uses {
+  padding: 0 var(--space-12);
+}
+.fs-material-card__name {
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+.fs-material-card__meta {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-material-card__uses {
+  color: var(--color-fg-faint);
+  font-size: var(--text-12);
+}
+.fs-face-finish__resolved {
+  margin: 0 0 var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-regions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: var(--space-8) 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-12);
+}
+.fs-regions li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-regions__swatch {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+}
+.fs-region-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.fs-region-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+
+.fs-options__pair > *,
+.fs-options__add > :first-child {
+  min-width: 0;
+}
+.fs-materials__library {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+}
+.fs-materials__library-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-8);
+}

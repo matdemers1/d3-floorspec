@@ -1,0 +1,6 @@
+{
+  "description": "An option whose ID, W1, is a wall's too: IDs are unique across collections, option sets and options included. FS-INV-001.",
+  "covers": [
+    "FS-CORE-3.1.2"
+  ]
+}

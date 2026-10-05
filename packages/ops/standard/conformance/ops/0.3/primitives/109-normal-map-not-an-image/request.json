@@ -1,0 +1,20 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "assets",
+      "id": "TILE-GLB",
+      "element": {
+        "path": "assets/tile.glb",
+        "sha256": "7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f",
+        "mediaType": "model/gltf-binary"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "TILE",
+      "path": "/texture/normal",
+      "value": "TILE-GLB"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The dishwasher names the FS_plumbing fixture X16 that supplies and drains it and the FS_electrical receptacle X17 that powers it. Neither extension is known or implemented: the IDs are checked against the document's extension elements, and both are. Valid.",
+  "covers": [
+    "FS-FURN-4.4.1",
+    "FS-FURN-1.2.1"
+  ]
+}

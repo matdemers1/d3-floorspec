@@ -1,0 +1,6 @@
+{
+  "description": "A texture's offset is a point, two lengths.",
+  "covers": [
+    "FS-CORE-18.2.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "An unfinished room in sided exterior walls drawn clockwise: each wall's left face faces the outside and shows its first layer's siding, each right face faces the room, which names no finish, and shows its last layer's gypsum board (source \"layer\"). A stone wainscot is a region of W4's left face, which faces no room.",
+  "covers": [
+    "FS-CORE-18.6.1",
+    "FS-CORE-18.5.1"
+  ]
+}

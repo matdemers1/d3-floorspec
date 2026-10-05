@@ -1,0 +1,6 @@
+{
+  "description": "A material's source without \"library\".",
+  "covers": [
+    "FS-CORE-8.1.3"
+  ]
+}

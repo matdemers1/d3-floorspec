@@ -1,0 +1,606 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "c133ede269a309936c6924ef26c3eb3833fc07b910857c098084ad1c7a83d30b",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 6178304],
+        "endLeft": [-64000, 6306304],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W10": {
+        "startRight": [4745728, 2667008],
+        "endRight": [9299456, 2667008],
+        "endLeft": [9299456, 2795008],
+        "startLeft": [4745728, 2795008],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 6178304],
+        "endRight": [4617728, 6178304],
+        "endLeft": [4681728, 6306304],
+        "startLeft": [-64000, 6306304],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4745728, 6178304],
+        "endRight": [9299456, 6178304],
+        "endLeft": [9427456, 6306304],
+        "startLeft": [4681728, 6306304],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [9299456, 6178304],
+        "endRight": [9299456, 2795008],
+        "endLeft": [9427456, 2731008],
+        "startLeft": [9427456, 6306304],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [9299456, 2667008],
+        "endRight": [9299456, 64000],
+        "endLeft": [9427456, -64000],
+        "startLeft": [9427456, 2731008],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W6": {
+        "startRight": [9299456, 64000],
+        "endRight": [4745728, 64000],
+        "endLeft": [4681728, -64000],
+        "startLeft": [9427456, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W7": {
+        "startRight": [4617728, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [4681728, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W8": {
+        "startRight": [4745728, 64000],
+        "endRight": [4745728, 2667008],
+        "endLeft": [4617728, 2731008],
+        "startLeft": [4617728, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W9": {
+        "startRight": [4745728, 2795008],
+        "endRight": [4745728, 6178304],
+        "endLeft": [4617728, 6178304],
+        "startLeft": [4617728, 2731008],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J3": [[4617728, 6178304], [4745728, 6178304], [4681728, 6306304]],
+      "J6": [[4617728, 64000], [4681728, -64000], [4745728, 64000]],
+      "J7": [[4617728, 2731008], [4745728, 2667008], [4745728, 2795008]],
+      "J8": [[9299456, 2667008], [9427456, 2731008], [9299456, 2795008]]
+    },
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [4617728, 64000], [4617728, 2731008], [4617728, 6178304], [64000, 6178304]],
+        "holes": [],
+        "area": "27842877325312"
+      },
+      "R2": {
+        "outer": [[4745728, 2795008], [9299456, 2795008], [9299456, 6178304], [4745728, 6178304]],
+        "holes": [],
+        "area": "15406609727488"
+      },
+      "R3": {
+        "outer": [[4745728, 64000], [9299456, 64000], [9299456, 2667008], [4745728, 2667008]],
+        "holes": [],
+        "area": "11853390413824"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "X1": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "appliances",
+        "footprint": [[64000, 5282304], [1216000, 5282304], [1216000, 6178304], [64000, 6178304]],
+        "bottom": 0,
+        "top": 2278400
+      },
+      "X10": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[5608448, 3554304], [7656448, 3554304], [7656448, 6178304], [5608448, 6178304]],
+        "bottom": 0,
+        "top": 1280000
+      },
+      "X11": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[7720448, 5602304], [8360448, 5602304], [8360448, 6178304], [7720448, 6178304]],
+        "bottom": 0,
+        "top": 768000
+      },
+      "X12": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[8531456, 2871296], [9299456, 2871296], [9299456, 4151296], [8531456, 4151296]],
+        "bottom": 0,
+        "top": 2688000
+      },
+      "X13": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "appliances",
+        "footprint": [[7751424, 64000], [8634624, 64000], [8634624, 896000], [7751424, 896000]],
+        "bottom": 0,
+        "top": 1088000
+      },
+      "X14": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "appliances",
+        "footprint": [[6855424, 64000], [7738624, 64000], [7738624, 896000], [6855424, 896000]],
+        "bottom": 0,
+        "top": 1088000
+      },
+      "X15": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "casework",
+        "footprint": [[64000, 1152000], [832000, 1152000], [832000, 1920000], [64000, 1920000]],
+        "bottom": 0,
+        "top": 2688000
+      },
+      "X16": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "appliances",
+        "footprint": [[2956800, 5666304], [3724800, 5666304], [3724800, 6178304], [2956800, 6178304]],
+        "bottom": 1152000,
+        "top": 1600000
+      },
+      "X2": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "casework",
+        "footprint": [[1216000, 5410304], [1984000, 5410304], [1984000, 6178304], [1216000, 6178304]],
+        "bottom": 0,
+        "top": 1152000
+      },
+      "X3": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "appliances",
+        "footprint": [[1984000, 5346304], [2956800, 5346304], [2956800, 6178304], [1984000, 6178304]],
+        "bottom": 0,
+        "top": 1177600
+      },
+      "X4": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "casework",
+        "footprint": [[2956800, 5410304], [3724800, 5410304], [3724800, 6178304], [2956800, 6178304]],
+        "bottom": 0,
+        "top": 1152000
+      },
+      "X5": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "appliances",
+        "footprint": [[3724800, 5410304], [4492800, 5410304], [4492800, 6178304], [3724800, 6178304]],
+        "bottom": 0,
+        "top": 1088000
+      },
+      "X6": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "casework",
+        "footprint": [[1216000, 5730304], [1984000, 5730304], [1984000, 6178304], [1216000, 6178304]],
+        "bottom": 1792000,
+        "top": 2752000
+      },
+      "X7": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[2340864, 1771008], [3492864, 1771008], [3492864, 3691008], [2340864, 3691008]],
+        "bottom": 0,
+        "top": 960000
+      },
+      "X8": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[1636864, 2443008], [2276864, 2443008], [2276864, 3019008], [1636864, 3019008]],
+        "bottom": 0,
+        "top": 1088000
+      },
+      "X9": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "pieces",
+        "footprint": [[3556864, 2443008], [4196864, 2443008], [4196864, 3019008], [3556864, 3019008]],
+        "bottom": 0,
+        "top": 1088000
+      }
+    },
+    "placements": {
+      "X1": {
+        "point": [640000, 6178304, 0],
+        "facing": -90000000
+      },
+      "X10": {
+        "point": [6632448, 6178304, 0],
+        "facing": -90000000
+      },
+      "X11": {
+        "point": [8040448, 6178304, 0],
+        "facing": -90000000
+      },
+      "X12": {
+        "point": [9299456, 3511296, 0],
+        "facing": 180000000
+      },
+      "X13": {
+        "point": [8193024, 64000, 0],
+        "facing": 90000000
+      },
+      "X14": {
+        "point": [7297024, 64000, 0],
+        "facing": 90000000
+      },
+      "X15": {
+        "point": [64000, 1536000, 0],
+        "facing": 0
+      },
+      "X16": {
+        "point": [3340800, 6178304, 1152000],
+        "facing": -90000000
+      },
+      "X2": {
+        "point": [1600000, 6178304, 0],
+        "facing": -90000000
+      },
+      "X3": {
+        "point": [2470400, 6178304, 0],
+        "facing": -90000000
+      },
+      "X4": {
+        "point": [3340800, 6178304, 0],
+        "facing": -90000000
+      },
+      "X5": {
+        "point": [4108800, 6178304, 0],
+        "facing": -90000000
+      },
+      "X6": {
+        "point": [1600000, 6178304, 1792000],
+        "facing": -90000000
+      },
+      "X7": {
+        "point": [2340864, 2731008, 0],
+        "facing": 0
+      },
+      "X8": {
+        "point": [1636864, 2731008, 0],
+        "facing": 0
+      },
+      "X9": {
+        "point": [4196864, 2731008, 0],
+        "facing": 180000000
+      }
+    },
+    "clearances": {
+      "X1": {
+        "door": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[64000, 4130304], [1216000, 4130304], [1216000, 5282304], [64000, 5282304]],
+          "bottom": 0,
+          "top": 2278400
+        }
+      },
+      "X10": {
+        "left": {
+          "level": "L1",
+          "purpose": "access",
+          "footprint": [[7656448, 3554304], [8424448, 3554304], [8424448, 6178304], [7656448, 6178304]],
+          "bottom": 0,
+          "top": 2560000
+        },
+        "right": {
+          "level": "L1",
+          "purpose": "access",
+          "footprint": [[4840448, 3554304], [5608448, 3554304], [5608448, 6178304], [4840448, 6178304]],
+          "bottom": 0,
+          "top": 2560000
+        }
+      },
+      "X12": {
+        "front": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[7763456, 2871296], [8531456, 2871296], [8531456, 4151296], [7763456, 4151296]],
+          "bottom": 0,
+          "top": 2688000
+        }
+      },
+      "X13": {
+        "door": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[7751424, 896000], [8634624, 896000], [8634624, 1792000], [7751424, 1792000]],
+          "bottom": 0,
+          "top": 1088000
+        }
+      },
+      "X14": {
+        "door": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[6855424, 896000], [7738624, 896000], [7738624, 1792000], [6855424, 1792000]],
+          "bottom": 0,
+          "top": 1088000
+        }
+      },
+      "X15": {
+        "front": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[832000, 1152000], [1600000, 1152000], [1600000, 1920000], [832000, 1920000]],
+          "bottom": 0,
+          "top": 2688000
+        }
+      },
+      "X2": {
+        "front": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[1216000, 4642304], [1984000, 4642304], [1984000, 5410304], [1216000, 5410304]],
+          "bottom": 0,
+          "top": 1152000
+        }
+      },
+      "X3": {
+        "door": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[1984000, 4578304], [2956800, 4578304], [2956800, 5346304], [1984000, 5346304]],
+          "bottom": 0,
+          "top": 1177600
+        }
+      },
+      "X4": {
+        "front": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[2956800, 4642304], [3724800, 4642304], [3724800, 5410304], [2956800, 5410304]],
+          "bottom": 0,
+          "top": 1152000
+        }
+      },
+      "X5": {
+        "door": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[3724800, 4514304], [4492800, 4514304], [4492800, 5410304], [3724800, 5410304]],
+          "bottom": 0,
+          "top": 1088000
+        }
+      },
+      "X6": {
+        "front": {
+          "level": "L1",
+          "purpose": "swing",
+          "footprint": [[1216000, 5218304], [1984000, 5218304], [1984000, 5730304], [1216000, 5730304]],
+          "bottom": 1792000,
+          "top": 2752000
+        }
+      },
+      "X7": {
+        "around": {
+          "level": "L1",
+          "purpose": "access",
+          "footprint": [[1380864, 811008], [4452864, 811008], [4452864, 4651008], [1380864, 4651008]],
+          "bottom": 0,
+          "top": 2560000
+        }
+      }
+    },
+    "clearanceOverlaps": [
+      [["X10", "left"], ["X12", "front"]],
+      [["X15", "front"], ["X7", "around"]],
+      [["X2", "front"], ["X7", "around"]],
+      [["X3", "door"], ["X7", "around"]],
+      [["X4", "front"], ["X7", "around"]],
+      [["X5", "door"], ["X7", "around"]]
+    ],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      },
+      "R2": {
+        "entry": false,
+        "reachable": false,
+        "throughSleeping": false
+      },
+      "R3": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "extensions": {
+      "FS_furniture": {
+        "rooms": {
+          "R1": {
+            "items": ["X1", "X15", "X16", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9"],
+            "floorArea": "7149977600000"
+          },
+          "R2": {
+            "items": ["X10", "X11", "X12"],
+            "floorArea": "6725632000000"
+          },
+          "R3": {
+            "items": ["X13", "X14"],
+            "floorArea": "1469644800000"
+          }
+        },
+        "items": {
+          "X1": {
+            "kind": "appliances",
+            "category": "refrigerator",
+            "depth": 896000,
+            "height": 2278400,
+            "room": "R1",
+            "width": 1152000
+          },
+          "X10": {
+            "kind": "pieces",
+            "category": "bed",
+            "depth": 2624000,
+            "height": 1280000,
+            "room": "R2",
+            "width": 2048000
+          },
+          "X11": {
+            "kind": "pieces",
+            "category": "nightstand",
+            "depth": 576000,
+            "height": 768000,
+            "room": "R2",
+            "width": 640000
+          },
+          "X12": {
+            "kind": "pieces",
+            "category": "wardrobe",
+            "depth": 768000,
+            "height": 2688000,
+            "room": "R2",
+            "width": 1280000
+          },
+          "X13": {
+            "kind": "appliances",
+            "category": "washer",
+            "depth": 832000,
+            "height": 1088000,
+            "room": "R3",
+            "width": 883200
+          },
+          "X14": {
+            "kind": "appliances",
+            "category": "dryer",
+            "depth": 832000,
+            "height": 1088000,
+            "room": "R3",
+            "width": 883200
+          },
+          "X15": {
+            "kind": "casework",
+            "category": "tallCabinet",
+            "depth": 768000,
+            "height": 2688000,
+            "room": "R1",
+            "width": 768000
+          },
+          "X16": {
+            "kind": "appliances",
+            "category": "microwave",
+            "depth": 512000,
+            "height": 448000,
+            "room": "R1",
+            "width": 768000
+          },
+          "X2": {
+            "kind": "casework",
+            "category": "baseCabinet",
+            "depth": 768000,
+            "height": 1152000,
+            "room": "R1",
+            "width": 768000
+          },
+          "X3": {
+            "kind": "appliances",
+            "category": "range",
+            "depth": 832000,
+            "height": 1177600,
+            "room": "R1",
+            "width": 972800
+          },
+          "X4": {
+            "kind": "casework",
+            "category": "baseCabinet",
+            "depth": 768000,
+            "height": 1152000,
+            "room": "R1",
+            "width": 768000
+          },
+          "X5": {
+            "kind": "appliances",
+            "category": "dishwasher",
+            "depth": 768000,
+            "height": 1088000,
+            "room": "R1",
+            "width": 768000
+          },
+          "X6": {
+            "kind": "casework",
+            "category": "wallCabinet",
+            "depth": 448000,
+            "height": 960000,
+            "room": "R1",
+            "width": 768000
+          },
+          "X7": {
+            "kind": "pieces",
+            "category": "diningTable",
+            "depth": 1152000,
+            "height": 960000,
+            "room": "R1",
+            "width": 1920000
+          },
+          "X8": {
+            "kind": "pieces",
+            "category": "chair",
+            "depth": 640000,
+            "height": 1088000,
+            "room": "R1",
+            "width": 576000
+          },
+          "X9": {
+            "kind": "pieces",
+            "category": "chair",
+            "depth": 640000,
+            "height": 1088000,
+            "room": "R1",
+            "width": 576000
+          }
+        },
+        "groups": {
+          "X10": ["X11"],
+          "X7": ["X8", "X9"]
+        }
+      }
+    }
+  }
+}

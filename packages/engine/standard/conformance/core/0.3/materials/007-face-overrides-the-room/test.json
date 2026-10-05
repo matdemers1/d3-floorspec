@@ -1,0 +1,7 @@
+{
+  "description": "The same painted room with one accent wall: W2's right face names its own material, which wins over the room's on that face alone (source \"face\"); the other three faces inherit the paint.",
+  "covers": [
+    "FS-CORE-18.5.1",
+    "FS-CORE-18.6.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The dishwasher names the base cabinet X4 as a connection: an element of FS_furniture, not of the system that serves it.",
+  "covers": [
+    "FS-FURN-4.4.1"
+  ]
+}

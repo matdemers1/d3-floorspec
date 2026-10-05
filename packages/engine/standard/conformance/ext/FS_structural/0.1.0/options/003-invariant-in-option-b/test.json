@@ -1,0 +1,8 @@
+{
+  "description": "Option B's deck has joists closer than they are wide: FS_structural is evaluated in each checked design, so FS-STRC-INV-002 is reported for option B's design, with `design`.",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.2.3",
+    "FS-STRC-2.2.2"
+  ]
+}

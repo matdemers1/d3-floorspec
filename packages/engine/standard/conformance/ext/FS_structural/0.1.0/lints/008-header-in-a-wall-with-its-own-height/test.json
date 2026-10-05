@@ -1,0 +1,6 @@
+{
+  "description": "W2 is 2300 mm high (its top unconnected, Core 5.9), and O2's 2x10 header, 9 1/4\" deep, no longer fits in the 166.4 mm left above the window.",
+  "covers": [
+    "FS-STRC-1.2.3"
+  ]
+}

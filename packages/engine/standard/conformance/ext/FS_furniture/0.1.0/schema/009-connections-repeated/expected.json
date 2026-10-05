@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-FURN-SCH-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

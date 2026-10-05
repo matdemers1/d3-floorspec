@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/core/0.3/option.schema.json",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 19.1's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "title": "Option sets and options",
+  "description": "19.1: an option set — the alternatives for one part of a design, such as a kitchen's layout — and its options. New in 0.3. That a set's `primary` is one of its own options (FS-CORE-19.1.2), and that references between elements do not cross options (FS-CORE-19.4.1), are invariants (FS-INV-1101, FS-INV-1102), not checked here.",
+  "$defs": {
+    "optionSet": {
+      "title": "Option set",
+      "description": "19.1: an option set. It has only the members of its table (FS-CORE-1.4.1).",
+      "type": "object",
+      "required": [
+        "primary"
+      ],
+      "properties": {
+        "primary": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "19.1: a reference to the set's primary option — one of its own options. Always present."
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "1.4: a human-readable label, 1–200 characters, such as \"Kitchen\". Absent by default."
+        },
+        "extensions": {
+          "$ref": "defs.schema.json#/$defs/extensions",
+          "description": "1.4, 1.6: extension data on this option set.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.4, 1.7: application-specific data on this option set.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    },
+    "option": {
+      "title": "Option",
+      "description": "19.1: one alternative of an option set. It has only the members of its table (FS-CORE-1.4.1).",
+      "type": "object",
+      "required": [
+        "set"
+      ],
+      "properties": {
+        "set": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "19.1: a reference to the option set this option is of. Always present."
+        },
+        "name": {
+          "$ref": "defs.schema.json#/$defs/name",
+          "description": "1.4: a human-readable label, 1–200 characters, such as \"A\" or \"Open plan\". Absent by default."
+        },
+        "extensions": {
+          "$ref": "defs.schema.json#/$defs/extensions",
+          "description": "1.4, 1.6: extension data on this option.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "defs.schema.json#/$defs/extras",
+          "description": "1.4, 1.7: application-specific data on this option.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

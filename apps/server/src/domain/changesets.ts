@@ -118,6 +118,7 @@ export async function acceptChangeset(
           kind: 'merge',
           author: authorOfOp(op),
           batch: op.ops as unknown as Batch,
+          option: op.editOption,
           resolved: op.resolved as unknown as Batch | null,
           inverse: op.inverse as unknown as Batch | null,
           created: op.created,
@@ -139,7 +140,8 @@ export async function acceptChangeset(
     const results: { op: OpLog; result: Committed; before: string }[] = [];
     for (const [index, op] of ops.entries()) {
       const batch = op.ops as unknown as Batch;
-      const result = runApplier(applier, document, batch, [...retired, ...results.flatMap((r) => r.result.created)]);
+      // Each batch in the design option it was drawn in (Ops 0.3, 2.8).
+      const result = runApplier(applier, document, batch, [...retired, ...results.flatMap((r) => r.result.created)], undefined, op.editOption);
       if (result.status === 'rejected') {
         throw new ProblemError({
           status: 409,
@@ -168,6 +170,7 @@ export async function acceptChangeset(
           kind: 'merge',
           author: authorOfOp(op),
           batch: op.ops as unknown as Batch,
+          option: op.editOption,
           resolved: result.resolved,
           inverse: result.inverse,
           created: result.created,

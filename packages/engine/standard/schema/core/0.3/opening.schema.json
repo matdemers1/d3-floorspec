@@ -58,6 +58,10 @@
       "$ref": "defs.schema.json#/$defs/clearOpening",
       "description": "7.1, 8.4: the net clear opening of what fills it, as declared. A typed property (8.2): absent, it resolves from `fill` (7.2), and an opening that resolves none has no clear opening. Replaces its type's whole: an own clear opening without an area has no declared area."
     },
+    "option": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "19.2: a reference to the option this opening is in. Absent: it is in no option, and so in every design."
+    },
     "name": {
       "$ref": "defs.schema.json#/$defs/name",
       "description": "1.4: a human-readable label, 1–200 characters. Absent by default."

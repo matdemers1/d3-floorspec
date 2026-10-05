@@ -216,6 +216,21 @@ describe('versions and the op log', () => {
     expect(await db.retiredId.count({ where: { projectId: project.id } })).toBe(13);
   });
 
+  it('hands the applier context.option, keeps it in the op log and shows it in the history (Ops 0.3, 2.8)', async () => {
+    await operator.post(ops(), { batch: ONE_ROOM_HOUSE });
+    applier.requests.length = 0;
+    const res = await operator.post(ops(), { batch: [{ op: 'addElement', collection: 'rooms', element: { level: 'L1', anchor: [1, 1] } }], context: { option: 'KB' } });
+    expect(res.status, res.text).toBe(201);
+    expect(applier.requests[0]?.context?.option).toBe('KB');
+    const seq = (res.body as { op: { seq: number } }).op.seq;
+    expect((await db.opLog.findFirstOrThrow({ where: { projectId: project.id, seq } })).editOption).toBe('KB');
+    const history = (await operator.get(`/api/projects/${project.id}/history`)).body as { ops: { seq: number; option: string | null }[] };
+    expect(history.ops.find((o) => o.seq === seq)?.option).toBe('KB');
+    expect(history.ops.find((o) => o.seq === seq - 1)?.option).toBeNull();
+    // Not an ID: refused before the applier sees it.
+    expect((await operator.post(ops(), { batch: ONE_ROOM_HOUSE, context: { option: 7 } })).status).toBe(400);
+  });
+
   it('serves only versions this project reached', async () => {
     const other = await createProjectAs(operator, 'Other');
     await operator.post(`/api/projects/${other.id}/ops`, { batch: ONE_ROOM_HOUSE });

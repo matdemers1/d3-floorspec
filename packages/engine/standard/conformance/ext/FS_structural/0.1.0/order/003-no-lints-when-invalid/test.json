@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too - O1 has no header in its bearing wall: the document is invalid, so no lint is reported, FS_structural's or Core's.",
+  "covers": [
+    "FS-STRC-1.2.2",
+    "FS-STRC-1.2.3"
+  ]
+}

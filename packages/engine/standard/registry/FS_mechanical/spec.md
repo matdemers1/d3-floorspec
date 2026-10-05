@@ -102,7 +102,7 @@ FS_mechanical is a fraction.
 # 2. Elements
 
 Every element below is an extension element (Core §12.5): besides the members its table lists, it
-has `fallback`, and may have `host`, `clearances`, `name` and `extras`, which Floorspec Core checks.
+has `fallback`, and may have `host`, `clearances`, `option` (Core 0.3), `name` and `extras`, which Floorspec Core checks.
 
 **Fuel and combustion air.** Equipment and gas appliances say what they burn. One that burns fuel
 — natural gas, propane or oil — says where its combustion air comes from in `combustionAir`:

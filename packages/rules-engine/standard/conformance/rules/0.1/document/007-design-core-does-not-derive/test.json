@@ -1,0 +1,6 @@
+{
+  "description": "The request names the design {\"RS\": \"RC\"}, and the house has no option RC: Core derives nothing for it (Core 19.6.2), so FS-RULES-003 and no finding.",
+  "covers": [
+    "FS-RULES-1.2.2"
+  ]
+}
