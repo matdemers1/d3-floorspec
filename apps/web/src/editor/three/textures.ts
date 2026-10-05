@@ -1,22 +1,16 @@
 import * as THREE from 'three';
 import type { Look } from './parts';
 import type { MapRef } from './surfaces';
+import { assetUrl } from '../../lib/assets';
 
 /** A textured material with no colour of its own, before its image arrives: a quiet neutral. */
 const FALLBACK = '#d9d6cf'; // d3-allow: a default material colour of the 3D model, not chrome
 
-/** The shared viewer's stores are keyed `share:<token>` (share/Viewer.tsx), not by a project ID. */
-const SHARE_KEY = 'share:';
-
 /**
- * Where a texture's bytes are: the project's asset route for its owner, or — in the shared viewer —
- * the link's own, which serves only files the shared version names (FLR-T-9.6, FLR-T-9.1). The
- * owner's route needs the owner's session, so a link's viewer could never load a texture from it.
+ * Where a texture's bytes are: the project's asset route for its owner, or the link's own in the
+ * shared viewer (FLR-T-9.6) — the same rule as every stored file the editor shows (lib/assets.ts).
  */
-export function textureUrl(store: string, sha256: string): string {
-  if (store.startsWith(SHARE_KEY)) return `/api/share/${encodeURIComponent(store.slice(SHARE_KEY.length))}/assets/${sha256}`;
-  return `/api/projects/${store}/assets/${sha256}`;
-}
+export const textureUrl = assetUrl;
 
 /**
  * The 3D view's textures (FLR-T-8.2): each base colour map loaded once from the project's asset

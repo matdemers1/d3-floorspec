@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { evaluate, facingVector } from '@floorspec/engine';
 import { validateBytes } from 'gltf-validator';
 import { describe, expect, it } from 'vitest';
-import { assetDirImages, buildScene, exportGltf, exportUsdz, linear, readGlb, readStoreZip, type ImageSource } from '../src/export/gltf/index.js';
+import { assetDirImages, assetDirModels, buildScene, exportGltf, exportUsdz, linear, readGlb, readStoreZip, type ImageSource } from '../src/export/gltf/index.js';
 import { createHandlers } from '../src/queue/handlers.js';
 import { rasterize } from '../src/render/png.js';
 
@@ -399,6 +399,138 @@ describe('maps from the asset store (FLR-T-9.2 with FLR-T-8.2)', () => {
     const bare = await createHandlers()['export.gltf']!(backsplash(png), { ...job, kind: 'export.gltf' });
     expect((bare.summary?.['textures'] as { omitted: unknown[] }).omitted).toHaveLength(1);
   });
+});
+
+describe('fallback models merged into the glTF (FLR-T-9.2, Core 12.6)', () => {
+  const FRIDGE_GLB = new Uint8Array(readFileSync(here('../../../packages/engine/standard/registry/FS_furniture/library/models/refrigerator-900.glb')));
+  const digest = (b: Uint8Array): string => createHash('sha256').update(b).digest('hex');
+  /** An asset directory as the api writes it: `ab/cd/<sha256>`. */
+  const store = (files: Uint8Array[]): string => {
+    const dir = mkdtempSync(join(tmpdir(), 'models-'));
+    for (const bytes of files) {
+      const sha = digest(bytes);
+      mkdirSync(join(dir, sha.slice(0, 2), sha.slice(2, 4)), { recursive: true });
+      writeFileSync(join(dir, sha.slice(0, 2), sha.slice(2, 4), sha), bytes);
+    }
+    return dir;
+  };
+  /**
+   * The fridge-in-each-option case with the starter library's refrigerator as its model: FA (option
+   * A, the primary) and a second, common refrigerator FC on the far wall — two elements of the
+   * shown design sharing one model.
+   */
+  const kitchen = (bytes: Uint8Array = FRIDGE_GLB, mediaType = 'model/gltf-binary'): Json => {
+    const doc = load(join(SUITE, 'options/034-fridge-in-each-option/input.json'));
+    const pieces = ((doc['extensions'] as Json)['FS_furniture'] as { collections: { pieces: Record<string, Json> } }).collections.pieces;
+    (pieces['FA']!['fallback'] as Json)['asset'] = 'FRIDGE';
+    const fc = structuredClone(pieces['FA']!);
+    delete fc['option'];
+    fc['host'] = { mode: 'free', level: 'L1', position: [2_000_000, 2_000_000], rotation: 0 };
+    pieces['FC'] = fc;
+    doc['assets'] = { FRIDGE: { path: 'assets/refrigerator-900.glb', sha256: digest(bytes), mediaType, byteLength: bytes.byteLength } };
+    expect(evaluate(doc).valid).toBe(true);
+    return doc;
+  };
+  const glbOf = (json: Json, bin: Uint8Array): Uint8Array => {
+    const text = new TextEncoder().encode(JSON.stringify(json));
+    const jl = text.byteLength + ((4 - (text.byteLength % 4)) % 4);
+    const out = new Uint8Array(12 + 8 + jl + 8 + bin.byteLength);
+    const v = new DataView(out.buffer);
+    v.setUint32(0, 0x46546c67, true);
+    v.setUint32(4, 2, true);
+    v.setUint32(8, out.byteLength, true);
+    v.setUint32(12, jl, true);
+    v.setUint32(16, 0x4e4f534a, true);
+    out.set(text, 20);
+    out.fill(0x20, 20 + text.byteLength, 20 + jl);
+    v.setUint32(20 + jl, bin.byteLength, true);
+    v.setUint32(24 + jl, 0x004e4942, true);
+    out.set(bin, 28 + jl);
+    return out;
+  };
+
+  it('draws the library refrigerator at each placement, its mesh and material once, and the validator passes with no errors or warnings', async () => {
+    const file = await exportGltf(kitchen(), { ...VERSION, models: assetDirModels(store([FRIDGE_GLB]))! });
+    expect(file.summary['models']).toEqual({ merged: ['FRIDGE'], omitted: [] });
+    const glb = readGlb(file.bytes);
+    const library = readGlb(FRIDGE_GLB);
+    const meshes = glb.json['meshes'] as { name: string; primitives: { attributes: Record<string, number>; material: number }[] }[];
+    const fridgeMeshes = meshes.flatMap((m, i) => (m.name === 'refrigerator-900' ? [i] : []));
+    expect(fridgeMeshes).toHaveLength(1);
+    expect((glb.json['materials'] as { name: string }[]).filter((m) => m.name === 'appliances')).toHaveLength(1);
+    // The copied positions are the library's own: same bounds, metres, +Y up.
+    const position = (glb.json['accessors'] as Accessor[])[meshes[fridgeMeshes[0]!]!.primitives[0]!.attributes['POSITION']!]!;
+    const original = (library.json['accessors'] as Accessor[])[0]!;
+    expect([position.min, position.max, position.count]).toEqual([original.min, original.max, original.count]);
+    expect(accessor(glb, meshes[fridgeMeshes[0]!]!.primitives[0]!.attributes['POSITION']!)).toEqual(accessor(library, 0));
+    // One node per element under its marker, both drawing the one mesh.
+    const nodes = nodesOf(glb.json);
+    const markers = nodes.filter((n) => n.extras?.floorspec?.['model'] === 'FRIDGE');
+    expect(markers.map((n) => n.extras?.floorspec?.['id']).sort()).toEqual(['FA', 'FC']);
+    for (const m of markers) {
+      expect(m.children).toHaveLength(1);
+      const child = nodes[m.children![0]!]!;
+      expect(child.mesh).toBe(fridgeMeshes[0]);
+      expect(child.name).toBe(`${String(m.extras?.floorspec?.['id'])} refrigerator-900`);
+      expect(child.translation).toBeUndefined();
+    }
+    const report = await validate(file.bytes);
+    expect(report.errors, report.messages.join('\n')).toBe(0);
+    expect(report.warnings, report.messages.join('\n')).toBe(0);
+    // The same scene writes the same bytes.
+    expect((await exportGltf(kitchen(), { ...VERSION, models: assetDirModels(store([FRIDGE_GLB]))! })).bytes).toEqual(file.bytes);
+  });
+
+  it('keeps the marker and says why when a model cannot be merged', async () => {
+    const without = await exportGltf(kitchen(), VERSION);
+    expect(without.summary['models']).toEqual({ merged: [], omitted: [{ asset: 'FRIDGE', reason: 'its bytes were not available to the exporter' }] });
+    expect(nodesOf(readGlb(without.bytes).json).filter((n) => n.extras?.floorspec?.['model'] === 'FRIDGE').every((n) => n.children === undefined)).toBe(true);
+    const cases: [Uint8Array, string][] = [
+      [new TextEncoder().encode('not a model'), 'it is not a glTF 2.0 binary'],
+      [glbOf({ asset: { version: '2.0' }, extensionsRequired: ['KHR_draco_mesh_compression'], extensionsUsed: ['KHR_draco_mesh_compression'], scene: 0, scenes: [{ nodes: [0] }], nodes: [{}] }, new Uint8Array(4)), 'it requires KHR_draco_mesh_compression, which this export does not carry'],
+      [glbOf({ asset: { version: '2.0' }, scene: 0, scenes: [{ nodes: [0] }], nodes: [{ mesh: 3 }] }, new Uint8Array(4)), 'mesh 3 is not in the model'],
+      [glbOf({ asset: { version: '2.0' }, scene: 0, scenes: [{ nodes: [0] }], nodes: [{}], buffers: [{ byteLength: 4, uri: 'https://example.test/b.bin' }] }, new Uint8Array(4)), 'its data is outside the binary'],
+    ];
+    for (const [bytes, reason] of cases) {
+      const file = await exportGltf(kitchen(bytes), { ...VERSION, models: () => bytes });
+      expect(file.summary['models'], reason).toEqual({ merged: [], omitted: [{ asset: 'FRIDGE', reason }] });
+      const report = await validate(file.bytes);
+      expect(report.errors, report.messages.join('\n')).toBe(0);
+    }
+    // A glTF that is JSON, not a binary, is not merged.
+    const gltfJson = await exportGltf(kitchen(FRIDGE_GLB, 'model/gltf+json'), { ...VERSION, models: () => FRIDGE_GLB });
+    expect((gltfJson.summary['models'] as { omitted: { reason: string }[] }).omitted[0]!.reason).toBe('model/gltf+json is not a glTF binary this export merges');
+  });
+
+  it('reads a model from the asset store by its digest, only as a glTF binary, and only one the job’s project claimed', async () => {
+    const dir = store([FRIDGE_GLB, tilePng('#fff')]);
+    const models = assetDirModels(dir)!;
+    expect(models({ id: 'F', sha256: digest(FRIDGE_GLB), mediaType: 'model/gltf-binary' })).toEqual(FRIDGE_GLB);
+    expect(models({ id: 'F', sha256: digest(FRIDGE_GLB), mediaType: 'image/png' })).toBeUndefined();
+    expect(models({ id: 'F', sha256: digest(tilePng('#fff')), mediaType: 'model/gltf-binary' })).toBeUndefined();
+    expect(models({ id: 'F', sha256: '../../etc/passwd', mediaType: 'model/gltf-binary' })).toBeUndefined();
+    expect(assetDirModels(undefined)).toBeUndefined();
+    const table = createHandlers({ assetDir: dir });
+    const job = { id: 'j', projectId: 'p', versionHash: 'e'.repeat(64), kind: 'export.gltf', params: { versionAt: '2026-10-05T00:00:00Z' } };
+    const claimed = await table['export.gltf']!(kitchen(), { ...job, claimed: new Set([digest(FRIDGE_GLB)]) });
+    expect(claimed.summary?.['models']).toEqual({ merged: ['FRIDGE'], omitted: [] });
+    const unclaimed = await table['export.gltf']!(kitchen(), { ...job, claimed: new Set(['0'.repeat(64)]) });
+    expect(unclaimed.summary?.['models']).toEqual({ merged: [], omitted: [{ asset: 'FRIDGE', reason: 'its bytes were not available to the exporter' }] });
+  });
+
+  it('marks the model in USDZ, at its placement, and says it was not converted', async () => {
+    const file = await exportUsdz(kitchen(), { ...VERSION, models: assetDirModels(store([FRIDGE_GLB]))! });
+    expect(file.summary['models']).toEqual({ merged: [], omitted: [{ asset: 'FRIDGE', reason: 'USDZ marks where the model goes; this export does not convert glTF to USD' }] });
+    const usda = new TextDecoder().decode(readStoreZip(file.bytes)[0]!.bytes);
+    expect(usda.match(/string floorspecModel = "FRIDGE"/g)).toHaveLength(2);
+    expect(usda).toContain('uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]');
+    // Where Apple's usdchecker is installed, the marked file still passes its ARKit rules.
+    if (spawnSync('usdchecker', ['--help'], { encoding: 'utf8' }).status === 0) {
+      const path = join(mkdtempSync(join(tmpdir(), 'usdz-')), 'kitchen.usdz');
+      writeFileSync(path, file.bytes);
+      expect(execFileSync('usdchecker', ['--arkit', '--strict', path], { encoding: 'utf8' })).toContain('Success!');
+    }
+  }, 60_000);
 });
 
 describe('USDZ export', () => {

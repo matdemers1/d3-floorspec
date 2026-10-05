@@ -5,6 +5,9 @@
  * that digest and against the media type the document declares (PNG or JPEG by their signatures)
  * before they are embedded: a missing, changed or mislabelled file is left out, and the export's
  * summary says so, as for any map it cannot embed.
+ *
+ * Fallback models (Core 12.6) are read the same way: by digest, checked against it, and only a glTF
+ * binary (its `glTF` magic) under `model/gltf-binary`.
  */
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -24,19 +27,38 @@ export function looksLike(bytes: Uint8Array, mediaType: string): boolean {
   return sig !== undefined && bytes.length >= sig.length && sig.every((b, i) => bytes[i] === b);
 }
 
+/** A stored file's bytes by digest, only when they are still those bytes. */
+function readStored(root: string, sha256: string): Uint8Array | undefined {
+  if (!SHA256.test(sha256)) return undefined;
+  let bytes: Uint8Array;
+  try {
+    bytes = new Uint8Array(readFileSync(join(root, sha256.slice(0, 2), sha256.slice(2, 4), sha256)));
+  } catch {
+    return undefined;
+  }
+  return createHash('sha256').update(bytes).digest('hex') === sha256 ? bytes : undefined;
+}
+
 /** An `images` source over a content-addressed asset directory; undefined when there is no directory. */
 export function assetDirImages(dir: string | undefined): ImageSource | undefined {
   if (dir === undefined || dir === '') return undefined;
   const root = resolve(dir);
   return ({ sha256, mediaType }) => {
-    if (!SHA256.test(sha256) || SIGNATURES[mediaType] === undefined) return undefined;
-    let bytes: Uint8Array;
-    try {
-      bytes = new Uint8Array(readFileSync(join(root, sha256.slice(0, 2), sha256.slice(2, 4), sha256)));
-    } catch {
-      return undefined;
-    }
-    if (createHash('sha256').update(bytes).digest('hex') !== sha256) return undefined;
-    return looksLike(bytes, mediaType) ? bytes : undefined;
+    if (SIGNATURES[mediaType] === undefined) return undefined;
+    const bytes = readStored(root, sha256);
+    return bytes !== undefined && looksLike(bytes, mediaType) ? bytes : undefined;
+  };
+}
+
+const GLB_MAGIC = [0x67, 0x6c, 0x54, 0x46]; // glTF
+
+/** A `models` source over the same directory: glTF binaries only; undefined when there is no directory. */
+export function assetDirModels(dir: string | undefined): ImageSource | undefined {
+  if (dir === undefined || dir === '') return undefined;
+  const root = resolve(dir);
+  return ({ sha256, mediaType }) => {
+    if (mediaType !== 'model/gltf-binary') return undefined;
+    const bytes = readStored(root, sha256);
+    return bytes !== undefined && bytes.length >= 4 && GLB_MAGIC.every((b, i) => bytes[i] === b) ? bytes : undefined;
   };
 }

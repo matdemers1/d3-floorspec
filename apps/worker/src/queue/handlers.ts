@@ -4,7 +4,7 @@
  */
 import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/index.js';
 import { exportIfc } from '../export/ifc/index.js';
-import { assetDirImages, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
+import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
 import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
 
 export interface JobRow {
@@ -91,16 +91,22 @@ export function render3dParams(raw: unknown): Render3dParams {
   };
 }
 
-/** The 3D exports' options: one version, its levels, its design, and the asset store's maps when the worker can read them. */
-function modelOptions(job: JobRow, source: ImageSource | undefined) {
+/**
+ * The 3D exports' options: one version, its levels, its design, and the asset store's maps and
+ * fallback models when the worker can read them — only files the job's project claimed.
+ */
+function modelOptions(job: JobRow, store: { images: ImageSource | undefined; models: ImageSource | undefined }) {
   const p = exportParams(job.params);
   const claimed = job.claimed;
-  const images: ImageSource | undefined = source === undefined || claimed === undefined ? source : (asset) => (claimed.has(asset.sha256) ? source(asset) : undefined);
+  const only = (source: ImageSource | undefined): ImageSource | undefined => (source === undefined || claimed === undefined ? source : (asset) => (claimed.has(asset.sha256) ? source(asset) : undefined));
+  const images = only(store.images);
+  const models = only(store.models);
   return {
     version: { hash: job.versionHash, seq: p.versionSeq ?? null },
     ...(p.levels === undefined ? {} : { levels: p.levels }),
     ...(p.design === undefined ? {} : { design: p.design }),
     ...(images === undefined ? {} : { images }),
+    ...(models === undefined ? {} : { models }),
   };
 }
 
@@ -117,7 +123,7 @@ function options(job: JobRow) {
 export interface HandlerOptions {
   /**
    * The asset store's directory (`ASSET_DIR`, content-addressed `ab/cd/<sha256>`): glTF and USDZ
-   * exports embed the PNG and JPEG maps they find there. The worker mounts the api's volume
+   * exports embed the PNG and JPEG maps they find there, and glTF merges fallback models' binaries. The worker mounts the api's volume
    * read-only; without it, exports carry colours and list the maps they left out.
    */
   readonly assetDir?: string;
@@ -125,7 +131,7 @@ export interface HandlerOptions {
 
 /** The job table, reading maps from `assetDir` when it is given. */
 export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<string, Handler>> {
-  const images = assetDirImages(opts.assetDir);
+  const store = { images: assetDirImages(opts.assetDir), models: assetDirModels(opts.assetDir) };
   return {
     'export.pdf': async (document, job) => {
       const pdf = await exportPdf(document, options(job));
@@ -141,11 +147,11 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
       return { name: ifc.name, contentType: ifc.contentType, bytes: ifc.bytes, summary: { ifc: ifc.summary } };
     },
     'export.gltf': async (document, job) => {
-      const file = await exportGltf(document, modelOptions(job, images));
+      const file = await exportGltf(document, modelOptions(job, store));
       return { name: file.name, contentType: file.contentType, bytes: file.bytes, summary: file.summary };
     },
     'export.usdz': async (document, job) => {
-      const file = await exportUsdz(document, modelOptions(job, images));
+      const file = await exportUsdz(document, modelOptions(job, store));
       return { name: file.name, contentType: file.contentType, bytes: file.bytes, summary: file.summary };
     },
     /** FLR-T-8.5: a PNG of the 3D model from a named view or a room; the api waits for it. */

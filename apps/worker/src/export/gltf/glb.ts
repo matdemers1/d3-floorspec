@@ -11,9 +11,14 @@
  * colour (18.1). Without the bytes, the material is its `color`, and the summary says which maps
  * were left out.
  *
+ * An extension element's fallback model (Core 12.6) is merged in at its placement when its glTF
+ * binary is given (`models`), its meshes shared by every element that names it (merge.ts); without
+ * it, the element keeps its fallback box and a marker node where the model goes.
+ *
  * Deterministic: the same scene writes the same bytes — no dates, no random IDs, keys in one order.
  */
 import type { Scene, SceneMaterial } from './scene.js';
+import { mergeModel, type MergedModel } from './merge.js';
 
 /** The bytes of an asset a material's map names, when the exporter can have them. */
 export type ImageSource = (asset: { id: string; sha256: string; mediaType: string }) => Uint8Array | undefined;
@@ -24,6 +29,14 @@ export interface GlbOptions {
   /** More of `asset.extras.floorspec`: the version, what was exported. */
   readonly about?: Record<string, unknown>;
   readonly images?: ImageSource;
+  /** The bytes of the glTF binaries extension elements' fallbacks name (Core 12.6), when the exporter can have them. */
+  readonly models?: ImageSource;
+}
+
+/** What became of the fallback models: merged, by asset ID, and those left out as markers, and why. */
+export interface ModelsReport {
+  readonly merged: string[];
+  readonly omitted: { asset: string; reason: string }[];
 }
 
 export interface GlbResult {
@@ -36,6 +49,7 @@ export interface GlbResult {
   readonly embedded: string[];
   /** Maps left out, and why. */
   readonly omitted: { asset: string; reason: string }[];
+  readonly models: ModelsReport;
 }
 
 const ARRAY_BUFFER = 34962;
@@ -58,13 +72,13 @@ class Bin {
   length = 0;
   readonly views: Json[] = [];
 
-  view(bytes: Uint8Array, target?: number): number {
+  view(bytes: Uint8Array, target?: number, extra: Json = {}): number {
     const pad = (4 - (this.length % 4)) % 4;
     if (pad > 0) {
       this.chunks.push(new Uint8Array(pad));
       this.length += pad;
     }
-    this.views.push({ buffer: 0, byteOffset: this.length, byteLength: bytes.byteLength, ...(target === undefined ? {} : { target }) });
+    this.views.push({ buffer: 0, byteOffset: this.length, byteLength: bytes.byteLength, ...extra, ...(target === undefined ? {} : { target }) });
     this.chunks.push(bytes);
     this.length += bytes.byteLength;
     return this.views.length - 1;
@@ -101,6 +115,9 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
   const accessors: Json[] = [];
   const images: Json[] = [];
   const textures: Json[] = [];
+  const samplers: Json[] = [];
+  /** The maps' one sampler, written when the first map is. */
+  let mapSampler: number | undefined;
   const imageOf = new Map<string, number>();
   const embedded: string[] = [];
   const omitted: { asset: string; reason: string }[] = [];
@@ -121,7 +138,8 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
       return undefined;
     }
     images.push({ name: asset, bufferView: bin.view(bytes), mimeType: info.mediaType });
-    textures.push({ sampler: 0, source: images.length - 1 });
+    mapSampler ??= samplers.push({ magFilter: LINEAR, minFilter: LINEAR_MIPMAP_LINEAR, wrapS: REPEAT, wrapT: REPEAT }) - 1;
+    textures.push({ sampler: mapSampler, source: images.length - 1 });
     imageOf.set(asset, textures.length - 1);
     embedded.push(asset);
     return textures.length - 1;
@@ -134,6 +152,30 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
   const meshes: Json[] = [];
   const nodes: Json[] = [];
   let triangles = 0;
+
+  // Fallback models (Core 12.6): each glTF binary read and copied in once, by asset ID.
+  const extensionsUsed = new Set<string>();
+  const target = { view: (bytes: Uint8Array, extra?: Json) => bin.view(bytes, undefined, extra), accessors, meshes, materials, textures, images, samplers, nodes, extensionsUsed };
+  const mergedOf = new Map<string, MergedModel | null>();
+  const models: ModelsReport = { merged: [], omitted: [] };
+  const modelFor = (asset: string, sha256: string | undefined, mediaType: string | undefined): MergedModel | null => {
+    if (mergedOf.has(asset)) return mergedOf.get(asset) ?? null;
+    let merged: MergedModel | null = null;
+    if (mediaType !== 'model/gltf-binary' || sha256 === undefined) models.omitted.push({ asset, reason: `${mediaType ?? 'a model with no media type'} is not a glTF binary this export merges` });
+    else {
+      const bytes = options.models?.({ id: asset, sha256, mediaType });
+      if (bytes === undefined) models.omitted.push({ asset, reason: 'its bytes were not available to the exporter' });
+      else {
+        const made = mergeModel(target, bytes);
+        if (typeof made === 'function') {
+          merged = made;
+          models.merged.push(asset);
+        } else models.omitted.push({ asset, reason: made.reason });
+      }
+    }
+    mergedOf.set(asset, merged);
+    return merged;
+  };
   nodes.push({}); // the model's node, filled in below
   const levelNodes: number[] = [];
   for (let i = 0; i < scene.levels.length; i++) {
@@ -174,13 +216,17 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
       if (node.model !== undefined) {
         // Core 12.6: the fallback model's origin, turned by the element's facing alone. The model
         // itself is the asset's; this export marks where it goes.
-        nodes.push({
+        const marker: Json = {
           name: `${node.id} model`,
           translation: node.model.translation.map(f),
           rotation: node.model.rotation.map(f),
           extras: { floorspec: { id: node.id, model: node.model.asset } },
-        });
+        };
+        nodes.push(marker);
         element['children'] = [nodes.length - 1];
+        // The model's own scene under the marker: its frame is the export's (metres, +Y up, +X the front).
+        const merged = modelFor(node.model.asset, node.model.sha256, node.model.mediaType);
+        if (merged !== null) marker['children'] = merged(node.id);
       }
     }
     nodes[levelNodes[li]!] = { name: level.name === undefined ? level.id : `${level.id} ${level.name}`, children, extras: { floorspec: { id: level.id, kind: 'level', elevation: f(level.elevation) } } };
@@ -193,17 +239,20 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
       generator: options.generator ?? 'D3 Floorspec',
       extras: { floorspec: { ...options.about, design: scene.design, upAxis: 'Y', unit: 'metre' } },
     },
+    ...(extensionsUsed.size === 0 ? {} : { extensionsUsed: [...extensionsUsed].sort() }),
     scene: 0,
     scenes: [{ name: scene.project, nodes: [0] }],
     nodes,
     ...(meshes.length === 0 ? {} : { meshes }),
     ...(materials.length === 0 ? {} : { materials }),
-    ...(textures.length === 0 ? {} : { textures, images, samplers: [{ magFilter: LINEAR, minFilter: LINEAR_MIPMAP_LINEAR, wrapS: REPEAT, wrapT: REPEAT }] }),
+    ...(textures.length === 0 ? {} : { textures }),
+    ...(images.length === 0 ? {} : { images }),
+    ...(samplers.length === 0 ? {} : { samplers }),
     ...(accessors.length === 0 ? {} : { accessors, bufferViews: bin.views }),
     ...(bin.length === 0 ? {} : { buffers: [{ byteLength: bin.bytes().byteLength }] }),
   };
   const bytes = glbOf(json, bin.length === 0 ? null : bin.bytes());
-  return { bytes, nodes: nodes.length, meshes: meshes.length, materials: materials.length, triangles, embedded, omitted };
+  return { bytes, nodes: nodes.length, meshes: meshes.length, materials: materials.length, triangles, embedded, omitted, models };
 }
 
 /**

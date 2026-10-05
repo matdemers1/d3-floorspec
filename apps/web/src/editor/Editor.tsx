@@ -373,7 +373,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
       <CommentsButton store={store} />
       <Avatar className="fs-topbar__avatar" name={you} size="sm" />
       {project !== null ? <ShareButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} /> : null}
-      {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} /> : null}
+      {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} optionSets={model?.optionSets} /> : null}
     </header>
   );
 }

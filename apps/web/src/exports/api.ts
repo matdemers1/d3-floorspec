@@ -17,6 +17,8 @@ export interface ExportJob {
   versionSeq: number | null;
   levels: string[] | null;
   page: PageName | null;
+  /** The design it was made in (Core 19.6): option set → option; null for the primary design asked for implicitly, or an IFC export. */
+  design: Record<string, string> | null;
   error: string | null;
   result: { name: string; size: number; sheets?: { number: string; title: string }[]; files?: string[]; ifc?: { entities: Record<string, number> }; elements?: number } | null;
   createdAt: string;
@@ -37,6 +39,59 @@ export interface ExportRequest {
   kind: ExportKind;
   levels?: string[];
   page?: PageName;
+  /** PDF, DXF, glTF and USDZ: one option per set (FLR-T-9.7); the server refuses one for IFC. */
+  design?: Record<string, string>;
+}
+
+/** The kinds made in one design: every export but the IFC model, which is of the primary. */
+export const takesDesign = (kind: ExportKind): boolean => kind !== 'ifc';
+
+/** An option set as the Export dialog and the job list name it — structurally the editor's OptionSetView. */
+export interface DesignSet {
+  readonly id: string;
+  readonly name: string;
+  readonly primary: string;
+  readonly options: readonly { readonly id: string; readonly name: string }[];
+}
+
+type Json = Record<string, unknown>;
+const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * A document's option sets with their options' names (Core 0.3, 19.1), in ID order, read from the
+ * JSON as it is — for the dashboard, which has the document but not the editor's model.
+ */
+export function designSetsOf(document: unknown): DesignSet[] {
+  if (!isObject(document) || !isObject(document['optionSets'])) return [];
+  const options = isObject(document['options']) ? document['options'] : {};
+  return Object.entries(document['optionSets'])
+    .filter((e): e is [string, Json] => isObject(e[1]) && typeof e[1]['primary'] === 'string')
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([id, set]) => ({
+      id,
+      name: typeof set['name'] === 'string' ? set['name'] : id,
+      primary: set['primary'] as string,
+      options: Object.entries(options)
+        .filter((e): e is [string, Json] => isObject(e[1]) && e[1]['set'] === id)
+        .sort(([a], [b]) => (a < b ? -1 : 1))
+        .map(([o, opt]) => ({ id: o, name: typeof opt['name'] === 'string' ? opt['name'] : o })),
+    }));
+}
+
+/** "Kitchen B": a set's name and its option's, as the editor's options chip says them. */
+export function optionChoiceLabel(set: DesignSet, option: string): string {
+  return `${set.name} ${set.options.find((o) => o.id === option)?.name ?? option}`;
+}
+
+/** "Kitchen B, Stair north": a design, one choice per set, by name where the set is known. */
+export function designLabel(design: Readonly<Record<string, string>>, sets: readonly DesignSet[] = []): string {
+  return Object.entries(design)
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([set, option]) => {
+      const known = sets.find((s) => s.id === set);
+      return known === undefined ? `${set} ${option}` : optionChoiceLabel(known, option);
+    })
+    .join(', ');
 }
 
 export async function requestExport(projectId: string, body: ExportRequest): Promise<ExportJob> {
@@ -66,8 +121,13 @@ export async function untilFinished(projectId: string, job: ExportJob, onUpdate:
   return current;
 }
 
-/** What a job is doing, in words. */
-export function describeJob(job: ExportJob): string {
+/** What a job is doing, in words — and, when it was made in a chosen design, which (FLR-T-9.7). */
+export function describeJob(job: ExportJob, sets: readonly DesignSet[] = []): string {
+  const what = describeStatus(job);
+  return job.design === null || Object.keys(job.design).length === 0 ? what : `${what} · design ${designLabel(job.design, sets)}`;
+}
+
+function describeStatus(job: ExportJob): string {
   const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ' }[job.kind];
   switch (job.status) {
     case 'queued':

@@ -88,9 +88,10 @@ export interface SceneNode {
   readonly primitives: ScenePrimitive[];
   /**
    * An extension element whose fallback has a model (Core 12.6): where the model's origin goes, in
-   * the scene (metres, +Y up), and its turn about +Y — the element's facing alone.
+   * the scene (metres, +Y up), and its turn about +Y — the element's facing alone; and the asset's
+   * digest and media type as the document records them, for an exporter that merges the model.
    */
-  readonly model?: { readonly asset: string; readonly translation: Vec3; readonly rotation: [number, number, number, number] };
+  readonly model?: { readonly asset: string; readonly sha256?: string; readonly mediaType?: string; readonly translation: Vec3; readonly rotation: [number, number, number, number] };
 }
 
 export interface SceneLevel {
@@ -736,7 +737,16 @@ function modelOf(doc: FloorspecDocument, derived: Derived, el: ReturnType<typeof
   const [x, y, z] = placed?.point ?? [0, 0, elevation];
   const facing = placed?.facing ?? 0;
   const half = ((facing / 1e6) * Math.PI) / 360;
-  return { model: { asset: fallback.asset, translation: [x / M, z / M, -y / M], rotation: [0, Math.sin(half), 0, Math.cos(half)] } };
+  const a = (doc.assets as Record<string, Json> | undefined)?.[fallback.asset];
+  return {
+    model: {
+      asset: fallback.asset,
+      ...(typeof a?.['sha256'] === 'string' ? { sha256: a['sha256'] } : {}),
+      ...(typeof a?.['mediaType'] === 'string' ? { mediaType: a['mediaType'] } : {}),
+      translation: [x / M, z / M, -y / M],
+      rotation: [0, Math.sin(half), 0, Math.cos(half)],
+    },
+  };
 }
 
 function roomsOf(doc: FloorspecDocument, derived: Derived): SceneRoom[] {

@@ -12,8 +12,13 @@
  * AR Quick Look puts the stage's origin on the floor it finds, so the model is moved: the centre of
  * its footprint to the origin and its lowest point to y = 0. The translation is on the root prim and
  * in `customLayerData`, so the document's coordinates can be recovered.
+ *
+ * An extension element's fallback model (Core 12.6) is not converted from glTF to USD: the element
+ * keeps its fallback box, and an Xform under it marks where the model goes (its translation and its
+ * turn about +Y, the model's asset ID in `customData`). The summary lists those models as left out,
+ * and says why; the glTF export merges them.
  */
-import type { ImageSource } from './glb.js';
+import type { ImageSource, ModelsReport } from './glb.js';
 import type { Scene, SceneMaterial, Vec3 } from './scene.js';
 import { storeZip, type ZipEntry } from './zip.js';
 
@@ -29,7 +34,11 @@ export interface UsdzResult {
   readonly materials: number;
   readonly embedded: string[];
   readonly omitted: { asset: string; reason: string }[];
+  readonly models: ModelsReport;
 }
+
+/** Why a USDZ export marks a fallback model and does not carry it. */
+export const USDZ_MODEL_REASON = 'USDZ marks where the model goes; this export does not convert glTF to USD';
 
 const EXT: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg' };
 
@@ -96,7 +105,8 @@ export function writeUsdz(scene: Scene, options: UsdzOptions = {}): UsdzResult {
   const usda = usdaOf(scene, options.about ?? {}, textureFile);
   const triangles = scene.levels.reduce((n, l) => n + l.nodes.reduce((m, node) => m + node.primitives.reduce((k, p) => k + p.indices.length / 3, 0), 0), 0);
   const bytes = storeZip([{ name: 'model.usda', bytes: new TextEncoder().encode(usda) }, ...files]);
-  return { bytes, usda, triangles, materials: scene.materials.length, embedded, omitted };
+  const marked = [...new Set(scene.levels.flatMap((l) => l.nodes.flatMap((n) => (n.model === undefined || n.primitives.length === 0 ? [] : [n.model.asset]))))].sort();
+  return { bytes, usda, triangles, materials: scene.materials.length, embedded, omitted, models: { merged: [], omitted: marked.map((asset) => ({ asset, reason: USDZ_MODEL_REASON })) } };
 }
 
 /** The root layer's text. `textureFile` names a map's file in the package, or null without one. */
@@ -185,6 +195,21 @@ export function usdaOf(scene: Scene, about: Record<string, unknown>, textureFile
           out.push(`                texCoord2f[] primvars:st = [${st.join(', ')}] (\n                    interpolation = "vertex"\n                )`);
         }
         out.push('                uniform token subdivisionScheme = "none"');
+        out.push('            }');
+      }
+      if (node.model !== undefined) {
+        // Core 12.6: where the model's origin goes, turned by the element's facing alone (USD's quaternion is w first).
+        const [qx, qy, qz, qw] = node.model.rotation;
+        out.push(`            def Xform ${str(meshName('Model'))} (`);
+        out.push(`                customData = {
+                    string floorspecId = ${str(node.id)}
+                    string floorspecModel = ${str(node.model.asset)}
+                }`);
+        out.push('            )');
+        out.push('            {');
+        out.push(`                quatf xformOp:orient = (${[qw, qx, qy, qz].map((v) => num(v)).join(', ')})`);
+        out.push(`                double3 xformOp:translate = (${node.model.translation.map((v) => num(v)).join(', ')})`);
+        out.push('                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]');
         out.push('            }');
       }
       out.push('        }');

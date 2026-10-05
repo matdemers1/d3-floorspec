@@ -1,4 +1,5 @@
 import { ApiError } from '../lib/api';
+import { assetUrl } from '../lib/assets';
 import type { StoredFile } from './ops';
 
 /**
@@ -43,5 +44,9 @@ export async function libraryBytes(url: string): Promise<Blob> {
   return res.blob();
 }
 
-/** Where the bytes of a file this project may read are. */
-export const assetHref = (projectId: string, sha256: string): string => `/api/projects/${projectId}/assets/${sha256}`;
+/**
+ * Where the bytes of a file this store may read are: the project's asset route, or in the shared
+ * viewer (a `share:<token>` store) the link's own (FLR-T-9.6) — so a link's plan symbols and
+ * models load with no account instead of falling back to outlines and boxes.
+ */
+export const assetHref = assetUrl;
