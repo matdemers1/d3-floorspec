@@ -48,6 +48,13 @@ async function withTotp(browser: Browser): Promise<string> {
 
 const ROOM = [{ op: 'addElement', collection: 'buildings', id: 'B1', element: {} }];
 
+/** A brief the layout solver can lay out: a living room, a kitchen and a bedroom. */
+const BRIEF = [
+  { op: 'addProgramItem', function: 'living', targetArea: '240 sq ft' },
+  { op: 'addProgramItem', function: 'kitchen', targetArea: '120 sq ft' },
+  { op: 'addProgramItem', function: 'sleeping', targetArea: '120 sq ft' },
+];
+
 const EXERCISES: Record<string, Exercise> = {
   'POST /auth/setup': async ({ running }) => ({
     reply: await new Browser(running.url).post('/auth/setup', OPERATOR),
@@ -142,6 +149,12 @@ const EXERCISES: Record<string, Exercise> = {
     const { id } = await createProjectAs(operator);
     const agent = Browser.bearer(running.url, await tokenFor(operator, id, 'agent'));
     return { reply: await agent.post(`/api/projects/${id}/changesets`, { name: 'Idea', batch: ROOM }), action: 'changeset.propose' };
+  },
+  'POST /api/projects/:projectId/layouts': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    await operator.post(`/api/projects/${id}/ops`, { batch: BRIEF });
+    return { reply: await operator.post(`/api/projects/${id}/layouts`, {}), action: 'layouts.propose' };
   },
   'POST /api/projects/:projectId/changesets/:changesetId/accept': async ({ running }) => {
     const operator = await setupOperator(running);

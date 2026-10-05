@@ -22,6 +22,7 @@ import { accountRoutes } from './routes/account.js';
 import { projectRoutes } from './routes/projects.js';
 import { historyRoutes } from './routes/history.js';
 import { changesetRoutes } from './routes/changesets.js';
+import { layoutRoutes } from './routes/layouts.js';
 import { checkRoutes } from './routes/checks.js';
 import { tokenRoutes } from './routes/tokens.js';
 import { mountMcp } from './routes/mcp.js';
@@ -90,6 +91,7 @@ export function createApp({
   mount(app, '/api/projects', projectRoutes(db));
   mount(app, '/api/projects', historyRoutes(db, applier));
   mount(app, '/api/projects', changesetRoutes(db, applier));
+  mount(app, '/api/projects', layoutRoutes(db, applier));
   mount(app, '/api/projects', checkRoutes(db, renderer));
   mount(app, '/api/projects', eventRoutes(db, events, eventStream));
   mount(app, '/api/tokens', tokenRoutes(db));

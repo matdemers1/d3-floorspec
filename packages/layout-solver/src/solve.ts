@@ -279,23 +279,18 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
       shortlist.push(b);
     }
 
-  // Apply and measure each in full. With distinctIds, each candidate mints after the ones before it.
-  const taken = options.distinctIds === true ? new Set(used) : null;
+  // Apply and measure each in full. Each mints from the same state: the document's IDs, the
+  // retired ones, the prelude's.
   const named = (ops: readonly Operation[]): string[] => ops.flatMap((o) => ('id' in o && typeof o.id === 'string' ? [o.id] : []));
-  const scored: { b: Built; candidate: Omit<Candidate, 'rank'> }[] = [];
-  for (const b of shortlist) {
+  const realise = (b: Built, t: Target, from: ReadonlySet<string>): Omit<Candidate, 'rank'> | undefined => {
     const layout = b.layout;
     const segs = segments(layout);
     const access = planAccess(layout, segs)!;
-    // Each candidate mints from the same state — the document's IDs, the retired ones, the prelude's —
-    // or, with distinctIds, from that state and every ID the candidates before it named.
-    const own = taken === null ? target : chooseTarget(doc, program, options, taken);
-    const ids = new Ids(new Set([...(taken ?? used), ...named(own.prelude)]));
+    const ids = new Ids(new Set([...from, ...named(t.prelude)]));
     // Measured with every room's brief set, so the engine derives the brief fit from the document.
-    const emitted = emit(layout, segs, access, own, ids, { windows: options.windows ?? true, brief: true });
-    if (taken !== null) for (const id of named(emitted.batch)) taken.add(id);
+    const emitted = emit(layout, segs, access, t, ids, { windows: options.windows ?? true, brief: true });
     const applied = measure(working, emitted.batch, retired, layout, emitted.roomIds, brief);
-    if (applied.status === 'rejected') continue;
+    if (applied.status === 'rejected') return undefined;
     const m = applied.measures;
     const s = score(layout, brief, m, scoreContext(layout, segs, access));
     const rooms: CandidateRoom[] = layout.spaces.map((sp) => ({
@@ -307,22 +302,24 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
       rect: [gBu(sp.rect.x0), gBu(sp.rect.y0), gBu(sp.rect.x1), gBu(sp.rect.y1)],
       area: Math.round((m.rooms.get(sp.key)?.area ?? 0) * 10) / 10,
     }));
-    scored.push({
-      b,
-      candidate: {
-        id: b.variant.key,
-        strategy: layout.family,
-        label: layout.label,
-        level: own.level,
-        batch: emitBrief ? emitted.batch : emitted.batch.filter((o) => !(o.op === 'setProperty' && o.path === '/brief')),
-        footprint: { width: gBu(layout.width), depth: gBu(layout.depth) },
-        rooms,
-        entry: emitted.roomIds.get(access.entry.space)!,
-        unplaced: brief.unplaced,
-        score: s,
-        explanation: explain(layout, brief, m, access.entry.space, s),
-      },
-    });
+    return {
+      id: b.variant.key,
+      strategy: layout.family,
+      label: layout.label,
+      level: t.level,
+      batch: emitBrief ? emitted.batch : emitted.batch.filter((o) => !(o.op === 'setProperty' && o.path === '/brief')),
+      footprint: { width: gBu(layout.width), depth: gBu(layout.depth) },
+      rooms,
+      entry: emitted.roomIds.get(access.entry.space)!,
+      unplaced: brief.unplaced,
+      score: s,
+      explanation: explain(layout, brief, m, access.entry.space, s),
+    };
+  };
+  const scored: { b: Built; candidate: Omit<Candidate, 'rank'> }[] = [];
+  for (const b of shortlist) {
+    const candidate = realise(b, target, used);
+    if (candidate !== undefined) scored.push({ b, candidate });
   }
   if (scored.length === 0)
     throw new SolverError(
@@ -345,5 +342,18 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
     chosen.push(left.splice(i, 1)[0]!);
   }
   chosen.sort(order);
+  if (options.distinctIds === true) {
+    // In rank order, each candidate after the first is written again minting after the ones before
+    // it — the same layout, measured the same, under IDs no other candidate names.
+    const taken = new Set(used);
+    for (const [i, x] of chosen.entries()) {
+      if (i > 0) {
+        const again = realise(x.b, chooseTarget(doc, program, options, taken), taken);
+        if (again === undefined) throw new SolverError(`candidate ${x.candidate.id} did not commit under distinct IDs`);
+        x.candidate = again;
+      }
+      for (const id of named(x.candidate.batch)) taken.add(id);
+    }
+  }
   return chosen.map((x, i) => ({ ...x.candidate, rank: i + 1 }));
 }
