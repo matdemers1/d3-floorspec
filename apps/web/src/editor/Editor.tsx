@@ -478,7 +478,8 @@ function StatusBar({ store }: { store: EditorStore }) {
         className="fs-statusbar__item fs-statusbar__findings"
         aria-pressed={findingsOpen}
         title="Advisory code findings: not a plan review"
-        onClick={() => { store.set({ findingsOpen: !findingsOpen }); }}
+        // Opening the findings brings them over a proposal under review; the proposal stays in the top bar.
+        onClick={() => { store.set(findingsOpen ? { findingsOpen: false } : { findingsOpen: true, side: 'inspector' }); }}
       >
         <TriangleAlert className={findings > 0 ? 'fs-warn' : 'fs-faint'} aria-hidden="true" />
         {rules.report === null ? 'Findings' : findings === 1 ? '1 finding' : `${String(findings)} findings`}

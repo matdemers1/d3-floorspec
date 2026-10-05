@@ -654,3 +654,9 @@
 .fs-rf__hatch--note {
   stroke: var(--color-fg-muted);
 }
+/* A link inside a sentence is told apart by more than its colour (WCAG 1.4.1). */
+.fs-coverage-note a,
+.fs-notice a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
