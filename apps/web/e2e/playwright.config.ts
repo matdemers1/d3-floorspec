@@ -1,4 +1,6 @@
 import { randomBytes } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
@@ -22,6 +24,8 @@ import { defineConfig, devices } from '@playwright/test';
  *                   walkthrough up an L stair under a hip roof. WebGL through SwiftShader (see GL_ARGS).
  *   - `share`     — FLR-T-9.6: a share link made, opened with no account (plan, 3D, findings), a comment
  *                   pinned to a wall by an invited account, seen live and resolved by the owner, revoked.
+ *   - `assets`    — FLR-T-8.2: a tile photo dropped in, calibrated to 12", applied to a backsplash
+ *                   region and drawn in 3D; the asset store on a directory of its own (ASSET_DIR).
  *
  * Run with:
  *
@@ -29,7 +33,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`). E2E_PORT is the keyboard suite's port; the others take the next ten.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`). E2E_PORT is the keyboard suite's port; the others take the next eleven.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -82,6 +86,8 @@ const SUITES: Suite[] = [
   { name: 'three', spec: 'three.spec.ts', port: PORT + 9, database: databaseFor('three'), setupToken: true, gl: true },
   // FLR-T-9.6: share links, the shared viewer (plan, 3D, findings — so packs installed and WebGL) and comments.
   { name: 'share', spec: 'share.spec.ts', port: PORT + 10, database: databaseFor('share'), setupToken: true, gl: true, env: { RULE_PACKS_DIR: `${web}e2e/fixtures/rule-packs` } },
+  // Content-addressed, so a directory shared across runs only ever holds the same bytes under the same names.
+  { name: 'assets', spec: 'assets.spec.ts', port: PORT + 11, database: databaseFor('assets'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-assets') } },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;

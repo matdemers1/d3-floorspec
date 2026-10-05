@@ -84,10 +84,14 @@ const Env = z.object({
   /** Nightly dumps older than this are pruned after a successful backup; the newest is always kept. */
   BACKUP_RETENTION_DAYS: z.preprocess((v) => (v === '' ? undefined : v), z.coerce.number().int().positive().max(3650).default(30)),
   /**
-   * The asset volume (FLR-REQ-147), mirrored into `BACKUP_DIR/assets` by the nightly backup. Unset
-   * until the asset store exists (FLR-T-8.2): the backup then records that there are no assets.
+   * The asset volume (FLR-REQ-124, FLR-REQ-147): uploaded textures, content-addressed by SHA-256
+   * (FLR-T-8.2), mirrored into `BACKUP_DIR/assets` by the nightly backup. The image sets `/assets`.
+   * Unset: in development and tests uploads are kept in memory and lost on restart; in production
+   * uploads are refused, and the backup records that there are no assets.
    */
   ASSET_DIR: optional(z.string()),
+  /** The largest upload the asset store takes, in bytes. Default 20 MiB. */
+  ASSET_MAX_BYTES: z.preprocess((v) => (v === '' ? undefined : v), z.coerce.number().int().positive().max(256 * 1024 * 1024).default(20 * 1024 * 1024)),
 
   /**
    * Alert email through the D3 Auth mail relay (FLR-T-12.2) — the same three names Foreman and

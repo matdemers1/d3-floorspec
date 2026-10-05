@@ -66,6 +66,11 @@ const CALLS: Record<string, Call> = {
   'POST /api/projects/:projectId/comments/:commentId/resolve': { body: {}, ownerStatus: 200 },
   'POST /api/projects/:projectId/comments/:commentId/reopen': { body: {}, ownerStatus: 200 },
   'DELETE /api/projects/:projectId/comments/:commentId': { ownerStatus: 204 },
+  // Answered, by a route that works: an upload is the image's bytes, never JSON (FLR-T-8.2).
+  'POST /api/projects/:projectId/assets': { body: {}, ownerStatus: 415 },
+  'GET /api/projects/:projectId/assets': { ownerStatus: 200 },
+  // Answered, by a route that works: A's project has uploaded nothing, so no digest is A's to read.
+  'GET /api/projects/:projectId/assets/:sha256': { ownerStatus: 404 },
   // Last: it is the one that changes the project, so the owner's call to it goes at the end.
   'DELETE /api/projects/:projectId': { ownerStatus: 204 },
 };
@@ -90,7 +95,8 @@ describe('per-account isolation', () => {
       .replace(':changesetId', changesetId)
       .replace(':jobId', jobId)
       .replace(':shareId', shareId)
-      .replace(':commentId', commentId);
+      .replace(':commentId', commentId)
+      .replace(':sha256', 'a'.repeat(64));
 
   beforeAll(async () => {
     running = await start();

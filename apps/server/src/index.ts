@@ -91,6 +91,15 @@ logger.info(
   scheduleOn ? 'nightly backup and weekly restore drill scheduled' : 'backups are not scheduled here (BACKUP_SCHEDULE=off)',
 );
 
+logger.info(
+  { assetDir: config.ASSET_DIR ?? null, maxBytes: config.ASSET_MAX_BYTES },
+  config.ASSET_DIR !== undefined
+    ? 'asset store on the filesystem'
+    : config.NODE_ENV === 'production'
+      ? 'no asset store: ASSET_DIR is not set, so texture uploads are refused'
+      : 'ASSET_DIR is not set: texture uploads are kept in memory and lost on restart',
+);
+
 const server = app.listen(config.PORT, () => {
   logger.info(
     { port: config.PORT, publicUrl: config.PUBLIC_URL, oidcConfigured: config.oidcConfigured, oidcReachable: oidc !== null, rulePacks: rulePacks.sources, ruleProfile: rulePacks.profile?.name ?? 'default' },

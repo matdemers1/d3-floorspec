@@ -41,6 +41,8 @@ import { NO_PACKS, type InstalledPacks } from './rules/packs.js';
 import { projectShareRoutes, shareRoutes } from './share/routes.js';
 import { privateShareHeaders } from './share/guards.js';
 import type { ShareLimits } from './share/limit.js';
+import { assetRoutes } from './routes/assets.js';
+import { defaultAssetStore, type AssetStore } from './assets/store.js';
 
 export interface AppDeps {
   readonly config: Config;
@@ -75,6 +77,8 @@ export interface AppDeps {
   readonly render3d?: Render3dWait;
   /** The share routes' rate limits (FLR-T-9.6); tests tighten them. */
   readonly shareLimits?: ShareLimits;
+  /** The asset store (FLR-T-8.2). Default: the filesystem under ASSET_DIR (src/assets/store.ts). */
+  readonly assets?: AssetStore | null;
 }
 
 /** The paths the API owns. Anything else is a screen of the editor. */
@@ -92,6 +96,7 @@ export function createApp({
   rulePacks = NO_PACKS,
   render3d = {},
   shareLimits,
+  assets = defaultAssetStore(config),
 }: AppDeps): Express {
   const app = express();
   (app.locals as { events?: EventHub }).events = events;
@@ -117,6 +122,7 @@ export function createApp({
   mount(app, '/api/rule-packs', rulePackRoutes(db, rulePacks));
   mount(app, '/api/projects', eventRoutes(db, events, eventStream));
   mount(app, '/api/projects', exportRoutes(db));
+  mount(app, '/api/projects', assetRoutes(db, assets, config.ASSET_MAX_BYTES));
   mount(app, '/api/tokens', tokenRoutes(db));
   mount(app, '/api/maintenance', maintenanceRoutes(db, config));
   // Sharing (FLR-T-9.6): the owner's links and comments, and what a share link reaches.

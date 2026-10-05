@@ -902,7 +902,7 @@ function MaterialBody({ ctx }: { ctx: Ctx }) {
           />
         </Row>
       </Section>
-      <MaterialSurface id={id} element={element} model={model} units={ctx.units} readOnly={readOnly} edit={ctx.edit} />
+      <MaterialSurface store={ctx.store} id={id} element={element} model={model} units={ctx.units} readOnly={readOnly} edit={ctx.edit} />
     </>
   );
 }

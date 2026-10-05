@@ -13,6 +13,8 @@ import { FOV, ThreeController } from './controller';
 import { useHouseMesh } from './meshing';
 import { threeOf, useThreeState, type ThreeStore, type WalkStart } from './mode';
 import { describeScene, faceColours, isVisible, levelOrder, lookOf, type Look } from './parts';
+import { isSurfacePart, surfaceBuffers, type MapRef } from './surfaces';
+import { TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
 
 /**
@@ -77,16 +79,34 @@ interface Built {
   geometry: THREE.BufferGeometry;
   look: Look;
   triangles: number;
+  /**
+   * A finished surface's draw groups (FLR-T-8.2): slot i draws geometry group i — vertex colours
+   * where `null`, a texture's map otherwise. Absent: one material for the whole part.
+   */
+  slots?: (MapRef | null)[];
 }
 
 function buildParts(model: EditorModel, mesh: HouseMesh): Built[] {
   const walls = new Map(model.levels.flatMap((l) => l.walls.map((w) => [w.id, w] as const)));
   return mesh.parts.map((part) => {
+    const look = lookOf(part);
+    // Walls, floors and ceilings: by finished surface, with texture coordinates in world units (Core 18.3).
+    if (isSurfacePart(part) && model.derived !== null) {
+      const b = surfaceBuffers(model, mesh, part);
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(b.positions, 3));
+      geometry.setAttribute('normal', new THREE.BufferAttribute(b.normals, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(b.colors, 3));
+      geometry.setAttribute('uv', new THREE.BufferAttribute(b.uvs, 2));
+      b.groups.forEach((g, i) => { geometry.addGroup(g.start, g.count, i); });
+      geometry.computeBoundingBox();
+      geometry.computeBoundingSphere();
+      return { part, geometry, look, triangles: b.positions.length / 9, slots: b.groups.map((g) => g.map) };
+    }
     const { positions, normals } = flatShaded(part.mesh);
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-    const look = lookOf(part);
     if (look !== 'glass' && look !== 'pick') geometry.setAttribute('color', new THREE.BufferAttribute(faceColours(model, part, normals, walls), 3));
     geometry.computeBoundingBox();
     geometry.computeBoundingSphere();
@@ -127,6 +147,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
 
   const ready = state.status === 'ready' ? state : null;
   const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);
+  const textures = useMemo(() => new TextureLibrary(store.projectId, () => { ctl.invalidate(); }), [store, ctl]);
+  useEffect(() => () => { textures.dispose(); }, [textures]);
   useEffect(() => () => { for (const b of built) b.geometry.dispose(); }, [built]);
 
   // The physics follows the mesh; the first mesh frames the camera.
@@ -177,7 +199,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const summary = useMemo(() => (ready === null ? '' : describeScene(ready.model, visible.map((b) => b.part))), [ready, visible]);
   const triangles = visible.reduce((n, b) => n + b.triangles, 0);
 
-  useTestHook(store, three, ctl, ready, host);
+  useTestHook(store, three, ctl, ready, host, built, textures);
 
   // ── Orbit: pointer, wheel and keys on the canvas.
   const pointers = useRef(new Map<number, { x: number; y: number; button: number; shift: boolean }>());
@@ -400,7 +422,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <directionalLight position={[-30, -45, 70]} intensity={1.7} />
         <Rig ctl={ctl} />
         <SceneBridge />
-        <Parts visible={visible} selection={walking ? null : selection} accent={tokens.accent} onClick={onClick} onDoubleClick={onDoubleClick} />
+        <Parts visible={visible} selection={walking ? null : selection} accent={tokens.accent} textures={textures} onClick={onClick} onDoubleClick={onDoubleClick} />
         {!walking ? <LabelTracker built={visible} selection={selection} el={label} /> : null}
       </Canvas>
     );
@@ -503,12 +525,14 @@ function Parts({
   visible,
   selection,
   accent,
+  textures,
   onClick,
   onDoubleClick,
 }: {
   visible: Built[];
   selection: string | null;
   accent: string;
+  textures: TextureLibrary;
   onClick: (e: ThreeEvent<MouseEvent>) => void;
   onDoubleClick: (e: ThreeEvent<MouseEvent>) => void;
 }) {
@@ -537,8 +561,9 @@ function Parts({
     materials.glassOn.color.set(accent);
     materials.pickOn.color.set(accent);
     materials.edges.color.set(accent);
+    textures.setAccent(accent);
     invalidate();
-  }, [accent, materials, invalidate]);
+  }, [accent, materials, textures, invalidate]);
 
   const selected = useMemo(() => visible.filter((b) => b.part.id === selection), [visible, selection]);
   const outlines = useMemo(() => selected.map((b) => ({ key: b.part.key, geometry: new THREE.EdgesGeometry(b.geometry, 30) })), [selected]);
@@ -559,7 +584,7 @@ function Parts({
         <mesh
           key={b.part.key}
           geometry={b.geometry}
-          material={materialOf(b, b.part.id === selection)}
+          material={b.slots === undefined ? materialOf(b, b.part.id === selection) : b.slots.map((m) => (m === null ? materialOf(b, b.part.id === selection) : textures.material(m, b.look, b.part.id === selection)))}
           userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
           renderOrder={b.look === 'glass' || b.look === 'pick' ? 1 : 0}
         />
@@ -803,6 +828,11 @@ interface Hook {
   screenPoint(id: string): { x: number; y: number } | null;
   walk(from: WalkStart | null): void;
   face(yawDegrees: number): void;
+  /**
+   * The textured surfaces drawn (FLR-T-8.2): each part with a map, the material and the image's
+   * digest, whether the image has arrived, and the texture coordinates' range — in tiles.
+   */
+  textured: { part: string; material: string; sha256: string; loaded: boolean; u: [number, number]; v: [number, number] }[];
 }
 
 declare global {
@@ -815,7 +845,7 @@ declare global {
  * Under automation only (navigator.webdriver), the e2e suite reads the walker and asks where on
  * screen an element can be clicked. Nothing is exposed to a person's browser.
  */
-function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController, ready: { mesh: HouseMesh; world: World } | null, el: { current: HTMLDivElement | null }) {
+function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController, ready: { mesh: HouseMesh; world: World } | null, el: { current: HTMLDivElement | null }, built: readonly Built[], textures: TextureLibrary) {
   useEffect(() => {
     if (!navigator.webdriver) return;
     const hook: Hook = {
@@ -854,12 +884,29 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
       face: (deg) => {
         if (ctl.walker !== null) ctl.walker = { ...ctl.walker, yaw: (deg * Math.PI) / 180 };
       },
+      get textured() {
+        return built.flatMap((b) =>
+          (b.slots ?? []).flatMap((m, i) => {
+            if (m === null) return [];
+            const g = b.geometry.groups[i];
+            const uv = b.geometry.getAttribute('uv');
+            let [u0, u1, v0, v1] = [Infinity, -Infinity, Infinity, -Infinity];
+            for (let k = g?.start ?? 0; k < (g?.start ?? 0) + (g?.count ?? 0); k++) {
+              u0 = Math.min(u0, uv.getX(k));
+              u1 = Math.max(u1, uv.getX(k));
+              v0 = Math.min(v0, uv.getY(k));
+              v1 = Math.max(v1, uv.getY(k));
+            }
+            return [{ part: b.part.key, material: m.material, sha256: m.sha256, loaded: textures.loaded.has(m.sha256), u: [u0, u1] as [number, number], v: [v0, v1] as [number, number] }];
+          }),
+        );
+      },
     };
     window.__floorspec3d = hook;
     return () => {
       if (window.__floorspec3d === hook) delete window.__floorspec3d;
     };
-  }, [store, three, ctl, ready, el]);
+  }, [store, three, ctl, ready, el, built, textures]);
 }
 
 /** Registered by the scene: what screenPoint needs from inside the canvas. */

@@ -18,6 +18,8 @@ import {
 } from './helpers.js';
 import { projectWithDocument } from './drawings-support.js';
 import { commentOn, shareOf } from './share-support.js';
+import { upload } from './assets-support.js';
+import { tilePng } from '../support/images.js';
 
 /**
  * The audit walk (FLR-T-0.4): every mutating route, called successfully, writes an audit row with
@@ -188,6 +190,11 @@ const EXERCISES: Record<string, Exercise> = {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(running.db, operator);
     return { reply: await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' }), action: 'export.request' };
+  },
+  'POST /api/projects/:projectId/assets': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    return { reply: await upload(running.url, operator, id, tilePng(8, 8)), action: 'asset.upload' };
   },
   'POST /api/tokens': async ({ running }) => {
     const operator = await setupOperator(running);
