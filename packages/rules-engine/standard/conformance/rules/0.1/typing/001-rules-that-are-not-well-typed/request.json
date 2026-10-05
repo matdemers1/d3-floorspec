@@ -1,0 +1,578 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "GOOD": {
+          "title": "Well typed",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (well typed); it states no requirement of any real code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "UNKNOWN-MEASURE": {
+          "title": "A measure the library does not define",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a measure the library does not define); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomVolume",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "WRONG-TARGET": {
+          "title": "An opening measure on a room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (an opening measure on a room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "openingWidth",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "MISSING-ARG": {
+          "title": "A required argument missing",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a required argument missing); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomAdjacentTo",
+            "op": "=",
+            "value": true
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "EXTRA-ARG": {
+          "title": "An argument the measure does not take",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (an argument the measure does not take); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">=",
+            "value": 1,
+            "args": {
+              "per": "room"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ARG-TYPE": {
+          "title": "An argument of the wrong type",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (an argument of the wrong type); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomAdjacentTo",
+            "op": "=",
+            "value": true,
+            "args": {
+              "function": "bedroom"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "VALUE-TYPE": {
+          "title": "A length compared with a string",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a length compared with a string); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomLeastWidth",
+            "op": ">=",
+            "value": "7 ft"
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "OP-FOR-TYPE": {
+          "title": "has on a length",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (has on a length); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomLeastWidth",
+            "op": "has",
+            "value": "x"
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "IN-AN-AREA": {
+          "title": "in on an area",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (in on an area); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": "in",
+            "value": [1, 2]
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "BOOLEAN-ORDER": {
+          "title": "An order on a boolean",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (an order on a boolean); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomIsEntry",
+            "op": ">",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "APPLIES-EXTENSION": {
+          "title": "An extension on a room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (an extension on a room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "extension": "FS_electrical"
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "COLLECTION-ALONE": {
+          "title": "A collection without its extension",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a collection without its extension); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "collection": "panels"
+          },
+          "requirement": {
+            "measure": "elementTopAboveFloor",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "NO-SUCH-SET": {
+          "title": "Envelopes of a room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (envelopes of a room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "envelopes",
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "envelopeDepth",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "SET-ARG": {
+          "title": "An opening set argument",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (an opening set argument); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "args": {
+              "to": "inside"
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "openingWidth",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "MEMBER-OF-WHAT": {
+          "title": "A member of an unnamed extension",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a member of an unnamed extension); it states no requirement of any real code.",
+          "applies": {
+            "to": "element"
+          },
+          "requirement": {
+            "measure": "elementMember",
+            "op": "=",
+            "value": 1,
+            "args": {
+              "name": "rating",
+              "type": "integer"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "UNIT-ON-A-TERM": {
+          "title": "A unit on a term",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a unit on a term); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "FS_electrical",
+            "collection": "panels"
+          },
+          "requirement": {
+            "measure": "elementMember",
+            "op": "=",
+            "value": "x",
+            "args": {
+              "name": "rating",
+              "type": "term",
+              "unit": "A"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ZERO-LIMIT": {
+          "title": "A limit of zero",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a limit of zero); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "FS_electrical",
+            "collection": "panels"
+          },
+          "select": {
+            "from": "envelopes",
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "clearDepthInFront",
+            "op": ">=",
+            "value": 1,
+            "args": {
+              "limit": 0
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "PROVENANCE": {
+          "title": "Verified against another edition",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (verified against another edition); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">=",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2021"
+          }
+        },
+        "DEFERRED-AND-BAD": {
+          "title": "Deferred and unknown",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (deferred and unknown); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "all": [
+              {
+                "measure": "ceilingHeight",
+                "op": ">=",
+                "value": 1
+              },
+              {
+                "measure": "roomVolume",
+                "op": ">=",
+                "value": 1
+              }
+            ]
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

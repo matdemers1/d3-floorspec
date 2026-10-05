@@ -1,0 +1,202 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "ROOMS": {
+          "title": "Every room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (every room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room"
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "SLEEPING-ROOMS": {
+          "title": "Sleeping rooms",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (sleeping rooms); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "WINDOWS": {
+          "title": "Windows with a sill of at most a foot",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (windows with a sill of at most a foot); it states no requirement of any real code.",
+          "applies": {
+            "to": "opening",
+            "where": {
+              "measure": "openingKind",
+              "op": "=",
+              "value": "window"
+            }
+          },
+          "requirement": {
+            "measure": "openingSillHeight",
+            "op": "<=",
+            "value": 390144
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "PANELS": {
+          "title": "Panels below three feet",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (panels below three feet); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "FS_electrical",
+            "collection": "panels"
+          },
+          "requirement": {
+            "measure": "elementTopAboveFloor",
+            "op": "<=",
+            "value": 1170432
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ELECTRICAL": {
+          "title": "Every electrical element",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (every electrical element); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "FS_electrical"
+          },
+          "requirement": {
+            "measure": "elementBottomAboveFloor",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ELEMENTS": {
+          "title": "Every element is in a room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (every element is in a room); it states no requirement of any real code.",
+          "applies": {
+            "to": "element"
+          },
+          "requirement": {
+            "measure": "elementRoomFunction",
+            "op": "!=",
+            "value": "none"
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "LEVELS": {
+          "title": "Four rooms on a level",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (four rooms on a level); it states no requirement of any real code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 4
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

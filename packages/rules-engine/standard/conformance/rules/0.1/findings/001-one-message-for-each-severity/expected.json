@@ -1,0 +1,242 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§7.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "A-MAY-NOT-MEET",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§7.2"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "B-CHECK",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§7.3(a)"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "C-NOTE",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§7.1"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "136.23 sq ft",
+          "holds": false,
+          "measure": "roomNetArea",
+          "op": ">=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 30442468147200,
+          "thresholdDisplay": "200.00 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §7.1 (A big bedroom).",
+      "pack": "test-pack",
+      "rule": "A-MAY-NOT-MEET",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "A big bedroom",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§7.2"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "11' 8 1/16\"",
+          "holds": false,
+          "measure": "roomLeastWidth",
+          "op": ">=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 5071872,
+          "thresholdDisplay": "13' 0\"",
+          "type": "length",
+          "value": 4553728
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §7.2 (A wide bedroom). Check it with a professional or the authority having jurisdiction.",
+      "pack": "test-pack",
+      "rule": "B-CHECK",
+      "severity": "check",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "A wide bedroom",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§7.3(a)"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "no",
+          "holds": false,
+          "measure": "roomIsEntry",
+          "op": "=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": true,
+          "thresholdDisplay": "yes",
+          "type": "boolean",
+          "value": false
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §7.3(a) (A bedroom with its own way in). This is for information.",
+      "pack": "test-pack",
+      "rule": "C-NOTE",
+      "severity": "note",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "A bedroom with its own way in",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.1",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

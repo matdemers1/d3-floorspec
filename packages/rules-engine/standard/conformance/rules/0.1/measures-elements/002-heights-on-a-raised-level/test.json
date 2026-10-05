@@ -1,0 +1,6 @@
+{
+  "description": "The rules house on a level at 1,000 mm: the panel's fallback is still 800 mm to 1,600 mm above its floor.",
+  "covers": [
+    "FS-RULES-7.3.1"
+  ]
+}

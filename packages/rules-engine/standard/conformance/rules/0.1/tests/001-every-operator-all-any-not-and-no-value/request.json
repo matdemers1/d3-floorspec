@@ -1,0 +1,254 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "EVERY-OPERATOR": {
+          "title": "Every operator holds",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (every operator holds); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "not": {
+              "all": [
+                {
+                  "measure": "roomNetArea",
+                  "op": ">",
+                  "value": 20736438697983
+                },
+                {
+                  "measure": "roomNetArea",
+                  "op": ">=",
+                  "value": 20736438697984
+                },
+                {
+                  "measure": "roomNetArea",
+                  "op": "<=",
+                  "value": 20736438697984
+                },
+                {
+                  "measure": "roomNetArea",
+                  "op": "=",
+                  "value": 20736438697984
+                },
+                {
+                  "measure": "roomNetArea",
+                  "op": "!=",
+                  "value": 0
+                },
+                {
+                  "measure": "roomNetArea",
+                  "op": "<",
+                  "value": 20736438697985
+                },
+                {
+                  "measure": "roomLeastWidth",
+                  "op": "in",
+                  "value": [1, 4553728]
+                },
+                {
+                  "measure": "roomFunction",
+                  "op": "in",
+                  "value": ["bath", "sleeping"]
+                },
+                {
+                  "measure": "roomFunction",
+                  "op": "!=",
+                  "value": "living"
+                },
+                {
+                  "measure": "roomIsReachable",
+                  "op": "=",
+                  "value": true
+                },
+                {
+                  "measure": "roomIsEntry",
+                  "op": "!=",
+                  "value": true
+                },
+                {
+                  "measure": "elementCount",
+                  "op": "=",
+                  "value": 3,
+                  "args": {
+                    "extension": "FS_electrical"
+                  }
+                }
+              ]
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ANY-NONE": {
+          "title": "Neither holds",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (neither holds); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "any": [
+              {
+                "measure": "roomNetArea",
+                "op": "<",
+                "value": 20736438697984
+              },
+              {
+                "measure": "roomIsEntry",
+                "op": "=",
+                "value": true
+              }
+            ]
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ANY-ONE": {
+          "title": "One holds",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (one holds); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "any": [
+              {
+                "measure": "roomNetArea",
+                "op": "<",
+                "value": 20736438697984
+              },
+              {
+                "measure": "roomIsReachable",
+                "op": "=",
+                "value": true
+              }
+            ]
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "NO-VALUE": {
+          "title": "A receptacle load",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a receptacle load); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "FS_electrical",
+            "collection": "receptacles"
+          },
+          "requirement": {
+            "all": [
+              {
+                "measure": "elementMember",
+                "op": "=",
+                "value": 0,
+                "args": {
+                  "name": "watts",
+                  "type": "integer"
+                }
+              },
+              {
+                "measure": "elementMember",
+                "op": "<",
+                "value": 1,
+                "args": {
+                  "name": "watts",
+                  "type": "integer"
+                }
+              },
+              {
+                "measure": "elementMember",
+                "op": "!=",
+                "value": 0,
+                "args": {
+                  "name": "watts",
+                  "type": "integer"
+                }
+              },
+              {
+                "measure": "elementMember",
+                "op": "has",
+                "value": "gfci",
+                "args": {
+                  "name": "features",
+                  "type": "terms"
+                }
+              }
+            ]
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

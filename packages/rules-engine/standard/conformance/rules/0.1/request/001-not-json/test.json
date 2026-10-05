@@ -1,0 +1,8 @@
+{
+  "description": "A request that is not a well-formed JSON text is reported with FS-RULES-001 and nothing else is evaluated: the report has the notice and empty lists, and no units, profile or hash.",
+  "covers": [
+    "FS-RULES-1.1.1",
+    "FS-RULES-11.1.1",
+    "FS-RULES-9.1.1"
+  ]
+}

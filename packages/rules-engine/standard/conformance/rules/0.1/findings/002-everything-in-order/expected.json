@@ -1,0 +1,700 @@
+{
+  "coverage": [
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "pack": "a-pack",
+      "section": "§1",
+      "status": "partial"
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "note": "a",
+      "pack": "a-pack",
+      "section": "§1",
+      "status": "partial"
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "note": "b",
+      "pack": "a-pack",
+      "section": "§1",
+      "status": "partial"
+    },
+    {
+      "code": "TEST-CODE",
+      "edition": "2024",
+      "pack": "a-pack",
+      "section": "§9",
+      "status": "notAddressed"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "FS-RULES-004",
+      "packIndex": 2,
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-007",
+      "pack": "a-pack",
+      "rule": "BAD",
+      "severity": "error"
+    },
+    {
+      "code": "FS-RULES-008",
+      "pack": "b-pack",
+      "rule": "DEFERRED",
+      "severity": "info"
+    }
+  ],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 2,
+      "pack": "a-pack",
+      "rule": "M",
+      "subjects": 2,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 5,
+      "pack": "b-pack",
+      "rule": "A",
+      "subjects": 5,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 3,
+      "pack": "b-pack",
+      "rule": "Z",
+      "subjects": 3,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R2"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                4745728,
+                64000
+              ],
+              [
+                9299456,
+                64000
+              ],
+              [
+                9299456,
+                4617728
+              ],
+              [
+                4745728,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "136.23 sq ft",
+          "holds": false,
+          "measure": "roomNetArea",
+          "op": "<",
+          "target": {
+            "id": "R2",
+            "kind": "room"
+          },
+          "threshold": 1,
+          "thresholdDisplay": "0.00 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        }
+      ],
+      "message": "R2 may not meet TEST-CODE 2024 §1.1 (M rule).",
+      "pack": "a-pack",
+      "rule": "M",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R2",
+        "kind": "room"
+      },
+      "title": "M rule",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R3"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                9427456,
+                64000
+              ],
+              [
+                12420608,
+                64000
+              ],
+              [
+                12420608,
+                4617728
+              ],
+              [
+                9427456,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "89.55 sq ft",
+          "holds": false,
+          "measure": "roomNetArea",
+          "op": "<",
+          "target": {
+            "id": "R3",
+            "kind": "room"
+          },
+          "threshold": 1,
+          "thresholdDisplay": "0.00 sq ft",
+          "type": "area",
+          "value": "13630000070656"
+        }
+      ],
+      "message": "R3 may not meet TEST-CODE 2024 §1.1 (M rule).",
+      "pack": "a-pack",
+      "rule": "M",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R3",
+        "kind": "room"
+      },
+      "title": "M rule",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                1560576,
+                4681728
+              ],
+              [
+                2731008,
+                4681728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "3' 0\"",
+          "holds": false,
+          "measure": "openingWidth",
+          "op": ">",
+          "target": {
+            "id": "O1",
+            "kind": "opening"
+          },
+          "threshold": 1560576,
+          "thresholdDisplay": "4' 0\"",
+          "type": "length",
+          "value": 1170432
+        }
+      ],
+      "message": "O1 may not meet TEST-CODE 2024 §1.1 (A rule).",
+      "pack": "b-pack",
+      "rule": "A",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O1",
+        "kind": "opening"
+      },
+      "title": "A rule",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O2"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                4681728,
+                1560576
+              ],
+              [
+                4681728,
+                2731008
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "3' 0\"",
+          "holds": false,
+          "measure": "openingWidth",
+          "op": ">",
+          "target": {
+            "id": "O2",
+            "kind": "opening"
+          },
+          "threshold": 1560576,
+          "thresholdDisplay": "4' 0\"",
+          "type": "length",
+          "value": 1170432
+        }
+      ],
+      "message": "O2 may not meet TEST-CODE 2024 §1.1 (A rule).",
+      "pack": "b-pack",
+      "rule": "A",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O2",
+        "kind": "opening"
+      },
+      "title": "A rule",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O3"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                7802880,
+                0
+              ],
+              [
+                6632448,
+                0
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "3' 0\"",
+          "holds": false,
+          "measure": "openingWidth",
+          "op": ">",
+          "target": {
+            "id": "O3",
+            "kind": "opening"
+          },
+          "threshold": 1560576,
+          "thresholdDisplay": "4' 0\"",
+          "type": "length",
+          "value": 1170432
+        }
+      ],
+      "message": "O3 may not meet TEST-CODE 2024 §1.1 (A rule).",
+      "pack": "b-pack",
+      "rule": "A",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O3",
+        "kind": "opening"
+      },
+      "title": "A rule",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O4"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                9363456,
+                1560576
+              ],
+              [
+                9363456,
+                2731008
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "3' 0\"",
+          "holds": false,
+          "measure": "openingWidth",
+          "op": ">",
+          "target": {
+            "id": "O4",
+            "kind": "opening"
+          },
+          "threshold": 1560576,
+          "thresholdDisplay": "4' 0\"",
+          "type": "length",
+          "value": 1170432
+        }
+      ],
+      "message": "O4 may not meet TEST-CODE 2024 §1.1 (A rule).",
+      "pack": "b-pack",
+      "rule": "A",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O4",
+        "kind": "opening"
+      },
+      "title": "A rule",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O5"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                6242304,
+                4681728
+              ],
+              [
+                7412736,
+                4681728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "3' 0\"",
+          "holds": false,
+          "measure": "openingWidth",
+          "op": ">",
+          "target": {
+            "id": "O5",
+            "kind": "opening"
+          },
+          "threshold": 1560576,
+          "thresholdDisplay": "4' 0\"",
+          "type": "length",
+          "value": 1170432
+        }
+      ],
+      "message": "O5 may not meet TEST-CODE 2024 §1.1 (A rule).",
+      "pack": "b-pack",
+      "rule": "A",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O5",
+        "kind": "opening"
+      },
+      "title": "A rule",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "sleeping",
+          "holds": false,
+          "measure": "roomFunction",
+          "op": "=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": "garage",
+          "thresholdDisplay": "garage",
+          "type": "term",
+          "value": "sleeping"
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §1.1 (Z rule).",
+      "pack": "b-pack",
+      "rule": "Z",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "Z rule",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R2"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                4745728,
+                64000
+              ],
+              [
+                9299456,
+                64000
+              ],
+              [
+                9299456,
+                4617728
+              ],
+              [
+                4745728,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "living",
+          "holds": false,
+          "measure": "roomFunction",
+          "op": "=",
+          "target": {
+            "id": "R2",
+            "kind": "room"
+          },
+          "threshold": "garage",
+          "thresholdDisplay": "garage",
+          "type": "term",
+          "value": "living"
+        }
+      ],
+      "message": "R2 may not meet TEST-CODE 2024 §1.1 (Z rule).",
+      "pack": "b-pack",
+      "rule": "Z",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R2",
+        "kind": "room"
+      },
+      "title": "Z rule",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R3"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                9427456,
+                64000
+              ],
+              [
+                12420608,
+                64000
+              ],
+              [
+                12420608,
+                4617728
+              ],
+              [
+                9427456,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "mechanical",
+          "holds": false,
+          "measure": "roomFunction",
+          "op": "=",
+          "target": {
+            "id": "R3",
+            "kind": "room"
+          },
+          "threshold": "garage",
+          "thresholdDisplay": "garage",
+          "type": "term",
+          "value": "mechanical"
+        }
+      ],
+      "message": "R3 may not meet TEST-CODE 2024 §1.1 (Z rule).",
+      "pack": "b-pack",
+      "rule": "Z",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R3",
+        "kind": "room"
+      },
+      "title": "Z rule",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.1",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [
+    {
+      "pack": "a-pack",
+      "reason": "invalid",
+      "rule": "BAD",
+      "version": "0.1.0"
+    },
+    {
+      "pack": "b-pack",
+      "reason": "deferred",
+      "rule": "DEFERRED",
+      "version": "0.1.0"
+    }
+  ],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

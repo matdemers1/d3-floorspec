@@ -1,0 +1,8 @@
+{
+  "description": "A selected pack's coverage entries for TEST-CODE 2021 and 2024, TEST-ELEC 2026 and OTHER 2024, under a profile that adopts TEST-CODE 2024 and TEST-ELEC 2026 and selects only that pack: the report carries the 2024 and 2026 entries, each with its pack's name; a second, unselected pack's entries are not carried, and its rule is listed as \"profile\".",
+  "covers": [
+    "FS-RULES-10.4.1",
+    "FS-RULES-9.1.1",
+    "FS-RULES-9.1.2"
+  ]
+}

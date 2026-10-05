@@ -1,0 +1,267 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "main",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "EVALUATED": {
+          "title": "A smoke alarm in every sleeping room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§5.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a smoke alarm in every sleeping room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "elementCount",
+            "op": ">=",
+            "value": 1,
+            "args": {
+              "extension": "FS_electrical",
+              "collection": "alarms",
+              "match": {
+                "detects": "smoke"
+              }
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "INVALID": {
+          "title": "Invalid",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (invalid); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomVolume",
+            "op": ">",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "DEFERRED": {
+          "title": "Deferred",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (deferred); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "travelDistance",
+            "op": "<",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "EDITION": {
+          "title": "Another edition",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "1999",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (another edition); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "1999"
+          }
+        },
+        "WITHDRAWN": {
+          "title": "Withdrawn",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (withdrawn); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">",
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "EXTENSION": {
+          "title": "A member of an extension nobody implements",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a member of an extension nobody implements); it states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "EXT_furniture"
+          },
+          "requirement": {
+            "measure": "elementMember",
+            "op": "=",
+            "value": "oak",
+            "args": {
+              "name": "finish",
+              "type": "term"
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    },
+    {
+      "floorspecRules": "0.1",
+      "name": "unselected",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "SMOKE": {
+          "title": "A smoke alarm in every sleeping room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§5.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a smoke alarm in every sleeping room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "elementCount",
+            "op": ">=",
+            "value": 1,
+            "args": {
+              "extension": "FS_electrical",
+              "collection": "alarms",
+              "match": {
+                "detects": "smoke"
+              }
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ],
+    "packs": [
+      {
+        "name": "main",
+        "version": "^0.1.0"
+      }
+    ],
+    "amendments": [
+      {
+        "citation": {
+          "authority": "Town of Example",
+          "reference": "Ord. 1 §1"
+        },
+        "withdraws": [
+          {
+            "pack": "main",
+            "rule": "WITHDRAWN"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "description": "Every room measure on the rules house: functions, net areas (R1 12' x 12' between centred 100 mm walls, R3 8' x 12'), least widths, circulation (R2 has the front door; R1 is reached through it), neighbours and element counts, by core members and with a match on FS_electrical's `detects`.",
+  "covers": [
+    "FS-RULES-4.3.1",
+    "FS-RULES-4.4.1",
+    "FS-RULES-4.7.1",
+    "FS-RULES-5.1.1",
+    "FS-RULES-5.2.1",
+    "FS-RULES-5.3.1",
+    "FS-RULES-5.4.1",
+    "FS-RULES-5.5.1",
+    "FS-RULES-5.6.1"
+  ]
+}

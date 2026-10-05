@@ -1,0 +1,7 @@
+{
+  "description": "The Phase 6 demo again, with the pack's rules and its coverage entries written in another order, and an empty second pack before it in the request: the report is the same, finding for finding and byte for byte, except for the second pack's absence from every list (it has no rules). Evaluation is a function of its inputs, not of the order they are written in.",
+  "covers": [
+    "FS-RULES-1.4.1",
+    "FS-RULES-9.7.1"
+  ]
+}

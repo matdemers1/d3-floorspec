@@ -1,0 +1,38 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R2"
+      },
+      "measure": "roomFunction"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R3"
+      },
+      "measure": "roomFunction"
+    },
+    {
+      "target": {
+        "kind": "level",
+        "id": "L1"
+      },
+      "measure": "roomCount",
+      "args": {
+        "function": "EXT_furniture:sauna"
+      }
+    },
+    {
+      "target": {
+        "kind": "level",
+        "id": "L1"
+      },
+      "measure": "roomCount",
+      "args": {
+        "function": "unspecified"
+      }
+    }
+  ]
+}

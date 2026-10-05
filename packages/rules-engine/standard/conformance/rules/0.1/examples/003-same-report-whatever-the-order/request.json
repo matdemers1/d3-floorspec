@@ -1,0 +1,202 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "empty-pack",
+      "version": "0.1.0",
+      "title": "No rules",
+      "license": "CC-BY-4.0",
+      "rules": {}
+    },
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "WORKSPACE": {
+          "title": "Clear working space in front of a panel",
+          "citation": {
+            "code": "TEST-ELEC",
+            "edition": "2026",
+            "section": "§4.2"
+          },
+          "paraphrase": "Synthetic: a panel has a declared working space that nothing stands in, clear for 30 in in front of it. It states no requirement of any real code.",
+          "applies": {
+            "to": "element",
+            "extension": "FS_electrical",
+            "collection": "panels"
+          },
+          "select": {
+            "from": "envelopes",
+            "args": {
+              "purpose": "workingSpace"
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "all": [
+              {
+                "measure": "envelopeObstructions",
+                "op": "=",
+                "value": 0
+              },
+              {
+                "measure": "clearDepthInFront",
+                "op": ">=",
+                "value": 975360,
+                "args": {
+                  "limit": 975360
+                }
+              }
+            ]
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2026"
+          }
+        },
+        "SMOKE": {
+          "title": "A smoke alarm in every sleeping room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§5.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a smoke alarm in every sleeping room); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "elementCount",
+            "op": ">=",
+            "value": 1,
+            "args": {
+              "extension": "FS_electrical",
+              "collection": "alarms",
+              "match": {
+                "detects": "smoke"
+              }
+            }
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ESCAPE": {
+          "title": "Escape opening in every sleeping room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§3.1",
+            "link": "https://example.com/test-code/2024/3.1"
+          },
+          "paraphrase": "Synthetic: every sleeping room has a window or door to the outside of at least 5 sq ft, with its sill no higher than 40 in, at least 18 in wide and 22 in high. The rule measures the opening as drawn, not its net clear opening. It states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "args": {
+              "to": "outside"
+            },
+            "where": {
+              "measure": "openingKind",
+              "op": "in",
+              "value": ["window", "door"]
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "all": [
+              {
+                "measure": "openingArea",
+                "op": ">=",
+                "value": 761061703680
+              },
+              {
+                "measure": "openingSillHeight",
+                "op": "<=",
+                "value": 1300480
+              },
+              {
+                "measure": "openingWidth",
+                "op": ">=",
+                "value": 585216
+              },
+              {
+                "measure": "openingHeight",
+                "op": ">=",
+                "value": 715264
+              }
+            ]
+          },
+          "severity": "check",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      },
+      "coverage": [
+        {
+          "code": "TEST-ELEC",
+          "edition": "2026",
+          "section": "§9",
+          "status": "notAddressed"
+        },
+        {
+          "code": "TEST-ELEC",
+          "edition": "2026",
+          "section": "§4",
+          "status": "partial"
+        },
+        {
+          "code": "TEST-CODE",
+          "edition": "2024",
+          "section": "§5",
+          "status": "addressed"
+        },
+        {
+          "code": "TEST-CODE",
+          "edition": "2024",
+          "section": "§3",
+          "status": "partial",
+          "note": "The escape opening is measured as drawn; net clear openings are not checked."
+        }
+      ]
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

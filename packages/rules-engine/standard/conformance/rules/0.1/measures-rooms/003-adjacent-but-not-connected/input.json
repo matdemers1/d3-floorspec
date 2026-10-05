@@ -1,0 +1,309 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "The rules house"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "WIN": {
+      "kind": "windowType",
+      "width": 1170432,
+      "height": 1560576,
+      "sill": 780288
+    },
+    "DOOR": {
+      "kind": "doorType",
+      "width": 1170432,
+      "height": 2600960
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 4681728]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [4681728, 4681728]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [9363456, 4681728]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [12484608, 4681728]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [12484608, 0]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [9363456, 0]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [4681728, 0]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J5",
+      "type": "WT"
+    },
+    "W5": {
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    },
+    "W6": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J7",
+      "type": "WT"
+    },
+    "W7": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J8",
+      "type": "WT"
+    },
+    "W8": {
+      "level": "L1",
+      "start": "J8",
+      "end": "J1",
+      "type": "WT"
+    },
+    "W9": {
+      "level": "L1",
+      "start": "J8",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W10": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J4",
+      "type": "WT"
+    }
+  },
+  "openings": {
+    "O1": {
+      "wall": "W2",
+      "offset": 1560576,
+      "fill": "WIN"
+    },
+    "O3": {
+      "wall": "W7",
+      "offset": 1560576,
+      "fill": "DOOR"
+    },
+    "O4": {
+      "wall": "W10",
+      "offset": 1560576,
+      "fill": "DOOR"
+    },
+    "O5": {
+      "wall": "W3",
+      "offset": 1560576,
+      "fill": "WIN"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2340864, 2340864],
+      "name": "Bedroom",
+      "function": "sleeping"
+    },
+    "R2": {
+      "level": "L1",
+      "anchor": [7022592, 2340864],
+      "name": "Living",
+      "function": "living"
+    },
+    "R3": {
+      "level": "L1",
+      "anchor": [10924032, 2340864],
+      "name": "Utility",
+      "function": "mechanical"
+    }
+  },
+  "extensionsUsed": {
+    "FS_electrical": "0.1.0",
+    "FS_mechanical": "0.1.0"
+  },
+  "extensions": {
+    "FS_electrical": {
+      "collections": {
+        "panels": {
+          "X1": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -256000, -512000],
+                "max": [128000, 256000, 512000]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W5",
+              "side": "right",
+              "offset": 1170432,
+              "height": 1536000
+            },
+            "volts": [120, 240],
+            "rating": 100,
+            "mainBreaker": 100,
+            "spaces": 20,
+            "clearances": {
+              "working": {
+                "purpose": "workingSpace",
+                "shape": "box",
+                "min": [0, -512000, -1536000],
+                "max": [1280000, 512000, 1024000]
+              }
+            }
+          }
+        },
+        "alarms": {
+          "X3": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-96000, -96000, -64000],
+                "max": [96000, 96000, 0]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R1",
+              "surface": "ceiling",
+              "position": [2340864, 2340864]
+            },
+            "detects": ["smoke"]
+          }
+        },
+        "receptacles": {
+          "X4": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -51200, -76800],
+                "max": [32000, 51200, 76800]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W1",
+              "side": "right",
+              "offset": 2340864,
+              "height": 384000
+            }
+          },
+          "X5": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -51200, -76800],
+                "max": [32000, 51200, 76800]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W8",
+              "side": "right",
+              "offset": 2340864,
+              "height": 384000
+            }
+          }
+        }
+      },
+      "circuits": {
+        "C1": {
+          "panel": "X1",
+          "breaker": 15,
+          "volts": 120,
+          "rating": 15,
+          "space": 1,
+          "protection": ["afci"],
+          "loads": ["X3", "X4", "X5"]
+        }
+      }
+    },
+    "FS_mechanical": {
+      "collections": {
+        "equipment": {
+          "X2": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-384000, -384000, 0],
+                "max": [384000, 384000, 1152000]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R3",
+              "surface": "floor",
+              "position": [10143744, 1170432]
+            },
+            "equipment": "boiler",
+            "clearances": {
+              "service": {
+                "purpose": "workingSpace",
+                "shape": "box",
+                "min": [384000, -480000, 0],
+                "max": [1344000, 480000, 2560000]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

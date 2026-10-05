@@ -1,0 +1,84 @@
+{
+  "results": [
+    {
+      "display": "window",
+      "type": "term",
+      "value": "window"
+    },
+    {
+      "display": "door",
+      "type": "term",
+      "value": "door"
+    },
+    {
+      "display": "empty",
+      "type": "term",
+      "value": "empty"
+    },
+    {
+      "display": "3' 0\"",
+      "type": "length",
+      "value": 1170432
+    },
+    {
+      "display": "4' 0\"",
+      "type": "length",
+      "value": 1560576
+    },
+    {
+      "display": "6' 8\"",
+      "type": "length",
+      "value": 2600960
+    },
+    {
+      "display": "12.00 sq ft",
+      "type": "area",
+      "value": "1826548088832"
+    },
+    {
+      "display": "20.00 sq ft",
+      "type": "area",
+      "value": "3044246814720"
+    },
+    {
+      "display": "2' 0\"",
+      "type": "length",
+      "value": 780288
+    },
+    {
+      "display": "0' 0\"",
+      "type": "length",
+      "value": 0
+    },
+    {
+      "display": "6' 0\"",
+      "type": "length",
+      "value": 2340864
+    },
+    {
+      "display": "6' 8\"",
+      "type": "length",
+      "value": 2600960
+    },
+    {
+      "display": "yes",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "display": "no",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "display": "yes",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "display": "yes",
+      "type": "boolean",
+      "value": true
+    }
+  ]
+}

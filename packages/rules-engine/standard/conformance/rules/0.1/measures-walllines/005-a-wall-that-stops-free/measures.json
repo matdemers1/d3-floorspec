@@ -1,0 +1,30 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R2"
+      },
+      "measure": "wallRunBetweenReceptacles"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R2"
+      },
+      "measure": "receptacleReach"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R2"
+      },
+      "measure": "wallRunBetweenReceptacles",
+      "args": {
+        "match": {
+          "amps": 20
+        }
+      }
+    }
+  ]
+}

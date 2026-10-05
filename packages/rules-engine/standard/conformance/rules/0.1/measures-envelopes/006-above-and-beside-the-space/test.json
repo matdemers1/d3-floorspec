@@ -1,0 +1,7 @@
+{
+  "description": "A shelf S1 hung 2,100 mm up, right in front of the panel, and a cabinet S2 on the floor beside the space, 800 mm to the panel's right: the shelf is above the working space's 2,000 mm top and the cabinet's footprint ends 100 mm before the space's side, so neither obstructs it, and the space is clear to the limit.",
+  "covers": [
+    "FS-RULES-7.6.1",
+    "FS-RULES-7.7.1"
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "A-MAY-NOT-MEET": {
+          "title": "A big bedroom",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§7.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a big bedroom); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomNetArea",
+            "op": ">=",
+            "value": 30442468147200
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "B-CHECK": {
+          "title": "A wide bedroom",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§7.2"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a wide bedroom); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomLeastWidth",
+            "op": ">=",
+            "value": 5071872
+          },
+          "severity": "check",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "C-NOTE": {
+          "title": "A bedroom with its own way in",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§7.3(a)"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (a bedroom with its own way in); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "roomIsEntry",
+            "op": "=",
+            "value": true
+          },
+          "severity": "note",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

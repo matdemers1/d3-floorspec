@@ -1,0 +1,8 @@
+{
+  "description": "A furniture piece in the living room turned 30 degrees, with an access space in front of it: the strip in front of it reaches the living room's east wall W10 obliquely, so its clear depth is irrational before it is rounded - about 2,023,400 base units, the oracle's exact value - and nothing obstructs the space itself.",
+  "covers": [
+    "FS-RULES-4.3.1",
+    "FS-RULES-7.6.1",
+    "FS-RULES-7.7.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "One rule for each way a rule of a usable pack is not evaluated - an unselected pack (\"profile\"), FS-RULES-007 (\"invalid\"), FS-RULES-008 (\"deferred\"), an edition not in force (\"edition\"), an amendment (\"withdrawn\") and FS-RULES-009 (\"extension\") - beside one that is evaluated: every rule is in exactly one of the two lists.",
+  "covers": [
+    "FS-RULES-10.5.1",
+    "FS-RULES-9.1.1"
+  ]
+}

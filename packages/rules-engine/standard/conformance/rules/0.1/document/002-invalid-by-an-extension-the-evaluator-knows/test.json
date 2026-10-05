@@ -1,0 +1,6 @@
+{
+  "description": "The rules house with circuit C1 on a panel that does not exist: valid to a reader that does not know FS_electrical, but this evaluator knows it (registry.json) and its validator reports FS-ELEC-INV-002, so the document is invalid: FS-RULES-003.",
+  "covers": [
+    "FS-RULES-1.2.1"
+  ]
+}

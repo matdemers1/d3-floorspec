@@ -1,0 +1,126 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "ESCAPE": {
+          "title": "Escape opening in every sleeping room",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§3.1",
+            "link": "https://example.com/test-code/2024/3.1"
+          },
+          "paraphrase": "Synthetic: every sleeping room has a window or door to the outside of at least 5 sq ft, with its sill no higher than 40 in, at least 18 in wide and 22 in high. The rule measures the opening as drawn, not its net clear opening. It states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "args": {
+              "to": "outside"
+            },
+            "where": {
+              "measure": "openingKind",
+              "op": "in",
+              "value": ["window", "door"]
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "all": [
+              {
+                "measure": "openingArea",
+                "op": ">=",
+                "value": 761061703680
+              },
+              {
+                "measure": "openingSillHeight",
+                "op": "<=",
+                "value": 1300480
+              },
+              {
+                "measure": "openingWidth",
+                "op": ">=",
+                "value": 585216
+              },
+              {
+                "measure": "openingHeight",
+                "op": ">=",
+                "value": 715264
+              }
+            ]
+          },
+          "severity": "check",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "ESCAPE-2021": {
+          "title": "Escape opening in every sleeping room (2021)",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2021",
+            "section": "§3.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (escape opening in every sleeping room (2021)); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "select": {
+            "from": "openings",
+            "args": {
+              "to": "outside"
+            },
+            "need": "any"
+          },
+          "requirement": {
+            "measure": "openingArea",
+            "op": ">=",
+            "value": 1065486385152
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2021"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2021",
+        "effective": "2022-01-01"
+      },
+      {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "effective": "2025-07-01"
+      }
+    ],
+    "asOf": "2021-12-31"
+  }
+}

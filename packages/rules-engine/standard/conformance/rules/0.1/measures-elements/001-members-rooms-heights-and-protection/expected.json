@@ -1,0 +1,131 @@
+{
+  "results": [
+    {
+      "display": "100 A",
+      "type": "integer",
+      "value": 100
+    },
+    {
+      "display": "not stated",
+      "type": "integer",
+      "value": null
+    },
+    {
+      "display": "smoke",
+      "type": "terms",
+      "value": [
+        "smoke"
+      ]
+    },
+    {
+      "display": "15 A",
+      "type": "integer",
+      "value": 15
+    },
+    {
+      "display": "not stated",
+      "type": "integer",
+      "value": null
+    },
+    {
+      "display": "mainsWithBattery",
+      "type": "term",
+      "value": "mainsWithBattery"
+    },
+    {
+      "display": "none",
+      "type": "terms",
+      "value": []
+    },
+    {
+      "display": "boiler",
+      "type": "term",
+      "value": "boiler"
+    },
+    {
+      "display": "yes",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "display": "no",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "display": "sleeping",
+      "type": "term",
+      "value": "sleeping"
+    },
+    {
+      "display": "sleeping",
+      "type": "term",
+      "value": "sleeping"
+    },
+    {
+      "display": "mechanical",
+      "type": "term",
+      "value": "mechanical"
+    },
+    {
+      "display": "sleeping",
+      "type": "term",
+      "value": "sleeping"
+    },
+    {
+      "display": "living",
+      "type": "term",
+      "value": "living"
+    },
+    {
+      "display": "none",
+      "type": "term",
+      "value": "none"
+    },
+    {
+      "display": "none",
+      "type": "term",
+      "value": "none"
+    },
+    {
+      "display": "2' 7 1/2\"",
+      "type": "length",
+      "value": 1024000
+    },
+    {
+      "display": "5' 3\"",
+      "type": "length",
+      "value": 2048000
+    },
+    {
+      "display": "8' 8 5/16\"",
+      "type": "length",
+      "value": 3392000
+    },
+    {
+      "display": "-0' 0 3/8\"",
+      "type": "length",
+      "value": -12800
+    },
+    {
+      "display": "yes",
+      "involved": [
+        "C1"
+      ],
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "display": "no",
+      "involved": [],
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "display": "yes",
+      "involved": [],
+      "type": "boolean",
+      "value": true
+    }
+  ]
+}

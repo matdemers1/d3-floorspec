@@ -1,0 +1,198 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "model-editions",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "IRC-2021": {
+          "title": "Synthetic rule 1",
+          "citation": {
+            "code": "IRC",
+            "edition": "2021",
+            "section": "TEST-1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite, citing a code only to test which editions the default profile adopts; it states no requirement of that code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2021"
+          }
+        },
+        "IRC-2024": {
+          "title": "Synthetic rule 2",
+          "citation": {
+            "code": "IRC",
+            "edition": "2024",
+            "section": "TEST-2"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite, citing a code only to test which editions the default profile adopts; it states no requirement of that code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "NEC-2023": {
+          "title": "Synthetic rule 3",
+          "citation": {
+            "code": "NEC",
+            "edition": "2023",
+            "section": "TEST-3"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite, citing a code only to test which editions the default profile adopts; it states no requirement of that code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2023"
+          }
+        },
+        "NEC-2026": {
+          "title": "Synthetic rule 4",
+          "citation": {
+            "code": "NEC",
+            "edition": "2026",
+            "section": "TEST-4"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite, citing a code only to test which editions the default profile adopts; it states no requirement of that code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2026"
+          }
+        },
+        "IPC-2024": {
+          "title": "Synthetic rule 5",
+          "citation": {
+            "code": "IPC",
+            "edition": "2024",
+            "section": "TEST-5"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite, citing a code only to test which editions the default profile adopts; it states no requirement of that code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "IMC-2024": {
+          "title": "Synthetic rule 6",
+          "citation": {
+            "code": "IMC",
+            "edition": "2024",
+            "section": "TEST-6"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite, citing a code only to test which editions the default profile adopts; it states no requirement of that code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "IFGC-2024": {
+          "title": "Synthetic rule 7",
+          "citation": {
+            "code": "IFGC",
+            "edition": "2024",
+            "section": "TEST-7"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite, citing a code only to test which editions the default profile adopts; it states no requirement of that code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "TEST-CODE-2024": {
+          "title": "Synthetic rule 8",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "TEST-8"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite, citing a code only to test which editions the default profile adopts; it states no requirement of that code.",
+          "applies": {
+            "to": "level"
+          },
+          "requirement": {
+            "measure": "roomCount",
+            "op": ">=",
+            "value": 0
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ]
+}

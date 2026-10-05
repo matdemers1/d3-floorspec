@@ -1,0 +1,6 @@
+{
+  "description": "The same document and pack for an evaluator that knows FS_electrical and FS_mechanical: every FS_electrical rule is evaluated; only the EXT_furniture rule, which no evaluator implements, is still FS-RULES-009.",
+  "covers": [
+    "FS-RULES-3.10.1"
+  ]
+}

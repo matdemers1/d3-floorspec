@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/rules/0.1/pack.schema.json",
+  "$comment": "Normative (FLR-ADR-006, FLR-ADR-011): the rule pack object an evaluator reads (Floorspec Rules 0.1, chapter 2). A pack it rejects is FS-RULES-004. The rule-pack format (FLR-T-6.3) builds on this object.",
+  "title": "Floorspec Rules 0.1 rule pack",
+  "description": "2.1: a named, versioned set of rule records under CC BY 4.0, with its coverage.",
+  "type": "object",
+  "required": [
+    "floorspecRules",
+    "name",
+    "version",
+    "title",
+    "license",
+    "rules"
+  ],
+  "properties": {
+    "floorspecRules": {
+      "$ref": "defs.schema.json#/$defs/floorspecRules"
+    },
+    "name": {
+      "$ref": "defs.schema.json#/$defs/packName"
+    },
+    "version": {
+      "$ref": "defs.schema.json#/$defs/version"
+    },
+    "title": {
+      "$ref": "defs.schema.json#/$defs/title"
+    },
+    "license": {
+      "title": "Licence",
+      "description": "2.3: CC BY 4.0, as an SPDX identifier.",
+      "const": "CC-BY-4.0"
+    },
+    "description": {
+      "$ref": "defs.schema.json#/$defs/text"
+    },
+    "rules": {
+      "title": "Rules",
+      "description": "2.1: rule ID → rule record.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "defs.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "rule.schema.json"
+      }
+    },
+    "coverage": {
+      "title": "Coverage",
+      "description": "2.4.",
+      "type": "array",
+      "items": {
+        "$ref": "defs.schema.json#/$defs/coverageEntry"
+      },
+      "default": []
+    },
+    "extras": {
+      "type": "object",
+      "default": {}
+    }
+  },
+  "additionalProperties": false
+}

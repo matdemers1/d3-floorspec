@@ -1,0 +1,19 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingSillHeight"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingHeadHeight"
+    }
+  ],
+  "units": "metric"
+}

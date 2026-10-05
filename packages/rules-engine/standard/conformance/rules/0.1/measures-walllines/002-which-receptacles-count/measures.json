@@ -1,0 +1,48 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "receptacleReach",
+      "args": {
+        "match": {
+          "amps": 20
+        }
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "receptacleReach",
+      "args": {
+        "maxHeight": 256000
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "receptacleReach",
+      "args": {
+        "maxHeight": 384000
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "wallRunBetweenReceptacles",
+      "args": {
+        "match": {
+          "amps": 15
+        }
+      }
+    }
+  ]
+}

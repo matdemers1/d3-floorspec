@@ -1,0 +1,7 @@
+{
+  "description": "Three packs: two schema-valid packs named `same` (FS-RULES-005 for each, neither evaluated) and a third, also named `same`, that does not match the schema (FS-RULES-004; it does not count as a name). Other packs are unaffected.",
+  "covers": [
+    "FS-RULES-11.1.1",
+    "FS-RULES-2.2.1"
+  ]
+}

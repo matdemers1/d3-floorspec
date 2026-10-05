@@ -1,0 +1,6 @@
+{
+  "description": "A request without `packs` does not match the request schema: FS-RULES-001.",
+  "covers": [
+    "FS-RULES-1.1.1"
+  ]
+}

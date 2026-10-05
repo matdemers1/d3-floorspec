@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "display": "15' 8 1/16\"",
+      "involved": [
+        "X8"
+      ],
+      "type": "length",
+      "value": 6114304
+    },
+    {
+      "display": "15' 8 1/16\"",
+      "involved": [
+        "X8"
+      ],
+      "type": "length",
+      "value": 6114304
+    },
+    {
+      "display": "27' 0 3/16\"",
+      "involved": [],
+      "type": "length",
+      "value": 10540032
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "display": "38' 8 1/4\"",
+      "involved": [
+        "X6"
+      ],
+      "type": "length",
+      "value": 15093760
+    },
+    {
+      "display": "19' 4 1/8\"",
+      "involved": [
+        "X6"
+      ],
+      "type": "length",
+      "value": 7546880
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "Two packs given as b-pack then a-pack, rules declared Z then A, and a malformed third pack: diagnostics are sorted by code, `evaluated` and `notEvaluated` by pack and rule, coverage by pack, code, edition, section, status and note (an absent note first), and findings by pack, rule and subject.",
+  "covers": [
+    "FS-RULES-11.1.1",
+    "FS-RULES-9.7.1"
+  ]
+}
