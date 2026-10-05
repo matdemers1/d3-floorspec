@@ -1,0 +1,6 @@
+{
+  "description": "An opening filled by a type that does not exist, and a common door in A's wall: reference invariants are evaluated first, so only FS-INV-002.",
+  "covers": [
+    "FS-CORE-10.3.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "The Kitchen set's primary is DA, an option of the Deck set: FS-INV-1101 names the set and the option, and no design is evaluated.",
+  "covers": [
+    "FS-CORE-19.1.2",
+    "FS-CORE-10.2.1",
+    "FS-CORE-10.3.1"
+  ]
+}

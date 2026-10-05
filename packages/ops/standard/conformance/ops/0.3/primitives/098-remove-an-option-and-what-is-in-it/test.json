@@ -1,0 +1,6 @@
+{
+  "description": "Removing option KB with cascade takes its separator and its window; the set has one option left, which Core only lints.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

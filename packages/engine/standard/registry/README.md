@@ -70,14 +70,16 @@ mechanical, low-voltage, structural, furniture — ship as first-party `FS_` ext
 | [`FS_plumbing`](FS_plumbing/spec.md) | 0.1.0 | Release Candidate | fixtures, water heaters, drains, cleanouts and logical stacks, with what drains where and where hot water comes from | `FS-PLMB-` |
 | [`FS_mechanical`](FS_mechanical/spec.md) | 0.1.0 | Release Candidate | heating, cooling and ventilation equipment, air terminals, exhaust, gas appliances and gas sources, with fuel and combustion air | `FS-MECH-` |
 | [`FS_lowvoltage`](FS_lowvoltage/spec.md) | 0.1.0 | Release Candidate | data, coax, phone and fibre outlets, doorbells, security devices, speakers, and the head-ends they are run to | `FS-LOWV-` |
+| [`FS_furniture`](FS_furniture/spec.md) | 0.1.0 | Release Candidate | furniture, appliances and casework, each with a glTF model, a plan symbol and clearance envelopes — a refrigerator's door swing, the access beside a bed — with a starter library ([`library/`](FS_furniture/library/), CC0 1.0) | `FS-FURN-` |
 
-All four list one implementation, D3 Floorspec's engine. The conformance oracle in
-`tools/oracle/ext/` implements them too, but it is written by the same project and is not an
+The four building systems list one implementation, D3 Floorspec's engine. The conformance oracle in
+`tools/oracle/ext/` implements all five too, but it is written by the same project and is not an
 independent implementation: each stays a Release Candidate until a second, independent
-implementation passes its suite (FLR-REQ-092).
+implementation passes its suite (FLR-REQ-092). FS_furniture lists none yet: the oracle passes its
+suite, and D3 Floorspec's engine is listed when it does.
 
 Every official extension follows the same conventions, each stated in its own specification's
-chapter 1: its rules apply to a document of a Core draft it lists — all four list Core 0.2 and
+chapter 1: its rules apply to a document of a Core draft it lists — all five list Core 0.2 and
 0.3 — that uses it at a version a validator both implements and knows; its diagnostics are `FS-<CODE>-SCH-`, `-INV-` and `-LINT-`, evaluated after
 Core's invariants and never with a Core error; its errors make a document invalid; and what it
 derives is `extensions.<NAME>` of the derived values. Records that are not elements — circuits,

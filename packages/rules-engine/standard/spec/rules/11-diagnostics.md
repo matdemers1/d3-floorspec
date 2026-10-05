@@ -20,7 +20,7 @@ that two evaluators report the same bytes.
 |---|---|---|---|---|---|
 | `FS-RULES-001` | error | the request is not a well-formed JSON text, or does not match the request schema | — | nothing is evaluated | 1.1.1 |
 | `FS-RULES-002` | error | the profile does not match the profile schema, adopts one code twice with one date, names one pack twice, or its text matches the assurance pattern | — | nothing is evaluated | 10.1.1 |
-| `FS-RULES-003` | error | the document is not valid | — | nothing is evaluated | 1.2.1 |
+| `FS-RULES-003` | error | the document is not valid, or Core derives nothing for the design the request names | — | nothing is evaluated | 1.2.1, 1.2.2 |
 | `FS-RULES-004` | error | a pack does not match the pack schema; once for each | `packIndex` | the pack is not evaluated | 2.1.1 |
 | `FS-RULES-005` | error | a pack that matches the schema shares its name with another that does; once for each such pack | `packIndex` | the pack is not evaluated | 2.2.1 |
 | `FS-RULES-006` | error | a pack that matches the schema has text that matches the assurance pattern | `packIndex` | the pack is not evaluated | 2.5.1 |

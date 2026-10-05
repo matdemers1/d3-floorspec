@@ -137,6 +137,10 @@
         "reachable": false
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "BED": {
         "bottom": 0,

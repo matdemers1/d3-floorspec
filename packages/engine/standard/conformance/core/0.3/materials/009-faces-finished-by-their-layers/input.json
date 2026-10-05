@@ -1,0 +1,116 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "EXT": {
+      "kind": "wallType",
+      "name": "Exterior 2x6, sided",
+      "layers": [
+        {
+          "thickness": 25600,
+          "function": "finish",
+          "material": "SIDING"
+        },
+        {
+          "thickness": 179200,
+          "function": "core",
+          "material": "STUD"
+        },
+        {
+          "thickness": 16640,
+          "function": "finish",
+          "material": "GWB"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [5120000, 0]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "EXT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "EXT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "EXT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J1",
+      "type": "EXT",
+      "finishes": {
+        "left": {
+          "regions": [
+            {
+              "from": 0,
+              "to": 5120000,
+              "bottom": 0,
+              "top": 1152000,
+              "material": "STONE"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2560000, 1920000]
+    }
+  },
+  "materials": {
+    "SIDING": {
+      "color": "#7d8c80"
+    },
+    "STUD": {
+      "color": "#e8d3a3"
+    },
+    "GWB": {
+      "color": "#f2f0eb"
+    },
+    "STONE": {
+      "color": "#8a8178"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The package's file is assets/Tile-12in.png and the asset's path assets/tile-12in.png: a path names one file exactly, case and all, so there is no file at it: FS-INV-1005.",
+  "covers": [
+    "FS-CORE-18.4.2"
+  ]
+}

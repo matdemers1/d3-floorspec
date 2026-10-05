@@ -1,0 +1,8 @@
+{
+  "description": "Regions of one face may share an edge: W2's right face has panelling below the backsplash and above part of it, each meeting it along its whole edge. W4's right face is tiled by one region the whole length of its location line and the whole height of the wall, the largest a region may be. Valid; each face lists its regions in the order the wall does.",
+  "covers": [
+    "FS-CORE-18.5.3",
+    "FS-CORE-18.5.4",
+    "FS-CORE-18.6.1"
+  ]
+}

@@ -31,6 +31,14 @@
         "metric"
       ],
       "default": "imperial"
+    },
+    "design": {
+      "title": "Design",
+      "description": "1.2: the design to evaluate (Core 19.6): an object mapping option set IDs to option IDs. Absent: the primary design. A design Core derives nothing for is FS-RULES-003, not this schema's.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   },
   "additionalProperties": false

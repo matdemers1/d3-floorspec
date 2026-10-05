@@ -1,0 +1,7 @@
+{
+  "description": "A plan symbol is SVG or PNG (Core 12.6.1): the refrigerator's, made a JPEG, is FS-INV-506, and FS_furniture is not evaluated.",
+  "covers": [
+    "FS-FURN-1.2.2",
+    "FS-CORE-12.6.1"
+  ]
+}

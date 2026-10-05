@@ -1,0 +1,7 @@
+{
+  "description": "A region with no width, starting and ending past the wall's end: FS-INV-1001 only - FS-INV-1002 is not evaluated for a region that has FS-INV-1001 (10.3).",
+  "covers": [
+    "FS-CORE-18.5.2",
+    "FS-CORE-10.3.1"
+  ]
+}

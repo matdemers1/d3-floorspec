@@ -1,0 +1,6 @@
+{
+  "description": "A texture with a size and no map.",
+  "covers": [
+    "FS-CORE-18.2.1"
+  ]
+}

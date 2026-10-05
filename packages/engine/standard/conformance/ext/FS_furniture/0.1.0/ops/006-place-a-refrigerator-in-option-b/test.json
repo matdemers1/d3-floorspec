@@ -1,0 +1,7 @@
+{
+  "description": "Kitchen options A and B in a Core 0.3 document, applied as Ops 0.3 with context.option B: placeElement puts option B's refrigerator on the west wall, and the applier adds it to B (Ops 2.8.1). Both designs are valid under FS_furniture.",
+  "covers": [
+    "FS-FURN-1.2.1",
+    "FS-OPS-2.8.1"
+  ]
+}

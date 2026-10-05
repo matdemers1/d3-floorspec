@@ -1,0 +1,6 @@
+{
+  "description": "A door O1 from the Bedroom swings into the Laundry, where a dresser X16 stands in its swing: an opening's envelope runs into it as an element's does. (With a door, the flat's circulation is evaluated, and it has no entry: Core's FS-LINT-014.)",
+  "covers": [
+    "FS-FURN-1.2.3"
+  ]
+}

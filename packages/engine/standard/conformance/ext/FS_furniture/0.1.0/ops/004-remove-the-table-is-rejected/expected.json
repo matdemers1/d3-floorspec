@@ -1,0 +1,15 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-FURN-INV-002",
+      "severity": "error",
+      "elements": ["X8"]
+    },
+    {
+      "code": "FS-FURN-INV-002",
+      "severity": "error",
+      "elements": ["X9"]
+    }
+  ]
+}

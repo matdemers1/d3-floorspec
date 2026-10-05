@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 650" width="760mm" height="650mm">
+<title>Range, 760 mm (FS_furniture range; CC0-1.0)</title>
+<rect x="5" y="5" width="750" height="640" fill="#ffffff" stroke="#000000" stroke-width="10"/>
+<rect x="0" y="0" width="760" height="60" fill="none" stroke="#000000" stroke-width="5"/>
+<circle cx="190" cy="230" r="90" fill="none" stroke="#000000" stroke-width="5"/>
+<circle cx="570" cy="230" r="90" fill="none" stroke="#000000" stroke-width="5"/>
+<circle cx="190" cy="480" r="90" fill="none" stroke="#000000" stroke-width="5"/>
+<circle cx="570" cy="480" r="90" fill="none" stroke="#000000" stroke-width="5"/>
+</svg>

@@ -1,0 +1,7 @@
+{
+  "description": "The pantry of the last test, and the front door moved to 3500 mm along its 4 m wall, so it runs past the wall's end in every design: FS-INV-302 is reported once, without design, and FS-INV-202 with \"design\": \"KB\".",
+  "covers": [
+    "FS-CORE-19.5.2",
+    "FS-CORE-10.2.1"
+  ]
+}

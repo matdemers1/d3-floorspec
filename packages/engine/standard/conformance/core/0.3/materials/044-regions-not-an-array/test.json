@@ -1,0 +1,6 @@
+{
+  "description": "A face's regions are an array.",
+  "covers": [
+    "FS-CORE-18.5.1"
+  ]
+}

@@ -45,6 +45,41 @@ export const OFFICIAL_ENTRIES = [
     ]
   },
   {
+    "name": "FS_furniture",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_furniture/0.1.0/furniture.schema.json",
+    "title": "Furniture, appliances and casework",
+    "requires": {},
+    "kinds": {
+      "pieces": {
+        "title": "Furniture piece",
+        "fallback": {
+          "asset": true,
+          "symbol": true
+        }
+      },
+      "appliances": {
+        "title": "Appliance",
+        "fallback": {
+          "asset": true,
+          "symbol": true
+        }
+      },
+      "casework": {
+        "title": "Casework",
+        "fallback": {
+          "asset": true,
+          "symbol": true
+        }
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": []
+  },
+  {
     "name": "FS_lowvoltage",
     "version": "0.1.0",
     "status": "releaseCandidate",
@@ -160,7 +195,7 @@ export const OFFICIAL_SCHEMAS = {
   "FS_electrical": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://d3cloud.io/floorspec/schema/ext/FS_electrical/0.1.0/electrical.schema.json",
-    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_electrical 0.1.0, registry/FS_electrical/spec.md. Applied to the extension's top-level data, extensions.FS_electrical, by a validator that implements FS_electrical and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_electrical 0.1.0, registry/FS_electrical/spec.md. Applied to the extension's top-level data, extensions.FS_electrical, by a validator that implements FS_electrical and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, option, name, extras) are checked by Floorspec Core, so this schema only names them.",
     "title": "FS_electrical 0.1.0",
     "description": "Panels, circuits, receptacles, switches, lights, smoke and CO alarms, EV chargers and switch control.",
     "type": "object",
@@ -302,6 +337,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -368,6 +406,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -413,6 +454,9 @@ export const OFFICIAL_SCHEMAS = {
           },
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
           },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
@@ -464,6 +508,9 @@ export const OFFICIAL_SCHEMAS = {
           },
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
           },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
@@ -534,6 +581,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -589,6 +639,9 @@ export const OFFICIAL_SCHEMAS = {
           },
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
           },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
@@ -681,10 +734,263 @@ export const OFFICIAL_SCHEMAS = {
       }
     }
   },
+  "FS_furniture": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_furniture/0.1.0/furniture.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_furniture 0.1.0, registry/FS_furniture/spec.md. Applied to the extension's top-level data, extensions.FS_furniture, by a validator that implements FS_furniture and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, option, name, extras) are checked by Floorspec Core, so this schema only names them.",
+    "title": "FS_furniture 0.1.0",
+    "description": "Furniture pieces, appliances and casework, each with a glTF model, a plan symbol and clearance envelopes.",
+    "type": "object",
+    "properties": {
+      "collections": {
+        "description": "Core 12.5: the extension's elements, by kind.",
+        "type": "object",
+        "properties": {
+          "pieces": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/piece"
+            },
+            "description": "Pieces: an ID → element map (Core 12.5)."
+          },
+          "appliances": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/appliance"
+            },
+            "description": "Appliances: an ID → element map (Core 12.5)."
+          },
+          "casework": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/casework"
+            },
+            "description": "Casework: an ID → element map (Core 12.5)."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+        "description": "Core 3.1.1: an ID."
+      },
+      "pieceCategory": {
+        "description": "2.5: the categories of a piece.",
+        "type": "string",
+        "enum": [
+          "sofa",
+          "armchair",
+          "chair",
+          "bench",
+          "stool",
+          "diningTable",
+          "coffeeTable",
+          "sideTable",
+          "desk",
+          "bed",
+          "crib",
+          "nightstand",
+          "dresser",
+          "wardrobe",
+          "bookcase",
+          "sideboard",
+          "mediaUnit",
+          "shelf",
+          "other"
+        ]
+      },
+      "applianceCategory": {
+        "description": "2.5: the categories of an appliance.",
+        "type": "string",
+        "enum": [
+          "refrigerator",
+          "freezer",
+          "range",
+          "wallOven",
+          "cooktop",
+          "microwave",
+          "dishwasher",
+          "washer",
+          "dryer",
+          "other"
+        ]
+      },
+      "caseworkCategory": {
+        "description": "2.5: the categories of casework.",
+        "type": "string",
+        "enum": [
+          "baseCabinet",
+          "wallCabinet",
+          "tallCabinet",
+          "island",
+          "vanity",
+          "shelving",
+          "other"
+        ]
+      },
+      "piece": {
+        "title": "Piece",
+        "description": "2.2: a piece of furniture.",
+        "type": "object",
+        "required": [
+          "category"
+        ],
+        "properties": {
+          "category": {
+            "description": "2.5: what it is.",
+            "$ref": "#/$defs/pieceCategory"
+          },
+          "catalogue": {
+            "description": "2.1: where it came from - a library item, a maker's model number. A label only.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "with": {
+            "description": "4.3: the element of FS_furniture it belongs with or is set into.",
+            "$ref": "#/$defs/id"
+          },
+          "seats": {
+            "description": "2.2: how many people it seats.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "appliance": {
+        "title": "Appliance",
+        "description": "2.3: a domestic appliance.",
+        "type": "object",
+        "required": [
+          "category"
+        ],
+        "properties": {
+          "category": {
+            "description": "2.5: what it is.",
+            "$ref": "#/$defs/applianceCategory"
+          },
+          "catalogue": {
+            "description": "2.1: where it came from - a library item, a maker's model number. A label only.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "with": {
+            "description": "4.3: the element of FS_furniture it belongs with or is set into.",
+            "$ref": "#/$defs/id"
+          },
+          "connections": {
+            "description": "4.4: the elements of other extensions that serve it.",
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/id"
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "casework": {
+        "title": "Casework",
+        "description": "2.4: built-in cabinetry.",
+        "type": "object",
+        "required": [
+          "category"
+        ],
+        "properties": {
+          "category": {
+            "description": "2.5: what it is.",
+            "$ref": "#/$defs/caseworkCategory"
+          },
+          "catalogue": {
+            "description": "2.1: where it came from - a library item, a maker's model number. A label only.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "with": {
+            "description": "4.3: the element of FS_furniture it belongs with or is set into.",
+            "$ref": "#/$defs/id"
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
   "FS_lowvoltage": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://d3cloud.io/floorspec/schema/ext/FS_lowvoltage/0.1.0/lowvoltage.schema.json",
-    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_lowvoltage 0.1.0, registry/FS_lowvoltage/spec.md. Applied to the extension's top-level data, extensions.FS_lowvoltage, by a validator that implements FS_lowvoltage and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_lowvoltage 0.1.0, registry/FS_lowvoltage/spec.md. Applied to the extension's top-level data, extensions.FS_lowvoltage, by a validator that implements FS_lowvoltage and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, option, name, extras) are checked by Floorspec Core, so this schema only names them.",
     "title": "FS_lowvoltage 0.1.0",
     "description": "Data, coax and phone outlets, doorbells, security devices, speakers, and the head-ends they are run to.",
     "type": "object",
@@ -797,6 +1103,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -839,6 +1148,9 @@ export const OFFICIAL_SCHEMAS = {
           },
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
           },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
@@ -893,6 +1205,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -939,6 +1254,9 @@ export const OFFICIAL_SCHEMAS = {
           },
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
           },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
@@ -996,6 +1314,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -1010,7 +1331,7 @@ export const OFFICIAL_SCHEMAS = {
   "FS_mechanical": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://d3cloud.io/floorspec/schema/ext/FS_mechanical/0.1.0/mechanical.schema.json",
-    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_mechanical 0.1.0, registry/FS_mechanical/spec.md. Applied to the extension's top-level data, extensions.FS_mechanical, by a validator that implements FS_mechanical and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_mechanical 0.1.0, registry/FS_mechanical/spec.md. Applied to the extension's top-level data, extensions.FS_mechanical, by a validator that implements FS_mechanical and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, option, name, extras) are checked by Floorspec Core, so this schema only names them.",
     "title": "FS_mechanical 0.1.0",
     "description": "Heating, cooling and ventilation equipment, terminals, exhaust, gas appliances and gas sources.",
     "type": "object",
@@ -1171,6 +1492,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -1215,6 +1539,9 @@ export const OFFICIAL_SCHEMAS = {
           },
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
           },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
@@ -1266,6 +1593,9 @@ export const OFFICIAL_SCHEMAS = {
           },
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
           },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
@@ -1347,6 +1677,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -1399,7 +1732,7 @@ export const OFFICIAL_SCHEMAS = {
   "FS_plumbing": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://d3cloud.io/floorspec/schema/ext/FS_plumbing/0.1.0/plumbing.schema.json",
-    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_plumbing 0.1.0, registry/FS_plumbing/spec.md. Applied to the extension's top-level data, extensions.FS_plumbing, by a validator that implements FS_plumbing and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_plumbing 0.1.0, registry/FS_plumbing/spec.md. Applied to the extension's top-level data, extensions.FS_plumbing, by a validator that implements FS_plumbing and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, option, name, extras) are checked by Floorspec Core, so this schema only names them.",
     "title": "FS_plumbing 0.1.0",
     "description": "Fixtures, water heaters, drains, cleanouts and logical stacks, with their connections.",
     "type": "object",
@@ -1527,6 +1860,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -1600,6 +1936,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -1641,6 +1980,9 @@ export const OFFICIAL_SCHEMAS = {
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
           },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
           "name": {
             "description": "Core 12.5: checked by Core, not here."
           },
@@ -1670,6 +2012,9 @@ export const OFFICIAL_SCHEMAS = {
           },
           "clearances": {
             "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
           },
           "name": {
             "description": "Core 12.5: checked by Core, not here."

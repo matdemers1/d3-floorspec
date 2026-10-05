@@ -98,6 +98,10 @@
         "reachable": false
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "R1": {
         "bottom": 0,

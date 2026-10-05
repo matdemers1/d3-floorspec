@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-1006",
+      "severity": "error",
+      "elements": ["M-refrigerator-900"]
+    },
+    {
+      "code": "FS-INV-1007",
+      "severity": "error",
+      "elements": ["M-refrigerator-900"]
+    }
+  ]
+}

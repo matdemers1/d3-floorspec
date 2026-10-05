@@ -1,0 +1,7 @@
+{
+  "description": "Every kind of FS_furniture requires a model in its fallback (1.1): the refrigerator without one is FS-INV-603 of a known extension (Core 12.4.2), and FS_furniture is not evaluated.",
+  "covers": [
+    "FS-FURN-1.2.2",
+    "FS-CORE-12.4.2"
+  ]
+}

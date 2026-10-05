@@ -1,0 +1,201 @@
+{
+  "assets": {
+    "TILE-PHOTO": {
+      "byteLength": 48213,
+      "mediaType": "image/jpeg",
+      "path": "assets/tile-12in.jpg",
+      "sha256": "5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e"
+    }
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.3",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3901440
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        4681728,
+        3901440
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        4681728,
+        0
+      ]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [
+        3121152,
+        0
+      ]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [
+        3121152,
+        3901440
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "materials": {
+    "PAINT": {
+      "color": "#e9e6df",
+      "name": "Eggshell paint",
+      "roughness": 700
+    },
+    "TILE": {
+      "color": "#d8d4cc",
+      "name": "Porcelain tile, 12 inch",
+      "roughness": 300,
+      "texture": {
+        "asset": "TILE-PHOTO",
+        "size": [
+          390144,
+          390144
+        ]
+      }
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2340864,
+        1950720
+      ],
+      "function": "kitchen",
+      "level": "L1",
+      "name": "Kitchen",
+      "wallFinish": "PAINT"
+    }
+  },
+  "types": {
+    "T-door-36": {
+      "height": 2600960,
+      "kind": "doorType",
+      "width": 1170432
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J6",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J5",
+      "finishes": {
+        "right": {
+          "material": "TILE",
+          "regions": [
+            {
+              "bottom": 1170432,
+              "from": 780288,
+              "material": "TILE",
+              "to": 1560576,
+              "top": 1755648
+            },
+            {
+              "bottom": 1755648,
+              "from": 0,
+              "material": "TILE",
+              "to": 390144,
+              "top": 3456000
+            }
+          ]
+        }
+      },
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    },
+    "W5": {
+      "end": "J6",
+      "level": "L1",
+      "start": "J5",
+      "type": "WT"
+    },
+    "W6": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J6",
+      "type": "WT"
+    },
+    "W7": {
+      "end": "J1",
+      "finishes": {
+        "right": {
+          "material": "TILE",
+          "regions": [
+            {
+              "bottom": 1170432,
+              "from": 0,
+              "material": "TILE",
+              "to": 2340864,
+              "top": 1755648
+            },
+            {
+              "bottom": 0,
+              "from": 780288,
+              "material": "TILE",
+              "to": 1560576,
+              "top": 1170432
+            }
+          ]
+        }
+      },
+      "level": "L1",
+      "start": "J5",
+      "type": "WT"
+    }
+  }
+}

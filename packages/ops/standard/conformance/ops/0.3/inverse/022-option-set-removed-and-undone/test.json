@@ -1,0 +1,6 @@
+{
+  "description": "Removing the set with cascade: the inverse adds the set, then its options, then what was in them - option sets and options come after junctions in step 2's order - and applying it gives back A exactly (1.6.1).",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A chair with the FS_plumbing fixture X16: an element, but not of FS_furniture.",
+  "covers": [
+    "FS-FURN-4.3.1"
+  ]
+}

@@ -273,6 +273,10 @@
         "throughSleeping": false
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "RNE": {
         "bottom": 0,

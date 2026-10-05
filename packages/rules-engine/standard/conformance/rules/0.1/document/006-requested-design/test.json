@@ -1,0 +1,7 @@
+{
+  "description": "The same house and pack, the request naming the design {\"RS\": \"RB\"}: its view has the pantry, four rooms on L1, and the rule finds that.",
+  "covers": [
+    "FS-RULES-1.1.1",
+    "FS-RULES-1.2.2"
+  ]
+}

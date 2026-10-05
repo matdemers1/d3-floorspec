@@ -1,0 +1,8 @@
+{
+  "description": "The kitchen house with the Deck set, deriving {\"KS\": \"KB\", \"DS\": \"DB\"}: a design that chooses non-primary options of two sets is not one of the checked designs, but its view is valid, so it is derived - the open kitchen, and no deck.",
+  "covers": [
+    "FS-CORE-19.6.1",
+    "FS-CORE-19.6.2",
+    "FS-CORE-19.5.1"
+  ]
+}

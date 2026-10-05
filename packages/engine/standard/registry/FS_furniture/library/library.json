@@ -1,0 +1,1208 @@
+{
+  "library": "FS_furniture starter library",
+  "extension": "FS_furniture",
+  "version": "0.1.0",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "description": "Generic furniture, appliances and casework as FS_furniture 0.1.0 elements ready to place: lengths in base units (1/1280 mm), each item's box and default clearance envelopes in its frame (spec.md 3.1, 4.2), and a generated proxy model and plan symbol with their SHA-256 digests and lengths. Written by tools/furniture-library.ts.",
+  "items": {
+    "refrigerator-900": {
+      "kind": "appliances",
+      "mounting": "floor",
+      "element": {
+        "category": "refrigerator",
+        "catalogue": "refrigerator-900",
+        "name": "Refrigerator, 900 mm",
+        "clearances": {
+          "door": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              896000,
+              -576000,
+              0
+            ],
+            "max": [
+              2048000,
+              576000,
+              2278400
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -576000,
+              0
+            ],
+            "max": [
+              896000,
+              576000,
+              2278400
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/refrigerator-900.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "f7e318e5c45b6596771381820a0ee93b5021fc89bd6de2c0b8f566796a9f5552",
+        "byteLength": 2300
+      },
+      "symbol": {
+        "path": "symbols/refrigerator-900.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "ef8ac6f6aef200d274387176304c1d566b78399e73cee083cdeb17a691abe373",
+        "byteLength": 527
+      }
+    },
+    "freezer-600": {
+      "kind": "appliances",
+      "mounting": "floor",
+      "element": {
+        "category": "freezer",
+        "catalogue": "freezer-600",
+        "name": "Upright freezer, 600 mm",
+        "clearances": {
+          "door": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              832000,
+              -384000,
+              0
+            ],
+            "max": [
+              1984000,
+              384000,
+              2176000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -384000,
+              0
+            ],
+            "max": [
+              832000,
+              384000,
+              2176000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/freezer-600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "445552a3f8bf714bec9151545a03b152e3760db6521187e0e6e352720b333f7f",
+        "byteLength": 2292
+      },
+      "symbol": {
+        "path": "symbols/freezer-600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "2851f067f9771f208bcc3f9df1860020673b730fcc7c287ea6dc718fe0edf0c4",
+        "byteLength": 525
+      }
+    },
+    "range-760": {
+      "kind": "appliances",
+      "mounting": "floor",
+      "element": {
+        "category": "range",
+        "catalogue": "range-760",
+        "name": "Range, 760 mm",
+        "clearances": {
+          "door": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              832000,
+              -486400,
+              0
+            ],
+            "max": [
+              1600000,
+              486400,
+              1177600
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -486400,
+              0
+            ],
+            "max": [
+              832000,
+              486400,
+              1177600
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/range-760.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "4bb46d30886648b92fb82137e675bed4cf8d4f3a9afe02873817ee2ef0b774d8",
+        "byteLength": 2284
+      },
+      "symbol": {
+        "path": "symbols/range-760.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "33d80b570a881073b6fd99def41ebd92aaa4f022c39abada8048f258d87fe808",
+        "byteLength": 667
+      }
+    },
+    "wall-oven-760": {
+      "kind": "appliances",
+      "mounting": "builtIn",
+      "element": {
+        "category": "wallOven",
+        "catalogue": "wall-oven-760",
+        "name": "Wall oven, 760 mm",
+        "clearances": {
+          "door": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              768000,
+              -486400,
+              0
+            ],
+            "max": [
+              1536000,
+              486400,
+              921600
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -486400,
+              0
+            ],
+            "max": [
+              768000,
+              486400,
+              921600
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/wall-oven-760.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "f8a0972e5efc8087605eb6ff8ef525acdab11dee86f2a045dc5a32220466ea0d",
+        "byteLength": 1644
+      },
+      "symbol": {
+        "path": "symbols/wall-oven-760.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "06eb65e379a497260bb5979e0c0d1a713e1b842e051d9bf0c2ac359fa1740306",
+        "byteLength": 336
+      }
+    },
+    "cooktop-760": {
+      "kind": "appliances",
+      "mounting": "builtIn",
+      "element": {
+        "category": "cooktop",
+        "catalogue": "cooktop-760",
+        "name": "Cooktop, 760 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -486400,
+              0
+            ],
+            "max": [
+              665600,
+              486400,
+              76800
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/cooktop-760.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "d37a41056f2253a4df5047a83479a2ad6d577fe920e572fda77428b3702ebbbe",
+        "byteLength": 1640
+      },
+      "symbol": {
+        "path": "symbols/cooktop-760.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "0807293d25aaabd40456f3b09aca4af3f7a19972a9e23db2018c837e922de80e",
+        "byteLength": 581
+      }
+    },
+    "microwave-600": {
+      "kind": "appliances",
+      "mounting": "builtIn",
+      "element": {
+        "category": "microwave",
+        "catalogue": "microwave-600",
+        "name": "Microwave, 600 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -384000,
+              0
+            ],
+            "max": [
+              512000,
+              384000,
+              448000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/microwave-600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "d1fb5bca4e0a985422735b1b4051fa28b5b7dd01f7ca2f4761d44c23d68673e9",
+        "byteLength": 1644
+      },
+      "symbol": {
+        "path": "symbols/microwave-600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "6080463ce12a18a26f553e919e8252e196ba0eeb7f8838858641892acce4d36b",
+        "byteLength": 337
+      }
+    },
+    "dishwasher-600": {
+      "kind": "appliances",
+      "mounting": "floor",
+      "element": {
+        "category": "dishwasher",
+        "catalogue": "dishwasher-600",
+        "name": "Dishwasher, 600 mm",
+        "clearances": {
+          "door": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              768000,
+              -384000,
+              0
+            ],
+            "max": [
+              1664000,
+              384000,
+              1088000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -384000,
+              0
+            ],
+            "max": [
+              768000,
+              384000,
+              1088000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/dishwasher-600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "2bf68e06f4a9ee40b534d73546b356cc0748e527ce72dc05bc9e2fae02e8e912",
+        "byteLength": 1648
+      },
+      "symbol": {
+        "path": "symbols/dishwasher-600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "3ea74a39189f73b343cfd0d4f2f91b3fb1cc21a68b063b5286621a848f973edf",
+        "byteLength": 411
+      }
+    },
+    "washer-690": {
+      "kind": "appliances",
+      "mounting": "floor",
+      "element": {
+        "category": "washer",
+        "catalogue": "washer-690",
+        "name": "Front-loading washer, 690 mm",
+        "clearances": {
+          "door": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              832000,
+              -441600,
+              0
+            ],
+            "max": [
+              1728000,
+              441600,
+              1088000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -441600,
+              0
+            ],
+            "max": [
+              832000,
+              441600,
+              1088000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/washer-690.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "e025948e4f0e3afe20902c0536283c7eafd9bfa3ea577984b4f6b348751aee94",
+        "byteLength": 1636
+      },
+      "symbol": {
+        "path": "symbols/washer-690.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "0eab48dcb4ebafc8b503e0d789bfb491d009494753b852ef8bafbbb9d6e8cef3",
+        "byteLength": 351
+      }
+    },
+    "dryer-690": {
+      "kind": "appliances",
+      "mounting": "floor",
+      "element": {
+        "category": "dryer",
+        "catalogue": "dryer-690",
+        "name": "Dryer, 690 mm",
+        "clearances": {
+          "door": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              832000,
+              -441600,
+              0
+            ],
+            "max": [
+              1728000,
+              441600,
+              1088000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -441600,
+              0
+            ],
+            "max": [
+              832000,
+              441600,
+              1088000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/dryer-690.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "cead0ad4bb50d8013157af6c5d15ce41b78142336e622bcacddf1d0e9c6eff6e",
+        "byteLength": 1636
+      },
+      "symbol": {
+        "path": "symbols/dryer-690.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "498984c7a1fd87fd029847b0d5b4ffced97870ddb976d190aafd1af2d6e9d5de",
+        "byteLength": 417
+      }
+    },
+    "sofa-2100": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "sofa",
+        "catalogue": "sofa-2100",
+        "name": "Three-seat sofa",
+        "seats": 3,
+        "clearances": {
+          "front": {
+            "purpose": "access",
+            "shape": "box",
+            "min": [
+              1152000,
+              -1344000,
+              0
+            ],
+            "max": [
+              1920000,
+              1344000,
+              2560000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1344000,
+              0
+            ],
+            "max": [
+              1152000,
+              1344000,
+              1088000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/sofa-2100.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "9e743f17668b4e416702511a1b8bcf8308ddc29309a852d884a8b9ff837a9880",
+        "byteLength": 3584
+      },
+      "symbol": {
+        "path": "symbols/sofa-2100.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "0cce0be35d5fb68643c6248467f13e06592f8f373fcf74f2054585faa6cb2449",
+        "byteLength": 538
+      }
+    },
+    "armchair-850": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "armchair",
+        "catalogue": "armchair-850",
+        "name": "Armchair",
+        "seats": 1,
+        "clearances": {
+          "front": {
+            "purpose": "access",
+            "shape": "box",
+            "min": [
+              1088000,
+              -544000,
+              0
+            ],
+            "max": [
+              1856000,
+              544000,
+              2560000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -544000,
+              0
+            ],
+            "max": [
+              1088000,
+              544000,
+              1088000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/armchair-850.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "affddfa5d06994e7158f78b3458f804da97975ed41a069dbd34496a0e9e73409",
+        "byteLength": 3592
+      },
+      "symbol": {
+        "path": "symbols/armchair-850.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "b54c8d50dd3b7f6bef32adf03f9d6449e05e5d2e0871acae8bb5f558e682b122",
+        "byteLength": 530
+      }
+    },
+    "dining-table-1500": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "diningTable",
+        "catalogue": "dining-table-1500",
+        "name": "Dining table, 1500 x 900 mm",
+        "seats": 6,
+        "clearances": {
+          "around": {
+            "purpose": "access",
+            "shape": "box",
+            "min": [
+              -960000,
+              -1920000,
+              0
+            ],
+            "max": [
+              2112000,
+              1920000,
+              2560000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -960000,
+              0
+            ],
+            "max": [
+              1152000,
+              960000,
+              960000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/dining-table-1500.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "f1f7f9c3f84f64e30aa05fa002b4e7ce05a14dea36bb5deaf243873ee12657bf",
+        "byteLength": 4208
+      },
+      "symbol": {
+        "path": "symbols/dining-table-1500.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "7e309d65f182b2d30118aef245bc423d6cafc2014d52e8ab266d9972c1a30a06",
+        "byteLength": 642
+      }
+    },
+    "dining-chair-450": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "chair",
+        "catalogue": "dining-chair-450",
+        "name": "Dining chair",
+        "seats": 1,
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -288000,
+              0
+            ],
+            "max": [
+              640000,
+              288000,
+              1088000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/dining-chair-450.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "4835348fccce28c0c4d15a586325c8b0df39768f5b1d65596b2b7dd8b6b3acb2",
+        "byteLength": 4880
+      },
+      "symbol": {
+        "path": "symbols/dining-chair-450.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "d4eebc326c2e4831968c5f726fc82a359c8b953b7104db21804e4614c2f012cd",
+        "byteLength": 706
+      }
+    },
+    "coffee-table-1200": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "coffeeTable",
+        "catalogue": "coffee-table-1200",
+        "name": "Coffee table",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -768000,
+              0
+            ],
+            "max": [
+              768000,
+              768000,
+              576000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/coffee-table-1200.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "8df4b116f6f8de8eae63cb6bec10ef226acff22a2b6b1034c87dfe6435dd87a2",
+        "byteLength": 4248
+      },
+      "symbol": {
+        "path": "symbols/coffee-table-1200.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "4dbde2c892d11cdaa038a6c3957ab5c1867dc69809d46dae3225a8dc665a3a79",
+        "byteLength": 627
+      }
+    },
+    "bed-queen-1600": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "bed",
+        "catalogue": "bed-queen-1600",
+        "name": "Queen bed, 1600 x 2050 mm",
+        "clearances": {
+          "left": {
+            "purpose": "access",
+            "shape": "box",
+            "min": [
+              0,
+              1024000,
+              0
+            ],
+            "max": [
+              2624000,
+              1792000,
+              2560000
+            ]
+          },
+          "right": {
+            "purpose": "access",
+            "shape": "box",
+            "min": [
+              0,
+              -1792000,
+              0
+            ],
+            "max": [
+              2624000,
+              -1024000,
+              2560000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1024000,
+              0
+            ],
+            "max": [
+              2624000,
+              1024000,
+              1280000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/bed-queen-1600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "d51ef9f12df2579b523e70cda3e1390b239f2cd15f66843c4eb08ebf1ee92778",
+        "byteLength": 3572
+      },
+      "symbol": {
+        "path": "symbols/bed-queen-1600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "5c51b020883f5a3bb19461fdaa62081d1f5814aa1ca9554a1b859cde116c11e2",
+        "byteLength": 626
+      }
+    },
+    "nightstand-500": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "nightstand",
+        "catalogue": "nightstand-500",
+        "name": "Nightstand",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -320000,
+              0
+            ],
+            "max": [
+              576000,
+              320000,
+              768000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/nightstand-500.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "5647cf07144ea8e2fc29d7b59ccff7d8d9af18a7bde67e0fdc572ae6af8b2d89",
+        "byteLength": 1616
+      },
+      "symbol": {
+        "path": "symbols/nightstand-500.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "72e836eac1c855510b04aba00e3795806d498c4566c4a4b8e3495fe1a0cfa513",
+        "byteLength": 331
+      }
+    },
+    "dresser-1200": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "dresser",
+        "catalogue": "dresser-1200",
+        "name": "Dresser",
+        "clearances": {
+          "front": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              640000,
+              -768000,
+              0
+            ],
+            "max": [
+              1280000,
+              768000,
+              1024000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -768000,
+              0
+            ],
+            "max": [
+              640000,
+              768000,
+              1024000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/dresser-1200.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "f2af947f142fc17a50a9b3b850604406f9ec2001029b5625f6464b37d629c720",
+        "byteLength": 1620
+      },
+      "symbol": {
+        "path": "symbols/dresser-1200.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "0123e986512e7766d0583344dcc81b03a20f89797b8c4d45e44f45950bf79917",
+        "byteLength": 329
+      }
+    },
+    "wardrobe-1000": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "wardrobe",
+        "catalogue": "wardrobe-1000",
+        "name": "Wardrobe",
+        "clearances": {
+          "front": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              768000,
+              -640000,
+              0
+            ],
+            "max": [
+              1536000,
+              640000,
+              2688000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -640000,
+              0
+            ],
+            "max": [
+              768000,
+              640000,
+              2688000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/wardrobe-1000.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "b73ed9acc31559a1a4f11abfe84fb29248debc84e730cc305cfb0481285c23fc",
+        "byteLength": 1608
+      },
+      "symbol": {
+        "path": "symbols/wardrobe-1000.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "a5aae7dec03a4041b8b494f6734fd14f53056fc3eadc0473fe9559a8a00a7c7b",
+        "byteLength": 408
+      }
+    },
+    "desk-1200": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "desk",
+        "catalogue": "desk-1200",
+        "name": "Desk",
+        "seats": 1,
+        "clearances": {
+          "front": {
+            "purpose": "access",
+            "shape": "box",
+            "min": [
+              768000,
+              -768000,
+              0
+            ],
+            "max": [
+              1728000,
+              768000,
+              2560000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -768000,
+              0
+            ],
+            "max": [
+              768000,
+              768000,
+              960000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/desk-1200.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "62c873a42fa92a38d33bd639bd121da7bba3066c99b11e726fa75c4e77ab03bc",
+        "byteLength": 2916
+      },
+      "symbol": {
+        "path": "symbols/desk-1200.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "d634c4f6bf9bcf0a9db4bd377f81da0eba1bad63e5c2743f080459e5ac37cfd6",
+        "byteLength": 429
+      }
+    },
+    "bookcase-900": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "bookcase",
+        "catalogue": "bookcase-900",
+        "name": "Bookcase",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -576000,
+              0
+            ],
+            "max": [
+              448000,
+              576000,
+              2304000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/bookcase-900.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "9ba4f27402c26429032280fa5632804a07795537e5501493a26cfce3cd7441eb",
+        "byteLength": 1640
+      },
+      "symbol": {
+        "path": "symbols/bookcase-900.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "d1225435a6ca300fae1bd72bb7a838d767ca8f05264fe93ffe1f4d2518243af4",
+        "byteLength": 251
+      }
+    },
+    "base-cabinet-600": {
+      "kind": "casework",
+      "mounting": "floor",
+      "element": {
+        "category": "baseCabinet",
+        "catalogue": "base-cabinet-600",
+        "name": "Base cabinet with counter, 600 mm",
+        "clearances": {
+          "front": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              768000,
+              -384000,
+              0
+            ],
+            "max": [
+              1536000,
+              384000,
+              1152000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -384000,
+              0
+            ],
+            "max": [
+              768000,
+              384000,
+              1152000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/base-cabinet-600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "b6198a5cfb2a6da276ef2151b9f4205818fdeccc8b67a56ee354ed92d14e7d70",
+        "byteLength": 2952
+      },
+      "symbol": {
+        "path": "symbols/base-cabinet-600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "2b580fab1a46846da03b4b422472f839fb9b5d176aaf7e22cff6ced000423a9b",
+        "byteLength": 537
+      }
+    },
+    "wall-cabinet-600": {
+      "kind": "casework",
+      "mounting": "wall",
+      "element": {
+        "category": "wallCabinet",
+        "catalogue": "wall-cabinet-600",
+        "name": "Wall cabinet, 600 mm",
+        "clearances": {
+          "front": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              448000,
+              -384000,
+              0
+            ],
+            "max": [
+              960000,
+              384000,
+              960000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -384000,
+              0
+            ],
+            "max": [
+              448000,
+              384000,
+              960000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/wall-cabinet-600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "62ea0ad3aa061820ec47b0bc9540f1bb6517564257a603bb1ffe819513649bcd",
+        "byteLength": 1636
+      },
+      "symbol": {
+        "path": "symbols/wall-cabinet-600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "87e3d014ab0a61596e001f8b2466b770bb370272e32978e5869c37529eb99cfe",
+        "byteLength": 367
+      }
+    },
+    "tall-cabinet-600": {
+      "kind": "casework",
+      "mounting": "floor",
+      "element": {
+        "category": "tallCabinet",
+        "catalogue": "tall-cabinet-600",
+        "name": "Tall pantry cabinet, 600 mm",
+        "clearances": {
+          "front": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              768000,
+              -384000,
+              0
+            ],
+            "max": [
+              1536000,
+              384000,
+              2688000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -384000,
+              0
+            ],
+            "max": [
+              768000,
+              384000,
+              2688000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/tall-cabinet-600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "98db3d3048b1cee950e115c700a6535d04c393f5321b58c558f287813ef8c5a3",
+        "byteLength": 2300
+      },
+      "symbol": {
+        "path": "symbols/tall-cabinet-600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "2197f78314cd25445861a2995b3b173d6590f96efa627b25c10378e13e51b4b4",
+        "byteLength": 440
+      }
+    },
+    "island-1800": {
+      "kind": "casework",
+      "mounting": "floor",
+      "element": {
+        "category": "island",
+        "catalogue": "island-1800",
+        "name": "Kitchen island, 1800 x 900 mm",
+        "clearances": {
+          "front": {
+            "purpose": "workingSpace",
+            "shape": "box",
+            "min": [
+              1152000,
+              -1152000,
+              0
+            ],
+            "max": [
+              2432000,
+              1152000,
+              2560000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1152000,
+              0
+            ],
+            "max": [
+              1152000,
+              1152000,
+              1152000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/island-1800.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "9b7026b7ac1ee140fdc2f2edab888798c7c031933480763f0cc2dd1a1a6bef96",
+        "byteLength": 2288
+      },
+      "symbol": {
+        "path": "symbols/island-1800.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "bbb305e35bcd754182aa99e9c2d021d1b381fdc7ee244af4efd481d0a492b470",
+        "byteLength": 367
+      }
+    },
+    "vanity-900": {
+      "kind": "casework",
+      "mounting": "floor",
+      "element": {
+        "category": "vanity",
+        "catalogue": "vanity-900",
+        "name": "Vanity cabinet, 900 mm",
+        "clearances": {
+          "front": {
+            "purpose": "swing",
+            "shape": "box",
+            "min": [
+              704000,
+              -576000,
+              0
+            ],
+            "max": [
+              1344000,
+              576000,
+              1088000
+            ]
+          }
+        },
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -576000,
+              0
+            ],
+            "max": [
+              704000,
+              576000,
+              1088000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/vanity-900.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "cf4c97f7c5de8c9dc18c36bc411f90b6736d73940035ccfe1265a7d9872a6d57",
+        "byteLength": 2936
+      },
+      "symbol": {
+        "path": "symbols/vanity-900.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "6e1b28f798e263d1b6b514ac76b89a8dde732459410367529efae093ff51da10",
+        "byteLength": 521
+      }
+    }
+  }
+}

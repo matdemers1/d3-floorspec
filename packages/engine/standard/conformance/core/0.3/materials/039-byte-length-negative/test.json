@@ -1,0 +1,6 @@
+{
+  "description": "An asset's byteLength is at least 0.",
+  "covers": [
+    "FS-CORE-18.4.1"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "130a596c32183cb0828fd3ceddc189370e08df83c3d41b8cd96da9a1e85c4cdb",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W2",
+      "path": "/finishes/right/regions",
+      "value": [
+        {
+          "to": 3901440,
+          "bottom": 1170432,
+          "from": 780288,
+          "material": "TILE",
+          "top": 1755648
+        }
+      ]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "W2",
+      "path": "/finishes"
+    }
+  ]
+}

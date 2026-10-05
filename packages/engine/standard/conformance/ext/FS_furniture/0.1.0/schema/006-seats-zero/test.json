@@ -1,0 +1,6 @@
+{
+  "description": "A piece seats at least one person when it says how many.",
+  "covers": [
+    "FS-FURN-1.3.1"
+  ]
+}

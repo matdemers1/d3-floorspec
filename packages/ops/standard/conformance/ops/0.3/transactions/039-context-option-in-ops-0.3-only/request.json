@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "DIN",
+      "path": "/name",
+      "value": "x"
+    }
+  ],
+  "context": {
+    "option": "KA",
+    "design": {}
+  }
+}

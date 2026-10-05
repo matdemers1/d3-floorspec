@@ -111,6 +111,12 @@ export interface Equipment {
     [k: string]: unknown | undefined;
   };
   /**
+   * Core 19.2 (Core 0.3): checked by Core, not here.
+   */
+  option?: {
+    [k: string]: unknown | undefined;
+  };
+  /**
    * Core 12.5: checked by Core, not here.
    */
   name?: {
@@ -158,6 +164,12 @@ export interface Terminal {
     [k: string]: unknown | undefined;
   };
   /**
+   * Core 19.2 (Core 0.3): checked by Core, not here.
+   */
+  option?: {
+    [k: string]: unknown | undefined;
+  };
+  /**
    * Core 12.5: checked by Core, not here.
    */
   name?: {
@@ -202,6 +214,12 @@ export interface Exhaust {
    * Core 13.5: checked by Core, not here.
    */
   clearances?: {
+    [k: string]: unknown | undefined;
+  };
+  /**
+   * Core 19.2 (Core 0.3): checked by Core, not here.
+   */
+  option?: {
     [k: string]: unknown | undefined;
   };
   /**
@@ -271,6 +289,12 @@ export interface GasAppliance {
    * Core 13.5: checked by Core, not here.
    */
   clearances?: {
+    [k: string]: unknown | undefined;
+  };
+  /**
+   * Core 19.2 (Core 0.3): checked by Core, not here.
+   */
+  option?: {
     [k: string]: unknown | undefined;
   };
   /**

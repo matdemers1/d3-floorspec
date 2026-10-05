@@ -1,0 +1,47 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "02921d95425857816c62b2326b29d2ea0023b76d319f3f6e90260b8cf522c82c",
+  "created": ["OP1", "OP2", "OS1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "optionSets",
+      "id": "OS1",
+      "element": {
+        "primary": "OP1"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "OP1",
+      "element": {
+        "set": "OS1"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "OP2",
+      "element": {
+        "set": "OS1"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "OP1"
+    },
+    {
+      "op": "removeElement",
+      "id": "OP2"
+    },
+    {
+      "op": "removeElement",
+      "id": "OS1"
+    }
+  ]
+}

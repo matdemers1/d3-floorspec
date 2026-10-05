@@ -1,0 +1,7 @@
+{
+  "description": "With context.option KA, addWall adds A's wall between the kitchen and the dining room, and addElement its door: both are added in option A, and the junctions they use stay common.",
+  "covers": [
+    "FS-OPS-2.8.1",
+    "FS-OPS-2.1.1"
+  ]
+}

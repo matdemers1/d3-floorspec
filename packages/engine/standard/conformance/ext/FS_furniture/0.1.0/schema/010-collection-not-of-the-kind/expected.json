@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-604",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

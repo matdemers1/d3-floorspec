@@ -1,0 +1,26 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "ROOMS",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [],
+  "floorspecRules": "0.1",
+  "hash": "e0718750781c0fda98d004b7568eb74393d1bef83745feaeccdfa37250f307b5",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

@@ -1,0 +1,18 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "W2",
+      "path": "/finishes/right/regions",
+      "value": [
+        {
+          "from": 780288,
+          "to": 5071872,
+          "bottom": 1170432,
+          "top": 1755648,
+          "material": "TILE"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "Option B's refrigerator is with the wall W9: FS_furniture is evaluated in each checked design, so FS-FURN-INV-002 is reported for option B's design, with `design`.",
+  "covers": [
+    "FS-FURN-1.2.1",
+    "FS-FURN-1.2.3",
+    "FS-FURN-4.3.1"
+  ]
+}

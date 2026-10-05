@@ -1,0 +1,7 @@
+{
+  "description": "FS_furniture has no collection \"rugs\": Core reports it first, as FS-INV-604 of a known extension (Core 12.4.1), and FS_furniture is not evaluated.",
+  "covers": [
+    "FS-FURN-1.2.2",
+    "FS-CORE-12.4.1"
+  ]
+}

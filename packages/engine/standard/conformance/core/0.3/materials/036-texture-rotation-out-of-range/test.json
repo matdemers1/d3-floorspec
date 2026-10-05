@@ -1,0 +1,6 @@
+{
+  "description": "A texture's rotation of -180,000,000: the range is (-180,000,000, 180,000,000].",
+  "covers": [
+    "FS-CORE-18.2.1"
+  ]
+}

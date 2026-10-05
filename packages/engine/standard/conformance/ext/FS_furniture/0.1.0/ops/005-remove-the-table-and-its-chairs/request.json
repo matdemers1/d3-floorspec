@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "removeElement",
+      "id": "X8"
+    },
+    {
+      "op": "removeElement",
+      "id": "X9"
+    },
+    {
+      "op": "removeElement",
+      "id": "X7"
+    }
+  ]
+}

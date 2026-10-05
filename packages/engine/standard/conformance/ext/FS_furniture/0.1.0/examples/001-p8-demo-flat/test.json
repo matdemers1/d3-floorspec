@@ -1,0 +1,10 @@
+{
+  "description": "The Phase 8 demo flat, read by an implementation of FS_furniture that knows it: a kitchen with a refrigerator, a range, a dishwasher, base and wall cabinets, a pantry and a dining table with two chairs, a bedroom with a bed, a nightstand and a wardrobe, and a laundry with a washer and a dryer - every one the starter library's item, with its model, its symbol and its default envelopes. It is valid, reports nothing - the chairs in the table's envelope and the nightstand beside the bed are with them, and the wall cabinet hangs clear of the counter - and derives FS_furniture's values as `derived.extensions.FS_furniture`: each item's kind, category, dimensions and room, each room's items and the floor they stand on, and the groups.",
+  "covers": [
+    "FS-FURN-1.2.1",
+    "FS-FURN-1.2.3",
+    "FS-FURN-1.2.4",
+    "FS-FURN-1.3.1",
+    "FS-FURN-6.1.1"
+  ]
+}

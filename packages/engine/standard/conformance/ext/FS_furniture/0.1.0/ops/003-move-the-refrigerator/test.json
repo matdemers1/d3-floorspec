@@ -1,0 +1,7 @@
+{
+  "description": "moveElement moves the refrigerator to the Kitchen's west wall, 3300 mm from its start: it now faces east, and its door swing goes with it.",
+  "covers": [
+    "FS-FURN-1.2.1",
+    "FS-OPS-4.10.1"
+  ]
+}

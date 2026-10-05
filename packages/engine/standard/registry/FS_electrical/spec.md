@@ -111,7 +111,7 @@ Nothing in FS_electrical is a fraction.
 # 2. Elements
 
 Every element below is an extension element (Core §12.5): besides the members its table lists, it
-has `fallback`, and may have `host`, `clearances`, `name` and `extras`, which Floorspec Core
+has `fallback`, and may have `host`, `clearances`, `option` (Core 0.3), `name` and `extras`, which Floorspec Core
 checks. A member with a default may be omitted; canonicalization never omits it for you (Core
 §12.5).
 

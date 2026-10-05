@@ -164,6 +164,10 @@
         "reachable": true
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "DIN": {
         "bottom": 0,

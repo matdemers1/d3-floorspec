@@ -1,0 +1,6 @@
+{
+  "description": "Removing the set with cascade takes its options and everything in them: the house is left with only its common elements.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

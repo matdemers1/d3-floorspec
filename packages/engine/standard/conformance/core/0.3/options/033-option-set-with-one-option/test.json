@@ -1,0 +1,6 @@
+{
+  "description": "A Deck set whose only option is DA, primary: valid, with FS-LINT-017 - there is nothing to choose between.",
+  "covers": [
+    "FS-CORE-19.8.1"
+  ]
+}

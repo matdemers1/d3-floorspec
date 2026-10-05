@@ -1,0 +1,6 @@
+{
+  "description": "The kitchen house with the design input {\"Kitchen\": \"KB\"}: no option set has the ID \"Kitchen\" (it is KS's name), so nothing is derived.",
+  "covers": [
+    "FS-CORE-19.6.2"
+  ]
+}

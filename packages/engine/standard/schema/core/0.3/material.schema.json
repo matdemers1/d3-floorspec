@@ -1,42 +1,106 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://d3cloud.io/floorspec/schema/core/0.3/material.schema.json",
-  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+  "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.5's table and 18.2's texture table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1). `metallic` and `roughness` have none: absent, each takes its map's value, or 0 and 1000 without a map (18.1).",
   "title": "Material",
-  "description": "8.5: what a layer, a finish or a slab's surface is made of. It has only the members of its table (FS-CORE-1.4.1).",
+  "description": "8.5, 18.1: what a layer, a finish or a slab's surface is made of - a physically based surface in the metallic-roughness model of glTF 2.0. It has only the members of its table (FS-CORE-1.4.1).",
   "type": "object",
   "properties": {
     "color": {
       "title": "Colour",
-      "description": "8.5: the material's base colour as \"#rrggbb\", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). Absent by default.",
+      "description": "8.5, 18.1: the material's base colour as \"#rrggbb\", lowercase hexadecimal sRGB; it MUST match ^#[0-9a-f]{6}$ (FS-CORE-8.5.1). With a base colour map, the colour to show where the map is not drawn. Absent by default.",
       "type": "string",
       "pattern": "^#[0-9a-f]{6}$"
     },
+    "metallic": {
+      "title": "Metallic",
+      "description": "18.1: how metallic the surface is, in thousandths, an integer from 0 to 1000 (FS-CORE-18.1.1). Absent: the metallic-roughness map's value, or 0 without one - so it has no constant default.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "roughness": {
+      "title": "Roughness",
+      "description": "18.1: how rough the surface is, in thousandths, an integer from 0 to 1000 (FS-CORE-18.1.1). Absent: the metallic-roughness map's value, or 1000 without one - so it has no constant default.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
     "texture": {
       "title": "Texture",
-      "description": "8.5: an image tiled across the surface; one tile covers `size` [w, h] base units. Absent by default; when present, both members are present.",
+      "description": "8.5, 18.2: images tiled across the surface - its maps - and the real-world size, offset and rotation of one tile. Absent by default. A texture MUST have at least one map (FS-CORE-18.2.1).",
       "type": "object",
       "required": [
-        "asset",
         "size"
       ],
       "properties": {
         "asset": {
           "$ref": "defs.schema.json#/$defs/reference",
-          "description": "8.5: a reference to the asset holding the image."
+          "description": "18.2: the base colour map, a reference to an asset holding an sRGB image of the surface's colour. Absent: no base colour map."
+        },
+        "normal": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "18.2: the normal map, a reference to an asset holding a tangent-space normal map, linear, as glTF 2.0 defines it. Absent: no normal map."
+        },
+        "metallicRoughness": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "18.2: the metallic-roughness map, a reference to an asset holding roughness in its green and metalness in its blue channel, linear, as glTF 2.0 defines it. Absent: no such map."
+        },
+        "occlusion": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "18.2: the occlusion map, a reference to an asset holding ambient occlusion in its red channel, linear. Absent: no occlusion map."
         },
         "size": {
           "title": "Tile size",
-          "description": "8.5: [w, h], the size one tile covers. It MUST be two lengths greater than zero (FS-CORE-8.5.2).",
+          "description": "8.5, 18.2: [w, h], the real-world size of one tile. It MUST be two lengths greater than zero (FS-CORE-8.5.2). Always present.",
           "type": "array",
           "items": {
             "$ref": "defs.schema.json#/$defs/positiveLength"
           },
           "minItems": 2,
           "maxItems": 2
+        },
+        "offset": {
+          "$ref": "defs.schema.json#/$defs/point",
+          "description": "18.2, 18.3: where a tile's corner is, in the surface's coordinates.",
+          "default": [
+            0,
+            0
+          ]
+        },
+        "rotation": {
+          "$ref": "defs.schema.json#/$defs/angleHalfOpen",
+          "description": "18.2, 18.3: how far the tiles are turned, counter-clockwise as seen by someone facing the surface; in (−180,000,000, 180,000,000] (FS-CORE-18.2.1).",
+          "default": 0
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "title": "With a base colour map",
+          "required": [
+            "asset"
+          ]
+        },
+        {
+          "title": "With a normal map",
+          "required": [
+            "normal"
+          ]
+        },
+        {
+          "title": "With a metallic-roughness map",
+          "required": [
+            "metallicRoughness"
+          ]
+        },
+        {
+          "title": "With a occlusion map",
+          "required": [
+            "occlusion"
+          ]
+        }
+      ]
     },
     "name": {
       "$ref": "defs.schema.json#/$defs/name",

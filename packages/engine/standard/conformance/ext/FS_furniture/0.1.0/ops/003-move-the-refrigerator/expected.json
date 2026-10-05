@@ -1,0 +1,41 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "2af55e7dff511ca1e982eca4c8fb08e88be88fe052f7f0face882c7d625675c5",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/host",
+      "value": {
+        "height": 0,
+        "mode": "wallFace",
+        "offset": 4224000,
+        "side": "right",
+        "wall": "W1"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/fallback/level",
+      "value": "L1"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/host",
+      "value": {
+        "height": 0,
+        "mode": "wallFace",
+        "offset": 640000,
+        "side": "right",
+        "wall": "W2"
+      }
+    }
+  ]
+}

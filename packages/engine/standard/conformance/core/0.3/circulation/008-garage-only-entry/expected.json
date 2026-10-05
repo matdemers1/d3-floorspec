@@ -192,6 +192,10 @@
         "reachable": true
       }
     },
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {
       "GAR": {
         "bottom": 0,

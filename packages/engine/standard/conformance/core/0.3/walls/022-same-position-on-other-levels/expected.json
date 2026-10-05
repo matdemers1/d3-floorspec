@@ -33,6 +33,10 @@
     "clearanceOverlaps": [],
     "ceilings": {},
     "circulation": {},
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
     "floors": {},
     "roofs": {},
     "slabs": {},

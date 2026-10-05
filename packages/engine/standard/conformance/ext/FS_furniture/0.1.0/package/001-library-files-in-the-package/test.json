@@ -1,0 +1,8 @@
+{
+  "description": "The flat as a Core 0.3 document whose assets declare their byteLength, run by a package validator given the starter library's files at the paths its assets name (Core 18.4): every model and symbol is there, with the digest and length the library gives. Valid.",
+  "covers": [
+    "FS-FURN-1.2.1",
+    "FS-CORE-18.4.2",
+    "FS-CORE-18.4.3"
+  ]
+}

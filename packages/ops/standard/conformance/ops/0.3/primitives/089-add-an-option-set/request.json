@@ -1,0 +1,31 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "optionSets",
+      "id": "KS",
+      "element": {
+        "name": "Kitchen",
+        "primary": "KA"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "KA",
+      "element": {
+        "set": "KS",
+        "name": "A"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "options",
+      "id": "KB",
+      "element": {
+        "set": "KS",
+        "name": "B"
+      }
+    }
+  ]
+}

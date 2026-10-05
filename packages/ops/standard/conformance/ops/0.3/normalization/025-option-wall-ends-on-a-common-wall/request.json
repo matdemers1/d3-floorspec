@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "drawWall",
+      "id": "WP",
+      "level": "L1",
+      "from": [9344000, 1920000],
+      "to": [9344000, 5120000],
+      "type": "WT"
+    }
+  ],
+  "context": {
+    "option": "KB"
+  }
+}

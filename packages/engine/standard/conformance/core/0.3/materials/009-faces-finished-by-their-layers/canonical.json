@@ -1,0 +1,131 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.3",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3840000
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        5120000,
+        3840000
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "materials": {
+    "GWB": {
+      "color": "#f2f0eb"
+    },
+    "SIDING": {
+      "color": "#7d8c80"
+    },
+    "STONE": {
+      "color": "#8a8178"
+    },
+    "STUD": {
+      "color": "#e8d3a3"
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2560000,
+        1920000
+      ],
+      "level": "L1"
+    }
+  },
+  "types": {
+    "EXT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "SIDING",
+          "thickness": 25600
+        },
+        {
+          "function": "core",
+          "material": "STUD",
+          "thickness": 179200
+        },
+        {
+          "function": "finish",
+          "material": "GWB",
+          "thickness": 16640
+        }
+      ],
+      "name": "Exterior 2x6, sided"
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "EXT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "EXT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "EXT"
+    },
+    "W4": {
+      "end": "J1",
+      "finishes": {
+        "left": {
+          "regions": [
+            {
+              "bottom": 0,
+              "from": 0,
+              "material": "STONE",
+              "to": 5120000,
+              "top": 1152000
+            }
+          ]
+        }
+      },
+      "level": "L1",
+      "start": "J4",
+      "type": "EXT"
+    }
+  }
+}

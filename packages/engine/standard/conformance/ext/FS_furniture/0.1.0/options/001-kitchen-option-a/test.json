@@ -1,0 +1,9 @@
+{
+  "description": "Kitchen option A and B as Core 0.3 design options (Core 19): the refrigerator X1 is in A, the primary, and a refrigerator X16 on the west wall is in B. The primary design is derived: X1 is in the Kitchen, and X16 is not an item of it.",
+  "covers": [
+    "FS-FURN-1.2.1",
+    "FS-FURN-1.2.4",
+    "FS-FURN-6.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

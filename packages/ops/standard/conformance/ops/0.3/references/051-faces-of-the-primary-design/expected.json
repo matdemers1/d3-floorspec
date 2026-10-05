@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-INV-1102",
+      "severity": "error",
+      "elements": ["OA2", "WA"]
+    }
+  ]
+}

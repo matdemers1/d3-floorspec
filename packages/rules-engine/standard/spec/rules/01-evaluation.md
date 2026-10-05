@@ -16,6 +16,7 @@ The request is a JSON text (Core §9.1) whose value is an object:
 | `packs` | array of rule packs (chapter 2) | — (always present) | the packs to evaluate; it may be empty |
 | `profile` | profile (chapter 10) | the default profile (10.6) | the jurisdiction profile to evaluate under |
 | `units` | `"imperial"` or `"metric"` | `"imperial"` | how the report displays lengths and areas (9.6) |
+| `design` | object: option set ID → option ID | absent: the primary design | the design of a document with design options to evaluate (Core §19.6) |
 
 The request schema is `schema/rules/0.1/request.schema.json`, published at
 `https://d3cloud.io/floorspec/schema/rules/0.1/request.schema.json`. It checks the request's own
@@ -35,6 +36,14 @@ version the evaluator both implements and knows.
 An evaluator MUST evaluate rules only for a valid document — one that a Core 0.3 validator implementing the same extensions, configured with the same known extensions, reports valid (Core §10.1) — and for any other document MUST report `FS-RULES-003` and no finding. {#FS-RULES-1.2.1 MUST}
 
 A document is valid or not before any rule is read: rules never make one valid or invalid (1.5).
+
+A document with design options (Core chapter 19) is evaluated in one design — the request's
+`design`, a design input as Core §19.6 defines one, or the primary design when the request has none.
+Every measure reads what Core derives for that design, and every subject is an element of its view
+(Core §19.3): option B's pantry is a room of B's design, and not of A's.
+
+An evaluator MUST evaluate rules on the design the request's `design` gives, or on the primary design when it has none, exactly as on that design's view; and when Core derives nothing for that design (Core §19.6.2), it MUST report `FS-RULES-003` and no finding. {#FS-RULES-1.2.2 MUST}
+Comparing options against a code is evaluating twice, one design each.
 
 ## 1.3 Order of evaluation
 

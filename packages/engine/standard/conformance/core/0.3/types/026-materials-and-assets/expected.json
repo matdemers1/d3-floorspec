@@ -93,6 +93,47 @@
         "reachable": false
       }
     },
+    "finishes": {
+      "walls": {
+        "W1": {
+          "right": {
+            "material": "TILE",
+            "regions": [],
+            "room": "R1",
+            "source": "room"
+          }
+        },
+        "W2": {
+          "right": {
+            "material": "TILE",
+            "regions": [],
+            "room": "R1",
+            "source": "room"
+          }
+        },
+        "W3": {
+          "right": {
+            "material": "TILE",
+            "regions": [],
+            "room": "R1",
+            "source": "room"
+          }
+        },
+        "W4": {
+          "right": {
+            "material": "TILE",
+            "regions": [],
+            "room": "R1",
+            "source": "room"
+          }
+        }
+      },
+      "rooms": {
+        "R1": {
+          "floor": "OAK"
+        }
+      }
+    },
     "floors": {
       "R1": {
         "bottom": 0,

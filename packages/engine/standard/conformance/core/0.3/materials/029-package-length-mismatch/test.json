@@ -1,0 +1,6 @@
+{
+  "description": "The photo is the file its digest names, but its byteLength is one more than the file's length: FS-INV-1007.",
+  "covers": [
+    "FS-CORE-18.4.3"
+  ]
+}

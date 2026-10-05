@@ -1,0 +1,7 @@
+{
+  "description": "Removing KA with cascade and making KB primary in the same batch: valid, the kitchen open.",
+  "covers": [
+    "FS-OPS-2.2.2",
+    "FS-OPS-2.3.1"
+  ]
+}

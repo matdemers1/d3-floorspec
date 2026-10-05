@@ -1,0 +1,115 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 3840000]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [5120000, 3840000]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [5120000, 0]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT",
+      "finishes": {
+        "right": {
+          "regions": {
+            "from": 768000,
+            "to": 4352000,
+            "bottom": 1170432,
+            "top": 1755648,
+            "material": "TILE"
+          }
+        }
+      }
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J1",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2560000, 1920000],
+      "name": "Kitchen",
+      "function": "kitchen",
+      "wallFinish": "PAINT"
+    }
+  },
+  "materials": {
+    "PAINT": {
+      "name": "Eggshell paint",
+      "color": "#e9e6df",
+      "roughness": 700
+    },
+    "TILE": {
+      "name": "Porcelain tile, 12 inch",
+      "color": "#d8d4cc",
+      "roughness": 300,
+      "texture": {
+        "asset": "TILE-PHOTO",
+        "size": [390144, 390144]
+      }
+    }
+  },
+  "assets": {
+    "TILE-PHOTO": {
+      "path": "assets/tile-12in.png",
+      "sha256": "cf77abf784e1b49ffad62638d0117883502d08e4f0b8b1e7beb10fe1f70eab6c",
+      "mediaType": "image/png",
+      "byteLength": 73
+    }
+  }
+}

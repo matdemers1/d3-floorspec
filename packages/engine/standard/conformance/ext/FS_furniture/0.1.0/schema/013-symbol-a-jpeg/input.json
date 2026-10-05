@@ -1,0 +1,711 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Phase 8 demo flat"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 6242304]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [4681728, 6242304]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [9363456, 6242304]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [9363456, 0]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [4681728, 0]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [4681728, 2731008]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [9363456, 2731008]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J8",
+      "type": "WT"
+    },
+    "W5": {
+      "level": "L1",
+      "start": "J8",
+      "end": "J5",
+      "type": "WT"
+    },
+    "W6": {
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    },
+    "W7": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J1",
+      "type": "WT"
+    },
+    "W8": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J7",
+      "type": "WT"
+    },
+    "W9": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W10": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J8",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2340864, 3121152],
+      "name": "Kitchen",
+      "function": "kitchen"
+    },
+    "R2": {
+      "level": "L1",
+      "anchor": [7022592, 4681728],
+      "name": "Bedroom",
+      "function": "sleeping"
+    },
+    "R3": {
+      "level": "L1",
+      "anchor": [7022592, 1170432],
+      "name": "Laundry",
+      "function": "laundry"
+    }
+  },
+  "assets": {
+    "M-base-cabinet-600": {
+      "path": "furniture/base-cabinet-600.glb",
+      "sha256": "b6198a5cfb2a6da276ef2151b9f4205818fdeccc8b67a56ee354ed92d14e7d70",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-base-cabinet-600": {
+      "path": "furniture/base-cabinet-600.svg",
+      "sha256": "2b580fab1a46846da03b4b422472f839fb9b5d176aaf7e22cff6ced000423a9b",
+      "mediaType": "image/svg+xml"
+    },
+    "M-bed-queen-1600": {
+      "path": "furniture/bed-queen-1600.glb",
+      "sha256": "d51ef9f12df2579b523e70cda3e1390b239f2cd15f66843c4eb08ebf1ee92778",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-bed-queen-1600": {
+      "path": "furniture/bed-queen-1600.svg",
+      "sha256": "5c51b020883f5a3bb19461fdaa62081d1f5814aa1ca9554a1b859cde116c11e2",
+      "mediaType": "image/svg+xml"
+    },
+    "M-dining-chair-450": {
+      "path": "furniture/dining-chair-450.glb",
+      "sha256": "4835348fccce28c0c4d15a586325c8b0df39768f5b1d65596b2b7dd8b6b3acb2",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-dining-chair-450": {
+      "path": "furniture/dining-chair-450.svg",
+      "sha256": "d4eebc326c2e4831968c5f726fc82a359c8b953b7104db21804e4614c2f012cd",
+      "mediaType": "image/svg+xml"
+    },
+    "M-dining-table-1500": {
+      "path": "furniture/dining-table-1500.glb",
+      "sha256": "f1f7f9c3f84f64e30aa05fa002b4e7ce05a14dea36bb5deaf243873ee12657bf",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-dining-table-1500": {
+      "path": "furniture/dining-table-1500.svg",
+      "sha256": "7e309d65f182b2d30118aef245bc423d6cafc2014d52e8ab266d9972c1a30a06",
+      "mediaType": "image/svg+xml"
+    },
+    "M-dishwasher-600": {
+      "path": "furniture/dishwasher-600.glb",
+      "sha256": "2bf68e06f4a9ee40b534d73546b356cc0748e527ce72dc05bc9e2fae02e8e912",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-dishwasher-600": {
+      "path": "furniture/dishwasher-600.svg",
+      "sha256": "3ea74a39189f73b343cfd0d4f2f91b3fb1cc21a68b063b5286621a848f973edf",
+      "mediaType": "image/svg+xml"
+    },
+    "M-dryer-690": {
+      "path": "furniture/dryer-690.glb",
+      "sha256": "cead0ad4bb50d8013157af6c5d15ce41b78142336e622bcacddf1d0e9c6eff6e",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-dryer-690": {
+      "path": "furniture/dryer-690.svg",
+      "sha256": "498984c7a1fd87fd029847b0d5b4ffced97870ddb976d190aafd1af2d6e9d5de",
+      "mediaType": "image/svg+xml"
+    },
+    "M-nightstand-500": {
+      "path": "furniture/nightstand-500.glb",
+      "sha256": "5647cf07144ea8e2fc29d7b59ccff7d8d9af18a7bde67e0fdc572ae6af8b2d89",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-nightstand-500": {
+      "path": "furniture/nightstand-500.svg",
+      "sha256": "72e836eac1c855510b04aba00e3795806d498c4566c4a4b8e3495fe1a0cfa513",
+      "mediaType": "image/svg+xml"
+    },
+    "M-range-760": {
+      "path": "furniture/range-760.glb",
+      "sha256": "4bb46d30886648b92fb82137e675bed4cf8d4f3a9afe02873817ee2ef0b774d8",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-range-760": {
+      "path": "furniture/range-760.svg",
+      "sha256": "33d80b570a881073b6fd99def41ebd92aaa4f022c39abada8048f258d87fe808",
+      "mediaType": "image/svg+xml"
+    },
+    "M-refrigerator-900": {
+      "path": "furniture/refrigerator-900.glb",
+      "sha256": "f7e318e5c45b6596771381820a0ee93b5021fc89bd6de2c0b8f566796a9f5552",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-refrigerator-900": {
+      "path": "furniture/refrigerator-900.svg",
+      "sha256": "ef8ac6f6aef200d274387176304c1d566b78399e73cee083cdeb17a691abe373",
+      "mediaType": "image/jpeg"
+    },
+    "M-tall-cabinet-600": {
+      "path": "furniture/tall-cabinet-600.glb",
+      "sha256": "98db3d3048b1cee950e115c700a6535d04c393f5321b58c558f287813ef8c5a3",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-tall-cabinet-600": {
+      "path": "furniture/tall-cabinet-600.svg",
+      "sha256": "2197f78314cd25445861a2995b3b173d6590f96efa627b25c10378e13e51b4b4",
+      "mediaType": "image/svg+xml"
+    },
+    "M-wall-cabinet-600": {
+      "path": "furniture/wall-cabinet-600.glb",
+      "sha256": "62ea0ad3aa061820ec47b0bc9540f1bb6517564257a603bb1ffe819513649bcd",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-wall-cabinet-600": {
+      "path": "furniture/wall-cabinet-600.svg",
+      "sha256": "87e3d014ab0a61596e001f8b2466b770bb370272e32978e5869c37529eb99cfe",
+      "mediaType": "image/svg+xml"
+    },
+    "M-wardrobe-1000": {
+      "path": "furniture/wardrobe-1000.glb",
+      "sha256": "b73ed9acc31559a1a4f11abfe84fb29248debc84e730cc305cfb0481285c23fc",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-wardrobe-1000": {
+      "path": "furniture/wardrobe-1000.svg",
+      "sha256": "a5aae7dec03a4041b8b494f6734fd14f53056fc3eadc0473fe9559a8a00a7c7b",
+      "mediaType": "image/svg+xml"
+    },
+    "M-washer-690": {
+      "path": "furniture/washer-690.glb",
+      "sha256": "e025948e4f0e3afe20902c0536283c7eafd9bfa3ea577984b4f6b348751aee94",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-washer-690": {
+      "path": "furniture/washer-690.svg",
+      "sha256": "0eab48dcb4ebafc8b503e0d789bfb491d009494753b852ef8bafbbb9d6e8cef3",
+      "mediaType": "image/svg+xml"
+    }
+  },
+  "extensionsUsed": {
+    "FS_furniture": "0.1.0"
+  },
+  "extensions": {
+    "FS_furniture": {
+      "collections": {
+        "appliances": {
+          "X1": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -576000, 0],
+                "max": [896000, 576000, 2278400]
+              },
+              "asset": "M-refrigerator-900",
+              "symbol": "S-refrigerator-900"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W2",
+              "side": "right",
+              "offset": 640000,
+              "height": 0
+            },
+            "category": "refrigerator",
+            "catalogue": "refrigerator-900",
+            "name": "Refrigerator, 900 mm",
+            "clearances": {
+              "door": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [896000, -576000, 0],
+                "max": [2048000, 576000, 2278400]
+              }
+            }
+          },
+          "X3": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -486400, 0],
+                "max": [832000, 486400, 1177600]
+              },
+              "asset": "M-range-760",
+              "symbol": "S-range-760"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W2",
+              "side": "right",
+              "offset": 2470400,
+              "height": 0
+            },
+            "category": "range",
+            "catalogue": "range-760",
+            "name": "Range, 760 mm",
+            "clearances": {
+              "door": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [832000, -486400, 0],
+                "max": [1600000, 486400, 1177600]
+              }
+            }
+          },
+          "X5": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -384000, 0],
+                "max": [768000, 384000, 1088000]
+              },
+              "asset": "M-dishwasher-600",
+              "symbol": "S-dishwasher-600"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W2",
+              "side": "right",
+              "offset": 4108800,
+              "height": 0
+            },
+            "category": "dishwasher",
+            "catalogue": "dishwasher-600",
+            "name": "Dishwasher, 600 mm",
+            "clearances": {
+              "door": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [768000, -384000, 0],
+                "max": [1664000, 384000, 1088000]
+              }
+            }
+          },
+          "X13": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -441600, 0],
+                "max": [832000, 441600, 1088000]
+              },
+              "asset": "M-washer-690",
+              "symbol": "S-washer-690"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W6",
+              "side": "right",
+              "offset": 1170432,
+              "height": 0
+            },
+            "category": "washer",
+            "catalogue": "washer-690",
+            "name": "Front-loading washer, 690 mm",
+            "clearances": {
+              "door": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [832000, -441600, 0],
+                "max": [1728000, 441600, 1088000]
+              }
+            }
+          },
+          "X14": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -441600, 0],
+                "max": [832000, 441600, 1088000]
+              },
+              "asset": "M-dryer-690",
+              "symbol": "S-dryer-690"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W6",
+              "side": "right",
+              "offset": 2066432,
+              "height": 0
+            },
+            "category": "dryer",
+            "catalogue": "dryer-690",
+            "name": "Dryer, 690 mm",
+            "clearances": {
+              "door": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [832000, -441600, 0],
+                "max": [1728000, 441600, 1088000]
+              }
+            }
+          }
+        },
+        "casework": {
+          "X2": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -384000, 0],
+                "max": [768000, 384000, 1152000]
+              },
+              "asset": "M-base-cabinet-600",
+              "symbol": "S-base-cabinet-600"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W2",
+              "side": "right",
+              "offset": 1600000,
+              "height": 0
+            },
+            "category": "baseCabinet",
+            "catalogue": "base-cabinet-600",
+            "name": "Base cabinet with counter, 600 mm",
+            "clearances": {
+              "front": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [768000, -384000, 0],
+                "max": [1536000, 384000, 1152000]
+              }
+            }
+          },
+          "X4": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -384000, 0],
+                "max": [768000, 384000, 1152000]
+              },
+              "asset": "M-base-cabinet-600",
+              "symbol": "S-base-cabinet-600"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W2",
+              "side": "right",
+              "offset": 3340800,
+              "height": 0
+            },
+            "category": "baseCabinet",
+            "catalogue": "base-cabinet-600",
+            "name": "Base cabinet with counter, 600 mm",
+            "clearances": {
+              "front": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [768000, -384000, 0],
+                "max": [1536000, 384000, 1152000]
+              }
+            }
+          },
+          "X6": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -384000, 0],
+                "max": [448000, 384000, 960000]
+              },
+              "asset": "M-wall-cabinet-600",
+              "symbol": "S-wall-cabinet-600"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W2",
+              "side": "right",
+              "offset": 1600000,
+              "height": 1792000
+            },
+            "category": "wallCabinet",
+            "catalogue": "wall-cabinet-600",
+            "name": "Wall cabinet, 600 mm",
+            "clearances": {
+              "front": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [448000, -384000, 0],
+                "max": [960000, 384000, 960000]
+              }
+            }
+          },
+          "X15": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -384000, 0],
+                "max": [768000, 384000, 2688000]
+              },
+              "asset": "M-tall-cabinet-600",
+              "symbol": "S-tall-cabinet-600"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W1",
+              "side": "right",
+              "offset": 1536000,
+              "height": 0
+            },
+            "category": "tallCabinet",
+            "catalogue": "tall-cabinet-600",
+            "name": "Tall pantry cabinet, 600 mm",
+            "clearances": {
+              "front": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [768000, -384000, 0],
+                "max": [1536000, 384000, 2688000]
+              }
+            }
+          }
+        },
+        "pieces": {
+          "X7": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -960000, 0],
+                "max": [1152000, 960000, 960000]
+              },
+              "asset": "M-dining-table-1500",
+              "symbol": "S-dining-table-1500"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R1",
+              "surface": "floor",
+              "position": [2340864, 2731008]
+            },
+            "category": "diningTable",
+            "catalogue": "dining-table-1500",
+            "name": "Dining table, 1500 x 900 mm",
+            "seats": 6,
+            "clearances": {
+              "around": {
+                "purpose": "access",
+                "shape": "box",
+                "min": [-960000, -1920000, 0],
+                "max": [2112000, 1920000, 2560000]
+              }
+            }
+          },
+          "X8": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -288000, 0],
+                "max": [640000, 288000, 1088000]
+              },
+              "asset": "M-dining-chair-450",
+              "symbol": "S-dining-chair-450"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R1",
+              "surface": "floor",
+              "position": [1636864, 2731008]
+            },
+            "category": "chair",
+            "catalogue": "dining-chair-450",
+            "name": "Dining chair",
+            "seats": 1,
+            "with": "X7"
+          },
+          "X9": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -288000, 0],
+                "max": [640000, 288000, 1088000]
+              },
+              "asset": "M-dining-chair-450",
+              "symbol": "S-dining-chair-450"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R1",
+              "surface": "floor",
+              "position": [4196864, 2731008],
+              "rotation": 180000000
+            },
+            "category": "chair",
+            "catalogue": "dining-chair-450",
+            "name": "Dining chair",
+            "seats": 1,
+            "with": "X7"
+          },
+          "X10": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -1024000, 0],
+                "max": [2624000, 1024000, 1280000]
+              },
+              "asset": "M-bed-queen-1600",
+              "symbol": "S-bed-queen-1600"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W3",
+              "side": "right",
+              "offset": 1950720,
+              "height": 0
+            },
+            "category": "bed",
+            "catalogue": "bed-queen-1600",
+            "name": "Queen bed, 1600 x 2050 mm",
+            "clearances": {
+              "left": {
+                "purpose": "access",
+                "shape": "box",
+                "min": [0, 1024000, 0],
+                "max": [2624000, 1792000, 2560000]
+              },
+              "right": {
+                "purpose": "access",
+                "shape": "box",
+                "min": [0, -1792000, 0],
+                "max": [2624000, -1024000, 2560000]
+              }
+            }
+          },
+          "X11": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -320000, 0],
+                "max": [576000, 320000, 768000]
+              },
+              "asset": "M-nightstand-500",
+              "symbol": "S-nightstand-500"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W3",
+              "side": "right",
+              "offset": 3358720,
+              "height": 0
+            },
+            "category": "nightstand",
+            "catalogue": "nightstand-500",
+            "name": "Nightstand",
+            "with": "X10"
+          },
+          "X12": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -640000, 0],
+                "max": [768000, 640000, 2688000]
+              },
+              "asset": "M-wardrobe-1000",
+              "symbol": "S-wardrobe-1000"
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W4",
+              "side": "right",
+              "offset": 2731008,
+              "height": 0
+            },
+            "category": "wardrobe",
+            "catalogue": "wardrobe-1000",
+            "name": "Wardrobe",
+            "clearances": {
+              "front": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [768000, -640000, 0],
+                "max": [1536000, 640000, 2688000]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "floorspec": "0.3",
+  "project": {
+    "name": "Conformance"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "T-door-36": {
+      "kind": "doorType",
+      "width": 1170432,
+      "height": 2600960
+    },
+    "G": {
+      "kind": "windowType",
+      "width": 1536000,
+      "height": 1536000,
+      "sill": 1152000
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 5120000]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [10240000, 5120000]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [10240000, 0]
+    },
+    "S4": {
+      "level": "L1",
+      "position": [5120000, 0]
+    },
+    "S5": {
+      "level": "L1",
+      "position": [6400000, 0]
+    },
+    "N4": {
+      "level": "L1",
+      "position": [5120000, 5120000]
+    },
+    "N5": {
+      "level": "L1",
+      "position": [6400000, 5120000]
+    },
+    "BJ1": {
+      "level": "L1",
+      "position": [5760000, 2560000],
+      "option": "KB"
+    },
+    "BJ2": {
+      "level": "L1",
+      "position": [7040000, 2560000],
+      "option": "KB"
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "N4",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "N4",
+      "end": "N5",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "N5",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W5": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W6": {
+      "level": "L1",
+      "start": "J4",
+      "end": "S5",
+      "type": "WT"
+    },
+    "W7": {
+      "level": "L1",
+      "start": "S5",
+      "end": "S4",
+      "type": "WT"
+    },
+    "W8": {
+      "level": "L1",
+      "start": "S4",
+      "end": "J1",
+      "type": "WT"
+    },
+    "WA": {
+      "level": "L1",
+      "start": "S5",
+      "end": "N5",
+      "type": "WT",
+      "option": "KA"
+    },
+    "WB": {
+      "level": "L1",
+      "start": "BJ1",
+      "end": "BJ2",
+      "type": "WT",
+      "option": "KB"
+    }
+  },
+  "rooms": {
+    "DIN": {
+      "level": "L1",
+      "anchor": [2560000, 2560000],
+      "name": "Dining"
+    },
+    "KIT": {
+      "level": "L1",
+      "anchor": [8320000, 2560000],
+      "name": "Kitchen"
+    }
+  },
+  "openings": {
+    "O1": {
+      "wall": "W1",
+      "offset": 1920000,
+      "fill": "T-door-36"
+    },
+    "OA": {
+      "wall": "WA",
+      "offset": 1920000,
+      "fill": "T-door-36",
+      "option": "KA"
+    },
+    "OB": {
+      "wall": "W4",
+      "offset": 640000,
+      "fill": "G",
+      "option": "KB"
+    }
+  },
+  "optionSets": {
+    "KS": {
+      "name": "Kitchen",
+      "primary": "KA"
+    }
+  },
+  "options": {
+    "KA": {
+      "set": "KS",
+      "name": "A"
+    },
+    "KB": {
+      "set": "KS",
+      "name": "B"
+    }
+  },
+  "separators": {
+    "SB": {
+      "level": "L1",
+      "start": "S4",
+      "end": "N4",
+      "option": "KB"
+    }
+  }
+}

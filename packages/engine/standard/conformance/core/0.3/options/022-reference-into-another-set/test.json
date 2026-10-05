@@ -1,0 +1,6 @@
+{
+  "description": "An opening of kitchen option B in the pantry wall of option PB of another set: a design may choose B without PB, so FS-INV-1102.",
+  "covers": [
+    "FS-CORE-19.4.1"
+  ]
+}

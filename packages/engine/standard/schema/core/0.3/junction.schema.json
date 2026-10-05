@@ -25,6 +25,10 @@
         "kind": "mitre"
       }
     },
+    "option": {
+      "$ref": "defs.schema.json#/$defs/reference",
+      "description": "19.2: a reference to the option this junction is in. Absent: it is in no option, and so in every design."
+    },
     "name": {
       "$ref": "defs.schema.json#/$defs/name",
       "description": "1.4: a human-readable label, 1–200 characters. Absent by default."

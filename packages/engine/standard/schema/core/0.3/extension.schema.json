@@ -86,7 +86,7 @@
     },
     "element": {
       "title": "Extension element",
-      "description": "12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.",
+      "description": "12.5: an element of a kind an extension adds. It MUST have a `fallback`, and its core members — `fallback`, `host`, `clearances`, `option` (19.2), `name` and `extras` — MUST have their types (FS-CORE-12.5.2). Every other member is the extension's own, and core neither restricts nor reads it.",
       "type": "object",
       "required": [
         "fallback"
@@ -103,6 +103,10 @@
         "clearances": {
           "$ref": "clearance.schema.json",
           "description": "13.5: the space the element needs kept clear, in its frame. Absent: none."
+        },
+        "option": {
+          "$ref": "defs.schema.json#/$defs/reference",
+          "description": "12.5, 19.2: a reference to the option the element is in. Absent: it is in no option, and so in every design."
         },
         "name": {
           "$ref": "defs.schema.json#/$defs/name",

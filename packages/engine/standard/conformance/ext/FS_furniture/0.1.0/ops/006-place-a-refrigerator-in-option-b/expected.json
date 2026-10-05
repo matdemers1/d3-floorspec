@@ -1,0 +1,50 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "e714baa254a8d8b06bf3480a33c1806f95f56d97d76b4e3ea169977b54241039",
+  "created": ["X16"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "appliances",
+      "id": "X16",
+      "element": {
+        "catalogue": "refrigerator-900",
+        "category": "refrigerator",
+        "clearances": {
+          "door": {
+            "max": [2048000, 576000, 2278400],
+            "min": [896000, -576000, 0],
+            "purpose": "swing",
+            "shape": "box"
+          }
+        },
+        "fallback": {
+          "level": "L1",
+          "asset": "M-refrigerator-900",
+          "box": {
+            "max": [896000, 576000, 2278400],
+            "min": [0, -576000, 0]
+          },
+          "symbol": "S-refrigerator-900"
+        },
+        "host": {
+          "height": 0,
+          "mode": "wallFace",
+          "offset": 4224000,
+          "side": "right",
+          "wall": "W1"
+        },
+        "name": "Refrigerator, 900 mm"
+      },
+      "extension": "FS_furniture"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "X16"
+    }
+  ]
+}

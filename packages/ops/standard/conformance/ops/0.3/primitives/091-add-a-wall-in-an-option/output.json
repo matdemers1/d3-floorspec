@@ -1,0 +1,206 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "floorspec": "0.3",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        5120000
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        10240000,
+        5120000
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        10240000,
+        0
+      ]
+    },
+    "N4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        5120000
+      ]
+    },
+    "N5": {
+      "level": "L1",
+      "position": [
+        6400000,
+        5120000
+      ]
+    },
+    "S4": {
+      "level": "L1",
+      "position": [
+        5120000,
+        0
+      ]
+    },
+    "S5": {
+      "level": "L1",
+      "position": [
+        6400000,
+        0
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "openings": {
+    "O1": {
+      "fill": "T-door-36",
+      "offset": 1920000,
+      "wall": "W1"
+    },
+    "OA": {
+      "fill": "T-door-36",
+      "offset": 1920000,
+      "option": "KA",
+      "wall": "WA"
+    },
+    "OB": {
+      "fill": "G",
+      "offset": 640000,
+      "option": "KB",
+      "wall": "W4"
+    }
+  },
+  "optionSets": {
+    "KS": {
+      "name": "Kitchen",
+      "primary": "KA"
+    }
+  },
+  "options": {
+    "KA": {
+      "name": "A",
+      "set": "KS"
+    },
+    "KB": {
+      "name": "B",
+      "set": "KS"
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "DIN": {
+      "anchor": [
+        2560000,
+        2560000
+      ],
+      "level": "L1",
+      "name": "Dining"
+    }
+  },
+  "separators": {
+    "SB": {
+      "end": "N4",
+      "level": "L1",
+      "option": "KB",
+      "start": "S4"
+    }
+  },
+  "types": {
+    "G": {
+      "height": 1536000,
+      "kind": "windowType",
+      "sill": 1152000,
+      "width": 1536000
+    },
+    "T-door-36": {
+      "height": 2600960,
+      "kind": "doorType",
+      "width": 1170432
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "N4",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "N5",
+      "level": "L1",
+      "start": "N4",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J3",
+      "level": "L1",
+      "start": "N5",
+      "type": "WT"
+    },
+    "W5": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W6": {
+      "end": "S5",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    },
+    "W7": {
+      "end": "S4",
+      "level": "L1",
+      "start": "S5",
+      "type": "WT"
+    },
+    "W8": {
+      "end": "J1",
+      "level": "L1",
+      "start": "S4",
+      "type": "WT"
+    },
+    "WA": {
+      "end": "N5",
+      "level": "L1",
+      "option": "KA",
+      "start": "S5",
+      "type": "WT"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "83ee2a9baa33a7546b7e0ebb2b3c7cdd2a7c60b8ec0af100c18e815c75c2d383",
+  "created": ["OA2"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "OA2",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 3328000,
+        "wall": "WA"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "OA2"
+    }
+  ]
+}

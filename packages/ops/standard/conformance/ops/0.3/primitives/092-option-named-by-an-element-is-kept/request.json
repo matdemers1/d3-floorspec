@@ -1,0 +1,18 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "separators",
+      "id": "SB",
+      "element": {
+        "level": "L1",
+        "start": "S4",
+        "end": "N4",
+        "option": "KB"
+      }
+    }
+  ],
+  "context": {
+    "option": "KA"
+  }
+}

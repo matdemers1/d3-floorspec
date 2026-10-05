@@ -1,0 +1,9 @@
+{
+  "description": "A texture's offset [0, 0] and rotation 0, a face finish with no regions, an empty face finish and so empty finishes are constant defaults, which the canonical form omits; metallic 0 is not - absent, it is its map's - so it is kept.",
+  "covers": [
+    "FS-CORE-9.2.1",
+    "FS-CORE-1.5.1",
+    "FS-CORE-18.2.1",
+    "FS-CORE-18.5.1"
+  ]
+}

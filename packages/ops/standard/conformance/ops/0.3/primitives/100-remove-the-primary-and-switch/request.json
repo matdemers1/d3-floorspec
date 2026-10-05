@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "removeElement",
+      "id": "KA",
+      "cascade": true
+    },
+    {
+      "op": "setProperty",
+      "id": "KS",
+      "path": "/primary",
+      "value": "KB"
+    }
+  ]
+}
