@@ -128,6 +128,12 @@
   font-weight: var(--weight-semibold);
   color: var(--color-fg);
 }
+.fs-template-card__plan {
+  height: 120px;
+  margin-bottom: var(--space-8);
+  padding: var(--space-8);
+  border-radius: var(--radius-md);
+}
 .fs-template-card[data-unavailable='true'] .fs-template-card__title {
   color: var(--color-fg-muted);
 }

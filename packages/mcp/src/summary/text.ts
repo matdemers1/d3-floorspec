@@ -36,6 +36,7 @@ function opening(o: OpeningSummary, self: string): string {
     s += `, hinge ${o.hinge ?? 'start'}, swing ${o.swing ?? 'right'}`;
     if (o.swingsInto) s += `, opens into ${neighbour(o.swingsInto, self)}`;
   }
+  if (o.kind === 'window') s += `, ${lengthText(o.height)} high${o.sill ? ` above a ${lengthText(o.sill)} sill` : ''}`;
   if (o.operation) s += `, operation ${o.operation}`;
   if (o.clearOpening) {
     const c = o.clearOpening;
@@ -76,6 +77,14 @@ function room(r: RoomSummary): string[] {
     out.push(`${SIDE_TITLES[side]}:${edges.length ? '' : ' (nothing)'}`);
     for (const e of edges) out.push(...edge(e, r.id));
   }
+  if (r.daylight) {
+    const d = r.daylight;
+    out.push(
+      d.windows === 0
+        ? 'Daylight: no windows to the outside.'
+        : `Daylight: ${d.windows} window${d.windows === 1 ? '' : 's'} to the outside (${d.facing.join(', ')}), ${d.roughOpening.squareFeet} ft² of rough opening, ${d.percentOfFloor}% of the floor area.`,
+    );
+  }
   if (r.inside.length) {
     out.push('Inside the room (freestanding):');
     for (const e of r.inside) out.push(...edge(e, r.id));
@@ -114,6 +123,13 @@ export function summaryText(s: DocumentSummary): string {
       `Wall lengths are location lines; opening positions are measured from the wall's start junction.`,
     ROOM_FUNCTIONS_TEXT,
   );
+  if (s.site) {
+    const f = s.site.facing;
+    out.push(
+      `Site: plan north faces ${f.north.compass} (${f.north.bearing}°), east ${f.east.compass} (${f.east.bearing}°), south ${f.south.compass} (${f.south.bearing}°), west ${f.west.compass} (${f.west.bearing}°) — a window on a side looks that way` +
+        (s.site.latitude !== undefined && s.site.longitude !== undefined ? `; location ${s.site.latitude.toFixed(4)}°, ${s.site.longitude.toFixed(4)}°.` : '; no location.'),
+    );
+  }
   if (!s.valid) out.push('', 'The document is NOT valid: fix the error diagnostics below first; geometry is reported only where it can be derived.');
   if (s.options?.length) {
     out.push('', '## Design options', 'Described: the primary design; elements of other options are left out. floorspec_apply\'s `option` adds what a batch draws into one.');

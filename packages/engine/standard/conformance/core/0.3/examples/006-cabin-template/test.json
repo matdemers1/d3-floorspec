@@ -1,0 +1,14 @@
+{
+  "description": "The cabin starter template (templates/cabin.floorspec.json): a double-height living room under a one-sided vault that follows the shed roof above it, a bedroom, a bath and a kitchen under a sleeping loft, and a straight stair along the east wall whose head lands on the loft's railing; a deck slab. The roof is a shed of 3 in 12 rising from its south eave, its three other edges gables. The open part of the loft level is a bounded face with no room - the stair's well, and the living room's void - so FS-LINT-003 is reported for it; the stair has nothing above it, so it has no headroom.",
+  "covers": [
+    "FS-CORE-8.1.3",
+    "FS-CORE-6.7.1",
+    "FS-CORE-15.3.2",
+    "FS-CORE-15.7.1",
+    "FS-CORE-16.4.1",
+    "FS-CORE-16.5.1",
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.5.1",
+    "FS-CORE-17.6.1"
+  ]
+}

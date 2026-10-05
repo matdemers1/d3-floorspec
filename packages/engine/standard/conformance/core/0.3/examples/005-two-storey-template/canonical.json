@@ -1,0 +1,2702 @@
+{
+  "buildings": {
+    "HOUSE": {
+      "name": "House"
+    }
+  },
+  "extensions": {
+    "FS_electrical": {
+      "collections": {
+        "panels": {
+          "PANEL": {
+            "clearances": {
+              "working": {
+                "max": [
+                  1170432,
+                  487680,
+                  975360
+                ],
+                "min": [
+                  0,
+                  -487680,
+                  -1560576
+                ],
+                "purpose": "workingSpace",
+                "shape": "box"
+              }
+            },
+            "fallback": {
+              "box": {
+                "max": [
+                  130048,
+                  227584,
+                  487680
+                ],
+                "min": [
+                  0,
+                  -227584,
+                  -487680
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "height": 1560576,
+              "mode": "wallFace",
+              "offset": 3511296,
+              "side": "left",
+              "wall": "W19"
+            },
+            "mainBreaker": 200,
+            "name": "Main panel",
+            "rating": 200,
+            "spaces": 40,
+            "volts": [
+              120,
+              240
+            ]
+          }
+        }
+      }
+    },
+    "FS_plumbing": {
+      "collections": {
+        "fixtures": {
+          "HB-LAV": {
+            "clearances": {
+              "front": {
+                "max": [
+                  1430528,
+                  487680,
+                  1560576
+                ],
+                "min": [
+                  650240,
+                  -487680,
+                  -1040384
+                ],
+                "purpose": "fixtureClearance",
+                "shape": "box"
+              }
+            },
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  650240,
+                  325120,
+                  0
+                ],
+                "min": [
+                  0,
+                  -325120,
+                  -260096
+                ]
+              },
+              "level": "L2"
+            },
+            "fixture": "lavatory",
+            "host": {
+              "height": 1040384,
+              "mode": "wallFace",
+              "offset": 1950720,
+              "side": "right",
+              "wall": "W36"
+            },
+            "hotFrom": "WH1",
+            "name": "Hall bath lavatory",
+            "supply": [
+              "cold",
+              "hot"
+            ]
+          },
+          "HB-TUB": {
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  975360,
+                  975360,
+                  650240
+                ],
+                "min": [
+                  0,
+                  -975360,
+                  0
+                ]
+              },
+              "level": "L2"
+            },
+            "fixture": "bathtubShower",
+            "host": {
+              "height": 0,
+              "mode": "wallFace",
+              "offset": 1219200,
+              "side": "right",
+              "wall": "W23"
+            },
+            "hotFrom": "WH1",
+            "name": "Hall bath tub and shower",
+            "supply": [
+              "cold",
+              "hot"
+            ]
+          },
+          "HB-WC": {
+            "clearances": {
+              "front": {
+                "max": [
+                  1690624,
+                  487680,
+                  2600960
+                ],
+                "min": [
+                  910336,
+                  -487680,
+                  0
+                ],
+                "purpose": "fixtureClearance",
+                "shape": "box"
+              }
+            },
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  910336,
+                  292608,
+                  975360
+                ],
+                "min": [
+                  0,
+                  -292608,
+                  0
+                ]
+              },
+              "level": "L2"
+            },
+            "fixture": "waterCloset",
+            "host": {
+              "height": 0,
+              "mode": "wallFace",
+              "offset": 682752,
+              "side": "right",
+              "wall": "W36"
+            },
+            "name": "Hall bath toilet",
+            "supply": [
+              "cold"
+            ]
+          },
+          "K-SINK": {
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  715264,
+                  487680,
+                  0
+                ],
+                "min": [
+                  0,
+                  -487680,
+                  -292608
+                ]
+              },
+              "level": "L1"
+            },
+            "fixture": "kitchenSink",
+            "host": {
+              "height": 1170432,
+              "mode": "wallFace",
+              "offset": 2731008,
+              "side": "right",
+              "wall": "W8"
+            },
+            "hotFrom": "WH1",
+            "name": "Kitchen sink",
+            "supply": [
+              "cold",
+              "hot"
+            ]
+          },
+          "L-WASH": {
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  975360,
+                  455168,
+                  1267968
+                ],
+                "min": [
+                  0,
+                  -455168,
+                  0
+                ]
+              },
+              "level": "L2"
+            },
+            "fixture": "clothesWasher",
+            "host": {
+              "height": 0,
+              "mode": "wallFace",
+              "offset": 1560576,
+              "side": "right",
+              "wall": "W26"
+            },
+            "hotFrom": "WH1",
+            "name": "Washer box",
+            "supply": [
+              "cold",
+              "hot"
+            ]
+          },
+          "PB-LAV1": {
+            "clearances": {
+              "front": {
+                "max": [
+                  1430528,
+                  487680,
+                  1560576
+                ],
+                "min": [
+                  650240,
+                  -487680,
+                  -1040384
+                ],
+                "purpose": "fixtureClearance",
+                "shape": "box"
+              }
+            },
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  650240,
+                  325120,
+                  0
+                ],
+                "min": [
+                  0,
+                  -325120,
+                  -260096
+                ]
+              },
+              "level": "L2"
+            },
+            "fixture": "lavatory",
+            "host": {
+              "height": 1040384,
+              "mode": "wallFace",
+              "offset": 2926080,
+              "side": "right",
+              "wall": "W34"
+            },
+            "hotFrom": "WH1",
+            "name": "Primary bath lavatory, left",
+            "supply": [
+              "cold",
+              "hot"
+            ]
+          },
+          "PB-LAV2": {
+            "clearances": {
+              "front": {
+                "max": [
+                  1430528,
+                  487680,
+                  1560576
+                ],
+                "min": [
+                  650240,
+                  -487680,
+                  -1040384
+                ],
+                "purpose": "fixtureClearance",
+                "shape": "box"
+              }
+            },
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  650240,
+                  325120,
+                  0
+                ],
+                "min": [
+                  0,
+                  -325120,
+                  -260096
+                ]
+              },
+              "level": "L2"
+            },
+            "fixture": "lavatory",
+            "host": {
+              "height": 1040384,
+              "mode": "wallFace",
+              "offset": 1755648,
+              "side": "right",
+              "wall": "W34"
+            },
+            "hotFrom": "WH1",
+            "name": "Primary bath lavatory, right",
+            "supply": [
+              "cold",
+              "hot"
+            ]
+          },
+          "PB-SH": {
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  1170432,
+                  585216,
+                  2600960
+                ],
+                "min": [
+                  0,
+                  -585216,
+                  0
+                ]
+              },
+              "level": "L2"
+            },
+            "fixture": "shower",
+            "host": {
+              "height": 0,
+              "mode": "wallFace",
+              "offset": 1170432,
+              "side": "right",
+              "wall": "W33"
+            },
+            "hotFrom": "WH1",
+            "name": "Primary shower",
+            "supply": [
+              "cold",
+              "hot"
+            ]
+          },
+          "PB-WC": {
+            "clearances": {
+              "front": {
+                "max": [
+                  1690624,
+                  487680,
+                  2600960
+                ],
+                "min": [
+                  910336,
+                  -487680,
+                  0
+                ],
+                "purpose": "fixtureClearance",
+                "shape": "box"
+              }
+            },
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  910336,
+                  292608,
+                  975360
+                ],
+                "min": [
+                  0,
+                  -292608,
+                  0
+                ]
+              },
+              "level": "L2"
+            },
+            "fixture": "waterCloset",
+            "host": {
+              "height": 0,
+              "mode": "wallFace",
+              "offset": 3121152,
+              "side": "right",
+              "wall": "W54"
+            },
+            "name": "Primary bath toilet",
+            "supply": [
+              "cold"
+            ]
+          },
+          "PR-LAV": {
+            "clearances": {
+              "front": {
+                "max": [
+                  1430528,
+                  487680,
+                  1560576
+                ],
+                "min": [
+                  650240,
+                  -487680,
+                  -1040384
+                ],
+                "purpose": "fixtureClearance",
+                "shape": "box"
+              }
+            },
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  650240,
+                  325120,
+                  0
+                ],
+                "min": [
+                  0,
+                  -325120,
+                  -260096
+                ]
+              },
+              "level": "L1"
+            },
+            "fixture": "lavatory",
+            "host": {
+              "height": 1040384,
+              "mode": "wallFace",
+              "offset": 1267968,
+              "side": "left",
+              "wall": "W22"
+            },
+            "hotFrom": "WH1",
+            "name": "Powder room lavatory",
+            "supply": [
+              "cold",
+              "hot"
+            ]
+          },
+          "PR-WC": {
+            "clearances": {
+              "front": {
+                "max": [
+                  1690624,
+                  487680,
+                  2600960
+                ],
+                "min": [
+                  910336,
+                  -487680,
+                  0
+                ],
+                "purpose": "fixtureClearance",
+                "shape": "box"
+              }
+            },
+            "drain": "K1",
+            "fallback": {
+              "box": {
+                "max": [
+                  910336,
+                  292608,
+                  975360
+                ],
+                "min": [
+                  0,
+                  -292608,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "fixture": "waterCloset",
+            "host": {
+              "height": 0,
+              "mode": "wallFace",
+              "offset": 877824,
+              "side": "right",
+              "wall": "W4"
+            },
+            "name": "Powder room toilet",
+            "supply": [
+              "cold"
+            ]
+          }
+        },
+        "waterHeaters": {
+          "WH1": {
+            "capacity": 189000,
+            "clearances": {
+              "service": {
+                "max": [
+                  1690624,
+                  487680,
+                  1950720
+                ],
+                "min": [
+                  715264,
+                  -487680,
+                  0
+                ],
+                "purpose": "access",
+                "shape": "box"
+              }
+            },
+            "drain": "K1",
+            "energy": "electric",
+            "fallback": {
+              "box": {
+                "max": [
+                  715264,
+                  357632,
+                  1950720
+                ],
+                "min": [
+                  0,
+                  -357632,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "heater": "storage",
+            "host": {
+              "height": 0,
+              "mode": "wallFace",
+              "offset": 975360,
+              "side": "right",
+              "wall": "W5"
+            },
+            "input": 4500,
+            "name": "Water heater"
+          }
+        }
+      },
+      "stacks": {
+        "K1": {
+          "levels": [
+            "L1",
+            "L2"
+          ],
+          "name": "Main stack"
+        }
+      }
+    }
+  },
+  "extensionsUsed": {
+    "FS_electrical": "0.1.0",
+    "FS_plumbing": "0.1.0"
+  },
+  "floorspec": "0.3",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        10924032
+      ]
+    },
+    "J10": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W13",
+          "W14"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        3901440,
+        6242304
+      ]
+    },
+    "J11": {
+      "level": "L1",
+      "position": [
+        9363456,
+        6242304
+      ]
+    },
+    "J12": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W16",
+          "W17"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        9363456,
+        5071872
+      ]
+    },
+    "J13": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W8",
+          "W9"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        14045184,
+        5071872
+      ]
+    },
+    "J14": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J15": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W11",
+          "W12"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        3901440,
+        0
+      ]
+    },
+    "J16": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W10",
+          "W11"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        9363456,
+        0
+      ]
+    },
+    "J17": {
+      "level": "L1",
+      "position": [
+        14045184,
+        0
+      ]
+    },
+    "J18": {
+      "level": "L2",
+      "position": [
+        0,
+        10924032
+      ]
+    },
+    "J19": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W27",
+          "W28"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        2145792,
+        10924032
+      ]
+    },
+    "J2": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W4",
+          "W5"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        1950720,
+        10924032
+      ]
+    },
+    "J20": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W28",
+          "W29"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        3901440,
+        10924032
+      ]
+    },
+    "J21": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W29",
+          "W30"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        9363456,
+        10924032
+      ]
+    },
+    "J22": {
+      "level": "L2",
+      "position": [
+        14045184,
+        10924032
+      ]
+    },
+    "J23": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W52",
+          "W53"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        9363456,
+        8583168
+      ]
+    },
+    "J24": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W31",
+          "W32"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        14045184,
+        8583168
+      ]
+    },
+    "J25": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W25",
+          "W26"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        0,
+        7802880
+      ]
+    },
+    "J26": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W56",
+          "W57"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        2145792,
+        7802880
+      ]
+    },
+    "J27": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W43",
+          "W44"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        3901440,
+        7802880
+      ]
+    },
+    "J28": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W42",
+          "W43"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        3901440,
+        7217664
+      ]
+    },
+    "J29": {
+      "level": "L2",
+      "position": [
+        6242304,
+        7217664
+      ]
+    },
+    "J3": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W5",
+          "W6"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        3901440,
+        10924032
+      ]
+    },
+    "J30": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W24",
+          "W25"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        0,
+        6242304
+      ]
+    },
+    "J31": {
+      "level": "L2",
+      "position": [
+        1463040,
+        6242304
+      ]
+    },
+    "J32": {
+      "level": "L2",
+      "position": [
+        3901440,
+        6242304
+      ]
+    },
+    "J33": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W47",
+          "W48"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        6242304,
+        6242304
+      ]
+    },
+    "J34": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W51",
+          "W52"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        9363456,
+        6242304
+      ]
+    },
+    "J35": {
+      "level": "L2",
+      "position": [
+        3901440,
+        4876800
+      ]
+    },
+    "J36": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W45",
+          "W46"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        6242304,
+        4876800
+      ]
+    },
+    "J37": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W50",
+          "W51"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        9363456,
+        4876800
+      ]
+    },
+    "J38": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W40",
+          "W41"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        3901440,
+        3901440
+      ]
+    },
+    "J39": {
+      "level": "L2",
+      "position": [
+        6242304,
+        3901440
+      ]
+    },
+    "J4": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W6",
+          "W7"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        9363456,
+        10924032
+      ]
+    },
+    "J40": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W49",
+          "W50"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        9363456,
+        2340864
+      ]
+    },
+    "J41": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W32",
+          "W33"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        14045184,
+        2340864
+      ]
+    },
+    "J42": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W23",
+          "W24"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        0,
+        2243328
+      ]
+    },
+    "J43": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W37",
+          "W38"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        1463040,
+        2243328
+      ]
+    },
+    "J44": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W39",
+          "W40"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        3901440,
+        2243328
+      ]
+    },
+    "J45": {
+      "level": "L2",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J46": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W35",
+          "W36"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        3901440,
+        0
+      ]
+    },
+    "J47": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W34",
+          "W35"
+        ]
+      },
+      "level": "L2",
+      "position": [
+        9363456,
+        0
+      ]
+    },
+    "J48": {
+      "level": "L2",
+      "position": [
+        14045184,
+        0
+      ]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [
+        14045184,
+        10924032
+      ]
+    },
+    "J6": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W2",
+          "W3"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        0,
+        8583168
+      ]
+    },
+    "J7": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W20",
+          "W21"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        1950720,
+        8583168
+      ]
+    },
+    "J8": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W14",
+          "W15"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        3901440,
+        8583168
+      ]
+    },
+    "J9": {
+      "join": {
+        "kind": "butt",
+        "through": [
+          "W1",
+          "W2"
+        ]
+      },
+      "level": "L1",
+      "position": [
+        0,
+        6242304
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "HOUSE",
+      "ceilingHeight": 3511296,
+      "elevation": 0,
+      "height": 3901440,
+      "name": "Main floor"
+    },
+    "L2": {
+      "building": "HOUSE",
+      "ceilingHeight": 3121152,
+      "elevation": 3901440,
+      "floorThickness": 390144,
+      "height": 3157728,
+      "name": "Upper floor"
+    }
+  },
+  "materials": {
+    "asphalt-shingles": {
+      "color": "#5d5852",
+      "name": "Asphalt shingles, weathered wood",
+      "roughness": 950
+    },
+    "carpet": {
+      "color": "#cfc4b2",
+      "name": "Carpet, oatmeal",
+      "roughness": 1000
+    },
+    "cast-in-place-concrete": {
+      "color": "#aaa9a3",
+      "name": "Cast-in-place concrete",
+      "roughness": 900,
+      "source": {
+        "item": "cast-in-place-concrete",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "fibre-cement-siding": {
+      "color": "#8f9aa1",
+      "name": "Fibre-cement lap siding, painted",
+      "roughness": 750,
+      "source": {
+        "item": "fibre-cement-siding",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "gypsum-board": {
+      "color": "#efede8",
+      "name": "Gypsum board, painted",
+      "roughness": 900,
+      "source": {
+        "item": "gypsum-board",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "luxury-vinyl-plank": {
+      "color": "#b8ab98",
+      "name": "Luxury vinyl plank, warm grey",
+      "roughness": 600
+    },
+    "oak-flooring": {
+      "color": "#c9a77c",
+      "name": "White oak flooring, matte finish",
+      "roughness": 650
+    },
+    "osb-sheathing": {
+      "color": "#c09a5b",
+      "name": "OSB sheathing",
+      "roughness": 900,
+      "source": {
+        "item": "osb-sheathing",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "porcelain-tile": {
+      "color": "#d6d4cf",
+      "name": "Porcelain floor tile, light grey",
+      "roughness": 500
+    },
+    "weather-resistive-barrier": {
+      "color": "#e9edf0",
+      "name": "Weather-resistive barrier",
+      "roughness": 600,
+      "source": {
+        "item": "weather-resistive-barrier",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wood-stud-framing": {
+      "color": "#c8a46e",
+      "name": "Wood stud framing",
+      "roughness": 850,
+      "source": {
+        "item": "wood-stud-framing",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wood-stud-framing-insulated": {
+      "color": "#dcc28c",
+      "name": "Wood stud framing, insulated cavities",
+      "roughness": 900,
+      "source": {
+        "item": "wood-stud-framing-insulated",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    }
+  },
+  "openings": {
+    "B2D": {
+      "fill": "door-interior-swing-30x80",
+      "offset": 650240,
+      "wall": "W46"
+    },
+    "B3D": {
+      "fill": "door-interior-swing-30x80",
+      "offset": 650240,
+      "swing": "left",
+      "wall": "W48"
+    },
+    "BAD": {
+      "fill": "door-interior-swing-28x80",
+      "offset": 585216,
+      "wall": "W38"
+    },
+    "BKD": {
+      "fill": "door-exterior-swing-36x80",
+      "name": "Back door",
+      "offset": 552704,
+      "wall": "W2"
+    },
+    "C1": {
+      "height": 2731008,
+      "name": "Cased opening, foyer to living",
+      "offset": 2340864,
+      "wall": "W13",
+      "width": 2340864
+    },
+    "C2": {
+      "height": 2731008,
+      "name": "Cased opening, living to dining",
+      "offset": 1365504,
+      "wall": "W16",
+      "width": 2340864
+    },
+    "C2D": {
+      "fill": "door-bypass-48x80",
+      "offset": 357632,
+      "wall": "W59"
+    },
+    "C3": {
+      "height": 2731008,
+      "name": "Cased opening, living to family",
+      "offset": 1170432,
+      "wall": "W18",
+      "width": 3121152
+    },
+    "C3D": {
+      "fill": "door-bypass-48x80",
+      "offset": 357632,
+      "wall": "W61"
+    },
+    "CLD": {
+      "fill": "door-interior-swing-24x80",
+      "offset": 552704,
+      "swing": "left",
+      "wall": "W21"
+    },
+    "FD": {
+      "fill": "door-exterior-swing-36x80",
+      "hinge": "end",
+      "name": "Front door",
+      "offset": 357632,
+      "wall": "W12"
+    },
+    "LAD": {
+      "fill": "door-interior-swing-28x80",
+      "offset": 585216,
+      "swing": "left",
+      "wall": "W56"
+    },
+    "MFD": {
+      "fill": "door-interior-swing-30x80",
+      "offset": 2015744,
+      "swing": "left",
+      "wall": "W19"
+    },
+    "MFM": {
+      "fill": "door-interior-swing-30x80",
+      "offset": 650240,
+      "wall": "W14"
+    },
+    "PBD": {
+      "fill": "door-interior-swing-30x80",
+      "offset": 650240,
+      "wall": "W54"
+    },
+    "PRD": {
+      "fill": "door-interior-swing-30x80",
+      "name": "Primary bedroom door",
+      "offset": 162560,
+      "wall": "W51"
+    },
+    "PTD": {
+      "fill": "door-double-swing-60x80",
+      "name": "Patio doors",
+      "offset": 1332992,
+      "wall": "W7"
+    },
+    "PWD": {
+      "fill": "door-interior-swing-24x80",
+      "offset": 552704,
+      "swing": "left",
+      "wall": "W20"
+    },
+    "STD": {
+      "fill": "door-interior-swing-24x80",
+      "offset": 455168,
+      "swing": "left",
+      "wall": "W57"
+    },
+    "WCD": {
+      "fill": "door-interior-swing-28x80",
+      "offset": 682752,
+      "swing": "left",
+      "wall": "W55"
+    },
+    "WIN1": {
+      "fill": "window-double-hung-30x48",
+      "offset": 2235200,
+      "wall": "W12"
+    },
+    "WIN10": {
+      "fill": "window-double-hung-36x60",
+      "offset": 4137152,
+      "wall": "W6"
+    },
+    "WIN11": {
+      "fill": "window-slider-48x36",
+      "offset": 1162304,
+      "wall": "W36"
+    },
+    "WIN12": {
+      "fill": "window-double-hung-36x60",
+      "offset": 3308096,
+      "wall": "W35"
+    },
+    "WIN13": {
+      "fill": "window-double-hung-36x60",
+      "offset": 967232,
+      "wall": "W35"
+    },
+    "WIN14": {
+      "fill": "window-slider-48x36",
+      "offset": 1552448,
+      "wall": "W34"
+    },
+    "WIN15": {
+      "fill": "window-double-hung-36x60",
+      "offset": 3698240,
+      "wall": "W32"
+    },
+    "WIN16": {
+      "fill": "window-double-hung-36x60",
+      "offset": 1357376,
+      "wall": "W32"
+    },
+    "WIN17": {
+      "fill": "window-casement-24x48",
+      "offset": 1942592,
+      "wall": "W30"
+    },
+    "WIN18": {
+      "fill": "window-double-hung-36x60",
+      "offset": 967232,
+      "wall": "W29"
+    },
+    "WIN19": {
+      "fill": "window-double-hung-36x60",
+      "offset": 3308096,
+      "wall": "W29"
+    },
+    "WIN2": {
+      "fill": "window-double-hung-36x60",
+      "offset": 3308096,
+      "wall": "W11"
+    },
+    "WIN20": {
+      "fill": "window-double-hung-36x60",
+      "offset": 1454912,
+      "wall": "W24"
+    },
+    "WIN3": {
+      "fill": "window-double-hung-36x60",
+      "offset": 967232,
+      "wall": "W11"
+    },
+    "WIN4": {
+      "fill": "window-double-hung-36x60",
+      "offset": 1747520,
+      "wall": "W10"
+    },
+    "WIN5": {
+      "fill": "window-double-hung-36x60",
+      "offset": 1942592,
+      "wall": "W9"
+    },
+    "WIN6": {
+      "fill": "window-slider-48x36",
+      "offset": 1942592,
+      "wall": "W8"
+    },
+    "WIN7": {
+      "fill": "window-fixed-72x48",
+      "offset": 1552448,
+      "wall": "W6"
+    },
+    "WIN8": {
+      "fill": "window-casement-24x48",
+      "offset": 577088,
+      "wall": "W4"
+    },
+    "WIN9": {
+      "fill": "window-double-hung-36x60",
+      "offset": 138176,
+      "wall": "W6"
+    }
+  },
+  "program": {
+    "adjacency": [
+      {
+        "a": "P-KITCHEN",
+        "b": "P-DINING",
+        "kind": "required"
+      },
+      {
+        "a": "P-KITCHEN",
+        "b": "P-FAMILY",
+        "kind": "required"
+      },
+      {
+        "a": "P-LIVING",
+        "b": "P-DINING",
+        "kind": "preferred"
+      },
+      {
+        "a": "P-PRIMARY",
+        "b": "P-PBATH",
+        "kind": "required"
+      },
+      {
+        "a": "P-KITCHEN",
+        "b": "P-POWDER",
+        "kind": "forbidden"
+      },
+      {
+        "a": "P-LAUNDRY",
+        "b": "P-BED",
+        "kind": "preferred",
+        "weight": 3
+      }
+    ],
+    "items": {
+      "P-BATH": {
+        "function": "bath",
+        "level": "L2",
+        "minArea": 6849555333120,
+        "name": "Hall bath"
+      },
+      "P-BED": {
+        "count": 2,
+        "function": "sleeping",
+        "level": "L2",
+        "minArea": 16743357480960,
+        "name": "Bedrooms",
+        "targetArea": 21309727703040
+      },
+      "P-DINING": {
+        "function": "dining",
+        "level": "L1",
+        "minArea": 18265480888320,
+        "name": "Dining room"
+      },
+      "P-FAMILY": {
+        "function": "living",
+        "level": "L1",
+        "minArea": 22831851110400,
+        "name": "Family room"
+      },
+      "P-KITCHEN": {
+        "function": "kitchen",
+        "level": "L1",
+        "minArea": 22831851110400,
+        "name": "Kitchen"
+      },
+      "P-LAUNDRY": {
+        "function": "laundry",
+        "level": "L2",
+        "name": "Laundry"
+      },
+      "P-LIVING": {
+        "function": "living",
+        "level": "L1",
+        "minArea": 27398221332480,
+        "name": "Living room"
+      },
+      "P-PBATH": {
+        "function": "bath",
+        "level": "L2",
+        "minArea": 8371678740480,
+        "name": "Primary bath"
+      },
+      "P-POWDER": {
+        "function": "bath",
+        "level": "L1",
+        "name": "Powder room"
+      },
+      "P-PRIMARY": {
+        "function": "sleeping",
+        "level": "L2",
+        "minArea": 24353974517760,
+        "name": "Primary bedroom",
+        "targetArea": 27398221332480
+      }
+    }
+  },
+  "project": {
+    "description": "A two-storey starter: a side-hall plan with the living room, dining room, kitchen and family room downstairs, a mudroom and powder room by the back door, and an L-shaped stair to three bedrooms upstairs - the primary suite under a vaulted ceiling - with a hall bath and an upstairs laundry, under one gable roof. A Floorspec 0.3 starter template; every wall, door and window type is the US starter library's.",
+    "name": "Two-storey house"
+  },
+  "roofs": {
+    "ROOF": {
+      "edges": {
+        "1": {
+          "gable": true,
+          "overhang": 195072
+        },
+        "3": {
+          "gable": true,
+          "overhang": 195072
+        }
+      },
+      "footprint": [
+        [
+          0,
+          0
+        ],
+        [
+          14045184,
+          0
+        ],
+        [
+          14045184,
+          10924032
+        ],
+        [
+          0,
+          10924032
+        ]
+      ],
+      "level": "L2",
+      "material": "asphalt-shingles",
+      "name": "Gable roof",
+      "overhang": 390144,
+      "pitch": {
+        "rise": 8,
+        "run": 12
+      },
+      "thickness": 325120
+    }
+  },
+  "rooms": {
+    "B2": {
+      "anchor": [
+        7412736,
+        2340864
+      ],
+      "brief": "P-BED",
+      "floorFinish": "carpet",
+      "function": "sleeping",
+      "level": "L2",
+      "name": "Bedroom 2"
+    },
+    "B3": {
+      "anchor": [
+        7412736,
+        8583168
+      ],
+      "brief": "P-BED",
+      "floorFinish": "carpet",
+      "function": "sleeping",
+      "level": "L2",
+      "name": "Bedroom 3"
+    },
+    "BATH": {
+      "anchor": [
+        1950720,
+        1170432
+      ],
+      "brief": "P-BATH",
+      "floorFinish": "porcelain-tile",
+      "function": "bath",
+      "level": "L2",
+      "name": "Hall bath"
+    },
+    "CL2": {
+      "anchor": [
+        5071872,
+        4389120
+      ],
+      "function": "storage",
+      "level": "L2",
+      "name": "Bedroom 2 closet"
+    },
+    "CL3": {
+      "anchor": [
+        5071872,
+        6729984
+      ],
+      "function": "storage",
+      "level": "L2",
+      "name": "Bedroom 3 closet"
+    },
+    "DIN": {
+      "anchor": [
+        11704320,
+        2535936
+      ],
+      "brief": "P-DINING",
+      "floorFinish": "oak-flooring",
+      "function": "dining",
+      "level": "L1",
+      "name": "Dining room"
+    },
+    "FAM": {
+      "anchor": [
+        6632448,
+        8583168
+      ],
+      "brief": "P-FAMILY",
+      "floorFinish": "oak-flooring",
+      "function": "living",
+      "level": "L1",
+      "name": "Family room"
+    },
+    "FOY": {
+      "anchor": [
+        2340864,
+        3901440
+      ],
+      "floorFinish": "oak-flooring",
+      "function": "circulation",
+      "level": "L1",
+      "name": "Foyer"
+    },
+    "HALL": {
+      "anchor": [
+        2731008,
+        5071872
+      ],
+      "floorFinish": "oak-flooring",
+      "function": "circulation",
+      "level": "L2",
+      "name": "Upper hall"
+    },
+    "KIT": {
+      "anchor": [
+        11704320,
+        7802880
+      ],
+      "brief": "P-KITCHEN",
+      "floorFinish": "oak-flooring",
+      "function": "kitchen",
+      "level": "L1",
+      "name": "Kitchen"
+    },
+    "LAU": {
+      "anchor": [
+        1072896,
+        9363456
+      ],
+      "brief": "P-LAUNDRY",
+      "floorFinish": "luxury-vinyl-plank",
+      "function": "laundry",
+      "level": "L2",
+      "name": "Laundry"
+    },
+    "LIV": {
+      "anchor": [
+        6632448,
+        3121152
+      ],
+      "brief": "P-LIVING",
+      "floorFinish": "oak-flooring",
+      "function": "living",
+      "level": "L1",
+      "name": "Living room"
+    },
+    "MUD": {
+      "anchor": [
+        1950720,
+        7412736
+      ],
+      "floorFinish": "luxury-vinyl-plank",
+      "function": "utility",
+      "level": "L1",
+      "name": "Mudroom"
+    },
+    "PBA": {
+      "anchor": [
+        11704320,
+        1170432
+      ],
+      "brief": "P-PBATH",
+      "floorFinish": "porcelain-tile",
+      "function": "bath",
+      "level": "L2",
+      "name": "Primary bath"
+    },
+    "PRI": {
+      "anchor": [
+        11704320,
+        5462016
+      ],
+      "brief": "P-PRIMARY",
+      "ceiling": {
+        "height": 4161536,
+        "kind": "vaulted",
+        "pitch": {
+          "rise": 4,
+          "run": 12
+        },
+        "ridge": [
+          [
+            9363456,
+            5462016
+          ],
+          [
+            14045184,
+            5462016
+          ]
+        ]
+      },
+      "floorFinish": "carpet",
+      "function": "sleeping",
+      "level": "L2",
+      "name": "Primary bedroom"
+    },
+    "PWR": {
+      "anchor": [
+        975360,
+        9753600
+      ],
+      "brief": "P-POWDER",
+      "floorFinish": "porcelain-tile",
+      "function": "bath",
+      "level": "L1",
+      "name": "Powder room"
+    },
+    "STO": {
+      "anchor": [
+        3023616,
+        9363456
+      ],
+      "function": "storage",
+      "level": "L2",
+      "name": "Linen and storage"
+    },
+    "UTL": {
+      "anchor": [
+        2926080,
+        9753600
+      ],
+      "function": "utility",
+      "level": "L1",
+      "name": "Utility closet"
+    },
+    "WIC": {
+      "anchor": [
+        11704320,
+        9753600
+      ],
+      "floorFinish": "carpet",
+      "function": "storage",
+      "level": "L2",
+      "name": "Walk-in closet"
+    }
+  },
+  "separators": {
+    "S1": {
+      "end": "J13",
+      "level": "L1",
+      "start": "J12"
+    },
+    "S2": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J11"
+    },
+    "S3": {
+      "end": "J31",
+      "level": "L2",
+      "start": "J30"
+    },
+    "S4": {
+      "end": "J43",
+      "level": "L2",
+      "start": "J31"
+    }
+  },
+  "site": {
+    "location": {
+      "latitude": 39828300,
+      "longitude": -98579500
+    }
+  },
+  "slabs": {
+    "PATIO": {
+      "boundary": [
+        [
+          9363456,
+          10924032
+        ],
+        [
+          14045184,
+          10924032
+        ],
+        [
+          14045184,
+          14825472
+        ],
+        [
+          9363456,
+          14825472
+        ]
+      ],
+      "level": "L1",
+      "material": "cast-in-place-concrete",
+      "name": "Back patio",
+      "offset": -260096,
+      "purpose": "patio",
+      "thickness": 130048
+    },
+    "PORCH": {
+      "boundary": [
+        [
+          0,
+          -2340864
+        ],
+        [
+          4681728,
+          -2340864
+        ],
+        [
+          4681728,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "level": "L1",
+      "material": "cast-in-place-concrete",
+      "name": "Front porch",
+      "offset": -195072,
+      "purpose": "porch",
+      "thickness": 130048
+    }
+  },
+  "stairs": {
+    "ST1": {
+      "form": {
+        "kind": "lShaped",
+        "risersBeforeTurn": 3,
+        "turn": "right"
+      },
+      "handrail": {
+        "height": 1170432,
+        "sides": "right"
+      },
+      "level": "L1",
+      "maxRiser": 251968,
+      "name": "Main stair",
+      "position": [
+        2048256,
+        1755648
+      ],
+      "rotation": 180000000,
+      "to": "L2",
+      "tread": 325120,
+      "width": 1170432
+    }
+  },
+  "types": {
+    "door-bypass-48x80": {
+      "clearOpening": {
+        "height": 2600960,
+        "width": 747776
+      },
+      "height": 2682240,
+      "kind": "doorType",
+      "name": "Bypass sliding doors, two leaves, 48 x 80 in",
+      "operation": "bypassSlide",
+      "source": {
+        "item": "door-bypass-48x80",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1625600
+    },
+    "door-double-swing-60x80": {
+      "clearOpening": {
+        "height": 2600960,
+        "width": 1820672
+      },
+      "clearances": {
+        "swing": {
+          "max": [
+            975360,
+            1007872,
+            2682240
+          ],
+          "min": [
+            0,
+            -1007872,
+            0
+          ],
+          "purpose": "swing",
+          "shape": "box"
+        }
+      },
+      "height": 2682240,
+      "kind": "doorType",
+      "name": "Double swing doors, a pair, 60 x 80 in",
+      "operation": "doubleSwing",
+      "source": {
+        "item": "door-double-swing-60x80",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 2015744
+    },
+    "door-exterior-swing-36x80": {
+      "clearOpening": {
+        "height": 2568448,
+        "width": 1097280
+      },
+      "clearances": {
+        "swing": {
+          "max": [
+            1170432,
+            617728,
+            2682240
+          ],
+          "min": [
+            0,
+            -617728,
+            0
+          ],
+          "purpose": "swing",
+          "shape": "box"
+        }
+      },
+      "height": 2682240,
+      "kind": "doorType",
+      "name": "Exterior swing door, 36 x 80 in",
+      "operation": "swing",
+      "source": {
+        "item": "door-exterior-swing-36x80",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1235456
+    },
+    "door-interior-swing-24x80": {
+      "clearOpening": {
+        "height": 2600960,
+        "width": 715264
+      },
+      "clearances": {
+        "swing": {
+          "max": [
+            780288,
+            422656,
+            2682240
+          ],
+          "min": [
+            0,
+            -422656,
+            0
+          ],
+          "purpose": "swing",
+          "shape": "box"
+        }
+      },
+      "height": 2682240,
+      "kind": "doorType",
+      "name": "Interior swing door, 24 x 80 in",
+      "operation": "swing",
+      "source": {
+        "item": "door-interior-swing-24x80",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 845312
+    },
+    "door-interior-swing-28x80": {
+      "clearOpening": {
+        "height": 2600960,
+        "width": 845312
+      },
+      "clearances": {
+        "swing": {
+          "max": [
+            910336,
+            487680,
+            2682240
+          ],
+          "min": [
+            0,
+            -487680,
+            0
+          ],
+          "purpose": "swing",
+          "shape": "box"
+        }
+      },
+      "height": 2682240,
+      "kind": "doorType",
+      "name": "Interior swing door, 28 x 80 in",
+      "operation": "swing",
+      "source": {
+        "item": "door-interior-swing-28x80",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 975360
+    },
+    "door-interior-swing-30x80": {
+      "clearOpening": {
+        "height": 2600960,
+        "width": 910336
+      },
+      "clearances": {
+        "swing": {
+          "max": [
+            975360,
+            520192,
+            2682240
+          ],
+          "min": [
+            0,
+            -520192,
+            0
+          ],
+          "purpose": "swing",
+          "shape": "box"
+        }
+      },
+      "height": 2682240,
+      "kind": "doorType",
+      "name": "Interior swing door, 30 x 80 in",
+      "operation": "swing",
+      "source": {
+        "item": "door-interior-swing-30x80",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1040384
+    },
+    "wall-2x4-interior": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        },
+        {
+          "function": "core",
+          "material": "wood-stud-framing",
+          "thickness": 113792
+        },
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x4 interior partition, gypsum both faces",
+      "source": {
+        "item": "wall-2x4-interior",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wall-2x6-exterior-fibre-cement": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "fibre-cement-siding",
+          "thickness": 10160
+        },
+        {
+          "function": "membrane",
+          "material": "weather-resistive-barrier",
+          "thickness": 508
+        },
+        {
+          "function": "substrate",
+          "material": "osb-sheathing",
+          "thickness": 14224
+        },
+        {
+          "function": "core",
+          "material": "wood-stud-framing-insulated",
+          "thickness": 178816
+        },
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x6 exterior wall, fibre-cement siding",
+      "source": {
+        "item": "wall-2x6-exterior-fibre-cement",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "window-casement-24x48": {
+      "clearOpening": {
+        "area": 837167874048,
+        "height": 1430528,
+        "width": 585216
+      },
+      "height": 1576832,
+      "kind": "windowType",
+      "name": "Casement window, 24 x 48 in",
+      "operation": "casement",
+      "sill": 1105408,
+      "source": {
+        "item": "window-casement-24x48",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 796544
+    },
+    "window-double-hung-30x48": {
+      "clearOpening": {
+        "area": 577138458624,
+        "height": 682752,
+        "width": 845312
+      },
+      "height": 1576832,
+      "kind": "windowType",
+      "name": "Double-hung window, 30 x 48 in",
+      "operation": "doubleHung",
+      "sill": 1105408,
+      "source": {
+        "item": "window-double-hung-30x48",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 991616
+    },
+    "window-double-hung-36x60": {
+      "clearOpening": {
+        "area": 913274044416,
+        "height": 877824,
+        "width": 1040384
+      },
+      "height": 1966976,
+      "kind": "windowType",
+      "name": "Double-hung window, 36 x 60 in",
+      "operation": "doubleHung",
+      "sill": 715264,
+      "source": {
+        "item": "window-double-hung-36x60",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1186688
+    },
+    "window-fixed-72x48": {
+      "height": 1576832,
+      "kind": "windowType",
+      "name": "Fixed window, 72 x 48 in",
+      "operation": "fixed",
+      "sill": 1105408,
+      "source": {
+        "item": "window-fixed-72x48",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 2357120
+    },
+    "window-slider-48x36": {
+      "clearOpening": {
+        "area": 710324256768,
+        "height": 1040384,
+        "width": 682752
+      },
+      "height": 1186688,
+      "kind": "windowType",
+      "name": "Horizontal sliding window, 48 x 36 in",
+      "operation": "horizontalSlider",
+      "sill": 1495552,
+      "source": {
+        "item": "window-slider-48x36",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      },
+      "width": 1576832
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J9",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J14",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W10": {
+      "end": "J16",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J17",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W11": {
+      "end": "J15",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J16",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W12": {
+      "end": "J14",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J15",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W13": {
+      "end": "J10",
+      "level": "L1",
+      "start": "J15",
+      "type": "wall-2x4-interior"
+    },
+    "W14": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J10",
+      "type": "wall-2x4-interior"
+    },
+    "W15": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J8",
+      "type": "wall-2x4-interior"
+    },
+    "W16": {
+      "end": "J12",
+      "level": "L1",
+      "start": "J16",
+      "type": "wall-2x4-interior"
+    },
+    "W17": {
+      "end": "J11",
+      "level": "L1",
+      "start": "J12",
+      "type": "wall-2x4-interior"
+    },
+    "W18": {
+      "end": "J11",
+      "level": "L1",
+      "start": "J10",
+      "type": "wall-2x4-interior"
+    },
+    "W19": {
+      "end": "J10",
+      "level": "L1",
+      "start": "J9",
+      "type": "wall-2x4-interior"
+    },
+    "W2": {
+      "end": "J6",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J9",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W20": {
+      "end": "J7",
+      "level": "L1",
+      "start": "J6",
+      "type": "wall-2x4-interior"
+    },
+    "W21": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J7",
+      "type": "wall-2x4-interior"
+    },
+    "W22": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J7",
+      "type": "wall-2x4-interior"
+    },
+    "W23": {
+      "end": "J42",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J45",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W24": {
+      "end": "J30",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J42",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W25": {
+      "end": "J25",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J30",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W26": {
+      "end": "J18",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J25",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W27": {
+      "end": "J19",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J18",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W28": {
+      "end": "J20",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J19",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W29": {
+      "end": "J21",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J20",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W3": {
+      "end": "J1",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J6",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W30": {
+      "end": "J22",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J21",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W31": {
+      "end": "J24",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J22",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W32": {
+      "end": "J41",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J24",
+      "top": {
+        "height": 4226560
+      },
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W33": {
+      "end": "J48",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J41",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W34": {
+      "end": "J47",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J48",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W35": {
+      "end": "J46",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J47",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W36": {
+      "end": "J45",
+      "justification": "exteriorFace",
+      "level": "L2",
+      "start": "J46",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W37": {
+      "end": "J43",
+      "level": "L2",
+      "start": "J42",
+      "type": "wall-2x4-interior"
+    },
+    "W38": {
+      "end": "J44",
+      "level": "L2",
+      "start": "J43",
+      "type": "wall-2x4-interior"
+    },
+    "W39": {
+      "end": "J44",
+      "level": "L2",
+      "start": "J46",
+      "type": "wall-2x4-interior"
+    },
+    "W4": {
+      "end": "J2",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J1",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W40": {
+      "end": "J38",
+      "level": "L2",
+      "start": "J44",
+      "type": "wall-2x4-interior"
+    },
+    "W41": {
+      "end": "J35",
+      "level": "L2",
+      "start": "J38",
+      "type": "wall-2x4-interior"
+    },
+    "W42": {
+      "end": "J28",
+      "level": "L2",
+      "start": "J32",
+      "type": "wall-2x4-interior"
+    },
+    "W43": {
+      "end": "J27",
+      "level": "L2",
+      "start": "J28",
+      "type": "wall-2x4-interior"
+    },
+    "W44": {
+      "end": "J20",
+      "level": "L2",
+      "start": "J27",
+      "type": "wall-2x4-interior"
+    },
+    "W45": {
+      "end": "J36",
+      "level": "L2",
+      "start": "J35",
+      "type": "wall-2x4-interior"
+    },
+    "W46": {
+      "end": "J37",
+      "level": "L2",
+      "start": "J36",
+      "type": "wall-2x4-interior"
+    },
+    "W47": {
+      "end": "J33",
+      "level": "L2",
+      "start": "J32",
+      "type": "wall-2x4-interior"
+    },
+    "W48": {
+      "end": "J34",
+      "level": "L2",
+      "start": "J33",
+      "type": "wall-2x4-interior"
+    },
+    "W49": {
+      "end": "J40",
+      "level": "L2",
+      "start": "J47",
+      "type": "wall-2x4-interior"
+    },
+    "W5": {
+      "end": "J3",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J2",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W50": {
+      "end": "J37",
+      "level": "L2",
+      "start": "J40",
+      "top": {
+        "height": 4226560
+      },
+      "type": "wall-2x4-interior"
+    },
+    "W51": {
+      "end": "J34",
+      "level": "L2",
+      "start": "J37",
+      "top": {
+        "height": 4226560
+      },
+      "type": "wall-2x4-interior"
+    },
+    "W52": {
+      "end": "J23",
+      "level": "L2",
+      "start": "J34",
+      "top": {
+        "height": 4226560
+      },
+      "type": "wall-2x4-interior"
+    },
+    "W53": {
+      "end": "J21",
+      "level": "L2",
+      "start": "J23",
+      "type": "wall-2x4-interior"
+    },
+    "W54": {
+      "end": "J41",
+      "level": "L2",
+      "start": "J40",
+      "type": "wall-2x4-interior"
+    },
+    "W55": {
+      "end": "J24",
+      "level": "L2",
+      "start": "J23",
+      "type": "wall-2x4-interior"
+    },
+    "W56": {
+      "end": "J26",
+      "level": "L2",
+      "start": "J25",
+      "type": "wall-2x4-interior"
+    },
+    "W57": {
+      "end": "J27",
+      "level": "L2",
+      "start": "J26",
+      "type": "wall-2x4-interior"
+    },
+    "W58": {
+      "end": "J19",
+      "level": "L2",
+      "start": "J26",
+      "type": "wall-2x4-interior"
+    },
+    "W59": {
+      "end": "J39",
+      "level": "L2",
+      "start": "J38",
+      "type": "wall-2x4-interior"
+    },
+    "W6": {
+      "end": "J4",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J3",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W60": {
+      "end": "J36",
+      "level": "L2",
+      "start": "J39",
+      "type": "wall-2x4-interior"
+    },
+    "W61": {
+      "end": "J29",
+      "level": "L2",
+      "start": "J28",
+      "type": "wall-2x4-interior"
+    },
+    "W62": {
+      "end": "J33",
+      "level": "L2",
+      "start": "J29",
+      "type": "wall-2x4-interior"
+    },
+    "W7": {
+      "end": "J5",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J4",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W8": {
+      "end": "J13",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J5",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W9": {
+      "end": "J17",
+      "justification": "exteriorFace",
+      "level": "L1",
+      "start": "J13",
+      "type": "wall-2x6-exterior-fibre-cement"
+    }
+  }
+}

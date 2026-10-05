@@ -30,6 +30,10 @@ export interface OpeningSummary {
   /** The door or window type that fills it. */
   readonly fill?: string;
   readonly width: Length;
+  /** Its height: its own, else its fill's (Core 7.2). */
+  readonly height: Length;
+  /** For a window: its sill above the wall's base, its own, else its fill's (Core 7.2). */
+  readonly sill?: Length;
   /** From the wall's start junction along its location line to the near edge (Core 7.3). */
   readonly offset: Length;
   readonly hinge?: 'start' | 'end';
@@ -116,6 +120,18 @@ export interface RoomSummary {
   readonly sides: Readonly<Record<Side, readonly EdgeSummary[]>>;
   /** Walls standing inside the room (its holes: a freestanding closet, a chase). */
   readonly inside: readonly EdgeSummary[];
+  /**
+   * Its windows to the outside — those in walls on its outer boundary whose other side is exterior —
+   * by the sides they face, and their rough openings (width × height, Core 7.2) as an area and as a
+   * share of the room's net area. A design measure for a critique, not a code calculation.
+   */
+  readonly daylight?: {
+    readonly windows: number;
+    readonly facing: readonly Side[];
+    readonly roughOpening: { readonly squareFeet: string; readonly squareBaseUnits: string };
+    /** Rough opening ÷ net area, as a percentage to one decimal. */
+    readonly percentOfFloor: string;
+  };
   /** Devices on its floor or ceiling; absent when there are none. Wall devices are listed under their walls. */
   readonly devices?: readonly SurfaceDeviceSummary[];
   /**
@@ -264,9 +280,24 @@ export interface StairSummary {
   readonly headroom?: Length;
 }
 
+/**
+ * The site (Core 1.8), for orientation: true north, the compass bearing each plan side faces (the
+ * direction of its outward normal — what a window on that side looks toward), and the location.
+ */
+export interface SiteSummary {
+  /** Microdegrees from project north (+Y) to true north, counter-clockwise (Core 1.8). */
+  readonly trueNorth: number;
+  readonly facing: Readonly<Record<Side, { readonly bearing: number; readonly compass: string }>>;
+  /** Degrees, WGS 84, when the site has a location. */
+  readonly latitude?: number;
+  readonly longitude?: number;
+}
+
 export interface DocumentSummary {
   readonly project: string;
   readonly valid: boolean;
+  /** The site, when the document has one (Core 1.8). */
+  readonly site?: SiteSummary;
   readonly levels: readonly LevelSummary[];
   /** The program (Core 0.2), met or not; absent when the document has none or is not valid. */
   readonly program?: ProgramSummary;
@@ -509,6 +540,8 @@ class LevelTopology {
         const kind = fill?.kind === 'doorType' ? 'door' : fill?.kind === 'windowType' ? 'window' : 'opening';
         const t = fill && fill.kind !== 'wallType' ? fill : undefined;
         const width = o.width ?? t?.width ?? 0;
+        const height = o.height ?? t?.height ?? 0;
+        const sill = o.sill ?? (t !== undefined && 'sill' in t ? t.sill : undefined) ?? 0;
         const swing = o.swing ?? 'right';
         const clear = effectiveClearOpening(this.doc, o);
         const s: OpeningSummary = {
@@ -517,6 +550,8 @@ class LevelTopology {
           kind,
           ...(o.fill !== undefined && { fill: o.fill }),
           width: length(BigInt(width)),
+          height: length(BigInt(height)),
+          ...(kind === 'window' && { sill: length(BigInt(sill)) }),
           offset: length(BigInt(o.offset)),
           ...(kind === 'door' && { hinge: o.hinge ?? 'start', swing, ...(sides && { swingsInto: swing === 'left' ? sides.left : sides.right }) }),
           ...(t?.operation !== undefined && { operation: t.operation }),
@@ -617,6 +652,7 @@ function levelSummary(doc: FloorspecDocument, analysis: Analysis, lid: string): 
       sides,
       inside,
       ...(devices.length > 0 && { devices }),
+      daylight: daylight(sides, poly.area2),
     };
   });
 
@@ -660,6 +696,30 @@ function levelSummary(doc: FloorspecDocument, analysis: Analysis, lid: string): 
   });
 
   return { ...base, derived: true, rooms, adjacency, doorGraph: links, unanchored };
+}
+
+/** A room's windows to the outside and their rough openings (RoomSummary.daylight). */
+function daylight(sides: Readonly<Record<Side, readonly EdgeSummary[]>>, area2: bigint): NonNullable<RoomSummary['daylight']> {
+  let windows = 0;
+  let rough2 = 0n;
+  const facing: Side[] = [];
+  for (const side of SIDES)
+    for (const e of sides[side]) {
+      if (e.kind !== 'wall' || e.otherSide.kind !== 'exterior') continue;
+      for (const o of e.openings) {
+        if (o.kind !== 'window') continue;
+        windows += 1;
+        rough2 += 2n * BigInt(o.width.baseUnits) * BigInt(o.height.baseUnits);
+        if (!facing.includes(side)) facing.push(side);
+      }
+    }
+  const tenths = area2 > 0n ? (rough2 * 1000n + area2 / 2n) / area2 : 0n;
+  return {
+    windows,
+    facing,
+    roughOpening: { squareFeet: squareFeet(rough2), squareBaseUnits: halfString(rough2) },
+    percentOfFloor: `${tenths / 10n}.${tenths % 10n}`,
+  };
 }
 
 function unplaced(id: string, r: NonNullable<FloorspecDocument['rooms']>[string], lid: string): RoomSummary {
@@ -897,7 +957,30 @@ export function describeJson(document: string | Uint8Array | object, options: De
     diags = diagnostics.filter((d) => (d.level !== undefined ? d.level === lid : d.elements.length === 0 || d.elements.some((e) => onLevel.has(e))));
   }
   const area = ev.valid && options.room === undefined ? z765(doc).buildings.map((b) => ({ building: b.building, aboveGradeSqFt: b.aboveGradeSqFt, belowGradeSqFt: b.belowGradeSqFt })) : undefined;
-  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), diagnostics: diags };
+  const site = siteSummary(doc);
+  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), diagnostics: diags };
+}
+
+const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'] as const;
+const SIDE_BEARING: Readonly<Record<Side, number>> = { north: 0, east: 90, south: 180, west: 270 };
+
+/** The site's orientation and location (SiteSummary); undefined when the document has no site. */
+export function siteSummary(doc: FloorspecDocument): SiteSummary | undefined {
+  const site = doc.site;
+  if (site === undefined) return undefined;
+  const trueNorth = site.trueNorth ?? 0;
+  const facing = {} as Record<Side, { bearing: number; compass: string }>;
+  for (const side of SIDES) {
+    // A side's outward normal is SIDE_BEARING from project north, and project north is trueNorth
+    // clockwise of true north (trueNorth runs counter-clockwise from project north to true north).
+    const bearing = (((SIDE_BEARING[side] + Math.round(trueNorth / 1_000_000)) % 360) + 360) % 360;
+    facing[side] = { bearing, compass: COMPASS[Math.round(bearing / 22.5) % 16]! };
+  }
+  return {
+    trueNorth,
+    facing,
+    ...(site.location !== undefined && { latitude: site.location.latitude / 1_000_000, longitude: site.location.longitude / 1_000_000 }),
+  };
 }
 
 /** What the circulation lints say (14.4), narrowed to a room or level when asked; undefined when nothing. */

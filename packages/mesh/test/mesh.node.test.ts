@@ -39,9 +39,9 @@ describe('the conformance suites', () => {
       solids += r.solids;
       openings += r.openings;
     }
-    // Every kind of part was produced and checked — but a roof's gable ends, which only a roof with
-    // a thickness has as parts of their own: no case declares one (the generated houses do).
-    expect([...kinds].sort()).toEqual(['ceiling', 'extension', 'floor', 'junctionFill', 'opening', 'roof', 'slab', 'stairBlock', 'stairFlight', 'stairLanding', 'wall'].sort());
+    // Every kind of part was produced and checked — a roof's gable ends among them, which only a roof
+    // with a thickness has as parts of their own: the starter templates (examples/005 and 006) declare one.
+    expect([...kinds].sort()).toEqual(['ceiling', 'extension', 'floor', 'junctionFill', 'opening', 'roof', 'roofGable', 'slab', 'stairBlock', 'stairFlight', 'stairLanding', 'wall'].sort());
     expect(solids).toBeGreaterThan(1000);
     expect(openings).toBeGreaterThan(50);
   });

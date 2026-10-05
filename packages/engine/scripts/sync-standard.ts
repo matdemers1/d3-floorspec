@@ -16,6 +16,7 @@
  *   spec/core/10-diagnostics.md → standard/spec/core/10-diagnostics.md
  *   registry/                   → standard/registry/              (the official extensions: entries, specs, schemas)
  *   conformance/ext/            → standard/conformance/ext/       (their suites)
+ *   templates/                  → standard/templates/             (the starter templates, FLR-REQ-078)
  *
  * and records the checkout's commit in standard/LOCK.json. It refuses a checkout with uncommitted
  * changes in those paths unless --allow-dirty is given, in which case LOCK.json says so and CI's
@@ -37,6 +38,7 @@ export const PATHS = [
   'spec/core/10-diagnostics.md',
   'registry',
   'conformance/ext',
+  'templates',
 ] as const;
 
 const here = dirname(new URL(import.meta.url).pathname);

@@ -24,10 +24,11 @@ export function conformanceInputs(): Named[] {
   return out;
 }
 
-/** The new-project template and the plan renderer's fixture houses. */
+/** The new-project templates — the app's and the standard's starter templates — and the plan renderer's fixture houses. */
 export function templates(): Named[] {
   const files = [
     join(here, '..', '..', '..', 'apps', 'web', 'src', 'projects', 'templates', 'three-room-house.floorspec.json'),
+    ...['ranch', 'two-storey', 'cabin'].map((t) => join(here, '..', '..', 'engine', 'standard', 'templates', `${t}.floorspec.json`)),
     ...['l-shaped-house', 'three-room-house', 'two-bedroom-ranch'].map((f) => join(here, '..', '..', 'render2d', 'test', 'fixtures', `${f}.json`)),
   ];
   return files.map((f) => ({ name: relative(join(here, '..', '..', '..'), f), text: readFileSync(f, 'utf8') }));

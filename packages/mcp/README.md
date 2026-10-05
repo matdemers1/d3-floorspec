@@ -7,7 +7,11 @@ Eleven tools: `floorspec_describe` (the room-centric summary in `src/summary`), 
 `floorspec_apply`, `floorspec_propose`, `floorspec_propose_layouts` (the brief laid out by
 `@floorspec/layout-solver` on the server, one pending changeset per candidate), `floorspec_accept`, `floorspec_reject`,
 `floorspec_validate`, `floorspec_findings`, `floorspec_render`, `floorspec_export`; the resource
-`floorspec://<project>/model`; the prompt `design-partner`. `apply` and `propose` take the Floorspec
+`floorspec://<project>/model`; the prompts `design-partner` and `design-critique` (`src/prompts/critique.ts`,
+FLR-REQ-079: a designer's critique of daylight, circulation, storage, privacy and furniture fit from what
+`describe`, `query`, `validate` and `render` expose — the site's compass bearings, each window's height
+and sill, each room's daylight — with element IDs, severities and suggested Ops, never citing a code and
+kept apart from `floorspec_findings`; optional `project`, `changeset` and `focus` arguments). `apply` and `propose` take the Floorspec
 Ops 0.2 union (`src/ops-schema.ts`, hand-written from the spec; `test/ops-schema.test.ts` holds it,
 host references included, to the vendored `schema/ops/0.2`): the program (`addProgramItem`,
 `setAdjacency`, `removeAdjacency`, `setRoomBrief`, `addRoom`'s `brief`) and hosted extension elements

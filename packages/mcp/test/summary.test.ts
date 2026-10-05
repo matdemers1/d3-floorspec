@@ -394,3 +394,45 @@ group('design options (Core 0.3, chapter 19)', () => {
     expect(t).not.toContain(' SB ');
   });
 });
+
+/** FLR-T-4.5: what the design critique reads — the site's orientation, windows' heights and each room's daylight. */
+group('orientation and daylight', () => {
+  const template = (name: string): string => readFileSync(new URL(`../../engine/standard/templates/${name}.floorspec.json`, import.meta.url), 'utf8');
+  const ranch = describeJson(template('ranch'));
+  const rooms = new Map(ranch.levels[0]!.rooms.map((r) => [r.id, r]));
+
+  it('gives each plan side the compass bearing it faces', () => {
+    expect(ranch.site).toEqual({
+      trueNorth: 0,
+      facing: { north: { bearing: 0, compass: 'N' }, east: { bearing: 90, compass: 'E' }, south: { bearing: 180, compass: 'S' }, west: { bearing: 270, compass: 'W' } },
+      latitude: 39.8283,
+      longitude: -98.5795,
+    });
+    // True north 30° counter-clockwise of project north: project north faces 30° east of true north.
+    const turned = JSON.parse(template('ranch')) as { site: { trueNorth: number } };
+    turned.site.trueNorth = 30_000_000;
+    expect(describeJson(turned).site?.facing.north).toEqual({ bearing: 30, compass: 'NNE' });
+    expect(describeJson(turned).site?.facing.west).toEqual({ bearing: 300, compass: 'WNW' });
+    expect(describe(turned)).toContain('Site: plan north faces NNE (30°)');
+    // The three-room house's true north is 12.5° clockwise of project north: plan north faces 348°.
+    expect(describeJson(text('three-room-house')).site?.facing.north).toEqual({ bearing: 348, compass: 'NNW' });
+  });
+
+  it("lists a window's height and sill", () => {
+    const north = rooms.get('PRI')!.sides.north.flatMap((e) => e.openings);
+    expect(north.map((o) => [o.id, o.kind, o.width.ftIn, o.height.ftIn, o.sill?.ftIn])).toEqual([['WIN5', 'window', `3' 1/2"`, `5' 1/2"`, `1' 10"`]]);
+  });
+
+  it("measures each room's windows to the outside against its floor", () => {
+    expect(rooms.get('PRI')!.daylight).toMatchObject({ windows: 2, facing: ['north', 'west'] });
+    expect(rooms.get('LIV')!.daylight).toMatchObject({ windows: 2, facing: ['south'] });
+    // An interior bath and a closet have none.
+    expect(rooms.get('BA2')!.daylight).toEqual({ windows: 0, facing: [], roughOpening: { squareFeet: '0.0', squareBaseUnits: '0' }, percentOfFloor: '0.0' });
+    // Two 36.5" × 60.5" windows: 30.67 ft² on 188.8 ft².
+    const pri = rooms.get('PRI')!.daylight!;
+    expect(pri.roughOpening.squareFeet).toBe('30.7');
+    expect(pri.percentOfFloor).toBe('16.2');
+    expect(describe(template('ranch'))).toContain('Daylight: 2 windows to the outside (north, west), 30.7 ft² of rough opening, 16.2% of the floor area.');
+    expect(describe(template('ranch'))).toContain('Daylight: no windows to the outside.');
+  });
+});
