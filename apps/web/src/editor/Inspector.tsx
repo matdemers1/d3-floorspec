@@ -109,6 +109,10 @@ function noun(kind: Kind): string {
     case 'doorType':
     case 'windowType':
       return 'type';
+    case 'item':
+      return 'brief item';
+    case 'extensionElement':
+      return 'element';
     default:
       return kind;
   }
@@ -143,7 +147,7 @@ function kindIcon(kind: Kind): ReactNode {
 
 function Header({ ctx, kind }: { ctx: Ctx; kind: Kind }) {
   const { model, id, level } = ctx;
-  let subtitle: string = kind === 'wallType' ? 'Wall type' : kind === 'doorType' ? 'Door type' : kind === 'windowType' ? 'Window type' : kind.charAt(0).toUpperCase() + kind.slice(1);
+  let subtitle: string = kind === 'wallType' ? 'Wall type' : kind === 'doorType' ? 'Door type' : kind === 'windowType' ? 'Window type' : kind === 'item' ? 'Brief item' : kind === 'extensionElement' ? (ctx.model.ext.get(ctx.id)?.extension ?? 'Extension element') : kind.charAt(0).toUpperCase() + kind.slice(1);
   if ((kind === 'wall' || kind === 'separator') && level !== undefined) {
     const sides = roomsBeside(level, id);
     const name = (r: string | null) => (r === null ? 'Outside' : labelOf(model, r));
@@ -578,6 +582,7 @@ function RoomBody({ ctx, focusName }: { ctx: Ctx; focusName: boolean }) {
             onValueChange={(v) => { ctx.edit(`Set function of ${labelOf(model, id)}`, v === 'unspecified' ? (element['function'] === undefined ? [] : unsetProperty(id, '/function')) : setProperty(id, '/function', v)); }}
           />
         </Row>
+        <BriefRow ctx={ctx} />
         <ReadOnlyField label="Net area" value={room === undefined ? '—' : formatArea(room.area2, units)} />
         <ReadOnlyField label="Anchor" value={`${formatLen(anchor[0], units)}, ${formatLen(anchor[1], units)}`} />
       </Section>
@@ -587,6 +592,33 @@ function RoomBody({ ctx, focusName }: { ctx: Ctx; focusName: boolean }) {
         {finish('ceiling', 'Ceiling')}
       </Section>
     </>
+  );
+}
+
+/**
+ * Which brief item the room fulfils (Core 0.2, 6.5 and 11.3): setRoomBrief, or unsetting `brief`.
+ * A Core 0.1 plan has no brief to link to, so the row is only there on a 0.2 one.
+ */
+function BriefRow({ ctx }: { ctx: Ctx }) {
+  const { element, model, id, readOnly } = ctx;
+  if (model.document.floorspec !== '0.2') return null;
+  const items = Object.entries((model.document.program?.items ?? {}) as Record<string, Json | undefined>);
+  const brief = str(element['brief']);
+  return (
+    <Row label="Brief">
+      <Select
+        aria-label="Brief item"
+        appearance="filled"
+        options={[{ value: '', label: 'None' }, ...items.map(([item, it]) => ({ value: item, label: str(it?.['name']) ?? `Item ${item}` }))]}
+        value={brief ?? ''}
+        disabled={readOnly || (items.length === 0 && brief === undefined)}
+        {...(items.length === 0 ? { placeholder: 'No brief yet' } : {})}
+        onValueChange={(v) => {
+          if (v === (brief ?? '')) return;
+          ctx.edit(`Link ${labelOf(model, id)} to the brief`, v === '' ? unsetProperty(id, '/brief') : [{ op: 'setRoomBrief', room: id, item: v }]);
+        }}
+      />
+    </Row>
   );
 }
 

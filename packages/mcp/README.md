@@ -3,8 +3,9 @@
 The D3 Floorspec MCP server (MCP 2026-07-28, `@modelcontextprotocol/server` 2.1.0), mounted by the
 API at `/mcp` through `createFloorspecMcpHandler`.
 
-Ten tools: `floorspec_describe` (the room-centric summary in `src/summary`), `floorspec_query`,
-`floorspec_apply`, `floorspec_propose`, `floorspec_accept`, `floorspec_reject`,
+Eleven tools: `floorspec_describe` (the room-centric summary in `src/summary`), `floorspec_query`,
+`floorspec_apply`, `floorspec_propose`, `floorspec_propose_layouts` (the brief laid out by
+`@floorspec/layout-solver` on the server, one pending changeset per candidate), `floorspec_accept`, `floorspec_reject`,
 `floorspec_validate`, `floorspec_findings`, `floorspec_render`, `floorspec_export`; the resource
 `floorspec://<project>/model`; the prompt `design-partner`. `apply` and `propose` take the Floorspec
 Ops 0.2 union (`src/ops-schema.ts`, hand-written from the spec; `test/ops-schema.test.ts` holds it,

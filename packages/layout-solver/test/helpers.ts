@@ -3,26 +3,30 @@ import { expect } from 'vitest';
 import { check, type CheckResult } from '@floorspec/engine';
 import { apply, type Operation } from '@floorspec/ops';
 import { BU_PER_FOOT, type Candidate, type Program } from '../src/index.js';
-import { parseDocument, toBase } from '../src/document.js';
+import { parseDocument } from '../src/document.js';
 
 type Doc = Record<string, unknown>;
 type Coll = Record<string, Record<string, unknown>>;
 
-/** Apply a batch to the Core 0.1 view of a document (what Ops 0.1 applies to); fail the test if it does not commit. */
+/** Apply a batch to the document as given, as the server's Ops 0.2 applier does; fail the test if it does not commit. */
 export function commit(doc: object, batch: readonly Operation[]): Doc {
-  const r = apply(toBase(parseDocument(doc)), { batch: [...batch] });
+  const r = apply(parseDocument(doc), { batch: [...batch] });
   if (r.status !== 'committed') expect.fail(`the batch does not commit: ${JSON.stringify(r.diagnostics.slice(0, 5))}`);
   return JSON.parse(r.document) as Doc;
 }
 
-/** The committed document as Core 0.2 with the program and each placed room's brief. */
+/**
+ * The committed document, which already holds the program and — the batch set them — each placed
+ * room's brief. Checked here rather than assumed: the program is the one solved for, and every
+ * room the candidate says fulfils an item names it.
+ */
 export function withBrief(committed: Doc, program: Program, c: Candidate): Doc {
-  const view = structuredClone(committed);
-  view['floorspec'] = '0.2';
-  view['program'] = structuredClone(program);
-  const rooms = view['rooms'] as Coll;
-  for (const r of c.rooms) if (r.item !== undefined) rooms[r.id]!['brief'] = r.item;
-  return view;
+  const held = committed['program'] as Program;
+  expect(Object.keys(held.items ?? {}).sort()).toEqual(Object.keys(program.items ?? {}).sort());
+  expect((held.adjacency ?? []).map((a) => `${a.a}|${a.b}|${a.kind}`)).toEqual((program.adjacency ?? []).map((a) => `${a.a}|${a.b}|${a.kind}`));
+  const rooms = committed['rooms'] as Coll;
+  for (const r of c.rooms) expect(rooms[r.id]!['brief'], r.id).toBe(r.item);
+  return committed;
 }
 
 /**
@@ -34,6 +38,7 @@ export function connections(committed: Doc, roomIds: readonly string[]): { adjac
   const view = structuredClone(committed);
   view['floorspec'] = '0.2';
   const rooms = view['rooms'] as Coll;
+  for (const room of Object.values(rooms)) delete room['brief'];
   const items: Record<string, unknown> = {};
   const adjacency: unknown[] = [];
   for (const id of roomIds) {

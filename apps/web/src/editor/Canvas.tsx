@@ -70,6 +70,19 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
     }
   }, [levelId, store]);
 
+  // A proposal drawn on a level main has nothing on yet — a layout candidate (FLR-T-4.3) — is
+  // framed when it is first shown: the empty level gives the view nothing to fit.
+  const reviewed = useEditor(store, (s) => reviewTarget(s.review, s.model));
+  const reviewFitted = useRef<string | null>(null);
+  const hasView = useEditor(store, (s) => s.view !== null);
+  useEffect(() => {
+    const s = store.get();
+    if (reviewed === null || s.review === null || s.view === null || reviewFitted.current === s.review.id) return;
+    reviewFitted.current = s.review.id;
+    const proposed = reviewed.levels.find((l) => l.id === s.level)?.bounds ?? null;
+    if (proposed !== null && (store.levelView?.bounds ?? null) === null) store.set({ view: fit(proposed, s.view.w, s.view.h) });
+  }, [reviewed, hasView, store]);
+
   useEffect(() => {
     const query = window.matchMedia('(pointer: coarse)');
     const update = () => { setCoarse(query.matches); };

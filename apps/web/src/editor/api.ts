@@ -251,3 +251,11 @@ export async function decideChangeset(projectId: string, id: string, verb: 'acce
   if (res.status === 412) return { status: 'stale' };
   return { status: 'failed', message: messageOf(body, res.status) };
 }
+
+/** Who opened a changeset, for a person to read: an agent's name, or "You" for a session's or token's own. */
+export function proposerOf(createdBy: string | null | undefined): string {
+  if (createdBy === null || createdBy === undefined || createdBy === '') return 'An agent';
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(createdBy)) return 'You';
+  if (createdBy.startsWith('token:')) return 'A token';
+  return createdBy;
+}

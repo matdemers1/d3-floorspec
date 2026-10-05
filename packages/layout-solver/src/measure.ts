@@ -2,19 +2,17 @@
  * Measuring a candidate. The final measures come from the real engine, on the document the
  * candidate's batch actually commits:
  *
- * 1. the batch is applied to the Core 0.1 base with @floorspec/ops — so every candidate is a batch
- *    that commits, or it is dropped;
- * 2. a **brief view** of the result — declared Core 0.2, the program restored, each placed room's
- *    `brief` set to its item — is checked with @floorspec/engine: the program's derived values
- *    (11.3, 11.4: countMet, minAreaMet, targetAreaMet, adjacent) and every diagnostic, lints
- *    included, are the engine's own;
+ * 1. the batch — which sets each placed room's `brief` (Ops 0.2) — is applied with @floorspec/ops
+ *    to the document the solver lays out into, so every candidate is a batch that commits, or it
+ *    is dropped;
+ * 2. the committed document is checked with @floorspec/engine: the program's derived values (11.3,
+ *    11.4: countMet, minAreaMet, targetAreaMet, adjacent) and every diagnostic, lints included,
+ *    are the engine's own;
  * 3. a **probe view** — the same result with a synthetic program of one item per room and a
  *    preferred adjacency between every pair — gives the engine's `adjacent` and `connected` (11.4)
  *    for every pair of rooms: the circulation graph, as the engine sees the doors and separators.
  *
- * The brief and probe views are measurements only; nothing writes them anywhere. Once Ops 0.2
- * applies to Core 0.2 documents, the batch sets `brief` itself (emit option `brief`), step 2 reads
- * the committed document directly, and `briefView` is deleted.
+ * The probe view is a measurement only; nothing writes it anywhere.
  *
  * Before any of that, every variant gets a quick estimate from its rectangles alone (`estimate`),
  * so that only the most promising few are applied and checked in full.
@@ -25,7 +23,7 @@ import type { Access } from './access.js';
 import { plannedPairs } from './access.js';
 import { collection, type Json } from './document.js';
 import { between, isExterior, pairKey, rh, rw, type Layout, type Seg, type Space } from './layout.js';
-import type { Adjacency, Brief, Program } from './program.js';
+import type { Adjacency, Brief } from './program.js';
 import { BU_PER_FOOT, SQ_BU_PER_SQ_FT } from './units.js';
 
 export interface RoomMeasure {
@@ -60,9 +58,9 @@ export interface Measures {
   /** Pairs of space keys whose rooms are adjacent / connected (pairKey). */
   readonly adjacent: ReadonlySet<string>;
   readonly connected: ReadonlySet<string>;
-  /** Diagnostics of the brief view, without the program lints FS-LINT-008…011 (which brief fit already counts). */
+  /** Diagnostics of the committed document, without the program lints FS-LINT-008…011 (which brief fit already counts). */
   readonly findings: readonly Diagnostic[];
-  /** Every diagnostic of the brief view. */
+  /** Every diagnostic of the committed document. */
   readonly diagnostics: readonly Diagnostic[];
 }
 
@@ -139,30 +137,15 @@ function finish(
 
 export type Applied =
   | { readonly status: 'committed'; readonly document: string; readonly measures: Measures }
-  | { readonly status: 'rejected'; readonly stage: 'apply' | 'brief' | 'probe'; readonly diagnostics: readonly Diagnostic[] };
-
-/** The brief view of a committed result: Core 0.2, the program, and each room's brief. */
-export function briefView(committed: Json, original: Json, program: Program, roomItems: ReadonlyMap<string, string>): Json {
-  const view = structuredClone(committed);
-  view['floorspec'] = '0.2';
-  view['program'] = structuredClone(program);
-  const rooms = collection(view, 'rooms');
-  const before = collection(original, 'rooms');
-  for (const [id, room] of Object.entries(rooms)) {
-    const item = roomItems.get(id) ?? before[id]?.['brief'];
-    if (typeof item === 'string') room['brief'] = item;
-  }
-  // Types' clearances (Core 0.2, 13.5) were set aside for the 0.1 base: put them back.
-  const types = collection(view, 'types');
-  for (const [id, t] of Object.entries(collection(original, 'types'))) if (t['clearances'] !== undefined && types[id] !== undefined) types[id]['clearances'] = structuredClone(t['clearances']);
-  return view;
-}
+  | { readonly status: 'rejected'; readonly stage: 'apply' | 'check' | 'probe'; readonly diagnostics: readonly Diagnostic[] };
 
 /** The probe view: one synthetic item per room on the level, every pair a preferred adjacency. */
 function probeView(committed: Json, roomIds: readonly string[]): Json {
   const view = structuredClone(committed);
   view['floorspec'] = '0.2';
   const rooms = collection(view, 'rooms');
+  // The rooms' own briefs name the real program's items, which the probe's program replaces.
+  for (const room of Object.values(rooms)) delete room['brief'];
   const items: Record<string, unknown> = {};
   for (const id of roomIds) {
     items[`probe-${id}`] = { function: rooms[id]!['function'] ?? 'unspecified' };
@@ -175,26 +158,22 @@ function probeView(committed: Json, roomIds: readonly string[]): Json {
   return view;
 }
 
-/** Apply a candidate batch to the base and measure the result with the engine. */
+/** Apply a candidate batch to the document and measure the result with the engine. */
 export function measure(
-  base: Json,
-  original: Json,
-  program: Program,
+  document: Json,
   batch: readonly Operation[],
   retired: readonly string[],
   layout: Layout,
   roomIds: ReadonlyMap<string, string>,
   brief: Brief,
 ): Applied {
-  const result = apply(base, { batch: [...batch], ...(retired.length > 0 ? { context: { retired: [...retired] } } : {}) });
+  const result = apply(document, { batch: [...batch], ...(retired.length > 0 ? { context: { retired: [...retired] } } : {}) });
   if (result.status === 'rejected') return { status: 'rejected', stage: 'apply', diagnostics: result.diagnostics };
   const committed = JSON.parse(result.document) as Json;
   const keyOf = new Map([...roomIds].map(([k, id]) => [id, k]));
-  const roomItems = new Map<string, string>();
-  for (const s of layout.spaces) if (s.req !== undefined) roomItems.set(roomIds.get(s.key)!, s.req.item);
 
-  const view = check(briefView(committed, original, program, roomItems));
-  if (!view.valid || view.derived === undefined) return { status: 'rejected', stage: 'brief', diagnostics: view.diagnostics };
+  const view = check(committed);
+  if (!view.valid || view.derived === undefined) return { status: 'rejected', stage: 'check', diagnostics: view.diagnostics };
   const ours = [...roomIds.values()];
   const probe = check(probeView(committed, ours));
   if (!probe.valid || probe.derived?.program === undefined) return { status: 'rejected', stage: 'probe', diagnostics: probe.diagnostics };

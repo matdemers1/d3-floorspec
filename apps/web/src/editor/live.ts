@@ -22,7 +22,10 @@ export function connectLive(store: EditorStore, options: { createEventSource?: E
     await store.load();
     await refreshProposals(store);
     const review = store.get().review;
-    if (review !== null) await openReview(store, review.id, { show: false });
+    const wanted = store.wanted;
+    store.wanted = null;
+    if (wanted !== null && store.get().proposals.some((p) => p.id === wanted)) await openReview(store, wanted);
+    else if (review !== null) await openReview(store, review.id, { show: false });
     else {
       // A proposal already waiting when the editor opens is shown, as if it had just arrived.
       const first = store.get().proposals[0];

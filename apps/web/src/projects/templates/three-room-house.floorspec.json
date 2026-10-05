@@ -16,7 +16,7 @@
       "tool": "hand-written for FLR-T-1.12"
     }
   },
-  "floorspec": "0.1",
+  "floorspec": "0.2",
   "junctions": {
     "C1": {
       "level": "MAIN",

@@ -3,6 +3,7 @@ import type { Diagnostic } from '@floorspec/engine';
 import { decideChangeset, fetchChangeset, fetchChangesetModel, fetchChangesets, HttpFailure, type ChangesetLogEntry } from './api';
 import { readModel, type EditorModel } from './model';
 import type { EditorStore, Review } from './store';
+import { parseLayoutName } from '../program/candidates';
 
 /**
  * Live changesets, the client side (FLR-T-3.5). An agent working over MCP writes a named changeset
@@ -162,7 +163,14 @@ export async function accept(store: EditorStore, confirmed = false): Promise<voi
   if (now?.id !== review.id) return;
   switch (answer.status) {
     case 'accepted':
-      store.set({ review: null, side: 'inspector', notice: { tone: 'info', text: `“${review.name}” is in the plan${answer.mode === 'replay' ? ', replayed onto your latest changes' : ''}. Undo takes it back.` } });
+      store.set({
+        review: null,
+        side: 'inspector',
+        notice: {
+          tone: 'info',
+          text: `“${review.name}” is in the plan${answer.mode === 'replay' ? ', replayed onto your latest changes' : ''}. Undo takes it back.${parseLayoutName(review.name) === null ? '' : ' The other layout candidates no longer apply: discard them from Layouts.'}`,
+        },
+      });
       await store.follow(answer.hash, null);
       await refreshProposals(store);
       return;

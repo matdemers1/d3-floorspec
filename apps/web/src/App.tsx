@@ -25,6 +25,7 @@ import { Setup } from './screens/Setup';
 import { SignIn } from './screens/SignIn';
 
 const Editor = lazy(() => import('./editor/Editor'));
+const Program = lazy(() => import('./program/Program'));
 
 /**
  * The editor shell. One question decides what renders — is there a session? — and the answer comes
@@ -93,6 +94,17 @@ function Root() {
     return (
       <Suspense fallback={<Spinner label="Opening the editor" />}>
         <Editor key={editor} id={editor} you={session.account.displayName} />
+      </Suspense>
+    );
+  }
+
+  // The brief and its layouts (the board's "05" and "06"): full-window too, a chunk of their own.
+  const brief = /^\/projects\/([0-9a-f-]{36})\/(program|layouts)$/.exec(path);
+  if (brief !== null) {
+    const [, project = '', screen] = brief;
+    return (
+      <Suspense fallback={<Spinner label="Opening the brief" />}>
+        <Program key={project} id={project} screen={screen === 'layouts' ? 'layouts' : 'brief'} you={session.account.displayName} />
       </Suspense>
     );
   }

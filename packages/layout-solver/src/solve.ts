@@ -11,11 +11,11 @@
  * Deterministic: no clock, no Math.random; every enumeration and every tie is broken by a stable
  * key. The same document and options give the same candidates, byte for byte.
  */
-import { check } from '@floorspec/engine';
+import { check, jsonEqual, omitDefaults } from '@floorspec/engine';
 import type { Operation } from '@floorspec/ops';
 import { fits, planAccess, type Access } from './access.js';
 import { variants, type Variant } from './builders.js';
-import { collection, idsOf, levelIsEmpty, levelsByElevation, parseDocument, SolverError, toBase, type Json } from './document.js';
+import { collection, idsOf, levelIsEmpty, levelsByElevation, parseDocument, SolverError, type Json } from './document.js';
 import { emit, Ids, type Target } from './emit.js';
 import { insideOf, isExterior, segments, signature, tiles, type Family, type Layout, type Seg, type Space } from './layout.js';
 import { estimate, measure, type Measures } from './measure.js';
@@ -39,8 +39,18 @@ export interface SolveOptions {
   readonly ignoreItemLevels?: boolean;
   /** Add windows to habitable rooms' outside walls. Default true. */
   readonly windows?: boolean;
-  /** Set each room's `brief` in the batch (needs an Ops 0.2 applier). Default false. */
+  /**
+   * Set each placed room's `brief` in the batch (Ops 0.2). Default true. A program passed in that is
+   * not the document's own has no items in the document to name, so its candidates never set it.
+   */
   readonly emitBrief?: boolean;
+  /**
+   * Have no two candidates name the same ID — types, walls, rooms, and the building and level a
+   * candidate adds — so that all of them can be proposed as changesets of one project at once: the
+   * store retires an ID the first time any head holds it (Ops 1.5). Default false: each candidate
+   * mints from the document's state, as if it were the only one.
+   */
+  readonly distinctIds?: boolean;
   /** How many of the best-estimated tilings are applied and measured in full. Default 10. */
   readonly evaluate?: number;
   /** Seed for the order in which equally-estimated variants are tried. Default 1. */
@@ -68,7 +78,7 @@ export interface Candidate {
   readonly strategy: Family;
   readonly label: string;
   readonly level: string;
-  /** The Ops batch that draws this layout, applied to the document as given. */
+  /** The Ops batch that draws this layout (and links each room to its item), applied to the document as given. */
   readonly batch: Operation[];
   readonly footprint: { readonly width: number; readonly depth: number };
   readonly rooms: readonly CandidateRoom[];
@@ -196,13 +206,23 @@ function explain(layout: Layout, brief: Brief, m: Measures, entry: string, s: Sc
   return out;
 }
 
+/** A program as its canonical form has it, defaults left out: two spellings of one program compare equal. */
+const programOf = (program: unknown): unknown => (omitDefaults({ floorspec: '0.2', project: { name: 'x' }, program }) as Json)['program'];
+
 /** Lay out a program: ranked candidates, each an Ops batch that commits on the document. */
 export function solve(document: string | Uint8Array | object, options: SolveOptions = {}): Candidate[] {
   const doc = parseDocument(document);
   const program = options.program ?? (isObject(doc['program']) ? doc['program'] : undefined);
   if (program === undefined || Object.keys(program.items ?? {}).length === 0) throw new SolverError('there is no program to lay out: give the document a program (Core 0.2, chapter 11) or pass one');
   // The program must be valid against this document (references, IDs): check it as Core 0.2.
-  const withProgram = { ...structuredClone(doc), floorspec: '0.2', program: structuredClone(program) };
+  // A program the document does not hold is laid out against the document with it, as Core 0.2;
+  // rooms already linked to the document's own items are left unlinked in that view.
+  const own = isObject(doc['program']) && jsonEqual(programOf(doc['program']), programOf(program));
+  const withProgram: Json = own ? doc : { ...structuredClone(doc), floorspec: '0.2', program: structuredClone(program) };
+  if (!own) {
+    const items = new Set(Object.keys(program.items ?? {}));
+    for (const room of Object.values(collection(withProgram, 'rooms'))) if (typeof room['brief'] === 'string' && !items.has(room['brief'])) delete room['brief'];
+  }
   const pc = check(withProgram);
   if (!pc.valid) {
     const errors = pc.diagnostics.filter((x) => x.severity === 'error');
@@ -219,7 +239,10 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
   }
   const brief = readBrief(program, { level: target.level, ignoreItemLevels: options.ignoreItemLevels ?? false, fulfilled });
   if (brief.reqs.length === 0) throw new SolverError('every item of the program is already fulfilled or belongs on another level: nothing to place');
-  const base = toBase(doc);
+  // Candidates are applied to the document as given and measured on what they commit (or, for a
+  // program passed in, on the document with it).
+  const working = withProgram;
+  const emitBrief = own && (options.emitBrief ?? true);
 
   // Build and estimate every variant.
   const built: Built[] = [];
@@ -256,17 +279,18 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
       shortlist.push(b);
     }
 
-  // Apply and measure each in full.
-  const scored: { b: Built; candidate: Omit<Candidate, 'rank'> }[] = [];
-  for (const b of shortlist) {
+  // Apply and measure each in full. Each mints from the same state: the document's IDs, the
+  // retired ones, the prelude's.
+  const named = (ops: readonly Operation[]): string[] => ops.flatMap((o) => ('id' in o && typeof o.id === 'string' ? [o.id] : []));
+  const realise = (b: Built, t: Target, from: ReadonlySet<string>): Omit<Candidate, 'rank'> | undefined => {
     const layout = b.layout;
     const segs = segments(layout);
     const access = planAccess(layout, segs)!;
-    // Each candidate mints from the same state: the document's IDs, the retired ones, the prelude's.
-    const ids = new Ids(new Set([...used, ...target.prelude.flatMap((o) => ('id' in o && typeof o.id === 'string' ? [o.id] : []))]));
-    const emitted = emit(layout, segs, access, target, ids, { windows: options.windows ?? true, brief: options.emitBrief ?? false });
-    const applied = measure(base, doc, program, emitted.batch.filter((o) => !(o.op === 'setProperty' && o.path === '/brief')), retired, layout, emitted.roomIds, brief);
-    if (applied.status === 'rejected') continue;
+    const ids = new Ids(new Set([...from, ...named(t.prelude)]));
+    // Measured with every room's brief set, so the engine derives the brief fit from the document.
+    const emitted = emit(layout, segs, access, t, ids, { windows: options.windows ?? true, brief: true });
+    const applied = measure(working, emitted.batch, retired, layout, emitted.roomIds, brief);
+    if (applied.status === 'rejected') return undefined;
     const m = applied.measures;
     const s = score(layout, brief, m, scoreContext(layout, segs, access));
     const rooms: CandidateRoom[] = layout.spaces.map((sp) => ({
@@ -278,22 +302,24 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
       rect: [gBu(sp.rect.x0), gBu(sp.rect.y0), gBu(sp.rect.x1), gBu(sp.rect.y1)],
       area: Math.round((m.rooms.get(sp.key)?.area ?? 0) * 10) / 10,
     }));
-    scored.push({
-      b,
-      candidate: {
-        id: b.variant.key,
-        strategy: layout.family,
-        label: layout.label,
-        level: target.level,
-        batch: emitted.batch,
-        footprint: { width: gBu(layout.width), depth: gBu(layout.depth) },
-        rooms,
-        entry: emitted.roomIds.get(access.entry.space)!,
-        unplaced: brief.unplaced,
-        score: s,
-        explanation: explain(layout, brief, m, access.entry.space, s),
-      },
-    });
+    return {
+      id: b.variant.key,
+      strategy: layout.family,
+      label: layout.label,
+      level: t.level,
+      batch: emitBrief ? emitted.batch : emitted.batch.filter((o) => !(o.op === 'setProperty' && o.path === '/brief')),
+      footprint: { width: gBu(layout.width), depth: gBu(layout.depth) },
+      rooms,
+      entry: emitted.roomIds.get(access.entry.space)!,
+      unplaced: brief.unplaced,
+      score: s,
+      explanation: explain(layout, brief, m, access.entry.space, s),
+    };
+  };
+  const scored: { b: Built; candidate: Omit<Candidate, 'rank'> }[] = [];
+  for (const b of shortlist) {
+    const candidate = realise(b, target, used);
+    if (candidate !== undefined) scored.push({ b, candidate });
   }
   if (scored.length === 0)
     throw new SolverError(
@@ -316,5 +342,18 @@ export function solve(document: string | Uint8Array | object, options: SolveOpti
     chosen.push(left.splice(i, 1)[0]!);
   }
   chosen.sort(order);
+  if (options.distinctIds === true) {
+    // In rank order, each candidate after the first is written again minting after the ones before
+    // it — the same layout, measured the same, under IDs no other candidate names.
+    const taken = new Set(used);
+    for (const [i, x] of chosen.entries()) {
+      if (i > 0) {
+        const again = realise(x.b, chooseTarget(doc, program, options, taken), taken);
+        if (again === undefined) throw new SolverError(`candidate ${x.candidate.id} did not commit under distinct IDs`);
+        x.candidate = again;
+      }
+      for (const id of named(x.candidate.batch)) taken.add(id);
+    }
+  }
   return chosen.map((x, i) => ({ ...x.candidate, rank: i + 1 }));
 }

@@ -44,6 +44,9 @@ importers:
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@floorspec/layout-solver':
+        specifier: workspace:*
+        version: link:../../packages/layout-solver
       '@floorspec/mcp':
         specifier: workspace:*
         version: link:../../packages/mcp

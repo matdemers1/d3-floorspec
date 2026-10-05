@@ -14,8 +14,9 @@ const candidates = solve(document, {
   footprint: { width, depth }, // base units; default: sized from the program
   count: 5,         // at least 3 whenever the program allows
   retired,          // the store's retired IDs (Ops 1.5): never named by a candidate
+  emitBrief: true,  // default: the batch links each room to its item (Ops 0.2)
 });
-candidates[0].batch;  // Ops batch: types, drawWall/drawSeparator, addRoom, addOpening
+candidates[0].batch;  // Ops batch: types, drawWall/drawSeparator, addRoom, addOpening, /brief
 candidates[0].score;  // { total, briefFit, circulation, findings, detail }
 candidates[0].explanation;
 toChangesetProposals(candidates); // [{ name, batch }]: one POST /api/projects/:id/changesets each
@@ -42,20 +43,18 @@ toChangesetProposals(candidates); // [{ name, batch }]: one POST /api/projects/:
    **Score** it (`score.ts`), see its module comment:
    `total = 100 × (0.5 briefFit + 0.3 circulation + 0.2 findings)`.
 
-## Core 0.1 today, Core 0.2 tomorrow
+## Applied as given, measured as committed
 
-`@floorspec/ops` applies Ops 0.1 to Core 0.1 documents only. So each batch is applied to a
-Core 0.1 *base*: the document without `program`, rooms' `brief` and types' `clearances`
-(`document.ts`). Brief fit is still the engine's own. A *brief view* of the committed result
-restores the program and sets each room's `brief`, and the engine derives `countMet`,
-`minAreaMet`, `targetAreaMet` and `adjacent` (11.3, 11.4) and lints 008–011 from it. A *probe
-view* derives `adjacent` and `connected` for every pair of rooms: this is the circulation graph.
+Since Ops 0.2, `@floorspec/ops` applies to Core 0.2 documents, so each batch is applied to the
+document as given and the committed result is checked directly: the batch sets each placed room's
+`brief` (`emitBrief`, default true), and the engine derives `countMet`, `minAreaMet`,
+`targetAreaMet` and `adjacent` (11.3, 11.4) and lints 008–011 from the document itself. A *probe
+view* still derives `adjacent` and `connected` for every pair of rooms: this is the circulation
+graph. A program passed in that the document does not hold is laid out against the document with
+it (as Core 0.2), and its candidates set no `brief`: the document has no items for them to name.
 
-When Ops 0.2 lands, three changes are needed:
-
-- Default `emitBrief` to true, so the batch sets `/brief` itself.
-- Apply the batch to the document as given, and delete `toBase`.
-- Read the program values from the committed document, and delete `briefView`.
+The server runs the solver on main at `POST /api/projects/:projectId/layouts` and opens one
+changeset per candidate (`toChangesetProposals`); the MCP tool `floorspec_propose_layouts` calls it.
 
 ## Rendering
 

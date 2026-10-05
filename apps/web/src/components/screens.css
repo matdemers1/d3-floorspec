@@ -341,3 +341,37 @@
   background: var(--color-surface-hover);
   border-color: transparent;
 }
+
+/* The dashboard's brief card (FLR-T-4.2): the items and whether the plan meets each. */
+.fs-brief-card__summary,
+.fs-brief-card__more {
+  margin: 0;
+  color: var(--color-fg-faint);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-brief-card__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: var(--space-8) 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-brief-card__items li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-brief-card__count {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+.fs-brief-card__actions {
+  display: flex;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}

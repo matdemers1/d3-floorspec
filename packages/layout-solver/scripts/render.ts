@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { apply } from '@floorspec/ops';
 import { renderPlan } from '@floorspec/render2d';
-import { toBase, parseDocument } from '../src/document.js';
+import { parseDocument } from '../src/document.js';
 import { solve } from '../src/index.js';
 import { SAMPLES } from '../test/programs.js';
 
@@ -33,7 +33,7 @@ for (const name of chosen) {
   const started = performance.now();
   const candidates = solve(doc, { count, ignoreItemLevels: allLevels });
   console.log(`\n=== ${name}: ${String(candidates.length)} candidates in ${String(Math.round(performance.now() - started))} ms`);
-  const base = toBase(parseDocument(doc));
+  const base = parseDocument(doc);
   for (const c of candidates) {
     const r = apply(base, { batch: c.batch });
     if (r.status !== 'committed') throw new Error(`candidate ${c.id} does not commit`);

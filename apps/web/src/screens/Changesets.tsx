@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Badge, Button, Cluster, DataList, DataListRow, EmptyState, Section, Spinner, Stack, useToast } from '@d3cloud/ui';
 import { api, ApiError, messageOf } from '../lib/api';
+import { proposerOf } from '../editor/api';
 
 interface ChangesetRow {
   id: string;
@@ -93,7 +94,7 @@ export function Changesets({ projectId, onDecided, bare = false }: { projectId: 
               <DataListRow
                 key={row.id}
                 title={row.name}
-                description={`${String(row.ops ?? 0)} op${row.ops === 1 ? '' : 's'} · ${row.createdBy ?? 'unknown'} · ${new Date(row.createdAt).toLocaleString()}`}
+                description={`${String(row.ops ?? 0)} op${row.ops === 1 ? '' : 's'} · ${proposerOf(row.createdBy)} · ${new Date(row.createdAt).toLocaleString()}`}
                 meta={<Badge tone={row.fastForward === true ? 'attention' : 'neutral'}>{row.fastForward === true ? 'applies cleanly' : 'will replay'}</Badge>}
                 actions={
                   <Cluster gap="8">

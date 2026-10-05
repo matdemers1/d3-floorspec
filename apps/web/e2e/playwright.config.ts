@@ -11,6 +11,7 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `keyboard`  — FLR-T-3.7: the editor driven without a pointer.
  *   - `main-path` — FLR-T-3.9: the P3 exit demo, setup to a compared undo, with the setup token gate.
  *   - `a11y`      — FLR-T-3.9: axe on every screen and significant state, in both themes.
+ *   - `program`   — FLR-T-4.2, 4.3: the P4 exit demo, a brief to an accepted layout that meets it.
  *
  * Run with:
  *
@@ -18,7 +19,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`). E2E_PORT is the keyboard suite's port; the others take the next two.
+ * `…_a11y_test`, `…_program_test`). E2E_PORT is the keyboard suite's port; the others take the next three.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -51,6 +52,7 @@ const SUITES: Suite[] = [
   { name: 'keyboard', spec: 'keyboard.spec.ts', port: PORT, database: databaseFor(null), setupToken: false },
   { name: 'main-path', spec: 'main-path.spec.ts', port: PORT + 1, database: databaseFor('main'), setupToken: true },
   { name: 'a11y', spec: 'a11y.spec.ts', port: PORT + 2, database: databaseFor('a11y'), setupToken: true },
+  { name: 'program', spec: 'program.spec.ts', port: PORT + 3, database: databaseFor('program'), setupToken: true },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;

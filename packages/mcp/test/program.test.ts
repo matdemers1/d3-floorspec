@@ -69,6 +69,9 @@ class ApplierClient implements FloorspecClient {
   reject(): never {
     throw new Error('not used');
   }
+  proposeLayouts(): never {
+    throw new Error('not used');
+  }
   validate() {
     return Promise.resolve({ head: 'main', hash: contentHash(this.document), valid: true, diagnostics: [] });
   }
@@ -122,6 +125,46 @@ describe('a brief and a device, through floorspec_apply', () => {
     expect(described).toContain('## Program');
     expect(described).toMatch(/- P1 "Cook" — kitchen: 1 of 1 room \(R1\)/);
     expect(described).toMatch(/- required P1 \| DIN: /);
+  });
+
+  it('edits the bubble diagram: retypes an edge, renames and resizes an item, and removes one with its edges', async () => {
+    const client = new ApplierClient(HOUSE);
+    const mcp = await connect(client);
+    const call = async (batch: unknown[]) => {
+      const result = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch } });
+      expect(result.isError, texts(result)).toBeFalsy();
+    };
+    await call([
+      { op: 'addProgramItem', id: 'KIT', function: 'kitchen', name: 'Kitchen' },
+      { op: 'addProgramItem', id: 'DIN', function: 'dining', name: 'Dining' },
+      { op: 'addProgramItem', id: 'GAR', function: 'garage', name: 'Garage' },
+      { op: 'setAdjacency', a: 'KIT', b: 'DIN', kind: 'preferred' },
+      { op: 'setAdjacency', a: 'GAR', b: 'KIT', kind: 'preferred', weight: 2 },
+      { op: 'setRoomBrief', room: 'Kitchen', item: 'item KIT' },
+    ]);
+    // A kind is changed by removing the edge of the old kind and setting the new one, in one batch.
+    await call([
+      { op: 'removeAdjacency', a: 'DIN', b: 'KIT', kind: 'preferred' },
+      { op: 'setAdjacency', a: 'KIT', b: 'DIN', kind: 'required', weight: 8 },
+      { op: 'setProperty', id: 'DIN', path: '/name', value: 'Breakfast nook' },
+      { op: 'setProperty', id: 'DIN', path: '/targetArea', value: 120 * 152_212_340_736 },
+    ]);
+    let doc = client.document as Doc;
+    expect(doc.program.adjacency).toEqual([
+      { a: 'GAR', b: 'KIT', kind: 'preferred', weight: 2 },
+      { a: 'KIT', b: 'DIN', kind: 'required', weight: 8 },
+    ]);
+    expect(doc.program.items['DIN']).toEqual({ function: 'dining', name: 'Breakfast nook', targetArea: 120 * 152_212_340_736 });
+    // An item a room fulfils cannot be removed out from under it; one no room names can, edges and all.
+    const refused = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [{ op: 'removeElement', id: 'KIT' }] } });
+    expect(refused.isError).toBe(true);
+    await call([{ op: 'removeElement', id: 'GAR' }]);
+    doc = client.document as Doc;
+    expect(Object.keys(doc.program.items).sort()).toEqual(['DIN', 'KIT']);
+    expect(doc.program.adjacency).toEqual([{ a: 'KIT', b: 'DIN', kind: 'required', weight: 8 }]);
+    // Unlinking the room, then the item goes too.
+    await call([{ op: 'unsetProperty', id: 'R1', path: '/brief' }, { op: 'removeElement', id: 'KIT' }]);
+    expect(Object.keys((client.document as Doc).program.items)).toEqual(['DIN']);
   });
 
   it('places an outlet on the face that looks into a room, then moves it to the floor', async () => {
