@@ -27,7 +27,7 @@ async function download(page: Page, act: () => Promise<void>): Promise<{ name: s
   return { name: file.suggestedFilename(), bytes: readFileSync(path) };
 }
 
-test('exports a dimensioned PDF sheet per level and DXF drawings', async ({ page }) => {
+test('exports a dimensioned PDF sheet per level, DXF drawings, and the 3D model as glTF and USDZ', async ({ page }) => {
   await firstRunSetup(page, { name: 'Drawings', email: 'drawings@example.test', password: password('drawings') });
   await page.getByRole('button', { name: 'New project' }).first().click();
   const created = page.getByRole('dialog', { name: 'New project' });
@@ -69,6 +69,28 @@ test('exports a dimensioned PDF sheet per level and DXF drawings', async ({ page
   expect(text).toContain('AC1015');
   expect(text).toContain('A-WALL-EXTR');
   expect(text).toContain('BEDROOM 3');
+
+  // ── The 3D model (FLR-T-9.2): glTF 2.0 binary and USDZ, drawn by the same queue.
+  await page.getByRole('button', { name: 'Export' }).click();
+  await dialog.getByRole('radio', { name: /glTF 2\.0/ }).click();
+  await expect(dialog.getByRole('radio', { name: /glTF 2\.0/ })).toHaveAttribute('aria-checked', 'true');
+  await expect(dialog).toContainText('every element keeps its Floorspec ID');
+  await dialog.getByRole('combobox', { name: 'Levels' }).click();
+  await page.getByRole('option', { name: 'Every level, one model' }).click();
+  const glb = await download(page, () => dialog.getByRole('button', { name: 'Export' }).click());
+  expect(glb.name).toMatch(/^two-storey-ranch-v\d+\.glb$/);
+  expect(glb.bytes.subarray(0, 4).toString('latin1')).toBe('glTF');
+  expect(glb.bytes.readUInt32LE(4)).toBe(2);
+  const gltfJson = JSON.parse(glb.bytes.subarray(20, 20 + glb.bytes.readUInt32LE(12)).toString('utf8')) as { asset: { version: string }; nodes: { name: string }[] };
+  expect(gltfJson.asset.version).toBe('2.0');
+  expect(gltfJson.nodes.map((n) => n.name)).toEqual(expect.arrayContaining(['MAIN Main floor', 'UPPER Upper floor']));
+
+  await page.getByRole('button', { name: 'Export' }).click();
+  await dialog.getByRole('radio', { name: /USDZ/ }).click();
+  const usdz = await download(page, () => dialog.getByRole('button', { name: 'Export' }).click());
+  expect(usdz.name).toMatch(/^two-storey-ranch-v\d+\.usdz$/);
+  expect(usdz.bytes.readUInt32LE(0)).toBe(0x04034b50);
+  expect(usdz.bytes.subarray(30, 30 + usdz.bytes.readUInt16LE(26)).toString('utf8')).toBe('model.usda');
 
   // ── From the dashboard: DXF for every level, a ZIP, listed among the recent exports.
   await page.goto(`/projects/${project}`);

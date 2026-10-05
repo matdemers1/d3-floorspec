@@ -45,7 +45,7 @@ You cannot run code, and you do not need to: every change is a Floorspec Op.
 | Read | `floorspec_query` | The exact elements you will touch: `{ "room": "Kitchen", "kind": "walls" }`, `{ "wall": "W7" }` |
 | Change | `floorspec_apply` / `floorspec_propose` | Typed ops in `batch`, into a changeset named by `changeset`; `render: true` |
 | Lay out | `floorspec_propose_layouts` | The brief as ranked candidate plans, one changeset each, with the solver's report |
-| Look | `floorspec_render` | The plan PNG; a changeset is drawn ghosted against main |
+| Look | `floorspec_render` | The plan PNG; a changeset is drawn ghosted against main. `view: "3d"` draws the model from `camera` — `sw`, `se`, `ne`, `nw`, `top`, or a room's name to stand in |
 | Check | `floorspec_validate`, `floorspec_findings` | Diagnostics with fix operations; advisory code findings |
 | Hand over | — | Name the changeset, and say the person accepts it in D3 Floorspec |
 

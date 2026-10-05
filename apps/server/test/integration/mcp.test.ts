@@ -7,7 +7,8 @@ import { TOOL_NAMES } from '@floorspec/mcp';
 import { TokenRejected, type Verifier } from '../../src/auth/resource-server.js';
 import { workerRenderer } from '../../src/render.js';
 import { ONE_ROOM_HOUSE } from '../support/fake-applier.js';
-import { Browser, createProjectAs, ISSUER, reset, setupOperator, start, testDb, tokenFor, type Running } from './helpers.js';
+import { createDrain } from '@d3-floorspec/worker/queue';
+import { Browser, createProjectAs, ISSUER, reset, setupOperator, start, testDb, TEST_ENV, tokenFor, type Running } from './helpers.js';
 
 /**
  * FLR-T-2.6 and FLR-T-2.10, end to end: MCP 2026-07-28 at /mcp, authorised by a per-project token
@@ -213,7 +214,7 @@ describe('the MCP endpoint', () => {
     expect(texts(midBatch)).toContain('Hint: Walls drawn in this batch join the plan when the batch ends; apply this operation in a second batch.');
   });
 
-  it('reports findings honestly, and 3D as not available yet', async () => {
+  it('reports findings honestly, and renders 3D in the worker from a camera or a room (FLR-T-8.5)', async () => {
     const mcp = await connect(`Bearer ${await tokenFor(operator, project.id, 'read')}`);
     const findings = await mcp.callTool({ name: 'floorspec_findings', arguments: {} });
     expect(findings.structuredContent).toMatchObject({ findings: [] });
@@ -222,9 +223,28 @@ describe('the MCP endpoint', () => {
     expect(texts(findings)).toContain('They are not a plan review, and the authority having jurisdiction decides.');
     expect(texts(findings)).toMatch(/What the installed packs check, and do not: https?:\/\/\S+\/rule-packs/);
     expect(texts(findings)).not.toMatch(/is compliant/i);
-    const threeD = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d' } });
-    expect(threeD.isError).toBe(true);
-    expect(texts(threeD)).toContain('not available yet');
+    // No worker runs here: a drain stands in for it, as the api's inline drain does in development.
+    const drain = createDrain({ databaseUrl: TEST_ENV.DATABASE_URL, pollMs: 200, log: () => undefined });
+    await drain.start();
+    try {
+      const threeD = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'ne', width: 512 } });
+      expect(threeD.isError ?? false, texts(threeD)).toBe(false);
+      expect(images(threeD)).toHaveLength(1);
+      const png = Buffer.from(images(threeD)[0]?.data ?? '', 'base64');
+      expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([512, 384]);
+      const inside = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Kitchen' } });
+      expect(images(inside)).toHaveLength(1);
+      expect(await db.job.findFirst({ where: { kind: 'render.3d', projectId: project.id }, orderBy: { createdAt: 'desc' } })).toMatchObject({
+        status: 'done',
+        params: { room: 'Kitchen' },
+        result: { camera: expect.stringMatching(/^Kitchen \(R1\)/) as string },
+      });
+      const nowhere = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Attic' } });
+      expect(nowhere.isError).toBe(true);
+      expect(texts(nowhere)).toContain('no room Attic');
+    } finally {
+      await drain.stop();
+    }
     const plan = await mcp.callTool({ name: 'floorspec_render', arguments: { width: 512 } });
     expect(images(plan)).toHaveLength(1);
     const exported = await mcp.callTool({ name: 'floorspec_export', arguments: {} });

@@ -513,20 +513,23 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     },
   );
 
+  const CAMERAS: readonly string[] = ['sw', 'se', 'ne', 'nw', 'top'];
+  type Camera = NonNullable<RenderOptions['camera']>;
   server.registerTool(
     'floorspec_render',
     {
       title: 'Render',
       description:
-        'A PNG of a level\'s plan, for main or a pending changeset (drawn ghosted against its base). Look at it before describing a change. 3D is not available yet.',
+        'PNG of a level\'s plan (a changeset ghosted on its base) or the 3D model. Look before describing a change.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
           changeset: PendingChangeset,
-          view: z.enum(['plan', '3d']).optional().describe('"plan" (default); "3d" is not available yet.'),
-          level: z.string().min(1).max(64).optional().describe('The level to draw; default the lowest.'),
-          highlight: z.array(z.string().min(1).max(64)).max(100).optional().describe('Element IDs to draw in the accent colour.'),
-          width: z.int().min(256).max(4096).optional().describe('Pixels wide; default the natural size.'),
+          view: z.enum(['plan', '3d']).optional().describe('Default plan.'),
+          camera: z.string().optional().describe('3D: sw, se, ne, nw or top (default sw), or a room ID or name to stand in.'),
+          level: z.string().min(1).max(64).optional().describe('Level to draw (3D: cut away above it); default the lowest.'),
+          highlight: z.array(z.string().min(1).max(64)).optional().describe('IDs to draw in the accent colour.'),
+          width: z.int().optional().describe('Pixels wide: plan to 4096, 3D to 2048.'),
         }),
       ),
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -537,6 +540,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         const changeset = await changesetId(client, project.id, args.changeset);
         const png = await client.render(project.id, {
           view: args.view ?? 'plan',
+          // One property for both, to fit the listing's budget: a named view, else a room.
+          ...(args.camera === undefined ? {} : CAMERAS.includes(args.camera) ? { camera: args.camera as Camera } : { room: args.camera }),
           ...(args.level === undefined ? {} : { level: args.level }),
           ...(changeset === undefined ? {} : { changeset }),
           ...(args.highlight === undefined ? {} : { highlight: args.highlight }),

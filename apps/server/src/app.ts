@@ -24,7 +24,7 @@ import { historyRoutes } from './routes/history.js';
 import { changesetRoutes } from './routes/changesets.js';
 import { layoutRoutes } from './routes/layouts.js';
 import { assistantRoutes } from './routes/assistants.js';
-import { checkRoutes } from './routes/checks.js';
+import { checkRoutes, type Render3dWait } from './routes/checks.js';
 import { profileRoutes, projectProfileRoutes, rulePackRoutes } from './routes/rules.js';
 import { tokenRoutes } from './routes/tokens.js';
 import { exportRoutes } from './routes/exports.js';
@@ -68,6 +68,8 @@ export interface AppDeps {
   readonly eventStream?: EventRouteOptions;
   /** The installed rule packs (RULE_PACKS_DIR, read at boot). Default: none. */
   readonly rulePacks?: InstalledPacks;
+  /** How long a 3D render waits for the worker (FLR-T-8.5); tests shorten it. */
+  readonly render3d?: Render3dWait;
 }
 
 /** The paths the API owns. Anything else is a screen of the editor. */
@@ -83,6 +85,7 @@ export function createApp({
   events = new EventHub(config.DATABASE_URL),
   eventStream = {},
   rulePacks = NO_PACKS,
+  render3d = {},
 }: AppDeps): Express {
   const app = express();
   (app.locals as { events?: EventHub }).events = events;
@@ -102,7 +105,7 @@ export function createApp({
   mount(app, '/api/projects', changesetRoutes(db, applier));
   mount(app, '/api/projects', layoutRoutes(db, applier));
   mount(app, '/api/projects', assistantRoutes(db, applier));
-  mount(app, '/api/projects', checkRoutes(db, renderer, rulePacks, `${config.PUBLIC_URL.replace(/\/$/, '')}/rule-packs`));
+  mount(app, '/api/projects', checkRoutes(db, renderer, rulePacks, `${config.PUBLIC_URL.replace(/\/$/, '')}/rule-packs`, render3d));
   mount(app, '/api/projects', projectProfileRoutes(db, rulePacks));
   mount(app, '/api/profiles', profileRoutes(db, rulePacks));
   mount(app, '/api/rule-packs', rulePackRoutes(db, rulePacks));
