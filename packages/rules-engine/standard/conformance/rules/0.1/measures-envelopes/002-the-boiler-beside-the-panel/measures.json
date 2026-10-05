@@ -1,0 +1,42 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopeObstructions"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "clearDepthInFront",
+      "args": {
+        "limit": 1170432
+      }
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopeOverlaps"
+    },
+    {
+      "target": {
+        "kind": "envelope",
+        "id": "X1",
+        "envelope": "working"
+      },
+      "measure": "envelopeOverlaps",
+      "args": {
+        "purpose": "swing"
+      }
+    }
+  ]
+}

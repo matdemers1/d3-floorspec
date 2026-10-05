@@ -1,0 +1,611 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "ANY-NONE",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "ANY-ONE",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "EVERY-OPERATOR",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 2,
+      "pack": "test-pack",
+      "rule": "NO-VALUE",
+      "subjects": 2,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "136.23 sq ft",
+          "holds": false,
+          "measure": "roomNetArea",
+          "op": "<",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 20736438697984,
+          "thresholdDisplay": "136.23 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        },
+        {
+          "display": "no",
+          "holds": false,
+          "measure": "roomIsEntry",
+          "op": "=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": true,
+          "thresholdDisplay": "yes",
+          "type": "boolean",
+          "value": false
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §1.1 (Neither holds).",
+      "pack": "test-pack",
+      "rule": "ANY-NONE",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "Neither holds",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "136.23 sq ft",
+          "holds": true,
+          "measure": "roomNetArea",
+          "op": ">",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 20736438697983,
+          "thresholdDisplay": "136.23 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        },
+        {
+          "display": "136.23 sq ft",
+          "holds": true,
+          "measure": "roomNetArea",
+          "op": ">=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 20736438697984,
+          "thresholdDisplay": "136.23 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        },
+        {
+          "display": "136.23 sq ft",
+          "holds": true,
+          "measure": "roomNetArea",
+          "op": "<=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 20736438697984,
+          "thresholdDisplay": "136.23 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        },
+        {
+          "display": "136.23 sq ft",
+          "holds": true,
+          "measure": "roomNetArea",
+          "op": "=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 20736438697984,
+          "thresholdDisplay": "136.23 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        },
+        {
+          "display": "136.23 sq ft",
+          "holds": true,
+          "measure": "roomNetArea",
+          "op": "!=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 0,
+          "thresholdDisplay": "0.00 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        },
+        {
+          "display": "136.23 sq ft",
+          "holds": true,
+          "measure": "roomNetArea",
+          "op": "<",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 20736438697985,
+          "thresholdDisplay": "136.23 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        },
+        {
+          "display": "11' 8 1/16\"",
+          "holds": true,
+          "measure": "roomLeastWidth",
+          "op": "in",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": [
+            1,
+            4553728
+          ],
+          "thresholdDisplay": "0' 0\", 11' 8 1/16\"",
+          "type": "length",
+          "value": 4553728
+        },
+        {
+          "display": "sleeping",
+          "holds": true,
+          "measure": "roomFunction",
+          "op": "in",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": [
+            "bath",
+            "sleeping"
+          ],
+          "thresholdDisplay": "bath, sleeping",
+          "type": "term",
+          "value": "sleeping"
+        },
+        {
+          "display": "sleeping",
+          "holds": true,
+          "measure": "roomFunction",
+          "op": "!=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": "living",
+          "thresholdDisplay": "living",
+          "type": "term",
+          "value": "sleeping"
+        },
+        {
+          "display": "yes",
+          "holds": true,
+          "measure": "roomIsReachable",
+          "op": "=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": true,
+          "thresholdDisplay": "yes",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "display": "no",
+          "holds": true,
+          "measure": "roomIsEntry",
+          "op": "!=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": true,
+          "thresholdDisplay": "yes",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "args": {
+            "extension": "FS_electrical"
+          },
+          "display": "3",
+          "holds": true,
+          "measure": "elementCount",
+          "op": "=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 3,
+          "thresholdDisplay": "3",
+          "type": "count",
+          "value": 3
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §1.1 (Every operator holds).",
+      "pack": "test-pack",
+      "rule": "EVERY-OPERATOR",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "Every operator holds",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "X4"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                2289664
+              ],
+              [
+                96000,
+                2289664
+              ],
+              [
+                96000,
+                2392064
+              ],
+              [
+                64000,
+                2392064
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "args": {
+            "name": "watts",
+            "type": "integer"
+          },
+          "display": "not stated",
+          "holds": false,
+          "measure": "elementMember",
+          "op": "=",
+          "target": {
+            "id": "X4",
+            "kind": "element"
+          },
+          "threshold": 0,
+          "thresholdDisplay": "0",
+          "type": "integer",
+          "value": null
+        },
+        {
+          "args": {
+            "name": "watts",
+            "type": "integer"
+          },
+          "display": "not stated",
+          "holds": false,
+          "measure": "elementMember",
+          "op": "<",
+          "target": {
+            "id": "X4",
+            "kind": "element"
+          },
+          "threshold": 1,
+          "thresholdDisplay": "1",
+          "type": "integer",
+          "value": null
+        },
+        {
+          "args": {
+            "name": "watts",
+            "type": "integer"
+          },
+          "display": "not stated",
+          "holds": true,
+          "measure": "elementMember",
+          "op": "!=",
+          "target": {
+            "id": "X4",
+            "kind": "element"
+          },
+          "threshold": 0,
+          "thresholdDisplay": "0",
+          "type": "integer",
+          "value": null
+        },
+        {
+          "args": {
+            "name": "features",
+            "type": "terms"
+          },
+          "display": "none",
+          "holds": false,
+          "measure": "elementMember",
+          "op": "has",
+          "target": {
+            "id": "X4",
+            "kind": "element"
+          },
+          "threshold": "gfci",
+          "thresholdDisplay": "gfci",
+          "type": "terms",
+          "value": []
+        }
+      ],
+      "message": "X4 may not meet TEST-CODE 2024 §1.1 (A receptacle load).",
+      "pack": "test-pack",
+      "rule": "NO-VALUE",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "X4",
+        "kind": "element"
+      },
+      "title": "A receptacle load",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "X5"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                2289664,
+                64000
+              ],
+              [
+                2392064,
+                64000
+              ],
+              [
+                2392064,
+                96000
+              ],
+              [
+                2289664,
+                96000
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "args": {
+            "name": "watts",
+            "type": "integer"
+          },
+          "display": "not stated",
+          "holds": false,
+          "measure": "elementMember",
+          "op": "=",
+          "target": {
+            "id": "X5",
+            "kind": "element"
+          },
+          "threshold": 0,
+          "thresholdDisplay": "0",
+          "type": "integer",
+          "value": null
+        },
+        {
+          "args": {
+            "name": "watts",
+            "type": "integer"
+          },
+          "display": "not stated",
+          "holds": false,
+          "measure": "elementMember",
+          "op": "<",
+          "target": {
+            "id": "X5",
+            "kind": "element"
+          },
+          "threshold": 1,
+          "thresholdDisplay": "1",
+          "type": "integer",
+          "value": null
+        },
+        {
+          "args": {
+            "name": "watts",
+            "type": "integer"
+          },
+          "display": "not stated",
+          "holds": true,
+          "measure": "elementMember",
+          "op": "!=",
+          "target": {
+            "id": "X5",
+            "kind": "element"
+          },
+          "threshold": 0,
+          "thresholdDisplay": "0",
+          "type": "integer",
+          "value": null
+        },
+        {
+          "args": {
+            "name": "features",
+            "type": "terms"
+          },
+          "display": "none",
+          "holds": false,
+          "measure": "elementMember",
+          "op": "has",
+          "target": {
+            "id": "X5",
+            "kind": "element"
+          },
+          "threshold": "gfci",
+          "thresholdDisplay": "gfci",
+          "type": "terms",
+          "value": []
+        }
+      ],
+      "message": "X5 may not meet TEST-CODE 2024 §1.1 (A receptacle load).",
+      "pack": "test-pack",
+      "rule": "NO-VALUE",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "X5",
+        "kind": "element"
+      },
+      "title": "A receptacle load",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.1",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

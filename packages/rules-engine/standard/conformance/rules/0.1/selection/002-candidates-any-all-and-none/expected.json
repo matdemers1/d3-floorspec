@@ -1,0 +1,777 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "ALL-WINDOWS",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "ANY-DOOR",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 3,
+      "pack": "test-pack",
+      "rule": "DOOR-SWINGS",
+      "subjects": 3,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "LEVEL-CO",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "LEVEL-SLEEPING",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "NONE-ALL",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "NONE-ANY",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "OUTSIDE-DOOR",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "RECEPTACLES-LOW",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "candidates": [
+        {
+          "id": "O1",
+          "kind": "opening"
+        },
+        {
+          "id": "O2",
+          "kind": "opening"
+        }
+      ],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O1",
+        "O2",
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          },
+          {
+            "kind": "segment",
+            "points": [
+              [
+                1560576,
+                4681728
+              ],
+              [
+                2731008,
+                4681728
+              ]
+            ]
+          },
+          {
+            "kind": "segment",
+            "points": [
+              [
+                4681728,
+                1560576
+              ],
+              [
+                4681728,
+                2731008
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "window",
+          "holds": true,
+          "measure": "openingKind",
+          "op": "=",
+          "target": {
+            "id": "O1",
+            "kind": "opening"
+          },
+          "threshold": "window",
+          "thresholdDisplay": "window",
+          "type": "term",
+          "value": "window"
+        },
+        {
+          "display": "door",
+          "holds": false,
+          "measure": "openingKind",
+          "op": "=",
+          "target": {
+            "id": "O2",
+            "kind": "opening"
+          },
+          "threshold": "window",
+          "thresholdDisplay": "window",
+          "type": "term",
+          "value": "door"
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §1.1 (Only windows).",
+      "pack": "test-pack",
+      "rule": "ALL-WINDOWS",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "Only windows",
+      "version": "0.1.0"
+    },
+    {
+      "candidates": [],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O2"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                4681728,
+                1560576
+              ],
+              [
+                4681728,
+                2731008
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [],
+      "message": "O2 may not meet TEST-CODE 2024 §1.1 (A door swing).",
+      "pack": "test-pack",
+      "rule": "DOOR-SWINGS",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O2",
+        "kind": "opening"
+      },
+      "title": "A door swing",
+      "version": "0.1.0"
+    },
+    {
+      "candidates": [],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O3"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                7802880,
+                0
+              ],
+              [
+                6632448,
+                0
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [],
+      "message": "O3 may not meet TEST-CODE 2024 §1.1 (A door swing).",
+      "pack": "test-pack",
+      "rule": "DOOR-SWINGS",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O3",
+        "kind": "opening"
+      },
+      "title": "A door swing",
+      "version": "0.1.0"
+    },
+    {
+      "candidates": [],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O4"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                9363456,
+                1560576
+              ],
+              [
+                9363456,
+                2731008
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [],
+      "message": "O4 may not meet TEST-CODE 2024 §1.1 (A door swing).",
+      "pack": "test-pack",
+      "rule": "DOOR-SWINGS",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O4",
+        "kind": "opening"
+      },
+      "title": "A door swing",
+      "version": "0.1.0"
+    },
+    {
+      "candidates": [
+        {
+          "id": "X3",
+          "kind": "element"
+        }
+      ],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "L1",
+        "X3"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                2244864,
+                2244864
+              ],
+              [
+                2436864,
+                2244864
+              ],
+              [
+                2436864,
+                2436864
+              ],
+              [
+                2244864,
+                2436864
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "args": {
+            "name": "detects",
+            "type": "terms"
+          },
+          "display": "smoke",
+          "holds": false,
+          "measure": "elementMember",
+          "op": "has",
+          "target": {
+            "id": "X3",
+            "kind": "element"
+          },
+          "threshold": "carbonMonoxide",
+          "thresholdDisplay": "carbonMonoxide",
+          "type": "terms",
+          "value": [
+            "smoke"
+          ]
+        }
+      ],
+      "message": "L1 may not meet TEST-CODE 2024 §1.1 (A carbon monoxide alarm on every level).",
+      "pack": "test-pack",
+      "rule": "LEVEL-CO",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "L1",
+        "kind": "level"
+      },
+      "title": "A carbon monoxide alarm on every level",
+      "version": "0.1.0"
+    },
+    {
+      "candidates": [
+        {
+          "id": "R1",
+          "kind": "room"
+        }
+      ],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "L1",
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "136.23 sq ft",
+          "holds": false,
+          "measure": "roomNetArea",
+          "op": ">=",
+          "target": {
+            "id": "R1",
+            "kind": "room"
+          },
+          "threshold": 30442468147200,
+          "thresholdDisplay": "200.00 sq ft",
+          "type": "area",
+          "value": "20736438697984"
+        }
+      ],
+      "message": "L1 may not meet TEST-CODE 2024 §1.1 (A big bedroom).",
+      "pack": "test-pack",
+      "rule": "LEVEL-SLEEPING",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "L1",
+        "kind": "level"
+      },
+      "title": "A big bedroom",
+      "version": "0.1.0"
+    },
+    {
+      "candidates": [],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [],
+      "message": "R1 may not meet TEST-CODE 2024 §1.1 (An empty opening).",
+      "pack": "test-pack",
+      "rule": "NONE-ANY",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "An empty opening",
+      "version": "0.1.0"
+    },
+    {
+      "candidates": [
+        {
+          "id": "O1",
+          "kind": "opening"
+        }
+      ],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O1",
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          },
+          {
+            "kind": "segment",
+            "points": [
+              [
+                1560576,
+                4681728
+              ],
+              [
+                2731008,
+                4681728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "window",
+          "holds": false,
+          "measure": "openingKind",
+          "op": "=",
+          "target": {
+            "id": "O1",
+            "kind": "opening"
+          },
+          "threshold": "door",
+          "thresholdDisplay": "door",
+          "type": "term",
+          "value": "window"
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §1.1 (A door to the outside).",
+      "pack": "test-pack",
+      "rule": "OUTSIDE-DOOR",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "A door to the outside",
+      "version": "0.1.0"
+    },
+    {
+      "candidates": [
+        {
+          "id": "X4",
+          "kind": "element"
+        },
+        {
+          "id": "X5",
+          "kind": "element"
+        }
+      ],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "R1",
+        "X4",
+        "X5"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          },
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                2289664
+              ],
+              [
+                96000,
+                2289664
+              ],
+              [
+                96000,
+                2392064
+              ],
+              [
+                64000,
+                2392064
+              ]
+            ]
+          },
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                2289664,
+                64000
+              ],
+              [
+                2392064,
+                64000
+              ],
+              [
+                2392064,
+                96000
+              ],
+              [
+                2289664,
+                96000
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "0' 9 7/16\"",
+          "holds": false,
+          "measure": "elementBottomAboveFloor",
+          "op": "<=",
+          "target": {
+            "id": "X4",
+            "kind": "element"
+          },
+          "threshold": 256000,
+          "thresholdDisplay": "0' 7 7/8\"",
+          "type": "length",
+          "value": 307200
+        },
+        {
+          "display": "0' 9 7/16\"",
+          "holds": false,
+          "measure": "elementBottomAboveFloor",
+          "op": "<=",
+          "target": {
+            "id": "X5",
+            "kind": "element"
+          },
+          "threshold": 256000,
+          "thresholdDisplay": "0' 7 7/8\"",
+          "type": "length",
+          "value": 307200
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2024 §1.1 (Receptacles low).",
+      "pack": "test-pack",
+      "rule": "RECEPTACLES-LOW",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "Receptacles low",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.1",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

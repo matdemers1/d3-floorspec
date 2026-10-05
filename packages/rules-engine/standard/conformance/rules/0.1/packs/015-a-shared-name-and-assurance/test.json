@@ -1,0 +1,7 @@
+{
+  "description": "A pack that shares its name with another and says \"compliant\": it is reported with both FS-RULES-005 and FS-RULES-006.",
+  "covers": [
+    "FS-RULES-2.2.1",
+    "FS-RULES-2.5.1"
+  ]
+}

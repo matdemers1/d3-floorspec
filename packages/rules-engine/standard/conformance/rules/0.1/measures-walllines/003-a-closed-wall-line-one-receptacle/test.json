@@ -1,0 +1,7 @@
+{
+  "description": "R3 without its door: its wall line has no break, so it is one closed stretch of 15,093,760, with no ends. With one receptacle the longest run is the whole loop and the greatest reach half of it.",
+  "covers": [
+    "FS-RULES-8.1.1",
+    "FS-RULES-8.2.1"
+  ]
+}

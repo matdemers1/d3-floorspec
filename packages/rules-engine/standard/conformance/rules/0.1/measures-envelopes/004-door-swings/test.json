@@ -1,0 +1,9 @@
+{
+  "description": "Every door of the rules house with a swing envelope 3' deep and wide: the swing of O4, into the utility room, is not obstructed by its own wall W10 (an owner's host is not its obstacle), is clear to the east wall W5, 8' less 50 mm away, and overlaps the boiler's service space - as the boiler's space overlaps it, once of each purpose.",
+  "covers": [
+    "FS-RULES-7.5.1",
+    "FS-RULES-7.6.1",
+    "FS-RULES-7.7.1",
+    "FS-RULES-7.8.1"
+  ]
+}

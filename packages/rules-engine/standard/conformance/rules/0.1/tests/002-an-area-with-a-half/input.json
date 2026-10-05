@@ -1,0 +1,91 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "The rules house"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "WIN": {
+      "kind": "windowType",
+      "width": 1170432,
+      "height": 1560576,
+      "sill": 780288
+    },
+    "DOOR": {
+      "kind": "doorType",
+      "width": 1170432,
+      "height": 2600960
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [5120000, 896000]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [4224000, 6528000]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [-512000, 5248000]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J1",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2304000, 3072000],
+      "function": "sleeping"
+    }
+  },
+  "extensionsUsed": {},
+  "extensions": {}
+}

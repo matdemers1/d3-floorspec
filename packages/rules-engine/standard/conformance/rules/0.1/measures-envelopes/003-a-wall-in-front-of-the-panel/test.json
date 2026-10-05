@@ -1,0 +1,7 @@
+{
+  "description": "A free-standing wall W11 a foot in front of the panel's wall, across its working space: it obstructs the space, and the space is clear for 1' less the two half-thicknesses, 200 mm (262,144 base units).",
+  "covers": [
+    "FS-RULES-7.6.1",
+    "FS-RULES-7.7.1"
+  ]
+}

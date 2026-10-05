@@ -1,0 +1,6 @@
+{
+  "description": "R1 with a match and a height limit: no receptacle is 20 A (both are the default 15 A), and none is at most 200 mm above the floor, so none counts and the measure is the whole stretch; both are at 300 mm and 15 A, so with those they count.",
+  "covers": [
+    "FS-RULES-8.2.1"
+  ]
+}

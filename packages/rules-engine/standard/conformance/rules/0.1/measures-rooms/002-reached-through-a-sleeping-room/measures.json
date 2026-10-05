@@ -1,0 +1,25 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomThroughSleeping"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R2"
+      },
+      "measure": "roomThroughSleeping"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R3"
+      },
+      "measure": "roomThroughSleeping"
+    }
+  ]
+}

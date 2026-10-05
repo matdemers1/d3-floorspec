@@ -1,0 +1,7 @@
+{
+  "description": "The rules house with the escape rule written for two editions of TEST-CODE, and a profile adopting 2021: only the 2021 rule, whose synthetic threshold is 7 sq ft, is in force, and the bedroom's 12 sq ft window passes it; the 2024 rule is listed with the reason \"edition\". Evaluating the same document and pack under another profile is how findings follow a jurisdiction (10.7).",
+  "covers": [
+    "FS-RULES-1.4.1",
+    "FS-RULES-10.3.1"
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2021",
+        "section": "§3.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "ESCAPE-2021",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "candidates": [
+        {
+          "id": "O1",
+          "kind": "opening"
+        }
+      ],
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2021",
+        "section": "§3.1"
+      },
+      "elements": [
+        "O1",
+        "R1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                64000,
+                64000
+              ],
+              [
+                4617728,
+                64000
+              ],
+              [
+                4617728,
+                4617728
+              ],
+              [
+                64000,
+                4617728
+              ]
+            ]
+          },
+          {
+            "kind": "segment",
+            "points": [
+              [
+                1560576,
+                4681728
+              ],
+              [
+                2731008,
+                4681728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "6.00 sq ft",
+          "holds": false,
+          "measure": "openingArea",
+          "op": ">=",
+          "target": {
+            "id": "O1",
+            "kind": "opening"
+          },
+          "threshold": 1065486385152,
+          "thresholdDisplay": "7.00 sq ft",
+          "type": "area",
+          "value": "913274044416"
+        }
+      ],
+      "message": "R1 may not meet TEST-CODE 2021 §3.1 (Escape opening in every sleeping room (2021)).",
+      "pack": "test-pack",
+      "rule": "ESCAPE-2021",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "R1",
+        "kind": "room"
+      },
+      "title": "Escape opening in every sleeping room (2021)",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.1",
+  "hash": "a1d1eacfb9cd4b50bc4fe27c05ac1b8368be761181dfa9b6fefde74ec2df9291",
+  "notEvaluated": [
+    {
+      "pack": "test-pack",
+      "reason": "edition",
+      "rule": "ESCAPE",
+      "version": "0.1.0"
+    }
+  ],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

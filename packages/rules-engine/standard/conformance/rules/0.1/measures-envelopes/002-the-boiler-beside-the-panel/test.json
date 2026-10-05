@@ -1,0 +1,8 @@
+{
+  "description": "The Phase 6 demo: the boiler stands in the panel's working space, so it obstructs it, the space is clear for 0, and the boiler's own service space overlaps the panel's.",
+  "covers": [
+    "FS-RULES-7.6.1",
+    "FS-RULES-7.7.1",
+    "FS-RULES-7.8.1"
+  ]
+}

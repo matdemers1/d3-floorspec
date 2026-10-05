@@ -1,0 +1,71 @@
+{
+  "floorspecRules": "0.1",
+  "packs": [
+    {
+      "floorspecRules": "0.1",
+      "name": "test-pack",
+      "version": "0.1.0",
+      "title": "Synthetic conformance rules",
+      "license": "CC-BY-4.0",
+      "rules": {
+        "SLEEP-EVERYWHERE": {
+          "title": "Every room is a bedroom",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (every room is a bedroom); it states no requirement of any real code.",
+          "applies": {
+            "to": "room"
+          },
+          "requirement": {
+            "measure": "roomFunction",
+            "op": "=",
+            "value": "sleeping"
+          },
+          "exceptions": [
+            {
+              "when": {
+                "measure": "roomFunction",
+                "op": "=",
+                "value": "mechanical"
+              },
+              "note": "Not in a mechanical room."
+            },
+            {
+              "when": {
+                "not": {
+                  "measure": "roomIsReachable",
+                  "op": "=",
+                  "value": true
+                }
+              },
+              "note": "Not in a room nobody reaches."
+            }
+          ],
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        }
+      }
+    }
+  ],
+  "profile": {
+    "floorspecRules": "0.1",
+    "name": "Test jurisdiction",
+    "adopts": [
+      {
+        "code": "TEST-CODE",
+        "edition": "2024"
+      },
+      {
+        "code": "TEST-ELEC",
+        "edition": "2026"
+      }
+    ]
+  }
+}

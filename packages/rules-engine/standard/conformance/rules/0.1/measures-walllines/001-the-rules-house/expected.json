@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "display": "22' 4 1/8\"",
+      "involved": [
+        "X4",
+        "X5"
+      ],
+      "type": "length",
+      "value": 8717312
+    },
+    {
+      "display": "22' 4 1/8\"",
+      "involved": [
+        "X4",
+        "X5"
+      ],
+      "type": "length",
+      "value": 8717312
+    },
+    {
+      "display": "21' 4 1/8\"",
+      "involved": [],
+      "type": "length",
+      "value": 8327168
+    },
+    {
+      "display": "21' 4 1/8\"",
+      "involved": [],
+      "type": "length",
+      "value": 8327168
+    },
+    {
+      "display": "35' 8 1/4\"",
+      "involved": [],
+      "type": "length",
+      "value": 13923328
+    }
+  ]
+}

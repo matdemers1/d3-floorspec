@@ -1,0 +1,7 @@
+{
+  "description": "A request with `\"units\": \"metric\"`: the report says so, and every display is in millimetres and square metres, each rounded once: R1 is 4,553,728 base units wide (3,557.6 mm, displayed `3558 mm`) and its net area 12.6565 m2 (displayed `12.66 m²`); the thresholds, 4 m and 20 m2, display the same way.",
+  "covers": [
+    "FS-RULES-1.1.1",
+    "FS-RULES-9.6.1"
+  ]
+}

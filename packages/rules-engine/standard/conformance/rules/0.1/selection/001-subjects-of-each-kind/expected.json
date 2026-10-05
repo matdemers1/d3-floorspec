@@ -1,0 +1,316 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "ELECTRICAL",
+      "subjects": 4,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "ELEMENTS",
+      "subjects": 5,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "LEVELS",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "PANELS",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "ROOMS",
+      "subjects": 3,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "SLEEPING-ROOMS",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 2,
+      "pack": "test-pack",
+      "rule": "WINDOWS",
+      "subjects": 2,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "L1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": []
+      },
+      "measures": [
+        {
+          "display": "3",
+          "holds": false,
+          "measure": "roomCount",
+          "op": ">=",
+          "target": {
+            "id": "L1",
+            "kind": "level"
+          },
+          "threshold": 4,
+          "thresholdDisplay": "4",
+          "type": "count",
+          "value": 3
+        }
+      ],
+      "message": "L1 may not meet TEST-CODE 2024 §1.1 (Four rooms on a level).",
+      "pack": "test-pack",
+      "rule": "LEVELS",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "L1",
+        "kind": "level"
+      },
+      "title": "Four rooms on a level",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "X1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                12292608,
+                3255296
+              ],
+              [
+                12420608,
+                3255296
+              ],
+              [
+                12420608,
+                3767296
+              ],
+              [
+                12292608,
+                3767296
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "5' 3\"",
+          "holds": false,
+          "measure": "elementTopAboveFloor",
+          "op": "<=",
+          "target": {
+            "id": "X1",
+            "kind": "element"
+          },
+          "threshold": 1170432,
+          "thresholdDisplay": "3' 0\"",
+          "type": "length",
+          "value": 2048000
+        }
+      ],
+      "message": "X1 may not meet TEST-CODE 2024 §1.1 (Panels below three feet).",
+      "pack": "test-pack",
+      "rule": "PANELS",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "X1",
+        "kind": "element"
+      },
+      "title": "Panels below three feet",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                1560576,
+                4681728
+              ],
+              [
+                2731008,
+                4681728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "2' 0\"",
+          "holds": false,
+          "measure": "openingSillHeight",
+          "op": "<=",
+          "target": {
+            "id": "O1",
+            "kind": "opening"
+          },
+          "threshold": 390144,
+          "thresholdDisplay": "1' 0\"",
+          "type": "length",
+          "value": 780288
+        }
+      ],
+      "message": "O1 may not meet TEST-CODE 2024 §1.1 (Windows with a sill of at most a foot).",
+      "pack": "test-pack",
+      "rule": "WINDOWS",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O1",
+        "kind": "opening"
+      },
+      "title": "Windows with a sill of at most a foot",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "elements": [
+        "O5"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "kind": "segment",
+            "points": [
+              [
+                6242304,
+                4681728
+              ],
+              [
+                7412736,
+                4681728
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "2' 0\"",
+          "holds": false,
+          "measure": "openingSillHeight",
+          "op": "<=",
+          "target": {
+            "id": "O5",
+            "kind": "opening"
+          },
+          "threshold": 390144,
+          "thresholdDisplay": "1' 0\"",
+          "type": "length",
+          "value": 780288
+        }
+      ],
+      "message": "O5 may not meet TEST-CODE 2024 §1.1 (Windows with a sill of at most a foot).",
+      "pack": "test-pack",
+      "rule": "WINDOWS",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "O5",
+        "kind": "opening"
+      },
+      "title": "Windows with a sill of at most a foot",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.1",
+  "hash": "01e8fce6ab5874a400fba41eb0dc087094d222254eba955f367620a944cee524",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

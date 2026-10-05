@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/rules/0.1/request.schema.json",
+  "$comment": "Normative (FLR-ADR-006): the evaluation request of Floorspec Rules 0.1. A request it rejects, or one that is not well-formed JSON, is FS-RULES-001 (1.1.1).",
+  "title": "Floorspec Rules 0.1 evaluation request",
+  "description": "1.1: the packs, the profile and the units. Each pack and the profile are checked by their own schemas (2.1, 10.1), not by this one.",
+  "type": "object",
+  "required": [
+    "floorspecRules",
+    "packs"
+  ],
+  "properties": {
+    "floorspecRules": {
+      "$ref": "defs.schema.json#/$defs/floorspecRules"
+    },
+    "packs": {
+      "title": "Packs",
+      "description": "1.1: the packs to evaluate; each is checked by the pack schema (FS-RULES-004).",
+      "type": "array"
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "1.1: the profile; absent, the default profile (10.6). It is checked by the profile schema (FS-RULES-002)."
+    },
+    "units": {
+      "title": "Units",
+      "description": "9.6.",
+      "type": "string",
+      "enum": [
+        "imperial",
+        "metric"
+      ],
+      "default": "imperial"
+    }
+  },
+  "additionalProperties": false
+}

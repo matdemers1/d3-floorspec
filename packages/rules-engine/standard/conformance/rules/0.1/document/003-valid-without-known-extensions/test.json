@@ -1,0 +1,7 @@
+{
+  "description": "The same document, for an evaluator configured with no known extensions: FS_electrical is not evaluated, the document is valid, and the rules that read only core members are evaluated - the smoke-alarm rule reads FS_electrical's `detects` and is not (FS-RULES-009).",
+  "covers": [
+    "FS-RULES-1.2.1",
+    "FS-RULES-3.10.1"
+  ]
+}

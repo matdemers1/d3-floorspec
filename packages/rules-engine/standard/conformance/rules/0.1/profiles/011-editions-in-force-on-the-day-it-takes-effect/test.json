@@ -1,0 +1,7 @@
+{
+  "description": "A jurisdiction that adopted TEST-CODE 2021 from 2022-01-01 and 2024 from 2025-07-01, evaluated asOf 2025-07-01: the edition in force is 2024, so only ESCAPE is evaluated.",
+  "covers": [
+    "FS-RULES-10.2.1",
+    "FS-RULES-10.3.1"
+  ]
+}

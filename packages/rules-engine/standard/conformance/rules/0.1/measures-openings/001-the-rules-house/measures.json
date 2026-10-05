@@ -1,0 +1,116 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingKind"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O2"
+      },
+      "measure": "openingKind"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O6"
+      },
+      "measure": "openingKind"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingWidth"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingHeight"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O2"
+      },
+      "measure": "openingHeight"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingArea"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O2"
+      },
+      "measure": "openingArea"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingSillHeight"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O2"
+      },
+      "measure": "openingSillHeight"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingHeadHeight"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O2"
+      },
+      "measure": "openingHeadHeight"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O1"
+      },
+      "measure": "openingToOutside"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O2"
+      },
+      "measure": "openingToOutside"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O3"
+      },
+      "measure": "openingToOutside"
+    },
+    {
+      "target": {
+        "kind": "opening",
+        "id": "O6"
+      },
+      "measure": "openingToOutside"
+    }
+  ]
+}

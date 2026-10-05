@@ -1,0 +1,10 @@
+{
+  "description": "Three rules the bedroom fails, one of each severity: every message names the subject, the code, the edition, the section and the rule's title, says \"may not meet\", and for `check` asks for a check by a professional or the authority having jurisdiction, and for `note` says it is for information.",
+  "covers": [
+    "FS-RULES-1.5.2",
+    "FS-RULES-9.2.1",
+    "FS-RULES-9.5.1",
+    "FS-RULES-9.5.2",
+    "FS-RULES-9.6.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A malformed profile for an invalid document: only FS-RULES-002.",
+  "covers": [
+    "FS-RULES-1.3.1"
+  ]
+}

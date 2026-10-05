@@ -1,0 +1,6 @@
+{
+  "description": "The same rule with the doors O2 and O3 removed, so that no room is reachable: every room is now exempt by the second exception - R3 by both - including R1, which would pass the requirement: an exempt subject is not tried on it.",
+  "covers": [
+    "FS-RULES-3.7.1"
+  ]
+}

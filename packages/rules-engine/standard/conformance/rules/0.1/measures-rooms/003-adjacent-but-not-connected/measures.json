@@ -1,0 +1,31 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomAdjacentTo",
+      "args": {
+        "function": "living"
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomConnectedTo",
+      "args": {
+        "function": "living"
+      }
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "roomIsReachable"
+    }
+  ]
+}

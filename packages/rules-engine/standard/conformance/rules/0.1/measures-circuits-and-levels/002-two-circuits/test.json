@@ -1,0 +1,7 @@
+{
+  "description": "X5 moved to a 20 A circuit C2 without AFCI: R1 has two receptacle circuits, one of them 20 A, and X5 is no longer AFCI-protected.",
+  "covers": [
+    "FS-RULES-7.4.1",
+    "FS-RULES-8.3.1"
+  ]
+}

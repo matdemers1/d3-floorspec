@@ -1,0 +1,10 @@
+{
+  "description": "The panel's working space (1000 mm deep, 800 mm wide, floor to 2,000 mm) and the boiler's service space as declared; nothing obstructs either; in front of the panel the space is clear to the 3' limit, and with a 10' limit it reaches the far wall of the utility room, W10, at 8' less 100 mm; and no envelope overlaps another.",
+  "covers": [
+    "FS-RULES-4.7.1",
+    "FS-RULES-7.5.1",
+    "FS-RULES-7.6.1",
+    "FS-RULES-7.7.1",
+    "FS-RULES-7.8.1"
+  ]
+}

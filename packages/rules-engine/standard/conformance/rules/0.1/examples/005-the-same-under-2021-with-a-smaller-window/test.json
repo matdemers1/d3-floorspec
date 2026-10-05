@@ -1,0 +1,7 @@
+{
+  "description": "The same pack and profile as the previous test, with the bedroom window 3' x 2' (6 sq ft): now the 2021 rule, in force, gives R1 a finding; the 2024 rule is not evaluated.",
+  "covers": [
+    "FS-RULES-10.3.1",
+    "FS-RULES-3.6.1"
+  ]
+}

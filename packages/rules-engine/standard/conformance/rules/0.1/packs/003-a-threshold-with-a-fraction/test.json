@@ -1,0 +1,6 @@
+{
+  "description": "A rule whose threshold is written `1.5`: thresholds are JSON integers, so the pack does not match its schema (FS-RULES-004).",
+  "covers": [
+    "FS-RULES-2.1.1"
+  ]
+}

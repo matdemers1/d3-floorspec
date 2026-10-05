@@ -1,0 +1,40 @@
+{
+  "coverage": [],
+  "diagnostics": [
+    {
+      "code": "FS-RULES-009",
+      "pack": "test-pack",
+      "rule": "SMOKE",
+      "severity": "info"
+    }
+  ],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§1.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "ROOMS",
+      "subjects": 1,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [],
+  "floorspecRules": "0.1",
+  "hash": "2ff751c86b8b2960b12f221d1a121cb13b40085f89415ceb241dd71531a8c30c",
+  "notEvaluated": [
+    {
+      "pack": "test-pack",
+      "reason": "extension",
+      "rule": "SMOKE",
+      "version": "0.1.0"
+    }
+  ],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}
