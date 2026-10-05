@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-MECH-INV-003",
+      "severity": "error",
+      "elements": ["G1", "X14"]
+    }
+  ]
+}

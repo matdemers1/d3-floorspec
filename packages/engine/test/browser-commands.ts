@@ -15,6 +15,8 @@ export interface ConformanceCase {
   input: string;
   /** The case's registry.json (Core 0.2, 12.2), when it has one. */
   registry: string | null;
+  /** For an official extension's case: the one extension the reader implements. */
+  extensions: string[] | null;
   expected: string;
   canonical: string | null;
 }
@@ -36,6 +38,7 @@ const conformanceCases: BrowserCommand = () => {
             core,
             input: readFileSync(join(dir, 'input.json')).toString('base64'),
             registry: existsSync(reg) ? readFileSync(reg).toString('base64') : null,
+            extensions: null,
             expected: readFileSync(join(dir, 'expected.json'), 'utf8'),
             canonical: existsSync(c) ? readFileSync(c, 'utf8') : null,
           });
@@ -44,6 +47,33 @@ const conformanceCases: BrowserCommand = () => {
     };
     if (existsSync(root)) walk(root);
   }
+  // The official extensions' suites (conformance/ext/<NAME>/<version>/): their validator and
+  // deriver cases, each read by a reader that implements that one extension.
+  const ext = join(import.meta.dirname, '..', 'standard', 'conformance', 'ext');
+  for (const name of existsSync(ext) ? readdirSync(ext).sort() : [])
+    for (const version of readdirSync(join(ext, name)).sort()) {
+      const root = join(ext, name, version);
+      const walk = (dir: string): void => {
+        for (const entry of readdirSync(dir).sort()) {
+          const p = join(dir, entry);
+          if (statSync(p).isDirectory()) walk(p);
+          else if (entry === 'test.json' && !existsSync(join(dir, 'request.json'))) {
+            const c = join(dir, 'canonical.json');
+            const reg = join(dir, 'registry.json');
+            out.push({
+              name: `${name}/${relative(root, dir)}`,
+              core: '0.2',
+              input: readFileSync(join(dir, 'input.json')).toString('base64'),
+              registry: existsSync(reg) ? readFileSync(reg).toString('base64') : null,
+              extensions: [name],
+              expected: readFileSync(join(dir, 'expected.json'), 'utf8'),
+              canonical: existsSync(c) ? readFileSync(c, 'utf8') : null,
+            });
+          }
+        }
+      };
+      walk(root);
+    }
   return out;
 };
 

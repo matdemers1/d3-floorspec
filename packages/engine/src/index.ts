@@ -9,7 +9,8 @@
  */
 import { canonicalize, contentHash } from './canonical/canonicalize.js';
 import { deriveFrom, type Derived } from './derive/derive.js';
-import { evaluate, type ValidateOptions } from './validate/validate.js';
+import { evaluate, type Evaluation, type ValidateOptions } from './validate/validate.js';
+import { deriveExtensions } from './extensions/official.js';
 import type { Diagnostic } from './validate/diagnostic.js';
 
 export const ENGINE_VERSION = '0.2.0-draft';
@@ -43,6 +44,18 @@ export {
 export { analyseCirculation, type CirculationAnalysis, type BuildingCirculation } from './circulation/circulation.js';
 export { loadKnownExtensions, knownEntry, satisfies as versionSatisfies, compareVersions } from './validate/registry.js';
 export { facingVector, direction } from './exact/angle.js';
+export {
+  OFFICIAL_EXTENSIONS,
+  OFFICIAL_EXTENSION_NAMES,
+  IMPLEMENTATIONS as EXTENSION_IMPLEMENTATIONS,
+  type DerivedExtensions,
+} from './extensions/official.js';
+export type { ExtensionImplementation, ExtensionDiagnostic, ExtensionContext } from './extensions/context.js';
+export { defaultClearances } from './extensions/clearances.js';
+export * as electrical from './extensions/fs/electrical.js';
+export * as plumbing from './extensions/fs/plumbing.js';
+export * as mechanical from './extensions/fs/mechanical.js';
+export * as lowvoltage from './extensions/fs/lowvoltage.js';
 export { extentsOk, footprintsOverlap, type Frame, type Footprint } from './derive/frames.js';
 export { extElements, declaredVersion, type ExtElement } from './model/document.js';
 export { LevelGeometry } from './derive/level.js';
@@ -64,11 +77,21 @@ export class InvalidDocumentError extends Error {
   }
 }
 
-/** Derive every value of chapters 5–7 and 11–14 from a document. Throws InvalidDocumentError when it is not valid. */
+/** Everything a valid evaluation derives: Core's values, and the evaluated extensions' when the reader implements any. */
+function derivedOf(ev: Evaluation): Derived {
+  const derived = deriveFrom(ev.document!, ev.analysis!);
+  if (ev.extensions) derived.extensions = deriveExtensions(ev.extensions);
+  return derived;
+}
+
+/**
+ * Derive every value of chapters 5–7 and 11–14 from a document — and, for a reader that implements
+ * official extensions, what they derive. Throws InvalidDocumentError when it is not valid.
+ */
 export function derive(input: string | Uint8Array | object, options: ValidateOptions = {}): Derived {
   const ev = evaluate(input, options);
   if (!ev.valid || !ev.document || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);
-  return deriveFrom(ev.document, ev.analysis);
+  return derivedOf(ev);
 }
 
 /** The conformance-shaped result of conformance/README.md: what a conformant implementation reports and derives. */
@@ -91,7 +114,7 @@ export function check(input: string | Uint8Array | object, options: ValidateOpti
     valid: true,
     diagnostics: ev.diagnostics,
     hash: contentHash(ev.document),
-    derived: deriveFrom(ev.document, ev.analysis),
+    derived: derivedOf(ev),
     canonical: canonicalize(ev.document),
   };
 }

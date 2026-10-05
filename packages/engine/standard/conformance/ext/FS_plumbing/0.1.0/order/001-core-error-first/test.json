@@ -1,0 +1,6 @@
+{
+  "description": "A Core invariant breaks - an element 13' along the 12' wall W2, FS-INV-501 - and so does FS_plumbing's schema: Core's error is reported, and FS_plumbing is not evaluated.",
+  "covers": [
+    "FS-PLMB-1.2.2"
+  ]
+}

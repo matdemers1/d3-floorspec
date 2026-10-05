@@ -13,6 +13,10 @@
  *                                      FLR-ADR-006: the schema is the source; the types are
  *                                      generated from it)
  *   src/generated/registry-types.ts    and for a registry entry
+ *   src/generated/official-extensions.ts   the official extensions' registry entries, as data
+ *   src/generated/validate-FS_<x>.ts       each official extension's schema (FS-<CODE>-SCH-001),
+ *                                          as standalone ajv code
+ *   src/generated/types-FS_<x>.ts          and TypeScript types for its top-level data
  *
  *   pnpm --filter @floorspec/engine generate          write them
  *   pnpm --filter @floorspec/engine check:generated   fail if writing them would change anything
@@ -163,6 +167,29 @@ async function typesSource(schema: JsonObject, name: string, from: string, what:
   return HEADER(from, what) + '/* eslint-disable */\n' + ts;
 }
 
+/**
+ * The official extensions vendored from the registry (standard/registry/<NAME>/): each one's entry
+ * and its schema — the file whose `$id` is the entry's `schema` URL.
+ */
+type Entry = JsonObject & { name: string; version: string; schema: string };
+
+function officialExtensions(): { name: string; entry: Entry; schema: JsonObject }[] {
+  const dir = join(engineRoot, 'standard', 'registry');
+  if (!existsSync(dir)) throw new Error(`${dir} does not exist; run sync-standard first`);
+  const out: { name: string; entry: Entry; schema: JsonObject }[] = [];
+  for (const name of readdirSync(dir).sort()) {
+    if (!name.startsWith('FS_') || !existsSync(join(dir, name, 'extension.json'))) continue;
+    const entry = JSON.parse(readFileSync(join(dir, name, 'extension.json'), 'utf8')) as Entry;
+    const schemas = readdirSync(join(dir, name))
+      .filter((f) => f.endsWith('.schema.json'))
+      .map((f) => JSON.parse(readFileSync(join(dir, name, f), 'utf8')) as JsonObject);
+    const schema = schemas.find((x) => x.$id === entry.schema);
+    if (!schema) throw new Error(`registry/${name}: no schema has the $id ${entry.schema}`);
+    out.push({ name, entry, schema });
+  }
+  return out;
+}
+
 /** Files this script once wrote and no longer does: removed by `generate`, reported by `--check`. */
 const RETIRED = ['validate.ts'];
 
@@ -184,6 +211,25 @@ export async function generate(): Promise<Map<string, string>> {
     'registry-types.ts',
     await typesSource(registry, 'RegistryEntry', 'registry/0.1', 'TypeScript types for a registry entry (Core 0.2, 12.2), generated from the schema with json-schema-to-typescript.'),
   );
+  // The official extensions (FS_electrical, FS_plumbing, FS_mechanical, FS_lowvoltage): their
+  // registry entries as data, each one's schema as a standalone validator (its FS-<CODE>-SCH-001)
+  // and as TypeScript types.
+  const exts = officialExtensions();
+  out.set(
+    'official-extensions.ts',
+    HEADER('../registry', 'The official extensions\' registry entries (registry/<NAME>/extension.json), as data.') +
+      `export const OFFICIAL_ENTRIES = ${JSON.stringify(exts.map((x) => x.entry), null, 2)} as const;\n`,
+  );
+  for (const x of exts) {
+    const schema = { ...x.schema };
+    delete schema.$id;
+    out.set(`validate-${x.name}.ts`, validatorSource(schema, `../registry/${x.name}`, `The ${x.name} ${x.entry.version} schema`));
+    out.set(
+      `types-${x.name}.ts`,
+      await typesSource(x.schema, `${x.name.replace(/^FS_/, '').replace(/^./, (c) => c.toUpperCase())}Data`, `../registry/${x.name}`,
+        `TypeScript types for ${x.name} ${x.entry.version}'s top-level data, generated from its schema with json-schema-to-typescript.`),
+    );
+  }
   return out;
 }
 

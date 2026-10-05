@@ -1,0 +1,7 @@
+{
+  "description": "The lavatory's hotFrom is the toilet and its supply is cold: FS-PLMB-INV-005 only.",
+  "covers": [
+    "FS-PLMB-4.2.1",
+    "FS-PLMB-3.2.1"
+  ]
+}

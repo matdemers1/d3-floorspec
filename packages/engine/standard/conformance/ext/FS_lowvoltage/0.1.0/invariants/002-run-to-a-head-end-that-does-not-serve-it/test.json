@@ -1,0 +1,6 @@
+{
+  "description": "The enclosure no longer terminates audio, so the speaker run to it is a contradiction.",
+  "covers": [
+    "FS-LOWV-3.1.2"
+  ]
+}

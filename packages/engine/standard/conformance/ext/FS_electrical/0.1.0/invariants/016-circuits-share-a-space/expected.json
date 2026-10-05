@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-ELEC-INV-009",
+      "severity": "error",
+      "elements": ["C1", "C2"]
+    },
+    {
+      "code": "FS-ELEC-INV-009",
+      "severity": "error",
+      "elements": ["C3", "C4"]
+    }
+  ]
+}

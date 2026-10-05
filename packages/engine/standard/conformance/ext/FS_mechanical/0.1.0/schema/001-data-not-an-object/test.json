@@ -1,0 +1,6 @@
+{
+  "description": "FS_mechanical's top-level data is an array: Core allows any JSON there, FS_mechanical's schema does not.",
+  "covers": [
+    "FS-MECH-1.3.1"
+  ]
+}

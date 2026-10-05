@@ -1,0 +1,6 @@
+{
+  "description": "The water heater circuit at 208 V on a 120/240 V panel.",
+  "covers": [
+    "FS-ELEC-3.1.2"
+  ]
+}

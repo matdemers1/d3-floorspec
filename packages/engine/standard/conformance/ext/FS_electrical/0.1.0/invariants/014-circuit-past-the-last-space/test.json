@@ -1,0 +1,6 @@
+{
+  "description": "The 2-pole EV circuit at space 40 of a 40-space panel takes space 41.",
+  "covers": [
+    "FS-ELEC-3.3.1"
+  ]
+}

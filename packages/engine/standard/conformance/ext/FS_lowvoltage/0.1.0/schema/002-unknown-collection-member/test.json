@@ -1,0 +1,6 @@
+{
+  "description": "An element has a member its kind does not define.",
+  "covers": [
+    "FS-LOWV-1.3.1"
+  ]
+}

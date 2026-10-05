@@ -1,0 +1,6 @@
+{
+  "description": "A switched receptacle: X21 controls X5 as well as the light.",
+  "covers": [
+    "FS-ELEC-4.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "X28 is fed by C6 on X1, and X1 by C7 on X28: each panel is on the loop.",
+  "covers": [
+    "FS-ELEC-3.4.2"
+  ]
+}

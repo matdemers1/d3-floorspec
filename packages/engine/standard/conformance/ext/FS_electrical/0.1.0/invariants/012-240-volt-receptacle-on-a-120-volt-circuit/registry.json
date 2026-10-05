@@ -1,0 +1,45 @@
+[
+  {
+    "name": "FS_electrical",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_electrical/0.1.0/electrical.schema.json",
+    "title": "Electrical",
+    "requires": {},
+    "kinds": {
+      "panels": {
+        "title": "Panel",
+        "fallback": {}
+      },
+      "receptacles": {
+        "title": "Receptacle",
+        "fallback": {}
+      },
+      "switches": {
+        "title": "Switch",
+        "fallback": {}
+      },
+      "lights": {
+        "title": "Light",
+        "fallback": {}
+      },
+      "alarms": {
+        "title": "Smoke, CO or heat alarm",
+        "fallback": {}
+      },
+      "evChargers": {
+        "title": "EV charger",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  }
+]

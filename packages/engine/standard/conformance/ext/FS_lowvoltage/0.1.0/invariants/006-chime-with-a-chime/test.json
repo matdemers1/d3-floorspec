@@ -1,0 +1,6 @@
+{
+  "description": "A chime that names a chime.",
+  "covers": [
+    "FS-LOWV-3.2.1"
+  ]
+}

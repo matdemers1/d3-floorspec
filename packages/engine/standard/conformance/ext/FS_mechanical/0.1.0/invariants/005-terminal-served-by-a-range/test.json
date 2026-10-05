@@ -1,0 +1,6 @@
+{
+  "description": "The supply register is served by the range.",
+  "covers": [
+    "FS-MECH-3.2.1"
+  ]
+}

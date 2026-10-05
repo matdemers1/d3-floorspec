@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_electrical/circuits/C2/loads",
+      "value": ["X4"]
+    },
+    {
+      "op": "removeElement",
+      "id": "X5"
+    }
+  ]
+}

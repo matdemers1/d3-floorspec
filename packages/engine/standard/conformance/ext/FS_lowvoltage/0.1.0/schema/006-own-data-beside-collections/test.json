@@ -1,0 +1,6 @@
+{
+  "description": "FS_lowvoltage has no top-level member but collections.",
+  "covers": [
+    "FS-LOWV-1.3.1"
+  ]
+}

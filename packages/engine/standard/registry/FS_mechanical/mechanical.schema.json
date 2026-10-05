@@ -1,0 +1,389 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/ext/FS_mechanical/0.1.0/mechanical.schema.json",
+  "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_mechanical 0.1.0, registry/FS_mechanical/spec.md. Applied to the extension's top-level data, extensions.FS_mechanical, by a validator that implements FS_mechanical and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, name, extras) are checked by Floorspec Core, so this schema only names them.",
+  "title": "FS_mechanical 0.1.0",
+  "description": "Heating, cooling and ventilation equipment, terminals, exhaust, gas appliances and gas sources.",
+  "type": "object",
+  "properties": {
+    "collections": {
+      "description": "Core 12.5: the extension's elements, by kind.",
+      "type": "object",
+      "properties": {
+        "equipment": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/equipment"
+          },
+          "description": "Equipment: an ID → element map (Core 12.5)."
+        },
+        "terminals": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/terminal"
+          },
+          "description": "Terminals: an ID → element map (Core 12.5)."
+        },
+        "exhaust": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/exhaust"
+          },
+          "description": "Exhaust: an ID → element map (Core 12.5)."
+        },
+        "gasAppliances": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/gasAppliance"
+          },
+          "description": "Gas appliances: an ID → element map (Core 12.5)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "gasSources": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/gasSource"
+      },
+      "description": "Gas sources: an ID → record map; the IDs share the document's one space of IDs."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "description": "Core 3.1.1: an ID."
+    },
+    "equipment": {
+      "title": "Equipment",
+      "description": "2.1: heating, cooling or ventilation equipment.",
+      "type": "object",
+      "required": [
+        "equipment"
+      ],
+      "properties": {
+        "equipment": {
+          "description": "What it is.",
+          "type": "string",
+          "enum": [
+            "furnace",
+            "airHandler",
+            "heatPump",
+            "airConditioner",
+            "boiler",
+            "miniSplit",
+            "fanCoil",
+            "erv",
+            "hrv",
+            "dehumidifier",
+            "humidifier"
+          ]
+        },
+        "fuel": {
+          "description": "What it runs on.",
+          "type": "string",
+          "enum": [
+            "electric",
+            "naturalGas",
+            "propane",
+            "oil"
+          ],
+          "default": "electric"
+        },
+        "input": {
+          "description": "Input rating, in watts.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "heating": {
+          "description": "Heating output, in watts.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "cooling": {
+          "description": "Cooling output, in watts.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "airflow": {
+          "description": "Air flow, in millilitres per second.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000000
+        },
+        "combustionAir": {
+          "description": "Where combustion air comes from: the space the appliance is in, outdoors through a duct or opening, or a sealed direct connection to outdoors.",
+          "type": "string",
+          "enum": [
+            "indoor",
+            "outdoor",
+            "direct"
+          ]
+        },
+        "vent": {
+          "description": "How it vents its combustion products.",
+          "type": "string",
+          "enum": [
+            "natural",
+            "power",
+            "direct"
+          ]
+        },
+        "gasFrom": {
+          "description": "3.1: the gas source it draws from.",
+          "$ref": "#/$defs/id"
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "terminal": {
+      "title": "Terminal",
+      "description": "2.2: an air terminal: a supply register or diffuser, a return or transfer grille.",
+      "type": "object",
+      "required": [
+        "terminal"
+      ],
+      "properties": {
+        "terminal": {
+          "description": "What it does.",
+          "type": "string",
+          "enum": [
+            "supply",
+            "return",
+            "transfer"
+          ]
+        },
+        "equipment": {
+          "description": "3.2: the equipment it is served by.",
+          "$ref": "#/$defs/id"
+        },
+        "airflow": {
+          "description": "Air flow, in millilitres per second.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000000
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "exhaust": {
+      "title": "Exhaust",
+      "description": "2.3: an exhaust fan, hood or vent.",
+      "type": "object",
+      "required": [
+        "exhaust"
+      ],
+      "properties": {
+        "exhaust": {
+          "description": "What it is.",
+          "type": "string",
+          "enum": [
+            "bathFan",
+            "rangeHood",
+            "kitchenFan",
+            "dryerVent",
+            "wholeHouse"
+          ]
+        },
+        "airflow": {
+          "description": "Air flow, in millilitres per second.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000000
+        },
+        "discharge": {
+          "description": "Where it discharges.",
+          "type": "string",
+          "enum": [
+            "outdoors",
+            "recirculating"
+          ]
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "gasAppliance": {
+      "title": "Gas appliance",
+      "description": "2.4: a fuel-gas appliance.",
+      "type": "object",
+      "required": [
+        "appliance",
+        "fuel"
+      ],
+      "properties": {
+        "appliance": {
+          "description": "What it is.",
+          "type": "string",
+          "enum": [
+            "range",
+            "cooktop",
+            "oven",
+            "dryer",
+            "fireplace",
+            "spaceHeater",
+            "grill",
+            "poolHeater",
+            "generator",
+            "lamp"
+          ]
+        },
+        "fuel": {
+          "description": "The gas it burns.",
+          "type": "string",
+          "enum": [
+            "naturalGas",
+            "propane"
+          ]
+        },
+        "input": {
+          "description": "Input rating, in watts.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "combustionAir": {
+          "description": "Where combustion air comes from: the space the appliance is in, outdoors through a duct or opening, or a sealed direct connection to outdoors.",
+          "type": "string",
+          "enum": [
+            "indoor",
+            "outdoor",
+            "direct"
+          ]
+        },
+        "vent": {
+          "description": "How it vents its combustion products.",
+          "type": "string",
+          "enum": [
+            "none",
+            "natural",
+            "power",
+            "direct"
+          ]
+        },
+        "gasFrom": {
+          "description": "3.1: the gas source it draws from.",
+          "$ref": "#/$defs/id"
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "gasSource": {
+      "title": "Gas source",
+      "description": "3.1: where fuel gas enters: a meter or a tank.",
+      "type": "object",
+      "required": [
+        "fuel"
+      ],
+      "properties": {
+        "fuel": {
+          "description": "The gas.",
+          "type": "string",
+          "enum": [
+            "naturalGas",
+            "propane"
+          ]
+        },
+        "source": {
+          "description": "What it is.",
+          "type": "string",
+          "enum": [
+            "meter",
+            "tank"
+          ],
+          "default": "meter"
+        },
+        "name": {
+          "description": "A human-readable label, 1-200 characters.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "extras": {
+          "description": "As Core 1.7: data no specification defines.",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

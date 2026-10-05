@@ -1,0 +1,6 @@
+{
+  "description": "FS_electrical's data does not match its schema, but no extension is known: nothing of it is evaluated, and the document is valid.",
+  "covers": [
+    "FS-ELEC-1.2.1"
+  ]
+}

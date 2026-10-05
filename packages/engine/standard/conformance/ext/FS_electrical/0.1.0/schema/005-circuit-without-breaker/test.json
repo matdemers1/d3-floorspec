@@ -1,0 +1,6 @@
+{
+  "description": "A circuit always has a breaker.",
+  "covers": [
+    "FS-ELEC-1.3.1"
+  ]
+}

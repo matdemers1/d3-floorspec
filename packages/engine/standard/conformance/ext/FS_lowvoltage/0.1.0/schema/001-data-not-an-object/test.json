@@ -1,0 +1,6 @@
+{
+  "description": "FS_lowvoltage's top-level data is an array: Core allows any JSON there, FS_lowvoltage's schema does not.",
+  "covers": [
+    "FS-LOWV-1.3.1"
+  ]
+}

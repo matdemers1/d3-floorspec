@@ -1,0 +1,6 @@
+{
+  "description": "X21 controls the light X22, the panel X1 and the wall W1: twice FS-ELEC-INV-010.",
+  "covers": [
+    "FS-ELEC-4.1.1"
+  ]
+}

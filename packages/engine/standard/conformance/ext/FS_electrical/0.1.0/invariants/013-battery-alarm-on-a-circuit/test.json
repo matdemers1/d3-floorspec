@@ -1,0 +1,6 @@
+{
+  "description": "The alarm X23 runs on battery alone, yet C4 lists it.",
+  "covers": [
+    "FS-ELEC-3.2.5"
+  ]
+}

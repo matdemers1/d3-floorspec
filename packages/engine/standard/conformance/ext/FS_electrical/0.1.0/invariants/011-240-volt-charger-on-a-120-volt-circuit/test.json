@@ -1,0 +1,6 @@
+{
+  "description": "The 240 V EV charger on C5, made a 120 V circuit.",
+  "covers": [
+    "FS-ELEC-3.2.4"
+  ]
+}

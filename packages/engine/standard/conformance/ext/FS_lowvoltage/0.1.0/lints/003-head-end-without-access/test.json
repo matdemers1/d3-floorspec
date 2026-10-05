@@ -1,0 +1,6 @@
+{
+  "description": "The enclosure has no access envelope (2.6).",
+  "covers": [
+    "FS-LOWV-1.2.3"
+  ]
+}

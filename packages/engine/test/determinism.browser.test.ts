@@ -1,7 +1,7 @@
 /**
  * The engine in a real browser (FLR-ADR-010). Runs only in the `browser` project: derives every
  * determinism fixture in Chromium and compares the results, byte for byte, with Node's; then runs
- * both conformance suites in the browser too.
+ * both Core conformance suites and the official extensions' suites in the browser too.
  */
 import { describe, expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
@@ -24,7 +24,11 @@ describe('in the browser', () => {
     let passed = 0;
     for (const c of cases) {
       const expected = JSON.parse(c.expected) as { valid: boolean; diagnostics: { code: string }[]; hash?: string; derived?: unknown };
-      const r = check(fromBase64(c.input), { core: c.core, ...(c.registry !== null && { knownExtensions: fromBase64(c.registry) }) });
+      const r = check(fromBase64(c.input), {
+        core: c.core,
+        ...(c.registry !== null && { knownExtensions: fromBase64(c.registry) }),
+        ...(c.extensions !== null && { extensions: c.extensions }),
+      });
       const actual = r.diagnostics.map((d) => ({ code: d.code, severity: d.severity, elements: d.elements }));
       const schemaOnly = expected.diagnostics.length === 1 && expected.diagnostics[0]!.code === 'FS-SCH-001';
       const diagOk = schemaOnly ? actual.length > 0 && actual.every((d) => d.code === 'FS-SCH-001') : JSON.stringify(actual) === JSON.stringify(expected.diagnostics);

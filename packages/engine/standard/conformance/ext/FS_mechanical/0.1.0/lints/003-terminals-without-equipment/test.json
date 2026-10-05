@@ -1,0 +1,6 @@
+{
+  "description": "The supply register names no equipment; a transfer grille X28 does not need to.",
+  "covers": [
+    "FS-MECH-1.2.3"
+  ]
+}

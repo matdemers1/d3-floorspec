@@ -1,0 +1,6 @@
+{
+  "description": "FS_electrical's top-level data is an array: Core allows any JSON there, FS_electrical's schema does not.",
+  "covers": [
+    "FS-ELEC-1.3.1"
+  ]
+}

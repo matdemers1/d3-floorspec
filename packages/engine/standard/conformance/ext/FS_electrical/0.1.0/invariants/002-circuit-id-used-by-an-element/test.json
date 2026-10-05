@@ -1,0 +1,6 @@
+{
+  "description": "A circuit called X2 - a receptacle's ID.",
+  "covers": [
+    "FS-ELEC-1.3.2"
+  ]
+}

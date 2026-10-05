@@ -1,0 +1,6 @@
+{
+  "description": "An electric heat pump with indoor combustion air.",
+  "covers": [
+    "FS-MECH-2.1.1"
+  ]
+}

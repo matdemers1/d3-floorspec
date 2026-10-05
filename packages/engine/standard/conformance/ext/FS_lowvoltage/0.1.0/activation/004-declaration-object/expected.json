@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-LOWV-SCH-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

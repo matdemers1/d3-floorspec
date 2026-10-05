@@ -1,0 +1,6 @@
+{
+  "description": "C2 moved to space 1, which C1 takes; and the 2-pole C3 (spaces 3-4) overlaps C4 moved to space 4.",
+  "covers": [
+    "FS-ELEC-3.3.2"
+  ]
+}

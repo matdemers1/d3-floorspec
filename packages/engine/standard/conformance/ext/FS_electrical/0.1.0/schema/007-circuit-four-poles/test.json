@@ -1,0 +1,6 @@
+{
+  "description": "A breaker has one, two or three poles.",
+  "covers": [
+    "FS-ELEC-1.3.1"
+  ]
+}

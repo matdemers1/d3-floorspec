@@ -1,0 +1,7 @@
+{
+  "description": "A propane range drawing from a missing source: FS-MECH-INV-002 only.",
+  "covers": [
+    "FS-MECH-4.2.1",
+    "FS-MECH-3.1.1"
+  ]
+}

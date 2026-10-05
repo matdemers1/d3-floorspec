@@ -11,12 +11,19 @@ import { sortDiagnostics, type Diagnostic } from './diagnostic.js';
 import { invariants, Reporter, type Analysis } from './invariants.js';
 import { lints } from './lints.js';
 import { loadKnownExtensions } from './registry.js';
+import { evaluateExtensions, implementationsOf, lintExtensions, type ExtensionRun } from '../extensions/official.js';
 
 /** The Floorspec Core versions this reader implements (1.2.2): Core 0.2, which also reads 0.1 (1.2.4). */
 export const IMPLEMENTED_VERSIONS: readonly string[] = ['0.1', '0.2'];
 
 export interface ValidateOptions {
-  /** Extensions this reader implements (1.6.4). The engine implements none: it is a core-only reader. */
+  /**
+   * Extensions this reader implements (1.6.4): none by default — a core-only reader. Naming an
+   * official extension the engine implements (`OFFICIAL_EXTENSION_NAMES`: FS_electrical,
+   * FS_plumbing, FS_mechanical, FS_lowvoltage) also evaluates it, for a document that uses it at a
+   * version the validator knows (`knownExtensions`; `OFFICIAL_EXTENSIONS` holds their entries), and
+   * adds `extensions` to the derived values.
+   */
   readonly extensions?: readonly string[];
   /**
    * The newest Core draft the reader implements. `'0.2'`, the default, reads documents declaring
@@ -47,6 +54,11 @@ export interface Evaluation extends ValidationResult {
   document?: FloorspecDocument;
   /** Level geometry, when the reference invariants held. */
   analysis?: Analysis;
+  /**
+   * The official extensions evaluated for a valid document (each extension's spec, 1.2) — present,
+   * possibly empty, whenever the reader implements one; the deriver derives `extensions` from it.
+   */
+  extensions?: ExtensionRun[];
 }
 
 type SchemaError = { instancePath: string; message?: string; keyword: string };
@@ -147,9 +159,22 @@ export function evaluate(input: string | Uint8Array | object, options: ValidateO
   const analysis = invariants(document, r, { core02: versions.includes('0.2'), ...(known && { known }) });
   if (!analysis) return finish(r, { value, document });
 
-  // Tier 5: lints, only for a valid document.
-  if (!r.diagnostics.some((d) => d.severity === 'error')) lints(document, analysis, r);
-  return finish(r, { value, document, analysis });
+  // The extensions this reader implements, after Core's invariants and only without a Core error:
+  // their schemas, then their invariants (each extension's spec, 1.2).
+  const implemented = implementationsOf(options.extensions);
+  let runs: ExtensionRun[] | undefined;
+  if (implemented.length) {
+    runs = [];
+    if (!r.diagnostics.some((d) => d.severity === 'error'))
+      runs = evaluateExtensions(document, analysis, known, implemented, schemaView(value, nonInteger), r.diagnostics);
+  }
+
+  // Tier 5: lints, only for a valid document — Core's, then the extensions'.
+  if (!r.diagnostics.some((d) => d.severity === 'error')) {
+    lints(document, analysis, r);
+    if (runs) lintExtensions(runs);
+  }
+  return finish(r, { value, document, analysis, ...(runs && { extensions: runs }) });
 }
 
 /** Validate a document (chapter 10): `{ valid, diagnostics }`. */

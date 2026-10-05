@@ -1,0 +1,6 @@
+{
+  "description": "The lavatory has a hot-water source but is supplied cold only.",
+  "covers": [
+    "FS-PLMB-3.2.2"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "The Phase 5 demo: the Kitchen's west wall W1 moved 1' west, by an applier that implements FS_electrical and knows it. No element changes - every host is relative - and the result is valid under FS_electrical; the elements on W1 (X5, X2, X3) now derive placements 1' further west.",
+  "covers": [
+    "FS-ELEC-1.2.1",
+    "FS-OPS-2.7.1",
+    "FS-OPS-4.2.1"
+  ]
+}

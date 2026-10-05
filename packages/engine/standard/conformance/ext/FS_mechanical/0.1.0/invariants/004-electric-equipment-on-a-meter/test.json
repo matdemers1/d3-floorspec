@@ -1,0 +1,6 @@
+{
+  "description": "An electric heat pump that draws from the gas meter.",
+  "covers": [
+    "FS-MECH-3.1.2"
+  ]
+}

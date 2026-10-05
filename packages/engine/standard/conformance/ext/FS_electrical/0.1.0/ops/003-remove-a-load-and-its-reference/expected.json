@@ -1,0 +1,730 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "cacad26776380265ba6242726b317d52112ff612aeba0c94033f434386097b18",
+  "created": [],
+  "removed": ["X5"],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_electrical/circuits/C2/loads",
+      "value": ["X4"]
+    },
+    {
+      "op": "removeElement",
+      "id": "X5"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "receptacles",
+      "id": "X5",
+      "element": {
+        "amps": 20,
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [32000, 51200, 76800],
+            "min": [0, -51200, -76800]
+          }
+        },
+        "features": ["gfci", "tamperResistant"],
+        "host": {
+          "height": 1408000,
+          "mode": "wallFace",
+          "offset": 2340864,
+          "side": "right",
+          "wall": "W1"
+        }
+      },
+      "extension": "FS_electrical"
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions",
+      "value": {
+        "FS_electrical": {
+          "circuits": {
+            "C1": {
+              "breaker": 20,
+              "loads": ["X2", "X3"],
+              "name": "Kitchen counter 1",
+              "panel": "X1",
+              "protection": ["afci"],
+              "rating": 20,
+              "space": 1,
+              "volts": 120
+            },
+            "C2": {
+              "breaker": 20,
+              "loads": ["X4", "X5"],
+              "name": "Kitchen counter 2",
+              "panel": "X1",
+              "protection": ["afci"],
+              "rating": 20,
+              "space": 2,
+              "volts": 120
+            },
+            "C3": {
+              "breaker": 30,
+              "loads": ["X8"],
+              "name": "Water heater",
+              "panel": "X1",
+              "poles": 2,
+              "rating": 30,
+              "space": 3,
+              "volts": 240
+            },
+            "C4": {
+              "breaker": 15,
+              "loads": ["X22", "X23", "X13"],
+              "name": "Kitchen and bath lights",
+              "panel": "X1",
+              "protection": ["afci"],
+              "rating": 15,
+              "space": 5,
+              "volts": 120
+            },
+            "C5": {
+              "breaker": 40,
+              "loads": ["X24"],
+              "name": "EV charger",
+              "panel": "X1",
+              "poles": 2,
+              "rating": 40,
+              "space": 6,
+              "volts": 240
+            }
+          },
+          "collections": {
+            "alarms": {
+              "X23": {
+                "detects": ["smoke", "carbonMonoxide"],
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [96000, 96000, 0],
+                    "min": [-96000, -96000, -64000]
+                  }
+                },
+                "host": {
+                  "position": [3511296, 3511296],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "ceiling"
+                },
+                "interconnect": "A"
+              }
+            },
+            "evChargers": {
+              "X24": {
+                "amps": 32,
+                "connector": "j1772",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 192000, 256000],
+                    "min": [0, -192000, -256000]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 1170432,
+                  "side": "left",
+                  "wall": "W7"
+                }
+              }
+            },
+            "lights": {
+              "X22": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 128000, 0],
+                    "min": [-128000, -128000, -192000]
+                  }
+                },
+                "fixture": "recessed",
+                "host": {
+                  "position": [2340864, 2340864],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "ceiling"
+                },
+                "watts": 12
+              }
+            },
+            "panels": {
+              "X1": {
+                "clearances": {
+                  "working": {
+                    "max": [1280000, 512000, 1024000],
+                    "min": [0, -512000, -1536000],
+                    "purpose": "workingSpace",
+                    "shape": "box"
+                  }
+                },
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 256000, 512000],
+                    "min": [0, -256000, -512000]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 1170432,
+                  "side": "right",
+                  "wall": "W5"
+                },
+                "mainBreaker": 200,
+                "name": "Main panel",
+                "rating": 200,
+                "spaces": 40,
+                "volts": [120, 240]
+              }
+            },
+            "receptacles": {
+              "X2": {
+                "amps": 20,
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "features": ["gfci", "tamperResistant"],
+                "host": {
+                  "height": 1408000,
+                  "mode": "wallFace",
+                  "offset": 2340864,
+                  "side": "right",
+                  "wall": "W2"
+                }
+              },
+              "X3": {
+                "amps": 20,
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "features": ["gfci", "tamperResistant"],
+                "host": {
+                  "height": 1408000,
+                  "mode": "wallFace",
+                  "offset": 3511296,
+                  "side": "right",
+                  "wall": "W2"
+                }
+              },
+              "X4": {
+                "amps": 20,
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "features": ["gfci", "tamperResistant"],
+                "host": {
+                  "height": 1408000,
+                  "mode": "wallFace",
+                  "offset": 1170432,
+                  "side": "left",
+                  "wall": "W9"
+                }
+              },
+              "X5": {
+                "amps": 20,
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "features": ["gfci", "tamperResistant"],
+                "host": {
+                  "height": 1408000,
+                  "mode": "wallFace",
+                  "offset": 2340864,
+                  "side": "right",
+                  "wall": "W1"
+                }
+              }
+            },
+            "switches": {
+              "X21": {
+                "controls": ["X22"],
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 390144,
+                  "side": "left",
+                  "wall": "W8"
+                }
+              },
+              "X26": {
+                "controls": ["X13"],
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 390144,
+                  "side": "right",
+                  "wall": "W9"
+                }
+              }
+            }
+          }
+        },
+        "FS_lowvoltage": {
+          "collections": {
+            "doorbells": {
+              "X17": {
+                "chime": "X18",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [25600, 25600, 51200],
+                    "min": [0, -25600, -51200]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 2731008,
+                  "side": "left",
+                  "wall": "W7"
+                },
+                "part": "button"
+              },
+              "X18": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [64000, 128000, 128000],
+                    "min": [0, -128000, -128000]
+                  }
+                },
+                "headEnd": "X15",
+                "host": {
+                  "height": 2560000,
+                  "mode": "wallFace",
+                  "offset": 1950720,
+                  "side": "left",
+                  "wall": "W9"
+                },
+                "part": "chime"
+              }
+            },
+            "headEnds": {
+              "X15": {
+                "clearances": {
+                  "access": {
+                    "max": [896000, 230400, 576000],
+                    "min": [128000, -230400, -576000],
+                    "purpose": "access",
+                    "shape": "box"
+                  }
+                },
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 230400, 576000],
+                    "min": [0, -230400, -576000]
+                  }
+                },
+                "headEnd": "structuredMedia",
+                "host": {
+                  "height": 1920000,
+                  "mode": "wallFace",
+                  "offset": 780288,
+                  "side": "right",
+                  "wall": "W6"
+                },
+                "serves": ["data", "coax", "doorbell", "security", "audio"]
+              }
+            },
+            "outlets": {
+              "X16": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "headEnd": "X15",
+                "host": {
+                  "height": 384000,
+                  "mode": "wallFace",
+                  "offset": 780288,
+                  "side": "right",
+                  "wall": "W1"
+                },
+                "media": ["data", "coax"],
+                "ports": 2
+              }
+            },
+            "security": {
+              "X20": {
+                "device": "motion",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [51200, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "headEnd": "X15",
+                "host": {
+                  "height": 2816000,
+                  "mode": "wallFace",
+                  "offset": 1950720,
+                  "side": "right",
+                  "wall": "W8"
+                },
+                "zone": "Utility"
+              }
+            },
+            "speakers": {
+              "X19": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 128000, 0],
+                    "min": [-128000, -128000, -128000]
+                  }
+                },
+                "headEnd": "X15",
+                "host": {
+                  "position": [1170432, 2340864],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "ceiling"
+                },
+                "speaker": "inCeiling",
+                "zone": "Kitchen"
+              }
+            }
+          }
+        },
+        "FS_mechanical": {
+          "collections": {
+            "equipment": {
+              "X10": {
+                "airflow": 188000,
+                "clearances": {
+                  "service": {
+                    "max": [1318400, 480000, 2560000],
+                    "min": [358400, -480000, 0],
+                    "purpose": "workingSpace",
+                    "shape": "box"
+                  }
+                },
+                "combustionAir": "direct",
+                "equipment": "furnace",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [358400, 358400, 1792000],
+                    "min": [-358400, -358400, 0]
+                  }
+                },
+                "fuel": "naturalGas",
+                "gasFrom": "G1",
+                "heating": 16000,
+                "host": {
+                  "position": [7022592, 1560576],
+                  "mode": "surface",
+                  "room": "R3",
+                  "rotation": 180000000,
+                  "surface": "floor"
+                },
+                "input": 17600,
+                "vent": "direct"
+              }
+            },
+            "exhaust": {
+              "X13": {
+                "airflow": 37750,
+                "discharge": "outdoors",
+                "exhaust": "bathFan",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [166400, 166400, 0],
+                    "min": [-166400, -166400, -192000]
+                  }
+                },
+                "host": {
+                  "position": [6242304, 3121152],
+                  "mode": "surface",
+                  "room": "R2",
+                  "surface": "ceiling"
+                }
+              }
+            },
+            "gasAppliances": {
+              "X14": {
+                "appliance": "range",
+                "combustionAir": "indoor",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [832000, 486400, 1177600],
+                    "min": [0, -486400, 0]
+                  }
+                },
+                "fuel": "naturalGas",
+                "gasFrom": "G1",
+                "host": {
+                  "position": [1170432, 4604928],
+                  "mode": "surface",
+                  "room": "R1",
+                  "rotation": -90000000,
+                  "surface": "floor"
+                },
+                "input": 17600,
+                "vent": "none"
+              }
+            },
+            "terminals": {
+              "X11": {
+                "airflow": 94000,
+                "equipment": "X10",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [192000, 64000, 0],
+                    "min": [-192000, -64000, -25600]
+                  }
+                },
+                "host": {
+                  "position": [2340864, 390144],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "floor"
+                },
+                "terminal": "supply"
+              },
+              "X12": {
+                "airflow": 94000,
+                "equipment": "X10",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [25600, 256000, 192000],
+                    "min": [0, -256000, -192000]
+                  }
+                },
+                "host": {
+                  "height": 384000,
+                  "mode": "wallFace",
+                  "offset": 3511296,
+                  "side": "right",
+                  "wall": "W1"
+                },
+                "terminal": "return"
+              }
+            }
+          },
+          "gasSources": {
+            "G1": {
+              "fuel": "naturalGas",
+              "name": "Utility meter"
+            }
+          }
+        },
+        "FS_plumbing": {
+          "collections": {
+            "cleanouts": {
+              "X27": {
+                "clearances": {
+                  "access": {
+                    "max": [601600, 288000, 499200],
+                    "min": [25600, -288000, -76800],
+                    "purpose": "access",
+                    "shape": "box"
+                  }
+                },
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [25600, 76800, 76800],
+                    "min": [0, -76800, -76800]
+                  }
+                },
+                "host": {
+                  "height": 384000,
+                  "mode": "wallFace",
+                  "offset": 1950720,
+                  "side": "right",
+                  "wall": "W5"
+                },
+                "stack": "K1"
+              }
+            },
+            "drains": {
+              "X9": {
+                "drain": "K1",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [96000, 96000, 0],
+                    "min": [-96000, -96000, -12800]
+                  }
+                },
+                "host": {
+                  "position": [6242304, 780288],
+                  "mode": "surface",
+                  "room": "R3",
+                  "surface": "floor"
+                },
+                "receptor": "floor"
+              }
+            },
+            "fixtures": {
+              "X25": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 51200, 51200],
+                    "min": [0, -51200, -51200]
+                  }
+                },
+                "fixture": "hoseBibb",
+                "host": {
+                  "height": 640000,
+                  "mode": "wallFace",
+                  "offset": 780288,
+                  "side": "left",
+                  "wall": "W1"
+                },
+                "supply": ["cold"]
+              },
+              "X6": {
+                "clearances": {
+                  "front": {
+                    "max": [1664000, 512000, 2560000],
+                    "min": [896000, -512000, 0],
+                    "purpose": "fixtureClearance",
+                    "shape": "box"
+                  }
+                },
+                "drain": "K1",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [896000, 243200, 1024000],
+                    "min": [0, -243200, 0]
+                  }
+                },
+                "fixture": "waterCloset",
+                "host": {
+                  "position": [6242304, 4604928],
+                  "mode": "surface",
+                  "room": "R2",
+                  "rotation": -90000000,
+                  "surface": "floor"
+                },
+                "supply": ["cold"]
+              },
+              "X7": {
+                "clearances": {
+                  "front": {
+                    "max": [1408000, 320000, 1536000],
+                    "min": [640000, -320000, -1024000],
+                    "purpose": "fixtureClearance",
+                    "shape": "box"
+                  }
+                },
+                "drain": "K1",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [640000, 320000, 0],
+                    "min": [0, -320000, -256000]
+                  }
+                },
+                "fixture": "lavatory",
+                "host": {
+                  "height": 1024000,
+                  "mode": "wallFace",
+                  "offset": 1170432,
+                  "side": "right",
+                  "wall": "W4"
+                },
+                "hotFrom": "X8",
+                "supply": ["cold", "hot"]
+              }
+            },
+            "waterHeaters": {
+              "X8": {
+                "capacity": 189000,
+                "clearances": {
+                  "service": {
+                    "max": [1126400, 358400, 1920000],
+                    "min": [358400, -358400, 0],
+                    "purpose": "access",
+                    "shape": "box"
+                  }
+                },
+                "drain": "X9",
+                "energy": "electric",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [358400, 358400, 1920000],
+                    "min": [-358400, -358400, 0]
+                  }
+                },
+                "heater": "storage",
+                "host": {
+                  "position": [5462016, 780288],
+                  "mode": "surface",
+                  "room": "R3",
+                  "rotation": 90000000,
+                  "surface": "floor"
+                },
+                "input": 4500
+              }
+            }
+          },
+          "stacks": {
+            "K1": {
+              "levels": ["L1"],
+              "name": "Main stack",
+              "outlet": "sewer",
+              "size": 97536
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A 48 A charger on a 40 A breaker.",
+  "covers": [
+    "FS-ELEC-1.2.3"
+  ]
+}

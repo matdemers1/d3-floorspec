@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-PLMB-INV-009",
+      "severity": "error",
+      "elements": ["X8"]
+    }
+  ]
+}

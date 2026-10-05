@@ -1,0 +1,6 @@
+{
+  "description": "A subpanel X28 is listed as a load of C5, not fed through its fedBy.",
+  "covers": [
+    "FS-ELEC-3.2.2"
+  ]
+}
