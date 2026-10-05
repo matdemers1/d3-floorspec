@@ -1,0 +1,12 @@
+{
+  "description": "The Phase 10 framed house, read by an implementation of FS_structural that knows it: bearing and shear walls framed with 2x6 and 2x4 studs, a door and a window under two-ply 2x10 headers - the window flagged for an engineer - a door in a non-bearing wall with no header, the Kitchen's 2x10 floor joists spanning east-west, the Bath's slab on grade, and a deck on 2x8 joists with a recorded span. The document has no top-level FS_structural data: all of it is on walls, openings, rooms and the slab. It is valid, reports nothing, and derives the bearing and shear walls and the openings in bearing walls of L1, the Kitchen's span - its extent the clear distance between W1's east face and the interior line's west face - and the deck's, whose recorded 6' stands for its 7' extent, and what needs an engineer.",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.2.3",
+    "FS-STRC-1.2.4",
+    "FS-STRC-1.3.1",
+    "FS-STRC-1.3.2",
+    "FS-STRC-3.2.1",
+    "FS-STRC-5.1.1"
+  ]
+}

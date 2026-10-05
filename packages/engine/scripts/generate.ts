@@ -229,6 +229,14 @@ export async function generate(): Promise<Map<string, string>> {
     const schema = { ...x.schema };
     delete schema.$id;
     out.set(`validate-${x.name}.ts`, validatorSource(schema, `../registry/${x.name}`, `The ${x.name} ${x.entry.version} schema`));
+    // An extension whose data lives on core elements (FS_structural, Core 12.7) checks it as
+    // { <collection>: data } against its #/$defs/coreElements.
+    const defs = schema.$defs as JsonObject | undefined;
+    if (defs !== undefined && Object.hasOwn(defs, 'coreElements'))
+      out.set(
+        `validate-${x.name}-core.ts`,
+        validatorSource({ ...schema, $ref: '#/$defs/coreElements', properties: undefined, additionalProperties: undefined, type: undefined } as unknown as JsonObject, `../registry/${x.name}`, `The ${x.name} ${x.entry.version} schema's data on core elements (#/$defs/coreElements)`),
+      );
     out.set(
       `types-${x.name}.ts`,
       await typesSource(x.schema, `${x.name.replace(/^FS_/, '').replace(/^./, (c) => c.toUpperCase())}Data`, `../registry/${x.name}`,

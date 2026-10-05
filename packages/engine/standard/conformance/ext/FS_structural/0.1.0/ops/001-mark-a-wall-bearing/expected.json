@@ -1,0 +1,37 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "ebbd6c73539a66432257c98ec80e50b13d17365d161702c2c5f4dc05d8d4bb6b",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W10",
+      "path": "/extensions/FS_structural/bearing",
+      "value": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "W10",
+      "path": "/extensions",
+      "value": {
+        "FS_structural": {
+          "bearing": false,
+          "framing": {
+            "material": "wood",
+            "member": {
+              "depth": 113792,
+              "designation": "2x4",
+              "width": 48768
+            },
+            "spacing": 780288,
+            "system": "studs"
+          }
+        }
+      }
+    }
+  ]
+}

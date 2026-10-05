@@ -1,0 +1,8 @@
+{
+  "description": "The same \"0.3\" house with W10's studs closer than they are wide: FS_structural is evaluated for a Core 0.3 document, so the invariant is reported.",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.2.3",
+    "FS-STRC-2.2.2"
+  ]
+}

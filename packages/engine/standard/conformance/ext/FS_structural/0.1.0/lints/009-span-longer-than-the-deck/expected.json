@@ -1,0 +1,191 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-STRC-LINT-005",
+      "severity": "warning",
+      "elements": ["S1"]
+    }
+  ],
+  "hash": "1bbc72cf3ffb1d9a7afa51f228fc67758078b36cd0f1e91ee248475a297b8269",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [105664, 105664],
+        "endRight": [105664, 4576064],
+        "endLeft": [-105664, 4787392],
+        "startLeft": [-105664, -105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W10": {
+        "startRight": [4754880, 2267712],
+        "endRight": [7697216, 2267712],
+        "endLeft": [7697216, 2414016],
+        "startLeft": [4754880, 2414016],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [105664, 4576064],
+        "endRight": [4608576, 4576064],
+        "endLeft": [4681728, 4787392],
+        "startLeft": [-105664, 4787392],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4754880, 4576064],
+        "endRight": [7697216, 4576064],
+        "endLeft": [7908544, 4787392],
+        "startLeft": [4681728, 4787392],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [7697216, 4576064],
+        "endRight": [7697216, 2414016],
+        "endLeft": [7908544, 2340864],
+        "startLeft": [7908544, 4787392],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [7697216, 2267712],
+        "endRight": [7697216, 105664],
+        "endLeft": [7908544, -105664],
+        "startLeft": [7908544, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W6": {
+        "startRight": [7697216, 105664],
+        "endRight": [4754880, 105664],
+        "endLeft": [4681728, -105664],
+        "startLeft": [7908544, -105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W7": {
+        "startRight": [4608576, 105664],
+        "endRight": [105664, 105664],
+        "endLeft": [-105664, -105664],
+        "startLeft": [4681728, -105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W8": {
+        "startRight": [4754880, 105664],
+        "endRight": [4754880, 2267712],
+        "endLeft": [4608576, 2340864],
+        "startLeft": [4608576, 105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W9": {
+        "startRight": [4754880, 2414016],
+        "endRight": [4754880, 4576064],
+        "endLeft": [4608576, 4576064],
+        "startLeft": [4608576, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J3": [[4608576, 4576064], [4754880, 4576064], [4681728, 4787392]],
+      "J6": [[4608576, 105664], [4681728, -105664], [4754880, 105664]],
+      "J7": [[4608576, 2340864], [4754880, 2267712], [4754880, 2414016]],
+      "J8": [[7697216, 2267712], [7908544, 2340864], [7697216, 2414016]]
+    },
+    "rooms": {
+      "R1": {
+        "outer": [[105664, 105664], [4608576, 105664], [4608576, 2340864], [4608576, 4576064], [105664, 4576064]],
+        "holes": [],
+        "area": "20129817804800"
+      },
+      "R2": {
+        "outer": [[4754880, 2414016], [7697216, 2414016], [7697216, 4576064], [4754880, 4576064]],
+        "holes": [],
+        "area": "6361471664128"
+      },
+      "R3": {
+        "outer": [[4754880, 105664], [7697216, 105664], [7697216, 2267712], [4754880, 2267712]],
+        "holes": [],
+        "area": "6361471664128"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [3511296, 0],
+        "end": [2340864, 0],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "O2": {
+        "start": [1560576, 4681728],
+        "end": [3121152, 4681728],
+        "sillElevation": 1170432,
+        "headElevation": 2731008
+      },
+      "O3": {
+        "start": [5462016, 2340864],
+        "end": [6437376, 2340864],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "O4": {
+        "start": [4681728, 390144],
+        "end": [4681728, 1365504],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      },
+      "R2": {
+        "entry": false,
+        "reachable": true
+      },
+      "R3": {
+        "entry": false,
+        "reachable": true
+      }
+    },
+    "extensions": {
+      "FS_structural": {
+        "levels": {
+          "L1": {
+            "openings": ["O1", "O2", "O4"],
+            "bearing": ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9"],
+            "shear": ["W1", "W2", "W4"]
+          }
+        },
+        "needsEngineer": ["O2"],
+        "spans": {
+          "R1": {
+            "direction": [1, 0],
+            "extent": 4502912,
+            "span": 4502912
+          },
+          "S1": {
+            "direction": [0, 1],
+            "extent": 2731008,
+            "span": 3121152
+          }
+        }
+      }
+    }
+  }
+}

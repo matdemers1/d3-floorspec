@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of W10 /extensions/FS_structural/bearing: W10 now bears, by an applier that implements FS_structural and knows it. Ops never judges a structure: the batch commits, and the result is valid, with its door O3 now an opening in a bearing wall with no header (FS-STRC-LINT-001, 6.1.1 is the editor's to act on).",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

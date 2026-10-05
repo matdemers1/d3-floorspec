@@ -9,8 +9,9 @@ registry/<NAME>/spec.md            its specification, tagged in its own ID space
 registry/<NAME>/<short>.schema.json   its JSON Schema, whose $id is the entry's `schema` URL
 ```
 
-The specification and schema are optional for a Proposal and required from Draft on; the suite is
-`conformance/ext/<NAME>/<version>/` (`conformance/README.md`). The spec site publishes a schema at
+A Proposal holds `proposal.md`, its rationale, instead; the specification, the schema and the suite
+— `conformance/ext/<NAME>/<version>/` (`conformance/README.md`) — are required from Draft on, and
+`evidence/` from Release Candidate on (Lifecycle, below). The spec site publishes a schema at
 the URL its `$id` gives: `https://d3cloud.io/floorspec/schema/ext/<NAME>/<version>/<short>.schema.json`.
 
 An entry matches [`schema/registry/0.1/extension.schema.json`](../schema/registry/0.1/extension.schema.json),
@@ -49,12 +50,91 @@ registry to read a document: known extensions only add checks.
 
 ## Lifecycle
 
-| Status | What it means | To get here |
+An extension moves through four statuses, each a value of the entry's `status`, and every move is
+a pull request to this repository (FLR-REQ-138) made with the extension template
+([`.github/PULL_REQUEST_TEMPLATE/extension.md`](../.github/PULL_REQUEST_TEMPLATE/extension.md):
+add `?template=extension.md` to the pull request's URL). The Registry workflow
+(`.github/workflows/registry.yml`) runs [`tools/registry-gates.ts`](../tools/registry-gates.ts) —
+`pnpm registry:check` — on every push and pull request, and fails when an entry does not have
+what its status asks or a change is not a step the lifecycle allows. Each status keeps the
+requirements of the one before it.
+
+| Status | What it means | What the gates require |
 |---|---|---|
-| **Proposal** | an idea with a name reserved | an entry and a written rationale |
-| **Draft** | specified and changing | a specification, a schema at a versioned URL, and conformance tests |
-| **Release Candidate** | specified and frozen unless implementations find a problem | at least one implementation passing the tests |
-| **Ratified** | stable | a schema, a conformance suite, and **two independent implementations** listed in `implementations` (the entry schema refuses a ratified entry with fewer) |
+| **Proposal** (`proposal`) | an idea, with its name reserved | `extension.json` matching the entry schema, in a directory named after it; `proposal.md`, the written rationale — what it describes, why it is not Core or an existing extension, who means to implement it; a row in a table below |
+| **Draft** (`draft`) | specified, and changing | `spec.md` with its statements tagged in an ID space of its own, its 1.1 table giving the entry's version and status; a schema file whose `$id` is the entry's `schema`, a URL with a `/<version>/` segment; a conformance suite at `conformance/ext/<NAME>/<version>/` with a test for every `MUST` and `MUST NOT` |
+| **Release Candidate** (`releaseCandidate`) | specified and frozen, unless implementations find a problem | at least one implementation in `implementations`, each with **evidence** that it passed every test of the suite — or an owner's recorded **exception** |
+| **Ratified** (`ratified`) | stable | at least two implementations, each with evidence of passing the suite as it is now, two of them **independent** (FLR-REQ-092; the entry schema itself refuses a ratified entry with fewer than two); from the commit that ratifies it, its schema files, its suite and every member of its entry but `implementations` are frozen |
+
+**The oracle is not evidence.** The conformance oracle (`tools/oracle/ext/`) implements every
+official extension, but it wrote the expected outputs its suite is checked against, so its passing
+proves nothing about the suite. An implementation is software that someone uses: D3 Floorspec's
+engine is one, and is listed for the four building systems.
+
+### Changes by pull request
+
+On a pull request the gates also compare each entry with the pull request's base:
+
+- a new extension, and a new version of an existing one, enters as a Proposal or a Draft;
+- a version moves forward one status per pull request, and never back — a problem found in a
+  Release Candidate or a Ratified version is fixed in a new version;
+- a version only ever increases, and an entry is never removed: its name stays reserved, and its
+  earlier versions stay recoverable from this repository's history and at their published URLs.
+
+A maintainer may allow anything else — two steps at once, a withdrawn proposal — by adding the
+`registry-maintainer` label to the pull request, which re-runs the gates, and says why in it.
+
+### Evidence
+
+Evidence that an implementation passes a version's suite is a file
+`registry/<NAME>/evidence/<slug>.json`, one for each implementation listed:
+
+```json
+{
+  "implementation": { "name": "D3 Floorspec (@floorspec/engine)", "url": "https://github.com/matdemers1/d3-floorspec", "version": "ee6939f64cbfbf92f0ade7112cbe8df62744853a" },
+  "maintainer": "matdemers1",
+  "sharesCodeWith": [],
+  "extension": "FS_plumbing",
+  "extensionVersion": "0.1.0",
+  "suite": { "commit": "441a066de5285ce7998e045e1add1bffa92d58a0", "tests": 39 },
+  "result": { "passed": 39, "failed": 0 },
+  "ran": "2026-10-05",
+  "run": "https://github.com/matdemers1/d3-floorspec/actions/runs/37276088906",
+  "command": "pnpm --filter @floorspec/engine conformance (test/extensions.node.test.ts)"
+}
+```
+
+`implementation` is the entry's listing — the same `name` and `url` — with the version that ran;
+`suite.commit` is the commit of this repository whose `conformance/ext/<NAME>/<version>/` it ran,
+and `suite.tests` how many tests that suite held then, which the gates check against the commit;
+`result` must be every test passed and none failed. `run` links a public run — a CI job — and
+`ran` is its date. Evidence of a suite that has changed since its commit is **stale**: a warning for
+a Release Candidate, which means the implementation should run the suite again, and an error for a
+Ratified version.
+
+Two implementations are **independent** when their evidence names different `maintainer`s and
+neither lists the other in `sharesCodeWith` — the implementations it shares code with, a parser, a
+geometry kernel, a port. The pull request that ratifies says how they came to be written
+independently; the maintainers judge it.
+
+### Exceptions
+
+An owner may waive one gate for one version of one extension, by an entry in
+[`exceptions.json`](exceptions.json) that names the decision and the condition that ends it. Only
+the Release Candidate's implementation rule can be waived (`releaseCandidate.implementation`);
+nothing of Ratified can. The gates fail when an exception names an entry or version that is not
+there, or a rule that now passes, so an exception is removed when it ends. There is one:
+FS_furniture 0.1.0 is a Release Candidate with no implementation, by the owner's decision when it
+was published (FLR-T-8.3), until D3 Floorspec's engine passes its suite and is listed.
+
+### Who decides
+
+The registry's maintainers — the owners of `registry/` in
+[`.github/CODEOWNERS`](../.github/CODEOWNERS) — review every registry pull request, judge what the
+gates cannot (that a proposal belongs in the registry, that a specification is clear, that two
+implementations are independent, that a Release Candidate is ready to freeze), add the
+`registry-maintainer` label, and record exceptions. The gates decide nothing a maintainer could not
+see; they make sure nothing is merged that the lifecycle forbids.
 
 Every kind an extension adds carries a fallback — a box, and optionally a glTF model and a 2D
 symbol — so that a reader without the extension still shows that something is there. An extension
@@ -71,18 +151,24 @@ mechanical, low-voltage, structural, furniture — ship as first-party `FS_` ext
 | [`FS_mechanical`](FS_mechanical/spec.md) | 0.1.0 | Release Candidate | heating, cooling and ventilation equipment, air terminals, exhaust, gas appliances and gas sources, with fuel and combustion air | `FS-MECH-` |
 | [`FS_lowvoltage`](FS_lowvoltage/spec.md) | 0.1.0 | Release Candidate | data, coax, phone and fibre outlets, doorbells, security devices, speakers, and the head-ends they are run to | `FS-LOWV-` |
 | [`FS_furniture`](FS_furniture/spec.md) | 0.1.0 | Release Candidate | furniture, appliances and casework, each with a glTF model, a plan symbol and clearance envelopes — a refrigerator's door swing, the access beside a bed — with a starter library ([`library/`](FS_furniture/library/), CC0 1.0) | `FS-FURN-` |
+| [`FS_structural`](FS_structural/spec.md) | 0.1.0 | Draft | bearing and shear flags, framing (material, system, member size, spacing), floor spans and headers, recorded on walls, openings, slabs, rooms' floors and roofs for handoff to an engineer — never a structural design or a check of one | `FS-STRC-` |
 
-The four building systems list one implementation, D3 Floorspec's engine. The conformance oracle in
-`tools/oracle/ext/` implements all five too, but it is written by the same project and is not an
-independent implementation: each stays a Release Candidate until a second, independent
-implementation passes its suite (FLR-REQ-092). FS_furniture lists none yet: the oracle passes its
-suite, and D3 Floorspec's engine is listed when it does.
+The four building systems list one implementation, D3 Floorspec's engine, with evidence of its
+passing their suites at 441a066 (`<NAME>/evidence/`); each suite has gained a test since — an
+element in a design option — so the gates warn until the engine runs them again. Each stays a Release
+Candidate until a second, independent implementation passes its suite (FLR-REQ-092). FS_furniture
+lists none yet, by recorded exception (above). FS_structural is a Draft: the oracle passes its
+suite, and it becomes a Release Candidate when an implementation does. The conformance oracle in
+`tools/oracle/ext/` implements all six, and is evidence for none.
 
 Every official extension follows the same conventions, each stated in its own specification's
-chapter 1: its rules apply to a document of a Core draft it lists — all five list Core 0.2 and
+chapter 1: its rules apply to a document of a Core draft it lists — all six list Core 0.2 and
 0.3 — that uses it at a version a validator both implements and knows; its diagnostics are `FS-<CODE>-SCH-`, `-INV-` and `-LINT-`, evaluated after
 Core's invariants and never with a Core error; its errors make a document invalid; and what it
 derives is `extensions.<NAME>` of the derived values. Records that are not elements — circuits,
-stacks, gas sources — share the document's one space of IDs, so diagnostics can name them. Default
+stacks, gas sources — share the document's one space of IDs, so diagnostics can name them. Data an
+extension records on core elements (FS_structural's, on walls, openings, slabs, rooms and roofs) is
+each element's own `extensions.<NAME>`, defined by the schema's `#/$defs/coreElements`, and checked
+with the top-level data as the schema tier. Default
 clearance envelopes are Floorspec's own round numbers, never a code's; a code's requirements are a
 Floorspec Rules pack's to state, with citations.

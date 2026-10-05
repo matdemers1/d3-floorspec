@@ -1,0 +1,7 @@
+{
+  "description": "The Kitchen's recorded span is its extent plus 1/1280 mm.",
+  "covers": [
+    "FS-STRC-1.2.3",
+    "FS-STRC-3.2.1"
+  ]
+}

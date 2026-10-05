@@ -1,0 +1,6 @@
+{
+  "description": "A length written with a fraction is not an integer, even when it is a whole number.",
+  "covers": [
+    "FS-STRC-1.3.2"
+  ]
+}

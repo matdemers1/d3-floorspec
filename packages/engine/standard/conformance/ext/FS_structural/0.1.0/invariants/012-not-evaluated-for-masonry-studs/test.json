@@ -1,0 +1,7 @@
+{
+  "description": "W1's concrete masonry studs are also 1\" on centre: FS-STRC-INV-003 only, and not FS-STRC-INV-002 (4.2).",
+  "covers": [
+    "FS-STRC-4.2.1",
+    "FS-STRC-2.2.3"
+  ]
+}

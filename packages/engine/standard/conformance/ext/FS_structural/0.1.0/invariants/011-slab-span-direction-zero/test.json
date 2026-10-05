@@ -1,0 +1,6 @@
+{
+  "description": "The deck spans along [0, 0], with a recorded length.",
+  "covers": [
+    "FS-STRC-3.1.1"
+  ]
+}

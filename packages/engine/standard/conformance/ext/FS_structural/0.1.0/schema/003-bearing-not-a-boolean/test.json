@@ -1,0 +1,6 @@
+{
+  "description": "W1's `bearing` is \"yes\": a flag is a boolean.",
+  "covers": [
+    "FS-STRC-1.3.2"
+  ]
+}

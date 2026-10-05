@@ -1,0 +1,7 @@
+{
+  "description": "The back door O1, in the bearing wall W7, has no header.",
+  "covers": [
+    "FS-STRC-1.2.3",
+    "FS-STRC-2.4.1"
+  ]
+}

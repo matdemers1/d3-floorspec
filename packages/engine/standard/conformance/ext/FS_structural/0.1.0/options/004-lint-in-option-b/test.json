@@ -1,0 +1,7 @@
+{
+  "description": "Option B's deck records a 12' span across its 10': the lint is reported for option B's design, with `design`.",
+  "covers": [
+    "FS-STRC-1.2.3",
+    "FS-STRC-3.2.1"
+  ]
+}

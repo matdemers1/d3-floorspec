@@ -1,0 +1,13 @@
+{
+  "name": "FS_structural",
+  "version": "0.1.0",
+  "status": "draft",
+  "schema": "https://d3cloud.io/floorspec/schema/ext/FS_structural/0.1.0/structural.schema.json",
+  "title": "Structural attributes",
+  "requires": {},
+  "kinds": {},
+  "terms": {
+    "roomFunctions": []
+  },
+  "implementations": []
+}

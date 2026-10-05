@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "W1",
+      "path": "/extensions/FS_structural/framing/spacing",
+      "value": 32512
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "W10 is said to bear: its door O3 joins the openings in L1's bearing walls, and has no header (FS-STRC-LINT-001).",
+  "covers": [
+    "FS-STRC-5.1.1",
+    "FS-STRC-1.2.3"
+  ]
+}

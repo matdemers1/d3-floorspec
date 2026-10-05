@@ -1,0 +1,29 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "86445d36ad05895db77b78b5b31613731c8e0ae99b0ad0d6d05c96d830e687a5",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "O3",
+      "path": "/extensions/FS_structural/header",
+      "value": {
+        "material": "wood",
+        "member": {
+          "depth": 178816,
+          "designation": "2x6",
+          "width": 48768
+        }
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "O3",
+      "path": "/extensions"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "W3 says nothing of bearing, W5 says it does not bear, and W10 says it is a shear wall: `bearing` lists only the walls whose flag is true, the openings only those in them, and an absent flag is never false. A second level L2, with no walls, has empty lists. W10 and the Kitchen are flagged for an engineer.",
+  "covers": [
+    "FS-STRC-5.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "unsetProperty of W2 /extensions/FS_structural/shear: W2 no longer says whether it is a shear wall, and leaves the shear walls.",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-OPS-2.3.1"
+  ]
+}

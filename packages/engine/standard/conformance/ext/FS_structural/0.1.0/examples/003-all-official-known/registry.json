@@ -1,0 +1,202 @@
+[
+  {
+    "name": "FS_electrical",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_electrical/0.1.0/electrical.schema.json",
+    "title": "Electrical",
+    "requires": {},
+    "kinds": {
+      "panels": {
+        "title": "Panel",
+        "fallback": {}
+      },
+      "receptacles": {
+        "title": "Receptacle",
+        "fallback": {}
+      },
+      "switches": {
+        "title": "Switch",
+        "fallback": {}
+      },
+      "lights": {
+        "title": "Light",
+        "fallback": {}
+      },
+      "alarms": {
+        "title": "Smoke, CO or heat alarm",
+        "fallback": {}
+      },
+      "evChargers": {
+        "title": "EV charger",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_plumbing",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_plumbing/0.1.0/plumbing.schema.json",
+    "title": "Plumbing",
+    "requires": {},
+    "kinds": {
+      "fixtures": {
+        "title": "Plumbing fixture",
+        "fallback": {}
+      },
+      "waterHeaters": {
+        "title": "Water heater",
+        "fallback": {}
+      },
+      "drains": {
+        "title": "Drain",
+        "fallback": {}
+      },
+      "cleanouts": {
+        "title": "Cleanout",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_mechanical",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_mechanical/0.1.0/mechanical.schema.json",
+    "title": "Mechanical and fuel gas",
+    "requires": {},
+    "kinds": {
+      "equipment": {
+        "title": "HVAC equipment",
+        "fallback": {}
+      },
+      "terminals": {
+        "title": "Air terminal",
+        "fallback": {}
+      },
+      "exhaust": {
+        "title": "Exhaust fan or hood",
+        "fallback": {}
+      },
+      "gasAppliances": {
+        "title": "Gas appliance",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_lowvoltage",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_lowvoltage/0.1.0/lowvoltage.schema.json",
+    "title": "Low voltage",
+    "requires": {},
+    "kinds": {
+      "outlets": {
+        "title": "Data, coax or phone outlet",
+        "fallback": {}
+      },
+      "doorbells": {
+        "title": "Doorbell button or chime",
+        "fallback": {}
+      },
+      "security": {
+        "title": "Security device",
+        "fallback": {}
+      },
+      "speakers": {
+        "title": "Speaker",
+        "fallback": {}
+      },
+      "headEnds": {
+        "title": "Head-end",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_furniture",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_furniture/0.1.0/furniture.schema.json",
+    "title": "Furniture, appliances and casework",
+    "requires": {},
+    "kinds": {
+      "pieces": {
+        "title": "Furniture piece",
+        "fallback": {
+          "asset": true,
+          "symbol": true
+        }
+      },
+      "appliances": {
+        "title": "Appliance",
+        "fallback": {
+          "asset": true,
+          "symbol": true
+        }
+      },
+      "casework": {
+        "title": "Casework",
+        "fallback": {
+          "asset": true,
+          "symbol": true
+        }
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": []
+  },
+  {
+    "name": "FS_structural",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_structural/0.1.0/structural.schema.json",
+    "title": "Structural attributes",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": []
+  }
+]

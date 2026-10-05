@@ -1,0 +1,6 @@
+{
+  "description": "The window O2's head is at 84\" in a wall 2700 mm high, which leaves 566.4 mm above it: a 24\" (609.6 mm) deep glulam header does not fit.",
+  "covers": [
+    "FS-STRC-1.2.3"
+  ]
+}

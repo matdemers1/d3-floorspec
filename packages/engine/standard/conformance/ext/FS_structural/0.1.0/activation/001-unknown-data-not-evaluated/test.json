@@ -1,0 +1,6 @@
+{
+  "description": "W1's FS_structural data does not match the schema, but no extension is known: nothing of it is evaluated, and the document is valid.",
+  "covers": [
+    "FS-STRC-1.2.1"
+  ]
+}

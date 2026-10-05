@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "W2",
+      "path": "/extensions/FS_structural/shear"
+    }
+  ]
+}

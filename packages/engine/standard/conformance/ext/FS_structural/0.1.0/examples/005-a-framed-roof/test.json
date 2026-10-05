@@ -1,0 +1,8 @@
+{
+  "description": "The house as a Core 0.3 document with a roof over it, framed with 2x8 rafters at 24\" (Core 16): FS_structural's data on a roof is its framing, of the roof systems. Valid, and the derived values are the 0.2 house's.",
+  "covers": [
+    "FS-STRC-1.2.1",
+    "FS-STRC-1.3.2",
+    "FS-STRC-5.1.1"
+  ]
+}

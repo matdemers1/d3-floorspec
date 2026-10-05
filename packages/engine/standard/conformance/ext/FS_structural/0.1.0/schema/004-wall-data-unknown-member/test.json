@@ -1,0 +1,6 @@
+{
+  "description": "W1's data has a member a wall's data does not define.",
+  "covers": [
+    "FS-STRC-1.3.2"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "The Kitchen's west wall W1 moved 1' west: nothing in FS_structural's data changes, and the Kitchen's span, derived from its room polygon, is 1' longer.",
+  "covers": [
+    "FS-STRC-3.2.1",
+    "FS-STRC-5.1.1",
+    "FS-OPS-2.7.1",
+    "FS-OPS-4.2.1"
+  ]
+}

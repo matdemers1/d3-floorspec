@@ -1,0 +1,6 @@
+{
+  "description": "L1 carries FS_structural data, which this version defines on no level.",
+  "covers": [
+    "FS-STRC-1.3.3"
+  ]
+}

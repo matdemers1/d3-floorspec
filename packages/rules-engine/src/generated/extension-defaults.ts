@@ -54,7 +54,8 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
     "drains": {},
     "fixtures": {},
     "waterHeaters": {}
-  }
+  },
+  "FS_structural": {}
 };
 
 export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, unknown>>>>>> = {
@@ -76,5 +77,6 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
     "stacks": {
       "stack": "drainWasteVent"
     }
-  }
+  },
+  "FS_structural": {}
 };

@@ -1,0 +1,23 @@
+{
+  "$comment": "Evidence (registry/README.md, \"Evidence\"): D3 Floorspec's engine ran this extension's suite as vendored at the floorspec commit below (its standard/LOCK.json) and passed every test: in its public CI run, and again locally on the date given.",
+  "implementation": {
+    "name": "D3 Floorspec (@floorspec/engine)",
+    "url": "https://github.com/matdemers1/d3-floorspec",
+    "version": "ee6939f64cbfbf92f0ade7112cbe8df62744853a"
+  },
+  "maintainer": "matdemers1",
+  "sharesCodeWith": [],
+  "extension": "FS_mechanical",
+  "extensionVersion": "0.1.0",
+  "suite": {
+    "commit": "441a066de5285ce7998e045e1add1bffa92d58a0",
+    "tests": 35
+  },
+  "result": {
+    "passed": 35,
+    "failed": 0
+  },
+  "ran": "2026-10-05",
+  "run": "https://github.com/matdemers1/d3-floorspec/actions/runs/37276088906",
+  "command": "pnpm --filter @floorspec/engine conformance (test/extensions.node.test.ts)"
+}
