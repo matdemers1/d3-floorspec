@@ -12,7 +12,7 @@ const started = performance.now();
 
 describe('Rules 0.1 conformance suite', () => {
   it('is vendored', () => {
-    expect(all.length).toBe(99);
+    expect(all.length).toBe(103);
   });
 
   it.each(all.map((n) => [n]))('%s', (name) => {

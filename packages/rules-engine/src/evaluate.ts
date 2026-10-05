@@ -136,15 +136,20 @@ export function serialize(value: Report | { results: MeasureResult[] }): string 
 
 // ── the document (1.2) ────────────────────────────────────────────────────────
 
-function readDocument(document: Input, units: Units, options: EvaluateOptions): { model: Model; hash: string } | undefined {
+/**
+ * The document, valid, as seen in the design asked for (1.2, Core §19.6): the primary design without
+ * one. Undefined when it is not valid, or Core derives nothing for that design (1.2.1, 1.2.2).
+ */
+function readDocument(document: Input, units: Units, options: EvaluateOptions, design?: unknown): { model: Model; hash: string } | undefined {
   const ev = evaluateDocument(document, {
     extensions: options.extensions ?? OFFICIAL_EXTENSION_NAMES,
     ...(options.knownExtensions !== undefined && { knownExtensions: options.knownExtensions }),
+    ...(design !== undefined && { design }),
   });
-  if (!ev.valid || ev.document === undefined || ev.analysis === undefined) return undefined;
-  const derived = deriveFrom(ev.document, ev.analysis);
+  if (!ev.valid || ev.document === undefined || ev.view === undefined || ev.analysis === undefined) return undefined;
+  const derived = deriveFrom(ev.view, ev.analysis);
   const evaluated = (ev.extensions ?? []).map((run) => run.impl.name);
-  return { model: new Model(ev.document, ev.analysis, derived, evaluated, units), hash: contentHash(ev.document) };
+  return { model: new Model(ev.view, ev.analysis, derived, evaluated, units), hash: contentHash(ev.document) };
 }
 
 // ── the pipeline (1.3) ────────────────────────────────────────────────────────
@@ -168,8 +173,8 @@ export function evaluate(document: Input, request: Input, options: EvaluateOptio
   const profile: unknown = Object.hasOwn(req, 'profile') ? req.profile : DEFAULT_PROFILE;
   if (!profileOk(profile)) return report({ units, diagnostics: [diag('FS-RULES-002')] });
 
-  // 3. The document.
-  const doc = readDocument(document, units, options);
+  // 3. The document, in the request's design (1.2.2).
+  const doc = readDocument(document, units, options, req.design);
   if (doc === undefined) return report({ units, profile: profile.name, diagnostics: [diag('FS-RULES-003')] });
   return evaluateValid(doc.model, doc.hash, req, profile);
 }
