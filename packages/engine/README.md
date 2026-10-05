@@ -53,11 +53,20 @@ centre is the room polygon moved in by its border, rounded once; FS-INV-701 to 7
 `surface` host sits on its room's floor top or under its ceiling at its position (15.6). A 0.2 or
 0.1 reader (`core: '0.2'`, `'0.1'`) derives none of these members.
 
+It also derives `derived.roofs[RF]` (kind, eave outline, eave, and the surface — faces, gable ends,
+ridges, hips and valleys — or `null` where the draft does not derive one, with FS-LINT-015) and
+`derived.stairs[ST]` (risers, riserHeight, rise, bottom, top, foot and head and their rooms, box,
+and for a straight, L or U stair its steps, run, walkline and headroom; FS-LINT-016 for a winder or
+a spiral). A stair links its foot room and head room in the door graph, and a building with a stair
+no longer joins its levels through rooms of function `circulation`.
+
 | Directory | What |
 |---|---|
 | `src/exact` | BigInt helpers and `Surd`: exact numbers in ℚ(√r₁…√r_k), exact sign, floor and round-half-to-even; `angle.ts`: F(θ) and the direction of a vector (13.1) in BigInt fixed point |
 | `src/geometry` | integer predicates (5.3), exact face lines and corners (5.5), the half-edge structure (6.1), planarize |
 | `src/derive` | per-level geometry (wedges, face ends, joins, fills, rooms), the program (11), frames, footprints and overlaps (13), and the `derived` output |
+| `src/roofs` | roofs (16): edges, the eave outline, FS-INV-801 … 805, FS-LINT-015, and flat, shed and equal-pitch surfaces — the last by the oracle's wavefront sweep on integers ×4 |
+| `src/stairs` | stairs (17): the layout in the stair's frame, foot and head rooms, rise and riser count, steps, run, walkline, headroom over lanes, FS-INV-901 … 904, FS-LINT-016, and the door-graph links a stair adds (14.1) |
 | `src/circulation` | the door graph, entries, reachable rooms and sleeping rooms reached only through another (14), and the lints FS-LINT-012 … 014 |
 | `src/extensions` | the official extensions: the shared context (one space of IDs, the room of an element), their registry (`official.ts`), default clearances, and one module each in `fs/` |
 | `src/validate` | the tiers, the invariants (`invariants02.ts`: program, extension, hosting), the lints, known extensions and version ranges (`registry.ts`), and `catalogue.ts` — the single table of codes |

@@ -1,4 +1,4 @@
-# 8. Wall lines, receptacles, circuits and levels
+# 8. Wall lines, receptacles, circuits, levels and stairs
 
 ## 8.1 The wall line of a room
 
@@ -91,3 +91,29 @@ An evaluator MUST compute `circuitCount` as this section defines it. {#FS-RULES-
 A rule that every level has a smoke alarm reads `elementCount` of each level.
 
 An evaluator MUST compute the measures of this section as this section defines them. {#FS-RULES-8.4.1 MUST}
+
+## 8.5 Stairs
+
+Each measure here takes a stair (Core §17.1) as its target. A document that declares Core 0.1 or 0.2
+has no stair, so a rule about stairs has no subject in it.
+
+| Measure | Arguments | Type | Value |
+|---|---|---|---|
+| `stairRiserHeight` | — | length | its riser height as Core derives it: its rise divided by its riser count, rounded once (Core §17.4) |
+| `stairTreadDepth` | — | length | its `tread`: the going from one nosing to the next, along the walkline (Core §17.1) |
+| `stairWidth` | — | length | its `width` (Core §17.1) |
+| `stairHeadroom` | — | length | its headroom as Core derives it (Core §17.6); no value for a stair Core derives none for — a winder or spiral stair (Core §17.7), or one with nothing above it |
+| `stairHandrailHeight` | — | length | its handrail's `height` above the nosing line (Core §17.1); no value when it declares no handrail |
+
+Every stair of a document has equal risers, so one riser height and one tread depth describe all of
+them; a code's limit on the variation between risers is met by construction, and a rule need not
+measure it. The riser height is Core's, rounded: a rule that compares it with a threshold in whole
+base units sees it within half of one, a 2,560th of a millimetre. A winder's or a spiral's tread
+depth is the declared going at its walkline; how deep its treads are at their narrow ends needs the
+treads Core does not yet derive (Core §17.7), and a rule about it says so in its paraphrase.
+`stairWidth` is the stair's declared width, not a clear width between handrails. A rule that a
+stair needs headroom reads `stairHeadroom` with a `where` on the same measure — `{ "measure":
+"stairHeadroom", "op": ">=", "value": 0 }` holds only for a stair that has one — if it should not
+report a stair whose headroom Core does not derive (3.8).
+
+An evaluator MUST compute the measures of this section as this section defines them. {#FS-RULES-8.5.1 MUST}

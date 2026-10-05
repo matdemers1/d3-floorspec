@@ -1,0 +1,6 @@
+{
+  "description": "A well that starts at the stair's first nosing line: every point of every lane is in the well, where L1's ceiling is cut and no room of L2 is, so nothing is above the stair and it has no headroom member.",
+  "covers": [
+    "FS-CORE-17.6.1"
+  ]
+}

@@ -2,7 +2,7 @@
   "batch": [
     {
       "op": "addElement",
-      "collection": "roofs",
+      "collection": "optionSets",
       "element": {}
     }
   ]

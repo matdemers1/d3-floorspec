@@ -22,7 +22,8 @@ import {
   type TypeChoice,
 } from './ops';
 import { requestRemove, switchUnits } from './actions';
-import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, WallIcon, WindowIcon } from './icons';
+import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, StairIcon, WallIcon, WindowIcon } from './icons';
+import { RoofBody, RoofDrawSettings, StairBody, StairDrawSettings } from './RoofStairFields';
 import { FindingsList } from './Diagnostics';
 import { Layers as LayersIcon, Palette, House } from 'lucide-react';
 import type { ToolController } from './tools';
@@ -155,6 +156,10 @@ function kindIcon(kind: Kind): ReactNode {
       return <SeparatorIcon />;
     case 'slab':
       return <SlabIcon />;
+    case 'roof':
+      return <RoofIcon />;
+    case 'stair':
+      return <StairIcon />;
     case 'junction':
       return <JunctionIcon />;
     case 'level':
@@ -220,6 +225,20 @@ function bodyFor(kind: Kind, ctx: Ctx, focus: string | null): ReactNode {
       return (
         <>
           <SlabBody ctx={ctx} />
+          <NameOnly ctx={ctx} />
+        </>
+      );
+    case 'roof':
+      return (
+        <>
+          <RoofBody ctx={ctx} />
+          <NameOnly ctx={ctx} />
+        </>
+      );
+    case 'stair':
+      return (
+        <>
+          <StairBody ctx={ctx} />
           <NameOnly ctx={ctx} />
         </>
       );
@@ -1014,6 +1033,49 @@ function DrawPanel({ store, model }: { store: EditorStore; model: EditorModel })
           <p>A patio, a deck or a landing outside the rooms: its outline is what you draw, its top is above the level by the offset (Floorspec Core 6.7). Rooms' own floors and ceilings are set on each room.</p>
         </div>
         <KeyHints />
+      </div>
+    );
+  }
+  if (tool === 'roof') {
+    const chain = draft?.tool === 'roof' ? draft.chain : [];
+    return (
+      <div className="fs-inspector__body">
+        <div className="fs-inspector__head">
+          <span className="fs-inspector__icon">
+            <RoofIcon />
+          </span>
+          <div className="fs-inspector__title">
+            <h2>Draw roof</h2>
+            <p>{chain.length === 0 ? 'Click its footprint’s corners; click the first again or press Enter to finish' : `${String(chain.length)} ${chain.length === 1 ? 'corner' : 'corners'}`}</p>
+          </div>
+        </div>
+        <RoofDrawSettings store={store} units={units} />
+        <div className="fs-callout-card" role="note">
+          <strong>Roofs are derived from their footprint</strong>
+          <p>Draw the outline the roof sits on — usually the outside of the walls. Its eave outline, faces, ridges, hips and valleys are derived (Floorspec Core 16); set gables and pitch edge by edge in the inspector.</p>
+        </div>
+        <KeyHints />
+      </div>
+    );
+  }
+  if (tool === 'stair') {
+    const foot = draft?.tool === 'stair' ? draft.foot : null;
+    return (
+      <div className="fs-inspector__body">
+        <div className="fs-inspector__head">
+          <span className="fs-inspector__icon">
+            <StairIcon />
+          </span>
+          <div className="fs-inspector__title">
+            <h2>Place a stair</h2>
+            <p>{foot === null ? 'Click where it starts: the middle of its first step' : 'Click the way it rises; Alt for any angle'}</p>
+          </div>
+        </div>
+        <StairDrawSettings store={store} model={model} units={units} />
+        <div className="fs-callout-card" role="note">
+          <strong>Risers are derived</strong>
+          <p>A stair says where it starts, how wide and deep its steps are and how high a riser may be; the riser count, the steps and the headroom follow from the floors at each end (Floorspec Core 17).</p>
+        </div>
       </div>
     );
   }

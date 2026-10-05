@@ -1,0 +1,6 @@
+{
+  "description": "A rotation of -180000000: the range is (-180000000, 180000000].",
+  "covers": [
+    "FS-CORE-17.1.1"
+  ]
+}

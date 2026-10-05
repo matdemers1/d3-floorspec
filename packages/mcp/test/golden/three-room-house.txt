@@ -55,5 +55,7 @@ West:
 - BED "Bedroom" <-> LIV "Living room": door BD in wall WI1
 - KIT "Kitchen" <-> LIV "Living room": open plan across separator SK
 
+Finished area after ANSI Z765-2021 (paraphrased; an app measure, not part of Floorspec): HOUSE 876 sq ft above grade, 0 below.
+
 ## Diagnostics
 (none)

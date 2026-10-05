@@ -1,7 +1,8 @@
 import type { EditorStore } from './store';
 import { kindOf, labelOf, sortedLevels } from './model';
 import { roomsBeside } from './geometry';
-import { addLevel, DEFAULT_LEVEL_HEIGHT, removeOps, setUnits, type RemoveKind } from './ops';
+import { exteriorOutline } from '@floorspec/engine';
+import { addLevel, addRoof, DEFAULT_LEVEL_HEIGHT, removeOps, setUnits, type RemoveKind } from './ops';
 import type { UnitSystem } from './units';
 import { removeDevice, removeRecord } from './systems/ops';
 
@@ -89,4 +90,27 @@ export function newLevel(store: EditorStore): void {
 export function switchUnits(store: EditorStore, system: UnitSystem): void {
   if (store.units === system) return;
   void store.apply(system === 'metric' ? 'Show metric' : 'Show feet and inches', setUnits(system));
+}
+
+/**
+ * A roof over the level being drawn (Core 0.3, 16.1): its footprint the outside faces of the
+ * level's exterior walls as the engine derives them (the largest group of walls, when there are
+ * several), with the roof tool's pitch, overhang and gables. The roof layer is shown.
+ */
+export function roofOverLevel(store: EditorStore): void {
+  const s = store.get();
+  if (s.model === null || s.level === null || s.readOnly !== null) return;
+  let rings: [number, number][][];
+  try {
+    rings = exteriorOutline(s.model.document, s.level);
+  } catch {
+    rings = [];
+  }
+  const ring = rings[0];
+  if (ring === undefined || ring.length < 3) {
+    store.set({ notice: { tone: 'info', text: 'This level has no walls that enclose a space to roof over: draw them first, or draw the roof with the roof tool.' } });
+    return;
+  }
+  store.set({ layers: { ...s.layers, roof: true } });
+  void store.apply(`Roof over ${labelOf(s.model, s.level)}`, addRoof(s.model.document, s.level, ring, s.draw.roof), { select: (created) => created[0] ?? null });
 }

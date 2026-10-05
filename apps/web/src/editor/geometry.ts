@@ -119,6 +119,8 @@ export type Hit =
   | { kind: 'wall'; id: string }
   | { kind: 'separator'; id: string }
   | { kind: 'slab'; id: string }
+  | { kind: 'roof'; id: string }
+  | { kind: 'stair'; id: string }
   | { kind: 'room'; id: string };
 
 /**
@@ -126,7 +128,7 @@ export type Hit =
  * or within `tol` of it), a separator, then the room whose face holds the point. `tol` is in base
  * units — the caller turns pixels into it, so a touch target can be larger than a mouse's.
  */
-export function hitTest(level: LevelView, p: Point, tol: number, options: { junctions?: boolean } = {}): Hit | null {
+export function hitTest(level: LevelView, p: Point, tol: number, options: { junctions?: boolean; roofs?: boolean } = {}): Hit | null {
   if (options.junctions !== false) {
     let best: { id: string; d: number } | null = null;
     for (const j of level.junctions) {
@@ -150,6 +152,19 @@ export function hitTest(level: LevelView, p: Point, tol: number, options: { junc
   }
   if (wallBest !== null) return { kind: 'wall', id: wallBest.id };
   for (const s of level.separators) if (project(p, s.a, s.b).distance <= tol) return { kind: 'separator', id: s.id };
+  // A stair (Core 0.3, 17) stands in a room: inside its box in plan, it is what a click finds.
+  for (const st of level.stairs) {
+    const { min, max } = st.derived.box;
+    if (p[0] >= min[0] && p[0] <= max[0] && p[1] >= min[1] && p[1] <= max[1]) return { kind: 'stair', id: st.id };
+  }
+  // A roof (Core 0.3, 16), with its layer shown: on its eave outline or one of its lines.
+  if (options.roofs === true)
+    for (const r of level.roofs) {
+      const ring = r.derived.outline;
+      const onEave = ring.some((a, i) => project(p, a, ring[(i + 1) % ring.length] ?? a).distance <= tol);
+      const onLine = (r.derived.surface?.lines ?? []).some((l) => project(p, [l.from[0], l.from[1]], [l.to[0], l.to[1]]).distance <= tol);
+      if (onEave || onLine) return { kind: 'roof', id: r.id };
+    }
   const face = faceAt(level, p);
   if (face?.room !== undefined && face.room !== null) return { kind: 'room', id: face.room };
   // A slab (Core 6.7) under the pointer, outside every room: the last thing a click finds.

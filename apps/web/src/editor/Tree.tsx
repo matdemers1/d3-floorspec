@@ -5,7 +5,7 @@ import { useEditor, type EditorStore, type Layers } from './store';
 import { elementOf, labelOf, sortedLevels, type EditorModel } from './model';
 import { setOrUnset } from './ops';
 import { formatArea, formatLen } from './units';
-import { DoorIcon, EyeIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon, SlabIcon } from './icons';
+import { DoorIcon, EyeIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon, SlabIcon, StairIcon } from './icons';
 import { newLevel } from './actions';
 import { SYSTEMS } from './systems/catalog';
 import { SystemIcon } from './systems/Panels';
@@ -98,6 +98,8 @@ export function ProjectTree({ store }: { store: EditorStore }) {
           ['openings', 'Openings', <DoorIcon key="o" />, view.openings],
           ['separators', 'Separators', <SeparatorIcon key="s" />, view.separators],
           ['slabs', 'Slabs', <SlabIcon key="sl" />, view.slabs],
+          ['roofs', 'Roofs', <RoofIcon key="rf" />, view.roofs],
+          ['stairs', 'Stairs', <StairIcon key="st" />, view.stairs],
           ['junctions', 'Junctions', <JunctionIcon key="j" />, view.junctions],
           // The building systems' devices (FLR-T-5.7), one group per extension.
           ...SYSTEMS.map((sys): [string, string, ReactNode, { id: string }[]] => [sys.id, sys.label, <SystemIcon key={sys.id} system={sys.id} />, view.devices.filter((d) => d.system === sys.id)]),
@@ -303,6 +305,7 @@ export function LayerChips({ store, layers }: { store: EditorStore; layers: Laye
     ['lowvoltage', 'Low-voltage'],
   ];
   const after: [Exclude<keyof Layers, 'coreOnly'>, string][] = [
+    ['roof', 'Roof'],
     ['findings', 'Findings'],
     ['clearances', 'Clearances'],
   ];

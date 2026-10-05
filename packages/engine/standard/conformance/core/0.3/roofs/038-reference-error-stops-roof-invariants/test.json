@@ -1,0 +1,6 @@
+{
+  "description": "A roof on a missing level whose every edge is a gable: once a reference invariant is reported, no other is evaluated, so only FS-INV-002.",
+  "covers": [
+    "FS-CORE-10.3.1"
+  ]
+}

@@ -15,6 +15,7 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `systems`   — FLR-T-5.7, 5.8: the P5 exit demo, devices and circuits to a moved wall and schedules.
  *   - `findings`  — FLR-T-6.8, 6.9: with synthetic rule packs installed (e2e/fixtures/rule-packs), a
  *                   profile built and chosen, the findings report, the plan overlay and the notice.
+ *   - `roofs-stairs` — FLR-T-7.2, 7.3: a hip roof over the walls and an L stair, checked through model.json.
  *
  * Run with:
  *
@@ -22,7 +23,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`). E2E_PORT is the keyboard suite's port; the others take the next five.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`). E2E_PORT is the keyboard suite's port; the others take the next six.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -61,6 +62,7 @@ const SUITES: Suite[] = [
   { name: 'systems', spec: 'systems.spec.ts', port: PORT + 4, database: databaseFor('systems'), setupToken: true },
   // The only suite with rule packs installed: the standard's synthetic example pack and an e2e pack.
   { name: 'findings', spec: 'findings.spec.ts', port: PORT + 5, database: databaseFor('findings'), setupToken: true, env: { RULE_PACKS_DIR: `${web}e2e/fixtures/rule-packs` } },
+  { name: 'roofs-stairs', spec: 'roofs-stairs.spec.ts', port: PORT + 6, database: databaseFor('roofs'), setupToken: true },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;

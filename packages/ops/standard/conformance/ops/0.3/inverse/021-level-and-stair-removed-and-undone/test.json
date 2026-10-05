@@ -1,0 +1,6 @@
+{
+  "description": "Removing L2 with cascade, its stair with it: the inverse adds L2 back before the stair that rises to it - stairs come after roofs in step 2's order, so they are added after levels in step 3's - and applying it gives back A exactly (1.6.1).",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

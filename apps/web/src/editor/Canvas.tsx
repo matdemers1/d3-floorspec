@@ -18,6 +18,7 @@ import { GapMarkers } from './systems/Assistant';
 import { kindById } from './systems/catalog';
 import { anchorOf, circuitsOf } from './systems/view';
 import { RuleFindingLabels, RuleFindingsLayer } from '../findings/Overlay';
+import { RoofLayer, roofStairOutline, StairDraft, StairsLayer } from './RoofStairLayer';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -259,6 +260,8 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
         </g>
       ) : null}
       {layers.rooms && !ghost ? <CeilingMarks view={view} level={level} /> : null}
+      {!ghost ? <StairsLayer view={view} level={level} /> : null}
+      {layers.roof && !ghost ? <RoofLayer view={view} level={level} /> : null}
       {layers.rooms && !ghost && labels ? <RoomLabels view={view} level={level} document={document} units={units} /> : null}
     </g>
   );
@@ -441,7 +444,7 @@ export function Outline({ view, level, id, className, pad = 0 }: { view: Viewpor
   }
   const device = level.devices.find((d) => d.id === id);
   if (device !== undefined) return <DeviceOutline view={view} d={device} className={`${className} fs-hl--ring`} />;
-  return null;
+  return roofStairOutline(view, level, id, className);
 }
 
 function Findings({ store, view, level }: { store: EditorStore; view: Viewport; level: LevelView }) {
@@ -590,7 +593,8 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
   const draft = useEditor(store, (s) => s.draft);
   const draw = useEditor(store, (s) => s.draw);
   if (draft === null) return null;
-  if (draft.tool === 'slab') {
+  if (draft.tool === 'stair') return <StairDraft view={view} foot={draft.foot} cursor={draft.cursor} />;
+  if (draft.tool === 'slab' || draft.tool === 'roof') {
     const chain = draft.chain.map((v) => v.point);
     const cursor = draft.cursor;
     const all = cursor !== null && chain.length > 0 ? [...chain, cursor.point] : chain;

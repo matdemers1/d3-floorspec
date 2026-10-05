@@ -354,8 +354,8 @@ const RAIL: { tool?: ToolId; label: string; icon: ReactNode; later?: string }[] 
   { tool: 'room', label: 'Name a room', icon: <RoomAnchorIcon /> },
   { tool: 'separator', label: 'Draw a room separator', icon: <SeparatorIcon /> },
   { tool: 'slab', label: 'Draw a slab', icon: <SlabIcon /> },
-  { label: 'Stairs', icon: <StairIcon />, later: 'P4' },
-  { label: 'Roof', icon: <RoofIcon />, later: 'P4' },
+  { tool: 'stair', label: 'Place a stair', icon: <StairIcon /> },
+  { tool: 'roof', label: 'Draw a roof', icon: <RoofIcon /> },
 ];
 /** The building systems below the rule (FLR-T-5.7): each starts the device tool with that system's first kind. */
 const RAIL_SYSTEMS: { system: SystemId; label: string; icon: ReactNode; first: string }[] = [

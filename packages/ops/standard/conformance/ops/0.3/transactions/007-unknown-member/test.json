@@ -1,6 +1,6 @@
 {
   "description": "moveJunction with a \"by\" member, which its definition does not list.",
   "covers": [
-    "FS-OPS-1.1.2"
+    "FS-OPS-1.1.3"
   ]
 }

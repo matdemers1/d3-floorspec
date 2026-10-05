@@ -36,7 +36,7 @@ export interface ScheduleRow {
 }
 
 export interface Schedule {
-  id: 'rooms' | 'doors' | 'windows' | 'fixtures' | 'receptacles';
+  id: 'rooms' | 'doors' | 'windows' | 'fixtures' | 'receptacles' | 'stairs';
   label: string;
   columns: ScheduleColumn[];
   rows: ScheduleRow[];
@@ -335,9 +335,59 @@ export function receptaclesSchedule(model: EditorModel, units: UnitSystem): Sche
   };
 }
 
-/** Every schedule, in the board's order. */
+const FORM_LABEL: Record<string, string> = { straight: 'Straight', lShaped: 'L-shaped', uShaped: 'U-shaped', winder: 'Winder', spiral: 'Spiral' };
+
+/** Stairs (Core 0.3, 17): each stair's form, the levels it joins, its risers, riser height, tread and headroom, as derived. */
+export function stairsSchedule(model: EditorModel, units: UnitSystem): Schedule {
+  const rows: ScheduleRow[] = model.levels
+    .flatMap((l) => l.stairs.map((st) => ({ level: l, st })))
+    .sort((a, b) => (a.st.id < b.st.id ? -1 : a.st.id > b.st.id ? 1 : 0))
+    .map(({ level, st }) => {
+      const d = st.derived;
+      const element = (model.document.stairs?.[st.id] ?? {}) as Json;
+      return {
+        key: st.id,
+        cells: {
+          mark: text(st.id),
+          name: str(element['name']) === undefined ? none : text(String(element['name'])),
+          form: text(FORM_LABEL[st.form] ?? st.form),
+          levels: text(`${labelOf(model, level.id)} → ${labelOf(model, st.to)}`),
+          risers: text(String(d.risers), d.risers),
+          riserHeight: text(formatLen(d.riserHeight, units), d.riserHeight),
+          tread: text(formatLen(num(element['tread']) ?? 0, units), num(element['tread']) ?? 0),
+          width: text(formatLen(num(element['width']) ?? 0, units), num(element['width']) ?? 0),
+          headroom: d.headroom === undefined ? none : text(formatLen(d.headroom, units), d.headroom),
+        },
+      };
+    });
+  return {
+    id: 'stairs',
+    label: 'Stairs',
+    columns: present(
+      [
+        { key: 'mark', header: 'Mark' },
+        { key: 'name', header: 'Name' },
+        { key: 'form', header: 'Form' },
+        { key: 'levels', header: 'From → to' },
+        { key: 'risers', header: 'Risers', numeric: true },
+        { key: 'riserHeight', header: 'Riser height', numeric: true },
+        { key: 'tread', header: 'Tread', numeric: true },
+        { key: 'width', header: 'Width', numeric: true },
+        { key: 'headroom', header: 'Headroom', numeric: true },
+      ],
+      rows,
+      ['name'],
+    ),
+    rows,
+    footnote:
+      'Risers, riser height and headroom as Floorspec Core 0.3 derives them (17.4, 17.6) — the riser height is the rise over the riser count, rounded once; tread and width as the stair declares them. A winder or spiral stair has no derived headroom (17.7).',
+  };
+}
+
+/** Every schedule, in the board's order; stairs only when the plan has any. */
 export function schedules(model: EditorModel, units: UnitSystem): Schedule[] {
-  return [roomsSchedule(model, units), doorsSchedule(model, units), windowsSchedule(model, units), receptaclesSchedule(model, units), fixturesSchedule(model)];
+  const stairs = stairsSchedule(model, units);
+  return [roomsSchedule(model, units), doorsSchedule(model, units), windowsSchedule(model, units), receptaclesSchedule(model, units), fixturesSchedule(model), ...(stairs.rows.length ? [stairs] : [])];
 }
 
 /** A schedule as CSV (RFC 4180): its columns, and each row's text. */

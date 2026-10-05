@@ -1,0 +1,6 @@
+{
+  "description": "Adding a stair: the inverse removes it, and applying it gives back A exactly (1.6.1).",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

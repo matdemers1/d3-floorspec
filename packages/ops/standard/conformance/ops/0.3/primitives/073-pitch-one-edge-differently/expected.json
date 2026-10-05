@@ -1,0 +1,25 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d5fd8845dfa2ef29c2652880163ab87080d491f547c93fe80f9737de133264de",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/edges/0/pitch",
+      "value": {
+        "rise": 12,
+        "run": 12
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "RF1",
+      "path": "/edges"
+    }
+  ]
+}

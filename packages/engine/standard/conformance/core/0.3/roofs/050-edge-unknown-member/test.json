@@ -1,0 +1,7 @@
+{
+  "description": "An edge has only gable, pitch and overhang: \"fascia\" is unknown.",
+  "covers": [
+    "FS-CORE-16.1.1",
+    "FS-CORE-1.4.3"
+  ]
+}

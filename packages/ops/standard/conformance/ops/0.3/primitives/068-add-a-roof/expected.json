@@ -1,0 +1,29 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "f49812772508c9dc6b602deb370eeb9f3d98300f83a642d88a7b2f0803a3a4f2",
+  "created": ["RF1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "roofs",
+      "id": "RF1",
+      "element": {
+        "level": "L1",
+        "footprint": [[-64000, -64000], [4745728, -64000], [4745728, 3965440], [-64000, 3965440]],
+        "overhang": 390144,
+        "pitch": {
+          "rise": 6,
+          "run": 12
+        }
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "RF1"
+    }
+  ]
+}

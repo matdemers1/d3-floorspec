@@ -1,0 +1,6 @@
+{
+  "description": "An L whose first flight is 1 riser: it has no tread before the landing. FS-INV-903.",
+  "covers": [
+    "FS-CORE-17.4.2"
+  ]
+}

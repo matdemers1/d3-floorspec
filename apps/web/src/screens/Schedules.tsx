@@ -25,7 +25,7 @@ export function Schedules({ id }: { id: string }) {
   const [state, setState] = useState<State>({ status: 'loading' });
   const [tab, setTab] = useState<Schedule['id']>(() => {
     const wanted = new URLSearchParams(window.location.search).get('tab');
-    return wanted === 'doors' || wanted === 'windows' || wanted === 'receptacles' || wanted === 'fixtures' ? wanted : 'rooms';
+    return wanted === 'doors' || wanted === 'windows' || wanted === 'receptacles' || wanted === 'fixtures' || wanted === 'stairs' ? wanted : 'rooms';
   });
   const tick = useLiveTick(id);
 

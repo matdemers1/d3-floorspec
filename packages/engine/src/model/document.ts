@@ -33,6 +33,13 @@ export type Ceiling = G.Ceiling;
 export type FlatCeiling = G.FlatCeiling;
 export type TrayCeiling = G.TrayCeiling;
 export type VaultedCeiling = G.VaultedCeiling;
+/** 16.1 (Core 0.3): a roof — a footprint, a pitch, and gables and overhangs edge by edge. */
+export type Roof = G.Roof;
+export type RoofEdge = G.RoofEdge;
+/** 17.1 (Core 0.3): a stair between two levels of a building. */
+export type Stair = G.Stair2;
+export type StairForm = G.StairForm;
+export type Handrail = G.Handrail;
 export type Type = G.Type;
 export type WallType = G.WallType;
 export type DoorType = G.DoorType;
@@ -74,9 +81,11 @@ export const COLLECTIONS = [
   'openings',
   'rooms',
   'slabs',
+  'roofs',
   'types',
   'materials',
   'assets',
+  'stairs',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 

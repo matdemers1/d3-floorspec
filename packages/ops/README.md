@@ -7,10 +7,13 @@ transaction (FLR-ADR-008). Isomorphic like `@floorspec/engine`, which it is buil
 bytes.
 
 The draft is chosen per call. **Ops 0.3**, the default, is Ops 0.2 applied with a Core 0.3 reader:
-no new operation and no new member (its requests match `schema/ops/0.2`), but it applies to Core 0.3
-documents — a door or window type's `operation` and `clearOpening`, and an opening's own
-`clearOpening`, are members `setProperty` and `unsetProperty` address like any other, and a result
-is judged by Core 0.3's invariants (`FS-INV-305` … `308`). **Ops 0.2** (`{ ops: '0.2' }`) is the
+no new operation and no new member (its requests match `schema/ops/0.3`, which is Ops 0.2's with
+`roofs` and `stairs` among `addElement`'s collections), but it applies to Core 0.3 documents — a door
+or window type's `operation` and `clearOpening`, an opening's own `clearOpening`, and every member of
+a roof or a stair, are members `setProperty` and `unsetProperty` address like any other, and a
+result is judged by Core 0.3's invariants (`FS-INV-305` … `308`, `FS-INV-801` … `805`, `FS-INV-901`
+… `904`). Roofs mint `RF` IDs and stairs `ST`; removing a level takes or is blocked by its roofs and
+by every stair whose `level` or `to` it is; the inverse removes roofs and then stairs after slabs. **Ops 0.2** (`{ ops: '0.2' }`) is the
 published draft: Core 0.2 documents and Core 0.1 ones (a document declaring "0.3" is `FS-OPS-002`),
 and adds the program and extension elements as things an
 edit addresses: program items (`addProgramItem`, `addElement` into `items`, `setAdjacency`,
@@ -58,7 +61,7 @@ formatLength(4893056); // `12' 6 1/2"` (1/16" by default); { system: 'metric' } 
 | `src/normalize.ts` | 5.1 merge → 5.2 snap rounding (only on a level that breaks Core §5.3), splitting, re-hosting openings and hosted elements → 5.3 join cleanup |
 | `src/locks.ts`, `src/inverse.ts` | locks (ch. 6); the inverse (1.6) |
 | `src/types.ts` | request, operation and result types |
-| `standard/` | the three Ops conformance suites (0.1: 230 cases, 0.2: 359, 0.3: 393), both schemas (0.3 has none of its own) and the diagnostics chapter, vendored by `pnpm sync-standard` and pinned in `LOCK.json` |
+| `standard/` | the three Ops conformance suites (0.1: 230 cases, 0.2: 359, 0.3: 420), the three request schemas and the diagnostics chapter, vendored by `pnpm sync-standard` and pinned in `LOCK.json` |
 
 ## Exactness and determinism
 

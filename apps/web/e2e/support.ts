@@ -8,12 +8,14 @@ export const IN = 32_512;
 export const FT = 12 * IN;
 
 export interface Doc {
-  levels?: Record<string, { name?: string }>;
+  levels?: Record<string, { name?: string; elevation?: number }>;
   junctions?: Record<string, { level?: string; position: [number, number] }>;
   walls?: Record<string, { start: string; end: string; name?: string; level?: string }>;
   openings?: Record<string, { wall: string; fill?: string; offset?: number; clearOpening?: { width: number; height: number; area?: number } }>;
   rooms?: Record<string, { name?: string; anchor?: [number, number]; ceiling?: { kind: string } }>;
   slabs?: Record<string, { level: string; boundary: [number, number][]; thickness: number; purpose?: string }>;
+  roofs?: Record<string, { level: string; footprint: [number, number][]; pitch?: { rise: number; run: number }; overhang?: number; edges?: Record<string, unknown> }>;
+  stairs?: Record<string, { level: string; to: string; position: [number, number]; rotation?: number; form?: { kind: string; turn?: string }; maxRiser?: number; risers?: number }>;
   types?: Record<string, { kind: string; name?: string; operation?: string; clearOpening?: { width: number; height: number; area?: number } }>;
 }
 

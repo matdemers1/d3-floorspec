@@ -84,4 +84,19 @@ describe('Ops 0.3', () => {
     const wall = B(apply(d, { batch: [{ op: 'moveWall', wall: 'W1', by: -1000 }] }));
     expect(wall.rooms!.RA!.ceiling).toEqual(vault);
   });
+
+  it('adds a roof and a stair under minted IDs (RF, ST), and Ops 0.2 refuses both collections with FS-OPS-001', () => {
+    const d = { ...pair(), floorspec: '0.3', levels: { L1: { building: 'B1', elevation: 0, height: 2_700_000 }, L2: { building: 'B1', elevation: 3_000_000, height: 2_700_000 } } };
+    const roof = { level: 'L1', footprint: [[0, 0], [7_800_000, 0], [7_800_000, 2_800_000], [0, 2_800_000]], pitch: { rise: 6, run: 12 } };
+    const stair = { level: 'L1', to: 'L2', position: [500_000, 1_400_000], width: 900_000, tread: 280_000, maxRiser: 190_000 };
+    const r = committed(apply(d, { batch: [{ op: 'addElement', collection: 'roofs', element: roof }, { op: 'addElement', collection: 'stairs', element: stair }] }));
+    expect(Object.keys(B(r).roofs!)).toEqual(['RF1']);
+    expect(Object.keys(B(r).stairs!)).toEqual(['ST1']);
+    // The inverse removes the roof before the stair (1.6), and removing L2 takes the stair with it (2.2).
+    expect(r.inverse).toEqual([{ op: 'removeElement', id: 'RF1' }, { op: 'removeElement', id: 'ST1' }]);
+    rejectedWith(apply(r.document, { batch: [{ op: 'removeElement', id: 'L2' }] }), 'FS-OPS-006', ['L2', 'ST1']);
+    expect(B(committed(apply(r.document, { batch: [{ op: 'removeElement', id: 'L2', cascade: true }] }))).stairs).toBeUndefined();
+    const d02 = { ...pair(), floorspec: '0.2' };
+    rejectedWith(apply(d02, { batch: [{ op: 'addElement', collection: 'roofs', element: roof }] }, { ops: '0.2' }), 'FS-OPS-001', []);
+  });
 });

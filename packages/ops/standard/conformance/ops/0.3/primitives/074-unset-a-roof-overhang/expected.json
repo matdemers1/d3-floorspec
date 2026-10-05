@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "7375e1756507d8853255e081ad8d3d478badca4c4b978b021289d0bc5c174453",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "RF1",
+      "path": "/overhang"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "RF1",
+      "path": "/overhang",
+      "value": 390144
+    }
+  ]
+}

@@ -38,7 +38,8 @@
             "room",
             "opening",
             "element",
-            "level"
+            "level",
+            "stair"
           ]
         },
         "extension": {

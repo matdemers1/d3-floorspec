@@ -47,6 +47,8 @@
     "ceilings": {},
     "circulation": {},
     "floors": {},
-    "slabs": {}
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
   }
 }

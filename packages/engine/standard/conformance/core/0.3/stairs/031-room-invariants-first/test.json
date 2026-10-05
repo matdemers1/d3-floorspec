@@ -1,0 +1,6 @@
+{
+  "description": "A stair of 1 riser to L2, where R2's anchor is on a wall's location line (FS-INV-201): the stair's rise is measured from the rooms' floors, so FS-INV-902 and FS-INV-903 are not evaluated for it.",
+  "covers": [
+    "FS-CORE-10.3.1"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "results": [
+    {
+      "display": "0' 7 1/16\"",
+      "type": "length",
+      "value": 230400
+    },
+    {
+      "display": "0' 9\"",
+      "type": "length",
+      "value": 292608
+    },
+    {
+      "display": "3' 0\"",
+      "type": "length",
+      "value": 1170432
+    },
+    {
+      "display": "4' 10 7/8\"",
+      "type": "length",
+      "value": 1913856
+    },
+    {
+      "display": "2' 10\"",
+      "type": "length",
+      "value": 1105408
+    },
+    {
+      "display": "0' 7 1/16\"",
+      "type": "length",
+      "value": 230400
+    },
+    {
+      "display": "0' 7 1/2\"",
+      "type": "length",
+      "value": 243840
+    },
+    {
+      "display": "2' 6\"",
+      "type": "length",
+      "value": 975360
+    },
+    {
+      "display": "not stated",
+      "type": "length",
+      "value": null
+    },
+    {
+      "display": "not stated",
+      "type": "length",
+      "value": null
+    }
+  ]
+}

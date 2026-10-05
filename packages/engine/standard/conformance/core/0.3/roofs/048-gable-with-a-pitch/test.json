@@ -1,0 +1,6 @@
+{
+  "description": "A gable with a pitch of its own: a gable does not slope.",
+  "covers": [
+    "FS-CORE-16.1.1"
+  ]
+}

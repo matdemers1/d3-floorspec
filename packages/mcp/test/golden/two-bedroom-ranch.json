@@ -1472,5 +1472,12 @@
       "unanchored": []
     }
   ],
+  "area": [
+    {
+      "building": "HOUSE",
+      "aboveGradeSqFt": 1246,
+      "belowGradeSqFt": 0
+    }
+  ],
   "diagnostics": []
 }

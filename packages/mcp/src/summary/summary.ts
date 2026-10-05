@@ -10,7 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
-import { analyseCirculation, deriveEvaluation, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { analyseCirculation, deriveEvaluation, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -222,6 +222,35 @@ export interface LevelSummary {
   readonly elements?: readonly ElementSummary[];
   /** FS_electrical circuits whose panel is on this level; absent when there are none. */
   readonly circuits?: readonly CircuitSummary[];
+  /** Core 0.3 (chapter 16): roofs on this level — kind, pitch, eave above the level; absent when there are none. */
+  readonly roofs?: readonly RoofSummary[];
+  /** Core 0.3 (chapter 17): stairs rising from this level; absent when there are none. */
+  readonly stairs?: readonly StairSummary[];
+}
+
+/** One roof (Core 16): its kind, its pitch where one pitch rules, and whether Core derives its surface. */
+export interface RoofSummary {
+  readonly id: string;
+  readonly name?: string;
+  readonly kind: 'flat' | 'shed' | 'gable' | 'hip';
+  /** "6:12", or "mixed" when its sloped edges differ; absent for a flat roof. */
+  readonly pitch?: string;
+  readonly eave: Length;
+  readonly surfaceDerived: boolean;
+}
+
+/** One stair (Core 17): where it rises to, its risers, tread and headroom as derived. */
+export interface StairSummary {
+  readonly id: string;
+  readonly name?: string;
+  readonly to: string;
+  readonly form: string;
+  readonly risers: number;
+  readonly riserHeight: Length;
+  readonly tread: Length;
+  readonly width: Length;
+  /** Absent where Core derives none (a winder or spiral stair, or nothing above it). */
+  readonly headroom?: Length;
 }
 
 export interface DocumentSummary {
@@ -232,6 +261,8 @@ export interface DocumentSummary {
   readonly program?: ProgramSummary;
   /** Circulation problems (Core 0.2, chapter 14); absent when there are none or the document is not valid. */
   readonly circulation?: CirculationSummary;
+  /** Finished area after ANSI Z765-2021 (paraphrased; an app measure, not the standard), per building; absent when not valid. */
+  readonly area?: readonly { readonly building: string; readonly aboveGradeSqFt: number; readonly belowGradeSqFt: number }[];
   readonly diagnostics: readonly DiagnosticSummary[];
 }
 
@@ -718,12 +749,51 @@ export function describeJson(document: string | Uint8Array | object, options: De
     const elevation = doc.levels![r.level]!.elevation;
     return { kind: c.kind, floorOffset: length(BigInt(f.top - elevation)), low: length(BigInt(c.low - f.top)), high: length(BigInt(c.high - f.top)) };
   };
+  // Core 0.3: roofs (chapter 16) and stairs (chapter 17), by the level they stand on or rise from.
+  const roofsOn = new Map<string, RoofSummary[]>();
+  for (const [id, rf] of entries(doc.roofs)) {
+    const d = derived?.roofs?.[id];
+    if (d === undefined) continue;
+    const pitches = new Set<string>();
+    rf.footprint.forEach((_, i) => {
+      const e = rf.edges?.[String(i)];
+      const pt = e?.gable === true ? undefined : (e?.pitch ?? rf.pitch);
+      if (pt) pitches.add(`${pt.rise}:${pt.run}`);
+    });
+    const pitch = pitches.size === 0 ? undefined : pitches.size === 1 ? [...pitches][0]! : 'mixed';
+    const L = doc.levels![rf.level]!;
+    roofsOn.set(rf.level, [
+      ...(roofsOn.get(rf.level) ?? []),
+      { id, ...(rf.name !== undefined && { name: rf.name }), kind: d.kind, ...(pitch !== undefined && { pitch }), eave: length(BigInt(d.eave - L.elevation)), surfaceDerived: d.surface !== null },
+    ]);
+  }
+  const stairsOn = new Map<string, StairSummary[]>();
+  for (const [id, st] of entries(doc.stairs)) {
+    const d = derived?.stairs?.[id];
+    if (d === undefined) continue;
+    stairsOn.set(st.level, [
+      ...(stairsOn.get(st.level) ?? []),
+      {
+        id,
+        ...(st.name !== undefined && { name: st.name }),
+        to: st.to,
+        form: st.form?.kind ?? 'straight',
+        risers: d.risers,
+        riserHeight: length(BigInt(d.riserHeight)),
+        tread: length(BigInt(st.tread)),
+        width: length(BigInt(st.width)),
+        ...(d.headroom !== undefined && { headroom: length(BigInt(d.headroom)) }),
+      },
+    ]);
+  }
   levels = levels.map((l) => ({
     ...l,
     rooms: l.rooms.map((r) => {
       const ceiling = ceilingOf(r.id);
       return ceiling === undefined ? r : { ...r, ceiling };
     }),
+    ...(roofsOn.has(l.id) && { roofs: roofsOn.get(l.id)! }),
+    ...(stairsOn.has(l.id) && { stairs: stairsOn.get(l.id)! }),
     ...(elements.has(l.id) && { elements: elements.get(l.id)! }),
     ...(byLevel.has(l.id) && { circuits: byLevel.get(l.id)!.sort((a, b) => cmp(a.id, b.id)) }),
   }));
@@ -765,12 +835,13 @@ export function describeJson(document: string | Uint8Array | object, options: De
   } else if (options.level !== undefined) {
     const lid = options.level;
     const onLevel = new Set<string>([lid]);
-    for (const c of ['junctions', 'walls', 'separators', 'rooms', 'slabs'] as const)
+    for (const c of ['junctions', 'walls', 'separators', 'rooms', 'slabs', 'roofs', 'stairs'] as const)
       for (const [id, e] of entries<{ level: string }>(doc[c])) if (e.level === lid) onLevel.add(id);
     for (const [id, o] of entries(doc.openings)) if (onLevel.has(o.wall)) onLevel.add(id);
     diags = diagnostics.filter((d) => (d.level !== undefined ? d.level === lid : d.elements.length === 0 || d.elements.some((e) => onLevel.has(e))));
   }
-  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), ...(circulation && { circulation }), diagnostics: diags };
+  const area = ev.valid && options.room === undefined ? z765(doc).buildings.map((b) => ({ building: b.building, aboveGradeSqFt: b.aboveGradeSqFt, belowGradeSqFt: b.belowGradeSqFt })) : undefined;
+  return { project: doc.project.name, valid: ev.valid, levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), diagnostics: diags };
 }
 
 /** What the circulation lints say (14.4), narrowed to a room or level when asked; undefined when nothing. */

@@ -1,0 +1,269 @@
+{
+  "coverage": [],
+  "diagnostics": [],
+  "evaluated": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.3"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "HANDRAIL",
+      "subjects": 2,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.2"
+      },
+      "exempt": 0,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "HEADROOM",
+      "subjects": 1,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.1"
+      },
+      "exempt": 0,
+      "findings": 0,
+      "pack": "test-pack",
+      "rule": "RISER",
+      "subjects": 2,
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.4"
+      },
+      "exempt": 1,
+      "findings": 1,
+      "pack": "test-pack",
+      "rule": "TREAD",
+      "subjects": 2,
+      "version": "0.1.0"
+    }
+  ],
+  "findings": [
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.3"
+      },
+      "elements": [
+        "ST2"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                1365504,
+                682752
+              ],
+              [
+                3316224,
+                682752
+              ],
+              [
+                3316224,
+                2633472
+              ],
+              [
+                1365504,
+                2633472
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "not stated",
+          "holds": false,
+          "measure": "stairHandrailHeight",
+          "op": ">=",
+          "target": {
+            "id": "ST2",
+            "kind": "stair"
+          },
+          "threshold": 1105408,
+          "thresholdDisplay": "2' 10\"",
+          "type": "length",
+          "value": null
+        },
+        {
+          "display": "not stated",
+          "holds": false,
+          "measure": "stairHandrailHeight",
+          "op": "<=",
+          "target": {
+            "id": "ST2",
+            "kind": "stair"
+          },
+          "threshold": 1235456,
+          "thresholdDisplay": "3' 2\"",
+          "type": "length",
+          "value": null
+        }
+      ],
+      "message": "ST2 may not meet TEST-CODE 2024 §4.3 (A handrail 34 to 38 in high).",
+      "pack": "test-pack",
+      "rule": "HANDRAIL",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "ST2",
+        "kind": "stair"
+      },
+      "title": "A handrail 34 to 38 in high",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.2"
+      },
+      "elements": [
+        "ST1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                5071872,
+                195072
+              ],
+              [
+                9168384,
+                195072
+              ],
+              [
+                9168384,
+                1365504
+              ],
+              [
+                5071872,
+                1365504
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "4' 10 7/8\"",
+          "holds": false,
+          "measure": "stairHeadroom",
+          "op": ">=",
+          "target": {
+            "id": "ST1",
+            "kind": "stair"
+          },
+          "threshold": 2600960,
+          "thresholdDisplay": "6' 8\"",
+          "type": "length",
+          "value": 1913856
+        }
+      ],
+      "message": "ST1 may not meet TEST-CODE 2024 §4.2 (Headroom of 6 ft 8 in).",
+      "pack": "test-pack",
+      "rule": "HEADROOM",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "ST1",
+        "kind": "stair"
+      },
+      "title": "Headroom of 6 ft 8 in",
+      "version": "0.1.0"
+    },
+    {
+      "citation": {
+        "code": "TEST-CODE",
+        "edition": "2024",
+        "section": "§4.4"
+      },
+      "elements": [
+        "ST1"
+      ],
+      "location": {
+        "level": "L1",
+        "shapes": [
+          {
+            "holes": [],
+            "kind": "polygon",
+            "outer": [
+              [
+                5071872,
+                195072
+              ],
+              [
+                9168384,
+                195072
+              ],
+              [
+                9168384,
+                1365504
+              ],
+              [
+                5071872,
+                1365504
+              ]
+            ]
+          }
+        ]
+      },
+      "measures": [
+        {
+          "display": "0' 9\"",
+          "holds": false,
+          "measure": "stairTreadDepth",
+          "op": ">=",
+          "target": {
+            "id": "ST1",
+            "kind": "stair"
+          },
+          "threshold": 325120,
+          "thresholdDisplay": "0' 10\"",
+          "type": "length",
+          "value": 292608
+        }
+      ],
+      "message": "ST1 may not meet TEST-CODE 2024 §4.4 (Treads at least 10 in deep).",
+      "pack": "test-pack",
+      "rule": "TREAD",
+      "severity": "mayNotMeet",
+      "subject": {
+        "id": "ST1",
+        "kind": "stair"
+      },
+      "title": "Treads at least 10 in deep",
+      "version": "0.1.0"
+    }
+  ],
+  "floorspecRules": "0.1",
+  "hash": "150f1551745eb0f6def99d6bf1f0b1bcd0b448b2d1b58ed561a80fa77e3e4ad1",
+  "notEvaluated": [],
+  "notice": "Floorspec findings are advisory. They are not a plan review, and the authority having jurisdiction decides.",
+  "profile": "Test jurisdiction",
+  "units": "imperial"
+}

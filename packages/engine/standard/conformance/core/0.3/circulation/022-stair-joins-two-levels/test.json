@@ -1,0 +1,8 @@
+{
+  "description": "A hall with the front door on L1, and on L2 a loft - of function living, not circulation - with a bedroom off it. A stair rises from the hall to the loft: its foot room and its head room are linked, so the loft and the bedroom are reachable.",
+  "covers": [
+    "FS-CORE-14.1.1",
+    "FS-CORE-14.3.1",
+    "FS-CORE-17.4.3"
+  ]
+}

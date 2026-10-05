@@ -378,3 +378,45 @@ describe('Core 0.3: slabs and ceilings that are not flat', () => {
     expect(plain).not.toContain('<g id="ceilings">');
   });
 });
+
+describe('Core 0.3: stairs and roofs', () => {
+  const stairCase = (name: string): Record<string, unknown> =>
+    JSON.parse(readFileSync(new URL(`../../engine/standard/conformance/core/0.3/stairs/${name}/input.json`, import.meta.url), 'utf8')) as Record<string, unknown>;
+
+  it('draws a stair on the level it rises from: treads, a dashed landing above the cut, the break line and UP', () => {
+    const d = stairCase('007-l-stair-with-landing');
+    const svg = renderPlan(d, { level: 'L1' });
+    expect(svg).toContain('<g id="stairs">');
+    expect(svg.match(/data-step="tread"/g)).toHaveLength(12);
+    expect(svg.match(/data-step="landing"/g)).toHaveLength(1);
+    // The cut plane is 4 ft up (1,560,576): with 246,857-unit risers the landing (on the seventh) and
+    // the six treads after it are above it, dashed.
+    expect(svg.match(/stroke-dasharray="3 3"/g)).toHaveLength(7);
+    expect(svg).toContain('data-cut="ST1"');
+    expect(svg).toContain('data-arrow="up"');
+    expect(svg).toContain('>UP</text>');
+    expect(renderPlan(d, { level: 'L2' })).not.toContain('<g id="stairs">');
+    expect(renderPlan(d, { level: 'L1' })).toBe(svg);
+  });
+
+  it('draws a spiral stair as its circle and box, since its steps are not derived', () => {
+    const svg = renderPlan(stairCase('016-spiral'), { level: 'L1' });
+    expect(svg).toContain('data-form="spiral"');
+    expect(svg).toContain('<circle');
+    expect(svg).not.toContain('data-step=');
+  });
+
+  it('draws a roof only on the roof layer: the eave dashed, ridge and hips, gable ends heavier', () => {
+    const d = load('three-room-house') as Doc & { roofs?: unknown };
+    d.floorspec = '0.3';
+    d.roofs = { RF1: { level: 'MAIN', footprint: [[0, 0], [14045184, 0], [14045184, 9363456], [0, 9363456]], pitch: { rise: 6, run: 12 }, overhang: 12 * 32512, edges: { '1': { gable: true }, '3': { gable: true } } } };
+    expect(check(d).valid).toBe(true);
+    expect(renderPlan(d)).not.toContain('<g id="roofs">');
+    const svg = renderPlan(d, { roof: true });
+    expect(svg).toContain('data-kind="gable"');
+    expect(svg.match(/data-line="ridge"/g)).toHaveLength(1);
+    expect(svg.match(/data-line="hip"/g)).toBeNull();
+    expect(svg.match(/data-gable="RF1"/g)).toHaveLength(2);
+    expect(svg).toContain('data-eave="RF1"');
+  });
+});

@@ -33,11 +33,16 @@ import type { DeviceHover } from './systems/placement';
  * write it between renders without threading callbacks through every component.
  */
 
-export type ToolId = 'select' | 'wall' | 'separator' | 'slab' | 'door' | 'window' | 'room' | 'device';
+export type ToolId = 'select' | 'wall' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'device';
 
-/** The tools that draw a chain of points: walls and separators (a polyline), and a slab's outline (Core 0.3, 6.7). */
-export type ChainTool = 'wall' | 'separator' | 'slab';
-export const isChainTool = (t: unknown): t is ChainTool => t === 'wall' || t === 'separator' || t === 'slab';
+/**
+ * The tools that draw a chain of points: walls and separators (a polyline), and the outlines of a
+ * slab (Core 0.3, 6.7) and a roof's footprint (Core 0.3, 16.1).
+ */
+export type ChainTool = 'wall' | 'separator' | 'slab' | 'roof';
+export const isChainTool = (t: unknown): t is ChainTool => t === 'wall' || t === 'separator' || t === 'slab' || t === 'roof';
+/** The chain tools that draw a closed outline (at least three corners) rather than a polyline. */
+export const isOutlineTool = (t: unknown): t is 'slab' | 'roof' => t === 'slab' || t === 'roof';
 
 export type ChainDraft = { tool: ChainTool; chain: ChainVertex[]; cursor: Snap | null; typed: string };
 export const isChainDraft = (d: Draft | null | undefined): d is ChainDraft => d !== null && d !== undefined && isChainTool(d.tool);
@@ -64,6 +69,8 @@ export type Draft =
       typed: string;
     }
   | { tool: 'room'; hover: { point: Point; free: boolean } | null }
+  /** The stair tool (Core 0.3, 17): its foot clicked, then the direction it rises in. */
+  | { tool: 'stair'; foot: Point | null; cursor: Point | null }
   | { tool: 'device'; hover: DeviceHover | null; typed: string }
   | {
       tool: 'select';
@@ -101,6 +108,8 @@ export interface Layers {
   clearances: boolean;
   /** Draw every extension element as a reader without its extension does: its fallback box (Core 1.6.9, 12.6). */
   coreOnly: boolean;
+  /** The roof layer (Core 0.3, 16): each roof's eave outline, ridges, hips and valleys over the plan. */
+  roof: boolean;
 }
 
 export interface DrawSettings {
@@ -116,6 +125,10 @@ export interface DrawSettings {
   height: number | null;
   /** The slab tool (Core 6.7): a new slab's thickness, its top above the level, and its purpose (Core 0.3). */
   slab: { thickness: number; offset: number; purpose: string | null };
+  /** The roof tool (Core 0.3, 16.1): a new roof's pitch and overhang, and whether its two short ends are gables. */
+  roof: { rise: number; run: number; overhang: number; gables: boolean };
+  /** The stair tool (Core 0.3, 17.1): a new stair's form, the way it turns, width, tread and greatest riser. */
+  stair: { form: 'straight' | 'lShaped' | 'uShaped'; turn: 'left' | 'right'; width: number; tread: number; maxRiser: number };
 }
 
 /**
@@ -228,8 +241,11 @@ const initial: EditorState = {
   notice: null,
   view: null,
   cursor: null,
-  layers: { walls: true, openings: true, rooms: true, dimensions: true, findings: true, electrical: true, plumbing: true, mechanical: true, lowvoltage: true, clearances: false, coreOnly: false },
-  draw: { wallType: null, justification: 'center', chain: true, doorType: null, windowType: null, device: 'receptacle', receptacle: NO_OPTIONS, height: null, slab: { thickness: 130_048, offset: 0, purpose: null } },
+  layers: { walls: true, openings: true, rooms: true, dimensions: true, findings: true, electrical: true, plumbing: true, mechanical: true, lowvoltage: true, clearances: false, coreOnly: false, roof: false },
+  draw: { wallType: null, justification: 'center', chain: true, doorType: null, windowType: null, device: 'receptacle', receptacle: NO_OPTIONS, height: null, slab: { thickness: 130_048, offset: 0, purpose: null },
+    // 6:12 with a 12" overhang; a 36" stair with 10" treads and risers no higher than 7 3/4".
+    roof: { rise: 6, run: 12, overhang: 390_144, gables: false },
+    stair: { form: 'straight', turn: 'left', width: 1_170_432, tread: 325_120, maxRiser: 251_968 } },
   focus: null,
   treeOpen: false,
   findingsOpen: false,

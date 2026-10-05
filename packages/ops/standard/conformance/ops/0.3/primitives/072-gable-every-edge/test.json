@@ -1,0 +1,7 @@
+{
+  "description": "setProperty makes every edge of the roof a gable: no edge slopes (Core 16.2.2), so the result is invalid: FS-INV-803.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

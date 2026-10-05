@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { z765 } from '@floorspec/engine';
 import { Button, EmptyState, SegmentedControl } from '@d3cloud/ui';
 import { Grid3x3, Pencil } from 'lucide-react';
 import { firstLevel, PlanThumbnail } from '../components/PlanThumbnail';
@@ -16,6 +17,15 @@ export function PlanCard({ projectId, name, summary }: { projectId: string; name
   const [level, setLevel] = useState<string | undefined>(() => (document === null ? undefined : firstLevel(document)));
   const levels = summary?.levels ?? [];
   const current = levels.find((l) => l.id === level);
+  // The house's finished area after ANSI Z765-2021, as paraphrased by the engine's app measure.
+  const finished = useMemo(() => {
+    if (summary === null || !summary.valid || summary.empty || document === null) return null;
+    try {
+      return z765(document).buildings.reduce((sum, b) => sum + b.aboveGradeSqFt, 0);
+    } catch {
+      return null;
+    }
+  }, [summary, document]);
 
   const aside =
     levels.length > 1 ? (
@@ -40,6 +50,9 @@ export function PlanCard({ projectId, name, summary }: { projectId: string; name
           <li>{plural(current?.walls ?? summary.walls, 'wall')}</li>
           <li>{plural(current?.openings ?? summary.openings, 'opening')}</li>
           {current === undefined ? null : <li>{formatSquareFeet(current.area2)} ft² on this level</li>}
+          {finished === null || finished === 0 ? null : (
+            <li title="Measured to the outside of the walls after ANSI Z765-2021 (paraphrased; an app measure, not part of Floorspec)">{finished.toLocaleString('en-US')} ft² finished above grade (Z765)</li>
+          )}
         </ul>
       ) : null}
       {summary !== null && !summary.valid ? <Diagnostics diagnostics={summary.diagnostics} /> : null}

@@ -126,6 +126,9 @@ importers:
       '@floorspec/ops':
         specifier: workspace:*
         version: link:../../packages/ops
+      '@floorspec/render2d':
+        specifier: workspace:*
+        version: link:../../packages/render2d
       '@floorspec/rules-engine':
         specifier: workspace:*
         version: link:../../packages/rules-engine

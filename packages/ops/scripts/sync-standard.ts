@@ -7,12 +7,12 @@
  *
  * Copies, from a floorspec checkout (default: ../floorspec beside this repository):
  *
- *   schema/ops/0.1/, 0.2/      → standard/schema/ops/0.1/, 0.2/
+ *   schema/ops/0.1/, 0.2/, 0.3/      → standard/schema/ops/0.1/, 0.2/, 0.3/
  *   conformance/ops/0.1/, 0.2/, 0.3/ → standard/conformance/ops/0.1/, 0.2/, 0.3/
+ *   spec/ops/07-diagnostics.md       → standard/spec/ops/07-diagnostics.md
  *
- * Ops 0.3 has no schema directory of its own: its requests have exactly Ops 0.2's shape, and
- * schema/ops/0.2/ is its schema too (Ops 0.3 §0.4).
- *   spec/ops/07-diagnostics.md → standard/spec/ops/07-diagnostics.md
+ * Ops 0.3 has a request schema of its own since roofs and stairs: addElement accepts the
+ * `roofs` and `stairs` collections, which Ops 0.2's request schema does not name.
  *
  * and records the checkout's commit in standard/LOCK.json. It refuses a checkout with uncommitted
  * changes in those paths unless --allow-dirty is given, in which case LOCK.json says so and CI's
@@ -25,6 +25,7 @@ import { dirname, join, resolve } from 'node:path';
 export const PATHS = [
   'schema/ops/0.1',
   'schema/ops/0.2',
+  'schema/ops/0.3',
   'conformance/ops/0.1',
   'conformance/ops/0.2',
   'conformance/ops/0.3',

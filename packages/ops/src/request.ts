@@ -1,7 +1,7 @@
 /**
  * The shape of an apply request (1.1): a batch of at least one operation the draft defines, each
  * with exactly the members its definition lists, and an optional context of locks and retired IDs.
- * Anything else is FS-OPS-001 (Ops 0.1: 1.1.1; Ops 0.2: 1.1.2) — including an operation with none,
+ * Anything else is FS-OPS-001 (Ops 0.1: 1.1.1; Ops 0.2: 1.1.2; Ops 0.3: 1.1.3) — including an operation with none,
  * or more than one, of a group of members of which it takes exactly one (moveOpening's `at` and
  * `by`, addLevel's `elevation`, `above` and `below`, a wall-face host's `side` and `toward`), or
  * with `toward` but no `by` on moveOpening.
@@ -16,7 +16,7 @@
  * validation does. The shapes match the vendored schemas, and a test holds them to them.
  */
 import { fail } from './diagnostics.js';
-import { COLLECTIONS, isCollection, ITEMS, type OpsVersion } from './model/working.js';
+import { collectionsOf, ITEMS, type OpsVersion } from './model/working.js';
 import { isObject, toPointer } from './lib/json.js';
 import type { ApplyRequest, OperationName } from './types.js';
 
@@ -101,7 +101,10 @@ const SHAPES_02: Readonly<Record<OperationName, OpShape>> = {
 };
 
 /** The operations of each draft and their members. */
-/** Ops 0.3 adds no operation and no member: its requests have exactly Ops 0.2's shape (Ops 0.3 §0.4, §1.1). */
+/**
+ * Ops 0.3 adds no operation and no member: its requests have Ops 0.2's shape, except that addElement
+ * may name the collections roofs and stairs (schema/ops/0.3, Ops 0.3 §0.4, §1.1.3).
+ */
 export const OP_SHAPES_BY_VERSION: Readonly<Record<OpsVersion, Readonly<Partial<Record<OperationName, OpShape>>>>> = { '0.1': SHAPES_01, '0.2': SHAPES_02, '0.3': SHAPES_02 };
 /** The operations of Ops 0.3 — the current draft, whose operations are Ops 0.2's — and their members. */
 export const OP_SHAPES: Readonly<Record<OperationName, OpShape>> = SHAPES_02;
@@ -131,7 +134,7 @@ function typeOk(t: MemberType, v: unknown, nonInteger: ReadonlySet<string>, ptr:
     case 'any':
       return true;
     case 'collection':
-      return isCollection(v);
+      return typeof v === 'string' && collectionsOf('0.1').includes(v as never);
     case 'side':
       return v === 'north' || v === 'south' || v === 'east' || v === 'west';
     case 'surface':
@@ -197,8 +200,8 @@ export function checkRequest(request: unknown, nonInteger: ReadonlySet<string> =
     const shape = typeof name === 'string' && Object.hasOwn(shapes, name) ? shapes[name as OperationName] : undefined;
     if (!shape) return fail('FS-OPS-001', `${JSON.stringify(name)} is not an operation of Floorspec Ops ${ops}`, [], `${base}/op`);
     checkMembers(name as string, op, shape, base, ['batch', i], nonInteger, 'op');
-    if (name === 'addElement' && !Object.hasOwn(op, 'extension') && !isCollection(op.collection) && op.collection !== ITEMS)
-      fail('FS-OPS-001', `addElement's collection is one of ${[...COLLECTIONS, ITEMS].join(', ')}, unless it has an extension`, [], `${base}/collection`);
+    if (name === 'addElement' && !Object.hasOwn(op, 'extension') && !collectionsOf(ops).includes(op.collection as never) && op.collection !== ITEMS)
+      fail('FS-OPS-001', `addElement's collection is one of ${[...collectionsOf(ops), ITEMS].join(', ')}, unless it has an extension`, [], `${base}/collection`);
     if ((name === 'placeElement' || name === 'moveElement') && isObject(op.host)) checkHost(op.host, `${base}/host`, ['batch', i, 'host'], nonInteger);
     return undefined;
   });

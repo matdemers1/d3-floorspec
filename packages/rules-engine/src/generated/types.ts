@@ -181,7 +181,7 @@ export interface Citation {
  * 3.4: the rule's subjects. extension and collection are for "element" only, and collection only with extension (3.9).
  */
 export interface Applicability {
-  to: 'room' | 'opening' | 'element' | 'level';
+  to: 'room' | 'opening' | 'element' | 'level' | 'stair';
   extension?: ExtensionName;
   collection?: CollectionName;
   where?: Test;
@@ -393,10 +393,10 @@ export interface FloorspecRules01Finding {
   message: string;
 }
 /**
- * 4.1: a room, an opening, an extension element or a level.
+ * 4.1: a room, an opening, an extension element, a level or a stair.
  */
 export interface Target1 {
-  kind: 'room' | 'opening' | 'element' | 'level';
+  kind: 'room' | 'opening' | 'element' | 'level' | 'stair';
   id: ID;
 }
 /**

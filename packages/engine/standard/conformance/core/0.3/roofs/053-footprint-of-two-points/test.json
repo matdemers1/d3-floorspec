@@ -1,0 +1,7 @@
+{
+  "description": "A footprint of two points is not a polygon.",
+  "covers": [
+    "FS-CORE-16.1.1",
+    "FS-CORE-2.6.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "A U-shaped stair turning left, with a 200 mm gap between its flights: 7 risers east, a landing 900 mm deep across both flights and the gap, from (2500 mm, 150 mm) to (3400 mm, 2150 mm), and 7 risers west from (2500 mm, 1700 mm) to its head at (1000 mm, 1700 mm) - above its foot. Its walkline runs through the landing's middle: 12 x 250 + 2 x 900 + 200 mm. The well covers the whole stair, so it has no headroom.",
+  "covers": [
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.5.1",
+    "FS-CORE-17.6.1"
+  ]
+}

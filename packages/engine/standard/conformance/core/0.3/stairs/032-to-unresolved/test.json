@@ -1,0 +1,7 @@
+{
+  "description": "A stair whose to names no level: FS-INV-002, and no other invariant is evaluated.",
+  "covers": [
+    "FS-CORE-3.2.1",
+    "FS-CORE-10.3.1"
+  ]
+}

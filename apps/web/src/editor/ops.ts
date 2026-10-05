@@ -216,6 +216,92 @@ export function addSlab(document: FloorspecDocument, level: string, outline: rea
   ];
 }
 
+// ─── Roofs and stairs (Core 0.3, chapters 16 and 17) ─────────────────────────────────────────
+
+/**
+ * A roof (Core 16.1): its footprint as drawn, on the level, at a pitch with an overhang on every
+ * edge. With `gables` on a four-sided footprint, its two shorter opposite edges are gables — a gable
+ * roof; otherwise every edge slopes — a hip roof (a shed or flat roof is set in the inspector).
+ */
+export function addRoof(document: FloorspecDocument, level: string, footprint: readonly Point[], o: { rise: number; run: number; overhang: number; gables: boolean }): Batch {
+  const n = footprint.length;
+  const len2 = (i: number): number => {
+    const a = footprint[i] ?? [0, 0];
+    const b = footprint[(i + 1) % n] ?? a;
+    return (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2;
+  };
+  const short = n === 4 && o.gables ? (len2(0) + len2(2) <= len2(1) + len2(3) ? ['0', '2'] : ['1', '3']) : [];
+  return [
+    ...upgradeFor(document),
+    {
+      op: 'addElement',
+      collection: 'roofs',
+      element: {
+        level,
+        footprint: footprint.map((p) => [p[0], p[1]]),
+        pitch: { rise: o.rise, run: o.run },
+        ...(o.overhang === 0 ? {} : { overhang: o.overhang }),
+        ...(short.length ? { edges: Object.fromEntries(short.map((k) => [k, { gable: true }])) } : {}),
+      },
+    },
+  ];
+}
+
+/**
+ * Roofs and stairs are Floorspec Core 0.3's (chapters 16, 17): a plan of an earlier draft is made
+ * to declare "0.3" in the same batch, which changes nothing else in it (Core 1.2.6) and Undo takes
+ * back with the element.
+ */
+const upgradeFor = (document: FloorspecDocument): Batch =>
+  document.floorspec === '0.1' || document.floorspec === '0.2' ? [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }] : [];
+
+/** The level a stair on `level` rises to: the next one up in the same building, or none. */
+export function levelAbove(document: FloorspecDocument, level: string): string | undefined {
+  const levels = (document.levels ?? {}) as Record<string, { building: string; elevation: number } | undefined>;
+  const here = levels[level];
+  if (here === undefined) return undefined;
+  return Object.entries(levels)
+    .filter((e): e is [string, { building: string; elevation: number }] => e[1] !== undefined && e[1].building === here.building && e[1].elevation > here.elevation)
+    .sort(([ia, a], [ib, b]) => a.elevation - b.elevation || (ia < ib ? -1 : 1))[0]?.[0];
+}
+
+/**
+ * A stair (Core 17.1) from `level` to `to`: its first nosing line's middle at `position`, rising in
+ * `rotation` (microdegrees), with the tool's width, tread and greatest riser height — the engine
+ * derives its riser count (17.4). An L or U stair turns halfway: its first flight has half the
+ * risers the levels' difference needs at that greatest riser, and at least two.
+ */
+export function addStair(
+  document: FloorspecDocument,
+  level: string,
+  to: string,
+  position: Point,
+  rotation: number,
+  o: { form: 'straight' | 'lShaped' | 'uShaped'; turn: 'left' | 'right'; width: number; tread: number; maxRiser: number },
+): Batch {
+  const levels = (document.levels ?? {}) as Record<string, { elevation: number } | undefined>;
+  const rise = (levels[to]?.elevation ?? 0) - (levels[level]?.elevation ?? 0);
+  const n = Math.max(2, Math.ceil(rise / o.maxRiser));
+  const form = o.form === 'straight' ? undefined : { kind: o.form, turn: o.turn, risersBeforeTurn: Math.max(2, Math.floor(n / 2)) };
+  return [
+    ...upgradeFor(document),
+    {
+      op: 'addElement',
+      collection: 'stairs',
+      element: {
+        level,
+        to,
+        position: [position[0], position[1]],
+        ...(rotation === 0 ? {} : { rotation }),
+        width: o.width,
+        tread: o.tread,
+        maxRiser: o.maxRiser,
+        ...(form === undefined ? {} : { form }),
+      },
+    },
+  ];
+}
+
 // ─── Openings and rooms ──────────────────────────────────────────────────────────────────────
 
 export function addOpening(

@@ -16,7 +16,7 @@ an edit, and never say that a design meets a code (FLR-ADR-011).
 | [5. Measures of rooms](05-rooms.md) | function, net area, least width, circulation, neighbours, elements in a room, ceiling height |
 | [6. Measures of openings](06-openings.md) | kind and operation, size as drawn, heights above the floor, outside, net clear opening |
 | [7. Measures of elements and envelopes](07-elements.md) | members, room, heights, protection, envelopes as declared, obstructions, clear depth in front, overlaps |
-| [8. Wall lines, receptacles, circuits and levels](08-wall-lines.md) | the wall line of a room, receptacle reach, wall run between receptacles, circuits, levels |
+| [8. Wall lines, receptacles, circuits, levels and stairs](08-wall-lines.md) | the wall line of a room, receptacle reach, wall run between receptacles, circuits, levels, stairs |
 | [9. Findings and the report](09-findings.md) | the report, findings, measured conditions, location, wording, display, order, serialization, the notice |
 | [10. Jurisdiction profiles](10-profiles.md) | adoptions and editions in force, rules in force, packs, amendments, the default profile |
 | [11. Diagnostics](11-diagnostics.md) | the FS-RULES catalogue |

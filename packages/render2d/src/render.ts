@@ -10,6 +10,7 @@ import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
 import { buildScene, type Pt, type Scene, type SceneOpening, type SceneRoom, type SceneWall } from './scene.js';
 import { el, escText as esc, linePath, ringsPath, type XY } from './svg.js';
+import { roofSymbol, stairSymbol } from './symbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
 
 export interface RenderOptions {
@@ -29,6 +30,11 @@ export interface RenderOptions {
   readonly labels?: boolean;
   /** Clearance envelopes (Core 0.2, 13.5) as dashed boxes. Default false. */
   readonly clearances?: boolean;
+  /**
+   * The roof layer (Core 0.3, 16): each roof on the level — its eave outline dashed, its ridges,
+   * hips and valleys, and the eave edge of each gable end. Default false.
+   */
+  readonly roof?: boolean;
 }
 
 export const DEFAULT_SCALE = 24;
@@ -342,6 +348,9 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   for (const s of scene.separators.values()) all = grow(all, [s.start, s.end]);
   for (const u of scene.unanchored) all = grow(all, u.outer);
   for (const sl of scene.slabs.values()) all = grow(all, sl.outline);
+  for (const st of scene.stairs.values()) all = grow(all, [[st.derived.box.min[0], st.derived.box.min[1]], [st.derived.box.max[0], st.derived.box.max[1]]]);
+  const showRoof = options.roof ?? false;
+  if (showRoof) for (const rf of scene.roofs.values()) all = grow(all, rf.outline);
   for (const fb of scene.fallbacks.values()) all = grow(all, fb.footprint);
   const showClearances = options.clearances ?? false;
   if (showClearances) for (const c of scene.clearances) all = grow(all, c.footprint);
@@ -428,6 +437,37 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   }
   if (ceilings !== '') parts.push(el('g', { id: 'ceilings' }, ceilings));
 
+  // ── stairs (Core 0.3, 17): treads, landings, the cut line and the UP arrow ──
+  if (scene.stairs.size) {
+    let stairs = '';
+    for (const [id, st] of scene.stairs) {
+      const sym = stairSymbol(st.derived, st.form);
+      const a = hi.has(id);
+      const ink = a ? pal.accent : pal.muted;
+      let g = '';
+      for (const step of sym.steps)
+        g += el('path', {
+          'data-step': step.landing ? 'landing' : 'tread',
+          d: ringsPath([P(step.outline)]),
+          fill: step.landing ? pal.unanchored : 'none',
+          stroke: ink,
+          'stroke-width': 1,
+          ...(step.above ? { 'stroke-dasharray': '3 3' } : {}),
+        });
+      if (sym.bounds) g += el('path', { d: ringsPath([P(sym.bounds)]), fill: 'none', stroke: ink, 'stroke-width': 1, 'stroke-dasharray': '6 3' });
+      if (sym.circle) {
+        const c = f.P(sym.circle.centre);
+        g += el('circle', { cx: c[0], cy: c[1], r: sym.circle.radius * s, fill: 'none', stroke: ink, 'stroke-width': 1 });
+      }
+      if (sym.cut) g += el('path', { 'data-cut': id, d: linePath(f.P(sym.cut[0]), f.P(sym.cut[1])), stroke: pal.text, 'stroke-width': 1.5, fill: 'none' });
+      g += arrow(sym.arrow.map(f.P), ink);
+      const up = f.P(sym.up);
+      g += el('text', { x: up[0], y: up[1] + 12, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 600, fill: ink }, 'UP');
+      stairs += el('g', { 'data-id': id, 'data-form': st.form }, g);
+    }
+    parts.push(el('g', { id: 'stairs' }, stairs));
+  }
+
   // ── separators ──
   let seps = '';
   for (const sp of scene.separators.values()) {
@@ -509,6 +549,21 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
     parts.push(el('g', { id: 'clearances' }, cls));
   }
 
+  // ── the roof layer (Core 0.3, 16): eave outline dashed, ridges, hips and valleys, gable ends ──
+  if (showRoof && scene.roofs.size) {
+    let roofs = '';
+    for (const [id, rf] of scene.roofs) {
+      const sym = roofSymbol(rf);
+      const ink = hi.has(id) ? pal.accent : pal.text;
+      let g = el('path', { 'data-eave': id, d: ringsPath([P(sym.eave)]), fill: 'none', stroke: ink, 'stroke-width': 1.25, 'stroke-dasharray': '7 4' });
+      for (const l of sym.lines)
+        g += el('path', { 'data-line': l.kind, d: linePath(f.P(l.from), f.P(l.to)), stroke: ink, 'stroke-width': l.kind === 'ridge' ? 1.5 : 1, ...(l.kind === 'valley' ? { 'stroke-dasharray': '2 2' } : {}), fill: 'none' });
+      for (const [a, b] of sym.gables) g += el('path', { 'data-gable': id, d: linePath(f.P(a), f.P(b)), stroke: ink, 'stroke-width': 2.5, fill: 'none' });
+      roofs += el('g', { 'data-id': id, 'data-kind': rf.kind }, g);
+    }
+    parts.push(el('g', { id: 'roofs' }, roofs));
+  }
+
   // ── ghosts: what the changeset removed, and where moved elements were ──
   if (diff) {
     let g = '';
@@ -587,6 +642,20 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   parts.push(northArrow(W - 30, H - 32, scene.trueNorth, pal));
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${SANS}">${parts.join('')}</svg>\n`;
+}
+
+/** A polyline ending in an arrowhead at its last point, in drawing coordinates. */
+function arrow(pts: readonly XY[], ink: string): string {
+  if (pts.length < 2) return '';
+  const d = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${num(x)} ${num(y)}`).join('');
+  const [x1, y1] = pts[pts.length - 1]!;
+  const [x0, y0] = pts[pts.length - 2]!;
+  const len = Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+  if (len === 0) return el('path', { d, stroke: ink, 'stroke-width': 1, fill: 'none' });
+  const ux = (x1 - x0) / len;
+  const uy = (y1 - y0) / len;
+  const head = `M${num(x1)} ${num(y1)}L${num(x1 - 8 * ux + 4 * uy)} ${num(y1 - 8 * uy - 4 * ux)}L${num(x1 - 8 * ux - 4 * uy)} ${num(y1 - 8 * uy + 4 * ux)}Z`;
+  return el('path', { 'data-arrow': 'up', d, stroke: ink, 'stroke-width': 1, fill: 'none' }) + el('path', { d: head, fill: ink });
 }
 
 function placeLabel(

@@ -1,7 +1,7 @@
 {
   "description": "moveOpening takes exactly one of \"at\" and \"by\": both is FS-OPS-001.",
   "covers": [
-    "FS-OPS-1.1.2",
+    "FS-OPS-1.1.3",
     "FS-OPS-4.5.2"
   ]
 }

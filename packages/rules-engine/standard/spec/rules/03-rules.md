@@ -51,14 +51,15 @@ meets a code (2.5).
 
 | Member | Type | Default | Meaning |
 |---|---|---|---|
-| `to` | `"room"`, `"opening"`, `"element"` or `"level"` | — (always present) | the kind of subject |
+| `to` | `"room"`, `"opening"`, `"element"`, `"level"` or `"stair"` | — (always present) | the kind of subject |
 | `extension` | extension name (Core §1.6.1) | absent | for `"element"` only: only the elements of this extension |
 | `collection` | collection name (Core §12.5) | absent | for `"element"` only, with `extension`: only the elements of this collection |
 | `where` | test (3.8) | absent: every candidate subject | a test each subject passes |
 
 The **candidate subjects** are every room of the document for `"room"`; every opening for
 `"opening"`; every extension element for `"element"` (Core §12.5) — of `extension` when it is
-given, and of its `collection` when that is given too; and every level for `"level"`. The rule's
+given, and of its `collection` when that is given too; every level for `"level"`; and every stair
+(Core §17.1) for `"stair"`. The rule's
 **subjects** are the candidate subjects for which `where`, evaluated on the candidate subject,
 holds. An extension element is found from its core members alone (Core §12.5), so a rule applies to
 the elements of an extension the evaluator does not implement too, as long as it reads none of
@@ -154,7 +155,7 @@ A rule is **well typed** when each of these holds:
 
 - every condition names a measure that chapters 5 to 8 define for the kind of target it is
   evaluated on — the subject's kind (3.4), or the candidates' (3.5): rooms, openings, extension
-  elements, clearance envelopes or levels;
+  elements, clearance envelopes, levels or stairs;
 - its `args` are exactly arguments that the measure takes, each of the type its definition gives,
   and include every argument it requires;
 - its `op` applies to the measure's type, and its `value` is of the kind the table of 3.8 gives;

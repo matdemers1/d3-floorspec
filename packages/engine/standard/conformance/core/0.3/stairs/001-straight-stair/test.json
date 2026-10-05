@@ -1,0 +1,10 @@
+{
+  "description": "A straight stair of 14 risers from a hall on L1 to the hall above, through a well that starts 500 mm past its first nosing line. Its foot room is R1 (bottom 0) and its head, 13 treads on at (4250 mm, 600 mm), is on the well's separator and so in R2 (top 2700 mm): a rise of 3456000, riser height 3456000 / 14 rounded to 246857. Its run is 13 x 250 mm, its walkline the same length, and its 13 treads are listed bottom to top. The headroom is where the floor above ends: at the well's edge the nosing line is 3 risers up, 740571.43, under L2's 300 mm floor and L1's 2400 mm ceilings at 3072000 - 2331428.57, rounded to 2331429.",
+  "covers": [
+    "FS-CORE-17.1.1",
+    "FS-CORE-17.4.3",
+    "FS-CORE-17.5.1",
+    "FS-CORE-17.6.1",
+    "FS-CORE-2.2.1"
+  ]
+}

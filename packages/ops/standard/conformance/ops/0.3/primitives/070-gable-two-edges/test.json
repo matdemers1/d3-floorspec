@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of /edges/1/gable and /edges/3/gable on the hip roof - creating its \"edges\" and each edge on the way - makes the box's short ends gables: the roof derives as a gable roof.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

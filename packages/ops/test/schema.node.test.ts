@@ -1,10 +1,10 @@
 /**
- * The request checker (Ops 0.1: 1.1.1; Ops 0.2 and 0.3: 1.1.2) agrees with schema/ops/0.1 and
- * schema/ops/0.2, the normative shapes of an apply request: for every request of each draft's
+ * The request checker (Ops 0.1: 1.1.1; Ops 0.2: 1.1.2; Ops 0.3: 1.1.3) agrees with schema/ops/0.1,
+ * 0.2 and 0.3, the normative shapes of an apply request: for every request of each draft's
  * conformance suite and a corpus of malformed ones, checkRequest — run as that draft — accepts
  * exactly what that draft's schema accepts (numbers written with a fraction or an exponent mapped
- * to non-numbers first, as the schema's $comment says). Ops 0.3 has no schema of its own: its
- * requests are Ops 0.2's, so its suite is checked against schema/ops/0.2 (Ops 0.3 §0.4, §1.1).
+ * to non-numbers first, as the schema's $comment says). Ops 0.3's schema is Ops 0.2's with roofs
+ * and stairs among addElement's collections (Ops 0.3 §0.4, §1.1).
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -14,8 +14,8 @@ import { describe, expect, it } from 'vitest';
 import { checkRequest, OpsFailure, OP_SHAPES_BY_VERSION, type OpsVersion } from '../src/index.js';
 import { listCases, SUITES } from './suite.js';
 
-/** The schema of each draft's requests: Ops 0.3's is Ops 0.2's. */
-const SCHEMA_OF: Record<OpsVersion, '0.1' | '0.2'> = { '0.1': '0.1', '0.2': '0.2', '0.3': '0.2' };
+/** The schema of each draft's requests. */
+const SCHEMA_OF: Record<OpsVersion, OpsVersion> = { '0.1': '0.1', '0.2': '0.2', '0.3': '0.3' };
 const schemaDir = (ops: OpsVersion): string => join(import.meta.dirname, '..', 'standard', 'schema', 'ops', SCHEMA_OF[ops]);
 
 const validators = new Map<OpsVersion, (v: unknown) => boolean>();
@@ -68,6 +68,7 @@ const MALFORMED = [
   '{"batch":[{"op":"moveWall","wall":"W1","by":2.0}]}',
   '{"batch":[{"op":"moveRoom","room":"R1","by":[1,2,3]}]}',
   '{"batch":[{"op":"addElement","collection":"walls","element":[]}]}',
+  '{"batch":[{"op":"addElement","collection":"chimneys","element":{}}]}',
   '{"batch":[{"op":"addElement","collection":"roofs","element":{}}]}',
   '{"batch":[{"op":"addJunction","level":5,"position":[0,0]}]}',
   '{"batch":[{"op":"addWall","level":"L1","start":"J1","end":7}]}',

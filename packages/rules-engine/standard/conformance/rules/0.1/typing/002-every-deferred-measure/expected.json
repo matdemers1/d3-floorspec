@@ -28,36 +28,6 @@
     {
       "code": "FS-RULES-008",
       "pack": "test-pack",
-      "rule": "D-stairHandrailHeight",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
-      "rule": "D-stairHeadroom",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
-      "rule": "D-stairRiserHeight",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
-      "rule": "D-stairTreadDepth",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
-      "rule": "D-stairWidth",
-      "severity": "info"
-    },
-    {
-      "code": "FS-RULES-008",
-      "pack": "test-pack",
       "rule": "D-travelDistance",
       "severity": "info"
     }
@@ -89,36 +59,6 @@
       "pack": "test-pack",
       "reason": "deferred",
       "rule": "D-roomNarrowestDimension",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
-      "rule": "D-stairHandrailHeight",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
-      "rule": "D-stairHeadroom",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
-      "rule": "D-stairRiserHeight",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
-      "rule": "D-stairTreadDepth",
-      "version": "0.1.0"
-    },
-    {
-      "pack": "test-pack",
-      "reason": "deferred",
-      "rule": "D-stairWidth",
       "version": "0.1.0"
     },
     {

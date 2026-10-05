@@ -1,0 +1,7 @@
+{
+  "description": "A roof on a four-edge footprint with an override for edge 4, which does not exist. FS-INV-801.",
+  "covers": [
+    "FS-CORE-16.1.2",
+    "FS-CORE-10.2.1"
+  ]
+}

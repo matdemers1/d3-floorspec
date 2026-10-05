@@ -1,0 +1,7 @@
+{
+  "description": "A gable roof with its footprint written clockwise: the outline is derived counter-clockwise from its least vertex; the gables, its short ends, are edges 0 and 2 as it is written - west, north, east, south - and every face and gable keeps its edge's index as written.",
+  "covers": [
+    "FS-CORE-16.5.1",
+    "FS-CORE-16.3.1"
+  ]
+}

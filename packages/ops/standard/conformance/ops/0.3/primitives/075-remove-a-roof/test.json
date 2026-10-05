@@ -1,0 +1,8 @@
+{
+  "description": "removeElement removes the roof; nothing depends on a roof, and the inverse adds it back, exactly as it is in A.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-2.2.2",
+    "FS-OPS-1.6.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "unsetProperty of the stair's /risers: it has neither risers nor maxRiser, which Core 0.3's schema rejects: FS-SCH-001.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.3.1"
+  ]
+}

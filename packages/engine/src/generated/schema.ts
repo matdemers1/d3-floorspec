@@ -162,14 +162,14 @@ export const SCHEMA = {
         },
         "positiveLength": {
           "title": "Positive length",
-          "description": "A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1).",
+          "description": "A length (2.1) greater than zero: a level's height (1.8.3), floor thickness and ceiling height (1.8.4), a slab's thickness (6.7.1), an opening's width and height (7.1.2), a layer's thickness (8.3.1), a door or window type's width and height (8.4.1), a clear opening's width and height (8.4.3), a texture's size (8.5.2), a floor's thickness (15.1.1), a ceiling's height, a tray's border and depth (15.2.1), a stair's width, tread and greatest riser height and a handrail's height (17.1.1), a spiral stair's diameter (17.2.1).",
           "type": "integer",
           "minimum": 1,
           "maximum": 9007199254740991
         },
         "nonNegativeLength": {
           "title": "Non-negative length",
-          "description": "A length (2.1) that is not negative: an opening's offset (7.1.1) and sill (7.1.2), a door or window type's sill (8.4.1).",
+          "description": "A length (2.1) that is not negative: an opening's offset (7.1.1) and sill (7.1.2), a door or window type's sill (8.4.1), a stair's gap (17.2.1).",
           "type": "integer",
           "minimum": 0,
           "maximum": 9007199254740991
@@ -270,7 +270,7 @@ export const SCHEMA = {
         },
         "angleHalfOpen": {
           "title": "Angle in (−180°, 180°]",
-          "description": "1.8, 13.3: an angle (2.4) greater than −180,000,000 and at most 180,000,000 microdegrees.",
+          "description": "1.8, 13.3, 17.1: an angle (2.4) greater than −180,000,000 and at most 180,000,000 microdegrees.",
           "type": "integer",
           "exclusiveMinimum": -180000000,
           "maximum": 180000000
@@ -284,7 +284,7 @@ export const SCHEMA = {
         },
         "pitch": {
           "title": "Pitch",
-          "description": "2.5, 15.3: a slope as a pair of positive integers { \"rise\": r, \"run\": n } — r up for every n across. Both MUST be integers from 1 to 2^53 − 1 (FS-CORE-15.2.1).",
+          "description": "2.5, 15.3, 16.1: a slope as a pair of positive integers { \"rise\": r, \"run\": n } — r up for every n across. Both MUST be integers from 1 to 2^53 − 1 (FS-CORE-15.2.1, FS-CORE-16.1.1).",
           "type": "object",
           "required": [
             "rise",
@@ -630,6 +630,18 @@ export const SCHEMA = {
           },
           "default": {}
         },
+        "roofs": {
+          "title": "Roofs",
+          "description": "1.1, 16.1: the collection of roofs (1.4), keyed by element ID. New in 0.3.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/defs/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/roof"
+          },
+          "default": {}
+        },
         "types": {
           "title": "Types",
           "description": "1.1, 8.1: the collection of types (1.4), keyed by element ID; each type's kind is given by its `kind` member.",
@@ -663,6 +675,18 @@ export const SCHEMA = {
           },
           "additionalProperties": {
             "$ref": "#/$defs/asset"
+          },
+          "default": {}
+        },
+        "stairs": {
+          "title": "Stairs",
+          "description": "1.1, 17.1: the collection of stairs (1.4), keyed by element ID.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/defs/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/stair"
           },
           "default": {}
         },
@@ -1327,6 +1351,113 @@ export const SCHEMA = {
       },
       "additionalProperties": false
     },
+    "roof": {
+      "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 16.1's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+      "title": "Roof",
+      "description": "16.1: a roof — a footprint polygon, a pitch, and gables and overhangs edge by edge. It has only the members of its table (FS-CORE-1.4.1, FS-CORE-16.1.1).",
+      "type": "object",
+      "required": [
+        "level",
+        "footprint"
+      ],
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "1.3, 16.1: a reference to the level the roof belongs to. Always present."
+        },
+        "footprint": {
+          "$ref": "#/$defs/defs/$defs/polygon",
+          "description": "16.1: the roof's outline in plan, before overhangs: a polygon (2.6). Always present. That it is simple with positive area (FS-CORE-2.6.1) is an invariant (FS-INV-009), and that no two consecutive edges are collinear (FS-CORE-16.2.3) another (FS-INV-804); neither is checked here."
+        },
+        "height": {
+          "$ref": "#/$defs/defs/$defs/length",
+          "description": "16.1, 16.3: the elevation of the roof's eaves above its level's elevation. Absent by default: its level's `height` (a derived default)."
+        },
+        "pitch": {
+          "$ref": "#/$defs/defs/$defs/pitch",
+          "description": "16.1, 16.2: the pitch of every edge that is not a gable and has no pitch of its own. Absent by default: none — a roof with no pitch anywhere is flat."
+        },
+        "overhang": {
+          "$ref": "#/$defs/defs/$defs/nonNegativeLength",
+          "description": "16.1, 16.3: how far the roof overhangs every edge that has no overhang of its own; MUST NOT be negative (FS-CORE-16.1.1).",
+          "default": 0
+        },
+        "edges": {
+          "title": "Roof edges",
+          "description": "16.1: what differs, edge by edge: each member name an edge index in decimal without leading zeros (FS-CORE-16.1.1). That it names an edge of the footprint (FS-CORE-16.1.2) is an invariant (FS-INV-801), not checked here.",
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(0|[1-9][0-9]*)$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/roof/$defs/edge"
+          },
+          "default": {}
+        },
+        "thickness": {
+          "$ref": "#/$defs/defs/$defs/positiveLength",
+          "description": "16.1: the thickness of the roof under its surface, measured vertically; MUST be greater than zero (FS-CORE-16.1.1). Absent by default: not declared."
+        },
+        "material": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "16.1: a reference to the material of the roof's top surface. Absent by default."
+        },
+        "name": {
+          "$ref": "#/$defs/defs/$defs/name",
+          "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+        },
+        "extensions": {
+          "$ref": "#/$defs/defs/$defs/extensions",
+          "description": "1.4, 1.6: extension data on this roof.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "#/$defs/defs/$defs/extras",
+          "description": "1.4, 1.7: application-specific data on this roof.",
+          "default": {}
+        }
+      },
+      "additionalProperties": false,
+      "$defs": {
+        "edge": {
+          "title": "Roof edge",
+          "description": "16.1: one edge's gable flag, pitch and overhang, each overriding the roof's; an edge absent from `edges` is `{}`. An edge whose `gable` is true has no `pitch` (FS-CORE-16.1.1).",
+          "type": "object",
+          "properties": {
+            "gable": {
+              "description": "16.1, 16.2: the edge is a gable — a vertical end the roof does not slope up from.",
+              "type": "boolean",
+              "default": false
+            },
+            "pitch": {
+              "$ref": "#/$defs/defs/$defs/pitch",
+              "description": "16.1, 16.2: the pitch the roof rises at from this edge. Absent by default: the roof's `pitch` (a derived default)."
+            },
+            "overhang": {
+              "$ref": "#/$defs/defs/$defs/nonNegativeLength",
+              "description": "16.1, 16.3: how far the roof overhangs this edge; MUST NOT be negative. Absent by default: the roof's `overhang` (a derived default)."
+            }
+          },
+          "additionalProperties": false,
+          "if": {
+            "properties": {
+              "gable": {
+                "const": true
+              }
+            },
+            "required": [
+              "gable"
+            ]
+          },
+          "then": {
+            "properties": {
+              "pitch": false
+            }
+          },
+          "default": {}
+        }
+      }
+    },
     "room": {
       "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 6.5's table; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
       "title": "Room",
@@ -1721,6 +1852,354 @@ export const SCHEMA = {
         }
       },
       "additionalProperties": false
+    },
+    "stair": {
+      "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 17.1's and 17.2's tables; the reference canonicalizer reads them as its table of constant defaults (9.2 step 1).",
+      "title": "Stair",
+      "description": "17.1: a stair between two levels of a building — where it starts, the way it rises, its width, tread, riser count or greatest riser height, form and handrail. It has only the members of its table (FS-CORE-17.1.1), and exactly one of `risers` and `maxRiser`. That its `level` and `to` resolve (FS-CORE-3.2.1) and are two levels of one building (FS-CORE-17.1.2), that its rise is greater than zero (FS-CORE-17.4.1) and that its riser count fits its form (FS-CORE-17.4.2) are invariants, not checked here.",
+      "type": "object",
+      "required": [
+        "level",
+        "to",
+        "position",
+        "width",
+        "tread"
+      ],
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "17.1: a reference to the level the stair rises from; its foot is on it. Always present."
+        },
+        "to": {
+          "$ref": "#/$defs/defs/$defs/reference",
+          "description": "17.1: a reference to the level the stair rises to; its head is on it. Always present."
+        },
+        "position": {
+          "$ref": "#/$defs/defs/$defs/point",
+          "description": "17.1, 17.3: the middle of the stair's first nosing line, in plan: the origin of its frame. Always present."
+        },
+        "rotation": {
+          "$ref": "#/$defs/defs/$defs/angleHalfOpen",
+          "description": "17.1, 17.3: the direction the first flight rises in, counter-clockwise from +X; its frame faces F(rotation) (13.1).",
+          "default": 0
+        },
+        "width": {
+          "$ref": "#/$defs/defs/$defs/positiveLength",
+          "description": "17.1: the stair's width, greater than zero (FS-CORE-17.1.1). Always present."
+        },
+        "tread": {
+          "$ref": "#/$defs/defs/$defs/positiveLength",
+          "description": "17.1: the going — the horizontal distance from one nosing to the next, along the walkline — greater than zero (FS-CORE-17.1.1). Always present."
+        },
+        "risers": {
+          "description": "17.1, 17.4: the number of risers from the foot to the head, an integer from 1 to 2^53 − 1 (FS-CORE-17.1.1). Absent: derived from maxRiser (17.4); a stair has exactly one of risers and maxRiser.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "maxRiser": {
+          "$ref": "#/$defs/defs/$defs/positiveLength",
+          "description": "17.1, 17.4: the greatest riser height the stair may have; its riser count is the least that keeps every riser no higher (17.4). Greater than zero (FS-CORE-17.1.1). Absent: the stair has risers."
+        },
+        "form": {
+          "$ref": "#/$defs/stair/$defs/form",
+          "description": "17.1, 17.2: the stair's form.",
+          "default": {
+            "kind": "straight"
+          }
+        },
+        "handrail": {
+          "$ref": "#/$defs/stair/$defs/handrail",
+          "description": "17.1: the stair's handrail. Absent: no handrail is declared."
+        },
+        "name": {
+          "$ref": "#/$defs/defs/$defs/name",
+          "description": "1.4: a human-readable label, 1–200 characters. Absent by default."
+        },
+        "extensions": {
+          "$ref": "#/$defs/defs/$defs/extensions",
+          "description": "1.4, 1.6: extension data on this stair.",
+          "default": {}
+        },
+        "extras": {
+          "$ref": "#/$defs/defs/$defs/extras",
+          "description": "1.4, 1.7: application-specific data on this stair.",
+          "default": {}
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "risers"
+          ]
+        },
+        {
+          "required": [
+            "maxRiser"
+          ]
+        }
+      ],
+      "additionalProperties": false,
+      "$defs": {
+        "form": {
+          "title": "Stair form",
+          "description": "17.2: a stair's form, exactly one of five (FS-CORE-17.2.1); a winder stair turns a quarter or a half. That a spiral stair's width is at most half its diameter (FS-CORE-17.2.2) is an invariant (FS-INV-904), not checked here.",
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "title": "Stair kind",
+              "description": "17.2: \"straight\", \"lShaped\", \"uShaped\", \"winder\" or \"spiral\".",
+              "type": "string",
+              "enum": [
+                "straight",
+                "lShaped",
+                "uShaped",
+                "winder",
+                "spiral"
+              ]
+            }
+          },
+          "oneOf": [
+            {
+              "title": "Straight stair",
+              "description": "17.2: { \"kind\": \"straight\" } — one flight.",
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "17.2: \"straight\".",
+                  "const": "straight"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "title": "L-shaped stair",
+              "description": "17.2: { \"kind\": \"lShaped\", \"turn\", \"risersBeforeTurn\" } — two flights at right angles, joined by a square landing.",
+              "type": "object",
+              "required": [
+                "kind",
+                "turn",
+                "risersBeforeTurn"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "17.2: \"lShaped\".",
+                  "const": "lShaped"
+                },
+                "turn": {
+                  "description": "17.2: the way the stair turns as it is walked up: \"left\" is counter-clockwise seen from above.",
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "right"
+                  ]
+                },
+                "risersBeforeTurn": {
+                  "description": "17.2: the number of risers of the first flight, the last of which rises onto the landing or the first winder; an integer from 1 to 2^53 − 1 (FS-CORE-17.2.1). That the stair's riser count fits it (FS-CORE-17.4.2) is an invariant (FS-INV-903), not checked here. Always present.",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "title": "U-shaped stair",
+              "description": "17.2: { \"kind\": \"uShaped\", \"turn\", \"risersBeforeTurn\", \"gap\"? } — two parallel flights joined by a landing across both.",
+              "type": "object",
+              "required": [
+                "kind",
+                "turn",
+                "risersBeforeTurn"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "17.2: \"uShaped\".",
+                  "const": "uShaped"
+                },
+                "turn": {
+                  "description": "17.2: the way the stair turns as it is walked up: \"left\" is counter-clockwise seen from above.",
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "right"
+                  ]
+                },
+                "risersBeforeTurn": {
+                  "description": "17.2: the number of risers of the first flight, the last of which rises onto the landing or the first winder; an integer from 1 to 2^53 − 1 (FS-CORE-17.2.1). That the stair's riser count fits it (FS-CORE-17.4.2) is an invariant (FS-INV-903), not checked here. Always present.",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "gap": {
+                  "$ref": "#/$defs/defs/$defs/nonNegativeLength",
+                  "description": "17.2: the distance between the two flights, in plan; not negative (FS-CORE-17.2.1).",
+                  "default": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "title": "Quarter-turn winder stair",
+              "description": "17.2: { \"kind\": \"winder\", \"angle\": \"quarter\", \"turn\", \"risersBeforeTurn\", \"winders\" } — an L that turns on winders; it has no gap (FS-CORE-17.2.1).",
+              "type": "object",
+              "required": [
+                "kind",
+                "turn",
+                "angle",
+                "risersBeforeTurn",
+                "winders"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "17.2: \"winder\".",
+                  "const": "winder"
+                },
+                "turn": {
+                  "description": "17.2: the way the stair turns as it is walked up: \"left\" is counter-clockwise seen from above.",
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "right"
+                  ]
+                },
+                "angle": {
+                  "description": "17.2: \"quarter\".",
+                  "const": "quarter"
+                },
+                "risersBeforeTurn": {
+                  "description": "17.2: the number of risers of the first flight, the last of which rises onto the landing or the first winder; an integer from 1 to 2^53 − 1 (FS-CORE-17.2.1). That the stair's riser count fits it (FS-CORE-17.4.2) is an invariant (FS-INV-903), not checked here. Always present.",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "winders": {
+                  "description": "17.2: the number of winder treads at the turn, an integer from 1 to 2^53 − 1 (FS-CORE-17.2.1). Always present.",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "title": "Half-turn winder stair",
+              "description": "17.2: { \"kind\": \"winder\", \"angle\": \"half\", \"turn\", \"risersBeforeTurn\", \"winders\", \"gap\"? } — a U that turns on winders.",
+              "type": "object",
+              "required": [
+                "kind",
+                "turn",
+                "angle",
+                "risersBeforeTurn",
+                "winders"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "17.2: \"winder\".",
+                  "const": "winder"
+                },
+                "turn": {
+                  "description": "17.2: the way the stair turns as it is walked up: \"left\" is counter-clockwise seen from above.",
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "right"
+                  ]
+                },
+                "angle": {
+                  "description": "17.2: \"half\".",
+                  "const": "half"
+                },
+                "risersBeforeTurn": {
+                  "description": "17.2: the number of risers of the first flight, the last of which rises onto the landing or the first winder; an integer from 1 to 2^53 − 1 (FS-CORE-17.2.1). That the stair's riser count fits it (FS-CORE-17.4.2) is an invariant (FS-INV-903), not checked here. Always present.",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "winders": {
+                  "description": "17.2: the number of winder treads at the turn, an integer from 1 to 2^53 − 1 (FS-CORE-17.2.1). Always present.",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "gap": {
+                  "$ref": "#/$defs/defs/$defs/nonNegativeLength",
+                  "description": "17.2: the distance between the two flights, in plan; not negative (FS-CORE-17.2.1).",
+                  "default": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "title": "Spiral stair",
+              "description": "17.2: { \"kind\": \"spiral\", \"turn\", \"diameter\", \"sweep\" } — treads that wind around a centre.",
+              "type": "object",
+              "required": [
+                "kind",
+                "turn",
+                "diameter",
+                "sweep"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "17.2: \"spiral\".",
+                  "const": "spiral"
+                },
+                "turn": {
+                  "description": "17.2: the way the stair turns as it is walked up: \"left\" is counter-clockwise seen from above.",
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "right"
+                  ]
+                },
+                "diameter": {
+                  "$ref": "#/$defs/defs/$defs/positiveLength",
+                  "description": "17.2: the stair's outer diameter, greater than zero (FS-CORE-17.2.1). Always present."
+                },
+                "sweep": {
+                  "description": "17.2, 17.3: the angle, in microdegrees, the stair turns through from its first nosing line to its last: an integer from 1 to 2^53 − 1 (FS-CORE-17.2.1). Always present.",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "handrail": {
+          "title": "Handrail",
+          "description": "17.1: a stair's handrail, as declared: its height above the nosing line and the sides it is on.",
+          "type": "object",
+          "required": [
+            "height"
+          ],
+          "properties": {
+            "height": {
+              "$ref": "#/$defs/defs/$defs/positiveLength",
+              "description": "17.1: the handrail's height above the nosing line, greater than zero (FS-CORE-17.1.1). Always present."
+            },
+            "sides": {
+              "description": "17.1: the sides of the stair, as walked up, that have a handrail.",
+              "type": "string",
+              "enum": [
+                "left",
+                "right",
+                "both"
+              ],
+              "default": "both"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     },
     "type": {
       "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 8.3's and 8.4's tables (clearances, extensions, extras). A type's `layers`, `width`, `height`, `sill` and `clearOpening` have no default, and neither has `operation`, whose absence means that none is declared. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).",

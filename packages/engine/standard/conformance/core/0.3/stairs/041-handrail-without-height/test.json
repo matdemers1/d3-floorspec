@@ -1,0 +1,6 @@
+{
+  "description": "A handrail with sides and no height.",
+  "covers": [
+    "FS-CORE-17.1.1"
+  ]
+}

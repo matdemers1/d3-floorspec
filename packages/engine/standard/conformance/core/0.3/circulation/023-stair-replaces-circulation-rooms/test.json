@@ -1,0 +1,7 @@
+{
+  "description": "A hall on L1 and a landing on L2, both of function circulation, but the building's stair rises from the living room to the bedroom, and only a window joins the bedroom to the landing. A building with a stair is joined across its levels by its stairs alone: the bedroom is reachable, and the landing is not (FS-LINT-012), though both halls are circulation rooms.",
+  "covers": [
+    "FS-CORE-14.1.1",
+    "FS-CORE-14.3.1"
+  ]
+}

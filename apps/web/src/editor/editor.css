@@ -658,6 +658,64 @@
   stroke-width: 1.25;
   stroke-dasharray: 8 3 2 3;
 }
+/* Stairs (Core 0.3, 17): treads and landings, dashed above the plan's cut plane, a break line at
+   the cut, and an UP arrow along the walkline (render2d's symbols). */
+.fs-stair__step {
+  fill: none;
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+}
+.fs-stair__step--landing {
+  fill: var(--color-fill-quiet);
+}
+.fs-stair__step--above {
+  stroke-dasharray: 3 3;
+}
+.fs-stair__bounds {
+  fill: none;
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+  stroke-dasharray: 6 3;
+}
+.fs-stair__cut {
+  stroke: var(--color-fg);
+  stroke-width: 1.5;
+}
+.fs-stair__arrow {
+  fill: none;
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+}
+.fs-stair__head {
+  fill: var(--color-fg-muted);
+}
+.fs-stair__up {
+  fill: var(--color-fg-muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+/* The roof layer (Core 0.3, 16): the eave outline dashed above the cut, ridges, hips and valleys,
+   and each gable end's eave edge heavier. */
+.fs-roof__eave {
+  fill: none;
+  stroke: var(--color-fg);
+  stroke-width: 1.25;
+  stroke-dasharray: 7 4;
+}
+.fs-roof__line {
+  stroke: var(--color-fg);
+  stroke-width: 1;
+}
+.fs-roof__line--ridge {
+  stroke-width: 1.5;
+}
+.fs-roof__line--valley {
+  stroke-dasharray: 2 2;
+}
+.fs-roof__gable {
+  stroke: var(--color-fg);
+  stroke-width: 2.5;
+}
 .fs-plan2__face--free {
   fill: var(--color-surface-card);
   fill-opacity: 0.45;

@@ -1,0 +1,7 @@
+{
+  "description": "A hall on L1 sunk 150 mm: the stair's bottom is the top of its foot room's floor, -192000, so its rise is 2850 mm, and with a greatest riser of 7 3/4 in it needs 15 risers of 243200 - one more than from a floor at the level's elevation. Its head moves out a tread, to (4500 mm, 600 mm), past the well into R2, whose 300 mm floor is now over its last tread: its headroom is -384000.",
+  "covers": [
+    "FS-CORE-17.4.3",
+    "FS-CORE-15.1.2"
+  ]
+}

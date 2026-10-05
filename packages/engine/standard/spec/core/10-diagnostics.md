@@ -10,8 +10,9 @@ Validation runs in tiers:
 2. **Document** — can this reader read it at all: its version and its required extensions? (`FS-DOC-`)
 3. **Schema** — does it match the JSON Schema of the draft it declares? (`FS-SCH-`)
 4. **Invariants** — the rules no schema can express: references resolve, the wall graph is planar,
-   rooms, openings, hosted elements, floors and ceilings fit, the program is consistent, and the
-   extensions known to the validator are used as their registry entries say. (`FS-INV-`)
+   rooms, openings, hosted elements, floors, ceilings and roofs fit, the program is consistent, the
+   extensions known to the validator are used as their registry entries say, and stairs rise
+   between two levels of a building. (`FS-INV-`)
 5. **Lints** — conditions that make a valid document worse. (`FS-LINT-`)
 
 The schema is applied to the parsed document, in which a number written with a fraction or an
@@ -80,6 +81,13 @@ error, with these refinements inside tier 4:
   a level where room invariants are evaluated, and that has none of `FS-INV-201` to `FS-INV-204`:
   they are tested on its room polygon. `FS-INV-701` is not evaluated for a room that has
   `FS-INV-702`: a vault without a ridge line has no elevation.
+- **Roof invariants** (`FS-INV-801` to `FS-INV-805`) are evaluated for every roof, except that
+  `FS-INV-805` is not evaluated for a roof that has `FS-INV-804`: its moved lines need not meet.
+- **Stair invariants** (`FS-INV-901` to `FS-INV-904`) are evaluated for every stair, except that
+  `FS-INV-902` and `FS-INV-903` are evaluated only for a stair without `FS-INV-901` whose two levels
+  are levels where room invariants are evaluated and have no room with any of `FS-INV-201` to
+  `FS-INV-204` — its rise is measured from its rooms' floors (17.4) — and `FS-INV-903` is not
+  evaluated for a stair that has `FS-INV-902`.
 - **Lints** are evaluated only for a valid document. The circulation lints (`FS-LINT-012` to
   `FS-LINT-014`) are evaluated only for a building that is evaluated (14.4), and `FS-LINT-012` and
   `FS-LINT-013` only for a building that has an entry (14.2).
@@ -98,7 +106,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-JSON-003` | error | a string has an unpaired surrogate | — | 9.1.3 |
 | `FS-DOC-001` | error | the root is an object whose `floorspec` member is a string naming a version this reader does not implement | — | 1.2.2 |
 | `FS-DOC-002` | error | `extensionsRequired` is an array of distinct extension names, each a member of `extensionsUsed`, and one of them names an extension this reader does not implement; one diagnostic for each such name. Any other `extensionsRequired` is left to the schema tier and `FS-INV-004` | — | 1.6.4 |
-| `FS-SCH-001` | error | the document does not match the schema of the draft it declares (1.2.6) | — | 1.1, 1.2.5, 1.2.6, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 6.7.2, 7.1.1, 7.1.2, 8.1, 8.3, 8.4.1–8.4.3, 8.5, 8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1, 15.1.1, 15.2.1 |
+| `FS-SCH-001` | error | the document does not match the schema of the draft it declares (1.2.6) | — | 1.1, 1.2.5, 1.2.6, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 6.7.2, 7.1.1, 7.1.2, 8.1, 8.3, 8.4.1–8.4.3, 8.5, 8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1, 15.1.1, 15.2.1, 16.1.1, 17.1.1, 17.2.1 |
 
 **Reference invariants.**
 
@@ -112,7 +120,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-INV-006` | error | a room's or a program item's function names an extension not in `extensionsUsed` | the room or item | 4.2.1, 11.1.2 |
 | `FS-INV-007` | error | an edge's junction is on another level | the edge and the junction | 3.3.1 |
 | `FS-INV-008` | error | a wall's base or top level is in another building | the wall and the level | 3.3.2 |
-| `FS-INV-009` | error | an authored polygon is not simple or has no area | the slab, or none for the site boundary | 2.6.1 |
+| `FS-INV-009` | error | an authored polygon is not simple or has no area | the slab or roof, or none for the site boundary | 2.6.1 |
 
 **Graph and join invariants.**
 
@@ -196,6 +204,25 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-INV-702` | error | a vaulted ceiling's two ridge points are the same point | the room | 15.3.1 |
 | `FS-INV-703` | error | a tray ceiling's border does not fit its room: an edge of the centre runs backwards, or the centre is degenerate | the room | 15.4.1 |
 
+**Roof invariants.**
+
+| Code | Severity | Condition | Elements | Rule |
+|---|---|---|---|---|
+| `FS-INV-801` | error | a member name of a roof's `edges` names no edge of its footprint | the roof | 16.1.2 |
+| `FS-INV-802` | error | a roof has both level edges and edges that are not level | the roof | 16.2.1 |
+| `FS-INV-803` | error | every edge of a roof is a gable | the roof | 16.2.2 |
+| `FS-INV-804` | error | two consecutive edges of a roof's footprint are collinear | the roof | 16.2.3 |
+| `FS-INV-805` | error | a roof's eave outline does not fit its footprint: an edge of it runs backwards, or it is not simple or runs the other way | the roof | 16.3.1 |
+
+**Stair invariants.**
+
+| Code | Severity | Condition | Elements | Rule |
+|---|---|---|---|---|
+| `FS-INV-901` | error | a stair's `to` is its own `level`, or a level of another building | the stair | 17.1.2 |
+| `FS-INV-902` | error | a stair's rise is not greater than zero | the stair | 17.4.1 |
+| `FS-INV-903` | error | a stair's riser count does not fit its form | the stair | 17.4.2 |
+| `FS-INV-904` | error | a spiral stair's width is more than half its diameter | the stair | 17.2.2 |
+
 **Lints.**
 
 | Code | Severity | Condition | Elements | Rule |
@@ -214,6 +241,8 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-LINT-012` | warning | a room not reachable from an entry of its building | the room | 14.4 |
 | `FS-LINT-013` | warning | a sleeping room reachable only through another sleeping room | the room | 14.4 |
 | `FS-LINT-014` | warning | an evaluated building (14.4) that has rooms but no entry | the building | 14.4 |
+| `FS-LINT-015` | info | a roof whose surface this draft does not derive (16.4.4) | the roof | 16.4.1 |
+| `FS-LINT-016` | info | a winder or a spiral stair, whose steps, run, walkline and headroom this draft does not derive | the stair | 17.7 |
 
 ## 10.5 Fix operations
 

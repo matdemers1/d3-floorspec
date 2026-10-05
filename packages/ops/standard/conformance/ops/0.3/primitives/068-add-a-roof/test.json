@@ -1,0 +1,7 @@
+{
+  "description": "addElement adds a hip roof over the box, at 6 in 12 with a 1' overhang, and names no ID: the applier mints RF1 - the prefix of roofs is RF (1.5) - and the result derives a hip roof whose ridge is half of 12' and 100 mm above its eaves: 3' and 25 mm.",
+  "covers": [
+    "FS-OPS-2.1.1",
+    "FS-OPS-1.5.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A stair added to a Core 0.2 document that does not declare \"0.3\": Ops 0.3 adds to the stairs collection, but Core 0.2's schema has none, so the result is invalid: FS-SCH-001.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-2.1.1"
+  ]
+}

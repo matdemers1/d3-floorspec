@@ -2,7 +2,8 @@
  * The working copy of a transaction (1.2): document A, deep-copied, changed in place by each
  * primitive, and the bookkeeping ID minting needs (1.5).
  *
- * The document's one space of IDs (0.3): an element of one of Core's eleven collections, and — in
+ * The document's one space of IDs (0.3): an element of one of Core's thirteen collections (eleven,
+ * and Core 0.3's roofs and stairs), and — in
  * Ops 0.2 and 0.3, in a working copy that declares "0.2" or "0.3" — a program item (Core §11.1) or
  * an extension element (Core §12.5). Which a working copy declares is read from it as it stands;
  * under Ops 0.1, or in a document that declares "0.1", only the eleven collections hold elements.
@@ -19,16 +20,24 @@ export const COLLECTIONS = [
   'openings',
   'rooms',
   'slabs',
+  'roofs',
   'types',
   'materials',
   'assets',
+  'stairs',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 
+/** Core 0.3's collections (chapters 16, 17), which only an Ops 0.3 request may add to (Ops 0.3 §1.1.3). */
+export const CORE03_COLLECTIONS: readonly CollectionName[] = ['roofs', 'stairs'];
+
+/** The collections addElement may name in a request of this draft: Ops 0.3 adds roofs and stairs. */
+export const collectionsOf = (ops: OpsVersion): readonly CollectionName[] => (ops === '0.3' ? COLLECTIONS : COLLECTIONS.filter((c) => !CORE03_COLLECTIONS.includes(c)));
+
 /**
  * The draft of Floorspec Ops a transaction follows. Ops 0.3 adds no operation and no member: it is
- * Ops 0.2 applied with a Core 0.3 reader (Ops 0.3 §0.4), so everything this package says of "Ops
- * 0.2" holds of 0.3 too, and only the Core reader differs.
+ * Ops 0.2 applied with a Core 0.3 reader (Ops 0.3 §0.4), and addElement may name Core 0.3's roofs
+ * and stairs, so everything this package says of "Ops 0.2" holds of 0.3 too.
  */
 export type OpsVersion = '0.1' | '0.2' | '0.3';
 
@@ -58,6 +67,8 @@ export const PREFIX: Readonly<Record<CollectionName, string>> & { readonly items
   types: 'T',
   materials: 'M',
   assets: 'A',
+  roofs: 'RF',
+  stairs: 'ST',
   items: 'P',
 };
 /** 1.5 (Ops 0.2): every extension collection shares one prefix. */

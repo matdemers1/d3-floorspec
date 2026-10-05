@@ -141,6 +141,19 @@ export function summaryText(s: DocumentSummary): string {
             `connected ${c.connectedLoad} W of ${c.capacity} W (stated watts only; not a load calculation)`,
         );
     }
+    if (l.roofs?.length) {
+      out.push('', `### Roofs (${l.id})`);
+      for (const r of l.roofs)
+        out.push(`- ${r.id}${q(r.name)}: ${r.kind}${r.pitch ? `, ${r.pitch}` : ''}, eave ${lengthText(r.eave)} above the level${r.surfaceDerived ? '' : '; surface not derived (FS-LINT-015)'}`);
+    }
+    if (l.stairs?.length) {
+      out.push('', `### Stairs (${l.id})`);
+      for (const s of l.stairs)
+        out.push(
+          `- ${s.id}${q(s.name)}: ${s.form} to ${s.to}, ${s.risers} risers × ${inches(s.riserHeight.baseUnits)} (${s.riserHeight.baseUnits}), tread ${inches(s.tread.baseUnits)}, ${lengthText(s.width)} wide` +
+            (s.headroom ? `, headroom ${lengthText(s.headroom)}` : ', headroom not derived'),
+        );
+    }
     if (l.unanchored.length) {
       out.push('', `### Unanchored faces (${l.id})`);
       for (const u of l.unanchored) {
@@ -174,6 +187,8 @@ export function summaryText(s: DocumentSummary): string {
     if (c.unreachable.length) out.push(`- unreachable through doors: ${c.unreachable.join(', ')}`);
     if (c.throughSleeping.length) out.push(`- reachable only through another sleeping room: ${c.throughSleeping.join(', ')}`);
   }
+  if (s.area?.length)
+    out.push('', `Finished area after ANSI Z765-2021 (paraphrased; an app measure, not part of Floorspec): ${s.area.map((a) => `${a.building} ${a.aboveGradeSqFt} sq ft above grade, ${a.belowGradeSqFt} below`).join('; ')}.`);
   out.push('', '## Diagnostics');
   if (!s.diagnostics.length) out.push('(none)');
   for (const d of s.diagnostics) out.push(`- ${d.code} (${d.severity})${d.elements.length ? ` [${d.elements.join(', ')}]` : ''}${d.level ? ` on ${d.level}` : ''}: ${d.message}`);

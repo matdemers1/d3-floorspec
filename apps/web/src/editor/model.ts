@@ -1,4 +1,4 @@
-import { check, extElements, OFFICIAL_READER, type Derived, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
+import { check, extElements, OFFICIAL_READER, type Derived, type DerivedRoof, type DerivedStair, type Diagnostic, type FloorspecDocument } from '@floorspec/engine';
 import { twiceArea } from './units';
 import { deviceViews, recordIndex, type DeviceView, type RecordRef } from './systems/view';
 import { kindLabel } from './systems/catalog';
@@ -15,10 +15,10 @@ export type Ring = readonly Point[];
 
 /** Every collection an element can live in (Core 1.1), in the order the tree lists them. */
 export type Collection =
-  | 'buildings' | 'levels' | 'junctions' | 'walls' | 'separators' | 'openings' | 'rooms' | 'slabs' | 'types' | 'materials' | 'assets';
+  | 'buildings' | 'levels' | 'junctions' | 'walls' | 'separators' | 'openings' | 'rooms' | 'slabs' | 'roofs' | 'stairs' | 'types' | 'materials' | 'assets';
 
 export const COLLECTIONS: readonly Collection[] = [
-  'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'types', 'materials', 'assets',
+  'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'roofs', 'stairs', 'types', 'materials', 'assets',
 ];
 
 /**
@@ -28,7 +28,7 @@ export const COLLECTIONS: readonly Collection[] = [
 export type Place = Collection | 'items' | 'extension' | 'record';
 
 export type Kind =
-  | 'building' | 'level' | 'junction' | 'wall' | 'separator' | 'opening' | 'room' | 'slab'
+  | 'building' | 'level' | 'junction' | 'wall' | 'separator' | 'opening' | 'room' | 'slab' | 'roof' | 'stair'
   | 'wallType' | 'doorType' | 'windowType' | 'material' | 'asset' | 'item' | 'extensionElement'
   /** A record an extension keeps beside its elements (FS_electrical's circuits …): not an element. */
   | 'circuit' | 'stack' | 'gasSource';
@@ -97,6 +97,22 @@ export interface SlabView {
   bottom: number;
 }
 
+/** A roof (Core 0.3, 16) as the engine derived it: its kind, eave outline and surface. */
+export interface RoofView {
+  id: string;
+  /** Its footprint as drawn (Core 16.1). */
+  footprint: Ring;
+  derived: DerivedRoof;
+}
+
+/** A stair (Core 0.3, 17) on the level it rises from, as the engine derived it. */
+export interface StairView {
+  id: string;
+  to: string;
+  form: string;
+  derived: DerivedStair;
+}
+
 export interface FaceView {
   /** The room anchored in it, or null for an unanchored face. */
   room: string | null;
@@ -131,6 +147,9 @@ export interface LevelView {
   devices: DeviceView[];
   /** The slabs on this level, as derived (Core 0.3, 15.7). */
   slabs: SlabView[];
+  /** The roofs on this level (Core 0.3, 16.5) and the stairs rising from it (17.4). */
+  roofs: RoofView[];
+  stairs: StairView[];
   bounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
 }
 
@@ -198,7 +217,7 @@ export function kindOf(model: EditorModel, id: string): Kind | null {
   }
   const singular: Record<Collection, Kind> = {
     buildings: 'building', levels: 'level', junctions: 'junction', walls: 'wall', separators: 'separator', openings: 'opening',
-    rooms: 'room', slabs: 'slab', types: 'wallType', materials: 'material', assets: 'asset',
+    rooms: 'room', slabs: 'slab', roofs: 'roof', stairs: 'stair', types: 'wallType', materials: 'material', assets: 'asset',
   };
   return singular[c];
 }
@@ -287,7 +306,7 @@ function levelsWithoutGeometry(document: FloorspecDocument): LevelView[] {
     building: String(level['building']),
     elevation: Number(level['elevation']),
     height: Number(level['height']),
-    junctions: [], walls: [], fills: [], separators: [], openings: [], rooms: [], faces: [], devices: [], slabs: [],
+    junctions: [], walls: [], fills: [], separators: [], openings: [], rooms: [], faces: [], devices: [], slabs: [], roofs: [], stairs: [],
     bounds: null,
   }));
 }
@@ -381,11 +400,21 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
     if (d === undefined) continue;
     views.get(String(s['level']))?.slabs.push({ id, outline: d.outline, purpose: typeof s['purpose'] === 'string' ? s['purpose'] : undefined, top: d.top, bottom: d.bottom });
   }
+  for (const [id, r] of entriesOf(document.roofs)) {
+    const d = derived.roofs?.[id];
+    if (d === undefined) continue;
+    views.get(String(r['level']))?.roofs.push({ id, footprint: r['footprint'] as Ring, derived: d });
+  }
+  for (const [id, st] of entriesOf(document.stairs)) {
+    const d = derived.stairs?.[id];
+    if (d === undefined) continue;
+    views.get(String(st['level']))?.stairs.push({ id, to: String(st['to']), form: typeof (st['form'] as Json | undefined)?.['kind'] === 'string' ? String((st['form'] as Json)['kind']) : 'straight', derived: d });
+  }
   for (const free of derived.unanchored) {
     views.get(free.level)?.faces.push({ room: null, outer: free.outer, holes: free.holes, area2: twiceArea(free.area) });
   }
   for (const view of views.values()) {
-    const pts: Point[] = [...view.junctions.map((j) => j.position), ...view.walls.flatMap((w) => w.ring), ...view.slabs.flatMap((s) => s.outline)];
+    const pts: Point[] = [...view.junctions.map((j) => j.position), ...view.walls.flatMap((w) => w.ring), ...view.slabs.flatMap((s) => s.outline), ...view.stairs.flatMap((s): Point[] => [[s.derived.box.min[0], s.derived.box.min[1]], [s.derived.box.max[0], s.derived.box.max[1]]])];
     if (pts.length > 0) {
       const xs = pts.map((p) => p[0]);
       const ys = pts.map((p) => p[1]);
@@ -412,6 +441,8 @@ export function labelOf(model: EditorModel, id: string): string {
     case 'wall': return name ?? `Wall ${id}`;
     case 'separator': return name ?? `Separator ${id}`;
     case 'slab': return name ?? `Slab ${id}`;
+    case 'roof': return name ?? `Roof ${id}`;
+    case 'stair': return name ?? `Stair ${id}`;
     case 'junction': return name ?? `Junction ${id}`;
     case 'level': return name ?? `Level ${id}`;
     case 'building': return name ?? `Building ${id}`;

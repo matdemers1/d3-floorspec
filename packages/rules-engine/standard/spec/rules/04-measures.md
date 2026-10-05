@@ -15,9 +15,11 @@ measure; this chapter defines what they share.
 | element | an extension element (Core §12.5) | `{ "kind": "element", "id": "X1" }` |
 | envelope | one clearance envelope (Core §13.5) of an opening or an extension element, its **owner** | `{ "kind": "envelope", "id": "X1", "envelope": "working" }` |
 | level | a level (Core §1.8) | `{ "kind": "level", "id": "L1" }` |
+| stair | a stair (Core §17.1) | `{ "kind": "stair", "id": "ST1" }` |
 
 The **level** of a target is the room's `level`; the opening's wall's `level`; the extension
-element's fallback `level` (Core §12.6); an envelope's owner's level; and the level itself. Its
+element's fallback `level` (Core §12.6); an envelope's owner's level; the level itself; and the
+stair's `level`, the one it rises from (Core §17.1). Its
 **floor** is that level's `elevation`: a height **above the floor** is an elevation minus it.
 
 Targets are ordered by `id`, comparing IDs as Core §10.2 compares them, and then, for envelopes of
@@ -38,8 +40,9 @@ one owner, by envelope name.
 A measure's type is fixed by its definition, except `elementMember`'s, which its arguments fix
 (7.1). Only some measures can have **no value**: `elementMember`, when the element has no such
 member and its extension gives it no default; and `openingOperation` and the net clear measures of
-an opening (6.1, 6.5), when nothing is declared for them. A measure with no value is reported as
-`null`.
+an opening (6.1, 6.5), when nothing is declared for them; and `stairHeadroom` and
+`stairHandrailHeight` (8.5), when Core derives no headroom or the stair declares no handrail. A
+measure with no value is reported as `null`.
 
 ## 4.3 Exactness
 
@@ -116,7 +119,6 @@ the library without a finding that measures the wrong thing.
 | Measure | Target | Needs |
 |---|---|---|
 | `roomNarrowestDimension` | room | the dimension at every point of a room that is not convex — `roomLeastWidth` (5.3) measures the whole room |
-| `stairRiserHeight`, `stairTreadDepth`, `stairWidth`, `stairHeadroom`, `stairHandrailHeight` | stair | stairs (Core §0.5) |
 | `countertopReceptacleReach`, `countertopWallRunBetweenReceptacles` | room | countertops, which no extension yet describes |
 | `travelDistance` | room | a path through the door graph measured in length: Core's door graph (Core §14.1) has no geometry along its links |
 | `floorElevationDifference` | room | which difference it is: Core derives each room's floor (Core §15.1), but not yet the change of level across a doorway, the threshold between two floors |

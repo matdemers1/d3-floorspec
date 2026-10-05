@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-INV-804",
+      "severity": "error",
+      "elements": ["RF1"]
+    }
+  ]
+}

@@ -3,9 +3,9 @@
  * reachable from an entry, which sleeping rooms are reachable only through another sleeping room,
  * and the circulation lints FS-LINT-012 … 014.
  *
- * The door graph's nodes are rooms. Two rooms are linked when they are connected (11.4), or when
- * both have the function `circulation` and are on different levels of one building — the stand-in
- * for stairs, which Core 0.2 does not define (14.1). A room is an entry when an edge between its
+ * The door graph's nodes are rooms. Two rooms are linked when they are connected (11.4), when a
+ * stair runs from one to the other (Core 0.3: its foot room and head room, 17.4), or — in a building
+ * with no stair — when both have the function `circulation` and are on different levels of it (14.1). A room is an entry when an edge between its
  * face and its level's unbounded face is a separator, or a wall hosting a door or an empty opening
  * (14.2). Everything here is a search over a finite graph: exact, and independent of the order in
  * which a document lists its elements.
@@ -13,6 +13,7 @@
 import { analyseProgram } from '../derive/program.js';
 import { entries, get, type FloorspecDocument } from '../model/document.js';
 import type { Analysis, Reporter } from '../validate/invariants.js';
+import { StairContext, stairLinks } from '../stairs/stairs.js';
 
 /** 14.3: what a deriver derives for one room. */
 export interface DerivedCirculationRoom {
@@ -83,7 +84,11 @@ export function analyseCirculation(doc: FloorspecDocument, analysis: Analysis): 
 
   const buildingOf = new Map<string, string>();
   for (const [rid, room] of entries(doc.rooms)) buildingOf.set(rid, get(doc.levels, room.level)!.building);
-  const halls = [...buildingOf.keys()].filter((r) => functionOf(doc, r) === 'circulation').sort(cmp);
+  // 14.1 (Core 0.3): a stair links its foot room and its head room; a building with a stair no
+  // longer joins its levels through rooms of function `circulation`.
+  if (entries(doc.stairs).length) for (const [a, b] of stairLinks(new StairContext(doc, analysis.levels))) link(a, b);
+  const withStairs = new Set(entries(doc.stairs).map(([, st]) => get(doc.levels, st.level)!.building));
+  const halls = [...buildingOf.keys()].filter((r) => functionOf(doc, r) === 'circulation' && !withStairs.has(buildingOf.get(r)!)).sort(cmp);
   for (let i = 0; i < halls.length; i++)
     for (let k = i + 1; k < halls.length; k++) {
       const a = halls[i]!;
