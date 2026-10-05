@@ -1,0 +1,7 @@
+{
+  "description": "A member set, one changed and one removed: the inverse sets what A has and B lacks or has differently, and unsets what B has and A lacks, by member name.",
+  "covers": [
+    "FS-OPS-1.6.1",
+    "FS-OPS-2.3.1"
+  ]
+}

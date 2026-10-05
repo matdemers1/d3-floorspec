@@ -1,0 +1,7 @@
+{
+  "description": "The first operation moves J8 so that W8 crosses the north wall; the second asks for \"north wall of Kitchen\" on that working copy. Its level breaks Core 5.3: FS-OPS-007 names L1.",
+  "covers": [
+    "FS-OPS-3.4.1",
+    "FS-OPS-7.1.1"
+  ]
+}

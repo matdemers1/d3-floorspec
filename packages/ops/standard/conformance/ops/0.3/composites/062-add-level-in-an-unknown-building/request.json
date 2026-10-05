@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "addLevel",
+      "building": "B9",
+      "elevation": 0,
+      "height": "8'"
+    }
+  ]
+}

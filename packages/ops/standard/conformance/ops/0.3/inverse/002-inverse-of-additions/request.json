@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "drawWall",
+      "level": "L1",
+      "from": ["2'", "7'"],
+      "to": ["8'", "7'"],
+      "type": "WT"
+    },
+    {
+      "op": "addOpening",
+      "wall": "W5",
+      "at": "centered",
+      "fill": "T-door-36"
+    }
+  ]
+}

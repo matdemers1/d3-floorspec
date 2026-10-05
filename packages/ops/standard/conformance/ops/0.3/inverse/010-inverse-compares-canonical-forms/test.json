@@ -1,0 +1,6 @@
+{
+  "description": "A writes \"justification\": \"center\" explicitly; the batch sets it to \"center\" again. The two are the same in canonical form, so nothing is inverted for it.",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

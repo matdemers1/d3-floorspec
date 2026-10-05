@@ -1,0 +1,6 @@
+{
+  "description": "Levels added earlier in the batch are in the working copy: L2 above L1, then L3 above L2 at 3456000 + 3121152, then L4 below L1.",
+  "covers": [
+    "FS-OPS-4.8.1"
+  ]
+}

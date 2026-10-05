@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "addJunction",
+      "id": "J9",
+      "level": "L1",
+      "position": ["3'", "3'"]
+    },
+    {
+      "op": "addJunction",
+      "id": "J9",
+      "level": "L1",
+      "position": ["4'", "3'"]
+    }
+  ]
+}

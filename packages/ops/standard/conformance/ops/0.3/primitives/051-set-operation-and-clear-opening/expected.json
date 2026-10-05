@@ -1,0 +1,36 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "7d0263a823222709835b2575a1ba9543c2da1d11394525a55382d3b0e2219b1b",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "T-door-36",
+      "path": "/operation",
+      "value": "pocket"
+    },
+    {
+      "op": "setProperty",
+      "id": "T-door-36",
+      "path": "/clearOpening",
+      "value": {
+        "height": 2568448,
+        "width": 1105408
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "T-door-36",
+      "path": "/clearOpening"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "T-door-36",
+      "path": "/operation"
+    }
+  ]
+}

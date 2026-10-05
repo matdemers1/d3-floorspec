@@ -1,0 +1,47 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "658507ff3b900032d01691bcce8a0086b0e32a6f17c9e5fa4564ad7c462f3c9f",
+  "created": [],
+  "removed": ["GAR"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "GAR"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "GAR",
+      "element": {
+        "function": "garage",
+        "name": "Garage"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/program/adjacency",
+      "value": [
+        {
+          "a": "KIT",
+          "b": "DIN",
+          "kind": "required"
+        },
+        {
+          "a": "KIT",
+          "b": "PAN",
+          "kind": "preferred",
+          "weight": 3
+        },
+        {
+          "a": "GAR",
+          "b": "KIT",
+          "kind": "forbidden"
+        }
+      ]
+    }
+  ]
+}

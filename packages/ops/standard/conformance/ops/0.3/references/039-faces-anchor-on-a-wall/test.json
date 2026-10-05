@@ -1,0 +1,6 @@
+{
+  "description": "An anchor on a location line is in no face.",
+  "covers": [
+    "FS-OPS-3.4.1"
+  ]
+}

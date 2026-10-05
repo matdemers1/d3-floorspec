@@ -1,0 +1,27 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "14a5db42997fa6be3d705cfa6deb52ca614725cbf91dcd7a6bf02edddcfb1003",
+  "created": ["OFF"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "items",
+      "id": "OFF",
+      "element": {
+        "extras": {
+          "source": "interview"
+        },
+        "function": "office",
+        "minArea": 14745600000000
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "OFF"
+    }
+  ]
+}

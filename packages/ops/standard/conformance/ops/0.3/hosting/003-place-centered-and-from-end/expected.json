@@ -1,0 +1,70 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "9a5ea3b3e946349d4ca641c4800e68f69c38a5ed8e76f04e90ff2b158ab63cdd",
+  "created": ["X1", "X2"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "devices",
+      "id": "X1",
+      "element": {
+        "device": "receptacle",
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [25600, 51200, 128000],
+            "min": [0, -51200, 0]
+          }
+        },
+        "host": {
+          "height": 384000,
+          "mode": "wallFace",
+          "offset": 2340864,
+          "side": "right",
+          "wall": "W2"
+        }
+      },
+      "extension": "FS_electrical"
+    },
+    {
+      "op": "addElement",
+      "collection": "devices",
+      "id": "X2",
+      "element": {
+        "device": "receptacle",
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [25600, 51200, 128000],
+            "min": [0, -51200, 0]
+          }
+        },
+        "host": {
+          "height": 384000,
+          "mode": "wallFace",
+          "offset": 3511296,
+          "side": "right",
+          "wall": "W2"
+        }
+      },
+      "extension": "FS_electrical"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "X1"
+    },
+    {
+      "op": "removeElement",
+      "id": "X2"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extensions"
+    }
+  ]
+}

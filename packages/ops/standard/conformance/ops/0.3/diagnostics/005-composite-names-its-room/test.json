@@ -1,0 +1,7 @@
+{
+  "description": "FS-OPS-008 for resizeRoom names the room.",
+  "covers": [
+    "FS-OPS-7.1.1",
+    "FS-OPS-4.4.1"
+  ]
+}

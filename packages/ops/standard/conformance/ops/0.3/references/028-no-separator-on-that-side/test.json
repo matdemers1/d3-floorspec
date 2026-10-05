@@ -1,0 +1,6 @@
+{
+  "description": "The Kitchen's east side is a wall: \"east separator of Kitchen\" matches nothing.",
+  "covers": [
+    "FS-OPS-3.3.1"
+  ]
+}

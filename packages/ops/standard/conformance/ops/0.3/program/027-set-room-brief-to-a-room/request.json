@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "setRoomBrief",
+      "room": "Dining",
+      "item": "R1"
+    }
+  ]
+}

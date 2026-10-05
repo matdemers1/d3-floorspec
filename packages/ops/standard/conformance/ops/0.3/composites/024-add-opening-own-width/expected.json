@@ -1,0 +1,28 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "ed60dd2c02321b4115ce261fb436eecb7c73f91da31c296cb62934e4048c197d",
+  "created": ["O1"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "height": 1560576,
+        "name": "Window",
+        "offset": 1853184,
+        "sill": 1170432,
+        "wall": "W2",
+        "width": 975360
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "O1"
+    }
+  ]
+}

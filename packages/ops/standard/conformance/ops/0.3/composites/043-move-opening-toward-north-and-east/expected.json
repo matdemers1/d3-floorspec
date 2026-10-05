@@ -1,0 +1,59 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "67a4e0b69e9aa63f15b8bfc47c04bb1471898063820e065f13b7eac7e8310693",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "O1",
+      "path": "/offset",
+      "value": 1950720
+    },
+    {
+      "op": "setProperty",
+      "id": "O2",
+      "path": "/offset",
+      "value": 1950720
+    },
+    {
+      "op": "setProperty",
+      "id": "O3",
+      "path": "/offset",
+      "value": 1170432
+    },
+    {
+      "op": "setProperty",
+      "id": "O4",
+      "path": "/offset",
+      "value": 1170432
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "O1",
+      "path": "/offset",
+      "value": 1560576
+    },
+    {
+      "op": "setProperty",
+      "id": "O2",
+      "path": "/offset",
+      "value": 1560576
+    },
+    {
+      "op": "setProperty",
+      "id": "O3",
+      "path": "/offset",
+      "value": 1560576
+    },
+    {
+      "op": "setProperty",
+      "id": "O4",
+      "path": "/offset",
+      "value": 1560576
+    }
+  ]
+}

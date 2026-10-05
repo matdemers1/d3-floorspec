@@ -1,0 +1,6 @@
+{
+  "description": "A negative \"by\" moves the wall to its right: the north wall 1' south, into the room.",
+  "covers": [
+    "FS-OPS-4.2.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "cascade does not apply to a type: removing WT with cascade true is still blocked by the four walls that use it.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-2.2.2"
+  ]
+}

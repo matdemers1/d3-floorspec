@@ -1,0 +1,7 @@
+{
+  "description": "A pendant on the ceiling of \"living\" - a room name, compared ignoring case - at (6', 5'), its coordinates written as lengths.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-3.3.1"
+  ]
+}

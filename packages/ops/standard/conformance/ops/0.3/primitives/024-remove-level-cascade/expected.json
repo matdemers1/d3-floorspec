@@ -1,0 +1,138 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "4b1ea744567c35d2bf8522d5c07aea1ade2049391bad06441a35ccb34c9399b4",
+  "created": [],
+  "removed": ["K1", "K2", "K3", "K4", "L2", "O1", "R2", "SL1", "V1", "V2", "V3", "V4"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "L2",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L2",
+      "element": {
+        "building": "B1",
+        "elevation": 3456000,
+        "height": 3456000
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "junctions",
+      "id": "K1",
+      "element": {
+        "level": "L2",
+        "position": [0, 0]
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "junctions",
+      "id": "K2",
+      "element": {
+        "level": "L2",
+        "position": [0, 3121152]
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "junctions",
+      "id": "K3",
+      "element": {
+        "level": "L2",
+        "position": [3121152, 3121152]
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "junctions",
+      "id": "K4",
+      "element": {
+        "level": "L2",
+        "position": [3121152, 0]
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "V1",
+      "element": {
+        "level": "L2",
+        "start": "K1",
+        "end": "K2",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "V2",
+      "element": {
+        "level": "L2",
+        "start": "K2",
+        "end": "K3",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "V3",
+      "element": {
+        "level": "L2",
+        "start": "K3",
+        "end": "K4",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "V4",
+      "element": {
+        "level": "L2",
+        "start": "K4",
+        "end": "K1",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "slabs",
+      "id": "SL1",
+      "element": {
+        "level": "L2",
+        "boundary": [[0, 0], [3121152, 0], [3121152, -1560576]],
+        "thickness": 256000
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R2",
+      "element": {
+        "level": "L2",
+        "anchor": [1560576, 1560576],
+        "name": "Loft"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "height": 1560576,
+        "offset": 780288,
+        "sill": 1170432,
+        "wall": "V1",
+        "width": 1170432
+      }
+    }
+  ]
+}

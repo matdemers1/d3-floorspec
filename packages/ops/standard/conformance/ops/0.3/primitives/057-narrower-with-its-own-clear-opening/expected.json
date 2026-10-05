@@ -1,0 +1,36 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "5174fbbd8608af0c3ce33a75db8071671ff6555e1c0dac2c5941f94b2b2462e2",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "O1",
+      "path": "/width",
+      "value": 975360
+    },
+    {
+      "op": "setProperty",
+      "id": "O1",
+      "path": "/clearOpening",
+      "value": {
+        "height": 2568448,
+        "width": 910336
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "O1",
+      "path": "/clearOpening"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "O1",
+      "path": "/width"
+    }
+  ]
+}

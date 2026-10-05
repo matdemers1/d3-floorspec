@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "addLevel",
+      "id": "L0",
+      "building": "B1",
+      "elevation": "-8'",
+      "height": "7' 6\"",
+      "extras": {
+        "use": "storage"
+      }
+    }
+  ]
+}

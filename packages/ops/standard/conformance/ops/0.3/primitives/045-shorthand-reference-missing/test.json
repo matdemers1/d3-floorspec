@@ -1,0 +1,7 @@
+{
+  "description": "addWall's start is a reference, resolved before the wall is added: J99 names no junction, FS-OPS-003 - where addElement with the same content would be added and rejected at validation.",
+  "covers": [
+    "FS-OPS-2.1.2",
+    "FS-OPS-3.3.1"
+  ]
+}

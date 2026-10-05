@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "moveElement",
+      "element": "X1",
+      "host": {
+        "mode": "surface",
+        "room": "Loft",
+        "surface": "floor",
+        "at": ["4'", "4'"]
+      }
+    }
+  ]
+}

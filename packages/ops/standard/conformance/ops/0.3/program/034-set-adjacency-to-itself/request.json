@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setAdjacency",
+      "a": "KIT",
+      "b": "Kitchen",
+      "kind": "preferred"
+    }
+  ]
+}

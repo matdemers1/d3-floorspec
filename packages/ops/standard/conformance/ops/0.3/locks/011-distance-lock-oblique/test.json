@@ -1,0 +1,6 @@
+{
+  "description": "Two parallel oblique walls locked apart, both moved by the same vector: the distance is unchanged (compared exactly, by squared cross products).",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

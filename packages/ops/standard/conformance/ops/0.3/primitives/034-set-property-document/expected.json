@@ -1,0 +1,35 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "eb145d37193b5a362678f01c3933fdd8763a3d3685c51dc6a60c5194d695509c",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensionsUsed",
+      "value": {
+        "EXT_acoustics": "1.0"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extras/importer",
+      "value": "conformance"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extensionsUsed"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extras"
+    }
+  ]
+}

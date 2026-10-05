@@ -1,0 +1,6 @@
+{
+  "description": "A model asset is a piece's fallback model: removing the asset is blocked by the piece.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "addProgramItem adds a brief item: \"Bedroom\", three of them, each at least 11 m2 and meant to be 150 sq ft, preferred on L1. The areas resolve exactly - 11 m2 is 18,022,400,000,000 square base units, 150 sq ft is 22,831,851,110,400 - and the ID is minted, P1.",
+  "covers": [
+    "FS-OPS-4.9.1",
+    "FS-OPS-3.6.1",
+    "FS-OPS-1.5.1",
+    "FS-OPS-2.1.3"
+  ]
+}

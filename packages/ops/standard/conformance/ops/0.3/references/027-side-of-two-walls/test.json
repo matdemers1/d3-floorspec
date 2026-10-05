@@ -1,0 +1,7 @@
+{
+  "description": "The Dining room's west side is two walls, W8 and W9: \"west wall of Dining\" is ambiguous, FS-OPS-004.",
+  "covers": [
+    "FS-OPS-3.3.1",
+    "FS-OPS-3.4.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "Removing G2 with cascade takes the two walls that end at it and, through W5, its gate - and nothing else: G1 and G3 stay.",
+  "covers": [
+    "FS-OPS-2.2.2"
+  ]
+}

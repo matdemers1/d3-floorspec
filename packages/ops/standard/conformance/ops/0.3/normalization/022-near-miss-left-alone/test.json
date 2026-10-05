@@ -1,0 +1,7 @@
+{
+  "description": "A wall W5 along x + y = 4000001 passes 0.7 base units from the post P - inside P's pixel, but not through P - in a valid A. A rename elsewhere leaves the level satisfying Core 5.3, so it is not planarized: W5 is not split, and B is A but for the name.",
+  "covers": [
+    "FS-OPS-5.2.1",
+    "FS-OPS-5.4.1"
+  ]
+}

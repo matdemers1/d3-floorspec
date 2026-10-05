@@ -1,0 +1,7 @@
+{
+  "description": "The same clear opening without declaring \"0.3\": the result declares \"0.2\", whose schema has no \"clearOpening\" (Core 1.2.6), so it is invalid and the rejection carries FS-SCH-001.",
+  "covers": [
+    "FS-OPS-1.2.3",
+    "FS-OPS-1.2.2"
+  ]
+}

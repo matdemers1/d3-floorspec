@@ -1,0 +1,76 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "7ab4d5fc3793343f03096e8520814f6dee2a18fcf9d1592e331ba92c6240030b",
+  "created": ["J10", "J9", "O1", "S1", "W11"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O1",
+      "element": {
+        "extras": {
+          "glazing": "double"
+        },
+        "height": 1170432,
+        "name": "Pantry window",
+        "offset": 780288,
+        "sill": 1170432,
+        "wall": "W3",
+        "width": 780288
+      }
+    },
+    {
+      "op": "addJunction",
+      "id": "J9",
+      "level": "L1",
+      "position": [9363456, 2340864]
+    },
+    {
+      "op": "addJunction",
+      "id": "J10",
+      "level": "L1",
+      "position": [10924032, 2340864]
+    },
+    {
+      "op": "addSeparator",
+      "id": "S1",
+      "level": "L1",
+      "start": "J9",
+      "end": "J10",
+      "extensions": {
+        "EXT_acoustics": {}
+      },
+      "name": "Patio edge"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "W5",
+      "path": "/end",
+      "value": "J6"
+    },
+    {
+      "op": "removeElement",
+      "id": "O1"
+    },
+    {
+      "op": "removeElement",
+      "id": "S1"
+    },
+    {
+      "op": "removeElement",
+      "id": "W11"
+    },
+    {
+      "op": "removeElement",
+      "id": "J10"
+    },
+    {
+      "op": "removeElement",
+      "id": "J9"
+    }
+  ]
+}

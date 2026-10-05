@@ -1,0 +1,7 @@
+{
+  "description": "The inverse of removing G2 with cascade re-adds what it took, in the reverse collection order - junctions, then walls, then openings - each exactly as it was in A.",
+  "covers": [
+    "FS-OPS-1.6.1",
+    "FS-OPS-2.2.2"
+  ]
+}

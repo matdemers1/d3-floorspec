@@ -1,0 +1,6 @@
+{
+  "description": "Giving a type with no clear opening one: the inverse unsets it, and applying the inverse gives back A exactly (1.6.1).",
+  "covers": [
+    "FS-OPS-1.6.1"
+  ]
+}

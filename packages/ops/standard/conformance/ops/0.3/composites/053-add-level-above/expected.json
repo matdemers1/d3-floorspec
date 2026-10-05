@@ -1,0 +1,26 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "3e01905a02e9a19d0bd5b78f7700792b4d270275f68f03c55279dde0e369b876",
+  "created": ["L2"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "levels",
+      "id": "L2",
+      "element": {
+        "building": "B1",
+        "elevation": 3456000,
+        "height": 3121152,
+        "name": "Second floor"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "L2"
+    }
+  ]
+}

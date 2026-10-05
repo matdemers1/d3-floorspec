@@ -1,0 +1,6 @@
+{
+  "description": "Two junctions at one position (Core 5.1) leave a level with no faces to give: FS-OPS-007.",
+  "covers": [
+    "FS-OPS-3.4.1"
+  ]
+}

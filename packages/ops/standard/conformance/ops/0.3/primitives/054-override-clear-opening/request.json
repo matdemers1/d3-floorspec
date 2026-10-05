@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "O1",
+      "path": "/clearOpening",
+      "value": {
+        "width": 975360,
+        "height": 2568448
+      }
+    }
+  ]
+}

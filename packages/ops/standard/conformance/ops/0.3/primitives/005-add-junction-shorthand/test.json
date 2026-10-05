@@ -1,0 +1,6 @@
+{
+  "description": "addJunction is addElement into junctions: the same document as the previous test, byte for byte, the name carried as every element may carry one.",
+  "covers": [
+    "FS-OPS-2.1.2"
+  ]
+}

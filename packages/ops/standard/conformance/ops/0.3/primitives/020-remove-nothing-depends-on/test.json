@@ -1,0 +1,7 @@
+{
+  "description": "An opening, a slab and a room are removed; nothing blocks them and cascade changes nothing.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-2.2.2"
+  ]
+}

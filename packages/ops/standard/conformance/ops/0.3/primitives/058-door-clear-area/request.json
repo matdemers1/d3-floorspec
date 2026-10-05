@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "T-door-36",
+      "path": "/clearOpening/area",
+      "value": 2672172204032
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A hosted element is placed by a point, so a position is resolved with width 0: \"centered\" on the 12' wall W2 is 6', and \"3' from end\" is 9'.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-3.5.1"
+  ]
+}

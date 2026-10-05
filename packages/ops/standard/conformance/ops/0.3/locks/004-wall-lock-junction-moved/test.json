@@ -1,0 +1,6 @@
+{
+  "description": "The wall W6 is locked: its content does not change, but its end junction J7 moves 2' east.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

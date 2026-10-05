@@ -1,0 +1,77 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "a777b5e67be2e4ea30ad483412f6ebd9ba6a04231feb6b0dd07c0b95f7b6b7a0",
+  "created": ["J5", "J6", "R2", "S1", "W5", "W6"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addJunction",
+      "id": "J5",
+      "level": "L1",
+      "position": [3121152, 0]
+    },
+    {
+      "op": "addJunction",
+      "id": "J6",
+      "level": "L1",
+      "position": [3121152, 3901440]
+    },
+    {
+      "op": "addSeparator",
+      "id": "S1",
+      "level": "L1",
+      "start": "J5",
+      "end": "J6"
+    },
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R2",
+      "element": {
+        "level": "L1",
+        "anchor": [3901440, 1950720],
+        "function": "kitchen",
+        "name": "Kitchen"
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "W2",
+      "path": "/end",
+      "value": "J3"
+    },
+    {
+      "op": "setProperty",
+      "id": "W4",
+      "path": "/end",
+      "value": "J1"
+    },
+    {
+      "op": "removeElement",
+      "id": "R2"
+    },
+    {
+      "op": "removeElement",
+      "id": "S1"
+    },
+    {
+      "op": "removeElement",
+      "id": "W5"
+    },
+    {
+      "op": "removeElement",
+      "id": "W6"
+    },
+    {
+      "op": "removeElement",
+      "id": "J5"
+    },
+    {
+      "op": "removeElement",
+      "id": "J6"
+    }
+  ]
+}

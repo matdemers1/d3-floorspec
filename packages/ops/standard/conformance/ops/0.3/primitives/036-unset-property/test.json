@@ -1,0 +1,6 @@
+{
+  "description": "unsetProperty removes a member, so its default applies again: the room has no name.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "addOpening",
+      "wall": "W2",
+      "at": "18\" from start",
+      "fill": "T-door-36"
+    }
+  ]
+}

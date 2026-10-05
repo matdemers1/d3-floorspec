@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "W8",
+      "path": "/name",
+      "value": "Kitchen east"
+    }
+  ],
+  "context": {
+    "locks": [
+      {
+        "element": "W8"
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "moveElement",
+      "element": "fridge outlet",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W2",
+        "at": "4'",
+        "height": 384000,
+        "side": "right"
+      }
+    }
+  ]
+}

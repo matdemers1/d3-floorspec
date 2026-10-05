@@ -1,0 +1,34 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "b64131ba2b84592be3ba764dc974aff60f1f8e92433d40b25cefc53ef365e4b1",
+  "created": ["O2"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "openings",
+      "id": "O2",
+      "element": {
+        "fill": "T-door-36",
+        "offset": 1755648,
+        "wall": "W2"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "O2",
+      "path": "/clearOpening",
+      "value": {
+        "height": 2568448,
+        "width": 1007872
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "O2"
+    }
+  ]
+}

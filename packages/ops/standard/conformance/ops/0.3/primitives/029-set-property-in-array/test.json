@@ -1,0 +1,6 @@
+{
+  "description": "A path may index into an array: the wall type's first layer's thickness.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

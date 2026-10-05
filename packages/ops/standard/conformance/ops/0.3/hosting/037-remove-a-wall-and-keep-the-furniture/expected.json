@@ -1,0 +1,82 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "e3462998d521209a307319a36b4b4894e70e3b2f3ae4c2108f620a7bc9d1f62c",
+  "created": [],
+  "removed": ["R3", "W8", "X1"],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "X2",
+      "path": "/host/room",
+      "value": "R1"
+    },
+    {
+      "op": "removeElement",
+      "id": "R3"
+    },
+    {
+      "op": "removeElement",
+      "id": "W8",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X2",
+      "path": "/host",
+      "value": {
+        "position": [7022592, 2340864],
+        "mode": "surface",
+        "room": "R3",
+        "surface": "floor"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W8",
+      "element": {
+        "level": "L1",
+        "start": "J7",
+        "end": "J8",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R3",
+      "element": {
+        "level": "L1",
+        "anchor": [7022592, 2340864],
+        "function": "dining",
+        "name": "Dining"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "devices",
+      "id": "X1",
+      "element": {
+        "device": "receptacle",
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [25600, 51200, 128000],
+            "min": [0, -51200, 0]
+          }
+        },
+        "host": {
+          "height": 384000,
+          "mode": "wallFace",
+          "offset": 1560576,
+          "side": "left",
+          "wall": "W8"
+        }
+      },
+      "extension": "FS_electrical"
+    }
+  ]
+}

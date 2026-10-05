@@ -1,0 +1,6 @@
+{
+  "description": "moveJunction is setProperty of /position: the same document as the previous test.",
+  "covers": [
+    "FS-OPS-2.4.1"
+  ]
+}

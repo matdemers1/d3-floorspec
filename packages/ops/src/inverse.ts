@@ -5,7 +5,7 @@
  */
 import { jsonEqual } from '@floorspec/engine';
 import { applyPrimitive } from './primitives.js';
-import { extCollectionsOf, ITEMS, itemsOf, WorkingCopy, type CollectionName, type OpsVersion, type Place } from './model/working.js';
+import { atLeast02, extCollectionsOf, ITEMS, itemsOf, WorkingCopy, type CollectionName, type OpsVersion, type Place } from './model/working.js';
 import type { ResolvedPrimitive } from './types.js';
 import { clone, cmpStr, escapeToken, getMember, isObject, sortedKeys, type JsonObject } from './lib/json.js';
 
@@ -65,7 +65,7 @@ function documentDiff(aCanon: JsonObject, b: JsonObject, ops: OpsVersion): Resol
   else if (sa !== undefined) out.push({ op: 'setProperty', id: '$document', path: '/site', value: clone(sa) });
   else if (sb !== undefined) out.push({ op: 'unsetProperty', id: '$document', path: '/site' });
   const rest: string[] = [...DOCUMENT_MEMBERS];
-  if (ops === '0.2') {
+  if (atLeast02(ops)) {
     const pa = getMember(aCanon, 'program');
     const pb = getMember(b, 'program');
     // Ops 0.2: when both have a program, its members are compared one by one.
@@ -77,7 +77,7 @@ function documentDiff(aCanon: JsonObject, b: JsonObject, ops: OpsVersion): Resol
 }
 
 export function inverseOf(aCanon: JsonObject, bCanon: JsonObject, ops: OpsVersion = '0.2'): ResolvedPrimitive[] {
-  if (ops === '0.2') return inverse02(aCanon, bCanon);
+  if (atLeast02(ops)) return inverse02(aCanon, bCanon);
   // 1. Property differences, by collection in the order of step 2 and by ID.
   const out: ResolvedPrimitive[] = [];
   for (const c of INVERSE_ORDER) {

@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/host/offset",
+      "value": 5071872
+    },
+    {
+      "op": "drawWall",
+      "level": "L1",
+      "from": ["4'", "-1'"],
+      "to": ["4'", "11'"],
+      "type": "WT"
+    }
+  ]
+}

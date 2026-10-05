@@ -101,8 +101,9 @@ const SHAPES_02: Readonly<Record<OperationName, OpShape>> = {
 };
 
 /** The operations of each draft and their members. */
-export const OP_SHAPES_BY_VERSION: Readonly<Record<OpsVersion, Readonly<Partial<Record<OperationName, OpShape>>>>> = { '0.1': SHAPES_01, '0.2': SHAPES_02 };
-/** The operations of Ops 0.2, the current draft, and their members. */
+/** Ops 0.3 adds no operation and no member: its requests have exactly Ops 0.2's shape (Ops 0.3 §0.4, §1.1). */
+export const OP_SHAPES_BY_VERSION: Readonly<Record<OpsVersion, Readonly<Partial<Record<OperationName, OpShape>>>>> = { '0.1': SHAPES_01, '0.2': SHAPES_02, '0.3': SHAPES_02 };
+/** The operations of Ops 0.3 — the current draft, whose operations are Ops 0.2's — and their members. */
 export const OP_SHAPES: Readonly<Record<OperationName, OpShape>> = SHAPES_02;
 
 /** 4.10: the members of a host reference, by mode. */
@@ -181,7 +182,7 @@ function checkHost(host: Record<string, unknown>, base: string, tokens: (string 
  * Check a request's shape (1.1.1), throwing FS-OPS-001 at the first problem. `nonInteger` holds the
  * pointers of numbers written with a fraction or an exponent, which are not JSON integers.
  */
-export function checkRequest(request: unknown, nonInteger: ReadonlySet<string> = new Set(), ops: OpsVersion = '0.2'): ApplyRequest {
+export function checkRequest(request: unknown, nonInteger: ReadonlySet<string> = new Set(), ops: OpsVersion = '0.3'): ApplyRequest {
   const shapes = OP_SHAPES_BY_VERSION[ops];
   if (!isObject(request)) return fail('FS-OPS-001', 'an apply request is an object { "batch": [...], "context"?: {...} }', [], '');
   for (const k of Object.keys(request))

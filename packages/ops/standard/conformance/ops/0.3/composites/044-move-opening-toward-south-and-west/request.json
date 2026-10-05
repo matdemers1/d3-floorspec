@@ -1,0 +1,28 @@
+{
+  "batch": [
+    {
+      "op": "moveOpening",
+      "opening": "O1",
+      "by": "1'",
+      "toward": "south"
+    },
+    {
+      "op": "moveOpening",
+      "opening": "O2",
+      "by": "1'",
+      "toward": "west"
+    },
+    {
+      "op": "moveOpening",
+      "opening": "O3",
+      "by": "-1'",
+      "toward": "south"
+    },
+    {
+      "op": "moveOpening",
+      "opening": "O4",
+      "by": "1'",
+      "toward": "west"
+    }
+  ]
+}

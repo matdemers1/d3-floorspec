@@ -1,0 +1,6 @@
+{
+  "description": "Removing building B1 without cascade is blocked by its levels.",
+  "covers": [
+    "FS-OPS-2.2.1"
+  ]
+}

@@ -1,13 +1,18 @@
 # @floorspec/ops
 
-The reference applier of **Floorspec Ops 0.2** (`../floorspec/spec/ops/`), and of Ops 0.1 as
-published: every change to a Floorspec document is a batch of operations applied as one
+The reference applier of **Floorspec Ops 0.3** (`../floorspec/spec/ops/`), and of Ops 0.2 and 0.1
+as published: every change to a Floorspec document is a batch of operations applied as one
 transaction (FLR-ADR-008). Isomorphic like `@floorspec/engine`, which it is built on
 (FLR-ADR-010): the editor, the server, the MCP server and the CLI apply the same edit to the same
 bytes.
 
-The draft is chosen per call. **Ops 0.2**, the default, applies to Core 0.2 documents and to Core
-0.1 ones (a Core 0.2 reader reads both), and adds the program and extension elements as things an
+The draft is chosen per call. **Ops 0.3**, the default, is Ops 0.2 applied with a Core 0.3 reader:
+no new operation and no new member (its requests match `schema/ops/0.2`), but it applies to Core 0.3
+documents — a door or window type's `operation` and `clearOpening`, and an opening's own
+`clearOpening`, are members `setProperty` and `unsetProperty` address like any other, and a result
+is judged by Core 0.3's invariants (`FS-INV-305` … `308`). **Ops 0.2** (`{ ops: '0.2' }`) is the
+published draft: Core 0.2 documents and Core 0.1 ones (a document declaring "0.3" is `FS-OPS-002`),
+and adds the program and extension elements as things an
 edit addresses: program items (`addProgramItem`, `addElement` into `items`, `setAdjacency`,
 `removeAdjacency`, `addRoom`'s `brief`, `setRoomBrief`, the selectors `item <item>` and
 `brief of <room>`, areas such as `"11 m2"`), extension elements (`placeElement` and `moveElement`
@@ -16,7 +21,8 @@ walls), relative `moveOpening` and `addLevel`. **Ops 0.1** (`{ ops: '0.1' }`) is
 draft exactly: Core 0.1 documents only, and every 0.2 operation or member is `FS-OPS-001`.
 
 An edit never changes a document's declared version by itself (Ops writes no declaration
-implicitly): a 0.1 document stays 0.1 until a batch sets `$document` `/floorspec` to `"0.2"`.
+implicitly): a 0.1 document stays 0.1 until a batch sets `$document` `/floorspec` to `"0.2"`, and a
+0.2 document stays 0.2 until one sets it to `"0.3"` (Ops 0.3 only).
 
 ```ts
 import { apply, resolveBatch, parseLength, formatLength } from '@floorspec/ops';
@@ -24,7 +30,7 @@ import { apply, resolveBatch, parseLength, formatLength } from '@floorspec/ops';
 const r = apply(modelJson, {
   batch: [{ op: 'resizeRoom', room: 'Kitchen', side: 'east', by: "2'" }],
   context: { locks: [{ element: 'R5' }], retired: ['W9'] },
-}); // options: { ops: '0.1' | '0.2' (default), knownExtensions? } — the validator's registry entries
+}); // options: { ops: '0.1' | '0.2' | '0.3' (default), knownExtensions?, extensions? } — the validator's registry entries
 if (r.status === 'committed') {
   r.document; // B, canonical form (Core §9.2) — the exact bytes to store
   r.hash; // B's content hash (Core §9.3)
@@ -52,7 +58,7 @@ formatLength(4893056); // `12' 6 1/2"` (1/16" by default); { system: 'metric' } 
 | `src/normalize.ts` | 5.1 merge → 5.2 snap rounding (only on a level that breaks Core §5.3), splitting, re-hosting openings and hosted elements → 5.3 join cleanup |
 | `src/locks.ts`, `src/inverse.ts` | locks (ch. 6); the inverse (1.6) |
 | `src/types.ts` | request, operation and result types |
-| `standard/` | both Ops conformance suites (0.1: 230 cases, 0.2: 359), both schemas and the diagnostics chapter, vendored by `pnpm sync-standard` and pinned in `LOCK.json` |
+| `standard/` | the three Ops conformance suites (0.1: 230 cases, 0.2: 359, 0.3: 380), both schemas (0.3 has none of its own) and the diagnostics chapter, vendored by `pnpm sync-standard` and pinned in `LOCK.json` |
 
 ## Exactness and determinism
 
@@ -67,6 +73,6 @@ project (`pnpm test:browser`) applies the same fixtures in Chromium and requires
 ```sh
 pnpm --filter @floorspec/ops test            # unit tests (Node)
 pnpm --filter @floorspec/ops test:browser    # the same in Chromium, plus Node-vs-browser byte equality
-pnpm --filter @floorspec/ops conformance     # conformance/ops/0.1 as Ops 0.1 and conformance/ops/0.2 as Ops 0.2
+pnpm --filter @floorspec/ops conformance     # conformance/ops/<draft> as that draft, and the extensions' Ops cases
 pnpm --filter @floorspec/ops sync-standard [../floorspec] [--allow-dirty]
 ```

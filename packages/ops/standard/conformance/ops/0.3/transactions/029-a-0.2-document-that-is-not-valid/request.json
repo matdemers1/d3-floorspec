@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "Kitchen",
+      "path": "/name",
+      "value": "Galley"
+    }
+  ]
+}

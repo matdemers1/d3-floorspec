@@ -1,0 +1,7 @@
+{
+  "description": "removeWall of a wall with a room on each side and no keep: FS-OPS-008.",
+  "covers": [
+    "FS-OPS-4.7.1",
+    "FS-OPS-7.1.1"
+  ]
+}

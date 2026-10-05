@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "addRoom",
+      "level": "L1",
+      "at": ["30'", "5'"],
+      "brief": "Study"
+    }
+  ]
+}

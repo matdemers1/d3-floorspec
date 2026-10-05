@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "L1",
+      "path": "/height"
+    },
+    {
+      "op": "addLevel",
+      "building": "B1",
+      "above": "L1",
+      "height": "8'"
+    }
+  ]
+}

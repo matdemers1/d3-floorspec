@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "setRoomFinish",
+      "room": "Kitchen",
+      "surface": "floor",
+      "material": "M1"
+    }
+  ],
+  "context": {
+    "locks": [],
+    "user": "matt"
+  }
+}

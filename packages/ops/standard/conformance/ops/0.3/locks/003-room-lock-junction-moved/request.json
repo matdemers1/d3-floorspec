@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "moveJunction",
+      "id": "J3",
+      "to": ["-1'", "12'"]
+    }
+  ],
+  "context": {
+    "locks": [
+      {
+        "element": "R2"
+      }
+    ]
+  }
+}

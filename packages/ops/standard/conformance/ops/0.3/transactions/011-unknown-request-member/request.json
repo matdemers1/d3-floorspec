@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "moveJunction",
+      "id": "J8",
+      "to": [0, 0]
+    }
+  ],
+  "dryRun": true
+}

@@ -1,0 +1,9 @@
+{
+  "description": "Both the request (an empty batch) and A (crossing walls) are wrong. The request is checked before A (1.2, 7.1), so the rejection is FS-OPS-001 alone.",
+  "covers": [
+    "FS-OPS-1.1.2",
+    "FS-OPS-1.2.1",
+    "FS-OPS-7.1.1",
+    "FS-OPS-7.1.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "setProperty addresses an extension element by ID: the outlet is raised to 600 mm, a path relative to the element.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

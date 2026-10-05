@@ -1,0 +1,6 @@
+{
+  "description": "addWall is addElement into walls: the same document as the previous test.",
+  "covers": [
+    "FS-OPS-2.1.2"
+  ]
+}

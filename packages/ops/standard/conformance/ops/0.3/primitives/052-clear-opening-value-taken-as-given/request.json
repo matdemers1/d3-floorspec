@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "T-door-36",
+      "path": "/clearOpening",
+      "value": {
+        "width": "34\"",
+        "height": 2568448
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "R1",
+      "path": "/brief"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R2",
+      "path": "/brief"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R3",
+      "path": "/brief"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/program"
+    }
+  ]
+}

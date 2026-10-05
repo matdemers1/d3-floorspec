@@ -1,0 +1,6 @@
+{
+  "description": "An element lock on the program item KIT: changing its minimum area breaks it.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

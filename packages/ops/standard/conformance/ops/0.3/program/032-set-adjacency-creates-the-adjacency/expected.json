@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "096f2a2792aece1e59a701dd978374464a213ceedf8552e2ca747eddeda69e90",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setAdjacency",
+      "a": "A1",
+      "b": "A2",
+      "kind": "required"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/program/adjacency"
+    }
+  ]
+}

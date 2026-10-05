@@ -1,0 +1,7 @@
+{
+  "description": "W1's level is removed earlier in the batch, so the host has no level to give the fallback: FS-OPS-003 names the wall.",
+  "covers": [
+    "FS-OPS-4.10.1",
+    "FS-OPS-7.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "setProperty of the door type's /clearOpening/width sets one member of the clear opening and leaves its height.",
+  "covers": [
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -11,8 +11,9 @@ import { describe, expect, it } from 'vitest';
 import { EXTENSION_IMPLEMENTATIONS, OFFICIAL_EXTENSION_NAMES, OFFICIAL_READER } from '@floorspec/engine';
 import { apply } from '../src/index.js';
 import { checkCase } from './check.js';
+import { EXT_SUITES } from './suite.js';
 
-const EXT = join(import.meta.dirname, '..', '..', 'engine', 'standard', 'conformance', 'ext');
+const EXT = EXT_SUITES;
 
 /** Every case directory that holds an apply request. */
 function opsCases(dir: string): string[] {

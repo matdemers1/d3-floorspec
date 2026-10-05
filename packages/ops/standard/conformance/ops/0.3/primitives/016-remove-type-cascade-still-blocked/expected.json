@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-OPS-006",
+      "severity": "error",
+      "elements": ["W1", "W2", "W3", "W4", "WT"]
+    }
+  ]
+}

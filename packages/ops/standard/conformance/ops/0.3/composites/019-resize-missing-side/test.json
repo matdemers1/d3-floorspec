@@ -1,0 +1,7 @@
+{
+  "description": "The triangle has no north side: FS-OPS-008.",
+  "covers": [
+    "FS-OPS-4.4.1",
+    "FS-OPS-7.1.1"
+  ]
+}

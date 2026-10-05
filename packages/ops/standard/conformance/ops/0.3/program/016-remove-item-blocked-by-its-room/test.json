@@ -1,0 +1,7 @@
+{
+  "description": "The Kitchen room's brief names KIT, so KIT cannot be removed: FS-OPS-006 names the item and the room.",
+  "covers": [
+    "FS-OPS-2.2.1",
+    "FS-OPS-7.1.1"
+  ]
+}

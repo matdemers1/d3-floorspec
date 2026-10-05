@@ -1,0 +1,7 @@
+{
+  "description": "addRoom and addOpening pass name, extensions and extras into the element as given.",
+  "covers": [
+    "FS-OPS-4.5.3",
+    "FS-OPS-4.6.1"
+  ]
+}
