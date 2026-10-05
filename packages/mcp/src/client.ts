@@ -110,7 +110,11 @@ export interface Findings {
   readonly rulePacks: readonly { readonly name: string; readonly version: string; readonly title: string }[];
   readonly note: string;
   readonly notice?: string;
+  /** The jurisdiction profile the findings were evaluated under (FLR-T-6.8), and its ID — null for the default. */
   readonly profile?: string;
+  readonly profileId?: string | null;
+  /** Where the installed packs' coverage matrix is shown: what is checked, what is not (FLR-REQ-096). */
+  readonly coverageUrl?: string;
   readonly diagnostics?: readonly { readonly code: string; readonly severity: string; readonly pack?: string; readonly rule?: string }[];
   readonly evaluated?: readonly { readonly pack: string; readonly version: string; readonly rule: string; readonly citation: FindingCitation; readonly subjects: number; readonly exempt: number; readonly findings: number }[];
   readonly notEvaluated?: readonly { readonly pack: string; readonly version: string; readonly rule: string; readonly reason: string }[];

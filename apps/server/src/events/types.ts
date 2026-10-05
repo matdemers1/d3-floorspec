@@ -43,9 +43,22 @@ export interface ChangesetEventData {
   readonly mergeMode: 'fast-forward' | 'replay' | null;
 }
 
+/**
+ * The jurisdiction profile the project's findings are evaluated under changed (FLR-T-6.8): another
+ * was chosen, or the one in use was edited or deleted. The model did not move, but its findings may
+ * have: a subscriber showing findings fetches them again.
+ */
+export interface ProfileEventData {
+  /** The profile now in use; null for the instance default. */
+  readonly id: string | null;
+  readonly name: string;
+  readonly change: 'chosen' | 'edited' | 'deleted';
+}
+
 export type ProjectEvent =
   | { readonly projectId: string; readonly type: 'head'; readonly data: HeadEventData }
-  | { readonly projectId: string; readonly type: 'changeset'; readonly data: ChangesetEventData };
+  | { readonly projectId: string; readonly type: 'changeset'; readonly data: ChangesetEventData }
+  | { readonly projectId: string; readonly type: 'profile'; readonly data: ProfileEventData };
 
 export type ProjectEventType = ProjectEvent['type'];
 

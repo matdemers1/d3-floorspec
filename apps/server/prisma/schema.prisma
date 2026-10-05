@@ -48,16 +48,17 @@ model Account {
   updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   disabledAt DateTime? @map("disabled_at") @db.Timestamptz(6)
 
-  credential     Credential?
-  identities     Identity[]
-  sessions       Session[]
-  projects       Project[]
-  invitesSent    Invite[]    @relation("InvitedBy")
-  acceptedInvite Invite?     @relation("AcceptedBy")
-  ops            OpLog[]
-  tokens         ApiToken[]
-  changesetsMade Changeset[] @relation("ChangesetCreatedBy")
-  changesetsClosed Changeset[] @relation("ChangesetClosedBy")
+  credential       Credential?
+  identities       Identity[]
+  sessions         Session[]
+  projects         Project[]
+  invitesSent      Invite[]      @relation("InvitedBy")
+  acceptedInvite   Invite?       @relation("AcceptedBy")
+  ops              OpLog[]
+  tokens           ApiToken[]
+  changesetsMade   Changeset[]   @relation("ChangesetCreatedBy")
+  changesetsClosed Changeset[]   @relation("ChangesetClosedBy")
+  ruleProfiles     RuleProfile[]
 
   @@map("accounts")
 }
@@ -174,14 +175,20 @@ model Project {
   /// Soft delete: the op log and the versions it points at are append-only and stay.
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  owner      Account     @relation(fields: [ownerAccountId], references: [id], onDelete: Restrict)
-  heads      Head[]
-  ops        OpLog[]
-  tokens     ApiToken[]
-  changesets Changeset[]
-  retiredIds RetiredId[]
+  /// The jurisdiction profile its findings are evaluated under (FLR-T-6.8). Null: the instance's
+  /// default — "Model Codes (latest)" (Rules 10.6) unless RULE_PROFILE names another.
+  ruleProfileId String? @map("rule_profile_id") @db.Uuid
+
+  owner       Account      @relation(fields: [ownerAccountId], references: [id], onDelete: Restrict)
+  ruleProfile RuleProfile? @relation(fields: [ruleProfileId], references: [id], onDelete: SetNull)
+  heads       Head[]
+  ops         OpLog[]
+  tokens      ApiToken[]
+  changesets  Changeset[]
+  retiredIds  RetiredId[]
 
   @@index([ownerAccountId])
+  @@index([ruleProfileId])
   @@map("projects")
 }
 
@@ -382,6 +389,28 @@ model ApiToken {
   @@index([accountId])
   @@index([projectId])
   @@map("api_tokens")
+}
+
+// ─── Code rules ────────────────────────────────────────────────────────────
+
+/// A jurisdiction profile an account built (Floorspec Rules 0.1, chapter 10; FLR-T-6.8,
+/// FLR-REQ-100): the code editions in force where a house is built, from when, and the cited local
+/// amendments that withdraw rules. `profile` is the standard's own JSON object, in canonical form,
+/// checked by @floorspec/rules-engine before it is stored; nothing here copies a code's text.
+/// Deleting one puts the projects that used it back on the default.
+model RuleProfile {
+  id             String @id @default(uuid(7)) @db.Uuid
+  ownerAccountId String @map("owner_account_id") @db.Uuid
+  profile        Json
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  owner    Account   @relation(fields: [ownerAccountId], references: [id], onDelete: Cascade)
+  projects Project[]
+
+  @@index([ownerAccountId])
+  @@map("rule_profiles")
 }
 
 // ─── Audit ─────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { Request } from 'express';
 import { z } from 'zod';
 import { OFFICIAL_READER, validate } from '@floorspec/engine';
-import { findingsFor, type Units } from '@floorspec/rules-engine';
+import { findingsFor, NOTICE, type Units } from '@floorspec/rules-engine';
 import type { Db } from '../db.js';
 import { Routes } from '../http/routes.js';
 import { HttpError } from '../http/errors.js';
@@ -11,6 +11,7 @@ import { MAIN } from '../domain/projects.js';
 import { changesetHead } from '../domain/history.js';
 import { RENDER_3D_PENDING, RENDER_PENDING, type PlanRenderer } from '../render.js';
 import { NO_PACKS, type InstalledPacks } from '../rules/packs.js';
+import { profileOfProject } from '../rules/profiles.js';
 
 const RenderQuery = z.object({
   view: z.enum(['plan', '3d']).optional(),
@@ -24,7 +25,8 @@ const RenderQuery = z.object({
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** With no rule pack installed (RULE_PACKS_DIR), findings say so rather than look clean. */
-export const NO_RULE_PACKS = 'No rule packs are installed yet: advisory code findings arrive in Phase 6. This is not a statement that the design meets any code.';
+export const NO_RULE_PACKS =
+  'Nothing was checked: no rule pack is installed on this server yet. A pack is installed once a person has verified each of its rules against the code it cites; until then there are no findings, and that says nothing about any code.';
 
 /** The display units a project chose in the editor (`/extras/d3floorspec/units`), for a finding's display values (Rules 9.6). */
 function unitsOf(document: unknown): Units {
@@ -36,7 +38,7 @@ function unitsOf(document: unknown): Units {
  * Checks on a head — main, or a pending changeset with `?changeset=<id>`: validation by the
  * reference engine, advisory findings, and a plan render.
  */
-export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: InstalledPacks = NO_PACKS): Routes {
+export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: InstalledPacks = NO_PACKS, coverageUrl = '/rule-packs'): Routes {
   const routes = new Routes(db);
 
   async function documentAt(req: Request): Promise<{ head: string; hash: string; document: unknown; base: unknown }> {
@@ -71,28 +73,32 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
 
   /**
    * Advisory code findings (FLR-ADR-011, FLR-REQ-098: rules advise, never block): the installed rule
-   * packs evaluated against the committed head under the installed profile (RULE_PROFILE; else the
-   * default profile, Rules 10.6), with the
-   * report's notice and every rule's edition. A read, never part of an edit: no batch waits for it
-   * and no finding stops one. With no pack installed, an empty list and a note that says why.
+   * packs evaluated against the committed head under the project's jurisdiction profile (FLR-T-6.8;
+   * else the instance default — RULE_PROFILE, or the default profile, Rules 10.6), with the report's
+   * notice, every rule's edition, and where the packs' coverage matrix is (FLR-REQ-096, 105). A
+   * read, never part of an edit: no batch waits for it and no finding stops one. With no pack
+   * installed, an empty list and a note that says nothing was checked.
    */
   routes.read(
     '/:projectId/findings',
     async (req, res) => {
       const { head, hash, document } = await documentAt(req);
+      const chosen = await profileOfProject(db, req.project as { ruleProfileId: string | null }, rules);
+      const about = { profile: chosen.profile.name, profileId: chosen.id, notice: NOTICE, coverageUrl };
       if (rules.packs.length === 0) {
-        res.json({ head, hash, findings: [], rulePacks: [], note: NO_RULE_PACKS });
+        res.json({ head, hash, findings: [], rulePacks: [], note: NO_RULE_PACKS, ...about });
         return;
       }
-      const report = findingsFor(document as object, rules.profile, rules.packs, { units: unitsOf(document) });
+      const report = findingsFor(document as object, chosen.profile, rules.packs, { units: unitsOf(document) });
       res.json({
         head,
         hash,
         findings: report.findings,
         rulePacks: rules.packs.map((p) => ({ name: p.name, version: p.version, title: p.title })),
         note: report.notice,
-        notice: report.notice,
+        ...about,
         ...(report.profile === undefined ? {} : { profile: report.profile }),
+        ...(report.units === undefined ? {} : { units: report.units }),
         diagnostics: report.diagnostics,
         evaluated: report.evaluated,
         notEvaluated: report.notEvaluated,

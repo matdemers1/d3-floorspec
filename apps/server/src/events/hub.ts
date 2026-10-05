@@ -183,7 +183,7 @@ export class EventHub {
       logger.warn('ignored an event that is not JSON');
       return;
     }
-    if (parsed?.v !== 1 || typeof parsed.p !== 'string' || (parsed.t !== 'head' && parsed.t !== 'changeset')) {
+    if (parsed?.v !== 1 || typeof parsed.p !== 'string' || (parsed.t !== 'head' && parsed.t !== 'changeset' && parsed.t !== 'profile')) {
       logger.warn('ignored an event in an unknown shape');
       return;
     }

@@ -55,6 +55,14 @@ const BRIEF = [
   { op: 'addProgramItem', function: 'sleeping', targetArea: '120 sq ft' },
 ];
 
+/** A jurisdiction profile (Rules 10.1) with a cited amendment (FLR-T-6.8). */
+const PROFILE = {
+  floorspecRules: '0.1',
+  name: 'Town of Example',
+  adopts: [{ code: 'IRC', edition: '2021', effective: '2024-03-15' }],
+  amendments: [{ citation: { authority: 'Town of Example', reference: 'Ord. 2024-7 §3' }, withdraws: [{ pack: 'us-model-latest', rule: 'R314-1' }] }],
+};
+
 const EXERCISES: Record<string, Exercise> = {
   'POST /auth/setup': async ({ running }) => ({
     reply: await new Browser(running.url).post('/auth/setup', OPERATOR),
@@ -184,6 +192,26 @@ const EXERCISES: Record<string, Exercise> = {
     const { id } = await createProjectAs(operator);
     const created = (await operator.post('/api/tokens', { projectId: id, name: 'Claude', kind: 'agent' })).body as { id: string };
     return { reply: await operator.request('DELETE', `/api/tokens/${created.id}`), action: 'token.revoke' };
+  },
+  'POST /api/profiles': async ({ running }) => {
+    const operator = await setupOperator(running);
+    return { reply: await operator.post('/api/profiles', { profile: PROFILE }), action: 'profile.create' };
+  },
+  'PUT /api/profiles/:profileId': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = (await operator.post('/api/profiles', { profile: PROFILE })).body as { id: string };
+    return { reply: await operator.request('PUT', `/api/profiles/${id}`, { profile: { ...PROFILE, asOf: '2026-01-01' } }), action: 'profile.update' };
+  },
+  'DELETE /api/profiles/:profileId': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = (await operator.post('/api/profiles', { profile: PROFILE })).body as { id: string };
+    return { reply: await operator.request('DELETE', `/api/profiles/${id}`), action: 'profile.delete' };
+  },
+  'PUT /api/projects/:projectId/profile': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const project = await createProjectAs(operator);
+    const { id } = (await operator.post('/api/profiles', { profile: PROFILE })).body as { id: string };
+    return { reply: await operator.request('PUT', `/api/projects/${project.id}/profile`, { profileId: id }), action: 'project.profile' };
   },
   'DELETE /api/account/d3auth': async ({ running, d3auth }) => {
     const operator = await setupOperator(running);
