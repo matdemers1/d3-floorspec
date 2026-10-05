@@ -350,6 +350,65 @@ describe('drawing exports', () => {
   });
 });
 
+describe('path-traced stills (FLR-T-12.6)', () => {
+  let running: Running;
+  let drain: Drain;
+
+  beforeAll(async () => {
+    running = await start();
+  });
+  afterAll(async () => {
+    await running.close();
+  });
+  beforeEach(async () => {
+    await reset(db);
+    drain = createDrain({ databaseUrl: TEST_ENV.DATABASE_URL, log: () => undefined });
+  });
+  afterEach(async () => {
+    await drain.stop();
+  });
+
+  it('queues a still of a room, renders it on the queue with its passes, and serves the PNG', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator);
+    const asked = await operator.post(`/api/projects/${id}/exports`, { kind: 'still', still: { room: 'Living room', size: 'small', quality: 'draft', sun: { azimuth: 200, altitude: 40 } } });
+    expect(asked.status, asked.text).toBe(202);
+    const queued = view(asked) as ExportView & { still: unknown; progress: unknown };
+    expect(queued).toMatchObject({ kind: 'still', status: 'queued', version: hash, still: { room: 'Living room', camera: null, size: 'small', quality: 'draft', sun: { azimuth: 200, altitude: 40 } }, progress: null });
+
+    // One still at a time per project.
+    const second = await operator.post(`/api/projects/${id}/exports`, { kind: 'still' });
+    expect(second.status, second.text).toBe(429);
+
+    expect(await drain.runOnce()).toBe(1);
+    const done = view(await operator.get(`/api/projects/${id}/exports/${queued.id}`)) as ExportView & { result: Record<string, unknown> | null; progress: unknown };
+    expect(done.status, done.error ?? '').toBe('done');
+    expect(done.progress).toBeNull();
+    expect(done.result).toMatchObject({ contentType: 'image/png', label: 'Offline path-traced render — approximate lighting', width: 640, height: 480, samples: 16, sun: { azimuth: 200, altitude: 40, source: 'yours' } });
+    expect(String(done.result?.['camera'])).toMatch(/^Living room \(LIV\)/);
+    const row = await db.job.findUniqueOrThrow({ where: { id: queued.id } });
+    expect(row.kind).toBe('export.still');
+    const file = await download(operator, `${running.url}${String(done.download)}`);
+    expect(file.status).toBe(200);
+    expect(file.type).toBe('image/png');
+    expect(Array.from(file.bytes.subarray(1, 4))).toEqual([0x50, 0x4e, 0x47]);
+  }, 180_000);
+
+  it('refuses work over the budget, a room or level the model does not have, and still options on another export', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    const ask = (body: object) => operator.post(`/api/projects/${id}/exports`, body);
+    expect((await ask({ kind: 'still', still: { size: 'large', quality: 'high' } })).status).toBe(400);
+    expect((await ask({ kind: 'still', still: { room: 'Ballroom' } })).status).toBe(400);
+    expect((await ask({ kind: 'still', still: { level: 'NOPE' } })).status).toBe(400);
+    expect((await ask({ kind: 'still', still: { room: 'LIV', camera: 'sw' } })).status).toBe(400);
+    expect((await ask({ kind: 'still', still: { sun: { azimuth: 90, altitude: 0 } } })).status).toBe(400);
+    expect((await ask({ kind: 'pdf', still: { size: 'small' } })).status).toBe(400);
+    expect((await ask({ kind: 'still', levels: ['MAIN'] })).status).toBe(400);
+    expect(await db.job.count()).toBe(0);
+  });
+});
+
 describe('3D exports embed the maps in the asset store (FLR-T-9.2)', () => {
   let running: Running;
   let dir: string;
