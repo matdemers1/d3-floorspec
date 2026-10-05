@@ -1,11 +1,13 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { evaluate, facingVector } from '@floorspec/engine';
 import { validateBytes } from 'gltf-validator';
 import { describe, expect, it } from 'vitest';
-import { buildScene, exportGltf, exportUsdz, linear, readGlb, readStoreZip, type ImageSource } from '../src/export/gltf/index.js';
+import { assetDirImages, buildScene, exportGltf, exportUsdz, linear, readGlb, readStoreZip, type ImageSource } from '../src/export/gltf/index.js';
+import { createHandlers } from '../src/queue/handlers.js';
 import { rasterize } from '../src/render/png.js';
 
 /** A small PNG: what a tile photo's bytes would be. */
@@ -325,6 +327,77 @@ describe('glTF export', () => {
     const fridge = nodesOf(glb.json).find((n) => n.extras?.floorspec?.['id'] === 'FA' && n.mesh !== undefined)!;
     expect(fridge.extras?.floorspec).toMatchObject({ kind: 'extension', extension: 'FS_furniture', collection: 'pieces' });
     expect((await validate(bytes)).errors).toBe(0);
+  });
+});
+
+describe('maps from the asset store (FLR-T-9.2 with FLR-T-8.2)', () => {
+  /** An asset directory as the api writes it: `ab/cd/<sha256>`. */
+  const store = (files: Uint8Array[]): string => {
+    const dir = mkdtempSync(join(tmpdir(), 'assets-'));
+    for (const bytes of files) {
+      const sha = createHash('sha256').update(bytes).digest('hex');
+      mkdirSync(join(dir, sha.slice(0, 2), sha.slice(2, 4)), { recursive: true });
+      writeFileSync(join(dir, sha.slice(0, 2), sha.slice(2, 4), sha), bytes);
+    }
+    return dir;
+  };
+  const sha = (b: Uint8Array): string => createHash('sha256').update(b).digest('hex');
+  /** The backsplash case with its tile photo pointing at `bytes`. */
+  const backsplash = (bytes: Uint8Array, mediaType = 'image/png'): Json => {
+    const doc = load(join(SUITE, 'materials/008-tile-photo-on-the-backsplash/input.json'));
+    doc['assets'] = { 'TILE-PHOTO': { path: 'assets/tile.png', sha256: sha(bytes), mediaType, byteLength: bytes.byteLength } };
+    expect(evaluate(doc).valid).toBe(true);
+    return doc;
+  };
+
+  it('embeds a PNG read by its SHA-256, and the file passes the validator with no errors', async () => {
+    const png = tilePng('#b0a89a');
+    const dir = store([png]);
+    const file = await exportGltf(backsplash(png), { ...VERSION, images: assetDirImages(dir)! });
+    expect(file.summary['textures']).toEqual({ embedded: ['TILE-PHOTO'], omitted: [] });
+    const glb = readGlb(file.bytes);
+    expect((glb.json['images'] as Json[]).map((i) => i['mimeType'])).toEqual(['image/png']);
+    const report = await validate(file.bytes);
+    expect(report.errors, report.messages.join('\n')).toBe(0);
+    expect(report.warnings, report.messages.join('\n')).toBe(0);
+  });
+
+  it('leaves out a map that is missing, changed on disk, or not what the document says it is', async () => {
+    const png = tilePng('#b0a89a');
+    const dir = store([png]);
+    const images = assetDirImages(dir)!;
+    // Missing: nothing under that digest.
+    const other = tilePng('#123456');
+    expect(images({ id: 'X', sha256: sha(other), mediaType: 'image/png' })).toBeUndefined();
+    // Changed: the file under the digest is not those bytes.
+    mkdirSync(join(dir, sha(other).slice(0, 2), sha(other).slice(2, 4)), { recursive: true });
+    writeFileSync(join(dir, sha(other).slice(0, 2), sha(other).slice(2, 4), sha(other)), png);
+    expect(images({ id: 'X', sha256: sha(other), mediaType: 'image/png' })).toBeUndefined();
+    // Mislabelled: PNG bytes the document calls a JPEG.
+    expect(images({ id: 'X', sha256: sha(png), mediaType: 'image/jpeg' })).toBeUndefined();
+    // Not a digest: never a path.
+    expect(images({ id: 'X', sha256: '../../etc/passwd', mediaType: 'image/png' })).toBeUndefined();
+    expect(images({ id: 'X', sha256: sha(png), mediaType: 'image/png' })).toEqual(png);
+    const file = await exportGltf(backsplash(png, 'image/jpeg'), { ...VERSION, images });
+    expect(file.summary['textures']).toEqual({ embedded: [], omitted: [{ asset: 'TILE-PHOTO', reason: 'its bytes were not available to the exporter' }] });
+    expect(assetDirImages(undefined)).toBeUndefined();
+    expect(assetDirImages('')).toBeUndefined();
+  });
+
+  it('is what the worker’s glTF and USDZ jobs read, given the asset directory', async () => {
+    const png = tilePng('#b0a89a');
+    const table = createHandlers({ assetDir: store([png]) });
+    const job = { id: 'j', projectId: 'p', versionHash: 'e'.repeat(64), params: { versionAt: '2026-10-05T00:00:00Z' } };
+    const glb = await table['export.gltf']!(backsplash(png), { ...job, kind: 'export.gltf' });
+    expect(glb.summary?.['textures']).toEqual({ embedded: ['TILE-PHOTO'], omitted: [] });
+    const usdz = await table['export.usdz']!(backsplash(png), { ...job, kind: 'export.usdz' });
+    expect(readStoreZip(usdz.bytes).map((e) => e.name)).toEqual(['model.usda', 'textures/TILE-PHOTO.png']);
+    // The drain fills in what the job's project uploaded: a digest it has not claimed is not read.
+    const unclaimed = await table['export.gltf']!(backsplash(png), { ...job, kind: 'export.gltf', claimed: new Set(['0'.repeat(64)]) });
+    expect((unclaimed.summary?.['textures'] as { embedded: unknown[] }).embedded).toEqual([]);
+    // Without a directory, the job says what it left out.
+    const bare = await createHandlers()['export.gltf']!(backsplash(png), { ...job, kind: 'export.gltf' });
+    expect((bare.summary?.['textures'] as { omitted: unknown[] }).omitted).toHaveLength(1);
   });
 });
 

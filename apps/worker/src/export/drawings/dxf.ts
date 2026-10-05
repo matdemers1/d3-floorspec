@@ -8,8 +8,11 @@
  * numbers, not a rounding of them. Points placed by drafting (a door's open leaf, a label) are
  * rounded to the base unit first and are exact from there.
  *
- * Entities: LINE (walls, jambs, glazing, door leaves, dimension lines and ticks), ARC (door
- * swings), LWPOLYLINE (rooms, slabs, devices, window tags), CIRCLE (door tags) and TEXT. Dimension
+ * Entities: LINE (walls, jambs, glazing, door leaves, dimension lines and ticks, roof lines), ARC
+ * (door swings), LWPOLYLINE (rooms, slabs, devices, window tags, treads, eaves, stair arrows, the
+ * cut line), CIRCLE (door tags) and TEXT. Stairs are on A-FLOR-STRS (treads above the cut on
+ * A-FLOR-STRS-OVHD, arrows and UP/DN on A-FLOR-STRS-IDEN) and a roof's eave above a plan on
+ * A-ROOF-OVHD; the roof plan file draws on A-ROOF-OTLN, -RIDG, -VLLY and -IDEN (FLR-T-9.7). Dimension
  * strings are drawn as lines and text on A-ANNO-DIMS rather than as DIMENSION entities: a
  * DIMENSION needs an anonymous block of its own rendering for most readers to show it, and plain
  * geometry reads the same in every one.
@@ -19,8 +22,9 @@
  */
 import type { DimString } from './dimensions.js';
 import { LAYER_DEFS, LAYERS } from './layers.js';
-import type { LevelPlan, XY } from './plan.js';
-import { planTitle } from './sheet.js';
+import type { Box, LevelPlan, XY } from './plan.js';
+import { planTitle, ROOF_PLAN_TITLE } from './sheet.js';
+import { pitchText, type PlanRoof, type PlanStair } from './symbols.js';
 import { areaText, BU_PER_MM, lengthText, type UnitSystem } from './units.js';
 
 export interface DxfMeta {
@@ -29,6 +33,8 @@ export interface DxfMeta {
   readonly version: string;
   readonly date: string;
   readonly units: UnitSystem;
+  /** The design drawn, in words, when the model has design options. */
+  readonly design?: string;
 }
 
 /** The annotation scale text and dimension offsets are sized for: 1/4" = 1'-0" (48) or 1:50. */
@@ -168,6 +174,33 @@ const angleOf = (c: XY, p: XY): number => {
 /** Paper points → model base units at the annotation ratio. */
 const paper = (pt: number, ratio: number): number => Math.round(((pt * 25.4) / 72) * ratio * BU_PER_MM);
 
+/** A filled-looking arrowhead as a closed polyline at `tip`, pointing from `from` (model units). */
+function arrowHeadE(e: Entities, layer: string, from: XY, tip: XY, size: number): void {
+  const dx = tip[0] - from[0];
+  const dy = tip[1] - from[1];
+  const l = Math.hypot(dx, dy) || 1;
+  const u: XY = [dx / l, dy / l];
+  const n: XY = [-u[1], u[0]];
+  const b: XY = [tip[0] - u[0] * size, tip[1] - u[1] * size];
+  polyE(e, layer, [r(tip), r([b[0] + n[0] * size * 0.38, b[1] + n[1] * size * 0.38]), r([b[0] - n[0] * size * 0.38, b[1] - n[1] * size * 0.38])], true);
+}
+
+function stairEntities(e: Entities, stairs: readonly PlanStair[], P: (pt: number) => number): void {
+  for (const st of stairs) {
+    for (const step of st.steps) polyE(e, step.hidden ? LAYERS.stairAbove : LAYERS.stair, step.outline, true);
+    if (st.bounds) polyE(e, LAYERS.stairAbove, st.bounds, true);
+    if (st.circle) circleE(e, LAYERS.stair, st.circle.centre, st.circle.radius);
+    if (st.cut) polyE(e, LAYERS.stair, st.cut, false);
+    if (st.arrow.length >= 2) {
+      polyE(e, LAYERS.stairTag, st.arrow, false);
+      arrowHeadE(e, LAYERS.stairTag, st.arrow[st.arrow.length - 2]!, st.arrow[st.arrow.length - 1]!, P(4.5));
+      const [a, b] = [st.arrow[0]!, st.arrow[1]!];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      textE(e, LAYERS.stairTag, r([a[0] - ((b[0] - a[0]) / l) * P(8), a[1] - ((b[1] - a[1]) / l) * P(8)]), P(5.5), st.label);
+    }
+  }
+}
+
 function entities(e: Entities, plan: LevelPlan, dims: readonly DimString[], meta: DxfMeta): void {
   const ratio = annotationRatio(meta.units);
   const P = (pt: number): number => paper(pt, ratio);
@@ -185,6 +218,8 @@ function entities(e: Entities, plan: LevelPlan, dims: readonly DimString[], meta
     arcE(e, LAYERS.door, d.hinge, d.radius, ccw ? a0 : a1, ccw ? a1 : a0);
   }
   for (const dv of plan.devices) polyE(e, dv.layer, dv.footprint, true);
+  stairEntities(e, plan.stairs, P);
+  for (const rf of plan.roofs) polyE(e, LAYERS.roofAbove, rf.eave, true);
 
   // Room labels: name, area, size.
   for (const room of plan.rooms) {
@@ -242,19 +277,75 @@ function entities(e: Entities, plan: LevelPlan, dims: readonly DimString[], meta
     const h = P(9);
     textE(e, LAYERS.note, [Math.round((ext.minX + ext.maxX) / 2), below], h, `${planTitle(meta.levelName).toUpperCase()} - ${meta.projectName}`);
     textE(e, LAYERS.note, [Math.round((ext.minX + ext.maxX) / 2), below - Math.round(h * 1.8)], P(12), 'NOT FOR CONSTRUCTION - NOT A PLAN REVIEW');
-    textE(e, LAYERS.note, [Math.round((ext.minX + ext.maxX) / 2), below - Math.round(h * 3.4)], P(6), `${meta.version} - ${meta.date} - drawn by D3 Floorspec; verify every dimension`);
-    const nc: XY = [ext.maxX + P(40), below];
-    const nr = P(11);
-    const rot = (-plan.trueNorth / 1_000_000) * (Math.PI / 180);
-    const R = (p: XY): XY => r([nc[0] + p[0] * Math.cos(rot) + p[1] * Math.sin(rot), nc[1] - p[0] * Math.sin(rot) + p[1] * Math.cos(rot)]);
-    circleE(e, LAYERS.symbol, nc, nr);
-    polyE(e, LAYERS.symbol, [R([0, P(10)]), R([P(5), -P(7)]), R([0, -P(3.5)]), R([-P(5), -P(7)])], true);
-    textE(e, LAYERS.symbol, R([0, P(16)]), P(7), 'N');
+    noteBlock(e, ext, planTitle(meta.levelName), plan.trueNorth, meta);
   }
+}
+
+/** The note under a drawing — its title, NOT FOR CONSTRUCTION, the version and the design — and the north arrow beside it. */
+function noteBlock(e: Entities, ext: Box, title: string, trueNorth: number, meta: DxfMeta): void {
+  const P = (pt: number): number => paper(pt, annotationRatio(meta.units));
+  const below = ext.minY - P(22 + 3 * 15 + 30);
+  const h = P(9);
+  const cx = Math.round((ext.minX + ext.maxX) / 2);
+  textE(e, LAYERS.note, [cx, below], h, `${title.toUpperCase()} - ${meta.projectName}`);
+  textE(e, LAYERS.note, [cx, below - Math.round(h * 1.8)], P(12), 'NOT FOR CONSTRUCTION - NOT A PLAN REVIEW');
+  textE(e, LAYERS.note, [cx, below - Math.round(h * 3.4)], P(6), `${meta.version} - ${meta.date} - drawn by D3 Floorspec; verify every dimension`);
+  if (meta.design !== undefined) textE(e, LAYERS.note, [cx, below - Math.round(h * 4.4)], P(6), `DESIGN: ${meta.design}`);
+  const nc: XY = [ext.maxX + P(40), below];
+  const nr = P(11);
+  const rot = (-trueNorth / 1_000_000) * (Math.PI / 180);
+  const R = (p: XY): XY => r([nc[0] + p[0] * Math.cos(rot) + p[1] * Math.sin(rot), nc[1] - p[0] * Math.sin(rot) + p[1] * Math.cos(rot)]);
+  circleE(e, LAYERS.symbol, nc, nr);
+  polyE(e, LAYERS.symbol, [R([0, P(10)]), R([P(5), -P(7)]), R([0, -P(3.5)]), R([-P(5), -P(7)])], true);
+  textE(e, LAYERS.symbol, R([0, P(16)]), P(7), 'N');
+}
+
+function roofEntities(e: Entities, roofs: readonly PlanRoof[], ext: Box, trueNorth: number, meta: DxfMeta): void {
+  const P = (pt: number): number => paper(pt, annotationRatio(meta.units));
+  for (const rf of roofs) {
+    polyE(e, LAYERS.roofOutline, rf.eave, true);
+    for (const [a, b] of rf.gables) lineE(e, LAYERS.roofOutline, a, b);
+    for (const l of rf.lines) lineE(e, l.kind === 'valley' ? LAYERS.roofValley : LAYERS.roofRidge, l.from, l.to);
+    for (const s of rf.slopes) {
+      const half = P(15);
+      const tail: XY = r([s.at[0] - s.dir[0] * half, s.at[1] - s.dir[1] * half]);
+      const tip: XY = r([s.at[0] + s.dir[0] * half, s.at[1] + s.dir[1] * half]);
+      lineE(e, LAYERS.roofTag, tail, tip);
+      arrowHeadE(e, LAYERS.roofTag, tail, tip, P(4.5));
+      textE(e, LAYERS.roofTag, r([tail[0] - s.dir[1] * P(6), tail[1] + s.dir[0] * P(6)]), P(6), pitchText(s.rise, s.run, meta.units));
+    }
+  }
+  noteBlock(e, ext, ROOF_PLAN_TITLE, trueNorth, meta);
+}
+
+/** The roof plan as a DXF file: every roof drawn from above (FLR-T-9.7). */
+export function roofDxf(roofs: readonly PlanRoof[], trueNorth: number, meta: DxfMeta): string {
+  let ext: Box | undefined;
+  for (const rf of roofs)
+    for (const [x, y] of rf.eave) {
+      if (!ext) ext = { minX: x, minY: y, maxX: x, maxY: y };
+      else {
+        ext.minX = Math.min(ext.minX, x);
+        ext.minY = Math.min(ext.minY, y);
+        ext.maxX = Math.max(ext.maxX, x);
+        ext.maxY = Math.max(ext.maxY, y);
+      }
+    }
+  const box = ext ?? { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  return dxfDocument(box, meta.units, (e) => {
+    roofEntities(e, roofs, box, trueNorth, meta);
+  });
 }
 
 /** One level's plan as a DXF file (ASCII, CRLF line ends). */
 export function levelDxf(plan: LevelPlan, dims: readonly DimString[], meta: DxfMeta): string {
+  return dxfDocument(plan.extent ?? { minX: 0, minY: 0, maxX: 0, maxY: 0 }, meta.units, (e) => {
+    entities(e, plan, dims, meta);
+  });
+}
+
+/** A DXF file around a set of entities: header, tables, blocks, the entities, objects. */
+function dxfDocument(ext: Box, units: UnitSystem, emit: (e: Entities) => void): string {
   const w = new Writer();
   // Fixed handles for the structure, allocated before any entity.
   const h = {
@@ -290,11 +381,10 @@ export function levelDxf(plan: LevelPlan, dims: readonly DimString[], meta: DxfM
 
   // Entities first, into a writer of their own, so the header can carry the final handle seed.
   const ents = new Writer(Number.parseInt(w.seed, 16));
-  entities({ w: ents, owner: h.modelRecord }, plan, dims, meta);
+  emit({ w: ents, owner: h.modelRecord });
   const seed = ents.seed;
 
-  const ext = plan.extent ?? { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-  const ratio = annotationRatio(meta.units);
+  const ratio = annotationRatio(units);
   const pad = paper(110, ratio);
 
   const section = (name: string, body: () => void): void => {

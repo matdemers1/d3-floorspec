@@ -73,7 +73,7 @@ events.start().catch((error: unknown) => {
 // The job queue (FLR-T-9.3): drained by the worker container in production; by this process when
 // no worker runs (development, the end-to-end suites).
 const drainInline = (config.JOB_DRAIN ?? (config.NODE_ENV === 'production' ? 'worker' : 'inline')) === 'inline';
-const drain = drainInline ? (await import('@d3-floorspec/worker/queue')).createDrain({ databaseUrl: config.DATABASE_URL, log: (m) => { logger.info(m); } }) : null;
+const drain = drainInline ? (await import('@d3-floorspec/worker/queue')).createDrain({ databaseUrl: config.DATABASE_URL, ...(config.ASSET_DIR === undefined ? {} : { assetDir: config.ASSET_DIR }), log: (m) => { logger.info(m); } }) : null;
 if (drain !== null) {
   drain.start().catch((error: unknown) => {
     logger.warn({ err: error instanceof Error ? error.message : String(error) }, 'the inline job drain did not start');

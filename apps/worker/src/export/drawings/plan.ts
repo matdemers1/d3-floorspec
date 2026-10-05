@@ -9,8 +9,10 @@
  * then broken where an opening passes through it and closed with jambs; door leaves, swings and
  * glazing are placed relative to the derived opening points the same way the plan renderer does.
  */
+import { deriveFrom, evaluate, InvalidDocumentError, type Derived, type FloorspecDocument } from '@floorspec/engine';
 import { buildScene, labelPoint, type Pt, type Scene, type SceneOpening, type SceneWall } from '@floorspec/render2d';
 import { layerForDevice, LAYERS } from './layers.js';
+import { arrivingStairs, planRoof, planStair, type PlanRoof, type PlanStair } from './symbols.js';
 
 export type XY = readonly [number, number];
 
@@ -103,6 +105,10 @@ export interface LevelPlan {
   readonly unanchored: readonly { readonly outer: readonly Pt[]; readonly holes: readonly (readonly Pt[])[]; readonly area: string }[];
   readonly devices: readonly PlanDevice[];
   readonly tags: readonly PlanTag[];
+  /** Stairs rising from this level (UP) and arriving at it (DN) — FLR-T-9.7. */
+  readonly stairs: readonly PlanStair[];
+  /** Roofs on this level: drawn dashed on its plan (above the cut), and on the roof plan. */
+  readonly roofs: readonly PlanRoof[];
   /** The wall body (pieces only), for the dimension strings. */
   readonly body: Box | undefined;
   /** Everything drawn, door swings included. */
@@ -325,12 +331,21 @@ export function openingMarks(scenes: readonly Scene[]): Map<string, string> {
 }
 
 /** The drawing geometry of one level. `marks` numbers the openings (see `openingMarks`). */
-export function levelPlan(input: string | Uint8Array | object, level: string, marks: ReadonlyMap<string, string> = new Map()): LevelPlan {
-  const scene = buildScene(input, level);
-  return planOf(scene, marks);
+export function levelPlan(input: string | Uint8Array | object, level: string, marks: ReadonlyMap<string, string> = new Map(), design?: Readonly<Record<string, string>>): LevelPlan {
+  const ev = evaluate(input, design === undefined ? {} : { design });
+  if (!ev.valid || !ev.document) throw new InvalidDocumentError(ev.diagnostics);
+  if (!ev.view || !ev.analysis) throw new RangeError('the document has no such design, or it is not valid (Core 19.6.2)');
+  const doc = ev.view;
+  return planOf(buildScene(doc, level), marks, { doc, derived: deriveFrom(doc, ev.analysis) });
 }
 
-export function planOf(scene: Scene, marks: ReadonlyMap<string, string>): LevelPlan {
+/** What a plan needs beyond its scene: the document (roof pitches) and its derived geometry (stairs arriving). */
+export interface PlanContext {
+  readonly doc: FloorspecDocument;
+  readonly derived: Derived;
+}
+
+export function planOf(scene: Scene, marks: ReadonlyMap<string, string>, context?: PlanContext): LevelPlan {
   const roomRings = [...scene.rooms.values()].map((r) => [r.outer, ...r.holes]);
   const faceRings = [...roomRings, ...scene.unanchored.map((u) => [u.outer, ...u.holes])];
   const inside = (p: XY): boolean => faceRings.some((rings) => insideRings(p[0], p[1], rings));
@@ -439,8 +454,16 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>): LevelP
     }
   }
 
-  // ── rooms ──
-  const swings = [...scene.openings.values()].filter((o) => o.kind === 'door').map((o) => reach(o, scene.walls.get(o.wall)!) as Pt[]);
+  // ── stairs and roofs (FLR-T-9.7) ──
+  const stairs: PlanStair[] = [...scene.stairs].map(([id, st]) => planStair(id, st.derived, st.form, 'up'));
+  if (context !== undefined) for (const [id, st] of arrivingStairs(context.doc, context.derived, scene.levelId)) stairs.push(planStair(id, st.derived, st.form, 'down'));
+  const roofs: PlanRoof[] = [...scene.roofs].map(([id, rf]) => planRoof(context?.doc, id, rf));
+
+  // ── rooms: a label keeps clear of door swings and stairs ──
+  const swings = [
+    ...[...scene.openings.values()].filter((o) => o.kind === 'door').map((o) => reach(o, scene.walls.get(o.wall)!) as Pt[]),
+    ...stairs.flatMap((st) => [...st.steps.map((s) => s.outline as Pt[]), ...(st.bounds === null ? [] : [st.bounds as Pt[]])]),
+  ];
   const rooms: PlanRoom[] = [...scene.rooms.values()].map((r) => {
     const b = grow(undefined, r.outer)!;
     const lp = labelPoint(r.outer, r.holes, swings);
@@ -465,6 +488,11 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>): LevelP
   for (const s of scene.slabs.values()) extent = grow(extent, s.outline);
   for (const d of devices) extent = grow(extent, d.footprint);
   for (const o of scene.openings.values()) extent = grow(extent, reach(o, scene.walls.get(o.wall)!));
+  for (const st of stairs) {
+    for (const step of st.steps) extent = grow(extent, step.outline);
+    if (st.bounds) extent = grow(extent, st.bounds);
+  }
+  for (const rf of roofs) extent = grow(extent, rf.eave);
 
   return {
     levelId: scene.levelId,
@@ -484,6 +512,8 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>): LevelP
     unanchored: scene.unanchored,
     devices,
     tags,
+    stairs,
+    roofs,
     body,
     extent,
   };

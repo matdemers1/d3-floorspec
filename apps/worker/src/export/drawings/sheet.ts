@@ -5,13 +5,18 @@
  *
  * A sheet is one level's floor plan at a true architectural scale with its dimension strings, room
  * labels and door and window marks; a title strip down the right edge with the project, a
- * NOT FOR CONSTRUCTION block, the 3D view, the legend and the sheet's facts (scale, date, version);
- * and, where it fits beside or under the plan, the level's door and window schedule.
+ * NOT FOR CONSTRUCTION block, the 3D view, the legend and the sheet's facts (scale, date, version,
+ * and the design drawn when the model has design options); and, where it fits beside or under the
+ * plan, the level's door and window schedule. Stairs are drawn on their plans, roofs dashed on
+ * theirs, and a roof plan sheet draws every roof from above (FLR-T-9.7).
+ *
+ * The 3D view is a picture of the mesh (render3d over @floorspec/mesh), asked for at the panel's
+ * size once the strip is laid out, and embedded as a PNG at 300 dpi.
  */
 import { num } from '@floorspec/render2d';
-import type { AxoFace } from './axo.js';
 import type { DimString, Side } from './dimensions.js';
-import type { Box, LevelPlan, XY } from './plan.js';
+import type { Box, LevelPlan, Segment, XY } from './plan.js';
+import { pitchText, type PlanRoof, type PlanStair } from './symbols.js';
 import { areaText, BU_PER_INCH, IMPERIAL_SCALES, lengthText, METRIC_SCALES, type DrawingScale, type UnitSystem } from './units.js';
 
 // ── the display list ─────────────────────────────────────────────────────────
@@ -51,7 +56,23 @@ export interface ClipPrim {
   readonly children: readonly Prim[];
 }
 
-export type Prim = PathPrim | TextPrim | ClipPrim;
+/** A raster image (the 3D view): PNG bytes drawn into a box on the page. */
+export interface ImagePrim {
+  readonly t: 'image';
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+  readonly png: Uint8Array;
+}
+
+export type Prim = PathPrim | TextPrim | ClipPrim | ImagePrim;
+
+/**
+ * The 3D view, asked for at the panel's size in points once the strip is laid out: a PNG of that
+ * shape, or null when there is nothing to draw.
+ */
+export type View3d = (widthPt: number, heightPt: number) => { readonly png: Uint8Array } | null;
 
 export interface Sheet {
   /** A-101, A-102, … and A-601 for a schedule sheet. */
@@ -98,11 +119,6 @@ const POCHE = '#3d3d3d';
 const RED = '#c4161c';
 const WHITE = '#ffffff';
 const PAPER_FILL = '#ffffff';
-
-const grey = (v: number): string => {
-  const h = Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
-  return `#${h}${h}${h}`;
-};
 
 // ── geometry helpers ─────────────────────────────────────────────────────────
 
@@ -235,6 +251,8 @@ export interface SheetMeta {
   readonly sheetCount: number;
   /** What the 3D view shows: `Cut above Main floor`, `Whole model`. */
   readonly viewCaption: string;
+  /** The design drawn, in words, when the model has design options (Core 19). */
+  readonly design?: string;
 }
 
 interface Ctx {
@@ -253,7 +271,7 @@ export function composePlanSheet(
   layout: SetLayout,
   plan: LevelPlan,
   dims: readonly DimString[],
-  axo: readonly AxoFace[],
+  view: View3d,
   rows: readonly ScheduleRow[],
   meta: SheetMeta,
   measure: Measure,
@@ -265,18 +283,45 @@ export function composePlanSheet(
 
   out.push({ t: 'path', d: rect(0, 0, page.width, page.height), fill: PAPER_FILL });
   drawPlan(c, plan);
+  drawStairs(c, plan.stairs);
+  drawOverheadRoofs(c, plan.roofs);
   drawDimensions(c, plan, dims, meta.units);
   drawRoomLabels(c, plan, meta.units);
   drawTags(c, plan);
-  drawViewTitle(c, layout, plan, meta);
+  drawViewTitle(c, layout, planTitle(plan.levelName), plan.trueNorth, meta);
   if (layout.schedule !== null && layout.schedule !== 'sheet') drawSchedule(c, layout.schedule, rows, `${meta.levelName} — door and window schedule`);
   drawBorder(c, layout);
-  drawStrip(c, layout, axo, meta, planTitle(meta.levelName), plan.rooms.map((r) => [r.title, areaText(r.area, meta.units)]));
+  const extra: LegendItem[] = [];
+  if (plan.stairs.length > 0) extra.push(...stairLegend(c));
+  if (plan.roofs.length > 0) extra.push({ label: 'Roof eave above (see roof plan)', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: GREY, width: 0.5, dash: [5, 2.5] }) });
+  drawStrip(c, layout, view, meta, planTitle(meta.levelName), plan.rooms.map((r) => [r.title, areaText(r.area, meta.units)]), [...planLegend(c), ...extra]);
   return { number: meta.sheetNumber, title: planTitle(meta.levelName), width: page.width, height: page.height, prims: out };
 }
 
+export const ROOF_PLAN_TITLE = 'Roof plan';
+
+/**
+ * The roof plan (FLR-T-9.7): every roof of the drawn levels from above, at the set's scale and
+ * placed by the set's frame, so it lies over the floor plans sheet to sheet — eave and gable ends,
+ * ridges, hips and valleys, a slope arrow with its pitch on every pitched face, and the exterior
+ * walls of the levels the roofs bear on, dashed below.
+ */
+export function composeRoofSheet(layout: SetLayout, roofs: readonly PlanRoof[], wallsBelow: readonly Segment[], trueNorth: number, view: View3d, meta: SheetMeta, measure: Measure): Sheet {
+  const { page, k, frame, origin } = layout;
+  const P = (p: XY): XY => [origin[0] + (p[0] - frame.minX) * k, origin[1] + (frame.maxY - p[1]) * k];
+  const out: Prim[] = [{ t: 'path', d: rect(0, 0, page.width, page.height), fill: PAPER_FILL }];
+  const c: Ctx = { out, measure, k, P };
+  for (const rf of roofs) drawRoof(c, rf, meta.units);
+  // The walls the roofs bear on, under them: dashed over the roof surface.
+  if (wallsBelow.length > 0) out.push({ t: 'path', d: wallsBelow.map((s) => line(P(s.a), P(s.b))).join(''), stroke: FAINT, width: 0.45, dash: [3, 2] });
+  drawViewTitle(c, layout, ROOF_PLAN_TITLE, trueNorth, meta);
+  drawBorder(c, layout);
+  drawStrip(c, layout, view, meta, ROOF_PLAN_TITLE, [], roofLegend(c));
+  return { number: meta.sheetNumber, title: ROOF_PLAN_TITLE, width: page.width, height: page.height, prims: out };
+}
+
 /** The schedule sheet a set ends with when a level's schedule fits beside none of its plans. */
-export function composeScheduleSheet(layout: SetLayout, groups: readonly { title: string; rows: readonly ScheduleRow[] }[], axo: readonly AxoFace[], meta: SheetMeta, measure: Measure): Sheet {
+export function composeScheduleSheet(layout: SetLayout, groups: readonly { title: string; rows: readonly ScheduleRow[] }[], view: View3d, meta: SheetMeta, measure: Measure): Sheet {
   const { page } = layout;
   const out: Prim[] = [{ t: 'path', d: rect(0, 0, page.width, page.height), fill: PAPER_FILL }];
   const c: Ctx = { out, measure, k: layout.k, P: (p) => p };
@@ -292,7 +337,7 @@ export function composeScheduleSheet(layout: SetLayout, groups: readonly { title
     y += h;
   }
   drawBorder(c, layout);
-  drawStrip(c, layout, axo, meta, 'Door and window schedule', []);
+  drawStrip(c, layout, view, meta, 'Door and window schedule', [], planLegend(c));
   return { number: meta.sheetNumber, title: 'Door and window schedule', width: page.width, height: page.height, prims: out };
 }
 
@@ -356,6 +401,89 @@ function hatch(pts: readonly XY[], step: number): string {
   const h = y1 - y0;
   for (let x = x0 - h; x <= x1; x += step) d += line([x, y1], [x + h, y0]);
   return d;
+}
+
+// ── stairs and roofs (FLR-T-9.7) ─────────────────────────────────────────────
+
+/** A filled arrowhead at `tip`, pointing from `from` (paper points). */
+function arrowHead(from: XY, tip: XY, size: number): string {
+  const dx = tip[0] - from[0];
+  const dy = tip[1] - from[1];
+  const l = Math.hypot(dx, dy) || 1;
+  const u: XY = [dx / l, dy / l];
+  const n: XY = [-u[1], u[0]];
+  const base: XY = [tip[0] - u[0] * size, tip[1] - u[1] * size];
+  return ring([tip, [base[0] + n[0] * size * 0.38, base[1] + n[1] * size * 0.38], [base[0] - n[0] * size * 0.38, base[1] - n[1] * size * 0.38]]);
+}
+
+function drawStairs(c: Ctx, stairs: readonly PlanStair[]): void {
+  const { out, P } = c;
+  for (const st of stairs) {
+    const solid = st.steps.filter((s) => !s.hidden);
+    const hidden = st.steps.filter((s) => s.hidden);
+    // Landings get a light tone, so the turn reads.
+    for (const s of solid) if (s.landing) out.push({ t: 'path', d: ring(s.outline.map(P)), fill: '#f4f4f4' });
+    if (solid.length > 0) out.push({ t: 'path', d: solid.map((s) => ring(s.outline.map(P))).join(''), stroke: INK, width: 0.35, join: 'round' });
+    if (hidden.length > 0) out.push({ t: 'path', d: hidden.map((s) => ring(s.outline.map(P))).join(''), stroke: GREY, width: 0.3, dash: [2, 1.6] });
+    if (st.bounds) out.push({ t: 'path', d: ring(st.bounds.map(P)), stroke: INK, width: 0.35, dash: [5, 2.5] });
+    if (st.circle) {
+      const cc = P(st.circle.centre);
+      out.push({ t: 'path', d: circle(cc[0], cc[1], st.circle.radius * c.k), stroke: INK, width: 0.35 });
+    }
+    if (st.cut) out.push({ t: 'path', d: st.cut.map((p, i) => (i === 0 ? M(P(p)) : L(P(p)))).join(''), stroke: INK, width: 0.7, join: 'miter' });
+    // The arrow: a dot at its tail, the shaft along the walkline, a head at the end.
+    const pts = st.arrow.map(P);
+    if (pts.length >= 2) {
+      out.push({ t: 'path', d: pts.map((p, i) => (i === 0 ? M(p) : L(p))).join(''), stroke: INK, width: 0.45, join: 'round' });
+      out.push({ t: 'path', d: arrowHead(pts[pts.length - 2]!, pts[pts.length - 1]!, 4.5), fill: INK });
+      out.push({ t: 'path', d: circle(pts[0]![0], pts[0]![1], 1.2), fill: INK });
+      // The label beside the tail, on the side away from the first leg.
+      const [a, b] = [pts[0]!, pts[1]!];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const u: XY = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+      const at: XY = [a[0] - u[0] * 8, a[1] - u[1] * 8];
+      out.push(text(at[0], at[1] + 2, st.label, 'sans-bold', 5.5, { anchor: 'middle' }));
+    }
+  }
+}
+
+/** A roof on its own level's plan: the eave outline, dashed — it is above the cut. */
+function drawOverheadRoofs(c: Ctx, roofs: readonly PlanRoof[]): void {
+  if (roofs.length === 0) return;
+  c.out.push({ t: 'path', d: roofs.map((r) => ring(r.eave.map(c.P))).join(''), stroke: GREY, width: 0.5, dash: [5, 2.5] });
+}
+
+/** A roof from above, on the roof plan. */
+function drawRoof(c: Ctx, rf: PlanRoof, units: UnitSystem): void {
+  const { out, P } = c;
+  out.push({ t: 'path', d: ring(rf.eave.map(P)), fill: '#f7f7f7', stroke: INK, width: 0.9, join: 'miter' });
+  const ridges = rf.lines.filter((l) => l.kind === 'ridge');
+  const hips = rf.lines.filter((l) => l.kind === 'hip');
+  const valleys = rf.lines.filter((l) => l.kind === 'valley');
+  if (ridges.length > 0) out.push({ t: 'path', d: ridges.map((l) => line(P(l.from), P(l.to))).join(''), stroke: INK, width: 0.8, cap: 'round' });
+  if (hips.length > 0) out.push({ t: 'path', d: hips.map((l) => line(P(l.from), P(l.to))).join(''), stroke: INK, width: 0.5, cap: 'round' });
+  if (valleys.length > 0) out.push({ t: 'path', d: valleys.map((l) => line(P(l.from), P(l.to))).join(''), stroke: INK, width: 0.5, dash: [4, 1.5, 1, 1.5] });
+  if (rf.gables.length > 0) out.push({ t: 'path', d: rf.gables.map(([a, b]) => line(P(a), P(b))).join(''), stroke: INK, width: 1.8, cap: 'butt' });
+  // Slope arrows: downhill, with the face's pitch above the shaft.
+  const L2 = 15;
+  for (const s of rf.slopes) {
+    const m = P(s.at);
+    const d: XY = [s.dir[0], -s.dir[1]]; // model → paper: y flips
+    const tail: XY = [m[0] - d[0] * L2, m[1] - d[1] * L2];
+    const tip: XY = [m[0] + d[0] * L2, m[1] + d[1] * L2];
+    out.push({ t: 'path', d: line(tail, tip), stroke: INK, width: 0.45 });
+    out.push({ t: 'path', d: arrowHead(tail, tip, 4.5), fill: INK });
+    const label = pitchText(s.rise, s.run, units);
+    // Beside the shaft's tail, on the side that reads upright.
+    const n: XY = d[1] > 0.7 || d[1] < -0.7 ? [1, 0] : [0, -1];
+    out.push(text(tail[0] + n[0] * 5, tail[1] + n[1] * 4 + (n[0] !== 0 ? 2 : 0), label, 'mono-medium', 6, { anchor: n[0] !== 0 ? 'start' : 'middle' }));
+  }
+  if (!rf.derived) {
+    const b = rf.eave.map(P);
+    const cx = b.reduce((v, p) => v + p[0], 0) / b.length;
+    const cy = b.reduce((v, p) => v + p[1], 0) / b.length;
+    out.push(text(cx, cy, 'ROOF SURFACE NOT DERIVED — EAVE ONLY', 'sans', 5.5, { anchor: 'middle', color: GREY }));
+  }
 }
 
 // ── dimensions ───────────────────────────────────────────────────────────────
@@ -488,7 +616,7 @@ function drawTags(c: Ctx, plan: LevelPlan): void {
 
 // ── view title, north arrow, scale bar ───────────────────────────────────────
 
-function drawViewTitle(c: Ctx, layout: SetLayout, plan: LevelPlan, meta: SheetMeta): void {
+function drawViewTitle(c: Ctx, layout: SetLayout, viewTitle: string, trueNorth: number, meta: SheetMeta): void {
   const { out, measure } = c;
   const x = layout.origin[0] - layout.margins.W + 4;
   const y = layout.origin[1] + (layout.frame.maxY - layout.frame.minY) * layout.k + layout.margins.S + 20;
@@ -496,14 +624,14 @@ function drawViewTitle(c: Ctx, layout: SetLayout, plan: LevelPlan, meta: SheetMe
   out.push({ t: 'path', d: line([x, y - 4], [x + 22, y - 4]), stroke: INK, width: 0.5 });
   out.push(text(x + 11, y - 7, String(meta.sheetIndex + 1), 'sans-bold', 7, { anchor: 'middle' }));
   out.push(text(x + 11, y + 4, meta.sheetNumber, 'sans', 4.6, { anchor: 'middle' }));
-  const title = planTitle(plan.levelName).toUpperCase();
+  const title = viewTitle.toUpperCase();
   out.push(text(x + 30, y - 5, title, 'sans-bold', 10));
   const tw = measure(title, 'sans-bold', 10);
   out.push({ t: 'path', d: line([x + 30, y - 1], [x + 30 + Math.max(tw, 120), y - 1]), stroke: INK, width: 1.1 });
   out.push(text(x + 30, y + 8, `SCALE: ${layout.scale.label}`, 'sans', 6.5, { color: GREY }));
   const barX = x + 30 + Math.max(tw, 120) + 22;
   scaleBar(c, layout, meta.units, barX, y - 2);
-  northArrow(c, barX + scaleBarWidth(layout, meta.units) + 34, y - 6, plan.trueNorth);
+  northArrow(c, barX + scaleBarWidth(layout, meta.units) + 34, y - 6, trueNorth);
 }
 
 function scaleBarSteps(units: UnitSystem): { total: number; label: (v: number) => string; values: number[] }[] {
@@ -612,7 +740,7 @@ function drawBorder(c: Ctx, layout: SetLayout): void {
 export const NOT_FOR_CONSTRUCTION = 'NOT FOR CONSTRUCTION';
 export const NOT_A_PLAN_REVIEW = 'Not a plan review. Drawn from a Floorspec model; no building code has been checked. Verify every dimension before building.';
 
-function drawStrip(c: Ctx, layout: SetLayout, axo: readonly AxoFace[], meta: SheetMeta, sheetTitle: string, rooms: readonly (readonly [string, string])[]): void {
+function drawStrip(c: Ctx, layout: SetLayout, view: View3d, meta: SheetMeta, sheetTitle: string, rooms: readonly (readonly [string, string])[], items: readonly LegendItem[]): void {
   const { out, measure } = c;
   const s = layout.strip;
   const x = s.x + 10;
@@ -647,17 +775,30 @@ function drawStrip(c: Ctx, layout: SetLayout, axo: readonly AxoFace[], meta: She
   }
   y = boxTop + boxH + 12;
 
+  // Sheet facts, from the bottom up: the design, when the model has options, takes up to two lines.
+  const design = meta.design === undefined ? [] : wrap(meta.design, w - 44, 'sans', 6.5, measure).slice(0, 2);
+  const facts: [string, string[]][] = [
+    ['SHEET', [sheetTitle]],
+    ['SCALE', [meta.sheetNumber.startsWith('A-6') ? 'None' : layout.scale.label]],
+    ...(design.length === 0 ? [] : [['DESIGN', design] as [string, string[]]]),
+    ['DATE', [meta.date]],
+    ['VERSION', [meta.version]],
+    ['UNITS', [meta.units === 'metric' ? 'Millimetres; areas in m²' : 'Feet and inches to 1/16"; areas in SF']],
+    ['PAPER', [layout.page.label]],
+  ];
+  const factLines = facts.reduce((n, [, v]) => n + v.length, 0);
+  const factsH = 52 + factLines * 11;
+
   // 3D view.
-  const factsH = 118;
-  const legendH = 128;
+  const legendH = 16 + items.length * 14;
   const bottom = s.y + s.h;
   const viewH = Math.max(90, Math.min(w * 0.95, bottom - factsH - legendH - y - 26));
   out.push(text(x, y, '3D VIEW', 'sans-medium', 5.5, { color: FAINT }));
   out.push(text(x + w, y, meta.viewCaption, 'sans', 5.5, { color: FAINT, anchor: 'end' }));
   y += 5;
-  drawAxo(c, axo, { x, y, w, h: viewH });
+  drawView(c, view, { x, y, w, h: viewH });
   y += viewH + 4;
-  out.push(text(x, y + 5, 'Isometric from the south-west, drawn from the model.', 'sans', 5.2, { color: GREY }));
+  out.push(text(x, y + 5, 'Isometric from the south-west, rendered from the 3D model.', 'sans', 5.2, { color: GREY }));
   y += 14;
   out.push({ t: 'path', d: line([s.x, y], [s.x + s.w, y]), stroke: INK, width: 0.5 });
 
@@ -665,7 +806,11 @@ function drawStrip(c: Ctx, layout: SetLayout, axo: readonly AxoFace[], meta: She
   y += 10;
   out.push(text(x, y + 2, 'LEGEND', 'sans-medium', 5.5, { color: FAINT }));
   y += 6;
-  y = legend(c, x, y);
+  for (const it of items) {
+    y += 14;
+    it.draw(x + 2, y - 2);
+    out.push(text(x + 32, y, it.label, 'sans', 6.2, { color: INK }));
+  }
 
   // Rooms on this level, with their net areas, where the strip has room for them.
   const roomsTop = y + 16;
@@ -681,22 +826,15 @@ function drawStrip(c: Ctx, layout: SetLayout, axo: readonly AxoFace[], meta: She
     }
   }
 
-  // Sheet facts, from the bottom up.
   const fy = bottom - factsH;
   out.push({ t: 'path', d: line([s.x, fy], [s.x + s.w, fy]), stroke: INK, width: 0.5 });
-  const facts: [string, string][] = [
-    ['SHEET', sheetTitle],
-    ['SCALE', meta.sheetNumber.startsWith('A-6') ? 'None' : layout.scale.label],
-    ['DATE', meta.date],
-    ['VERSION', meta.version],
-    ['UNITS', meta.units === 'metric' ? 'Millimetres; areas in m²' : 'Feet and inches to 1/16"; areas in SF'],
-    ['PAPER', layout.page.label],
-  ];
   let yy = fy + 12;
   for (const [label, value] of facts) {
     out.push(text(x, yy, label, 'sans-medium', 5.2, { color: FAINT }));
-    out.push(text(x + 44, yy, wrap(value, w - 44, 'sans', 6.5, measure)[0] ?? '', 'sans', 6.5));
-    yy += 11;
+    for (const v of value) {
+      out.push(text(x + 44, yy, wrap(v, w - 44, 'sans', 6.5, measure)[0] ?? '', 'sans', 6.5));
+      yy += 11;
+    }
   }
   out.push({ t: 'path', d: line([s.x, bottom - 40], [s.x + s.w, bottom - 40]), stroke: INK, width: 0.5 });
   out.push(text(x, bottom - 26, 'SHEET', 'sans-medium', 5.2, { color: FAINT }));
@@ -704,9 +842,14 @@ function drawStrip(c: Ctx, layout: SetLayout, axo: readonly AxoFace[], meta: She
   out.push(text(x + w, bottom - 11, meta.sheetNumber, 'sans-bold', 22, { anchor: 'end' }));
 }
 
-function legend(c: Ctx, x: number, y0: number): number {
+interface LegendItem {
+  readonly label: string;
+  readonly draw: (cx: number, cy: number) => void;
+}
+
+function planLegend(c: Ctx): LegendItem[] {
   const { out } = c;
-  const items: { label: string; draw: (cx: number, cy: number) => void }[] = [
+  return [
     { label: 'Wall, cut', draw: (cx, cy) => out.push({ t: 'path', d: rect(cx, cy - 3, 22, 6), fill: POCHE, stroke: INK, width: 0.6 }) },
     {
       label: 'Door, leaf and swing',
@@ -747,49 +890,56 @@ function legend(c: Ctx, x: number, y0: number): number {
       },
     },
   ];
-  let y = y0;
-  for (const it of items) {
-    y += 14;
-    it.draw(x + 2, y - 2);
-    out.push(text(x + 32, y, it.label, 'sans', 6.2, { color: INK }));
-  }
-  return y;
-
 }
 
-function drawAxo(c: Ctx, faces: readonly AxoFace[], box: { x: number; y: number; w: number; h: number }): void {
+function stairLegend(c: Ctx): LegendItem[] {
   const { out } = c;
-  out.push({ t: 'path', d: rect(box.x, box.y, box.w, box.h), fill: '#fafafa', stroke: HAIR, width: 0.4 });
-  let b: Box | undefined;
-  for (const f of faces)
-    for (const r of f.rings)
-      for (const [px, py] of r) {
-        if (!b) b = { minX: px, minY: py, maxX: px, maxY: py };
-        else {
-          b.minX = Math.min(b.minX, px);
-          b.minY = Math.min(b.minY, py);
-          b.maxX = Math.max(b.maxX, px);
-          b.maxY = Math.max(b.maxY, py);
-        }
-      }
-  if (b === undefined) {
+  return [
+    {
+      label: 'Stair: UP from the foot, DN from the head',
+      draw: (cx, cy) => {
+        out.push({ t: 'path', d: line([cx, cy - 4], [cx, cy + 4]) + line([cx + 6, cy - 4], [cx + 6, cy + 4]) + line([cx + 12, cy - 4], [cx + 12, cy + 4]), stroke: INK, width: 0.35 });
+        out.push({ t: 'path', d: line([cx - 2, cy], [cx + 18, cy]), stroke: INK, width: 0.45 });
+        out.push({ t: 'path', d: arrowHead([cx, cy], [cx + 22, cy], 4.5), fill: INK });
+      },
+    },
+    {
+      label: 'Cut line at 4\'-0" with break; above it dashed',
+      draw: (cx, cy) => {
+        out.push({ t: 'path', d: `${M([cx, cy + 4])}${L([cx + 9, cy + 0.5])}${L([cx + 10.5, cy - 2.5])}${L([cx + 11.5, cy + 2.5])}${L([cx + 13, cy - 0.5])}${L([cx + 22, cy - 4])}`, stroke: INK, width: 0.7 });
+      },
+    },
+  ];
+}
+
+function roofLegend(c: Ctx): LegendItem[] {
+  const { out } = c;
+  return [
+    { label: 'Eave (roof outline)', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: INK, width: 0.9 }) },
+    { label: 'Ridge', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: INK, width: 0.8 }) },
+    { label: 'Hip', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy + 4], [cx + 22, cy - 4]), stroke: INK, width: 0.5 }) },
+    { label: 'Valley', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy - 4], [cx + 22, cy + 4]), stroke: INK, width: 0.5, dash: [4, 1.5, 1, 1.5] }) },
+    { label: 'Gable end', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: INK, width: 1.8 }) },
+    {
+      label: 'Slope down, with its pitch',
+      draw: (cx, cy) => {
+        out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: INK, width: 0.45 });
+        out.push({ t: 'path', d: arrowHead([cx, cy], [cx + 22, cy], 4.5), fill: INK });
+      },
+    },
+    { label: 'Exterior wall below', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: FAINT, width: 0.45, dash: [3, 2] }) },
+  ];
+}
+
+/** The 3D view's panel: the render, fitted, or a note when there is nothing to draw. */
+function drawView(c: Ctx, view: View3d, box: { x: number; y: number; w: number; h: number }): void {
+  const { out } = c;
+  const image = view(box.w, box.h);
+  if (image === null) {
+    out.push({ t: 'path', d: rect(box.x, box.y, box.w, box.h), fill: '#fafafa', stroke: HAIR, width: 0.4 });
     out.push(text(box.x + box.w / 2, box.y + box.h / 2, 'Nothing to draw on this level yet', 'sans', 6, { anchor: 'middle', color: FAINT }));
     return;
   }
-  const pad = 8;
-  const s = Math.min((box.w - 2 * pad) / Math.max(1, b.maxX - b.minX), (box.h - 2 * pad) / Math.max(1, b.maxY - b.minY));
-  const ox = box.x + (box.w - (b.maxX - b.minX) * s) / 2;
-  const oy = box.y + (box.h - (b.maxY - b.minY) * s) / 2;
-  const T = (p: XY): XY => [ox + (p[0] - b.minX) * s, oy + (b.maxY - p[1]) * s];
-  const children: Prim[] = [];
-  for (const f of faces) {
-    const rings = f.rings.map((r) => r.map(T));
-    if (rings[0]!.length === 2) {
-      children.push({ t: 'path', d: line(rings[0]![0]!, rings[0]![1]!), stroke: INK, width: 0.35, cap: 'round' });
-      continue;
-    }
-    const d = rings.map(ring).join('');
-    children.push({ t: 'path', d, fill: grey(f.shade), ...(f.stroke ? { stroke: INK, width: 0.3 } : {}), evenOdd: rings.length > 1, join: 'round' });
-  }
-  out.push({ t: 'clip', d: rect(box.x, box.y, box.w, box.h), children });
+  out.push({ t: 'image', x: box.x, y: box.y, w: box.w, h: box.h, png: image.png });
+  out.push({ t: 'path', d: rect(box.x, box.y, box.w, box.h), stroke: HAIR, width: 0.4 });
 }

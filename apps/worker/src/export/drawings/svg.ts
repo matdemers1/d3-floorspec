@@ -27,6 +27,9 @@ export function sheetToSvg(sheet: Sheet, measure: Measure): string {
           defs.push(`<clipPath id="${id}"><path d="${p.d}"/></clipPath>`);
           return `<g clip-path="url(#${id})">${draw(p.children)}</g>`;
         }
+        if (p.t === 'image') {
+          return `<image x="${num(p.x)}" y="${num(p.y)}" width="${num(p.w)}" height="${num(p.h)}" preserveAspectRatio="none" href="data:image/png;base64,${Buffer.from(p.png).toString('base64')}"/>`;
+        }
         if (p.t === 'text') {
           const [family, weight] = FAMILY[p.font];
           const w = measure(p.text, p.font, p.size);

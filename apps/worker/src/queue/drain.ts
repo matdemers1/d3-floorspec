@@ -11,7 +11,7 @@
 import { createHash } from 'node:crypto';
 import { hostname } from 'node:os';
 import pg from 'pg';
-import { handlers, type Handler, type JobRow } from './handlers.js';
+import { createHandlers, handlers, type Handler, type JobRow } from './handlers.js';
 
 export const JOB_CHANNEL = 'floorspec_jobs';
 export const MAX_ATTEMPTS = 3;
@@ -25,6 +25,8 @@ export interface DrainOptions {
   /** Who is draining, for `locked_by`. Default host and process ID. */
   readonly workerId?: string;
   readonly handlers?: Readonly<Record<string, Handler>>;
+  /** Where the asset store is (`ASSET_DIR`), for the 3D exports' maps. Default the process's `ASSET_DIR`. Ignored when `handlers` is given. */
+  readonly assetDir?: string;
   readonly log?: (message: string) => void;
 }
 
@@ -45,7 +47,7 @@ function reason(error: unknown): string {
 export function createDrain(options: DrainOptions): Drain {
   const pool = new pg.Pool({ connectionString: options.databaseUrl, max: 2 });
   const workerId = options.workerId ?? `${hostname()}:${String(process.pid)}`;
-  const table = options.handlers ?? handlers;
+  const table = options.handlers ?? (options.assetDir === undefined ? handlers : createHandlers({ assetDir: options.assetDir }));
   const log = options.log ?? ((m: string) => process.stdout.write(`${m}\n`));
   let listener: pg.Client | null = null;
   let timer: NodeJS.Timeout | null = null;
@@ -83,7 +85,9 @@ export function createDrain(options: DrainOptions): Drain {
       const { rows } = await pool.query<{ document: unknown }>('select document from versions where hash = $1', [job.versionHash]);
       const version = rows[0];
       if (version === undefined) throw new Error(`version ${job.versionHash.slice(0, 12)} is not in the store`);
-      const file = await handler(version.document as object, job);
+      // What this project uploaded: the only asset bytes its exports may carry.
+      const claims = await pool.query<{ sha256: string }>('select sha256 from project_assets where project_id = $1', [job.projectId]);
+      const file = await handler(version.document as object, { ...job, claimed: new Set(claims.rows.map((r) => r.sha256)) });
       const sha256 = createHash('sha256').update(file.bytes).digest('hex');
       const client = await pool.connect();
       try {
