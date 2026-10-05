@@ -144,3 +144,36 @@ describe('floorspec --extensions', () => {
     expect(floorspec('validate', join(demo, 'input.json'), '--extensions', 'FS_nonesuch').status).toBe(2);
   });
 });
+
+describe('floorspec migrate', () => {
+  // The migration suite (Core 0.3, chapter 20), vendored in packages/migrate/standard.
+  const msuite = join(import.meta.dirname, '..', '..', 'migrate', 'standard', 'conformance', 'migration', '0.3');
+  const mcases = existsSync(msuite) ? cases(msuite) : [];
+
+  it('has the migration suite', () => {
+    expect(mcases.length).toBeGreaterThan(20);
+  });
+
+  it.each(mcases.map((d) => [relative(msuite, d), d]))('%s', (_name, dir) => {
+    const { to } = JSON.parse(readFileSync(join(dir, 'request.json'), 'utf8')) as { to: unknown };
+    // A target that is not a string cannot be given on a command line, where every argument is one.
+    if (typeof to !== 'string') return;
+    const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as { status: string; diagnostics: { code: string }[] };
+    const p = floorspec('migrate', join(dir, 'input.json'), '--to', to);
+    if (expected.status === 'migrated') {
+      expect(p.status).toBe(0);
+      expect(p.stdout).toBe(readFileSync(join(dir, 'output.json'), 'utf8'));
+    } else {
+      expect(p.status).toBe(1);
+      expect(p.stdout).toBe('');
+      for (const d of expected.diagnostics) expect(p.stderr).toContain(d.code);
+    }
+  });
+
+  it('takes no option but --to: nothing else decides a migration (Core 20.1)', () => {
+    const doc = join(msuite, 'step-0.1-0.2', '001-version-only', 'input.json');
+    expect(floorspec('migrate', doc, '--core', '0.2').status).toBe(2);
+    expect(floorspec('validate', doc, '--to', '0.3').status).toBe(2);
+    expect(floorspec('migrate', doc).stdout).toContain('"floorspec": "0.3"');
+  });
+});

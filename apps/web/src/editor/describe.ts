@@ -187,7 +187,12 @@ function sentence(op: Json, units: UnitSystem, name: Namer): string | null {
  * batch adds for the elements that use them are left out — they are the means, not the edit.
  */
 export function summarizeBatch(batch: readonly Json[], units: UnitSystem, name: Namer): string {
-  const meaningful = batch.filter((op) => !(op['op'] === 'addElement' && op['collection'] === 'types' && batch.length > 1));
+  // A migration (Core chapter 20) reads as the upgrade it is: the members it moves into
+  // extras["floorspec:migration"] are part of "Upgraded the plan to Floorspec 0.3".
+  const migrating = batch.some((op) => op['op'] === 'setProperty' && op['id'] === '$document' && op['path'] === '/floorspec');
+  const migrationPart = (op: Json): boolean =>
+    migrating && op['id'] === '$document' && (op['op'] === 'unsetProperty' ? String(op['path']).startsWith('/extensions/') : op['path'] === '/extras/floorspec:migration');
+  const meaningful = batch.filter((op) => !(op['op'] === 'addElement' && op['collection'] === 'types' && batch.length > 1) && !migrationPart(op));
   const ops = meaningful.length > 0 ? meaningful : batch;
   if (ops.length === 0) return 'Nothing';
   if (ops.length === 1 && ops[0]?.['op'] === 'createProject') return 'Created the project';

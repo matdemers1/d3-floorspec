@@ -214,3 +214,13 @@ describe('the official extensions and Core 0.3 (each extension spec, 1.2)', () =
     expect(Object.keys(check({ ...d, floorspec: '0.3' }, opts).derived!.extensions!)).toEqual(['FS_electrical']);
   });
 });
+
+describe("an extension element's own `option` in a 0.2 document (Core 0.3, 1.2.6, 19.2)", () => {
+  it('is the extension’s member, not a reference to an option, for a reader of 0.2 or 0.3; in a 0.3 document it is core’s', () => {
+    const element = { fallback: { level: 'L1', box: { min: [0, 0, 0], max: [128000, 128000, 128000] } }, option: 'deluxe' };
+    const d = v02(box(1e6, 1e6), { extensionsUsed: { EXT_a: '1.0' }, extensions: { EXT_a: { collections: { things: { X1: element } } } } });
+    expect(validate(d).valid).toBe(true);
+    expect(validate(d, { core: '0.2' }).valid).toBe(true);
+    expect(codes(validate({ ...d, floorspec: '0.3' }))).toEqual(['FS-INV-002 X1']);
+  });
+});

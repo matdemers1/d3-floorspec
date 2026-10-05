@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@floorspec/engine": "workspace:*",
+    "@floorspec/migrate": "workspace:*",
     "@floorspec/ops": "workspace:*"
   }
 }

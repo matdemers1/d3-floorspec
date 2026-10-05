@@ -1,0 +1,7 @@
+{
+  "description": "Three extension elements in two collections of two extensions have an \"option\" - one of them a number, which only the extension constrains in 0.2 - and one has none. The record lists the three moves sorted by pointer (20.3.1, 20.5.1).",
+  "covers": [
+    "FS-CORE-20.5.1",
+    "FS-CORE-20.3.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The input is not a JSON text. A migrator refuses it with FS-JSON-001, as a validator reports it (20.2.1).",
+  "covers": [
+    "FS-CORE-20.2.1"
+  ]
+}

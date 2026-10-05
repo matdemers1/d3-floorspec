@@ -129,6 +129,9 @@ importers:
       '@floorspec/mesh':
         specifier: workspace:*
         version: link:../../packages/mesh
+      '@floorspec/migrate':
+        specifier: workspace:*
+        version: link:../../packages/migrate
       '@floorspec/ops':
         specifier: workspace:*
         version: link:../../packages/ops
@@ -264,6 +267,9 @@ importers:
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../../engine
+      '@floorspec/migrate':
+        specifier: workspace:*
+        version: link:../../migrate
       '@floorspec/ops':
         specifier: workspace:*
         version: link:../../ops
@@ -273,6 +279,9 @@ importers:
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../engine
+      '@floorspec/migrate':
+        specifier: workspace:*
+        version: link:../migrate
       '@floorspec/package':
         specifier: workspace:*
         version: link:../package
@@ -378,6 +387,19 @@ importers:
       playwright:
         specifier: 1.63.0
         version: 1.63.0
+
+  packages/migrate:
+    dependencies:
+      '@floorspec/engine':
+        specifier: workspace:*
+        version: link:../engine
+    devDependencies:
+      '@floorspec/ops':
+        specifier: workspace:*
+        version: link:../ops
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
 
   packages/ops:
     dependencies:

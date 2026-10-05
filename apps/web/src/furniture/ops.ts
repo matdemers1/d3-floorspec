@@ -1,4 +1,5 @@
 import type { FloorspecDocument } from '@floorspec/engine';
+import { migrationBatch } from '@floorspec/migrate';
 import type { Operation } from '@floorspec/ops';
 import type { EditorModel } from '../editor/model';
 import type { Batch, BatchBuilder } from '../editor/ops';
@@ -50,7 +51,7 @@ export interface NewItem {
 /** Core 0.3 and FS_furniture declared, as the batch that adds the first item needs them. */
 export function declarationOps(document: FloorspecDocument): Batch {
   const ops: Batch = [];
-  if (document.floorspec === '0.1' || document.floorspec === '0.2') ops.push({ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' });
+  ops.push(...migrationBatch(document, '0.3')); // Core chapter 20: nothing when it is 0.3 already
   const used = (document as { extensionsUsed?: Record<string, unknown> }).extensionsUsed;
   if (used === undefined || !Object.hasOwn(used, EXTENSION)) ops.push({ op: 'setProperty', id: '$document', path: `/extensionsUsed/${EXTENSION}`, value: extensionVersion(EXTENSION) });
   return ops;

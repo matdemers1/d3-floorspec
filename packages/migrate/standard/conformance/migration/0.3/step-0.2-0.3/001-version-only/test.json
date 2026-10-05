@@ -1,0 +1,9 @@
+{
+  "description": "A 0.2 house with a program, a brief and an outlet on W2 with no \"option\": the step makes it declare \"0.3\" and changes nothing else (20.5.1, 20.3.2). A reader of 0.3 derives the outlet's fallback and placement, the program and the room's floor and ceiling alike for both (20.6.1).",
+  "covers": [
+    "FS-CORE-20.5.1",
+    "FS-CORE-20.3.2",
+    "FS-CORE-20.1.4",
+    "FS-CORE-20.6.1"
+  ]
+}

@@ -94,7 +94,9 @@ export function references(doc: FloorspecDocument): Reference[] {
     if (h?.mode === 'free') add(x.id, h.level, 'levels');
     const fb = x.element.fallback;
     add(x.id, fb.level, 'levels');
-    add(x.id, x.element.option, 'options');
+    // Core 0.3 (19.2): an extension element's `option` is core's only in a 0.3 document; in a 0.2
+    // one it is the extension's own member, and a 0.3 reader reads it as absent (1.2.6).
+    if (doc.floorspec === '0.3') add(x.id, x.element.option, 'options');
     add(x.id, fb.asset, 'assets');
     add(x.id, fb.symbol, 'assets');
   }

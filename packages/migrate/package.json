@@ -1,0 +1,33 @@
+{
+  "name": "@floorspec/migrate",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The reference migrator of Floorspec Core 0.3 (chapter 20): a document of 0.1 or 0.2 migrated to a later draft, byte for byte, and the Floorspec Ops batch that makes the same change. Isomorphic, deterministic.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc -p test && tsc -p scripts",
+    "test": "vitest run",
+    "conformance": "vitest run test/conformance.node.test.ts test/property.node.test.ts",
+    "sync-standard": "tsx scripts/sync-standard.ts"
+  },
+  "dependencies": {
+    "@floorspec/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@floorspec/ops": "workspace:*",
+    "tsx": "^4.23.15"
+  }
+}

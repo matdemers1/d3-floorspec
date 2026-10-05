@@ -14,7 +14,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test:python": "cd workers/ifc && .venv/bin/python -m pytest -q",
-    "conformance": "pnpm --filter @floorspec/engine conformance && pnpm --filter @floorspec/engine build && pnpm --filter @floorspec/ops conformance && pnpm --filter @floorspec/rules-engine conformance"
+    "conformance": "pnpm --filter @floorspec/engine conformance && pnpm --filter @floorspec/engine build && pnpm --filter @floorspec/ops conformance && pnpm --filter @floorspec/rules-engine conformance && pnpm --filter @floorspec/ops build && pnpm --filter @floorspec/migrate conformance"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

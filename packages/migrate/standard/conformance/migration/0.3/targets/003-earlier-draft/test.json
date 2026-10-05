@@ -1,0 +1,6 @@
+{
+  "description": "A 0.3 document cannot be migrated to 0.2: a migration never goes backwards (20.2.3).",
+  "covers": [
+    "FS-CORE-20.2.3"
+  ]
+}

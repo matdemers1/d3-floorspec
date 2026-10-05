@@ -93,7 +93,7 @@ describe('reading a brief', () => {
   it('has nothing to say of a Core 0.1 plan but that it needs upgrading, which one op does', () => {
     const old = readModel('x', { floorspec: '0.1', project: { name: 'Old' } });
     expect(view(old)).toMatchObject({ version: '0.1', items: [], edges: [] });
-    const r = apply(old.document, { batch: [...upgrade(), ...addItem({ function: 'kitchen' })] });
+    const r = apply(old.document, { batch: [...upgrade(old.document), ...addItem({ function: 'kitchen' })] });
     expect(r.status).toBe('committed');
   });
 });
@@ -279,5 +279,24 @@ describe('the history and the diff name the brief', () => {
     expect(summarizeBatch([{ op: 'removeAdjacency', a: 'P1', b: 'P2', kind: 'required' }], 'imperial', name)).toBe('Unrelated Living and Kitchen');
     expect(summarizeBatch([{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }], 'imperial', name)).toBe('Upgraded the plan to Floorspec 0.3');
     expect(summarizeBatch([{ op: 'setProperty', id: 'R1', path: '/brief', value: 'P2' }], 'imperial', name)).toBe('Linked Kitchen room to Kitchen');
+  });
+
+  it('upgrades a 0.1 plan by its migration (Core chapter 20), which a version bump alone cannot do here', () => {
+    // A 0.1 plan whose extension data has a "collections" member, opaque in 0.1 and malformed as 0.3's.
+    const old = {
+      floorspec: '0.1',
+      project: { name: 'Old' },
+      extensionsUsed: { EXT_notes: '1.0' },
+      extensions: { EXT_notes: { collections: { pinned: 'not an element' } } },
+    };
+    expect(apply(old, { batch: [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }] }).status).toBe('rejected');
+    const batch = upgrade(old);
+    const r = apply(old, { batch: [...batch, ...addItem({ function: 'kitchen' })] });
+    expect(r.status).toBe('committed');
+    if (r.status !== 'committed') return;
+    const doc = JSON.parse(r.document) as { floorspec: string; extras: Record<string, unknown> };
+    expect(doc.floorspec).toBe('0.3');
+    expect(doc.extras['floorspec:migration']).toEqual([{ from: '0.1', to: '0.2', moved: [{ pointer: '/extensions/EXT_notes/collections', value: { pinned: 'not an element' } }] }]);
+    expect(summarizeBatch(batch as unknown as Record<string, unknown>[], 'imperial', (id) => id)).toBe('Upgraded the plan to Floorspec 0.3');
   });
 });

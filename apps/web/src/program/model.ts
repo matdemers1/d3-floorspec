@@ -1,4 +1,5 @@
 import { parseArea } from '@floorspec/ops';
+import { migrationBatch } from '@floorspec/migrate';
 import type { EditorModel } from '../editor/model';
 import type { Batch } from '../editor/ops';
 import type { UnitSystem } from '../editor/units';
@@ -189,9 +190,9 @@ export function parseAreaInput(text: string, units: UnitSystem): AreaInput {
 
 // ─── Operations ──────────────────────────────────────────────────────────────────────────────
 
-/** Ops 0.3, 2.3: what turns a Core 0.1 plan into a 0.3 one — the current draft — that can hold a brief. */
-export function upgrade(): Batch {
-  return [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }];
+/** What turns a Core 0.1 plan into a 0.3 one — the current draft — that can hold a brief: its migration (Core chapter 20). */
+export function upgrade(document: object): Batch {
+  return migrationBatch(document, '0.3');
 }
 
 export interface NewItem {

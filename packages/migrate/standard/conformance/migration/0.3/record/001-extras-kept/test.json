@@ -1,0 +1,8 @@
+{
+  "description": "The document's extras hold a viewer's camera. The step adds its record beside it and leaves the camera exactly as it was (20.3.1, 20.1.4); nothing is derived from either (20.6.1).",
+  "covers": [
+    "FS-CORE-20.3.1",
+    "FS-CORE-20.1.4",
+    "FS-CORE-20.6.1"
+  ]
+}
