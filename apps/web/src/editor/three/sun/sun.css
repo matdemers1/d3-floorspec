@@ -1,0 +1,153 @@
+/* The sun and shadow study (FLR-T-8.6): the panel over the 3D view and its chip. Tokens only. */
+
+.fs-sun {
+  position: absolute;
+  top: 88px;
+  right: var(--space-16);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 304px;
+  max-width: calc(100% - 2 * var(--space-16));
+  max-height: calc(100% - 88px - 60px);
+  overflow-y: auto;
+  padding: var(--space-12) var(--space-16) var(--space-16);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+}
+.fs-sun__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-editor .fs-sun__head svg.lucide {
+  width: var(--icon-16);
+  height: var(--icon-16);
+  color: var(--color-fg-muted);
+}
+.fs-sun__title {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  font-weight: var(--weight-semibold);
+}
+.fs-sun__status {
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-md);
+  background: var(--color-fill-quiet);
+  color: var(--color-fg);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-sun__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.fs-sun__time {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.fs-sun__time-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.fs-sun__clock {
+  font-family: var(--font-mono);
+  font-size: var(--text-13);
+  color: var(--color-fg);
+}
+.fs-sun__time-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.fs-sun__slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  margin: 0 0 0 var(--space-6);
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+.fs-sun__slider:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-sun__site {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--color-border);
+}
+.fs-sun__disclosure {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-fg-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fs-sun__disclosure:disabled {
+  cursor: default;
+}
+.fs-sun__disclosure:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-editor .fs-sun__disclosure svg.fs-sun__chev {
+  flex: none;
+  width: var(--icon-14);
+  height: var(--icon-14);
+  transition: transform 120ms ease;
+}
+.fs-sun__disclosure[aria-expanded='true'] .fs-sun__chev {
+  transform: rotate(90deg);
+}
+.fs-sun__site-line {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-fg);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-sun__site-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-sun__chip {
+  right: var(--space-16);
+  bottom: var(--space-16);
+  cursor: pointer;
+}
+.fs-sun__chip:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-fg);
+}
+.fs-sun__chip:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fs-editor .fs-sun__disclosure svg.fs-sun__chev {
+    transition: none;
+  }
+}

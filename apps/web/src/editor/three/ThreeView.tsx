@@ -4,7 +4,7 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three';
 import { flatShaded, type HouseMesh, type MeshPart, type Vec3 } from '@floorspec/mesh';
 import { Button, EmptyState, IconButton, Spinner, Tooltip } from '@d3cloud/ui';
-import { Box, Footprints, House, Layers, Orbit as OrbitIcon, RotateCcw, Sun, X } from 'lucide-react';
+import { Box, Footprints, House, Layers, Orbit as OrbitIcon, RotateCcw, X } from 'lucide-react';
 import { useEditor, type EditorState, type EditorStore } from '../store';
 import { labelOf, type EditorModel, type LevelView } from '../model';
 import { formatLen } from '../units';
@@ -16,6 +16,8 @@ import { describeScene, faceColours, isVisible, levelOrder, lookOf, type Look } 
 import { isSurfacePart, surfaceBuffers, type MapRef } from './surfaces';
 import { TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
+import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
+import { SunRig } from './sun/SunRig';
 
 /**
  * The 3D view (FLR-T-7.5, FLR-REQ-113, 114), laid out as the board's "08 · Editor — 3D cutaway",
@@ -72,7 +74,7 @@ function useTokens(host: { current: HTMLElement | null }): Tokens {
 // Glass and daylight are what the house is made of and lit by, not interface colour.
 const GLASS = '#9ec9ea'; // d3-allow: window glass in the 3D model, not chrome
 const SKY = '#d6e4f0'; // d3-allow: daylight behind the windows in a walkthrough, not chrome
-const SKY_GROUND = '#b8b1a4'; // d3-allow: the hemisphere light's bounce from the ground
+const NIGHT = '#1d2433'; // d3-allow: the night sky behind the windows when the sun study is below the horizon
 
 interface Built {
   part: MeshPart;
@@ -144,6 +146,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const tokens = useTokens(host);
   const ctl = useMemo(() => new ThreeController(three), [three]);
   const describedBy = useId();
+  const night = useSunNight(store, model);
 
   const ready = state.status === 'ready' ? state : null;
   const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);
@@ -407,6 +410,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         className="fs-three__canvas"
         frameloop={walking ? 'always' : 'demand'}
         dpr={[1, 2]}
+        shadows="percentage"
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{ fov: FOV, near: 0.05, far: 4000, position: [0, -20, 10], up: [0, 0, 1] }}
         onPointerMissed={(e: MouseEvent) => {
@@ -416,10 +420,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           gl.domElement.setAttribute('aria-hidden', 'true');
         }}
       >
-        <color attach="background" args={[walking ? SKY : tokens.background]} />
-        <hemisphereLight args={[0xffffff, SKY_GROUND, 1.6]} position={[0, 0, 1]} />
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[-30, -45, 70]} intensity={1.7} />
+        <color attach="background" args={[walking ? (night ? NIGHT : SKY) : tokens.background]} />
+        {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} /> : null}
         <Rig ctl={ctl} />
         <SceneBridge />
         <Parts visible={visible} selection={walking ? null : selection} accent={tokens.accent} textures={textures} onClick={onClick} onDoubleClick={onDoubleClick} />
@@ -463,6 +465,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
             {cutaway ? `Cutaway · ${levelName} and below` : 'Whole house'}
           </button>
           <ViewCube ctl={ctl} preset={preset} />
+          <SunPanel store={store} model={ready.model} />
+          <SunChip store={store} />
           <div className="fs-three__chip fs-three__stats" role="note">
             <Box aria-hidden="true" />
             WebGL · {String(visible.length)} parts · {triangles >= 1000 ? `${(triangles / 1000).toFixed(1)}k` : String(triangles)} triangles
@@ -586,6 +590,8 @@ function Parts({
           geometry={b.geometry}
           material={b.slots === undefined ? materialOf(b, b.part.id === selection) : b.slots.map((m) => (m === null ? materialOf(b, b.part.id === selection) : textures.material(m, b.look, b.part.id === selection)))}
           userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
+          castShadow={b.look !== 'glass' && b.look !== 'pick'}
+          receiveShadow={b.look !== 'glass' && b.look !== 'pick'}
           renderOrder={b.look === 'glass' || b.look === 'pick' ? 1 : 0}
         />
       ))}
@@ -639,9 +645,7 @@ function Toolbar({ store, three, ctl, mesh, cutaway, roof }: { store: EditorStor
       <Tooltip content={selection === null ? 'Walk through from the entry (4)' : 'Walk through (4) — or double-click a floor'}>
         <IconButton label="Walk through" icon={<Footprints />} size="sm" onClick={() => { three.walk(null); }} />
       </Tooltip>
-      <Tooltip content="Sun and shadow — arrives with the sun study in P8">
-        <IconButton label="Sun and shadow" icon={<Sun />} size="sm" disabled />
-      </Tooltip>
+      <SunButton store={store} />
       <Tooltip content={cutaway ? 'The cutaway leaves the roof off — show the whole house to see it' : roof ? 'Hide the roof' : 'Show the roof'}>
         <IconButton label="Roof" icon={<House />} size="sm" pressed={roof && !cutaway} disabled={cutaway} onClick={() => { three.set({ roof: !roof }); }} />
       </Tooltip>

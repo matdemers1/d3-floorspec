@@ -5,6 +5,7 @@ import { elementOf, levelOfElement, type Kind } from '../model';
 import { formatLen } from '../units';
 import { EYE_HEIGHTS, threeOf, useThreeState } from './mode';
 import { Row, Section } from '../fields';
+import { ShadowsRow } from './sun/SunPanel';
 
 /**
  * The inspector's "3D" section (the board's 08 frames), shown while a 3D view is open: what the 3D
@@ -29,6 +30,7 @@ export function ThreeSection({ store, id, kind }: { store: EditorStore; id: stri
       <Row label="Showing">
         <span className="fs-three-section__value">{cutaway ? `${levelName ?? 'This level'} and below, cut away` : 'The whole house'}</span>
       </Row>
+      <ShadowsRow store={store} />
       <Row label="Eye height" htmlFor="fs-eye-height">
         <Select
           id="fs-eye-height"

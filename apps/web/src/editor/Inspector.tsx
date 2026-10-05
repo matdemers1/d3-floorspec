@@ -48,6 +48,7 @@ import {
   type ClearOpening,
 } from './openings';
 import { ThreeSection } from './three/ThreeSection';
+import { SiteSection } from './three/sun/SiteFields';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -940,6 +941,7 @@ function ProjectPanel({ store, model, units, readOnly }: { store: EditorStore; m
         <ReadOnlyField label="Floorspec" value={`Core ${model.document.floorspec}`} />
         {model.document.floorspec !== CURRENT_CORE ? <CoreUpgradeNotice store={store} model={model} what="Door and window operation and declared net clear openings" /> : null}
       </Section>
+      <SiteSection store={store} model={model} readOnly={readOnly} />
       <SystemsSummary store={store} model={model} units={units} />
       <Section title="Findings">
         <FindingsList store={store} />
