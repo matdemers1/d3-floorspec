@@ -55,6 +55,11 @@ const CALLS: Record<string, Call> = {
   'GET /api/projects/:projectId/exports/:jobId': { ownerStatus: 200 },
   // Answered, by a route that works: A's export is still queued.
   'GET /api/projects/:projectId/exports/:jobId/file': { ownerStatus: 409 },
+  // Answered, by a route that works: an upload is the image's bytes, never JSON (FLR-T-8.2).
+  'POST /api/projects/:projectId/assets': { body: {}, ownerStatus: 415 },
+  'GET /api/projects/:projectId/assets': { ownerStatus: 200 },
+  // Answered, by a route that works: A's project has uploaded nothing, so no digest is A's to read.
+  'GET /api/projects/:projectId/assets/:sha256': { ownerStatus: 404 },
   // Last: it is the one that changes the project, so the owner's call to it goes at the end.
   'DELETE /api/projects/:projectId': { ownerStatus: 204 },
 };
@@ -71,7 +76,7 @@ describe('per-account isolation', () => {
 
   /** A route's path with A's project, version and changeset filled in. */
   const fill = (path: string, project = projectId) =>
-    path.replace(':projectId', project).replace(':hash', head).replace(':changesetId', changesetId).replace(':jobId', jobId);
+    path.replace(':projectId', project).replace(':hash', head).replace(':changesetId', changesetId).replace(':jobId', jobId).replace(':sha256', 'a'.repeat(64));
 
   beforeAll(async () => {
     running = await start();

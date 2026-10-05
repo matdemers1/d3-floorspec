@@ -37,12 +37,13 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && pg_dump --version | grep -q " ${POSTGRES_MAJOR}\." \
     && pg_restore --version | grep -q " ${POSTGRES_MAJOR}\."
-ENV NODE_ENV=production PORT=3400 WEB_DIST=/app/public BACKUP_DIR=/backups PREMIGRATION_DUMP=true
+ENV NODE_ENV=production PORT=3400 WEB_DIST=/app/public BACKUP_DIR=/backups PREMIGRATION_DUMP=true ASSET_DIR=/assets
 WORKDIR /app
-# Code stays root-owned so the service user cannot modify it; only /backups is writable.
+# Code stays root-owned so the service user cannot modify it; only /backups and /assets (the
+# content-addressed asset store, FLR-T-8.2) are writable.
 COPY --from=build /out ./
 COPY --from=build /repo/apps/web/dist ./public
-RUN mkdir -p /backups && chown node:node /backups
+RUN mkdir -p /backups /assets && chown node:node /backups /assets
 USER node
 EXPOSE 3400
 HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=6 \

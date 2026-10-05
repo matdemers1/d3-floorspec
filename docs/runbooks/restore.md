@@ -41,12 +41,13 @@ Into `BACKUP_DIR` (`/backups` in the image — the `floorspec_backups` Docker vo
   `changesets` and `audit_log`, the asset summary, and the `pg_dump` version. The counts and
   revision are read inside the same snapshot the dump is taken from (`pg_dump --snapshot`), so they
   describe exactly what is in the file.
-- `assets/` — a mirror of `ASSET_DIR`, when it is set and not empty. The asset store is
-  content-addressed, so only new files are copied. Until the asset store exists (FLR-T-8.2),
-  `ASSET_DIR` is unset and the manifest records `{"status": "none", "reason": "no asset store is
-  configured (ASSET_DIR is not set)"}`. An `ASSET_DIR` that is set but missing fails the backup —
-  that is a volume that did not mount, not an empty store. When FLR-T-8.2 lands: mount the asset
-  volume into the api and set `ASSET_DIR` to its path.
+- `assets/` — a mirror of `ASSET_DIR` (the image sets `/assets`, the `assets` volume), when it is
+  not empty. The asset store is content-addressed (FLR-T-8.2) — each upload is the file
+  `ab/cd/<sha256>` and never changes — so only new files are copied. With `ASSET_DIR` unset, or the
+  store empty, the manifest records `{"status": "none", "reason": …}`. An `ASSET_DIR` that is set but
+  missing fails the backup — that is a volume that did not mount, not an empty store. The database
+  keeps which project uploaded which digest (`project_assets`); a dump without its asset mirror
+  restores models whose textures fall back to their colour until the files are copied back.
 
 Nightly dumps older than `BACKUP_RETENTION_DAYS` (default 30) are pruned after a successful
 backup; the newest is never pruned.
@@ -180,7 +181,7 @@ live database, check it, then switch — never over the top of the only copy you
    then `dc start api worker`. The api migrates on boot if the dump predates the image's schema
    (after its own pre-migration dump). Sign in and open a project. Drop `floorspec_broken_<date>`
    once you are sure.
-6. **Assets** (once FLR-T-8.2 exists): copy the mirror back into the asset volume — files are
+6. **Assets:** copy the mirror back into the asset volume — files are
    content-addressed, so copying over an existing store only fills in what is missing:
    `dc run --rm --no-deps --entrypoint cp api -an /backups/assets/. "$ASSET_DIR"/`.
 7. **Off the machine:** `dc cp api:/backups ./floorspec-backups` copies the volume out.

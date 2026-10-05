@@ -38,6 +38,8 @@ import type { PlanRenderer } from './render.js';
 import { EventHub } from './events/hub.js';
 import { eventRoutes, type EventRouteOptions } from './events/routes.js';
 import { NO_PACKS, type InstalledPacks } from './rules/packs.js';
+import { assetRoutes } from './routes/assets.js';
+import { defaultAssetStore, type AssetStore } from './assets/store.js';
 
 export interface AppDeps {
   readonly config: Config;
@@ -68,6 +70,8 @@ export interface AppDeps {
   readonly eventStream?: EventRouteOptions;
   /** The installed rule packs (RULE_PACKS_DIR, read at boot). Default: none. */
   readonly rulePacks?: InstalledPacks;
+  /** The asset store (FLR-T-8.2). Default: the filesystem under ASSET_DIR (src/assets/store.ts). */
+  readonly assets?: AssetStore | null;
 }
 
 /** The paths the API owns. Anything else is a screen of the editor. */
@@ -83,6 +87,7 @@ export function createApp({
   events = new EventHub(config.DATABASE_URL),
   eventStream = {},
   rulePacks = NO_PACKS,
+  assets = defaultAssetStore(config),
 }: AppDeps): Express {
   const app = express();
   (app.locals as { events?: EventHub }).events = events;
@@ -108,6 +113,7 @@ export function createApp({
   mount(app, '/api/rule-packs', rulePackRoutes(db, rulePacks));
   mount(app, '/api/projects', eventRoutes(db, events, eventStream));
   mount(app, '/api/projects', exportRoutes(db));
+  mount(app, '/api/projects', assetRoutes(db, assets, config.ASSET_MAX_BYTES));
   mount(app, '/api/tokens', tokenRoutes(db));
   mount(app, '/api/maintenance', maintenanceRoutes(db, config));
   mountMcp(app, config);

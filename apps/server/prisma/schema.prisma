@@ -60,6 +60,7 @@ model Account {
   changesetsClosed Changeset[]   @relation("ChangesetClosedBy")
   ruleProfiles     RuleProfile[]
   jobsRequested    Job[]
+  assetsUploaded   ProjectAsset[]
 
   @@map("accounts")
 }
@@ -188,6 +189,7 @@ model Project {
   changesets  Changeset[]
   retiredIds  RetiredId[]
   jobs        Job[]
+  assets      ProjectAsset[]
 
   @@index([ownerAccountId])
   @@index([ruleProfileId])
@@ -547,4 +549,35 @@ model AlertLog {
 
   @@index([kind, createdAt])
   @@map("alerts")
+}
+
+// ─── Assets (FLR-T-8.2) ─────────────────────────────────────────────────────
+
+/// A file uploaded into a project: the bytes are in the content-addressed asset store (ASSET_DIR),
+/// keyed by `sha256`; this row is the project's claim on them — what lets the project's owner read
+/// them back, and what the editor offers before the document names them. Which assets a model
+/// *uses* is the document's `assets` collection (Core 18.4), never this table. One row per project
+/// and digest: an upload of the same bytes again is the same row.
+model ProjectAsset {
+  id         String  @id @default(uuid(7)) @db.Uuid
+  projectId  String  @map("project_id") @db.Uuid
+  sha256     String
+  mediaType  String  @map("media_type")
+  byteLength Int     @map("byte_length")
+  width      Int
+  height     Int
+  /// The file's name as uploaded, for a person: never a path.
+  name       String?
+
+  uploadedByAccountId String? @map("uploaded_by_account_id") @db.Uuid
+  uploadedByTokenId   String? @map("uploaded_by_token_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  uploadedBy Account? @relation(fields: [uploadedByAccountId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, sha256])
+  @@index([sha256])
+  @@map("project_assets")
 }

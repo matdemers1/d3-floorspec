@@ -89,8 +89,13 @@ from `openssl`, `PUBLIC_URL=http://127.0.0.1:3400`, no setup token and a fixed l
 password. It never overwrites a file that exists, so you can run it and then edit the result.
 
 The other settings, all optional, are listed in [`.env.example`](../.env.example) and in
-`apps/server/src/config.ts`: Sign in with D3 Auth (section 7), rule packs (section 8), and
-`INVITE_TTL_HOURS` (how long an invite link lasts, default 168).
+`apps/server/src/config.ts`: Sign in with D3 Auth (section 7), rule packs (section 8),
+`INVITE_TTL_HOURS` (how long an invite link lasts, default 168), and `ASSET_MAX_BYTES` (the largest
+texture upload, default 20 MiB). Uploaded textures are kept in the `assets` volume at `/assets`,
+which the image sets as `ASSET_DIR`; a JPEG's EXIF (a phone photo's GPS position among it), XMP and
+comments, a PNG's text chunks and a WebP's EXIF and XMP are removed losslessly before a file is
+stored — no pixel is re-encoded, and its colour profile stays. An EXIF orientation goes with the rest,
+so rotate a sideways photo before you upload it.
 
 ## 4. Build and start
 
@@ -265,7 +270,9 @@ Either answers with the tools: `floorspec_describe`, `floorspec_apply`, `floorsp
 
 ## 10. Backups
 
-Everything is in PostgreSQL (the `pgdata` volume). The api takes a `pg_dump` into the `backups`
+Everything is in PostgreSQL (the `pgdata` volume), except uploaded textures, which are files in
+the `assets` volume named by the SHA-256 of their bytes (`ASSET_DIR`, `/assets` in the image). The
+nightly backup mirrors that volume into `backups/assets`. The api takes a `pg_dump` into the `backups`
 volume before every migration, takes a nightly backup there (`floorspec-<time>.dump` with a
 manifest, kept `BACKUP_RETENTION_DAYS`), and once a week restores the newest into a scratch database
 and opens a project from it — the restore drill. `docs/runbooks/restore.md` has both, a real

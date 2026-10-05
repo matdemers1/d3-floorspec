@@ -17,6 +17,8 @@
 #                                   worker reads them too, for its health watchdog)
 #   /DATA/floorspec/tunnel.env    TUNNEL_TOKEN=<the floorspec tunnel's token>
 #
+# Uploaded textures live in the `assets` volume, files named by their SHA-256 (FLR-T-8.2).
+#
 # The api migrates on boot, after a pre-migration pg_dump into the backups volume. The editor is
 # served by the api: there is no separate web container. The api also takes the nightly backup into
 # that volume and runs the weekly restore drill (FLR-T-12.1, docs/runbooks/restore.md); the worker
@@ -47,6 +49,9 @@ services:
         condition: service_healthy
     volumes:
       - backups:/backups
+      # Uploaded textures, content-addressed (FLR-T-8.2); the image sets ASSET_DIR=/assets, and the
+      # nightly backup mirrors it into the backups volume.
+      - assets:/assets
     healthcheck:
       test: ["CMD", "node", "dist/healthcheck.js"]
       interval: 15s
@@ -77,3 +82,4 @@ services:
 volumes:
   pgdata: {}
   backups: {}
+  assets: {}
