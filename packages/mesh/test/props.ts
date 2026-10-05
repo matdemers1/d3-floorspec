@@ -218,7 +218,7 @@ function wallFacts(doc: FloorspecDocument, d: Derived, id: string): { ring: IPoi
       const l = Math.hypot(Number(dir[0]), Number(dir[1]));
       const bow = R - Math.sqrt(Math.max(R * R - (l * l) / 4, 0));
       const t = own(doc.types, w.type!);
-      const T = ((w.layers ?? (t.kind === 'wallType' ? t.layers : [])) ?? []).reduce((x, y) => x + y.thickness, 0);
+      const T = (w.layers ?? (t.kind === 'wallType' ? t.layers : [])).reduce((x, y) => x + y.thickness, 0);
       const k = BigInt(Math.ceil((T + bow + 2) / nLen));
       const ns = n[0] * s[0] + n[1] * s[1];
       const nn = n[0] * n[0] + n[1] * n[1];
