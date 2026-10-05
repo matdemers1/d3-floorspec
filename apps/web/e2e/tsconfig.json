@@ -2,6 +2,8 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"],
+    // page.evaluate bodies run in the browser: they are typed against the DOM.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "declaration": false,
     "sourceMap": false,
     "noEmit": true
