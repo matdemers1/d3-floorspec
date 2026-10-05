@@ -7,7 +7,9 @@ import { count, firstRunSetup, FT, modelOf, password, projectIn, settled } from 
  * FLR-T-7.2, 7.3: a roof and a stair drawn in the editor, checked through the model the server
  * holds (`model.json`) and the values the engine derives from it. A blank project gets a 20 ft ×
  * 12 ft room on Level 1 and a Level 2 above it; the stair tool places an L stair — its foot, then the
- * way it rises — that rises to Level 2; the roof tool roofs the walls as a 6:12 hip.
+ * way it rises — that rises to Level 2; the roof tool roofs the walls as a 6:12 hip. Then (FLR-T-11.2,
+ * Core 0.4) the inspector makes the hip a saltbox — gables at its short ends, its front at 12:12 — which
+ * the weighted straight skeleton derives, the plan draws, and the 3D view shows.
  */
 
 interface Camera {
@@ -121,4 +123,66 @@ test('a hip roof over the walls and an L stair to the level above, as the model 
   expect(d.steps?.filter((s) => s.landing === true)).toHaveLength(1);
   expect(d.walkline?.points).toHaveLength(3);
   expect(d.footRoom).toBe(Object.keys(doc.rooms ?? {})[0]);
+
+  // ── FLR-T-11.2 (Core 0.4, 16.4.3): the roof made a saltbox from its inspector — its two short ends
+  // gables, its south edge pitched 12:12 against the roof's 6:12 — is derived and drawn: one ridge, a
+  // third of the way back from the steep front, two gable ends, and no "not derived" note.
+  const [roofId] = Object.keys(doc.roofs ?? {});
+  type Edge = { gable?: boolean; pitch?: { rise: number; run: number } };
+  const edgeOf = async (i: number): Promise<Edge | undefined> => (await modelOf(page, project)).roofs?.[roofId!]?.edges?.[String(i)] as Edge | undefined;
+  const fp = roof.footprint;
+  const edgeLength = (i: number): number => Math.hypot(fp[(i + 1) % 4]![0] - fp[i]![0], fp[(i + 1) % 4]![1] - fp[i]![1]);
+  const ys = fp.map((p) => p[1]);
+  const shortEnds = [0, 1, 2, 3].filter((i) => edgeLength(i) < 16 * FT);
+  const south = [0, 1, 2, 3].find((i) => fp[i]![1] === Math.min(...ys) && fp[(i + 1) % 4]![1] === Math.min(...ys))!;
+  expect(shortEnds).toHaveLength(2);
+  // Out of the roof tool; the new roof is the selection — else pick it in the project tree.
+  await page.keyboard.press('Escape');
+  const firstEdge = inspector.getByRole('switch', { name: /^Edge 0 · / });
+  if (!(await firstEdge.waitFor({ timeout: 3000 }).then(() => true, () => false))) {
+    const roofs = page.getByRole('treeitem', { name: /^Roofs/ });
+    if ((await roofs.getAttribute('aria-expanded')) !== 'true') await roofs.click();
+    await page.getByRole('treeitem', { name: new RegExp(`\\b${roofId!}\\b`) }).click();
+  }
+  await expect(firstEdge).toBeVisible();
+  for (const i of shortEnds) {
+    await inspector.getByRole('switch', { name: new RegExp(`^Edge ${String(i)} · .* · gable$`) }).click();
+    await expect.poll(async () => (await edgeOf(i))?.gable).toBe(true);
+    await settled(page);
+  }
+  const rise = inspector.getByLabel(`Edge ${String(south)} pitch rise (in 12)`);
+  await rise.fill('12');
+  await rise.press('Enter');
+  await expect.poll(async () => (await edgeOf(south))?.pitch).toEqual({ rise: 12, run: 12 });
+  await settled(page);
+  doc = await modelOf(page, project);
+  const saltbox = check(doc);
+  expect(saltbox.valid, JSON.stringify(saltbox.diagnostics)).toBe(true);
+  expect(saltbox.diagnostics.map((x) => x.code)).not.toContain('FS-LINT-015');
+  const salt = (saltbox.derived as unknown as { roofs: Record<string, { kind: string; outline: [number, number][]; surface: { faces: unknown[]; gables: unknown[]; lines: { kind: string; from: number[] }[] } | null }> }).roofs[roofId!]!;
+  expect(salt.kind).toBe('gable');
+  expect(salt.surface?.faces).toHaveLength(2);
+  expect(salt.surface?.gables).toHaveLength(2);
+  expect(salt.surface?.lines.map((l) => l.kind)).toEqual(['ridge']);
+  const oy = salt.outline.map((p) => p[1]);
+  // The south plane rises twice as fast as the north one, so the ridge is a third of the way back.
+  expect(salt.surface!.lines[0]!.from[1]).toBe(Math.round(Math.min(...oy) + (Math.max(...oy) - Math.min(...oy)) / 3));
+  await expect(svg.locator('.fs-plan2__roofs .fs-roof__line--ridge')).toHaveCount(1);
+  await expect(svg.locator('.fs-plan2__roofs .fs-roof__line--hip')).toHaveCount(0);
+  await expect(svg.locator('.fs-plan2__roofs .fs-roof__gable')).toHaveCount(2);
+  await expect(inspector).not.toContainText('does not derive');
+  await expect(inspector).toContainText('2 faces · 1 ridges, hips, valleys and breaks');
+  await page.screenshot({ path: 'test-results/roofs-saltbox-2d.png' });
+
+  // …and in 3D: the whole house, the saltbox among its parts.
+  await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: '3D' }).click();
+  await page.waitForFunction(() => (window as unknown as { __floorspec3d?: { ready: boolean } }).__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
+  await page.getByRole('button', { name: /Cutaway · Level 1 and below/ }).click();
+  const canvas = page.getByRole('application', { name: /^3D view of / });
+  const description = page.locator(`[id="${(await canvas.getAttribute('aria-describedby'))!}"]`);
+  await expect(description).toContainText('1 roof');
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __floorspec3d?: { kinds: Record<string, number> } }).__floorspec3d?.kinds['roof'] ?? 0)).toBeGreaterThan(0);
+  await inspector.getByRole('button', { name: 'Clear the selection' }).click();
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'test-results/roofs-saltbox-3d.png' });
 });

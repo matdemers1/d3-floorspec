@@ -451,7 +451,7 @@ describe('Core 0.4: roofs at mixed pitches', () => {
     expect(svg).toContain('data-kind="gable"');
     expect(svg.match(/data-line="ridge"/g)).toHaveLength(1);
     expect(svg.match(/data-gable="RF1"/g)).toHaveLength(2);
-    const roof = (check(d).derived as { roofs: { RF1: { surface: { lines: { from: number[] }[] } } } }).roofs.RF1;
+    const roof = (check(d).derived as unknown as { roofs: { RF1: { surface: { lines: { from: number[] }[] } } } }).roofs.RF1;
     expect(roof.surface.lines[0]!.from[1]).toBe(8 * FT); // a third of the way back from the steep front
   });
 
