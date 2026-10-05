@@ -298,3 +298,48 @@ describe('label placement', () => {
     expect(p.x > 3 && p.x < 7 && p.y > 3 && p.y < 7).toBe(false);
   });
 });
+
+describe('Core 0.2: fallbacks and clearance envelopes', () => {
+  /** The three-room house as a 0.2 document, with a sofa in the living room and a swing on its entry door. */
+  function furnished(): Doc {
+    const d = load('three-room-house');
+    d.floorspec = '0.2';
+    const types = d.types as Record<string, Record<string, unknown>>;
+    types['D36']!.clearances = { swing: { purpose: 'swing', shape: 'box', min: [0, -585216, 0], max: [1170432, 585216, 2600960] } };
+    const anchor = d.rooms['LIV']!.anchor as [number, number];
+    d.extensionsUsed = { FS_furniture: '0.1' };
+    d.extensions = {
+      FS_furniture: {
+        collections: {
+          pieces: {
+            SOFA: {
+              fallback: { level: 'MAIN', box: { min: [-1066800, -457200, 0], max: [1066800, 457200, 838200] } },
+              host: { mode: 'surface', room: 'LIV', surface: 'floor', position: anchor, rotation: 90000000 },
+            },
+          },
+        },
+      },
+    };
+    return d;
+  }
+
+  it('draws every extension element on the level as its fallback footprint', () => {
+    const d = furnished();
+    expect(check(d).valid).toBe(true);
+    const svg = renderPlan(d);
+    expect(svg).toContain('<g id="fallbacks">');
+    expect(svg).toMatch(/data-id="SOFA" data-kind="FS_furniture:pieces"/);
+    expect(svg).not.toContain('id="clearances"');
+  });
+
+  it('draws clearance envelopes only when asked', () => {
+    const svg = renderPlan(furnished(), { clearances: true });
+    expect(svg).toMatch(/<g id="clearances"><path data-owner="[A-Z0-9]+" data-name="swing" data-purpose="swing"/);
+    expect(renderPlan(furnished(), { clearances: true })).toBe(svg);
+  });
+
+  it('leaves a 0.1 drawing byte-for-byte as it was', () => {
+    const d = load('three-room-house');
+    expect(renderPlan(d, { clearances: true })).toBe(renderPlan(d));
+  });
+});
