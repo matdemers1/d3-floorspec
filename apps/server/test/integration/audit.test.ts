@@ -19,6 +19,7 @@ import {
 import { projectWithDocument } from './drawings-support.js';
 import { commentOn, shareOf } from './share-support.js';
 import { upload } from './assets-support.js';
+import { reconciliation, stepCarrying, stubWorker, uploadIfc } from './imports-support.js';
 import { tilePng } from '../support/images.js';
 
 /**
@@ -195,6 +196,24 @@ const EXERCISES: Record<string, Exercise> = {
     const operator = await setupOperator(running);
     const { id } = await createProjectAs(operator);
     return { reply: await upload(running.url, operator, id, tilePng(8, 8)), action: 'asset.upload' };
+  },
+  'POST /api/projects/:projectId/imports/ifc': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(running.db, operator);
+    // A stand-in IFC worker that finds one edit: the import opens a changeset, and audits it.
+    const worker = await stubWorker((req) => ({
+      status: 200,
+      body: reconciliation(req.payload.hash, [{ element: 'B1', kind: 'building', changes: ['renamed'], ops: [{ op: 'setProperty', id: '$project', path: '/name', value: 'Imported' }], sources: [] }]),
+    }));
+    const before = process.env['IFC_WORKER_URL'];
+    process.env['IFC_WORKER_URL'] = worker.url;
+    try {
+      return { reply: await uploadIfc(running.url, operator, id, stepCarrying(hash)), action: 'import.ifc' };
+    } finally {
+      if (before === undefined) delete process.env['IFC_WORKER_URL'];
+      else process.env['IFC_WORKER_URL'] = before;
+      await worker.stop();
+    }
   },
   'POST /api/tokens': async ({ running }) => {
     const operator = await setupOperator(running);

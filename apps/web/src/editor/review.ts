@@ -57,6 +57,7 @@ export async function openReview(store: EditorStore, id: string, options: { show
             createdAt: detail.createdAt,
             base: detail.base,
             log: detail.log,
+            report: detail.report ?? null,
             proposed,
             loading: false,
             failure: s.review.failure?.source === 'server' && s.review.failure.against === s.model?.hash ? s.review.failure : null,

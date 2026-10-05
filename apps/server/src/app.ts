@@ -28,6 +28,7 @@ import { checkRoutes, type Render3dWait } from './routes/checks.js';
 import { profileRoutes, projectProfileRoutes, rulePackRoutes } from './routes/rules.js';
 import { tokenRoutes } from './routes/tokens.js';
 import { exportRoutes } from './routes/exports.js';
+import { importRoutes } from './routes/imports.js';
 import { maintenanceRoutes } from './routes/maintenance.js';
 import { latestRuns } from './maintenance/runs.js';
 import { mountMcp } from './routes/mcp.js';
@@ -122,6 +123,7 @@ export function createApp({
   mount(app, '/api/rule-packs', rulePackRoutes(db, rulePacks));
   mount(app, '/api/projects', eventRoutes(db, events, eventStream));
   mount(app, '/api/projects', exportRoutes(db));
+  mount(app, '/api/projects', importRoutes(db, applier));
   mount(app, '/api/projects', assetRoutes(db, assets, config.ASSET_MAX_BYTES));
   mount(app, '/api/tokens', tokenRoutes(db));
   mount(app, '/api/maintenance', maintenanceRoutes(db, config));

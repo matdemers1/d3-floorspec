@@ -73,9 +73,10 @@ services:
       - assets:/assets:ro
     # Its healthcheck is the image's own: the heartbeat file must be younger than two minutes.
 
-  # IFC4 exports (FLR-T-9.4): IfcOpenShell is LGPL, so it runs here, in its own image. It listens on
-  # 3410 on this network only; the worker reaches it as http://ifc-worker:3410 (its default in
-  # production; IFC_WORKER_URL overrides it). No database, no secrets.
+  # IFC4 exports (FLR-T-9.4) and IFC round-trip imports (FLR-T-9.5): IfcOpenShell is LGPL, so it runs
+  # here, in its own image. It listens on 3410 on this network only; the worker (exports) and the api
+  # (imports) reach it as http://ifc-worker:3410 (their default in production; IFC_WORKER_URL
+  # overrides it). No database, no secrets.
   ifc-worker:
     image: ghcr.io/matdemers1/d3-floorspec/ifc-worker:sha-0000000000000000000000000000000000000000
     restart: unless-stopped

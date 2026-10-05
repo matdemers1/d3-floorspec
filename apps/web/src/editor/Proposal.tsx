@@ -8,6 +8,7 @@ import { diffModels, groupChanges, roomEffects } from './diff';
 import { accept, closeReview, needsRebase, openReview, reject, reviewTarget } from './review';
 import { timeAgo } from '../projects/model';
 import { proposerOf } from './api';
+import { ImportReportList } from '../exports/ImportReport';
 
 /**
  * The proposal panel (FLR-T-3.5), the board's "09 · Changeset review": what an agent proposed,
@@ -108,6 +109,22 @@ export function ProposalPanel({ store }: { store: EditorStore }) {
       </section>
 
       {effects !== null && !failed ? <Effect store={store} review={review} main={main} target={target as EditorModel} effects={effects} /> : null}
+
+      {review.report !== undefined && review.report !== null ? (
+        <section className="fs-section" aria-label="Not brought across">
+          <div className="fs-section__head">
+            <h3 className="fs-overline">
+              Not brought across from {review.report.file.name} · {String(review.report.entries.length)}
+            </h3>
+          </div>
+          <ImportReportList
+            report={review.report}
+            onSelect={(id) => {
+              if (main.index.has(id)) store.select(id, { keepSide: true });
+            }}
+          />
+        </section>
+      ) : null}
 
       <div className="fs-review__actions">
         <Button

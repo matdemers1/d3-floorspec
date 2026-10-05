@@ -93,6 +93,8 @@ export function changesetRoutes(db: Db, applier: Applier): Routes {
         fastForward: changeset.status === 'pending' ? main?.versionHash === changeset.baseHash : null,
         main: main?.versionHash ?? null,
         log: ops,
+        // An imported changeset's report of what did not come across (FLR-T-9.5); null otherwise.
+        report: changeset.report ?? null,
       });
     },
     { token: 'read' },

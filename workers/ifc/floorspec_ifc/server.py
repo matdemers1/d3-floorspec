@@ -3,9 +3,12 @@
     GET  /health   {"status": "ok", ...}
     POST /export   a payload (application/json) → the IFC file (application/x-step), with
                    X-Floorspec-Ifc-Summary: its entity counts and validation result, as JSON.
+    POST /import   an import request (importer/request.py: the original version's payload and
+                   the edited file, base64) → the reconciliation (application/json): the Ops batch,
+                   its edits and the report of what was not imported (FLR-T-9.5).
 
-One export runs at a time; health answers meanwhile. A payload the worker does not read is a 422
-with {"error": "..."} — the Node side puts that sentence in the job's error.
+One request runs at a time; health answers meanwhile. A request the worker does not read is a 422
+with {"error": "..."} — the Node side puts that sentence in the job's error, or the import's answer.
 """
 
 from __future__ import annotations
@@ -21,6 +24,7 @@ from typing import Any
 from . import health
 from .check import problems
 from .export import ExportError, export, summary
+from .importer import ReconcileError, RequestError, parse_request, read_ifc, reconcile
 from .payload import PayloadError, parse
 
 MAX_BODY = 64 * 1024 * 1024
@@ -38,6 +42,17 @@ def render(raw: Any) -> tuple[bytes, dict[str, Any], str]:
             first = errors[0].get("message", "")
             raise ExportError(f"the export is not valid IFC4 ({len(errors)} problems; the first: {first})")
         return f.to_string().encode("utf-8"), summary(f, 0), payload.name
+
+
+def reconcile_request(raw: Any) -> dict[str, Any]:
+    """An import request, reconciled. Raises RequestError, ReconcileError."""
+    req = parse_request(raw)
+    edited = read_ifc(req.ifc)
+    with _lock:
+        result = reconcile(req.payload, edited)
+    view = result.view()
+    view["file"]["name"] = req.name
+    return view
 
 
 def log(**fields: Any) -> None:
@@ -66,6 +81,9 @@ class Handler(BaseHTTPRequestHandler):
             self._json(404, {"error": "not found"})
 
     def do_POST(self) -> None:  # noqa: N802
+        if self.path == "/import":
+            self._import()
+            return
         if self.path != "/export":
             self._json(404, {"error": "not found"})
             return
@@ -103,6 +121,32 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
         log(msg="exported", file=name, bytes=len(data), ms=round((time.monotonic() - started) * 1000), entities=facts["entities"])
+
+
+    def _import(self) -> None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = -1
+        if length <= 0 or length > MAX_BODY:
+            self._json(413 if length > MAX_BODY else 411, {"error": f"the request must have a length of at most {MAX_BODY} bytes"})
+            return
+        started = time.monotonic()
+        try:
+            view = reconcile_request(json.loads(self.rfile.read(length)))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self._json(400, {"error": "the request is not JSON"})
+            return
+        except (RequestError, ReconcileError) as e:
+            log(msg="import refused", error=str(e))
+            self._json(422, {"error": str(e)})
+            return
+        except Exception as e:  # a bug: say what kind, never the file
+            log(msg="import failed", error=type(e).__name__, detail=str(e)[:300])
+            self._json(500, {"error": f"the IFC worker failed ({type(e).__name__}: {str(e)[:200]})"})
+            return
+        self._json(200, view)
+        log(msg="reconciled", file=view["file"].get("name"), ms=round((time.monotonic() - started) * 1000), **view["counts"])
 
 
 def serve(host: str | None = None, port: int | None = None) -> ThreadingHTTPServer:

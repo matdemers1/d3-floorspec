@@ -1,5 +1,6 @@
 import type { Diagnostic } from '@floorspec/engine';
 import type { Batch } from './ops';
+import type { ImportReport } from '../exports/ifcImport';
 
 /**
  * The editor's calls: read a version, apply a batch, undo and redo (FLR-T-2.4's routes). Writes
@@ -197,6 +198,8 @@ export interface ChangesetLogEntry {
 export interface ChangesetDetail extends ChangesetRow {
   main: string | null;
   log: ChangesetLogEntry[];
+  /** An imported changeset's report of what did not come across (FLR-T-9.5); null otherwise. */
+  report?: ImportReport | null;
 }
 
 async function getJson<T>(url: string): Promise<T> {
