@@ -77,6 +77,7 @@ export {
   type ExtElement,
 } from './model/document.js';
 export { LevelGeometry } from './derive/level.js';
+export { exteriorOutline } from './derive/outline.js';
 export { z765, Z765_CITATION, FOOT, type Z765Options, type Z765Result, type Z765Building, type Z765Level } from './measures/z765.js';
 export { Surd } from './exact/surd.js';
 export { abs, floorDiv, gcd, isqrt, exactSqrt, roundHalfEvenRational, toSafeNumber, big } from './exact/bigint.js';

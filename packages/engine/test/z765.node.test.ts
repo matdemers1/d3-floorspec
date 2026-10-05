@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { check, FOOT, z765 } from '../src/index.js';
+import { check, exteriorOutline, FOOT, z765 } from '../src/index.js';
 
 const SQ_FT = FOOT * FOOT;
 /** Square feet, rounded half to even, from an exact area in square base units. */
@@ -39,6 +39,18 @@ describe('Z765 on the app templates', () => {
       },
     ]);
     expect(sqft(area)).toBe(876);
+  });
+
+  it("outlines the template's exterior walls for a roof: one rectangle, counter-clockwise, no straight-on vertex", () => {
+    // The exterior is broken at TE (a butt join) and at the interior walls' tees, all straight on.
+    expect(exteriorOutline(template, 'MAIN')).toEqual([
+      [
+        [14_083_792, -38_608],
+        [14_083_792, 9_402_064],
+        [-38_608, 9_402_064],
+        [-38_608, -38_608],
+      ],
+    ]);
   });
 
   it('is the same house as the conformance example it was made from', () => {

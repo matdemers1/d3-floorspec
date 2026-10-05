@@ -44,6 +44,7 @@
  */
 import { evaluate, type ValidateOptions } from '../validate/validate.js';
 import { resolve, StairContext } from '../stairs/stairs.js';
+import { exteriorRings } from '../derive/outline.js';
 import { Surd } from '../exact/surd.js';
 import { toSafeNumber } from '../exact/bigint.js';
 import { area2, locate, type IPoint } from '../geometry/predicates.js';
@@ -171,12 +172,8 @@ export function z765(input: string | Uint8Array | object, options: Z765Options =
       if (!g) continue;
       const excluded: Z765Level['excluded'] = [];
       // Gross: inside the outside faces of every group of walls that encloses something.
-      const enclosing = new Set(g.faces.map((f) => f.outer.component));
       let gross2 = 0n;
-      for (const c of g.graph.unbounded) if (enclosing.has(c.component)) {
-        const a = area2(g.ring(c));
-        gross2 += a < 0n ? -a : a;
-      }
+      for (const ring of exteriorRings(g)) gross2 += area2(ring);
       let unfin2 = 0n;
       let low = Surd.ZERO;
       for (const [rid, face] of [...la.roomFaces].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
