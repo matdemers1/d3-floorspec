@@ -8,14 +8,14 @@
       "title": "Synthetic conformance rules",
       "license": "CC-BY-4.0",
       "rules": {
-        "D-countertopReceptacleReach": {
-          "title": "Uses countertopReceptacleReach",
+        "SMOKE": {
+          "title": "A smoke alarm in every sleeping room",
           "citation": {
             "code": "TEST-CODE",
             "edition": "2024",
-            "section": "§1.1"
+            "section": "§5.1"
           },
-          "paraphrase": "A synthetic rule for the conformance suite (uses countertopreceptaclereach); it states no requirement of any real code.",
+          "paraphrase": "A synthetic rule for the conformance suite (a smoke alarm in every sleeping room); it states no requirement of any real code.",
           "applies": {
             "to": "room",
             "where": {
@@ -25,11 +25,15 @@
             }
           },
           "requirement": {
-            "measure": "countertopReceptacleReach",
+            "measure": "elementCount",
             "op": ">=",
             "value": 1,
             "args": {
-              "anything": true
+              "extension": "FS_electrical",
+              "collection": "alarms",
+              "match": {
+                "detects": "smoke"
+              }
             }
           },
           "severity": "mayNotMeet",
@@ -39,14 +43,14 @@
             "edition": "2024"
           }
         },
-        "D-countertopWallRunBetweenReceptacles": {
-          "title": "Uses countertopWallRunBetweenReceptacles",
+        "COUNT": {
+          "title": "Any alarm, by core members",
           "citation": {
             "code": "TEST-CODE",
             "edition": "2024",
             "section": "§1.1"
           },
-          "paraphrase": "A synthetic rule for the conformance suite (uses countertopwallrunbetweenreceptacles); it states no requirement of any real code.",
+          "paraphrase": "A synthetic rule for the conformance suite (any alarm, by core members); it states no requirement of any real code.",
           "applies": {
             "to": "room",
             "where": {
@@ -56,11 +60,12 @@
             }
           },
           "requirement": {
-            "measure": "countertopWallRunBetweenReceptacles",
+            "measure": "elementCount",
             "op": ">=",
             "value": 1,
             "args": {
-              "anything": true
+              "extension": "FS_electrical",
+              "collection": "alarms"
             }
           },
           "severity": "mayNotMeet",
@@ -70,28 +75,27 @@
             "edition": "2024"
           }
         },
-        "D-floorElevationDifference": {
-          "title": "Uses floorElevationDifference",
+        "MEMBER": {
+          "title": "A panel rating",
           "citation": {
             "code": "TEST-CODE",
             "edition": "2024",
             "section": "§1.1"
           },
-          "paraphrase": "A synthetic rule for the conformance suite (uses floorelevationdifference); it states no requirement of any real code.",
+          "paraphrase": "A synthetic rule for the conformance suite (a panel rating); it states no requirement of any real code.",
           "applies": {
-            "to": "room",
-            "where": {
-              "measure": "roomFunction",
-              "op": "=",
-              "value": "sleeping"
-            }
+            "to": "element",
+            "extension": "FS_electrical",
+            "collection": "panels"
           },
           "requirement": {
-            "measure": "floorElevationDifference",
+            "measure": "elementMember",
             "op": ">=",
-            "value": 1,
+            "value": 60,
             "args": {
-              "anything": true
+              "name": "rating",
+              "type": "integer",
+              "unit": "A"
             }
           },
           "severity": "mayNotMeet",
@@ -101,28 +105,25 @@
             "edition": "2024"
           }
         },
-        "D-roomNarrowestDimension": {
-          "title": "Uses roomNarrowestDimension",
+        "PROTECTED": {
+          "title": "Protection",
           "citation": {
             "code": "TEST-CODE",
             "edition": "2024",
             "section": "§1.1"
           },
-          "paraphrase": "A synthetic rule for the conformance suite (uses roomnarrowestdimension); it states no requirement of any real code.",
+          "paraphrase": "A synthetic rule for the conformance suite (protection); it states no requirement of any real code.",
           "applies": {
-            "to": "room",
-            "where": {
-              "measure": "roomFunction",
-              "op": "=",
-              "value": "sleeping"
-            }
+            "to": "element",
+            "extension": "FS_electrical",
+            "collection": "panels"
           },
           "requirement": {
-            "measure": "roomNarrowestDimension",
-            "op": ">=",
-            "value": 1,
+            "measure": "elementProtectedBy",
+            "op": "=",
+            "value": false,
             "args": {
-              "anything": true
+              "protection": "gfci"
             }
           },
           "severity": "mayNotMeet",
@@ -132,14 +133,14 @@
             "edition": "2024"
           }
         },
-        "D-stairHandrailHeight": {
-          "title": "Uses stairHandrailHeight",
+        "CIRCUITS": {
+          "title": "A receptacle circuit",
           "citation": {
             "code": "TEST-CODE",
             "edition": "2024",
             "section": "§1.1"
           },
-          "paraphrase": "A synthetic rule for the conformance suite (uses stairhandrailheight); it states no requirement of any real code.",
+          "paraphrase": "A synthetic rule for the conformance suite (a receptacle circuit); it states no requirement of any real code.",
           "applies": {
             "to": "room",
             "where": {
@@ -149,11 +150,69 @@
             }
           },
           "requirement": {
-            "measure": "stairHandrailHeight",
+            "measure": "circuitCount",
             "op": ">=",
-            "value": 1,
+            "value": 1
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "REACH": {
+          "title": "Receptacles, by core members",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (receptacles, by core members); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "receptacleReach",
+            "op": "<=",
+            "value": 11704320
+          },
+          "severity": "mayNotMeet",
+          "provenance": {
+            "verifiedBy": "Floorspec conformance suite",
+            "verifiedOn": "2026-10-04",
+            "edition": "2024"
+          }
+        },
+        "REACH-MATCH": {
+          "title": "Receptacles of 15 A",
+          "citation": {
+            "code": "TEST-CODE",
+            "edition": "2024",
+            "section": "§1.1"
+          },
+          "paraphrase": "A synthetic rule for the conformance suite (receptacles of 15 a); it states no requirement of any real code.",
+          "applies": {
+            "to": "room",
+            "where": {
+              "measure": "roomFunction",
+              "op": "=",
+              "value": "sleeping"
+            }
+          },
+          "requirement": {
+            "measure": "receptacleReach",
+            "op": "<=",
+            "value": 11704320,
             "args": {
-              "anything": true
+              "match": {
+                "amps": 15
+              }
             }
           },
           "severity": "mayNotMeet",
@@ -163,28 +222,25 @@
             "edition": "2024"
           }
         },
-        "D-stairHeadroom": {
-          "title": "Uses stairHeadroom",
+        "FURNITURE": {
+          "title": "A member of an extension nobody implements",
           "citation": {
             "code": "TEST-CODE",
             "edition": "2024",
             "section": "§1.1"
           },
-          "paraphrase": "A synthetic rule for the conformance suite (uses stairheadroom); it states no requirement of any real code.",
+          "paraphrase": "A synthetic rule for the conformance suite (a member of an extension nobody implements); it states no requirement of any real code.",
           "applies": {
-            "to": "room",
-            "where": {
-              "measure": "roomFunction",
-              "op": "=",
-              "value": "sleeping"
-            }
+            "to": "element",
+            "extension": "EXT_furniture"
           },
           "requirement": {
-            "measure": "stairHeadroom",
-            "op": ">=",
-            "value": 1,
+            "measure": "elementMember",
+            "op": "=",
+            "value": "oak",
             "args": {
-              "anything": true
+              "name": "finish",
+              "type": "term"
             }
           },
           "severity": "mayNotMeet",
@@ -194,14 +250,14 @@
             "edition": "2024"
           }
         },
-        "D-stairRiserHeight": {
-          "title": "Uses stairRiserHeight",
+        "OLD-SMOKE": {
+          "title": "A smoke alarm (2021)",
           "citation": {
             "code": "TEST-CODE",
-            "edition": "2024",
+            "edition": "2021",
             "section": "§1.1"
           },
-          "paraphrase": "A synthetic rule for the conformance suite (uses stairriserheight); it states no requirement of any real code.",
+          "paraphrase": "A synthetic rule for the conformance suite (a smoke alarm (2021)); it states no requirement of any real code.",
           "applies": {
             "to": "room",
             "where": {
@@ -211,111 +267,22 @@
             }
           },
           "requirement": {
-            "measure": "stairRiserHeight",
+            "measure": "elementCount",
             "op": ">=",
             "value": 1,
             "args": {
-              "anything": true
+              "extension": "FS_electrical",
+              "collection": "alarms",
+              "match": {
+                "detects": "smoke"
+              }
             }
           },
           "severity": "mayNotMeet",
           "provenance": {
             "verifiedBy": "Floorspec conformance suite",
             "verifiedOn": "2026-10-04",
-            "edition": "2024"
-          }
-        },
-        "D-stairTreadDepth": {
-          "title": "Uses stairTreadDepth",
-          "citation": {
-            "code": "TEST-CODE",
-            "edition": "2024",
-            "section": "§1.1"
-          },
-          "paraphrase": "A synthetic rule for the conformance suite (uses stairtreaddepth); it states no requirement of any real code.",
-          "applies": {
-            "to": "room",
-            "where": {
-              "measure": "roomFunction",
-              "op": "=",
-              "value": "sleeping"
-            }
-          },
-          "requirement": {
-            "measure": "stairTreadDepth",
-            "op": ">=",
-            "value": 1,
-            "args": {
-              "anything": true
-            }
-          },
-          "severity": "mayNotMeet",
-          "provenance": {
-            "verifiedBy": "Floorspec conformance suite",
-            "verifiedOn": "2026-10-04",
-            "edition": "2024"
-          }
-        },
-        "D-stairWidth": {
-          "title": "Uses stairWidth",
-          "citation": {
-            "code": "TEST-CODE",
-            "edition": "2024",
-            "section": "§1.1"
-          },
-          "paraphrase": "A synthetic rule for the conformance suite (uses stairwidth); it states no requirement of any real code.",
-          "applies": {
-            "to": "room",
-            "where": {
-              "measure": "roomFunction",
-              "op": "=",
-              "value": "sleeping"
-            }
-          },
-          "requirement": {
-            "measure": "stairWidth",
-            "op": ">=",
-            "value": 1,
-            "args": {
-              "anything": true
-            }
-          },
-          "severity": "mayNotMeet",
-          "provenance": {
-            "verifiedBy": "Floorspec conformance suite",
-            "verifiedOn": "2026-10-04",
-            "edition": "2024"
-          }
-        },
-        "D-travelDistance": {
-          "title": "Uses travelDistance",
-          "citation": {
-            "code": "TEST-CODE",
-            "edition": "2024",
-            "section": "§1.1"
-          },
-          "paraphrase": "A synthetic rule for the conformance suite (uses traveldistance); it states no requirement of any real code.",
-          "applies": {
-            "to": "room",
-            "where": {
-              "measure": "roomFunction",
-              "op": "=",
-              "value": "sleeping"
-            }
-          },
-          "requirement": {
-            "measure": "travelDistance",
-            "op": ">=",
-            "value": 1,
-            "args": {
-              "anything": true
-            }
-          },
-          "severity": "mayNotMeet",
-          "provenance": {
-            "verifiedBy": "Floorspec conformance suite",
-            "verifiedOn": "2026-10-04",
-            "edition": "2024"
+            "edition": "2021"
           }
         }
       }

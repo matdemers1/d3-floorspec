@@ -1,0 +1,18 @@
+{
+  "calls": [
+    {
+      "target": {
+        "kind": "room",
+        "id": "R1"
+      },
+      "measure": "ceilingHeight"
+    },
+    {
+      "target": {
+        "kind": "room",
+        "id": "R3"
+      },
+      "measure": "ceilingHeight"
+    }
+  ]
+}

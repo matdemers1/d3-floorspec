@@ -81,3 +81,21 @@ a bedroom need FS_electrical (`"match": { "detects": "smoke" }`); every alarm in
 `elementCount` of a level is in 8.4.
 
 An evaluator MUST compute `elementCount` of a room as this section defines it. {#FS-RULES-5.6.1 MUST}
+
+## 5.7 Ceiling height
+
+| Measure | Arguments | Type | Value |
+|---|---|---|---|
+| `ceilingHeight` | — | length | the least height of the room's ceiling above its floor: its ceiling's `low` minus its floor's `top`, both as Core derives them (Core §15.1, §15.5) |
+
+Both values are integers as Core reports them (4.3), so the difference needs no rounding. It is the
+**least** height: a vaulted ceiling's, at the lowest vertex of the room polygon (Core §15.3); a tray
+ceiling's, under its border; a flat ceiling's, everywhere. A sunken floor raises it and a raised
+floor lowers it, since a ceiling's height is measured from its level and a floor's offset from the
+same level (Core §15.2). It is always greater than zero in a valid document (Core §15.2.2).
+
+A rule that asks for a least ceiling height over part of a room only — so much of a sloped ceiling's
+floor area at a height — needs a measure this draft does not define; read with `ceilingHeight`,
+such a rule is checked against the lowest point, and says so in its paraphrase.
+
+An evaluator MUST compute `ceilingHeight` as this section defines it. {#FS-RULES-5.7.1 MUST}

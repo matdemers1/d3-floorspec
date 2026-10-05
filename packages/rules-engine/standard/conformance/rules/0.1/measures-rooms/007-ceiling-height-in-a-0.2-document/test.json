@@ -1,0 +1,6 @@
+{
+  "description": "The rules house as it is, a Core 0.2 document: a reader of Core 0.3 derives every room a flat ceiling at the level's height over a floor at its elevation, so each room's ceiling height is 2700 mm.",
+  "covers": [
+    "FS-RULES-5.7.1"
+  ]
+}

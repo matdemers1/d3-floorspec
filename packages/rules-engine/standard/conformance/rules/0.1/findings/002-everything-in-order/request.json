@@ -71,7 +71,7 @@
             }
           },
           "requirement": {
-            "measure": "ceilingHeight",
+            "measure": "roomNarrowestDimension",
             "op": ">=",
             "value": 1
           },

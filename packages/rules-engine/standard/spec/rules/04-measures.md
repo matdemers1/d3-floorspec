@@ -115,11 +115,10 @@ the library without a finding that measures the wrong thing.
 
 | Measure | Target | Needs |
 |---|---|---|
-| `ceilingHeight` | room | ceilings: Core derives no floors or ceilings (Core §0.5); a level's height is floor to floor |
 | `roomNarrowestDimension` | room | the dimension at every point of a room that is not convex — `roomLeastWidth` (5.3) measures the whole room |
 | `stairRiserHeight`, `stairTreadDepth`, `stairWidth`, `stairHeadroom`, `stairHandrailHeight` | stair | stairs (Core §0.5) |
 | `countertopReceptacleReach`, `countertopWallRunBetweenReceptacles` | room | countertops, which no extension yet describes |
 | `travelDistance` | room | a path through the door graph measured in length: Core's door graph (Core §14.1) has no geometry along its links |
-| `floorElevationDifference` | room | floors, and so a room's own floor elevation |
+| `floorElevationDifference` | room | which difference it is: Core derives each room's floor (Core §15.1), but not yet the change of level across a doorway, the threshold between two floors |
 
 An evaluator MUST treat every measure of this table as deferred. {#FS-RULES-4.8.1 MUST}
