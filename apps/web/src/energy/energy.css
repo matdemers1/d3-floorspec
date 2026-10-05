@@ -20,6 +20,9 @@
 .fs-energy__envelope .d3-tbl__td {
   white-space: normal;
 }
+.fs-energy__envelope .d3-tbl__td.d3-tbl__cell--num {
+  white-space: nowrap;
+}
 .fs-energy__notes {
   display: flex;
   flex-direction: column;
