@@ -328,7 +328,7 @@ const CHECKS: Checks = {
 
   asked: ({ seed, result, reply }) => {
     if (result.hash !== seed.hash) return fail('asked', 'the model was changed instead of asking');
-    if (reply === null || !reply.includes('?')) return fail('asked', 'the reply asks no question');
+    if (reply === null || !asksSomething(reply)) return fail('asked', 'the reply asks no question');
     return ok('asked', 'nothing changed, and the reply asks');
   },
 
@@ -500,4 +500,15 @@ function sameSet(named: Set<string>, expect: readonly string[]): string | null {
   const extra = [...named].filter((x) => !want.has(x));
   if (missing.length === 0 && extra.length === 0) return null;
   return [missing.length > 0 ? `missing ${missing.join(', ')}` : '', extra.length > 0 ? `also named ${extra.join(', ')}` : ''].filter((s) => s.length > 0).join('; ');
+}
+
+/**
+ * Whether a reply asks the homeowner something. A question mark is one way; an explicit request for
+ * the missing decision is another ("Tell me the width you want", "Let me know which bedroom").
+ * Proxy run 2026-10-05, task 025, asked with "Tell me the width you want … and I'll put it in a
+ * changeset" and was scored as not asking — a scorer bug, not an agent failure.
+ */
+export function asksSomething(reply: string): boolean {
+  if (reply.includes('?')) return true;
+  return /\b(tell me|let me know|which (one|would you|do you)|do you want|would you like|say which|choose|pick one)\b/i.test(reply);
 }

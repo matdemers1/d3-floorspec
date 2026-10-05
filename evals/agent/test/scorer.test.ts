@@ -161,3 +161,15 @@ describe('replies', () => {
     expect(check(seed, [{ kind: 'anyOf', groups }], 'Hmm.').pass).toBe(false);
   });
 });
+
+import { asksSomething } from '../src/scorer.js';
+import { describe as describeAsk, it as itAsk, expect as expectAsk } from 'vitest';
+
+describeAsk('asksSomething', () => {
+  itAsk('counts a question mark or an explicit request for the decision', () => {
+    expectAsk(asksSomething('How wide should it be?')).toBe(true);
+    expectAsk(asksSomething('Tell me the width you want and I will make it.')).toBe(true);
+    expectAsk(asksSomething('Let me know which bedroom.')).toBe(true);
+    expectAsk(asksSomething('I widened it to 8 feet.')).toBe(false);
+  });
+});
