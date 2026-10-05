@@ -23,6 +23,7 @@ export { typeRule, valueOk, CANDIDATE_SETS, type Typing } from './typing.js';
 export { displayValue, displayThreshold, displayLength, displayArea } from './display.js';
 export { wallLine, stretches, receptacleMeasures } from './measures/walllines.js';
 export type * from './types.js';
+export * from './profiles/index.js';
 
 export const RULES_VERSION = '0.1';
 
