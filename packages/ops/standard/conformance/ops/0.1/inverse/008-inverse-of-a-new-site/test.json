@@ -1,6 +1,7 @@
 {
-  "description": "The batch creates the site; the inverse unsets it as $document's /site (the oracle's reading: there is no other way to remove a site).",
+  "description": "The batch creates the site; the site exists in B only, so the inverse unsets it as $document's /site (1.6, step 4).",
   "covers": [
-    "FS-OPS-1.6.1"
+    "FS-OPS-1.6.1",
+    "FS-OPS-2.3.1"
   ]
 }

@@ -1,8 +1,9 @@
 {
-  "description": "Both the request (an empty batch) and A (crossing walls) are wrong. The request is checked first, so the rejection is FS-OPS-001 alone (the oracle's reading of \"first failure\": the request's shape, then A).",
+  "description": "Both the request (an empty batch) and A (crossing walls) are wrong. The request is checked before A (1.2, 7.1), so the rejection is FS-OPS-001 alone.",
   "covers": [
     "FS-OPS-1.1.1",
     "FS-OPS-1.2.1",
-    "FS-OPS-7.1.1"
+    "FS-OPS-7.1.1",
+    "FS-OPS-7.1.2"
   ]
 }

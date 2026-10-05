@@ -3,7 +3,7 @@
  * in exactly one way, or fails the batch.
  */
 import { fail } from './diagnostics.js';
-import { COLLECTIONS, type CollectionName, type WorkingCopy } from './model/working.js';
+import { type CollectionName, type WorkingCopy } from './model/working.js';
 import type { ResolvedPrimitive } from './types.js';
 import { clone, cmpStr, deleteMember, getMember, isObject, parsePointer, setMember, type JsonObject } from './lib/json.js';
 
@@ -34,6 +34,7 @@ export function applyPrimitive(wc: WorkingCopy, p: ResolvedPrimitive, ptr: { op:
         fail('FS-OPS-005', `${p.id} is ${wc.exists(p.id) ? 'already used in this document' : 'retired: it once named an element of this document'}`, [], ptr.id);
       const { collection, element } = addTarget(p);
       setMember(wc.ensureCollection(collection), p.id, clone(element));
+      wc.named(p.id);
       wc.touch();
       return;
     }
@@ -189,21 +190,24 @@ function target(wc: WorkingCopy, id: string, create: boolean, ptr: string): Json
   return e;
 }
 
+/** The members $document addresses (2.3): the document's top-level members other than its collections. */
+const DOCUMENT_MEMBERS: readonly string[] = ['floorspec', 'project', 'site', 'extensionsUsed', 'extensionsRequired', 'extensions', 'extras'];
+
 function tokensOf(id: string, path: string, ptr: string): string[] {
   const own = id.startsWith('$') ? [] : [id];
   const tokens = parsePointer(path);
   if (tokens === undefined) return fail('FS-OPS-003', `${JSON.stringify(path)} is not a JSON Pointer`, own, ptr);
   if (tokens.length === 0) return fail('FS-OPS-003', 'the path is empty: it must name a member', own, ptr);
-  if (id === '$document' && (COLLECTIONS as readonly string[]).includes(tokens[0]!))
-    fail('FS-OPS-003', `$document addresses the document's members other than its collections; ${tokens[0]} is a collection`, [], ptr);
+  if (id === '$document' && !DOCUMENT_MEMBERS.includes(tokens[0]!))
+    fail('FS-OPS-003', `$document addresses ${DOCUMENT_MEMBERS.join(', ')}; ${tokens[0]} is not one of them`, [], ptr);
   return tokens;
 }
 
-const arrayIndex = (t: string, length: number, allowEnd: boolean): number | undefined => {
-  if (t === '-' && allowEnd) return length;
+/** An array element is addressed by an index that exists (2.3.1): no `-`, no appending. */
+const arrayIndex = (t: string, length: number): number | undefined => {
   if (!/^(0|[1-9][0-9]*)$/.test(t)) return undefined;
   const i = Number(t);
-  return i < length || (allowEnd && i === length) ? i : undefined;
+  return i < length ? i : undefined;
 };
 
 export function setProperty(wc: WorkingCopy, id: string, path: string, value: unknown, ptr: string): void {
@@ -213,7 +217,7 @@ export function setProperty(wc: WorkingCopy, id: string, path: string, value: un
   for (let i = 0; i < tokens.length - 1; i++) {
     const t = tokens[i]!;
     if (Array.isArray(node)) {
-      const k = arrayIndex(t, node.length, false);
+      const k = arrayIndex(t, node.length);
       if (k === undefined) return fail('FS-OPS-003', `${path}: ${t} is not an index of the array there`, own, ptr);
       node = node[k];
     } else if (isObject(node)) {
@@ -223,7 +227,7 @@ export function setProperty(wc: WorkingCopy, id: string, path: string, value: un
   }
   const last = tokens[tokens.length - 1]!;
   if (Array.isArray(node)) {
-    const k = arrayIndex(last, node.length, true);
+    const k = arrayIndex(last, node.length);
     if (k === undefined) return fail('FS-OPS-003', `${path}: ${last} is not an index of the array there`, own, ptr);
     node[k] = clone(value);
   } else if (isObject(node)) setMember(node, last, clone(value));
@@ -238,14 +242,14 @@ export function unsetProperty(wc: WorkingCopy, id: string, path: string, ptr: st
   for (let i = 0; i < tokens.length - 1; i++) {
     const t = tokens[i]!;
     if (Array.isArray(node)) {
-      const k = arrayIndex(t, node.length, false);
+      const k = arrayIndex(t, node.length);
       node = k === undefined ? undefined : node[k];
     } else node = isObject(node) && Object.hasOwn(node, t) ? node[t] : undefined;
     if (node === undefined) return fail('FS-OPS-003', `${id} has no member ${path}`, own, ptr);
   }
   const last = tokens[tokens.length - 1]!;
   if (Array.isArray(node)) {
-    const k = arrayIndex(last, node.length, false);
+    const k = arrayIndex(last, node.length);
     if (k === undefined) return fail('FS-OPS-003', `${id} has no member ${path}`, own, ptr);
     node.splice(k, 1);
   } else if (isObject(node) && Object.hasOwn(node, last)) deleteMember(node, last);

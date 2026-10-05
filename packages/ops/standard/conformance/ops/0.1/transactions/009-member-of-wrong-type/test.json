@@ -1,5 +1,5 @@
 {
-  "description": "removeElement's \"cascade\" is a boolean; the string \"yes\" makes the request malformed (the oracle's reading: a member of the wrong type is malformed).",
+  "description": "removeElement's \"cascade\" is a boolean; the string \"yes\" makes the request malformed: every member has the JSON type schema/ops/0.1 gives it.",
   "covers": [
     "FS-OPS-1.1.1"
   ]

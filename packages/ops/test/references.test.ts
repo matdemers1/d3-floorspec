@@ -12,7 +12,7 @@ function resolved(d: object, op: unknown): ResolvedPrimitive[] {
 
 describe('lengths in operations (3.1.1)', () => {
   it('resolves every length to an integer, and echoes it', () => {
-    expect(resolved(box(), { op: 'setProperty', id: 'L1', path: '/height', value: `10' 6"` })).toEqual([{ op: 'setProperty', id: 'L1', path: '/height', value: 10 * FT + 6 * IN }]);
+    expect(resolved(box(), { op: 'moveWall', wall: 'W3', by: `10' 6"` })[0]).toEqual({ op: 'moveJunction', id: 'J3', to: [W + 10 * FT + 6 * IN, H] });
     expect(resolved(box(), { op: 'moveJunction', id: 'J1', to: ['-2\'', '1/3"'] })).toEqual([{ op: 'moveJunction', id: 'J1', to: [-2 * FT, 10837] }]);
   });
 
@@ -20,19 +20,21 @@ describe('lengths in operations (3.1.1)', () => {
     rejectedWith(run(box(), { op: 'moveWall', wall: 'W1', by: '2 feet' }), 'FS-OPS-012', []);
     rejectedWith(run(box(), { op: 'moveWall', wall: 'W1', by: '3/0"' }), 'FS-OPS-012');
     rejectedWith(run(box(), { op: 'moveJunction', id: 'J1', to: ['1 m', 'one'] }), 'FS-OPS-012');
-    rejectedWith(run(box(), { op: 'setProperty', id: 'L1', path: '/height', value: '3' }), 'FS-OPS-012');
+    rejectedWith(run(box(), { op: 'addOpening', wall: 'W1', at: 0, width: '3', height: 1000 }), 'FS-OPS-012');
   });
 
-  it('resolves lengths inside element content (2.5)', () => {
-    const b = B(
+  it('never resolves inside element or value (2.5)', () => {
+    rejectedWith(
       run(box(), {
         op: 'addElement',
         collection: 'types',
         id: 'INT',
         element: { kind: 'wallType', layers: [{ thickness: '1/2"', function: 'finish' }, { thickness: '3 1/2"', function: 'core' }, { thickness: '1/2"', function: 'finish' }] },
       }),
+      'FS-SCH-001',
     );
-    expect(b.types!.INT).toEqual({ kind: 'wallType', layers: [{ thickness: IN / 2, function: 'finish' }, { thickness: 3.5 * IN, function: 'core' }, { thickness: IN / 2, function: 'finish' }] });
+    rejectedWith(run(box(), { op: 'setProperty', id: 'L1', path: '/height', value: `10' 6"` }), 'FS-SCH-001');
+    expect(resolved(box(), { op: 'setProperty', id: 'L1', path: '/height', value: `10' 6"` })).toEqual([{ op: 'setProperty', id: 'L1', path: '/height', value: `10' 6"` }]);
   });
 });
 
@@ -113,6 +115,16 @@ describe('selectors (3.3.1)', () => {
     const named = pair();
     (named.rooms as Record<string, Record<string, unknown>>).RB!.name = 'RA';
     rejectedWith(run(named, { op: 'resizeRoom', room: 'RA', side: 'east', by: 1 }), 'FS-OPS-004', ['RA', 'RB']);
+    // Room names compare under Unicode case folding.
+    const folded = pair();
+    (folded.rooms as Record<string, Record<string, unknown>>).RB!.name = 'Große Stube';
+    expect(resolved(folded, { op: 'removeElement', id: 'GROSSE STUBE' })).toEqual([{ op: 'removeElement', id: 'RB' }]);
+    // "and" in a name: exactly one split must resolve.
+    const both = pair();
+    (both.rooms as Record<string, Record<string, unknown>>).RA!.name = 'A and B';
+    (both.rooms as Record<string, Record<string, unknown>>).RB!.name = 'C';
+    expect(resolved(both, { op: 'removeElement', id: 'wall between A and B and C' })).toEqual([{ op: 'removeElement', id: 'W7' }]);
+    rejectedWith(run(both, { op: 'removeElement', id: 'wall between A and Z and C' }), 'FS-OPS-003');
     // The north side of the whole pair, seen from a room that spans it, is two walls.
     const whole = pair(undefined, undefined, { rooms: { R: [100000, 100000] } });
     delete (whole.walls as Record<string, unknown>).W7;

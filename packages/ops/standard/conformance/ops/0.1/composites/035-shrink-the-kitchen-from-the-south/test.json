@@ -1,0 +1,7 @@
+{
+  "description": "\"Take a foot off the kitchen from the south\": resizeRoom south by -1'. The south side W7 continues east from J7 as the Dining room's W6, and J7 is a T: the Kitchen's own east wall W8 leaves it north, in the direction of v = (0, 1'). So no jog edge is added: the run is reconnected to a new junction J9 at (12', 1') on W8, normalization splits W8 there, and its first piece, J7 -> J9, is the jog. J1 moves 1' north and the Kitchen's anchor half of it.",
+  "covers": [
+    "FS-OPS-4.4.1",
+    "FS-OPS-5.2.1"
+  ]
+}

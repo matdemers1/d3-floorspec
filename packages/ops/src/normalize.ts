@@ -1,20 +1,21 @@
 /**
  * Normalization (chapter 5): after the last primitive and before validation, every level is made
- * planar again and what edits made coincide is merged — 5.1, then 5.2, then 5.1 again, then 5.3
- * (5.4.1). It never moves an anchor, never removes a wall or a room, and changes no member but
- * those its steps name.
+ * planar again and what edits made coincide is merged — 5.1, then 5.2, then 5.3 (5.4.1), each
+ * over every level, by ID, before the next. It never moves an anchor, never removes a wall or a
+ * room, and changes no member but those its steps name.
  *
- * The working copy may be invalid here (validation comes next), so only well-formed parts take
- * part: junctions whose position is a point, edges between such junctions.
+ * The working copy may be invalid here (validation comes next), so only the well-formed part of a
+ * level takes part: junctions with an integer position, and edges whose start and end are such
+ * junctions on the edge's own level. Anything else is left for validation to judge.
  */
 import { predicates, roundHalfEvenRational, Surd, type Diagnostic } from '@floorspec/engine';
 import { opsDiagnostic } from './diagnostics.js';
-import { asPoint, edgesOn, junctionsOn } from './model/faces.js';
+import { edgesOn, junctionsOn } from './model/faces.js';
 import type { WorkingCopy } from './model/working.js';
 import { clone, cmpStr, deleteMember, getMember, isObject, setMember, type JsonObject } from './lib/json.js';
 
 type IPoint = readonly [bigint, bigint];
-const { cross, eq, inSegmentInterior, orient, properCross, sub } = predicates;
+const { collinearOverlap, cross, eq, inSegmentInterior, properCross, sub } = predicates;
 const key = (p: IPoint): string => `${p[0]},${p[1]}`;
 const cmpPoint = (a: IPoint, b: IPoint): number => (a[0] !== b[0] ? (a[0] < b[0] ? -1 : 1) : a[1] !== b[1] ? (a[1] < b[1] ? -1 : 1) : 0);
 
@@ -23,9 +24,10 @@ export function normalize(wc: WorkingCopy): Diagnostic[] {
   const levels = wc.ids('levels');
   for (const l of levels) mergeCoincident(wc, l);
   const straddles: Diagnostic[] = [];
-  for (const l of levels) straddles.push(...planarize(wc, l));
+  // 5.2 runs only on a level that, after 5.1, breaks Core §5.3: a level with no crossing, no
+  // junction inside an edge and no overlap is left exactly as it is (near misses included).
+  for (const l of levels) if (!isPlanar(wc, l)) straddles.push(...planarize(wc, l));
   if (straddles.length) return straddles;
-  for (const l of levels) mergeCoincident(wc, l);
   cleanJoins(wc);
   return [];
 }
@@ -119,22 +121,42 @@ interface Seg {
   b: IPoint;
 }
 
-/** 5.2 on one level. Returns FS-OPS-009 for every opening that straddles an inserted junction. */
-function planarize(wc: WorkingCopy, level: string): Diagnostic[] {
+/** The well-formed part of a level (chapter 5): junctions with integer positions, and the edges between them. */
+function wellFormed(wc: WorkingCopy, level: string): { atPos: Map<string, string>; positions: IPoint[]; segs: Seg[] } {
   const atPos = new Map<string, string>();
-  for (const j of junctionsOn(wc, level)) if (j.pos && !atPos.has(key(j.pos))) atPos.set(key(j.pos), j.id);
-  const posOf = (id: string): IPoint | undefined => asPoint(getMember(wc.elementIn('junctions', id), 'position'));
-
+  const pos = new Map<string, IPoint>();
+  for (const j of junctionsOn(wc, level))
+    if (j.pos) {
+      pos.set(j.id, j.pos);
+      if (!atPos.has(key(j.pos))) atPos.set(key(j.pos), j.id);
+    }
   const segs: Seg[] = [];
   for (const e of edgesOn(wc, level)) {
-    const a = posOf(e.start);
-    const b = posOf(e.end);
+    const a = pos.get(e.start);
+    const b = pos.get(e.end);
     if (!a || !b || eq(a, b)) continue;
     segs.push({ id: e.id, kind: e.kind, a, b });
-    // An edge's ends are junction positions even if (invalidly) not on this level.
-    if (!atPos.has(key(a))) atPos.set(key(a), e.start);
-    if (!atPos.has(key(b))) atPos.set(key(b), e.end);
   }
+  return { atPos, positions: [...pos.values()], segs };
+}
+
+/** Does the well-formed part of a level satisfy Core §5.3 — no crossing, no junction inside an edge, no overlap? */
+function isPlanar(wc: WorkingCopy, level: string): boolean {
+  const { positions, segs } = wellFormed(wc, level);
+  for (let i = 0; i < segs.length; i++) {
+    const s = segs[i]!;
+    if (positions.some((p) => inSegmentInterior(p, s.a, s.b))) return false;
+    for (let j = i + 1; j < segs.length; j++) {
+      const t = segs[j]!;
+      if (properCross(s.a, s.b, t.a, t.b) || collinearOverlap(s.a, s.b, t.a, t.b)) return false;
+    }
+  }
+  return true;
+}
+
+/** 5.2 on one level. Returns FS-OPS-009 for every opening that straddles an inserted junction. */
+function planarize(wc: WorkingCopy, level: string): Diagnostic[] {
+  const { atPos, segs } = wellFormed(wc, level);
 
   // 1. Hot pixels: junction positions, and the rounded points where two edges meet at a point
   //    interior to at least one of them. An end of one edge inside another is a junction position
@@ -277,4 +299,3 @@ export function cleanJoins(wc: WorkingCopy): void {
   }
 }
 
-export { inSegmentInterior, orient };

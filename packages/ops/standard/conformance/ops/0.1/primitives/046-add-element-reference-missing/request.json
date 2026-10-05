@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "element": {
+        "level": "L1",
+        "start": "J99",
+        "end": "J1",
+        "type": "WT"
+      }
+    }
+  ]
+}

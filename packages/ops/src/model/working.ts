@@ -48,8 +48,8 @@ export class WorkingCopy {
   /** Junction IDs of A (5.1: the survivor of a merge is the one that was in A). */
   readonly junctionsInA: ReadonlySet<string>;
   readonly retired: ReadonlySet<string>;
-  /** IDs minted earlier in this batch (1.5). */
-  readonly minted = new Set<string>();
+  /** IDs named or minted earlier in this batch, including any removed again since (1.5). */
+  readonly used = new Set<string>();
   /** Bumped on every change, so derived views (faces) can be cached between changes. */
   version = 0;
 
@@ -123,9 +123,15 @@ export class WorkingCopy {
     return this.exists(id) || this.retired.has(id);
   }
 
+  /** Record an ID an operation named for an element it created (1.5). */
+  named(id: string): void {
+    this.used.add(id);
+  }
+
   /**
    * Mint an ID for a new element of a collection (1.5): its prefix and one more than the largest n
-   * among the IDs `^<prefix>[0-9]+$` in the working copy, minted earlier in this batch, and retired.
+   * among the IDs `^<prefix>[0-9]+$` in A, named or minted earlier in this batch (removed again
+   * or not), and retired. Every ID in the working copy is one of these, so a minted ID is free.
    */
   mint(collection: CollectionName): string {
     const prefix = PREFIX[collection];
@@ -138,11 +144,11 @@ export class WorkingCopy {
         if (n > max) max = n;
       }
     };
-    for (const id of this.allIds()) consider(id);
-    for (const id of this.minted) consider(id);
+    for (const id of this.inA) consider(id);
+    for (const id of this.used) consider(id);
     for (const id of this.retired) consider(id);
     const id = `${prefix}${max + 1n}`;
-    this.minted.add(id);
+    this.used.add(id);
     return id;
   }
 }

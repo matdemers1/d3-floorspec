@@ -1,5 +1,5 @@
 {
-  "description": "The inverse of a split restores W4's end before removing the junction and the piece the split created - otherwise the removal of J5 would be blocked by W4. (The oracle applies 1.6's step 3 before steps 1 and 2.)",
+  "description": "The inverse of a split restores W4's end before removing the junction and the piece the split created - otherwise the removal of J5 would be blocked by W4. Property differences come first (1.6, step 1).",
   "covers": [
     "FS-OPS-1.6.1",
     "FS-OPS-5.2.1"

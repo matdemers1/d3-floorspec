@@ -9,13 +9,8 @@
       "op": "addJunction",
       "id": "J5",
       "level": "L1",
-      "position": [390144, 390144]
-    },
-    {
-      "op": "setProperty",
-      "id": "J5",
-      "path": "/name",
-      "value": "Post"
+      "position": [390144, 390144],
+      "name": "Post"
     }
   ],
   "inverse": [

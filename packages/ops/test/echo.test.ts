@@ -86,7 +86,7 @@ describe('the echo (1.4.1) and the inverse (1.6.1)', () => {
 
   it('resolves nothing twice: the echo of an echo is itself', () => {
     const a = doc({ junctions: {}, walls: {} });
-    const r = committed(apply(a, { batch: [{ op: 'drawWall', level: 'L1', from: [0, 0], to: [0, "10'"], layers: [{ thickness: '5 1/2"', function: 'core' }] }] }));
+    const r = committed(apply(a, { batch: [{ op: 'drawWall', level: 'L1', from: [0, 0], to: [0, "10'"], layers: [{ thickness: 178816, function: 'core' }] }] }));
     expect(r.resolved).toEqual([
       { op: 'addJunction', id: 'J1', level: 'L1', position: [0, 0] },
       { op: 'addJunction', id: 'J2', level: 'L1', position: [0, 3901440] },

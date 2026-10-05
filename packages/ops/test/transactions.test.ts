@@ -15,7 +15,7 @@ describe('the request (1.1.1: FS-OPS-001)', () => {
     ['an operation with no op', { batch: [{ id: 'R1' }] }],
     ['a missing member', { batch: [{ op: 'moveJunction', id: 'J1' }] }],
     ['an unknown member', { batch: [{ op: 'moveJunction', id: 'J1', to: [0, 0], by: 'me' }] }],
-    ['a member a shorthand does not list', { batch: [{ op: 'addSeparator', level: 'L1', start: 'J1', end: 'J3', name: 'x' }] }],
+    ['a member a shorthand does not list', { batch: [{ op: 'addSeparator', level: 'L1', start: 'J1', end: 'J3', type: 'x' }] }],
     ['a length that is not an integer', { batch: [{ op: 'moveWall', wall: 'W1', by: 1.5 }] }],
     ['a point of three numbers', { batch: [{ op: 'moveJunction', id: 'J1', to: [0, 0, 0] }] }],
     ['a boolean where a length goes', { batch: [{ op: 'resizeRoom', room: 'R1', side: 'east', by: true }] }],
@@ -135,11 +135,12 @@ describe('minting IDs (1.5)', () => {
     expect(r.created).toEqual(['J5', 'J6', 'J7', 'W6']);
   });
 
-  it('does not count an ID of A removed earlier in the batch unless it is retired (1.5, as written)', () => {
-    const r = committed(run(box(), { op: 'removeElement', id: 'R1' }, { op: 'removeElement', id: 'W4', cascade: true }, { op: 'drawWall', level: 'L1', from: 'J4', to: 'J1', layers: [{ thickness: 12800, function: 'core' }] }));
-    expect(r.resolved.at(-1)).toMatchObject({ op: 'addWall', id: 'W4' });
-    const retired = committed(apply(box(), { batch: [{ op: 'removeElement', id: 'R1' }, { op: 'removeElement', id: 'W4', cascade: true }, { op: 'drawWall', level: 'L1', from: 'J4', to: 'J1', layers: [{ thickness: 12800, function: 'core' }] }], context: { retired: ['W4'] } }));
-    expect(retired.resolved.at(-1)).toMatchObject({ op: 'addWall', id: 'W5' });
+  it("counts A's IDs and every ID named earlier in the batch, even ones removed again", () => {
+    const core = [{ thickness: 12800, function: 'core' }];
+    const r = committed(run(box(), { op: 'removeElement', id: 'R1' }, { op: 'removeElement', id: 'W4', cascade: true }, { op: 'drawWall', level: 'L1', from: 'J4', to: 'J1', layers: core }));
+    expect(r.resolved.at(-1)).toMatchObject({ op: 'addWall', id: 'W5' });
+    const named = committed(run(box(), { op: 'addJunction', id: 'J20', level: 'L1', position: [9000000, 0] }, { op: 'removeElement', id: 'J20' }, { op: 'drawSeparator', level: 'L1', from: [9000000, 0], to: [9100000, 0] }));
+    expect(named.created).toEqual(['J21', 'J22', 'S1']);
   });
 
   it('counts retired IDs, and never reuses one', () => {

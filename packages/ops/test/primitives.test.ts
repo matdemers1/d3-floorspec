@@ -26,18 +26,22 @@ describe('addElement (2.1)', () => {
     expect(shorthand.created).toEqual(['J5', 'J6', 'S1']);
   });
 
-  it('resolves selectors and points in shorthand members, and keeps IDs to come', () => {
+  it("resolves a shorthand's references, and passes its other members as given", () => {
     const r = committed(
       run(
         box(),
         { op: 'addJunction', id: 'JX', level: 'L1', position: "1 m south of start of south wall of Kitchen" },
-        { op: 'addWall', level: 'L1', start: 'start of south wall of Kitchen', end: 'JX', layers: [{ thickness: '1/2"', function: 'core' }] },
+        { op: 'addWall', level: 'L1', start: 'start of south wall of Kitchen', end: 'JX', layers: [{ thickness: IN / 2, function: 'core' }], name: 'Stub' },
       ),
     );
     expect(r.resolved).toEqual([
       { op: 'addJunction', id: 'JX', level: 'L1', position: [W, -1280000] },
-      { op: 'addWall', id: 'W5', level: 'L1', start: 'J4', end: 'JX', layers: [{ thickness: IN / 2, function: 'core' }] },
+      { op: 'addWall', id: 'W5', level: 'L1', start: 'J4', end: 'JX', layers: [{ thickness: IN / 2, function: 'core' }], name: 'Stub' },
     ]);
+    // A shorthand's start that names no junction is FS-OPS-003 when it is resolved; the same
+    // content through addElement is added, and validation refuses it (2.1.2).
+    rejectedWith(run(box(), { op: 'addWall', level: 'L1', start: 'J1', end: 'J99', layers: [{ thickness: 12800, function: 'core' }] }), 'FS-OPS-003', []);
+    rejectedWith(run(box(), { op: 'addElement', collection: 'walls', element: { level: 'L1', start: 'J1', end: 'J99', layers: [{ thickness: 12800, function: 'core' }] } }), 'FS-INV-002', ['W5']);
   });
 });
 
@@ -81,7 +85,7 @@ describe('removeElement (2.2)', () => {
 
 describe('setProperty and unsetProperty (2.3)', () => {
   it('sets a member, creating the objects on the way to it', () => {
-    const b = B(run(box(), { op: 'setProperty', id: 'W1', path: '/extras/viewer/colour', value: 'red' }, { op: 'setProperty', id: 'W2', path: '/top/height', value: '9\'' }));
+    const b = B(run(box(), { op: 'setProperty', id: 'W1', path: '/extras/viewer/colour', value: 'red' }, { op: 'setProperty', id: 'W2', path: '/top/height', value: 9 * 12 * IN }));
     expect(b.walls!.W1!.extras).toEqual({ viewer: { colour: 'red' } });
     expect(b.walls!.W2!.top).toEqual({ height: 9 * 12 * IN });
   });
@@ -111,6 +115,13 @@ describe('setProperty and unsetProperty (2.3)', () => {
     rejectedWith(run(box(), { op: 'unsetProperty', id: '$site', path: '/trueNorth' }), 'FS-OPS-003');
     rejectedWith(run(box(), { op: 'setProperty', id: '$document', path: '/walls', value: {} }), 'FS-OPS-003');
     rejectedWith(run(box(), { op: 'setProperty', id: 'W1', path: 'name', value: 'x' }), 'FS-OPS-003');
+    // $document addresses only its listed members; arrays only by indices that exist.
+    rejectedWith(run(box(), { op: 'setProperty', id: '$document', path: '/notes', value: 'x' }), 'FS-OPS-003', []);
+    rejectedWith(run(box(), { op: 'setProperty', id: 'W1', path: '/layers/1', value: { thickness: 1, function: 'finish' } }), 'FS-OPS-003', ['W1']);
+    rejectedWith(run(box(), { op: 'setProperty', id: 'W1', path: '/layers/-', value: { thickness: 1, function: 'finish' } }), 'FS-OPS-003', ['W1']);
+    rejectedWith(run(box(), { op: 'setProperty', id: 'W1', path: '/layers/0/thickness/x', value: 1 }), 'FS-OPS-003', ['W1']);
+    expect(B(run(box(), { op: 'setProperty', id: 'W1', path: '/layers/0/thickness', value: 20000 })).walls!.W1!.layers).toEqual([{ thickness: 20000, function: 'core' }]);
+    expect(B(run(box(), { op: 'unsetProperty', id: '$document', path: '/project' }, { op: 'setProperty', id: '$document', path: '/project', value: { name: 'P' } })).project).toEqual({ name: 'P' });
   });
 
   it('removes a member so its default applies again', () => {

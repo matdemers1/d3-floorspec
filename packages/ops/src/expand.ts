@@ -15,7 +15,6 @@ import {
   edgeGeometry,
   LEVEL,
   OPENING,
-  resolveContent,
   resolveElement,
   resolveLength,
   resolvePoint,
@@ -29,13 +28,15 @@ import {
   type IPoint,
 } from './references/resolve.js';
 import type { Operation, Point, ResolvedPrimitive, Side } from './types.js';
-import { cmpStr, escapeToken, getMember, isObject, parsePointer, setMember, type JsonObject } from './lib/json.js';
+import { cmpStr, getMember, setMember, type JsonObject } from './lib/json.js';
 
 const pt = (p: IPoint, ptr: string): Point => [toJsonInt(p[0], ptr), toJsonInt(p[1], ptr)];
 const sortIds = (ids: Iterable<string>): string[] => [...new Set(ids)].sort(cmpStr);
 
-/** The wall members drawWall carries to the element (4.1), in Core §5.2's order. */
-const WALL_MEMBER_NAMES = ['type', 'layers', 'justification', 'base', 'top', 'name'] as const;
+/** The members drawWall carries to the wall as given (4.1), in Core §5.2's order. */
+const WALL_MEMBER_NAMES = ['type', 'layers', 'justification', 'base', 'top', 'name', 'extensions', 'extras'] as const;
+/** The members every created element may carry (2.1). */
+const COMMON_MEMBERS = ['name', 'extensions', 'extras'] as const;
 
 /** Resolve, expand and apply operation `index` of the batch. */
 export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPrimitive[] {
@@ -53,17 +54,26 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
     // ── primitives (2.5: references are resolved first, like any composite's) ──
     case 'addElement': {
       const id = op.id ?? ctx.wc.mint(op.collection);
-      const element = resolveContent(op.collection, [], op.element, `${base}/element`, ctx) as Record<string, unknown>;
-      emit({ op: 'addElement', collection: op.collection, id, element });
+      // 2.5: never resolved inside `element` — it is added exactly as given.
+      emit({ op: 'addElement', collection: op.collection, id, element: op.element });
       break;
     }
     case 'addJunction':
     case 'addWall':
     case 'addSeparator': {
+      // 2.1.2: the shorthand's references are resolved first — level, then position or start and
+      // end — and it is then exactly the addElement of the resolved values; every other member is
+      // passed as given.
       const collection: CollectionName = op.op === 'addJunction' ? 'junctions' : op.op === 'addWall' ? 'walls' : 'separators';
+      const resolvedRefs: JsonObject = { level: resolveElement(op.level, `${base}/level`, ctx, LEVEL) };
+      if (op.op === 'addJunction') resolvedRefs.position = pt(resolvePoint(op.position, `${base}/position`, ctx).point, `${base}/position`);
+      else {
+        resolvedRefs.start = resolveElement(op.start, `${base}/start`, ctx, JUNCTION);
+        resolvedRefs.end = resolveElement(op.end, `${base}/end`, ctx, JUNCTION);
+      }
       const id = op.id ?? ctx.wc.mint(collection);
       const p: JsonObject = { op: op.op, id };
-      for (const k of Object.keys(o)) if (k !== 'op' && k !== 'id') setMember(p, k, resolveContent(collection, [k], o[k], `${base}/${escapeToken(k)}`, ctx));
+      for (const k of Object.keys(o)) if (k !== 'op' && k !== 'id') setMember(p, k, Object.hasOwn(resolvedRefs, k) ? resolvedRefs[k] : o[k]);
       emit(p as unknown as ResolvedPrimitive);
       break;
     }
@@ -76,11 +86,8 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
     case 'unsetProperty': {
       const id = (RESERVED_TARGETS as readonly string[]).includes(op.id) ? (op.id as ReservedTarget) : resolveElement(op.id, `${base}/id`, ctx, ANY);
       if (op.op === 'unsetProperty') emit({ op: 'unsetProperty', id, path: op.path });
-      else {
-        const tokens = parsePointer(op.path) ?? [];
-        const targetKind = id.startsWith('$') ? id : (ctx.wc.collectionOf(id) ?? '');
-        emit({ op: 'setProperty', id, path: op.path, value: resolveContent(targetKind, tokens, op.value, `${base}/value`, ctx) });
-      }
+      // 2.5: never resolved inside `value` — it is set exactly as given.
+      else emit({ op: 'setProperty', id, path: op.path, value: op.value });
       break;
     }
     case 'moveJunction': {
@@ -115,10 +122,12 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
         ends.push(jid);
       }
       if (op.op === 'drawSeparator') {
-        emit({ op: 'addSeparator', id: op.id ?? ctx.wc.mint('separators'), level, start: ends[0]!, end: ends[1]! });
+        const sep: JsonObject = { op: 'addSeparator', id: op.id ?? ctx.wc.mint('separators'), level, start: ends[0]!, end: ends[1]! };
+        for (const k of COMMON_MEMBERS) if (has(k)) setMember(sep, k, o[k]);
+        emit(sep as unknown as ResolvedPrimitive);
       } else {
         const w: JsonObject = { op: 'addWall', id: op.id ?? ctx.wc.mint('walls'), level, start: ends[0]!, end: ends[1]! };
-        for (const k of WALL_MEMBER_NAMES) if (has(k)) setMember(w, k, resolveContent('walls', [k], o[k], `${base}/${k}`, ctx));
+        for (const k of WALL_MEMBER_NAMES) if (has(k)) setMember(w, k, o[k]);
         emit(w as unknown as ResolvedPrimitive);
       }
       break;
@@ -180,7 +189,7 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
         fail('FS-OPS-003', `the opening's width resolves from neither its own width nor its fill${op.fill === undefined ? '' : ` ${op.fill}`}`, [], has('fill') ? `${base}/fill` : base);
       const offset = resolvePosition(op.at, `${base}/at`, g.m, BigInt(w));
       const element: JsonObject = { wall, offset: toJsonInt(offset, `${base}/at`) };
-      for (const m of ['fill', 'width', 'height', 'sill', 'hinge', 'swing', 'name'] as const)
+      for (const m of ['fill', 'width', 'height', 'sill', 'hinge', 'swing', 'name', 'extensions', 'extras'] as const)
         if (has(m)) setMember(element, m, m === 'width' || m === 'height' || m === 'sill' ? lengths[m] : o[m]);
       emit({ op: 'addElement', collection: 'openings', id: op.id ?? ctx.wc.mint('openings'), element });
       break;
@@ -189,11 +198,11 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       const opening = resolveElement(op.opening, `${base}/opening`, ctx, OPENING);
       const e = ctx.wc.element(opening);
       const wall = getMember(e, 'wall');
-      if (typeof wall !== 'string' || !ctx.wc.elementIn('walls', wall)) return fail('FS-OPS-003', `${opening} is on no wall`, [], `${base}/opening`);
+      if (typeof wall !== 'string' || !ctx.wc.elementIn('walls', wall)) return fail('FS-OPS-003', `${opening} is on no wall`, [opening], `${base}/opening`);
       const g = edgeGeometry(ctx, wall, `${base}/opening`);
       const own = getMember(e, 'width');
       const w = typeof own === 'number' && Number.isSafeInteger(own) ? own : fillWidth(ctx, getMember(e, 'fill'));
-      if (w === undefined) fail('FS-OPS-003', `the width of ${opening} resolves from neither its own width nor its fill`, [], `${base}/opening`);
+      if (w === undefined) fail('FS-OPS-003', `the width of ${opening} resolves from neither its own width nor its fill`, [opening], `${base}/opening`);
       const offset = resolvePosition(op.at, `${base}/at`, g.m, BigInt(w));
       emit({ op: 'setProperty', id: opening, path: '/offset', value: toJsonInt(offset, `${base}/at`) }, `${base}/opening`);
       break;
@@ -204,15 +213,13 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       const level = resolveElement(op.level, `${base}/level`, ctx, LEVEL);
       const at = resolvePoint(op.at, `${base}/at`, ctx).point;
       const element: JsonObject = { level, anchor: pt(at, `${base}/at`) };
-      for (const m of ['name', 'function', 'wallFinish', 'floorFinish', 'ceilingFinish'] as const)
-        if (has(m)) setMember(element, m, resolveContent('rooms', [m], o[m], `${base}/${m}`, ctx));
+      for (const m of ['name', 'function', 'wallFinish', 'floorFinish', 'ceilingFinish', 'extensions', 'extras'] as const) if (has(m)) setMember(element, m, o[m]);
       emit({ op: 'addElement', collection: 'rooms', id: op.id ?? ctx.wc.mint('rooms'), element });
       break;
     }
     case 'setRoomFinish': {
       const room = resolveElement(op.room, `${base}/room`, ctx, ROOM);
-      const material = resolveContent('rooms', [`${op.surface}Finish`], op.material, `${base}/material`, ctx);
-      emit({ op: 'setProperty', id: room, path: `/${op.surface}Finish`, value: material }, `${base}/room`);
+      emit({ op: 'setProperty', id: room, path: `/${op.surface}Finish`, value: op.material }, `${base}/room`);
       break;
     }
 
@@ -308,6 +315,21 @@ function resizeRoom(ctx: Ctx, roomRef: string, side: Side, byRef: unknown, base:
   const cont0 = continues(P0, [-t[0], -t[1]]);
   const contK = continues(Pk, t);
   const ptr = `${base}/room`;
+  // Continuing ends where an edge leaves exactly in the direction of v; it must be longer than |v|.
+  const alongV = new Set<string>();
+  if (by !== 0n)
+    for (const [end, isCont] of [
+      [P0, cont0],
+      [Pk, contK],
+    ] as const) {
+      if (!isCont) continue;
+      for (const h of g.stars.get(end) ?? []) {
+        const d = g.direction(h);
+        if (predicates.cross(d, v) !== 0n || predicates.dot(d, v) <= 0n) continue;
+        alongV.add(end);
+        if (predicates.dot(d, d) <= by * by) not(`cannot move ${by < 0n ? -by : by} base units past ${end}: the edge leaving it that way is not longer than that`);
+      }
+    }
 
   // 1. Each continuing end, P₀ first: a new junction, the run edge reconnected, a jog.
   for (const [end, h, isCont] of [
@@ -321,6 +343,9 @@ function resizeRoom(ctx: Ctx, roomRef: string, side: Side, byRef: unknown, base:
     const jid = ctx.wc.mint('junctions');
     emit({ op: 'addJunction', id: jid, level, position: pt([p[0] + v[0], p[1] + v[1]], `${base}/by`) }, ptr);
     emit({ op: 'setProperty', id: edge.id, path: getMember(el, 'start') === end ? '/start' : '/end', value: jid }, ptr);
+    // At a T — an edge already leaving the end in the direction of v — no jog is added: the new
+    // junction lies on that edge, and normalization splits it there (4.4).
+    if (alongV.has(end)) continue;
     if (edge.kind === 'walls') {
       const w: JsonObject = { op: 'addWall', id: ctx.wc.mint('walls'), level, start: end, end: jid };
       for (const k of ['type', 'layers', 'justification'] as const) {
@@ -352,4 +377,3 @@ function resizeRoom(ctx: Ctx, roomRef: string, side: Side, byRef: unknown, base:
   }
 }
 
-export { isObject };

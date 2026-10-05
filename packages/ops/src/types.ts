@@ -24,6 +24,13 @@ export type Position = Length;
 export type Side = 'north' | 'south' | 'east' | 'west';
 export type Point = [number, number];
 
+/** The members every created element may carry (2.1, Core §1.4), passed into it as given. */
+export interface CommonMembers {
+  name?: string;
+  extensions?: Record<string, unknown>;
+  extras?: Record<string, unknown>;
+}
+
 // ── primitives (chapter 2) ─────────────────────────────────────────────────────
 
 export interface AddElement {
@@ -32,7 +39,7 @@ export interface AddElement {
   id?: string;
   element: Record<string, unknown>;
 }
-export interface AddJunction {
+export interface AddJunction extends CommonMembers {
   op: 'addJunction';
   id?: string;
   level: ElementRef;
@@ -57,7 +64,7 @@ export interface AddWall extends WallMembers {
   start: ElementRef;
   end: ElementRef;
 }
-export interface AddSeparator {
+export interface AddSeparator extends CommonMembers {
   op: 'addSeparator';
   id?: string;
   level: ElementRef;
@@ -92,14 +99,14 @@ export type Primitive = AddElement | AddJunction | AddWall | AddSeparator | Remo
 
 // ── composites (chapter 4) ─────────────────────────────────────────────────────
 
-export interface DrawWall extends Omit<WallMembers, 'extensions' | 'extras'> {
+export interface DrawWall extends WallMembers {
   op: 'drawWall';
   id?: string;
   level: ElementRef;
   from: PointRef;
   to: PointRef;
 }
-export interface DrawSeparator {
+export interface DrawSeparator extends CommonMembers {
   op: 'drawSeparator';
   id?: string;
   level: ElementRef;
@@ -123,7 +130,7 @@ export interface ResizeRoom {
   side: Side;
   by: Length;
 }
-export interface AddOpening {
+export interface AddOpening extends CommonMembers {
   op: 'addOpening';
   wall: ElementRef;
   at: Position;
@@ -134,19 +141,17 @@ export interface AddOpening {
   sill?: Length;
   hinge?: 'start' | 'end';
   swing?: 'left' | 'right';
-  name?: string;
 }
 export interface MoveOpening {
   op: 'moveOpening';
   opening: ElementRef;
   at: Position;
 }
-export interface AddRoom {
+export interface AddRoom extends CommonMembers {
   op: 'addRoom';
   level: ElementRef;
   at: PointRef;
   id?: string;
-  name?: string;
   function?: string;
   wallFinish?: string;
   floorFinish?: string;

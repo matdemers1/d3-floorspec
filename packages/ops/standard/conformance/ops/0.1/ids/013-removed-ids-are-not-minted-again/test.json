@@ -1,0 +1,7 @@
+{
+  "description": "The courtyard wall W7 is removed, then a wall drawn: W7 was in A, so minting skips it and the new wall is W8, although no wall in the working copy is numbered above 6.",
+  "covers": [
+    "FS-OPS-1.5.1",
+    "FS-OPS-1.4.1"
+  ]
+}
