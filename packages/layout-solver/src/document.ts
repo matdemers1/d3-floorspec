@@ -17,7 +17,7 @@ export class SolverError extends Error {
 const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** The collections of a Core document, in the order they are listed (Core §1.1). */
-export const COLLECTIONS = ['buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'types', 'materials', 'assets'] as const;
+export const COLLECTIONS = ['buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'slabs', 'roofs', 'types', 'materials', 'assets', 'stairs'] as const;
 
 export function parseDocument(input: string | Uint8Array | object): Json {
   const value: unknown = typeof input === 'string' || input instanceof Uint8Array ? parseJson(input).value : structuredClone(input);
