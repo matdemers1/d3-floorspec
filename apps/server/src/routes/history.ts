@@ -36,6 +36,8 @@ export const ApplyBody = z.strictObject({
   context: z
     .strictObject({
       locks: z.array(LockSchema).max(200).optional(),
+      /** The design option the batch edits in (Ops 0.3, 2.8): the applier judges whether it is one. */
+      option: z.string().min(1).max(64).optional(),
       // `retired` is the store's to supply (Ops 1.5): a client cannot vouch for the project's history.
     })
     .optional(),
@@ -112,6 +114,7 @@ export function historyRoutes(db: Db, applier: Applier): Routes {
         head,
         batch: body.batch,
         ...(body.context?.locks === undefined ? {} : { locks: body.context.locks }),
+        ...(body.context?.option === undefined ? {} : { option: body.context.option }),
         author,
         kind: 'apply',
         ifMatch: opened ? undefined : ifMatchOf(req),
@@ -248,6 +251,7 @@ export function historyRoutes(db: Db, applier: Applier): Routes {
             token: op.authorTokenId,
           },
           ops: op.ops,
+          option: op.editOption,
           resolved: op.resolved,
           inverse: op.inverse,
           created: op.created,

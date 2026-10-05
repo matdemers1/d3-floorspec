@@ -138,6 +138,7 @@ export function changesetRoutes(db: Db, applier: Applier): Routes {
           head,
           batch: body.batch,
           ...(body.context?.locks === undefined ? {} : { locks: body.context.locks }),
+          ...(body.context?.option === undefined ? {} : { option: body.context.option }),
           author,
           kind: 'apply',
           changesetId: changeset.id,

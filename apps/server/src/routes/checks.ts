@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { Request } from 'express';
 import { z } from 'zod';
-import { OFFICIAL_READER, validate } from '@floorspec/engine';
+import { evaluate, OFFICIAL_READER } from '@floorspec/engine';
 import { findingsFor, NOTICE, type Units } from '@floorspec/rules-engine';
 import type { Db } from '../db.js';
 import { Routes } from '../http/routes.js';
@@ -60,13 +60,25 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
     return { head: name, hash: head.versionHash, document: head.version.document, base };
   }
 
-  /** Schema, invariant and lint diagnostics (Core chapter 10), from the reference engine. */
+  /**
+   * Schema, invariant and lint diagnostics (Core chapter 10), from the reference engine. Validity
+   * never depends on the design (Core 19.5): every checked design is validated, a diagnostic found
+   * only in an option's design naming it in `design`. With `?design=`, the answer also says whether
+   * Core derives that design (19.6.2) — `derives` — and which design it is.
+   */
   routes.read(
     '/:projectId/validate',
     async (req, res) => {
+      const design = designQuery(req.query['design']);
       const { head, hash, document } = await documentAt(req);
-      const result = validate(document as object, OFFICIAL_READER);
-      res.json({ head, hash, valid: result.valid, diagnostics: result.diagnostics });
+      const ev = evaluate(document as object, { ...OFFICIAL_READER, ...(design === undefined ? {} : { design }) });
+      res.json({
+        head,
+        hash,
+        valid: ev.valid,
+        diagnostics: ev.diagnostics,
+        ...(design === undefined ? {} : { design, derives: ev.valid && ev.view !== undefined }),
+      });
     },
     { token: 'read' },
   );
@@ -82,14 +94,15 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
   routes.read(
     '/:projectId/findings',
     async (req, res) => {
+      const design = designQuery(req.query['design']);
       const { head, hash, document } = await documentAt(req);
       const chosen = await profileOfProject(db, req.project as { ruleProfileId: string | null }, rules);
-      const about = { profile: chosen.profile.name, profileId: chosen.id, notice: NOTICE, coverageUrl };
+      const about = { profile: chosen.profile.name, profileId: chosen.id, notice: NOTICE, coverageUrl, ...(design === undefined ? {} : { design }) };
       if (rules.packs.length === 0) {
         res.json({ head, hash, findings: [], rulePacks: [], note: NO_RULE_PACKS, ...about });
         return;
       }
-      const report = findingsFor(document as object, chosen.profile, rules.packs, { units: unitsOf(document) });
+      const report = findingsFor(document as object, chosen.profile, rules.packs, { units: unitsOf(document), ...(design === undefined ? {} : { design }) });
       res.json({
         head,
         hash,
@@ -149,3 +162,42 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
 
   return routes;
 }
+
+/**
+ * A design input (Core 0.3, 19.6) from a query: `design=KS:KB,DS:D2` (option set:option, comma
+ * separated) or the JSON object `design={"KS":"KB"}`. Absent: the primary design. Whether the sets
+ * and options are the document's is the engine's to judge; a malformed value is a 400.
+ */
+export function designQuery(raw: unknown): Record<string, string> | undefined {
+  if (raw === undefined) return undefined;
+  const bad = (): never => {
+    throw new HttpError(400, 'design is option set:option pairs, comma separated (design=KS:KB), or a JSON object of option set → option');
+  };
+  if (typeof raw !== 'string' || raw.length > 4000) return bad();
+  const out: Record<string, string> = {};
+  const put = (set: unknown, option: unknown): void => {
+    if (typeof set !== 'string' || typeof option !== 'string' || !ID.test(set) || !ID.test(option) || Object.hasOwn(out, set)) bad();
+    Object.defineProperty(out, set as string, { value: option, enumerable: true, writable: true, configurable: true });
+  };
+  if (raw.trim().startsWith('{')) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return bad();
+    }
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return bad();
+    for (const [k, v] of Object.entries(parsed)) put(k, v);
+    return out;
+  }
+  if (raw.trim() === '') return out;
+  for (const pair of raw.split(',')) {
+    const [set, option, ...rest] = pair.split(':');
+    if (rest.length) bad();
+    put(set?.trim(), option?.trim());
+  }
+  return out;
+}
+
+/** Core 3.1.1: the form of an ID. */
+const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
