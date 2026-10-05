@@ -78,6 +78,16 @@ uploaded them, or whose model names a digest its owner uploaded — 404 to anyon
 `src/assets/store.ts` is the adapter (`FsAssetStore`; `MemoryAssetStore` when `ASSET_DIR` is unset
 outside production).
 
+Furniture (FLR-T-8.3) uploads through the same route with `?as=`: `?as=model` takes a glTF 2.0
+model — `.glb`, or a `.gltf` whose buffers and images are embedded `data:` URIs; a model naming
+another file, or requiring a glTF extension, is refused with the reason (`src/assets/gltf.ts`) — and
+`?as=symbol` a plan symbol, a PNG (stripped as above) or an SVG. An SVG is never stored as sent: a
+strict tokenizer keeps an allowlist of drawing (shapes, paths, text, gradients, clips, `#`
+references) and drops scripts, handlers, `foreignObject`, style sheets and every outside
+reference; a DOCTYPE is refused. A clean file keeps its bytes (and so a library symbol its
+digest); one that lost anything is written again, and `stripped` says what went
+(`src/assets/svg.ts`). Without `as` an upload is a texture, as before.
+
 ## MCP (FLR-T-2.6)
 
 `POST /mcp`: MCP 2026-07-28 (and 2025-era clients, statelessly) via `@floorspec/mcp`. Bearer

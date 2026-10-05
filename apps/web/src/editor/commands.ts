@@ -8,6 +8,7 @@ import { compareOp, refreshLog, toggleHistory } from './history';
 import { kindById, kindsOf, type SystemId } from './systems/catalog';
 import { navigate } from '../lib/router';
 import { threeOf } from './three/mode';
+import { FURNITURE_COMMANDS } from '../furniture/commands';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -446,6 +447,8 @@ export const COMMANDS: readonly Command[] = [
       switchUnits(store, 'imperial');
     },
   },
+  // Furniture (FLR-T-8.3): F opens the library; [ and ] turn the selected item.
+  ...FURNITURE_COMMANDS,
 ];
 
 /** The level `dir` steps above (1) or below (-1) the current one, by elevation. */

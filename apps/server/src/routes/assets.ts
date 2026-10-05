@@ -6,7 +6,8 @@ import { HttpError } from '../http/errors.js';
 import { ProblemError } from '../http/problem.js';
 import { MAIN } from '../domain/projects.js';
 import { SHA256, type AssetStore } from '../assets/store.js';
-import { EXTENSIONS, MediaError, prepareImage } from '../assets/media.js';
+import { MediaError } from '../assets/media.js';
+import { ASSET_EXTENSIONS, prepareUpload, purposeOf } from '../assets/upload.js';
 
 /**
  * Assets (FLR-T-8.2, FLR-REQ-117, FLR-REQ-124): texture images uploaded into a project, stored by
@@ -16,6 +17,10 @@ import { EXTENSIONS, MediaError, prepareImage } from '../assets/media.js';
  *                                                  JSON; the bytes say what it is), `X-Asset-Name`
  *                                                  its file name, percent-encoded. 201 with the
  *                                                  asset entry the document should carry.
+ *                                                  `?as=model` takes a glTF 2.0 model and
+ *                                                  `?as=symbol` an SVG or PNG plan symbol
+ *                                                  (FLR-T-8.3, assets/upload.ts); without it, a
+ *                                                  texture image.
  *   GET  /api/projects/:projectId/assets           the document's assets and the project's uploads.
  *   GET  /api/projects/:projectId/assets/:sha256   the bytes; `?download` to save them as a file
  *                                                  named as the package path's last segment.
@@ -33,7 +38,7 @@ import { EXTENSIONS, MediaError, prepareImage } from '../assets/media.js';
 
 /** The path a stored file has in a project's package (Core 18.4): `assets/<sha256>.<ext>`. */
 export function packagePath(sha256: string, mediaType: string): string {
-  const ext = (EXTENSIONS as Readonly<Record<string, string | undefined>>)[mediaType] ?? 'bin';
+  const ext = (ASSET_EXTENSIONS as Readonly<Record<string, string | undefined>>)[mediaType] ?? 'bin';
   return `assets/${sha256}.${ext}`;
 }
 
@@ -118,7 +123,7 @@ export function assetRoutes(db: Db, store: AssetStore | null, maxBytes: number):
     return store;
   }
 
-  /** Upload a texture image into a project. */
+  /** Upload a texture image — or, with `?as=`, a model or a plan symbol — into a project. */
   routes.mutate(
     'POST',
     '/:projectId/assets',
@@ -128,10 +133,12 @@ export function assetRoutes(db: Db, store: AssetStore | null, maxBytes: number):
       const body: unknown = req.body;
       if (!Buffer.isBuffer(body)) throw new HttpError(415, 'send the image itself as the request body, not JSON');
       if (body.length === 0) throw new HttpError(400, 'the upload is empty');
+      const purpose = purposeOf(req.query['as']);
+      if (purpose === null) throw new HttpError(400, '`as` is texture, model or symbol');
       const assets = storeOrRefuse();
       let image;
       try {
-        image = prepareImage(new Uint8Array(body.buffer, body.byteOffset, body.length));
+        image = prepareUpload(new Uint8Array(body.buffer, body.byteOffset, body.length), purpose);
       } catch (error) {
         if (error instanceof MediaError) throw new HttpError(error.status, error.message);
         throw error;
@@ -162,7 +169,7 @@ export function assetRoutes(db: Db, store: AssetStore | null, maxBytes: number):
           action: 'asset.upload',
           targetType: 'asset',
           targetId: put.sha256,
-          detail: { projectId: project.id, mediaType: image.mediaType, byteLength: put.byteLength, created: put.created, stripped: image.stripped },
+          detail: { projectId: project.id, purpose, mediaType: image.mediaType, byteLength: put.byteLength, created: put.created, stripped: image.stripped },
         },
       };
     },

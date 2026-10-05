@@ -226,7 +226,8 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
           <polyline key={r.circuit} className={`fs-run fs-run--${String(r.tone)}${selectedCircuit === r.circuit ? ' is-selected' : ''}`} points={r.points.map((p) => S(view, p).map(f1).join(',')).join(' ')} />
         ))}
       </g>
-      {shown.map((d) => <DeviceShape key={d.id} view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}`} />)}
+      {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx). */}
+      {shown.filter((d) => d.extension !== 'FS_furniture').map((d) => <DeviceShape key={d.id} view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}`} />)}
       {layers.electrical ? <PanelCallouts view={view} level={level} /> : null}
     </g>
   );

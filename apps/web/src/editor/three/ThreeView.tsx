@@ -18,6 +18,7 @@ import { TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
 import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
 import { SunRig } from './sun/SunRig';
+import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelled } from '../../furniture/Furniture3D';
 
 /**
  * The 3D view (FLR-T-7.5, FLR-REQ-113, 114), laid out as the board's "08 · Editor — 3D cutaway",
@@ -200,6 +201,11 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     [built, walking, cutaway, roof, levelId, order],
   );
   const summary = useMemo(() => (ready === null ? '' : describeScene(ready.model, visible.map((b) => b.part))), [ready, visible]);
+  // Furniture (FLR-T-8.3): each item's glTF model in place of its fallback box, once the model is drawn.
+  const furniture = useFurnitureModels(store.projectId, ready?.model ?? null);
+  const partsShown = useMemo(() => withoutModelled(visible, furniture.drawn), [visible, furniture.drawn]);
+  const extensionIds = useMemo(() => visibleExtensionIds(visible), [visible]);
+  const clearancesShown = useEditor(store, (s) => s.layers.clearances);
   const triangles = visible.reduce((n, b) => n + b.triangles, 0);
 
   useTestHook(store, three, ctl, ready, host, built, textures);
@@ -424,7 +430,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} /> : null}
         <Rig ctl={ctl} />
         <SceneBridge />
-        <Parts visible={visible} selection={walking ? null : selection} accent={tokens.accent} textures={textures} onClick={onClick} onDoubleClick={onDoubleClick} />
+        <Parts visible={partsShown} selection={walking ? null : selection} accent={tokens.accent} textures={textures} onClick={onClick} onDoubleClick={onDoubleClick} />
+        {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} /> : null}
         {!walking ? <LabelTracker built={visible} selection={selection} el={label} /> : null}
       </Canvas>
     );

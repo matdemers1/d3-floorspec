@@ -3,6 +3,7 @@ import { kindOf, labelOf, type LevelView, type Point } from './model';
 import { dot, leftNormal, sub, len } from './geometry';
 import { moveJunction, moveOpening, moveWall, type Batch } from './ops';
 import { formatLen } from './units';
+import { nudgeDevice } from '../furniture/nudge';
 
 /**
  * Arrow-key nudging (FLR-T-3.7): the selected junction, wall, separator or opening moves one step
@@ -55,6 +56,9 @@ export function nudgeBatch(level: LevelView, document: { openings?: Record<strin
     const offset = typeof stored === 'number' ? stored : opening.offset;
     return moveOpening(id, Math.max(0, offset + (k > 0 ? step : -step)));
   }
+  // An extension element — a piece of furniture, a device (FLR-T-8.3): its host's position, or along its wall.
+  const device = level.devices.find((x) => x.id === id);
+  if (device !== undefined) return nudgeDevice(level, device, d, step);
   return null;
 }
 
@@ -63,7 +67,7 @@ export function nudgeable(store: EditorStore): boolean {
   const { selection, model, readOnly, compare } = store.get();
   if (selection === null || model === null || readOnly !== null || compare !== null) return false;
   const kind = kindOf(model, selection);
-  return kind === 'junction' || kind === 'wall' || kind === 'separator' || kind === 'opening';
+  return kind === 'junction' || kind === 'wall' || kind === 'separator' || kind === 'opening' || kind === 'extensionElement';
 }
 
 /** Nudge the selection. Returns false when the arrow does not move it (a wall pushed along itself). */
@@ -78,6 +82,7 @@ export function nudge(store: EditorStore, arrow: Arrow, big: boolean): boolean {
     const kind = model === null ? null : kindOf(model, id);
     if (kind === 'wall') store.set({ notice: { tone: 'info', text: 'A wall moves sideways: use the arrows across it. Drag a junction to lengthen it.' } });
     if (kind === 'opening') store.set({ notice: { tone: 'info', text: 'An opening moves along its wall: use the arrows along it.' } });
+    if (kind === 'extensionElement') store.set({ notice: { tone: 'info', text: 'An item on a wall face moves along its wall: use the arrows along it.' } });
     return true;
   }
   void store.apply(`Nudge ${labelOf(model, id)} ${formatLen(step, store.units)} ${WORD[arrow]}`, () => {

@@ -328,7 +328,12 @@ export function LayerChips({ store, layers }: { store: EditorStore; layers: Laye
       </div>
       <div className="fs-layers__chips">
         {chips.map(chip)}
-        <button type="button" className="fs-chip" disabled title="Furniture arrives with its extension (P8)">
+        <button
+          type="button"
+          className={layers.furniture !== false ? 'fs-chip is-on' : 'fs-chip'}
+          aria-pressed={layers.furniture !== false}
+          onClick={() => { store.set({ layers: { ...layers, furniture: layers.furniture === false } }); }}
+        >
           <EyeIcon />
           Furniture
         </button>

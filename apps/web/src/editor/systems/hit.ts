@@ -27,7 +27,9 @@ export function glyphCentre(d: DeviceView, s: number): Point {
 
 /** Whether a device's system is shown. Elements of another extension show with every layer. */
 export function visible(d: DeviceView, layers: Layers): boolean {
-  return d.system === null ? true : layers[d.system];
+  // FS_furniture has a layer of its own (FLR-T-8.3); other extensions' elements show with every layer.
+  if (d.system === null) return d.extension === 'FS_furniture' ? layers.furniture !== false : true;
+  return layers[d.system];
 }
 
 /** The device under the pointer, nearest first; null when none. `tol` is in base units, `s` pixels per base unit. */

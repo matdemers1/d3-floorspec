@@ -30,6 +30,8 @@ import { defineConfig, devices } from '@playwright/test';
  *                   a time, the light three.js draws checked against the solar module, night, play.
  *   - `package`   — FLR-T-9.1: a textured kitchen exported as a .floorspec package and imported as a
  *                   new project, its texture drawn in 3D; axe on the import dialog.
+ *   - `furniture` — FLR-T-8.3: the P8 fridge — placed from the library with its door's clearance,
+ *                   an island in its way as a note, its glTF model in 3D, undo.
  *
  * Run with:
  *
@@ -37,7 +39,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`). E2E_PORT is the keyboard suite's port; the others take the next thirteen.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`). E2E_PORT is the keyboard suite's port; the others take the next fourteen.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -96,6 +98,8 @@ const SUITES: Suite[] = [
   { name: 'sun', spec: 'sun.spec.ts', port: PORT + 12, database: databaseFor('sun'), setupToken: true, gl: true },
   // FLR-T-9.1: export a package, import it as a new project, the texture in 3D.
   { name: 'package', spec: 'package.spec.ts', port: PORT + 13, database: databaseFor('package'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-package-assets') } },
+  // FLR-T-8.3: a library refrigerator placed, its door's clearance, an island in its way, its model in 3D.
+  { name: 'furniture', spec: 'furniture.spec.ts', port: PORT + 14, database: databaseFor('furniture'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-furniture-assets') } },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;
