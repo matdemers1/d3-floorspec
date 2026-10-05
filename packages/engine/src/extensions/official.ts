@@ -117,3 +117,18 @@ export function deriveExtensions(runs: readonly ExtensionRun[]): DerivedExtensio
   for (const run of runs) Object.defineProperty(out, run.impl.name, { value: run.impl.derive(run.ctx), enumerable: true, writable: true, configurable: true });
   return out;
 }
+
+/**
+ * The room of each element of an official extension, by room — what that extension derives as
+ * `rooms` (FS_electrical 6.1 and its siblings), from Core's geometry alone: a surface host's room, a
+ * wall face's room on the host's side, a free position's room. For a tool that needs it whether or
+ * not the extension was evaluated for the document — as for a Core 0.3 document, which the
+ * extensions at 0.1.0 do not evaluate. Empty for an extension the engine does not implement, or a
+ * document whose geometry was not derived.
+ */
+export function officialElementRooms(document: FloorspecDocument, analysis: Analysis, extension: string): Record<string, string[]> {
+  const impl = IMPLEMENTATIONS.get(extension);
+  if (!impl) return {};
+  for (const la of analysis.levels.values()) if (la.geometry === undefined) return {};
+  return new ExtensionContext(document, analysis, impl, []).roomsDerived();
+}

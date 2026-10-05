@@ -173,6 +173,7 @@ test('setup to a compared undo: draw a room by hand, accept an agent’s proposa
   await settled(page);
   await inspector.getByRole('textbox', { name: 'Clear width' }).fill('2\' 7"');
   await inspector.getByRole('textbox', { name: 'Clear width' }).press('Enter');
+  await expect(inspector.getByText('Type the clear height too: a clear opening has both')).toBeVisible();
   await inspector.getByRole('textbox', { name: 'Clear height' }).fill('6\' 7"');
   await inspector.getByRole('textbox', { name: 'Clear height' }).press('Enter');
   await expect.poll(async () => (await modelOf(page, project)).types?.[doorType]?.clearOpening).toEqual({ width: 31 * 32512, height: 79 * 32512 });

@@ -50,6 +50,7 @@ export {
   OFFICIAL_EXTENSION_SCHEMAS,
   OFFICIAL_EXTENSION_CORE_VERSIONS,
   officialExtensionsEvaluatedFor,
+  officialElementRooms,
   IMPLEMENTATIONS as EXTENSION_IMPLEMENTATIONS,
   type DerivedExtensions,
 } from './extensions/official.js';

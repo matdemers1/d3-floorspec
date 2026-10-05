@@ -646,10 +646,10 @@ function OpeningClearSection({ ctx, fillType }: { ctx: Ctx; fillType: Json | und
       {fill !== undefined && own === undefined ? (
         <ReadOnlyField label="From type" value={fromType === undefined ? 'None declared' : clearOpeningText(fromType, units)} />
       ) : (
-        <ClearOpeningFields value={own} isWindow={isWindow} units={units} disabled={readOnly} onSet={set} />
+        <ClearOpeningFields draftKey={`${id}/own`} value={own} isWindow={isWindow} units={units} disabled={readOnly} onSet={set} />
       )}
       {fill !== undefined && own === undefined && fromType === undefined ? (
-        <ClearOpeningFields value={undefined} isWindow={false} units={units} disabled={readOnly} onSet={set} labelPrefix="Own clear" />
+        <ClearOpeningFields draftKey={`${id}/own`} value={undefined} isWindow={false} units={units} disabled={readOnly} onSet={set} labelPrefix="Own clear" />
       ) : null}
       <p className="fs-note">
         {effective === undefined
@@ -841,6 +841,7 @@ function FillTypeBody({ ctx }: { ctx: Ctx }) {
           </Section>
           <Section title="Clear opening">
             <ClearOpeningFields
+              draftKey={id}
               value={clear}
               isWindow={kind === 'windowType'}
               units={units}

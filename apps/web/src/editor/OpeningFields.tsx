@@ -34,6 +34,13 @@ export function CoreUpgradeNotice({ store, model, what }: { store: EditorStore; 
 }
 
 /**
+ * Clear openings being drafted — one dimension typed, the other not yet — by element. Kept outside
+ * the component: the inspector re-renders, and may remount, as the plan's live events arrive, and a
+ * half-typed clear opening must not be lost to that.
+ */
+const drafts = new Map<string, { width?: number; height?: number }>();
+
+/**
  * A clear opening's fields. Width and height are both required (Core 8.4), so a clear opening that
  * does not exist yet is drafted here until both are typed; then it is sent whole. Area is offered
  * for a window only, may be left empty — "not declared", never width × height — and clears with
@@ -46,7 +53,10 @@ export function ClearOpeningFields({
   disabled,
   onSet,
   labelPrefix = 'Clear',
+  draftKey,
 }: {
+  /** Which element's clear opening this is: a draft survives the inspector being redrawn. */
+  draftKey: string;
   value: ClearOpening | undefined;
   isWindow: boolean;
   units: UnitSystem;
@@ -54,16 +64,24 @@ export function ClearOpeningFields({
   onSet: (next: ClearOpening | undefined, label: string) => void;
   labelPrefix?: string;
 }) {
-  const [draft, setDraft] = useState<{ width?: number; height?: number }>({});
+  const [draft, setDraftState] = useState<{ width?: number; height?: number }>(() => drafts.get(draftKey) ?? {});
+  const setDraft = (next: { width?: number; height?: number }) => {
+    if (next.width === undefined && next.height === undefined) drafts.delete(draftKey);
+    else drafts.set(draftKey, next);
+    setDraftState(next);
+  };
   useEffect(() => {
-    if (value !== undefined) setDraft({});
-  }, [value]);
+    setDraftState(drafts.get(draftKey) ?? {});
+  }, [draftKey]);
+  useEffect(() => {
+    if (value !== undefined && drafts.has(draftKey)) setDraft({});
+  }, [value, draftKey]);
   const width = value?.width ?? draft.width;
   const height = value?.height ?? draft.height;
   const commit = (key: 'width' | 'height', v: number | null) => {
     if (v === null) {
       if (value !== undefined) onSet(undefined, 'Remove the clear opening');
-      else setDraft((d) => ({ ...d, [key]: undefined }));
+      else setDraft({ ...draft, [key]: undefined });
       return;
     }
     if (value !== undefined) {
@@ -71,8 +89,10 @@ export function ClearOpeningFields({
       return;
     }
     const next = { ...draft, [key]: v };
-    if (next.width !== undefined && next.height !== undefined) onSet({ width: next.width, height: next.height }, 'Declare the clear opening');
-    else setDraft(next);
+    if (next.width !== undefined && next.height !== undefined) {
+      setDraft({});
+      onSet({ width: next.width, height: next.height }, 'Declare the clear opening');
+    } else setDraft(next);
   };
   const incomplete = value === undefined && (draft.width !== undefined) !== (draft.height !== undefined);
   return (
