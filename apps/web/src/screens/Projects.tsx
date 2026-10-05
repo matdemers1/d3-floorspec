@@ -8,6 +8,7 @@ import { eachLimited, loadModel } from '../projects/model';
 import { NewProject } from '../projects/NewProject';
 import { ProjectCard, type ModelState, type ProjectRow } from '../projects/ProjectCard';
 import { Templates } from '../projects/TemplateCards';
+import type { Template } from '../projects/templates';
 
 export type { ProjectRow } from '../projects/ProjectCard';
 
@@ -26,6 +27,7 @@ export function Projects() {
   const [models, setModels] = useState<Record<string, ModelState>>({});
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
+  const [template, setTemplate] = useState<Template | null>(null);
   const [importing, setImporting] = useState(false);
   const search = useRef<HTMLInputElement>(null);
 
@@ -76,7 +78,7 @@ export function Projects() {
   }, [rows, query, models]);
 
   const newProject = (
-    <Button variant="primary" icon={<Plus />} onClick={() => { setCreating(true); }}>
+    <Button variant="primary" icon={<Plus />} onClick={() => { setTemplate(null); setCreating(true); }}>
       New project
     </Button>
   );
@@ -104,7 +106,7 @@ export function Projects() {
         </EmptyState>
       ) : rows !== null && rows.length === 0 ? (
         <FirstHouse
-          onNew={() => { setCreating(true); }}
+          onNew={() => { setTemplate(null); setCreating(true); }}
           onImport={() => { setImporting(true); }}
         />
       ) : (
@@ -158,11 +160,14 @@ export function Projects() {
             </ul>
           )}
 
-          <Templates onBlank={() => { setCreating(true); }} />
+          <Templates
+            onBlank={() => { setTemplate(null); setCreating(true); }}
+            onTemplate={(chosen) => { setTemplate(chosen); setCreating(true); }}
+          />
         </>
       )}
 
-      <NewProject open={creating} onOpenChange={setCreating} />
+      <NewProject open={creating} onOpenChange={setCreating} template={template} />
       <ImportFile open={importing} onOpenChange={setImporting} />
     </Page>
   );
