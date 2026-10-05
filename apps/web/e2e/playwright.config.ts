@@ -34,6 +34,8 @@ import { defineConfig, devices } from '@playwright/test';
  *                   an island in its way as a note, its glTF model in 3D, undo.
  *   - `templates` — FLR-T-4.5: a project from each of the standard's starter templates, held exactly,
  *                   opened in the plan, in 3D and in the schedules.
+ *   - `moonshots` — FLR-T-12.6: the ranch's advisory energy estimate, its climate changed through Ops,
+ *                   and a path-traced still of its 3D view rendered on the job queue.
  *
  * Run with:
  *
@@ -41,7 +43,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`). E2E_PORT is the keyboard suite's port; the others take the next fifteen.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`). E2E_PORT is the keyboard suite's port; the others take the next sixteen.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -104,6 +106,8 @@ const SUITES: Suite[] = [
   { name: 'furniture', spec: 'furniture.spec.ts', port: PORT + 14, database: databaseFor('furniture'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-furniture-assets') } },
   // FLR-T-4.5: the starter templates, each made a project and opened in the plan, 3D and the schedules.
   { name: 'templates', spec: 'templates.spec.ts', port: PORT + 15, database: databaseFor('templates'), setupToken: true, gl: true },
+  // FLR-T-12.6: the advisory energy estimate of a template, its climate changed, and a path-traced still.
+  { name: 'moonshots', spec: 'moonshots.spec.ts', port: PORT + 16, database: databaseFor('moonshots'), setupToken: true, gl: true },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;

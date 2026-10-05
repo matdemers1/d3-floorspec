@@ -161,6 +161,7 @@ function sentence(op: Json, units: UnitSystem, name: Namer): string | null {
       if (op['id'] === '$document' && op['path'] === '/floorspec') return `Upgraded the plan to Floorspec ${String(op['value'])}`;
       if (op['path'] === '/brief') return `Linked ${ref(op['id'], name)} to ${ref(op['value'], name)}`;
       if (op['path'] === '/extras/d3floorspec/units') return op['value'] === 'metric' ? 'Showed metric units' : 'Showed feet and inches';
+      if (op['path'] === '/extras/d3floorspec/energy') return 'Changed the energy estimate’s climate and assumptions';
       return `Set ${String(op['path']).replace(/^\//, '')} of ${ref(op['id'], name)}`;
     case 'addElement': {
       const element = (op['element'] ?? {}) as Json;

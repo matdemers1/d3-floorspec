@@ -25,6 +25,7 @@ import { PlanCard } from '../dashboard/PlanCard';
 import { BriefCard, ExportsCard, OptionsCard, ShareCard } from '../dashboard/Sections';
 import { FindingsCard, useFindingsStat } from '../findings/DashboardCard';
 import { VersionsSlot } from '../dashboard/VersionsSlot';
+import { EnergyCard } from '../energy/EnergyCard';
 import { api, ApiError, messageOf } from '../lib/api';
 import { navigate } from '../lib/router';
 import { formatSquareFeet, loadModel, plural, type ModelSummary } from '../projects/model';
@@ -172,6 +173,7 @@ export function Project({ id, you }: { id: string; you: string }) {
               <FindingsStat projectId={project.id} />
             </StatGroup>
             <ChangesetsSlot projectId={project.id} onDecided={load} />
+            {project.head === null ? null : <EnergyCard projectId={project.id} document={model?.document ?? null} />}
             <FindingsCard projectId={project.id} />
             <VersionsSlot projectId={project.id} you={you} />
             <ExportsCard projectId={project.id} hasModel={project.head !== null} document={model?.document ?? null} />

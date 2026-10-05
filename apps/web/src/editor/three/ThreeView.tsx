@@ -17,6 +17,7 @@ import { isSurfacePart, surfaceBuffers, type MapRef } from './surfaces';
 import { TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
 import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
+import { StillButton } from './still/StillDialog';
 import { SunRig } from './sun/SunRig';
 import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelled } from '../../furniture/Furniture3D';
 
@@ -472,6 +473,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
             {cutaway ? `Cutaway · ${levelName} and below` : 'Whole house'}
           </button>
           <ViewCube ctl={ctl} preset={preset} />
+          <StillButton store={store} preset={preset} level={cutaway ? levelId : null} />
           <SunPanel store={store} model={ready.model} />
           <SunChip store={store} />
           <div className="fs-three__chip fs-three__stats" role="note">
