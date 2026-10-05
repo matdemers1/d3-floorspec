@@ -21,7 +21,7 @@ describe('the request (1.1.1: FS-OPS-001)', () => {
     ['a boolean where a length goes', { batch: [{ op: 'resizeRoom', room: 'R1', side: 'east', by: true }] }],
     ['a side that is not one', { batch: [{ op: 'resizeRoom', room: 'R1', side: 'up', by: 1 }] }],
     ['a surface that is not one', { batch: [{ op: 'setRoomFinish', room: 'R1', surface: 'roof', material: 'M1' }] }],
-    ['an unknown collection', { batch: [{ op: 'addElement', collection: 'roofs', element: {} }] }],
+    ['an unknown collection', { batch: [{ op: 'addElement', collection: 'chimneys', element: {} }] }],
     ['cascade that is not a boolean', { batch: [{ op: 'removeElement', id: 'W1', cascade: 'yes' }] }],
     ['a context that is not an object', { batch: [{ op: 'removeElement', id: 'R1' }], context: [] }],
     ['an unknown context member', { batch: [{ op: 'removeElement', id: 'R1' }], context: { user: 'me' } }],

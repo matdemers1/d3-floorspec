@@ -112,6 +112,9 @@ const layerMaterials = (e: JsonObject): unknown[] => {
   return Array.isArray(layers) ? layers.map((l) => getMember(l, 'material')) : [];
 };
 
+/** Ops 0.3 (2.2): a stair depends on both its levels — the one it rises from and the one it rises to. */
+const stairsOf = (wc: WorkingCopy, level: string): string[] => where(wc, 'stairs', (e) => getMember(e, 'level') === level || getMember(e, 'to') === level);
+
 /** What blocks removing an element without cascade — and always, for a type, material, asset or program item (2.2). */
 function blockers(wc: WorkingCopy, id: string, kind: Place['kind']): string[] {
   const onLevel = (e: JsonObject): boolean => hostIs('level', id)(e) || fallbackIs(['level'], id)(e);
@@ -119,9 +122,9 @@ function blockers(wc: WorkingCopy, id: string, kind: Place['kind']): string[] {
     case 'buildings':
       return where(wc, 'levels', (e) => getMember(e, 'building') === id);
     case 'levels': {
-      const on = (['junctions', 'walls', 'separators', 'rooms', 'slabs'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'level') === id));
+      const on = (['junctions', 'walls', 'separators', 'rooms', 'slabs', 'roofs'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'level') === id));
       const vertical = where(wc, 'walls', (e) => getMember(getMember(e, 'base'), 'level') === id || getMember(getMember(e, 'top'), 'level') === id);
-      return [...on, ...vertical, ...extWhere(wc, onLevel)];
+      return [...on, ...vertical, ...extWhere(wc, onLevel), ...stairsOf(wc, id)];
     }
     case 'junctions':
       return (['walls', 'separators'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'start') === id || getMember(e, 'end') === id));
@@ -137,6 +140,7 @@ function blockers(wc: WorkingCopy, id: string, kind: Place['kind']): string[] {
         ...where(wc, 'types', (e) => layerMaterials(e).includes(id)),
         ...where(wc, 'rooms', (e) => ['wallFinish', 'floorFinish', 'ceilingFinish'].some((m) => getMember(e, m) === id)),
         ...where(wc, 'slabs', (e) => getMember(e, 'material') === id),
+        ...where(wc, 'roofs', (e) => getMember(e, 'material') === id),
       ];
     case 'assets':
       return [...where(wc, 'materials', (e) => getMember(getMember(e, 'texture'), 'asset') === id), ...extWhere(wc, fallbackIs(['asset', 'symbol'], id))];
@@ -153,8 +157,8 @@ function takes(wc: WorkingCopy, id: string, kind: Place['kind']): string[] {
     case 'buildings':
       return where(wc, 'levels', (e) => getMember(e, 'building') === id);
     case 'levels': {
-      const on = (['junctions', 'walls', 'separators', 'rooms', 'slabs'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'level') === id));
-      return [...on, ...extWhere(wc, (e) => hostIs('level', id)(e) || fallbackIs(['level'], id)(e))];
+      const on = (['junctions', 'walls', 'separators', 'rooms', 'slabs', 'roofs'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'level') === id));
+      return [...on, ...extWhere(wc, (e) => hostIs('level', id)(e) || fallbackIs(['level'], id)(e)), ...stairsOf(wc, id)];
     }
     case 'junctions':
       return (['walls', 'separators'] as const).flatMap((k) => where(wc, k, (e) => getMember(e, 'start') === id || getMember(e, 'end') === id));
