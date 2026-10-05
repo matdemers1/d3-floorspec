@@ -5,10 +5,12 @@ import { apply } from '@floorspec/ops';
 import type { Seed } from './types.js';
 
 /**
- * Seeds: the houses the tasks start from. A seed is a Floorspec Core 0.1 document, or batches of
+ * Seeds: the houses the tasks start from. A seed is a Floorspec Core document (the document seeds
+ * are Core 0.1, and stay so: their hashes are what runs were scored against), or batches of
  * Floorspec Ops applied in order to an empty document. Either way the server receives it the only
  * way anything reaches a document — as Floorspec Ops (FLR-ADR-008) — so a document seed is sent as
- * `addElement` operations that rebuild it exactly, and the harness checks the hash it lands at.
+ * operations that rebuild it exactly, its declared version included, and the harness checks the
+ * hash it lands at.
  */
 
 export const EVAL_ROOT = join(import.meta.dirname, '..');
@@ -16,8 +18,9 @@ export const SEEDS_DIR = join(EVAL_ROOT, 'seeds');
 
 export type Doc = Record<string, unknown>;
 
+/** The document the server creates a project with: Core 0.2, as apps/server's emptyDocument. */
 export function emptyDocument(name: string): Doc {
-  return { floorspec: '0.1', project: { name } };
+  return { floorspec: '0.2', project: { name } };
 }
 
 /** Apply batches to a document with the reference applier; throws with the diagnostics on a rejection. */
@@ -69,7 +72,12 @@ const KNOWN = new Set<string>(['floorspec', 'project', 'site', 'extras', 'extens
 /** One batch that turns the server's empty document into this one, with every ID kept. */
 export function documentToBatch(doc: Doc): object[] {
   for (const key of Object.keys(doc)) if (!KNOWN.has(key)) throw new Error(`the seed has a member the converter does not know: ${key}`);
-  const batch: object[] = [{ op: 'setProperty', id: '$document', path: '/project', value: doc['project'] }];
+  // The seed's own version: a project starts at Core 0.2, and a 0.1 seed is set back to 0.1 (Ops
+  // writes no declaration implicitly, so nothing else would).
+  const batch: object[] = [
+    { op: 'setProperty', id: '$document', path: '/floorspec', value: doc['floorspec'] },
+    { op: 'setProperty', id: '$document', path: '/project', value: doc['project'] },
+  ];
   for (const member of ['site', 'extras', 'extensions'] as const) {
     if (doc[member] !== undefined) batch.push({ op: 'setProperty', id: '$document', path: `/${member}`, value: doc[member] });
   }
