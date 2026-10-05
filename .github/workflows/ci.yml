@@ -260,7 +260,7 @@ jobs:
       # Exact pins, every file's sha256 checked, wheels only (workers/ifc/README.md).
       - name: Install
         working-directory: workers/ifc
-        run: pip install --require-hashes --only-binary=:all: -r requirements-dev.lock
+        run: 'pip install --require-hashes --only-binary=:all: -r requirements-dev.lock'
       - name: pytest
         working-directory: workers/ifc
         run: python -m pytest -q
