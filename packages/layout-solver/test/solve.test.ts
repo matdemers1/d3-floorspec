@@ -3,7 +3,7 @@ import { check } from '@floorspec/engine';
 import { apply } from '@floorspec/ops';
 import { BU_PER_FOOT, MAX_BATCH, MAX_CHANGESET_NAME, solve, SolverError, toChangesetProposals, type Candidate, type ChangesetProposal, type Program } from '../src/index.js';
 import { commit, connections, reachable, summary, withBrief } from './helpers.js';
-import { parseDocument, toBase } from '../src/document.js';
+import { parseDocument } from '../src/document.js';
 import { CABIN, house, RANCH, SAMPLES, TWO_STOREY } from './programs.js';
 
 const CASES: [string, () => Record<string, unknown>, Program, Parameters<typeof solve>[1]][] = [
@@ -31,11 +31,9 @@ describe.each(CASES)('%s', (name, doc, program, options) => {
     expect(new Set(cs.map((c) => c.id)).size).toBe(cs.length);
   });
 
-  it('has every candidate batch commit, and the result check with no errors (Core 0.1 and 0.2 with its brief)', () => {
+  it('has every candidate batch commit on the document as given, briefs set, and the result check with no errors', () => {
     for (const c of candidates()) {
       const b = commit(doc(), c.batch);
-      const r01 = check(b, { core: '0.1' });
-      expect(r01.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
       const r02 = check(withBrief(b, program, c));
       expect(r02.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
       // The engine's findings are the ones the score counted.
@@ -152,6 +150,8 @@ describe('options and edges', () => {
     for (const c of cs) {
       expect(c.batch[0]).toMatchObject({ op: 'addElement', collection: 'buildings', id: 'B1' });
       expect(c.batch[1]).toMatchObject({ op: 'addLevel', id: 'L1', building: 'B1', elevation: 0 });
+      // The program is not the document's own, so the batch names no items it does not hold.
+      expect(c.batch.some((o) => o.op === 'setProperty' && o.path === '/brief')).toBe(false);
       const r = apply(bare, { batch: c.batch });
       expect(r.status).toBe('committed');
     }
@@ -172,16 +172,26 @@ describe('options and edges', () => {
     const c = solve(SAMPLES.cabin(), { retired: ['W40', 'R9', 'T3'], count: 3 })[0]!;
     const named = c.batch.flatMap((o) => ('id' in o && typeof o.id === 'string' ? [o.id] : []));
     for (const id of named) expect(['W40', 'R9', 'T3', 'W1', 'R1']).not.toContain(id);
-    const r = apply(toBase(parseDocument(SAMPLES.cabin())), { batch: c.batch, context: { retired: ['W40', 'R9', 'T3'] } });
+    const r = apply(parseDocument(SAMPLES.cabin()), { batch: c.batch, context: { retired: ['W40', 'R9', 'T3'] } });
     expect(r.status).toBe('committed');
   });
 
-  it('can set each room\'s brief in the batch, for an Ops 0.2 applier', () => {
-    const [plain] = solve(SAMPLES.cabin(), { count: 3 });
-    const [withBriefs] = solve(SAMPLES.cabin(), { count: 3, emitBrief: true });
-    expect(plain!.batch.some((o) => o.op === 'setProperty')).toBe(false);
+  it('sets each placed room\'s brief in the batch, unless asked not to', () => {
+    const [withBriefs] = solve(SAMPLES.cabin(), { count: 3 });
+    const [plain] = solve(SAMPLES.cabin(), { count: 3, emitBrief: false });
     const briefs = withBriefs!.batch.filter((o) => o.op === 'setProperty' && o.path === '/brief');
     expect(briefs.length).toBe(withBriefs!.rooms.filter((r) => r.item !== undefined).length);
+    expect(plain!.batch.some((o) => o.op === 'setProperty')).toBe(false);
+    // Measured the same either way: the engine reads the brief fit off the briefs the measure set.
+    expect(plain!.score).toEqual(withBriefs!.score);
+  });
+
+  it('measures the committed document: every brief item has a room, and no FS-LINT-008…011, on the top ranch', () => {
+    const [c] = solve(SAMPLES.ranch(), { count: 3 });
+    const r = check(commit(SAMPLES.ranch(), c!.batch));
+    expect(r.valid).toBe(true);
+    for (const [id, v] of Object.entries(r.derived!.program!.items)) expect(v.rooms.length, id).toBeGreaterThan(0);
+    expect(r.diagnostics.filter((d) => ['FS-LINT-008', 'FS-LINT-009', 'FS-LINT-010', 'FS-LINT-011'].includes(d.code))).toEqual([]);
   });
 
   it('refuses a document with no program, and a level that already has walls', () => {

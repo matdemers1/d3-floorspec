@@ -1,11 +1,7 @@
 /**
- * The document the solver lays out into, and the Core 0.1 view of it the Ops applier needs.
- *
- * @floorspec/ops implements Ops 0.1, which applies to Core 0.1 documents only (packages/ops
- * apply.ts reads with `core: '0.1'`). A program lives in Core 0.2. So the solver keeps two views:
- * the document as given (0.1 or 0.2), and a **0.1 base** — the same document with the members 0.2
- * adds taken out (the program, rooms' `brief`, types' `clearances`) — which every candidate batch
- * is applied to. When Ops 0.2 is ported, `applyBase` is the document itself and `toBase` goes.
+ * The document the solver lays out into. Since Ops 0.2, @floorspec/ops applies to Core 0.2
+ * documents (and to the Core 0.1 documents stored before), so every candidate batch is applied to
+ * the document as given and measured on the document it commits: there is no second view of it.
  */
 import { evaluate, parseJson } from '@floorspec/engine';
 
@@ -35,23 +31,6 @@ export function parseDocument(input: string | Uint8Array | object): Json {
 }
 
 export const collection = (doc: Json, name: string): Record<string, Json> => (isObject(doc[name]) ? (doc[name] as Record<string, Json>) : {});
-
-/** The Core 0.1 base: the document without the members Core 0.2 adds. Throws when that is not a valid 0.1 document. */
-export function toBase(doc: Json): Json {
-  const base = structuredClone(doc);
-  base['floorspec'] = '0.1';
-  delete base['program'];
-  for (const room of Object.values(collection(base, 'rooms'))) delete room['brief'];
-  for (const type of Object.values(collection(base, 'types'))) delete type['clearances'];
-  const ev = evaluate(base, { core: '0.1' });
-  if (!ev.valid) {
-    const codes = [...new Set(ev.diagnostics.filter((d) => d.severity === 'error').map((d) => d.code))];
-    throw new SolverError(
-      `the document uses Core 0.2 members the Ops 0.1 applier cannot carry (${codes.join(', ')}); the solver can lay it out once Ops 0.2 is ported`,
-    );
-  }
-  return base;
-}
 
 /** Every ID in the document's single space of IDs (Core §3.1.2): elements and program items. */
 export function idsOf(doc: Json): Set<string> {
