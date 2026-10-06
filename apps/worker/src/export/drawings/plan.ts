@@ -465,8 +465,8 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>, context
   }
 
   // ── stairs and roofs (FLR-T-9.7) ──
-  const stairs: PlanStair[] = [...scene.stairs].map(([id, st]) => planStair(id, st.derived, st.form, 'up'));
-  if (context !== undefined) for (const [id, st] of arrivingStairs(context.doc, context.derived, scene.levelId)) stairs.push(planStair(id, st.derived, st.form, 'down'));
+  const stairs: PlanStair[] = [...scene.stairs].map(([id, st]) => planStair(id, st.derived, st.form, 'up', { column: st.column, newel: st.newel }));
+  if (context !== undefined) for (const [id, st] of arrivingStairs(context.doc, context.derived, scene.levelId)) stairs.push(planStair(id, st.derived, st.form, 'down', { column: st.column, newel: st.newel }));
   const roofs: PlanRoof[] = [...scene.roofs].map(([id, rf]) => planRoof(context?.doc, id, rf));
 
   // ── rooms: a label keeps clear of door swings and stairs ──

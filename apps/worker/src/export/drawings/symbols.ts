@@ -10,6 +10,9 @@
  * - A stair is drawn on the level it rises from: the treads below the plan's cut (4 ft, Core 17's
  *   plan convention) solid, the treads above it dashed, the cut line across the first tread above
  *   it with a break in the middle, and the UP arrow along the walkline from the foot.
+ * - As the editor's plan draws it (render2d, FLR-T-12.9; FLR-T-12.10 here): a winder stair's winders
+ *   tinted, its newel solid (Core 0.4, 17.7), a spiral's column solid, and — on the level it rises
+ *   from — where the floor above must be open from (17.6), across the stair.
  * - On the level it arrives at, the whole stair is drawn below the floor's cut, looking down into
  *   the stairwell: every tread solid and the DN arrow from the head, back along the walkline.
  * - A roof is drawn on its own level's plan as its eave outline, dashed: it is above that plan's cut.
@@ -17,15 +20,25 @@
  *   arrow on each pitched face pointing downhill, labelled with that face's pitch.
  */
 import type { DerivedRoof, DerivedStair, FloorspecDocument } from '@floorspec/engine';
-import { roofSymbol, stairSymbol, type Pt } from '@floorspec/render2d';
+import { columnRadius, newelOutline, roofSymbol, stairSymbol, type Pt } from '@floorspec/render2d';
 
 type XY = readonly [number, number];
 
 export interface PlanStairStep {
   readonly outline: readonly Pt[];
   readonly landing: boolean;
+  /** A winder stair's winder, or a spiral's tapered tread (Core 0.4, 17.7): drawn tinted. */
+  readonly winder: boolean;
   /** Drawn dashed: above the plan's cut. */
   readonly hidden: boolean;
+}
+
+/** What a plan knows of a stair beyond its derived geometry: a spiral's column, a winder's newel. */
+export interface StairExtras {
+  /** A spiral stair's column radius (render2d's `columnRadius`). */
+  readonly column?: number;
+  /** A winder stair's newel in plan (render2d's `newelOutline`). */
+  readonly newel?: readonly Pt[] | null;
 }
 
 export interface PlanStair {
@@ -44,6 +57,15 @@ export interface PlanStair {
   /** A winder or spiral stair, whose treads Core does not derive (17.7): its box, and a spiral's circle. */
   readonly bounds: readonly Pt[] | null;
   readonly circle: { readonly centre: Pt; readonly radius: number } | null;
+  /** A spiral stair's centre column, when its treads leave one: drawn solid. */
+  readonly column: { readonly centre: Pt; readonly radius: number } | null;
+  /** A winder stair's newel (Core 0.4, 17.7), when it has one: drawn solid. */
+  readonly newel: readonly Pt[] | null;
+  /**
+   * Where the floor above must be open from (Core 0.4, 17.6): the front edge of the first step that
+   * needs it, across the stair. Drawn on the level the stair rises from only; null on a `down` stair.
+   */
+  readonly opening: readonly [Pt, Pt] | null;
 }
 
 export interface RoofSlope {
@@ -82,20 +104,23 @@ export function breakLine(a: XY, b: XY): XY[] {
 }
 
 /** A stair on a plan: rising from this level (`up`) or arriving at it (`down`). */
-export function planStair(id: string, stair: DerivedStair, form: string, direction: 'up' | 'down'): PlanStair {
-  const sym = stairSymbol(stair, form);
+export function planStair(id: string, stair: DerivedStair, form: string, direction: 'up' | 'down', extras: StairExtras = {}): PlanStair {
+  const sym = stairSymbol(stair, form, extras.column ?? 0, extras.newel ?? null);
+  const drawn = { column: sym.column, newel: sym.newel };
   if (direction === 'up') {
     return {
       id,
       direction,
       form,
-      steps: sym.steps.map((s) => ({ outline: s.outline, landing: s.landing, hidden: s.above })),
+      steps: sym.steps.map((s) => ({ outline: s.outline, landing: s.landing, winder: s.winder && !s.landing, hidden: s.above })),
       cut: sym.cut === null ? null : breakLine(sym.cut[0], sym.cut[1]),
       arrow: sym.arrow,
       label: 'UP',
       labelAt: sym.up,
       bounds: sym.bounds,
       circle: sym.circle,
+      ...drawn,
+      opening: sym.opening,
     };
   }
   const arrow = [...sym.arrow].reverse();
@@ -103,13 +128,15 @@ export function planStair(id: string, stair: DerivedStair, form: string, directi
     id,
     direction,
     form,
-    steps: sym.steps.map((s) => ({ outline: s.outline, landing: s.landing, hidden: false })),
+    steps: sym.steps.map((s) => ({ outline: s.outline, landing: s.landing, winder: s.winder && !s.landing, hidden: false })),
     cut: null,
     arrow,
     label: 'DN',
     labelAt: arrow[0] ?? stair.head,
     bounds: sym.bounds,
     circle: sym.circle,
+    ...drawn,
+    opening: null,
   };
 }
 
@@ -174,13 +201,17 @@ export function pitchText(rise: number, run: number, units: 'imperial' | 'metric
   return `${String(in12)}:12`;
 }
 
-/** Stairs arriving at a level: every stair of the document whose `to` is it. */
-export function arrivingStairs(doc: FloorspecDocument, derived: { stairs?: Record<string, DerivedStair> }, level: string): Map<string, { derived: DerivedStair; form: string }> {
-  const out = new Map<string, { derived: DerivedStair; form: string }>();
+/** Stairs arriving at a level: every stair of the document whose `to` is it, with its column and newel. */
+export function arrivingStairs(
+  doc: FloorspecDocument,
+  derived: { stairs?: Record<string, DerivedStair> },
+  level: string,
+): Map<string, { derived: DerivedStair; form: string; column: number; newel: readonly Pt[] | null }> {
+  const out = new Map<string, { derived: DerivedStair; form: string; column: number; newel: readonly Pt[] | null }>();
   for (const id of Object.keys(doc.stairs ?? {}).sort()) {
     const st = doc.stairs![id]!;
     const d = derived.stairs?.[id];
-    if (st.to === level && st.level !== level && d !== undefined) out.set(id, { derived: d, form: st.form?.kind ?? 'straight' });
+    if (st.to === level && st.level !== level && d !== undefined) out.set(id, { derived: d, form: st.form?.kind ?? 'straight', column: columnRadius(st), newel: newelOutline(st) });
   }
   return out;
 }
