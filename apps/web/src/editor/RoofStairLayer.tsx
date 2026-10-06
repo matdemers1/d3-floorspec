@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { roofSymbol, stairSymbol } from '@floorspec/render2d';
+import { roofSymbol, stairSymbol, upPlacement } from '@floorspec/render2d';
 import type { Viewport } from './store';
 import type { LevelView, Point, Ring } from './model';
 import { toScreen } from './viewport';
@@ -32,21 +32,33 @@ function Arrow({ view, points }: { view: Viewport; points: readonly Point[] }) {
   );
 }
 
-/** Every stair rising from this level: treads (dashed above the cut plane), its landing, the break line and UP. */
+/**
+ * Where "UP" is written, on screen: beyond everything the stair reaches (render2d's `upPlacement`),
+ * the first way out that does not put it on a wall — so it never sits on a tread or the stair's box.
+ */
+function upAt(view: Viewport, sym: Parameters<typeof upPlacement>[0], solids: readonly Ring[]): Point {
+  return S(view, upPlacement(sym, solids, 1 / view.s).at);
+}
+
+/**
+ * Every stair rising from this level: treads (dashed above the cut plane), its landing, its winders
+ * tinted, a winder's newel, the break line, where the floor above must be open from, and UP.
+ */
 export function StairsLayer({ view, level }: { view: Viewport; level: LevelView }) {
   if (level.stairs.length === 0) return null;
+  const solids = [...level.walls.map((w) => w.ring), ...level.fills.map((f) => f.ring)];
   return (
     <g className="fs-plan2__stairs">
       {level.stairs.map((st) => {
-        const sym = stairSymbol(st.derived, st.form, st.column);
-        const up = S(view, sym.up);
+        const sym = stairSymbol(st.derived, st.form, st.column, st.newel);
+        const up = upAt(view, sym, solids);
         return (
           <g key={st.id} data-stair={st.id}>
             {sym.steps.map((step, i) => (
               <polygon
                 key={i}
                 data-step={step.landing ? 'landing' : step.winder ? 'winder' : 'tread'}
-                className={['fs-stair__step', step.landing ? 'fs-stair__step--landing' : '', step.above ? 'fs-stair__step--above' : ''].join(' ')}
+                className={['fs-stair__step', step.landing ? 'fs-stair__step--landing' : step.winder ? 'fs-stair__step--winder' : '', step.above ? 'fs-stair__step--above' : ''].filter((c) => c !== '').join(' ')}
                 points={pts(view, step.outline)}
               />
             ))}
@@ -57,11 +69,15 @@ export function StairsLayer({ view, level }: { view: Viewport; level: LevelView 
             {sym.column !== null ? (
               <circle className="fs-stair__column" data-column={st.id} cx={S(view, sym.column.centre)[0]} cy={S(view, sym.column.centre)[1]} r={sym.column.radius * view.s} />
             ) : null}
+            {sym.newel !== null ? <polygon className="fs-stair__newel" data-newel={st.id} points={pts(view, sym.newel)} /> : null}
             {sym.cut !== null ? (
               <line className="fs-stair__cut" x1={S(view, sym.cut[0])[0]} y1={S(view, sym.cut[0])[1]} x2={S(view, sym.cut[1])[0]} y2={S(view, sym.cut[1])[1]} />
             ) : null}
+            {sym.opening !== null ? (
+              <line className="fs-stair__opening" data-opening={st.id} x1={S(view, sym.opening[0])[0]} y1={S(view, sym.opening[0])[1]} x2={S(view, sym.opening[1])[0]} y2={S(view, sym.opening[1])[1]} />
+            ) : null}
             <Arrow view={view} points={sym.arrow} />
-            <text className="fs-stair__up" x={up[0]} y={up[1] + 14} textAnchor="middle">
+            <text className="fs-stair__up" data-up={st.id} x={up[0]} y={up[1]} textAnchor="middle" dominantBaseline="central">
               UP
             </text>
           </g>
@@ -71,7 +87,7 @@ export function StairsLayer({ view, level }: { view: Viewport; level: LevelView 
   );
 }
 
-/** The roof layer: each roof's eave outline dashed, its ridges, hips and valleys, and its gable ends. */
+/** The roof layer: each roof's eave outline dashed, its ridges, hips, valleys and breaks (each drawn its own way), and its gable ends. */
 export function RoofLayer({ view, level }: { view: Viewport; level: LevelView }) {
   if (level.roofs.length === 0) return null;
   return (
@@ -98,16 +114,68 @@ export function RoofLayer({ view, level }: { view: Viewport; level: LevelView })
   );
 }
 
-/** The highlight of a roof (its eave outline) or a stair (its box), for the selection and findings. */
+/**
+ * The highlight of a roof (its eave outline) or a stair (its box), for the selection and findings:
+ * outlined only, never filled, so the ridge, hip, valley and break lines and the treads under it stay visible.
+ */
 export function roofStairOutline(view: Viewport, level: LevelView, id: string, className: string): ReactNode {
+  const cls = `${className} fs-hl--outline`;
   const roof = level.roofs.find((r) => r.id === id);
-  if (roof !== undefined) return <polygon className={className} points={pts(view, roof.derived.outline)} />;
+  if (roof !== undefined) return <polygon className={cls} points={pts(view, roof.derived.outline)} />;
   const stair = level.stairs.find((s) => s.id === id);
   if (stair !== undefined) {
     const { min, max } = stair.derived.box;
-    return <polygon className={className} points={pts(view, [[min[0], min[1]], [max[0], min[1]], [max[0], max[1]], [min[0], max[1]]])} />;
+    return <polygon className={cls} points={pts(view, [[min[0], min[1]], [max[0], min[1]], [max[0], max[1]], [min[0], max[1]]])} />;
   }
   return null;
+}
+
+/**
+ * The selected roof's edges, numbered from 1 as the inspector's Edges section numbers them (Core
+ * 16.1: edge i runs from footprint point i to the next), each tag just outside the edge's middle.
+ */
+export function RoofEdgeTags({ view, level, id }: { view: Viewport; level: LevelView; id: string }) {
+  const roof = level.roofs.find((r) => r.id === id);
+  if (roof === undefined || roof.footprint.length < 3) return null;
+  const fp = roof.footprint;
+  const screen = fp.map((p) => S(view, p));
+  /** Even-odd: is the screen point inside the footprint? */
+  const inside = (x: number, y: number): boolean => {
+    let hit = false;
+    for (let i = 0, j = screen.length - 1; i < screen.length; j = i++) {
+      const [xi, yi] = screen[i] ?? [0, 0];
+      const [xj, yj] = screen[j] ?? [0, 0];
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit;
+    }
+    return hit;
+  };
+  return (
+    <g className="fs-roof__edges" data-roof-edges={id} aria-hidden="true">
+      {fp.map((a, i) => {
+        const b = fp[(i + 1) % fp.length] ?? a;
+        const p = S(view, a);
+        const q = S(view, b);
+        const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+        if (len < 1) return null;
+        const mx = (p[0] + q[0]) / 2;
+        const my = (p[1] + q[1]) / 2;
+        // A normal to the edge, turned to face out of the footprint.
+        let nx = -(q[1] - p[1]) / len;
+        let ny = (q[0] - p[0]) / len;
+        if (inside(mx + nx * 2, my + ny * 2)) [nx, ny] = [-nx, -ny];
+        const cx = mx + nx * 14;
+        const cy = my + ny * 14;
+        return (
+          <g key={i} data-edge={i + 1}>
+            <circle className="fs-roof__edge-tag" cx={cx} cy={cy} r={8} />
+            <text className="fs-roof__edge-num" x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
+              {String(i + 1)}
+            </text>
+          </g>
+        );
+      })}
+    </g>
+  );
 }
 
 /** The stair tool's draft: the foot, and the direction it will rise in towards the pointer. */

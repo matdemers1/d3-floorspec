@@ -20,7 +20,7 @@ import { GapMarkers } from './systems/Assistant';
 import { kindById } from './systems/catalog';
 import { anchorOf, circuitsOf } from './systems/view';
 import { RuleFindingLabels, RuleFindingsLayer } from '../findings/Overlay';
-import { RoofLayer, roofStairOutline, StairDraft, StairsLayer } from './RoofStairLayer';
+import { RoofEdgeTags, RoofLayer, roofStairOutline, StairDraft, StairsLayer } from './RoofStairLayer';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -498,10 +498,14 @@ function Selection({ store, view, level, coarse }: { store: EditorStore; view: V
   const junction = level.junctions.find((j) => j.id === selection);
   if (junction !== undefined) handles.push(junction.position);
   const size = coarse ? 14 : 5;
+  // A sloped roof's edges are numbered on the plan as its inspector's Edges section numbers them.
+  const roof = useEditor(store, (s) => (selection === null ? undefined : (s.model?.document.roofs?.[selection] as { pitch?: unknown; edges?: Record<string, { pitch?: unknown }> } | undefined)));
+  const sloped = roof !== undefined && (roof.pitch !== undefined || Object.values(roof.edges ?? {}).some((e) => e.pitch !== undefined));
   return (
     <g className="fs-selection" aria-hidden="true">
       {hover !== null && hover !== selection && tool === 'select' ? <Outline view={view} level={level} id={hover} className="fs-hl fs-hl--hover" /> : null}
       {selection !== null ? <Outline view={view} level={level} id={selection} className="fs-hl fs-hl--selected" /> : null}
+      {selection !== null && sloped ? <RoofEdgeTags view={view} level={level} id={selection} /> : null}
       {handles.map((h, i) => {
         const p = S(view, h);
         return coarse ? (

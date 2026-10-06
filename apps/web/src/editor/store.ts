@@ -658,5 +658,7 @@ export class EditorStore {
 const withFix = (label: string) => (label.endsWith(' (with fix)') ? label : `${label} (with fix)`);
 
 export function useEditor<T>(store: EditorStore, selector: (s: EditorState) => T): T {
-  return useSyncExternalStore(store.subscribe, () => selector(store.get()));
+  const snapshot = (): T => selector(store.get());
+  // The same snapshot server-side, so an inspector section renders to markup in a unit test.
+  return useSyncExternalStore(store.subscribe, snapshot, snapshot);
 }

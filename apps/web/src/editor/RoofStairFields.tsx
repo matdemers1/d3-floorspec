@@ -3,7 +3,7 @@ import { surfaceNotDerivedReason } from '@floorspec/engine';
 import { RotateCw } from 'lucide-react';
 import { useEditor, type EditorStore } from './store';
 import { labelOf, sortedLevels, type EditorModel } from './model';
-import { IntField, LengthField, ReadOnlyField, Row, Section } from './fields';
+import { InlineIntInput, IntField, LengthField, ReadOnlyField, Row, Section } from './fields';
 import { formatLen, type UnitSystem } from './units';
 import type { Batch } from './ops';
 import type { FloorCtx } from './FloorFields';
@@ -32,6 +32,15 @@ const unset = (id: string, path: string): Batch => [{ op: 'unsetProperty', id, p
 // ─── Roofs ───────────────────────────────────────────────────────────────────────────────────
 
 const ROOF_KINDS: Readonly<Record<string, string>> = { flat: 'Flat', shed: 'Shed', gable: 'Gable', hip: 'Hip' };
+
+/** A roof's lines by kind (Core 16.5), in words: `1 ridge, 4 hips, 2 valleys`. */
+export function linesText(lines: readonly { kind: string }[]): string {
+  const words = (['ridge', 'hip', 'valley', 'break'] as const).flatMap((k) => {
+    const n = lines.filter((l) => l.kind === k).length;
+    return n === 0 ? [] : [`${String(n)} ${k}${n === 1 ? '' : 's'}`];
+  });
+  return words.length === 0 ? 'None' : words.join(', ');
+}
 
 /** Why the engine does not derive a roof's surface (Core 0.4, 16.4.6), in words. */
 function notDerived(element: Json): string {
@@ -79,8 +88,8 @@ export function RoofBody({ ctx }: { ctx: FloorCtx }) {
         </Row>
         {pitch !== undefined ? (
           <>
-            <IntField label="Pitch rise" value={pitch.rise} min={1} max={48} unit={`in ${String(pitch.run)}`} disabled={readOnly} onCommit={(v) => { if (v !== null) ctx.edit(`Set pitch of ${name}`, set(id, '/pitch', { ...pitch, rise: v })); }} />
-            <IntField label="Pitch run" value={pitch.run} min={1} max={48} disabled={readOnly} onCommit={(v) => { if (v !== null) ctx.edit(`Set pitch of ${name}`, set(id, '/pitch', { ...pitch, run: v })); }} />
+            <IntField label="Rise" value={pitch.rise} min={1} max={48} unit={`in ${String(pitch.run)}`} disabled={readOnly} onCommit={(v) => { if (v !== null) ctx.edit(`Set pitch of ${name}`, set(id, '/pitch', { ...pitch, rise: v })); }} />
+            <IntField label="Run" value={pitch.run} min={1} max={48} disabled={readOnly} onCommit={(v) => { if (v !== null) ctx.edit(`Set pitch of ${name}`, set(id, '/pitch', { ...pitch, run: v })); }} />
           </>
         ) : null}
         <LengthField
@@ -97,8 +106,8 @@ export function RoofBody({ ctx }: { ctx: FloorCtx }) {
           units={units}
           allowEmpty
           disabled={readOnly}
-          placeholder={`${formatLen(num(level?.['height']) ?? 0, units)} (the level's height)`}
-          hint="Above the level, where the roof sits on its walls"
+          placeholder={formatLen(num(level?.['height']) ?? 0, units)}
+          hint="Above the level, where the roof sits on its walls; empty, the level's height"
           onCommit={(v) => { ctx.edit(`Set eave height of ${name}`, v === null ? (element['height'] === undefined ? [] : unset(id, '/height')) : set(id, '/height', v)); }}
         />
         <LengthField
@@ -114,37 +123,50 @@ export function RoofBody({ ctx }: { ctx: FloorCtx }) {
       </Section>
       {!flat ? (
         <Section title="Edges">
-          {footprint.map((a, i) => {
-            const b = footprint[(i + 1) % footprint.length] ?? a;
-            const gable = edges[String(i)]?.['gable'] === true;
-            const own = edges[String(i)]?.['pitch'] as { rise: number; run: number } | undefined;
-            const run = own?.run ?? pitch?.run ?? 12;
-            return (
-              <div key={i}>
-                <Switch
-                  checked={gable}
-                  disabled={readOnly}
-                  onCheckedChange={(on) => { ctx.edit(`${on ? 'Make' : 'Slope'} edge ${String(i)} of ${name}${on ? ' a gable' : ''}`, setEdge(i, on ? { gable: true, pitch: undefined } : { gable: undefined })); }}
-                >
-                  {`Edge ${String(i)} · ${formatLen(Math.hypot(b[0] - a[0], b[1] - a[1]), units)} · gable`}
-                </Switch>
-                {gable ? null : (
-                  <IntField
-                    label={`Edge ${String(i)} pitch rise`}
-                    value={own?.rise}
-                    min={1}
-                    max={48}
-                    unit={`in ${String(run)}`}
-                    allowEmpty
-                    placeholder={pitch === undefined ? 'None' : `${String(pitch.rise)} (the roof's)`}
+          {/* One compact row an edge, numbered from 1 as the plan's tags number them: a roof of many
+              edges stays short (FLR-T-12.9). */}
+          <div className="fs-edges" role="group" aria-label="Edges, numbered as on the plan">
+            <div className="fs-edges__head" aria-hidden="true">
+              <span>Edge</span>
+              <span>Length</span>
+              <span>Gable</span>
+              <span>{`Rise in ${String(pitch?.run ?? 12)}`}</span>
+            </div>
+            {footprint.map((a, i) => {
+              const b = footprint[(i + 1) % footprint.length] ?? a;
+              const n = String(i + 1);
+              const gable = edges[String(i)]?.['gable'] === true;
+              const own = edges[String(i)]?.['pitch'] as { rise: number; run: number } | undefined;
+              const run = own?.run ?? pitch?.run ?? 12;
+              const length = formatLen(Math.hypot(b[0] - a[0], b[1] - a[1]), units);
+              return (
+                <div key={i} className="fs-edges__row" data-edge={n}>
+                  <span className="fs-edges__num" aria-hidden="true">{n}</span>
+                  <span className="fs-edges__len">{length}</span>
+                  <Switch
+                    aria-label={`Edge ${n} (${length}) is a gable end`}
+                    checked={gable}
                     disabled={readOnly}
-                    onCommit={(v) => { ctx.edit(`Set pitch of edge ${String(i)} of ${name}`, setEdge(i, { pitch: v === null ? undefined : { rise: v, run } })); }}
+                    onCheckedChange={(on) => { ctx.edit(`${on ? 'Make' : 'Slope'} edge ${n} of ${name}${on ? ' a gable' : ''}`, setEdge(i, on ? { gable: true, pitch: undefined } : { gable: undefined })); }}
                   />
-                )}
-              </div>
-            );
-          })}
-          <p className="fs-note">A gable is a vertical end: the roof stops above that edge instead of sloping up from it. An edge with a pitch of its own rises at it — a saltbox's steep front, a porch's shallow side; empty, it takes the roof's.</p>
+                  {gable ? (
+                    <span className="fs-edges__none">Vertical</span>
+                  ) : (
+                    <InlineIntInput
+                      label={`Edge ${n} pitch rise (in ${String(run)})`}
+                      value={own?.rise}
+                      min={1}
+                      max={48}
+                      placeholder={pitch === undefined ? 'None' : String(pitch.rise)}
+                      disabled={readOnly}
+                      onCommit={(v) => { ctx.edit(`Set pitch of edge ${n} of ${name}`, setEdge(i, { pitch: v === null ? undefined : { rise: v, run } })); }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="fs-note">A gable end is vertical: the roof stops above that edge. An edge with a rise of its own slopes at it — a saltbox's steep front; empty, it takes the roof's.</p>
         </Section>
       ) : null}
       {view !== undefined ? (
@@ -156,7 +178,8 @@ export function RoofBody({ ctx }: { ctx: FloorCtx }) {
           ) : (
             <p className="fs-note">Floorspec does not derive this roof's surface — {notDerived(element)} (FS-LINT-015). Its eave outline is drawn.</p>
           )}
-          {surface ? <ReadOnlyField label="Faces · lines" value={`${String(surface.faces.length)} faces · ${String(surface.lines.length)} ridges, hips, valleys and breaks`} /> : null}
+          {surface ? <ReadOnlyField label="Faces" value={String(surface.faces.length)} /> : null}
+          {surface ? <ReadOnlyField label="Lines" value={linesText(surface.lines)} wrap /> : null}
         </Section>
       ) : null}
     </>
@@ -171,8 +194,8 @@ export function RoofDrawSettings({ store, units }: { store: EditorStore; units: 
   return (
     <>
       <Section title="New roof">
-        <IntField label="Pitch rise" value={draw.roof.rise} min={1} max={48} unit={`in ${String(draw.roof.run)}`} onCommit={(v) => { if (v !== null) setRoof({ rise: v }); }} />
-        <IntField label="Pitch run" value={draw.roof.run} min={1} max={48} onCommit={(v) => { if (v !== null) setRoof({ run: v }); }} />
+        <IntField label="Rise" value={draw.roof.rise} min={1} max={48} unit={`in ${String(draw.roof.run)}`} onCommit={(v) => { if (v !== null) setRoof({ rise: v }); }} />
+        <IntField label="Run" value={draw.roof.run} min={1} max={48} onCommit={(v) => { if (v !== null) setRoof({ run: v }); }} />
         <LengthField label="Overhang" value={draw.roof.overhang} units={units} nonNegative onCommit={(v) => { setRoof({ overhang: v ?? 0 }); }} />
         <Switch checked={draw.roof.gables} onCheckedChange={(v) => { setRoof({ gables: v }); }}>
           Gable the two short ends of a four-sided roof
@@ -190,13 +213,17 @@ export function RoofDrawSettings({ store, units }: { store: EditorStore; units: 
 
 // ─── Stairs ──────────────────────────────────────────────────────────────────────────────────
 
-const FORMS: readonly [string, string][] = [
+/** A stair's forms (Core 17.2), named the same in the stair tool and the inspector. */
+export const FORMS: readonly [string, string][] = [
   ['straight', 'Straight'],
   ['lShaped', 'L-shaped'],
   ['uShaped', 'U-shaped'],
   ['winder', 'Winder'],
   ['spiral', 'Spiral'],
 ];
+
+/** What a pre-0.4 plan's stair lacks (Core 0.4, 17.6, 17.7), said where those fields would be. */
+const UPGRADE_WHAT = "A winder's newel and a stair's design headroom (where the floor above must be open)";
 
 /** A stair (Core 17.1): form and turn, width, tread, risers or greatest riser, the level it rises to, and what is derived. */
 export function StairBody({ ctx }: { ctx: FloorCtx }) {
@@ -291,12 +318,15 @@ export function StairBody({ ctx }: { ctx: FloorCtx }) {
                 units={units}
                 positive
                 allowEmpty
-                placeholder="None: the winders meet at a point"
-                hint="The newel post's side, at the turn's inner corner"
+                placeholder="None"
+                hint="The newel post's side, at the turn's inner corner; empty, the winders meet at a point"
                 disabled={readOnly}
                 onCommit={(v) => { ctx.edit(`Set the newel of ${name}`, v === null ? (form['newel'] === undefined ? [] : unset(id, '/form/newel')) : set(id, '/form/newel', v)); }}
               />
-            ) : null}
+            ) : (
+              // Where the newel would be: what it and the design headroom need.
+              <CoreUpgradeNotice store={ctx.store} model={model} since="0.4" what={UPGRADE_WHAT} />
+            )}
           </>
         ) : null}
         {form.kind === 'spiral' ? (
@@ -314,7 +344,14 @@ export function StairBody({ ctx }: { ctx: FloorCtx }) {
           </>
         ) : null}
         <LengthField label="Width" value={width} units={units} positive disabled={readOnly} onCommit={(v) => { if (v !== null) ctx.edit(`Set width of ${name}`, set(id, '/width', v)); }} />
-        <LengthField label="Tread" value={num(element['tread'])} units={units} positive disabled={readOnly} hint="The going, nosing to nosing" onCommit={(v) => { if (v !== null) ctx.edit(`Set tread of ${name}`, set(id, '/tread', v)); }} />
+        <LengthField
+          label="Tread"
+          value={num(element['tread'])}
+          units={units}
+          positive
+          disabled={readOnly}
+          hint={form.kind === 'spiral' ? "Not used for the going: a spiral's diameter and sweep set it" : 'The going, nosing to nosing'}
+          onCommit={(v) => { if (v !== null) ctx.edit(`Set tread of ${name}`, set(id, '/tread', v)); }} />
         <Row label="Risers by">
           <SegmentedControl
             aria-label="Risers by"
@@ -355,8 +392,9 @@ export function StairBody({ ctx }: { ctx: FloorCtx }) {
             disabled={readOnly}
             onCommit={(v) => { ctx.edit(`Set the design headroom of ${name}`, v === null ? (element['minHeadroom'] === undefined ? [] : unset(id, '/minHeadroom')) : set(id, '/minHeadroom', v)); }}
           />
-        ) : (
-          <CoreUpgradeNotice store={ctx.store} model={model} since="0.4" what="A winder's newel and a stair's design headroom" />
+        ) : form.kind === 'winder' ? null : (
+          // Where the design headroom would be (a winder's notice sits at its newel, above).
+          <CoreUpgradeNotice store={ctx.store} model={model} since="0.4" what={UPGRADE_WHAT} />
         )}
         <Button size="sm" variant="secondary" icon={<RotateCw />} disabled={readOnly} onClick={() => { ctx.edit(`Turn ${name} a quarter`, turned === 0 ? unset(id, '/rotation') : set(id, '/rotation', turned)); }}>
           Turn a quarter
@@ -368,8 +406,8 @@ export function StairBody({ ctx }: { ctx: FloorCtx }) {
           <ReadOnlyField label="Rise" value={formatLen(d.rise, units)} />
           {d.run !== undefined ? <ReadOnlyField label="Run" value={formatLen(d.run, units)} /> : null}
           {d.walkline !== undefined ? <ReadOnlyField label="Walkline" value={formatLen(d.walkline.length, units)} /> : null}
-          {d.walklineGoing !== undefined ? <ReadOnlyField label="Least going at the walkline" value={formatLen(d.walklineGoing, units)} /> : null}
-          {d.narrowGoing !== undefined ? <ReadOnlyField label="Least going at the narrow end" value={formatLen(d.narrowGoing, units)} /> : null}
+          {d.walklineGoing !== undefined ? <ReadOnlyField label="Least going, walkline" value={formatLen(d.walklineGoing, units)} /> : null}
+          {d.narrowGoing !== undefined ? <ReadOnlyField label="Least going, narrow end" value={formatLen(d.narrowGoing, units)} /> : null}
           {d.opening !== undefined ? <ReadOnlyField label="Floor above open from" value={d.steps !== undefined && d.opening.first < d.steps.length ? `Step ${String(d.opening.first + 1)} of ${String(d.steps.length)}` : 'No step'} /> : null}
           <ReadOnlyField label="Headroom" value={d.headroom !== undefined ? formatLen(d.headroom, units) : d.steps === undefined ? 'Not derived for this form' : 'Nothing above it'} />
           <ReadOnlyField label="From · to" value={`${d.footRoom !== undefined ? labelOf(model, d.footRoom) : 'no room'} → ${d.headRoom !== undefined ? labelOf(model, d.headRoom) : 'no room'}`} />
@@ -388,13 +426,15 @@ export function StairDrawSettings({ store, model, units }: { store: EditorStore;
   const above = level === null ? undefined : sortedLevels(model.document).find((l) => l.level['building'] === model.document.levels?.[level]?.building && Number(l.level['elevation']) > Number(model.document.levels?.[level]?.elevation));
   return (
     <Section title="New stair">
-      <SegmentedControl
-        aria-label="Form"
-        size="sm"
-        value={draw.stair.form}
-        items={[{ value: 'straight', label: 'Straight' }, { value: 'lShaped', label: 'L' }, { value: 'uShaped', label: 'U' }, { value: 'winder', label: 'Winder' }, { value: 'spiral', label: 'Spiral' }]}
-        onValueChange={(v) => { setStair({ form: v as typeof draw.stair.form }); }}
-      />
+      <Row label="Form">
+        <Select
+          aria-label="Form"
+          appearance="filled"
+          options={FORMS.map(([value, label]) => ({ value, label }))}
+          value={draw.stair.form}
+          onValueChange={(v) => { setStair({ form: v as typeof draw.stair.form }); }}
+        />
+      </Row>
       {draw.stair.form !== 'straight' ? (
         <SegmentedControl
           aria-label="Turns"

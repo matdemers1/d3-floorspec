@@ -202,12 +202,91 @@ export function TextField({ label, value, onCommit, disabled, placeholder, autoF
   );
 }
 
-/** A read-only value in the field's shape: dashed, as the board draws a derived value. */
-export function ReadOnlyField({ label, value }: { label: string; value: string }) {
+/**
+ * A read-only value in the field's shape: dashed, as the board draws a derived value. `wrap` lets a
+ * value longer than the field run onto a second line instead of being cut off.
+ */
+export function ReadOnlyField({ label, value, wrap = false }: { label: string; value: string; wrap?: boolean }) {
   return (
     <Row label={label}>
-      <div className="fs-readonly">{value}</div>
+      <div className={wrap ? 'fs-readonly fs-readonly--wrap' : 'fs-readonly'}>{value}</div>
     </Row>
+  );
+}
+
+/**
+ * A whole number in a compact input with no row of its own — a table cell, named by `label` —
+ * committed on Enter or blur once it parses and is in range; empty commits null.
+ */
+export function InlineIntInput({ label, value, onCommit, disabled, min, max, placeholder }: { label: string; value: number | undefined; onCommit: (value: number | null) => void; disabled?: boolean; min: number; max: number; placeholder?: string | undefined }) {
+  const id = useId();
+  const shown = value === undefined ? '' : String(value);
+  const [text, setText] = useState(shown);
+  const [error, setError] = useState<string | null>(null);
+  const editing = useRef(false);
+  useEffect(() => {
+    if (!editing.current) {
+      setText(shown);
+      setError(null);
+    }
+  }, [shown]);
+  const commit = () => {
+    editing.current = false;
+    const t = text.trim();
+    if (t === shown) return;
+    if (t === '') {
+      onCommit(null);
+      return;
+    }
+    const n = Number(t);
+    if (!/^\d+$/.test(t) || n < min || n > max) {
+      setError(`From ${String(min)} to ${String(max)}`);
+      return;
+    }
+    setError(null);
+    if (n !== value) onCommit(n);
+  };
+  return (
+    <div className="fs-inline-int">
+      <Input
+        id={id}
+        size="sm"
+        appearance="filled"
+        className="fs-mono-input"
+        inputMode="numeric"
+        aria-label={label}
+        value={text}
+        placeholder={placeholder}
+        disabled={disabled}
+        invalid={error !== null}
+        aria-describedby={error !== null ? `${id}-help` : undefined}
+        autoComplete="off"
+        onFocus={() => { editing.current = true; }}
+        onChange={(e) => {
+          editing.current = true;
+          setText(e.target.value);
+          if (error !== null) setError(null);
+        }}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+          } else if (e.key === 'Escape') {
+            editing.current = false;
+            setText(shown);
+            setError(null);
+            (e.target as HTMLInputElement).blur();
+          }
+          e.stopPropagation();
+        }}
+      />
+      {error !== null ? (
+        <p id={`${id}-help`} className="fs-field-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
