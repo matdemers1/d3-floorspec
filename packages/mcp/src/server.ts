@@ -1,7 +1,8 @@
 import { McpServer, ResourceTemplate, type CallToolResult } from '@modelcontextprotocol/server';
 import { describeEstimate, estimateEnergy, EstimateError } from '@floorspec/analysis';
 import { z } from 'zod';
-import { FloorspecApiError, type Committed, type FloorspecClient, type Layouts, type ProjectSummary, type RenderOptions } from './client.js';
+import { FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type Layouts, type Op, type ProjectSummary, type RenderOptions } from './client.js';
+import { embedOps, libraryText, missingLibraryTypes, namesLibraryTypes, US_STARTER } from './library.js';
 import { Batch, Lock, OP_BY_NAME_ONLY } from './ops-schema.js';
 import { hintsFor } from './hints.js';
 import { compactSchema } from './tool-schema.js';
@@ -134,6 +135,110 @@ async function changesetId(client: FloorspecClient, projectId: string, handle: s
   return handle === undefined ? undefined : (await resolveChangeset(client, projectId, handle)).id;
 }
 
+/** A batch as it will be sent: the library types it names embedded ahead of the agent's own ops. */
+interface Prepared {
+  readonly batch: readonly Op[];
+  /** The embedding ops put first; the agent's op i is at i + prefix.length. */
+  readonly prefix: readonly Op[];
+  /** The library items embedded. */
+  readonly embedded: readonly string[];
+}
+
+/**
+ * Embed the US starter types a batch names that its head does not hold yet (library.ts). The head is
+ * the pending changeset the batch is going into when it is named and exists, else main — which is
+ * also what a new changeset starts from.
+ */
+async function prepare(client: FloorspecClient, projectId: string, changeset: string | undefined, batch: readonly Op[]): Promise<Prepared> {
+  if (!namesLibraryTypes(batch)) return { batch, prefix: [], embedded: [] };
+  let head: string | undefined;
+  if (changeset !== undefined) {
+    try {
+      head = (await resolveChangeset(client, projectId, changeset)).id;
+    } catch (error) {
+      if (!(error instanceof ToolError)) throw error;
+    }
+  }
+  const model = await client.model(projectId, head);
+  const ids = missingLibraryTypes(model.document, batch);
+  if (ids.length === 0) return { batch, prefix: [], embedded: [] };
+  const prefix = embedOps(model.document, batch, ids);
+  return { batch: [...prefix, ...batch], prefix, embedded: ids };
+}
+
+/**
+ * The IDs of embedding ops a refusal says are already used — the head was another than the one read
+ * (an agent's default changeset, whose name only the API knows). Sending the batch again without
+ * them is then right: the type is there.
+ */
+function alreadyUsed(error: unknown, prefix: readonly Op[]): Set<string> {
+  const taken = new Set<string>();
+  if (!(error instanceof FloorspecApiError) || error.status !== 422) return taken;
+  for (const d of error.diagnostics) {
+    if (d.code !== 'FS-OPS-005') continue;
+    for (const op of prefix) if (typeof op['id'] === 'string' && d.message.startsWith(`${op['id']} is already used`)) taken.add(op['id']);
+  }
+  return taken;
+}
+
+/** Apply a prepared batch, once more without any embedding the head turned out to hold already. */
+async function applyPrepared(client: FloorspecClient, projectId: string, input: Omit<ApplyInput, 'batch'>, prepared: Prepared, own: readonly Op[]): Promise<{ result: Committed; prepared: Prepared }> {
+  try {
+    return { result: await client.apply(projectId, { ...input, batch: prepared.batch }), prepared };
+  } catch (error) {
+    const taken = alreadyUsed(error, prepared.prefix);
+    if (taken.size === 0) throw new Shifted(error, prepared.prefix.length);
+    const prefix = prepared.prefix.filter((op) => !(typeof op['id'] === 'string' && taken.has(op['id'])));
+    const again: Prepared = { batch: [...prefix, ...own], prefix, embedded: prepared.embedded };
+    try {
+      return { result: await client.apply(projectId, { ...input, batch: again.batch }), prepared: again };
+    } catch (retry) {
+      throw new Shifted(retry, prefix.length);
+    }
+  }
+}
+
+/** A refusal of a batch that had `by` embedding ops put ahead of the agent's. */
+class Shifted extends Error {
+  constructor(
+    readonly error: unknown,
+    readonly by: number,
+  ) {
+    super('shifted');
+  }
+}
+
+/**
+ * A refusal in the agent's own terms: a pointer into the sent batch is turned back into one into the
+ * agent's (`/batch/12` → `/batch/5`), and one into an embedding op says so.
+ */
+function unshift(error: unknown): unknown {
+  if (!(error instanceof Shifted)) return error;
+  const inner = error.error;
+  if (error.by === 0 || !(inner instanceof FloorspecApiError)) return inner;
+  const fix = (pointer: unknown): unknown => {
+    if (typeof pointer !== 'string') return pointer;
+    const m = /^\/batch\/(\d+)(.*)$/.exec(pointer);
+    if (m === null) return pointer;
+    const i = Number(m[1]) - error.by;
+    return i >= 0 ? `/batch/${String(i)}${m[2] ?? ''}` : `(an embedded US starter library type)${m[2] ?? ''}`;
+  };
+  const diagnostics = inner.diagnostics.map((d) => (d.location === undefined ? d : { ...d, location: { ...d.location, pointer: fix(d.location['pointer']) } }));
+  return new FloorspecApiError(inner.status, { ...inner.body, diagnostics });
+}
+
+/** What an apply hands back to the agent: the echo of a long batch is left out; `created` names what it made. */
+const ECHO_LIMIT = 25;
+function compact(result: Committed): Record<string, unknown> {
+  if (result.resolved.length <= ECHO_LIMIT) return { ...result };
+  const { resolved, ...rest } = result;
+  return { ...rest, resolvedOps: resolved.length };
+}
+
+function embeddedText(prepared: Prepared): string {
+  return prepared.embedded.length === 0 ? '' : ` Embedded from the US starter library ${US_STARTER.version}: ${prepared.embedded.join(', ')}.`;
+}
+
 /** How an apply landed, in words an agent cannot misread. */
 function landed(result: Committed): string {
   const where =
@@ -214,7 +319,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_create_project',
     {
       title: 'Create a project',
-      description: 'A new, empty house for a new design. It has no building or levels: add them first (addElement buildings, addLevel).',
+      description: 'A new, empty house for a new design. It has no building or levels: add them first (addElement buildings, addLevel). Its result lists the US starter types a batch can name.',
       inputSchema: compactSchema(z.strictObject({ name: z.string().trim().min(1).max(200) })),
       annotations: { destructiveHint: false, openWorldHint: false },
     },
@@ -226,7 +331,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         }
         const project = await client.createProject(args.name);
         return ok(
-          `Created "${project.name}" (${project.id}). It is empty: add a building and its levels next, then rooms. Name this project in every call while the credential reaches more than one.`,
+          `Created "${project.name}" (${project.id}). It is empty: add a building and its levels next, then rooms. Name this project in every call while the credential reaches more than one. ${libraryText()}`,
           { project: project.id, name: project.name, head: project.head },
         );
       } catch (error) {
@@ -315,7 +420,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         'Apply `batch`, a list of typed Floorspec Ops, as one transaction: all commit or none. ' +
         'Example: {"changeset":"Widen the kitchen","batch":[{"op":"resizeRoom","room":"Kitchen","side":"east","by":"2\'"}],"render":true}. ' +
         'A write token commits to main; an agent credential writes into a pending changeset (`changeset`, or one named after the credential). ' +
-        'A rejection changes nothing and returns diagnostics with fixes.',
+        'A rejection changes nothing and returns diagnostics with fixes. ' +
+        'A US starter type a batch names (wall-2x4-interior, door-interior-swing-30x80, window-double-hung-36x60…) is embedded the first time.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
@@ -332,15 +438,20 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
-        const result = await client.apply(project.id, {
-          batch: args.batch,
-          ...(args.locks === undefined ? {} : { locks: args.locks }),
-          ...(args.option === undefined ? {} : { option: args.option }),
-          ...(args.changeset === undefined ? {} : { changeset: args.changeset }),
-          ...(args.ifMatch === undefined ? {} : { ifMatch: args.ifMatch }),
-        });
-        const structured = { project: project.id, ...result };
-        const content: CallToolResult['content'] = [text(landed(result)), text(structured)];
+        const { result, prepared } = await applyPrepared(
+          client,
+          project.id,
+          {
+            ...(args.locks === undefined ? {} : { locks: args.locks }),
+            ...(args.option === undefined ? {} : { option: args.option }),
+            ...(args.changeset === undefined ? {} : { changeset: args.changeset }),
+            ...(args.ifMatch === undefined ? {} : { ifMatch: args.ifMatch }),
+          },
+          await prepare(client, project.id, args.changeset, args.batch),
+          args.batch,
+        );
+        const structured = { project: project.id, ...compact(result), ...(prepared.embedded.length === 0 ? {} : { embedded: prepared.embedded }) };
+        const content: CallToolResult['content'] = [text(`${landed(result)}${embeddedText(prepared)}`), text(structured)];
         if (args.render === true) {
           // What the batch created is drawn in the accent; a changeset is drawn ghosted against its base.
           content.push(
@@ -352,7 +463,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         }
         return { content, structuredContent: structured };
       } catch (error) {
-        return failure(error, args.batch);
+        return failure(unshift(error), args.batch);
       }
     },
   );
@@ -397,15 +508,26 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           return { content, structuredContent: structured };
         }
         if (args.name === undefined) throw new ToolError('Name the changeset: "name" says what the change is, for the reviewer.');
-        const result = await client.propose(project.id, {
-          name: args.name,
-          ...(args.batch === undefined ? {} : { batch: args.batch }),
-          ...(args.locks === undefined ? {} : { locks: args.locks }),
-        });
-        const structured = { project: project.id, ...result };
+        const prepared = args.batch === undefined ? null : await prepare(client, project.id, args.name, args.batch);
+        let result;
+        try {
+          result = await client.propose(project.id, {
+            name: args.name,
+            ...(prepared === null ? {} : { batch: prepared.batch }),
+            ...(args.locks === undefined ? {} : { locks: args.locks }),
+          });
+        } catch (error) {
+          throw new Shifted(error, prepared?.prefix.length ?? 0);
+        }
+        const structured = {
+          project: project.id,
+          ...result,
+          applied: result.applied === null ? null : compact(result.applied),
+          ...(prepared === null || prepared.embedded.length === 0 ? {} : { embedded: prepared.embedded }),
+        };
         const content: CallToolResult['content'] = [
           text(
-            `Changeset "${result.changeset.name}" (${result.changeset.id}) is pending${result.applied === null ? '' : `; ${landed(result.applied)}`}`,
+            `Changeset "${result.changeset.name}" (${result.changeset.id}) is pending${result.applied === null ? '' : `; ${landed(result.applied)}`}${prepared === null ? '' : embeddedText(prepared)}`,
           ),
           text(structured),
         ];
@@ -414,7 +536,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         }
         return { content, structuredContent: structured };
       } catch (error) {
-        return failure(error, args.batch);
+        return failure(unshift(error), args.batch);
       }
     },
   );

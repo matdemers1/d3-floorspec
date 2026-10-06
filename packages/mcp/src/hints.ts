@@ -30,6 +30,11 @@ const DEFAULTS = {
   width: "An opening without a fill type needs `width` — an interior door is usually 2' 8\" to 3' 0\" wide.",
 } as const;
 
+/** An opening that does not fit its wall: wider than the wall when centered, or pushed off an end (FS-CORE-7.3.1). */
+export const OPENING_FIT_HINT =
+  "An opening does not fit along its wall: it is wider than the wall it is centered on, or `at` puts it past an end. A wall between two rooms is only as long as they share — floorspec_describe lists each room's walls with their lengths. Use a narrower fill (or width), or a longer wall.";
+const OPENING_OFFSET = /^\/openings\/[^/]+\/offset$/;
+
 /** setProperty's `value` is taken as given (Ops 2.5): the reference grammar does not reach inside it. */
 export const SET_PROPERTY_HINT =
   'setProperty values are taken as given, never resolved: a length or point there is an integer in base units (1 in = 32512, 1 ft = 390144, 1 mm = 1280), not a string like "5\'".';
@@ -88,10 +93,13 @@ export function hintsFor(diagnostics: readonly Diagnostic[], batch?: readonly { 
       if (stairs04 && STAIR_MEMBER.test(typeof d.location?.['pointer'] === 'string' ? d.location['pointer'] : '') && /additional properties/.test(message)) hints.add(STAIR_04_HINT);
       // An arc on a wall or a separator of a plan earlier than 0.4 is not a member it has.
       if (arcs04 && /^\/(walls|separators)\/[^/]+$/.test(typeof d.location?.['pointer'] === 'string' ? d.location['pointer'] : '') && /additional properties/.test(message)) hints.add(ARC_04_HINT);
+      if (OPENING_OFFSET.test(typeof d.location?.['pointer'] === 'string' ? d.location['pointer'] : '')) hints.add(OPENING_FIT_HINT);
       if (FALLBACK_BOX.test(message)) hints.add('A placed element needs element.fallback.box: {"min":[x,y,z],"max":[x,y,z]} in base units around its host point — an outlet is about 1" × 3" × 4".');
       const opening = OPENING_SCHEMA.exec(message);
       const member = opening?.[1];
       if (member === 'height' || member === 'width') hints.add(DEFAULTS[member]);
+    } else if (d.code === 'FS-INV-302') {
+      hints.add(OPENING_FIT_HINT);
     } else if (d.code === 'FS-INV-113') {
       hints.add(ARC_FIT_HINT);
     } else if (d.code === 'FS-OPS-013') {

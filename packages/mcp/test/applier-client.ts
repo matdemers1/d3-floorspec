@@ -6,7 +6,7 @@
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { canonicalize, contentHash, OFFICIAL_READER } from '@floorspec/engine';
 import { apply } from '@floorspec/ops';
-import { createFloorspecMcpHandler, FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient } from '../src/index.js';
+import { createFloorspecMcpHandler, FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type ProjectSummary } from '../src/index.js';
 
 export const PROJECT = '01a10000-0000-7000-8000-000000000001';
 
@@ -20,7 +20,7 @@ export class ApplierClient implements FloorspecClient {
   listProjects() {
     return Promise.resolve([{ id: PROJECT, name: 'Lake house', head: contentHash(this.document) }]);
   }
-  createProject(): Promise<never> {
+  createProject(_name: string): Promise<ProjectSummary> {
     return Promise.reject(new Error('the applier client holds one project'));
   }
   model() {
