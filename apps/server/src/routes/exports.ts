@@ -139,11 +139,10 @@ export function exportRoutes(db: Db): Routes {
       const version = await versionFor(tx, project.id, body.version);
       if (body.design !== undefined && body.kind === 'ifc') throw new HttpError(400, 'a design is chosen for a drawing or a 3D model, not an IFC export');
       // Drawn only from geometry the engine can derive: an invalid model is refused now, not as a failed job.
-      // Checked with the reader the worker draws it with: drawings (PDF, DXF) read as the api does
-      // everywhere (OFFICIAL_READER, FLR-T-12.8), so a model that requires an official extension is drawn;
-      // the 3D model, IFC and stills still read core-only.
-      const reader = body.kind === 'pdf' || body.kind === 'dxf' ? OFFICIAL_READER : {};
-      const ev = evaluate(version.document as object, body.design === undefined ? reader : { ...reader, design: body.design });
+      // Checked with the reader the worker makes every kind with — the one the api and the editor read
+      // with everywhere (OFFICIAL_READER; FLR-T-12.8 drawings, FLR-T-12.10 the rest): a model that
+      // requires an official extension is exported in every kind, one the editor calls invalid in none.
+      const ev = evaluate(version.document as object, body.design === undefined ? OFFICIAL_READER : { ...OFFICIAL_READER, design: body.design });
       if (!ev.valid || ev.document === undefined)
         throw new ProblemError({ status: 422, type: 'not-drawable', title: 'this version cannot be drawn', detail: 'The model is not valid. Run validate to see why.' });
       if (body.design !== undefined && (ev.design === null || ev.view === undefined))

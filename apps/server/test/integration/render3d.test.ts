@@ -6,7 +6,7 @@ import { MAX_PENDING_RENDERS } from '../../src/routes/checks.js';
 import { reset, setupOperator, start, testDb, TEST_ENV, type Browser, type Running } from './helpers.js';
 
 const cookieOf = (b: Browser): string => [...b.cookies].map(([k, v]) => `${k}=${v}`).join('; ');
-import { projectWithDocument } from './drawings-support.js';
+import { KITCHEN_AS_WRITTEN, projectWithDocument, REQUIRES_ELECTRICAL } from './drawings-support.js';
 
 /**
  * FLR-T-8.5 end to end: `GET /render?view=3d` queues a `render.3d` job on the Postgres job queue,
@@ -60,6 +60,20 @@ describe('3D render-back', () => {
     ]);
     expect(jobs[1]?.result).toMatchObject({ camera: expect.stringMatching(/^Kitchen \(KIT\) from its doorway/) as string, width: 1024, height: 768 });
     expect((await operator.get(`/api/projects/${id}/exports`)).body).toEqual({ exports: [] });
+  });
+
+  it('reads the model as the editor does: draws one that requires an official extension, refuses one the editor calls invalid (FLR-T-12.10)', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');
+    const wired = await fetch(`${running.url}/api/projects/${id}/render?view=3d&camera=sw&width=256`, { headers: { cookie: cookieOf(operator) } });
+    expect(wired.status, await wired.clone().text()).toBe(200);
+    expect(pngSize(new Uint8Array(await wired.arrayBuffer()))).toEqual({ width: 256, height: 192 });
+    expect((await db.job.findMany({ where: { projectId: id } })).map((j) => [j.kind, j.status, j.versionHash])).toEqual([['render.3d', 'done', hash]]);
+    const { id: kitchen } = await projectWithDocument(db, operator, KITCHEN_AS_WRITTEN, 'Kitchen as written');
+    const refused = await operator.get(`/api/projects/${kitchen}/render?view=3d`);
+    expect(refused.status).toBe(422);
+    expect(refused.text).toContain('not-renderable');
+    expect(await db.job.count({ where: { projectId: kitchen } })).toBe(0);
   });
 
   it('says why it could not draw: no such room, both a camera and a room, too wide', async () => {

@@ -3,12 +3,13 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { evaluate, facingVector } from '@floorspec/engine';
+import { evaluate, facingVector, OFFICIAL_READER } from '@floorspec/engine';
 import { validateBytes } from 'gltf-validator';
 import { describe, expect, it } from 'vitest';
 import { assetDirImages, assetDirModels, buildScene, exportGltf, exportUsdz, linear, readGlb, readStoreZip, type ImageSource } from '../src/export/gltf/index.js';
 import { createHandlers } from '../src/queue/handlers.js';
 import { rasterize } from '../src/render/png.js';
+import { withFurnitureFallbacks } from './support/furniture.js';
 
 /** A small PNG: what a tile photo's bytes would be. */
 const tilePng = (fill: string): Uint8Array => rasterize(`<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><rect width="4" height="4" fill="${fill}"/></svg>`);
@@ -32,11 +33,16 @@ const HOUSES: Record<string, Json> = {
   'two-storey': load(here('./fixtures/two-storey.json')),
   'l-stair-hip-roof': load(here('../../web/e2e/fixtures/l-stair-hip-roof.json')),
   'three-room-house': load(join(SUITE, 'examples/001-three-room-house/input.json')),
-  'kitchen-options': load(join(SUITE, 'examples/002-kitchen-options/input.json')),
+  // Its refrigerators completed with a model and a symbol, as FS_furniture 0.1.0 requires of the
+  // editor's reader (FLR-T-12.10): written for a core-only reader, the example is invalid there.
+  'kitchen-options': withFurnitureFallbacks(load(join(SUITE, 'examples/002-kitchen-options/input.json'))),
   'from-the-library': load(join(SUITE, 'examples/003-three-room-house-from-the-library/input.json')),
 };
 
-/** Every valid Core 0.3 conformance input whose primary design derives. */
+/**
+ * Every Core 0.3 conformance input whose primary design derives and that is valid as the editor reads
+ * it (OFFICIAL_READER, FLR-T-12.10) — the reader every export validates with.
+ */
 function validCases(): [string, Json][] {
   const out: [string, Json][] = [];
   for (const area of readdirSync(SUITE).sort()) {
@@ -55,7 +61,7 @@ function validCases(): [string, Json][] {
       } catch {
         continue; // a serialization case: not JSON a reader parses as a document
       }
-      const ev = evaluate(doc);
+      const ev = evaluate(doc, OFFICIAL_READER);
       if (ev.valid && ev.view !== undefined && Object.keys((ev.view.levels ?? {})).length > 0) out.push([`${area}/${c}`, doc]);
     }
   }
@@ -308,11 +314,9 @@ describe('glTF export', () => {
   });
 
   it('places an extension element’s fallback model by Core 12.6: its frame’s origin, turned by its facing alone', async () => {
-    const doc = load(join(SUITE, 'options/034-fridge-in-each-option/input.json'));
-    const pieces = ((doc['extensions'] as Json)['FS_furniture'] as { collections: { pieces: Record<string, { fallback: Json }> } }).collections.pieces;
-    pieces['FA']!.fallback['asset'] = 'FRIDGE';
-    doc['assets'] = { FRIDGE: { path: 'assets/fridge.glb', sha256: 'a'.repeat(64), mediaType: 'model/gltf-binary' } };
-    expect(evaluate(doc).valid).toBe(true);
+    // Each refrigerator with the library's model (FRIDGE) and symbol, as the editor's reader requires.
+    const doc = withFurnitureFallbacks(load(join(SUITE, 'options/034-fridge-in-each-option/input.json')));
+    expect(evaluate(doc, OFFICIAL_READER).valid).toBe(true);
     const bytes = (await exportGltf(doc, VERSION)).bytes;
     const glb = readGlb(bytes);
     const model = nodesOf(glb.json).find((n) => n.extras?.floorspec?.['model'] === 'FRIDGE')!;
@@ -428,8 +432,10 @@ describe('fallback models merged into the glTF (FLR-T-9.2, Core 12.6)', () => {
     fc['host'] = { mode: 'free', level: 'L1', position: [2_000_000, 2_000_000], rotation: 0 };
     pieces['FC'] = fc;
     doc['assets'] = { FRIDGE: { path: 'assets/refrigerator-900.glb', sha256: digest(bytes), mediaType, byteLength: bytes.byteLength } };
-    expect(evaluate(doc).valid).toBe(true);
-    return doc;
+    // FB and the plan symbols, as the editor's reader requires (FLR-T-12.10).
+    const complete = withFurnitureFallbacks(doc);
+    expect(evaluate(complete, OFFICIAL_READER).valid).toBe(true);
+    return complete;
   };
   const glbOf = (json: Json, bin: Uint8Array): Uint8Array => {
     const text = new TextEncoder().encode(JSON.stringify(json));

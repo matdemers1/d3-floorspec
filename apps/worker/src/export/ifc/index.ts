@@ -11,7 +11,10 @@
  * `IFC_WORKER_URL` names the worker: `http://ifc-worker:3410` on the production compose network,
  * `http://127.0.0.1:3410` elsewhere (`python -m floorspec_ifc serve` in workers/ifc).
  */
-import { contentHash, CORE_VERSION, deriveEvaluation, ENGINE_VERSION, evaluate, InvalidDocumentError, type Derived, type FloorspecDocument } from '@floorspec/engine';
+import { contentHash, CORE_VERSION, deriveEvaluation, ENGINE_VERSION, evaluate, InvalidDocumentError, OFFICIAL_READER, type Derived, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
+
+/** A reader (Core 1.6.4, 12.2): the extensions it implements and knows. */
+export type IfcReader = Omit<ValidateOptions, 'design'>;
 
 /** The payload's format and version; the worker refuses any other. */
 export const IFC_PAYLOAD_FORMAT = 'floorspec-ifc-payload';
@@ -75,12 +78,14 @@ export function ifcFileName(projectName: string, version: IfcVersionFacts): stri
 }
 
 /**
- * The payload for one version: evaluated and derived here, exactly. Throws InvalidDocumentError for
- * a document that is not valid — the api refuses those before a job is queued, and the job row is
- * data, so the worker checks again.
+ * The payload for one version: evaluated once and derived here, exactly. Throws InvalidDocumentError
+ * for a document that is not valid — the api refuses those before a job is queued, and the job row
+ * is data, so the worker checks again. It is read with `reader`, default `OFFICIAL_READER`, the
+ * reader the api and the editor run (FLR-T-12.10): a model that requires an official extension is
+ * exported, and one the editor calls invalid is refused.
  */
-export function ifcPayload(document: object, version: IfcVersionFacts): IfcPayload {
-  const ev = evaluate(document);
+export function ifcPayload(document: object, version: IfcVersionFacts, reader: IfcReader = OFFICIAL_READER): IfcPayload {
+  const ev = evaluate(document, reader);
   if (!ev.valid || !ev.document || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);
   const derived = deriveEvaluation(ev);
   const view = ev.view ?? ev.document;
@@ -107,6 +112,8 @@ export interface IfcExportOptions {
   readonly workerUrl?: string;
   /** How long to wait for the file (ms). Default 120000. */
   readonly timeoutMs?: number;
+  /** The reader the model is validated with. Default `OFFICIAL_READER` (see `ifcPayload`). */
+  readonly reader?: IfcReader;
 }
 
 /** The IFC worker's base URL from the environment. */
@@ -129,7 +136,7 @@ function summaryOf(header: string | null): IfcSummary {
 
 /** Export one version as IFC4 ADD2 TC1 Reference View, through the IFC worker. */
 export async function exportIfc(document: object, options: IfcExportOptions): Promise<IfcResult> {
-  const payload = ifcPayload(document, options.version);
+  const payload = ifcPayload(document, options.version, options.reader);
   const base = options.workerUrl ?? ifcWorkerUrl();
   let res: Response;
   try {

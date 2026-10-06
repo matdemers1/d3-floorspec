@@ -10,7 +10,7 @@
  * before a ray is cast; a still that runs past its time budget is stopped with a reason. Seeded: the
  * same version and options always give the same PNG.
  */
-import { buildScene, type Scene, type Vec3 } from '../export/gltf/scene.js';
+import { buildScene, type Scene, type SceneOptions, type Vec3 } from '../export/gltf/scene.js';
 import type { ImageSource } from '../export/gltf/glb.js';
 import { linear } from '../export/gltf/scene.js';
 import { findRoom, PRESETS, presetCamera, roomCamera, type Camera, type Preset } from '../render3d/camera.js';
@@ -41,6 +41,8 @@ export interface StillOptions {
   readonly quality?: Quality;
   readonly sun?: SunInput;
   readonly design?: Record<string, string>;
+  /** The reader the model is validated with (Core 1.6.4, 12.2). Default `OFFICIAL_READER`, the editor's (FLR-T-12.10). */
+  readonly reader?: SceneOptions['reader'];
   /** The asset store, for base-colour maps; only what the project claimed. */
   readonly images?: ImageSource;
   readonly onPass?: (done: number, total: number) => void | Promise<void>;
@@ -236,7 +238,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
 
 /** Path-trace a still of a version (FLR-REQ-154). Throws for an invalid model, an unknown room or level, or work over the budget. */
 export async function renderStill(document: object, options: StillOptions = {}): Promise<StillResult> {
-  const scene = await buildScene(document, options.design === undefined ? {} : { design: options.design });
+  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }) });
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
   return renderSceneStill(scene, { ...options, trueNorth });
