@@ -147,7 +147,8 @@ async function audit(page: Page, state: string): Promise<void> {
 
 test('every screen and state has no axe violations, in light and in dark', async ({ page, baseURL, browser }) => {
   if (baseURL === undefined) throw new Error('no baseURL');
-  test.setTimeout(300_000);
+  // Ninety-odd states, each audited in two themes: about three minutes here, over five on CI's runners.
+  test.setTimeout(900_000);
 
   // ── Anonymous: first-run setup, gated by the setup token, and its failure.
   await page.goto('/');
