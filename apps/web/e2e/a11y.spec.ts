@@ -253,6 +253,9 @@ test('every screen and state has no axe violations, in light and in dark', async
   await expect(inviteAlert).toBeVisible();
   const inviteLink = (await inviteAlert.locator('.fs-mono').textContent())?.trim() ?? '';
   expect(inviteLink).toMatch(/\/invite\/[A-Za-z0-9_-]+$/);
+  // The "created" toast dismisses itself, fading out partway through the two themes' audits: this
+  // state is the invite link, so audit it once the toast has gone.
+  await expect(page.locator('.d3-toast')).toHaveCount(0, { timeout: 15_000 });
   await audit(page, 'invites, link created');
 
   // ── Not found, and not yours.
