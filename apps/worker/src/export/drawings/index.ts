@@ -14,9 +14,9 @@
  * version's facts (hash, number, time): the same inputs give the same bytes, and nothing reads the
  * clock.
  */
-import { deriveFrom, evaluate, InvalidDocumentError, openingDimensions, type FloorspecDocument } from '@floorspec/engine';
-import { buildScene, type Scene } from '@floorspec/render2d';
-import { buildScene as buildModel, type Scene as ModelScene } from '../gltf/scene.js';
+import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, openingDimensions, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
+import { sceneOf, type ReaderOptions, type Scene } from '@floorspec/render2d';
+import { buildSceneFrom as buildModel, type Scene as ModelScene } from '../gltf/scene.js';
 import { MAX_WIDTH, renderView } from '../../render3d/index.js';
 import { dimensionStrings, type DimString } from './dimensions.js';
 import { levelDxf, roofDxf } from './dxf.js';
@@ -70,6 +70,12 @@ export interface DrawingOptions {
   readonly design?: Readonly<Record<string, string>>;
   /** PDF only: the 3D view's resolution, dots per inch of the sheet. Default 300. */
   readonly viewDpi?: number;
+  /**
+   * The reader the model is validated with (Core 1.6.4, 12.2) — once, for the plans and the 3D
+   * views alike. Default `OFFICIAL_READER`, the reader the api runs, so a model that requires an
+   * official extension is drawn.
+   */
+  readonly reader?: ReaderOptions;
 }
 
 export interface DrawingFile {
@@ -91,6 +97,8 @@ export interface DxfResult extends DrawingFile {
 }
 
 interface Prepared {
+  /** The one evaluation everything is drawn from. */
+  readonly ev: Evaluation;
   readonly doc: FloorspecDocument;
   readonly units: UnitSystem;
   readonly all: readonly LevelPlan[];
@@ -129,7 +137,8 @@ function designWords(original: FloorspecDocument, design: Readonly<Record<string
 }
 
 function prepare(document: object, options: DrawingOptions): Prepared {
-  const ev = evaluate(document, options.design === undefined ? {} : { design: options.design });
+  const reader = options.reader ?? OFFICIAL_READER;
+  const ev = evaluate(document, options.design === undefined ? reader : { ...reader, design: options.design });
   if (!ev.valid || !ev.document) throw new InvalidDocumentError(ev.diagnostics);
   if (!ev.view || !ev.analysis) throw new RangeError('the model has no such design, or that design is not valid (Core 19.6.2)');
   const doc = ev.view;
@@ -139,7 +148,8 @@ function prepare(document: object, options: DrawingOptions): Prepared {
   if (order.length === 0) throw new RangeError('the model has no levels to draw');
   const wanted = options.levels ?? order;
   for (const l of wanted) if (!order.includes(l)) throw new RangeError(`the model has no level ${l}`);
-  const scenes: Scene[] = order.map((l) => buildScene(doc, l));
+  // Every level from the one evaluation and its derived values: nothing is validated again.
+  const scenes: Scene[] = order.map((l) => sceneOf(ev, l, derived));
   // Marks number the whole model, so a door is D3 whichever levels are drawn.
   const marks = openingMarks(scenes);
   const all = scenes.map((s) => planOf(s, marks, { doc, derived }));
@@ -147,7 +157,7 @@ function prepare(document: object, options: DrawingOptions): Prepared {
   const dims = new Map(chosen.map((p) => [p.levelId, dimensionStrings(p)]));
   const roofs = chosen.flatMap((p) => p.roofs);
   const wallsBelow = chosen.filter((p) => p.roofs.length > 0).flatMap((p) => p.wallLines.filter((l) => l.layer === 'A-WALL-EXTR'));
-  return { doc, units: unitsOf(doc), all, chosen, dims, derived, roofs, wallsBelow, design: design === null ? null : { ...design }, designText: design === null ? undefined : designWords(ev.document, design) };
+  return { ev, doc, units: unitsOf(doc), all, chosen, dims, derived, roofs, wallsBelow, design: design === null ? null : { ...design }, designText: design === null ? undefined : designWords(ev.document, design) };
 }
 
 /**
@@ -230,7 +240,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
   const allDims = [...p.dims.values()].flat();
   const layout = layoutSet(page, frame, allDims, p.units, maxRows);
   const name = p.doc.project.name;
-  const model = await buildModel(document, options.design === undefined ? {} : { design: options.design });
+  const model = await buildModel(p.ev);
   const views = viewsOf(model, p.doc, options.viewDpi ?? 300);
   const pdf = openPdf(
     {

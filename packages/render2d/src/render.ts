@@ -8,7 +8,8 @@
  */
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
-import { buildScene, type Pt, type Scene, type SceneOpening, type SceneRoom, type SceneWall } from './scene.js';
+import { evaluate, type Evaluation } from '@floorspec/engine';
+import { DEFAULT_READER, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneOpening, type SceneRoom, type SceneWall } from './scene.js';
 import { el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
 import { roofSymbol, stairSymbol } from './symbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
@@ -18,14 +19,23 @@ export interface RenderOptions {
   readonly level?: string;
   /** Core 0.3 (19.6): the design of a document with design options to draw — option set → option. Default: the primary design. */
   readonly design?: Readonly<Record<string, string>>;
+  /**
+   * The reader the document — and the ghost's before side, when it is given as a document — is
+   * validated with: the caller's own (`ReaderOptions`). Default `DEFAULT_READER`, the reference
+   * implementation's (`OFFICIAL_READER`), so a document that requires an official extension draws.
+   */
+  readonly reader?: ReaderOptions;
   /** Default `light`. */
   readonly theme?: ThemeName;
   /** Drawing scale in SVG pixels per foot. Default 24. */
   readonly scale?: number;
   /** Element IDs to draw in the accent (walls, junctions, separators, openings, rooms). */
   readonly highlight?: readonly string[];
-  /** Changeset ghosting: the document before the changeset; this document is the after side. */
-  readonly ghost?: { readonly before: string | Uint8Array | object };
+  /**
+   * Changeset ghosting: the document before the changeset (validated with `reader`), or the
+   * caller's evaluation of it (not validated again); this document is the after side.
+   */
+  readonly ghost?: { readonly before: string | Uint8Array | object } | { readonly evaluation: Evaluation };
   /** Overall exterior dimensions. Default true. */
   readonly dimensions?: boolean;
   /** Room labels (name, area, dimensions, ID). Default true. */
@@ -326,9 +336,27 @@ function labelBlock(lines: readonly LabelLine[], x: number, y: number, rotate: b
   return el('g', { ...attrs, transform: `translate(${num(x)} ${num(y)})${rotate ? ' rotate(-90)' : ''}`, 'text-anchor': 'middle' }, body);
 }
 
-/** Render one level of a Floorspec document as a standalone SVG string. */
+/** What `renderEvaluation` takes: the drawing options, without the design — the evaluation chose it. */
+export type EvaluationRenderOptions = Omit<RenderOptions, 'design'>;
+
+/**
+ * Render one level of a Floorspec document as a standalone SVG string. The document is validated
+ * once, with `options.reader` (default `DEFAULT_READER`) in `options.design`; a caller that has
+ * already evaluated it calls `renderEvaluation` and it is not validated at all.
+ */
 export function renderPlan(document: string | Uint8Array | object, options: RenderOptions = {}): string {
-  const scene = buildScene(document, options.level, options.design);
+  const { design, ...rest } = options;
+  const reader = options.reader ?? DEFAULT_READER;
+  return renderEvaluation(evaluate(document, design === undefined ? reader : { ...reader, design }), rest);
+}
+
+/**
+ * Render one level of a document the caller has already evaluated — with its own reader, in the
+ * design it chose (`evaluate(document, { ...reader, design })`) — as a standalone SVG string,
+ * without validating it again. Throws InvalidDocumentError for an evaluation that is not valid.
+ */
+export function renderEvaluation(evaluation: Evaluation, options: EvaluationRenderOptions = {}): string {
+  const scene = sceneOf(evaluation, options.level);
   const pal = PALETTES[options.theme ?? 'light'];
   const scale = options.scale ?? DEFAULT_SCALE;
   if (!(scale > 0) || !Number.isFinite(scale)) throw new RangeError('scale must be a positive number of pixels per foot');
@@ -338,10 +366,11 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   let before: Scene | undefined;
   let diff: SceneDiff | undefined;
   if (options.ghost) {
-    const doc = options.ghost.before;
+    const g = options.ghost;
+    const ev = 'evaluation' in g ? g.evaluation : evaluate(g.before, options.reader ?? DEFAULT_READER);
     // The before side may not have this level at all: then everything on it is new.
     try {
-      before = buildScene(doc, scene.levelId);
+      before = sceneOf(ev, scene.levelId);
     } catch (e) {
       if (!(e instanceof RangeError)) throw e;
       before = undefined;

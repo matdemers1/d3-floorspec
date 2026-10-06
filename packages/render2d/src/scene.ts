@@ -4,7 +4,21 @@
  * points. Nothing here recomputes geometry; the only arithmetic left for the drawing is placing
  * symbols (door leaves, glazing lines) relative to those points.
  */
-import { arcFits, arcPolyline, deriveFrom, evaluate, InvalidDocumentError, sagittaOf, type DerivedRoof, type DerivedStair, type FloorspecDocument } from '@floorspec/engine';
+import {
+  arcFits,
+  arcPolyline,
+  deriveFrom,
+  evaluate,
+  InvalidDocumentError,
+  OFFICIAL_READER,
+  sagittaOf,
+  type Derived,
+  type DerivedRoof,
+  type DerivedStair,
+  type Evaluation,
+  type FloorspecDocument,
+  type ValidateOptions,
+} from '@floorspec/engine';
 
 const ipoint = (p: readonly [number, number]): readonly [bigint, bigint] => [BigInt(p[0]), BigInt(p[1])];
 const toPt = (p: readonly [bigint, bigint]): Pt => [Number(p[0]), Number(p[1])];
@@ -150,17 +164,47 @@ export function defaultLevel(doc: FloorspecDocument): string | undefined {
 }
 
 /**
- * Validate and derive a document, and keep one level of it. Throws InvalidDocumentError when the
- * document is not valid — a plan is only drawn from geometry the engine can derive. A document
- * with design options (Core 0.3, chapter 19) is drawn in one design: `design`, a design input
- * (19.6), or the primary design; a design the engine derives nothing for is a RangeError.
+ * The reader a document is validated with when render2d is given the document itself (Core 1.6.4,
+ * 12.2): the extensions it implements, the extensions it knows, the newest Core draft it reads and,
+ * for a package validator, the package's files. Everything `ValidateOptions` holds but the design,
+ * which is a drawing option of its own.
  */
-export function buildScene(input: string | Uint8Array | object, level?: string, design?: Readonly<Record<string, string>>): Scene {
-  const ev = evaluate(input, design === undefined ? {} : { design });
+export type ReaderOptions = Omit<ValidateOptions, 'design'>;
+
+/**
+ * The reader render2d validates with when the caller names none: the one the reference
+ * implementation runs everywhere (`OFFICIAL_READER`), so a document that requires an official
+ * extension is drawn. A caller with a reader of its own passes it as `reader`; a caller that has
+ * already evaluated the document passes the evaluation (`sceneOf`, `renderEvaluation`) and nothing
+ * is validated again.
+ */
+export const DEFAULT_READER: ReaderOptions = OFFICIAL_READER;
+
+/**
+ * Validate and derive a document with `reader` (default `DEFAULT_READER`), and keep one level of
+ * it. Throws InvalidDocumentError when the document is not valid — a plan is only drawn from
+ * geometry the engine can derive. A document with design options (Core 0.3, chapter 19) is drawn in
+ * one design: `design`, a design input (19.6), or the primary design; a design the engine derives
+ * nothing for is a RangeError. A caller that has evaluated the document already calls `sceneOf`.
+ */
+export function buildScene(input: string | Uint8Array | object, level?: string, design?: Readonly<Record<string, string>>, reader: ReaderOptions = DEFAULT_READER): Scene {
+  return sceneOf(evaluate(input, design === undefined ? reader : { ...reader, design }), level);
+}
+
+/**
+ * One level of a document the caller has already evaluated — with its own reader and in the design
+ * it chose — drawn without validating it again. `derived`, when the caller has it, is Core's derived
+ * values of that evaluation's view (`deriveFrom(ev.view, ev.analysis)` or `deriveEvaluation(ev)`),
+ * so several levels of one document derive it once. Throws InvalidDocumentError for an evaluation
+ * that is not valid, and RangeError when it derived nothing (no such design, 19.6.2) or the document
+ * has no such level.
+ */
+export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene {
   if (!ev.valid || !ev.document) throw new InvalidDocumentError(ev.diagnostics);
   if (!ev.view || !ev.analysis) throw new RangeError('the document has no such design, or it is not valid (Core 19.6.2)');
   const doc = ev.view;
-  const derived = deriveFrom(doc, ev.analysis);
+  const analysis = ev.analysis;
+  const derived = given ?? deriveFrom(doc, analysis);
   const lid = level ?? defaultLevel(doc);
   const lvl = lid === undefined ? undefined : doc.levels?.[lid];
   if (lid === undefined || !lvl || !Object.hasOwn(doc.levels ?? {}, lid)) throw new RangeError(`the document has no level ${level ?? ''}`.trim());
@@ -169,7 +213,7 @@ export function buildScene(input: string | Uint8Array | object, level?: string, 
   for (const [id, w] of entries(doc.walls)) {
     if (w.level !== lid) continue;
     const d = derived.walls[id]!;
-    const o = ev.analysis.offsets.get(id)!;
+    const o = analysis.offsets.get(id)!;
     const start = doc.junctions![w.start]!.position;
     const end = doc.junctions![w.end]!.position;
     walls.set(id, {

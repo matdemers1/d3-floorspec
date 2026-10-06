@@ -2,15 +2,15 @@
  * One level of a document as drawing geometry (FLR-T-9.3), in model coordinates (base units,
  * y up), shared by the PDF sheet and the DXF so the two can never disagree.
  *
- * Everything comes from the engine's derived geometry through `buildScene` (render2d): wall face
+ * Everything comes from the engine's derived geometry through `sceneOf` (render2d): wall face
  * ends, junction fills, room polygons, opening points. What is computed here is drafting, not
  * geometry: the wall outline is the union of the wall and junction pieces (their shared edges
  * cancel exactly — the pieces' vertices are the engine's rounded integers, compared with BigInt),
  * then broken where an opening passes through it and closed with jambs; door leaves, swings and
  * glazing are placed relative to the derived opening points the same way the plan renderer does.
  */
-import { deriveFrom, evaluate, InvalidDocumentError, type Derived, type FloorspecDocument } from '@floorspec/engine';
-import { buildScene, labelPoint, type Pt, type Scene, type SceneOpening, type SceneWall } from '@floorspec/render2d';
+import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, type Derived, type FloorspecDocument } from '@floorspec/engine';
+import { sceneOf, labelPoint, type ReaderOptions, type Pt, type Scene, type SceneOpening, type SceneWall } from '@floorspec/render2d';
 import { layerForDevice, LAYERS } from './layers.js';
 import { arrivingStairs, planRoof, planStair, type PlanRoof, type PlanStair } from './symbols.js';
 
@@ -330,13 +330,23 @@ export function openingMarks(scenes: readonly Scene[]): Map<string, string> {
   return marks;
 }
 
-/** The drawing geometry of one level. `marks` numbers the openings (see `openingMarks`). */
-export function levelPlan(input: string | Uint8Array | object, level: string, marks: ReadonlyMap<string, string> = new Map(), design?: Readonly<Record<string, string>>): LevelPlan {
-  const ev = evaluate(input, design === undefined ? {} : { design });
+/**
+ * The drawing geometry of one level. `marks` numbers the openings (see `openingMarks`). The document
+ * is validated once, with `reader` (default `OFFICIAL_READER`).
+ */
+export function levelPlan(
+  input: string | Uint8Array | object,
+  level: string,
+  marks: ReadonlyMap<string, string> = new Map(),
+  design?: Readonly<Record<string, string>>,
+  reader: ReaderOptions = OFFICIAL_READER,
+): LevelPlan {
+  const ev = evaluate(input, design === undefined ? reader : { ...reader, design });
   if (!ev.valid || !ev.document) throw new InvalidDocumentError(ev.diagnostics);
   if (!ev.view || !ev.analysis) throw new RangeError('the document has no such design, or it is not valid (Core 19.6.2)');
   const doc = ev.view;
-  return planOf(buildScene(doc, level), marks, { doc, derived: deriveFrom(doc, ev.analysis) });
+  const derived = deriveFrom(doc, ev.analysis);
+  return planOf(sceneOf(ev, level, derived), marks, { doc, derived });
 }
 
 /** What a plan needs beyond its scene: the document (roof pitches) and its derived geometry (stairs arriving). */

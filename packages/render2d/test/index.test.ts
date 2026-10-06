@@ -3,6 +3,8 @@ import { InvalidDocumentError, check } from '@floorspec/engine';
 import { describe, expect, it } from 'vitest';
 import { ACCENT, PACKAGE_NAME, PALETTES, buildScene, feetInches, inches, labelPoint, num, renderPlan, squareFeet } from '../src/index.js';
 
+/** A core-only reader (Core 1.6.4): implements no extension, knows none. */
+const CORE_ONLY = {};
 const HOUSES = ['three-room-house', 'two-bedroom-ranch', 'l-shaped-house'] as const;
 const FT = 390144;
 
@@ -305,7 +307,11 @@ describe('label placement', () => {
 });
 
 describe('Core 0.2: fallbacks and clearance envelopes', () => {
-  /** The three-room house as a 0.2 document, with a sofa in the living room and a swing on its entry door. */
+  /**
+   * The three-room house as a 0.2 document, with a sofa in the living room and a swing on its entry
+   * door — read by a core-only reader (`reader: {}`), which draws what it does not know as fallbacks.
+   * The reference reader knows FS_furniture 0.1.0, whose pieces need an asset and a symbol (FS-INV-603).
+   */
   function furnished(): Doc {
     const d = load('three-room-house');
     d.floorspec = '0.2';
@@ -331,16 +337,16 @@ describe('Core 0.2: fallbacks and clearance envelopes', () => {
   it('draws every extension element on the level as its fallback footprint', () => {
     const d = furnished();
     expect(check(d).valid).toBe(true);
-    const svg = renderPlan(d);
+    const svg = renderPlan(d, { reader: CORE_ONLY });
     expect(svg).toContain('<g id="fallbacks">');
     expect(svg).toMatch(/data-id="SOFA" data-kind="FS_furniture:pieces"/);
     expect(svg).not.toContain('id="clearances"');
   });
 
   it('draws clearance envelopes only when asked', () => {
-    const svg = renderPlan(furnished(), { clearances: true });
+    const svg = renderPlan(furnished(), { clearances: true, reader: CORE_ONLY });
     expect(svg).toMatch(/<g id="clearances"><path data-owner="[A-Z0-9]+" data-name="swing" data-purpose="swing"/);
-    expect(renderPlan(furnished(), { clearances: true })).toBe(svg);
+    expect(renderPlan(furnished(), { clearances: true, reader: CORE_ONLY })).toBe(svg);
   });
 
   it('leaves a 0.1 drawing byte-for-byte as it was', () => {

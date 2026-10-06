@@ -17,7 +17,7 @@
  * not define (a wall's top and ends, a slab, a roof, a stair) are given a box projection, which is
  * this exporter's choice and not the standard's.
  */
-import { deriveEvaluation, evaluate, extElements, facingVector, InvalidDocumentError, type Derived, type FloorspecDocument } from '@floorspec/engine';
+import { deriveEvaluation, evaluate, extElements, facingVector, InvalidDocumentError, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { loadMesher, UNITS_PER_METRE, type MeshPart, type Mesher, type PartKind } from '@floorspec/mesh';
 
 export type Vec3 = [number, number, number];
@@ -143,6 +143,8 @@ export interface SceneOptions {
   readonly levels?: readonly string[];
   /** The design to build (Core 19.6): option set → option. Default the primary design. */
   readonly design?: Readonly<Record<string, string>>;
+  /** The reader the document is validated with (Core 1.6.4, 12.2). Default a core-only reader. */
+  readonly reader?: Omit<ValidateOptions, 'design'>;
 }
 
 const M = UNITS_PER_METRE;
@@ -525,7 +527,16 @@ const along = (f: WallFrame, p: Vec3): number => (p[0] - f.S[0]) * f.e[0] + (p[1
  * meshed. Throws the engine's InvalidDocumentError for a document that is not valid.
  */
 export async function buildScene(document: object, options: SceneOptions = {}): Promise<Scene> {
-  const ev = evaluate(document, options.design === undefined ? {} : { design: options.design });
+  const reader = options.reader ?? {};
+  return buildSceneFrom(evaluate(document, options.design === undefined ? reader : { ...reader, design: options.design }), options);
+}
+
+/**
+ * The scene of a document the caller has already evaluated (with its own reader, in the design it
+ * chose), without validating it again: the drawings' 3D views use the evaluation their plans were
+ * drawn from. `options.design` and `options.reader` are the evaluation's and are not read.
+ */
+export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions, 'levels'> = {}): Promise<Scene> {
   if (!ev.valid || ev.document === undefined) throw new InvalidDocumentError(ev.diagnostics);
   const derived = deriveEvaluation(ev);
   const doc = ev.view ?? ev.document;

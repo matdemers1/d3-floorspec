@@ -32,6 +32,34 @@ const KITCHEN_OPTIONS = JSON.parse(
 ) as Prisma.InputJsonObject;
 
 /**
+ * The kitchen as the drawings read it. Drawings read as the api does (OFFICIAL_READER, FLR-T-12.8),
+ * which knows FS_furniture 0.1.0 and refuses the example's pieces, written for a core-only reader,
+ * for want of an asset and a symbol (FS-INV-603); without its furniture the kitchen is valid there.
+ */
+const KITCHEN_DRAWN = Object.fromEntries(Object.entries(KITCHEN_OPTIONS).filter(([k]) => k !== 'extensions' && k !== 'extensionsUsed'));
+
+/** The ranch with a smoke alarm it requires FS_electrical to read (Core 1.6.4): valid under OFFICIAL_READER only. */
+const REQUIRES_ELECTRICAL = {
+  ...(JSON.parse(readFileSync(new URL('../../../../packages/mcp/test/fixtures/two-bedroom-ranch.json', import.meta.url), 'utf8')) as Prisma.InputJsonObject),
+  floorspec: '0.4',
+  extensionsUsed: { FS_electrical: '0.1.0' },
+  extensionsRequired: ['FS_electrical'],
+  extensions: {
+    FS_electrical: {
+      collections: {
+        alarms: {
+          SA1: {
+            fallback: { level: 'MAIN', box: { min: [-96000, -96000, -64000], max: [96000, 96000, 0] } },
+            host: { mode: 'surface', room: 'LIV', surface: 'ceiling', position: [4681728, 3121152] },
+            detects: ['smoke'],
+          },
+        },
+      },
+    },
+  },
+} as Prisma.InputJsonObject;
+
+/**
  * FLR-T-9.3 end to end: an export is asked for over the API, queued on the Postgres job queue,
  * drained by the worker's drain (the same code the worker container runs), and downloaded — a PDF
  * with a sheet per level and a schedule sheet, and DXF drawings, one per level, in a ZIP.
@@ -229,7 +257,7 @@ describe('drawing exports', () => {
 
   it('draws PDF and DXF drawings in the design asked for, and the file says which (FLR-T-9.7)', async () => {
     const operator = await setupOperator(running);
-    const { id } = await projectWithDocument(db, operator, KITCHEN_OPTIONS, 'Kitchen options');
+    const { id } = await projectWithDocument(db, operator, KITCHEN_DRAWN, 'Kitchen options');
     const pdfA = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' }));
     const pdfB = await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', design: { KS: 'KB' } });
     expect(pdfB.status, pdfB.text).toBe(202);
@@ -270,6 +298,22 @@ describe('drawing exports', () => {
     const x = view(await operator.get(`/api/projects/${id}/exports/${dxf.id}`));
     expect(x.result?.files).toEqual([expect.stringMatching(/-level-1\.dxf$/), expect.stringMatching(/-level-2\.dxf$/), expect.stringMatching(/-roof-plan\.dxf$/)]);
     expect(zipNames((await download(operator, `${running.url}${x.download ?? ''}`)).bytes)).toEqual(x.result?.files);
+  });
+
+  it('draws a model that requires an official extension, read as the api reads it (FLR-T-12.8)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');
+    const valid = (await operator.get(`/api/projects/${id}/validate`)).body as { valid: boolean };
+    expect(valid.valid).toBe(true);
+    const pdf = await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' });
+    expect(pdf.status, pdf.text).toBe(202);
+    const dxf = await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf' });
+    expect(dxf.status, dxf.text).toBe(202);
+    expect(await drain.runOnce()).toBe(2);
+    for (const j of [view(pdf), view(dxf)]) {
+      const done = view(await operator.get(`/api/projects/${id}/exports/${j.id}`));
+      expect(done.status, done.error ?? '').toBe('done');
+    }
   });
 
   it('refuses what cannot be drawn before it is queued', async () => {

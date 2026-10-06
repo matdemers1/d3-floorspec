@@ -1,8 +1,12 @@
 /**
  * Plan rendering (FLR-T-2.8): the worker's `renderPlanPng` draws one level of a document as a PNG.
  * It runs in the api process for now — the worker has no job queue yet — behind this interface,
- * so moving it onto a queue later changes the wiring and nothing else.
+ * so moving it onto a queue later changes the wiring and nothing else. The plan is drawn with the
+ * reader the api validates with everywhere (`OFFICIAL_READER`), never a core-only one, so a model
+ * that requires an official extension draws as it validates.
  */
+import { OFFICIAL_READER } from '@floorspec/engine';
+
 export interface PlanRenderOptions {
   readonly level?: string;
   /** The document before a changeset: its changes are drawn ghosted over it. */
@@ -25,7 +29,7 @@ export function workerRenderer(): PlanRenderer {
   return {
     async renderPlanPng(document, options) {
       const { renderPlanPng } = await import('@d3-floorspec/worker/render');
-      return renderPlanPng(document, options);
+      return renderPlanPng(document, { ...options, reader: OFFICIAL_READER });
     },
   };
 }
