@@ -34,6 +34,10 @@ export interface Palette {
   readonly accentInk: string;
   /** Ghosts of what a changeset removes or moves. */
   readonly ghost: string;
+  /** --color-accent: a winder stair's tapered treads, tinted (drawn at a low opacity). */
+  readonly winder: string;
+  /** --color-warning: where the floor above a stair must be open from (Core 0.4, 17.6). */
+  readonly opening: string;
 }
 
 /** The Floorspec accent, the same in both themes. */
@@ -54,6 +58,8 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     accent: ACCENT,
     accentInk: '#101117',
     ghost: '#747888',
+    winder: '#5432be',
+    opening: '#714e00',
   },
   dark: {
     paper: '#101117',
@@ -69,5 +75,7 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     accent: ACCENT,
     accentInk: '#101117',
     ghost: '#999ead',
+    winder: '#978cff',
+    opening: '#e7b45d',
   },
 };
