@@ -12,11 +12,12 @@ import { DESIGN_PARTNER_PROMPT } from './prompts.js';
 import { CRITIQUE_PROMPT_NAME, CritiqueArgs, critiquePrompt } from './prompts/critique.js';
 
 /**
- * The D3 Floorspec MCP server (FLR-T-2.6): eleven verbs over one operation vocabulary.
+ * The D3 Floorspec MCP server (FLR-T-2.6): twelve verbs over one operation vocabulary.
  *
  * Perception — describe, query, validate, findings, render, export — reads; action — apply,
  * propose (a batch, or the electrical assistant's), propose_layouts, accept, reject — writes
- * Floorspec Ops, nothing else (FLR-ADR-008). **There is no tool
+ * Floorspec Ops, nothing else (FLR-ADR-008). create_project makes the empty house those ops
+ * start from, so a conversation can begin with no project at all (FLR-ADR-037). **There is no tool
  * that runs code** (FLR-REQ-058): an agent changes the house by sending typed operations, and a
  * test enumerates the tools to keep it that way.
  *
@@ -29,6 +30,7 @@ export const SERVER_NAME = 'd3-floorspec';
 export const SERVER_VERSION = '0.1.0';
 
 export const TOOL_NAMES = [
+  'floorspec_create_project',
   'floorspec_describe',
   'floorspec_query',
   'floorspec_apply',
@@ -104,7 +106,7 @@ async function resolveProject(client: FloorspecClient, handle: string | undefine
     return found;
   }
   if (projects.length === 1 && projects[0] !== undefined) return projects[0];
-  if (projects.length === 0) throw new ToolError('This credential reaches no projects. Create one in D3 Floorspec first.');
+  if (projects.length === 0) throw new ToolError('This credential reaches no projects yet. Create one with floorspec_create_project, named for the house.');
   throw new ToolError(`Name a project: ${projects.map((p) => `${p.name} (${p.id})`).join(', ')}.`);
 }
 
@@ -205,6 +207,31 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         'render and validate after every change. ' +
         'Agent edits land in a pending changeset a person accepts; every tool takes a changeset by name or ID. ' +
         'The design-partner prompt has the working rules and example calls; the design-critique prompt reviews a plan on daylight, circulation, storage, privacy and furniture fit. Never claim a change without a committed result and a render.',
+    },
+  );
+
+  server.registerTool(
+    'floorspec_create_project',
+    {
+      title: 'Create a project',
+      description: 'A new, empty house for a new design. It has no building or levels: add them first (addElement buildings, addLevel).',
+      inputSchema: compactSchema(z.strictObject({ name: z.string().trim().min(1).max(200) })),
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    async (args) => {
+      try {
+        const existing = (await client.listProjects()).filter((p) => p.name.toLowerCase() === args.name.toLowerCase());
+        if (existing.length > 0) {
+          throw new ToolError(`A project is already called "${args.name}" (${existing.map((p) => p.id).join(', ')}): use it, or create this one under another name.`);
+        }
+        const project = await client.createProject(args.name);
+        return ok(
+          `Created "${project.name}" (${project.id}). It is empty: add a building and its levels next, then rooms. Name this project in every call while the credential reaches more than one.`,
+          { project: project.id, name: project.name, head: project.head },
+        );
+      } catch (error) {
+        return failure(error);
+      }
     },
   );
 

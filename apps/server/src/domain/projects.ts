@@ -3,6 +3,7 @@ import { Prisma } from '../db.js';
 import { contentHash } from '@floorspec/engine';
 import type { Json } from '../model/document.js';
 import { emptyDocument, FLOORSPEC_VERSION } from '../model/document.js';
+import type { Author } from './history.js';
 
 /** The head every project has from birth. Changesets add others in later phases. */
 export const MAIN = 'main';
@@ -23,9 +24,12 @@ export async function storeVersion(tx: Tx, document: Json): Promise<string> {
 /**
  * Create a project at version 0: the empty Floorspec document, stored canonically, `main` pointing
  * at it, and op 1 in the log — a `createProject` op, because every change is an op (FLR-ADR-008),
- * the first one included.
+ * the first one included. The project belongs to the author's account whoever made it: a person,
+ * their write token, or an agent acting for them — the log says which.
  */
-export async function createProject(tx: Tx, ownerAccountId: string, name: string) {
+export async function createProject(tx: Tx, author: Author, name: string) {
+  const ownerAccountId = author.accountId;
+  if (ownerAccountId === null) throw new Error('a project is created for an account');
   const project = await tx.project.create({ data: { ownerAccountId, name } });
   const hash = await storeVersion(tx, emptyDocument(name));
   await tx.head.create({ data: { projectId: project.id, name: MAIN, versionHash: hash } });
@@ -34,8 +38,10 @@ export async function createProject(tx: Tx, ownerAccountId: string, name: string
       projectId: project.id,
       seq: 1,
       kind: 'create',
-      authorKind: 'account',
+      authorKind: author.kind,
       authorAccountId: ownerAccountId,
+      authorAgent: author.agent,
+      authorTokenId: author.tokenId,
       ops: [{ op: 'createProject', name, floorspec: FLOORSPEC_VERSION }] as Prisma.InputJsonArray,
       beforeHash: null,
       afterHash: hash,

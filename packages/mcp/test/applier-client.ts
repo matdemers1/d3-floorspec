@@ -20,6 +20,9 @@ export class ApplierClient implements FloorspecClient {
   listProjects() {
     return Promise.resolve([{ id: PROJECT, name: 'Lake house', head: contentHash(this.document) }]);
   }
+  createProject(): Promise<never> {
+    return Promise.reject(new Error('the applier client holds one project'));
+  }
   model() {
     return Promise.resolve({ hash: contentHash(this.document), document: this.document, text: canonicalize(this.document) });
   }
