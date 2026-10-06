@@ -235,40 +235,48 @@ export class LevelGeometry {
     return side > 0 ? this.leftLine(v, end) : this.rightLine(v, end);
   }
 
-  /** 21.4: does p lie beyond the far end of piece a of a face path — past the rounded face vertex there? */
-  private beyond(p: XPoint, path: { v: string; end: End }[], a: number, side: 1 | -1): boolean {
-    const { v, end } = path[a + 1]!;
+  /** 21.4: the rounded face vertex where piece k (k ≥ 1) of a face path starts. */
+  private faceVertex(path: { v: string; end: End }[], k: number, side: 1 | -1): IPoint {
+    const { v, end } = path[k]!;
     const ends = this.ends.get(v)!;
     const i = ends.indexOf(end);
     const cs = this.corners.get(v)!;
-    const fv = this.round(side > 0 ? cs[i]![0]! : cs[(i - 1 + ends.length) % ends.length]!.at(-1)!);
-    const d = path[a]!.end.d;
-    return p.x.sub(Surd.of(fv[0])).mulInt(d[0]).add(p.y.sub(Surd.of(fv[1])).mulInt(d[1])).sign() > 0;
+    return this.round(side > 0 ? cs[i]![0]! : cs[(i - 1 + ends.length) % ends.length]!.at(-1)!);
+  }
+
+  /**
+   * 21.4: p lies on piece k of a face path — not before the rounded face vertex that starts it (the first has
+   * none) and not past the one that ends it (the last has none), along the piece's direction. Exact.
+   */
+  private onPiece(p: XPoint, path: { v: string; end: End }[], k: number, side: 1 | -1): boolean {
+    const d = path[k]!.end.d;
+    const along = (v: IPoint): number => p.x.sub(Surd.of(v[0])).mulInt(d[0]).add(p.y.sub(Surd.of(v[1])).mulInt(d[1])).sign();
+    if (k > 0 && along(this.faceVertex(path, k, side)) < 0) return false;
+    if (k + 1 < path.length && along(this.faceVertex(path, k + 1, side)) > 0) return false;
+    return true;
   }
 
   /**
    * 21.4: where the `s1` face of one edge meets the `s2` face of another at junction J (+1 its J-left, -1
-   * its J-right): along their face paths, moving to the next piece of each path the point lies beyond,
-   * while there is one. `a` and `b` count the pieces passed — the face vertices the join cuts off.
+   * its J-right): the first intersection lying on both pieces — the first face's pieces outwards and, for
+   * each, the second's — or the first pieces' intersection when none does. `a` and `b` are the pieces it
+   * lies on: the face vertices the join cuts off.
    */
   private meet(jid: string, e1: End, s1: 1 | -1, e2: End, s2: 1 | -1): { p: XPoint; a: number; b: number } {
-    if (!this.junctions.has(jid)) return { p: intersect(this.line(jid, e1, s1), this.line(jid, e2, s2)), a: 0, b: 0 };
+    const first = intersect(this.line(jid, e1, s1), this.line(jid, e2, s2));
+    if (!this.junctions.has(jid)) return { p: first, a: 0, b: 0 };
     const p1 = this.path(jid, e1);
     const p2 = this.path(jid, e2);
-    let a = 0;
-    let b = 0;
-    let p = intersect(this.line(jid, e1, s1), this.line(jid, e2, s2));
-    for (;;) {
-      const adv1 = a + 1 < p1.length && this.beyond(p, p1, a, s1) ? 1 : 0;
-      const adv2 = b + 1 < p2.length && this.beyond(p, p2, b, s2) ? 1 : 0;
-      if (!adv1 && !adv2) return { p, a, b };
-      const l1 = this.line(p1[a + adv1]!.v, p1[a + adv1]!.end, s1);
-      const l2 = this.line(p2[b + adv2]!.v, p2[b + adv2]!.end, s2);
-      if (l1.A * l2.B - l2.A * l1.B === 0n) return { p, a, b };
-      p = intersect(l1, l2);
-      a += adv1;
-      b += adv2;
-    }
+    if (p1.length === 1 && p2.length === 1) return { p: first, a: 0, b: 0 };
+    for (let a = 0; a < p1.length; a++)
+      for (let b = 0; b < p2.length; b++) {
+        const l1 = this.line(p1[a]!.v, p1[a]!.end, s1);
+        const l2 = this.line(p2[b]!.v, p2[b]!.end, s2);
+        if (l1.A * l2.B - l2.A * l1.B === 0n) continue;
+        const q = a === 0 && b === 0 ? first : intersect(l1, l2);
+        if (this.onPiece(q, p1, a, s1) && this.onPiece(q, p2, b, s2)) return { p: q, a, b };
+      }
+    return { p: first, a: 0, b: 0 };
   }
 
   private cut(jid: string, end: End, side: 1 | -1): number {

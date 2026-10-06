@@ -1,0 +1,9 @@
+{
+  "description": "A south eave of three edges: edges 0 and 4 at 3 in 12 either side of edge 2, a foot further in at 12 in 12. A third of a foot up all three lie on one line: the two fast edges continue over the run as one wavefront edge, sharing one plane, and the slow one stops (16.4.4). Their plane's pieces are divided between them midway between their facing ends, at x = 15 feet: a seam, not a line, while the slow face's top is two breaks, one either side of it.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.4.4"
+  ]
+}

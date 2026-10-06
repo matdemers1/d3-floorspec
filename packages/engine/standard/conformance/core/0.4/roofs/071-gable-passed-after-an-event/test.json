@@ -1,0 +1,7 @@
+{
+  "description": "A U-shaped house open to the north whose inner faces, edges 2, 3 and 4, and the east arm's end, edge 1, are gables, and whose west arm's end, edge 5, rises at 3 in 12. Edge 5's line moves 4 feet for each foot it rises, so 13/4 feet up it lies on the line of edge 3, the gable across the bottom of the opening, facing the same way, with edge 4 gone between them: the faster continues over the run and the gable stops (16.4.4). Its wavefront edge then meets edge 2's, whose end it would push down past the gable's end (16.4.6, condition 3): the surface is not derived, FS-LINT-015. At t = 0 every gable was sound.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.4"
+  ]
+}

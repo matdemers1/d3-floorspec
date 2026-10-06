@@ -131,6 +131,7 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   await settled(page);
   await page.keyboard.press('ControlOrMeta+z');
   await expect.poll(async () => JSON.stringify((furniture(await modelOf(page, project))[0] as unknown as { host: unknown }).host)).toBe(hostBefore);
+  await settled(page);
 
   // ── An island in front of the door: a note, never an error.
   await page.keyboard.press('f');

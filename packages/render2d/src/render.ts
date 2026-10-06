@@ -34,7 +34,7 @@ export interface RenderOptions {
   readonly clearances?: boolean;
   /**
    * The roof layer (Core 0.3, 16): each roof on the level — its eave outline dashed, its ridges,
-   * hips and valleys, and the eave edge of each gable end. Default false.
+   * hips, valleys and (Core 0.4) breaks, and the eave edge of each gable end. Default false.
    */
   readonly roof?: boolean;
 }

@@ -1,7 +1,7 @@
 {
   "description": "The L-shaped house with both wing ends gabled: each ridge runs to its gable's midpoint, a valley and a hip meet the ridges where they cross, and each gable end is a triangle 6 feet high.",
   "covers": [
-    "FS-CORE-16.5.1",
-    "FS-CORE-16.4.1"
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.4.2"
   ]
 }

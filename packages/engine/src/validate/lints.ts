@@ -10,7 +10,7 @@ import { srcOf } from '../derive/level.js';
 import { analyseProgram } from '../derive/program.js';
 import { circulationLints } from '../circulation/circulation.js';
 import type { Analysis, Reporter } from './invariants.js';
-import { surfaceDerived } from '../roofs/roofs.js';
+import { surfaceNotDerivedReason } from '../roofs/roofs.js';
 import { StairContext, stairLints, stepsDerived } from '../stairs/stairs.js';
 import { references } from './references.js';
 
@@ -121,10 +121,11 @@ export function lints(doc: FloorspecDocument, analysis: Analysis, r: Reporter): 
     circulationLints(doc, analysis, r);
   }
 
-  // 015: roofs whose surface this draft does not derive (16.4.4); 016: winder and spiral stairs (17.7).
-  for (const [id, roof] of entries(doc.roofs))
-    if (!surfaceDerived(roof))
-      r.report('FS-LINT-015', `${id}'s surface is not derived by this draft: its pitches differ, its outline has an oblique edge, or a gable is not at the end of a wing.`, [id], { pointer: ptr('roofs', id) });
+  // 015: roofs whose surface this draft does not derive (16.4.4 of 0.3, 16.4.6 of 0.4); 016: winder and spiral stairs (17.7).
+  for (const [id, roof] of entries(doc.roofs)) {
+    const why = surfaceNotDerivedReason(roof, analysis.core04 ?? false);
+    if (why !== undefined) r.report('FS-LINT-015', `${id}'s surface is not derived by this draft: ${why}.`, [id], { pointer: ptr('roofs', id) });
+  }
   // Core 0.4 derives every stair's steps, and reports 018 and 019 instead (17.6, 17.7).
   if (!analysis.core04) {
     for (const [id, st] of entries(doc.stairs))

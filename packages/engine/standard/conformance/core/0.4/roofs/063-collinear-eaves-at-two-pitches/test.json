@@ -1,0 +1,8 @@
+{
+  "description": "The rectangle with the 2-foot bay, its south eave on two collinear edges, but edge 4, east of the bay, at 9 in 12 and edge 0 at 6 in 12: on one line, facing the same way, at two pitches, so they do not share a plane. Their lines move apart as they rise and never lie on one line again. The bay's west side, at 6 in 12, moves faster than edge 4: its face spreads east between those of edges 0 and 4, bounded by a valley and a hip, until it meets the east end's face in a short ridge 4 feet up, at x = 22 feet.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

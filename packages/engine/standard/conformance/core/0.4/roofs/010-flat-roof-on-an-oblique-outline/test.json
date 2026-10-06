@@ -2,7 +2,7 @@
   "description": "A flat roof over the five-sided footprint, overhanging 500 mm: the moved lines of its oblique edges have irrational positions, so the outline's vertices are exact corner points rounded once - the apex moves up 500 mm times the square root of 5 over 2.",
   "covers": [
     "FS-CORE-16.3.1",
-    "FS-CORE-16.5.1",
+    "FS-CORE-16.5.2",
     "FS-CORE-2.2.1"
   ]
 }

@@ -290,7 +290,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-LINT-012` | warning | a room not reachable from an entry of its building | the room | 14.4 |
 | `FS-LINT-013` | warning | a sleeping room reachable only through another sleeping room | the room | 14.4 |
 | `FS-LINT-014` | warning | an evaluated building (14.4) that has rooms but no entry | the building | 14.4 |
-| `FS-LINT-015` | info | a roof whose surface this draft does not derive (16.4.4) | the roof | 16.4.1 |
+| `FS-LINT-015` | info | a roof whose surface this draft does not derive (16.4.6) | the roof | 16.4.2 |
 | `FS-LINT-016` | info | Core 0.3 only: a winder or a spiral stair, whose steps 0.3 did not derive. A reader of 0.4 does not report it | the stair | — |
 | `FS-LINT-017` | info | an option set with exactly one option | the option set | 19.8 |
 | `FS-LINT-018` | warning | a winder stair without a newel, or a spiral stair whose width is half its diameter: its tapered treads narrow to a point | the stair | 17.7.6 |

@@ -1,7 +1,7 @@
 {
   "description": "A hip roof on a square 12 feet across, at 12 in 12: its four hips meet at one point 6 feet above its eaves, and it has no ridge. (A square footprint makes a pyramid.)",
   "covers": [
-    "FS-CORE-16.5.1",
-    "FS-CORE-16.4.1"
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.4.2"
   ]
 }

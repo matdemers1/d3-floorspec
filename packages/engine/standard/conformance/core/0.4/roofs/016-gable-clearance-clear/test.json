@@ -1,7 +1,8 @@
 {
-  "description": "A G-shaped house whose west arm, 10 feet wide, ends in a gable, edge 8, facing the south eave of the top wing 5 feet away: the gable's clearance is 5 feet deep, and the eave lies on its far side, not inside it, so the roof is derived.",
+  "description": "A G-shaped house whose west arm, 10 feet wide, ends in a gable, edge 8, facing the south eave of the top wing 5 feet away across a gap outside the outline. The wavefront moves inside the outline, so the top wing does not reach the gable: the arm's two planes meet in a ridge that runs to the gable's midpoint, as Core 0.3 derived it.",
   "covers": [
-    "FS-CORE-16.4.1",
-    "FS-CORE-16.5.1"
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
   ]
 }

@@ -2,6 +2,6 @@
   "description": "A roof with its overhang 0, an edge whose gable is false and one that is empty, written out: the canonical form omits each - and \"edges\", left empty - and keeps \"height\", whose default is derived.",
   "covers": [
     "FS-CORE-9.2.1",
-    "FS-CORE-16.5.1"
+    "FS-CORE-16.5.2"
   ]
 }

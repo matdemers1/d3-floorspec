@@ -1,0 +1,8 @@
+{
+  "description": "A house 20 feet by 8 with a 2-foot bay on its south side and a notch in its north above it, at 6 in 12. Half a foot up - a foot in - the bay's front closes at (3 feet, 0) while the notch's west corner reaches the west eave's wavefront at (1 foot, 5 feet) and splits it: two events at one elevation and two points, resolved at once from the wavefront there (16.4.4). The roof is the one Core 0.3 derived for the house, value for value.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

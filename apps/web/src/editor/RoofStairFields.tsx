@@ -1,4 +1,5 @@
 import { Button, SegmentedControl, Select, Switch } from '@d3cloud/ui';
+import { surfaceNotDerivedReason } from '@floorspec/engine';
 import { RotateCw } from 'lucide-react';
 import { useEditor, type EditorStore } from './store';
 import { labelOf, sortedLevels, type EditorModel } from './model';
@@ -32,7 +33,16 @@ const unset = (id: string, path: string): Batch => [{ op: 'unsetProperty', id, p
 
 const ROOF_KINDS: Readonly<Record<string, string>> = { flat: 'Flat', shed: 'Shed', gable: 'Gable', hip: 'Hip' };
 
-/** A roof (Core 16.1): pitch, overhang, eave height and thickness, gables edge by edge, and what is derived. */
+/** Why the engine does not derive a roof's surface (Core 0.4, 16.4.6), in words. */
+function notDerived(element: Json): string {
+  try {
+    return surfaceNotDerivedReason(element as unknown as Parameters<typeof surfaceNotDerivedReason>[0], true) ?? 'it is not derived';
+  } catch {
+    return 'its eave outline does not fit its footprint';
+  }
+}
+
+/** A roof (Core 16.1): pitch, overhang, eave height and thickness, gables and pitches edge by edge, and what is derived. */
 export function RoofBody({ ctx }: { ctx: FloorCtx }) {
   const { element, id, units, readOnly, model } = ctx;
   const name = labelOf(model, id);
@@ -107,18 +117,34 @@ export function RoofBody({ ctx }: { ctx: FloorCtx }) {
           {footprint.map((a, i) => {
             const b = footprint[(i + 1) % footprint.length] ?? a;
             const gable = edges[String(i)]?.['gable'] === true;
+            const own = edges[String(i)]?.['pitch'] as { rise: number; run: number } | undefined;
+            const run = own?.run ?? pitch?.run ?? 12;
             return (
-              <Switch
-                key={i}
-                checked={gable}
-                disabled={readOnly}
-                onCheckedChange={(on) => { ctx.edit(`${on ? 'Make' : 'Slope'} edge ${String(i)} of ${name}${on ? ' a gable' : ''}`, setEdge(i, on ? { gable: true, pitch: undefined } : { gable: undefined })); }}
-              >
-                {`Edge ${String(i)} · ${formatLen(Math.hypot(b[0] - a[0], b[1] - a[1]), units)} · gable`}
-              </Switch>
+              <div key={i}>
+                <Switch
+                  checked={gable}
+                  disabled={readOnly}
+                  onCheckedChange={(on) => { ctx.edit(`${on ? 'Make' : 'Slope'} edge ${String(i)} of ${name}${on ? ' a gable' : ''}`, setEdge(i, on ? { gable: true, pitch: undefined } : { gable: undefined })); }}
+                >
+                  {`Edge ${String(i)} · ${formatLen(Math.hypot(b[0] - a[0], b[1] - a[1]), units)} · gable`}
+                </Switch>
+                {gable ? null : (
+                  <IntField
+                    label={`Edge ${String(i)} pitch rise`}
+                    value={own?.rise}
+                    min={1}
+                    max={48}
+                    unit={`in ${String(run)}`}
+                    allowEmpty
+                    placeholder={pitch === undefined ? 'None' : `${String(pitch.rise)} (the roof's)`}
+                    disabled={readOnly}
+                    onCommit={(v) => { ctx.edit(`Set pitch of edge ${String(i)} of ${name}`, setEdge(i, { pitch: v === null ? undefined : { rise: v, run } })); }}
+                  />
+                )}
+              </div>
             );
           })}
-          <p className="fs-note">A gable is a vertical end: the roof stops above that edge instead of sloping up from it.</p>
+          <p className="fs-note">A gable is a vertical end: the roof stops above that edge instead of sloping up from it. An edge with a pitch of its own rises at it — a saltbox's steep front, a porch's shallow side; empty, it takes the roof's.</p>
         </Section>
       ) : null}
       {view !== undefined ? (
@@ -128,9 +154,9 @@ export function RoofBody({ ctx }: { ctx: FloorCtx }) {
           {surface ? (
             <ReadOnlyField label="High point" value={`${formatLen(surface.high - elevation, units)} above the level`} />
           ) : (
-            <p className="fs-note">Floorspec 0.3 does not derive this roof's surface — its pitches differ, its outline has an oblique edge, or a gable is not at the end of a wing (FS-LINT-015). Its eave outline is drawn.</p>
+            <p className="fs-note">Floorspec does not derive this roof's surface — {notDerived(element)} (FS-LINT-015). Its eave outline is drawn.</p>
           )}
-          {surface ? <ReadOnlyField label="Faces · lines" value={`${String(surface.faces.length)} faces · ${String(surface.lines.length)} ridges, hips and valleys`} /> : null}
+          {surface ? <ReadOnlyField label="Faces · lines" value={`${String(surface.faces.length)} faces · ${String(surface.lines.length)} ridges, hips, valleys and breaks`} /> : null}
         </Section>
       ) : null}
     </>

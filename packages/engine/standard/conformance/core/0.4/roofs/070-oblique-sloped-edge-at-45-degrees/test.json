@@ -1,0 +1,7 @@
+{
+  "description": "The same house with its 45-degree cut sloped: the cut is 4 feet times the square root of 2 long, so its plane has irrational coefficients. Its surface is not derived (16.4.6, condition 2): FS-LINT-015.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-10.2.1"
+  ]
+}

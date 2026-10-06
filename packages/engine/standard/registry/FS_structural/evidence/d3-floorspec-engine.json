@@ -3,21 +3,21 @@
   "implementation": {
     "name": "D3 Floorspec (@floorspec/engine)",
     "url": "https://github.com/matdemers1/d3-floorspec",
-    "version": "bafeefa33519ccff0fb5dd54478e496fc5b76a58"
+    "version": "579291914a2e1c40d311faac0b2ebb5522f930f2"
   },
   "maintainer": "matdemers1",
   "sharesCodeWith": [],
   "extension": "FS_structural",
   "extensionVersion": "0.1.0",
   "suite": {
-    "commit": "3b8d35a0287a4f8ad3f934abaf494bc42fd9646a",
-    "tests": 72
+    "commit": "e5fd4ca68144497917f5ded138ffebbf05e73c99",
+    "tests": 73
   },
   "result": {
-    "passed": 72,
+    "passed": 73,
     "failed": 0
   },
   "ran": "2026-10-05",
-  "run": "https://github.com/matdemers1/d3-floorspec/actions/runs/37302079499",
+  "run": "https://github.com/matdemers1/d3-floorspec/actions/runs/37331888892",
   "command": "pnpm --filter @floorspec/engine conformance (test/extensions.node.test.ts)"
 }

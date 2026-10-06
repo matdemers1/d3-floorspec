@@ -1,0 +1,8 @@
+{
+  "description": "The L-shaped house, its wing along X at 6 in 12 and its wing along Y - edges 3, 4 and 5 - at 9 in 12. The reflex corner's valley does not run at 45 degrees: it bends the wavefront between two speeds, and the two wings' ridges meet at different heights - the Y wing's, steeper, 9 feet above the eave and the X wing's 6 feet - joined by a hip down from the higher to the lower.",
+  "covers": [
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.4.3",
+    "FS-CORE-16.5.2"
+  ]
+}

@@ -76,6 +76,7 @@ export {
   type DerivedStair,
   type EnvelopeRef,
 } from './derive/derive.js';
+export { surfaceNotDerivedReason } from './roofs/roofs.js';
 export { analyseCirculation, type CirculationAnalysis, type BuildingCirculation } from './circulation/circulation.js';
 export { loadKnownExtensions, knownEntry, satisfies as versionSatisfies, compareVersions } from './validate/registry.js';
 export { facingVector, direction } from './exact/angle.js';
