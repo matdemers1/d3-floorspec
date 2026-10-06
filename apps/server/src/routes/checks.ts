@@ -148,7 +148,8 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
     if ((q.width ?? 0) > MAX_3D_WIDTH) throw new HttpError(400, `a 3D render is at most ${String(MAX_3D_WIDTH)} pixels wide`);
     if (q.camera !== undefined && q.room !== undefined) throw new HttpError(400, 'a 3D render is from a named camera or from a room, not both');
     const design = designQuery(q.design);
-    const ev = evaluate(at.document as object, design === undefined ? {} : { design });
+    // Read as the worker renders it and as the editor validates it (OFFICIAL_READER, FLR-T-12.10).
+    const ev = evaluate(at.document as object, { ...OFFICIAL_READER, ...(design === undefined ? {} : { design }) });
     if (!ev.valid || ev.document === undefined)
       throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this model cannot be drawn in 3D', detail: 'The model is not valid. Run validate to see why.' });
     if (ev.view === undefined) throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this design cannot be drawn', detail: 'The design names no design of this model, or that design is not valid.' });

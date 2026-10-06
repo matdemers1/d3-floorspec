@@ -7,7 +7,7 @@ import { createDrain, type Drain } from '@d3-floorspec/worker/queue';
 import type { Prisma } from '../../src/generated/prisma/client.js';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { reset, setupOperator, start, testDb, TEST_ENV, type Browser, type Reply, type Running } from './helpers.js';
-import { projectWithDocument } from './drawings-support.js';
+import { KITCHEN_AS_WRITTEN, projectWithDocument, REQUIRES_ELECTRICAL } from './drawings-support.js';
 
 /**
  * FLR-T-9.4 end to end: an IFC export is asked for over the API, queued on the Postgres job queue,
@@ -129,6 +129,27 @@ describe('IFC exports', () => {
       expect(file.text).toContain("IFCIDENTIFIER('GAB')");
     }
     expect(await db.auditLog.count({ where: { action: 'export.request', targetId: view(asked).id } })).toBe(1);
+  }, 60_000);
+
+  it('exports a model that requires an official extension, and refuses one the editor calls invalid (FLR-T-12.10)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');
+    const asked = await operator.post(`/api/projects/${id}/exports`, { kind: 'ifc' });
+    expect(asked.status, asked.text).toBe(202);
+    expect(await drain.runOnce()).toBe(1);
+    const done = view(await operator.get(`/api/projects/${id}/exports/${view(asked).id}`));
+    expect(done.status, done.error ?? '').toBe('done');
+    if (REAL) {
+      expect(done.result?.ifc?.validation.errors).toBe(0);
+      // The alarm is an IfcBuildingElementProxy, its fallback box (Annex A).
+      expect(done.result?.ifc?.entities).toMatchObject({ IfcSpace: expect.any(Number) as number });
+      const file = await download(operator, `${running.url}${done.download ?? ''}`);
+      expect(file.text).toContain("'FS_electrical:alarms'");
+    }
+    const { id: kitchen } = await projectWithDocument(db, operator, KITCHEN_AS_WRITTEN, 'Kitchen as written');
+    const refused = await operator.post(`/api/projects/${kitchen}/exports`, { kind: 'ifc' });
+    expect(refused.status, refused.text).toBe(422);
+    expect(await db.job.count({ where: { projectId: kitchen } })).toBe(0);
   }, 60_000);
 
   it('exports the whole model: an IFC export takes no levels', async () => {

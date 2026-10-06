@@ -44,6 +44,8 @@ async function still(page: Page): Promise<void> {
  * "background could not be determined" (an image node) and moves on. So it is checked here, by the
  * same WCAG 1.4.3 arithmetic, against every surface it can sit on: the well the plan is drawn in,
  * and each room's fill composited over it. Opacity on the text or its groups counts against it.
+ * Text painted over a halo — a stroke at least 2 px wide under its fill (`paint-order: stroke`) —
+ * sits on that halo wherever it is drawn: it is checked against the halo over each of those surfaces.
  */
 async function svgTextContrast(page: Page): Promise<{ failures: string[]; checked: string[] }> {
   return page.evaluate(() => {
@@ -102,7 +104,10 @@ async function svgTextContrast(page: Page): Promise<{ failures: string[]; checke
           const bold = Number(style.fontWeight) >= 700;
           const needed = size >= 24 || (bold && size >= 18.66) ? 3 : 4.5;
           const alpha = fill[3] * Number(style.fillOpacity) * opacityOf(part, svg);
-          const worst = Math.min(...surfaces.map((bg) => ratio(over([fill[0], fill[1], fill[2], alpha], bg), bg)));
+          const halo = parse(style.stroke);
+          const haloed = halo !== null && style.paintOrder.trim().startsWith('stroke') && parseFloat(style.strokeWidth) >= 2;
+          const grounds = haloed ? surfaces.map((bg) => over([halo[0], halo[1], halo[2], halo[3] * Number(style.strokeOpacity) * opacityOf(part, svg)], bg)) : surfaces;
+          const worst = Math.min(...grounds.map((bg) => ratio(over([fill[0], fill[1], fill[2], alpha], bg), bg)));
           checked.push(`${part.textContent.trim()}=${worst.toFixed(2)}`);
           if (worst < needed) failures.push(`svg-text-contrast: "${part.textContent.trim()}" (${part.getAttribute('class') ?? 'text'}) is ${worst.toFixed(2)}:1, needs ${String(needed)}:1`);
         }
@@ -346,19 +351,14 @@ test('every screen and state has no axe violations, in light and in dark', async
   await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('button', { name: 'Flip bulge' })).toBeVisible();
   await audit(page, 'editor, an arc wall selected (Core 0.4)');
   // FLR-T-12.9: a roof selected — its edges numbered on the plan and listed one row each — and a
-  // stair selected, outlined only, its winders tinted. The rooms' floor finishes are left out: a
-  // floor tinted by its finish puts the plan's faint area labels under 4.5:1, which is not this task's.
+  // stair selected, outlined only, its winders tinted. The house is loaded whole, its rooms' floor
+  // finishes with it (FLR-T-12.10): room names, areas and dimensions on a finish-tinted floor read at 4.5:1.
   const p7 = await page.request.post('/api/projects', { data: { name: 'P7 house' } });
   expect(p7.status(), await p7.text()).toBe(201);
   const p7id = ((await p7.json()) as { id: string }).id;
   const p7Doc = JSON.parse(readFileSync(new URL('./fixtures/l-stair-hip-roof.json', import.meta.url), 'utf8')) as Record<string, Record<string, unknown>>;
   const p7Batch = ['materials', 'types', 'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'stairs', 'roofs'].flatMap((collection) =>
-    Object.entries(p7Doc[collection] ?? {}).map(([id, element]) => ({
-      op: 'addElement',
-      collection,
-      id,
-      element: collection === 'rooms' ? Object.fromEntries(Object.entries(element as Record<string, unknown>).filter(([k]) => k !== 'floorFinish')) : element,
-    })),
+    Object.entries(p7Doc[collection] ?? {}).map(([id, element]) => ({ op: 'addElement', collection, id, element })),
   );
   expect((await page.request.post(`/api/projects/${p7id}/ops`, { data: { batch: p7Batch } })).status()).toBe(201);
   await page.goto(`/projects/${p7id}/editor`);

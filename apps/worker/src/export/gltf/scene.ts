@@ -17,7 +17,7 @@
  * not define (a wall's top and ends, a slab, a roof, a stair) are given a box projection, which is
  * this exporter's choice and not the standard's.
  */
-import { deriveEvaluation, evaluate, extElements, facingVector, InvalidDocumentError, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
+import { deriveEvaluation, evaluate, extElements, facingVector, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { loadMesher, UNITS_PER_METRE, type MeshPart, type Mesher, type PartKind } from '@floorspec/mesh';
 
 export type Vec3 = [number, number, number];
@@ -143,7 +143,11 @@ export interface SceneOptions {
   readonly levels?: readonly string[];
   /** The design to build (Core 19.6): option set → option. Default the primary design. */
   readonly design?: Readonly<Record<string, string>>;
-  /** The reader the document is validated with (Core 1.6.4, 12.2). Default a core-only reader. */
+  /**
+   * The reader the document is validated with (Core 1.6.4, 12.2). Default `OFFICIAL_READER`, the
+   * reader the api and the editor run (FLR-T-12.10), so a model that requires an official extension
+   * is built and one the editor calls invalid is refused.
+   */
   readonly reader?: Omit<ValidateOptions, 'design'>;
 }
 
@@ -523,11 +527,12 @@ function wallFrame(doc: FloorspecDocument, derived: Derived, id: string): WallFr
 const along = (f: WallFrame, p: Vec3): number => (p[0] - f.S[0]) * f.e[0] + (p[1] - f.S[1]) * f.e[1];
 
 /**
- * Build the scene of a document: evaluated (in the design asked for, else the primary), derived and
- * meshed. Throws the engine's InvalidDocumentError for a document that is not valid.
+ * Build the scene of a document: evaluated once (with `options.reader`, default `OFFICIAL_READER`,
+ * in the design asked for, else the primary), derived and meshed. Throws the engine's
+ * InvalidDocumentError for a document that is not valid.
  */
 export async function buildScene(document: object, options: SceneOptions = {}): Promise<Scene> {
-  const reader = options.reader ?? {};
+  const reader = options.reader ?? OFFICIAL_READER;
   return buildSceneFrom(evaluate(document, options.design === undefined ? reader : { ...reader, design: options.design }), options);
 }
 

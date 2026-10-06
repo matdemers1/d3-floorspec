@@ -8,7 +8,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Prisma } from '../../src/generated/prisma/client.js';
-import { projectWithDocument } from './drawings-support.js';
+import { KITCHEN_AS_WRITTEN, KITCHEN_OPTIONS, projectWithDocument, REQUIRES_ELECTRICAL } from './drawings-support.js';
 import { upload, type UploadedAsset } from './assets-support.js';
 import { tilePng } from '../support/images.js';
 import { contentHash } from '@floorspec/engine';
@@ -26,38 +26,6 @@ const BACKSPLASH = JSON.parse(
 /** The L-shaped stair and hip roof house (FLR-T-9.7): a roof plan sheet and file. */
 const L_STAIR = JSON.parse(readFileSync(new URL('../../../web/e2e/fixtures/l-stair-hip-roof.json', import.meta.url), 'utf8')) as Prisma.InputJsonObject;
 
-/** Core 0.3's kitchen with two option sets: a design to choose (FLR-T-9.2). */
-const KITCHEN_OPTIONS = JSON.parse(
-  readFileSync(new URL('../../../../packages/engine/standard/conformance/core/0.3/examples/002-kitchen-options/input.json', import.meta.url), 'utf8'),
-) as Prisma.InputJsonObject;
-
-/**
- * The kitchen as the drawings read it. Drawings read as the api does (OFFICIAL_READER, FLR-T-12.8),
- * which knows FS_furniture 0.1.0 and refuses the example's pieces, written for a core-only reader,
- * for want of an asset and a symbol (FS-INV-603); without its furniture the kitchen is valid there.
- */
-const KITCHEN_DRAWN = Object.fromEntries(Object.entries(KITCHEN_OPTIONS).filter(([k]) => k !== 'extensions' && k !== 'extensionsUsed'));
-
-/** The ranch with a smoke alarm it requires FS_electrical to read (Core 1.6.4): valid under OFFICIAL_READER only. */
-const REQUIRES_ELECTRICAL = {
-  ...(JSON.parse(readFileSync(new URL('../../../../packages/mcp/test/fixtures/two-bedroom-ranch.json', import.meta.url), 'utf8')) as Prisma.InputJsonObject),
-  floorspec: '0.4',
-  extensionsUsed: { FS_electrical: '0.1.0' },
-  extensionsRequired: ['FS_electrical'],
-  extensions: {
-    FS_electrical: {
-      collections: {
-        alarms: {
-          SA1: {
-            fallback: { level: 'MAIN', box: { min: [-96000, -96000, -64000], max: [96000, 96000, 0] } },
-            host: { mode: 'surface', room: 'LIV', surface: 'ceiling', position: [4681728, 3121152] },
-            detects: ['smoke'],
-          },
-        },
-      },
-    },
-  },
-} as Prisma.InputJsonObject;
 
 /**
  * FLR-T-9.3 end to end: an export is asked for over the API, queued on the Postgres job queue,
@@ -257,7 +225,7 @@ describe('drawing exports', () => {
 
   it('draws PDF and DXF drawings in the design asked for, and the file says which (FLR-T-9.7)', async () => {
     const operator = await setupOperator(running);
-    const { id } = await projectWithDocument(db, operator, KITCHEN_DRAWN, 'Kitchen options');
+    const { id } = await projectWithDocument(db, operator, KITCHEN_OPTIONS, 'Kitchen options');
     const pdfA = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' }));
     const pdfB = await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', design: { KS: 'KB' } });
     expect(pdfB.status, pdfB.text).toBe(202);
@@ -300,20 +268,41 @@ describe('drawing exports', () => {
     expect(zipNames((await download(operator, `${running.url}${x.download ?? ''}`)).bytes)).toEqual(x.result?.files);
   });
 
-  it('draws a model that requires an official extension, read as the api reads it (FLR-T-12.8)', async () => {
+  it('exports a model that requires an official extension, read as the api reads it: drawings, glTF and USDZ (FLR-T-12.8, FLR-T-12.10)', async () => {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');
     const valid = (await operator.get(`/api/projects/${id}/validate`)).body as { valid: boolean };
     expect(valid.valid).toBe(true);
-    const pdf = await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' });
-    expect(pdf.status, pdf.text).toBe(202);
-    const dxf = await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf' });
-    expect(dxf.status, dxf.text).toBe(202);
-    expect(await drain.runOnce()).toBe(2);
-    for (const j of [view(pdf), view(dxf)]) {
-      const done = view(await operator.get(`/api/projects/${id}/exports/${j.id}`));
-      expect(done.status, done.error ?? '').toBe('done');
+    const asked: ExportView[] = [];
+    for (const kind of ['pdf', 'dxf', 'gltf', 'usdz']) {
+      const r = await operator.post(`/api/projects/${id}/exports`, { kind });
+      expect(r.status, `${kind}: ${r.text}`).toBe(202);
+      asked.push(view(r));
     }
+    expect(await drain.runOnce()).toBe(4);
+    for (const j of asked) {
+      const done = view(await operator.get(`/api/projects/${id}/exports/${j.id}`));
+      expect(done.status, `${j.kind}: ${done.error ?? ''}`).toBe('done');
+    }
+    // The alarm is in the 3D model, as its fallback box (Core 12.6).
+    const gltf = asked.find((j) => j.kind === 'gltf');
+    const g = view(await operator.get(`/api/projects/${id}/exports/${gltf?.id ?? ''}`));
+    const glb = await download(operator, `${running.url}${g.download ?? ''}`);
+    expect(new TextDecoder().decode(glb.bytes)).toContain('"SA1"');
+  });
+
+  it('refuses, in every kind, a model the editor calls invalid though a core-only reader takes it (FLR-T-12.10)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, KITCHEN_AS_WRITTEN, 'Kitchen as written');
+    const valid = (await operator.get(`/api/projects/${id}/validate`)).body as { valid: boolean; diagnostics: { code: string }[] };
+    expect(valid.valid).toBe(false);
+    expect(valid.diagnostics.map((d) => d.code)).toContain('FS-INV-603');
+    for (const body of [{ kind: 'pdf' }, { kind: 'dxf' }, { kind: 'gltf' }, { kind: 'usdz' }, { kind: 'ifc' }, { kind: 'still', still: { size: 'small', quality: 'draft' } }]) {
+      const r = await operator.post(`/api/projects/${id}/exports`, body);
+      expect(r.status, `${body.kind}: ${r.text}`).toBe(422);
+      expect(r.text).toContain('not-drawable');
+    }
+    expect(await db.job.count()).toBe(0);
   });
 
   it('refuses what cannot be drawn before it is queued', async () => {

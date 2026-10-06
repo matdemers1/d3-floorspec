@@ -237,7 +237,8 @@ export function renderView(scene: Scene, options: ViewOptions): { png: Uint8Arra
 /** Render a version's 3D model (FLR-T-8.5). Throws for an invalid model, an unknown room or level. */
 export async function render3dPng(document: object, options: Render3dOptions = {}): Promise<Render3dResult> {
   if (options.camera !== undefined && !PRESETS.includes(options.camera)) throw new RangeError(`camera is one of ${PRESETS.join(', ')}`);
-  const scene = await buildScene(document, options.design === undefined ? {} : { design: options.design });
+  // One evaluation, with the reader asked for (default OFFICIAL_READER, the editor's: FLR-T-12.10).
+  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }) });
   return renderScene(scene, options);
 }
 

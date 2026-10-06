@@ -118,6 +118,15 @@ const HAIR = '#b3b3b3';
 const POCHE = '#3d3d3d';
 const RED = '#c4161c';
 const WHITE = '#ffffff';
+/**
+ * A winder's tint: render2d's (the editor's) winder colour, the light theme's accent #5432be at
+ * 0.18 opacity, flattened onto the white sheet — a PDF path here has no opacity.
+ */
+const WINDER_TINT = '#e0daf3';
+/** Where the floor above a stair must be open from: render2d's light-theme opening colour (warning). */
+const OPENING = '#714e00';
+/** The opening mark's dash-dot: render2d's 8 2 2 2 at the sheet's scale. */
+const OPENING_DASH = [4, 1, 1, 1] as const;
 const PAPER_FILL = '#ffffff';
 
 // ── geometry helpers ─────────────────────────────────────────────────────────
@@ -292,7 +301,7 @@ export function composePlanSheet(
   if (layout.schedule !== null && layout.schedule !== 'sheet') drawSchedule(c, layout.schedule, rows, `${meta.levelName} — door and window schedule`);
   drawBorder(c, layout);
   const extra: LegendItem[] = [];
-  if (plan.stairs.length > 0) extra.push(...stairLegend(c));
+  if (plan.stairs.length > 0) extra.push(...stairLegend(c, plan.stairs));
   if (plan.roofs.length > 0) extra.push({ label: 'Roof eave above (see roof plan)', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: GREY, width: 0.5, dash: [5, 2.5] }) });
   drawStrip(c, layout, view, meta, planTitle(meta.levelName), plan.rooms.map((r) => [r.title, areaText(r.area, meta.units)]), [...planLegend(c), ...extra]);
   return { number: meta.sheetNumber, title: planTitle(meta.levelName), width: page.width, height: page.height, prims: out };
@@ -421,8 +430,10 @@ function drawStairs(c: Ctx, stairs: readonly PlanStair[]): void {
   for (const st of stairs) {
     const solid = st.steps.filter((s) => !s.hidden);
     const hidden = st.steps.filter((s) => s.hidden);
-    // Landings get a light tone, so the turn reads.
+    // Landings get a light tone, so the turn reads; winders a tint, as the editor draws them.
     for (const s of solid) if (s.landing) out.push({ t: 'path', d: ring(s.outline.map(P)), fill: '#f4f4f4' });
+    const winders = st.steps.filter((s) => s.winder);
+    if (winders.length > 0) out.push({ t: 'path', d: winders.map((s) => ring(s.outline.map(P))).join(''), fill: WINDER_TINT });
     if (solid.length > 0) out.push({ t: 'path', d: solid.map((s) => ring(s.outline.map(P))).join(''), stroke: INK, width: 0.35, join: 'round' });
     if (hidden.length > 0) out.push({ t: 'path', d: hidden.map((s) => ring(s.outline.map(P))).join(''), stroke: GREY, width: 0.3, dash: [2, 1.6] });
     if (st.bounds) out.push({ t: 'path', d: ring(st.bounds.map(P)), stroke: INK, width: 0.35, dash: [5, 2.5] });
@@ -430,6 +441,14 @@ function drawStairs(c: Ctx, stairs: readonly PlanStair[]): void {
       const cc = P(st.circle.centre);
       out.push({ t: 'path', d: circle(cc[0], cc[1], st.circle.radius * c.k), stroke: INK, width: 0.35 });
     }
+    // A spiral's column and a winder's newel: solid.
+    if (st.column) {
+      const cc = P(st.column.centre);
+      out.push({ t: 'path', d: circle(cc[0], cc[1], st.column.radius * c.k), fill: INK, stroke: INK, width: 0.35 });
+    }
+    if (st.newel) out.push({ t: 'path', d: ring(st.newel.map(P)), fill: INK, stroke: INK, width: 0.35, join: 'miter' });
+    // Where the floor above must be open from (Core 0.4, 17.6): dash-dot, across the stair.
+    if (st.opening) out.push({ t: 'path', d: line(P(st.opening[0]), P(st.opening[1])), stroke: OPENING, width: 0.9, dash: OPENING_DASH, cap: 'butt' });
     if (st.cut) out.push({ t: 'path', d: st.cut.map((p, i) => (i === 0 ? M(P(p)) : L(P(p)))).join(''), stroke: INK, width: 0.7, join: 'miter' });
     // The arrow: a dot at its tail, the shaft along the walkline, a head at the end.
     const pts = st.arrow.map(P);
@@ -893,8 +912,21 @@ function planLegend(c: Ctx): LegendItem[] {
   ];
 }
 
-function stairLegend(c: Ctx): LegendItem[] {
+function stairLegend(c: Ctx, stairs: readonly PlanStair[]): LegendItem[] {
   const { out } = c;
+  const marks: LegendItem[] = [];
+  if (stairs.some((st) => st.steps.some((s) => s.winder)))
+    marks.push({
+      label: 'Winder (tapered tread), tinted',
+      draw: (cx, cy) => out.push({ t: 'path', d: ring([[cx, cy + 4], [cx + 22, cy + 4], [cx + 22, cy - 4], [cx + 8, cy - 4]]), fill: WINDER_TINT, stroke: INK, width: 0.35 }),
+    });
+  if (stairs.some((st) => st.newel !== null || st.column !== null))
+    marks.push({ label: 'Newel post or spiral column', draw: (cx, cy) => out.push({ t: 'path', d: rect(cx + 8, cy - 3, 6, 6), fill: INK }) });
+  if (stairs.some((st) => st.opening !== null))
+    marks.push({
+      label: 'Floor above open from here (headroom)',
+      draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: OPENING, width: 0.9, dash: OPENING_DASH, cap: 'butt' }),
+    });
   return [
     {
       label: 'Stair: UP from the foot, DN from the head',
@@ -910,6 +942,7 @@ function stairLegend(c: Ctx): LegendItem[] {
         out.push({ t: 'path', d: `${M([cx, cy + 4])}${L([cx + 9, cy + 0.5])}${L([cx + 10.5, cy - 2.5])}${L([cx + 11.5, cy + 2.5])}${L([cx + 13, cy - 0.5])}${L([cx + 22, cy - 4])}`, stroke: INK, width: 0.7 });
       },
     },
+    ...marks,
   ];
 }
 

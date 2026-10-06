@@ -8,10 +8,13 @@
  * numbers, not a rounding of them. Points placed by drafting (a door's open leaf, a label) are
  * rounded to the base unit first and are exact from there.
  *
- * Entities: LINE (walls, jambs, glazing, door leaves, dimension lines and ticks, roof lines), ARC
- * (door swings), LWPOLYLINE (rooms, slabs, devices, window tags, treads, eaves, stair arrows, the
- * cut line), CIRCLE (door tags) and TEXT. Stairs are on A-FLOR-STRS (treads above the cut on
- * A-FLOR-STRS-OVHD, arrows and UP/DN on A-FLOR-STRS-IDEN) and a roof's eave above a plan on
+ * Entities: LINE (walls, jambs, glazing, door leaves, dimension lines and ticks, roof lines, the
+ * floor opening above a stair), ARC (door swings), LWPOLYLINE (rooms, slabs, devices, window tags,
+ * treads, eaves, stair arrows, the cut line, newels), CIRCLE (door tags, a spiral's circle and
+ * column), SOLID (a winder's tint, a newel's fill) and TEXT. Stairs are on A-FLOR-STRS (treads above
+ * the cut on A-FLOR-STRS-OVHD, arrows and UP/DN on A-FLOR-STRS-IDEN, winders tinted on
+ * A-FLOR-STRS-PATT, newels and a spiral's column on A-FLOR-HRAL, and where the floor above must be
+ * open from on A-FLOR-OVHD, as render2d draws them: FLR-T-12.10) and a roof's eave above a plan on
  * A-ROOF-OVHD; the roof plan file draws on A-ROOF-OTLN, -RIDG, -VLLY and -IDEN (FLR-T-9.7). Dimension
  * strings are drawn as lines and text on A-ANNO-DIMS rather than as DIMENSION entities: a
  * DIMENSION needs an anonymous block of its own rendering for most readers to show it, and plain
@@ -165,6 +168,63 @@ function textE(e: Entities, layer: string, at: XY, height: number, s: string, an
   e.w.pair(73, 2);
 }
 
+/** A filled triangle or quadrilateral (SOLID: its third and fourth corners are given crosswise). */
+function solidE(e: Entities, layer: string, pts: readonly [XY, XY, XY] | readonly [XY, XY, XY, XY]): void {
+  common(e, 'SOLID', layer, 'AcDbTrace');
+  // SOLID's corners run 1, 2, then 4 and 3: a quadrilateral a–b–c–d is given as a, b, d, c.
+  const [a, b, c, d] = pts.length === 4 ? [pts[0], pts[1], pts[3], pts[2]] : [pts[0], pts[1], pts[2], pts[2]];
+  for (const [i, p] of [a, b, c, d].entries()) {
+    e.w.pair(10 + i, mm(p[0]));
+    e.w.pair(20 + i, mm(p[1]));
+    e.w.pair(30 + i, '0.0');
+  }
+}
+
+/** A simple polygon's triangles, by ear clipping: what a fill is drawn with when DXF has no polygon fill. */
+export function triangles(ring: readonly XY[]): [XY, XY, XY][] {
+  const pts = ring.length > 1 && ring[0]![0] === ring[ring.length - 1]![0] && ring[0]![1] === ring[ring.length - 1]![1] ? ring.slice(0, -1) : [...ring];
+  let area = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i]!;
+    const b = pts[(i + 1) % pts.length]!;
+    area += a[0] * b[1] - b[0] * a[1];
+  }
+  const idx = pts.map((_, i) => i);
+  if (area < 0) idx.reverse();
+  const cross = (o: XY, a: XY, b: XY): number => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const out: [XY, XY, XY][] = [];
+  let guard = idx.length * idx.length;
+  while (idx.length > 3 && guard-- > 0) {
+    let clipped = false;
+    for (let i = 0; i < idx.length; i++) {
+      const a = pts[idx[(i + idx.length - 1) % idx.length]!]!;
+      const b = pts[idx[i]!]!;
+      const c = pts[idx[(i + 1) % idx.length]!]!;
+      const turn = cross(a, b, c);
+      if (turn === 0) {
+        // A vertex on a straight run: dropped, with no sliver triangle.
+        idx.splice(i, 1);
+        clipped = true;
+        break;
+      }
+      if (turn < 0) continue;
+      const inside = idx.some((k) => {
+        const p = pts[k]!;
+        if (p === a || p === b || p === c) return false;
+        return cross(a, b, p) >= 0 && cross(b, c, p) >= 0 && cross(c, a, p) >= 0;
+      });
+      if (inside) continue;
+      out.push([a, b, c]);
+      idx.splice(i, 1);
+      clipped = true;
+      break;
+    }
+    if (!clipped) break;
+  }
+  if (idx.length === 3) out.push([pts[idx[0]!]!, pts[idx[1]!]!, pts[idx[2]!]!]);
+  return out;
+}
+
 const r = (p: XY): XY => [Math.round(p[0]), Math.round(p[1])];
 const angleOf = (c: XY, p: XY): number => {
   const a = (Math.atan2(p[1] - c[1], p[0] - c[0]) * 180) / Math.PI;
@@ -187,9 +247,17 @@ function arrowHeadE(e: Entities, layer: string, from: XY, tip: XY, size: number)
 
 function stairEntities(e: Entities, stairs: readonly PlanStair[], P: (pt: number) => number): void {
   for (const st of stairs) {
+    // The tint first, so the treads' lines are drawn over it.
+    for (const step of st.steps) if (step.winder) for (const t of triangles(step.outline)) solidE(e, LAYERS.stairTint, t);
     for (const step of st.steps) polyE(e, step.hidden ? LAYERS.stairAbove : LAYERS.stair, step.outline, true);
     if (st.bounds) polyE(e, LAYERS.stairAbove, st.bounds, true);
     if (st.circle) circleE(e, LAYERS.stair, st.circle.centre, st.circle.radius);
+    if (st.column) circleE(e, LAYERS.newel, st.column.centre, st.column.radius);
+    if (st.newel) {
+      for (const t of triangles(st.newel)) solidE(e, LAYERS.newel, t);
+      polyE(e, LAYERS.newel, st.newel, true);
+    }
+    if (st.opening) lineE(e, LAYERS.floorOpening, st.opening[0], st.opening[1]);
     if (st.cut) polyE(e, LAYERS.stair, st.cut, false);
     if (st.arrow.length >= 2) {
       polyE(e, LAYERS.stairTag, st.arrow, false);
