@@ -1078,7 +1078,7 @@ function DrawPanel({ store, model }: { store: EditorStore; model: EditorModel })
           <strong>A circular arc, at most a semicircle</strong>
           <p>Start and end at junctions where the arc meets other walls: an arc is never split where another wall crosses it (Floorspec Ops 0.4, 5.2). Shift+F flips the bulge; Tab switches between sagitta and radius.</p>
         </div>
-        <KeyHints />
+        <KeyHints arc />
       </div>
     );
   }
@@ -1242,7 +1242,16 @@ function DrawPanel({ store, model }: { store: EditorStore; model: EditorModel })
   );
 }
 
-function KeyHints() {
+function KeyHints({ arc = false }: { arc?: boolean }) {
+  if (arc)
+    return (
+      <ul className="fs-keys" aria-label="Keys">
+        <li><kbd>Enter</kbd> place the typed start, chord or bulge</li>
+        <li><kbd>Tab</kbd> sagitta or radius</li>
+        <li><kbd>Shift+F</kbd> flip the bulge</li>
+        <li><kbd>Esc</kbd> start again</li>
+      </ul>
+    );
   return (
     <ul className="fs-keys" aria-label="Keys">
       <li><kbd>Enter</kbd> place the typed length, or finish</li>

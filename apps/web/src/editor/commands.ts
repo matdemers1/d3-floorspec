@@ -79,7 +79,7 @@ export const COMMANDS: readonly Command[] = [
     label: 'Flip the arc being drawn',
     group: 'Tools',
     keywords: 'arc bulge flip curve',
-    keys: ['Shift+f'],
+    // Shift+F is read by the editor's key handler itself: a registry key of a letter has no Shift (keyOf).
     hint: 'Shift+F',
     enabled: (store) => {
       const d = store.get().draft;

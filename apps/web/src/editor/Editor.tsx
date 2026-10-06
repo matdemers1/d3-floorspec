@@ -609,6 +609,11 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
         return;
       }
       const mod = mac ? e.metaKey : e.ctrlKey;
+      // Shift+F in the arc-wall tool's bulge step flips the bulge (Core 0.4, 21), before F's own shortcut.
+      if (e.key.toLowerCase() === 'f' && e.shiftKey && !mod && !e.altKey && tools.flipArc()) {
+        e.preventDefault();
+        return;
+      }
       // A length being typed while drawing takes the key before any shortcut does.
       if (!mod && !e.altKey && tools.typeKey(e.key)) {
         e.preventDefault();
