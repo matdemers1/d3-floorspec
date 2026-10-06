@@ -18,6 +18,8 @@ async function axe(page: Page, state: string): Promise<void> {
   for (const theme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: theme });
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    // A dialog's backdrop and a theme's colours fade in: axe measures contrast once they have finished.
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running' || (a.effect?.getComputedTiming().iterations ?? 1) === Infinity), undefined, { timeout: 5_000 }).catch(() => undefined);
     const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
     expect.soft(results.violations.map((v) => `${v.id}: ${v.help} — ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`), `${state} (${theme})`).toEqual([]);
   }
