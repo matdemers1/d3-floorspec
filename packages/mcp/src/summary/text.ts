@@ -46,11 +46,13 @@ function opening(o: OpeningSummary, self: string): string {
 }
 
 function edge(e: EdgeSummary, self: string): string[] {
-  if (e.kind === 'separator') return [`- separator ${e.id}${q(e.name)}, ${lengthText(e.length)}, open to ${neighbour(e.otherSide, self)}`];
+  // Core 0.4, chapter 21: an arc edge's length is along its polyline; its sagitta and chord say how it bends.
+  const arc = e.arc ? ` (an arc: sagitta ${lengthText(e.arc.sagitta)}, chord ${lengthText(e.arc.chord)}, length along the arc)` : '';
+  if (e.kind === 'separator') return [`- separator ${e.id}${q(e.name)}, ${lengthText(e.length)}${arc}, open to ${neighbour(e.otherSide, self)}`];
   const type = e.type ? `${e.type.id}${q(e.type.name)}` : 'own layers';
   const thick = e.thickness ? ` ${inches(e.thickness.baseUnits)} (${e.thickness.baseUnits})` : '';
   return [
-    `- wall ${e.id}${q(e.name)}, ${lengthText(e.length)}, ${type}${thick}; other side: ${neighbour(e.otherSide, self)}`,
+    `- wall ${e.id}${q(e.name)}, ${lengthText(e.length)}${arc}, ${type}${thick}; other side: ${neighbour(e.otherSide, self)}`,
     ...e.openings.map((o) => `  - ${opening(o, self)}`),
     ...(e.devices ?? []).map((d) => `  - ${d.kind} ${d.id}${q(d.name)} on this face: ${lengthText(d.offset)} from the wall's start, ${lengthText(d.height)} high${d.circuits ? `, on circuit ${d.circuits.join(' and ')}` : ''}`),
   ];

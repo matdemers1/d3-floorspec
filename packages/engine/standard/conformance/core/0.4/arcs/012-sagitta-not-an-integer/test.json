@@ -1,0 +1,6 @@
+{
+  "description": "A sagitta of 1.5 base units is not a length.",
+  "covers": [
+    "FS-CORE-21.1.1"
+  ]
+}

@@ -3,9 +3,9 @@
  * result after normalization. Every comparison is exact: lengths by their squares, distances by
  * squared cross products.
  */
-import { jsonEqual, predicates, type Diagnostic } from '@floorspec/engine';
+import { jsonEqual, polylineLength, predicates, type Diagnostic } from '@floorspec/engine';
 import { opsDiagnostic } from './diagnostics.js';
-import { asPoint, editDesign, LevelFaces } from './model/faces.js';
+import { arcPolylineOf, asPoint, editDesign, LevelFaces } from './model/faces.js';
 import { samePlace, WorkingCopy } from './model/working.js';
 import type { Lock } from './types.js';
 import { getMember, type JsonObject } from './lib/json.js';
@@ -102,7 +102,13 @@ export function brokenLocks(a: WorkingCopy, b: WorkingCopy, aCanon: JsonObject, 
     } else if ('length' in l) {
       const la = line(a, l.length);
       const lb = b.elementIn('walls', l.length) ? line(b, l.length) : undefined;
-      held = la !== undefined && lb !== undefined && len2(la.d) === len2(lb.d);
+      // Ops 0.4: an arc wall's length is along its polyline (Core 21.6), and it is still an arc wall.
+      const arcA = la && arcPolylineOf(a, l.length, la.S, [la.S[0] + la.d[0], la.S[1] + la.d[1]]);
+      const arcB = lb && arcPolylineOf(b, l.length, lb.S, [lb.S[0] + lb.d[0], lb.S[1] + lb.d[1]]);
+      held =
+        la !== undefined &&
+        lb !== undefined &&
+        (arcA || arcB ? !!arcA && !!arcB && polylineLength(arcA) === polylineLength(arcB) : len2(la.d) === len2(lb.d));
       why = `the length of ${l.length} changed`;
     } else {
       const [p, q] = l.distance;

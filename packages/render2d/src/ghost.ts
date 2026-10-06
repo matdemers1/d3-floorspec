@@ -50,7 +50,7 @@ export function diffScenes(before: Scene | undefined, after: Scene): SceneDiff {
   return {
     walls: diff(before?.walls ?? empty, after.walls, (x, y) => samePts(x.outline, y.outline)),
     fills: diff(before?.fills ?? empty, after.fills, samePts),
-    separators: diff(before?.separators ?? empty, after.separators, (x, y) => samePts([x.start, x.end], [y.start, y.end])),
+    separators: diff(before?.separators ?? empty, after.separators, (x, y) => samePts(x.line, y.line)),
     openings: diff(
       before?.openings ?? empty,
       after.openings,

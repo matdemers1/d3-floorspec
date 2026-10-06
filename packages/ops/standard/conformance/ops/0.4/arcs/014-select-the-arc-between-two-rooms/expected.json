@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "2a40c02e2a92274533ead800026b53c9a6a6713707c126e6907d49dac0aff994",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W8",
+      "path": "/name",
+      "value": "Curved wall"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "W8",
+      "path": "/name"
+    }
+  ]
+}

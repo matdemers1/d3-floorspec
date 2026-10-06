@@ -10,7 +10,8 @@
  */
 import { Surd } from '../exact/surd.js';
 import { sha256, toHex } from '../hash/sha256.js';
-import { effectiveLayers, entries, get, ipoint, wallElevations, type FinishRegion, type FloorspecDocument, type Wall } from '../model/document.js';
+import { effectiveLayers, entries, get, ipoint, wallArc, wallElevations, type FinishRegion, type FloorspecDocument, type Wall } from '../model/document.js';
+import { polylineLength } from '../geometry/arcs.js';
 import { MAPS, SIDES } from '../validate/references.js';
 import type { LevelAnalysis } from '../validate/invariants.js';
 
@@ -55,7 +56,9 @@ export function finishInvariants(doc: FloorspecDocument, noTop: (wall: string) =
         }
         ok.push({ r, i });
         const to = BigInt(r.to);
-        if (to * to > D || (height !== undefined && BigInt(r.top) > height)) out.push({ code: 'FS-INV-1002', elements: [wid], path });
+        const arc = wallArc(doc, wid);                     // 21.6.2: an arc wall's length; none when unfit (10.3)
+        const past = arc === 'unfit' ? false : arc ? to > polylineLength(arc) : to * to > D;
+        if (past || (height !== undefined && BigInt(r.top) > height)) out.push({ code: 'FS-INV-1002', elements: [wid], path });
       });
       for (let a = 0; a < ok.length; a++)
         for (let b = a + 1; b < ok.length; b++)
@@ -154,7 +157,8 @@ export function facingRooms(levels: ReadonlyMap<string, LevelAnalysis>): Map<str
       for (const cycle of [f.outer, ...f.inner])
         for (const h of cycle.halfEdges) {
           const e = g.edges[h >> 1]!;
-          if (e.kind === 'wall') out.set(`${e.id}/${(h & 1) === 0 ? 'left' : 'right'}`, rid);
+          // An arc wall's segments face what the wall faces (21.3).
+          if (e.kind === 'wall') out.set(`${e.src ?? e.id}/${(h & 1) === 0 ? 'left' : 'right'}`, rid);
         }
     }
   }

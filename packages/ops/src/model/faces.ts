@@ -7,12 +7,12 @@
  * (FS-OPS-007). Mid-batch the working copy may be anything, so every member is checked before it is
  * read.
  */
-import { HalfEdgeGraph, predicates, type Face } from '@floorspec/engine';
+import { arcFits, arcPolyline, HalfEdgeGraph, inInterior, locationLinesMeet, predicates, sagittaOf, type Cycle, type Face } from '@floorspec/engine';
 import { cmpStr, getMember, isObject, type JsonObject } from '../lib/json.js';
 import type { WorkingCopy } from './working.js';
 
 type IPoint = readonly [bigint, bigint];
-const { collinearOverlap, eq, inSegmentInterior, onSegment, properCross } = predicates;
+const { collinearOverlap, eq, onSegment, properCross } = predicates;
 
 /** A JSON value that is a point of two safe integers, as BigInts. */
 export function asPoint(v: unknown): IPoint | undefined {
@@ -84,12 +84,41 @@ export function junctionsOn(wc: WorkingCopy, level: string, keep?: Keep): { id: 
 
 export type RoomPlace = { kind: 'face'; face: number } | { kind: 'none'; why: string };
 
+/**
+ * Core 0.4, 21.2: the polyline of an edge whose `arc` is well formed and fits, between two positioned
+ * junctions; undefined for a straight edge or one whose arc validation will judge.
+ */
+export function arcPolylineOf(wc: WorkingCopy, edge: string, S: IPoint, E: IPoint): readonly IPoint[] | undefined {
+  const h = sagittaOf(wc.element(edge) as { arc?: { sagitta?: unknown } } | undefined);
+  const a = getMember(wc.element(edge), 'arc');
+  if (h === undefined || !isObject(a) || Object.keys(a).length !== 1 || predicates.eq(S, E) || !arcFits(S, E, h)) return undefined;
+  return arcPolyline(S, E, h);
+}
+
+/** The graph of a level as composites read it (4.3, 4.4): half-edges 2e and 2e+1 of the level's edges e, in `edges` order. */
+export interface GraphView {
+  readonly stars: ReadonlyMap<string, readonly number[]>;
+  origin(h: number): string;
+  dest(h: number): string;
+  /** The outgoing direction of h: its chord, for an arc edge. */
+  direction(h: number): IPoint;
+}
+
 export class LevelFaces {
   readonly level: string;
   /** Why the level has no faces to give, or undefined when it has. */
   readonly broken: string | undefined;
-  readonly graph: HalfEdgeGraph | undefined;
+  /** The level's graph, edge by edge; an arc edge is one edge here, between its junctions. */
+  graph: GraphView | undefined;
   readonly edges: readonly LevelEdgeRef[];
+  /** Core 0.4, 21.3: the graph the faces are found in — every arc edge as the segments of its polyline. */
+  private sg: HalfEdgeGraph | undefined;
+  /** The location line of each edge: its polyline, two points for a straight edge (21.2). */
+  private readonly lines = new Map<string, readonly IPoint[]>();
+  /** The bounded faces, their cycles named by the level's edges and junctions. */
+  private collapsed: Face[] = [];
+  /** Per half-edge 2e / 2e+1 of `edges`: the face on its left, or −1. */
+  private readonly faceOfHalf: number[] = [];
   readonly positions: ReadonlyMap<string, IPoint>;
   /** Cycle index → bounded face index, or −1 for the unbounded face. */
   private readonly faceOfCycle: number[] = [];
@@ -108,16 +137,78 @@ export class LevelFaces {
       else positions.set(j.id, j.pos);
     }
     this.positions = positions;
+    if (broken === undefined)
+      for (const e of this.edges) {
+        const S = positions.get(e.start);
+        const E = positions.get(e.end);
+        if (!S || !E) continue;
+        this.lines.set(e.id, arcPolylineOf(wc, e.id, S, E) ?? [S, E]);
+      }
     broken ??= this.planarityProblem();
     this.broken = broken;
     if (broken === undefined) {
-      this.graph = new HalfEdgeGraph(positions, this.edges);
-      const g = this.graph;
-      g.cycles.forEach((c, i) => {
-        const f = g.faces.findIndex((face) => face.outer === c || face.inner.includes(c));
-        this.faceOfCycle[i] = f;
-      });
+      this.build();
     } else this.graph = undefined;
+  }
+
+  /** The graph over segments (21.3), its faces named by edges and junctions again, and the edge-level view. */
+  private build(): void {
+    const segs: { id: string; start: string; end: string; src: number; forward: boolean }[] = [];
+    const pos = new Map(this.positions);
+    this.edges.forEach((e, i) => {
+      const line = this.lines.get(e.id)!;
+      if (line.length === 2) {
+        segs.push({ id: e.id, start: e.start, end: e.end, src: i, forward: true });
+        return;
+      }
+      const names = [e.start, ...line.slice(1, -1).map((_, k) => `${e.id}^${k + 1}`), e.end];
+      line.slice(1, -1).forEach((p, k) => pos.set(names[k + 1]!, p));
+      for (let k = 0; k < line.length - 1; k++) segs.push({ id: `${e.id}~${k + 1}`, start: names[k]!, end: names[k + 1]!, src: i, forward: true });
+    });
+    const g = new HalfEdgeGraph(pos, segs);
+    this.sg = g;
+    g.cycles.forEach((c, i) => {
+      this.faceOfCycle[i] = g.faces.findIndex((face) => face.outer === c || face.inner.includes(c));
+    });
+    // A segment's half-edge 2s (along it) is the half-edge 2e of its edge e (along the edge), so
+    // a cycle of segments collapses run by run into a cycle of the level's edges.
+    const toHalf = (h: number): number => 2 * segs[h >> 1]!.src + (h & 1);
+    const collapse = (c: Cycle): Cycle => {
+      const start = c.halfEdges.findIndex((h) => this.positions.has(g.origin(h)));
+      const hs = [...c.halfEdges.slice(start), ...c.halfEdges.slice(0, start)];
+      const halfEdges: number[] = [];
+      for (const h of hs) if (this.positions.has(g.origin(h))) halfEdges.push(toHalf(h));
+      return { halfEdges, vertices: halfEdges.map((h) => this.origin(h)), area2: c.area2, component: c.component };
+    };
+    this.collapsed = g.faces.map((f) => ({ outer: collapse(f.outer), inner: f.inner.map(collapse) }));
+    segs.forEach((sg, s) => {
+      for (const side of [0, 1]) {
+        const h = 2 * sg.src + side;
+        if (this.faceOfHalf[h] === undefined) this.faceOfHalf[h] = this.faceOfCycle[g.cycleOf[2 * s + side]!] ?? -1;
+      }
+    });
+    const stars = new Map<string, number[]>();
+    for (const [j, star] of g.stars)
+      if (this.positions.has(j))
+        stars.set(
+          j,
+          star.map((h) => toHalf(h)),
+        );
+    this.graph = {
+      stars,
+      origin: (h) => this.origin(h),
+      dest: (h) => this.origin(h ^ 1),
+      direction: (h) => {
+        const a = this.positions.get(this.origin(h))!;
+        const b = this.positions.get(this.origin(h ^ 1))!;
+        return [b[0] - a[0], b[1] - a[1]];
+      },
+    };
+  }
+
+  private origin(h: number): string {
+    const e = this.edges[h >> 1]!;
+    return h & 1 ? e.end : e.start;
   }
 
   /** Core §5.1–5.3 on this level, and every edge's junctions on it: the conditions faces need. */
@@ -138,12 +229,17 @@ export class LevelFaces {
       if (pairs.has(k)) return `two edges connect ${e.start} and ${e.end} (Core 5.2.2)`;
       pairs.add(k);
     }
-    const segs = this.edges.map((e) => ({ id: e.id, a: P.get(e.start)!, b: P.get(e.end)! }));
+    const segs = this.edges.map((e) => ({ id: e.id, a: P.get(e.start)!, b: P.get(e.end)!, line: this.lines.get(e.id)! }));
     for (let i = 0; i < segs.length; i++) {
       const s = segs[i]!;
-      for (const [jid, p] of P) if (inSegmentInterior(p, s.a, s.b)) return `junction ${jid} lies inside ${s.id} (Core 5.3.2)`;
+      for (const [jid, p] of P) if (inInterior(p, s.line)) return `junction ${jid} lies inside ${s.id} (Core 5.3.2, 21.3.1)`;
       for (let j = i + 1; j < segs.length; j++) {
         const t = segs[j]!;
+        if (s.line.length > 2 || t.line.length > 2) {
+          const code = locationLinesMeet(s.line, t.line);
+          if (code) return `the location lines of ${s.id} and ${t.id} ${code === 'FS-INV-104' ? 'meet' : 'overlap'} (Core 21.3.1)`;
+          continue;
+        }
         if (properCross(s.a, s.b, t.a, t.b)) return `${s.id} and ${t.id} cross (Core 5.3.1)`;
         if (collinearOverlap(s.a, s.b, t.a, t.b)) return `${s.id} and ${t.id} overlap (Core 5.3.3)`;
       }
@@ -152,13 +248,12 @@ export class LevelFaces {
   }
 
   get faces(): readonly Face[] {
-    return this.graph?.faces ?? [];
+    return this.collapsed;
   }
 
   /** The face on the left of half-edge h (2e: edge e from start to end; 2e+1: back), or −1. */
   faceLeftOf(h: number): number {
-    const g = this.graph!;
-    return this.faceOfCycle[g.cycleOf[h]!] ?? -1;
+    return this.faceOfHalf[h] ?? -1;
   }
 
   edgeIndex(id: string): number {
@@ -167,9 +262,12 @@ export class LevelFaces {
 
   /** Where a point is: in a bounded face, or not (on a location line, or in the unbounded face). */
   place(p: IPoint): RoomPlace {
-    const g = this.graph;
+    const g = this.sg;
     if (!g) return { kind: 'none', why: this.broken ?? 'no faces' };
-    for (const e of this.edges) if (onSegment(p, this.positions.get(e.start)!, this.positions.get(e.end)!)) return { kind: 'none', why: `it lies on ${e.id}` };
+    for (const e of this.edges) {
+      const line = this.lines.get(e.id)!;
+      for (let i = 1; i < line.length; i++) if (onSegment(p, line[i - 1]!, line[i]!)) return { kind: 'none', why: `it lies on ${e.id}` };
+    }
     const f = g.innermostFace(p);
     return f ? { kind: 'face', face: g.faces.indexOf(f) } : { kind: 'none', why: 'it lies outside every enclosed face' };
   }

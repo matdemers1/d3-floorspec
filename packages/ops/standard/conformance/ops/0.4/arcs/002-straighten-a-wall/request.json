@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "W8",
+      "path": "/arc"
+    }
+  ]
+}

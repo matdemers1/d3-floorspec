@@ -1,0 +1,6 @@
+{
+  "description": "An arc has exactly the member sagitta: its radius is derived, never stored.",
+  "covers": [
+    "FS-CORE-21.1.1"
+  ]
+}

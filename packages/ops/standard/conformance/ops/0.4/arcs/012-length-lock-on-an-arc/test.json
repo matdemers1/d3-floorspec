@@ -1,0 +1,6 @@
+{
+  "description": "A length lock on the arc W8, and a batch that bends it further: its length along its polyline changes, so the lock is broken - FS-OPS-011.",
+  "covers": [
+    "FS-OPS-6.1.2"
+  ]
+}

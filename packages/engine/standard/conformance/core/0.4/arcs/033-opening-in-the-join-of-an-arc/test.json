@@ -1,0 +1,6 @@
+{
+  "description": "An opening 20 mm from the bay wall's start: the join at J2 reaches 50 mm along its first segment, so the opening is in it. FS-LINT-005.",
+  "covers": [
+    "FS-CORE-7.5.1"
+  ]
+}

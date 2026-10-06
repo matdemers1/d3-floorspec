@@ -23,6 +23,10 @@
       "$ref": "defs.schema.json#/$defs/reference",
       "description": "5.2: a reference to the junction at the other end. Always present."
     },
+    "arc": {
+      "$ref": "defs.schema.json#/$defs/arc",
+      "description": "21.1 (0.4): the circular arc the separator runs along. Absent: the separator is straight. No constant default."
+    },
     "option": {
       "$ref": "defs.schema.json#/$defs/reference",
       "description": "19.2: a reference to the option this separator is in. Absent: it is in no option, and so in every design."

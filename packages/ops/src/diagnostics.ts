@@ -17,7 +17,8 @@ export type OpsCode =
   | 'FS-OPS-009'
   | 'FS-OPS-010'
   | 'FS-OPS-011'
-  | 'FS-OPS-012';
+  | 'FS-OPS-012'
+  | 'FS-OPS-013';
 
 /** 7.1, with the rule each code reports. Every FS-OPS diagnostic is an error. */
 export const OPS_CATALOGUE: Readonly<Record<OpsCode, { condition: string; rules: readonly string[] }>> = {
@@ -33,6 +34,7 @@ export const OPS_CATALOGUE: Readonly<Record<OpsCode, { condition: string; rules:
   'FS-OPS-010': { condition: 'a lock names elements that do not exist, or walls that are not parallel', rules: ['6.1.1'] },
   'FS-OPS-011': { condition: 'the result breaks a lock', rules: ['6.1.2'] },
   'FS-OPS-012': { condition: 'a length, point or vector string does not match the grammar', rules: ['3.1.1'] },
+  'FS-OPS-013': { condition: 'planarization would route or split an arc edge', rules: ['5.2.4'] },
 };
 
 export function opsDiagnostic(code: OpsCode, message: string, elements: readonly string[] = [], pointer?: string): Diagnostic {

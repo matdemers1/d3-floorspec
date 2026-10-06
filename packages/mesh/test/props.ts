@@ -176,6 +176,8 @@ interface Expected {
 
 interface WallCut {
   id: string;
+  /** The direction the cut is square to: the wall's, or on an arc wall the opening's chord (Core 21.6). */
+  dir: IPoint;
   c0: bigint;
   c1: bigint;
   sill: number;
@@ -183,28 +185,53 @@ interface WallCut {
   poly: RPoint[];
 }
 
-function wallFacts(doc: FloorspecDocument, d: Derived, id: string): { ring: IPoint[]; base: number; top: number; cuts: WallCut[]; dir: IPoint } {
+function wallFacts(doc: FloorspecDocument, d: Derived, id: string): { ring: IPoint[]; base: number; top: number; cuts: WallCut[]; dir: IPoint; arc: boolean } {
   const w = own(doc.walls, id);
   const dw = own(d.walls, id);
-  const ring = dedupeRing([dw.startRight, dw.endRight, dw.endLeft, dw.startLeft].map(I));
+  // Core 0.4, 21.4: an arc wall's outline runs through its face vertices.
+  const ring = dedupeRing([dw.startRight, ...(dw.right ?? []), dw.endRight, dw.endLeft, ...[...(dw.left ?? [])].reverse(), dw.startLeft].map(I));
   const S = I(own(doc.junctions, w.start).position);
   const E = I(own(doc.junctions, w.end).position);
-  const dir: IPoint = [E[0] - S[0], E[1] - S[1]];
+  const wallDir: IPoint = [E[0] - S[0], E[1] - S[1]];
+  const arc = dw.polyline !== undefined && w.arc !== undefined;
   const cuts: WallCut[] = [];
   for (const [oid, o] of Object.entries(doc.openings ?? {})) {
     if (o?.wall !== id) continue;
     const dop = own(d.openings, oid);
-    const c0 = dir[0] * BigInt(dop.start[0]) + dir[1] * BigInt(dop.start[1]);
-    const c1 = dir[0] * BigInt(dop.end[0]) + dir[1] * BigInt(dop.end[1]);
+    const s = I(dop.start);
+    const e = I(dop.end);
+    // 21.6: on an arc wall an opening stands on its chord, and its cut is square to the chord, across the
+    // wall's thickness and the bow of the wall past the chord (the arc's sagitta for the chord's length).
+    const dir: IPoint = arc ? [e[0] - s[0], e[1] - s[1]] : wallDir;
+    const c0 = dir[0] * s[0] + dir[1] * s[1];
+    const c1 = dir[0] * e[0] + dir[1] * e[1];
     if (c1 <= c0) continue;
-    const poly = clip(clip(ring.map(rpoint), { a: dir, c: c0, s: 1 }), { a: dir, c: c1, s: -1 });
-    cuts.push({ id: oid, c0, c1, sill: dop.sillElevation, head: dop.headElevation, poly });
+    let poly = clip(clip(ring.map(rpoint), { a: dir, c: c0, s: 1 }), { a: dir, c: c1, s: -1 });
+    if (arc) {
+      const g = (x: bigint, y: bigint): bigint => (y === 0n ? (x < 0n ? -x : x) : g(y, x % y));
+      const k0 = g(dir[0], dir[1]);
+      const n: IPoint = [-dir[1] / k0, dir[0] / k0];
+      const nLen = Math.hypot(Number(n[0]), Number(n[1]));
+      const c = Math.hypot(Number(wallDir[0]), Number(wallDir[1]));
+      const h = Math.abs(w.arc!.sagitta);
+      const R = (c * c + 4 * h * h) / (8 * h);
+      const l = Math.hypot(Number(dir[0]), Number(dir[1]));
+      const bow = R - Math.sqrt(Math.max(R * R - (l * l) / 4, 0));
+      const t = own(doc.types, w.type!);
+      const T = (w.layers ?? (t.kind === 'wallType' ? t.layers : [])).reduce((x, y) => x + y.thickness, 0);
+      const k = BigInt(Math.ceil((T + bow + 2) / nLen));
+      const ns = n[0] * s[0] + n[1] * s[1];
+      const nn = n[0] * n[0] + n[1] * n[1];
+      poly = clip(clip(poly, { a: n, c: ns - k * nn, s: 1 }), { a: n, c: ns + k * nn, s: -1 });
+    }
+    cuts.push({ id: oid, dir, c0, c1, sill: dop.sillElevation, head: dop.headElevation, poly });
   }
-  return { ring, base: dw.baseElevation, top: dw.topElevation, cuts, dir };
+  return { ring, base: dw.baseElevation, top: dw.topElevation, cuts, dir: wallDir, arc };
 }
 
 /** A wall's genus where it is plain to see: every cut a tunnel or a notch from below, no two touching. Else undefined. */
 function wallGenus(f: ReturnType<typeof wallFacts>): number | undefined {
+  if (f.arc) return undefined; // cuts square to different chords: not plain to see
   let g = 0;
   for (const c of f.cuts) {
     const along = f.ring.map((V) => f.dir[0] * V[0] + f.dir[1] * V[1]);
@@ -414,7 +441,8 @@ export function checkHouse(kernel: Kernel, doc: FloorspecDocument, d: Derived, m
       expect(wall, `${label}: its wall`).toBeDefined();
       const dop = own(d.openings, p.id);
       const f = wallFacts(doc, d, o.wall);
-      const n = [-Number(f.dir[1]), Number(f.dir[0])];
+      const dir = f.cuts.find((x) => x.id === p.id)?.dir ?? f.dir;
+      const n = [-Number(dir[1]), Number(dir[0])];
       const len = Math.hypot(n[0]!, n[1]!);
       const c = [(dop.start[0] + dop.end[0]) / 2, (dop.start[1] + dop.end[1]) / 2, (dop.sillElevation + dop.headElevation) / 2];
       const m = (s: number): number[] => [0, 1, 2].map((k) => (c[k]! + (k < 2 ? (s * n[k]!) / len : 0) - mesh.origin[k]!) / BU);

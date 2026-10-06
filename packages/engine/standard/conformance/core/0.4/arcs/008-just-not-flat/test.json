@@ -1,0 +1,6 @@
+{
+  "description": "A sagitta of 1281, one more than the tolerance: the arc is halved once, at its midpoint (1500 mm, 1281), and each half, whose sagitta rounds to 320, is its chord - a polyline of two segments, and no lint.",
+  "covers": [
+    "FS-CORE-21.2.1"
+  ]
+}

@@ -46,6 +46,7 @@ import {
   SofaIcon,
   StairIcon,
   WallIcon,
+  ArcWallIcon,
   WindowIcon,
   PencilIcon,
   SlabIcon,
@@ -383,6 +384,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
 const RAIL: { tool?: ToolId; label: string; icon: ReactNode; later?: string }[] = [
   { tool: 'select', label: 'Select', icon: <SelectIcon /> },
   { tool: 'wall', label: 'Draw walls', icon: <WallIcon /> },
+  { tool: 'arc', label: 'Draw arc walls', icon: <ArcWallIcon /> },
   { tool: 'door', label: 'Place a door', icon: <DoorIcon /> },
   { tool: 'window', label: 'Place a window', icon: <WindowIcon /> },
   { tool: 'room', label: 'Name a room', icon: <RoomAnchorIcon /> },
@@ -607,8 +609,18 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
         return;
       }
       const mod = mac ? e.metaKey : e.ctrlKey;
+      // Shift+F in the arc-wall tool's bulge step flips the bulge (Core 0.4, 21), before F's own shortcut.
+      if (e.key.toLowerCase() === 'f' && e.shiftKey && !mod && !e.altKey && tools.flipArc()) {
+        e.preventDefault();
+        return;
+      }
       // A length being typed while drawing takes the key before any shortcut does.
       if (!mod && !e.altKey && tools.typeKey(e.key)) {
+        e.preventDefault();
+        return;
+      }
+      // Tab in the arc-wall tool's bulge step switches between typing the sagitta and the radius (Core 0.4, 21).
+      if (e.key === 'Tab' && !mod && !e.altKey && !e.shiftKey && tools.arcField()) {
         e.preventDefault();
         return;
       }

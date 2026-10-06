@@ -10,7 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
-import { analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -50,8 +50,10 @@ export interface EdgeSummary {
   readonly kind: 'wall' | 'separator';
   readonly id: string;
   readonly name?: string;
-  /** The length of its location line. */
+  /** The length of its location line — for an arc edge, along its polyline (Core 0.4, 21.6). */
   readonly length: Length;
+  /** Core 0.4, chapter 21: an arc edge's sagitta — positive bulges to the left of start → end — and its chord. */
+  readonly arc?: { readonly sagitta: Length; readonly chord: Length };
   /** Walls only: the wall type, if it has one. */
   readonly type?: { readonly id: string; readonly name?: string };
   /** Walls only: its thickness (sum of its effective layers). */
@@ -495,25 +497,34 @@ class LevelTopology {
     return face === undefined ? { kind: 'exterior' } : this.faceNeighbour.get(face)!;
   }
 
-  /** The edge a half-edge belongs to. */
+  /** The edge of the document a half-edge belongs to — an arc edge's, for one of its segments (Core 0.4, 21.3). */
   edgeOf(h: number): { id: string; kind: 'wall' | 'separator'; start: string; end: string } {
-    return this.g.edges[h >> 1]!;
+    const seg = this.g.edges[h >> 1]!;
+    const id = seg.src ?? seg.id;
+    const doc = seg.kind === 'wall' ? this.doc.walls?.[id] : this.doc.separators?.[id];
+    return { id, kind: seg.kind, start: doc?.start ?? seg.start, end: doc?.end ?? seg.end };
   }
 
   /** The two spaces either side of an edge: left of its direction, then right. */
   sidesOfEdge(edgeId: string): { left: Neighbour; right: Neighbour } | undefined {
-    const e = this.g.edges.findIndex((x) => x.id === edgeId);
-    return e < 0 ? undefined : { left: this.leftOf(2 * e), right: this.leftOf(2 * e + 1) };
+    if (!this.g.chains.has(edgeId)) return undefined;
+    const e = this.g.edgeIndexOf(edgeId);
+    return { left: this.leftOf(2 * e), right: this.leftOf(2 * e + 1) };
   }
 
   edgeSummary(h: number, neighbour: Neighbour): EdgeSummary {
     const e = this.edgeOf(h);
     const S = this.g.junctions.get(e.start)!.pos;
     const E = this.g.junctions.get(e.end)!.pos;
-    const len = segmentLength((E[0] - S[0]) ** 2n + (E[1] - S[1]) ** 2n);
+    const chord = segmentLength((E[0] - S[0]) ** 2n + (E[1] - S[1]) ** 2n);
+    const line = this.g.polylines.get(e.id);
+    const sagitta = (e.kind === 'wall' ? this.doc.walls?.[e.id] : this.doc.separators?.[e.id])?.arc?.sagitta;
+    // An arc edge's length is along its polyline (Core 0.4, 21.6).
+    const arc = sagitta !== undefined && line !== undefined ? { sagitta: length(BigInt(sagitta)), chord } : undefined;
+    const len = arc !== undefined && line !== undefined ? length(polylineLength(line)) : chord;
     if (e.kind === 'separator') {
       const name = this.doc.separators?.[e.id]?.name;
-      return { kind: 'separator', id: e.id, ...(name !== undefined && { name }), length: len, otherSide: neighbour, openings: [] };
+      return { kind: 'separator', id: e.id, ...(name !== undefined && { name }), length: len, ...(arc && { arc }), otherSide: neighbour, openings: [] };
     }
     const w = this.doc.walls![e.id]!;
     const type = w.type === undefined ? undefined : this.doc.types?.[w.type];
@@ -529,6 +540,7 @@ class LevelTopology {
       id: e.id,
       ...(w.name !== undefined && { name: w.name }),
       length: len,
+      ...(arc && { arc }),
       ...(w.type !== undefined && !w.layers && { type: { id: w.type, ...(type?.name !== undefined && { name: type.name }) } }),
       ...(offsets && { thickness: length(offsets.thickness) }),
       otherSide: neighbour,
@@ -576,8 +588,17 @@ class LevelTopology {
 
   /** The edges of a cycle, each with what is on its far side, and (for an outer cycle) its side. */
   cycleEdges(halfEdges: readonly number[]): { h: number; side: Side; along: bigint; summary: EdgeSummary }[] {
-    return halfEdges.map((h) => {
-      const d = this.g.graph.direction(h);
+    // An arc edge's segments are one edge (Core 0.4, 21.3): a run of them collapses into its first.
+    const k = halfEdges.findIndex((x) => !this.g.isVertex(this.g.graph.origin(x)));
+    const rotated = [...halfEdges.slice(Math.max(k, 0)), ...halfEdges.slice(0, Math.max(k, 0))];
+    const runs = rotated.filter((x) => !this.g.isVertex(this.g.graph.origin(x)));
+    return runs.map((h) => {
+      const e0 = this.edgeOf(h);
+      const P = this.g.junctions.get(e0.start)!.pos;
+      const Q = this.g.junctions.get(e0.end)!.pos;
+      const along0 = (h & 1) === 0;
+      // An arc edge's side is its chord's, walked the cycle's way.
+      const d = this.g.polylines.get(e0.id)!.length > 2 ? (along0 ? [Q[0] - P[0], Q[1] - P[1]] : [P[0] - Q[0], P[1] - Q[1]]) : this.g.graph.direction(h);
       // The outward normal is the right-hand normal of the walk (Ops §3.4): (dy, −dx).
       const side = sideOf(d[1], -d[0]);
       const e = this.edgeOf(h);
@@ -666,7 +687,8 @@ function levelSummary(doc: FloorspecDocument, analysis: Analysis, lid: string): 
   const adj = new Map<string, { between: [Neighbour, Neighbour]; walls: string[]; separators: string[] }>();
   const links: Link[] = [];
   const pair = (a: Neighbour, b: Neighbour): [Neighbour, Neighbour] => (nkey(a) <= nkey(b) ? [a, b] : [b, a]);
-  for (const e of g.edges) {
+  // Every edge of the document once - an arc edge's segments are one edge (Core 0.4, 21.3).
+  for (const e of g.edges.filter((x) => x.src === undefined || x.id === g.chains.get(x.src)![0]!.id).map((x) => ({ id: x.src ?? x.id, kind: x.kind }))) {
     const s = topo.sidesOfEdge(e.id)!;
     if (sameNeighbour(s.left, s.right)) continue;
     const between = pair(s.left, s.right);

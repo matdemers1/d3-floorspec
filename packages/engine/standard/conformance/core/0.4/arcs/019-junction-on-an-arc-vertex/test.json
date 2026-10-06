@@ -1,0 +1,6 @@
+{
+  "description": "A wall that starts at a vertex of the bay's polyline and runs north: a vertex is no junction, so the arc does not end there - its junction lies inside the arc. FS-INV-105, and nothing else: the two lines meet only at the straight wall's end.",
+  "covers": [
+    "FS-CORE-21.3.1"
+  ]
+}

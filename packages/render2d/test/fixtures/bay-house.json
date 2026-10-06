@@ -1,0 +1,186 @@
+{
+    "floorspec": "0.4",
+    "project": {
+        "name": "Bay house"
+    },
+    "buildings": {
+        "HOUSE": {
+            "name": "House"
+        }
+    },
+    "levels": {
+        "MAIN": {
+            "name": "Main floor",
+            "building": "HOUSE",
+            "elevation": 0,
+            "height": 3511296
+        }
+    },
+    "types": {
+        "EXT": {
+            "kind": "wallType",
+            "name": "Exterior 2x6",
+            "layers": [
+                {
+                    "thickness": 195072,
+                    "function": "core"
+                }
+            ]
+        },
+        "INT": {
+            "kind": "wallType",
+            "name": "Interior 2x4",
+            "layers": [
+                {
+                    "thickness": 130048,
+                    "function": "core"
+                }
+            ]
+        },
+        "D36": {
+            "kind": "doorType",
+            "name": "Door 36",
+            "width": 1170432,
+            "height": 2600960
+        },
+        "W48": {
+            "kind": "windowType",
+            "name": "Window 48",
+            "width": 1560576,
+            "height": 1560576,
+            "sill": 975360
+        }
+    },
+    "junctions": {
+        "A": {
+            "level": "MAIN",
+            "position": [
+                0,
+                0
+            ]
+        },
+        "B": {
+            "level": "MAIN",
+            "position": [
+                0,
+                6242304
+            ]
+        },
+        "C": {
+            "level": "MAIN",
+            "position": [
+                9363456,
+                6242304
+            ]
+        },
+        "D": {
+            "level": "MAIN",
+            "position": [
+                9363456,
+                0
+            ]
+        },
+        "E": {
+            "level": "MAIN",
+            "position": [
+                5462016,
+                0
+            ]
+        },
+        "F": {
+            "level": "MAIN",
+            "position": [
+                5462016,
+                6242304
+            ]
+        }
+    },
+    "walls": {
+        "W1": {
+            "level": "MAIN",
+            "start": "A",
+            "end": "B",
+            "type": "EXT"
+        },
+        "W2": {
+            "level": "MAIN",
+            "start": "B",
+            "end": "F",
+            "type": "EXT",
+            "arc": {
+                "sagitta": 1170432
+            }
+        },
+        "W3": {
+            "level": "MAIN",
+            "start": "F",
+            "end": "C",
+            "type": "EXT"
+        },
+        "W4": {
+            "level": "MAIN",
+            "start": "C",
+            "end": "D",
+            "type": "EXT"
+        },
+        "W5": {
+            "level": "MAIN",
+            "start": "D",
+            "end": "E",
+            "type": "EXT"
+        },
+        "W6": {
+            "level": "MAIN",
+            "start": "E",
+            "end": "A",
+            "type": "EXT"
+        },
+        "W7": {
+            "level": "MAIN",
+            "start": "E",
+            "end": "F",
+            "type": "INT",
+            "arc": {
+                "sagitta": -780288
+            }
+        }
+    },
+    "openings": {
+        "O1": {
+            "wall": "W2",
+            "offset": 2340864,
+            "fill": "W48"
+        },
+        "O2": {
+            "wall": "W7",
+            "offset": 2340864,
+            "fill": "D36",
+            "swing": "left"
+        },
+        "O3": {
+            "wall": "W5",
+            "offset": 1170432,
+            "fill": "D36"
+        }
+    },
+    "rooms": {
+        "LIV": {
+            "level": "MAIN",
+            "anchor": [
+                2731008,
+                3121152
+            ],
+            "name": "Living",
+            "function": "living"
+        },
+        "KIT": {
+            "level": "MAIN",
+            "anchor": [
+                7802880,
+                3121152
+            ],
+            "name": "Kitchen",
+            "function": "kitchen"
+        }
+    }
+}

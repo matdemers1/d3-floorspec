@@ -7,10 +7,12 @@ import { toSafeNumber } from '../exact/bigint.js';
 import { roundPoint, toNumbers } from '../geometry/exact-point.js';
 import type { IPoint } from '../geometry/predicates.js';
 import { deriveFloors, roomRings, type DerivedCeiling, type DerivedFloor, type DerivedSlab } from '../slabs/floors.js';
-import { effectiveClearOpening, entries, extElements, get, ipoint, openingDimensions, wallElevations, type ClearOpening, type FloorspecDocument } from '../model/document.js';
+import { effectiveClearOpening, entries, extElements, get, ipoint, openingDimensions, wallArc, wallElevations, type ClearOpening, type FloorspecDocument } from '../model/document.js';
+import { pointAt, polylineLength } from '../geometry/arcs.js';
+import { Q } from '../exact/rational.js';
 import type { Analysis } from '../validate/invariants.js';
 import { elementFrame, envelopesOverlap, footprintOf, openingFrame, placementOf, type Footprint, type Placement } from './frames.js';
-import { comparePoints } from './level.js';
+import { comparePoints, type LevelGeometry } from './level.js';
 import { analyseProgram, type DerivedProgram } from './program.js';
 import { analyseCirculation, type DerivedCirculationRoom } from '../circulation/circulation.js';
 import type { DerivedExtensions } from '../extensions/official.js';
@@ -35,6 +37,13 @@ export interface DerivedWall {
   startLeft: Point;
   baseElevation: number;
   topElevation: number;
+  /** Core 0.4, 21.7: an arc wall's polyline, from its start to its end. */
+  polyline?: Point[];
+  /** 21.6: an arc wall's length along its polyline. */
+  length?: number;
+  /** 21.4: an arc wall's left and right face vertices, from its start to its end. */
+  left?: Point[];
+  right?: Point[];
 }
 
 export interface DerivedRoomPolygon {
@@ -117,6 +126,14 @@ export interface Derived {
   options?: Record<string, DerivedOptionSet>;
 }
 
+/** 21.7: what an arc wall derives besides every wall's face ends and elevations; nothing for a straight wall. */
+function arcMembers(doc: FloorspecDocument, g: LevelGeometry, id: string): Pick<DerivedWall, 'polyline' | 'length' | 'left' | 'right'> {
+  const arc = wallArc(doc, id);
+  if (!arc || arc === 'unfit') return {};
+  const { left, right } = g.faceVertices(id);
+  return { polyline: arc.map(toNumbers), length: toSafeNumber(polylineLength(arc)), left: left.map(toNumbers), right: right.map(toNumbers) };
+}
+
 /** Half of a BigInt, as a decimal string (6.4: a net area is a multiple of one half). */
 export function halfString(twice: bigint): string {
   const neg = twice < 0n;
@@ -146,6 +163,7 @@ export function deriveFrom(doc: FloorspecDocument, analysis: Analysis): Derived 
       startLeft: toNumbers(fe.startLeft),
       baseElevation: toSafeNumber(el.base),
       topElevation: toSafeNumber(el.top),
+      ...arcMembers(doc, g, id),
     });
   }
 
@@ -176,8 +194,13 @@ export function deriveFrom(doc: FloorspecDocument, analysis: Analysis): Derived 
     const d: IPoint = [E[0] - S[0], E[1] - S[1]];
     const m = d[0] * d[0] + d[1] * d[1];
     const dim = openingDimensions(doc, o);
-    // S + d · t / |d| = S + d · t · √m / m (7.4)
+    const arc = wallArc(doc, o.wall);
+    // S + d · t / |d| = S + d · t · √m / m (7.4); on an arc wall, the point at distance t along its polyline (21.6)
     const at = (t: bigint): Point => {
+      if (arc && arc !== 'unfit') {
+        const [x, y] = pointAt(arc, Q.of(t));
+        return [toSafeNumber(x.round()), toSafeNumber(y.round())];
+      }
       const k = Surd.sqrt(m).mulInt(t).divInt(m);
       return toNumbers(roundPoint({ x: k.mulInt(d[0]).addInt(S[0]), y: k.mulInt(d[1]).addInt(S[1]) }));
     };

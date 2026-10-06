@@ -1,0 +1,19 @@
+{
+  "batch": [
+    {
+      "op": "drawSeparator",
+      "id": "S1",
+      "level": "L1",
+      "from": "J8",
+      "to": [9363456, 3121152]
+    },
+    {
+      "op": "setProperty",
+      "id": "S1",
+      "path": "/arc",
+      "value": {
+        "sagitta": 390144
+      }
+    }
+  ]
+}

@@ -7,6 +7,7 @@
 import type * as G from '../generated/types.js';
 import type * as R from '../generated/registry-types.js';
 import { big } from '../exact/bigint.js';
+import { arcFits, arcPolyline, sagittaOf } from '../geometry/arcs.js';
 
 /**
  * A document this engine reads: Core 0.4's shape, declaring any draft it implements. A document
@@ -235,3 +236,19 @@ export const programItems = (doc: FloorspecDocument): [string, ProgramItem][] =>
 
 /** 11.2: the program's adjacencies, in document order. */
 export const adjacencies = (doc: FloorspecDocument): readonly Adjacency[] => doc.program?.adjacency ?? [];
+
+/**
+ * Core 0.4, chapter 21: an arc wall's polyline (21.2); `'unfit'` for an arc wall whose arc is not at most a
+ * semicircle, or whose junctions are one (FS-INV-113, FS-INV-102) — it has no length (10.3); undefined for a
+ * straight wall.
+ */
+export function wallArc(doc: FloorspecDocument, wid: string): readonly IPointLike[] | 'unfit' | undefined {
+  const w = get(doc.walls, wid);
+  const h = sagittaOf(w);
+  if (!w || h === undefined) return undefined;
+  const S = ipoint(get(doc.junctions, w.start)!.position);
+  const E = ipoint(get(doc.junctions, w.end)!.position);
+  if (w.start === w.end || !arcFits(S, E, h)) return 'unfit';
+  return arcPolyline(S, E, h);
+}
+type IPointLike = readonly [bigint, bigint];

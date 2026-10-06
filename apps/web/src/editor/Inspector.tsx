@@ -11,6 +11,7 @@ import {
   moveJunction,
   moveOpening,
   moveWall,
+  setArc,
   setOrUnset,
   setProperty,
   setRoomFinish,
@@ -25,7 +26,8 @@ import { requestRemove, switchUnits } from './actions';
 import { MaterialSurface } from './Materials';
 import { OptionMembership } from './Options';
 import { WallFinishes } from './Finishes';
-import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, SofaIcon, StairIcon, WallIcon, WindowIcon } from './icons';
+import { ArcWallIcon, DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, SofaIcon, StairIcon, WallIcon, WindowIcon } from './icons';
+import { sagittaFromRadius } from './arcs';
 import { RoofBody, RoofDrawSettings, StairBody, StairDrawSettings } from './RoofStairFields';
 import { FindingsList } from './Diagnostics';
 import { Layers as LayersIcon, Palette, House } from 'lucide-react';
@@ -326,6 +328,65 @@ function TypePicker({ ctx, kind, value, label, path, allowNone }: { ctx: Ctx; ki
   );
 }
 
+/**
+ * A wall's arc (Core 0.4, chapter 21): its sagitta and radius, editable; its sweep, chord and length along
+ * the wall, as the engine derives them; flip the bulge, make it straight — or bend a straight wall.
+ */
+function ArcSection({ ctx, wall, chord }: { ctx: Ctx; wall: NonNullable<LevelView['walls'][number]>; chord: number }) {
+  const { id, units, readOnly, model } = ctx;
+  const arc = wall.arc;
+  const v04 = model.document.floorspec === '0.4';
+  if (arc === undefined)
+    return v04 && !readOnly ? (
+      <Section title="Arc">
+        <Button size="sm" variant="ghost" onClick={() => { ctx.edit(`Bend ${id} into an arc`, setArc(id, Math.round(chord / 8))); }}>
+          Bend into an arc
+        </Button>
+      </Section>
+    ) : null;
+  const sign: 1 | -1 = arc.sagitta < 0 ? -1 : 1;
+  return (
+    <Section title="Arc">
+      <LengthField
+        label="Sagitta"
+        value={Math.abs(arc.sagitta)}
+        units={units}
+        positive
+        disabled={readOnly}
+        hint="How far the middle of the wall bows from its chord: at most half the chord"
+        onCommit={(v) => {
+          if (v !== null && v !== Math.abs(arc.sagitta)) ctx.edit(`Set the sagitta of ${id}`, setArc(id, sign * Math.min(Math.abs(v), Math.floor(chord / 2))));
+        }}
+      />
+      <LengthField
+        label="Radius"
+        value={Math.round(arc.radius)}
+        units={units}
+        positive
+        disabled={readOnly}
+        hint="At least half the chord"
+        onCommit={(v) => {
+          if (v !== null && v !== Math.round(arc.radius)) ctx.edit(`Set the radius of ${id}`, setArc(id, sagittaFromRadius(chord, Math.abs(v), sign)));
+        }}
+      />
+      <ReadOnlyField label="Sweep" value={`${arc.sweep.toFixed(1)}°`} />
+      <ReadOnlyField label="Chord" value={prettyLen(Math.round(arc.chord), units)} />
+      <ReadOnlyField label="Length along the wall" value={prettyLen(arc.length, units)} />
+      {readOnly ? null : (
+        <div className="fs-arc__actions">
+          <Button size="sm" variant="ghost" onClick={() => { ctx.edit(`Flip the bulge of ${id}`, setArc(id, -arc.sagitta)); }}>
+            Flip bulge
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => { ctx.edit(`Straighten ${id}`, setArc(id, null)); }}>
+            Make straight
+          </Button>
+        </div>
+      )}
+      <p className="fs-note">Measured on the arc's 1 mm polyline (Core 21).</p>
+    </Section>
+  );
+}
+
 function describeLayers(layers: readonly Layer[] | undefined, units: UnitSystem): string {
   if (layers === undefined || layers.length === 0) return 'No layers';
   const total = layers.reduce((s, l) => s + l.thickness, 0);
@@ -360,7 +421,7 @@ function WallBody({ ctx }: { ctx: Ctx }) {
       </Section>
       <Section title="Geometry">
         <LengthField
-          label="Length"
+          label={wall?.arc === undefined ? 'Length' : 'Chord length'}
           value={Math.round(length)}
           units={units}
           positive
@@ -404,6 +465,7 @@ function WallBody({ ctx }: { ctx: Ctx }) {
           }}
         />
       </Section>
+      {wall !== undefined ? <ArcSection ctx={ctx} wall={wall} chord={length} /> : null}
       <Section title="Vertical">
         <LengthField
           label="Base offset"
@@ -965,6 +1027,61 @@ function DrawPanel({ store, model }: { store: EditorStore; model: EditorModel })
   const draft = useEditor(store, (s) => s.draft);
   const units = useEditor(store, () => store.units);
   const set = (patch: Partial<typeof draw>) => { store.set({ draw: { ...draw, ...patch } }); };
+  if (tool === 'arc') {
+    const choices = typeChoices(model.document, 'wallType');
+    const chosen = store.chosenType(choices, draw.wallType);
+    const d = draft?.tool === 'arc' ? draft : undefined;
+    const step =
+      d?.start === undefined || d.start === null
+        ? 'Click or type x, y to start the arc wall'
+        : d.end === null
+          ? 'Click its end, or type the chord length and Enter'
+          : draw.arcMode === 'chord'
+            ? `Bulge: move the pointer, or type the ${d.field} and Enter`
+            : 'Click a point the arc passes through';
+    return (
+      <div className="fs-inspector__body">
+        <div className="fs-inspector__head">
+          <span className="fs-inspector__icon"><ArcWallIcon /></span>
+          <div className="fs-inspector__title">
+            <h2>Draw arc wall</h2>
+            <p>{step}</p>
+          </div>
+        </div>
+        <Section title="Arc by">
+          <SegmentedControl
+            aria-label="Arc by"
+            size="sm"
+            value={draw.arcMode}
+            items={[{ value: 'chord', label: 'Chord + sagitta' }, { value: 'three', label: 'Three points' }]}
+            onValueChange={(v) => { set({ arcMode: v as typeof draw.arcMode }); }}
+          />
+        </Section>
+        <Section title="New wall">
+          <Select
+            aria-label="Wall type"
+            appearance="filled"
+            options={choices.map((c) => ({ value: c.id, label: c.starter ? `${c.name} (from library)` : c.name }))}
+            value={chosen?.id ?? ''}
+            onValueChange={(v) => { set({ wallType: v }); }}
+          />
+          <p className="fs-note">{describeLayers(chosen?.element['layers'] as Layer[] | undefined, units)}</p>
+          <SegmentedControl
+            aria-label="Justification"
+            size="sm"
+            value={draw.justification}
+            items={[{ value: 'center', label: 'Center' }, { value: 'interiorFace', label: 'Interior face' }, { value: 'exteriorFace', label: 'Exterior face' }]}
+            onValueChange={(v) => { set({ justification: v as typeof draw.justification }); }}
+          />
+        </Section>
+        <div className="fs-callout-card" role="note">
+          <strong>A circular arc, at most a semicircle</strong>
+          <p>Start and end at junctions where the arc meets other walls: an arc is never split where another wall crosses it (Floorspec Ops 0.4, 5.2). Shift+F flips the bulge; Tab switches between sagitta and radius.</p>
+        </div>
+        <KeyHints arc />
+      </div>
+    );
+  }
   if (tool === 'wall' || tool === 'separator') {
     const choices = typeChoices(model.document, 'wallType');
     const chosen = store.chosenType(choices, draw.wallType);
@@ -1125,7 +1242,16 @@ function DrawPanel({ store, model }: { store: EditorStore; model: EditorModel })
   );
 }
 
-function KeyHints() {
+function KeyHints({ arc = false }: { arc?: boolean }) {
+  if (arc)
+    return (
+      <ul className="fs-keys" aria-label="Keys">
+        <li><kbd>Enter</kbd> place the typed start, chord or bulge</li>
+        <li><kbd>Tab</kbd> sagitta or radius</li>
+        <li><kbd>Shift+F</kbd> flip the bulge</li>
+        <li><kbd>Esc</kbd> start again</li>
+      </ul>
+    );
   return (
     <ul className="fs-keys" aria-label="Keys">
       <li><kbd>Enter</kbd> place the typed length, or finish</li>

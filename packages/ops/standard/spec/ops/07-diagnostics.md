@@ -24,6 +24,7 @@ locks against the result.
 | `FS-OPS-010` | a lock names elements that do not exist, or walls that are not parallel | the lock's elements | 6.1.1 |
 | `FS-OPS-011` | the result breaks a lock | the lock's elements | 6.1.2 |
 | `FS-OPS-012` | a length, area, point or vector string does not match the grammar | — | 3.1.1, 3.6.1 |
+| `FS-OPS-013` | planarization would route or split an arc edge: on a level it planarizes, an arc edge's location line meets or overlaps another edge's, or a junction lies inside it (Ops 0.4) | every such arc edge on the level | 5.2.4 |
 
 An applier MUST report a rejection with the code this table gives for the first failure, and with exactly the elements it lists. {#FS-OPS-7.1.1 MUST}
 

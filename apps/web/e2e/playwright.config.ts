@@ -36,6 +36,8 @@ import { defineConfig, devices } from '@playwright/test';
  *                   opened in the plan, in 3D and in the schedules.
  *   - `moonshots` — FLR-T-12.6: the ranch's advisory energy estimate, its climate changed through Ops,
  *                   and a path-traced still of its 3D view rendered on the job queue.
+ *   - `arcs`      — FLR-T-11.1: an arc wall drawn by keyboard (Core 0.4, chapter 21), the curved room it
+ *                   closes with its area, the arc wall's inspector, and the curved wall in 3D.
  *
  * Run with:
  *
@@ -43,7 +45,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`). E2E_PORT is the keyboard suite's port; the others take the next sixteen.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`). E2E_PORT is the keyboard suite's port; the others take the next seventeen.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -108,6 +110,8 @@ const SUITES: Suite[] = [
   { name: 'templates', spec: 'templates.spec.ts', port: PORT + 15, database: databaseFor('templates'), setupToken: true, gl: true },
   // FLR-T-12.6: the advisory energy estimate of a template, its climate changed, and a path-traced still.
   { name: 'moonshots', spec: 'moonshots.spec.ts', port: PORT + 16, database: databaseFor('moonshots'), setupToken: true, gl: true },
+  // FLR-T-11.1: an arc wall drawn by keyboard, the curved room it closes and its area, and the wall in 3D.
+  { name: 'arcs', spec: 'arcs.spec.ts', port: PORT + 17, database: databaseFor('arcs'), setupToken: true, gl: true },
 ];
 
 const origin = (port: number) => `http://localhost:${String(port)}`;

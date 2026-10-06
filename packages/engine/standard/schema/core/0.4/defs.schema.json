@@ -243,6 +243,24 @@
         }
       },
       "additionalProperties": false
+    },
+    "arc": {
+      "title": "Arc",
+      "description": "21.1 (Core 0.4): the circular arc an edge runs along, given by its sagitta — the distance from the middle of its chord to the middle of the arc, to the left of the chord seen from its start junction when positive, to the right when negative. An arc MUST have exactly the member `sagitta`, a length that is not zero (FS-CORE-21.1.1). That the arc is at most a semicircle (FS-CORE-21.1.2) is an invariant (FS-INV-113), not checked here.",
+      "type": "object",
+      "required": [
+        "sagitta"
+      ],
+      "properties": {
+        "sagitta": {
+          "$ref": "#/$defs/length",
+          "not": {
+            "const": 0
+          },
+          "description": "21.1: the sagitta, a length that is not zero."
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

@@ -1,0 +1,25 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "84375ad9b57bfd12e7c19f8ef02fa6261203c3d94b2a96276417d7766fbe20d8",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W8",
+      "path": "/arc/sagitta",
+      "value": -390144
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "W8",
+      "path": "/arc",
+      "value": {
+        "sagitta": 390144
+      }
+    }
+  ]
+}

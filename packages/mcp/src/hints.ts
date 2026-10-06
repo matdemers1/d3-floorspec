@@ -42,6 +42,14 @@ export const UPGRADE_HINT =
 export const STAIR_04_HINT =
   'A winder\'s "newel" and a stair\'s "minHeadroom" are Floorspec 0.4 members. Upgrade the plan first, in the same batch: {"op":"setProperty","id":"$document","path":"/floorspec","value":"0.4"} — it moves nothing.';
 
+/** Arc walls (Core 0.4, chapter 21): an arc in an earlier plan, one bent past a semicircle, and one a wall would cross. */
+export const ARC_04_HINT =
+  'An "arc" on a wall or a separator is a Floorspec 0.4 member. Upgrade the plan first, in the same batch: {"op":"setProperty","id":"$document","path":"/floorspec","value":"0.4"} — it moves nothing.';
+export const ARC_FIT_HINT =
+  "An arc wall bends at most a semicircle (FS-INV-113): its sagitta may be no more than half its chord. For more, put a junction at the middle of the curve and draw two arcs.";
+export const ARC_ROUTE_HINT =
+  'An arc wall is never split where another wall meets it (FS-OPS-013): add a junction where they meet first, and draw the arc to it — or draw the other wall to a junction off the arc.';
+
 /** The hints for the invariants of tapered treads (Core 0.4, 17.7: FS-INV-905, FS-INV-906). */
 export const NEWEL_HINT =
   "A winder's newel reaches its walkline (FS-INV-905): make the newel smaller — about a fifth of the stair's width or less — or leave it out; a half turn's gap may be no wider than the stair.";
@@ -53,6 +61,7 @@ export function hintsFor(diagnostics: readonly Diagnostic[], batch?: readonly { 
   const drew = batch?.some((o) => DRAWING_OPS.has(o.op)) ?? false;
   const setsValues = batch?.some((o) => o.op === 'setProperty') ?? false;
   const stairs04 = batch !== undefined && STAIR_04_MEMBERS.test(JSON.stringify(batch));
+  const arcs04 = batch !== undefined && /"arc"|\/arc"/.test(JSON.stringify(batch));
   const programmed = batch?.some((o) => PROGRAM_OPS.has(o.op) || (o.op === 'addElement' && (o['collection'] === 'items' || o['extension'] !== undefined)) || (o.op === 'addRoom' && o['brief'] !== undefined)) ?? false;
   for (const d of diagnostics) {
     const message = d.message;
@@ -77,10 +86,16 @@ export function hintsFor(diagnostics: readonly Diagnostic[], batch?: readonly { 
       if (programmed && d.location?.['pointer'] === '' && /additional properties/.test(message)) hints.add(UPGRADE_HINT);
       // A winder's newel or a stair's minHeadroom in a plan earlier than 0.4 is not a member it has.
       if (stairs04 && STAIR_MEMBER.test(typeof d.location?.['pointer'] === 'string' ? d.location['pointer'] : '') && /additional properties/.test(message)) hints.add(STAIR_04_HINT);
+      // An arc on a wall or a separator of a plan earlier than 0.4 is not a member it has.
+      if (arcs04 && /^\/(walls|separators)\/[^/]+$/.test(typeof d.location?.['pointer'] === 'string' ? d.location['pointer'] : '') && /additional properties/.test(message)) hints.add(ARC_04_HINT);
       if (FALLBACK_BOX.test(message)) hints.add('A placed element needs element.fallback.box: {"min":[x,y,z],"max":[x,y,z]} in base units around its host point — an outlet is about 1" × 3" × 4".');
       const opening = OPENING_SCHEMA.exec(message);
       const member = opening?.[1];
       if (member === 'height' || member === 'width') hints.add(DEFAULTS[member]);
+    } else if (d.code === 'FS-INV-113') {
+      hints.add(ARC_FIT_HINT);
+    } else if (d.code === 'FS-OPS-013') {
+      hints.add(ARC_ROUTE_HINT);
     } else if (d.code === 'FS-INV-905') {
       hints.add(NEWEL_HINT);
     } else if (d.code === 'FS-INV-906') {

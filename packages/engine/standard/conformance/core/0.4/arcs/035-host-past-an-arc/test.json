@@ -1,0 +1,6 @@
+{
+  "description": "An element one base unit past the bay wall's length. FS-INV-501.",
+  "covers": [
+    "FS-CORE-21.6.2"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "A straight wall that starts two base units north of the bay's polyline - between it and its circle - and runs north. It would cross the circle; it does not meet the polyline, which is the wall's location line, so the document is valid.",
+  "covers": [
+    "FS-CORE-21.3.1",
+    "FS-CORE-21.2.1"
+  ]
+}

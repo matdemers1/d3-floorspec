@@ -1,0 +1,49 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-020",
+      "severity": "info",
+      "elements": ["W1"]
+    }
+  ],
+  "hash": "adbb04b84c3ba7111793bb7a6840c2eb4e140baa0ba17520b197e9cba9ec555f",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [0, -64000],
+        "endRight": [3840000, -64000],
+        "endLeft": [3840000, 64000],
+        "startLeft": [0, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000,
+        "left": [],
+        "length": 3840000,
+        "polyline": [[0, 0], [3840000, 0]],
+        "right": []
+      }
+    },
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "ceilings": {},
+    "circulation": {},
+    "finishes": {
+      "walls": {},
+      "rooms": {}
+    },
+    "floors": {},
+    "roofs": {},
+    "slabs": {},
+    "stairs": {}
+  }
+}

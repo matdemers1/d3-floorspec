@@ -1,0 +1,7 @@
+{
+  "description": "An arc on an oblique chord, from (0, 0) to (3000 mm, 1000 mm), with a sagitta of 500 mm: the chord's length is 1000 sqrt 10 mm, so the arc's midpoint, (1500 mm, 500 mm) + 500 (-1, 3) / sqrt 10 mm, and every vertex after it is irrational before it is rounded, each coordinate once, ties to even, decided exactly.",
+  "covers": [
+    "FS-CORE-21.2.1",
+    "FS-CORE-2.2.1"
+  ]
+}

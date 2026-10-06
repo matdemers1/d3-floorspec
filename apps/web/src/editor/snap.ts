@@ -1,5 +1,6 @@
 import type { LevelView, Point } from './model';
 import { dist, distanceToRing, project, sub } from './geometry';
+import { stationOf } from './arcs';
 
 /**
  * Snapping (FLR-T-3.3): where a click lands, as an exact integer point the applier can take as is.
@@ -111,11 +112,13 @@ function nearestEdge(level: LevelView, p: Point, tol: number, exclude?: Readonly
   let best: { id: string; a: Point; b: Point; d: number } | null = null;
   for (const w of level.walls) {
     if (exclude?.has(w.id) === true) continue;
+    // An arc wall (Core 0.4, 21) is no edge to snap a junction onto: one inside it would have to split it.
+    if (w.line.length > 2) continue;
     const d = Math.min(distanceToRing(p, w.ring), project(p, w.a, w.b).distance);
     if (d <= tol && (best === null || d < best.d)) best = { id: w.id, a: w.a, b: w.b, d };
   }
   for (const s of level.separators) {
-    if (exclude?.has(s.id) === true) continue;
+    if (exclude?.has(s.id) === true || s.line.length > 2) continue;
     const d = project(p, s.a, s.b).distance;
     if (d <= tol && (best === null || d < best.d)) best = { id: s.id, a: s.a, b: s.b, d };
   }
@@ -237,6 +240,16 @@ export interface OpeningSnap {
  * Where an opening of `width` goes on a wall, centred on the pointer: snapped to the wall's centre
  * when within `tol` of it, otherwise to the grid, and kept inside the wall (Core 7.3).
  */
+/**
+ * snapOpening on a wall as the editor holds it: along its polyline for an arc wall (Core 0.4, 21.6), whose
+ * openings are placed by stations — the pointer seen as a station and a distance across.
+ */
+export function snapOpeningOn(wall: { a: Point; b: Point; line: readonly Point[]; arc?: { length: number } }, width: number, pointer: Point, o: { tol: number; grid: number }): OpeningSnap {
+  if (wall.line.length <= 2 || wall.arc === undefined) return snapOpening(wall.a, wall.b, Math.hypot(wall.b[0] - wall.a[0], wall.b[1] - wall.a[1]), width, pointer, o);
+  const st = stationOf(wall.line, pointer);
+  return snapOpening([0, 0], [wall.arc.length, 0], wall.arc.length, width, [st.along, st.across], o);
+}
+
 export function snapOpening(a: Point, b: Point, wallLength: number, width: number, pointer: Point, o: { tol: number; grid: number }): OpeningSnap {
   const d = sub(b, a);
   const l = Math.hypot(d[0], d[1]) || 1;

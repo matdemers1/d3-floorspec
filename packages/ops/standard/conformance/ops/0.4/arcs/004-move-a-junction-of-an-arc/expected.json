@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "accff029ebb820f8eb05b91943f48b85b9202244eb6dabc61624802764843b02",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "moveJunction",
+      "id": "J8",
+      "to": [4681728, 3511296]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "J8",
+      "path": "/position",
+      "value": [4681728, 3121152]
+    }
+  ]
+}

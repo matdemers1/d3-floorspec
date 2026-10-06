@@ -1,8 +1,9 @@
-import { isChainDraft, isChainTool, isOutlineTool, type ChainTool, type EditorStore, type ToolId } from './store';
+import { isArcDraft, isChainDraft, isChainTool, isOutlineTool, type ArcDraft, type ChainTool, type EditorStore, type ToolId } from './store';
+import { sagittaFromRadius, sagittaToward } from './arcs';
 import { direction } from '@floorspec/engine';
 import type { LevelView, Point } from './model';
 import { dist, hitTest, faceAt, leftNormal, project, roomsBeside } from './geometry';
-import { pointAtLength, snapOpening, snapPoint, type Snap } from './snap';
+import { pointAtLength, snapOpeningOn, snapPoint, type Snap } from './snap';
 import { panBy, toWorld, zoomAt } from './viewport';
 import {
   addOpening,
@@ -11,6 +12,7 @@ import {
   addSlab,
   addStair,
   levelAbove,
+  drawArcWall,
   drawChain,
   isClosed,
   moveJunction,
@@ -266,6 +268,9 @@ export class ToolController {
       case 'roof':
         this.chainDown(p, s.tool);
         return;
+      case 'arc':
+        this.arcDown(p);
+        return;
       case 'stair':
         this.stairDown(p);
         return;
@@ -317,6 +322,9 @@ export class ToolController {
         if (dragging && draft.chain.length > 0) return;
         return;
       }
+      case 'arc':
+        this.arcMove(p);
+        return;
       case 'door':
       case 'window':
         this.openingHover(p, s.tool);
@@ -408,7 +416,7 @@ export class ToolController {
     const opening = level.openings.find((o) => o.id === start.target);
     const wall = opening === undefined ? undefined : level.walls.find((w) => w.id === opening.wall);
     if (opening === undefined || wall === undefined) return;
-    const snap = snapOpening(wall.a, wall.b, dist(wall.a, wall.b), opening.width, this.world(p), { tol: this.tol(p.type), grid });
+    const snap = snapOpeningOn(wall, opening.width, this.world(p), { tol: this.tol(p.type), grid });
     this.store.set({ draft: { tool: 'select', drag: { kind: 'opening', id: opening.id, offset: snap.offset, centered: snap.centered }, typed } });
     this.store.preview(moveOpening(opening.id, snap.centered ? 'centered' : snap.offset));
   }
@@ -515,6 +523,84 @@ export class ToolController {
     void this.store.apply(`Draw ${String(segments)} ${noun}`, drawChain(document, s.level, draft.chain, { kind: draft.tool, type, justification: s.draw.justification }));
   }
 
+  // ── arc walls (Core 0.4, chapter 21) ──
+
+  private arcDraft(): ArcDraft {
+    const d = this.store.get().draft;
+    return isArcDraft(d) ? d : { tool: 'arc', start: null, end: null, cursor: null, typed: '', field: 'sagitta', sagitta: 0 };
+  }
+
+  /** The bulge the pointer gives in the bulge step: toward it from the chord, or (three points) through it. */
+  private bulgeAt(d: ArcDraft, point: Point): number {
+    if (d.start === null || d.end === null) return 0;
+    const a = d.start.point;
+    const b = d.end.point;
+    if (this.store.get().draw.arcMode === 'chord') return sagittaToward(a, b, point);
+    // Three points: the arc from a to b through the point; its sagitta, at most a semicircle (21.1.2).
+    const ax = a[0], ay = a[1], bx = b[0], by = b[1], px = point[0], py = point[1];
+    const den = 2 * (ax * (by - py) + bx * (py - ay) + px * (ay - by));
+    const c = Math.hypot(bx - ax, by - ay);
+    if (Math.abs(den) < 1e-9 || c === 0) return 0;
+    const ux = ((ax * ax + ay * ay) * (by - py) + (bx * bx + by * by) * (py - ay) + (px * px + py * py) * (ay - by)) / den;
+    const uy = ((ax * ax + ay * ay) * (px - bx) + (bx * bx + by * by) * (ax - px) + (px * px + py * py) * (bx - ax)) / den;
+    const R = Math.hypot(ax - ux, ay - uy);
+    const side = Math.sign((bx - ax) * (py - ay) - (by - ay) * (px - ax)) || 1;
+    const centreSide = Math.sign((bx - ax) * (uy - ay) - (by - ay) * (ux - ax));
+    const toCentre = Math.sqrt(Math.max(R * R - (c * c) / 4, 0));
+    const h = centreSide === side ? R + toCentre : R - toCentre;
+    return side * Math.round(Math.min(h, c / 2));
+  }
+
+  private arcMove(p: PointerInfo): void {
+    const d = this.arcDraft();
+    const anchor = d.end?.point ?? d.start?.point;
+    const cursor = this.snapFor(p, d.end === null ? anchor : undefined, []);
+    const sagitta = d.start !== null && d.end !== null ? this.bulgeAt(d, this.world(p)) : d.sagitta;
+    this.store.set({ draft: { ...d, cursor, sagitta } });
+  }
+
+  private arcDown(p: PointerInfo): void {
+    const d = this.arcDraft();
+    if (d.start !== null && d.end !== null) {
+      this.finishArc(this.bulgeAt(d, this.world(p)));
+      return;
+    }
+    const snap = this.snapFor(p, d.start?.point, []);
+    const vertex: ChainVertex = { point: snap.point, junction: snap.kind === 'junction' && snap.ref?.startsWith('~') !== true ? snap.ref : undefined };
+    if (d.start === null) this.store.set({ draft: { ...d, start: vertex, cursor: snap, typed: '' } });
+    else if (vertex.point[0] !== d.start.point[0] || vertex.point[1] !== d.start.point[1]) this.store.set({ draft: { ...d, end: vertex, cursor: snap, typed: '' } });
+  }
+
+  /** Commit the arc wall drawn: drawWall, and its arc set in the same batch (Ops 0.4). */
+  finishArc(sagitta: number): void {
+    const s = this.store.get();
+    const d = this.arcDraft();
+    if (s.model === null || s.level === null || d.start === null || d.end === null) return;
+    const c = Math.hypot(d.end.point[0] - d.start.point[0], d.end.point[1] - d.start.point[1]);
+    const h = Math.max(-Math.floor(c / 2), Math.min(Math.floor(c / 2), Math.round(sagitta)));
+    this.store.set({ draft: { tool: 'arc', start: null, end: null, cursor: d.cursor, typed: '', field: d.field, sagitta: 0 } });
+    const type = this.store.chosenType(typeChoices(s.model.document, 'wallType'), s.draw.wallType);
+    void this.store.apply(h === 0 ? 'Draw 1 wall' : 'Draw an arc wall', drawArcWall(s.model.document, s.level, d.start, d.end, h, { type, justification: s.draw.justification }), {
+      select: (created) => created.find((id) => /^W\d+$/.test(id)) ?? null,
+    });
+  }
+
+  /** Tab in the bulge step: type a radius in place of the sagitta, or back. Returns true when taken. */
+  arcField(): boolean {
+    const d = this.store.get().draft;
+    if (!isArcDraft(d) || d.start === null || d.end === null) return false;
+    this.store.set({ draft: { ...d, field: d.field === 'sagitta' ? 'radius' : 'sagitta', typed: '' } });
+    return true;
+  }
+
+  /** Shift+F in the bulge step: bulge the other way. Returns true when taken. */
+  flipArc(): boolean {
+    const d = this.store.get().draft;
+    if (!isArcDraft(d) || d.start === null || d.end === null) return false;
+    this.store.set({ draft: { ...d, sagitta: -(d.sagitta || 1) } });
+    return true;
+  }
+
   // ── stairs (Core 0.3, 17) ──
 
   /**
@@ -561,7 +647,7 @@ export class ToolController {
     }
     const fill = this.store.chosenType(typeChoices(s.model.document, tool === 'door' ? 'doorType' : 'windowType'), tool === 'door' ? s.draw.doorType : s.draw.windowType);
     const width = Number(fill?.element['width'] ?? 0);
-    const snap = snapOpening(wall.a, wall.b, dist(wall.a, wall.b), width, this.world(p), { tol: this.tol(p.type), grid: gridStep(this.store.units) });
+    const snap = snapOpeningOn(wall, width, this.world(p), { tol: this.tol(p.type), grid: gridStep(this.store.units) });
     this.store.set({ draft: { tool, hover: { wall: wall.id, offset: snap.offset, centered: snap.centered, width, side: snap.side, nearer: snap.nearer, fits: snap.fits }, typed } });
   }
 
@@ -615,7 +701,12 @@ export class ToolController {
   typeKey(key: string): boolean {
     const s = this.store.get();
     // Drawing from the keyboard: the wall tool takes a typed start point before any click.
-    const draft = s.draft === null && isChainTool(s.tool) && this.editable ? { tool: s.tool, chain: [] as ChainVertex[], cursor: null, typed: '' } : s.draft;
+    const draft =
+      s.draft === null && isChainTool(s.tool) && this.editable
+        ? { tool: s.tool, chain: [] as ChainVertex[], cursor: null, typed: '' }
+        : s.draft === null && s.tool === 'arc' && this.editable
+          ? this.arcDraft()
+          : s.draft;
     if (draft === null || draft.tool === 'room' || draft.tool === 'stair') return false;
     if (draft.tool === 'select' && draft.drag === null) return false;
     if ((draft.tool === 'door' || draft.tool === 'window') && draft.hover === null) return false;
@@ -627,7 +718,7 @@ export class ToolController {
       return true;
     }
     const starts = /^[0-9.-]$/.test(key);
-    const drawing = isChainTool(draft.tool);
+    const drawing = isChainTool(draft.tool) || draft.tool === 'arc';
     const continues = /^[0-9.'"/ \-a-zA-Z]$/.test(key) || (drawing && /^[,<@]$/.test(key));
     if ((typed === '' && starts) || (typed !== '' && continues)) {
       this.store.set({ draft: { ...draft, typed: typed + key } });
@@ -666,6 +757,7 @@ export class ToolController {
       this.deviceDown(`${lengthText(draft.typed, units)} from ${draft.hover.nearer ?? 'start'}`);
       return true;
     }
+    if (isArcDraft(draft)) return this.arcEnter(draft);
     if (isChainDraft(draft)) {
       if (draft.typed.trim() === '') {
         this.finishChain();
@@ -726,6 +818,46 @@ export class ToolController {
     return false;
   }
 
+  /** Enter with the arc tool: place the typed start, the typed chord, or the typed bulge (Core 0.4, 21). */
+  private arcEnter(d: ArcDraft): boolean {
+    const units = this.store.units;
+    if (d.start !== null && d.end !== null) {
+      if (d.typed.trim() === '') {
+        this.finishArc(d.sagitta);
+        return true;
+      }
+      const parsed = parseLen(d.typed, units);
+      if (!parsed.ok) {
+        this.store.set({ notice: { tone: 'danger', text: parsed.reason } });
+        return true;
+      }
+      const sign: 1 | -1 = d.sagitta < 0 ? -1 : 1;
+      const c = Math.hypot(d.end.point[0] - d.start.point[0], d.end.point[1] - d.start.point[1]);
+      this.finishArc(d.field === 'radius' ? sagittaFromRadius(c, Math.abs(parsed.value), sign) : sign * Math.abs(parsed.value));
+      return true;
+    }
+    if (d.typed.trim() === '') return false;
+    const parsed = parseSegment(d.typed, units);
+    if (!parsed.ok) {
+      this.store.set({ notice: { tone: 'danger', text: parsed.reason } });
+      return true;
+    }
+    if (d.start === null && parsed.kind !== 'point') {
+      this.store.set({ notice: { tone: 'info', text: 'Type where the arc wall starts, as x, y — for example 0, 0.' } });
+      return true;
+    }
+    const angle = parsed.kind === 'length' ? (parsed.angle ?? d.cursor?.angle ?? 0) : (d.cursor?.angle ?? 0);
+    const from = d.start;
+    if (parsed.kind !== 'point' && from === null) return true;
+    const point: Point = parsed.kind === 'point' ? parsed.point : pointAtLength((from as ChainVertex).point, angle, parsed.length);
+    const junction = this.level?.junctions.find((j) => j.position[0] === point[0] && j.position[1] === point[1])?.id;
+    const vertex: ChainVertex = { point, junction };
+    const cursor: Snap = { point, kind: 'angle', guides: [], angle };
+    if (d.start === null) this.store.set({ draft: { ...d, start: vertex, typed: '', cursor } });
+    else this.store.set({ draft: { ...d, end: vertex, typed: '', cursor, sagitta: d.sagitta === 0 ? Math.round(Math.hypot(point[0] - d.start.point[0], point[1] - d.start.point[1]) / 8) : d.sagitta } });
+    return true;
+  }
+
   /** Esc: drop typed text, then finish a chain, then drop the selection, then go back to select. */
   escape(): void {
     const s = this.store.get();
@@ -741,6 +873,10 @@ export class ToolController {
     if (isChainDraft(draft) && draft.chain.length > 0) {
       if (draft.chain.length >= (isOutlineTool(draft.tool) ? 3 : 2)) this.finishChain();
       else this.store.set({ draft: { ...draft, chain: [] } });
+      return;
+    }
+    if (isArcDraft(draft) && draft.start !== null) {
+      this.store.set({ draft: { ...draft, start: null, end: null, sagitta: 0 } });
       return;
     }
     if (draft?.tool === 'select' && draft.drag !== null) {
@@ -860,7 +996,7 @@ export class ToolController {
     if (wall === undefined || s.model === null) return;
     const fill = this.store.chosenType(typeChoices(s.model.document, tool === 'door' ? 'doorType' : 'windowType'), tool === 'door' ? s.draw.doorType : s.draw.windowType);
     const width = Number(fill?.element['width'] ?? 0);
-    const L = dist(wall.a, wall.b);
+    const L = wall.arc?.length ?? dist(wall.a, wall.b);
     const offset = Math.round((L - width) / 2);
     this.store.set({ draft: { tool, hover: { wall: wall.id, offset, centered: true, width, side: 'right', nearer: 'start', fits: width <= L }, typed: '' } });
   }
@@ -871,8 +1007,15 @@ export class ToolController {
    */
   aim(key: string): boolean {
     const draft = this.store.get().draft;
-    if (!isChainDraft(draft) || draft.chain.length === 0) return false;
     const angles: Record<string, number> = { ArrowRight: 0, ArrowUp: 90, ArrowLeft: 180, ArrowDown: 270 };
+    // The arc tool aims its chord the same way, between its start and its end.
+    if (isArcDraft(draft) && draft.start !== null && draft.end === null) {
+      const a = angles[key];
+      if (a === undefined) return false;
+      this.store.set({ draft: { ...draft, cursor: { point: draft.start.point, kind: 'angle', guides: [], angle: a } } });
+      return true;
+    }
+    if (!isChainDraft(draft) || draft.chain.length === 0) return false;
     const angle = angles[key];
     if (angle === undefined) return false;
     const last = draft.chain[draft.chain.length - 1] as ChainVertex;

@@ -1,0 +1,10 @@
+{
+  "description": "A rectangle split by a room separator that arcs 800 mm north from (0, 2000 mm) to (5000 mm, 2000 mm): the separator has no thickness, so each room polygon runs along its polyline itself - R1's outward, R2's inward - and the two net areas differ from the straight split by the same exact amount.",
+  "covers": [
+    "FS-CORE-21.2.1",
+    "FS-CORE-21.3.2",
+    "FS-CORE-21.5.1",
+    "FS-CORE-6.2.1",
+    "FS-CORE-6.4.1"
+  ]
+}

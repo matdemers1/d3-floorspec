@@ -1,0 +1,9 @@
+{
+  "description": "drawSeparator from J8 to (24', 8'), a point inside the east wall W5, named S1 so that setProperty can give it an arc of 1' in the same batch. Normalization then planarizes the level, because the new junction lies inside W5: W5, a straight wall, is split there; the arc separator, which ends at that junction and meets nothing else, is never routed, and keeps its arc (5.2).",
+  "covers": [
+    "FS-OPS-5.2.4",
+    "FS-OPS-5.2.1",
+    "FS-OPS-4.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

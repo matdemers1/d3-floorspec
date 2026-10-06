@@ -1,0 +1,6 @@
+{
+  "description": "A semicircular wall of radius 100 mm, 300 mm thick and centred on its arc: its inner face would turn on a radius of -50 mm, so its face vertices on that side cross, and its outline is not simple. FS-INV-109.",
+  "covers": [
+    "FS-CORE-21.4.3"
+  ]
+}

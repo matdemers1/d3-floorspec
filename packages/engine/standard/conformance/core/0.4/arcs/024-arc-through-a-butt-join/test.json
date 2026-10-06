@@ -1,0 +1,7 @@
+{
+  "description": "The bay wall runs through the corner at J2, a butt join: the join acts on its first segment, which runs out to the outer corner while W1 stops against it.",
+  "covers": [
+    "FS-CORE-21.3.2",
+    "FS-CORE-5.8.4"
+  ]
+}

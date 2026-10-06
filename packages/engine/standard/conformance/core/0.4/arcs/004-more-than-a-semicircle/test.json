@@ -1,0 +1,6 @@
+{
+  "description": "A sagitta one base unit more than half the 5000 mm chord: 4 h^2 exceeds the chord's square, so the arc is more than a semicircle. FS-INV-113, a graph invariant: no room is checked on the level.",
+  "covers": [
+    "FS-CORE-21.1.2"
+  ]
+}

@@ -9,7 +9,7 @@
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
 import { buildScene, type Pt, type Scene, type SceneOpening, type SceneRoom, type SceneWall } from './scene.js';
-import { el, escText as esc, linePath, ringsPath, type XY } from './svg.js';
+import { el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
 import { roofSymbol, stairSymbol } from './symbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
 
@@ -198,9 +198,22 @@ function axes(a: Pt, b: Pt): { u: XY; n: XY; len: number } {
 
 const add = (p: Pt, v: XY, k: number): Pt => [p[0] + v[0] * k, p[1] + v[1] * k];
 
+/** The normal an opening's cut and jambs run along: its wall's, or, on an arc wall, its chord's (Core 0.4, 21.6). */
+function across(o: SceneOpening, w: SceneWall): { n: XY } {
+  return w.line.length > 2 ? axes(o.start, o.end) : axes(w.start, w.end);
+}
+
 /** The quadrilateral an opening cuts from its wall, its faces pushed out by `extra` base units. */
 function openingQuad(o: SceneOpening, w: SceneWall, extra: number): Pt[] {
-  const { n } = axes(w.start, w.end);
+  const { n } = across(o, w);
+  // On an arc wall the wall bows past the opening's chord by the sagitta of that chord on its circle: cut that too.
+  if (w.sagitta !== undefined && w.sagitta !== 0) {
+    const c = axes(w.start, w.end).len;
+    const h = Math.abs(w.sagitta);
+    const R = (c * c + 4 * h * h) / (8 * h);
+    const l = axes(o.start, o.end).len;
+    extra += R - Math.sqrt(Math.max(R * R - (l * l) / 4, 0)) + 1;
+  }
   return [add(o.start, n, w.a + extra), add(o.end, n, w.a + extra), add(o.end, n, -(w.b + extra)), add(o.start, n, -(w.b + extra))];
 }
 
@@ -263,7 +276,7 @@ function symbolReach(o: SceneOpening, w: SceneWall): Pt[] {
 }
 
 function jambs(o: SceneOpening, w: SceneWall, f: Frame, color: string): string {
-  const { n } = axes(w.start, w.end);
+  const { n } = across(o, w);
   const out = OUTLINE / f.s;
   const d = [o.start, o.end].map((p) => linePath(f.P(add(p, n, w.a + out)), f.P(add(p, n, -(w.b + out))))).join('');
   return el('path', { d, stroke: color, 'stroke-width': 2 * OUTLINE, fill: 'none' });
@@ -347,7 +360,7 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   for (const r of scene.fills.values()) body = grow(body, r);
   let all = body && { ...body };
   for (const r of scene.rooms.values()) all = grow(all, r.outer);
-  for (const s of scene.separators.values()) all = grow(all, [s.start, s.end]);
+  for (const s of scene.separators.values()) all = grow(all, s.line);
   for (const u of scene.unanchored) all = grow(all, u.outer);
   for (const sl of scene.slabs.values()) all = grow(all, sl.outline);
   for (const st of scene.stairs.values()) all = grow(all, [[st.derived.box.min[0], st.derived.box.min[1]], [st.derived.box.max[0], st.derived.box.max[1]]]);
@@ -359,7 +372,7 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   if (diff) {
     for (const w of diff.walls.before.values()) all = grow(all, w.outline);
     for (const r of diff.rooms.before.values()) all = grow(all, r.outer);
-    for (const s of diff.separators.before.values()) all = grow(all, [s.start, s.end]);
+    for (const s of diff.separators.before.values()) all = grow(all, s.line);
   }
   // Door leaves swing out of the building: their reach is part of the drawing.
   for (const o of [...scene.openings.values(), ...(diff ? diff.openings.before.values() : [])]) {
@@ -480,7 +493,7 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
     const acc = accented(sp.id, diff?.separators);
     seps += el('path', {
       'data-id': sp.id,
-      d: linePath(f.P(sp.start), f.P(sp.end)),
+      d: polylinePath(sp.line.map(f.P)),
       stroke: acc ? pal.accent : pal.separator,
       'stroke-width': acc ? 2 : 1.25,
       'stroke-dasharray': '6 4',
@@ -583,7 +596,7 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
       if (gone.length) g += el('path', { 'data-ghost': id, d: ringsPath(gone.map(P)), ...ghostStroke, opacity: 0.7 });
     }
     for (const [id, sp] of diff.separators.before)
-      g += el('path', { 'data-ghost': id, d: linePath(f.P(sp.start), f.P(sp.end)), ...ghostStroke, opacity: 0.7 });
+      g += el('path', { 'data-ghost': id, d: polylinePath(sp.line.map(f.P)), ...ghostStroke, opacity: 0.7 });
     const wallGhosts = [...diff.walls.before].map(([id, w]) => ({ id, ring: w.outline, removed: diff.walls.changes.get(id) === 'removed' }));
     const fillGhosts = [...diff.fills.before].map(([id, ring]) => ({ id, ring, removed: diff.fills.changes.get(id) === 'removed' }));
     for (const b of [...wallGhosts, ...fillGhosts])

@@ -120,7 +120,8 @@ export class ExtensionContext {
         });
         const roomOfFace = new Map<number, string>();
         for (const [rid, face] of la.roomFaces) roomOfFace.set(face, rid);
-        l = { edgeIndex: new Map(g.edges.map((e, i) => [e.id, i])), faceOfCycle, roomOfFace };
+        // An arc wall's faces are those of its first segment (21.3).
+        l = { edgeIndex: new Map(g.walls.map((id) => [id, g.edgeIndexOf(id)])), faceOfCycle, roomOfFace };
         levels.set(lid, l);
       }
       return l;

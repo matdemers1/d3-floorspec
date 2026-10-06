@@ -223,7 +223,7 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       const w = lengths.width ?? fillWidth(ctx, op.fill);
       if (w === undefined)
         fail('FS-OPS-003', `the opening's width resolves from neither its own width nor its fill${op.fill === undefined ? '' : ` ${op.fill}`}`, [], has('fill') ? `${base}/fill` : base);
-      const offset = resolvePosition(op.at, `${base}/at`, g.m, BigInt(w));
+      const offset = resolvePosition(op.at, `${base}/at`, g.L, BigInt(w));
       const element: JsonObject = { wall, offset: toJsonInt(offset, `${base}/at`) };
       for (const m of ['fill', 'width', 'height', 'sill', 'hinge', 'swing', 'name', 'extensions', 'extras'] as const)
         if (has(m)) setMember(element, m, m === 'width' || m === 'height' || m === 'sill' ? lengths[m] : o[m]);
@@ -241,7 +241,7 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
         const own = getMember(e, 'width');
         const w = typeof own === 'number' && Number.isSafeInteger(own) ? own : fillWidth(ctx, getMember(e, 'fill'));
         if (w === undefined) fail('FS-OPS-003', `the width of ${opening} resolves from neither its own width nor its fill`, [opening], `${base}/opening`);
-        const offset = resolvePosition(op.at, `${base}/at`, g.m, BigInt(w));
+        const offset = resolvePosition(op.at, `${base}/at`, g.L, BigInt(w));
         emit({ op: 'setProperty', id: opening, path: '/offset', value: toJsonInt(offset, `${base}/at`) }, `${base}/opening`);
         break;
       }
@@ -402,7 +402,7 @@ function resolveHost(ctx: Ctx, h: HostRef, ptr: string): { host: JsonObject; lev
       side = s;
     }
     // A hosted element is placed by a point: its position is resolved with w = 0 (3.5).
-    const offset = resolvePosition(h.at, `${ptr}/at`, g.m, 0n);
+    const offset = resolvePosition(h.at, `${ptr}/at`, g.L, 0n);
     const height = resolveLength(h.height, `${ptr}/height`);
     host = { mode: 'wallFace', wall, side, offset: toJsonInt(offset, `${ptr}/at`), height: toJsonInt(height, `${ptr}/height`) };
     owner = { kind: 'walls', id: wall, member: 'wall' };

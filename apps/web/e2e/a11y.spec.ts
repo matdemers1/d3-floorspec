@@ -1,4 +1,5 @@
 // The named export: under NodeNext the default resolves to the module namespace, not the class.
+import { readFileSync } from 'node:fs';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import type { Result } from 'axe-core';
@@ -315,6 +316,41 @@ test('every screen and state has no axe violations, in light and in dark', async
   await audit(page, 'editor, drawing a wall with a typed length');
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
+
+  // Core 0.4, chapter 21 (FLR-T-11.1): the arc-wall tool, an arc being drawn, and an arc wall selected.
+  await rail.getByRole('button', { name: 'Draw arc walls' }).click();
+  await audit(page, 'editor, arc wall tool (Core 0.4)');
+  await page.keyboard.type('0,0');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.type('6');
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('arc-entry')).toContainText('Sagitta');
+  await audit(page, 'editor, drawing an arc wall: its bulge (Core 0.4)');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  const arcHouse = await page.request.post('/api/projects', { data: { name: 'Bay house' } });
+  expect(arcHouse.status(), await arcHouse.text()).toBe(201);
+  const bay = ((await arcHouse.json()) as { id: string }).id;
+  const bayDoc = JSON.parse(readFileSync(new URL('./fixtures/bay-house.json', import.meta.url), 'utf8')) as Record<string, Record<string, unknown>>;
+  const bayBatch = ['types', 'buildings', 'levels', 'junctions', 'walls', 'openings', 'rooms'].flatMap((collection) =>
+    Object.entries(bayDoc[collection] ?? {}).map(([id, element]) => ({ op: 'addElement', collection, id, element })),
+  );
+  expect((await page.request.post(`/api/projects/${bay}/ops`, { data: { batch: bayBatch } })).status()).toBe(201);
+  await page.goto(`/projects/${bay}/editor`);
+  await expect(page.locator('.fs-statusbar')).toContainText('Live');
+  await settled(page);
+  const wallsGroup = tree.getByRole('treeitem', { name: /^Walls/ });
+  if ((await wallsGroup.getAttribute('aria-expanded')) === 'false') await wallsGroup.click();
+  await tree.getByRole('treeitem', { name: /Wall W2\b/ }).click();
+  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('button', { name: 'Flip bulge' })).toBeVisible();
+  await audit(page, 'editor, an arc wall selected (Core 0.4)');
+  await page.goto(`/projects/${house}/editor`);
+  await expect(page.locator('.fs-statusbar')).toContainText('Live');
+  await settled(page);
+  // Back on the house, its walls listed again in the tree, as the tour left them.
+  const houseWalls = tree.getByRole('treeitem', { name: /^Walls/ });
+  if ((await houseWalls.getAttribute('aria-expanded')) === 'false') await houseWalls.click();
 
   // The command palette.
   await page.keyboard.press('ControlOrMeta+k');

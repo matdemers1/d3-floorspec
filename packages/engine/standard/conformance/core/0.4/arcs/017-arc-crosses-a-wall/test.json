@@ -1,0 +1,6 @@
+{
+  "description": "A straight wall from inside the room to beyond the bay, through its arc: the two location lines cross where the straight wall crosses one of the arc's segments. FS-INV-104.",
+  "covers": [
+    "FS-CORE-21.3.1"
+  ]
+}

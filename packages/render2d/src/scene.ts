@@ -4,17 +4,27 @@
  * points. Nothing here recomputes geometry; the only arithmetic left for the drawing is placing
  * symbols (door leaves, glazing lines) relative to those points.
  */
-import { deriveFrom, evaluate, InvalidDocumentError, type DerivedRoof, type DerivedStair, type FloorspecDocument } from '@floorspec/engine';
+import { arcFits, arcPolyline, deriveFrom, evaluate, InvalidDocumentError, sagittaOf, type DerivedRoof, type DerivedStair, type FloorspecDocument } from '@floorspec/engine';
+
+const ipoint = (p: readonly [number, number]): readonly [bigint, bigint] => [BigInt(p[0]), BigInt(p[1])];
+const toPt = (p: readonly [bigint, bigint]): Pt => [Number(p[0]), Number(p[1])];
 import { columnRadius } from './symbols.js';
 
 export type Pt = readonly [number, number];
 
 export interface SceneWall {
   readonly id: string;
-  /** startRight → endRight → endLeft → startLeft, rounded, repeats removed (Core 5.7). */
+  /**
+   * startRight → endRight → endLeft → startLeft, rounded, repeats removed (Core 5.7); for an arc wall,
+   * through its right face vertices and back through its left (Core 0.4, 21.4).
+   */
   readonly outline: readonly Pt[];
   readonly start: Pt;
   readonly end: Pt;
+  /** Its location line: an arc wall's polyline (21.2), or [start, end]. */
+  readonly line: readonly Pt[];
+  /** An arc wall's sagitta (21.1), when it has one. */
+  readonly sagitta?: number;
   /** Face offsets (Core 5.4), in base units: left (exterior) and right. */
   readonly a: number;
   readonly b: number;
@@ -24,6 +34,8 @@ export interface SceneSeparator {
   readonly id: string;
   readonly start: Pt;
   readonly end: Pt;
+  /** Its location line: an arc separator's polyline (Core 0.4, 21.2), or [start, end]. */
+  readonly line: readonly Pt[];
 }
 
 export type OpeningKind = 'door' | 'window' | 'opening';
@@ -158,11 +170,15 @@ export function buildScene(input: string | Uint8Array | object, level?: string, 
     if (w.level !== lid) continue;
     const d = derived.walls[id]!;
     const o = ev.analysis.offsets.get(id)!;
+    const start = doc.junctions![w.start]!.position;
+    const end = doc.junctions![w.end]!.position;
     walls.set(id, {
       id,
-      outline: dedupeCyclic([d.startRight, d.endRight, d.endLeft, d.startLeft]),
-      start: doc.junctions![w.start]!.position,
-      end: doc.junctions![w.end]!.position,
+      outline: dedupeCyclic([d.startRight, ...(d.right ?? []), d.endRight, d.endLeft, ...[...(d.left ?? [])].reverse(), d.startLeft]),
+      start,
+      end,
+      line: d.polyline ?? [start, end],
+      ...(w.arc === undefined ? {} : { sagitta: w.arc.sagitta }),
       a: Number(o.a2) / 2,
       b: Number(o.b2) / 2,
     });
@@ -172,8 +188,14 @@ export function buildScene(input: string | Uint8Array | object, level?: string, 
   for (const [id, ring] of Object.entries(derived.junctionFills)) if (doc.junctions![id]!.level === lid) fills.set(id, ring);
 
   const separators = new Map<string, SceneSeparator>();
-  for (const [id, s] of entries(doc.separators))
-    if (s.level === lid) separators.set(id, { id, start: doc.junctions![s.start]!.position, end: doc.junctions![s.end]!.position });
+  for (const [id, s] of entries(doc.separators)) {
+    if (s.level !== lid) continue;
+    const start = doc.junctions![s.start]!.position;
+    const end = doc.junctions![s.end]!.position;
+    const h = sagittaOf(s);
+    const line = h === undefined || !arcFits(ipoint(start), ipoint(end), h) ? [start, end] : arcPolyline(ipoint(start), ipoint(end), h).map(toPt);
+    separators.set(id, { id, start, end, line });
+  }
 
   const openings = new Map<string, SceneOpening>();
   for (const [id, o] of entries(doc.openings)) {

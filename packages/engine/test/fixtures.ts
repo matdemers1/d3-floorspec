@@ -4,7 +4,7 @@
  * with oblique walls, odd thicknesses and every justification, so rounding is exercised everywhere.
  */
 import { planarize } from '../src/geometry/planarize.js';
-import { box, doc } from './doc.js';
+import { box, doc, type P, type WallSpec } from './doc.js';
 
 /** mulberry32: a tiny seeded PRNG, so the fixtures are the same on every run and platform. */
 function rng(seed: number): () => number {
@@ -51,6 +51,67 @@ function randomDoc(seed: number): object {
   return doc({ junctions: Object.fromEntries([...used].map((id) => [id, p.junctions[id]!])), walls: walls as never });
 }
 
+/**
+ * Core 0.4, chapter 21: a room of four oblique walls, some of them arcs with random sagittas — outward,
+ * inward, flat — and a door on one, so the polyline's snap rounding, face paths cut at joins and stations
+ * are exercised on irrational midpoints. Valid or not, Node and the browser must agree.
+ */
+function randomArcDoc(seed: number): object {
+  const r = rng(seed);
+  const int = (lo: number, hi: number): number => lo + Math.floor(r() * (hi - lo + 1));
+  const s = 1000000;
+  const corners: P[] = [
+    [int(-200000, 200000), int(-200000, 200000)],
+    [int(-200000, 200000), 4 * s + int(-200000, 200000)],
+    [5 * s + int(-200000, 200000), 4 * s + int(-200000, 200000)],
+    [5 * s + int(-200000, 200000), int(-200000, 200000)],
+  ];
+  const walls: Record<string, WallSpec> = {};
+  for (let i = 0; i < 4; i++) {
+    const a = corners[i]!;
+    const b = corners[(i + 1) % 4]!;
+    const chord = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const kind = int(0, 3);
+    const h = kind === 0 ? 0 : kind === 1 ? int(1, 1280) : int(-Math.floor(chord / 8), Math.floor(chord / 4));
+    walls[`W${i + 1}`] = { start: `J${i + 1}`, end: `J${(i + 1) % 4 + 1}`, t: int(6400, 40000), ...(h !== 0 && { arc: { sagitta: h } }) };
+  }
+  return doc({
+    junctions: Object.fromEntries(corners.map((c, i) => [`J${i + 1}`, c])),
+    walls,
+    rooms: { R1: [2500000, 2000000] },
+    openings: { O1: { wall: 'W2', offset: int(100000, 1500000), width: 914400, height: 2032000 } },
+    extra: { floorspec: '0.4' },
+  });
+}
+
+/**
+ * Core 0.4, 21.4: a box split at a T by a wall or a separator from its south side to its north, any of
+ * them an arc — so corners are found along face paths where arcs meet straight walls and each other.
+ */
+function randomArcTee(seed: number): object {
+  const r = rng(seed);
+  const int = (lo: number, hi: number): number => lo + Math.floor(r() * (hi - lo + 1));
+  const W = int(4, 8) * 1000000;
+  const H = int(3, 6) * 1000000;
+  const mx = int(2, W / 1000000 - 2) * 1000000;
+  const t = int(64000, 400000);
+  const arc = (c: number): Record<string, unknown> => {
+    const k = int(0, 3);
+    return k === 0 ? {} : { arc: { sagitta: (r() < 0.5 ? -1 : 1) * int(2000, Math.floor(c / (k === 1 ? 2 : 6))) } };
+  };
+  const wall = (start: string, end: string, c?: number): WallSpec => ({ start, end, t, ...(c === undefined ? {} : arc(c)) });
+  const sep = r() < 0.5;
+  const walls: Record<string, WallSpec> = { W1: wall('A', 'B', H), W2: wall('B', 'N'), W3: wall('N', 'C', W - mx), W4: wall('C', 'D', H), W5: wall('D', 'M'), W6: wall('M', 'A', mx) };
+  if (!sep) walls['W7'] = wall('M', 'N', H);
+  return doc({
+    junctions: { A: [0, 0], B: [0, H], C: [W, H], D: [W, 0], M: [mx, 0], N: [mx, H] },
+    walls,
+    ...(sep && { separators: { S1: { start: 'M', end: 'N', ...arc(H) } } }),
+    rooms: { R1: [mx / 2, H / 2], R2: [(mx + W) / 2, H / 2] },
+    extra: { floorspec: '0.4' },
+  });
+}
+
 export function fixtures(): { name: string; doc: object }[] {
   const out: { name: string; doc: object }[] = [
     { name: 'box with room', doc: doc(box(4000000, 3000000, 12801, { rooms: { R1: [2000000, 1500000] } })) },
@@ -65,5 +126,7 @@ export function fixtures(): { name: string; doc: object }[] {
     },
   ];
   for (let s = 1; s <= 40; s++) out.push({ name: `random ${s}`, doc: randomDoc(s) });
+  for (let s = 1; s <= 24; s++) out.push({ name: `random arcs ${s}`, doc: randomArcDoc(s) });
+  for (let s = 1; s <= 24; s++) out.push({ name: `random arc tees ${s}`, doc: randomArcTee(1000 + s) });
   return out;
 }

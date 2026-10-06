@@ -1,0 +1,7 @@
+{
+  "description": "addOpening of a 36\" door \"centered\" on the arc W8: the offset is half its length less the door's width, where the length is the arc's, along its polyline (Core 21.6): (L - w) / 2, rounded.",
+  "covers": [
+    "FS-OPS-3.5.1",
+    "FS-OPS-4.5.3"
+  ]
+}

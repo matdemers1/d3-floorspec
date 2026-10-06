@@ -1,0 +1,6 @@
+{
+  "description": "A second arc wall inside the room, from (500 mm, 3800 mm) to (4500 mm, 3800 mm) and bulging 1800 mm north, out through the bay and back: two polylines cross. FS-INV-104.",
+  "covers": [
+    "FS-CORE-21.3.1"
+  ]
+}

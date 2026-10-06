@@ -1,0 +1,8 @@
+{
+  "description": "R1's anchor is two base units north of the middle of one of the separator's segments: inside the circle the separator follows, but north of its polyline - so in R2's face, not R1's. A room is the face its polyline bounds (21.5): both anchors are in one face, FS-INV-202.",
+  "covers": [
+    "FS-CORE-21.5.1",
+    "FS-CORE-21.3.1",
+    "FS-CORE-6.3.2"
+  ]
+}

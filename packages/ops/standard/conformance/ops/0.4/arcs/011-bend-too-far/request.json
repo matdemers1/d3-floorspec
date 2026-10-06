@@ -1,0 +1,12 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "W8",
+      "path": "/arc",
+      "value": {
+        "sagitta": 1950720
+      }
+    }
+  ]
+}

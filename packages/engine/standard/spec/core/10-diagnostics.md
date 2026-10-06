@@ -76,15 +76,19 @@ error, with these refinements inside tier 4:
   and every type, except that `FS-INV-502` is not evaluated for a host wall that has `FS-INV-112`,
   and `FS-INV-503` is evaluated only for a `surface` host whose room is on a level where room
   invariants are evaluated and has none of `FS-INV-201` to `FS-INV-204`.
-- **Graph invariants** (`FS-INV-101` to `FS-INV-108`, `FS-INV-111` and `FS-INV-112`) are evaluated
+- **Graph invariants** (`FS-INV-101` to `FS-INV-108` and `FS-INV-111` to `FS-INV-113`) are evaluated
   for every level and wall, except that `FS-INV-111` is not evaluated for a junction with a wall
-  that has `FS-INV-107` or `FS-INV-108`: without layers there are no face lines to compare.
+  that has `FS-INV-107` or `FS-INV-108`: without layers there are no face lines to compare. An arc
+  edge whose arc does not fit (`FS-INV-113`, evaluated for every arc edge without `FS-INV-102`) has no
+  polyline (21.2), so `FS-INV-104` to `FS-INV-106` are not evaluated for it, and `FS-INV-111` is not
+  evaluated for a junction it ends at.
 - **Join invariants** (`FS-INV-109`, `FS-INV-110`) and **room invariants** (`FS-INV-201` to
   `FS-INV-204`) are evaluated only for levels on which no graph invariant other than
   `FS-INV-112` was reported.
 - **Opening and type invariants** (`FS-INV-301` to `FS-INV-308`) are evaluated for every opening
   and every door or window type, except that `FS-INV-303` is not evaluated for an opening whose
-  wall has `FS-INV-112`.
+  wall has `FS-INV-112`, and `FS-INV-302` not for one on an arc wall with `FS-INV-102` or
+  `FS-INV-113`, which has no length (21.6); nor are `FS-INV-501` and `FS-INV-1002` for such a wall.
 - **Floor and ceiling invariants** (`FS-INV-701` to `FS-INV-703`) are evaluated only for a room on
   a level where room invariants are evaluated, and that has none of `FS-INV-201` to `FS-INV-204`:
   they are tested on its room polygon. `FS-INV-701` is not evaluated for a room that has
@@ -124,7 +128,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-JSON-003` | error | a string has an unpaired surrogate | — | 9.1.3 |
 | `FS-DOC-001` | error | the root is an object whose `floorspec` member is a string naming a version this reader does not implement | — | 1.2.2 |
 | `FS-DOC-002` | error | `extensionsRequired` is an array of distinct extension names, each a member of `extensionsUsed`, and one of them names an extension this reader does not implement; one diagnostic for each such name. Any other `extensionsRequired` is left to the schema tier and `FS-INV-004` | — | 1.6.4 |
-| `FS-SCH-001` | error | the document does not match the schema of the draft it declares (1.2.8) | — | 1.1, 1.2.7, 1.2.8, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 6.7.2, 7.1.1, 7.1.2, 8.1, 8.3, 8.4.1–8.4.3, 8.5, 8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1, 15.1.1, 15.2.1, 16.1.1, 17.1.1, 17.1.3, 17.2.1, 17.2.3, 18.1.1, 18.2.1, 18.4.1, 18.5.1, 19.1.1, 19.2.1 |
+| `FS-SCH-001` | error | the document does not match the schema of the draft it declares (1.2.8) | — | 1.1, 1.2.7, 1.2.8, 1.3, 1.4, 1.6.1, 1.6.7, 1.6.8, 1.8, 2.1, 2.4, 2.6 (shape), 3.1.1, 3.1.3 (pattern), 3.2.3, 4.1.1, 4.2 (syntax), 4.3.1, 5.1, 5.2, 5.8.5, 5.9.1, 6.5, 6.7.1, 6.7.2, 7.1.1, 7.1.2, 8.1, 8.3, 8.4.1–8.4.3, 8.5, 8.6, 11.1.1, 11.1.2 (term), 12.1.1, 12.1.2, 12.5.1, 12.5.2, 13.2.1, 13.3.1, 13.5.1, 15.1.1, 15.2.1, 16.1.1, 17.1.1, 17.1.3, 17.2.1, 17.2.3, 18.1.1, 18.2.1, 18.4.1, 18.5.1, 19.1.1, 19.2.1, 21.1.1 |
 
 **Reference invariants.**
 
@@ -147,15 +151,16 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-INV-101` | error | two junctions on a level share a position | both junctions | 5.1.1 |
 | `FS-INV-102` | error | an edge starts and ends at the same junction | the edge | 5.2.1 |
 | `FS-INV-103` | error | two edges connect the same two junctions | both edges | 5.2.2 |
-| `FS-INV-104` | error | two edges cross | both edges | 5.3.1 |
-| `FS-INV-105` | error | a junction lies inside an edge | the junction and the edge | 5.3.2 |
-| `FS-INV-106` | error | two edges overlap along a segment (and are not `FS-INV-103`); an overlap always also leaves a junction inside an edge, so `FS-INV-105` accompanies it | both edges | 5.3.3 |
+| `FS-INV-104` | error | two edges cross — or, where one is an arc edge, their location lines meet at a point interior to both | both edges | 5.3.1, 21.3.1 |
+| `FS-INV-105` | error | a junction lies inside an edge — for an arc edge, in the interior of its polyline, at a vertex included | the junction and the edge | 5.3.2, 21.3.1 |
+| `FS-INV-106` | error | two edges overlap along a segment (and are not `FS-INV-103`); an overlap of two straight edges always also leaves a junction inside an edge, so `FS-INV-105` accompanies it | both edges | 5.3.3, 21.3.1 |
 | `FS-INV-107` | error | a wall has no effective layers | the wall | 5.4.1 |
 | `FS-INV-108` | error | a `coreFace` wall has no core layer, or its core layers are not consecutive | the wall | 5.4.2 |
-| `FS-INV-109` | error | a wall's outline is not simple, has no area, or is clockwise | the wall | 5.7.2 |
+| `FS-INV-109` | error | a wall's outline is not simple, has no area, or is clockwise | the wall | 5.7.2, 21.4.3 |
 | `FS-INV-110` | error | a junction fill is not simple or is clockwise | the junction | 5.7.4 |
 | `FS-INV-111` | error | a join override does not apply to its junction | the junction | 5.8.1–5.8.3 |
 | `FS-INV-112` | error | a wall's top is not above its base | the wall | 5.9.2 |
+| `FS-INV-113` | error | an arc edge's arc is more than a semicircle: four times the square of its sagitta exceeds the square of its chord | the edge | 21.1.2 |
 
 **Room invariants.**
 
@@ -174,7 +179,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | Code | Severity | Condition | Elements | Rule |
 |---|---|---|---|---|
 | `FS-INV-301` | error | an opening's width or height does not resolve | the opening | 7.2.1 |
-| `FS-INV-302` | error | an opening extends beyond its wall's length | the opening | 7.3.1 |
+| `FS-INV-302` | error | an opening extends beyond its wall's length | the opening | 7.3.1, 21.6.2 |
 | `FS-INV-303` | error | an opening extends above its wall's height | the opening | 7.3.2 |
 | `FS-INV-304` | error | two openings on one wall overlap | both openings | 7.3.3 |
 | `FS-INV-305` | error | an opening's effective clear opening is wider or taller than the opening | the opening | 7.2.2 |
@@ -197,7 +202,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 
 | Code | Severity | Condition | Elements | Rule |
 |---|---|---|---|---|
-| `FS-INV-501` | error | a `wallFace` host's offset exceeds its wall's length | the extension element | 13.3.2 |
+| `FS-INV-501` | error | a `wallFace` host's offset exceeds its wall's length | the extension element | 13.3.2, 21.6.2 |
 | `FS-INV-502` | error | a `wallFace` host's height exceeds its wall's height | the extension element | 13.3.3 |
 | `FS-INV-503` | error | a `surface` host's position is not strictly inside its room's polygon | the extension element | 13.3.4 |
 | `FS-INV-504` | error | an extension element's fallback level is not its host's level | the extension element | 13.3.5 |
@@ -248,7 +253,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | Code | Severity | Condition | Elements | Rule |
 |---|---|---|---|---|
 | `FS-INV-1001` | error | a region of a wall's finishes is empty: its `to` is not greater than its `from`, or its `top` not greater than its `bottom`; once for each such region | the wall | 18.5.2 |
-| `FS-INV-1002` | error | a region extends past its wall's length or above its wall's height; once for each such region | the wall | 18.5.3 |
+| `FS-INV-1002` | error | a region extends past its wall's length or above its wall's height; once for each such region | the wall | 18.5.3, 21.6.2 |
 | `FS-INV-1003` | error | two regions of one face overlap; once for each such pair | the wall | 18.5.4 |
 | `FS-INV-1004` | error | a texture's map is an asset whose media type 18.2.2 does not allow; once for each such map | the material and the asset | 18.2.2 |
 
@@ -290,6 +295,7 @@ A validator MUST NOT report a diagnostic that this section says is not evaluated
 | `FS-LINT-017` | info | an option set with exactly one option | the option set | 19.8 |
 | `FS-LINT-018` | warning | a winder stair without a newel, or a spiral stair whose width is half its diameter: its tapered treads narrow to a point | the stair | 17.7.6 |
 | `FS-LINT-019` | warning | a stair whose headroom is less than its `minHeadroom` | the stair | 17.6.4 |
+| `FS-LINT-020` | info | an arc edge whose sagitta is at most 1,280: it is derived as its chord | the edge | 21.8 |
 
 ## 10.5 Fix operations
 

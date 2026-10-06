@@ -398,6 +398,24 @@ export const SCHEMA = {
             }
           },
           "additionalProperties": false
+        },
+        "arc": {
+          "title": "Arc",
+          "description": "21.1 (Core 0.4): the circular arc an edge runs along, given by its sagitta — the distance from the middle of its chord to the middle of the arc, to the left of the chord seen from its start junction when positive, to the right when negative. An arc MUST have exactly the member `sagitta`, a length that is not zero (FS-CORE-21.1.1). That the arc is at most a semicircle (FS-CORE-21.1.2) is an invariant (FS-INV-113), not checked here.",
+          "type": "object",
+          "required": [
+            "sagitta"
+          ],
+          "properties": {
+            "sagitta": {
+              "$ref": "#/$defs/defs/$defs/length",
+              "not": {
+                "const": 0
+              },
+              "description": "21.1: the sagitta, a length that is not zero."
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
@@ -2007,6 +2025,10 @@ export const SCHEMA = {
           "$ref": "#/$defs/defs/$defs/reference",
           "description": "5.2: a reference to the junction at the other end. Always present."
         },
+        "arc": {
+          "$ref": "#/$defs/defs/$defs/arc",
+          "description": "21.1 (0.4): the circular arc the separator runs along. Absent: the separator is straight. No constant default."
+        },
         "option": {
           "$ref": "#/$defs/defs/$defs/reference",
           "description": "19.2: a reference to the option this separator is in. Absent: it is in no option, and so in every design."
@@ -2730,7 +2752,7 @@ export const SCHEMA = {
     "wall": {
       "$comment": "Normative (FLR-ADR-006). The `default` keywords here are exactly the constant defaults of 5.2's Wall table and 5.9 (justification, base, base.offset, top.offset, finishes, extensions, extras). `layers` (a typed property, 8.2), `top` (derived from the level's height, 5.9) and `base.level` (derived: the wall's own level) deliberately have none. The reference canonicalizer reads these keywords as its table of constant defaults (9.2 step 1).",
       "title": "Wall",
-      "description": "5.2: a straight, solid wall with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.",
+      "description": "5.2: a solid wall — straight, or along an arc (21.1) — with a thickness, an edge of its level's wall graph from its start junction to its end junction. Every wall MUST reference a level (FS-CORE-1.3.2). It has only the members of its table (FS-CORE-1.4.1). The wall's graph rules (5.2 to 5.4, 5.7), and that its top is above its base (FS-CORE-5.9.2), are invariants, not checked here.",
       "type": "object",
       "required": [
         "level",
@@ -2834,6 +2856,10 @@ export const SCHEMA = {
           "$ref": "#/$defs/finish",
           "description": "5.2, 18.5: the finishes of the wall's faces, and of regions of them, where they differ from the rooms they face.",
           "default": {}
+        },
+        "arc": {
+          "$ref": "#/$defs/defs/$defs/arc",
+          "description": "21.1 (0.4): the circular arc the wall runs along. Absent: the wall is straight. No constant default."
         },
         "option": {
           "$ref": "#/$defs/defs/$defs/reference",

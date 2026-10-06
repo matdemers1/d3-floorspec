@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "W8",
+      "path": "/arc/sagitta",
+      "value": -390144
+    }
+  ],
+  "context": {
+    "locks": [
+      {
+        "length": "W8"
+      }
+    ]
+  }
+}

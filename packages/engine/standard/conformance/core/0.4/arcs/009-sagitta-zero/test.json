@@ -1,0 +1,6 @@
+{
+  "description": "A sagitta of zero: a straight edge has no arc member.",
+  "covers": [
+    "FS-CORE-21.1.1"
+  ]
+}

@@ -116,7 +116,7 @@ describe('snapping', () => {
     walls: [
       {
         id: 'W1', level: 'L1', start: 'J1', end: 'J2', a: [0, 0], b: [10 * FT, 0],
-        ring: [[0, -3 * IN], [10 * FT, -3 * IN], [10 * FT, 3 * IN], [0, 3 * IN]],
+        ring: [[0, -3 * IN], [10 * FT, -3 * IN], [10 * FT, 3 * IN], [0, 3 * IN]], line: [[0, 0], [10 * FT, 0]],
         thickness: 6 * IN, left: 3 * IN, right: 3 * IN, type: undefined, justification: 'center',
       },
     ],

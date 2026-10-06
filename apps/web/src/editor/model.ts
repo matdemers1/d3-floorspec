@@ -1,4 +1,6 @@
 import {
+  arcFits,
+  arcPolyline,
   check,
   extElements,
   hasOptions,
@@ -67,14 +69,38 @@ export interface WallView {
   end: string;
   a: Point;
   b: Point;
-  /** The outline startRight → endRight → endLeft → startLeft, as the engine derived it. */
+  /**
+   * The outline startRight → endRight → endLeft → startLeft, as the engine derived it — for an arc wall
+   * through its right face vertices and back through its left (Core 0.4, 21.4).
+   */
   ring: Ring;
+  /** Its location line: an arc wall's polyline (21.2), or [a, b]. */
+  line: Point[];
+  /** An arc wall's arc (Core 0.4, chapter 21), with what the inspector shows of it. */
+  arc?: ArcInfo;
   thickness: number;
   /** Distance from the location line to the left and right faces (Core 5.4). */
   left: number;
   right: number;
   type: string | undefined;
   justification: string;
+}
+
+/** An arc edge's sagitta (21.1) and its derived measures: chord, radius and sweep for display, length as derived (21.6). */
+export interface ArcInfo {
+  sagitta: number;
+  chord: number;
+  radius: number;
+  /** Degrees. */
+  sweep: number;
+  /** Along its polyline, as the engine derives it. */
+  length: number;
+}
+
+/** The measures of an arc on a chord of length c with sagitta h (21.1), for display. */
+export function arcInfo(c: number, h: number, length: number): ArcInfo {
+  const a = Math.abs(h);
+  return { sagitta: h, chord: c, radius: (c * c + 4 * a * a) / (8 * a), sweep: (4 * Math.atan2(2 * a, c) * 180) / Math.PI, length };
 }
 
 export interface OpeningView {
@@ -150,6 +176,8 @@ export interface SeparatorView {
   end: string;
   a: Point;
   b: Point;
+  /** Its location line: an arc separator's polyline (Core 0.4, 21.2), or [a, b]. */
+  line: Point[];
 }
 
 export interface LevelView {
@@ -408,7 +436,11 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
       end: String(w['end']),
       a: position(String(w['start'])),
       b: position(String(w['end'])),
-      ring: [d.startRight, d.endRight, d.endLeft, d.startLeft],
+      ring: [d.startRight, ...(d.right ?? []), d.endRight, d.endLeft, ...[...(d.left ?? [])].reverse(), d.startLeft],
+      line: d.polyline ?? [position(String(w['start'])), position(String(w['end']))],
+      ...(d.polyline !== undefined && isArc(w['arc'])
+        ? { arc: arcInfo(Math.hypot(position(String(w['end']))[0] - position(String(w['start']))[0], position(String(w['end']))[1] - position(String(w['start']))[1]), w['arc'].sagitta, d.length ?? 0) }
+        : {}),
       thickness: offsets.left + offsets.right,
       left: offsets.left,
       right: offsets.right,
@@ -421,7 +453,12 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
     if (view === undefined) continue;
     bump(String(s['start']));
     bump(String(s['end']));
-    view.separators.push({ id, start: String(s['start']), end: String(s['end']), a: position(String(s['start'])), b: position(String(s['end'])) });
+    const a = position(String(s['start']));
+    const b = position(String(s['end']));
+    const h = isArc(s['arc']) ? s['arc'].sagitta : undefined;
+    const line: Point[] =
+      h === undefined || !arcFits(big(a), big(b), BigInt(h)) ? [a, b] : arcPolyline(big(a), big(b), BigInt(h)).map((p): Point => [Number(p[0]), Number(p[1])]);
+    view.separators.push({ id, start: String(s['start']), end: String(s['end']), a, b, line });
   }
   for (const [id, j] of entriesOf(document.junctions)) {
     const view = views.get(String(j['level']));
@@ -545,3 +582,10 @@ export function labelOf(model: EditorModel, id: string): string {
     default: return name ?? id;
   }
 }
+
+/** A well-formed arc member (Core 0.4, 21.1.1): `{ sagitta }`, a non-zero integer. */
+export function isArc(v: unknown): v is { sagitta: number } {
+  return typeof v === 'object' && v !== null && Number.isSafeInteger((v as { sagitta?: unknown }).sagitta) && (v as { sagitta: number }).sagitta !== 0;
+}
+
+const big = (p: Point): readonly [bigint, bigint] => [BigInt(Math.round(p[0])), BigInt(Math.round(p[1]))];

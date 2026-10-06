@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "moveWall",
+      "wall": "W8",
+      "by": "1'",
+      "toward": "Dining"
+    }
+  ]
+}

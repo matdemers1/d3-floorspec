@@ -1,0 +1,8 @@
+{
+  "description": "Two elements on the bay wall's faces: 21.4.1 2500 mm along its inner face, 21.4.2 at its very end on its outer face. Each frame is on its face, half the wall's thickness along the normal of the segment its distance falls on - 21.4.2's, at the end, on the last segment - and faces along that normal: into the room, and out of it.",
+  "covers": [
+    "FS-CORE-21.6.1",
+    "FS-CORE-13.4.1",
+    "FS-CORE-13.1.1"
+  ]
+}

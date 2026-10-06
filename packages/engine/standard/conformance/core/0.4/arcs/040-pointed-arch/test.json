@@ -1,0 +1,9 @@
+{
+  "description": "Two arcs, 300 mm walls, rising from a straight wall to an apex. At each foot an arc meets the straight wall at a sharp angle, and the two inner faces meet beyond the arc's first segment: the corner is found by moving along the arc's face path to its second piece (21.4), and the face vertex passed is cut off the wall's outline and the room polygon.",
+  "covers": [
+    "FS-CORE-21.4.2",
+    "FS-CORE-21.4.1",
+    "FS-CORE-21.3.2",
+    "FS-CORE-21.5.1"
+  ]
+}

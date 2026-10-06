@@ -879,6 +879,24 @@ path.fs-hl--danger {
   stroke-dasharray: 2 3;
   opacity: 0.8;
 }
+
+/* The arc-wall tool's chord (Core 0.4, 21): dashed, under the arc being drawn. */
+.fs-draw__chord {
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+  stroke-dasharray: 6 4;
+  fill: none;
+}
+
+/* An arc wall's bulge handle, at the middle of its polyline. */
+.fs-handle--bulge {
+  fill: var(--color-accent);
+}
+
+.fs-arc__actions {
+  display: flex;
+  gap: var(--space-2);
+}
 .fs-draw__opening {
   fill: var(--color-accent);
   fill-opacity: 0.6;

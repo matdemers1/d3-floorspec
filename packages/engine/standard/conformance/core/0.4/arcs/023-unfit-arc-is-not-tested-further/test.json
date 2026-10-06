@@ -1,0 +1,7 @@
+{
+  "description": "The arc of more than a semicircle with a straight wall across where it would be, and an opening 9 m along it: it has no polyline, so it is not tested for crossings, and has no length to test the opening against (10.3). FS-INV-113 alone.",
+  "covers": [
+    "FS-CORE-10.3.1",
+    "FS-CORE-21.1.2"
+  ]
+}

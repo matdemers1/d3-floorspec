@@ -5,8 +5,9 @@ import { IconButton } from '@d3cloud/ui';
 import { isChainDraft, useEditor, type EditorStore, type Layers, type Viewport } from './store';
 import type { ToolController, PointerInfo } from './tools';
 import type { LevelView, OpeningView, Point, Ring, WallView, EditorModel } from './model';
-import { labelOf } from './model';
+import { arcInfo, labelOf } from './model';
 import { add, centroid, dist, inFace, leftNormal, scale, sub } from './geometry';
+import { arcPoints, pointAtStation } from './arcs';
 import { fit, gridSpacing, scaleBar, toScreen, zoomAt, zoomPercent } from './viewport';
 import { formatArea, formatLen, prettyLen, type UnitSystem } from './units';
 import { typeChoices } from './ops';
@@ -218,9 +219,22 @@ function Grid({ view, units }: { view: Viewport; units: UnitSystem }) {
 // ─── The plan ────────────────────────────────────────────────────────────────────────────────
 
 /** A wall's centre line is offset from its location line when it is not centred (Core 5.4). */
-function centreShift(wall: WallView): Point {
-  return scale(leftNormal(wall.a, wall.b), (wall.left - wall.right) / 2);
+/** The normal an opening's cut runs along: its wall's, or on an arc wall its chord's (Core 0.4, 21.6). */
+function openingNormal(opening: { start: Point; end: Point }, wall: WallView): Point {
+  return wall.line.length > 2 ? leftNormal(opening.start, opening.end) : leftNormal(wall.a, wall.b);
 }
+
+/** From the location line to the middle of the wall's thickness, square to the opening. */
+function openingShift(opening: { start: Point; end: Point }, wall: WallView): Point {
+  return scale(openingNormal(opening, wall), (wall.left - wall.right) / 2);
+}
+
+/** The middle of a wall's location line: of its polyline, for an arc wall. */
+function wallMid(wall: WallView): Point {
+  return wall.arc === undefined ? [(wall.a[0] + wall.b[0]) / 2, (wall.a[1] + wall.b[1]) / 2] : pointAtStation(wall.line, wall.arc.length / 2);
+}
+
+const polyPts = (view: Viewport, line: readonly Point[]): string => line.map((p) => S(view, p).map((n) => n.toFixed(1)).join(',')).join(' ');
 
 export function Plan({ view, level, document, layers, units, ghost = false, labels = true }: { view: Viewport; level: LevelView; document: FloorspecDocument; layers: Layers; units: UnitSystem; ghost?: boolean; labels?: boolean }) {
   const walls = new Map(level.walls.map((w) => [w.id, w]));
@@ -248,11 +262,9 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
         </g>
       ) : null}
       <g className="fs-plan2__separators">
-        {level.separators.map((s) => {
-          const a = S(view, s.a);
-          const b = S(view, s.b);
-          return <line key={s.id} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />;
-        })}
+        {level.separators.map((s) => (
+          <polyline key={s.id} points={polyPts(view, s.line)} fill="none" />
+        ))}
       </g>
       {layers.walls ? (
         <g className="fs-plan2__walls">
@@ -296,10 +308,10 @@ function CeilingMarks({ view, level }: { view: Viewport; level: LevelView }) {
 }
 
 function OpeningShape({ view, opening, wall }: { view: Viewport; opening: OpeningView; wall: WallView }) {
-  const shift = centreShift(wall);
+  const shift = openingShift(opening, wall);
   const s0 = add(opening.start, shift);
   const e0 = add(opening.end, shift);
-  const n = leftNormal(wall.a, wall.b);
+  const n = openingNormal(opening, wall);
   const half = wall.thickness / 2;
   const over = 1 / view.s; // one pixel past each face, so the cut is clean
   const gap = [add(s0, scale(n, half + over)), add(e0, scale(n, half + over)), add(e0, scale(n, -half - over)), add(s0, scale(n, -half - over))];
@@ -431,8 +443,8 @@ export function Outline({ view, level, id, className, pad = 0 }: { view: Viewpor
   if (opening !== undefined) {
     const host = level.walls.find((w) => w.id === opening.wall);
     if (host === undefined) return null;
-    const shift = centreShift(host);
-    const n = leftNormal(host.a, host.b);
+    const shift = openingShift(opening, host);
+    const n = openingNormal(opening, host);
     const half = host.thickness / 2 + 2 / view.s;
     const s0 = add(opening.start, shift);
     const e0 = add(opening.end, shift);
@@ -441,11 +453,7 @@ export function Outline({ view, level, id, className, pad = 0 }: { view: Viewpor
   const slab = level.slabs.find((s) => s.id === id);
   if (slab !== undefined) return <polygon className={className} points={pts(view, slab.outline)} />;
   const sep = level.separators.find((s) => s.id === id);
-  if (sep !== undefined) {
-    const a = S(view, sep.a);
-    const b = S(view, sep.b);
-    return <line className={`${className} fs-hl--line`} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />;
-  }
+  if (sep !== undefined) return <polyline className={`${className} fs-hl--line`} points={polyPts(view, sep.line)} fill="none" />;
   const junction = level.junctions.find((j) => j.id === id);
   if (junction !== undefined) {
     const p = S(view, junction.position);
@@ -484,6 +492,9 @@ function Selection({ store, view, level, coarse }: { store: EditorStore; view: V
   const tool = useEditor(store, (s) => s.tool);
   const wall = selection === null ? undefined : (level.walls.find((w) => w.id === selection) ?? level.separators.find((sp) => sp.id === selection));
   const handles: Point[] = wall === undefined ? [] : [wall.a, wall.b];
+  // An arc wall's bulge, at the middle of its polyline (Core 0.4, 21).
+  const arcWall = selection === null ? undefined : level.walls.find((w) => w.id === selection && w.arc !== undefined);
+  const bulge = arcWall === undefined ? undefined : wallMid(arcWall);
   const junction = level.junctions.find((j) => j.id === selection);
   if (junction !== undefined) handles.push(junction.position);
   const size = coarse ? 14 : 5;
@@ -499,6 +510,7 @@ function Selection({ store, view, level, coarse }: { store: EditorStore; view: V
           <rect key={i} className="fs-handle" x={p[0] - size} y={p[1] - size} width={size * 2} height={size * 2} />
         );
       })}
+      {bulge !== undefined ? <circle className="fs-handle fs-handle--bulge" data-testid="arc-bulge-handle" cx={S(view, bulge)[0]} cy={S(view, bulge)[1]} r={size} /> : null}
     </g>
   );
 }
@@ -647,6 +659,35 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
       </g>
     );
   }
+  if (draft.tool === 'arc') {
+    // Core 0.4, 21: the chord, dashed, and the arc it will be — drawn smooth; the engine derives its polyline.
+    const type = store.chosenType(typeChoices(model.document, 'wallType'), draw.wallType);
+    const layers = (type?.element['layers'] as { thickness: number }[] | undefined) ?? [];
+    const thick = Math.max(3, layers.reduce((s, l) => s + l.thickness, 0) * view.s);
+    const a = draft.start?.point;
+    const b = draft.end?.point ?? (draft.start !== null ? draft.cursor?.point : undefined);
+    const curve = a !== undefined && draft.end !== null ? arcPoints(a, draft.end.point, draft.sagitta) : undefined;
+    const A = a === undefined ? undefined : S(view, a);
+    const B = b === undefined ? undefined : S(view, b);
+    return (
+      <g className="fs-draw" aria-hidden="true" data-testid="arc-draft">
+        {draft.cursor?.guides.map(([g0, g1], i) => {
+          const G0 = S(view, g0);
+          const G1 = S(view, g1);
+          return <line key={`g${String(i)}`} className="fs-draw__guide" x1={G0[0]} y1={G0[1]} x2={G1[0]} y2={G1[1]} />;
+        })}
+        {A !== undefined && B !== undefined ? <line className="fs-draw__chord" x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} /> : null}
+        {curve !== undefined ? <polyline className="fs-draw__band" points={polyPts(view, curve)} strokeWidth={thick} /> : null}
+        {curve !== undefined ? <polyline className="fs-draw__line" points={polyPts(view, curve)} /> : null}
+        {[draft.start, draft.end].map((v, i) => {
+          if (v === null) return null;
+          const q = S(view, v.point);
+          return <rect key={i} className="fs-draw__vertex" x={q[0] - 5} y={q[1] - 5} width={10} height={10} />;
+        })}
+        {draft.cursor !== null ? <SnapMarker view={view} snap={draft.cursor} /> : null}
+      </g>
+    );
+  }
   if (draft.tool === 'door' || draft.tool === 'window') {
     const hover = draft.hover;
     const wall = hover === null ? undefined : level.walls.find((w) => w.id === hover.wall);
@@ -654,11 +695,16 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
     const d = sub(wall.b, wall.a);
     const l = Math.hypot(d[0], d[1]) || 1;
     const u: Point = [d[0] / l, d[1] / l];
-    const shift = centreShift(wall);
-    const n = leftNormal(wall.a, wall.b);
+    // On an arc wall, at stations along its polyline, across the opening's chord (Core 0.4, 21.6).
+    const ends =
+      wall.arc === undefined
+        ? { start: add(wall.a, scale(u, hover.offset)), end: add(wall.a, scale(u, hover.offset + hover.width)) }
+        : { start: pointAtStation(wall.line, hover.offset), end: pointAtStation(wall.line, hover.offset + hover.width) };
+    const shift = openingShift(ends, wall);
+    const n = openingNormal(ends, wall);
     const half = wall.thickness / 2 + 2 / view.s;
-    const s0 = add(add(wall.a, scale(u, hover.offset)), shift);
-    const e0 = add(add(wall.a, scale(u, hover.offset + hover.width)), shift);
+    const s0 = add(ends.start, shift);
+    const e0 = add(ends.end, shift);
     return (
       <g className="fs-draw" aria-hidden="true">
         <polygon className="fs-hl fs-hl--hover" points={pts(view, wall.ring)} />
@@ -747,6 +793,49 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
       </div>,
     );
   }
+  if (draft?.tool === 'arc') {
+    // Core 0.4, 21: what is being typed — the start, the chord, then the sagitta or the radius — and the arc's measures.
+    const a = draft.start?.point;
+    const end = draft.end?.point;
+    const b = end ?? draft.cursor?.point;
+    if (a === undefined) {
+      if (draft.typed !== '')
+        out.push(
+          <div key="arc" className="fs-entry fs-entry--start" role="status" aria-live="polite">
+            <span className="fs-entry__label">Start at</span>
+            <span className="fs-entry__value">{draft.typed}</span>
+            <span className="fs-entry__caret" />
+          </div>,
+        );
+    } else if (b !== undefined) {
+      const c = Math.round(dist(a, b));
+      const mid = S(view, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+      const info = end !== undefined && draft.sagitta !== 0 ? arcInfo(c, draft.sagitta, 0) : undefined;
+      const label = end === undefined ? 'Chord' : draft.field === 'radius' ? 'Radius' : 'Sagitta';
+      const value =
+        draft.typed !== ''
+          ? draft.typed
+          : end === undefined
+            ? formatLen(c, units)
+            : draft.field === 'radius'
+              ? formatLen(Math.round(info?.radius ?? 0), units)
+              : formatLen(Math.abs(draft.sagitta), units);
+      out.push(
+        <div key="arc" className="fs-entry" style={{ left: mid[0] + 14, top: mid[1] - 46 }} role="status" aria-live="polite" data-testid="arc-entry">
+          <span className="fs-entry__label">{label}</span>
+          <span className="fs-entry__value">{value}</span>
+          <span className="fs-entry__caret" />
+          {end === undefined ? (
+            <span className="fs-entry__angle">→ {String(draft.cursor?.angle ?? 0)}°</span>
+          ) : (
+            <span className="fs-entry__angle">
+              Chord {formatLen(c, units)} · Radius {info === undefined ? '—' : formatLen(Math.round(info.radius), units)} · Sweep {info === undefined ? '0' : info.sweep.toFixed(1)}°
+            </span>
+          )}
+        </div>,
+      );
+    }
+  }
   if (isChainDraft(draft) && draft.chain.length === 0 && draft.typed !== '') {
     out.push(
       <div key="start" className="fs-entry fs-entry--start" role="status" aria-live="polite">
@@ -759,7 +848,7 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
   if ((draft?.tool === 'door' || draft?.tool === 'window') && draft.hover !== null) {
     const wall = level.walls.find((w) => w.id === draft.hover?.wall);
     if (wall !== undefined) {
-      const L = dist(wall.a, wall.b);
+      const L = wall.arc?.length ?? dist(wall.a, wall.b);
       const fromStart = draft.hover.offset;
       const fromEnd = Math.round(L - draft.hover.offset - draft.hover.width);
       const at = draft.hover.nearer === 'start' ? `${formatLen(fromStart, units)} from start` : `${formatLen(fromEnd, units)} from end`;
@@ -808,10 +897,10 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
   // The selected wall's length, beside it.
   const wall = selection === null || draft !== null ? undefined : level.walls.find((w) => w.id === selection);
   if (wall !== undefined) {
-    const mid = S(view, [(wall.a[0] + wall.b[0]) / 2, (wall.a[1] + wall.b[1]) / 2]);
+    const mid = S(view, wallMid(wall));
     out.push(
       <div key="dim" className="fs-callout" style={{ left: mid[0] + 12, top: mid[1] - 12 }}>
-        {prettyLen(Math.round(dist(wall.a, wall.b)), units)}
+        {wall.arc === undefined ? prettyLen(Math.round(dist(wall.a, wall.b)), units) : `${prettyLen(wall.arc.length, units)} along the arc`}
       </div>,
     );
   }

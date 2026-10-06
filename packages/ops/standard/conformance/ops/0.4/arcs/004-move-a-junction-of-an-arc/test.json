@@ -1,0 +1,6 @@
+{
+  "description": "moveJunction of J8 north by 1': the arc keeps its sagitta and follows its junctions - its chord is 9' long now, and it bends exactly as far from it.",
+  "covers": [
+    "FS-OPS-2.4.1"
+  ]
+}
