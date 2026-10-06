@@ -38,6 +38,8 @@ const L_SHAPED = fixture('../../../packages/mcp/test/fixtures/l-shaped-house.jso
 const TWO_STOREY = fixture('./fixtures/two-storey.json');
 const L_STAIR = fixture('../../web/e2e/fixtures/l-stair-hip-roof.json');
 const KITCHEN = fixture('../../../packages/engine/standard/conformance/core/0.3/examples/002-kitchen-options/input.json');
+/** A core-only reader (Core 1.6.4): implements no extension, knows none. */
+const CORE_ONLY = {};
 const VERSION = { hash: '3c9e1f0a71fe5b0c2d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c', seq: 42, at: new Date('2026-10-04T18:30:00Z') };
 const fontDir = mkdtempSync(join(tmpdir(), 'floorspec-fonts-drawings-'));
 
@@ -349,20 +351,20 @@ describe('stairs, roofs, designs and the 3D view (FLR-T-9.7)', () => {
   });
 
   it('draws the design asked for, the primary by default, and says which in the title block', async () => {
-    const primary = await exportPdf(KITCHEN, { version: VERSION, fontDir });
+    const primary = await exportPdf(KITCHEN, { version: VERSION, fontDir, reader: CORE_ONLY });
     expect(primary.design).toEqual({ DS: 'DA', KS: 'KA' });
     expect(texts(primary.sheets[0]!)).toContain('DESIGN');
     expect(texts(primary.sheets[0]!)).toContain('Deck — Deck · Kitchen — A: closed (primary)');
-    const b = await exportPdf(KITCHEN, { version: VERSION, fontDir, design: { KS: 'KB' } });
+    const b = await exportPdf(KITCHEN, { version: VERSION, fontDir, design: { KS: 'KB' }, reader: CORE_ONLY });
     expect(b.design).toEqual({ DS: 'DA', KS: 'KB' });
     expect(texts(b.sheets[0]!)).toContain('Deck — Deck · Kitchen — B: open');
     // Kitchen B is open: the wall between kitchen and dining (WA, option KA) is not drawn.
-    expect(levelPlan(KITCHEN, 'L1', new Map(), { KS: 'KB' }).pieces.length).toBeLessThan(levelPlan(KITCHEN, 'L1').pieces.length);
+    expect(levelPlan(KITCHEN, 'L1', new Map(), { KS: 'KB' }, CORE_ONLY).pieces.length).toBeLessThan(levelPlan(KITCHEN, 'L1', new Map(), undefined, CORE_ONLY).pieces.length);
     expect(Buffer.from(b.bytes).equals(Buffer.from(primary.bytes))).toBe(false);
-    const dxf = exportDxf(KITCHEN, { version: VERSION, design: { KS: 'KB' } });
+    const dxf = exportDxf(KITCHEN, { version: VERSION, design: { KS: 'KB' }, reader: CORE_ONLY });
     expect(dxf.design).toEqual({ DS: 'DA', KS: 'KB' });
     expect(new TextDecoder().decode(dxf.bytes)).toContain('DESIGN: Deck - Deck \\U+00B7 Kitchen - B: open'.replace(/ - /g, ' \\U+2014 '));
-    await expect(exportPdf(KITCHEN, { version: VERSION, fontDir, design: { KS: 'NOPE' } })).rejects.toThrow(/no such design/);
+    await expect(exportPdf(KITCHEN, { version: VERSION, fontDir, design: { KS: 'NOPE' }, reader: CORE_ONLY })).rejects.toThrow(/no such design/);
     // A model without options has no design line.
     expect(texts((await exportPdf(RANCH, { version: VERSION, fontDir })).sheets[0]!)).not.toContain('DESIGN');
   });

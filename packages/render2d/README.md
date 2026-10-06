@@ -18,6 +18,19 @@ renderPlan(doc, {
 }); // → a standalone SVG string
 ```
 
+**Whose reader.** `renderPlan` validates the document once, with `reader` (Core 1.6.4, 12.2: the
+extensions it implements, the extensions it knows, the newest Core draft, a package's files) —
+default `DEFAULT_READER`, the reference implementation's `OFFICIAL_READER`, so a document that
+requires an official extension draws. A caller that has already evaluated the document passes the
+evaluation and nothing is validated again:
+
+```ts
+const ev = evaluate(bytes, { ...OFFICIAL_READER, design });   // the caller's reader, once
+renderEvaluation(ev, { level: 'MAIN', theme: 'dark' });        // no second validation
+sceneOf(ev, 'MAIN', derived);                                  // the scene alone, as the worker's drawings use it
+renderPlan(doc, { reader: { extensions: ['FS_electrical'], knownExtensions } }); // a reader of its own
+```
+
 - **Geometry is the engine's.** Wall outlines, junction fills, room polygons and opening points are
   the values `@floorspec/engine` derives exactly and rounds once; the renderer only places symbols
   (door leaves, swings, glazing) relative to them.

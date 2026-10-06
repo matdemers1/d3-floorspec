@@ -8,9 +8,10 @@
  */
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
-import { buildScene, type Pt, type Scene, type SceneOpening, type SceneRoom, type SceneWall } from './scene.js';
+import { evaluate, type Evaluation } from '@floorspec/engine';
+import { DEFAULT_READER, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneOpening, type SceneRoom, type SceneWall } from './scene.js';
 import { el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
-import { roofSymbol, stairSymbol } from './symbols.js';
+import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
 
 export interface RenderOptions {
@@ -18,14 +19,23 @@ export interface RenderOptions {
   readonly level?: string;
   /** Core 0.3 (19.6): the design of a document with design options to draw — option set → option. Default: the primary design. */
   readonly design?: Readonly<Record<string, string>>;
+  /**
+   * The reader the document — and the ghost's before side, when it is given as a document — is
+   * validated with: the caller's own (`ReaderOptions`). Default `DEFAULT_READER`, the reference
+   * implementation's (`OFFICIAL_READER`), so a document that requires an official extension draws.
+   */
+  readonly reader?: ReaderOptions;
   /** Default `light`. */
   readonly theme?: ThemeName;
   /** Drawing scale in SVG pixels per foot. Default 24. */
   readonly scale?: number;
   /** Element IDs to draw in the accent (walls, junctions, separators, openings, rooms). */
   readonly highlight?: readonly string[];
-  /** Changeset ghosting: the document before the changeset; this document is the after side. */
-  readonly ghost?: { readonly before: string | Uint8Array | object };
+  /**
+   * Changeset ghosting: the document before the changeset (validated with `reader`), or the
+   * caller's evaluation of it (not validated again); this document is the after side.
+   */
+  readonly ghost?: { readonly before: string | Uint8Array | object } | { readonly evaluation: Evaluation };
   /** Overall exterior dimensions. Default true. */
   readonly dimensions?: boolean;
   /** Room labels (name, area, dimensions, ID). Default true. */
@@ -326,9 +336,27 @@ function labelBlock(lines: readonly LabelLine[], x: number, y: number, rotate: b
   return el('g', { ...attrs, transform: `translate(${num(x)} ${num(y)})${rotate ? ' rotate(-90)' : ''}`, 'text-anchor': 'middle' }, body);
 }
 
-/** Render one level of a Floorspec document as a standalone SVG string. */
+/** What `renderEvaluation` takes: the drawing options, without the design — the evaluation chose it. */
+export type EvaluationRenderOptions = Omit<RenderOptions, 'design'>;
+
+/**
+ * Render one level of a Floorspec document as a standalone SVG string. The document is validated
+ * once, with `options.reader` (default `DEFAULT_READER`) in `options.design`; a caller that has
+ * already evaluated it calls `renderEvaluation` and it is not validated at all.
+ */
 export function renderPlan(document: string | Uint8Array | object, options: RenderOptions = {}): string {
-  const scene = buildScene(document, options.level, options.design);
+  const { design, ...rest } = options;
+  const reader = options.reader ?? DEFAULT_READER;
+  return renderEvaluation(evaluate(document, design === undefined ? reader : { ...reader, design }), rest);
+}
+
+/**
+ * Render one level of a document the caller has already evaluated — with its own reader, in the
+ * design it chose (`evaluate(document, { ...reader, design })`) — as a standalone SVG string,
+ * without validating it again. Throws InvalidDocumentError for an evaluation that is not valid.
+ */
+export function renderEvaluation(evaluation: Evaluation, options: EvaluationRenderOptions = {}): string {
+  const scene = sceneOf(evaluation, options.level);
   const pal = PALETTES[options.theme ?? 'light'];
   const scale = options.scale ?? DEFAULT_SCALE;
   if (!(scale > 0) || !Number.isFinite(scale)) throw new RangeError('scale must be a positive number of pixels per foot');
@@ -338,10 +366,11 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   let before: Scene | undefined;
   let diff: SceneDiff | undefined;
   if (options.ghost) {
-    const doc = options.ghost.before;
+    const g = options.ghost;
+    const ev = 'evaluation' in g ? g.evaluation : evaluate(g.before, options.reader ?? DEFAULT_READER);
     // The before side may not have this level at all: then everything on it is new.
     try {
-      before = buildScene(doc, scene.levelId);
+      before = sceneOf(ev, scene.levelId);
     } catch (e) {
       if (!(e instanceof RangeError)) throw e;
       before = undefined;
@@ -452,11 +481,14 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
   }
   if (ceilings !== '') parts.push(el('g', { id: 'ceilings' }, ceilings));
 
-  // ── stairs (Core 0.3 and 0.4, 17): treads, landings and winders, a spiral's circle and column, the cut line and the UP arrow ──
+  // ── stairs (Core 0.3 and 0.4, 17): treads, landings and winders (tinted), a spiral's circle and
+  // column, a winder's newel, the cut line, where the floor above must be open from, and the UP arrow ──
   if (scene.stairs.size) {
     let stairs = '';
+    // "UP" is written clear of the walls when the stair leaves it a way to be.
+    const solids = [...[...scene.walls.values()].map((w) => w.outline), ...scene.fills.values()];
     for (const [id, st] of scene.stairs) {
-      const sym = stairSymbol(st.derived, st.form, st.column);
+      const sym = stairSymbol(st.derived, st.form, st.column, st.newel);
       const a = hi.has(id);
       const ink = a ? pal.accent : pal.muted;
       let g = '';
@@ -464,7 +496,8 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
         g += el('path', {
           'data-step': step.landing ? 'landing' : step.winder ? 'winder' : 'tread',
           d: ringsPath([P(step.outline)]),
-          fill: step.landing ? pal.unanchored : 'none',
+          fill: step.landing ? pal.unanchored : step.winder ? pal.winder : 'none',
+          'fill-opacity': step.winder && !step.landing ? WINDER_TINT : undefined,
           stroke: ink,
           'stroke-width': 1,
           ...(step.above ? { 'stroke-dasharray': '3 3' } : {}),
@@ -478,10 +511,13 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
         const c = f.P(sym.column.centre);
         g += el('circle', { 'data-column': id, cx: c[0], cy: c[1], r: sym.column.radius * s, fill: ink, stroke: ink, 'stroke-width': 1 });
       }
+      if (sym.newel) g += el('path', { 'data-newel': id, d: ringsPath([P(sym.newel)]), fill: ink, stroke: ink, 'stroke-width': 1 });
       if (sym.cut) g += el('path', { 'data-cut': id, d: linePath(f.P(sym.cut[0]), f.P(sym.cut[1])), stroke: pal.text, 'stroke-width': 1.5, fill: 'none' });
+      if (sym.opening)
+        g += el('path', { 'data-opening': id, d: linePath(f.P(sym.opening[0]), f.P(sym.opening[1])), stroke: pal.opening, 'stroke-width': 2, 'stroke-dasharray': '8 2 2 2', fill: 'none' });
       g += arrow(sym.arrow.map(f.P), ink);
-      const up = f.P(sym.up);
-      g += el('text', { x: up[0], y: up[1] + 12, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 600, fill: ink }, 'UP');
+      const up = f.P(upPlacement(sym, solids, 1 / s).at);
+      g += el('text', { 'data-up': id, x: up[0], y: up[1] + 3, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 600, fill: ink }, 'UP');
       stairs += el('g', { 'data-id': id, 'data-form': st.form }, g);
     }
     parts.push(el('g', { id: 'stairs' }, stairs));
@@ -568,15 +604,25 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
     parts.push(el('g', { id: 'clearances' }, cls));
   }
 
-  // ── the roof layer (Core 0.3, 16): eave outline dashed, ridges, hips and valleys, gable ends ──
+  // ── the roof layer (Core 0.3, 16): eave outline dashed; ridges, hips, valleys and breaks each drawn their own way; gable ends ──
   if (showRoof && scene.roofs.size) {
     let roofs = '';
     for (const [id, rf] of scene.roofs) {
       const sym = roofSymbol(rf);
       const ink = hi.has(id) ? pal.accent : pal.text;
       let g = el('path', { 'data-eave': id, d: ringsPath([P(sym.eave)]), fill: 'none', stroke: ink, 'stroke-width': 1.25, 'stroke-dasharray': '7 4' });
-      for (const l of sym.lines)
-        g += el('path', { 'data-line': l.kind, d: linePath(f.P(l.from), f.P(l.to)), stroke: ink, 'stroke-width': l.kind === 'ridge' ? 1.5 : 1, ...(l.kind === 'valley' ? { 'stroke-dasharray': '2 2' } : {}), fill: 'none' });
+      for (const l of sym.lines) {
+        const look = ROOF_LINES[l.kind];
+        g += el('path', {
+          'data-line': l.kind,
+          d: linePath(f.P(l.from), f.P(l.to)),
+          stroke: hi.has(id) ? pal.accent : look.muted ? pal.muted : pal.text,
+          'stroke-width': look.width,
+          'stroke-dasharray': look.dash,
+          'stroke-linecap': look.cap,
+          fill: 'none',
+        });
+      }
       for (const [a, b] of sym.gables) g += el('path', { 'data-gable': id, d: linePath(f.P(a), f.P(b)), stroke: ink, 'stroke-width': 2.5, fill: 'none' });
       roofs += el('g', { 'data-id': id, 'data-kind': rf.kind }, g);
     }
@@ -662,6 +708,21 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${SANS}">${parts.join('')}</svg>\n`;
 }
+
+/** A winder's tint: the accent, faint enough that its tread lines read through it. */
+const WINDER_TINT = 0.18;
+
+/**
+ * How each roof line is drawn (Core 16.5), so the four never read alike: a ridge solid and heaviest,
+ * a hip solid and light, a valley dashed, a break dotted and quieter — a change of pitch, not an edge
+ * where two faces meet at an angle.
+ */
+export const ROOF_LINES: Readonly<Record<'ridge' | 'hip' | 'valley' | 'break', { readonly width: number; readonly dash?: string; readonly cap?: 'round'; readonly muted?: true }>> = {
+  ridge: { width: 2 },
+  hip: { width: 1 },
+  valley: { width: 1.25, dash: '5 3' },
+  break: { width: 1.5, dash: '0.5 3.5', cap: 'round', muted: true },
+};
 
 /** A polyline ending in an arrowhead at its last point, in drawing coordinates. */
 function arrow(pts: readonly XY[], ink: string): string {

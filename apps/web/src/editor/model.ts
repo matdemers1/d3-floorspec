@@ -16,6 +16,7 @@ import {
   type Diagnostic,
   type FloorspecDocument,
 } from '@floorspec/engine';
+import { newelOutline, type NewelSource } from '@floorspec/render2d';
 import { twiceArea } from './units';
 import { deviceViews, recordIndex, type DeviceView, type RecordRef } from './systems/view';
 import { kindLabel } from './systems/catalog';
@@ -158,6 +159,8 @@ export interface StairView {
   derived: DerivedStair;
   /** A spiral stair's column radius (Core 17.7), diameter / 2 less width; 0 for every other stair. */
   column: number;
+  /** A winder stair's newel in plan (Core 0.4, 17.7), when it has one. */
+  newel: readonly Point[] | null;
 }
 
 export interface FaceView {
@@ -527,7 +530,7 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
     const diameter = form?.['diameter'];
     const width = st['width'];
     const column = kind === 'spiral' && typeof diameter === 'number' && typeof width === 'number' ? Math.max(0, diameter / 2 - width) : 0;
-    views.get(String(st['level']))?.stairs.push({ id, to: String(st['to']), form: kind, derived: d, column });
+    views.get(String(st['level']))?.stairs.push({ id, to: String(st['to']), form: kind, derived: d, column, newel: newelOutline(st as unknown as NewelSource) });
   }
   for (const free of derived.unanchored) {
     views.get(free.level)?.faces.push({ room: null, outer: free.outer, holes: free.holes, area2: twiceArea(free.area) });

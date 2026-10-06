@@ -238,18 +238,19 @@ function bodyFor(kind: Kind, ctx: Ctx, focus: string | null): ReactNode {
           <NameOnly ctx={ctx} />
         </>
       );
+    // Identity first, as the type inspectors have it (FLR-T-12.9).
     case 'roof':
       return (
         <>
-          <RoofBody ctx={ctx} />
           <NameOnly ctx={ctx} />
+          <RoofBody ctx={ctx} />
         </>
       );
     case 'stair':
       return (
         <>
-          <StairBody ctx={ctx} />
           <NameOnly ctx={ctx} />
+          <StairBody ctx={ctx} />
         </>
       );
     case 'building':

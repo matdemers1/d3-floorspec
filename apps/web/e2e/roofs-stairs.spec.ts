@@ -82,7 +82,10 @@ test('a hip roof over the walls and an L stair to the level above, as the model 
   await rail.getByRole('button', { name: 'Place a stair' }).click();
   const inspector = page.getByRole('complementary', { name: 'Inspector' });
   await expect(inspector.getByRole('heading', { name: 'Place a stair' })).toBeVisible();
-  await inspector.getByRole('radio', { name: 'L', exact: true }).click();
+  // The tool names its forms as the inspector does (FLR-T-12.9): "L-shaped", not "L".
+  await inspector.getByRole('combobox', { name: 'Form' }).click();
+  await page.getByRole('option', { name: 'L-shaped', exact: true }).click();
+  await expect(inspector.getByRole('combobox', { name: 'Form' })).toContainText('L-shaped');
   await click(page, camera, -8 * FT, -4 * FT);
   await click(page, camera, 0, -4 * FT);
   await expect.poll(async () => count((await modelOf(page, project)).stairs)).toBe(1);
@@ -138,19 +141,33 @@ test('a hip roof over the walls and an L stair to the level above, as the model 
   expect(shortEnds).toHaveLength(2);
   // Out of the roof tool; the new roof is the selection — else pick it in the project tree.
   await page.keyboard.press('Escape');
-  const firstEdge = inspector.getByRole('switch', { name: /^Edge 0 · / });
+  const firstEdge = inspector.getByRole('switch', { name: /^Edge 1 \(.*\) is a gable end$/ });
   if (!(await firstEdge.waitFor({ timeout: 3000 }).then(() => true, () => false))) {
     const roofs = page.getByRole('treeitem', { name: /^Roofs/ });
     if ((await roofs.getAttribute('aria-expanded')) !== 'true') await roofs.click();
     await page.getByRole('treeitem', { name: new RegExp(`\\b${roofId!}\\b`) }).click();
   }
   await expect(firstEdge).toBeVisible();
+  // FLR-T-12.9: edges are numbered from 1, in the inspector and on the plan; edge i is footprint[i] → footprint[i + 1].
+  await expect(inspector.getByRole('switch', { name: /^Edge 0\b/ })).toHaveCount(0);
+  await expect(svg.locator(`[data-roof-edges="${roofId!}"] [data-edge]`)).toHaveCount(4);
+  await expect(svg.locator(`[data-roof-edges="${roofId!}"] [data-edge="1"] text`)).toHaveText('1');
+  // Selected, the roof is outlined only: its ridge and hips are not painted over.
+  const selected = svg.locator('.fs-hl--selected');
+  await expect(selected).toHaveClass(/fs-hl--outline/);
+  expect(await selected.evaluate((el) => getComputedStyle(el).fill)).toBe('none');
+  // Identity comes first in the inspector, as in a type's.
+  const sections = await inspector.locator('section.fs-section').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
+  expect(sections.slice(0, 2)).toEqual(['Identity', 'Roof']);
+  // The tree does not say an unnamed roof's ID twice.
+  const roofRow = page.getByRole('treeitem', { name: new RegExp(`\\b${roofId!}\\b`) });
+  if ((await roofRow.count()) > 0) await expect(roofRow.locator('.fs-tree__meta')).toHaveCount(0);
   for (const i of shortEnds) {
-    await inspector.getByRole('switch', { name: new RegExp(`^Edge ${String(i)} · .* · gable$`) }).click();
+    await inspector.getByRole('switch', { name: new RegExp(`^Edge ${String(i + 1)} \\(.*\\) is a gable end$`) }).click();
     await expect.poll(async () => (await edgeOf(i))?.gable).toBe(true);
     await settled(page);
   }
-  const rise = inspector.getByLabel(`Edge ${String(south)} pitch rise (in 12)`);
+  const rise = inspector.getByLabel(`Edge ${String(south + 1)} pitch rise (in 12)`);
   await rise.fill('12');
   await rise.press('Enter');
   await expect.poll(async () => (await edgeOf(south))?.pitch).toEqual({ rise: 12, run: 12 });
@@ -171,8 +188,44 @@ test('a hip roof over the walls and an L stair to the level above, as the model 
   await expect(svg.locator('.fs-plan2__roofs .fs-roof__line--hip')).toHaveCount(0);
   await expect(svg.locator('.fs-plan2__roofs .fs-roof__gable')).toHaveCount(2);
   await expect(inspector).not.toContainText('does not derive');
-  await expect(inspector).toContainText('2 faces · 1 ridges, hips, valleys and breaks');
+  await expect(inspector.getByText('Lines', { exact: true })).toBeVisible();
+  await expect(inspector).toContainText('1 ridge');
+  // Nothing derived is cut off: every read-only value fits its field.
+  for (const ro of await inspector.locator('.fs-readonly').all()) expect(await ro.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  // Every placeholder fits its field too.
+  for (const input of await inspector.locator('input[placeholder]').all())
+    expect(
+      await input.evaluate((el: HTMLInputElement) => {
+        const cs = getComputedStyle(el);
+        const c = document.createElement('canvas').getContext('2d')!;
+        c.font = cs.font;
+        return c.measureText(el.placeholder).width <= el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      }),
+      await input.getAttribute('placeholder') ?? '',
+    ).toBe(true);
   await page.screenshot({ path: 'test-results/roofs-saltbox-2d.png' });
+  // The roof inspector, light and dark, beside the board's frame 89:30911.
+  for (const theme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: theme });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `test-results/roofs-inspector-${theme}.png` });
+  }
+
+  // ── The stair's inspector: Identity first; UP written clear of the stair's box (FLR-T-12.9).
+  await svg.locator(`[data-stair="${stairId}"] .fs-stair__step`).first().click({ force: true });
+  if (!(await inspector.getByRole('combobox', { name: 'Form' }).isVisible())) {
+    const stairs = page.getByRole('treeitem', { name: /^Stairs/ });
+    if ((await stairs.getAttribute('aria-expanded')) !== 'true') await stairs.click();
+    await page.getByRole('treeitem', { name: new RegExp(`\\b${stairId}\\b`) }).click();
+  }
+  await expect(inspector.getByRole('combobox', { name: 'Form' })).toContainText('L-shaped');
+  const stairSections = await inspector.locator('section.fs-section').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
+  expect(stairSections.slice(0, 2)).toEqual(['Identity', 'Stair']);
+  const upBox = (await svg.locator(`[data-up="${stairId}"]`).boundingBox())!;
+  const stairBox = (await svg.locator('.fs-hl--selected').boundingBox())!;
+  const overlaps = upBox.x < stairBox.x + stairBox.width && upBox.x + upBox.width > stairBox.x && upBox.y < stairBox.y + stairBox.height && upBox.y + upBox.height > stairBox.y;
+  expect(overlaps).toBe(false);
 
   // …and in 3D: the whole house, the saltbox among its parts.
   await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: '3D' }).click();

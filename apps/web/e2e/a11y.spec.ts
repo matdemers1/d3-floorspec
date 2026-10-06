@@ -345,6 +345,47 @@ test('every screen and state has no axe violations, in light and in dark', async
   await tree.getByRole('treeitem', { name: /Wall W2\b/ }).click();
   await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('button', { name: 'Flip bulge' })).toBeVisible();
   await audit(page, 'editor, an arc wall selected (Core 0.4)');
+  // FLR-T-12.9: a roof selected — its edges numbered on the plan and listed one row each — and a
+  // stair selected, outlined only, its winders tinted. The rooms' floor finishes are left out: a
+  // floor tinted by its finish puts the plan's faint area labels under 4.5:1, which is not this task's.
+  const p7 = await page.request.post('/api/projects', { data: { name: 'P7 house' } });
+  expect(p7.status(), await p7.text()).toBe(201);
+  const p7id = ((await p7.json()) as { id: string }).id;
+  const p7Doc = JSON.parse(readFileSync(new URL('./fixtures/l-stair-hip-roof.json', import.meta.url), 'utf8')) as Record<string, Record<string, unknown>>;
+  const p7Batch = ['materials', 'types', 'buildings', 'levels', 'junctions', 'walls', 'separators', 'openings', 'rooms', 'stairs', 'roofs'].flatMap((collection) =>
+    Object.entries(p7Doc[collection] ?? {}).map(([id, element]) => ({
+      op: 'addElement',
+      collection,
+      id,
+      element: collection === 'rooms' ? Object.fromEntries(Object.entries(element as Record<string, unknown>).filter(([k]) => k !== 'floorFinish')) : element,
+    })),
+  );
+  expect((await page.request.post(`/api/projects/${p7id}/ops`, { data: { batch: p7Batch } })).status()).toBe(201);
+  await page.goto(`/projects/${p7id}/editor`);
+  await expect(page.locator('.fs-statusbar')).toContainText('Live');
+  await settled(page);
+  const p7Inspector = page.getByRole('complementary', { name: 'Inspector' });
+  for (let depth = 1; depth <= 3; depth++) {
+    const closed = tree.locator(`[role="treeitem"][aria-level="${String(depth)}"][aria-expanded="false"]`);
+    while ((await closed.count()) > 0) await closed.first().click();
+  }
+  for (const [group, item] of [[/^Roofs/, /^Hip roof\b/], [/^Stairs/, /^Stair\b/]] as const) {
+    const g = tree.getByRole('treeitem', { name: group });
+    if ((await g.getAttribute('aria-expanded')) === 'false') await g.click();
+    await tree.getByRole('treeitem', { name: item }).first().click();
+    if (group.source === '^Roofs') {
+      await expect(p7Inspector.getByRole('group', { name: 'Edges, numbered as on the plan' })).toBeVisible();
+      await expect(page.locator('[data-roof-edges] [data-edge="1"]')).toBeVisible();
+      await audit(page, 'editor, a roof selected: its edges numbered (Core 0.3)');
+    } else {
+      await expect(p7Inspector.getByRole('combobox', { name: 'Form' })).toContainText('L-shaped');
+      await audit(page, 'editor, a stair selected (Core 0.4)');
+      await p7Inspector.getByRole('combobox', { name: 'Form' }).click();
+      await page.getByRole('option', { name: 'Winder', exact: true }).click();
+      await expect(page.locator('[data-stair="ST1"] .fs-stair__step--winder')).toHaveCount(3);
+      await audit(page, 'editor, a winder stair selected: its tinted winders (Core 0.4)');
+    }
+  }
   await page.goto(`/projects/${house}/editor`);
   await expect(page.locator('.fs-statusbar')).toContainText('Live');
   await settled(page);

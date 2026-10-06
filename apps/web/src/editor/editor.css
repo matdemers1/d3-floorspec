@@ -398,6 +398,62 @@
   color: var(--color-danger);
   font-size: var(--text-12);
 }
+.fs-readonly--wrap {
+  height: auto;
+  min-height: 36px;
+  padding-block: var(--space-8);
+  white-space: normal;
+  line-height: var(--leading-12);
+}
+/* A roof's edges (FLR-T-12.9): one compact row an edge — its number (as tagged on the plan), its
+   length, a gable switch and its own rise — so a roof of many edges stays short. */
+.fs-edges {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto 72px;
+  align-items: center;
+  column-gap: var(--space-8);
+  row-gap: var(--space-4);
+}
+.fs-edges__head,
+.fs-edges__row {
+  display: contents;
+}
+.fs-edges__head > span {
+  color: var(--color-fg-faint);
+  font-size: var(--text-11);
+  white-space: nowrap;
+}
+.fs-edges__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  font-weight: var(--weight-semibold);
+}
+.fs-edges__len {
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  color: var(--color-fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fs-edges__none {
+  color: var(--color-fg-faint);
+  font-size: var(--text-12);
+}
+.fs-inline-int {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
 .fs-field-hint {
   margin: 0;
   color: var(--color-fg-faint);
@@ -671,6 +727,24 @@
 .fs-stair__step--above {
   stroke-dasharray: 3 3;
 }
+/* Core 0.4 (17.7): a winder stair's tapered treads, tinted so the turn reads at a glance (the board's
+   P7 frames). The accent, faint, so the tread lines read through it in both themes. */
+.fs-stair__step--winder {
+  fill: var(--color-accent);
+  fill-opacity: 0.18;
+}
+/* A winder's newel post, at the turn's inner corner: solid, like a spiral's column. */
+.fs-stair__newel {
+  fill: var(--color-fg-muted);
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+}
+/* Core 0.4 (17.6): the front edge of the first step the floor above must be open over. */
+.fs-stair__opening {
+  stroke: var(--color-warning);
+  stroke-width: 2;
+  stroke-dasharray: 8 2 2 2;
+}
 /* Core 0.4 (17.7): a spiral stair's centre column, solid, under its tapered treads. */
 .fs-stair__column {
   fill: var(--color-fg-muted);
@@ -699,9 +773,11 @@
   fill: var(--color-fg-muted);
   font-size: 9px;
   font-weight: 600;
+  pointer-events: none;
 }
-/* The roof layer (Core 0.3, 16): the eave outline dashed above the cut, ridges, hips and valleys,
-   and each gable end's eave edge heavier. */
+/* The roof layer (Core 0.3, 16): the eave outline dashed above the cut; ridges, hips, valleys and
+   breaks each drawn their own way (render2d's ROOF_LINES) — a ridge solid and heaviest, a hip solid
+   and light, a valley dashed, a break dotted and quieter; each gable end's eave edge heavier. */
 .fs-roof__eave {
   fill: none;
   stroke: var(--color-fg);
@@ -713,10 +789,33 @@
   stroke-width: 1;
 }
 .fs-roof__line--ridge {
-  stroke-width: 1.5;
+  stroke-width: 2;
+}
+.fs-roof__line--hip {
+  stroke-width: 1;
 }
 .fs-roof__line--valley {
-  stroke-dasharray: 2 2;
+  stroke-width: 1.25;
+  stroke-dasharray: 5 3;
+}
+.fs-roof__line--break {
+  stroke: var(--color-fg-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 0.5 3.5;
+  stroke-linecap: round;
+}
+/* The selected roof's edges, numbered from 1 as its inspector numbers them. */
+.fs-roof__edge-tag {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-accent);
+  stroke-width: 1;
+}
+.fs-roof__edge-num {
+  fill: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  pointer-events: none;
 }
 .fs-roof__gable {
   stroke: var(--color-fg);
@@ -1732,6 +1831,10 @@ line.fs-diff {
   font-size: var(--text-11);
 }
 .fs-hl.fs-hl--ring {
+  fill: none;
+}
+/* A roof or a stair is outlined only: a fill would hide its ridge, hip, valley and break lines and its treads. */
+.fs-hl.fs-hl--outline {
   fill: none;
 }
 .fs-core-note {

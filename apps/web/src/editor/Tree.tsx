@@ -30,6 +30,11 @@ interface TreeRow {
   parent: string | null;
 }
 
+/** Whether a row's label already says its element's ID, as an unnamed element's does ("Stair ST1"). */
+export function idShown(label: string, id: string): boolean {
+  return label.split(/\s+/).includes(id);
+}
+
 /**
  * The tree is a WAI-ARIA tree with a roving tab stop (FLR-T-3.7): ↑/↓ move, → opens a group or
  * steps into it, ← closes it or steps out to its parent, Home/End jump, Enter or Space selects the
@@ -111,7 +116,9 @@ export function ProjectTree({ store }: { store: EditorStore }) {
           if (!open(gk)) continue;
           for (const item of items) {
             const o = view.openings.find((x) => x.id === item.id);
-            rows.push({ key: item.id, depth: 4, icon: o === undefined ? icon : o.kind === 'window' ? <WindowIcon /> : <DoorIcon />, label: labelOf(model, item.id), meta: item.id, id: item.id, parent: gk });
+            const label = labelOf(model, item.id);
+            // An unnamed element's label already carries its ID ("Stair ST1"): the ID is not said twice.
+            rows.push({ key: item.id, depth: 4, icon: o === undefined ? icon : o.kind === 'window' ? <WindowIcon /> : <DoorIcon />, label, ...(idShown(label, item.id) ? {} : { meta: item.id }), id: item.id, parent: gk });
           }
         }
       }
@@ -120,13 +127,20 @@ export function ProjectTree({ store }: { store: EditorStore }) {
     if (types.length > 0) {
       rows.push({ key: 'types', depth: 1, icon: <WallIcon />, label: 'Types', meta: String(types.length), group: true, parent: 'project' });
       if (open('types')) {
-        for (const [id, t] of types) rows.push({ key: id, depth: 2, icon: t['kind'] === 'wallType' ? <WallIcon /> : t['kind'] === 'doorType' ? <DoorIcon /> : <WindowIcon />, label: labelOf(model, id), meta: id, id, parent: 'types' });
+        for (const [id, t] of types) {
+          const label = labelOf(model, id);
+          rows.push({ key: id, depth: 2, icon: t['kind'] === 'wallType' ? <WallIcon /> : t['kind'] === 'doorType' ? <DoorIcon /> : <WindowIcon />, label, ...(idShown(label, id) ? {} : { meta: id }), id, parent: 'types' });
+        }
       }
     }
     const materials = Object.keys(model.document.materials ?? {});
     if (materials.length > 0) {
       rows.push({ key: 'materials', depth: 1, icon: <Palette />, label: 'Materials', meta: String(materials.length), group: true, parent: 'project' });
-      if (open('materials')) for (const id of materials) rows.push({ key: id, depth: 2, icon: <Palette />, label: labelOf(model, id), meta: id, id, parent: 'materials' });
+      if (open('materials'))
+        for (const id of materials) {
+          const label = labelOf(model, id);
+          rows.push({ key: id, depth: 2, icon: <Palette />, label, ...(idShown(label, id) ? {} : { meta: id }), id, parent: 'materials' });
+        }
     }
   }
 

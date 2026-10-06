@@ -318,9 +318,33 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
   await inspector.getByRole('textbox', { name: 'Design headroom' }).press('Enter');
   await expect.poll(async () => (await modelOf(page, project)).stairs?.['ST1']?.minHeadroom).toBe(80 * IN);
   await settled(page);
-  await expect(inspector.getByText('Least going at the narrow end')).toBeVisible();
+  await expect(inspector.getByText('Least going, narrow end')).toBeVisible();
   await expect(inspector.getByText('Floor above open from')).toBeVisible();
+  // FLR-T-12.9: the winders tinted, the newel drawn, where the floor above opens marked, and the
+  // stair outlined only when selected — its treads not painted over.
+  const stairG = plan.locator('[data-stair="ST1"]');
+  await expect(stairG.locator('.fs-stair__step--winder')).toHaveCount(3);
+  expect(await stairG.locator('.fs-stair__step--winder').first().evaluate((el) => getComputedStyle(el).fillOpacity)).toBe('0.18');
+  await expect(stairG.locator('[data-newel="ST1"]')).toHaveCount(1);
+  await expect(stairG.locator('[data-opening="ST1"]')).toHaveCount(1);
+  expect(await plan.locator('.fs-hl--selected').evaluate((el) => getComputedStyle(el).fill)).toBe('none');
+  const sections = await inspector.locator('section.fs-section').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
+  expect(sections.slice(0, 2)).toEqual(['Identity', 'Stair']);
+  // The tree says the stair's ID once: beside its name ("Stair"), or in its label when it has none.
+  expect(((await tree.getByRole('treeitem').filter({ hasText: 'ST1' }).first().textContent()) ?? '').match(/ST1/g)).toHaveLength(1);
   await shoot(page, 'plan-winder');
+  // A half turn: its second flight runs back past the foot, and UP is written clear of the stair's box.
+  await inspector.getByRole('radiogroup', { name: 'Turns through' }).getByRole('radio', { name: 'A half' }).click();
+  await expect.poll(async () => (await modelOf(page, project)).stairs?.['ST1']?.form?.angle).toBe('half');
+  await settled(page);
+  await expect(stairG.locator('.fs-stair__step--winder')).toHaveCount(6);
+  const upBox = (await stairG.locator('[data-up="ST1"]').boundingBox())!;
+  const box = (await plan.locator('.fs-hl--selected').boundingBox())!;
+  expect(upBox.x < box.x + box.width && upBox.x + upBox.width > box.x && upBox.y < box.y + box.height && upBox.y + upBox.height > box.y).toBe(false);
+  await shoot(page, 'plan-winder-half');
+  await inspector.getByRole('radiogroup', { name: 'Turns through' }).getByRole('radio', { name: 'A quarter' }).click();
+  await expect.poll(async () => (await modelOf(page, project)).stairs?.['ST1']?.form?.angle).toBe('quarter');
+  await settled(page);
   // In 3D: the winders are part of the stair's flight.
   // The 3D view is mounted afresh: its description is found again from the canvas.
   const described = async () => page.locator(`[id="${(await canvas.getAttribute('aria-describedby'))!}"]`);
@@ -341,6 +365,9 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
   await expect(plan.locator('[data-column="ST1"]')).toBeVisible();
   await expect(inspector.getByRole('textbox', { name: 'Diameter' })).toBeVisible();
   await expect(inspector.getByRole('textbox', { name: 'Sweep' })).toHaveValue('270');
+  // A spiral's tread does not claim to be its going: its diameter and sweep set that.
+  await expect(inspector).not.toContainText('nosing to nosing');
+  await expect(inspector).toContainText("a spiral's diameter and sweep set it");
   await shoot(page, 'plan-spiral');
   await views.getByRole('radio', { name: '3D' }).click();
   await ready(page);

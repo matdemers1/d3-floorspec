@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { InvalidDocumentError, check } from '@floorspec/engine';
 import { describe, expect, it } from 'vitest';
-import { ACCENT, PACKAGE_NAME, PALETTES, buildScene, feetInches, inches, labelPoint, num, renderPlan, squareFeet } from '../src/index.js';
+import { ACCENT, PACKAGE_NAME, PALETTES, ROOF_LINES, buildScene, feetInches, inches, labelPoint, newelOutline, num, renderPlan, squareFeet, stairSymbol, upPlacement, type NewelSource, type Pt } from '../src/index.js';
 
+/** A core-only reader (Core 1.6.4): implements no extension, knows none. */
+const CORE_ONLY = {};
 const HOUSES = ['three-room-house', 'two-bedroom-ranch', 'l-shaped-house'] as const;
 const FT = 390144;
 
@@ -305,7 +307,11 @@ describe('label placement', () => {
 });
 
 describe('Core 0.2: fallbacks and clearance envelopes', () => {
-  /** The three-room house as a 0.2 document, with a sofa in the living room and a swing on its entry door. */
+  /**
+   * The three-room house as a 0.2 document, with a sofa in the living room and a swing on its entry
+   * door — read by a core-only reader (`reader: {}`), which draws what it does not know as fallbacks.
+   * The reference reader knows FS_furniture 0.1.0, whose pieces need an asset and a symbol (FS-INV-603).
+   */
   function furnished(): Doc {
     const d = load('three-room-house');
     d.floorspec = '0.2';
@@ -331,16 +337,16 @@ describe('Core 0.2: fallbacks and clearance envelopes', () => {
   it('draws every extension element on the level as its fallback footprint', () => {
     const d = furnished();
     expect(check(d).valid).toBe(true);
-    const svg = renderPlan(d);
+    const svg = renderPlan(d, { reader: CORE_ONLY });
     expect(svg).toContain('<g id="fallbacks">');
     expect(svg).toMatch(/data-id="SOFA" data-kind="FS_furniture:pieces"/);
     expect(svg).not.toContain('id="clearances"');
   });
 
   it('draws clearance envelopes only when asked', () => {
-    const svg = renderPlan(furnished(), { clearances: true });
+    const svg = renderPlan(furnished(), { clearances: true, reader: CORE_ONLY });
     expect(svg).toMatch(/<g id="clearances"><path data-owner="[A-Z0-9]+" data-name="swing" data-purpose="swing"/);
-    expect(renderPlan(furnished(), { clearances: true })).toBe(svg);
+    expect(renderPlan(furnished(), { clearances: true, reader: CORE_ONLY })).toBe(svg);
   });
 
   it('leaves a 0.1 drawing byte-for-byte as it was', () => {
@@ -436,6 +442,111 @@ describe('Core 0.3: stairs and roofs', () => {
     expect(svg.match(/data-line="hip"/g)).toBeNull();
     expect(svg.match(/data-gable="RF1"/g)).toHaveLength(2);
     expect(svg).toContain('data-eave="RF1"');
+  });
+});
+
+describe('FLR-T-12.9: stair and roof symbols, each drawn its own way', () => {
+  const stair04 = (name: string): Record<string, unknown> =>
+    JSON.parse(readFileSync(new URL(`../../engine/standard/conformance/core/0.4/stairs/${name}/input.json`, import.meta.url), 'utf8')) as Record<string, unknown>;
+  const attr = (svg: string, marker: string, name: string): string | undefined => new RegExp(`<[^>]*${marker}[^>]*\\b${name}="([^"]*)"`).exec(svg)?.[1];
+
+  it('tints a winder stair’s winders with the winder colour, and leaves straight treads unfilled', () => {
+    for (const theme of ['light', 'dark'] as const) {
+      const svg = renderPlan(stair04('050-winder-with-newel'), { level: 'L1', theme });
+      const winders = svg.match(/<path data-step="winder"[^>]*>/g)!;
+      expect(winders).toHaveLength(3);
+      for (const w of winders) {
+        expect(w).toContain(`fill="${PALETTES[theme].winder}"`);
+        expect(w).toContain('fill-opacity="0.18"');
+      }
+      for (const t of svg.match(/<path data-step="tread"[^>]*>/g)!) expect(t).toContain('fill="none"');
+    }
+  });
+
+  it('draws a winder’s newel at the turn’s inner corner, where the winders’ nosing lines start', () => {
+    const d = stair04('050-winder-with-newel');
+    const scene = buildScene(d, 'L1');
+    const st = scene.stairs.get('ST1')!;
+    const newel = newelOutline((d as { stairs: Record<string, NewelSource> }).stairs['ST1']!)!;
+    expect(st.newel).toEqual(newel);
+    const corners = st.derived.steps!.flatMap((x) => x.outline);
+    // Every corner of the newel is a corner of a derived winder or tread (17.7: the nosing lines start on N).
+    for (const p of newel) expect(Math.min(...corners.map((q) => Math.hypot(q[0] - p[0], q[1] - p[1])))).toBeLessThan(1);
+    const svg = renderPlan(d, { level: 'L1' });
+    expect(svg).toContain('data-newel="ST1"');
+    // A winder without one, a straight stair and a spiral have none.
+    expect(renderPlan(stair04('015-winder-half'), { level: 'L1' })).not.toContain('data-newel');
+    expect(renderPlan(stair04('016-spiral'), { level: 'L1' })).not.toContain('data-newel');
+    // Turning right and rotated: still on the derived corners.
+    const r = stair04('051-winder-turning-right-rotated');
+    const rs = buildScene(r, 'L1').stairs.get('ST1')!;
+    const rc = rs.derived.steps!.flatMap((x) => x.outline);
+    for (const p of rs.newel!) expect(Math.min(...rc.map((q) => Math.hypot(q[0] - p[0], q[1] - p[1])))).toBeLessThan(1);
+  });
+
+  it('marks where the floor above must be open from, across the first step that needs it (Core 0.4, 17.6)', () => {
+    const d = stair04('058-opening');
+    const st = buildScene(d, 'L1').stairs.get('ST1')!;
+    const sym = stairSymbol(st.derived, st.form, st.column, st.newel);
+    const first = st.derived.steps![st.derived.opening!.first]!;
+    // The edge it shares with the step below it, right across the stair.
+    expect(sym.opening).not.toBeNull();
+    for (const p of sym.opening!) expect(first.outline).toContainEqual(p);
+    expect(Math.hypot(sym.opening![1][0] - sym.opening![0][0], sym.opening![1][1] - sym.opening![0][1])).toBe(1152000);
+    const svg = renderPlan(d, { level: 'L1' });
+    expect(attr(svg, 'data-opening="ST1"', 'stroke')).toBe(PALETTES.light.opening);
+    expect(renderPlan(stair04('060-no-opening-needed'), { level: 'L1' })).not.toContain('data-opening');
+    expect(renderPlan(stair04('061-winder-opening'), { level: 'L1' })).toContain('data-opening="ST1"');
+  });
+
+  it('writes UP beyond the stair: a half-turn winder’s second flight runs past its foot', () => {
+    for (const name of ['015-winder-half', '050-winder-with-newel', '007-l-stair-with-landing', '016-spiral', '051-winder-turning-right-rotated']) {
+      const d = stair04(name);
+      const st = buildScene(d, 'L1').stairs.get('ST1')!;
+      const sym = stairSymbol(st.derived, st.form, st.column, st.newel);
+      const label: Pt = [sym.up[0] + sym.away[0] * sym.clear, sym.up[1] + sym.away[1] * sym.clear];
+      // Nothing of the stair lies beyond the label's edge, along the way out.
+      const beyond = (p: Pt): number => (p[0] - label[0]) * sym.away[0] + (p[1] - label[1]) * sym.away[1];
+      for (const s of sym.steps) for (const p of s.outline) expect(beyond(p)).toBeLessThanOrEqual(1e-6);
+      // Nor of its box, which the selection outlines: a spiral's box reaches past its circle's tangent.
+      const { min, max } = st.derived.box;
+      for (const p of [[min[0], min[1]], [max[0], min[1]], [max[0], max[1]], [min[0], max[1]]] as Pt[]) expect(beyond(p)).toBeLessThanOrEqual(1e-6);
+      expect(renderPlan(d, { level: 'L1' })).toContain(`data-up="ST1"`);
+    }
+    // Against a wall, UP is written another way out: the first whose label lands clear of the solids.
+    const sp = buildScene(stair04('016-spiral'), 'L1').stairs.get('ST1')!;
+    const sym = stairSymbol(sp.derived, sp.form, sp.column, sp.newel);
+    expect(sym.ups).toHaveLength(4);
+    const free = upPlacement(sym, [], 1000);
+    expect(free.away).toEqual(sym.ups[0]!.away);
+    // A wall just past the label's corner, not under its centre, still sends it another way.
+    const [bx, by] = free.at;
+    const wall: Pt[] = [[bx + 7000, by - 50000], [bx + 50000, by - 50000], [bx + 50000, by + 50000], [bx + 7000, by + 50000]];
+    expect(upPlacement(sym, [wall], 1000).away).toEqual(sym.ups[1]!.away);
+    // The half turn: its second flight reaches 640,000 base units behind the foot.
+    const half = buildScene(stair04('015-winder-half'), 'L1').stairs.get('ST1')!;
+    expect(stairSymbol(half.derived, half.form, half.column, half.newel).clear).toBe(640000);
+  });
+
+  it('draws ridges, hips, valleys and breaks four different ways, in the theme’s ink', () => {
+    const looks = Object.values(ROOF_LINES).map((l) => JSON.stringify(l));
+    expect(new Set(looks).size).toBe(4);
+    const d = load('three-room-house') as Doc & { roofs?: unknown };
+    d.floorspec = '0.4';
+    const L = [[0, 0], [40 * FT, 0], [40 * FT, 24 * FT], [24 * FT, 24 * FT], [24 * FT, 48 * FT], [0, 48 * FT]];
+    d.roofs = { RF1: { level: 'MAIN', footprint: L, pitch: { rise: 6, run: 12 }, edges: { '3': { pitch: { rise: 9, run: 12 } }, '4': { pitch: { rise: 9, run: 12 } }, '5': { pitch: { rise: 9, run: 12 } } } } };
+    const svg = renderPlan(d, { roof: true, theme: 'dark' });
+    expect(attr(svg, 'data-line="ridge"', 'stroke-width')).toBe('2');
+    expect(attr(svg, 'data-line="hip"', 'stroke-dasharray')).toBeUndefined();
+    expect(attr(svg, 'data-line="valley"', 'stroke-dasharray')).toBe('5 3');
+    expect(attr(svg, 'data-line="valley"', 'stroke')).toBe(PALETTES.dark.text);
+    const stepped = load('three-room-house') as Doc & { roofs?: unknown };
+    stepped.floorspec = '0.4';
+    stepped.roofs = { RF1: { level: 'MAIN', footprint: [[0, 0], [10 * FT, 0], [10 * FT, FT], [30 * FT, FT], [30 * FT, 20 * FT], [0, 20 * FT]], pitch: { rise: 12, run: 12 }, edges: { '0': { pitch: { rise: 3, run: 12 } } } } };
+    const b = renderPlan(stepped, { roof: true });
+    expect(attr(b, 'data-line="break"', 'stroke-dasharray')).toBe('0.5 3.5');
+    expect(attr(b, 'data-line="break"', 'stroke')).toBe(PALETTES.light.muted);
+    expect(attr(b, 'data-line="break"', 'stroke-linecap')).toBe('round');
   });
 });
 
