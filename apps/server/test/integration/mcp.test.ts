@@ -87,7 +87,7 @@ describe('the MCP endpoint', () => {
   });
 
   for (const era of ['legacy', 'modern'] as const) {
-    it(`serves the eleven tools to a ${era} client with a project token`, async () => {
+    it(`serves the twelve tools to a ${era} client with a project token`, async () => {
       const mcp = await connect(`Bearer ${await tokenFor(operator, project.id, 'read')}`, era);
       const { tools } = await mcp.listTools();
       expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
@@ -285,6 +285,42 @@ describe('the MCP endpoint', () => {
     expect(texts(ambiguous)).not.toContain('Not yours');
   });
 
+  it('creates a project for an agent, owned by the account, with nothing on main but the empty house (FLR-ADR-037)', async () => {
+    const mcp = await connect(`Bearer ${await tokenFor(operator, null, 'agent', 'Claude everywhere')}`);
+    const created = await mcp.callTool({ name: 'floorspec_create_project', arguments: { name: 'West house' } });
+    expect(created.isError, texts(created)).toBeFalsy();
+    const id = (created.structuredContent as { project: string }).project;
+    const account = await db.account.findFirstOrThrow({ where: { email: 'operator@example.test' } });
+    expect(await db.project.findUniqueOrThrow({ where: { id } })).toMatchObject({ name: 'West house', ownerAccountId: account.id });
+    const log = await db.opLog.findMany({ where: { projectId: id } });
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ kind: 'create', authorKind: 'agent', authorAgent: 'Claude everywhere', authorAccountId: account.id });
+    expect((await db.auditLog.findFirstOrThrow({ where: { action: 'project.create', targetId: id } })).actor).toMatch(/^agent:/);
+    // The person sees it in their own list.
+    expect(((await operator.get('/api/projects')).body as { projects: { name: string }[] }).projects.map((p) => p.name)).toContain('West house');
+
+    // Its first edit is still a changeset, not main.
+    const applied = await mcp.callTool({
+      name: 'floorspec_apply',
+      arguments: { project: 'West house', batch: [{ op: 'addElement', collection: 'buildings', id: 'B1', element: {} }] },
+    });
+    expect(applied.isError, texts(applied)).toBeFalsy();
+    expect(applied.structuredContent).toMatchObject({ changeset: { status: 'pending' } });
+
+    // A second house of the same name is refused, not silently duplicated.
+    const again = await mcp.callTool({ name: 'floorspec_create_project', arguments: { name: 'west house' } });
+    expect(again.isError).toBe(true);
+    expect(texts(again)).toContain('already called');
+  });
+
+  it('refuses to create a project with a token that reaches one project only', async () => {
+    const bearer = Browser.bearer(running.url, await tokenFor(operator, project.id, 'agent'));
+    expect((await bearer.post('/api/projects', { name: 'Sneaky house' })).status).toBe(403);
+    const reader = Browser.bearer(running.url, await tokenFor(operator, null, 'read'));
+    expect((await reader.post('/api/projects', { name: 'Read-only house' })).status).toBe(403);
+    expect(await db.project.count({ where: { name: { in: ['Sneaky house', 'Read-only house'] } } })).toBe(0);
+  });
+
   describe('signed in through D3 Auth', () => {
     it('acts for the linked account as an agent: it reads every project and proposes, never commits', async () => {
       const account = await db.account.findFirstOrThrow({ where: { email: 'operator@example.test' } });
@@ -324,6 +360,20 @@ describe('the MCP endpoint', () => {
       const bearer = Browser.bearer(running.url, 'jwt.operator-sub.claude');
       expect((await bearer.get('/api/tokens')).status).toBe(403);
       expect((await bearer.request('DELETE', `/api/projects/${project.id}`)).status).toBe(403);
+    });
+
+    it('creates a project as the agent it is, from a conversation that starts with none', async () => {
+      const account = await db.account.findFirstOrThrow({ where: { email: 'operator@example.test' } });
+      await db.identity.create({ data: { accountId: account.id, iss: ISSUER, sub: 'operator-sub' } });
+      await db.project.updateMany({ data: { deletedAt: new Date() } });
+      const mcp = await connect('Bearer jwt.operator-sub.claude');
+      const empty = await mcp.callTool({ name: 'floorspec_describe', arguments: {} });
+      expect(texts(empty)).toContain('floorspec_create_project');
+      const created = await mcp.callTool({ name: 'floorspec_create_project', arguments: { name: 'Georgia house' } });
+      expect(created.isError, texts(created)).toBeFalsy();
+      const row = await db.opLog.findFirstOrThrow({ where: { projectId: (created.structuredContent as { project: string }).project } });
+      expect(row).toMatchObject({ authorKind: 'agent', authorAgent: 'd3auth:claude', authorAccountId: account.id });
+      expect((await mcp.callTool({ name: 'floorspec_describe', arguments: {} })).isError).toBeFalsy();
     });
   });
 

@@ -5,6 +5,7 @@ import { HttpError } from '../http/errors.js';
 import { createProject, MAIN } from '../domain/projects.js';
 import { canonicalize } from '@floorspec/engine';
 import { accountOf, parse } from './auth.js';
+import { authorOf } from '../domain/history.js';
 
 const CreateBody = z.object({ name: z.string().trim().min(1, 'a project needs a name').max(200) });
 
@@ -33,14 +34,23 @@ export function projectRoutes(db: Db): Routes {
     });
   }, { token: 'read' });
 
+  /**
+   * Create a project. An agent may, as well as a person (FLR-ADR-037): "design me a house" should
+   * not send anyone to the console first. What it makes is the empty document on `main` and nothing
+   * more — every edit after that is still a changeset a person accepts (FLR-ADR-016). A token
+   * scoped to one project reaches that project only, so it cannot make another.
+   */
   routes.mutate('POST', '/', async (req, tx) => {
+    if (req.auth === undefined && req.token?.projectId !== null && req.token?.projectId !== undefined) {
+      throw new HttpError(403, 'this token reaches one project only, so it cannot create another: use an account-wide token');
+    }
     const { name } = parse(CreateBody, req.body);
-    const { project, hash } = await createProject(tx, accountOf(req), name);
+    const { project, hash } = await createProject(tx, authorOf(req), name);
     return {
-      reply: (res) => res.status(201).json({ id: project.id, name: project.name, createdAt: project.createdAt, head: hash }),
+      reply: (res) => res.status(201).json({ id: project.id, name: project.name, createdAt: project.createdAt, updatedAt: project.updatedAt, head: hash }),
       audit: { action: 'project.create', targetType: 'project', targetId: project.id, detail: { name, version: hash } },
     };
-  });
+  }, { token: 'propose' });
 
   routes.read('/:projectId', async (req, res) => {
     const project = req.project;

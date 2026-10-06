@@ -286,7 +286,7 @@ export function packageRoutes(db: Db, applier: Applier, store: AssetStore | null
         stored.set(a.sha256, a);
       }
 
-      const created = await createProject(tx, accountId, name);
+      const created = await createProject(tx, authorOf(req), name);
       const batch = documentToBatch(document, name, { from: FLOORSPEC_VERSION });
       let head = created.hash;
       let seq = 1;

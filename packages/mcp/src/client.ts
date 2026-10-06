@@ -169,6 +169,8 @@ export interface ElectricalProposal {
 
 export interface FloorspecClient {
   listProjects(): Promise<readonly ProjectSummary[]>;
+  /** A new, empty project owned by the caller's account. */
+  createProject(name: string): Promise<ProjectSummary>;
   model(projectId: string, changeset?: string): Promise<Model>;
   apply(projectId: string, input: ApplyInput): Promise<Committed>;
   propose(projectId: string, input: { name: string; batch?: readonly Op[]; locks?: readonly unknown[] }): Promise<{ changeset: ChangesetView; applied: Committed | null }>;
@@ -267,6 +269,10 @@ export class HttpFloorspecClient implements FloorspecClient {
 
   async listProjects(): Promise<readonly ProjectSummary[]> {
     return (await this.json<{ projects: ProjectSummary[] }>('GET', '/api/projects')).projects;
+  }
+
+  createProject(name: string): Promise<ProjectSummary> {
+    return this.json<ProjectSummary>('POST', '/api/projects', { name });
   }
 
   async model(projectId: string, changeset?: string): Promise<Model> {

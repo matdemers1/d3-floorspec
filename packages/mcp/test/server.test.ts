@@ -61,6 +61,10 @@ class MemoryClient implements FloorspecClient {
     this.record('listProjects');
     return Promise.resolve([PROJECT]);
   }
+  createProject(name: string) {
+    this.record('createProject', name);
+    return Promise.resolve({ id: '01a10000-0000-7000-8000-000000000002', name, head: 'b'.repeat(64) });
+  }
   model(projectId: string, changeset?: string) {
     this.record('model', projectId, changeset);
     return Promise.resolve({ hash: PROJECT.head, document: HOUSE, text: JSON.stringify(HOUSE) });
@@ -188,7 +192,7 @@ const texts = (result: { content?: unknown }) => ((result.content ?? []) as Cont
 
 describe('the MCP server', () => {
   for (const era of ['legacy', 'modern'] as const) {
-    it(`lists exactly the eleven verbs to a ${era} client`, async () => {
+    it(`lists exactly the twelve verbs to a ${era} client`, async () => {
       const mcp = await connect(new MemoryClient(), era);
       const { tools } = await mcp.listTools();
       expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
@@ -212,6 +216,18 @@ describe('the MCP server', () => {
     expect(propose.properties.batch.items.$ref).toBe('#/$defs/Op');
     expect(propose.$defs['Op']?.properties?.op.enum).toEqual([...OP_NAMES]);
     expect(JSON.stringify(propose)).not.toContain('"Length"');
+  });
+
+  it('creates a project through the API, and refuses a second of the same name', async () => {
+    const client = new MemoryClient();
+    const mcp = await connect(client);
+    const created = await mcp.callTool({ name: 'floorspec_create_project', arguments: { name: 'West house' } });
+    expect(created.isError, texts(created)).toBeFalsy();
+    expect(client.calls.find((c) => c.method === 'createProject')?.args).toEqual(['West house']);
+    expect(created.structuredContent).toMatchObject({ name: 'West house' });
+    const again = await mcp.callTool({ name: 'floorspec_create_project', arguments: { name: 'lake HOUSE' } });
+    expect(again.isError).toBe(true);
+    expect(texts(again)).toContain('already called "lake HOUSE"');
   });
 
   it('says, with every findings answer, that findings are not a plan review, and where the pack coverage is (FLR-REQ-105, 096)', async () => {
@@ -273,7 +289,8 @@ describe('the MCP server', () => {
     const size = JSON.stringify(listing).length;
     process.stderr.write(`tools/list: ${String(size)} bytes (${String(JSON.stringify(listing, null, 2).length)} pretty-printed)\n`);
     // Was ~57 KB (130 KB pretty) with the operation union inlined at every member, twice over.
-    expect(size).toBeLessThan(25_000);
+    // 25 KB → 26 KB for the twelfth verb, floorspec_create_project (~400 bytes).
+    expect(size).toBeLessThan(26_000);
   });
 
   it('advertises a schema that accepts and refuses what the tool does', async () => {
