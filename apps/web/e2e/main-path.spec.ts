@@ -90,8 +90,8 @@ test('setup to a compared undo: draw a room by hand, accept an agent’s proposa
   let doc = await modelOf(page, project);
   expect(count(doc.levels)).toBe(0);
 
-  // ── An agent token for this project, minted on the Tokens screen (Account › API tokens). The
-  //    secret is shown once.
+  // ── An agent token, minted on the Tokens screen (Account › API tokens). It reaches every
+  //    project by default (FLR-T-2.11), and the secret is shown once.
   await page.getByRole('link', { name: 'Account' }).click();
   await expect(page.getByRole('heading', { name: 'API tokens' })).toBeVisible();
   await page.getByRole('button', { name: 'Create token' }).click();
@@ -99,7 +99,10 @@ test('setup to a compared undo: draw a room by hand, accept an agent’s proposa
   await expect(shown).toBeVisible();
   const token = (await shown.locator('.fs-mono').textContent())?.trim() ?? '';
   expect(token).toMatch(/^fls_[A-Za-z0-9_-]{43}$/);
-  await expect(page.getByText('Main path house · agent · created')).toBeVisible();
+  await expect(page.getByText('All projects · agent · created')).toBeVisible();
+  // The Claude Code command now carries it.
+  await page.getByRole('tab', { name: 'Claude Code' }).click();
+  await expect(page.locator('.fs-command')).toContainText(`Bearer ${token}`);
 
   // ── The editor.
   await page.goto(`/projects/${project}`);

@@ -247,8 +247,8 @@ export async function createProjectAs(browser: Browser, name = 'Lake house'): Pr
   return res.body as { id: string; head: string };
 }
 
-/** Mint an API token through the account screen's route; returns the secret. */
-export async function tokenFor(browser: Browser, projectId: string, kind: 'read' | 'write' | 'agent', name = `${kind} token`): Promise<string> {
+/** Mint an API token through the account screen's route; returns the secret. A null project: all of them. */
+export async function tokenFor(browser: Browser, projectId: string | null, kind: 'read' | 'write' | 'agent', name = `${kind} token`): Promise<string> {
   const res = await browser.post('/api/tokens', { projectId, name, kind });
   if (res.status !== 201) throw new Error(`token failed: ${String(res.status)} ${res.text}`);
   return (res.body as { token: string }).token;

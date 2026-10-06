@@ -5,8 +5,9 @@ import { hashToken } from '../auth/sessions.js';
 import type { TokenPrincipal, TokenScopeName } from '../http/context.js';
 
 /**
- * Per-project API tokens (FLR-T-2.5). The secret is `fls_` and 32 random bytes; only its SHA-256 is
- * stored, and it is shown once, at creation. Scopes:
+ * API tokens (FLR-T-2.5). The secret is `fls_` and 32 random bytes; only its SHA-256 is stored, and
+ * it is shown once, at creation. A token reaches one project, or — with no project — every project
+ * its account owns, now and later (FLR-T-2.11), so one MCP connection serves every house. Scopes:
  *
  *   - `read`  — describe, query, validate, render, export;
  *   - `write` — commit to `main` as the person who made the token;
@@ -44,7 +45,7 @@ export interface CreatedToken {
 
 export async function createToken(
   tx: Tx,
-  input: { accountId: string; projectId: string; name: string; kind: TokenKind; expiresAt: Date | null },
+  input: { accountId: string; projectId: string | null; name: string; kind: TokenKind; expiresAt: Date | null },
 ): Promise<CreatedToken> {
   const secret = mintSecret();
   const prefix = secret.slice(0, TOKEN_PREFIX.length + 6);
@@ -79,7 +80,9 @@ export async function resolveToken(db: Db, presented: string): Promise<TokenPrin
   if (row.revokedAt !== null) return null;
   if (row.expiresAt !== null && row.expiresAt.getTime() <= Date.now()) return null;
   if (row.account.disabledAt !== null) return null;
-  if (row.project.deletedAt !== null || row.project.ownerAccountId !== row.accountId) return null;
+  // A project token dies with its project; an account-wide one reaches whatever the account owns,
+  // which the ownership guard checks on every request.
+  if (row.project !== null && (row.project.deletedAt !== null || row.project.ownerAccountId !== row.accountId)) return null;
 
   // Advisory, and never allowed to fail the request.
   void db.apiToken.update({ where: { id: row.id }, data: { lastUsedAt: new Date() } }).catch(() => undefined);

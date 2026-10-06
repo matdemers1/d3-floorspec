@@ -52,6 +52,12 @@ const Env = z.object({
    * presents at `/mcp` (FLR-T-2.6). Defaults to `/oidc/jwks` on the issuer's origin.
    */
   D3AUTH_JWKS_URI: optional(z.url()),
+  /**
+   * The D3 Auth client Claude's connector signs in as — a public client, separate from the one
+   * this app signs people in with (`deploy/floorspec-mcp.d3auth.json`). Shown on the account screen
+   * as the connector's "OAuth Client ID". Defaults to `floorspec-mcp` when D3AUTH_ISSUER is set.
+   */
+  D3AUTH_MCP_CLIENT_ID: optional(z.string().min(1)),
 
   /**
    * A one-time secret first-run setup must present. Set on any instance reachable from the internet
