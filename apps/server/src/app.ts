@@ -126,7 +126,7 @@ export function createApp({
   mount(app, '/api/projects', exportRoutes(db));
   mount(app, '/api/projects', importRoutes(db, applier));
   mount(app, '/api/projects', assetRoutes(db, assets, config.ASSET_MAX_BYTES));
-  mount(app, '/api/tokens', tokenRoutes(db));
+  mount(app, '/api/tokens', tokenRoutes(db, config));
   mount(app, '/api/maintenance', maintenanceRoutes(db, config));
   // Sharing (FLR-T-9.6): the owner's links and comments, and what a share link reaches.
   const share = { config, events, rules: rulePacks, stream: eventStream, assets, ...(shareLimits === undefined ? {} : { limits: shareLimits }) };

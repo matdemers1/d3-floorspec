@@ -30,3 +30,21 @@
 .fs-totp-qr__dark {
   fill: var(--color-fg);
 }
+
+/* Connect Claude (FLR-T-2.11): a value to paste elsewhere with its copy button, and the Claude Code
+   command, which wraps rather than scrolling off a phone. */
+.fs-copy-value {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-command {
+  margin: 0;
+  padding: var(--space-12);
+  border-radius: var(--radius-sm);
+  background: var(--color-fill-quiet);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  white-space: pre-wrap;
+}

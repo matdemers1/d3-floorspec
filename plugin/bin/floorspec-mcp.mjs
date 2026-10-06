@@ -8,7 +8,7 @@
  * the server is the MCP server, and both protocol eras (2025-11-25 and 2026-07-28) pass through.
  *
  *   FLOORSPEC_URL    the server — `https://floorspec.d3cloud.io`, or its `/mcp` URL
- *   FLOORSPEC_TOKEN  a project API token (`fls_…`) from Account › API tokens
+ *   FLOORSPEC_TOKEN  an API token (`fls_…`) from Account › API tokens
  *
  * One file and no dependencies, so the Claude Code plugin can carry it as it is. Nothing is
  * logged anywhere but stderr, and nothing leaves the machine except to FLOORSPEC_URL.
@@ -138,7 +138,7 @@ export class StdioProxy {
                 this.emit(parsed);
                 return;
             }
-            const hint = res.status === 401 ? ' — check FLOORSPEC_TOKEN: a project API token from Account › API tokens' : '';
+            const hint = res.status === 401 ? ' — check FLOORSPEC_TOKEN: an API token from Account › API tokens' : '';
             const text = `D3 Floorspec answered ${String(res.status)}${hint}`;
             this.options.log?.(text);
             const reply = errorFor(message, res.status === 401 || res.status === 403 ? -32001 : -32000, text, parsed);
@@ -159,7 +159,7 @@ export class StdioProxy {
 export async function run(input, output, env, log, fetchImpl) {
     const token = env['FLOORSPEC_TOKEN'];
     if (token === undefined || token.trim().length === 0) {
-        log('floorspec-mcp: FLOORSPEC_TOKEN is not set. Create a project API token in D3 Floorspec (Account › API tokens).');
+        log('floorspec-mcp: FLOORSPEC_TOKEN is not set. Create an API token in D3 Floorspec (Account › API tokens).');
         return 2;
     }
     const proxy = new StdioProxy({

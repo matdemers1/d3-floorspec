@@ -67,6 +67,30 @@ describe('API tokens', () => {
     expect(listed.projects.map((p) => p.id)).toEqual([project.id]);
   });
 
+  it('reaches every project the account owns without one, including projects made later (FLR-T-2.11)', async () => {
+    const created = await operator.post('/api/tokens', { name: 'Claude everywhere', kind: 'agent' });
+    expect(created.status, created.text).toBe(201);
+    const { token, id, project: reach } = created.body as { token: string; id: string; project: unknown };
+    expect(reach).toBeNull();
+    const agent = Browser.bearer(running.url, token);
+    const later = await createProjectAs(operator, 'Later');
+    for (const target of [project.id, later.id]) expect((await agent.get(`/api/projects/${target}`)).status).toBe(200);
+    expect(((await agent.get('/api/projects')).body as { projects: unknown[] }).projects).toHaveLength(2);
+
+    // Listed as reaching every project, beside what the Connect Claude section needs.
+    const listed = (await operator.get('/api/tokens')).body as { tokens: { id: string; project: unknown }[]; mcp: { url: string; connector: { clientId: string } | null } };
+    expect(listed.tokens.find((t) => t.id === id)?.project).toBeNull();
+    expect(listed.mcp.url).toBe(`${running.config.PUBLIC_URL}/mcp`);
+    expect(listed.mcp.connector === null || listed.mcp.connector.clientId.length > 0).toBe(true);
+
+    // A project the token named still bounds it, and a deleted project ends a token named for it.
+    const deleted = await createProjectAs(operator, 'Gone');
+    const narrow = Browser.bearer(running.url, await tokenFor(operator, deleted.id, 'read'));
+    expect((await operator.request('DELETE', `/api/projects/${deleted.id}`)).status).toBe(204);
+    expect((await narrow.get('/api/projects')).status).toBe(401);
+    expect((await agent.get('/api/projects')).status).toBe(200);
+  });
+
   it('never acts as a person: no tokens, no account settings, no invites', async () => {
     const write = Browser.bearer(running.url, await tokenFor(operator, project.id, 'write'));
     expect((await write.post('/api/tokens', { projectId: project.id, name: 'y', kind: 'write' })).status).toBe(403);
