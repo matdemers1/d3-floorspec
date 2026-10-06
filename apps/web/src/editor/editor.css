@@ -858,6 +858,13 @@
   font-family: var(--font-sans);
   font-weight: var(--weight-medium);
   pointer-events: none;
+  /* FLR-T-12.10: a room's name and area sit on a halo of the card surface, painted under the glyphs,
+     so they read at 4.5:1 or better whatever colour the room's floor finish tints it (Core 0.3, 18.6:
+     the finish's colour is the model's, not ours). */
+  stroke: var(--color-surface-card);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
 }
 .fs-plan2__name {
   fill: var(--color-fg);
@@ -888,6 +895,12 @@
   fill: var(--color-fg-muted);
   font-family: var(--font-mono);
   font-size: var(--text-11);
+  /* FLR-T-12.10: a halo of the canvas well the dimension strings are drawn on, so one that crosses a
+     finish-tinted floor still reads at 4.5:1; on the well itself it does not show. */
+  stroke: var(--color-bg-sunken);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
 }
 .fs-dim__overall {
   fill: var(--color-fg-faint);
