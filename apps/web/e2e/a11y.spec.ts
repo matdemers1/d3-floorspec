@@ -348,6 +348,9 @@ test('every screen and state has no axe violations, in light and in dark', async
   await page.goto(`/projects/${house}/editor`);
   await expect(page.locator('.fs-statusbar')).toContainText('Live');
   await settled(page);
+  // Back on the house, its walls listed again in the tree, as the tour left them.
+  const houseWalls = tree.getByRole('treeitem', { name: /^Walls/ });
+  if ((await houseWalls.getAttribute('aria-expanded')) === 'false') await houseWalls.click();
 
   // The command palette.
   await page.keyboard.press('ControlOrMeta+k');
