@@ -227,9 +227,12 @@ D3 Floorspec is an MCP server at `<PUBLIC_URL>/mcp`. Claude reads your projects 
 changes; with an **agent** token its edits land in a named changeset that you accept or reject on
 the project page, never straight on the plan.
 
-1. In the editor, open **Account › API tokens**, pick the project, set **Access** to **Agent —
-   proposes changesets**, and create the token. It is shown once: copy it (`fls_…`). A **Read
-   only** token reads, renders and exports; a **Write** token commits to the plan as you.
+1. In the editor, open **Account › API tokens**, leave **Projects** on **All my projects** (or pick
+   one project to fence the token to it), set **Access** to **Agent — proposes changesets**, and
+   create the token. It is shown once: copy it (`fls_…`). A **Read only** token reads, renders and
+   exports; a **Write** token commits to the plan as you. With more than one project, Claude asks
+   which house you mean, or you name it. **Account › Connect Claude › Claude Code** shows the
+   command below with your URL and the new token already filled in.
 2. Connect Claude Code — directly over HTTP:
 
    ```bash
@@ -267,6 +270,23 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' |
 
 Either answers with the tools: `floorspec_describe`, `floorspec_apply`, `floorspec_propose`,
 `floorspec_render`, `floorspec_export` and the rest.
+
+### The Claude app (claude.ai, desktop, mobile)
+
+The Claude app connects without an API token, signing in through D3 Auth. **Account › Connect
+Claude › Claude app** shows every value it asks for. Once, in D3 Auth:
+
+1. Import `deploy/floorspec-mcp.d3auth.json` as an app (change the description's URL to yours). It
+   is a **public** client: PKCE and no secret, because the connector sends `client_secret_post`,
+   which D3 Auth does not accept. Grant it to yourself.
+2. Add `<PUBLIC_URL>/mcp` to D3 Auth's `RESOURCE_SERVERS` and restart it, so it will mint tokens
+   whose audience is this server.
+
+Then in Claude: **Settings › Connectors › Add custom connector** — the name, **Remote MCP server
+URL** `<PUBLIC_URL>/mcp`, and under **Advanced settings** the **OAuth Client ID** `floorspec-mcp`
+(or `D3AUTH_MCP_CLIENT_ID`, if you registered it under another ID), with **OAuth Client Secret**
+left empty. Connect, and sign in with the D3 Auth account linked to your D3 Floorspec account. The
+connector reaches every project that account owns, as an agent: its edits arrive as changesets.
 
 ## 10. Backups
 
@@ -335,5 +355,8 @@ docker compose -f deploy/compose.yml -f deploy/compose.dev.yml down -v   # stop 
   api read it when it last started; restart the api after changing it.
 - **Signed in, then signed straight out** — `PUBLIC_URL` is https but you opened http (or the
   other way round): the cookie's `Secure` flag follows `PUBLIC_URL`.
-- **Claude Code's tools answer 401** — the token was revoked, or is for another project; a token
-  reaches exactly one project.
+- **Claude Code's tools answer 401** — the token was revoked or has expired. A token made for one
+  project answers 404 for every other; make an *All my projects* token to reach them all.
+- **The Claude app's connector signs in, then is refused** — your D3 Auth account is not linked to
+  your D3 Floorspec account (Account › Sign in with D3 Auth), or D3 Auth does not list
+  `<PUBLIC_URL>/mcp` in its `RESOURCE_SERVERS` (its sign-in page then says `invalid_target`).

@@ -260,6 +260,31 @@ describe('the MCP endpoint', () => {
     expect(result.isError).toBe(true);
   });
 
+  it('reaches every project the account owns with an account-wide token, and no one else\'s (FLR-T-2.11)', async () => {
+    const second = await createProjectAs(operator, 'Second house');
+    await operator.post(`/api/projects/${second.id}/ops`, { batch: ONE_ROOM_HOUSE });
+    const mcp = await connect(`Bearer ${await tokenFor(operator, null, 'agent', 'Claude everywhere')}`);
+
+    const ambiguous = await mcp.callTool({ name: 'floorspec_describe', arguments: {} });
+    expect(texts(ambiguous)).toContain('Name a project');
+    for (const target of [project, second]) {
+      const proposed = await mcp.callTool({
+        name: 'floorspec_propose',
+        arguments: { project: target.id, name: 'Rename the kitchen', batch: [{ op: 'setProperty', id: 'R1', path: '/name', value: 'Galley' }] },
+      });
+      expect(proposed.isError, texts(proposed)).toBeFalsy();
+      expect(await db.changeset.count({ where: { projectId: target.id, status: 'pending' } })).toBe(1);
+    }
+    // By name, too, as a person would say it.
+    expect((await mcp.callTool({ name: 'floorspec_describe', arguments: { project: 'Second house' } })).isError).toBeFalsy();
+
+    // Somebody else's house is still not there, by ID or in the list.
+    const stranger = await db.account.create({ data: { email: 'stranger@example.test', displayName: 'Stranger' } });
+    const theirs = await db.project.create({ data: { name: 'Not yours', ownerAccountId: stranger.id } });
+    expect((await mcp.callTool({ name: 'floorspec_describe', arguments: { project: theirs.id } })).isError).toBe(true);
+    expect(texts(ambiguous)).not.toContain('Not yours');
+  });
+
   describe('signed in through D3 Auth', () => {
     it('acts for the linked account as an agent: it reads every project and proposes, never commits', async () => {
       const account = await db.account.findFirstOrThrow({ where: { email: 'operator@example.test' } });

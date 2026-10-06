@@ -188,6 +188,19 @@ describe('per-account isolation', () => {
     }
   });
 
+  it("answers B's account-wide token with 404 on A's project too (FLR-T-2.11)", async () => {
+    await bob.post('/api/projects', { name: "Bob's house" });
+    const created = await bob.post('/api/tokens', { projectId: null, name: 'bob everywhere', kind: 'write' });
+    expect(created.status, created.text).toBe(201);
+    const token = Browser.bearer(running.url, (created.body as { token: string }).token);
+    expect(((await token.get('/api/projects')).body as { projects: { name: string }[] }).projects.map((p) => p.name)).toEqual(["Bob's house"]);
+    for (const route of registry(running.app).filter((r) => r.projectScoped && r.token !== null)) {
+      const call = CALLS[`${route.method} ${route.path}`];
+      const res = await token.request(route.method, fill(route.path), call?.body);
+      expect(res.status, `${route.method} ${route.path} with B's account-wide token`).toBe(404);
+    }
+  });
+
   it("does not list A's projects to B", async () => {
     const listed = (await bob.get('/api/projects')).body as { projects: unknown[] };
     expect(listed.projects).toEqual([]);

@@ -19,7 +19,7 @@ import { takeParam } from '../lib/router';
 import { TotpQr } from '../components/TotpQr';
 import { ApiTokens } from './ApiTokens';
 
-/** The signed-in account's settings: two-factor, the D3 Auth link, and API tokens. */
+/** The signed-in account's settings: two-factor, the D3 Auth link, connecting Claude, and API tokens. */
 export function Account({ session, onChanged }: { session: SignedIn; onChanged: () => void }) {
   const toast = useToast();
   const [d3authError, setD3authError] = useState<string | null>(null);
@@ -44,7 +44,7 @@ export function Account({ session, onChanged }: { session: SignedIn; onChanged: 
             <D3AuthLink session={session} onChanged={onChanged} />
           </Stack>
         </Section>
-        <ApiTokens />
+        <ApiTokens d3authLinked={session.d3auth !== null} />
       </Stack>
     </Page>
   );
