@@ -73,9 +73,11 @@ describe('a stair\'s well, as operations', () => {
     const [well] = (validated.structuredContent as { wells: ReturnType<typeof wells> }).wells;
     expect(well!.stair).toBe('ST1');
     expect(well!.level).toBe('L2');
-    // Three separators: the wall at x = 4' is the fourth side.
-    const separators = well!.batch.filter((op) => op.op === 'drawSeparator');
-    expect(separators).toHaveLength(3);
+    // The wall at x = 4' is one side; the stair arrives at the north one, left open; the other two get guards.
+    expect(well!.batch.filter((op) => op.op === 'drawSeparator')).toHaveLength(1);
+    const guards = well!.batch.filter((op) => op.op === 'drawWall');
+    expect(guards).toHaveLength(2);
+    expect(guards.every((g) => g['justification'] === 'exteriorFace' && (g['top'] as { height: number }).height === 36 * IN)).toBe(true);
     expect(well!.outline.every(([x]) => x >= 4 * FT)).toBe(true);
     expect(well!.outline.some(([x]) => x === 4 * FT)).toBe(true);
     // The Landing's anchor was in the way; it moves first.
