@@ -12,6 +12,7 @@ import { changesetView, openChangeset } from '../domain/changesets.js';
 import { changesetEvent, countChangesetOps } from '../events/publish.js';
 import { committedView, rejection } from './history.js';
 import { freeName } from './layouts.js';
+import { carry, readSource } from '../domain/carry.js';
 import { parse } from './auth.js';
 
 /** A length: an integer in base units, or the reference grammar ("12'", "3.6 m"). */
@@ -28,6 +29,12 @@ export const ElectricalBody = z.strictObject({
     .optional(),
   /** Floorspec's default receptacle spacing along a wall run, overridden. */
   spacing: Length.optional(),
+  /**
+   * A pending changeset, by ID or name, whose plan to read instead of main's: an agent's plan is in
+   * its changeset (FLR-ADR-016). The proposal then carries that changeset's operations ahead of its
+   * own, so accepting it brings the plan in too (FLR-T-12.17).
+   */
+  changeset: z.string().trim().min(1).max(120).optional(),
 });
 
 /** What the answer says of a proposal besides its changeset. */
@@ -79,17 +86,22 @@ export function assistantRoutes(db: Db, applier: Applier): Routes {
 
       await lockProject(tx, project.id);
       const main = await readHead(tx, project.id, MAIN);
-      const doc = main.document as { rooms?: Record<string, { name?: string }> };
+      const source = body.changeset === undefined ? null : await readSource(tx, project.id, body.changeset, main.hash, 'a plan');
+      const plan = source === null ? main : source.head;
+      const doc = plan.document as { rooms?: Record<string, { name?: string }> };
       // Rooms by ID, or by name ignoring case when exactly one room has it (Ops 3.3).
       const rooms = body.rooms?.map((ref) => {
         if (Object.hasOwn(doc.rooms ?? {}, ref)) return ref;
         const named = Object.entries(doc.rooms ?? {}).filter(([, r]) => r.name?.toLowerCase() === ref.toLowerCase());
-        if (named.length !== 1) throw new HttpError(400, 'the request body is not valid', { fields: [{ path: 'rooms', message: `no room is called "${ref}", or more than one is` }] });
+        if (named.length !== 1) {
+          const where = source === null ? 'on main — an agent\'s plan is in its changeset: name it as "changeset"' : `in "${source.changeset.name}"`;
+          throw new HttpError(400, 'the request body is not valid', { fields: [{ path: 'rooms', message: `no room is called "${ref}" ${where}, or more than one is` }] });
+        }
         return named[0]?.[0] as string;
       });
       let proposal: ElectricalProposal;
       try {
-        proposal = proposeElectrical(main.document as object, {
+        proposal = proposeElectrical(plan.document as object, {
           retired: await retiredFor(tx, project.id),
           ...(body.level === undefined ? {} : { level: body.level }),
           ...(rooms === undefined ? {} : { rooms }),
@@ -112,13 +124,23 @@ export function assistantRoutes(db: Db, applier: Applier): Routes {
       const name = freeName(proposal.name, new Set(pending.map((c) => c.name)));
       const { changeset } = await openChangeset(tx, project.id, name, author);
       const head = changesetHead(changeset.id);
+      if (source !== null) {
+        const refused = await carry(tx, applier, { projectId: project.id, head, changesetId: changeset.id, source, author });
+        if (refused !== null) throw rejection(refused.result, head);
+      }
       const outcome = await applyToHead(tx, applier, { projectId: project.id, head, batch: proposal.batch as unknown as Batch, author, kind: 'apply', changesetId: changeset.id });
       // The assistant reads the plan with the same engine the applier validates with: a refusal
       // here is a fault in the assistant, and nothing of this request is kept.
       if (outcome.status === 'rejected') throw rejection(outcome.result, head);
       const committed = committedView(outcome);
       return {
-        reply: (res) => res.status(201).json({ main: main.hash, changeset: changesetView(changeset, { head: committed.hash, ops: 1 }), proposal: view }),
+        reply: (res) =>
+          res.status(201).json({
+            main: main.hash,
+            changeset: changesetView(changeset, { head: committed.hash, ops: (source?.ops.length ?? 0) + 1 }),
+            proposal: view,
+            ...(source === null ? {} : { carries: { changeset: source.changeset.id, name: source.changeset.name, ops: source.ops.length } }),
+          }),
         events: [changesetEvent(changeset, 'opened', { hash: committed.hash, ops: await countChangesetOps(tx, changeset) })],
         audit: {
           action: 'assistants.electrical.propose',

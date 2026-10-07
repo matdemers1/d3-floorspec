@@ -211,7 +211,7 @@ describe('layout candidates', () => {
       expect((await operator.post(path('/ops'), { batch: [{ op: 'setProperty', id: '$project', path: '/name', value: 'Moved on' }] })).status).toBe(201);
       const stale = await agent.post(path('/layouts'), { changeset: 'Brief' });
       expect(stale.status, stale.text).toBe(409);
-      expect(stale.body).toMatchObject({ type: '/problems/brief-stale' });
+      expect(stale.body).toMatchObject({ type: '/problems/source-stale' });
       expect((await agent.post(path('/layouts'), { changeset: 'No such brief' })).status).toBe(404);
     });
   });
