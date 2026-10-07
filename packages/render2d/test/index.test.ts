@@ -628,3 +628,26 @@ describe('Core 0.4: roofs at mixed pitches', () => {
     expect(renderPlan(d, { roof: true }).match(/data-line="break"/g)).toHaveLength(1);
   });
 });
+
+describe('a stair seen from the level it rises to (FLR-T-12.12)', () => {
+  const doc = JSON.parse(readFileSync(new URL('../../engine/standard/conformance/core/0.4/stairs/058-opening/input.json', import.meta.url), 'utf8')) as Record<string, unknown>;
+
+  it('draws the steps its well shows, with a DN arrow, and names the well', () => {
+    const upper = renderPlan(doc, { level: 'L2' });
+    expect(upper).toContain('id="stairs-below"');
+    expect(upper).toMatch(/<g data-id="ST1" data-below="true"/);
+    expect(upper).toContain('data-arrow="down"');
+    expect(upper).toContain('>DN<');
+    // 058's opening starts at the fourth step (index 3): its 14 risers give 13 treads, 10 of them seen.
+    const steps = /<g id="stairs-below">([\s\S]*?)<\/g><\/g>/.exec(upper)?.[1] ?? '';
+    expect(steps.match(/data-step="tread"/g)?.length).toBe(10);
+    expect(upper).toContain('Open to below');
+    expect(upper).not.toContain('>Unanchored<');
+  });
+
+  it('leaves the level it rises from as it was', () => {
+    const lower = renderPlan(doc, { level: 'L1' });
+    expect(lower).not.toContain('stairs-below');
+    expect(lower).toContain('data-arrow="up"');
+  });
+});
