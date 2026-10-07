@@ -23,7 +23,7 @@ export interface Well {
   readonly level: string;
   /** The well's outline, counter-clockwise, in base units. */
   readonly outline: readonly Pt[];
-  /** The operations that make it: anchor moves, then one drawSeparator per edge no wall bounds. */
+  /** The operations that make it: anchor moves, then per side no wall bounds a guard wall, or a separator where the stair arrives. */
   readonly batch: readonly Op[];
   readonly notes: readonly string[];
 }
@@ -119,12 +119,25 @@ export function wells(document: object, only?: ReadonlySet<string>): Well[] {
     const corners = steps.slice(d.opening.first).flatMap((s) => s.outline.map(([x, y]): Pt => [x, y]));
     const h = hull(corners);
     if (h.length < 3) continue;
-    out.push(wellOf(doc, derived, id, st.to, h));
+    out.push(wellOf(doc, derived, id, st.to, h, [d.head[0], d.head[1]]));
   }
   return out;
 }
 
-function wellOf(doc: FloorspecDocument, derived: ReturnType<typeof deriveEvaluation>, stair: string, level: string, h: readonly Pt[]): Well {
+/** The guard round a well's open sides: 36" high, its body outside the well (FLR-T-12.11). */
+const GUARD_HEIGHT = 1170432;
+const GUARD_TYPE = 'wall-2x4-interior';
+
+/** The distance from a point to a segment. */
+function toSegment(p: Pt, a: Pt, b: Pt): number {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const l2 = dx * dx + dy * dy;
+  const u = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
+  return Math.hypot(p[0] - (a[0] + u * dx), p[1] - (a[1] + u * dy));
+}
+
+function wellOf(doc: FloorspecDocument, derived: ReturnType<typeof deriveEvaluation>, stair: string, level: string, h: readonly Pt[], head: Pt): Well {
   const walls = wallsOn(doc, derived, level);
   const notes: string[] = [];
   // Each edge as a line n·x = c, n its outward normal (the hull runs counter-clockwise: outward is right).
@@ -171,13 +184,18 @@ function wellOf(doc: FloorspecDocument, derived: ReturnType<typeof deriveEvaluat
     batch.push({ op: 'setProperty', id: rid, path: '/anchor', value: [to[0], to[1]] });
     notes.push(`${rid}${r.name === undefined ? '' : ` ("${r.name}")`} was anchored where the well goes; its anchor moves clear of it first.`);
   }
-  // outline[i] starts edge i: it is where edge i − 1 meets it.
-  outline.forEach((a, i) => {
+  // outline[i] starts edge i: it is where edge i − 1 meets it. The side the stair arrives at stays open
+  // — a separator; every other side no wall bounds gets a guard: a 36" wall drawn round the well
+  // counter-clockwise, so its left face is the well's edge and its body stands outside it
+  // (justification exteriorFace, Core 5.4) — a centred one would take half its thickness from the well.
+  const sides = outline.map((a, i) => [a, outline[(i + 1) % outline.length]!] as const);
+  const arrival = sides.reduce((best, [a, b], i) => (edges[i]!.onWall === null && (best < 0 || toSegment(head, a, b) < toSegment(head, ...sides[best]!)) ? i : best), -1);
+  sides.forEach(([a, b], i) => {
     if (edges[i]!.onWall !== null) return;
-    const b = outline[(i + 1) % outline.length]!;
-    batch.push({ op: 'drawSeparator', level, from: [a[0], a[1]], to: [b[0], b[1]] });
+    if (i === arrival) batch.push({ op: 'drawSeparator', level, from: [a[0], a[1]], to: [b[0], b[1]] });
+    else batch.push({ op: 'drawWall', level, from: [a[0], a[1]], to: [b[0], b[1]], type: GUARD_TYPE, justification: 'exteriorFace', top: { height: GUARD_HEIGHT }, name: `Guard at ${stair}'s well` });
   });
-  notes.push('The well is a face with no room in it (Core 17.6); a guard round its open sides is not drawn.');
+  notes.push(`The well is a face with no room in it (Core 17.6). Its open sides get 36" guards (${GUARD_TYPE}, from the US starter library); the side ${stair} arrives at is left open.`);
   return { stair, level, outline, batch, notes };
 }
 
