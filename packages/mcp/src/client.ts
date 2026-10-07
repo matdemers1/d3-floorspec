@@ -151,6 +151,8 @@ export interface Layouts {
 }
 
 export interface ElectricalInput {
+  /** A pending changeset's ID whose plan to read instead of main's. */
+  readonly changeset?: string;
   readonly rooms?: readonly string[];
   readonly level?: string;
 }
@@ -159,6 +161,8 @@ export interface ElectricalInput {
 export interface ElectricalProposal {
   readonly main: string;
   readonly changeset: ChangesetView | null;
+  /** The pending changeset whose plan it read, and whose operations it carries. */
+  readonly carries?: { readonly changeset: string; readonly name: string; readonly ops: number };
   readonly proposal: {
     readonly name: string;
     readonly explanation: readonly string[];

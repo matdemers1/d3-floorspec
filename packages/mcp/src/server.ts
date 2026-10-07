@@ -424,7 +424,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         'Example: {"changeset":"Widen the kitchen","batch":[{"op":"resizeRoom","room":"Kitchen","side":"east","by":"2\'"}],"render":true}. ' +
         'A write token commits to main; an agent credential writes into a pending changeset (`changeset`, or one named after the credential). ' +
         'A rejection changes nothing and returns diagnostics with fixes. ' +
-        'A US starter type a batch names (wall-2x4-interior, door-interior-swing-30x80, window-double-hung-36x60…) is embedded the first time.',
+        'A US starter type a batch names (e.g. door-interior-swing-30x80) is embedded on first use.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
@@ -485,6 +485,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           locks: z.array(Lock).max(200).optional(),
           assistant: z.enum(['electrical']).optional(),
           rooms: z.array(z.string().min(1).max(200)).max(200).optional().describe('The assistant\'s rooms; default all.'),
+          changeset: ChangesetHandle.optional().describe('Assistant: the changeset whose plan to read.'),
           render: z.boolean().optional(),
         }),
         // The union is spelled out once, on floorspec_apply; the batch is validated the same here.
@@ -497,12 +498,17 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         const project = await resolveProject(client, args.project);
         if (args.assistant === 'electrical') {
           if (args.batch !== undefined) throw new ToolError('Send either a batch or an assistant, not both.');
-          const result = await client.proposeElectrical(project.id, args.rooms === undefined ? {} : { rooms: args.rooms });
+          const source = args.changeset === undefined ? undefined : await resolveChangeset(client, project.id, args.changeset);
+          const result = await client.proposeElectrical(project.id, {
+            ...(args.rooms === undefined ? {} : { rooms: args.rooms }),
+            ...(source === undefined ? {} : { changeset: source.id }),
+          });
           const structured = { project: project.id, ...result };
           const lead =
             result.changeset === null
               ? 'Nothing proposed: main is unchanged.'
-              : `Changeset "${result.changeset.name}" (${result.changeset.id}) is pending: ${String(result.proposal.ops)} operations from the electrical assistant. Main has not changed until a person accepts it.`;
+              : `Changeset "${result.changeset.name}" (${result.changeset.id}) is pending: ${String(result.proposal.ops)} operations from the electrical assistant. Main has not changed until a person accepts it.` +
+                (result.carries === undefined ? '' : ` It carries the ${String(result.carries.ops)} op(s) of "${result.carries.name}" ahead of them: accepting it brings that plan in too.`);
           const content: CallToolResult['content'] = [text([lead, ...result.proposal.explanation.map((l) => `- ${l}`)].join('\n')), text(structured)];
           if (args.render === true && result.changeset !== null) {
             const created = [...result.proposal.added.receptacles, ...result.proposal.added.switches, ...result.proposal.added.lights];

@@ -10,6 +10,7 @@ import type { Applier, Batch } from '../ops/applier.js';
 import { MAIN } from '../domain/projects.js';
 import { applyToHead, authorOf, changesetHead, lockProject, readHead, retiredFor } from '../domain/history.js';
 import { changesetView, MAX_CHANGESET_NAME, openChangeset } from '../domain/changesets.js';
+import { carry, readSource } from '../domain/carry.js';
 import { changesetEvent, countChangesetOps } from '../events/publish.js';
 import type { ProjectEvent } from '../events/types.js';
 import { committedView, rejection } from './history.js';
@@ -63,14 +64,6 @@ async function sameCandidate(tx: Tx, projectId: string, changeset: Changeset, ma
   return ops.length === 1 && Array.isArray(ops[0]?.ops) && ops[0].ops.length === length;
 }
 
-/** A pending changeset of the project, by ID or by name, that holds a brief to lay out. */
-async function briefChangeset(tx: Tx, projectId: string, handle: string): Promise<Changeset> {
-  const byId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(handle);
-  const found = await tx.changeset.findFirst({ where: { projectId, status: 'pending', ...(byId ? { id: handle.toLowerCase() } : { name: handle }) } });
-  if (found === null) throw new HttpError(404, `no pending changeset "${handle}" holds a brief here`);
-  return found;
-}
-
 /** What the answer says of a candidate besides its changeset: the solver's report, for the candidates screen. */
 function report(c: Candidate) {
   return {
@@ -113,18 +106,9 @@ export function layoutRoutes(db: Db, applier: Applier): Routes {
       const main = await readHead(tx, project.id, MAIN);
       const retired = await retiredFor(tx, project.id);
       // The brief's head: main, or a pending changeset that started from main as it is now.
-      const source = body.changeset === undefined ? null : await briefChangeset(tx, project.id, body.changeset);
-      if (source !== null && source.baseHash !== main.hash) {
-        throw new ProblemError({
-          status: 409,
-          type: 'brief-stale',
-          title: 'the brief\'s changeset no longer starts from main',
-          detail: `Main has moved since "${source.name}" was opened, so its candidates could not be accepted as they stand. Accept or reject "${source.name}" first, or write the brief again.`,
-          changeset: source.id,
-        });
-      }
-      const brief = source === null ? main : await readHead(tx, project.id, changesetHead(source.id));
-      const carried = source === null ? [] : await tx.opLog.findMany({ where: { projectId: project.id, head: changesetHead(source.id) }, orderBy: { seq: 'asc' } });
+      const source = body.changeset === undefined ? null : await readSource(tx, project.id, body.changeset, main.hash, 'a brief');
+      const brief = source === null ? main : source.head;
+      const carried = source?.ops ?? [];
       let candidates: Candidate[];
       try {
         candidates = solve(brief.document as object, {
@@ -160,10 +144,9 @@ export function layoutRoutes(db: Db, applier: Applier): Routes {
         const { changeset } = await openChangeset(tx, project.id, name, author);
         const head = changesetHead(changeset.id);
         // The brief's own operations first, as they resolved, so its IDs are the ones the layout names.
-        for (const op of carried) {
-          const again = (op.resolved ?? op.ops) as unknown as Batch;
-          const copied = await applyToHead(tx, applier, { projectId: project.id, head, batch: again, author, kind: 'apply', changesetId: changeset.id, ...(source === null ? {} : { retiredExcept: { changesetId: source.id } }) });
-          if (copied.status === 'rejected') throw rejection(copied.result, head);
+        if (source !== null) {
+          const refused = await carry(tx, applier, { projectId: project.id, head, changesetId: changeset.id, source, author });
+          if (refused !== null) throw rejection(refused.result, head);
         }
         const outcome = await applyToHead(tx, applier, { projectId: project.id, head, batch, author, kind: 'apply', changesetId: changeset.id });
         // The solver applied every candidate with the same applier before it answered: a refusal
@@ -177,7 +160,7 @@ export function layoutRoutes(db: Db, applier: Applier): Routes {
       const program = (brief.document as { program?: { items?: object; adjacency?: unknown[] } }).program;
       const solved = {
         main: main.hash,
-        ...(source === null ? {} : { brief: { changeset: source.id, name: source.name, ops: carried.length } }),
+        ...(source === null ? {} : { brief: { changeset: source.changeset.id, name: source.changeset.name, ops: carried.length } }),
         items: Object.keys(program?.items ?? {}).length,
         adjacencies: program?.adjacency?.length ?? 0,
         footprint: footprint ?? null,

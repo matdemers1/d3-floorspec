@@ -115,4 +115,31 @@ describe('the electrical assistant', () => {
     expect(level.status).toBe(422);
     expect(level.text).toContain('There is no level L9');
   });
+
+  it('reads a plan still in an agent\'s changeset, and its proposal carries that plan (FLR-T-12.17)', async () => {
+    const house = await createProjectAs(operator, 'Agent house');
+    const agent = Browser.bearer(running.url, await tokenFor(operator, null, 'agent', 'Claude'));
+    const at = (rest: string) => `/api/projects/${house.id}${rest}`;
+    for (const batch of [KITCHEN, NAME]) expect((await agent.post(at('/ops'), { changeset: 'Plan', batch })).status).toBe(201);
+
+    // On main there is no kitchen, and the refusal says where to look.
+    const bare = await agent.post(at('/assistants/electrical'), { rooms: ['Kitchen'] });
+    expect(bare.status).toBe(400);
+    expect(bare.text).toContain('changeset');
+
+    const res = await agent.post(at('/assistants/electrical'), { rooms: ['Kitchen'], changeset: 'Plan' });
+    expect(res.status, res.text).toBe(201);
+    const body = res.body as Proposed & { carries: { name: string; ops: number } };
+    expect(body.carries).toMatchObject({ name: 'Plan', ops: 2 });
+    expect(body.proposal.added.receptacles.length).toBeGreaterThan(0);
+
+    // Accepting it brings the plan and its receptacles in together.
+    const accepted = await operator.post(at(`/changesets/${body.changeset?.id ?? ''}/accept`), {});
+    expect(accepted.status, accepted.text).toBe(200);
+    const text = (await operator.get(at('/model.json'))).text;
+    const doc = JSON.parse(text) as { rooms: Record<string, { name?: string }> };
+    expect(Object.values(doc.rooms).map((r) => r.name)).toContain('Kitchen');
+    for (const id of body.proposal.added.receptacles) expect(text).toContain(`"${id}"`);
+    expect(check(text, OFFICIAL_READER).valid).toBe(true);
+  });
 });
