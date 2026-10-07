@@ -277,8 +277,10 @@ const pct = (x: number): string => `${String(Math.round(x * 100))}%`;
 
 /** The candidates in words: each changeset, its scores, and what the solver says of it. */
 export function layoutsText(result: Layouts): string {
+  const from = result.solved.brief;
   const lines = [
-    `${String(result.candidates.length)} layout candidates from ${String(result.solved.items)} brief items and ${String(result.solved.adjacencies)} adjacencies, each a pending changeset; main has not changed until a person accepts one, and accepting one stops the others applying.`,
+    `${String(result.candidates.length)} layout candidates from ${String(result.solved.items)} brief items and ${String(result.solved.adjacencies)} adjacencies, each a pending changeset; main has not changed until a person accepts one, and accepting one stops the others applying.` +
+      (from === undefined ? '' : ` Each carries the ${String(from.ops)} op(s) of "${from.name}" (${from.changeset}) ahead of its layout: accepting one brings the brief in too, so "${from.name}" is then rejected rather than accepted.`),
   ];
   for (const c of result.candidates) {
     lines.push(
@@ -576,7 +578,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose layouts',
       description:
-        'Lay out main\'s brief (its program and adjacencies) as ranked candidate plans, each opened as a pending changeset for a person to compare and accept. Lays out on an empty level, or adds one. Read the reports, then render a changeset to look at it.',
+        'Lay out a brief (its program and adjacencies) as ranked candidate plans, each a pending changeset a person compares and accepts. The brief is main\'s, or a pending changeset\'s (`changeset`): each candidate then carries that changeset\'s ops too. One empty level at a time: lay out the next level from the chosen candidate.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
@@ -586,6 +588,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
             .optional()
             .describe('East–west width and north–south depth, e.g. "44\'"; default sized from the brief.'),
           count: z.int().min(3).max(6).optional().describe('Candidates; default 3.'),
+          changeset: ChangesetHandle.optional().describe('The pending changeset holding the brief; omitted, main.'),
         }),
       ),
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -593,7 +596,9 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
+        const source = args.changeset === undefined ? undefined : await resolveChangeset(client, project.id, args.changeset);
         const result = await client.proposeLayouts(project.id, {
+          ...(source === undefined ? {} : { changeset: source.id }),
           ...(args.level === undefined ? {} : { level: args.level }),
           ...(args.footprint === undefined ? {} : { footprint: args.footprint }),
           ...(args.count === undefined ? {} : { count: args.count }),
