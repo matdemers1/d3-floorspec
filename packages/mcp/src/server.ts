@@ -235,6 +235,28 @@ function compact(result: Committed): Record<string, unknown> {
   return { ...rest, resolvedOps: resolved.length };
 }
 
+/**
+ * The level a committed batch drew on: the one its resolved operations name most — `level`, or an
+ * added element's `level` — first among equals in batch order. Undefined when none names one (a
+ * batch of setProperty alone): the render then draws its default, the lowest level.
+ */
+export function editedLevel(resolved: readonly Op[]): string | undefined {
+  const counts = new Map<string, number>();
+  for (const op of resolved) {
+    const element = op['element'];
+    const level = typeof op['level'] === 'string' ? op['level'] : element !== null && typeof element === 'object' && typeof (element as { level?: unknown }).level === 'string' ? (element as { level: string }).level : undefined;
+    if (level !== undefined) counts.set(level, (counts.get(level) ?? 0) + 1);
+  }
+  let best: string | undefined;
+  let most = 0;
+  for (const [level, n] of counts)
+    if (n > most) {
+      best = level;
+      most = n;
+    }
+  return best;
+}
+
 function embeddedText(prepared: Prepared): string {
   return prepared.embedded.length === 0 ? '' : ` Embedded from the US starter library ${US_STARTER.version}: ${prepared.embedded.join(', ')}.`;
 }
@@ -453,10 +475,13 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         const structured = { project: project.id, ...compact(result), ...(prepared.embedded.length === 0 ? {} : { embedded: prepared.embedded }) };
         const content: CallToolResult['content'] = [text(`${landed(result)}${embeddedText(prepared)}`), text(structured)];
         if (args.render === true) {
+          const drawn = editedLevel(result.resolved);
           // What the batch created is drawn in the accent; a changeset is drawn ghosted against its base.
           content.push(
             ...(await renderContent(client, project.id, {
               highlight: result.created,
+              // The level the batch drew on, not the lowest: the render is there to look at the change.
+              ...(drawn === undefined ? {} : { level: drawn }),
               ...(result.changeset === null || result.changeset === undefined ? {} : { changeset: result.changeset.id }),
             })),
           );
@@ -532,7 +557,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           text(structured),
         ];
         if (args.render === true) {
-          content.push(...(await renderContent(client, project.id, { changeset: result.changeset.id, highlight: result.applied?.created ?? [] })));
+          const level = result.applied === null ? undefined : editedLevel(result.applied.resolved);
+          content.push(...(await renderContent(client, project.id, { changeset: result.changeset.id, highlight: result.applied?.created ?? [], ...(level === undefined ? {} : { level }) })));
         }
         return { content, structuredContent: structured };
       } catch (error) {
