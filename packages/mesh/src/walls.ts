@@ -98,8 +98,58 @@ export function cutPolygon(ring: readonly IPoint[], d: IPoint, c0: bigint, c1: b
   return clipAll(ring.map(rpoint), slab(d, c0, c1));
 }
 
+/** A flat roof with a thickness: a slab from `under` to its eave over its eave outline (Core 16.3, 16.4.1). */
+interface FlatSlab {
+  readonly outline: readonly (readonly [number, number])[];
+  readonly under: number;
+  readonly eave: number;
+}
+
+/** Each level's flat roofs that have a thickness, by level. */
+function flatSlabs(doc: FloorspecDocument, derived: Derived): Map<string, FlatSlab[]> {
+  const out = new Map<string, FlatSlab[]>();
+  for (const id of Object.keys(derived.roofs ?? {}).sort()) {
+    const r = derived.roofs![id]!;
+    const roof = get(doc.roofs, id)!;
+    const t = roof.thickness ?? 0;
+    if (r.kind !== 'flat' || r.surface === null || t <= 0) continue;
+    out.set(roof.level, [...(out.get(roof.level) ?? []), { outline: r.outline, under: r.eave - t, eave: r.eave }]);
+  }
+  return out;
+}
+
+/** True when (x, y) is inside the polygon or within a base unit of its boundary. */
+function covers(poly: readonly (readonly [number, number])[], x: number, y: number): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i]!;
+    const [xj, yj] = poly[j]!;
+    const dx = xj - xi;
+    const dy = yj - yi;
+    const len2 = dx * dx + dy * dy;
+    const u = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((x - xi) * dx + (y - yi) * dy) / len2));
+    if (Math.hypot(x - (xi + u * dx), y - (yi + u * dy)) <= 1) return true;
+    if (yi > y !== yj > y && x < (dx * (y - yi)) / dy + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * Where a wall's solid stops: at the underside of a flat roof of its level whose slab would hold its
+ * top — the wall standing wholly under the roof's eave outline — and otherwise at its own top. A flat
+ * roof is its thickness hung below its eave, and a level's walls rise to the eave by default, so
+ * without this their tops lie in the roof's surface and show through it (FLR-T-12.12). The wall's
+ * derived top is unchanged; only the solid is drawn short of the roof that covers it.
+ */
+function solidTop(slabs: readonly FlatSlab[] | undefined, plan: readonly (readonly [number, number])[], base: number, top: number): number {
+  for (const s of slabs ?? [])
+    if (top > s.under && top <= s.eave && s.under > base && plan.every(([x, y]) => covers(s.outline, x, y))) return s.under;
+  return top;
+}
+
 export function wallParts(kernel: Kernel, doc: FloorspecDocument, derived: Derived, want: (kind: RawPart['kind']) => boolean): RawPart[] {
   const out: RawPart[] = [];
+  const slabs = flatSlabs(doc, derived);
   const { Manifold } = kernel;
   const openingsOf = new Map<string, string[]>();
   for (const oid of Object.keys(derived.openings).sort()) {
@@ -116,7 +166,7 @@ export function wallParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
       const ring = ring2.map(I);
       if (ring.length < 3 || iarea2(ring) <= 0n) continue;
       const base = dw.baseElevation;
-      const top = dw.topElevation;
+      const top = solidTop(slabs.get(w.level), ring2, base, dw.topElevation);
       const S = I(get(doc.junctions, w.start)!.position);
       const E = I(get(doc.junctions, w.end)!.position);
       const d: IPoint = [E[0] - S[0], E[1] - S[1]];
@@ -214,7 +264,7 @@ export function wallParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
       });
       if (!walls.length) continue;
       const base = Math.min(...walls.map((wid) => derived.walls[wid]!.baseElevation));
-      const top = Math.max(...walls.map((wid) => derived.walls[wid]!.topElevation));
+      const top = solidTop(slabs.get(j.level), fill, base, Math.max(...walls.map((wid) => derived.walls[wid]!.topElevation)));
       const b = new MeshBuilder(kernel);
       b.prism([fill], base, top);
       out.push({ kind: 'junctionFill', id: jid, level: j.level, closed: true, exact: b });
