@@ -132,7 +132,16 @@ export interface Scene {
   /** Roofs on this level, by ID, as derived (Core 0.3, 16.5). */
   readonly roofs: ReadonlyMap<string, DerivedRoof>;
   /** Stairs rising from this level, by ID, as derived (Core 0.3 and 0.4, 17.4–17.7), with their form and a spiral's column radius. */
-  readonly stairs: ReadonlyMap<string, { readonly derived: DerivedStair; readonly form: string; readonly column: number; readonly newel: readonly Pt[] | null }>;
+  readonly stairs: ReadonlyMap<string, SceneStair>;
+  /** Stairs rising to this level from another, by ID: what is seen of them through the floor's well. */
+  readonly stairsBelow: ReadonlyMap<string, SceneStair>;
+}
+
+export interface SceneStair {
+  readonly derived: DerivedStair;
+  readonly form: string;
+  readonly column: number;
+  readonly newel: readonly Pt[] | null;
 }
 
 /** A collection as [id, element] pairs sorted by ID (absent: empty). */
@@ -287,10 +296,14 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     const d = derived.roofs?.[id];
     if (rf.level === lid && d !== undefined) roofs.set(id, d);
   }
-  const stairs = new Map<string, { derived: DerivedStair; form: string; column: number; newel: readonly Pt[] | null }>();
+  const stairs = new Map<string, SceneStair>();
+  const stairsBelow = new Map<string, SceneStair>();
   for (const [id, st] of entries(doc.stairs)) {
     const d = derived.stairs?.[id];
-    if (st.level === lid && d !== undefined) stairs.set(id, { derived: d, form: st.form?.kind ?? 'straight', column: columnRadius(st), newel: newelOutline(st) });
+    if (d === undefined) continue;
+    const seen = { derived: d, form: st.form?.kind ?? 'straight', column: columnRadius(st), newel: newelOutline(st) };
+    if (st.level === lid) stairs.set(id, seen);
+    else if (st.to === lid) stairsBelow.set(id, seen);
   }
 
   return {
@@ -309,5 +322,6 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     slabs: byId(slabs),
     roofs: byId(roofs),
     stairs: byId(stairs),
+    stairsBelow: byId(stairsBelow),
   };
 }

@@ -5,7 +5,7 @@
 export const PACKAGE_NAME = '@floorspec/render2d';
 
 export { renderPlan, renderEvaluation, labelPoint, DEFAULT_SCALE, ROOF_LINES, type RenderOptions, type EvaluationRenderOptions } from './render.js';
-export { buildScene, sceneOf, defaultLevel, DEFAULT_READER, type ReaderOptions, type Scene, type SceneWall, type SceneOpening, type SceneRoom, type SceneSeparator, type SceneFace, type SceneFallback, type SceneClearance, type Pt, type OpeningKind } from './scene.js';
+export { buildScene, sceneOf, defaultLevel, DEFAULT_READER, type ReaderOptions, type Scene, type SceneWall, type SceneOpening, type SceneRoom, type SceneSeparator, type SceneFace, type SceneFallback, type SceneClearance, type SceneStair, type Pt, type OpeningKind } from './scene.js';
 export { roofSymbol, stairSymbol, upPlacement, columnRadius, newelOutline, CUT_HEIGHT, type RoofSymbol, type StairSymbol, type NewelSource } from './symbols.js';
 export { diffScenes, type Change, type SceneDiff, type Diff } from './ghost.js';
 export { PALETTES, ACCENT, type Palette, type ThemeName } from './theme.js';

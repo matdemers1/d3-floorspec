@@ -9,7 +9,7 @@
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
 import { evaluate, type Evaluation } from '@floorspec/engine';
-import { DEFAULT_READER, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneOpening, type SceneRoom, type SceneWall } from './scene.js';
+import { DEFAULT_READER, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneOpening, type SceneRoom, type SceneStair, type SceneWall } from './scene.js';
 import { el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
 import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
@@ -523,6 +523,28 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     parts.push(el('g', { id: 'stairs' }, stairs));
   }
 
+  // ── stairs from the level below: the steps seen through the floor's well, and the DN arrow from
+  // the head. With a minHeadroom the engine says where the well starts (17.6); without, every step. ──
+  if (scene.stairsBelow.size) {
+    let below = '';
+    for (const [id, st] of scene.stairsBelow) {
+      const sym = stairSymbol(st.derived, st.form, st.column, st.newel);
+      const ink = hi.has(id) ? pal.accent : pal.muted;
+      let g = '';
+      for (const step of seenFromAbove(st))
+        g += el('path', { 'data-step': step.landing ? 'landing' : 'tread', d: ringsPath([P(step.outline)]), fill: step.landing ? pal.unanchored : 'none', stroke: ink, 'stroke-width': 1 });
+      const down = [...sym.arrow].reverse().map(f.P);
+      g += arrow(down, ink, 'down');
+      const [hx, hy] = down[0]!;
+      const [nx, ny] = down[1] ?? down[0]!;
+      const len = Math.hypot(hx - nx, hy - ny) || 1;
+      // "DN" just beyond the head, on the landing it is walked down from.
+      g += el('text', { 'data-dn': id, x: hx + ((hx - nx) / len) * 12, y: hy + ((hy - ny) / len) * 12 + 3, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 600, fill: ink }, 'DN');
+      below += el('g', { 'data-id': id, 'data-below': 'true', 'data-form': st.form }, g);
+    }
+    parts.push(el('g', { id: 'stairs-below' }, below));
+  }
+
   // ── separators ──
   let seps = '';
   for (const sp of scene.separators.values()) {
@@ -685,8 +707,10 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       labels += placeLabel(r.id, lines, r.outer, r.holes, swings, f);
     }
     scene.unanchored.forEach((u, i) => {
+      // A face with no room over a stair rising to this level is its well (Core 17.6), not a gap.
+      const well = [...scene.stairsBelow.values()].some((st) => seenFromAbove(st).some((step) => insideRings(...centroid(step.outline), [u.outer, ...u.holes])));
       const lines: LabelLine[] = [
-        { text: 'Unanchored', size: 11, mono: false, weight: 500, color: pal.faint },
+        { text: well ? 'Open to below' : 'Unanchored', size: 11, mono: false, weight: 500, color: pal.faint },
         { text: `${squareFeet(u.area)} ft²`, size: 10, mono: true, color: pal.faint },
       ];
       labels += placeLabel(`unanchored-${i + 1}`, lines, u.outer, u.holes, swings, f);
@@ -724,8 +748,24 @@ export const ROOF_LINES: Readonly<Record<'ridge' | 'hip' | 'valley' | 'break', {
   break: { width: 1.5, dash: '0.5 3.5', cap: 'round', muted: true },
 };
 
+/** The steps of a stair from the level below that its well shows: from the first the floor is open over. */
+function seenFromAbove(st: SceneStair): NonNullable<SceneStair['derived']['steps']> {
+  const steps = st.derived.steps ?? [];
+  return steps.slice(st.derived.opening?.first ?? 0);
+}
+
+const centroid = (pts: readonly Pt[]): [number, number] => {
+  let x = 0;
+  let y = 0;
+  for (const p of pts) {
+    x += p[0];
+    y += p[1];
+  }
+  return [x / Math.max(pts.length, 1), y / Math.max(pts.length, 1)];
+};
+
 /** A polyline ending in an arrowhead at its last point, in drawing coordinates. */
-function arrow(pts: readonly XY[], ink: string): string {
+function arrow(pts: readonly XY[], ink: string, way: 'up' | 'down' = 'up'): string {
   if (pts.length < 2) return '';
   const d = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${num(x)} ${num(y)}`).join('');
   const [x1, y1] = pts[pts.length - 1]!;
@@ -735,7 +775,7 @@ function arrow(pts: readonly XY[], ink: string): string {
   const ux = (x1 - x0) / len;
   const uy = (y1 - y0) / len;
   const head = `M${num(x1)} ${num(y1)}L${num(x1 - 8 * ux + 4 * uy)} ${num(y1 - 8 * uy - 4 * ux)}L${num(x1 - 8 * ux - 4 * uy)} ${num(y1 - 8 * uy + 4 * ux)}Z`;
-  return el('path', { 'data-arrow': 'up', d, stroke: ink, 'stroke-width': 1, fill: 'none' }) + el('path', { d: head, fill: ink });
+  return el('path', { 'data-arrow': way, d, stroke: ink, 'stroke-width': 1, fill: 'none' }) + el('path', { d: head, fill: ink });
 }
 
 function placeLabel(
