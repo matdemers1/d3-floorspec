@@ -226,7 +226,36 @@ function wallFacts(doc: FloorspecDocument, d: Derived, id: string): { ring: IPoi
     }
     cuts.push({ id: oid, dir, c0, c1, sill: dop.sillElevation, head: dop.headElevation, poly });
   }
-  return { ring, base: dw.baseElevation, top: dw.topElevation, cuts, dir: wallDir, arc };
+  return { ring, base: dw.baseElevation, top: underRoof(doc, d, w.level, [dw.startRight, ...(dw.right ?? []), dw.endRight, dw.endLeft, ...[...(dw.left ?? [])].reverse(), dw.startLeft], dw.baseElevation, dw.topElevation), cuts, dir: wallDir, arc };
+}
+
+/**
+ * The height a wall's or junction fill's solid rises to (FLR-T-12.12): the underside of a flat roof
+ * with a thickness, on its level, whose slab holds its top — when its whole plan is inside or on the
+ * roof's eave outline — else its own top.
+ */
+function underRoof(doc: FloorspecDocument, d: Derived, level: string, plan: readonly (readonly [number, number])[], base: number, top: number): number {
+  const on = (poly: readonly (readonly [number, number])[], x: number, y: number): boolean => {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [ax, ay] = poly[j]!;
+      const [bx, by] = poly[i]!;
+      const cross = (bx - ax) * (y - ay) - (by - ay) * (x - ax);
+      const len = Math.hypot(bx - ax, by - ay);
+      const dot = (x - ax) * (bx - ax) + (y - ay) * (by - ay);
+      if (len > 0 && Math.abs(cross) / len <= 1 && dot >= -len && dot <= len * len + len) return true;
+      if (by > y !== ay > y && x < ((ax - bx) * (y - by)) / (ay - by) + bx) inside = !inside;
+    }
+    return inside;
+  };
+  for (const [id, r] of Object.entries(d.roofs ?? {}).sort(([a], [b]) => (a < b ? -1 : 1))) {
+    const roof = own(doc.roofs, id);
+    const t = roof.thickness ?? 0;
+    if (roof.level !== level || r.kind !== 'flat' || !r.surface || t <= 0) continue;
+    const under = r.eave - t;
+    if (top > under && top <= r.eave && under > base && plan.every(([x, y]) => on(r.outline, x, y))) return under;
+  }
+  return top;
 }
 
 /** A wall's genus where it is plain to see: every cut a tunnel or a notch from below, no two touching. Else undefined. */
@@ -285,8 +314,8 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
     case 'junctionFill': {
       const ws = Object.entries(doc.walls ?? {}).filter(([, w]) => w?.start === p.id || w?.end === p.id).map(([wid]) => own(d.walls, wid));
       const base = Math.min(...ws.map((w) => w.baseElevation));
-      const top = Math.max(...ws.map((w) => w.topElevation));
       const fill = own(d.junctionFills, p.id);
+      const top = underRoof(doc, d, own(doc.junctions, p.id).level, fill, base, Math.max(...ws.map((w) => w.topElevation)));
       return { volume6: prism6(ring2(fill), top - base), box: planBox(fill, base, top), genus: 0 };
     }
     case 'floor': {
