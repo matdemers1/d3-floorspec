@@ -10,7 +10,7 @@ import {
   type OpeningSummary,
   type RoomSummary,
 } from './summary.js';
-import { inches, lengthText } from './units.js';
+import { inches, lengthText, type Length } from './units.js';
 import { ROOM_FUNCTIONS_TEXT } from '../vocabulary.js';
 
 const SIDE_TITLES = { north: 'North', east: 'East', south: 'South', west: 'West' } as const;
@@ -28,6 +28,19 @@ function neighbour(n: Neighbour, self?: string): string {
     case 'degenerate':
       return 'a degenerate face (walls closer than their thickness)';
   }
+}
+
+/** 36 inches, in base units: the least landing depth this text calls enough. */
+const LANDING = 1170432;
+
+/**
+ * The clear floor at a stair's foot or head, and a design note when it is short — less than 36" or
+ * less than the stair is wide. Advice, not a code check (code findings come from rule packs).
+ */
+function landingText(end: 'foot' | 'head', clear: Length | undefined, width: Length): string {
+  if (clear === undefined) return '';
+  const short = clear.baseUnits < Math.max(LANDING, width.baseUnits);
+  return `; ${lengthText(clear)} clear ${end === 'foot' ? 'before the foot' : 'beyond the head'}${short ? ` — short of a landing (at least 3' 0" and the stair's width): give it more floor` : ''}`;
 }
 
 function opening(o: OpeningSummary, self: string): string {
@@ -180,7 +193,9 @@ export function summaryText(s: DocumentSummary): string {
           `- ${s.id}${q(s.name)}: ${s.form} to ${s.to}, ${s.risers} risers × ${inches(s.riserHeight.baseUnits)} (${s.riserHeight.baseUnits}), tread ${inches(s.tread.baseUnits)}, ${lengthText(s.width)} wide` +
             (s.headroom ? `, headroom ${lengthText(s.headroom)}` : ', headroom not derived') +
             (s.walklineGoing ? `; tapered treads: least going ${lengthText(s.walklineGoing)} at the walkline, ${s.narrowGoing ? lengthText(s.narrowGoing) : '0'} at the narrow end` : '') +
-            (s.minHeadroom ? `; designed for ${lengthText(s.minHeadroom)} headroom${s.openFromStep !== undefined ? `, the floor above open from step ${s.openFromStep}` : ', met with no opening'}` : ''),
+            (s.minHeadroom ? `; designed for ${lengthText(s.minHeadroom)} headroom${s.openFromStep !== undefined ? `, the floor above open from step ${s.openFromStep}` : ', met with no opening'}` : '') +
+            landingText('foot', s.clearAtFoot, s.width) +
+            landingText('head', s.clearAtHead, s.width),
         );
     }
     if (l.unanchored.length) {

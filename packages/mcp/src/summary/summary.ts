@@ -10,6 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
+import { landings } from '../stairwell.js';
 import { analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
@@ -286,6 +287,9 @@ export interface StairSummary {
   /** Core 0.4 (17.6): the headroom it is designed for, and the first step (1-based) over which the floor above must be open for it. */
   readonly minHeadroom?: Length;
   readonly openFromStep?: number;
+  /** The clear floor before its foot, on its level, and beyond its head, on its `to` level, before a wall; absent where none is met. */
+  readonly clearAtFoot?: Length;
+  readonly clearAtHead?: Length;
 }
 
 /**
@@ -898,6 +902,7 @@ export function describeJson(document: string | Uint8Array | object, options: De
     ]);
   }
   const stairsOn = new Map<string, StairSummary[]>();
+  const landing = new Map((doc.stairs === undefined ? [] : landings(doc)).map((l) => [l.stair, l]));
   for (const [id, st] of entries(doc.stairs)) {
     const d = derived?.stairs?.[id];
     if (d === undefined) continue;
@@ -917,6 +922,8 @@ export function describeJson(document: string | Uint8Array | object, options: De
         ...(d.narrowGoing !== undefined && { narrowGoing: length(BigInt(d.narrowGoing)) }),
         ...(st.minHeadroom !== undefined && { minHeadroom: length(BigInt(st.minHeadroom)) }),
         ...(d.opening !== undefined && { openFromStep: d.opening.first + 1 }),
+        ...(landing.get(id)?.foot !== undefined && { clearAtFoot: length(BigInt(landing.get(id)!.foot!)) }),
+        ...(landing.get(id)?.head !== undefined && { clearAtHead: length(BigInt(landing.get(id)!.head!)) }),
       },
     ]);
   }
