@@ -89,10 +89,18 @@ describe('spiral stairs (17.7)', () => {
 });
 
 describe('the opening and the headroom it is cut for (17.6)', () => {
-  it('starts at the first step less than minHeadroom below the floor above; FS-LINT-019 when the headroom is less', () => {
-    expect(stairOf(input('058-opening')).opening).toEqual({ first: 3 });
-    expect(stairOf(input('059-headroom-less-than-declared')).opening).toEqual({ first: 2 });
+  it('starts at the first step whose next riser comes within minHeadroom of the floor above; FS-LINT-019 when the headroom is less', () => {
+    expect(stairOf(input('058-opening')).opening).toEqual({ first: 2 });
+    expect(stairOf(input('059-headroom-less-than-declared')).opening).toEqual({ first: 1 });
     expect(codes(input('059-headroom-less-than-declared'))).toContain('FS-LINT-019 ST1');
+  });
+
+  it('counts a ceiling under the floor, as the headroom does: a well cut exactly to the opening leaves no FS-LINT-019 (FLR-T-12.14)', () => {
+    expect(stairOf(input('076-well-cut-to-the-opening')).opening).toEqual({ first: 2 });
+    expect(codes(input('076-well-cut-to-the-opening'))).not.toContain('FS-LINT-019 ST1');
+    expect(codes(input('077-well-short-of-the-opening'))).toContain('FS-LINT-019 ST1');
+    // A stair always comes up through the floor it reaches: its last step needs the opening.
+    expect(stairOf(input('060-opening-at-the-head')).opening).toEqual({ first: 12 });
   });
 });
 

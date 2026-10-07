@@ -65,7 +65,7 @@ describe('stair marks on the worker’s plans, as render2d draws them', () => {
       expect(st.opening, name).not.toBeNull();
       expect(st.opening).toEqual(stairSymbol(editor.derived, editor.form, editor.column, editor.newel).opening);
     }
-    expect(levelPlan(stair04('060-no-opening-needed'), 'L1').stairs[0]!.opening).toBeNull();
+    expect(levelPlan(stair04('001-straight-stair'), 'L1').stairs[0]!.opening).toBeNull();
   });
 
   it('carries a spiral’s column', () => {
@@ -97,7 +97,7 @@ describe('the PDF sheet', () => {
   });
 
   it('leaves the marks and their legend lines off a stair that has none', async () => {
-    const pdf = await exportPdf(stair04('060-no-opening-needed'), { version: VERSION, fontDir, levels: ['L1'], viewDpi: 72 });
+    const pdf = await exportPdf(stair04('001-straight-stair'), { version: VERSION, fontDir, levels: ['L1'], viewDpi: 72 });
     const sheet = pdf.sheets[0]!;
     expect(paths(sheet).some((p) => p.fill === WINDER_TINT || p.stroke === OPENING)).toBe(false);
     expect(texts(sheet)).not.toContain('Winder (tapered tread), tinted');
@@ -135,7 +135,7 @@ describe('the DXF', () => {
   it('puts a spiral’s column on A-FLOR-HRAL, and nothing new on a plain straight stair', () => {
     const spiral = parse(exportDxf(stair04('016-spiral'), { version: VERSION, levels: ['L1'] }).bytes);
     expect(spiral.entities.filter((e) => e.layer === 'A-FLOR-HRAL').map((e) => e.type)).toEqual(['CIRCLE']);
-    const plain = parse(exportDxf(stair04('060-no-opening-needed'), { version: VERSION, levels: ['L1'] }).bytes);
+    const plain = parse(exportDxf(stair04('001-straight-stair'), { version: VERSION, levels: ['L1'] }).bytes);
     expect(plain.entities.filter((e) => ['A-FLOR-STRS-PATT', 'A-FLOR-HRAL', 'A-FLOR-OVHD'].includes(e.layer))).toEqual([]);
   });
 

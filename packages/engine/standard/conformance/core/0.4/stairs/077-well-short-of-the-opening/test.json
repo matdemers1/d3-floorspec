@@ -1,0 +1,7 @@
+{
+  "description": "The same stair with its well a step short, from x = 1750 mm: over the third tread the lanes rise to 987428.57, about 771 mm, and the 2200 mm ceiling is still over them - about 1429 mm clear, less than the 1500 mm declared, so FS-LINT-019. Its opening still starts at index 2.",
+  "covers": [
+    "FS-CORE-17.6.3",
+    "FS-CORE-17.6.4"
+  ]
+}

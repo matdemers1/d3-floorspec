@@ -32,8 +32,8 @@ group('Core 0.4: winder and spiral stairs in floorspec_describe', () => {
   it('says where the floor above must be open for the headroom a stair is designed for', () => {
     const d = input('058-opening');
     const st = describeJson(d).levels.flatMap((l) => l.stairs ?? [])[0]!;
-    expect([st.minHeadroom?.baseUnits, st.openFromStep, st.walklineGoing]).toEqual([2_304_000, 4, undefined]);
-    expect(describe(JSON.stringify(d))).toMatch(/; designed for [^\n]* headroom, the floor above open from step 4/);
+    expect([st.minHeadroom?.baseUnits, st.openFromStep, st.walklineGoing]).toEqual([2_304_000, 3, undefined]);
+    expect(describe(JSON.stringify(d))).toMatch(/; designed for [^\n]* headroom, the floor above open from step 3/);
   });
 
   it('is named in the design-partner prompt where L stairs are', () => {

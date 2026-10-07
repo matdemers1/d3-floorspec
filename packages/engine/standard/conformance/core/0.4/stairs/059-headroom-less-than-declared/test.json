@@ -1,5 +1,5 @@
 {
-  "description": "The same stair designed for 2000 mm: its headroom, 2331428.57, is less than 2560000, so the validator reports FS-LINT-019, a warning. Its opening starts at the third step, index 2, whose top, 740571.43, is above 3072000 - 2560000.",
+  "description": "The same stair designed for 2000 mm: its headroom, 2331428.57, is less than 2560000, so the validator reports FS-LINT-019, a warning - its well starts a step later than its opening. Its opening starts at the second step, index 1, whose next riser's top, 740571.43, is above 3072000 - 2560000.",
   "covers": [
     "FS-CORE-17.6.3",
     "FS-CORE-17.6.4"
