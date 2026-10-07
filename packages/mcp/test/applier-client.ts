@@ -6,7 +6,7 @@
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { canonicalize, contentHash, OFFICIAL_READER } from '@floorspec/engine';
 import { apply } from '@floorspec/ops';
-import { createFloorspecMcpHandler, FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type ProjectSummary } from '../src/index.js';
+import { createFloorspecMcpHandler, FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type ProjectSummary, type Validation } from '../src/index.js';
 
 export const PROJECT = '01a10000-0000-7000-8000-000000000001';
 
@@ -53,7 +53,7 @@ export class ApplierClient implements FloorspecClient {
   proposeElectrical(): never {
     throw new Error('not used');
   }
-  validate() {
+  validate(): Promise<Validation> {
     return Promise.resolve({ head: 'main', hash: contentHash(this.document), valid: true, diagnostics: [] });
   }
   findings() {

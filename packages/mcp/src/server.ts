@@ -3,6 +3,7 @@ import { describeEstimate, estimateEnergy, EstimateError } from '@floorspec/anal
 import { z } from 'zod';
 import { FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type Layouts, type Op, type ProjectSummary, type RenderOptions } from './client.js';
 import { embedOps, libraryText, missingLibraryTypes, namesLibraryTypes, US_STARTER } from './library.js';
+import { wells } from './stairwell.js';
 import { Batch, Lock, OP_BY_NAME_ONLY } from './ops-schema.js';
 import { hintsFor } from './hints.js';
 import { compactSchema } from './tool-schema.js';
@@ -615,12 +616,21 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
-        const result = await client.validate(project.id, await changesetId(client, project.id, args.changeset));
+        const head = await changesetId(client, project.id, args.changeset);
+        const result = await client.validate(project.id, head);
         const errors = result.diagnostics.filter((d) => d.severity === 'error').length;
         const hints = hintsFor(result.diagnostics).map((h) => ` Hint: ${h}`).join('');
-        return ok(`${result.valid ? 'Valid' : 'Not valid'}: ${String(errors)} error(s), ${String(result.diagnostics.length - errors)} other diagnostic(s).${hints}`, {
+        // FS-LINT-019: the floor above is not open where a stair needs it. Core's fix operations cannot
+        // draw a well, so the batch that does comes with the diagnostic (stairwell.ts).
+        const short = new Set(result.diagnostics.filter((d) => d.code === 'FS-LINT-019').flatMap((d) => d.elements));
+        const cut = short.size === 0 ? [] : wells((await client.model(project.id, head)).document as object, short);
+        const fixes = cut
+          .map((w) => `\nTo open the floor of ${w.level} where ${w.stair} needs it: floorspec_apply ${JSON.stringify({ ...(args.changeset === undefined ? {} : { changeset: args.changeset }), batch: w.batch })}${w.notes.length ? ` — ${w.notes.join(' ')}` : ''}`)
+          .join('');
+        return ok(`${result.valid ? 'Valid' : 'Not valid'}: ${String(errors)} error(s), ${String(result.diagnostics.length - errors)} other diagnostic(s).${hints}${fixes}`, {
           project: project.id,
           ...result,
+          ...(cut.length === 0 ? {} : { wells: cut }),
         });
       } catch (error) {
         return failure(error);
