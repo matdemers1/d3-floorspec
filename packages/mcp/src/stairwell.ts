@@ -12,8 +12,7 @@ import type { Op } from './client.js';
  * location line, where the wall already bounds the face; and moves a room's anchor out of the well
  * first, so the well is not that room.
  *
- * The well starts a step before the derived opening (see `wells`). Advice, as a diagnostic's fix is
- * (Core 10.5): the tools offer it, an agent sends it. Non-normative.
+ * Advice, as a diagnostic's fix is (Core 10.5): the tools offer it, an agent sends it. Non-normative.
  */
 
 type Pt = readonly [number, number];
@@ -115,43 +114,14 @@ export function wells(document: object, only?: ReadonlySet<string>): Well[] {
     if (d === undefined || steps === undefined || st.minHeadroom === undefined) continue;
     // Asked for none in particular: only the stairs whose headroom is short now.
     if (only === undefined && d.headroom !== undefined && d.headroom >= st.minHeadroom) continue;
-    const first = needsFrom(doc, derived, st, d);
-    if (first === undefined) continue;
-    const corners = steps.slice(first).flatMap((s) => s.outline.map(([x, y]): Pt => [x, y]));
+    // Core 17.6 derives where the opening starts as the headroom measures it (FLR-T-12.14).
+    if (d.opening === undefined) continue;
+    const corners = steps.slice(d.opening.first).flatMap((s) => s.outline.map(([x, y]): Pt => [x, y]));
     const h = hull(corners);
     if (h.length < 3) continue;
     out.push(wellOf(doc, derived, id, st.to, h));
   }
   return out;
-}
-
-type Stair = NonNullable<NonNullable<FloorspecDocument['stairs']>[string]>;
-type DerivedStair = NonNullable<ReturnType<typeof deriveEvaluation>['stairs']>[string];
-
-/**
- * The first step the floor above must be open over, measured as FS-LINT-019 measures headroom
- * (17.6): along the pitch line, which over a step rises to the next step's top, and under whichever is
- * lower of the floor above and the ceiling of the room the step stands in. Core's derived `opening`
- * counts neither — it compares each step's own top with the floor above alone — so a well cut to it
- * still reports FS-LINT-019 under a ceiling lower than that floor (filed against the standard).
- */
-function needsFrom(doc: FloorspecDocument, derived: ReturnType<typeof deriveEvaluation>, st: Stair, d: DerivedStair): number | undefined {
-  const steps = d.steps ?? [];
-  const room = d.headRoom === undefined ? undefined : doc.rooms?.[d.headRoom];
-  const thick = room?.floor?.thickness ?? doc.levels?.[st.to]?.floorThickness ?? 0;
-  const floor = d.top - thick;
-  const rooms = Object.entries(doc.rooms ?? {}).flatMap(([rid, r]) => {
-    const poly = derived.rooms[rid]?.outer.map(([x, y]): Pt => [x, y]);
-    const ceiling = derived.ceilings?.[rid]?.low;
-    return r?.level === st.level && poly !== undefined && ceiling !== undefined ? [{ poly, ceiling }] : [];
-  });
-  for (let k = 0; k < steps.length; k++) {
-    const lane = k + 1 < steps.length ? steps[k + 1]!.top : d.top;
-    const [cx, cy] = steps[k]!.outline.reduce(([x, y], p) => [x + p[0] / steps[k]!.outline.length, y + p[1] / steps[k]!.outline.length], [0, 0]);
-    const under = rooms.find((r) => inside(r.poly, cx, cy))?.ceiling ?? Infinity;
-    if (lane + st.minHeadroom! > Math.min(floor, under)) return k;
-  }
-  return undefined;
 }
 
 function wellOf(doc: FloorspecDocument, derived: ReturnType<typeof deriveEvaluation>, stair: string, level: string, h: readonly Pt[]): Well {
