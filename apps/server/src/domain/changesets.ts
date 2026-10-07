@@ -134,7 +134,9 @@ export async function acceptChangeset(
   } else {
     // Replay every batch as it was sent, in order, against main as it is now. Everything is applied
     // in memory first; nothing is written until the last batch has committed.
-    const retired = await retiredFor(tx, input.projectId, { changesetId: changeset.id });
+    // What the changeset created itself is its to create again — a layout candidate also carries the
+    // operations of the brief's changeset, whose IDs that changeset claimed first.
+    const retired = await retiredFor(tx, input.projectId, { changesetId: changeset.id, ids: ops.flatMap((op) => op.created) });
     let document: unknown = main.document;
     let before = main.hash;
     const results: { op: OpLog; result: Committed; before: string }[] = [];

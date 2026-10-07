@@ -125,6 +125,8 @@ export interface Findings {
 
 /** What `POST /layouts` takes: where to lay the brief out, and how many candidates. */
 export interface LayoutsInput {
+  /** A pending changeset's ID whose head holds the brief; absent, main. */
+  readonly changeset?: string;
   readonly level?: string;
   readonly footprint?: { readonly width: number | string; readonly depth: number | string };
   readonly count?: number;
@@ -144,7 +146,7 @@ export interface LayoutCandidate {
 }
 
 export interface Layouts {
-  readonly solved: { readonly main: string; readonly items: number; readonly adjacencies: number };
+  readonly solved: { readonly main: string; readonly items: number; readonly adjacencies: number; readonly brief?: { readonly changeset: string; readonly name: string; readonly ops: number } };
   readonly candidates: readonly LayoutCandidate[];
 }
 

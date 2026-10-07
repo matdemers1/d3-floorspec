@@ -163,6 +163,59 @@ describe('layout candidates', () => {
     expect((await read.post(path('/layouts'), {})).status).toBe(403);
   });
 
+  describe('a brief an agent wrote into a changeset (FLR-T-12.13)', () => {
+    const agentBrief = async () => {
+      const agent = Browser.bearer(running.url, await tokenFor(operator, project.id, 'agent', 'Claude'));
+      const res = await agent.post(path('/ops'), { changeset: 'Brief', batch: BRIEF });
+      expect(res.status, res.text).toBe(201);
+      return { agent, brief: (res.body as { changeset: { id: string } }).changeset.id };
+    };
+
+    it('lays it out without anyone accepting it first; each candidate carries the brief, and accepting one brings both in', async () => {
+      const before = await main();
+      const { agent, brief: id } = await agentBrief();
+      const res = await agent.post(path('/layouts'), { changeset: 'Brief', count: 3 });
+      expect(res.status, res.text).toBe(201);
+      const body = res.body as Solved & { solved: { brief: { changeset: string; name: string; ops: number } } };
+      expect(body.solved).toMatchObject({ items: 4, adjacencies: 3, brief: { changeset: id, name: 'Brief', ops: 1 } });
+      expect(await main()).toBe(before);
+      // Every candidate's scratch head holds the brief and its layout: two ops each.
+      for (const c of body.candidates) expect(await db.opLog.count({ where: { projectId: project.id, head: `cs/${c.changeset.id}` } })).toBe(2);
+
+      const [chosen] = body.candidates;
+      expect(chosen).toBeDefined();
+      const accepted = await operator.post(path(`/changesets/${chosen?.changeset.id ?? ''}/accept`), {});
+      expect(accepted.status, accepted.text).toBe(200);
+      const doc = await model();
+      expect(Object.keys((doc['program'] as { items: object }).items).sort()).toEqual(['BED', 'BTH', 'KIT', 'LIV']);
+      const rooms = Object.values(doc['rooms'] as Record<string, { brief?: string }>);
+      expect(rooms.filter((r) => r.brief !== undefined).length).toBeGreaterThanOrEqual(5);
+      expect(check(doc).diagnostics.map((d) => d.code).filter((c) => PROGRAM_LINTS.includes(c))).toEqual([]);
+    });
+
+    it('replays a candidate onto main that has moved since, its brief and all', async () => {
+      const { agent } = await agentBrief();
+      const res = await agent.post(path('/layouts'), { changeset: 'Brief', count: 3 });
+      expect(res.status, res.text).toBe(201);
+      const first = (res.body as Solved).candidates[0]?.changeset.id ?? '';
+      // Main moves on — a person renames the project — so the accept replays rather than fast-forwards.
+      expect((await operator.post(path('/ops'), { batch: [{ op: 'setProperty', id: '$project', path: '/name', value: 'Lake house, again' }] })).status).toBe(201);
+      const accepted = await operator.post(path(`/changesets/${first}/accept`), {});
+      expect(accepted.status, accepted.text).toBe(200);
+      expect(accepted.body).toMatchObject({ mode: 'replay' });
+      expect(Object.keys(((await model())['program'] as { items: object }).items)).toHaveLength(4);
+    });
+
+    it('refuses a brief whose changeset no longer starts from main, and one that is not there', async () => {
+      const { agent } = await agentBrief();
+      expect((await operator.post(path('/ops'), { batch: [{ op: 'setProperty', id: '$project', path: '/name', value: 'Moved on' }] })).status).toBe(201);
+      const stale = await agent.post(path('/layouts'), { changeset: 'Brief' });
+      expect(stale.status, stale.text).toBe(409);
+      expect(stale.body).toMatchObject({ type: '/problems/brief-stale' });
+      expect((await agent.post(path('/layouts'), { changeset: 'No such brief' })).status).toBe(404);
+    });
+  });
+
   it('says why when there is nothing to lay out, and refuses a body it does not understand', async () => {
     const res = await operator.post(path('/layouts'), {});
     expect(res.status, res.text).toBe(422);

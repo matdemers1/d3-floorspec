@@ -25,6 +25,12 @@ export const LayoutsBody = z.strictObject({
   footprint: z.strictObject({ width: Length, depth: Length }).optional(),
   /** How many candidates. The solver gives at least three whenever the brief allows. */
   count: z.int().min(3).max(6).optional(),
+  /**
+   * A pending changeset, by ID or name, whose head holds the brief — an agent writes its brief there,
+   * never on main (FLR-ADR-016). Each candidate then carries that changeset's operations ahead of its
+   * layout, so accepting one brings the brief and the plan in together. Default: main.
+   */
+  changeset: z.string().trim().min(1).max(120).optional(),
 });
 
 function baseUnits(value: number | string, field: string): number {
@@ -55,6 +61,14 @@ async function sameCandidate(tx: Tx, projectId: string, changeset: Changeset, ma
   if (changeset.baseHash !== main) return false;
   const ops = await tx.opLog.findMany({ where: { projectId, head: changesetHead(changeset.id) }, select: { ops: true } });
   return ops.length === 1 && Array.isArray(ops[0]?.ops) && ops[0].ops.length === length;
+}
+
+/** A pending changeset of the project, by ID or by name, that holds a brief to lay out. */
+async function briefChangeset(tx: Tx, projectId: string, handle: string): Promise<Changeset> {
+  const byId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(handle);
+  const found = await tx.changeset.findFirst({ where: { projectId, status: 'pending', ...(byId ? { id: handle.toLowerCase() } : { name: handle }) } });
+  if (found === null) throw new HttpError(404, `no pending changeset "${handle}" holds a brief here`);
+  return found;
 }
 
 /** What the answer says of a candidate besides its changeset: the solver's report, for the candidates screen. */
@@ -98,9 +112,22 @@ export function layoutRoutes(db: Db, applier: Applier): Routes {
       await lockProject(tx, project.id);
       const main = await readHead(tx, project.id, MAIN);
       const retired = await retiredFor(tx, project.id);
+      // The brief's head: main, or a pending changeset that started from main as it is now.
+      const source = body.changeset === undefined ? null : await briefChangeset(tx, project.id, body.changeset);
+      if (source !== null && source.baseHash !== main.hash) {
+        throw new ProblemError({
+          status: 409,
+          type: 'brief-stale',
+          title: 'the brief\'s changeset no longer starts from main',
+          detail: `Main has moved since "${source.name}" was opened, so its candidates could not be accepted as they stand. Accept or reject "${source.name}" first, or write the brief again.`,
+          changeset: source.id,
+        });
+      }
+      const brief = source === null ? main : await readHead(tx, project.id, changesetHead(source.id));
+      const carried = source === null ? [] : await tx.opLog.findMany({ where: { projectId: project.id, head: changesetHead(source.id) }, orderBy: { seq: 'asc' } });
       let candidates: Candidate[];
       try {
-        candidates = solve(main.document as object, {
+        candidates = solve(brief.document as object, {
           count: body.count ?? 3,
           retired,
           // Every candidate becomes a changeset of this project, so no two may name one ID.
@@ -122,7 +149,7 @@ export function layoutRoutes(db: Db, applier: Applier): Routes {
       for (const [i, proposal] of proposals.entries()) {
         const candidate = candidates[i] as Candidate;
         const batch = proposal.batch as unknown as Batch;
-        const existing = byName.get(proposal.name);
+        const existing = source === null ? byName.get(proposal.name) : undefined;
         if (existing !== undefined && (await sameCandidate(tx, project.id, existing, main.hash, batch.length))) {
           const head = await tx.head.findUniqueOrThrow({ where: { projectId_name: { projectId: project.id, name: changesetHead(existing.id) } } });
           out.push({ ...report(candidate), changeset: changesetView(existing, { head: head.versionHash, ops: 1 }), reused: true });
@@ -132,18 +159,25 @@ export function layoutRoutes(db: Db, applier: Applier): Routes {
         taken.add(name);
         const { changeset } = await openChangeset(tx, project.id, name, author);
         const head = changesetHead(changeset.id);
+        // The brief's own operations first, as they resolved, so its IDs are the ones the layout names.
+        for (const op of carried) {
+          const again = (op.resolved ?? op.ops) as unknown as Batch;
+          const copied = await applyToHead(tx, applier, { projectId: project.id, head, batch: again, author, kind: 'apply', changesetId: changeset.id, ...(source === null ? {} : { retiredExcept: { changesetId: source.id } }) });
+          if (copied.status === 'rejected') throw rejection(copied.result, head);
+        }
         const outcome = await applyToHead(tx, applier, { projectId: project.id, head, batch, author, kind: 'apply', changesetId: changeset.id });
         // The solver applied every candidate with the same applier before it answered: a refusal
         // here is a fault, and nothing of this request is kept.
         if (outcome.status === 'rejected') throw rejection(outcome.result, head);
         const view = committedView(outcome);
         events.push(changesetEvent(changeset, 'opened', { hash: view.hash, ops: await countChangesetOps(tx, changeset) }));
-        out.push({ ...report(candidate), changeset: changesetView(changeset, { head: view.hash, ops: 1 }), reused: false });
+        out.push({ ...report(candidate), changeset: changesetView(changeset, { head: view.hash, ops: carried.length + 1 }), reused: false });
       }
 
-      const program = (main.document as { program?: { items?: object; adjacency?: unknown[] } }).program;
+      const program = (brief.document as { program?: { items?: object; adjacency?: unknown[] } }).program;
       const solved = {
         main: main.hash,
+        ...(source === null ? {} : { brief: { changeset: source.id, name: source.name, ops: carried.length } }),
         items: Object.keys(program?.items ?? {}).length,
         adjacencies: program?.adjacency?.length ?? 0,
         footprint: footprint ?? null,
