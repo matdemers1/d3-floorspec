@@ -1,0 +1,7 @@
+{
+  "description": "The straight stair under L1 ceilings of 2200 mm - lower than L2's floor, which has no thickness, at 2700 mm - designed for 1500 mm of headroom. A step needs the opening when the riser after it tops out above 2200 - 1500 mm, 896000: the second tread's next riser does at 740571.43 and is clear, the third's at 987428.57 is not - the opening starts at the third step, index 2, from x = 1500 mm. The well is cut exactly there, so its headroom is at least what it declares and there is no FS-LINT-019: the ceiling under the floor counts, as the headroom does.",
+  "covers": [
+    "FS-CORE-17.6.3",
+    "FS-CORE-17.6.4"
+  ]
+}

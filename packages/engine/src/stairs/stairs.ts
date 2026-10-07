@@ -888,13 +888,40 @@ function taperedLanes(tp: Tapered, r: Resolved): [IPoint, IPoint, Q, Q][] {
   return out;
 }
 
-/** 17.6: the index of the first step whose top is less than minHeadroom below the floor at the head, or undefined. */
-function openingFrom(ctx: StairContext, st: Stair, r: Resolved, tops: readonly Q[]): number | undefined {
+/** A step as 17.6 reads it for its opening: the top of the riser after it, and its outline. */
+interface OpeningStep {
+  readonly next: Q;
+  readonly outline: readonly IPoint[];
+}
+
+/**
+ * 17.6: the index of the first step that needs the opening, or undefined — the first whose next
+ * riser's top is less than minHeadroom below the lower of the bottom of the floor at the head and
+ * the ceiling, at each corner of its outline, of each room of the stair's level that holds the corner.
+ */
+function openingFrom(ctx: StairContext, st: Stair, r: Resolved, steps: readonly OpeningStep[]): number | undefined {
   if (st.minHeadroom === undefined) return undefined;
-  const thick = r.headRoom !== undefined ? floorThickness(ctx.doc, get(ctx.doc.rooms, r.headRoom)!) : BigInt(get(ctx.doc.levels, st.to)!.floorThickness ?? 0);
-  const limit = r.top - thick - BigInt(st.minHeadroom);
-  const i = tops.findIndex((z) => z.cmp(limit) > 0);
-  return i < 0 ? undefined : i;
+  const doc = ctx.doc;
+  const thick = r.headRoom !== undefined ? floorThickness(doc, get(doc.rooms, r.headRoom)!) : BigInt(get(doc.levels, st.to)!.floorThickness ?? 0);
+  const floor = Surd.of(r.top - thick);
+  const rooms = [...ctx.polygons(st.level).rooms];
+  const need = Surd.of(BigInt(st.minHeadroom));
+  for (let i = 0; i < steps.length; i++) {
+    let low = floor;
+    for (const v of steps[i]!.outline) {
+      const p = qpoint(v);
+      for (const [rid, poly] of rooms) {
+        if (!closedContains(poly, p)) continue;
+        const room = get(doc.rooms, rid)!;
+        const c = ceilingOf(room);
+        const base = ceilingBase(doc, room);
+        const z = c.kind === 'vaulted' ? vaultAtQ(base, c, p) : Surd.of(base);
+        if (z.cmp(low) < 0) low = z;
+      }
+    }
+    if (low.sub(steps[i]!.next.toSurd()).cmp(need) < 0) return i;
+  }
+  return undefined;
 }
 
 // ── derived values (17.4–17.6) ──────────────────────────────────────────────────
@@ -967,7 +994,7 @@ export function deriveStair(ctx: StairContext, st: Stair, core04 = true): Derive
     return core04 ? deriveTapered(ctx, st, r, fr, v) : v;
   }
   const steps: NonNullable<DerivedStair['steps']> = [];
-  const tops: Q[] = [];
+  const opening: OpeningStep[] = [];
   const pts: IPoint[] = [];
   const ringOf = (rect: Rect): IPoint[] => startAtLeast(rect.corners().map((c) => rpt(fr, c)));
   for (const piece of lay.pieces) {
@@ -975,13 +1002,13 @@ export function deriveStair(ctx: StairContext, st: Stair, core04 = true): Derive
       for (const [rect, index] of piece.flight.treads()) {
         const ring = ringOf(rect);
         steps.push({ outline: ring.map(p2), top: num(riserZ(r, index).round()) });
-        tops.push(riserZ(r, index));
+        opening.push({ next: riserZ(r, index + 1), outline: ring });
         pts.push(...ring);
       }
     } else {
       const ring = ringOf(piece.rect);
       steps.push({ outline: ring.map(p2), top: num(riserZ(r, piece.index).round()), landing: true });
-      tops.push(riserZ(r, piece.index));
+      opening.push({ next: riserZ(r, piece.index + 1), outline: ring });
       pts.push(...ring);
     }
   }
@@ -998,7 +1025,7 @@ export function deriveStair(ctx: StairContext, st: Stair, core04 = true): Derive
   v.walkline = { points: lay.walk.map((p) => p2(rpt(fr, p))), length: num(length.n / length.d) };
   const h = headroomOf(ctx, st, lay, fr, r);
   if (h !== undefined) v.headroom = num(h.round());
-  const first = openingFrom(ctx, st, r, tops);
+  const first = openingFrom(ctx, st, r, opening);
   if (first !== undefined) v.opening = { first };
   return v;
 }
@@ -1007,19 +1034,21 @@ export function deriveStair(ctx: StairContext, st: Stair, core04 = true): Derive
 function deriveTapered(ctx: StairContext, st: Stair, r: Resolved, fr: StairFrame, v: DerivedStair): DerivedStair {
   const tp = tapered(st, r.n);
   const steps: NonNullable<DerivedStair['steps']> = [];
-  const tops: Q[] = [];
+  const opening: OpeningStep[] = [];
   const walks: Surd[] = [];
   const narrows: Surd[] = [];
   const pushTapered = (tr: TaperedTread, winder: boolean): void => {
-    steps.push({ outline: ringOfPoints(tr.outline).map(p2), top: num(riserZ(r, tr.index).round()), ...(winder && { winder: true as const }) });
-    tops.push(riserZ(r, tr.index));
+    const ring = ringOfPoints(tr.outline);
+    steps.push({ outline: ring.map(p2), top: num(riserZ(r, tr.index).round()), ...(winder && { winder: true as const }) });
+    opening.push({ next: riserZ(r, tr.index + 1), outline: ring });
     walks.push(tr.walk);
     narrows.push(tr.narrow);
   };
   const flightSteps = (fl: Flight): void => {
     for (const [rect, index] of fl.treads()) {
-      steps.push({ outline: startAtLeast(rect.corners().map((c) => rpt(fr, c))).map(p2), top: num(riserZ(r, index).round()) });
-      tops.push(riserZ(r, index));
+      const ring = startAtLeast(rect.corners().map((c) => rpt(fr, c)));
+      steps.push({ outline: ring.map(p2), top: num(riserZ(r, index).round()) });
+      opening.push({ next: riserZ(r, index + 1), outline: ring });
     }
   };
   if (tp.flights.length) {
@@ -1039,7 +1068,7 @@ function deriveTapered(ctx: StairContext, st: Stair, r: Resolved, fr: StairFrame
   const lay: Layout = { pieces: tp.flights.map((flight) => ({ kind: 'flight', flight })), head: [Q.ZERO, Q.ZERO], rects: [], walk: [] };
   const h = headroomOf(ctx, st, lay, fr, r, taperedLanes(tp, r));
   if (h !== undefined) v.headroom = num(h.round());
-  const first = openingFrom(ctx, st, r, tops);
+  const first = openingFrom(ctx, st, r, opening);
   if (first !== undefined) v.opening = { first };
   return v;
 }

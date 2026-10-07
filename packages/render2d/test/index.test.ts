@@ -495,7 +495,7 @@ describe('FLR-T-12.9: stair and roof symbols, each drawn its own way', () => {
     expect(Math.hypot(sym.opening![1][0] - sym.opening![0][0], sym.opening![1][1] - sym.opening![0][1])).toBe(1152000);
     const svg = renderPlan(d, { level: 'L1' });
     expect(attr(svg, 'data-opening="ST1"', 'stroke')).toBe(PALETTES.light.opening);
-    expect(renderPlan(stair04('060-no-opening-needed'), { level: 'L1' })).not.toContain('data-opening');
+    expect(renderPlan(stair04('001-straight-stair'), { level: 'L1' })).not.toContain('data-opening');
     expect(renderPlan(stair04('061-winder-opening'), { level: 'L1' })).toContain('data-opening="ST1"');
   });
 
@@ -638,9 +638,9 @@ describe('a stair seen from the level it rises to (FLR-T-12.12)', () => {
     expect(upper).toMatch(/<g data-id="ST1" data-below="true"/);
     expect(upper).toContain('data-arrow="down"');
     expect(upper).toContain('>DN<');
-    // 058's opening starts at the fourth step (index 3): its 14 risers give 13 treads, 10 of them seen.
+    // 058's opening starts at the third step (index 2): its 14 risers give 13 treads, 11 of them seen.
     const steps = /<g id="stairs-below">([\s\S]*?)<\/g><\/g>/.exec(upper)?.[1] ?? '';
-    expect(steps.match(/data-step="tread"/g)?.length).toBe(10);
+    expect(steps.match(/data-step="tread"/g)?.length).toBe(11);
     expect(upper).toContain('Open to below');
     expect(upper).not.toContain('>Unanchored<');
   });
