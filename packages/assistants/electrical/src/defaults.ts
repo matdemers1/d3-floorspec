@@ -30,6 +30,11 @@ export interface ElectricalDefaults {
   afciFunctions: readonly string[];
   /** A switch's height above the wall's base, to its centre. */
   switchHeight: number;
+  /** A panel the assistant places when the plan has none (FLR-T-12.18): its centre's height, rating, spaces, and the least clear run it goes on. */
+  panelHeight: number;
+  panelRating: number;
+  panelSpaces: number;
+  panelMinRun: number;
   /** From the entry's edge to the switch's centre, beside it. */
   switchFromOpening: number;
   /** Rooms of these functions get no ceiling light. */
@@ -68,6 +73,10 @@ export const DEFAULTS: ElectricalDefaults = Object.freeze({
   gfciFunctions: Object.freeze(['kitchen', 'bath', 'laundry', 'garage', 'utility', 'exterior']),
   afciFunctions: Object.freeze(['sleeping', 'living', 'dining', 'office', 'circulation', 'kitchen', 'laundry']),
   switchHeight: 48 * IN,
+  panelHeight: 60 * IN,
+  panelRating: 200,
+  panelSpaces: 40,
+  panelMinRun: 32 * IN,
   switchFromOpening: 6 * IN,
   noLightFunctions: Object.freeze(['exterior']),
   noReceptacleFunctions: Object.freeze(['storage', 'circulation']),
@@ -86,7 +95,7 @@ export const DEFAULTS: ElectricalDefaults = Object.freeze({
 /** The defaults with a caller's overrides; every override is checked, so a bad one fails loudly. */
 export function withDefaults(overrides: Partial<ElectricalDefaults> = {}): ElectricalDefaults {
   const out = { ...DEFAULTS, ...overrides };
-  const positive = ['receptacleSpacing', 'minRun', 'receptacleHeight', 'switchHeight', 'receptacleBreaker', 'lightingBreaker', 'volts', 'maxDevicesPerCircuit', 'grid'] as const;
+  const positive = ['receptacleSpacing', 'minRun', 'receptacleHeight', 'switchHeight', 'panelHeight', 'panelRating', 'panelSpaces', 'panelMinRun', 'receptacleBreaker', 'lightingBreaker', 'volts', 'maxDevicesPerCircuit', 'grid'] as const;
   for (const k of positive) if (!Number.isSafeInteger(out[k]) || out[k] <= 0) throw new RangeError(`${k} must be a whole number greater than zero`);
   for (const k of ['endClearance', 'switchFromOpening', 'receptacleWatts', 'lightWatts', 'kitchenCircuits'] as const)
     if (!Number.isSafeInteger(out[k]) || out[k] < 0) throw new RangeError(`${k} must be a whole number, zero or more`);

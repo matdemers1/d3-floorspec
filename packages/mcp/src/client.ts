@@ -166,7 +166,7 @@ export interface ElectricalProposal {
   readonly proposal: {
     readonly name: string;
     readonly explanation: readonly string[];
-    readonly added: { readonly receptacles: readonly string[]; readonly switches: readonly string[]; readonly lights: readonly string[] };
+    readonly added: { readonly receptacles: readonly string[]; readonly switches: readonly string[]; readonly lights: readonly string[]; readonly panels?: readonly string[] };
     readonly circuits: readonly { readonly id: string; readonly name: string; readonly loads: readonly string[] }[];
     readonly notes: readonly string[];
     readonly ops: number;

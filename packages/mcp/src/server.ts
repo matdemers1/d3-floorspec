@@ -536,7 +536,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
                 (result.carries === undefined ? '' : ` It carries the ${String(result.carries.ops)} op(s) of "${result.carries.name}" ahead of them: accepting it brings that plan in too.`);
           const content: CallToolResult['content'] = [text([lead, ...result.proposal.explanation.map((l) => `- ${l}`)].join('\n')), text(structured)];
           if (args.render === true && result.changeset !== null) {
-            const created = [...result.proposal.added.receptacles, ...result.proposal.added.switches, ...result.proposal.added.lights];
+            const created = [...(result.proposal.added.panels ?? []), ...result.proposal.added.receptacles, ...result.proposal.added.switches, ...result.proposal.added.lights];
             content.push(...(await renderContent(client, project.id, { changeset: result.changeset.id, highlight: created })));
           }
           return { content, structuredContent: structured };
