@@ -63,7 +63,9 @@ describe('the electrical assistant', () => {
     expect(body.changeset).toMatchObject({ status: 'pending', name: 'Electrical layout: Kitchen' });
     expect(body.proposal.added.receptacles.length).toBeGreaterThan(3);
     expect(body.proposal.added.lights).toHaveLength(1);
-    expect(body.proposal.notes).toContain('There is no panel, so no circuits are proposed: place one and ask again.');
+    // No panel in the plan: it places one (FLR-T-12.18) and says to move it to where the service enters.
+    expect(body.proposal.notes.some((n) => n.startsWith('There was no panel, so it places a 200 A, 40-space panel'))).toBe(true);
+    expect(body.proposal.circuits.length).toBeGreaterThan(0);
     expect(body.proposal.explanation.join(' ')).toContain('These are layout defaults, not a code check');
     expect(body.proposal.explanation.join(' ')).not.toMatch(/complian/i);
     expect(await main()).toBe(before);

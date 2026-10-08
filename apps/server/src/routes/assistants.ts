@@ -25,7 +25,7 @@ export const ElectricalBody = z.strictObject({
   rooms: z.array(z.string().trim().min(1).max(200)).min(1).max(200).optional(),
   /** Which parts to propose; all by default. */
   include: z
-    .strictObject({ receptacles: z.boolean().optional(), switches: z.boolean().optional(), lights: z.boolean().optional(), circuits: z.boolean().optional() })
+    .strictObject({ receptacles: z.boolean().optional(), switches: z.boolean().optional(), lights: z.boolean().optional(), circuits: z.boolean().optional(), panel: z.boolean().optional() })
     .optional(),
   /** Floorspec's default receptacle spacing along a wall run, overridden. */
   spacing: Length.optional(),

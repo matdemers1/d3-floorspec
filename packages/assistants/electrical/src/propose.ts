@@ -27,8 +27,11 @@ export interface ElectricalOptions {
   defaults?: Partial<ElectricalDefaults>;
   /** IDs once used in the plan's history, never minted again (Ops 1.5). */
   retired?: readonly string[];
-  /** Which parts to propose; all of them by default. */
-  include?: { [K in 'receptacles' | 'switches' | 'lights' | 'circuits']?: boolean | undefined };
+  /**
+   * Which parts to propose; all of them by default. `panel`: when the plan has none and circuits are
+   * proposed, place one (FLR-T-12.18) rather than leave the loads unfed.
+   */
+  include?: { [K in 'receptacles' | 'switches' | 'lights' | 'circuits' | 'panel']?: boolean | undefined };
 }
 
 /** A stretch of wall run longer than the spacing allows, before the proposal. */
@@ -62,7 +65,7 @@ export interface ElectricalProposal {
   name: string;
   /** What it proposes and why, in sentences a person reads before accepting. */
   explanation: string[];
-  added: { receptacles: string[]; switches: string[]; lights: string[] };
+  added: { receptacles: string[]; switches: string[]; lights: string[]; panels: string[] };
   circuits: ProposedCircuit[];
   /** Receptacles already in the plan that it gives GFCI at the device. */
   upgraded: string[];
@@ -154,6 +157,7 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
     switches: options.include?.switches ?? true,
     lights: options.include?.lights ?? true,
     circuits: options.include?.circuits ?? true,
+    panel: options.include?.panel ?? true,
   };
   const plan = readPlan(document, { level: options.level, rooms: options.rooms, grid: d.grid });
   const doc = plan.document;
@@ -176,7 +180,7 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
   const batch: Operation[] = [];
   const placements: Operation[] = [];
   const edits: Operation[] = [];
-  const added = { receptacles: [] as string[], switches: [] as string[], lights: [] as string[] };
+  const added = { receptacles: [] as string[], switches: [] as string[], lights: [] as string[], panels: [] as string[] };
   const upgraded: string[] = [];
   const notes: string[] = [];
   const gaps: Gap[] = [];
@@ -276,7 +280,7 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
     const fed = new Set(Object.values(existingCircuits).flatMap((c) => (Array.isArray(c['loads']) ? (c['loads'] as string[]) : [])));
     const panels = Object.entries(collections['panels'] ?? {}).sort(([a], [b]) => cmp(a, b));
     const onLevel = panels.filter(([, p]) => options.level === undefined || (p['fallback'] as Json | undefined)?.['level'] === options.level);
-    const panel = (onLevel[0] ?? panels[0]);
+    let panel: [string, Json] | undefined = onLevel[0] ?? panels[0];
     // A load is on a circuit of its own voltage (FS_electrical 3.2.4): a 240 V receptacle is left for you.
     const at = (collection: string, id: string) => {
       const v = collections[collection]?.[id]?.['volts'];
@@ -284,8 +288,33 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
     };
     const receptacles = [...receptacleRoom.entries()].filter(([id]) => !fed.has(id) && at('receptacles', id) === d.volts);
     const lighting = [...lightRoom.entries()].filter(([id]) => !fed.has(id) && at('lights', id) === d.volts);
+    if (panel === undefined && include.panel && receptacles.length + lighting.length > 0) {
+      const spot = panelAt(plan.rooms, doc, d);
+      if (spot !== null) {
+        const id = mint('X');
+        const element: Json = { fallback: { box: structuredClone(PANEL_BOX) }, volts: [d.volts, 2 * d.volts], rating: d.panelRating, spaces: d.panelSpaces };
+        added.panels.push(id);
+        placements.push({
+          op: 'placeElement',
+          extension: 'FS_electrical',
+          collection: 'panels',
+          id,
+          host: { mode: 'wallFace', wall: spot.wall, side: spot.side, at: spot.offset, height: d.panelHeight },
+          element,
+        } as unknown as Operation);
+        notes.push(
+          `There was no panel, so it places a ${String(d.panelRating)} A, ${String(d.panelSpaces)}-space panel (${id}) in ${spot.room}, on wall ${spot.wall}: move it to where the service enters.`,
+        );
+        panel = [id, element];
+      }
+    }
     if (panel === undefined) {
-      if (receptacles.length + lighting.length > 0) notes.push('There is no panel, so no circuits are proposed: place one and ask again.');
+      if (receptacles.length + lighting.length > 0)
+        notes.push(
+          include.panel
+            ? 'There is no panel and no wall in these rooms to put one on, so no circuits are proposed: place one and ask again.'
+            : 'There is no panel, so no circuits are proposed: place one and ask again.',
+        );
     } else if (!(Array.isArray(panel[1]['volts']) && (panel[1]['volts'] as number[]).includes(d.volts))) {
       notes.push(`Panel ${panel[0]} does not supply ${String(d.volts)} V, so no circuits are proposed on it.`);
     } else {
@@ -388,6 +417,7 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
           added.receptacles.length > 0 && `${String(added.receptacles.length)} receptacle${added.receptacles.length === 1 ? '' : 's'}`,
           added.switches.length > 0 && `${String(added.switches.length)} switch${added.switches.length === 1 ? '' : 'es'}`,
           added.lights.length > 0 && `${String(added.lights.length)} light${added.lights.length === 1 ? '' : 's'}`,
+          added.panels.length > 0 && 'a panel',
           circuits.length > 0 && `${String(circuits.length)} circuit${circuits.length === 1 ? '' : 's'}`,
           upgraded.length > 0 && `GFCI on ${String(upgraded.length)} existing receptacle${upgraded.length === 1 ? '' : 's'}`,
         ]
@@ -407,7 +437,8 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
   ];
   return {
     batch,
-    name: `Electrical layout: ${list(roomNames)}`.slice(0, 120),
+    // A changeset's name is at most 120 characters: past that, the rooms are counted, not listed.
+    name: `Electrical layout: ${list(roomNames)}`.length <= 120 ? `Electrical layout: ${list(roomNames)}` : `Electrical layout: ${String(roomNames.length)} rooms`,
     explanation,
     added,
     circuits,
@@ -420,6 +451,31 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
 }
 
 /** Where a room's switch goes: beside its first entry, on the latch side — else the hinge side — within one of the room's runs. */
+/** A panel's box: 16" wide, 4" deep, 32" tall about its host point. */
+const PANEL_BOX = { min: [0, -260_096, -520_192], max: [130_048, 260_096, 520_192] };
+/** Where a panel goes first: the rooms a service usually enters, best first. */
+const PANEL_ROOMS = ['garage', 'utility', 'mechanical', 'laundry', 'storage', 'circulation'];
+
+/**
+ * Where to place a panel when the plan has none (FLR-T-12.18): the middle of the longest clear run,
+ * at least 32" long, of the first room by PANEL_ROOMS (then any room), on the lowest level, by ID.
+ * Advice like the rest: the note says to move it to where the service enters.
+ */
+export function panelAt(rooms: readonly RoomPlan[], doc: FloorspecDocument, d: ElectricalDefaults): { room: string; wall: string; side: 'left' | 'right'; offset: number } | null {
+  const elevation = (level: string): number => (doc.levels as Record<string, { elevation?: number }> | undefined)?.[level]?.elevation ?? 0;
+  const rank = (fn: string): number => {
+    const i = PANEL_ROOMS.indexOf(fn);
+    return i < 0 ? PANEL_ROOMS.length : i;
+  };
+  const candidates = rooms
+    .map((room) => ({ room, run: [...room.runs].filter((r) => r.to - r.from >= d.panelMinRun).sort((a, b) => b.to - b.from - (a.to - a.from) || cmp(a.wall, b.wall))[0] }))
+    .filter((c): c is { room: RoomPlan; run: WallRun } => c.run !== undefined)
+    .sort((a, b) => rank(a.room.function) - rank(b.room.function) || elevation(a.room.level) - elevation(b.room.level) || cmp(a.room.id, b.room.id));
+  const best = candidates[0];
+  if (best === undefined) return null;
+  return { room: best.room.name, wall: best.run.wall, side: best.run.side, offset: Math.round((best.run.from + best.run.to) / 2) };
+}
+
 export function switchAt(room: RoomPlan, d: ElectricalDefaults): { wall: string; side: 'left' | 'right'; offset: number } | null {
   for (const entry of room.entries) {
     // A door's latch is the jamb away from its hinge; a cased opening has none, and its end jamb is tried first.

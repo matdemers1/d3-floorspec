@@ -68,9 +68,29 @@ describe('proposing for a house with no electrical yet', () => {
     expect(bed?.['host']).toMatchObject({ mode: 'wallFace', wall: 'WI1', offset: 3121152 - 6 * IN, height: 48 * IN });
   });
 
-  it('proposes no circuits without a panel, and says so', () => {
-    expect(p.circuits).toEqual([]);
-    expect(p.notes).toContain('There is no panel, so no circuits are proposed: place one and ask again.');
+  it('places a panel when the plan has none, says where to move it, and feeds every load from it (FLR-T-12.18)', () => {
+    expect(p.added.panels).toHaveLength(1);
+    const [panel] = p.added.panels;
+    expect(p.notes.some((n) => n.startsWith(`There was no panel, so it places a 200 A, 40-space panel (${String(panel)})`) && n.endsWith('move it to where the service enters.'))).toBe(true);
+    expect(p.circuits.length).toBeGreaterThan(0);
+    expect(p.circuits.every((c) => c.panel === panel)).toBe(true);
+    const fed = new Set(p.circuits.flatMap((c) => c.loads));
+    for (const id of [...p.added.receptacles, ...p.added.lights]) expect(fed.has(id)).toBe(true);
+  });
+
+  it('names a proposal by its room count when listing them would pass 120 characters', () => {
+    const long = JSON.parse(HOUSE) as { rooms: Record<string, { name?: string }> };
+    for (const [id, room] of Object.entries(long.rooms)) room.name = `${id} — a room with a name long enough to fill a changeset title`;
+    expect(proposeElectrical(long).name).toBe(`Electrical layout: ${String(Object.keys(long.rooms).length)} rooms`);
+    expect(p.name.length).toBeLessThanOrEqual(120);
+    expect(p.name).toMatch(/^Electrical layout: /);
+  });
+
+  it('leaves the loads unfed, and says so, when told not to place a panel', () => {
+    const bare = proposeElectrical(HOUSE, { include: { panel: false } });
+    expect(bare.circuits).toEqual([]);
+    expect(bare.added.panels).toEqual([]);
+    expect(bare.notes).toContain('There is no panel, so no circuits are proposed: place one and ask again.');
   });
 
   it('says what it used and that it is not a code check, and never more', () => {
@@ -82,7 +102,7 @@ describe('proposing for a house with no electrical yet', () => {
 
   it('has nothing more to add the second time', () => {
     const again = proposeElectrical(after);
-    expect(again.added).toEqual({ receptacles: [], switches: [], lights: [] });
+    expect(again.added).toEqual({ receptacles: [], switches: [], lights: [], panels: [] });
     expect(again.batch).toEqual([]);
     expect(again.explanation[0]).toMatch(/^Nothing to add/);
   });
