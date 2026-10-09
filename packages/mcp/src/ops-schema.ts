@@ -58,13 +58,13 @@ export const Element = shared(
 export const Position = shared(
   z.union([z.int(), z.string().min(1).max(100)]),
   'Position',
-  'Along a wall: "centered", "2\' from start", "18\\" from end", or an offset length.',
+  'Along a wall: "centered", "2\' from start", "18\\" from end", or an offset length. An opening\'s near edge, not its centre; a hosted element\'s centre.',
 );
 
 /** An area: an integer of square base units, or a string such as `11 m2`, `120 sq ft`. */
 export const Area = shared(z.union([z.int(), z.string().min(1).max(64)]), 'Area', '"11 m2", "120 sq ft", or square base units.');
 
-const Id = shared(z.string().min(1).max(64), 'NewId', 'An ID for the new element; omitted, the next is minted (W13).');
+const Id = shared(z.string().min(1).max(64), 'NewId', 'Omitted, the next ID is minted (W13).');
 const Side = shared(z.enum(['north', 'south', 'east', 'west']), 'Side');
 /** Any JSON value — present: a missing `value` is not `null`. */
 const Json = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.unknown()), z.record(z.string(), z.unknown())]);
@@ -95,7 +95,8 @@ export const Host = shared(
       wall: Element,
       side: z.enum(['left', 'right']).optional(),
       toward: describe(Element, 'The room the face looks into.').optional(),
-      at: describe(Position, '"2\' from start", "centered": a point along the wall.'),
+      // Position says it: a hosted element's `at` is its centre.
+      at: Position,
       height: describe(Length, 'Above the wall base.'),
     }),
     z.strictObject({ mode: z.literal('surface'), room: Element, surface: z.enum(['floor', 'ceiling']), at: Point, rotation: z.int().optional() }),
@@ -176,7 +177,7 @@ export const SetProperty = z.strictObject({
   id: Target,
   path: Pointer,
   value: Json,
-}).describe('value is Core JSON as stored, never resolved: a length is an integer in base units (1 ft = 390144), not "9\'". Core 0.3: a door/window type\'s /operation and /clearOpening {width,height,area?} (area: windows; an opening may override it); a room\'s /floor {offset,thickness} and /ceiling {kind:flat|tray|vaulted,...}; a level\'s /ceilingHeight; a slab\'s /purpose.');
+}).describe('value is Core JSON as stored, never resolved: a length is integer base units (1 ft = 390144), not "9\'". Core 0.3 paths: door/window type /operation, /clearOpening {width,height,area?} (area: windows; an opening may override it); room /floor {offset,thickness}, /ceiling {kind:flat|tray|vaulted,...}; level /ceilingHeight; slab /purpose.');
 
 export const UnsetProperty = z.strictObject({
   op: z.literal('unsetProperty'),
@@ -257,7 +258,7 @@ export const AddOpening = z.strictObject({
   hinge: z.string().max(32).optional(),
   swing: z.string().max(32).optional(),
   ...elementMembers,
-}).describe('No fill: an empty cased opening (give width, height). A door/window of another size: fill the nearest type, override width/height.');
+}).describe('at is where it begins, not its centre. No fill: an empty cased opening (give width, height). A door/window of another size: fill the nearest type, override width/height.');
 
 export const MoveOpening = z.strictObject({
   op: z.literal('moveOpening'),
@@ -332,7 +333,7 @@ export const PlaceElement = z.strictObject({
   collection: ExtCollection,
   host: Host,
   element: describe(Obj, 'Its members besides host: fallback.box, the extension\'s own.'),
-}).describe('Adds an outlet, fixture or piece on a host.');
+}).describe('Adds an outlet, fixture or piece on a host. FS_furniture: element {"catalogue":"sofa-2100"} fills in a library item (a wrong name lists them).');
 
 export const MoveElement = z.strictObject({
   op: z.literal('moveElement'),
@@ -372,4 +373,4 @@ export const Lock = shared(z.union([
   z.strictObject({ element: z.string().min(1) }),
   z.strictObject({ length: z.string().min(1) }),
   z.strictObject({ distance: z.tuple([z.string().min(1), z.string().min(1)]) }),
-]), 'Lock', 'Ops 6: an element, a wall length, or the distance between two parallel walls.');
+]), 'Lock', 'Ops 6: an element, a wall length, or two parallel walls\' distance.');

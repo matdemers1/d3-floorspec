@@ -1,13 +1,16 @@
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { OFFICIAL_READER, Package, validate } from '@floorspec/engine';
 import { TOOL_NAMES } from '@floorspec/mcp';
 import { TokenRejected, type Verifier } from '../../src/auth/resource-server.js';
 import { workerRenderer } from '../../src/render.js';
 import { ONE_ROOM_HOUSE } from '../support/fake-applier.js';
 import { createDrain } from '@d3-floorspec/worker/queue';
+import { fetchBytes } from './assets-support.js';
 import { Browser, createProjectAs, ISSUER, reset, setupOperator, start, testDb, TEST_ENV, tokenFor, type Running } from './helpers.js';
 
 /**
@@ -26,6 +29,10 @@ const fakeVerifier: Verifier = {
 };
 
 type Content = { type: string; text?: string; data?: string; mimeType?: string };
+
+const FURNITURE = JSON.parse(readFileSync(new URL('../../../../packages/engine/standard/registry/FS_furniture/library/library.json', import.meta.url), 'utf8')) as {
+  items: Record<string, { model: { sha256: string }; symbol: { sha256: string } }>;
+};
 const texts = (result: { content?: unknown }) => ((result.content ?? []) as Content[]).filter((c) => c.type === 'text').map((c) => c.text ?? '').join('\n');
 const images = (result: { content?: unknown }) => ((result.content ?? []) as Content[]).filter((c) => c.type === 'image');
 
@@ -212,6 +219,37 @@ describe('the MCP endpoint', () => {
     });
     expect(texts(midBatch)).toContain('FS-OPS-007');
     expect(texts(midBatch)).toContain('Hint: Walls drawn in this batch join the plan when the batch ends; apply this operation in a second batch.');
+  });
+
+  it('places a library refrigerator by catalogue alone, its model and symbol uploaded to the asset store, and the package validates (FLR-T-12.25)', async () => {
+    const mcp = await connect(`Bearer ${await tokenFor(operator, project.id, 'write')}`);
+    const fridge = { op: 'placeElement', extension: 'FS_furniture', collection: 'appliances', id: 'FR', host: { mode: 'surface', room: 'Kitchen', surface: 'floor', at: [1280000, 1920000] }, element: { catalogue: 'refrigerator-900' } };
+    const placed = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [fridge] } });
+    expect(placed.isError, texts(placed)).toBeFalsy();
+    expect(placed.structuredContent).toMatchObject({ embedded: ['refrigerator-900'] });
+    expect(texts(placed)).not.toContain('did not take');
+    const lib = FURNITURE.items['refrigerator-900'];
+    if (lib === undefined) throw new Error('the library has no refrigerator-900');
+
+    // The assets the plan names are files the store has, readable by the project: each has an href.
+    const list = (await operator.get(`/api/projects/${project.id}/assets`)).body as { assets: { id: string; path: string; sha256: string; href: string | null }[]; uploads: { sha256: string }[] };
+    expect(list.assets.map((a) => [a.id, a.sha256]).sort()).toEqual([['refrigerator-900-model', lib.model.sha256], ['refrigerator-900-symbol', lib.symbol.sha256]]);
+    expect(list.assets.every((a) => a.href !== null)).toBe(true);
+    expect(list.uploads.map((u) => u.sha256).sort()).toEqual([lib.model.sha256, lib.symbol.sha256].sort());
+    expect(await db.auditLog.count({ where: { action: 'asset.upload', actor: { startsWith: 'token:' } } })).toBe(2);
+
+    const doc = await fetchBytes(running.url, operator, `/api/projects/${project.id}/model.json`);
+    const files: Record<string, Uint8Array> = {};
+    for (const a of list.assets) files[a.path] = (await fetchBytes(running.url, operator, `${a.href ?? ''}?download`)).bytes;
+    const result = validate(doc.bytes, { package: new Package(files), ...OFFICIAL_READER });
+    expect(result.valid, JSON.stringify(result.diagnostics)).toBe(true);
+    expect(result.diagnostics.filter((d) => d.code.startsWith('FS-FURN-') || /^FS-INV-100[5-7]$/.test(d.code))).toEqual([]);
+
+    // A second refrigerator reuses both assets; uploading the same bytes again stores nothing new.
+    const again = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [{ ...fridge, id: 'FR2', host: { ...fridge.host, at: [3840000, 1920000] } }] } });
+    expect(again.isError, texts(again)).toBeFalsy();
+    expect((again.structuredContent as { created: string[] }).created).toEqual(['FR2']);
+    expect(await db.projectAsset.count({ where: { projectId: project.id } })).toBe(2);
   });
 
   it('reports findings honestly, and renders 3D in the worker from a camera or a room (FLR-T-8.5)', async () => {
