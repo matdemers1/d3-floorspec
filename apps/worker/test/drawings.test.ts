@@ -485,3 +485,59 @@ describe('stored ZIP', () => {
     expect(tail.getUint16(10, true)).toBe(2);
   });
 });
+
+describe('door operations and furniture and fixture outlines on the drawings (FLR-T-12.24)', () => {
+  const SYMBOLS = fixture('../../../packages/render2d/test/fixtures/plan-symbols.json');
+  const plan = levelPlan(SYMBOLS, 'MAIN');
+  const door = (id: string) => plan.doors.find((d) => d.id === id)!;
+  const arcs = (id: string) => door(id).parts.filter((p) => p.kind === 'arc');
+
+  it('draws each door by its type’s operation, as render2d’s plan does, at base-unit points', () => {
+    expect(door('DG').operation).toBe('swing');
+    expect(arcs('DG')).toHaveLength(1);
+    expect(door('FR').operation).toBe('doubleSwing');
+    expect(arcs('FR')).toHaveLength(2);
+    expect(arcs('DA')).toHaveLength(2);
+    for (const id of ['GD', 'PT', 'PK', 'BF', 'BF2', 'BN']) expect(arcs(id), id).toHaveLength(0);
+    expect(door('GD').parts.map((p) => p.stroke)).toEqual(['hidden']);
+    expect(door('PK').parts.filter((p) => p.stroke === 'inWall')).toHaveLength(2);
+    expect(door('CS').parts).toEqual([]);
+    for (const d of plan.doors) for (const p of d.parts) for (const q of p.kind === 'arc' ? [p.centre, p.from, p.to] : p.pts) expect(q.every(Number.isInteger)).toBe(true);
+  });
+
+  it('outlines furniture and fixtures by what they are, and leaves other elements as their boxes', () => {
+    const device = (id: string) => plan.devices.find((d) => d.id === id)!;
+    expect(device('WC').layer).toBe('P-FIXT');
+    expect(device('WC').symbol!.length).toBe(3);
+    expect(device('TUB').symbol!.length).toBe(3);
+    expect(device('BED1').symbol!.length).toBe(5);
+    expect(device('BED1').layer).toBe('I-FURN');
+    expect(levelPlan(RANCH, 'MAIN').devices).toEqual([]);
+  });
+
+  it('puts hidden door parts on A-DOOR-HIDN, swings as ARCs on A-DOOR, and fixture outlines on their discipline’s layer', () => {
+    const text = new TextDecoder().decode(exportDxf(SYMBOLS, { version: VERSION, levels: ['MAIN'] }).bytes);
+    const doc = new DxfParser().parseSync(text) as unknown as { entities: { type: string; layer: string }[] };
+    const on = (layer: string, type?: string) => doc.entities.filter((e) => e.layer === layer && (type === undefined || e.type === type)).length;
+    // A swing, French doors' two, a double-acting door's two.
+    expect(on('A-DOOR', 'ARC')).toBe(1 + 2 + 2);
+    // The garage door, the barn door's open position (hidden), the pocket and the leaf in it.
+    expect(on('A-DOOR-HIDN')).toBe(1 + 1 + 2);
+    expect(on('A-DOOR', 'LWPOLYLINE')).toBeGreaterThan(0);
+    // Toilet 3, lavatory 3, tub 3, shower 4, kitchen sink 5.
+    expect(on('P-FIXT')).toBe(3 + 3 + 3 + 4 + 5);
+  });
+
+  it('draws them on the PDF sheet, legibly', async () => {
+    const pdf = await exportPdf(SYMBOLS, { version: VERSION, fontDir, levels: ['MAIN'] });
+    const paths = pdf.sheets[0]!.prims.flatMap((p) => (p.t === 'path' ? [p] : []));
+    // The pocket in the wall, dashed in white over the poché; the overhead door dashed in ink.
+    expect(paths.some((p) => p.stroke === '#ffffff' && p.dash !== undefined)).toBe(true);
+    expect(paths.filter((p) => p.stroke === '#000000' && p.dash !== undefined).length).toBeGreaterThan(0);
+    const { openPdf } = await import('../src/export/drawings/pdf.js');
+    const svg = sheetToSvg(pdf.sheets[0]!, openPdf({ title: '', subject: '', date: VERSION.at }, fontDir).measure);
+    const png = rasterize(svg, { width: 1700, fontDir });
+    expect(pngSize(png).width).toBe(1700);
+    if (process.env['FLOORSPEC_SHEET_PNG']) (await import('node:fs')).writeFileSync(process.env['FLOORSPEC_SHEET_PNG'], png);
+  });
+});

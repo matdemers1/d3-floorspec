@@ -54,7 +54,7 @@ export function diffScenes(before: Scene | undefined, after: Scene): SceneDiff {
     openings: diff(
       before?.openings ?? empty,
       after.openings,
-      (x, y) => samePts([x.start, x.end], [y.start, y.end]) && x.kind === y.kind && x.hinge === y.hinge && x.swing === y.swing && x.wall === y.wall,
+      (x, y) => samePts([x.start, x.end], [y.start, y.end]) && x.kind === y.kind && x.hinge === y.hinge && x.swing === y.swing && x.operation === y.operation && x.wall === y.wall,
     ),
     rooms: diff(
       before?.rooms ?? empty,

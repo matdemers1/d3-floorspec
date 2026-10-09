@@ -16,6 +16,11 @@ export interface PlanRenderOptions {
   /** Pixels wide; the height follows the plan. */
   readonly width?: number;
   readonly theme?: 'light' | 'dark';
+  /**
+   * The bytes of the plan symbols its furniture and fixtures name (Core 12.6), by SHA-256: each is
+   * drawn as its symbol; one without bytes is drawn as its kind's outline (FLR-T-12.24).
+   */
+  readonly symbols?: ReadonlyMap<string, Uint8Array>;
 }
 
 export interface PlanRenderer {

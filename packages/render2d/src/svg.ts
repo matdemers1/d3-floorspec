@@ -40,3 +40,20 @@ export const linePath = (a: XY, b: XY): string => `M${num(a[0])} ${num(a[1])}L${
 
 /** An open path through drawing points: an arc edge's polyline (Core 21.2). */
 export const polylinePath = (pts: readonly XY[]): string => (pts.length ? `M${pts.map(([x, y]) => `${num(x)} ${num(y)}`).join('L')}` : '');
+
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+/** Bytes as base64 (RFC 4648, padded): for a data URI. No Node `Buffer`, so it runs anywhere. */
+export function base64(bytes: Uint8Array): string {
+  let out = '';
+  let i = 0;
+  for (; i + 2 < bytes.length; i += 3) {
+    const n = (bytes[i]! << 16) | (bytes[i + 1]! << 8) | bytes[i + 2]!;
+    out += B64[(n >> 18) & 63]! + B64[(n >> 12) & 63]! + B64[(n >> 6) & 63]! + B64[n & 63]!;
+  }
+  if (i < bytes.length) {
+    const n = (bytes[i]! << 16) | ((bytes[i + 1] ?? 0) << 8);
+    out += B64[(n >> 18) & 63]! + B64[(n >> 12) & 63]! + (i + 1 < bytes.length ? B64[(n >> 6) & 63]! : '=') + '=';
+  }
+  return out;
+}

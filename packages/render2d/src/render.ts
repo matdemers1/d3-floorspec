@@ -9,9 +9,10 @@
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
 import { evaluate, type Evaluation } from '@floorspec/engine';
-import { DEFAULT_READER, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneOpening, type SceneRoom, type SceneStair, type SceneWall } from './scene.js';
-import { el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
+import { DEFAULT_READER, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneFallback, type SceneOpening, type SceneRoom, type SceneStair, type SceneWall } from './scene.js';
+import { base64, el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
 import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
+import { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type SymbolPart, type SymbolStroke } from './plansymbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
 
 export interface RenderOptions {
@@ -47,7 +48,20 @@ export interface RenderOptions {
    * hips, valleys and (Core 0.4) breaks, and the eave edge of each gable end. Default false.
    */
   readonly roof?: boolean;
+  /**
+   * The bytes of extension elements' fallback symbols (Core 12.6), by SHA-256: a map, or a function
+   * that answers for a digest. An element whose symbol's bytes are given — an SVG, PNG or JPEG — is
+   * drawn as its symbol on its box, in the plan's ink; any other is drawn as its kind's outline
+   * (FLR-T-12.24), or as its box. The renderer reads no file and fetches nothing.
+   */
+  readonly symbols?: SymbolBytes;
 }
+
+/** Where a fallback symbol's bytes come from: by SHA-256. */
+export type SymbolBytes = ReadonlyMap<string, Uint8Array> | ((sha256: string) => Uint8Array | undefined);
+
+/** The image types a symbol is embedded as. */
+const SYMBOL_TYPES: ReadonlySet<string> = new Set(['image/svg+xml', 'image/png', 'image/jpeg']);
 
 export const DEFAULT_SCALE = 24;
 
@@ -230,42 +244,64 @@ function openingQuad(o: SceneOpening, w: SceneWall, extra: number): Pt[] {
 interface SymbolStyle {
   readonly stroke: string;
   readonly window: string;
+  /** What is drawn inside the wall's poché: a pocket and the leaf in it. */
+  readonly inWall: string;
   readonly dash?: string;
   readonly opacity?: number;
 }
 
-/** A door leaf and its swing, a window's glazing, or nothing for an empty opening (Core 7.1). */
+/** How each kind of symbol line is drawn on the screen plan. */
+const STROKES: Readonly<Record<SymbolStroke, { readonly width: number; readonly dash?: string; readonly cap?: 'round' }>> = {
+  leaf: { width: 1.5, cap: 'round' },
+  swing: { width: 1, dash: '3 2' },
+  hidden: { width: 1.25, dash: '5 3' },
+  inWall: { width: 1, dash: '3 2' },
+  outline: { width: 1 },
+  detail: { width: 0.75 },
+};
+
+/** Symbol parts as SVG paths, one element each, in the order given. */
+function partsSvg(parts: readonly SymbolPart[], f: Frame, ink: (s: SymbolStroke) => string, st: { readonly dash?: string; readonly opacity?: number } = {}): string {
+  let out = '';
+  for (const part of parts) {
+    const look = STROKES[part.stroke];
+    const common = { fill: 'none', 'stroke-dasharray': st.dash, opacity: st.opacity };
+    if (part.kind === 'arc') {
+      const [hx, hy] = f.P(part.centre);
+      const [lx, ly] = f.P(part.from);
+      const [ox, oy] = f.P(part.to);
+      // Positive cross product in screen space (y down) is a clockwise turn: SVG's sweep-flag 1.
+      const sweep = (lx - hx) * (oy - hy) - (ly - hy) * (ox - hx) > 0 ? 1 : 0;
+      const r = part.radius * f.s;
+      out += el('path', {
+        d: `M${num(lx)} ${num(ly)}A${num(r)} ${num(r)} 0 0 ${sweep} ${num(ox)} ${num(oy)}`,
+        stroke: ink(part.stroke),
+        'stroke-width': look.width,
+        ...common,
+        'stroke-dasharray': st.dash ?? look.dash,
+      });
+      continue;
+    }
+    const d = polylinePath(part.pts.map(f.P)) + (part.closed ? 'Z' : '');
+    out += el('path', {
+      d,
+      stroke: ink(part.stroke),
+      'stroke-width': look.width,
+      ...(look.cap === undefined ? {} : { 'stroke-linecap': look.cap }),
+      ...common,
+      'stroke-dasharray': st.dash ?? look.dash,
+    });
+  }
+  return out;
+}
+
+/** A door's symbol by its operation (Core 8.4), a window's glazing, or nothing for an empty opening (Core 7.1). */
 function openingSymbol(o: SceneOpening, w: SceneWall, f: Frame, st: SymbolStyle): string {
   const { n, len } = axes(o.start, o.end);
   if (len === 0) return '';
-  const common = { fill: 'none', 'stroke-dasharray': st.dash, opacity: st.opacity };
-  if (o.kind === 'door') {
-    const left = o.swing === 'left';
-    const off = left ? w.a : -w.b;
-    const dir: XY = left ? n : [-n[0], -n[1]];
-    const J = o.hinge === 'start' ? o.start : o.end;
-    const K = o.hinge === 'start' ? o.end : o.start;
-    const H = add(J, n, off);
-    const L = add(H, dir, len);
-    const O = add(K, n, off);
-    const [hx, hy] = f.P(H);
-    const [lx, ly] = f.P(L);
-    const [ox, oy] = f.P(O);
-    // Positive cross product in screen space (y down) is a clockwise turn: SVG's sweep-flag 1.
-    const sweep = (lx - hx) * (oy - hy) - (ly - hy) * (ox - hx) > 0 ? 1 : 0;
-    const r = len * f.s;
-    return (
-      el('path', { d: linePath([hx, hy], [lx, ly]), stroke: st.stroke, 'stroke-width': 1.5, 'stroke-linecap': 'round', ...common }) +
-      el('path', {
-        d: `M${num(lx)} ${num(ly)}A${num(r)} ${num(r)} 0 0 ${sweep} ${num(ox)} ${num(oy)}`,
-        stroke: st.stroke,
-        'stroke-width': 1,
-        ...common,
-        'stroke-dasharray': st.dash ?? '3 2',
-      })
-    );
-  }
+  if (o.kind === 'door') return partsSvg(doorSymbol(o, w).parts, f, (k) => (k === 'inWall' ? st.inWall : st.stroke), st);
   if (o.kind === 'window') {
+    const common = { fill: 'none', 'stroke-dasharray': st.dash, opacity: st.opacity };
     const T = w.a + w.b;
     const mid = (w.a - w.b) / 2;
     const g = T / 7;
@@ -275,14 +311,11 @@ function openingSymbol(o: SceneOpening, w: SceneWall, f: Frame, st: SymbolStyle)
   return '';
 }
 
-/** The corners of the square a door leaf sweeps; an opening's quad otherwise. */
+/** What a door's symbol covers — the square a leaf sweeps, a bifold's fold, an overhead door's line; an opening's quad otherwise. */
 function symbolReach(o: SceneOpening, w: SceneWall): Pt[] {
-  const { n, len } = axes(o.start, o.end);
+  const { len } = axes(o.start, o.end);
   if (o.kind !== 'door' || len === 0) return openingQuad(o, w, 0);
-  const left = o.swing === 'left';
-  const off = left ? w.a : -w.b;
-  const k = off + (left ? len : -len);
-  return [add(o.start, n, off), add(o.end, n, off), add(o.end, n, k), add(o.start, n, k)];
+  return [...doorSymbol(o, w).reach];
 }
 
 function jambs(o: SceneOpening, w: SceneWall, f: Frame, color: string): string {
@@ -585,26 +618,34 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       'g',
       { 'data-id': o.id },
       jambs(o, w, f, accented(o.wall, diff?.walls) ? pal.accent : pal.poche) +
-        openingSymbol(o, w, f, a ? { stroke: pal.accent, window: pal.accent } : { stroke: pal.faint, window: pal.window }),
+        openingSymbol(o, w, f, a ? { stroke: pal.accent, window: pal.accent, inWall: pal.accent } : { stroke: pal.faint, window: pal.window, inWall: pal.room }),
     );
   }
   parts.push(el('g', { id: 'openings' }, ops));
 
-  // ── extension elements: their fallback boxes (Core 0.2, 12.6), drawn by a core-only reader ──
+  // ── extension elements: their symbols (Core 12.6) when the caller gave their bytes, else their
+  // kind's outline — a bed, a sofa, a toilet, a tub (FLR-T-12.24) — else their fallback boxes ──
   if (scene.fallbacks.size) {
     let fbs = '';
+    let inked = false;
     for (const fb of scene.fallbacks.values()) {
       const a = hi.has(fb.id);
-      fbs += el('path', {
-        'data-id': fb.id,
-        'data-kind': `${fb.extension}:${fb.collection}`,
-        d: ringsPath([P(fb.footprint)]),
-        fill: a ? pal.accent : pal.faint,
-        'fill-opacity': a ? 0.35 : 0.12,
-        stroke: a ? pal.accent : pal.faint,
-        'stroke-width': 1,
-      });
+      const image = symbolImage(fb, options.symbols, f);
+      const outline = image === null ? fixtureSymbol(fb) : null;
+      const box = { 'data-id': fb.id, 'data-kind': `${fb.extension}:${fb.collection}`, d: ringsPath([P(fb.footprint)]) };
+      if (image === null && outline === null) {
+        fbs += el('path', { ...box, fill: a ? pal.accent : pal.faint, 'fill-opacity': a ? 0.35 : 0.12, stroke: a ? pal.accent : pal.faint, 'stroke-width': 1 });
+        continue;
+      }
+      // The item stands on the floor: its box in the room's colour (tinted when highlighted), its symbol over it.
+      let g = el('path', { ...box, fill: a ? pal.accent : pal.room, 'fill-opacity': a ? 0.35 : undefined, stroke: image === null ? 'none' : a ? pal.accent : pal.faint, 'stroke-width': image === null ? undefined : 1 });
+      if (image !== null) {
+        inked = true;
+        g += image;
+      } else if (outline !== null) g += partsSvg(outline, f, (k) => (a ? pal.accent : k === 'detail' ? pal.faint : pal.muted));
+      fbs += el('g', { 'data-symbol': fb.id }, g);
     }
+    if (inked) parts.push(el('defs', {}, inkFilter(pal)));
     parts.push(el('g', { id: 'fallbacks' }, fbs));
   }
 
@@ -682,7 +723,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
         'g',
         { 'data-ghost': id },
         el('path', { d: ringsPath([P(openingQuad(o, w, 0))]), ...ghostStroke, opacity: 0.8 }) +
-          openingSymbol(o, w, f, { stroke: pal.ghost, window: pal.ghost, dash: '3 3', opacity: 0.8 }),
+          openingSymbol(o, w, f, { stroke: pal.ghost, window: pal.ghost, inWall: pal.ghost, dash: '3 3', opacity: 0.8 }),
       );
     }
     parts.push(el('g', { id: 'ghosts' }, g));
@@ -691,8 +732,11 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   // ── labels ──
   if (showLabels) {
     let labels = '';
-    // Labels keep clear of the squares door leaves sweep.
-    const swings = [...scene.openings.values()].filter((o) => o.kind === 'door').map((o) => symbolReach(o, scene.walls.get(o.wall)!));
+    // Labels keep clear of the squares door leaves sweep, and of the furniture and fixtures standing in the room.
+    const swings = [
+      ...[...scene.openings.values()].filter((o) => o.kind === 'door').map((o) => symbolReach(o, scene.walls.get(o.wall)!)),
+      ...[...scene.fallbacks.values()].filter(standsInRoom).map((fb) => fb.footprint),
+    ];
     for (const r of scene.rooms.values()) {
       const rb = grow(undefined, r.outer)!;
       const lines: LabelLine[] = [
@@ -840,3 +884,59 @@ function northArrow(cx: number, cy: number, trueNorth: number, pal: Palette): st
       el('text', { y: -17, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 600, fill: pal.muted }, 'N'),
   );
 }
+
+/**
+ * An extension element's symbol image (Core 12.6), when its bytes were given: laid out at its drawn
+ * size and turned onto its box corner to corner — its top left at the frame's (min x, min y), its
+ * top right at (min x, max y), its bottom left at (max x, min y) — and drawn in the plan's ink through
+ * the `fs-ink` filter. Null when there are no bytes for it, or it is not an image type.
+ */
+function symbolImage(fb: SceneFallback, symbols: SymbolBytes | undefined, f: Frame): string | null {
+  if (symbols === undefined || fb.symbol === undefined || fb.frame === undefined) return null;
+  const type = fb.symbol.mediaType;
+  if (!SYMBOL_TYPES.has(type)) return null;
+  const bytes = typeof symbols === 'function' ? symbols(fb.symbol.sha256) : symbols.get(fb.symbol.sha256);
+  if (bytes === undefined || bytes.byteLength === 0) return null;
+  const c = symbolCorners(fb.frame);
+  const [x0, y0] = f.P(c.topLeft);
+  const [x1, y1] = f.P(c.topRight);
+  const [x2, y2] = f.P(c.bottomLeft);
+  const w = Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+  const h = Math.sqrt((x2 - x0) * (x2 - x0) + (y2 - y0) * (y2 - y0));
+  if (!(w > 0) || !(h > 0)) return null;
+  const k = fixed4;
+  return el('image', {
+    'data-symbol-of': fb.id,
+    href: `data:${type};base64,${base64(bytes)}`,
+    width: w,
+    height: h,
+    preserveAspectRatio: 'none',
+    transform: `matrix(${k((x1 - x0) / w)} ${k((y1 - y0) / w)} ${k((x2 - x0) / h)} ${k((y2 - y0) / h)} ${num(x0)} ${num(y0)})`,
+    filter: 'url(#fs-ink)',
+  });
+}
+
+/**
+ * The filter a symbol image is drawn through: each colour channel mapped linearly so the image's
+ * white is the room's floor and its black the plan's muted ink — a library symbol drawn black on
+ * white reads on the plan's palette in either theme.
+ */
+function inkFilter(pal: Palette): string {
+  const rgb = (hex: string): [number, number, number] => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
+  const paper = rgb(pal.room);
+  const ink = rgb(pal.muted);
+  const row = (c: number): string => [0, 1, 2].map((j) => (j === c ? fixed4(paper[c]! - ink[c]!) : '0')).join(' ') + ` 0 ${fixed4(ink[c]!)}`;
+  return el(
+    'filter',
+    { id: 'fs-ink', 'color-interpolation-filters': 'sRGB', x: 0, y: 0, width: 1, height: 1 },
+    el('feColorMatrix', { type: 'matrix', values: `${row(0)} ${row(1)} ${row(2)} 0 0 0 1 0` }),
+  );
+}
+
+/** A coefficient to four decimals, trailing zeros trimmed, never `-0`: a symbol's turn, a filter's matrix. */
+function fixed4(v: number): string {
+  const r = Math.round(v * 10_000) / 10_000;
+  if (r === 0) return '0';
+  return r.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+}
+

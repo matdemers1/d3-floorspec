@@ -118,7 +118,7 @@ export function createApp({
   mount(app, '/api/projects', changesetRoutes(db, applier));
   mount(app, '/api/projects', layoutRoutes(db, applier));
   mount(app, '/api/projects', assistantRoutes(db, applier));
-  mount(app, '/api/projects', checkRoutes(db, renderer, rulePacks, `${config.PUBLIC_URL.replace(/\/$/, '')}/rule-packs`, render3d));
+  mount(app, '/api/projects', checkRoutes(db, renderer, rulePacks, `${config.PUBLIC_URL.replace(/\/$/, '')}/rule-packs`, render3d, assets));
   mount(app, '/api/projects', projectProfileRoutes(db, rulePacks));
   mount(app, '/api/profiles', profileRoutes(db, rulePacks));
   mount(app, '/api/rule-packs', rulePackRoutes(db, rulePacks));

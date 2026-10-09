@@ -10,7 +10,8 @@
  * glazing are placed relative to the derived opening points the same way the plan renderer does.
  */
 import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, type Derived, type FloorspecDocument } from '@floorspec/engine';
-import { sceneOf, labelPoint, type ReaderOptions, type Pt, type Scene, type SceneOpening, type SceneWall } from '@floorspec/render2d';
+import { doorSymbol, fixtureSymbol, sceneOf, labelPoint, standsInRoom, type ReaderOptions, type Pt, type Scene, type SceneOpening, type SceneWall, type SymbolPart } from '@floorspec/render2d';
+import type { DoorOperation } from '@floorspec/engine';
 import { layerForDevice, LAYERS } from './layers.js';
 import { arrivingStairs, planRoof, planStair, type PlanRoof, type PlanStair } from './symbols.js';
 
@@ -39,13 +40,14 @@ export interface OutlineEdge {
 export interface PlanDoor {
   readonly id: string;
   readonly mark: string | undefined;
-  /** The hinge point on the face the leaf swings from. */
-  readonly hinge: XY;
-  /** The open leaf's free end (the leaf is drawn open, 90°). */
-  readonly leafEnd: XY;
-  /** Where the free end is when the door is closed: the swing arc runs from `leafEnd` to here. */
-  readonly closedEnd: XY;
-  readonly radius: number;
+  /** How it operates (Core 8.4): its type's, or `swing` when the type declares none. */
+  readonly operation: DoorOperation;
+  /**
+   * Its symbol, as render2d's plan draws it (`doorSymbol`, FLR-T-12.24), every point rounded to the
+   * base unit: a swing's leaf open at 90° and its arc, a pair's two leaves, a pocket's leaf in the
+   * wall, sliding and folding leaves, an overhead door's dashed line.
+   */
+  readonly parts: readonly SymbolPart[];
 }
 
 export interface PlanWindow {
@@ -81,6 +83,11 @@ export interface PlanDevice {
   readonly collection: string;
   readonly layer: string;
   readonly footprint: readonly Pt[];
+  /**
+   * Its outline by what it is (render2d's `fixtureSymbol`, FLR-T-12.24) — a bed with its pillows, a
+   * toilet's tank and bowl, a tub — rounded to the base unit; null for an element drawn as its box.
+   */
+  readonly symbol: readonly SymbolPart[] | null;
 }
 
 export interface LevelPlan {
@@ -299,17 +306,18 @@ function quad(o: SceneOpening, w: SceneWall): XY[] {
   return [add(o.start, n, w.a), add(o.end, n, w.a), add(o.end, n, -w.b), add(o.start, n, -w.b)];
 }
 
-/** The square a door leaf sweeps, or the opening's quad. */
+/** What a door's symbol covers — the square a leaf sweeps, a fold, an overhead door's line — or the opening's quad. */
 function reach(o: SceneOpening, w: SceneWall): XY[] {
-  const { n, len } = axes(o.start, o.end);
+  const { len } = axes(o.start, o.end);
   if (o.kind !== 'door' || len === 0) return quad(o, w);
-  const left = o.swing === 'left';
-  const off = left ? w.a : -w.b;
-  const k = off + (left ? len : -len);
-  return [add(o.start, n, off), add(o.end, n, off), add(o.end, n, k), add(o.start, n, k)];
+  return [...doorSymbol(o, w).reach];
 }
 
 const round = (p: XY): XY => [Math.round(p[0]), Math.round(p[1])];
+
+/** Symbol parts with every point rounded to the base unit: the drawings carry the model's own numbers from there. */
+const rounded = (parts: readonly SymbolPart[]): SymbolPart[] =>
+  parts.map((p) => (p.kind === 'arc' ? { ...p, centre: round(p.centre), from: round(p.from), to: round(p.to) } : { ...p, pts: p.pts.map(round) }));
 
 /**
  * Number the doors and windows of a whole document: D1…, W1… in reading order — level by
@@ -442,12 +450,9 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>, context
     const mid: XY = [(o.start[0] + o.end[0]) / 2, (o.start[1] + o.end[1]) / 2];
     if (o.kind === 'door') {
       const left = o.swing === 'left';
-      const off = left ? w.a : -w.b;
       const dir: XY = left ? n : [-n[0], -n[1]];
-      const J = o.hinge === 'start' ? o.start : o.end;
-      const K = o.hinge === 'start' ? o.end : o.start;
-      const H = add(J, n, off);
-      doors.push({ id: o.id, mark, hinge: round(H), leafEnd: round(add(H, dir, len)), closedEnd: round(add(K, n, off)), radius: len });
+      const sym = doorSymbol(o, w);
+      doors.push({ id: o.id, mark, operation: sym.operation, parts: rounded(sym.parts) });
       // The tag goes on the side the door does not swing to.
       const side: XY = [-dir[0], -dir[1]];
       if (mark !== undefined) tags.push({ kind: 'door', id: o.id, mark, base: add(mid, side, left ? w.b : w.a), normal: side });
@@ -469,9 +474,10 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>, context
   if (context !== undefined) for (const [id, st] of arrivingStairs(context.doc, context.derived, scene.levelId)) stairs.push(planStair(id, st.derived, st.form, 'down', { column: st.column, newel: st.newel }));
   const roofs: PlanRoof[] = [...scene.roofs].map(([id, rf]) => planRoof(context?.doc, id, rf));
 
-  // ── rooms: a label keeps clear of door swings and stairs ──
+  // ── rooms: a label keeps clear of door swings, stairs, and the furniture and fixtures in the room ──
   const swings = [
     ...[...scene.openings.values()].filter((o) => o.kind === 'door').map((o) => reach(o, scene.walls.get(o.wall)!) as Pt[]),
+    ...[...scene.fallbacks.values()].filter(standsInRoom).map((fb) => fb.footprint),
     ...stairs.flatMap((st) => [...st.steps.map((s) => s.outline as Pt[]), ...(st.bounds === null ? [] : [st.bounds as Pt[]])]),
   ];
   const rooms: PlanRoom[] = [...scene.rooms.values()].map((r) => {
@@ -487,6 +493,7 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>, context
     collection: fb.collection,
     layer: layerForDevice(fb.extension, fb.collection),
     footprint: fb.footprint,
+    symbol: ((parts) => (parts === null ? null : rounded(parts)))(fixtureSymbol(fb)),
   }));
 
   let body: Box | undefined;
