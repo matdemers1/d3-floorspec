@@ -4,6 +4,7 @@
  * Coordinates: Floorspec's own axes — x east, y north, z up (2.1) — never re-oriented. A three.js
  * scene, whose up is +y, rotates the house group by −90° about x (or sets `camera.up` to +z).
  */
+import type { ModelRole } from './roles.js';
 
 /** Base units (1/1280 mm, FLR-ADR-004) in one metre: the one conversion from exact to float. */
 export const UNITS_PER_METRE = 1_280_000;
@@ -34,7 +35,7 @@ export interface Box3 {
  * | `stairLanding` | stair | solid: a landing plate, by the same rule |
  * | `stairColumn` | stair | solid: a spiral stair's centre column, its column's radius (17.7) — or a slender pole when its treads meet at the centre — from its bottom to its top |
  * | `stairBlock` | stair | solid placeholder: the stair's box (17.4), for a winder or spiral stair whose steps are not derived (as a Core 0.3 reader reads it) |
- * | `extension` | extension element | solid: its fallback box (12.6) |
+ * | `extension` | extension element | solid: its fallback box (12.6) — or, for an element this reader models, each piece of its model (`model`), inside that box |
  * | `threshold` | opening | a door's or an empty opening's sill where it is its wall's base: the plan its cut removes, each side of the location line, as the floor of the room on that side — solid between its top and bottom, a surface facing up without a thickness (see thresholds.ts) |
  */
 export type PartKind =
@@ -114,6 +115,13 @@ export interface MeshPart {
   threshold?: { wall: string; side: 'left' | 'right'; room: string };
   /** An extension element's extension and collection. */
   extension?: { name: string; collection: string };
+  /**
+   * A piece of an extension element's procedural model (FLR-T-12.21): what the element is (its
+   * collection's discriminant — `waterCloset`, `recessed`, `baseCabinet` — or the collection's name)
+   * and what this piece is made of (ROLE_LOOKS); `smooth` for a round piece — a solid of revolution,
+   * which a view may draw as one curved surface. Absent on an element drawn as its fallback box.
+   */
+  model?: { kind: string; role: ModelRole; smooth?: true };
   mesh: PartMesh;
   /** Its bounding box in base units, from the exact geometry. Exact integers except where an opening's cut ends at a rational point. */
   bbox: Box3;
@@ -138,4 +146,6 @@ export interface MeshOptions {
   origin?: Vec3;
   /** Attach `stats` to every part (for tests and diagnostics). */
   stats?: boolean;
+  /** Draw the extension elements this reader models as their models (default); false draws every one as its fallback box. */
+  models?: boolean;
 }

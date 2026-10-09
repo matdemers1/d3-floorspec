@@ -3,7 +3,7 @@ import { inflateSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { buildScene, exportGltf } from '../src/export/gltf/index.js';
 import { handlers } from '../src/queue/handlers.js';
-import { centroid, findRoom, PRESETS, presetCamera, render3dPng, renderGlb, renderScene, roomCamera } from '../src/render3d/index.js';
+import { centroid, findRoom, PRESETS, presetCamera, render3dPng, renderGlb, renderScene, roomCamera, sceneTriangles } from '../src/render3d/index.js';
 import { pngSize } from '../src/render/png.js';
 
 /**
@@ -136,6 +136,18 @@ describe('3D render', () => {
       // The same triangles in the same colours from the same camera: at most a few edge pixels apart.
       expect(diff / fromScene.rgb.length).toBeLessThan(0.5);
     }
+  });
+
+  it('draws a fixture model: a lens unshaded, a round piece without ink between its facets (FLR-T-12.21)', async () => {
+    const scene = await buildScene(load('../../../packages/mesh/test/fixtures/showcase.floorspec.json'));
+    const tris = sceneTriangles(scene);
+    expect(tris.filter((t) => t.unlit === true).length).toBeGreaterThan(0);
+    // Each round primitive is one outline key, far past the planes' keys.
+    const round = tris.filter((t) => t.key !== undefined && t.key >= 1 << 24);
+    expect(round.length).toBeGreaterThan(100);
+    expect(new Set(round.map((t) => t.key)).size).toBeLessThan(round.length / 10);
+    const kitchen = decode(renderScene(scene, { room: 'R1', width: 320 }).png);
+    expect(colours(kitchen)).toBeGreaterThan(200);
   });
 
   it('runs as a render.3d job: a PNG and what the camera was', async () => {

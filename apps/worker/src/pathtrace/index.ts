@@ -72,6 +72,8 @@ export interface StillResult {
 }
 
 const GROUND = linear('#cfcabd');
+/** How bright a luminaire's lens looks to the camera, over its colour: about a sunlit white wall's. */
+const LENS = 2.5;
 const DEG = Math.PI / 180;
 
 /** A sun in the scene's frame (x east-ish, +Y up, −Z project north), turned by the site's true north. */
@@ -94,7 +96,12 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
   const uv: number[] = [];
   const materials: PtMaterial[] = scene.materials.map((m, i) => {
     const t = options.textures?.get(i);
-    return { rgb: [m.baseColor[0], m.baseColor[1], m.baseColor[2]], glass: m.blend, ...(t === undefined ? {} : { texture: t }) };
+    return {
+      rgb: [m.baseColor[0], m.baseColor[1], m.baseColor[2]],
+      glass: m.blend,
+      ...(t === undefined ? {} : { texture: t }),
+      ...(m.emissive === undefined ? {} : { emission: [m.emissive[0] * LENS, m.emissive[1] * LENS, m.emissive[2] * LENS] as Vec3 }),
+    };
   });
   const min: Vec3 = [Infinity, Infinity, Infinity];
   const max: Vec3 = [-Infinity, -Infinity, -Infinity];

@@ -42,12 +42,31 @@ unioned) are built by manifold-3d in double precision in a local frame at an int
 | `stairFlight` | a flight's treads, each two risers deep, unioned | solid |
 | `stairLanding` | a landing by the same rule | solid |
 | `stairBlock` | placeholder: a winder or spiral stair's box (17.4) | solid |
-| `extension` | an extension element's fallback box (12.6) | solid |
+| `extension` | an extension element's procedural model, one part per piece (`part.model`), inside its fallback box (12.6); else that box | solid |
 | `threshold` | a door's or empty opening's cut plan, where its sill is the wall's base, split at the location line: each half the floor (top, bottom) of the room on its side | solid / surface |
 
 `part.bbox` is exact: for floors, ceilings, slabs, roofs and extension elements it is the engine's
 derived box; for a wall it is the exact box of the outline prism minus its cuts (computed slab by
 slab in rationals), which equals manifold-3d's double-precision box within a nanometre.
+
+## Fixture models (FLR-T-12.21)
+
+An extension element this package knows is drawn as a procedural model of what it is, instead of
+its plain fallback box: FS_electrical's receptacles, switches, panels, alarms and every kind of
+light; FS_plumbing's fixtures (toilet, basin, kitchen sink, tub, shower, hose bibb) and water
+heaters; FS_furniture's pieces, appliances and casework; FS_mechanical's gas appliances (range,
+grill, fireplace or fire pit). `src/models/` holds them, chosen by the member each collection
+names what an element is by (`discriminant`, `elementKind`). Each model is drawn in the element's
+own frame, fitted to its box — x from its back to its front, y from its right to its left, z up —
+and carried to the plan through the box's derived footprint, so every vertex lies inside the box.
+
+Each piece is a part of its own, keyed `extension:<id>:<piece>`, with `part.model = { kind, role,
+smooth? }`: the element's kind, what the piece is made of — one of `MODEL_ROLES`, each with its look
+in `ROLE_LOOKS` (porcelain, stainless, a counter's stone, a lamp's lens …) that the editor, the
+render, the path tracer and the glTF export all draw it with — and `smooth` for a round piece. A sink
+whose bowls lie inside a counter top at its height is set into it: the counter is cut for them.
+Round things are drawn from a written-out table of 24 cosines, never `Math.cos`, so Node and the
+browser mesh the same bytes. `meshDocument(doc, { models: false })` draws every element as its box.
 
 ## manifold-3d
 

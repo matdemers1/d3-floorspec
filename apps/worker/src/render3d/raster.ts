@@ -30,6 +30,8 @@ export interface DrawList {
    * a ceiling (2) over the underside of the floor above it, a floor (1) over the slab it sits on.
    */
   readonly bias: Uint8Array;
+  /** One per triangle, when present: drawn in its own colour, unshaded — a luminaire's lens. */
+  readonly unlit?: Uint8Array;
   readonly count: number;
 }
 
@@ -108,7 +110,7 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
     const n: Vec3 = [list.normals[3 * t]!, list.normals[3 * t + 1]!, list.normals[3 * t + 2]!];
     const lambert = Math.abs(dot(n, light));
     const sky = 0.5 + 0.5 * n[1];
-    const k = 0.34 + 0.14 * sky + 0.58 * lambert;
+    const k = list.unlit?.[t] === 1 ? 1 : 0.34 + 0.14 * sky + 0.58 * lambert;
     return [list.colors[3 * t]! * k, list.colors[3 * t + 1]! * k, list.colors[3 * t + 2]! * k];
   };
 

@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileS
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { evaluate, facingVector, OFFICIAL_READER } from '@floorspec/engine';
+import { MODEL_ROLES, ROLE_LOOKS } from '@floorspec/mesh';
 import { validateBytes } from 'gltf-validator';
 import { describe, expect, it } from 'vitest';
 import { assetDirImages, assetDirModels, buildScene, exportGltf, exportUsdz, linear, readGlb, readStoreZip, type ImageSource } from '../src/export/gltf/index.js';
@@ -311,6 +312,28 @@ describe('glTF export', () => {
     const oakReport = await validate(oak.bytes);
     expect(oakReport.errors, oakReport.messages.join('\n')).toBe(0);
     expect(oakReport.warnings, oakReport.messages.join('\n')).toBe(0);
+  });
+
+  it('colours a fixture model’s pieces by what each is made of, a lens emissive and glass see-through (FLR-T-12.21)', async () => {
+    const doc = load(here('../../../packages/mesh/test/fixtures/showcase.floorspec.json'));
+    const bytes = (await exportGltf(doc, VERSION)).bytes;
+    const glb = readGlb(bytes);
+    type Material = { pbrMetallicRoughness: { baseColorFactor: number[]; metallicFactor: number }; emissiveFactor?: number[]; alphaMode?: string; extras: { floorspec: Json } };
+    const byRole = new Map((glb.json['materials'] as Material[]).filter((m) => typeof m.extras.floorspec['role'] === 'string').map((m) => [m.extras.floorspec['role'] as string, m]));
+    expect([...byRole.keys()].sort()).toEqual([...MODEL_ROLES].sort());
+    for (const [role, m] of byRole) {
+      const look = ROLE_LOOKS[role as keyof typeof ROLE_LOOKS];
+      const [r, g, b] = linear(look.color);
+      expect(m.pbrMetallicRoughness.baseColorFactor.slice(0, 3).map((c) => c.toFixed(5)), role).toEqual([r, g, b].map((c) => c.toFixed(5)));
+      expect(m.pbrMetallicRoughness.metallicFactor, role).toBeCloseTo(look.metallic, 6);
+      expect(m.emissiveFactor !== undefined, role).toBe(look.emissive === true);
+      expect(m.alphaMode === 'BLEND', role).toBe(look.opacity !== undefined);
+    }
+    // The toilet is its tank, bowl, seat and the rest, under its one node.
+    const toilet = nodesOf(glb.json).find((n) => n.extras?.floorspec?.['id'] === 'S2' && n.mesh !== undefined)!;
+    expect(toilet.extras?.floorspec).toMatchObject({ kind: 'extension', extension: 'FS_plumbing', collection: 'fixtures' });
+    const v = await validate(bytes);
+    expect(v.errors, v.messages.join('\n')).toBe(0);
   });
 
   it('places an extension element’s fallback model by Core 12.6: its frame’s origin, turned by its facing alone', async () => {

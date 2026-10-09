@@ -1,4 +1,5 @@
 import { OFFICIAL_EXTENSIONS } from '@floorspec/engine';
+import { discriminant as memberOf } from '@floorspec/mesh';
 import type { UnitSystem } from '../units';
 
 /**
@@ -89,8 +90,9 @@ export const DEVICE_KINDS: readonly DeviceKind[] = [
   { id: 'evCharger', label: 'EV charger', aliases: ['ev', 'charger', 'evse'], system: 'electrical', extension: 'FS_electrical', collection: 'evChargers', mount: 'wall', box: box([0, -192_000, -256_000], [128_000, 192_000, 256_000]), height: h(48, 1200), members: { amps: 40, connector: 'j1772' }, symbol: 'ev' },
   // FS_plumbing
   { id: 'toilet', label: 'Toilet', aliases: ['water closet', 'wc'], system: 'plumbing', extension: 'FS_plumbing', collection: 'fixtures', mount: 'floorWall', box: box([0, -243_200, 0], [896_000, 243_200, 1_024_000]), members: { fixture: 'waterCloset', supply: ['cold'] }, symbol: 'toilet' },
-  { id: 'lavatory', label: 'Lavatory', aliases: ['basin', 'bathroom sink', 'vanity'], system: 'plumbing', extension: 'FS_plumbing', collection: 'fixtures', mount: 'wall', box: box([0, -320_000, -256_000], [640_000, 320_000, 0]), height: h(32, 800), members: { fixture: 'lavatory', supply: ['cold', 'hot'] }, symbol: 'basin' },
-  { id: 'kitchenSink', label: 'Kitchen sink', aliases: ['sink'], system: 'plumbing', extension: 'FS_plumbing', collection: 'fixtures', mount: 'wall', box: box([0, -416_000, -256_000], [704_000, 416_000, 0]), height: h(36, 900), members: { fixture: 'kitchenSink', supply: ['cold', 'hot'] }, symbol: 'basin' },
+  // A basin's frame is at its rim (its height); its box reaches above the rim for its tap.
+  { id: 'lavatory', label: 'Lavatory', aliases: ['basin', 'bathroom sink', 'vanity'], system: 'plumbing', extension: 'FS_plumbing', collection: 'fixtures', mount: 'wall', box: box([0, -320_000, -256_000], [640_000, 320_000, 192_000]), height: h(32, 800), members: { fixture: 'lavatory', supply: ['cold', 'hot'] }, symbol: 'basin' },
+  { id: 'kitchenSink', label: 'Kitchen sink', aliases: ['sink'], system: 'plumbing', extension: 'FS_plumbing', collection: 'fixtures', mount: 'wall', box: box([0, -416_000, -256_000], [704_000, 416_000, 384_000]), height: h(36, 900), members: { fixture: 'kitchenSink', supply: ['cold', 'hot'] }, symbol: 'basin' },
   { id: 'shower', label: 'Shower', aliases: [], system: 'plumbing', extension: 'FS_plumbing', collection: 'fixtures', mount: 'floorWall', box: box([0, -585_216, 0], [1_170_432, 585_216, 2_438_400]), members: { fixture: 'shower', supply: ['cold', 'hot'] }, symbol: 'shower' },
   { id: 'bathtub', label: 'Bathtub', aliases: ['tub', 'bath'], system: 'plumbing', extension: 'FS_plumbing', collection: 'fixtures', mount: 'floorWall', box: box([0, -975_360, 0], [975_360, 975_360, 650_240]), members: { fixture: 'bathtub', supply: ['cold', 'hot'] }, symbol: 'tub' },
   { id: 'waterHeater', label: 'Water heater', aliases: ['heater', 'hot water heater'], system: 'plumbing', extension: 'FS_plumbing', collection: 'waterHeaters', mount: 'floor', box: box([-358_400, -358_400, 0], [358_400, 358_400, 1_920_000]), members: { heater: 'storage', energy: 'electric' }, symbol: 'heater' },
@@ -139,13 +141,15 @@ type Json = Record<string, unknown>;
 
 /**
  * The catalogue kind an element is, read from its collection and the member that says what it is
- * (a fixture's `fixture`, equipment's `equipment` …) — or a generic one for the rest of its
- * collection; null for an element of an extension the editor does not know.
+ * (a fixture's `fixture`, equipment's `equipment` …: @floorspec/mesh's table, which the 3D models
+ * are chosen by too) — or a generic one for the rest of its collection; null for an element of an
+ * extension the editor does not know.
  */
 export function kindOfElement(extension: string, collection: string, element: Json): DeviceKind | null {
   const candidates = DEVICE_KINDS.filter((k) => k.extension === extension && k.collection === collection);
   if (candidates.length === 0) return null;
-  const discriminant = ['fixture', 'equipment', 'terminal', 'exhaust', 'appliance', 'media', 'headEnd'].find((m) => element[m] !== undefined);
+  const member = memberOf(extension, collection);
+  const discriminant = member !== undefined && element[member] !== undefined ? member : undefined;
   if (discriminant !== undefined) {
     const value = element[discriminant];
     const exact = candidates.find((k) => JSON.stringify(k.members[discriminant]) === JSON.stringify(value));

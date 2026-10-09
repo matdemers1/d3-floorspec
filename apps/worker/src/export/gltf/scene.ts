@@ -18,7 +18,7 @@
  * this exporter's choice and not the standard's.
  */
 import { deriveEvaluation, evaluate, extElements, facingVector, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
-import { loadMesher, surfaceGroups, UNITS_PER_METRE, type MeshPart, type Mesher, type PartKind } from '@floorspec/mesh';
+import { loadMesher, ROLE_LOOKS, surfaceGroups, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind } from '@floorspec/mesh';
 
 export type Vec3 = [number, number, number];
 export type Rgba = [number, number, number, number];
@@ -38,7 +38,7 @@ export interface SceneTexture {
 }
 
 export interface SceneMaterial {
-  /** `M:<material ID>` for the document's, `default:<what>` for the exporter's. */
+  /** `M:<material ID>` for the document's, `default:<what>` for the exporter's, `role:<role>` for a model's piece (FLR-T-12.21). */
   readonly key: string;
   readonly name: string;
   /** The document's material ID, for one of its own. */
@@ -54,6 +54,8 @@ export interface SceneMaterial {
   readonly declared: { readonly metallic?: number; readonly roughness?: number };
   /** Glass: drawn see-through. */
   readonly blend: boolean;
+  /** Linear RGB it is drawn as giving off: a luminaire's lens (FLR-T-12.21) — a look, not a light. */
+  readonly emissive?: readonly [number, number, number];
   readonly texture?: SceneTexture;
 }
 
@@ -69,6 +71,8 @@ export interface ScenePrimitive {
   /** glTF's convention (v runs down the image), present when the material has a texture. */
   readonly uvs: Float32Array | null;
   readonly indices: Uint32Array;
+  /** A model's round pieces (FLR-T-12.21): one curved surface, drawn without ink between its facets. */
+  readonly smooth?: true;
 }
 
 /** What a node's element is: the Floorspec collection it is in, singular. */
@@ -219,6 +223,27 @@ class Materials {
     });
   }
 
+  /** What a piece of an extension element's model is made of (FLR-T-12.21): the look the editor draws it with too. */
+  role(role: ModelRole): number {
+    const key = `role:${role}`;
+    const at = this.index.get(key);
+    if (at !== undefined) return at;
+    const look = ROLE_LOOKS[role];
+    const [r, g, b] = linear(look.color);
+    const opacity = look.opacity ?? 1;
+    return this.add({
+      key,
+      name: `Model ${role}`,
+      baseColor: [r, g, b, opacity],
+      color: look.color,
+      metallic: look.metallic,
+      roughness: look.roughness,
+      declared: {},
+      blend: opacity < 1,
+      ...(look.emissive === true ? { emissive: [r, g, b] as const } : {}),
+    });
+  }
+
   private own(id: string): number {
     const key = `M:${id}`;
     const at = this.index.get(key);
@@ -298,6 +323,7 @@ function boxProjection(n: Vec3): SurfaceST {
 interface Group {
   readonly material: number;
   readonly part: PartKind;
+  readonly smooth: boolean;
   /** z-up metres, nine per triangle. */
   readonly tris: number[];
   /** Base-unit surface coordinates, six per triangle, or null for an untextured material. */
@@ -311,12 +337,12 @@ class NodeBuilder {
   constructor(private readonly materials: Materials) {}
 
   /** Add a convex polygon (z-up metres) with the normal of the triangle it came from. */
-  add(part: PartKind, material: number, poly: readonly Vec3[], n: Vec3, st: SurfaceST): void {
-    const key = `${part}|${String(material)}`;
+  add(part: PartKind, material: number, poly: readonly Vec3[], n: Vec3, st: SurfaceST, smooth = false): void {
+    const key = `${part}|${String(material)}${smooth ? '|smooth' : ''}`;
     let g = this.groups.get(key);
     const textured = this.materials.list[material]!.texture !== undefined;
     if (g === undefined) {
-      g = { material, part, tris: [], st: textured ? [] : null, normals: [] };
+      g = { material, part, smooth, tris: [], st: textured ? [] : null, normals: [] };
       this.groups.set(key, g);
     }
     for (let i = 1; i + 1 < poly.length; i++) {
@@ -383,6 +409,7 @@ class NodeBuilder {
         normals: Float32Array.from(nor),
         uvs: tex === undefined ? null : Float32Array.from(uv),
         indices: Uint32Array.from(idx),
+        ...(g.smooth ? { smooth: true as const } : {}),
       });
     }
     return out;
@@ -680,8 +707,10 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
       default: {
         const fallback: DefaultName =
           part.kind === 'slab' ? 'slab' : part.kind === 'roof' ? 'roof' : part.kind === 'roofGable' ? 'gable' : part.kind === 'extension' ? 'extension' : 'stair';
-        const material = materials.of(part.kind === 'roofGable' ? undefined : part.material, fallback);
-        for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, boxProjection(n));
+        // A piece of a model takes its role's look; a fallback box the quiet default.
+        const material = part.model !== undefined ? materials.role(part.model.role) : materials.of(part.kind === 'roofGable' ? undefined : part.material, fallback);
+        const smooth = part.model?.smooth === true;
+        for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, boxProjection(n), smooth);
       }
     }
   }

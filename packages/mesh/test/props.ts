@@ -148,6 +148,26 @@ function positionsBox(mesh: PartMesh): Box3 {
 /** One metre's billionth, in base units: the double-precision tolerance. */
 const NANOMETRE = BU / 1e9;
 
+/**
+ * Every vertex of a mesh inside a convex footprint (counter-clockwise, base units) in plan: to the
+ * half unit a model's rounded points may move, and Float32's rounding of the output.
+ */
+function expectInside(mesh: PartMesh, origin: readonly number[], ring: readonly (readonly [number, number])[], label: string): void {
+  const P = mesh.positions;
+  for (let i = 0; i < P.length; i += 3) {
+    const x = P[i]! * BU + origin[0]!;
+    const y = P[i + 1]! * BU + origin[1]!;
+    const tol = 1 + 2 ** -22 * (Math.abs(P[i]!) + Math.abs(P[i + 1]!)) * BU;
+    for (let k = 0; k < ring.length; k++) {
+      const a = ring[k]!;
+      const b = ring[(k + 1) % ring.length]!;
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const side = ((b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0])) / len;
+      if (side < -tol) expect(side, `${label}: vertex ${String(i / 3)} outside its box's footprint`).toBeGreaterThanOrEqual(-tol);
+    }
+  }
+}
+
 function expectBoxNear(actual: Box3, expected: Box3, tol: number, label: string): void {
   for (const c of ['min', 'max'] as const)
     for (let k = 0; k < 3; k++) expect(Math.abs(actual[c][k]! - expected[c][k]!), `${label}: ${c}[${k}] ${actual[c][k]} vs ${expected[c][k]}`).toBeLessThanOrEqual(tol);
@@ -320,6 +340,11 @@ interface Expected {
   /** Only the plan extent and the bottom of `box` (a stair's pieces stop a riser below its top). */
   planBoxAndBottom?: Box3;
   genus?: number;
+  /**
+   * A piece of an extension element's model (FLR-T-12.21): no analytic volume, but the box it must
+   * stay inside — its fallback's footprint, bottom and top (12.6).
+   */
+  within?: { footprint: readonly (readonly [number, number])[]; bottom: number; top: number };
 }
 
 interface WallCut {
@@ -568,6 +593,7 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
     }
     case 'extension': {
       const f = own(d.fallbacks, p.id);
+      if (p.model !== undefined) return { within: f };
       return { volume6: prism6(ring2(f.footprint), f.top - f.bottom), box: planBox(f.footprint, f.bottom, f.top), genus: 0 };
     }
   }
@@ -618,7 +644,18 @@ export function checkHouse(kernel: Kernel, doc: FloorspecDocument, d: Derived, m
     if (exp.genus !== undefined) expect(topo.components, `${label}: one piece`).toBe(1);
 
     let analytic: number;
-    if (exp.volume6 !== undefined) {
+    if (exp.within !== undefined) {
+      // A model's piece: one solid, every vertex inside its element's box, its volume positive and
+      // at most the box's.
+      expect(topo.components, `${label}: one piece`).toBe(1);
+      expect(stats.exactVolume, `${label}: an exact part's volume is exact`).toBe(true);
+      const w = exp.within;
+      expect(p.bbox.min[2], `${label}: above the box's bottom`).toBeGreaterThanOrEqual(w.bottom);
+      expect(p.bbox.max[2], `${label}: below the box's top`).toBeLessThanOrEqual(w.top);
+      expectInside(p.mesh, mesh.origin, w.footprint, label);
+      analytic = stats.volume;
+      expect(BigInt(stats.volume6!), `${label}: no bigger than its box`).toBeLessThanOrEqual(prism6(iarea2(w.footprint.map(I)), w.top - w.bottom));
+    } else if (exp.volume6 !== undefined) {
       expect(stats.exactVolume, `${label}: an exact part's volume is exact`).toBe(true);
       const got = BigInt(stats.volume6!);
       if (exp.rel === undefined) expect(got, `${label}: exact volume`).toBe(exp.volume6);
@@ -629,7 +666,15 @@ export function checkHouse(kernel: Kernel, doc: FloorspecDocument, d: Derived, m
       expect(Math.abs(stats.volume - analytic) / analytic, `${label}: volume ${stats.volume} vs ${analytic}`).toBeLessThanOrEqual(1e-9);
     }
     expect(analytic, `${label}: positive volume`).toBeGreaterThan(0);
-    expect(Math.abs(im.volume - analytic / BU ** 3) / (analytic / BU ** 3), `${label}: Float32 volume`).toBeLessThanOrEqual(1e-4);
+    // A model's small piece (an outlet's slot) far from the origin: Float32's step is a larger share of it.
+    let f32 = 1e-4;
+    if (exp.within !== undefined) {
+      const pb2 = positionsBox(p.mesh);
+      const far = Math.max(...pb2.min.map(Math.abs), ...pb2.max.map(Math.abs));
+      const thin = Math.min(...[0, 1, 2].map((k) => pb2.max[k]! - pb2.min[k]!));
+      f32 += (6 * 2 ** -24 * far) / thin;
+    }
+    expect(Math.abs(im.volume - analytic / BU ** 3) / (analytic / BU ** 3), `${label}: Float32 volume`).toBeLessThanOrEqual(f32);
 
     if (p.kind === 'opening') {
       sum.openings++;

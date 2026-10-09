@@ -111,7 +111,7 @@ function buildParts(model: EditorModel, mesh: HouseMesh): Built[] {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-    if (look !== 'glass' && look !== 'pick') geometry.setAttribute('color', new THREE.BufferAttribute(faceColours(model, part, normals, walls), 3));
+    if (look !== 'pick' && (look !== 'glass' || part.model !== undefined)) geometry.setAttribute('color', new THREE.BufferAttribute(faceColours(model, part, normals, walls), 3));
     geometry.computeBoundingBox();
     geometry.computeBoundingSphere();
     return { part, geometry, look, triangles: positions.length / 9 };
@@ -558,12 +558,16 @@ function Parts({
     const ceiling = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
     const ceilingOn = new THREE.MeshLambertMaterial({ vertexColors: true, emissiveIntensity: 0.55, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
     const glass = new THREE.MeshLambertMaterial({ color: GLASS, transparent: true, opacity: 0.38, depthWrite: false });
+    // A model's glass (a shower's screen) in its own colour; a luminaire's lens unshaded, as if lit.
+    const modelGlass = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.38, depthWrite: false });
+    const lens = new THREE.MeshBasicMaterial({ vertexColors: true });
+    const lensOn = new THREE.MeshLambertMaterial({ vertexColors: true, emissiveIntensity: 0.55 });
     const glassOn = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.6, depthWrite: false });
     // A door's or an empty opening's cut: nothing drawn, still a target for the pointer.
     const pick = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
     const pickOn = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.4, depthWrite: false });
     const edges = new THREE.LineBasicMaterial({ depthTest: false, transparent: true, opacity: 0.95 });
-    return { solid, solidOn, floor, floorOn, ceiling, ceilingOn, glass, glassOn, pick, pickOn, edges };
+    return { solid, solidOn, floor, floorOn, ceiling, ceilingOn, glass, glassOn, modelGlass, lens, lensOn, pick, pickOn, edges };
   }, []);
   useEffect(() => () => { for (const m of Object.values(materials)) m.dispose(); }, [materials]);
   const invalidate = useThree((s) => s.invalidate);
@@ -571,6 +575,7 @@ function Parts({
     materials.solidOn.emissive.set(accent);
     materials.ceilingOn.emissive.set(accent);
     materials.floorOn.emissive.set(accent);
+    materials.lensOn.emissive.set(accent);
     materials.glassOn.color.set(accent);
     materials.pickOn.color.set(accent);
     materials.edges.color.set(accent);
@@ -584,7 +589,8 @@ function Parts({
   useEffect(() => { invalidate(); }, [visible, selection, invalidate]);
 
   const materialOf = (b: Built, on: boolean) => {
-    if (b.look === 'glass') return on ? materials.glassOn : materials.glass;
+    if (b.look === 'glass') return on ? materials.glassOn : b.part.model !== undefined ? materials.modelGlass : materials.glass;
+    if (b.look === 'lens') return on ? materials.lensOn : materials.lens;
     if (b.look === 'pick') return on ? materials.pickOn : materials.pick;
     if (b.look === 'ceiling') return on ? materials.ceilingOn : materials.ceiling;
     if (b.look === 'floor') return on ? materials.floorOn : materials.floor;

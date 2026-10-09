@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { flatShaded, loadMesher, type HouseMesh, type MeshPart } from '@floorspec/mesh';
+import { flatShaded, loadMesher, ROLE_LOOKS, type HouseMesh, type MeshPart } from '@floorspec/mesh';
 import { readModel, type EditorModel } from '../src/editor/model';
 import { basisOf, eyeOf, fitOrbit, orbitBy, panBy, presetOf, PRESETS, zoomBy, type Orbit } from '../src/editor/three/camera';
 import { describeScene, elementOfPart, faceColours, isVisible, levelOrder, linear, lookOf, partsOfElement } from '../src/editor/three/parts';
@@ -140,6 +140,26 @@ describe('parts in the 3D view', () => {
     const floor = mesh.parts.find((p) => p.kind === 'floor' && p.id === 'KIT') as MeshPart;
     const tile = faceColours(model, floor, flatShaded(floor.mesh).normals, walls);
     expect([...tile.slice(0, 3)].map((v) => v.toFixed(6))).toEqual(linear('#cfd3da').map((v) => v.toFixed(6)));
+  });
+
+  it('draws a fixture model’s pieces in their roles’ colours: glass see-through, a lens lit (FLR-T-12.21)', async () => {
+    const showcase = readModel('showcase', readFileSync(new URL('../../../packages/mesh/test/fixtures/showcase.floorspec.json', import.meta.url), 'utf8'));
+    expect(showcase.valid).toBe(true);
+    const m = (await loadMesher()).meshDerived(showcase.document, showcase.derived!);
+    const walls = new Map(showcase.levels.flatMap((l) => l.walls.map((w) => [w.id, w] as const)));
+    const looks = new Map<string, Set<string>>();
+    for (const p of m.parts.filter((q) => q.model !== undefined)) {
+      const role = p.model!.role;
+      looks.set(role, new Set([...(looks.get(role) ?? []), lookOf(p)]));
+      const c = faceColours(showcase, p, flatShaded(p.mesh).normals, walls);
+      expect([...c.slice(0, 3)].map((v) => v.toFixed(5)), p.key).toEqual(linear(ROLE_LOOKS[role].color).map((v) => v.toFixed(5)));
+    }
+    expect(looks.get('glass')).toEqual(new Set(['glass']));
+    expect(looks.get('lens')).toEqual(new Set(['lens']));
+    expect(looks.get('porcelain')).toEqual(new Set(['solid']));
+    // A toilet selects as one element, whichever of its pieces is clicked.
+    expect(new Set(partsOfElement(m.parts, 'S2').map((p) => elementOfPart(p)))).toEqual(new Set(['S2']));
+    expect(partsOfElement(m.parts, 'S2').length).toBeGreaterThan(4);
   });
 });
 

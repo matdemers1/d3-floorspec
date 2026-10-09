@@ -1,4 +1,4 @@
-import type { MeshPart, PartKind } from '@floorspec/mesh';
+import { ROLE_LOOKS, type MeshPart, type PartKind } from '@floorspec/mesh';
 import type { EditorModel, WallView } from '../model';
 
 /**
@@ -20,16 +20,17 @@ export function partsOfElement<T extends Pick<MeshPart, 'id'>>(parts: readonly T
   return id === null ? [] : parts.filter((p) => p.id === id);
 }
 
-export type Look = 'solid' | 'floor' | 'ceiling' | 'glass' | 'pick';
+export type Look = 'solid' | 'floor' | 'ceiling' | 'glass' | 'pick' | 'lens';
 
 /**
  * How a part is drawn: opaque; a floor or a ceiling — opaque, and drawn in front of what shares
  * its plane (a wall running floor to floor ends at the top of the floor above; a ceiling at the
  * level's floor-to-floor height meets that floor's underside), a doorway's threshold as the floor
- * it continues; as glass (a window); or not at all but still clickable (a door's or an empty
- * opening's cut).
+ * it continues; as glass (a window, a shower's screen); as a lit lens (a luminaire's, FLR-T-12.21);
+ * or not at all but still clickable (a door's or an empty opening's cut).
  */
-export function lookOf(part: Pick<MeshPart, 'kind' | 'opening'>): Look {
+export function lookOf(part: Pick<MeshPart, 'kind' | 'opening' | 'model'>): Look {
+  if (part.model !== undefined) return ROLE_LOOKS[part.model.role].opacity !== undefined ? 'glass' : ROLE_LOOKS[part.model.role].emissive === true ? 'lens' : 'solid';
   if (part.kind === 'ceiling') return 'ceiling';
   if (part.kind === 'floor' || part.kind === 'slab' || part.kind === 'threshold') return 'floor';
   if (part.kind !== 'opening') return 'solid';
@@ -167,7 +168,8 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
     case 'threshold':
       return one(materialColour(model, rooms?.[part.threshold?.room ?? '']?.['floorFinish'] as string | undefined) ?? DEFAULTS.floor);
     case 'extension':
-      return one(DEFAULTS.extension);
+      // A model's piece in its role's colour (FLR-T-12.21), the worker's render and export alike.
+      return one(part.model === undefined ? DEFAULTS.extension : ROLE_LOOKS[part.model.role].color);
     case 'opening':
       return one(DEFAULTS.interior);
   }
