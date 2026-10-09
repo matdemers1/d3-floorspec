@@ -86,6 +86,28 @@ describe('proposing for a house with no electrical yet', () => {
     expect(p.name).toMatch(/^Electrical layout: /);
   });
 
+  it('keeps the panel clear of doors and windows: a wall runs on under a window, a panel does not (FLR-T-12.19)', () => {
+    type Doc = { openings?: Record<string, Record<string, unknown>>; types?: Record<string, { width?: number }> };
+    const panelHost = (prop: ReturnType<typeof proposeElectrical>) => {
+      const op = prop.batch.find((o) => (o as { collection?: string }).collection === 'panels') as unknown as { host: { wall: string; at: number } };
+      return op.host;
+    };
+    const doc = JSON.parse(HOUSE) as Doc;
+    const first = panelHost(proposeElectrical(doc));
+    // A 4' window centred where the panel went: the panel must move off it, 6" clear.
+    const w = 4 * 390_144;
+    doc.openings = { ...(doc.openings ?? {}), OW: { wall: first.wall, offset: first.at - w / 2, fill: 'W4848', width: w } };
+    const moved = panelHost(proposeElectrical(doc));
+    const half = 260_096;
+    const types = doc.types ?? {};
+    for (const o of Object.values(doc.openings)) {
+      if (o['wall'] !== moved.wall) continue;
+      const from = o['offset'] as number;
+      const to = from + ((o['width'] as number | undefined) ?? types[o['fill'] as string]?.width ?? 0);
+      expect(moved.at + half <= from - 195_072 || moved.at - half >= to + 195_072, `panel at ${String(moved.at)} on ${moved.wall} clear of ${String(from)}–${String(to)}`).toBe(true);
+    }
+  });
+
   it('leaves the loads unfed, and says so, when told not to place a panel', () => {
     const bare = proposeElectrical(HOUSE, { include: { panel: false } });
     expect(bare.circuits).toEqual([]);
