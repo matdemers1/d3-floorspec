@@ -48,7 +48,9 @@ renderPlan(doc, { reader: { extensions: ['FS_electrical'], knownExtensions } });
   their kind's outline — a bed with pillows, a sofa with back and arms, tables, chairs, a counter
   line on cabinets, burners, a toilet's tank and bowl, basins, a tub, a shower and its drain — and
   any other element as its fallback box. Room labels keep clear of them. `doorSymbol` and
-  `fixtureSymbol` (`plansymbols.ts`) are the geometry the worker's PDF and DXF drawings draw too.
+  `fixtureSymbol` (`plansymbols.ts`) are the geometry the worker's PDF and DXF drawings and the
+  editor's plan canvas (FLR-T-12.27) draw too; `boxFrame` and `categoryOf` give them an element's
+  box and kind as the scene reads them.
 - **Wall poché is one body:** an outline layer under a fill layer, so wall pieces and junction fills
   join without seams. Openings are cut through one mask, and the floor runs through them.
 - **Stairs and roofs (Core 0.3):** a stair is drawn on the level it rises from — its treads and

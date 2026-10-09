@@ -14,6 +14,7 @@ import {
   type DerivedStair,
   type Design,
   type Diagnostic,
+  type DoorOperation,
   type FloorspecDocument,
 } from '@floorspec/engine';
 import { newelOutline, type NewelSource } from '@floorspec/render2d';
@@ -115,6 +116,8 @@ export interface OpeningView {
   width: number;
   hinge: 'start' | 'end';
   swing: 'left' | 'right';
+  /** A door's fill type's operation (Core 8.4), when it declares one: how its plan symbol is drawn. */
+  operation?: DoorOperation;
 }
 
 export interface RoomView {
@@ -487,6 +490,7 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
       width: openingWidth(document, o) ?? 0,
       hinge: o['hinge'] === 'end' ? 'end' : 'start',
       swing: o['swing'] === 'left' ? 'left' : 'right',
+      ...(kind === 'door' && typeof fill?.['operation'] === 'string' ? { operation: fill['operation'] as DoorOperation } : {}),
     });
   }
   for (const [id, r] of entriesOf(document.rooms)) {

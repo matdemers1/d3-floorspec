@@ -360,8 +360,11 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
 type Json = Record<string, unknown>;
 const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-/** What an extension element is, in its extension's own term: FS_furniture's `category`, FS_plumbing's `fixture`, `heater` or `receptor`. */
-function categoryOf(element: Json): string | undefined {
+/**
+ * What an extension element is, in its extension's own term: FS_furniture's `category`, FS_plumbing's
+ * `fixture`, `heater` or `receptor`. Exported so the editor's canvas reads an element as the scene does.
+ */
+export function categoryOf(element: Json): string | undefined {
   for (const k of ['category', 'fixture', 'heater', 'receptor']) if (typeof element[k] === 'string') return element[k];
   return undefined;
 }
@@ -380,9 +383,10 @@ function symbolOf(doc: FloorspecDocument, element: Json): SceneFallback['symbol'
 /**
  * An element's box in plan, corner by corner: its frame (Core 13.1) — its placement, else its level's
  * — maps the box's corners, and each is snapped to the footprint vertex the engine derived for it,
- * so the corners drawn are the engine's own points and only their order is worked out here.
+ * so the corners drawn are the engine's own points and only their order is worked out here. Exported
+ * so the editor's canvas puts a symbol on the same box (FLR-T-12.27).
  */
-function boxFrame(element: Json, footprint: readonly Pt[], placement: { readonly point: readonly number[]; readonly facing: number } | undefined): BoxFrame | undefined {
+export function boxFrame(element: Json, footprint: readonly Pt[], placement: { readonly point: readonly number[]; readonly facing: number } | undefined): BoxFrame | undefined {
   const fb = element['fallback'];
   const box = isObject(fb) ? fb['box'] : undefined;
   if (!isObject(box) || !Array.isArray(box['min']) || !Array.isArray(box['max']) || footprint.length !== 4) return undefined;

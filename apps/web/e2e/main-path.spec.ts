@@ -170,10 +170,27 @@ test('setup to a compared undo: draw a room by hand, accept an agent’s proposa
   const typesRow = tree.getByRole('treeitem', { name: /^Types/ });
   if ((await typesRow.getAttribute('aria-expanded')) === 'false') await typesRow.click();
   await tree.getByRole('treeitem', { name: new RegExp(doc.types?.[doorType]?.name ?? doorType) }).click();
+  // FLR-T-12.27: the plan draws the door by its operation, from render2d's symbols — one leaf and its
+  // swing; a pair's two leaves and swings; a pocket door's leaf, and its pocket dashed in the wall.
+  const door = svg.locator(`.fs-plan2:not(.fs-plan2--ghost) [data-opening="${doorId}"]`);
+  await expect(door).toHaveAttribute('data-operation', 'swing');
+  await expect(door.locator('.fs-plan2__leaf')).toHaveCount(1);
+  await expect(door.locator('.fs-plan2__swing')).toHaveCount(1);
+  await inspector.getByRole('combobox', { name: 'Operation' }).click();
+  await page.getByRole('option', { name: 'Pair, swinging', exact: true }).click();
+  await expect.poll(async () => (await modelOf(page, project)).types?.[doorType]?.operation).toBe('doubleSwing');
+  await settled(page);
+  await expect(door).toHaveAttribute('data-operation', 'doubleSwing');
+  await expect(door.locator('.fs-plan2__leaf')).toHaveCount(2);
+  await expect(door.locator('.fs-plan2__swing')).toHaveCount(2);
   await inspector.getByRole('combobox', { name: 'Operation' }).click();
   await page.getByRole('option', { name: 'Pocket', exact: true }).click();
   await expect.poll(async () => (await modelOf(page, project)).types?.[doorType]?.operation).toBe('pocket');
   await settled(page);
+  await expect(door).toHaveAttribute('data-operation', 'pocket');
+  await expect(door.locator('.fs-plan2__leaf')).toHaveCount(1);
+  await expect(door.locator('.fs-plan2__inwall')).toHaveCount(2);
+  await expect(door.locator('.fs-plan2__swing')).toHaveCount(0);
   await inspector.getByRole('textbox', { name: 'Clear width' }).fill('2\' 7"');
   await inspector.getByRole('textbox', { name: 'Clear width' }).press('Enter');
   await expect(inspector.getByText('Type the clear height too: a clear opening has both')).toBeVisible();

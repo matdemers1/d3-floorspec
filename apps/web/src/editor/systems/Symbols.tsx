@@ -8,6 +8,7 @@ import { anchorOf, facingVector, recordsOf, type DeviceView } from './view';
 import { angleOf, type DeviceHover } from './placement';
 import { membersFor, systemOfExtension, type DeviceKind, type ReceptacleOptions } from './catalog';
 import { compareIds } from './view';
+import { FIXTURE_CLASS, fixtureParts, SymbolParts } from '../plansymbols';
 
 /**
  * The building systems on the plan (FLR-T-5.7): each device as its symbol — a receptacle's circle
@@ -99,8 +100,21 @@ function Glyph({ view, d, className }: { view: Viewport; d: DeviceView; classNam
   return <g className={className}>{parts}</g>;
 }
 
-/** A device drawn by its outline, with the detail its kind has in plan. */
+/**
+ * A device drawn by its outline, with the detail its kind has in plan: a plumbing fixture as render2d
+ * draws it (FLR-T-12.27) — a toilet's tank and bowl, a basin and its drain, a tub, a shower's fall to
+ * its drain — in its system's tone; anything render2d has no outline for, as below.
+ */
 function Outlined({ view, d, className }: { view: Viewport; d: DeviceView; className: string }) {
+  const fixture = d.extension === 'FS_plumbing' ? fixtureParts(d) : null;
+  if (fixture !== null) {
+    return (
+      <g className={className} data-fixture={d.id}>
+        <polygon className="fs-sym__pad" points={pts(view, d.footprint)} />
+        <SymbolParts view={view} parts={fixture} classes={FIXTURE_CLASS} />
+      </g>
+    );
+  }
   const b = boxOf(d);
   const at = frameOf(d);
   const symbol = d.kind?.symbol;

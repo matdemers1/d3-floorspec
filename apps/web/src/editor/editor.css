@@ -840,13 +840,30 @@
   stroke: var(--color-info);
   stroke-width: 1;
 }
+/* Doors by operation (FLR-T-12.27, render2d's plansymbols): a leaf or a sliding panel, its swing, a
+   door above the cut (an overhead door, a barn door's open position) dashed, and a pocket and the
+   leaf in it dashed in the floor's colour over the wall's poché. */
 .fs-plan2__leaf {
+  fill: none;
   stroke: var(--color-fg-faint);
   stroke-width: 1.5;
+  stroke-linecap: round;
 }
 .fs-plan2__swing {
   fill: none;
   stroke: var(--color-fg-faint);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+.fs-plan2__hidden {
+  fill: none;
+  stroke: var(--color-fg-faint);
+  stroke-width: 1.25;
+  stroke-dasharray: 5 3;
+}
+.fs-plan2__inwall {
+  fill: none;
+  stroke: var(--color-surface-card);
   stroke-width: 1;
   stroke-dasharray: 3 2;
 }
@@ -1784,6 +1801,34 @@ line.fs-diff {
 .fs-sym--ghost {
   opacity: 0.6;
   stroke-dasharray: 3 2;
+}
+/* Furniture and plumbing outlines (FLR-T-12.27, render2d's plansymbols): a plumbing fixture's lines
+   take its system's tone from .fs-sym; furniture's are the plan's muted and faint ink. */
+.fs-sym__pad {
+  stroke: none;
+}
+.fs-fixture__outline,
+.fs-fixture__detail,
+.fs-fixture__hidden {
+  fill: none;
+  stroke-linejoin: round;
+}
+.fs-fixture__outline {
+  stroke-width: 1.25;
+}
+.fs-fixture__detail {
+  stroke-width: 0.75;
+}
+.fs-fixture__hidden {
+  stroke-width: 1.25;
+  stroke-dasharray: 5 3;
+}
+.fs-furn-item .fs-fixture__outline,
+.fs-furn-item .fs-fixture__hidden {
+  stroke: var(--color-fg-muted);
+}
+.fs-furn-item .fs-fixture__detail {
+  stroke: var(--color-fg-faint);
 }
 .fs-sym--bad {
   stroke: var(--color-danger);
