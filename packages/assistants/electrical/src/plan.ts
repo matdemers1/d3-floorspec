@@ -33,6 +33,17 @@ export interface Entry {
   hinge: 'start' | 'end' | null;
 }
 
+/** A stretch of a wall face with a counter along it: FS_furniture casework set against the face. */
+export interface CounterSpan {
+  wall: string;
+  side: 'left' | 'right';
+  /** Offsets along the wall's location line, from < to. */
+  from: number;
+  to: number;
+  /** The casework element. */
+  casework: string;
+}
+
 export interface RoomPlan {
   id: string;
   name: string;
@@ -44,6 +55,10 @@ export interface RoomPlan {
   centre: Point | null;
   /** FS_electrical's elements in the room, as it derives them (FS_electrical 6.1). */
   devices: string[];
+  /** The stretches of its wall faces with counter casework along them (FLR-T-12.26), by wall, side and offset. */
+  counters: CounterSpan[];
+  /** Whether it has counter casework at all — along a wall or not, an island say: when it does, only the spans above are counters. */
+  hasCounters: boolean;
 }
 
 export interface PlanReading {
@@ -89,13 +104,27 @@ function subtract(from: number, to: number, cuts: readonly (readonly [number, nu
   return parts;
 }
 
+/** How near a face casework stands to count as along it: 2". */
+const COUNTER_REACH = 65_024;
+
+/** How far P is from a wall face's line, into the room (negative: behind the face), rounded toward zero. */
+function intoRoom(p: Point, f: Point, d: Point, len: bigint, side: 'left' | 'right'): number {
+  // The room is to the left of the location line walked start to end for the left face (Core 13.3).
+  const cross = BigInt(d[0]) * BigInt(p[1] - f[1]) - BigInt(d[1]) * BigInt(p[0] - f[0]);
+  return Number((side === 'left' ? cross : -cross) / len);
+}
+
+const centroid = (ps: readonly Point[]): Point => [Math.round(ps.reduce((a, p) => a + p[0], 0) / ps.length), Math.round(ps.reduce((a, p) => a + p[1], 0) / ps.length)];
+
+function insideRoom(p: Point, outer: readonly Point[], holes: readonly (readonly Point[])[]): boolean {
+  const q: [bigint, bigint] = [BigInt(p[0]), BigInt(p[1])];
+  const ring = (r: readonly Point[]) => r.map(([x, y]) => [BigInt(x), BigInt(y)] as [bigint, bigint]);
+  return predicates.locate(q, ring(outer)) === 'inside' && holes.every((h) => predicates.locate(q, ring(h)) === 'outside');
+}
+
 /** A point strictly inside a room polygon: its centroid on the grid if that is inside, else a grid search. */
 function centreOf(outer: readonly Point[], holes: readonly (readonly Point[])[], grid: number): Point | null {
-  const inside = (p: Point) => {
-    const q: [bigint, bigint] = [BigInt(p[0]), BigInt(p[1])];
-    const ring = (r: readonly Point[]) => r.map(([x, y]) => [BigInt(x), BigInt(y)] as [bigint, bigint]);
-    return predicates.locate(q, ring(outer)) === 'inside' && holes.every((h) => predicates.locate(q, ring(h)) === 'outside');
-  };
+  const inside = (p: Point) => insideRoom(p, outer, holes);
   let a = 0n;
   let cx = 0n;
   let cy = 0n;
@@ -125,7 +154,10 @@ function centreOf(outer: readonly Point[], holes: readonly (readonly Point[])[],
 }
 
 /** Read a plan: valid under the official extensions, or a PlanError that says why not. */
-export function readPlan(input: string | Uint8Array | FloorspecDocument | object, options: { level?: string | undefined; rooms?: readonly string[] | undefined; grid: number }): PlanReading {
+export function readPlan(
+  input: string | Uint8Array | FloorspecDocument | object,
+  options: { level?: string | undefined; rooms?: readonly string[] | undefined; grid: number; counterCategories?: readonly string[] | undefined },
+): PlanReading {
   const evaluation = evaluate(input, OFFICIAL_READER);
   if (!evaluation.valid || evaluation.view === undefined || evaluation.analysis === undefined) {
     const codes = [...new Set(evaluation.diagnostics.filter((d) => d.severity === 'error').map((d) => d.code))];
@@ -151,6 +183,17 @@ export function readPlan(input: string | Uint8Array | FloorspecDocument | object
     onFace.set(key, [...(onFace.get(key) ?? []), { id: x.id, offset: h.offset }]);
   }
 
+  // Counter casework (FS_furniture 2.4): its footprint as derived (Core 13.2), by level.
+  const categories = options.counterCategories ?? [];
+  const casework: { id: string; level: string; footprint: readonly Point[] }[] = [];
+  for (const x of extElements(doc)) {
+    if (x.extension !== 'FS_furniture' || x.collection !== 'casework') continue;
+    const category = (x.element as unknown as Json)['category'];
+    const fb = derived.fallbacks?.[x.id];
+    if (typeof category !== 'string' || !categories.includes(category) || fb === undefined) continue;
+    casework.push({ id: x.id, level: fb.level, footprint: fb.footprint });
+  }
+
   const rooms: RoomPlan[] = [];
   const roomIds = Object.keys(doc.rooms ?? {}).sort(cmp);
   for (const rid of roomIds) {
@@ -173,6 +216,8 @@ export function readPlan(input: string | Uint8Array | FloorspecDocument | object
         if (e.kind === 'separator') for (const j of [e.start, e.end]) if (!open.has(j)) open.set(j, e.id);
       }
     const openEntries: Entry[] = [];
+    const counters: CounterSpan[] = [];
+    const mine = casework.filter((c) => c.level === room.level);
     for (const cycle of [f.outer, ...f.inner]) {
       for (const h of cycle.halfEdges) {
         const e = g.edges[h >> 1]!;
@@ -201,6 +246,15 @@ export function readPlan(input: string | Uint8Array | FloorspecDocument | object
           cuts.push([o.offset, o.offset + width]);
           entries.push({ room: rid, opening: oid, wall: e.id, side, from: o.offset, to: o.offset + width, hinge: fill?.kind === 'doorType' ? (o.hinge ?? 'start') : null });
         }
+        // Casework against this face: a corner of it within COUNTER_REACH of the face, none behind it.
+        for (const c of mine) {
+          const into = c.footprint.map((p) => intoRoom(p, fa, d, len, side));
+          if (Math.min(...into) > COUNTER_REACH || Math.min(...into) < -COUNTER_REACH) continue;
+          const along = c.footprint.map((p) => clamp(offsetAlong(p, s, d, len)));
+          const from = Math.max(Math.min(...along), Math.min(a, b));
+          const to = Math.min(Math.max(...along), Math.max(a, b));
+          if (to > from) counters.push({ wall: e.id, side, from, to, casework: c.id });
+        }
         const parts = subtract(Math.min(a, b), Math.max(a, b), cuts);
         for (const [x, y] of parts) runs.push({ room: rid, wall: e.id, side, from: x, to: y });
         const first = parts[0];
@@ -225,6 +279,8 @@ export function readPlan(input: string | Uint8Array | FloorspecDocument | object
       entries,
       centre: centreOf(polygon.outer, polygon.holes, options.grid),
       devices: electricalRooms[rid] ?? [],
+      counters: counters.sort((x, y) => cmp(x.wall, y.wall) || cmp(x.side, y.side) || x.from - y.from || cmp(x.casework, y.casework)),
+      hasCounters: counters.length > 0 || mine.some((c) => insideRoom(centroid(c.footprint), polygon.outer, polygon.holes)),
     });
   }
   return { document: doc, evaluation, derived, rooms, receptaclesOn: (wall, side) => [...(onFace.get(`${wall}/${side}`) ?? [])].sort((a, b) => a.offset - b.offset || cmp(a.id, b.id)) };

@@ -77,10 +77,15 @@ export interface WallDeviceSummary {
   readonly kind: string;
   /** Along the wall's location line from its start junction. */
   readonly offset: Length;
-  /** Above the wall's base. */
+  /** Its centre (its frame's origin) above the wall's base. */
   readonly height: Length;
   /** FS_electrical circuits that list it as a load. */
   readonly circuits?: readonly string[];
+  /**
+   * An opening it sits in the span of, or within 6" of, that comes down near it (FLR-T-12.26): a door
+   * or cased opening, or a window whose sill is below the device's top plus 6". Absent when clear.
+   */
+  readonly inOpening?: { readonly id: string; readonly kind: 'door' | 'window' | 'opening'; readonly sill?: Length };
 }
 
 /** A device on a room's floor or ceiling. */
@@ -363,6 +368,8 @@ type IPoint = readonly [bigint, bigint];
 type Analysis = NonNullable<Evaluation['analysis']>;
 
 const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+/** 6", in base units: how near an opening a wall device is reported as in its way (FLR-T-12.26). */
+const SIX_INCHES = 195_072;
 
 function entries<T>(c: Readonly<Record<string, T | undefined>> | undefined): [string, T][] {
   if (!c) return [];
@@ -440,7 +447,7 @@ class LevelTopology {
   private readonly faceNeighbour = new Map<number, Neighbour>();
   readonly unanchoredFaces: { index: number; face: number }[] = [];
   /** Wall-face devices by wall, and the circuits each load is on. */
-  private readonly wallDevices = new Map<string, { side: 'left' | 'right'; summary: WallDeviceSummary }[]>();
+  private readonly wallDevices = new Map<string, { side: 'left' | 'right'; summary: WallDeviceSummary; top: number }[]>();
 
   constructor(
     readonly doc: FloorspecDocument,
@@ -481,7 +488,8 @@ class LevelTopology {
         height: length(BigInt(h.height)),
         ...(on && { circuits: on }),
       };
-      this.wallDevices.set(h.wall, [...(this.wallDevices.get(h.wall) ?? []), { side: h.side, summary }]);
+      const top = h.height + x.element.fallback.box.max[2];
+      this.wallDevices.set(h.wall, [...(this.wallDevices.get(h.wall) ?? []), { side: h.side, summary, top }]);
     }
     graph.faces.forEach((_, i) => {
       const rid = roomOfFace.get(i);
@@ -535,9 +543,17 @@ class LevelTopology {
     const offsets = this.analysis.offsets.get(e.id);
     // The space described is on h's left: the wall's left face when h runs the wall's way.
     const face: 'left' | 'right' = ((h & 1) === 0) === (e.start === w.start) ? 'left' : 'right';
+    const openings = this.openingsOn(e.id);
     const devices = (this.wallDevices.get(e.id) ?? [])
       .filter((d) => d.side === face)
-      .map((d) => d.summary)
+      .map((d) => {
+        // An opening that comes down near it, its span within 6" of the device's centre (FLR-T-12.26).
+        const at = d.summary.offset.baseUnits;
+        const o = openings.find(
+          (x) => at > x.offset.baseUnits - SIX_INCHES && at < x.offset.baseUnits + x.width.baseUnits + SIX_INCHES && (x.kind !== 'window' || (x.sill?.baseUnits ?? 0) < d.top + SIX_INCHES),
+        );
+        return o === undefined ? d.summary : { ...d.summary, inOpening: { id: o.id, kind: o.kind, ...(o.sill !== undefined && { sill: o.sill }) } };
+      })
       .sort((a, b) => a.offset.baseUnits - b.offset.baseUnits || cmp(a.id, b.id));
     return {
       kind: 'wall',
@@ -548,7 +564,7 @@ class LevelTopology {
       ...(w.type !== undefined && !w.layers && { type: { id: w.type, ...(type?.name !== undefined && { name: type.name }) } }),
       ...(offsets && { thickness: length(offsets.thickness) }),
       otherSide: neighbour,
-      openings: this.openingsOn(e.id),
+      openings,
       ...(devices.length > 0 && { devices }),
     };
   }

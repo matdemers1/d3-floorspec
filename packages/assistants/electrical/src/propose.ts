@@ -104,12 +104,35 @@ export function runGaps(run: WallRun, existing: readonly number[], spacing: numb
 /**
  * Where new receptacles go on a run so that every point of it is within half the spacing of one:
  * greedily, each as far along as it may be, on the grid, kept the end clearance from corners and doors.
+ * `allowed`, when given, is where a receptacle may go (FLR-T-12.26): the run's stretches clear of
+ * the windows it would sit under. One that would land in a window's span slides back along the wall
+ * to the stretch before it when that still covers the point it is for, else on to the stretch after
+ * it — never dropped, so the spacing holds wherever the wall leaves room.
  */
-export function fillRun(run: WallRun, existing: readonly number[], spacing: number, d: ElectricalDefaults): number[] {
+export function fillRun(run: WallRun, existing: readonly number[], spacing: number, d: ElectricalDefaults, allowed?: readonly (readonly [number, number])[]): number[] {
   const half = Math.floor(spacing / 2);
   const lo = run.from + d.endClearance;
   const hi = run.to - d.endClearance;
-  if (hi < lo) return [];
+  const spots = (allowed ?? (hi < lo ? [] : [[lo, hi] as const])).filter(([a, b]) => b >= a).sort((x, y) => x[0] - y[0]);
+  if (spots.length === 0) return [];
+  // The furthest place at or before t, on the grid where its stretch has a grid point there.
+  const before = (t: number): number | null => {
+    for (let i = spots.length - 1; i >= 0; i--) {
+      const [a, b] = spots[i]!;
+      if (a <= t) return Math.max(a, Math.floor(Math.min(b, t) / d.grid) * d.grid);
+    }
+    return null;
+  };
+  // The nearest place at or after t.
+  const after = (t: number): number | null => {
+    for (const [a, b] of spots) {
+      if (b < t) continue;
+      const v = Math.max(a, t);
+      const g = Math.ceil(v / d.grid) * d.grid;
+      return g <= b ? g : v;
+    }
+    return null;
+  };
   const have = existing.filter((p) => p >= run.from && p <= run.to).sort((a, b) => a - b);
   const placed: number[] = [];
   let cur = run.from;
@@ -120,20 +143,96 @@ export function fillRun(run: WallRun, existing: readonly number[], spacing: numb
       cur = Math.max(...covering) + half + 1;
       continue;
     }
-    let q = Math.min(cur + half, hi);
-    q = Math.max(lo, Math.floor(q / d.grid) * d.grid);
-    if (q > hi) q = hi;
-    if (q + half < cur) break;
-    placed.push(q);
-    cur = q + half + 1;
+    const q = before(cur + half);
+    if (q !== null && q + half >= cur) {
+      placed.push(q);
+      cur = q + half + 1;
+      continue;
+    }
+    // Nowhere within reach of cur — under a wide window, or short of the run's first clear stretch:
+    // go on to the first point the next stretch can cover, and cover it from there.
+    const next = after(cur);
+    if (next === null) break;
+    cur = next - half;
   }
   return placed;
+}
+
+/** A plate's top above its centre (PLATE's z extent). */
+const PLATE_TOP = 76_800;
+
+/** An opening in a wall: its span along the wall, the sill it comes down to, and whether it is a door. */
+interface Hole {
+  id: string;
+  kind: 'door' | 'window' | 'opening';
+  from: number;
+  to: number;
+  sill: number;
+}
+
+/** The openings in a wall (Core 7.2: own width and sill, else its fill's): a door or a cased opening comes down to the floor. */
+function holesIn(doc: FloorspecDocument, wall: string): Hole[] {
+  const types = (doc.types ?? {}) as Record<string, { kind?: string; width?: number; sill?: number } | undefined>;
+  return Object.entries((doc.openings ?? {}) as Record<string, { wall?: string; offset?: number; width?: number; sill?: number; fill?: string } | undefined>)
+    .flatMap(([id, o]) => {
+      if (o?.wall !== wall || typeof o.offset !== 'number') return [];
+      const t = o.fill === undefined ? undefined : types[o.fill];
+      const kind: Hole['kind'] = t?.kind === 'windowType' ? 'window' : t?.kind === 'doorType' ? 'door' : 'opening';
+      const width = o.width ?? (t?.kind === 'wallType' ? undefined : t?.width) ?? 0;
+      return [{ id, kind, from: o.offset, to: o.offset + width, sill: kind === 'window' ? (o.sill ?? t?.sill ?? 0) : 0 }];
+    })
+    .sort((a, b) => a.from - b.from || cmp(a.id, b.id));
+}
+
+/** Whether an opening keeps a device whose centre is at `height` out of its span: a door always; a window when its sill is below the device's top plus the sill clearance. */
+const keepsOut = (h: Hole, height: number, d: ElectricalDefaults): boolean => h.kind !== 'window' || h.sill < height + PLATE_TOP + d.sillClearance;
+
+/** [from, to] less the cuts, ends and all, as closed stretches. */
+function less(from: number, to: number, cuts: readonly (readonly [number, number])[]): [number, number][] {
+  let parts: [number, number][] = to >= from ? [[from, to]] : [];
+  for (const [a, b] of cuts) {
+    const next: [number, number][] = [];
+    for (const [x, y] of parts) {
+      if (b < x || a > y) next.push([x, y]);
+      else {
+        if (a - 1 >= x) next.push([x, a - 1]);
+        if (b + 1 <= y) next.push([b + 1, y]);
+      }
+    }
+    parts = next;
+  }
+  return parts;
+}
+
+/**
+ * Where receptacles may go on a run, and at what height (FLR-T-12.26): along a counter — casework
+ * against the wall, or every wall of a room whose function has counters when none is drawn — at the
+ * counter height, elsewhere at the general height, and out of the span of every opening that keeps a
+ * device at that height out, with the end clearance either side.
+ */
+export function receptacleStretches(run: WallRun, room: RoomPlan, doc: FloorspecDocument, d: ElectricalDefaults): { from: number; to: number; height: number }[] {
+  const lo = run.from + d.endClearance;
+  const hi = run.to - d.endClearance;
+  if (hi < lo) return [];
+  const base = room.hasCounters ? d.receptacleHeight : (d.heightByFunction[room.function] ?? d.receptacleHeight);
+  // The run cut into counter and other stretches, which share no point.
+  const counters = room.counters.filter((c) => c.wall === run.wall && c.side === run.side).map((c) => [Math.max(lo, c.from), Math.min(hi, c.to)] as [number, number]).filter(([a, b]) => b >= a);
+  const merged: [number, number][] = [];
+  for (const c of counters.sort((x, y) => x[0] - y[0])) {
+    const last = merged[merged.length - 1];
+    if (last !== undefined && c[0] <= last[1] + 1) last[1] = Math.max(last[1], c[1]);
+    else merged.push([...c]);
+  }
+  const stretches = [...merged.map(([a, b]) => ({ from: a, to: b, height: d.counterHeight })), ...less(lo, hi, merged).map(([a, b]) => ({ from: a, to: b, height: base }))];
+  return stretches
+    .flatMap((s) => clearOf({ ...run, from: s.from, to: s.to }, doc, d.endClearance, (h) => keepsOut(h, s.height, d)).map(([a, b]) => ({ from: a, to: b, height: s.height })))
+    .sort((a, b) => a.from - b.from);
 }
 
 /** The plan's spacing gaps for the rooms asked about: what the editor's card and markers show. */
 export function analyseGaps(document: string | Uint8Array | FloorspecDocument | object, options: Pick<ElectricalOptions, 'level' | 'rooms' | 'defaults'> = {}): Gap[] {
   const d = withDefaults(options.defaults);
-  const plan = readPlan(document, { level: options.level, rooms: options.rooms, grid: d.grid });
+  const plan = readPlan(document, { level: options.level, rooms: options.rooms, grid: d.grid, counterCategories: d.counterCategories });
   return plan.rooms.flatMap((room) =>
     d.noReceptacleFunctions.includes(room.function)
       ? []
@@ -159,7 +258,7 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
     circuits: options.include?.circuits ?? true,
     panel: options.include?.panel ?? true,
   };
-  const plan = readPlan(document, { level: options.level, rooms: options.rooms, grid: d.grid });
+  const plan = readPlan(document, { level: options.level, rooms: options.rooms, grid: d.grid, counterCategories: d.counterCategories });
   const doc = plan.document;
   const electrical = (doc.extensions as Json | undefined)?.['FS_electrical'];
   const collections = (isObject(electrical) && isObject(electrical['collections']) ? electrical['collections'] : {}) as Record<string, Record<string, Json> | undefined>;
@@ -199,7 +298,18 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
         if (run.to - run.from < d.minRun) continue;
         const existing = plan.receptaclesOn(run.wall, run.side).map((x) => x.offset);
         gaps.push(...runGaps(run, existing, spacing));
-        for (const at of fillRun(run, existing, spacing, d)) {
+        const stretches = receptacleStretches(run, room, doc, d);
+        // Counters drawn as casework first, each covered at the counter spacing; then the whole run at the room's.
+        const onCounters = room.counters
+          .filter((c) => c.wall === run.wall && c.side === run.side)
+          .flatMap((c) => {
+            const allowed = stretches.filter((x) => x.height === d.counterHeight && x.to >= c.from && x.from <= c.to).map((x) => [Math.max(x.from, c.from), Math.min(x.to, c.to)] as const);
+            return fillRun({ ...run, from: c.from, to: c.to }, existing, d.counterSpacing, d, allowed);
+          });
+        const ats = [...new Set(onCounters)].sort((a, b) => a - b);
+        ats.push(...fillRun(run, [...existing, ...ats], spacing, d, stretches.map((x) => [x.from, x.to] as const)));
+        for (const at of ats.sort((a, b) => a - b)) {
+          const height = stretches.find((x) => at >= x.from && at <= x.to)?.height ?? d.receptacleHeight;
           const id = mint('X');
           added.receptacles.push(id);
           receptacleRoom.set(id, room.id);
@@ -208,7 +318,7 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
             extension: 'FS_electrical',
             collection: 'receptacles',
             id,
-            host: { mode: 'wallFace', wall: run.wall, side: run.side, at, height: d.heightByFunction[room.function] ?? d.receptacleHeight },
+            host: { mode: 'wallFace', wall: run.wall, side: run.side, at, height },
             element: { fallback: { box: structuredClone(PLATE) }, ...(gfci ? { features: ['gfci'] } : {}) },
           } as unknown as Operation);
         }
@@ -255,7 +365,7 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
         const controls = collections['switches']?.[sid]?.['controls'];
         edits.push({ op: 'setProperty', id: sid, path: '/controls', value: [...(Array.isArray(controls) ? (controls as string[]) : []), ...unswitched] });
       } else if (unswitched.length > 0) {
-        const at = switchAt(room, d);
+        const at = switchAt(room, d, doc);
         if (at === null) notes.push(`${room.name} has no entry with wall beside it for a switch: its light is left for you to switch.`);
         else {
           const id = mint('X');
@@ -423,7 +533,7 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
         ]
           .filter((x): x is string => typeof x === 'string')
           .join(', ')} for ${list(roomNames)}.`,
-    `From Floorspec's layout defaults, each configurable: receptacles at most ${lengthText(doc, d.receptacleSpacing)} apart along a wall run and within ${lengthText(doc, d.receptacleSpacing / 2)} of its ends${Object.entries(d.spacingByFunction).map(([f, v]) => `, ${lengthText(doc, v)} apart in a ${f}`).join('')}; GFCI at the device in ${list([...d.gfciFunctions])} rooms; AFCI at the breaker on circuits serving ${list([...d.afciFunctions])} rooms; a switch beside each room's entry on the latch side (beside an open side when it has no door); a ceiling light per room; ${String(d.receptacleBreaker)} A receptacle and ${String(d.lightingBreaker)} A lighting circuits filled to ${String(Math.round(d.loadFraction * 100))}% of their capacity at ${String(d.receptacleWatts)} W a receptacle and ${String(d.lightWatts)} W a light.`,
+    `From Floorspec's layout defaults, each configurable: receptacles at most ${lengthText(doc, d.receptacleSpacing)} apart along a wall run and within ${lengthText(doc, d.receptacleSpacing / 2)} of its ends${Object.entries(d.spacingByFunction).map(([f, v]) => `, ${lengthText(doc, v)} apart in a ${f}`).join('')}; general receptacles ${lengthText(doc, d.receptacleHeight)} to centre, counter receptacles ${lengthText(doc, d.counterHeight)} to centre and at most ${lengthText(doc, d.counterSpacing)} apart along casework counters (along every wall of a ${list(Object.keys(d.heightByFunction))} with none drawn); every receptacle and switch out of the span of a door, and of a window whose sill is below its top plus ${lengthText(doc, d.sillClearance)}, slid along the wall to the nearest clear stretch; GFCI at the device in ${list([...d.gfciFunctions])} rooms; AFCI at the breaker on circuits serving ${list([...d.afciFunctions])} rooms; a switch ${lengthText(doc, d.switchHeight)} to centre beside each room's entry on the latch side (beside an open side when it has no door); a ceiling light per room; ${String(d.receptacleBreaker)} A receptacle and ${String(d.lightingBreaker)} A lighting circuits filled to ${String(Math.round(d.loadFraction * 100))}% of their capacity at ${String(d.receptacleWatts)} W a receptacle and ${String(d.lightWatts)} W a light.`,
     'These are layout defaults, not a code check: advisory code findings, with their citations, arrive with the Floorspec Rules packs.',
     ...plan.rooms.flatMap((room) => {
       const mine = gaps.filter((g) => g.room === room.id);
@@ -450,25 +560,20 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
   };
 }
 
-/** Where a room's switch goes: beside its first entry, on the latch side — else the hinge side — within one of the room's runs. */
 /** A panel's box: 16" wide, 4" deep, 32" tall about its host point. */
 const PANEL_BOX = { min: [0, -260_096, -520_192], max: [130_048, 260_096, 520_192] };
 /** Where a panel goes first: the rooms a service usually enters, best first. */
 const PANEL_ROOMS = ['garage', 'utility', 'mechanical', 'laundry', 'storage', 'circulation'];
 
 /**
- * The stretches of a run with no opening in them, each opening widened by `clear` either side: a
- * run carries on under a window, which suits a receptacle but not a panel (FLR-T-12.19).
+ * The stretches of a run with no opening in them — of those `keep` keeps — each opening widened by
+ * `clear` either side: a run carries on under a window, which suits a receptacle but not a panel
+ * (FLR-T-12.19), nor a receptacle or switch the window comes down near (FLR-T-12.26).
  */
-function clearOf(run: WallRun, doc: FloorspecDocument, clear: number): [number, number][] {
-  const types = (doc.types ?? {}) as Record<string, { width?: number } | undefined>;
-  const blocks = Object.values((doc.openings ?? {}) as Record<string, { wall?: string; offset?: number; width?: number; fill?: string } | undefined>)
-    .flatMap((o) => {
-      if (o?.wall !== run.wall || typeof o.offset !== 'number') return [];
-      const width = o.width ?? (o.fill === undefined ? undefined : types[o.fill]?.width);
-      return typeof width === 'number' ? [[o.offset - clear, o.offset + width + clear] as [number, number]] : [];
-    })
-    .sort((a, b) => a[0] - b[0]);
+function clearOf(run: WallRun, doc: FloorspecDocument, clear: number, keep: (h: Hole) => boolean = () => true): [number, number][] {
+  const blocks = holesIn(doc, run.wall)
+    .filter((h) => h.to > h.from && keep(h))
+    .map((h) => [h.from - clear, h.to + clear] as [number, number]);
   const out: [number, number][] = [];
   let from = run.from;
   for (const [a, b] of blocks) {
@@ -507,14 +612,22 @@ export function panelAt(rooms: readonly RoomPlan[], doc: FloorspecDocument, d: E
   return { room: pick.room.name, wall: pick.best.run.wall, side: pick.best.run.side, offset: Math.round((pick.best.from + pick.best.to) / 2) };
 }
 
-export function switchAt(room: RoomPlan, d: ElectricalDefaults): { wall: string; side: 'left' | 'right'; offset: number } | null {
+/**
+ * Where a room's switch goes: beside its first entry, on the latch side — else the hinge side —
+ * within one of the room's runs, and — given the plan — out of the span of a window that comes down
+ * near it (FLR-T-12.26).
+ */
+export function switchAt(room: RoomPlan, d: ElectricalDefaults, doc?: FloorspecDocument): { wall: string; side: 'left' | 'right'; offset: number } | null {
   for (const entry of room.entries) {
+    // Doors and cased openings are out of the runs already; a window beside the entry may not be.
+    const holes = doc === undefined ? [] : holesIn(doc, entry.wall).filter((h) => h.kind === 'window' && keepsOut(h, d.switchHeight, d));
+    const clear = (at: number) => holes.every((h) => at <= h.from - d.endClearance || at >= h.to + d.endClearance);
     // A door's latch is the jamb away from its hinge; a cased opening has none, and its end jamb is tried first.
     const latchEnd = entry.hinge !== 'end';
     const candidates = latchEnd ? [entry.to + d.switchFromOpening, entry.from - d.switchFromOpening] : [entry.from - d.switchFromOpening, entry.to + d.switchFromOpening];
     for (const at of candidates) {
       const run = room.runs.find((r) => r.wall === entry.wall && r.side === entry.side && at >= r.from && at <= r.to);
-      if (run !== undefined) return { wall: entry.wall, side: entry.side, offset: at };
+      if (run !== undefined && clear(at)) return { wall: entry.wall, side: entry.side, offset: at };
     }
   }
   return null;

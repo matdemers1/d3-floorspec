@@ -18,11 +18,28 @@ export interface ElectricalDefaults {
   spacingByFunction: Readonly<Record<string, number>>;
   /** A wall run shorter than this — between a corner and a door, say — gets no receptacle. */
   minRun: number;
-  /** From a corner or a door's edge to a receptacle's centre, at least. */
+  /**
+   * From a corner or a door's edge to a receptacle's centre, at least — and from the edge of a
+   * window that comes down near the receptacle (sillClearance), so it is never under the window.
+   */
   endClearance: number;
-  /** A receptacle's height above the wall's base, to its centre. */
+  /**
+   * A window whose sill is below a receptacle's or switch's top plus this keeps it out of the
+   * window's span (FLR-T-12.26): it slides along the wall to the nearest clear stretch. A door always does.
+   */
+  sillClearance: number;
+  /** A general receptacle's height above the wall's base, to its centre. */
   receptacleHeight: number;
-  /** Heights for rooms of a function: above a counter or a vanity. */
+  /** A counter receptacle's height above the wall's base, to its centre: above a 36" counter. */
+  counterHeight: number;
+  /** Along a counter drawn as casework, receptacles at most this far apart, and its ends within half of it. */
+  counterSpacing: number;
+  /** FS_furniture casework categories that carry a counter: along a wall, receptacles there are counter receptacles. */
+  counterCategories: readonly string[];
+  /**
+   * Rooms of these functions with no counter casework drawn are taken to have counters along every
+   * wall, at this height to the receptacle's centre.
+   */
   heightByFunction: Readonly<Record<string, number>>;
   /** Rooms of these functions get receptacles with GFCI at the device. */
   gfciFunctions: readonly string[];
@@ -68,8 +85,12 @@ export const DEFAULTS: ElectricalDefaults = Object.freeze({
   spacingByFunction: Object.freeze({ kitchen: 4 * FT }),
   minRun: 2 * FT,
   endClearance: 6 * IN,
-  receptacleHeight: 12 * IN,
-  heightByFunction: Object.freeze({ kitchen: 42 * IN, bath: 36 * IN }),
+  sillClearance: 6 * IN,
+  receptacleHeight: 16 * IN,
+  counterHeight: 42 * IN,
+  counterSpacing: 4 * FT,
+  counterCategories: Object.freeze(['baseCabinet', 'island', 'vanity']),
+  heightByFunction: Object.freeze({ kitchen: 42 * IN, bath: 42 * IN }),
   gfciFunctions: Object.freeze(['kitchen', 'bath', 'laundry', 'garage', 'utility', 'exterior']),
   afciFunctions: Object.freeze(['sleeping', 'living', 'dining', 'office', 'circulation', 'kitchen', 'laundry']),
   switchHeight: 48 * IN,
@@ -95,9 +116,9 @@ export const DEFAULTS: ElectricalDefaults = Object.freeze({
 /** The defaults with a caller's overrides; every override is checked, so a bad one fails loudly. */
 export function withDefaults(overrides: Partial<ElectricalDefaults> = {}): ElectricalDefaults {
   const out = { ...DEFAULTS, ...overrides };
-  const positive = ['receptacleSpacing', 'minRun', 'receptacleHeight', 'switchHeight', 'panelHeight', 'panelRating', 'panelSpaces', 'panelMinRun', 'receptacleBreaker', 'lightingBreaker', 'volts', 'maxDevicesPerCircuit', 'grid'] as const;
+  const positive = ['receptacleSpacing', 'minRun', 'receptacleHeight', 'counterHeight', 'counterSpacing', 'switchHeight', 'panelHeight', 'panelRating', 'panelSpaces', 'panelMinRun', 'receptacleBreaker', 'lightingBreaker', 'volts', 'maxDevicesPerCircuit', 'grid'] as const;
   for (const k of positive) if (!Number.isSafeInteger(out[k]) || out[k] <= 0) throw new RangeError(`${k} must be a whole number greater than zero`);
-  for (const k of ['endClearance', 'switchFromOpening', 'receptacleWatts', 'lightWatts', 'kitchenCircuits'] as const)
+  for (const k of ['endClearance', 'sillClearance', 'switchFromOpening', 'receptacleWatts', 'lightWatts', 'kitchenCircuits'] as const)
     if (!Number.isSafeInteger(out[k]) || out[k] < 0) throw new RangeError(`${k} must be a whole number, zero or more`);
   if (!(out.loadFraction > 0 && out.loadFraction <= 1)) throw new RangeError('loadFraction must be more than 0 and at most 1');
   for (const [f, v] of [...Object.entries(out.spacingByFunction), ...Object.entries(out.heightByFunction)])

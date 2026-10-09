@@ -84,6 +84,8 @@ describe('the Phase 5 demo, through floorspec_apply and floorspec_describe', () 
       ['X5', 'FS_electrical:receptacles', ['C2']],
     ]);
     expect(devices[0]?.height.baseUnits).toBe(42 * IN);
+    // X4, 10' along at 42", sits under the kitchen window WK, whose 42" sill is below its plate's top plus 6" (FLR-T-12.26).
+    expect(devices.map((d) => [d.id, d.inOpening?.id])).toEqual([['X2', undefined], ['X3', undefined], ['X4', 'WK'], ['X5', undefined]]);
     expect(devices[0]?.offset.baseUnits).toBe(2 * FT);
     // The room's floor devices, and each element's room as its extension derives it.
     expect(s.levels[0]?.rooms.find((r) => r.name === 'Bath')?.devices).toEqual([{ id: 'X6', kind: 'FS_plumbing:fixtures', surface: 'floor' }]);
@@ -94,7 +96,8 @@ describe('the Phase 5 demo, through floorspec_apply and floorspec_describe', () 
       { id: 'C2', name: 'Kitchen counter 2', panel: 'X1', breaker: 20, volts: 120, poles: 1, loads: ['X4', 'X5'], connectedLoad: 0, capacity: 2400 },
     ]);
     const text = texts(described);
-    expect(text).toContain("FS_electrical:receptacles X2 on this face: 2' 0\" (780288) from the wall's start, 3' 6\" (1365504) high, on circuit C1");
+    expect(text).toContain("FS_electrical:receptacles X2 on this face: 2' 0\" (780288) from the wall's start, centre 3' 6\" (1365504) above the wall's base, on circuit C1");
+    expect(text).toContain(`FS_electrical:receptacles X4 on this face: 10' 0" (3901440) from the wall's start, centre 3' 6" (1365504) above the wall's base, on circuit C2; in the way of window WK (sill 3' 6" (1365504)): move it along the wall, 6" clear of the opening`);
     expect(text).toContain('### Circuits (MAIN, FS_electrical)');
     expect(text).toContain('- C1 "Kitchen counter 1" on panel X1: 20 A, 120 V; loads X2, X3; connected 0 W of 2400 W (stated watts only; not a load calculation)');
 

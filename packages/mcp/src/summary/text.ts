@@ -67,7 +67,11 @@ function edge(e: EdgeSummary, self: string): string[] {
   return [
     `- wall ${e.id}${q(e.name)}, ${lengthText(e.length)}${arc}, ${type}${thick}; other side: ${neighbour(e.otherSide, self)}`,
     ...e.openings.map((o) => `  - ${opening(o, self)}`),
-    ...(e.devices ?? []).map((d) => `  - ${d.kind} ${d.id}${q(d.name)} on this face: ${lengthText(d.offset)} from the wall's start, ${lengthText(d.height)} high${d.circuits ? `, on circuit ${d.circuits.join(' and ')}` : ''}`),
+    ...(e.devices ?? []).map(
+      (d) =>
+        `  - ${d.kind} ${d.id}${q(d.name)} on this face: ${lengthText(d.offset)} from the wall's start, centre ${lengthText(d.height)} above the wall's base${d.circuits ? `, on circuit ${d.circuits.join(' and ')}` : ''}` +
+        (d.inOpening ? `; in the way of ${d.inOpening.kind} ${d.inOpening.id}${d.inOpening.sill ? ` (sill ${lengthText(d.inOpening.sill)})` : ''}: move it along the wall, 6" clear of the opening` : ''),
+    ),
   ];
 }
 
