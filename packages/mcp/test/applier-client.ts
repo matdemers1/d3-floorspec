@@ -4,9 +4,10 @@
  * in-process MCP server connected to it. Shared by the tool-path tests.
  */
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
+import { createHash } from 'node:crypto';
 import { canonicalize, contentHash, OFFICIAL_READER } from '@floorspec/engine';
 import { apply } from '@floorspec/ops';
-import { createFloorspecMcpHandler, FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type ProjectSummary, type Validation } from '../src/index.js';
+import { createFloorspecMcpHandler, FloorspecApiError, type ApplyInput, type AssetUpload, type Committed, type FloorspecClient, type ProjectSummary, type StoredAsset, type Validation } from '../src/index.js';
 
 export const PROJECT = '01a10000-0000-7000-8000-000000000001';
 
@@ -14,6 +15,10 @@ export const PROJECT = '01a10000-0000-7000-8000-000000000001';
 export class ApplierClient implements FloorspecClient {
   document: object;
   seq = 1;
+  /** The asset store: what uploadAsset was given, by digest — the bytes as the asset route keeps them. */
+  readonly store = new Map<string, Uint8Array>();
+  /** How many uploads arrived. */
+  uploads = 0;
   constructor(document: object) {
     this.document = document;
   }
@@ -61,6 +66,13 @@ export class ApplierClient implements FloorspecClient {
   }
   render(): Promise<Uint8Array> {
     return Promise.reject(new FloorspecApiError(501, { error: 'no renderer here' }));
+  }
+  uploadAsset(_projectId: string, upload: AssetUpload): Promise<StoredAsset> {
+    this.uploads++;
+    const sha256 = createHash('sha256').update(upload.bytes).digest('hex');
+    this.store.set(sha256, upload.bytes);
+    const mediaType = upload.as === 'model' ? 'model/gltf-binary' : 'image/svg+xml';
+    return Promise.resolve({ sha256, mediaType, byteLength: upload.bytes.length, path: `assets/${sha256}.${upload.as === 'model' ? 'glb' : 'svg'}` });
   }
 }
 

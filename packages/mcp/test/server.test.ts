@@ -15,7 +15,9 @@ import {
   OP_NAMES,
   TOOL_NAMES,
   type Committed,
+  type AssetUpload,
   type FloorspecClient,
+  type StoredAsset,
   type LayoutsInput,
   type RenderOptions,
 } from '../src/index.js';
@@ -177,6 +179,10 @@ class MemoryClient implements FloorspecClient {
     if (!this.renderable) return Promise.reject(new FloorspecApiError(501, { error: 'rendering arrives with FLR-T-2.8' }));
     return Promise.resolve(new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
   }
+  uploadAsset(projectId: string, upload: AssetUpload): Promise<StoredAsset> {
+    this.record('uploadAsset', projectId, upload.name, upload.as);
+    return Promise.reject(new FloorspecApiError(503, { title: 'this instance has no asset store' }));
+  }
 }
 
 async function connect(client: FloorspecClient, era: 'legacy' | 'modern' = 'modern') {
@@ -289,7 +295,8 @@ describe('the MCP server', () => {
     const size = JSON.stringify(listing).length;
     process.stderr.write(`tools/list: ${String(size)} bytes (${String(JSON.stringify(listing, null, 2).length)} pretty-printed)\n`);
     // Was ~57 KB (130 KB pretty) with the operation union inlined at every member, twice over.
-    // 25 KB → 26 KB for the twelfth verb, floorspec_create_project (~400 bytes).
+    // 25 KB → 26 KB for the twelfth verb, floorspec_create_project (~400 bytes). FLR-T-12.25 paid
+    // for the furniture catalogue and an opening's `at` (its near edge) by trimming other text.
     expect(size).toBeLessThan(26_000);
   });
 

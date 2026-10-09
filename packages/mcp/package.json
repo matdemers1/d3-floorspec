@@ -19,7 +19,8 @@
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "vendor-furniture": "node scripts/vendor-furniture.mjs"
   },
   "devDependencies": {
     "@floorspec/ops": "workspace:*",

@@ -3,6 +3,7 @@ import { describeEstimate, estimateEnergy, EstimateError } from '@floorspec/anal
 import { z } from 'zod';
 import { FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type Layouts, type Op, type ProjectSummary, type RenderOptions } from './client.js';
 import { embedOps, libraryText, missingLibraryTypes, namesLibraryTypes, US_STARTER } from './library.js';
+import { CatalogueError, fillFurniture, FS_FURNITURE, furnitureText, libraryFileBytes, namesFurniture, type FurnitureFill, type LibraryFile } from './furniture.js';
 import { wells } from './stairwell.js';
 import { Batch, Lock, OP_BY_NAME_ONLY } from './ops-schema.js';
 import { hintsFor } from './hints.js';
@@ -51,7 +52,7 @@ const ProjectHandle = z
   .min(1)
   .max(64)
   .optional()
-  .describe('Project ID or name; optional if the credential reaches one.');
+  .describe('Project ID or name; optional if only one is reachable.');
 const ChangesetHandle = z.string().min(1).max(120);
 /** A changeset to read: by name or ID, exactly as floorspec_apply takes one. */
 const PendingChangeset = ChangesetHandle.optional().describe("A pending changeset's name or ID; omitted, main.");
@@ -141,17 +142,27 @@ interface Prepared {
   readonly batch: readonly Op[];
   /** The embedding ops put first; the agent's op i is at i + prefix.length. */
   readonly prefix: readonly Op[];
-  /** The library items embedded. */
+  /** The agent's own ops as sent: a catalogue placement completed from the FS_furniture library. */
+  readonly own: readonly Op[];
+  /** The US starter types embedded. */
   readonly embedded: readonly string[];
+  /** The FS_furniture library items placed by their catalogue ID. */
+  readonly furniture: readonly string[];
+  /** Anything the agent should know about the embedding: a library file the store did not take. */
+  readonly notes: readonly string[];
 }
 
 /**
- * Embed the US starter types a batch names that its head does not hold yet (library.ts). The head is
- * the pending changeset the batch is going into when it is named and exists, else main — which is
- * also what a new changeset starts from.
+ * Embed the US starter types a batch names that its head does not hold yet (library.ts), and fill in
+ * each FS_furniture placement that names a library item by its catalogue ID (furniture.ts) — its
+ * model and symbol uploaded into the project's asset store first, so the assets the batch adds
+ * name bytes the server has. The head is the pending changeset the batch is going into when it is
+ * named and exists, else main — which is also what a new changeset starts from.
  */
 async function prepare(client: FloorspecClient, projectId: string, changeset: string | undefined, batch: readonly Op[]): Promise<Prepared> {
-  if (!namesLibraryTypes(batch)) return { batch, prefix: [], embedded: [] };
+  const types = namesLibraryTypes(batch);
+  const furnished = namesFurniture(batch);
+  if (!types && !furnished) return { batch, prefix: [], own: batch, embedded: [], furniture: [], notes: [] };
   let head: string | undefined;
   if (changeset !== undefined) {
     try {
@@ -161,10 +172,45 @@ async function prepare(client: FloorspecClient, projectId: string, changeset: st
     }
   }
   const model = await client.model(projectId, head);
-  const ids = missingLibraryTypes(model.document, batch);
-  if (ids.length === 0) return { batch, prefix: [], embedded: [] };
-  const prefix = embedOps(model.document, batch, ids);
-  return { batch: [...prefix, ...batch], prefix, embedded: ids };
+  let placed: FurnitureFill = { prefix: [], batch, items: [], files: [] };
+  if (furnished) {
+    try {
+      placed = fillFurniture(model.document, batch);
+    } catch (error) {
+      if (error instanceof CatalogueError) throw new ToolError(error.message);
+      throw error;
+    }
+  }
+  const own = placed.batch;
+  const ids = types ? missingLibraryTypes(model.document, own) : [];
+  const prefix = [...(ids.length === 0 ? [] : embedOps(model.document, own, ids)), ...placed.prefix];
+  const notes = await storeLibraryFiles(client, projectId, placed.files);
+  return { batch: [...prefix, ...own], prefix, own, embedded: ids, furniture: placed.items, notes };
+}
+
+/**
+ * Upload library files into the project's asset store through the asset route, as the editor does
+ * when it places an item: stored by digest, so uploading bytes the store has already changes
+ * nothing. Done for every file a placement names — reused assets too, whose bytes an earlier
+ * hand-written batch may never have uploaded. A refusal does not stop the batch; it is said.
+ */
+async function storeLibraryFiles(client: FloorspecClient, projectId: string, files: readonly LibraryFile[]): Promise<string[]> {
+  const problems: string[] = [];
+  await Promise.all(
+    files.map(async (file) => {
+      const name = file.path.split('/').at(-1) ?? file.path;
+      try {
+        const stored = await client.uploadAsset(projectId, { bytes: libraryFileBytes(file), name, as: file.mediaType === 'model/gltf-binary' ? 'model' : 'symbol' });
+        if (stored.sha256 !== file.sha256) problems.push(`${name} was stored as ${stored.sha256}, not as its library digest`);
+      } catch (error) {
+        if (!(error instanceof FloorspecApiError)) throw error;
+        problems.push(`${name}: ${error.message}`);
+      }
+    }),
+  );
+  return problems.length === 0
+    ? []
+    : [`Note: the asset store did not take every library file (${problems.sort().join('; ')}). The plan names them, but the 3D view and an exported package lack them until they are uploaded.`];
 }
 
 /**
@@ -183,14 +229,14 @@ function alreadyUsed(error: unknown, prefix: readonly Op[]): Set<string> {
 }
 
 /** Apply a prepared batch, once more without any embedding the head turned out to hold already. */
-async function applyPrepared(client: FloorspecClient, projectId: string, input: Omit<ApplyInput, 'batch'>, prepared: Prepared, own: readonly Op[]): Promise<{ result: Committed; prepared: Prepared }> {
+async function applyPrepared(client: FloorspecClient, projectId: string, input: Omit<ApplyInput, 'batch'>, prepared: Prepared): Promise<{ result: Committed; prepared: Prepared }> {
   try {
     return { result: await client.apply(projectId, { ...input, batch: prepared.batch }), prepared };
   } catch (error) {
     const taken = alreadyUsed(error, prepared.prefix);
     if (taken.size === 0) throw new Shifted(error, prepared.prefix.length);
     const prefix = prepared.prefix.filter((op) => !(typeof op['id'] === 'string' && taken.has(op['id'])));
-    const again: Prepared = { batch: [...prefix, ...own], prefix, embedded: prepared.embedded };
+    const again: Prepared = { ...prepared, batch: [...prefix, ...prepared.own], prefix };
     try {
       return { result: await client.apply(projectId, { ...input, batch: again.batch }), prepared: again };
     } catch (retry) {
@@ -222,7 +268,7 @@ function unshift(error: unknown): unknown {
     const m = /^\/batch\/(\d+)(.*)$/.exec(pointer);
     if (m === null) return pointer;
     const i = Number(m[1]) - error.by;
-    return i >= 0 ? `/batch/${String(i)}${m[2] ?? ''}` : `(an embedded US starter library type)${m[2] ?? ''}`;
+    return i >= 0 ? `/batch/${String(i)}${m[2] ?? ''}` : `(an op embedded from a library)${m[2] ?? ''}`;
   };
   const diagnostics = inner.diagnostics.map((d) => (d.location === undefined ? d : { ...d, location: { ...d.location, pointer: fix(d.location['pointer']) } }));
   return new FloorspecApiError(inner.status, { ...inner.body, diagnostics });
@@ -259,7 +305,18 @@ export function editedLevel(resolved: readonly Op[]): string | undefined {
 }
 
 function embeddedText(prepared: Prepared): string {
-  return prepared.embedded.length === 0 ? '' : ` Embedded from the US starter library ${US_STARTER.version}: ${prepared.embedded.join(', ')}.`;
+  return [
+    prepared.embedded.length === 0 ? '' : ` Embedded from the US starter library ${US_STARTER.version}: ${prepared.embedded.join(', ')}.`,
+    prepared.furniture.length === 0 ? '' : ` Filled in from the FS_furniture starter library ${FS_FURNITURE.version} (members, box, envelopes, model and symbol): ${prepared.furniture.join(', ')}.`,
+    ...prepared.notes.map((n) => ` ${n}`),
+  ].join('');
+}
+
+/** What the structured result says was embedded: US starter types, then furniture library items. */
+function embeddedMember(prepared: Prepared | null): Record<string, unknown> {
+  if (prepared === null) return {};
+  const all = [...prepared.embedded, ...prepared.furniture];
+  return all.length === 0 ? {} : { embedded: all };
 }
 
 /** How an apply landed, in words an agent cannot misread. */
@@ -344,7 +401,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_create_project',
     {
       title: 'Create a project',
-      description: 'A new, empty house for a new design. It has no building or levels: add them first (addElement buildings, addLevel). Its result lists the US starter types a batch can name.',
+      description: 'A new, empty house for a new design. It has no building or levels: add them first (addElement buildings, addLevel). Its result lists the US starter types and furniture a batch can name.',
       inputSchema: compactSchema(z.strictObject({ name: z.string().trim().min(1).max(200) })),
       annotations: { destructiveHint: false, openWorldHint: false },
     },
@@ -356,7 +413,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         }
         const project = await client.createProject(args.name);
         return ok(
-          `Created "${project.name}" (${project.id}). It is empty: add a building and its levels next, then rooms. Name this project in every call while the credential reaches more than one. ${libraryText()}`,
+          `Created "${project.name}" (${project.id}). It is empty: add a building and its levels next, then rooms. Name this project in every call while the credential reaches more than one. ${libraryText()} ${furnitureText()}`,
           { project: project.id, name: project.name, head: project.head },
         );
       } catch (error) {
@@ -417,7 +474,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Query elements',
       description:
-        'Elements by ID, kind, level, room or relationship, with geometry in ft-in and base units: the walls bounding a room, the openings in a wall, the rooms either side of a wall.',
+        'Elements by ID, kind, level, room or relationship (the walls bounding a room, the openings in a wall), with geometry in ft-in and base units.',
       inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset, ...QueryInput })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -445,8 +502,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         'Apply `batch`, a list of typed Floorspec Ops, as one transaction: all commit or none. ' +
         'Example: {"changeset":"Widen the kitchen","batch":[{"op":"resizeRoom","room":"Kitchen","side":"east","by":"2\'"}],"render":true}. ' +
         'A write token commits to main; an agent credential writes into a pending changeset (`changeset`, or one named after the credential). ' +
-        'A rejection changes nothing and returns diagnostics with fixes. ' +
-        'A US starter type a batch names (e.g. door-interior-swing-30x80) is embedded on first use.',
+        'A rejection returns diagnostics with fixes. ' +
+        'US starter types (door-interior-swing-30x80) and furniture catalogue items are embedded on first use.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
@@ -473,9 +530,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
             ...(args.ifMatch === undefined ? {} : { ifMatch: args.ifMatch }),
           },
           await prepare(client, project.id, args.changeset, args.batch),
-          args.batch,
         );
-        const structured = { project: project.id, ...compact(result), ...(prepared.embedded.length === 0 ? {} : { embedded: prepared.embedded }) };
+        const structured = { project: project.id, ...compact(result), ...embeddedMember(prepared) };
         const content: CallToolResult['content'] = [text(`${landed(result)}${embeddedText(prepared)}`), text(structured)];
         if (args.render === true) {
           const drawn = editedLevel(result.resolved);
@@ -557,7 +613,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           project: project.id,
           ...result,
           applied: result.applied === null ? null : compact(result.applied),
-          ...(prepared === null || prepared.embedded.length === 0 ? {} : { embedded: prepared.embedded }),
+          ...embeddedMember(prepared),
         };
         const content: CallToolResult['content'] = [
           text(
@@ -610,7 +666,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose layouts',
       description:
-        'Lay out a brief (its program and adjacencies) as ranked candidate plans, each a pending changeset a person compares and accepts. The brief is main\'s, or a pending changeset\'s (`changeset`): each candidate then carries that changeset\'s ops too. One empty level at a time: lay out the next level from the chosen candidate.',
+        'Lay out a brief (its program and adjacencies) as ranked candidate plans, each a pending changeset a person accepts. The brief is main\'s, or a pending changeset\'s (`changeset`): each candidate then carries that changeset\'s ops too. One empty level at a time: lay out the next level from the chosen candidate.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
@@ -756,7 +812,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_export',
     {
       title: 'Export',
-      description: 'Export the model. Format "floorspec": the canonical Floorspec Core JSON. Other formats come later.',
+      description: 'Export the model. Format "floorspec": the canonical Floorspec Core JSON.',
       inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset, format: z.enum(['floorspec']).optional() })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

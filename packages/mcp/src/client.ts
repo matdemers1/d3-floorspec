@@ -188,6 +188,27 @@ export interface FloorspecClient {
   validate(projectId: string, changeset?: string): Promise<Validation>;
   findings(projectId: string, changeset?: string): Promise<Findings>;
   render(projectId: string, options: RenderOptions): Promise<Uint8Array>;
+  /**
+   * Upload a file into the project's asset store (`POST /assets?as=model|symbol`): stored by its
+   * SHA-256, readable by the project. Uploading the same bytes again changes nothing.
+   */
+  uploadAsset(projectId: string, upload: AssetUpload): Promise<StoredAsset>;
+}
+
+export interface AssetUpload {
+  readonly bytes: Uint8Array;
+  /** The file's name, for a person. */
+  readonly name: string;
+  readonly as: 'model' | 'symbol' | 'texture';
+}
+
+/** An uploaded file as the asset route answers it (apps/server/src/routes/assets.ts). */
+export interface StoredAsset {
+  readonly sha256: string;
+  readonly mediaType: string;
+  readonly byteLength: number;
+  /** Where the document's asset entry should say it is (Core 18.4). */
+  readonly path: string;
 }
 
 export interface RenderOptions {
@@ -237,15 +258,16 @@ export class HttpFloorspecClient implements FloorspecClient {
   }
 
   private async send(method: string, path: string, body?: unknown, headers: Record<string, string> = {}): Promise<Response> {
+    const raw = body instanceof Uint8Array;
     const res = await this.fetchImpl(new URL(path, this.options.baseUrl), {
       method,
       headers: {
         authorization: this.options.authorization,
         accept: 'application/json',
-        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        ...(body === undefined ? {} : { 'content-type': raw ? 'application/octet-stream' : 'application/json' }),
         ...headers,
       },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(body === undefined ? {} : { body: raw ? body : JSON.stringify(body) }),
     });
     if (!res.ok) {
       const text = await res.text();
@@ -349,5 +371,10 @@ export class HttpFloorspecClient implements FloorspecClient {
     if (options.width !== undefined) params.set('width', String(options.width));
     const res = await this.send('GET', this.project(projectId, `/render?${params.toString()}`), undefined, { accept: 'image/png' });
     return new Uint8Array(await res.arrayBuffer());
+  }
+
+  async uploadAsset(projectId: string, upload: AssetUpload): Promise<StoredAsset> {
+    const path = this.project(projectId, `/assets?as=${encodeURIComponent(upload.as)}`);
+    return (await this.json<{ asset: StoredAsset }>('POST', path, upload.bytes, { 'x-asset-name': encodeURIComponent(upload.name) })).asset;
   }
 }

@@ -32,7 +32,9 @@ const DEFAULTS = {
 
 /** An opening that does not fit its wall: wider than the wall when centered, or pushed off an end (FS-CORE-7.3.1). */
 export const OPENING_FIT_HINT =
-  "An opening does not fit along its wall: it is wider than the wall it is centered on, or `at` puts it past an end. A wall between two rooms is only as long as they share — floorspec_describe lists each room's walls with their lengths. Use a narrower fill (or width), or a longer wall.";
+  "An opening does not fit along its wall: it is wider than the wall it is centered on, or `at` puts it past an end. " +
+  "An opening's `at` is where it begins, not its centre: \"2' from start\" puts its near edge 2' from the wall's start, so it runs from 2' to 2' plus its width (\"2' from end\": its far edge 2' from the end) — unlike placeElement, whose `at` is the element's centre. " +
+  "A wall between two rooms is only as long as they share — floorspec_describe lists each room's walls with their lengths. Use a smaller `at`, a narrower fill (or width), or a longer wall.";
 const OPENING_OFFSET = /^\/openings\/[^/]+\/offset$/;
 
 /** setProperty's `value` is taken as given (Ops 2.5): the reference grammar does not reach inside it. */
