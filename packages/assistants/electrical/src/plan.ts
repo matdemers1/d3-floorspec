@@ -59,6 +59,8 @@ export interface RoomPlan {
   counters: CounterSpan[];
   /** Whether it has counter casework at all — along a wall or not, an island say: when it does, only the spans above are counters. */
   hasCounters: boolean;
+  /** Its arc walls (Core 21): no wall run is read along a curve, so they get no receptacles. */
+  curved: string[];
 }
 
 export interface PlanReading {
@@ -217,11 +219,18 @@ export function readPlan(
       }
     const openEntries: Entry[] = [];
     const counters: CounterSpan[] = [];
+    const curved: string[] = [];
     const mine = casework.filter((c) => c.level === room.level);
     for (const cycle of [f.outer, ...f.inner]) {
       for (const h of cycle.halfEdges) {
         const e = g.edges[h >> 1]!;
         if (e.kind !== 'wall') continue;
+        // A segment of an arc wall is `<id>~<k>` in the level graph (Core 21.3), not a wall of the
+        // document: a run is a straight stretch of one wall's face, so a curve gets none.
+        if (e.src !== undefined) {
+          if (!curved.includes(e.src)) curved.push(e.src);
+          continue;
+        }
         const wall = doc.walls![e.id]!;
         // The room is on the half-edge's left: the wall's left face when the half-edge runs its way.
         const side: 'left' | 'right' = ((h & 1) === 0) === (e.start === wall.start) ? 'left' : 'right';
@@ -281,6 +290,7 @@ export function readPlan(
       devices: electricalRooms[rid] ?? [],
       counters: counters.sort((x, y) => cmp(x.wall, y.wall) || cmp(x.side, y.side) || x.from - y.from || cmp(x.casework, y.casework)),
       hasCounters: counters.length > 0 || mine.some((c) => insideRoom(centroid(c.footprint), polygon.outer, polygon.holes)),
+      curved: curved.sort(cmp),
     });
   }
   return { document: doc, evaluation, derived, rooms, receptaclesOn: (wall, side) => [...(onFace.get(`${wall}/${side}`) ?? [])].sort((a, b) => a.offset - b.offset || cmp(a.id, b.id)) };

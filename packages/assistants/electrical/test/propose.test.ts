@@ -79,6 +79,14 @@ describe('proposing for a house with no electrical yet', () => {
     for (const id of [...p.added.receptacles, ...p.added.lights]) expect(fed.has(id)).toBe(true);
   });
 
+  it('gives the panel it places FS_electrical 2.7\'s default working space, so no FS-ELEC-LINT-006', () => {
+    const codes = check(after, OFFICIAL_READER).diagnostics.map((x) => x.code);
+    expect(codes).not.toContain('FS-ELEC-LINT-006');
+    const [panel] = p.added.panels;
+    const placed = electrical(after)?.collections?.['panels']?.[panel as string];
+    expect(placed?.['clearances']).toMatchObject({ working: { purpose: 'workingSpace', shape: 'box', min: [0, -512_000, -60 * IN], max: [1_280_000, 512_000, 2_560_000 - 60 * IN] } });
+  });
+
   it('names a proposal by its room count when listing them would pass 120 characters', () => {
     const long = JSON.parse(HOUSE) as { rooms: Record<string, { name?: string }> };
     for (const [id, room] of Object.entries(long.rooms)) room.name = `${id} — a room with a name long enough to fill a changeset title`;
@@ -331,5 +339,29 @@ describe('determinism', () => {
     const b = JSON.stringify(proposeElectrical(JSON.parse(HOUSE) as object));
     expect(a).toBe(b);
     expect(JSON.stringify(proposeElectrical(DEMO))).toBe(JSON.stringify(proposeElectrical(DEMO)));
+  });
+});
+
+describe('a room with an arc wall (Core 21)', () => {
+  // The living room's west wall bowed out 2': the level graph walks it as segments `WW~<k>`, which
+  // are not walls of the document — reading them as walls threw, and the API answered 500.
+  const doc = JSON.parse(HOUSE) as Json & { walls: Record<string, Json> };
+  doc['floorspec'] = '0.4';
+  doc.walls['WW'] = { ...doc.walls['WW'], arc: { sagitta: 2 * FT } };
+  const ARC = JSON.stringify(doc);
+
+  it('is valid to start with', () => {
+    expect(check(ARC, OFFICIAL_READER).valid).toBe(true);
+  });
+
+  it('proposes for every room, the straight walls laid out, the curve said', () => {
+    const p = proposeElectrical(ARC);
+    expect(p.rooms).toEqual(['BED', 'KIT', 'LIV']);
+    const after = commit(ARC, p);
+    expect(check(after, OFFICIAL_READER).valid).toBe(true);
+    expect(p.explanation.some((l) => l.includes('curved wall WW gets no receptacles'))).toBe(true);
+    const hosts = Object.values(electrical(after)?.collections?.['receptacles'] ?? {}).map((r) => (r['host'] as { wall?: string }).wall);
+    expect(hosts).not.toContain('WW');
+    expect(hosts.length).toBeGreaterThan(0);
   });
 });

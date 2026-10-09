@@ -402,7 +402,13 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
       const spot = panelAt(plan.rooms, doc, d);
       if (spot !== null) {
         const id = mint('X');
-        const element: Json = { fallback: { box: structuredClone(PANEL_BOX) }, volts: [d.volts, 2 * d.volts], rating: d.panelRating, spaces: d.panelSpaces };
+        const element: Json = {
+          fallback: { box: structuredClone(PANEL_BOX) },
+          volts: [d.volts, 2 * d.volts],
+          rating: d.panelRating,
+          spaces: d.panelSpaces,
+          clearances: { working: workingSpace(d.panelHeight) },
+        };
         added.panels.push(id);
         placements.push({
           op: 'placeElement',
@@ -543,6 +549,11 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
         `${room.name} had ${mine.length === 1 ? 'one stretch' : `${String(mine.length)} stretches`} of wall longer than the spacing without a receptacle; the longest, ${lengthText(doc, worst.length)} ${worst.kind === 'none' ? 'with none at all' : worst.kind === 'end' ? 'from a corner or door to the nearest' : 'between two'}, on wall ${worst.wall}.`,
       ];
     }),
+    ...plan.rooms.flatMap((room) =>
+      room.curved.length === 0
+        ? []
+        : [`${room.name}'s curved wall${room.curved.length === 1 ? '' : 's'} ${list(room.curved)} ${room.curved.length === 1 ? 'gets' : 'get'} no receptacles: the layout reads straight wall runs only, so place any along a curve by hand.`],
+    ),
     ...notes,
   ];
   return {
@@ -562,6 +573,21 @@ export function proposeElectrical(document: string | Uint8Array | FloorspecDocum
 
 /** A panel's box: 16" wide, 4" deep, 32" tall about its host point. */
 const PANEL_BOX = { min: [0, -260_096, -520_192], max: [130_048, 260_096, 520_192] };
+
+/**
+ * FS_electrical 2.7's default working space for a panel on a wall face `h` above the floor: 1,000 mm
+ * into the room, at least 800 mm wide centred on the panel, floor to 2,000 mm (FS-ELEC-2.7.2) —
+ * the extension's round defaults, not a code's requirement.
+ */
+function workingSpace(h: number): Json {
+  const MM = 1280;
+  return {
+    purpose: 'workingSpace',
+    shape: 'box',
+    min: [0, Math.min(PANEL_BOX.min[1]!, -400 * MM), -h],
+    max: [1000 * MM, Math.max(PANEL_BOX.max[1]!, 400 * MM), 2000 * MM - h],
+  };
+}
 /** Where a panel goes first: the rooms a service usually enters, best first. */
 const PANEL_ROOMS = ['garage', 'utility', 'mechanical', 'laundry', 'storage', 'circulation'];
 
