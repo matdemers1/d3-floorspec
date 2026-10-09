@@ -1,0 +1,1641 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Plan symbols"
+  },
+  "buildings": {
+    "HOUSE": {
+      "name": "House"
+    }
+  },
+  "levels": {
+    "MAIN": {
+      "name": "Main floor",
+      "building": "HOUSE",
+      "elevation": 0,
+      "height": 2743200
+    }
+  },
+  "junctions": {
+    "SW": {
+      "level": "MAIN",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "SE": {
+      "level": "MAIN",
+      "position": [
+        23408640,
+        0
+      ]
+    },
+    "NE": {
+      "level": "MAIN",
+      "position": [
+        23408640,
+        11704320
+      ]
+    },
+    "NW": {
+      "level": "MAIN",
+      "position": [
+        0,
+        11704320
+      ]
+    },
+    "S24": {
+      "level": "MAIN",
+      "position": [
+        9363456,
+        0
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "S1",
+          "S2"
+        ]
+      }
+    },
+    "S42": {
+      "level": "MAIN",
+      "position": [
+        16386048,
+        0
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "S2",
+          "S3"
+        ]
+      }
+    },
+    "N24": {
+      "level": "MAIN",
+      "position": [
+        9363456,
+        11704320
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "N2",
+          "N3"
+        ]
+      }
+    },
+    "N42": {
+      "level": "MAIN",
+      "position": [
+        16386048,
+        11704320
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "N1",
+          "N2"
+        ]
+      }
+    },
+    "E18": {
+      "level": "MAIN",
+      "position": [
+        23408640,
+        7022592
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "E1",
+          "E2"
+        ]
+      }
+    },
+    "M18": {
+      "level": "MAIN",
+      "position": [
+        16386048,
+        7022592
+      ],
+      "join": {
+        "kind": "butt",
+        "through": [
+          "I2",
+          "I3"
+        ]
+      }
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "MAIN",
+      "start": "SW",
+      "end": "NW",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "N3": {
+      "level": "MAIN",
+      "start": "NW",
+      "end": "N24",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "N2": {
+      "level": "MAIN",
+      "start": "N24",
+      "end": "N42",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "N1": {
+      "level": "MAIN",
+      "start": "N42",
+      "end": "NE",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "E2": {
+      "level": "MAIN",
+      "start": "NE",
+      "end": "E18",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "E1": {
+      "level": "MAIN",
+      "start": "E18",
+      "end": "SE",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "S3": {
+      "level": "MAIN",
+      "start": "SE",
+      "end": "S42",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "S2": {
+      "level": "MAIN",
+      "start": "S42",
+      "end": "S24",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "S1": {
+      "level": "MAIN",
+      "start": "S24",
+      "end": "SW",
+      "type": "EXT26",
+      "justification": "coreFace"
+    },
+    "I1": {
+      "level": "MAIN",
+      "start": "S24",
+      "end": "N24",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "I2": {
+      "level": "MAIN",
+      "start": "S42",
+      "end": "M18",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "I3": {
+      "level": "MAIN",
+      "start": "M18",
+      "end": "N42",
+      "type": "INT24",
+      "justification": "center"
+    },
+    "I4": {
+      "level": "MAIN",
+      "start": "M18",
+      "end": "E18",
+      "type": "INT24",
+      "justification": "center"
+    }
+  },
+  "openings": {
+    "GD": {
+      "wall": "S1",
+      "offset": 1560576,
+      "fill": "DOH",
+      "name": "Garage door"
+    },
+    "FR": {
+      "wall": "S2",
+      "offset": 2340864,
+      "fill": "DFR",
+      "swing": "right",
+      "name": "French doors"
+    },
+    "PT": {
+      "wall": "S3",
+      "offset": 1170432,
+      "fill": "DBP",
+      "name": "Patio slider"
+    },
+    "DG": {
+      "wall": "I1",
+      "offset": 1170432,
+      "fill": "D36",
+      "hinge": "start",
+      "swing": "left",
+      "name": "Garage entry"
+    },
+    "BF": {
+      "wall": "I1",
+      "offset": 7412736,
+      "fill": "DBF",
+      "swing": "right",
+      "name": "Closet bifold"
+    },
+    "PK": {
+      "wall": "I2",
+      "offset": 1560576,
+      "fill": "DPK",
+      "hinge": "start",
+      "name": "Pocket door"
+    },
+    "DA": {
+      "wall": "I2",
+      "offset": 4291584,
+      "fill": "DDA",
+      "hinge": "end",
+      "swing": "right",
+      "name": "Cafe door"
+    },
+    "BN": {
+      "wall": "I3",
+      "offset": 1560576,
+      "fill": "DBN",
+      "hinge": "start",
+      "swing": "right",
+      "name": "Barn door"
+    },
+    "CS": {
+      "wall": "I4",
+      "offset": 4291584,
+      "fill": "DCS",
+      "name": "Cased opening"
+    },
+    "BF2": {
+      "wall": "I4",
+      "offset": 1560576,
+      "fill": "DBF2",
+      "hinge": "start",
+      "swing": "left",
+      "name": "Linen bifold"
+    },
+    "WG": {
+      "wall": "W1",
+      "offset": 3901440,
+      "fill": "W3636"
+    },
+    "WB": {
+      "wall": "E1",
+      "offset": 2340864,
+      "fill": "W4848"
+    }
+  },
+  "rooms": {
+    "GAR": {
+      "level": "MAIN",
+      "name": "Garage",
+      "function": "garage",
+      "anchor": [
+        4681728,
+        5852160
+      ]
+    },
+    "LIV": {
+      "level": "MAIN",
+      "name": "Great room",
+      "function": "living",
+      "anchor": [
+        12874752,
+        5852160
+      ]
+    },
+    "BED": {
+      "level": "MAIN",
+      "name": "Bedroom",
+      "function": "sleeping",
+      "anchor": [
+        19897344,
+        3511296
+      ]
+    },
+    "BATH": {
+      "level": "MAIN",
+      "name": "Bath",
+      "function": "bath",
+      "anchor": [
+        19897344,
+        9363456
+      ]
+    }
+  },
+  "types": {
+    "EXT26": {
+      "kind": "wallType",
+      "name": "2x6 exterior wall",
+      "layers": [
+        {
+          "thickness": 24384,
+          "function": "finish"
+        },
+        {
+          "thickness": 14224,
+          "function": "substrate"
+        },
+        {
+          "thickness": 178816,
+          "function": "core"
+        },
+        {
+          "thickness": 16256,
+          "function": "finish"
+        }
+      ]
+    },
+    "INT24": {
+      "kind": "wallType",
+      "name": "2x4 partition",
+      "layers": [
+        {
+          "thickness": 16256,
+          "function": "finish"
+        },
+        {
+          "thickness": 113792,
+          "function": "core"
+        },
+        {
+          "thickness": 16256,
+          "function": "finish"
+        }
+      ]
+    },
+    "D36": {
+      "kind": "doorType",
+      "name": "36 in door",
+      "width": 1170432,
+      "height": 2600960,
+      "operation": "swing"
+    },
+    "DOH": {
+      "kind": "doorType",
+      "name": "16 ft garage door",
+      "width": 6242304,
+      "height": 2731008,
+      "operation": "overhead"
+    },
+    "DFR": {
+      "kind": "doorType",
+      "name": "5 ft French doors",
+      "width": 1950720,
+      "height": 2600960,
+      "operation": "doubleSwing"
+    },
+    "DBP": {
+      "kind": "doorType",
+      "name": "6 ft patio slider",
+      "width": 2340864,
+      "height": 2600960,
+      "operation": "bypassSlide"
+    },
+    "DBF": {
+      "kind": "doorType",
+      "name": "5 ft bifold",
+      "width": 1950720,
+      "height": 2600960,
+      "operation": "bifold"
+    },
+    "DBF2": {
+      "kind": "doorType",
+      "name": "30 in bifold",
+      "width": 975360,
+      "height": 2600960,
+      "operation": "bifold"
+    },
+    "DPK": {
+      "kind": "doorType",
+      "name": "32 in pocket door",
+      "width": 1040384,
+      "height": 2600960,
+      "operation": "pocket"
+    },
+    "DDA": {
+      "kind": "doorType",
+      "name": "30 in double-acting door",
+      "width": 975360,
+      "height": 2600960,
+      "operation": "doubleActing"
+    },
+    "DBN": {
+      "kind": "doorType",
+      "name": "36 in barn door",
+      "width": 1170432,
+      "height": 2600960,
+      "operation": "surfaceSlide"
+    },
+    "DCS": {
+      "kind": "doorType",
+      "name": "4 ft cased opening",
+      "width": 1560576,
+      "height": 2600960,
+      "operation": "cased"
+    },
+    "W3636": {
+      "kind": "windowType",
+      "name": "36 x 36 in window",
+      "width": 1170432,
+      "height": 1170432,
+      "sill": 1365504
+    },
+    "W4848": {
+      "kind": "windowType",
+      "name": "48 x 48 in window",
+      "width": 1560576,
+      "height": 1560576,
+      "sill": 1170432
+    }
+  },
+  "assets": {
+    "bed-queen-1600-model": {
+      "path": "assets/bed-queen-1600.glb",
+      "sha256": "d51ef9f12df2579b523e70cda3e1390b239f2cd15f66843c4eb08ebf1ee92778",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 3572
+    },
+    "bed-queen-1600-symbol": {
+      "path": "assets/bed-queen-1600.svg",
+      "sha256": "5c51b020883f5a3bb19461fdaa62081d1f5814aa1ca9554a1b859cde116c11e2",
+      "mediaType": "image/svg+xml",
+      "byteLength": 626
+    },
+    "nightstand-500-model": {
+      "path": "assets/nightstand-500.glb",
+      "sha256": "5647cf07144ea8e2fc29d7b59ccff7d8d9af18a7bde67e0fdc572ae6af8b2d89",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 1616
+    },
+    "nightstand-500-symbol": {
+      "path": "assets/nightstand-500.svg",
+      "sha256": "72e836eac1c855510b04aba00e3795806d498c4566c4a4b8e3495fe1a0cfa513",
+      "mediaType": "image/svg+xml",
+      "byteLength": 331
+    },
+    "dresser-1200-model": {
+      "path": "assets/dresser-1200.glb",
+      "sha256": "f2af947f142fc17a50a9b3b850604406f9ec2001029b5625f6464b37d629c720",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 1620
+    },
+    "dresser-1200-symbol": {
+      "path": "assets/dresser-1200.svg",
+      "sha256": "0123e986512e7766d0583344dcc81b03a20f89797b8c4d45e44f45950bf79917",
+      "mediaType": "image/svg+xml",
+      "byteLength": 329
+    },
+    "sofa-2100-model": {
+      "path": "assets/sofa-2100.glb",
+      "sha256": "9e743f17668b4e416702511a1b8bcf8308ddc29309a852d884a8b9ff837a9880",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 3584
+    },
+    "sofa-2100-symbol": {
+      "path": "assets/sofa-2100.svg",
+      "sha256": "0cce0be35d5fb68643c6248467f13e06592f8f373fcf74f2054585faa6cb2449",
+      "mediaType": "image/svg+xml",
+      "byteLength": 538
+    },
+    "armchair-850-model": {
+      "path": "assets/armchair-850.glb",
+      "sha256": "affddfa5d06994e7158f78b3458f804da97975ed41a069dbd34496a0e9e73409",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 3592
+    },
+    "armchair-850-symbol": {
+      "path": "assets/armchair-850.svg",
+      "sha256": "b54c8d50dd3b7f6bef32adf03f9d6449e05e5d2e0871acae8bb5f558e682b122",
+      "mediaType": "image/svg+xml",
+      "byteLength": 530
+    },
+    "coffee-table-1200-model": {
+      "path": "assets/coffee-table-1200.glb",
+      "sha256": "8df4b116f6f8de8eae63cb6bec10ef226acff22a2b6b1034c87dfe6435dd87a2",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 4248
+    },
+    "coffee-table-1200-symbol": {
+      "path": "assets/coffee-table-1200.svg",
+      "sha256": "4dbde2c892d11cdaa038a6c3957ab5c1867dc69809d46dae3225a8dc665a3a79",
+      "mediaType": "image/svg+xml",
+      "byteLength": 627
+    },
+    "dining-table-1500-model": {
+      "path": "assets/dining-table-1500.glb",
+      "sha256": "f1f7f9c3f84f64e30aa05fa002b4e7ce05a14dea36bb5deaf243873ee12657bf",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 4208
+    },
+    "dining-table-1500-symbol": {
+      "path": "assets/dining-table-1500.svg",
+      "sha256": "7e309d65f182b2d30118aef245bc423d6cafc2014d52e8ab266d9972c1a30a06",
+      "mediaType": "image/svg+xml",
+      "byteLength": 642
+    },
+    "dining-chair-450-model": {
+      "path": "assets/dining-chair-450.glb",
+      "sha256": "4835348fccce28c0c4d15a586325c8b0df39768f5b1d65596b2b7dd8b6b3acb2",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 4880
+    },
+    "dining-chair-450-symbol": {
+      "path": "assets/dining-chair-450.svg",
+      "sha256": "d4eebc326c2e4831968c5f726fc82a359c8b953b7104db21804e4614c2f012cd",
+      "mediaType": "image/svg+xml",
+      "byteLength": 706
+    },
+    "refrigerator-900-model": {
+      "path": "assets/refrigerator-900.glb",
+      "sha256": "f7e318e5c45b6596771381820a0ee93b5021fc89bd6de2c0b8f566796a9f5552",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 2300
+    },
+    "refrigerator-900-symbol": {
+      "path": "assets/refrigerator-900.svg",
+      "sha256": "ef8ac6f6aef200d274387176304c1d566b78399e73cee083cdeb17a691abe373",
+      "mediaType": "image/svg+xml",
+      "byteLength": 527
+    },
+    "base-cabinet-600-model": {
+      "path": "assets/base-cabinet-600.glb",
+      "sha256": "b6198a5cfb2a6da276ef2151b9f4205818fdeccc8b67a56ee354ed92d14e7d70",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 2952
+    },
+    "base-cabinet-600-symbol": {
+      "path": "assets/base-cabinet-600.svg",
+      "sha256": "2b580fab1a46846da03b4b422472f839fb9b5d176aaf7e22cff6ced000423a9b",
+      "mediaType": "image/svg+xml",
+      "byteLength": 537
+    },
+    "range-760-model": {
+      "path": "assets/range-760.glb",
+      "sha256": "4bb46d30886648b92fb82137e675bed4cf8d4f3a9afe02873817ee2ef0b774d8",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 2284
+    },
+    "range-760-symbol": {
+      "path": "assets/range-760.svg",
+      "sha256": "33d80b570a881073b6fd99def41ebd92aaa4f022c39abada8048f258d87fe808",
+      "mediaType": "image/svg+xml",
+      "byteLength": 667
+    },
+    "dishwasher-600-model": {
+      "path": "assets/dishwasher-600.glb",
+      "sha256": "2bf68e06f4a9ee40b534d73546b356cc0748e527ce72dc05bc9e2fae02e8e912",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 1648
+    },
+    "dishwasher-600-symbol": {
+      "path": "assets/dishwasher-600.svg",
+      "sha256": "3ea74a39189f73b343cfd0d4f2f91b3fb1cc21a68b063b5286621a848f973edf",
+      "mediaType": "image/svg+xml",
+      "byteLength": 411
+    },
+    "wall-cabinet-600-model": {
+      "path": "assets/wall-cabinet-600.glb",
+      "sha256": "62ea0ad3aa061820ec47b0bc9540f1bb6517564257a603bb1ffe819513649bcd",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 1636
+    },
+    "wall-cabinet-600-symbol": {
+      "path": "assets/wall-cabinet-600.svg",
+      "sha256": "87e3d014ab0a61596e001f8b2466b770bb370272e32978e5869c37529eb99cfe",
+      "mediaType": "image/svg+xml",
+      "byteLength": 367
+    },
+    "washer-690-model": {
+      "path": "assets/washer-690.glb",
+      "sha256": "e025948e4f0e3afe20902c0536283c7eafd9bfa3ea577984b4f6b348751aee94",
+      "mediaType": "model/gltf-binary",
+      "byteLength": 1636
+    },
+    "washer-690-symbol": {
+      "path": "assets/washer-690.svg",
+      "sha256": "0eab48dcb4ebafc8b503e0d789bfb491d009494753b852ef8bafbbb9d6e8cef3",
+      "mediaType": "image/svg+xml",
+      "byteLength": 351
+    }
+  },
+  "extensionsUsed": {
+    "FS_furniture": "0.1",
+    "FS_plumbing": "0.1"
+  },
+  "extensions": {
+    "FS_furniture": {
+      "collections": {
+        "pieces": {
+          "BED1": {
+            "category": "bed",
+            "catalogue": "bed-queen-1600",
+            "name": "Queen bed, 1600 x 2050 mm",
+            "clearances": {
+              "left": {
+                "purpose": "access",
+                "shape": "box",
+                "min": [
+                  0,
+                  1024000,
+                  0
+                ],
+                "max": [
+                  2624000,
+                  1792000,
+                  2560000
+                ]
+              },
+              "right": {
+                "purpose": "access",
+                "shape": "box",
+                "min": [
+                  0,
+                  -1792000,
+                  0
+                ],
+                "max": [
+                  2624000,
+                  -1024000,
+                  2560000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -1024000,
+                  0
+                ],
+                "max": [
+                  2624000,
+                  1024000,
+                  1280000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "bed-queen-1600-model",
+              "symbol": "bed-queen-1600-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "BED",
+              "surface": "floor",
+              "position": [
+                23174554,
+                3511296
+              ],
+              "rotation": 180000000
+            }
+          },
+          "NS1": {
+            "category": "nightstand",
+            "catalogue": "nightstand-500",
+            "name": "Nightstand",
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -320000,
+                  0
+                ],
+                "max": [
+                  576000,
+                  320000,
+                  768000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "nightstand-500-model",
+              "symbol": "nightstand-500-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "BED",
+              "surface": "floor",
+              "position": [
+                23174554,
+                1911706
+              ],
+              "rotation": 180000000
+            }
+          },
+          "NS2": {
+            "category": "nightstand",
+            "catalogue": "nightstand-500",
+            "name": "Nightstand",
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -320000,
+                  0
+                ],
+                "max": [
+                  576000,
+                  320000,
+                  768000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "nightstand-500-model",
+              "symbol": "nightstand-500-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "BED",
+              "surface": "floor",
+              "position": [
+                23174554,
+                5110886
+              ],
+              "rotation": 180000000
+            }
+          },
+          "DR1": {
+            "category": "dresser",
+            "catalogue": "dresser-1200",
+            "name": "Dresser",
+            "clearances": {
+              "front": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [
+                  640000,
+                  -768000,
+                  0
+                ],
+                "max": [
+                  1280000,
+                  768000,
+                  1024000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -768000,
+                  0
+                ],
+                "max": [
+                  640000,
+                  768000,
+                  1024000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "dresser-1200-model",
+              "symbol": "dresser-1200-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "BED",
+              "surface": "floor",
+              "position": [
+                18726912,
+                234086
+              ],
+              "rotation": 90000000
+            }
+          },
+          "SOFA": {
+            "category": "sofa",
+            "catalogue": "sofa-2100",
+            "name": "Three-seat sofa",
+            "seats": 3,
+            "clearances": {
+              "front": {
+                "purpose": "access",
+                "shape": "box",
+                "min": [
+                  1152000,
+                  -1344000,
+                  0
+                ],
+                "max": [
+                  1920000,
+                  1344000,
+                  2560000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -1344000,
+                  0
+                ],
+                "max": [
+                  1152000,
+                  1344000,
+                  1088000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "sofa-2100-model",
+              "symbol": "sofa-2100-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                11314176,
+                5071872
+              ],
+              "rotation": -90000000
+            }
+          },
+          "ARM": {
+            "category": "armchair",
+            "catalogue": "armchair-850",
+            "name": "Armchair",
+            "seats": 1,
+            "clearances": {
+              "front": {
+                "purpose": "access",
+                "shape": "box",
+                "min": [
+                  1088000,
+                  -544000,
+                  0
+                ],
+                "max": [
+                  1856000,
+                  544000,
+                  2560000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -544000,
+                  0
+                ],
+                "max": [
+                  1088000,
+                  544000,
+                  1088000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "armchair-850-model",
+              "symbol": "armchair-850-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                14240256,
+                4096512
+              ],
+              "rotation": 180000000
+            }
+          },
+          "CT": {
+            "category": "coffeeTable",
+            "catalogue": "coffee-table-1200",
+            "name": "Coffee table",
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -768000,
+                  0
+                ],
+                "max": [
+                  768000,
+                  768000,
+                  576000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "coffee-table-1200-model",
+              "symbol": "coffee-table-1200-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                11314176,
+                3745382
+              ],
+              "rotation": -90000000
+            }
+          },
+          "DT": {
+            "category": "diningTable",
+            "catalogue": "dining-table-1500",
+            "name": "Dining table, 1500 x 900 mm",
+            "seats": 6,
+            "clearances": {
+              "around": {
+                "purpose": "access",
+                "shape": "box",
+                "min": [
+                  -960000,
+                  -1920000,
+                  0
+                ],
+                "max": [
+                  2112000,
+                  1920000,
+                  2560000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -960000,
+                  0
+                ],
+                "max": [
+                  1152000,
+                  960000,
+                  960000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "dining-table-1500-model",
+              "symbol": "dining-table-1500-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                13498982,
+                7373722
+              ],
+              "rotation": -90000000
+            }
+          },
+          "CH1": {
+            "category": "chair",
+            "catalogue": "dining-chair-450",
+            "name": "Dining chair",
+            "seats": 1,
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -288000,
+                  0
+                ],
+                "max": [
+                  640000,
+                  288000,
+                  1088000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "dining-chair-450-model",
+              "symbol": "dining-chair-450-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                13030810,
+                8036966
+              ],
+              "rotation": -90000000
+            }
+          },
+          "CH2": {
+            "category": "chair",
+            "catalogue": "dining-chair-450",
+            "name": "Dining chair",
+            "seats": 1,
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -288000,
+                  0
+                ],
+                "max": [
+                  640000,
+                  288000,
+                  1088000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "dining-chair-450-model",
+              "symbol": "dining-chair-450-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                13967155,
+                8036966
+              ],
+              "rotation": -90000000
+            }
+          },
+          "CH3": {
+            "category": "chair",
+            "catalogue": "dining-chair-450",
+            "name": "Dining chair",
+            "seats": 1,
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -288000,
+                  0
+                ],
+                "max": [
+                  640000,
+                  288000,
+                  1088000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "dining-chair-450-model",
+              "symbol": "dining-chair-450-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                13030810,
+                5579059
+              ],
+              "rotation": 90000000
+            }
+          },
+          "CH4": {
+            "category": "chair",
+            "catalogue": "dining-chair-450",
+            "name": "Dining chair",
+            "seats": 1,
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -288000,
+                  0
+                ],
+                "max": [
+                  640000,
+                  288000,
+                  1088000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "dining-chair-450-model",
+              "symbol": "dining-chair-450-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                13967155,
+                5579059
+              ],
+              "rotation": 90000000
+            }
+          }
+        },
+        "appliances": {
+          "REF": {
+            "category": "refrigerator",
+            "catalogue": "refrigerator-900",
+            "name": "Refrigerator, 900 mm",
+            "clearances": {
+              "door": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [
+                  896000,
+                  -576000,
+                  0
+                ],
+                "max": [
+                  2048000,
+                  576000,
+                  2278400
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -576000,
+                  0
+                ],
+                "max": [
+                  896000,
+                  576000,
+                  2278400
+                ]
+              },
+              "level": "MAIN",
+              "asset": "refrigerator-900-model",
+              "symbol": "refrigerator-900-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                10104730,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          },
+          "RNG": {
+            "category": "range",
+            "catalogue": "range-760",
+            "name": "Range, 760 mm",
+            "clearances": {
+              "door": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [
+                  832000,
+                  -486400,
+                  0
+                ],
+                "max": [
+                  1600000,
+                  486400,
+                  1177600
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -486400,
+                  0
+                ],
+                "max": [
+                  832000,
+                  486400,
+                  1177600
+                ]
+              },
+              "level": "MAIN",
+              "asset": "range-760-model",
+              "symbol": "range-760-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                11957914,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          },
+          "DW": {
+            "category": "dishwasher",
+            "catalogue": "dishwasher-600",
+            "name": "Dishwasher, 600 mm",
+            "clearances": {
+              "door": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [
+                  768000,
+                  -384000,
+                  0
+                ],
+                "max": [
+                  1664000,
+                  384000,
+                  1088000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -384000,
+                  0
+                ],
+                "max": [
+                  768000,
+                  384000,
+                  1088000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "dishwasher-600-model",
+              "symbol": "dishwasher-600-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                14708429,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          },
+          "WSH": {
+            "category": "washer",
+            "catalogue": "washer-690",
+            "name": "Front-loading washer, 690 mm",
+            "clearances": {
+              "door": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [
+                  832000,
+                  -441600,
+                  0
+                ],
+                "max": [
+                  1728000,
+                  441600,
+                  1088000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -441600,
+                  0
+                ],
+                "max": [
+                  832000,
+                  441600,
+                  1088000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "washer-690-model",
+              "symbol": "washer-690-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "GAR",
+              "surface": "floor",
+              "position": [
+                234086,
+                10143744
+              ],
+              "rotation": 0
+            }
+          }
+        },
+        "casework": {
+          "BC1": {
+            "category": "baseCabinet",
+            "catalogue": "base-cabinet-600",
+            "name": "Base cabinet with counter, 600 mm",
+            "clearances": {
+              "front": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [
+                  768000,
+                  -384000,
+                  0
+                ],
+                "max": [
+                  1536000,
+                  384000,
+                  1152000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -384000,
+                  0
+                ],
+                "max": [
+                  768000,
+                  384000,
+                  1152000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "base-cabinet-600-model",
+              "symbol": "base-cabinet-600-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                11080090,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          },
+          "BC2": {
+            "category": "baseCabinet",
+            "catalogue": "base-cabinet-600",
+            "name": "Base cabinet with counter, 600 mm",
+            "clearances": {
+              "front": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [
+                  768000,
+                  -384000,
+                  0
+                ],
+                "max": [
+                  1536000,
+                  384000,
+                  1152000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -384000,
+                  0
+                ],
+                "max": [
+                  768000,
+                  384000,
+                  1152000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "base-cabinet-600-model",
+              "symbol": "base-cabinet-600-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                12835738,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          },
+          "WC1": {
+            "category": "wallCabinet",
+            "catalogue": "wall-cabinet-600",
+            "name": "Wall cabinet, 600 mm",
+            "clearances": {
+              "front": {
+                "purpose": "swing",
+                "shape": "box",
+                "min": [
+                  448000,
+                  -384000,
+                  0
+                ],
+                "max": [
+                  960000,
+                  384000,
+                  960000
+                ]
+              }
+            },
+            "fallback": {
+              "box": {
+                "min": [
+                  0,
+                  -384000,
+                  0
+                ],
+                "max": [
+                  448000,
+                  384000,
+                  960000
+                ]
+              },
+              "level": "MAIN",
+              "asset": "wall-cabinet-600-model",
+              "symbol": "wall-cabinet-600-symbol"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                15488717,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          }
+        }
+      }
+    },
+    "FS_plumbing": {
+      "collections": {
+        "fixtures": {
+          "SNK": {
+            "fixture": "kitchenSink",
+            "supply": [
+              "cold"
+            ],
+            "fallback": {
+              "level": "MAIN",
+              "box": {
+                "min": [
+                  0,
+                  -536448,
+                  0
+                ],
+                "max": [
+                  715264,
+                  536448,
+                  1170432
+                ]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "LIV",
+              "surface": "floor",
+              "position": [
+                13772083,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          },
+          "WC": {
+            "fixture": "waterCloset",
+            "supply": [
+              "cold"
+            ],
+            "fallback": {
+              "level": "MAIN",
+              "box": {
+                "min": [
+                  0,
+                  -292608,
+                  0
+                ],
+                "max": [
+                  910336,
+                  292608,
+                  975360
+                ]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "BATH",
+              "surface": "floor",
+              "position": [
+                18726912,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          },
+          "LAV": {
+            "fixture": "lavatory",
+            "supply": [
+              "cold"
+            ],
+            "fallback": {
+              "level": "MAIN",
+              "box": {
+                "min": [
+                  0,
+                  -390144,
+                  0
+                ],
+                "max": [
+                  650240,
+                  390144,
+                  1105408
+                ]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "BATH",
+              "surface": "floor",
+              "position": [
+                17556480,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          },
+          "TUB": {
+            "fixture": "bathtub",
+            "supply": [
+              "cold"
+            ],
+            "fallback": {
+              "level": "MAIN",
+              "box": {
+                "min": [
+                  0,
+                  -975360,
+                  0
+                ],
+                "max": [
+                  1040384,
+                  975360,
+                  650240
+                ]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "BATH",
+              "surface": "floor",
+              "position": [
+                23174554,
+                9558528
+              ],
+              "rotation": 180000000
+            }
+          },
+          "SHW": {
+            "fixture": "shower",
+            "supply": [
+              "cold"
+            ],
+            "fallback": {
+              "level": "MAIN",
+              "box": {
+                "min": [
+                  0,
+                  -585216,
+                  0
+                ],
+                "max": [
+                  1170432,
+                  585216,
+                  32512
+                ]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "BATH",
+              "surface": "floor",
+              "position": [
+                20482560,
+                11470234
+              ],
+              "rotation": -90000000
+            }
+          }
+        }
+      }
+    }
+  }
+}

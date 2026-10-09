@@ -9,12 +9,15 @@ import {
   arcPolyline,
   deriveFrom,
   evaluate,
+  extElements,
+  facingVector,
   InvalidDocumentError,
   OFFICIAL_READER,
   sagittaOf,
   type Derived,
   type DerivedRoof,
   type DerivedStair,
+  type DoorOperation,
   type Evaluation,
   type FloorspecDocument,
   type ValidateOptions,
@@ -23,6 +26,7 @@ import {
 const ipoint = (p: readonly [number, number]): readonly [bigint, bigint] => [BigInt(p[0]), BigInt(p[1])];
 const toPt = (p: readonly [bigint, bigint]): Pt => [Number(p[0]), Number(p[1])];
 import { columnRadius, newelOutline } from './symbols.js';
+import type { BoxFrame } from './plansymbols.js';
 
 export type Pt = readonly [number, number];
 
@@ -63,6 +67,8 @@ export interface SceneOpening {
   readonly end: Pt;
   readonly hinge: 'start' | 'end';
   readonly swing: 'left' | 'right';
+  /** A door's fill type's operation (Core 8.4), when it declares one: how its symbol is drawn. */
+  readonly operation?: DoorOperation;
 }
 
 export interface SceneRoom {
@@ -101,6 +107,15 @@ export interface SceneFallback {
   readonly collection: string;
   /** Four points, counter-clockwise, as the engine derived them (13.2). */
   readonly footprint: readonly Pt[];
+  /** What the element is, when its extension says: FS_furniture's `category`, FS_plumbing's `fixture`. */
+  readonly category?: string;
+  /**
+   * Its box in plan, corner by corner (FLR-T-12.24): the footprint's vertex at the frame's (min x, min y)
+   * and the box's sides from it — which way its front faces, for its symbol or outline.
+   */
+  readonly frame?: BoxFrame;
+  /** Its fallback's 2D symbol (Core 12.6), when it names a packaged asset with a digest. */
+  readonly symbol?: { readonly id: string; readonly sha256: string; readonly mediaType: string };
 }
 
 /** A clearance envelope in plan (Core 0.2, 13.5), by owner — an opening or an extension element — and name. */
@@ -256,7 +271,8 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     const fill = o.fill === undefined ? undefined : doc.types?.[o.fill];
     const kind: OpeningKind = fill?.kind === 'doorType' ? 'door' : fill?.kind === 'windowType' ? 'window' : 'opening';
     const d = derived.openings[id]!;
-    openings.set(id, { id, wall: o.wall, kind, start: d.start, end: d.end, hinge: o.hinge ?? 'start', swing: o.swing ?? 'right' });
+    const operation = fill?.kind === 'doorType' ? fill.operation : undefined;
+    openings.set(id, { id, wall: o.wall, kind, start: d.start, end: d.end, hinge: o.hinge ?? 'start', swing: o.swing ?? 'right', ...(operation === undefined ? {} : { operation }) });
   }
 
   const rooms = new Map<string, SceneRoom>();
@@ -279,8 +295,23 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
   const unanchored = derived.unanchored.filter((u) => u.level === lid).map((u) => ({ outer: u.outer, holes: u.holes, area: u.area }));
 
   const fallbacks = new Map<string, SceneFallback>();
-  for (const [id, fb] of entries(derived.fallbacks))
-    if (fb.level === lid) fallbacks.set(id, { id, extension: fb.extension, collection: fb.collection, footprint: fb.footprint });
+  const elements = new Map(extElements(doc).map((x) => [x.id, x.element as unknown as Json]));
+  for (const [id, fb] of entries(derived.fallbacks)) {
+    if (fb.level !== lid) continue;
+    const element = elements.get(id);
+    const frame = element === undefined ? undefined : boxFrame(element, fb.footprint, derived.placements?.[id]);
+    const category = element === undefined ? undefined : categoryOf(element);
+    const symbol = element === undefined ? undefined : symbolOf(doc, element);
+    fallbacks.set(id, {
+      id,
+      extension: fb.extension,
+      collection: fb.collection,
+      footprint: fb.footprint,
+      ...(category === undefined ? {} : { category }),
+      ...(frame === undefined ? {} : { frame }),
+      ...(symbol === undefined ? {} : { symbol }),
+    });
+  }
   const clearances: SceneClearance[] = [];
   for (const [owner, envs] of entries(derived.clearances))
     for (const [name, env] of entries(envs)) if (env.level === lid) clearances.push({ owner, name, purpose: env.purpose, footprint: env.footprint });
@@ -324,4 +355,56 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     stairs: byId(stairs),
     stairsBelow: byId(stairsBelow),
   };
+}
+
+type Json = Record<string, unknown>;
+const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** What an extension element is, in its extension's own term: FS_furniture's `category`, FS_plumbing's `fixture`, `heater` or `receptor`. */
+function categoryOf(element: Json): string | undefined {
+  for (const k of ['category', 'fixture', 'heater', 'receptor']) if (typeof element[k] === 'string') return element[k];
+  return undefined;
+}
+
+/** An element's fallback symbol (Core 12.6), when it names an asset of the document with a SHA-256. */
+function symbolOf(doc: FloorspecDocument, element: Json): SceneFallback['symbol'] {
+  const fb = element['fallback'];
+  const id = isObject(fb) ? fb['symbol'] : undefined;
+  if (typeof id !== 'string') return undefined;
+  const assets = doc.assets as Record<string, unknown> | undefined;
+  const a = assets !== undefined && Object.hasOwn(assets, id) ? assets[id] : undefined;
+  if (!isObject(a) || typeof a['sha256'] !== 'string' || !/^[0-9a-f]{64}$/.test(a['sha256'])) return undefined;
+  return { id, sha256: a['sha256'], mediaType: typeof a['mediaType'] === 'string' ? a['mediaType'] : '' };
+}
+
+/**
+ * An element's box in plan, corner by corner: its frame (Core 13.1) — its placement, else its level's
+ * — maps the box's corners, and each is snapped to the footprint vertex the engine derived for it,
+ * so the corners drawn are the engine's own points and only their order is worked out here.
+ */
+function boxFrame(element: Json, footprint: readonly Pt[], placement: { readonly point: readonly number[]; readonly facing: number } | undefined): BoxFrame | undefined {
+  const fb = element['fallback'];
+  const box = isObject(fb) ? fb['box'] : undefined;
+  if (!isObject(box) || !Array.isArray(box['min']) || !Array.isArray(box['max']) || footprint.length !== 4) return undefined;
+  const [x0, y0] = box['min'] as number[];
+  const [x1, y1] = box['max'] as number[];
+  if (typeof x0 !== 'number' || typeof y0 !== 'number' || typeof x1 !== 'number' || typeof y1 !== 'number') return undefined;
+  const [fx, fy] = facingVector(placement?.facing ?? 0);
+  const k = Math.sqrt(Number(fx) * Number(fx) + Number(fy) * Number(fy));
+  const u: Pt = [Number(fx) / k, Number(fy) / k];
+  const o: Pt = placement === undefined ? [0, 0] : [placement.point[0] ?? 0, placement.point[1] ?? 0];
+  const corner = (x: number, y: number): Pt => {
+    const p: Pt = [o[0] + x * u[0] - y * u[1], o[1] + x * u[1] + y * u[0]];
+    let best = footprint[0]!;
+    let near = Infinity;
+    for (const q of footprint) {
+      const d = (q[0] - p[0]) * (q[0] - p[0]) + (q[1] - p[1]) * (q[1] - p[1]);
+      if (d < near) [near, best] = [d, q];
+    }
+    return best;
+  };
+  const origin = corner(x0, y0);
+  const front = corner(x1, y0);
+  const side = corner(x0, y1);
+  return { origin, depth: [front[0] - origin[0], front[1] - origin[1]], width: [side[0] - origin[0], side[1] - origin[1]] };
 }

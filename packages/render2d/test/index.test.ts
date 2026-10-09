@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { InvalidDocumentError, check } from '@floorspec/engine';
 import { describe, expect, it } from 'vitest';
-import { ACCENT, PACKAGE_NAME, PALETTES, ROOF_LINES, buildScene, feetInches, inches, labelPoint, newelOutline, num, renderPlan, squareFeet, stairSymbol, upPlacement, type NewelSource, type Pt } from '../src/index.js';
+import { ACCENT, PACKAGE_NAME, PALETTES, ROOF_LINES, buildScene, doorSymbol, feetInches, fixtureSymbol, inches, labelPoint, newelOutline, num, renderPlan, squareFeet, stairSymbol, upPlacement, type BoxFrame, type DoorSource, type NewelSource, type Pt, type SymbolPart } from '../src/index.js';
 
 /** A core-only reader (Core 1.6.4): implements no extension, knows none. */
 const CORE_ONLY = {};
@@ -649,5 +649,252 @@ describe('a stair seen from the level it rises to (FLR-T-12.12)', () => {
     const lower = renderPlan(doc, { level: 'L1' });
     expect(lower).not.toContain('stairs-below');
     expect(lower).toContain('data-arrow="up"');
+  });
+});
+
+describe('FLR-T-12.24: doors drawn by how they operate', () => {
+  const IN = 32512;
+  const W = { a: 3 * IN, b: 3 * IN };
+  const door = (operation: DoorSource['operation'], width = 36 * IN, more: Partial<DoorSource> = {}): DoorSource => ({ start: [0, 0], end: [width, 0], hinge: 'start', swing: 'right', operation, ...more });
+  const arcs = (parts: readonly SymbolPart[]) => parts.filter((p) => p.kind === 'arc');
+  const paths = (parts: readonly SymbolPart[]) => parts.flatMap((p) => (p.kind === 'path' ? [p] : []));
+  const ys = (parts: readonly SymbolPart[]) => parts.flatMap((p) => (p.kind === 'path' ? p.pts : [p.from, p.to, p.centre])).map((q) => q[1]);
+  const xs = (parts: readonly SymbolPart[]) => parts.flatMap((p) => (p.kind === 'path' ? p.pts : [p.from, p.to, p.centre])).map((q) => q[0]);
+
+  it('draws a single swing as one leaf open at 90° and one quarter arc, from the hinge jamb, on the swing side — and a door with no operation the same', () => {
+    const s = doorSymbol(door('swing'), W);
+    expect(s.operation).toBe('swing');
+    expect(paths(s.parts)).toHaveLength(1);
+    expect(arcs(s.parts)).toEqual([{ kind: 'arc', centre: [0, -3 * IN], radius: 36 * IN, from: [0, -39 * IN], to: [36 * IN, -3 * IN], stroke: 'swing' }]);
+    expect(doorSymbol(door(undefined), W)).toEqual(s);
+    // The hinge and the swing side are respected.
+    const other = doorSymbol(door('swing', 36 * IN, { hinge: 'end', swing: 'left' }), W);
+    expect(arcs(other.parts)[0]).toMatchObject({ centre: [36 * IN, 3 * IN], from: [36 * IN, 39 * IN], to: [0, 3 * IN] });
+  });
+
+  it('draws double doors as two leaves from both jambs, their two arcs meeting at the middle', () => {
+    const s = doorSymbol(door('doubleSwing', 60 * IN), W);
+    const [a, b] = arcs(s.parts) as [Extract<SymbolPart, { kind: 'arc' }>, Extract<SymbolPart, { kind: 'arc' }>];
+    expect(paths(s.parts).filter((p) => p.stroke === 'leaf')).toHaveLength(2);
+    expect([a.centre, b.centre]).toEqual([[0, -3 * IN], [60 * IN, -3 * IN]]);
+    expect(a.radius).toBe(30 * IN);
+    expect(a.to).toEqual([30 * IN, -3 * IN]);
+    expect(b.to).toEqual([30 * IN, -3 * IN]);
+    expect(Math.min(...ys(s.parts))).toBe(-33 * IN);
+  });
+
+  it('draws a double-acting door with a swing to each side', () => {
+    const s = doorSymbol(door('doubleActing'), W);
+    const [a, b] = arcs(s.parts);
+    expect(Math.sign(a!.centre[1])).toBe(-1);
+    expect(Math.sign(b!.centre[1])).toBe(1);
+  });
+
+  it('draws a pocket door as a leaf sliding into a pocket inside the wall beyond its hinge jamb, dashed there', () => {
+    const s = doorSymbol(door('pocket', 32 * IN), W);
+    const inWall = s.parts.filter((p) => p.stroke === 'inWall');
+    const leaf = s.parts.filter((p) => p.stroke === 'leaf');
+    expect(inWall.length).toBe(2);
+    expect(leaf.length).toBe(1);
+    // The pocket runs from the hinge jamb (x = 0) back into the wall, a leaf's length, inside its faces.
+    expect(Math.min(...xs(inWall))).toBeCloseTo(-32 * IN, 0);
+    expect(Math.max(...xs(inWall))).toBeLessThanOrEqual(0);
+    for (const y of ys(s.parts)) expect(Math.abs(y)).toBeLessThan(3 * IN);
+    // The leaf still out of the pocket is in the opening.
+    expect(Math.min(...xs(leaf))).toBe(0);
+    expect(Math.max(...xs(leaf))).toBeCloseTo(16 * IN, 6);
+    // Hinged at the end, the pocket is beyond the end jamb.
+    expect(Math.max(...xs(doorSymbol(door('pocket', 32 * IN, { hinge: 'end' }), W).parts))).toBeCloseTo(64 * IN, 0);
+  });
+
+  it('draws a bypass slider as two leaves on two parallel tracks, overlapping at the middle', () => {
+    const s = doorSymbol(door('bypassSlide', 72 * IN), W);
+    const [a, b] = paths(s.parts);
+    expect(s.parts.every((p) => p.stroke === 'leaf' && p.kind === 'path' && p.closed)).toBe(true);
+    expect(Math.min(...ys([a!]))).toBeGreaterThan(Math.max(...ys([b!])));
+    expect(Math.max(...xs([a!]))).toBeGreaterThan(Math.min(...xs([b!])));
+    expect(Math.min(...xs([a!]))).toBe(0);
+    expect(Math.max(...xs([b!]))).toBeCloseTo(72 * IN, 6);
+  });
+
+  it('draws a barn door on the face it hangs on, its open position dashed beyond the hinge jamb', () => {
+    const s = doorSymbol(door('surfaceSlide'), W);
+    const hidden = s.parts.filter((p) => p.stroke === 'hidden');
+    expect(hidden).toHaveLength(1);
+    expect(Math.max(...xs(hidden))).toBeLessThan(0);
+    for (const y of ys(s.parts)) expect(y).toBeLessThan(-3 * IN);
+  });
+
+  it('draws a bifold as zig-zag leaves: one pair to the hinge jamb in a narrow opening, a pair to each jamb in a wide one', () => {
+    const narrow = doorSymbol(door('bifold', 30 * IN), W);
+    expect(narrow.parts).toHaveLength(1);
+    expect((narrow.parts[0] as Extract<SymbolPart, { kind: 'path' }>).pts).toHaveLength(3);
+    const wide = doorSymbol(door('bifold', 60 * IN), W);
+    expect(wide.parts).toHaveLength(2);
+    // Folded into the swing side: the apexes are off the face, on the right.
+    for (const p of wide.parts) expect((p as Extract<SymbolPart, { kind: 'path' }>).pts[1]![1]).toBeLessThan(-3 * IN);
+  });
+
+  it('draws an overhead door as a dashed line just inside the opening, on the side it rises on, across the whole opening', () => {
+    const s = doorSymbol(door('overhead', 16 * 12 * IN), W);
+    expect(s.parts).toHaveLength(1);
+    expect(s.parts[0]!.stroke).toBe('hidden');
+    expect(Math.min(...xs(s.parts))).toBe(0);
+    expect(Math.max(...xs(s.parts))).toBeCloseTo(192 * IN, 6);
+    for (const y of ys(s.parts)) expect(y).toBeLessThan(-3 * IN);
+    expect(Math.min(...ys(s.parts))).toBeGreaterThan(-10 * IN);
+  });
+
+  it('draws a cased opening with no leaf', () => {
+    expect(doorSymbol(door('cased'), W).parts).toEqual([]);
+  });
+
+  describe('on the plan', () => {
+    const doc = load('plan-symbols');
+    const svg = renderPlan(doc);
+    const group = (id: string): string => new RegExp(`<g data-id="${id}">(.*?)</g>`).exec(svg)![1]!;
+    const arcCount = (g: string): number => (g.match(/A[\d.]+ [\d.]+ 0 0 [01] /g) ?? []).length;
+
+    it('validates with the reference reader', () => {
+      expect(check(doc).valid).toBe(true);
+    });
+
+    it('draws each door its own way: a garage door dashed, French doors with two arcs, a slider and a pocket with none', () => {
+      expect(arcCount(group('DG'))).toBe(1);
+      expect(arcCount(group('FR'))).toBe(2);
+      expect(arcCount(group('DA'))).toBe(2);
+      for (const id of ['GD', 'PT', 'PK', 'BF', 'BF2', 'BN', 'CS']) expect(arcCount(group(id))).toBe(0);
+      expect(group('GD')).toContain('stroke-dasharray="5 3"');
+      // The pocket in the wall: dashed in the floor's colour over the poché.
+      expect(group('PK')).toContain(`stroke="${PALETTES.light.room}"`);
+    });
+
+    it('keeps a plan of plain swing doors byte-for-byte: a type that says "swing" draws as one that says nothing', () => {
+      const d = load('two-bedroom-ranch');
+      // A door type's operation is Core 0.2's.
+      d.floorspec = '0.4';
+      const swung = structuredClone(d);
+      for (const t of Object.values(swung.types as Record<string, Record<string, unknown>>)) if (t['kind'] === 'doorType') t['operation'] = 'swing';
+      expect(renderPlan(swung)).toBe(renderPlan(d));
+    });
+
+    it('golden: every door operation, furniture and fixtures, light and dark', async () => {
+      await expect(svg).toMatchFileSnapshot('./golden/plan-symbols-light.svg');
+      await expect(renderPlan(doc, { theme: 'dark' })).toMatchFileSnapshot('./golden/plan-symbols-dark.svg');
+    });
+  });
+});
+
+describe('FLR-T-12.24: furniture and plumbing fixtures', () => {
+  const IN = 32512;
+  /** A box with its back on the y axis, facing +x: `depth` × `width` inches. */
+  const frame = (depth: number, width: number): BoxFrame => ({ origin: [0, 0], depth: [depth * IN, 0], width: [0, width * IN] });
+  const pts = (parts: readonly SymbolPart[]) => parts.flatMap((p) => (p.kind === 'path' ? p.pts : []));
+  const inside = (parts: readonly SymbolPart[], d: number, w: number) => pts(parts).every(([x, y]) => x >= -1 && x <= d * IN + 1 && y >= -1 && y <= w * IN + 1);
+
+  it('draws a toilet as its tank against the wall and its bowl, an ellipse, in front', () => {
+    const parts = fixtureSymbol({ extension: 'FS_plumbing', collection: 'fixtures', category: 'waterCloset', frame: frame(28, 18) })!;
+    expect(parts.length).toBe(3);
+    const [tank, bowl] = parts as [Extract<SymbolPart, { kind: 'path' }>, Extract<SymbolPart, { kind: 'path' }>];
+    expect(Math.min(...tank.pts.map((p) => p[0]))).toBe(0);
+    expect(Math.max(...tank.pts.map((p) => p[0]))).toBeLessThanOrEqual(9 * IN);
+    // The bowl is an ellipse in front of the tank, reaching the box's front.
+    expect(bowl.pts).toHaveLength(32);
+    expect(Math.min(...bowl.pts.map((p) => p[0]))).toBeGreaterThanOrEqual(Math.max(...tank.pts.map((p) => p[0])) - 1);
+    expect(Math.max(...bowl.pts.map((p) => p[0]))).toBeCloseTo(28 * IN, 0);
+    expect(inside(parts, 28, 18)).toBe(true);
+  });
+
+  it('draws a lavatory and a kitchen sink as their basins with drains — a kitchen sink wide enough with two', () => {
+    const lav = fixtureSymbol({ extension: 'FS_plumbing', collection: 'fixtures', category: 'lavatory', frame: frame(20, 24) })!;
+    expect(lav.length).toBe(3);
+    const sink = fixtureSymbol({ extension: 'FS_plumbing', collection: 'fixtures', category: 'kitchenSink', frame: frame(22, 33) })!;
+    expect(sink.length).toBe(1 + 2 * 2);
+    const bar = fixtureSymbol({ extension: 'FS_plumbing', collection: 'fixtures', category: 'barSink', frame: frame(18, 15) })!;
+    expect(bar.length).toBe(1 + 2);
+    for (const [p, d, w] of [[lav, 20, 24], [sink, 22, 33], [bar, 18, 15]] as const) expect(inside(p, d, w)).toBe(true);
+  });
+
+  it('draws a tub as its rim, a rounded basin inside it and the drain at one end', () => {
+    const parts = fixtureSymbol({ extension: 'FS_plumbing', collection: 'fixtures', category: 'bathtub', frame: frame(32, 60) })!;
+    expect(parts.map((p) => p.stroke)).toEqual(['outline', 'detail', 'detail']);
+    const basin = parts[1] as Extract<SymbolPart, { kind: 'path' }>;
+    expect(basin.pts.length).toBeGreaterThan(30);
+    const drain = parts[2] as Extract<SymbolPart, { kind: 'path' }>;
+    // The drain is at an end of the tub's length (its width here), not its middle.
+    expect(Math.max(...drain.pts.map((p) => p[1]))).toBeLessThan(15 * IN);
+    expect(inside(parts, 32, 60)).toBe(true);
+  });
+
+  it('draws a shower with its drain, and a bed with its headboard at the back and two pillows', () => {
+    expect(fixtureSymbol({ extension: 'FS_plumbing', collection: 'fixtures', category: 'shower', frame: frame(36, 36) })).toHaveLength(4);
+    const bed = fixtureSymbol({ extension: 'FS_furniture', collection: 'pieces', category: 'bed', frame: frame(80, 60) })!;
+    // Box, headboard, two pillows, the sheet's fold.
+    expect(bed).toHaveLength(5);
+    const [, head, pillow] = bed as Extract<SymbolPart, { kind: 'path' }>[];
+    expect(Math.max(...head!.pts.map((p) => p[0]))).toBeLessThan(4 * IN);
+    expect(Math.min(...pillow!.pts.map((p) => p[0]))).toBeLessThan(20 * IN);
+    // A twin bed has one pillow.
+    expect(fixtureSymbol({ extension: 'FS_furniture', collection: 'pieces', category: 'bed', frame: frame(75, 39) })).toHaveLength(4);
+    expect(inside(bed, 80, 60)).toBe(true);
+  });
+
+  it('draws a sofa with its back and arms, a chair, a table, and a counter line on a base cabinet', () => {
+    const sofa = fixtureSymbol({ extension: 'FS_furniture', collection: 'pieces', category: 'sofa', frame: frame(36, 84) })!;
+    expect(sofa.length).toBeGreaterThanOrEqual(4 + 1);
+    expect(fixtureSymbol({ extension: 'FS_furniture', collection: 'pieces', category: 'chair', frame: frame(20, 18) })).toHaveLength(2);
+    expect(fixtureSymbol({ extension: 'FS_furniture', collection: 'pieces', category: 'diningTable', frame: frame(36, 60) })).toHaveLength(2);
+    const cab = fixtureSymbol({ extension: 'FS_furniture', collection: 'casework', category: 'baseCabinet', frame: frame(24, 30) })!;
+    expect(cab.map((p) => p.stroke)).toEqual(['outline', 'detail']);
+    const wall = fixtureSymbol({ extension: 'FS_furniture', collection: 'casework', category: 'wallCabinet', frame: frame(12, 30) })!;
+    expect(wall.every((p) => p.stroke === 'hidden')).toBe(true);
+  });
+
+  it('knows no outline for something it does not know: drawn as its box', () => {
+    expect(fixtureSymbol({ extension: 'FS_furniture', collection: 'pieces', category: 'other', frame: frame(20, 20) })).toBeNull();
+    expect(fixtureSymbol({ extension: 'FS_electrical', collection: 'receptacles', frame: frame(2, 3) })).toBeNull();
+    expect(fixtureSymbol({ extension: 'FS_furniture', collection: 'pieces', category: 'bed' })).toBeNull();
+  });
+
+  describe('on the plan', () => {
+    const doc = load('plan-symbols');
+    const scene = buildScene(doc);
+
+    it('turns each item with its placement: a bed against the east wall faces west, its back corner on the wall', () => {
+      const bed = scene.fallbacks.get('BED1')!;
+      expect(bed.category).toBe('bed');
+      // Its front (+x of its frame) faces west.
+      expect(bed.frame!.depth[0]).toBeLessThan(0);
+      expect(bed.frame!.depth[1]).toBe(0);
+      expect(bed.footprint).toContainEqual(bed.frame!.origin);
+      const wc = scene.fallbacks.get('WC')!;
+      expect(wc.category).toBe('waterCloset');
+      // Against the north wall, facing south.
+      expect(wc.frame!.depth[1]).toBeLessThan(0);
+    });
+
+    it('draws furniture and fixtures as their outlines in the plan’s ink, when it has no symbol bytes', () => {
+      const svg = renderPlan(doc);
+      const g = /<g data-symbol="WC">(.*?)<\/g>/.exec(svg)![1]!;
+      expect(g).toContain(`stroke="${PALETTES.light.muted}"`);
+      expect(g).not.toContain('<image');
+      expect(svg).not.toContain('fs-ink');
+    });
+
+    it('draws an item as its symbol, turned onto its box and inked in the palette, when it is given the bytes', () => {
+      const lib = JSON.parse(readFileSync(new URL('../../engine/standard/registry/FS_furniture/library/library.json', import.meta.url), 'utf8')) as { items: Record<string, { symbol: { path: string; sha256: string } }> };
+      const bytes = new Map(Object.values(lib.items).map((it) => [it.symbol.sha256, new Uint8Array(readFileSync(new URL(`../../engine/standard/registry/FS_furniture/library/${it.symbol.path}`, import.meta.url)))]));
+      const svg = renderPlan(doc, { symbols: bytes, theme: 'dark' });
+      const img = /<image data-symbol-of="BED1" href="data:image\/svg\+xml;base64,([A-Za-z0-9+/=]+)"[^>]*>/.exec(svg)!;
+      expect(img).not.toBeNull();
+      expect(new TextDecoder().decode(Uint8Array.from(atob(img[1]!), (c) => c.charCodeAt(0)))).toContain('Queen bed');
+      expect(img[0]).toContain('filter="url(#fs-ink)"');
+      // The bed faces west: the image's down (its front) is the plan's left.
+      expect(img[0]).toMatch(/transform="matrix\(0 1 -1 0 /);
+      expect(svg).toContain('<filter id="fs-ink" color-interpolation-filters="sRGB"');
+      // The function form answers too; plumbing with no symbol keeps its outline.
+      expect(renderPlan(doc, { symbols: (sha) => bytes.get(sha), theme: 'dark' })).toBe(svg);
+      expect(svg).toMatch(/<g data-symbol="WC"><path data-id="WC"/);
+    });
   });
 });

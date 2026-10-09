@@ -10,6 +10,7 @@ import { ProblemError } from '../http/problem.js';
 import { MAIN } from '../domain/projects.js';
 import { changesetHead } from '../domain/history.js';
 import { RENDER_PENDING, type PlanRenderer } from '../render.js';
+import { SHA256, type AssetStore } from '../assets/store.js';
 import { NO_PACKS, type InstalledPacks } from '../rules/packs.js';
 import { profileOfProject } from '../rules/profiles.js';
 
@@ -37,6 +38,35 @@ export interface Render3dWait {
   readonly pollMs?: number;
 }
 
+/** The largest plan symbol embedded in a render: a symbol is a small drawing, never a photograph. */
+export const MAX_SYMBOL_BYTES = 1_048_576;
+/** How many distinct symbols one render reads. */
+const MAX_SYMBOLS = 64;
+
+type Json = Record<string, unknown>;
+const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** The SHA-256 of every plan symbol a document's extension elements name (Core 12.6), sorted, at most MAX_SYMBOLS. */
+export function symbolDigests(document: unknown): string[] {
+  if (!isObject(document)) return [];
+  const docAssets = isObject(document['assets']) ? document['assets'] : {};
+  const extensions = isObject(document['extensions']) ? document['extensions'] : {};
+  const out = new Set<string>();
+  for (const ext of Object.values(extensions)) {
+    const collections = isObject(ext) && isObject(ext['collections']) ? ext['collections'] : {};
+    for (const coll of Object.values(collections)) {
+      if (!isObject(coll)) continue;
+      for (const el of Object.values(coll)) {
+        const id = isObject(el) && isObject(el['fallback']) ? el['fallback']['symbol'] : undefined;
+        const asset = typeof id === 'string' && Object.hasOwn(docAssets, id) ? docAssets[id] : undefined;
+        const sha = isObject(asset) ? asset['sha256'] : undefined;
+        if (typeof sha === 'string' && SHA256.test(sha)) out.add(sha);
+      }
+    }
+  }
+  return [...out].sort().slice(0, MAX_SYMBOLS);
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** With no rule pack installed (RULE_PACKS_DIR), findings say so rather than look clean. */
@@ -53,8 +83,27 @@ function unitsOf(document: unknown): Units {
  * Checks on a head — main, or a pending changeset with `?changeset=<id>`: validation by the
  * reference engine, advisory findings, and a plan render.
  */
-export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: InstalledPacks = NO_PACKS, coverageUrl = '/rule-packs', wait: Render3dWait = {}): Routes {
+export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: InstalledPacks = NO_PACKS, coverageUrl = '/rule-packs', wait: Render3dWait = {}, assets: AssetStore | null = null): Routes {
   const routes = new Routes(db);
+
+  /**
+   * The bytes of the plan symbols a document's extension elements name (Core 12.6), for the plan
+   * render (FLR-T-12.24) — only files the project's owner uploaded into one of their projects, as
+   * the asset route serves them: a digest alone never reads somebody else's file. A symbol that is
+   * not readable, or not stored, is left out and drawn as its kind's outline.
+   */
+  async function symbolBytes(document: unknown, ownerAccountId: string | undefined): Promise<Map<string, Uint8Array>> {
+    const out = new Map<string, Uint8Array>();
+    if (assets === null || ownerAccountId === undefined) return out;
+    const digests = symbolDigests(document);
+    if (digests.length === 0) return out;
+    const rows = await db.projectAsset.findMany({ where: { sha256: { in: digests }, project: { ownerAccountId } }, select: { sha256: true } });
+    for (const sha256 of [...new Set(rows.map((r) => r.sha256))].sort()) {
+      const bytes = await assets.get(sha256);
+      if (bytes !== null && bytes.byteLength <= MAX_SYMBOL_BYTES) out.set(sha256, bytes);
+    }
+    return out;
+  }
 
   async function documentAt(req: Request): Promise<{ head: string; hash: string; document: unknown; base: unknown }> {
     const project = req.project;
@@ -206,6 +255,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
       }
       if (renderer === null) throw new ProblemError({ status: 501, type: 'not-available', title: RENDER_PENDING });
       const { level, highlight, width, theme } = options.data;
+      const symbols = await symbolBytes(document, req.project?.ownerAccountId);
       let png: Uint8Array;
       try {
         png = await renderer.renderPlanPng(document as object, {
@@ -213,6 +263,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(highlight === undefined ? {} : { highlight: highlight.split(',').filter((id) => id.length > 0) }),
           ...(width === undefined ? {} : { width }),
           ...(theme === undefined ? {} : { theme }),
+          ...(symbols.size === 0 ? {} : { symbols }),
           ...(base === null ? {} : { ghost: { before: base as object } }),
         });
       } catch (error) {

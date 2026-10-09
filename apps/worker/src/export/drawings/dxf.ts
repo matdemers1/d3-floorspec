@@ -9,7 +9,8 @@
  * rounded to the base unit first and are exact from there.
  *
  * Entities: LINE (walls, jambs, glazing, door leaves, dimension lines and ticks, roof lines, the
- * floor opening above a stair), ARC (door swings), LWPOLYLINE (rooms, slabs, devices, window tags,
+ * floor opening above a stair), ARC (door swings), LWPOLYLINE (rooms, slabs, devices and their
+ * outlines, sliding, folding and overhead doors (A-DOOR, hidden parts on A-DOOR-HIDN), window tags,
  * treads, eaves, stair arrows, the cut line, newels), CIRCLE (door tags, a spiral's circle and
  * column), SOLID (a winder's tint, a newel's fill) and TEXT. Stairs are on A-FLOR-STRS (treads above
  * the cut on A-FLOR-STRS-OVHD, arrows and UP/DN on A-FLOR-STRS-IDEN, winders tinted on
@@ -23,6 +24,7 @@
  * Deterministic: handles are allocated in a fixed order, entities are written in plan order, and
  * nothing reads a clock.
  */
+import type { SymbolPart, SymbolStroke } from '@floorspec/render2d';
 import type { DimString } from './dimensions.js';
 import { LAYER_DEFS, LAYERS } from './layers.js';
 import type { Box, LevelPlan, XY } from './plan.js';
@@ -269,6 +271,20 @@ function stairEntities(e: Entities, stairs: readonly PlanStair[], P: (pt: number
   }
 }
 
+/** Symbol parts as entities: LINE for a two-point path, LWPOLYLINE for any other, ARC for an arc. */
+function partEntities(e: Entities, parts: readonly SymbolPart[], layer: (stroke: SymbolStroke) => string): void {
+  for (const p of parts) {
+    if (p.kind === 'arc') {
+      // ARC runs counter-clockwise from its start angle to its end angle.
+      const a0 = angleOf(p.centre, p.from);
+      const a1 = angleOf(p.centre, p.to);
+      const ccw = (a1 - a0 + 360) % 360 <= 180;
+      arcE(e, layer(p.stroke), p.centre, p.radius, ccw ? a0 : a1, ccw ? a1 : a0);
+    } else if (p.pts.length === 2 && !p.closed) lineE(e, layer(p.stroke), p.pts[0]!, p.pts[1]!);
+    else if (p.pts.length >= 2) polyE(e, layer(p.stroke), p.pts, p.closed);
+  }
+}
+
 function entities(e: Entities, plan: LevelPlan, dims: readonly DimString[], meta: DxfMeta): void {
   const ratio = annotationRatio(meta.units);
   const P = (pt: number): number => paper(pt, ratio);
@@ -277,15 +293,13 @@ function entities(e: Entities, plan: LevelPlan, dims: readonly DimString[], meta
   for (const room of plan.rooms) for (const ring of [room.outer, ...room.holes]) polyE(e, LAYERS.roomBoundary, ring, true);
   for (const s of plan.wallLines) lineE(e, s.layer, s.a, s.b);
   for (const w of plan.windows) for (const [a, b] of w.lines) lineE(e, LAYERS.glazing, a, b);
-  for (const d of plan.doors) {
-    lineE(e, LAYERS.door, d.hinge, d.leafEnd);
-    // ARC runs counter-clockwise from its start angle to its end angle.
-    const a0 = angleOf(d.hinge, d.leafEnd);
-    const a1 = angleOf(d.hinge, d.closedEnd);
-    const ccw = ((a1 - a0 + 360) % 360) <= 180;
-    arcE(e, LAYERS.door, d.hinge, d.radius, ccw ? a0 : a1, ccw ? a1 : a0);
+  // Doors by how they operate (FLR-T-12.24); what is hidden — an overhead door, a pocket in the wall — on A-DOOR-HIDN.
+  for (const d of plan.doors) partEntities(e, d.parts, (k) => (k === 'hidden' || k === 'inWall' ? LAYERS.doorHidden : LAYERS.door));
+  // Furniture and fixtures as their outlines, anything else as its box: on its discipline's layer.
+  for (const dv of plan.devices) {
+    if (dv.symbol === null) polyE(e, dv.layer, dv.footprint, true);
+    else partEntities(e, dv.symbol, () => dv.layer);
   }
-  for (const dv of plan.devices) polyE(e, dv.layer, dv.footprint, true);
   stairEntities(e, plan.stairs, P);
   for (const rf of plan.roofs) polyE(e, LAYERS.roofAbove, rf.eave, true);
 

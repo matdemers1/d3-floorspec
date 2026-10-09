@@ -13,7 +13,7 @@
  * The 3D view is a picture of the mesh (render3d over @floorspec/mesh), asked for at the panel's
  * size once the strip is laid out, and embedded as a PNG at 300 dpi.
  */
-import { num } from '@floorspec/render2d';
+import { num, type SymbolPart, type SymbolStroke } from '@floorspec/render2d';
 import type { DimString, Side } from './dimensions.js';
 import type { Box, LevelPlan, Segment, XY } from './plan.js';
 import { pitchText, type PlanRoof, type PlanStair } from './symbols.js';
@@ -365,8 +365,14 @@ function drawPlan(c: Ctx, plan: LevelPlan): void {
   for (const u of plan.unanchored) out.push({ t: 'path', d: [u.outer, ...u.holes].map((r) => ring(r.map(P))).join(''), fill: '#f4f4f4', evenOdd: true });
   // Room separators: dashed.
   for (const [a, b] of plan.separators) out.push({ t: 'path', d: line(P(a), P(b)), stroke: GREY, width: 0.4, dash: [4, 2.5] });
-  // Extension elements: their fallback boxes, light.
-  for (const dv of plan.devices) out.push({ t: 'path', d: ring(dv.footprint.map(P)), fill: '#ececec', stroke: GREY, width: 0.35 });
+  // Extension elements: furniture and fixtures as their outlines (FLR-T-12.24), anything else as its fallback box, light.
+  for (const dv of plan.devices) {
+    if (dv.symbol === null) out.push({ t: 'path', d: ring(dv.footprint.map(P)), fill: '#ececec', stroke: GREY, width: 0.35 });
+    else {
+      out.push({ t: 'path', d: ring(dv.footprint.map(P)), fill: WHITE });
+      drawParts(c, dv.symbol);
+    }
+  }
   // Walls: the poché, then the openings cut out of it, then the outline as drawn.
   out.push({ t: 'path', d: plan.pieces.map((p) => ring(p.ring.map(P))).join(''), fill: POCHE, stroke: POCHE, width: 0.2, join: 'round' });
   if (plan.cuts.length > 0) out.push({ t: 'path', d: plan.cuts.map((q) => ring(q.map(P))).join(''), fill: WHITE, stroke: WHITE, width: 0.6 });
@@ -382,15 +388,39 @@ function drawPlan(c: Ctx, plan: LevelPlan): void {
     out.push({ t: 'path', d: frameLines, stroke: INK, width: 0.45 });
     out.push({ t: 'path', d: glass, stroke: INK, width: 0.3 });
   }
-  // Doors: the leaf open at 90°, and its swing.
-  for (const dr of plan.doors) {
-    const h = P(dr.hinge);
-    const l = P(dr.leafEnd);
-    const o = P(dr.closedEnd);
-    const r = dr.radius * c.k;
-    const sweep = (l[0] - h[0]) * (o[1] - h[1]) - (l[1] - h[1]) * (o[0] - h[0]) > 0 ? 1 : 0;
-    out.push({ t: 'path', d: line(h, l), stroke: INK, width: 0.7, cap: 'butt' });
-    out.push({ t: 'path', d: `${M(l)}A${num(r)} ${num(r)} 0 0 ${sweep} ${num(o[0])} ${num(o[1])}`, stroke: INK, width: 0.3 });
+  // Doors, by how they operate (FLR-T-12.24): a swing's leaf open at 90° and its arc, a pair's two
+  // leaves, a pocket's leaf in the wall, sliding and folding leaves, an overhead door dashed.
+  for (const dr of plan.doors) drawParts(c, dr.parts);
+}
+
+/** How each kind of symbol line is drawn on a sheet. */
+const SHEET_STROKES: Readonly<Record<SymbolStroke, { readonly color: string; readonly width: number; readonly dash?: readonly number[] }>> = {
+  leaf: { color: INK, width: 0.7 },
+  swing: { color: INK, width: 0.3 },
+  hidden: { color: INK, width: 0.45, dash: [3, 1.5] },
+  inWall: { color: WHITE, width: 0.35, dash: [1.5, 1] },
+  outline: { color: INK, width: 0.4 },
+  detail: { color: GREY, width: 0.25 },
+};
+
+/** Symbol parts (render2d's door and fixture symbols) on the sheet. */
+function drawParts(c: Ctx, parts: readonly SymbolPart[]): void {
+  const { out, P } = c;
+  for (const part of parts) {
+    const look = SHEET_STROKES[part.stroke];
+    const style = { stroke: look.color, width: look.width, ...(look.dash === undefined ? {} : { dash: look.dash }) };
+    if (part.kind === 'arc') {
+      const h = P(part.centre);
+      const l = P(part.from);
+      const o = P(part.to);
+      const r = part.radius * c.k;
+      const sweep = (l[0] - h[0]) * (o[1] - h[1]) - (l[1] - h[1]) * (o[0] - h[0]) > 0 ? 1 : 0;
+      out.push({ t: 'path', d: `${M(l)}A${num(r)} ${num(r)} 0 0 ${sweep} ${num(o[0])} ${num(o[1])}`, ...style });
+      continue;
+    }
+    const pts = part.pts.map(P);
+    if (pts.length < 2) continue;
+    out.push({ t: 'path', d: part.closed ? ring(pts) : `${M(pts[0]!)}${pts.slice(1).map(L).join('')}`, ...style, ...(part.stroke === 'leaf' ? { cap: 'butt' as const } : {}) });
   }
 }
 

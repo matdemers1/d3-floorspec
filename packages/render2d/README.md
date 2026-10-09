@@ -15,6 +15,7 @@ renderPlan(doc, {
   dimensions: true,           // overall exterior dimensions, ft-in
   labels: true,               // room name (or function), net ft², ft-in size, ID
   roof: false,                // the roof layer: eave outline dashed, ridges, hips, valleys, gable ends
+  symbols: bytesBySha256,     // fallback symbol bytes (Core 12.6): Map<sha256, Uint8Array> or (sha256) => bytes
 }); // → a standalone SVG string
 ```
 
@@ -34,6 +35,20 @@ renderPlan(doc, { reader: { extensions: ['FS_electrical'], knownExtensions } });
 - **Geometry is the engine's.** Wall outlines, junction fills, room polygons and opening points are
   the values `@floorspec/engine` derives exactly and rounds once; the renderer only places symbols
   (door leaves, swings, glazing) relative to them.
+- **Doors by operation (Core 8.4, FLR-T-12.24):** a single swing as its leaf open at 90° and a
+  quarter arc; double doors as two leaves whose arcs meet at the middle; a double-acting door with
+  a swing to each side; a pocket door half drawn into a pocket in the wall, dashed in the floor's
+  colour over the poché; a bypass slider as two leaves on two tracks; a barn door on its face with
+  its open position dashed; a bifold as zig-zag leaves; an overhead (garage) door as a dashed line
+  just inside the opening; a cased opening with no leaf. `hinge` and `swing` are respected where
+  Core gives them meaning and read as hints elsewhere.
+- **Furniture and fixtures (FLR-T-12.24):** an element whose fallback symbol's bytes the caller
+  gives (`symbols`) is drawn as that image on its box, turned with its placement and inked into the
+  palette through one `feColorMatrix`; otherwise FS_furniture and FS_plumbing elements are drawn as
+  their kind's outline — a bed with pillows, a sofa with back and arms, tables, chairs, a counter
+  line on cabinets, burners, a toilet's tank and bowl, basins, a tub, a shower and its drain — and
+  any other element as its fallback box. Room labels keep clear of them. `doorSymbol` and
+  `fixtureSymbol` (`plansymbols.ts`) are the geometry the worker's PDF and DXF drawings draw too.
 - **Wall poché is one body:** an outline layer under a fill layer, so wall pieces and junction fills
   join without seams. Openings are cut through one mask, and the floor runs through them.
 - **Stairs and roofs (Core 0.3):** a stair is drawn on the level it rises from — its treads and
