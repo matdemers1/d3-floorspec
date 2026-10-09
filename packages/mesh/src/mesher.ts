@@ -3,12 +3,14 @@
  * once from base units to Float32 metres at the very end.
  */
 import { deriveEvaluation, evaluate, type Derived, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
+import { closureParts } from './closures.js';
 import { extensionParts } from './extensions.js';
 import { loadKernel, type Kernel, type KernelOptions } from './kernel.js';
 import type { RawPart } from './part.js';
 import { roofParts } from './roofs.js';
 import { roomParts } from './rooms.js';
 import { stairParts } from './stairs.js';
+import { thresholdParts } from './thresholds.js';
 import { PART_KINDS, UNITS_PER_METRE, type Box3, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartStats, type Vec3 } from './types.js';
 import { wallParts } from './walls.js';
 
@@ -60,6 +62,8 @@ function meshWith(kernel: Kernel, doc: FloorspecDocument, derived: Derived, opti
   try {
     raw.push(
       ...wallParts(kernel, doc, derived, want),
+      ...closureParts(kernel, doc, derived, want),
+      ...thresholdParts(kernel, doc, derived, want),
       ...roomParts(kernel, doc, derived, want),
       ...roofParts(kernel, doc, derived, want),
       ...stairParts(kernel, doc, derived, want),

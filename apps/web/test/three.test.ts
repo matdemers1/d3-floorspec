@@ -5,6 +5,7 @@ import { flatShaded, loadMesher, type HouseMesh, type MeshPart } from '@floorspe
 import { readModel, type EditorModel } from '../src/editor/model';
 import { basisOf, eyeOf, fitOrbit, orbitBy, panBy, presetOf, PRESETS, zoomBy, type Orbit } from '../src/editor/three/camera';
 import { describeScene, elementOfPart, faceColours, isVisible, levelOrder, linear, lookOf, partsOfElement } from '../src/editor/three/parts';
+import { isSurfacePart, surfaceBuffers } from '../src/editor/three/surfaces';
 import { blocked, buildWorld, entryOf, groundAt, look, NO_INPUT, placeAt, roomAt, standAt, stepWalker, WALK, type Walker, type WalkInput, type World } from '../src/editor/three/walk';
 
 /**
@@ -139,6 +140,46 @@ describe('parts in the 3D view', () => {
     const floor = mesh.parts.find((p) => p.kind === 'floor' && p.id === 'KIT') as MeshPart;
     const tile = faceColours(model, floor, flatShaded(floor.mesh).normals, walls);
     expect([...tile.slice(0, 3)].map((v) => v.toFixed(6))).toEqual(linear('#cfd3da').map((v) => v.toFixed(6)));
+  });
+});
+
+describe('doorways and corners in 3D (FLR-T-12.20)', () => {
+  const hex = (c: ArrayLike<number>): string => Array.from(c, (v) => v.toFixed(6)).join();
+  const colours = (part: MeshPart): Set<string> => {
+    const b = surfaceBuffers(model, mesh, part);
+    const out = new Set<string>();
+    for (let i = 0; i < b.colors.length; i += 3) out.add(hex(b.colors.slice(i, i + 3)));
+    return out;
+  };
+
+  it('floor the front door with thresholds that select it and are drawn as the kitchen floor they continue', () => {
+    const ths = mesh.parts.filter((p) => p.kind === 'threshold' && p.id === 'FRONT');
+    expect(ths.map((p) => p.key)).toEqual(['threshold:FRONT:left', 'threshold:FRONT:right']);
+    for (const t of ths) {
+      expect(lookOf(t)).toBe('floor');
+      expect(isSurfacePart(t)).toBe(true);
+      expect(elementOfPart(t)).toBe('FRONT');
+      expect(t.threshold!.room).toBe('KIT');
+      // The kitchen's tile, outside half too: the doorway has one sill.
+      expect(colours(t)).toEqual(new Set([hex(linear('#cfd3da'))]));
+    }
+  });
+
+  it('draw a junction fill’s faces as its walls’ faces and its top as their core', () => {
+    const fills = mesh.parts.filter((p) => p.kind === 'junctionFill');
+    expect(fills.length).toBeGreaterThan(0);
+    const stud = hex(linear('#e2cfa2'));
+    const allowed = new Set([stud, hex(linear('#d9d2c3')), hex(linear('#eeebe4'))]);
+    for (const f of fills) {
+      expect(isSurfacePart(f)).toBe(true);
+      const b = surfaceBuffers(model, mesh, f);
+      for (let i = 0; i < b.colors.length; i += 3) {
+        const c = hex(b.colors.slice(i, i + 3));
+        // Every face is a wall's finish or its core, never the old flat fill colour.
+        expect(allowed.has(c), `${f.key}: ${c}`).toBe(true);
+        if (b.normals[i + 2]! > 0.9) expect(c, `${f.key}: its top`).toBe(stud);
+      }
+    }
   });
 });
 

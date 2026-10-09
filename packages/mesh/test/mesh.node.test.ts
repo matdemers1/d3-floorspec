@@ -18,12 +18,12 @@ beforeAll(async () => {
   mesher = await loadMesher();
 });
 
-function meshAndCheck(input: string | object, name: string): ReturnType<typeof checkHouse> & { kinds: Set<string> } {
+function meshAndCheck(input: string | object, name: string): ReturnType<typeof checkHouse> & { kinds: Set<string>; closures: number } {
   const ev = evaluate(input);
   const derived = deriveEvaluation(ev);
   const doc = (ev.view ?? ev.document)!;
   const mesh = mesher.meshDerived(doc, derived, { stats: true });
-  return { ...checkHouse(kernel, doc, derived, mesh, name), kinds: new Set(mesh.parts.map((p) => p.kind)) };
+  return { ...checkHouse(kernel, doc, derived, mesh, name), kinds: new Set(mesh.parts.map((p) => p.kind)), closures: mesh.parts.filter((p) => p.key.includes(':closure:')).length };
 }
 
 describe('the conformance suites', () => {
@@ -33,17 +33,21 @@ describe('the conformance suites', () => {
     const kinds = new Set<string>();
     let solids = 0;
     let openings = 0;
+    let closures = 0;
     for (const c of valid) {
       const r = meshAndCheck(c.text, c.name);
       for (const k of r.kinds) kinds.add(k);
       solids += r.solids;
       openings += r.openings;
+      closures += r.closures;
     }
     // Every kind of part was produced and checked — a roof's gable ends among them, which only a roof
     // with a thickness has as parts of their own: the starter templates (examples/005 and 006) declare one.
     // A Core 0.4 reader derives every stair's steps (17.7), so none is a placeholder block here; a
     // spiral's column is a part of its own.
-    expect([...kinds].sort()).toEqual(['ceiling', 'extension', 'floor', 'junctionFill', 'opening', 'roof', 'roofGable', 'slab', 'stairColumn', 'stairFlight', 'stairLanding', 'wall'].sort());
+    expect([...kinds].sort()).toEqual(['ceiling', 'extension', 'floor', 'junctionFill', 'opening', 'roof', 'roofGable', 'slab', 'stairColumn', 'stairFlight', 'stairLanding', 'threshold', 'wall'].sort());
+    // Doorways floored and corners closed (FLR-T-12.20): the examples' separators leave corners open.
+    expect(closures).toBeGreaterThan(10);
     expect(solids).toBeGreaterThan(1000);
     expect(openings).toBeGreaterThan(50);
   });

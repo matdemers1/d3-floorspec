@@ -12,7 +12,13 @@
  *   triangles (and does meet its own void, the control);
  * - every bounding box is exact: equal to the engine's derived box where the engine derives one, and
  *   to manifold-3d's double-precision box within 1e-9 m where it does not; the Float32 positions'
- *   box equals it within Float32 rounding.
+ *   box equals it within Float32 rounding;
+ * - every doorway is floored (FLR-T-12.20): under a door or an empty opening whose sill is its wall's
+ *   base, a vertical ray each side of the location line meets the opening's threshold, whose volume
+ *   is its half of the cut's plan between its room's floor's bottom and top;
+ * - no corner is left open (FLR-T-12.20): where a separator sits between two walls whose faces are not
+ *   parallel there, a point inside the corner those faces would have made is inside the junction's
+ *   closure.
  */
 import { expect } from 'vitest';
 import type { Derived, FloorspecDocument } from '@floorspec/engine';
@@ -153,6 +159,148 @@ function planBox(points: readonly (readonly [number, number])[], z0: number, z1:
   const xs = points.map((p) => p[0]);
   const ys = points.map((p) => p[1]);
   return { min: [Math.min(...xs), Math.min(...ys), z0], max: [Math.max(...xs), Math.max(...ys), z1] };
+}
+
+
+// ── thresholds and closures (FLR-T-12.20) ───────────────────────────────────────
+
+const inPoly = (ring: readonly (readonly [number, number])[], x: number, y: number): boolean => {
+  let c = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i]!;
+    const [xj, yj] = ring[j]!;
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+};
+
+/** A threshold-bearing opening: a door's or an empty opening's on a straight wall, its sill at the wall's base. */
+interface Doorway {
+  id: string;
+  wall: string;
+  /** The room on each side: its face's (18.6), or the one a millimetre past the face at the opening's middle. */
+  rooms: { left?: string; right?: string };
+  /** Each side's half of the cut's plan, rounded once, and a point well inside it. */
+  halves: { left?: { ring: IPoint[]; probe: [number, number] }; right?: { ring: IPoint[]; probe: [number, number] } };
+}
+
+function doorways(doc: FloorspecDocument, d: Derived): Doorway[] {
+  const out: Doorway[] = [];
+  for (const [oid, o] of Object.entries(doc.openings ?? {}).sort(([a], [b]) => (a < b ? -1 : 1))) {
+    if (o === undefined) continue;
+    const w = own(doc.walls, o.wall);
+    const dw = own(d.walls, o.wall);
+    const dop = own(d.openings, oid);
+    const t = o.fill === undefined ? undefined : doc.types?.[o.fill];
+    if (t?.kind === 'windowType' || dw.polyline !== undefined || w.arc?.sagitta || dop.sillElevation !== dw.baseElevation) continue;
+    const f = wallFacts(doc, d, o.wall);
+    const cut = f.cuts.find((c) => c.id === oid);
+    if (!cut) continue;
+    const S = own(doc.junctions, w.start).position;
+    const E = own(doc.junctions, w.end).position;
+    const len = Math.hypot(E[0] - S[0], E[1] - S[1]);
+    const n = [-(E[1] - S[1]) / len, (E[0] - S[0]) / len] as const;
+    const nI: IPoint = [BigInt(S[1] - E[1]), BigInt(E[0] - S[0])];
+    const ns = nI[0] * BigInt(S[0]) + nI[1] * BigInt(S[1]);
+    const mid = [(dop.start[0] + dop.end[0]) / 2, (dop.start[1] + dop.end[1]) / 2] as const;
+    const way: Doorway = { id: oid, wall: o.wall, rooms: {}, halves: {} };
+    for (const side of ['left', 'right'] as const) {
+      const at = side === 'left' ? dw.startLeft : dw.startRight;
+      const face = (at[0] - S[0]) * n[0] + (at[1] - S[1]) * n[1];
+      const k = face + (side === 'left' ? 1280 : -1280);
+      const room =
+        d.finishes?.walls[o.wall]?.[side]?.room ??
+        Object.keys(d.rooms)
+          .sort()
+          .find((r) => own(doc.rooms, r).level === w.level && inPoly(d.rooms[r]!.outer, mid[0] + k * n[0], mid[1] + k * n[1]) && !d.rooms[r]!.holes.some((h) => inPoly(h, mid[0] + k * n[0], mid[1] + k * n[1])));
+      if (room !== undefined) way.rooms[side] = room;
+      const half = clip(cut.poly, { a: nI, c: ns, s: side === 'left' ? 1 : -1 });
+      const ring = dedupeRing(half.map((q): IPoint => [q[0].round(), q[1].round()]));
+      if (ring.length < 3 || iarea2(ring) <= 0n || Math.abs(face) < 4) continue;
+      way.halves[side] = { ring, probe: [mid[0] + (face / 2) * n[0], mid[1] + (face / 2) * n[1]] };
+    }
+    out.push(way);
+  }
+  return out;
+}
+
+/** A corner a separator leaves open between two walls, found here from the derived face ends and the walls' directions. */
+interface OpenCorner {
+  junction: string;
+  /** The wall before the separators (counter-clockwise) and the one after. */
+  walls: [string, string];
+  /** The first's outgoing-left face end, the second's outgoing-right one, and where those faces' lines meet, rounded once. */
+  L: IPoint;
+  R: IPoint;
+  X: IPoint;
+  /** The closure: from R back along the fill's boundary to L, then X; counter-clockwise. */
+  ring: IPoint[];
+}
+
+function openCorners(doc: FloorspecDocument, d: Derived): OpenCorner[] {
+  const out: OpenCorner[] = [];
+  for (const [jid, j] of Object.entries(doc.junctions ?? {}).sort(([a], [b]) => (a < b ? -1 : 1))) {
+    if (j === undefined || j.join?.kind === 'butt') continue;
+    const P = j.position;
+    const ends: { wall?: string; ang: number; d: IPoint; L?: IPoint; R?: IPoint }[] = [];
+    let arc = false;
+    for (const [, s] of Object.entries(doc.separators ?? {})) {
+      if (s === undefined || (s.start !== jid && s.end !== jid)) continue;
+      if (s.arc?.sagitta) arc = true;
+      const o = own(doc.junctions, s.start === jid ? s.end : s.start).position;
+      ends.push({ ang: Math.atan2(o[1] - P[1], o[0] - P[0]), d: [BigInt(o[0] - P[0]), BigInt(o[1] - P[1])] });
+    }
+    if (!ends.length) continue;
+    for (const [wid, w] of Object.entries(doc.walls ?? {})) {
+      if (w === undefined || (w.start !== jid && w.end !== jid)) continue;
+      if (w.arc?.sagitta) arc = true;
+      const dw = own(d.walls, wid);
+      const atStart = w.start === jid;
+      const o = own(doc.junctions, atStart ? w.end : w.start).position;
+      ends.push({ wall: wid, ang: Math.atan2(o[1] - P[1], o[0] - P[0]), d: [BigInt(o[0] - P[0]), BigInt(o[1] - P[1])], L: I(atStart ? dw.startLeft : dw.endRight), R: I(atStart ? dw.startRight : dw.endLeft) });
+    }
+    if (arc || ends.filter((e) => e.wall).length < 2) continue;
+    ends.sort((a, b) => ((a.ang + 2 * Math.PI) % (2 * Math.PI)) - ((b.ang + 2 * Math.PI) % (2 * Math.PI)));
+    const fill = d.junctionFills[jid]?.map(I);
+    for (let i = 0; i < ends.length; i++) {
+      const a = ends[i]!;
+      const b = ends[(i + 1) % ends.length]!;
+      if (!a.wall || b.wall) continue;
+      let m = (i + 1) % ends.length;
+      while (!ends[m]!.wall) m = (m + 1) % ends.length;
+      const c = ends[m]!;
+      if (c.wall === a.wall) continue;
+      const den = a.d[0] * c.d[1] - a.d[1] * c.d[0];
+      if (den === 0n) continue;
+      const L = a.L!;
+      const R = c.R!;
+      // L + t·a.d on c's right face line: t = ((R − L) × c.d) / (a.d × c.d).
+      const t = new Rat((R[0] - L[0]) * c.d[1] - (R[1] - L[1]) * c.d[0], den);
+      const X: IPoint = [new Rat(L[0]).add(t.mul(new Rat(a.d[0]))).round(), new Rat(L[1]).add(t.mul(new Rat(a.d[1]))).round()];
+      const eq = (p: IPoint, q: IPoint): boolean => p[0] === q[0] && p[1] === q[1];
+      let path: IPoint[] = [L, R];
+      const k = fill ? fill.findIndex((p) => eq(p, L)) : -1;
+      if (fill && k >= 0) {
+        const walk: IPoint[] = [];
+        for (let s = 0; s < fill.length; s++) {
+          walk.push(fill[(k + s) % fill.length]!);
+          if (eq(walk[walk.length - 1]!, R)) {
+            path = walk;
+            break;
+          }
+        }
+      }
+      const ring = dedupeRing([...path, X]);
+      if (ring.length < 3 || iarea2(ring) >= 0n) continue;
+      out.push({ junction: jid, walls: [a.wall, c.wall!], L, R, X, ring: ring.reverse() });
+    }
+  }
+  return out;
+}
+
+/** Is a point inside a closed mesh? The parity of a ray's crossings, the ray skewed off every axis. */
+function contains(mesh: PartMesh, p: readonly number[]): boolean {
+  return hits(mesh, p, [p[0]! + 0.000137, p[1]! + 0.000071, p[2]! + 1000]) % 2 === 1;
 }
 
 // ── analytic values ─────────────────────────────────────────────────────────────
@@ -312,6 +460,15 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
       return { volume: area2(c.poly).mul(new Rat(BigInt(c.head - c.sill), 2n)), genus: 0 };
     }
     case 'junctionFill': {
+      if (p.key.includes(':closure:')) {
+        const c = openCorners(doc, d).find((x) => `junctionFill:${x.junction}:closure:${x.walls[0]}` === p.key);
+        expect(c, `${p.key}: a corner a separator leaves open`).toBeDefined();
+        const ws = c!.walls.map((w) => own(d.walls, w));
+        const base = Math.min(...ws.map((w) => w.baseElevation));
+        const ring = c!.ring.map((q): [number, number] => [Number(q[0]), Number(q[1])]);
+        const top = underRoof(doc, d, own(doc.junctions, p.id).level, ring, base, Math.max(...ws.map((w) => w.topElevation)));
+        return { volume6: prism6(iarea2(c!.ring), top - base), box: planBox(ring, base, top), genus: 0 };
+      }
       const ws = Object.entries(doc.walls ?? {}).filter(([, w]) => w?.start === p.id || w?.end === p.id).map(([wid]) => own(d.walls, wid));
       const base = Math.min(...ws.map((w) => w.baseElevation));
       const fill = own(d.junctionFills, p.id);
@@ -398,6 +555,17 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
       const b = own(d.stairs, p.id).box;
       return { volume6: 6n * BigInt(b.max[0] - b.min[0]) * BigInt(b.max[1] - b.min[1]) * BigInt(b.max[2] - b.min[2]), box: box3(b), genus: 0 };
     }
+    case 'threshold': {
+      const way = doorways(doc, d).find((x) => x.id === p.id);
+      const side = p.threshold!.side;
+      const half = way?.halves[side];
+      expect(half, `${p.key}: a doorway's half`).toBeDefined();
+      // The room on its side, or — outside the house — the other side's.
+      expect(p.threshold!.room).toBe(way!.rooms[side] ?? way!.rooms[side === 'left' ? 'right' : 'left']);
+      const fl = own(d.floors, p.threshold!.room);
+      const ring = half!.ring.map((q): [number, number] => [Number(q[0]), Number(q[1])]);
+      return p.closed ? { volume6: prism6(iarea2(half!.ring), fl.top - fl.bottom), box: planBox(ring, fl.bottom, fl.top), genus: 0 } : { box: planBox(ring, fl.top, fl.top) };
+    }
     case 'extension': {
       const f = own(d.fallbacks, p.id);
       return { volume6: prism6(ring2(f.footprint), f.top - f.bottom), box: planBox(f.footprint, f.bottom, f.top), genus: 0 };
@@ -479,6 +647,35 @@ export function checkHouse(kernel: Kernel, doc: FloorspecDocument, d: Derived, m
       expect(hits(wall!.mesh, a, b), `${label}: the ray through the opening meets its wall`).toBe(0);
       expect(hits(p.mesh, a, b), `${label}: the ray meets the opening's own void`).toBeGreaterThanOrEqual(2);
     }
+  }
+
+  // Every doorway is floored: a ray down through each half of its cut meets its threshold.
+  if (d.floors !== undefined)
+    for (const way of doorways(doc, d)) {
+      if (way.rooms.left === undefined && way.rooms.right === undefined) continue;
+      const level = own(doc.walls, way.wall).level;
+      if (!mesh.parts.some((q) => q.level === level)) continue;
+      for (const side of ['left', 'right'] as const) {
+        const half = way.halves[side];
+        if (!half) continue;
+        const t = mesh.parts.find((q) => q.key === `threshold:${way.id}:${side}`);
+        expect(t, `${name} ${way.id}: the ${side} half of its doorway has a threshold`).toBeDefined();
+        const at = (z: number): number[] => [(half.probe[0] - mesh.origin[0]) / BU, (half.probe[1] - mesh.origin[1]) / BU, (z - mesh.origin[2]) / BU];
+        const fl = own(d.floors, t!.threshold!.room);
+        expect(hits(t!.mesh, at(fl.top + BU), at(fl.bottom - BU)), `${name} ${way.id}: a ray down the ${side} half of the doorway meets its threshold`).toBeGreaterThanOrEqual(1);
+      }
+    }
+
+  // No corner is left open: a point inside each corner a separator leaves is inside the junction's closure.
+  for (const c of openCorners(doc, d)) {
+    const level = own(doc.junctions, c.junction).level;
+    if (!mesh.parts.some((q) => q.level === level && q.kind === 'wall')) continue;
+    const part = mesh.parts.find((q) => q.key === `junctionFill:${c.junction}:closure:${c.walls[0]}`);
+    expect(part, `${name} ${c.junction}: the corner between ${c.walls.join(' and ')} is closed`).toBeDefined();
+    const ws = c.walls.map((w) => own(d.walls, w));
+    const z = (Math.max(...ws.map((w) => w.baseElevation)) + Math.min(...ws.map((w) => w.topElevation))) / 2;
+    const q = [0, 1].map((k) => Number(c.X[k]!) + (Number(c.L[k]!) - Number(c.X[k]!)) / 4 + (Number(c.R[k]!) - Number(c.X[k]!)) / 4);
+    expect(contains(part!.mesh, [(q[0]! - mesh.origin[0]) / BU, (q[1]! - mesh.origin[1]) / BU, (z - mesh.origin[2]) / BU]), `${name} ${c.junction}: inside the corner is closed`).toBe(true);
   }
   return sum;
 }

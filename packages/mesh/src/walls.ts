@@ -99,14 +99,14 @@ export function cutPolygon(ring: readonly IPoint[], d: IPoint, c0: bigint, c1: b
 }
 
 /** A flat roof with a thickness: a slab from `under` to its eave over its eave outline (Core 16.3, 16.4.1). */
-interface FlatSlab {
+export interface FlatSlab {
   readonly outline: readonly (readonly [number, number])[];
   readonly under: number;
   readonly eave: number;
 }
 
 /** Each level's flat roofs that have a thickness, by level. */
-function flatSlabs(doc: FloorspecDocument, derived: Derived): Map<string, FlatSlab[]> {
+export function flatSlabs(doc: FloorspecDocument, derived: Derived): Map<string, FlatSlab[]> {
   const out = new Map<string, FlatSlab[]>();
   for (const id of Object.keys(derived.roofs ?? {}).sort()) {
     const r = derived.roofs![id]!;
@@ -141,7 +141,7 @@ function covers(poly: readonly (readonly [number, number])[], x: number, y: numb
  * without this their tops lie in the roof's surface and show through it (FLR-T-12.12). The wall's
  * derived top is unchanged; only the solid is drawn short of the roof that covers it.
  */
-function solidTop(slabs: readonly FlatSlab[] | undefined, plan: readonly (readonly [number, number])[], base: number, top: number): number {
+export function solidTop(slabs: readonly FlatSlab[] | undefined, plan: readonly (readonly [number, number])[], base: number, top: number): number {
   for (const s of slabs ?? [])
     if (top > s.under && top <= s.eave && s.under > base && plan.every(([x, y]) => covers(s.outline, x, y))) return s.under;
   return top;

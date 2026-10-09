@@ -25,12 +25,13 @@ export type Look = 'solid' | 'floor' | 'ceiling' | 'glass' | 'pick';
 /**
  * How a part is drawn: opaque; a floor or a ceiling — opaque, and drawn in front of what shares
  * its plane (a wall running floor to floor ends at the top of the floor above; a ceiling at the
- * level's floor-to-floor height meets that floor's underside); as glass (a window); or not at all
- * but still clickable (a door's or an empty opening's cut).
+ * level's floor-to-floor height meets that floor's underside), a doorway's threshold as the floor
+ * it continues; as glass (a window); or not at all but still clickable (a door's or an empty
+ * opening's cut).
  */
 export function lookOf(part: Pick<MeshPart, 'kind' | 'opening'>): Look {
   if (part.kind === 'ceiling') return 'ceiling';
-  if (part.kind === 'floor' || part.kind === 'slab') return 'floor';
+  if (part.kind === 'floor' || part.kind === 'slab' || part.kind === 'threshold') return 'floor';
   if (part.kind !== 'opening') return 'solid';
   return part.opening?.category === 'window' ? 'glass' : 'pick';
 }
@@ -105,10 +106,11 @@ export function linear(hex: string): [number, number, number] {
 }
 
 /**
- * Each face's colour, for a flat-shaded part (one normal per vertex, three per triangle). A wall's
- * left face (Core 5.4, its exterior when drawn clockwise around a room) takes its first layer's
- * material, its right face its last layer's, and its top, ends and the reveals of its openings its
- * core's; everything else is one colour.
+ * Each face's colour, for a flat-shaded part (one normal per vertex, three per triangle) — what the
+ * view draws when the model has no derived values to lay finished surfaces out by (surfaces.ts). A
+ * wall's left face (Core 5.4, its exterior when drawn clockwise around a room) takes its first
+ * layer's material, its right face its last layer's, and its top, ends and the reveals of its
+ * openings its core's; everything else is one colour.
  */
 export function faceColours(model: EditorModel, part: MeshPart, normals: Float32Array, walls: ReadonlyMap<string, WallView>): Float32Array {
   const out = new Float32Array(normals.length);
@@ -162,6 +164,8 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
       return one(DEFAULTS.stair);
     case 'junctionFill':
       return one(DEFAULTS.fill);
+    case 'threshold':
+      return one(materialColour(model, rooms?.[part.threshold?.room ?? '']?.['floorFinish'] as string | undefined) ?? DEFAULTS.floor);
     case 'extension':
       return one(DEFAULTS.extension);
     case 'opening':

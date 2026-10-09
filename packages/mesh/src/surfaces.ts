@@ -22,6 +22,12 @@
  * sides of a thick floor, a tray's vertical step, whose coordinates this draft leaves undefined —
  * is a group with no surface.
  *
+ * A junction fill — and a closure (closures.ts) — is the walls it joins: each of its faces that lies
+ * in the plane of one of its walls' faces is that face, with that face's finish, regions and (s, t),
+ * so the wall's finish runs on round the corner; the rest of it, its top among them, takes the core
+ * (middle layer, 8.3) material of the first of its walls (by ID) that has one, as a wall's own top
+ * does. A threshold (thresholds.ts) is the floor of the room on its side.
+ *
  * These are for drawing, not for normative output: positions arrive as Float32 metres and the
  * coordinates are doubles. `tileCoordinates` turns them into a texture's tile coordinates
  * `(s'/w, t'/h)`; a glTF exporter writes `u = s'/w`, `v = −t'/h` (glTF's v runs down its image),
@@ -176,6 +182,71 @@ class Group {
 /** How close to the face's own normal a triangle's must be to lie on that face. */
 const ON_FACE = 0.98;
 
+/** How far (base units) a fill's face may be from a wall face's plane and still lie in it: a millimetre, past Float32 rounding. */
+const IN_PLANE = 1280;
+
+/** A wall's core — its middle layer's (8.3) — material, or null. */
+function coreOf(doc: FloorspecDocument, wid: string): string | null {
+  const w = get(doc.walls, wid);
+  const t = w?.type === undefined ? undefined : get(doc.types, w.type);
+  const layers = w?.layers ?? (t?.kind === 'wallType' ? t.layers : undefined) ?? [];
+  return layers.length === 0 ? null : (layers[Math.floor(layers.length / 2)]!.material ?? null);
+}
+
+interface FaceClass {
+  key: string;
+  surface: Surface;
+  material: string | null;
+  st: (w: [number, number, number]) => [number, number];
+  rects: { index: number; rect: Rect; material: string }[];
+}
+
+/**
+ * A wall's two faces as surfaces (18.3, 18.5, 18.6): each one's material, (s, t) and regions; the
+ * wall's left normal; and a point on each face's plane.
+ */
+function wallFaces(doc: FloorspecDocument, derived: Derived, wid: string): { wall: string; left: readonly [number, number]; on: Record<Side, readonly [number, number]>; left_: FaceClass; right_: FaceClass } | undefined {
+  const w = get(doc.walls, wid);
+  const dw = derived.walls[wid];
+  const S = w && get(doc.junctions, w.start)?.position;
+  const E = w && get(doc.junctions, w.end)?.position;
+  if (!w || !dw || !S || !E) return undefined;
+  const dx = E[0] - S[0];
+  const dy = E[1] - S[1];
+  const len = Math.hypot(dx, dy);
+  if (len === 0) return undefined;
+  const e = [dx / len, dy / len] as const;
+  // The left of the location line, looking from start to end (5.4).
+  const left = [-e[1], e[0]] as const;
+  const base = dw.baseElevation;
+  const finishes = derived.finishes?.walls[wid];
+  const along = (q: [number, number, number]) => (q[0] - S[0]) * e[0] + (q[1] - S[1]) * e[1];
+  const face = (side: Side): FaceClass => {
+    const f = finishes?.[side];
+    const sgn = side === 'right' ? 1 : -1;
+    return {
+      key: `face:${side}`,
+      surface: { kind: 'face', wall: wid, side },
+      material: f?.material ?? null,
+      st: (q) => [sgn * along(q), q[2] - base],
+      // A region in the face's (s, t): along [from, to] is s in [from, to] on a right face and
+      // in [−to, −from] on a left one, where s runs the other way.
+      rects: (f?.regions ?? []).map((r, index) => ({
+        index,
+        material: r.material,
+        rect: side === 'right' ? { s0: r.from, s1: r.to, t0: r.bottom, t1: r.top } : { s0: -r.to, s1: -r.from, t0: r.bottom, t1: r.top },
+      })),
+    };
+  };
+  return {
+    wall: wid,
+    left,
+    on: { left: dw.startLeft, right: dw.startRight },
+    left_: face('left'),
+    right_: face('right'),
+  };
+}
+
 /**
  * A part's triangles by the finished surface each lies on, with surface coordinates (18.3) and the
  * material of each (18.6). Groups with no triangles are left out; the groups together are exactly
@@ -184,7 +255,7 @@ const ON_FACE = 0.98;
 export function surfaceGroups(
   doc: FloorspecDocument,
   derived: Derived,
-  part: Pick<MeshPart, 'kind' | 'id' | 'mesh' | 'material'>,
+  part: Pick<MeshPart, 'kind' | 'id' | 'mesh' | 'material' | 'threshold'>,
   origin: Vec3 = [0, 0, 0],
   unitsPerMetre: number = UNITS_PER_METRE,
 ): SurfaceGroup[] {
@@ -200,52 +271,47 @@ export function surfaceGroups(
   const world = (i: number): [number, number, number] => [P[3 * i]! * k + origin[0], P[3 * i + 1]! * k + origin[1], P[3 * i + 2]! * k + origin[2]];
 
   // What each kind of part needs to place a vertex on its surface.
-  type Classify = (n: readonly [number, number, number]) => { key: string; surface: Surface | null; material: string | null; st?: (w: [number, number, number]) => [number, number]; rects?: { index: number; rect: Rect; material: string }[] };
+  type Classify = (n: readonly [number, number, number], centroid: readonly [number, number, number]) => { key: string; surface: Surface | null; material: string | null; st?: (w: [number, number, number]) => [number, number]; rects?: { index: number; rect: Rect; material: string }[] };
   let classify: Classify;
   const rest = { key: 'rest', surface: null, material: part.material ?? null };
 
   if (part.kind === 'wall') {
-    const w = get(doc.walls, part.id);
-    const dw = derived.walls[part.id];
-    const S = w && get(doc.junctions, w.start)?.position;
-    const E = w && get(doc.junctions, w.end)?.position;
-    if (!w || !dw || !S || !E) classify = () => rest;
-    else {
-      const dx = E[0] - S[0];
-      const dy = E[1] - S[1];
-      const len = Math.hypot(dx, dy);
-      const e = [dx / len, dy / len] as const;
-      // The left of the location line, looking from start to end (5.4).
-      const left = [-e[1], e[0]] as const;
-      const base = dw.baseElevation;
-      const finishes = derived.finishes?.walls[part.id];
-      const along = (q: [number, number, number]) => (q[0] - S[0]) * e[0] + (q[1] - S[1]) * e[1];
-      const faces = {} as Record<Side, ReturnType<Classify>>;
-      for (const side of ['left', 'right'] as const) {
-        const f = finishes?.[side];
-        const sgn = side === 'right' ? 1 : -1;
-        faces[side] = {
-          key: `face:${side}`,
-          surface: { kind: 'face', wall: part.id, side },
-          material: f?.material ?? null,
-          st: (q) => [sgn * along(q), q[2] - base],
-          // A region in the face's (s, t): along [from, to] is s in [from, to] on a right face and
-          // in [−to, −from] on a left one, where s runs the other way.
-          rects: (f?.regions ?? []).map((r, index) => ({
-            index,
-            material: r.material,
-            rect: side === 'right' ? { s0: r.from, s1: r.to, t0: r.bottom, t1: r.top } : { s0: -r.to, s1: -r.from, t0: r.bottom, t1: r.top },
-          })),
-        };
-      }
+    const faces = wallFaces(doc, derived, part.id);
+    if (faces === undefined) classify = () => rest;
+    else
       classify = (n) => {
-        const d = n[0] * left[0] + n[1] * left[1];
-        return d > ON_FACE ? faces.left : d < -ON_FACE ? faces.right : { ...rest, material: null };
+        const d = n[0] * faces.left[0] + n[1] * faces.left[1];
+        return d > ON_FACE ? faces.left_ : d < -ON_FACE ? faces.right_ : { ...rest, material: null };
       };
-    }
-  } else if (part.kind === 'floor') {
-    const material = derived.finishes?.rooms[part.id]?.floor ?? null;
-    const floor = { key: 'floor', surface: { kind: 'floor', room: part.id } as Surface, material, st: (q: [number, number, number]): [number, number] => [q[0], q[1]] };
+  } else if (part.kind === 'junctionFill') {
+    // A fill's (or a closure's) face that lies in the plane of a face of one of its walls is that face —
+    // its finish, its regions, its (s, t) — and the rest of it, its top among them, is the walls' core.
+    const walls = Object.keys(derived.walls)
+      .filter((wid) => {
+        const w = get(doc.walls, wid);
+        return w !== undefined && (w.start === part.id || w.end === part.id);
+      })
+      .sort();
+    const all = walls.map((wid) => wallFaces(doc, derived, wid)).filter((f) => f !== undefined);
+    const core = walls.map((wid) => coreOf(doc, wid)).find((m) => m !== null) ?? null;
+    const body = { ...rest, material: core };
+    classify = (n, c) => {
+      for (const f of all) {
+        const d = n[0] * f.left[0] + n[1] * f.left[1];
+        if (Math.abs(d) <= ON_FACE) continue;
+        const side = d > 0 ? 'left' : 'right';
+        const at = f.on[side];
+        if (Math.abs((c[0] - at[0]) * f.left[0] + (c[1] - at[1]) * f.left[1]) > IN_PLANE) continue;
+        const face = side === 'left' ? f.left_ : f.right_;
+        return { ...face, key: `${face.key}:${f.wall}` };
+      }
+      return body;
+    };
+    } else if (part.kind === 'floor' || (part.kind === 'threshold' && part.threshold !== undefined)) {
+    // A threshold is the floor of the room on its side, carried into the doorway.
+    const room = part.kind === 'threshold' ? part.threshold!.room : part.id;
+    const material = derived.finishes?.rooms[room]?.floor ?? null;
+    const floor = { key: 'floor', surface: { kind: 'floor', room } as Surface, material, st: (q: [number, number, number]): [number, number] => [q[0], q[1]] };
     classify = (n) => (n[2] > ON_FACE ? floor : { ...rest, material });
   } else if (part.kind === 'ceiling') {
     const material = derived.finishes?.rooms[part.id]?.ceiling ?? null;
@@ -262,14 +328,15 @@ export function surfaceGroups(
     let n: [number, number, number] = [u[1]! * v[2]! - u[2]! * v[1]!, u[2]! * v[0]! - u[0]! * v[2]!, u[0]! * v[1]! - u[1]! * v[0]!];
     const nl = Math.hypot(...n) || 1;
     n = [n[0] / nl, n[1] / nl, n[2] / nl];
-    const c = classify(n);
+    const w3 = ids.map(world);
+    const c = classify(n, [(w3[0]![0] + w3[1]![0] + w3[2]![0]) / 3, (w3[0]![1] + w3[1]![1] + w3[2]![1]) / 3, (w3[0]![2] + w3[1]![2] + w3[2]![2]) / 3]);
     const st = c.st;
     if (st === undefined) {
       group(c.key, c.surface, c.material).add(a.map((p) => ({ p, s: 0, t: 0 })), n);
       continue;
     }
-    let pieces: Poly[] = [ids.map((i, j) => {
-      const [s, tt] = st(world(i));
+    let pieces: Poly[] = [ids.map((_, j) => {
+      const [s, tt] = st(w3[j]!);
       return { p: a[j]!, s, t: tt };
     })];
     for (const r of c.rects ?? []) {
@@ -278,9 +345,9 @@ export function surfaceGroups(
         const { inside, outside } = split(piece, r.rect);
         next.push(...outside);
         if (inside !== null && areaSt(inside) > MIN_AREA) {
-          const side = (c.surface as { side: Side }).side;
+          const { side, wall } = c.surface as { side: Side; wall: string };
           // Region coordinates (18.3): from its lower corner on the left of a person facing it.
-          group(`region:${side}:${String(r.index)}`, { kind: 'region', wall: part.id, side, index: r.index }, r.material).add(inside, n, { ds: r.rect.s0, dt: r.rect.t0 });
+          group(`region:${side}:${String(r.index)}${wall === part.id ? '' : `:${wall}`}`, { kind: 'region', wall, side, index: r.index }, r.material).add(inside, n, { ds: r.rect.s0, dt: r.rect.t0 });
         }
       }
       pieces = next;

@@ -46,6 +46,15 @@ export class Rat {
     const g = gcd(this.n, this.d);
     return g > 1n ? new Rat(this.n / g, this.d / g) : this;
   }
+  /** The nearest integer, a tie to the even one — the rounding of Core 2.2. */
+  round(): bigint {
+    const r = this.reduce();
+    const fl = r.n >= 0n ? r.n / r.d : -((-r.n + r.d - 1n) / r.d);
+    const twice = 2n * (r.n - fl * r.d);
+    if (twice > r.d) return fl + 1n;
+    if (twice < r.d) return fl;
+    return fl % 2n === 0n ? fl : fl + 1n;
+  }
   /** The nearest double: exact for an integer of at most 53 bits. */
   toNumber(): number {
     const r = this.reduce();

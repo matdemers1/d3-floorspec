@@ -7,6 +7,7 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { deriveEvaluation, evaluate, surfaceST, type Derived, type FloorspecDocument } from '@floorspec/engine';
+import threeRoom from '../../engine/standard/conformance/core/0.3/examples/001-three-room-house/input.json' with { type: 'json' };
 import { loadMesher, surfaceGroups, tileCoordinates, type HouseMesh, type MeshPart, type Mesher, type SurfaceGroup } from '../src/index.js';
 
 const IN = 32_512;
@@ -241,6 +242,54 @@ describe('surface coordinates on floors and ceilings (18.3)', () => {
     if (fill === undefined) return;
     const groups = surfaceGroups(doc, derived, fill, mesh.origin);
     expect(groups.map((g) => [g.surface, g.st.length])).toEqual([[null, 0]]);
+  });
+});
+
+describe('fills, closures and thresholds (FLR-T-12.20)', () => {
+  let m: HouseMesh;
+  let d: Derived;
+  let doc: FloorspecDocument;
+  beforeAll(async () => {
+    const ev = evaluate(threeRoom);
+    doc = ev.document!;
+    d = deriveEvaluation(ev);
+    m = (await loadMesher()).meshDerived(doc, d);
+  });
+  const groups = (key: string): SurfaceGroup[] => surfaceGroups(doc, d, m.parts.find((p) => p.key === key)!, m.origin);
+  const normal = (g: SurfaceGroup): [number, number, number] => [g.normals[0]!, g.normals[1]!, g.normals[2]!];
+
+  it("give a closure's faces in its walls' planes those faces' finishes, and its top the walls' core", () => {
+    // At TM the separator SK continues WI1 north, and WI2 runs east: the closure is the square NW of TM.
+    const gs = groups('junctionFill:TM:closure:WI2');
+    const faces = gs.filter((g) => g.surface !== null);
+    expect(faces.map((g) => [g.surface, g.material, normal(g).map(Math.round)])).toEqual(
+      expect.arrayContaining([
+        [{ kind: 'face', wall: 'WI2', side: 'left' }, 'GWB', [0, 1, 0]],
+        [{ kind: 'face', wall: 'WI1', side: 'left' }, 'GWB', [-1, 0, 0]],
+      ]),
+    );
+    expect(faces).toHaveLength(2);
+    const rest = gs.find((g) => g.surface === null)!;
+    expect(rest.material).toBe('STUD');
+    // Every vertex of a face carries the wall's own (s, t): z − b up the face.
+    for (const g of faces) for (let i = 0; i < g.st.length / 2; i++) expect(g.st[2 * i + 1]).toBeCloseTo(g.positions[3 * i + 2]! * 1_280_000, 0);
+  });
+
+  it("give a fill's top its walls' core too", () => {
+    const rest = groups('junctionFill:TM').find((g) => g.surface === null)!;
+    expect(rest.material).toBe('STUD');
+  });
+
+  it("make a threshold the floor of the room on its side, finish and coordinates", () => {
+    for (const [key, room, finish] of [
+      ['threshold:BD:right', 'BED', 'OAK'],
+      ['threshold:BD:left', 'LIV', 'OAK'],
+      ['threshold:FD:right', 'LIV', 'OAK'],
+    ] as const) {
+      const floor = groups(key).find((g) => g.surface?.kind === 'floor')!;
+      expect([floor.surface, floor.material], key).toEqual([{ kind: 'floor', room }, finish]);
+      for (let i = 0; i < floor.st.length / 2; i++) expect(floor.st[2 * i]).toBeCloseTo(floor.positions[3 * i]! * 1_280_000, 0);
+    }
   });
 });
 
