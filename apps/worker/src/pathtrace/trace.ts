@@ -1,19 +1,27 @@
 /**
  * A small Monte-Carlo path tracer (FLR-T-12.6, FLR-REQ-154): diffuse surfaces in their material's
- * colour and base-colour map, thin glass that lets light through, one sun and a clear sky.
+ * colour and base-colour map, thin glass that lets light through, one sun, a clear sky, and — when
+ * they are turned on (FLR-T-12.22) — the lamps of the house's luminaires.
  *
  * - Every pixel is traced `samples` times, one sample a pass, each pass over the whole image — so a
  *   pass is the unit of progress, and an image is never part-traced.
  * - At each diffuse bounce the sun is sampled directly (next-event estimation, a shadow ray to a
  *   point on its disc), and the path continues in a cosine-weighted direction; a path that escapes
  *   sees the sky. Russian roulette ends paths after the third bounce.
+ * - Lamps (`PtScene.lamps`) are small spheres, each shining every way or as a spot down a cone. At
+ *   each diffuse bounce, beside the sun, one or two lamps are sampled directly — picked in proportion
+ *   to what each could give the point, unshadowed — each with a shadow ray through the same BVH, so
+ *   a lamp lights its own room and not the room behind the wall. A luminaire's lens lets its own
+ *   lamp's light out: shadow rays toward a lamp pass through lenses.
  * - Glass shows a glint of the sky (8%) and lets the rest through, tinted by its colour; a shadow
  *   ray passes through glass the same way, so sun reaches the floor through a window.
- * - The image is exposed to its own log-average luminance and tone-mapped with an ACES-style
- *   filmic curve, then written in sRGB.
+ * - The image is exposed to its own log-average luminance — or to a fixed exposure, so a room with
+ *   its lamps on and off can be compared — and tone-mapped with an ACES-style filmic curve, then
+ *   written in sRGB.
  *
  * What it is not: a lighting simulation. Metallic and roughness are ignored (every opaque surface is
- * matte), there are no lamps, and the sky is a simple gradient — approximate lighting, which is what
+ * matte), a lamp's photometry is a guess from its kind and watts (@floorspec/mesh lights.ts), and
+ * the sky is a simple gradient — approximate lighting, which is what
  * the screen says. Seeded (rng.ts), so the same scene and options give the same picture.
  */
 import type { Vec3 } from '../export/gltf/scene.js';
@@ -30,9 +38,22 @@ export interface PtMaterial {
   readonly texture?: Texture;
   /**
    * Linear RGB a luminaire's lens shows (FLR-T-12.21): added where a camera ray meets it, so the lens
-   * looks lit; it lights nothing else — light from fixtures is FLR-T-12.22's.
+   * looks lit. The light it gives the room is its lamp's (`PtScene.lamps`), sampled directly.
    */
   readonly emission?: Vec3;
+  /** A luminaire's lens (lit or not): what a shadow ray toward a lamp passes through. */
+  readonly lens?: boolean;
+}
+
+/** A lamp (FLR-T-12.22): a small sphere that shines every way, or a spot down a cone. */
+export interface PtLamp {
+  /** Its centre, metres, +Y up. */
+  readonly position: Vec3;
+  readonly radius: number;
+  /** Radiant intensity (on its axis, for a spot), in the tracer's irradiance units at one metre: linear RGB. */
+  readonly intensity: Vec3;
+  /** A spot: its axis (unit) and its cone's cosines — full inside `inner`, dark past `outer`. */
+  readonly spot?: { readonly dir: Vec3; readonly inner: number; readonly outer: number };
 }
 
 /** What the tracer traces: triangles with a material each and, for mapped materials, texture coordinates. */
@@ -46,6 +67,8 @@ export interface PtScene {
   /** Six per triangle: (u, v) at each vertex; NaN where the material has no map. */
   readonly uvs: Float32Array;
   readonly materials: readonly PtMaterial[];
+  /** The lamps that are on; none when the lights are off. */
+  readonly lamps?: readonly PtLamp[];
 }
 
 export interface Sun {
@@ -65,6 +88,10 @@ export interface TraceOptions {
   readonly camera: Camera;
   readonly sun: Sun;
   readonly seed: number;
+  /** The sky's radiance, scaled per channel: dimmed and blued at dusk and at night. Default [1, 1, 1]. */
+  readonly sky?: Vec3;
+  /** The most a single sample may add to a pixel, in luminance. Default 12: a dim night's is less. */
+  readonly clamp?: number;
   /** Diffuse bounces after the first hit. Default 4. */
   readonly bounces?: number;
   /** Called after each pass, with the passes done and in all; awaited, so it may yield. */
@@ -106,6 +133,12 @@ export function skyRadiance(dx: number, dy: number, dz: number, sun: Sun, out: F
 export async function trace(scene: PtScene, options: TraceOptions): Promise<{ color: Float32Array; features: Features }> {
   const { width: W, height: H, samples, camera, sun, seed } = options;
   const bounces = options.bounces ?? 4;
+  const [skyR, skyG, skyB] = options.sky ?? [1, 1, 1];
+  const clamp = options.clamp ?? CLAMP;
+  const lamps = scene.lamps ?? [];
+  const lampW = new Float64Array(lamps.length);
+  /** How many lamps each diffuse bounce samples. */
+  const lampPicks = Math.min(2, lamps.length);
   const started = Date.now();
   const bvh = new Bvh({ positions: scene.positions, count: scene.count });
   const N = scene.normals;
@@ -170,6 +203,110 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   };
   const light = new Float64Array(3);
 
+  /** How much of a lamp's light reaches a point along `l`, up to `tMax`: through glass and lenses, not past anything else. */
+  const reaches = (ox: number, oy: number, oz: number, lx: number, ly: number, lz: number, tMax: number, out: Float64Array): void => {
+    out[0] = 1;
+    out[1] = 1;
+    out[2] = 1;
+    let tFrom = EPS;
+    for (let k = 0; k < 8; k++) {
+      if (!bvh.intersect(ox, oy, oz, lx, ly, lz, tFrom, tMax, shadowHit)) return;
+      const m = mats[scene.material[shadowHit.tri]!]!;
+      if (m.lens !== true) {
+        if (!m.glass) {
+          out[0] = 0;
+          out[1] = 0;
+          out[2] = 0;
+          return;
+        }
+        out[0] *= 0.9 * (0.7 + 0.3 * m.rgb[0]);
+        out[1] *= 0.9 * (0.7 + 0.3 * m.rgb[1]);
+        out[2] *= 0.9 * (0.7 + 0.3 * m.rgb[2]);
+      }
+      tFrom = shadowHit.t + EPS;
+    }
+    // Past eight crossings, call it blocked.
+    out[0] = 0;
+    out[1] = 0;
+    out[2] = 0;
+  };
+  /** A spot's falloff toward its cone's edge, for the cosine of the angle off its axis. */
+  const spotFactor = (lamp: PtLamp, cosA: number): number => {
+    const s = lamp.spot;
+    if (s === undefined) return 1;
+    if (cosA <= s.outer) return 0;
+    if (cosA >= s.inner) return 1;
+    const t = (cosA - s.outer) / (s.inner - s.outer);
+    return t * t * (3 - 2 * t);
+  };
+  const lampLight = new Float64Array(3);
+  /**
+   * The lamps' light at a point with normal n, directly: `lampPicks` lamps picked in proportion to
+   * what each could give it unshadowed, each sampled at a point on its sphere and shadow-tested.
+   * Irradiance (linear RGB) into `out`.
+   */
+  const lampsAt = (px: number, py: number, pz: number, nx: number, ny: number, nz: number, out: Float64Array): void => {
+    out[0] = 0;
+    out[1] = 0;
+    out[2] = 0;
+    let total = 0;
+    for (let i = 0; i < lamps.length; i++) {
+      const lamp = lamps[i]!;
+      const vx = lamp.position[0] - px;
+      const vy = lamp.position[1] - py;
+      const vz = lamp.position[2] - pz;
+      const d2 = vx * vx + vy * vy + vz * vz;
+      const d = Math.sqrt(d2);
+      // Facing it (to within its radius), and within its cone.
+      const cosN = (vx * nx + vy * ny + vz * nz) / d;
+      const sin = lamp.radius / Math.max(d, lamp.radius);
+      let w = 0;
+      if (cosN > -sin) {
+        const sp = lamp.spot === undefined ? 1 : spotFactor(lamp, -(vx * lamp.spot.dir[0] + vy * lamp.spot.dir[1] + vz * lamp.spot.dir[2]) / d + sin);
+        const I = lamp.intensity;
+        w = (Math.max(cosN, 0.05 * sin) * sp * (I[0] + I[1] + I[2])) / Math.max(d2, lamp.radius * lamp.radius);
+      }
+      lampW[i] = w;
+      total += w;
+    }
+    if (total <= 0) return;
+    for (let pick = 0; pick < lampPicks; pick++) {
+      let x = rng.next() * total;
+      let i = 0;
+      while (i < lamps.length - 1 && x >= lampW[i]!) x -= lampW[i++]!;
+      if (lampW[i]! <= 0) continue;
+      const p = lampW[i]! / total;
+      const lamp = lamps[i]!;
+      // A point in its sphere.
+      const u = 2 * rng.next() - 1;
+      const phi = 2 * Math.PI * rng.next();
+      const rr = lamp.radius * Math.cbrt(rng.next());
+      const across = Math.sqrt(Math.max(0, 1 - u * u)) * rr;
+      const qx = lamp.position[0] + Math.cos(phi) * across;
+      const qy = lamp.position[1] + u * rr;
+      const qz = lamp.position[2] + Math.sin(phi) * across;
+      let lx = qx - px;
+      let ly = qy - py;
+      let lz = qz - pz;
+      const d2 = Math.max(lx * lx + ly * ly + lz * lz, lamp.radius * lamp.radius);
+      const d = Math.sqrt(d2);
+      lx /= d;
+      ly /= d;
+      lz /= d;
+      const cosN = nx * lx + ny * ly + nz * lz;
+      if (cosN <= 0) continue;
+      const sp = lamp.spot === undefined ? 1 : spotFactor(lamp, -(lx * lamp.spot.dir[0] + ly * lamp.spot.dir[1] + lz * lamp.spot.dir[2]));
+      if (sp <= 0) continue;
+      reaches(px, py, pz, lx, ly, lz, d, lampLight);
+      if (lampLight[0] === 0 && lampLight[1] === 0 && lampLight[2] === 0) continue;
+      const k = (sp * cosN) / d2 / p / lampPicks;
+      out[0] += lamp.intensity[0] * k * lampLight[0]!;
+      out[1] += lamp.intensity[1] * k * lampLight[1]!;
+      out[2] += lamp.intensity[2] * k * lampLight[2]!;
+    }
+  };
+  const lampE = new Float64Array(3);
+
   for (let pass = 0; pass < samples; pass++) {
     const step = options.rows?.of ?? 1;
     for (let py = options.rows?.index ?? 0; py < H; py += step) {
@@ -203,9 +340,9 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
         for (;;) {
           if (!bvh.intersect(ox, oy, oz, dx, dy, dz, tMin, Infinity, hit)) {
             skyRadiance(dx, dy, dz, sun, sky);
-            r += tr * sky[0]!;
-            g += tg * sky[1]!;
-            b += tb * sky[2]!;
+            r += tr * sky[0]! * skyR;
+            g += tg * sky[1]! * skyG;
+            b += tb * sky[2]! * skyB;
             break;
           }
           const t = hit.tri;
@@ -228,9 +365,9 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             // A glint of the sky (8%, not traced further), and the rest straight through, tinted.
             const k = 2 * (dx * nx + dy * ny + dz * nz);
             skyRadiance(dx - k * nx, dy - k * ny, dz - k * nz, sun, sky);
-            r += tr * 0.08 * sky[0]!;
-            g += tg * 0.08 * sky[1]!;
-            b += tb * 0.08 * sky[2]!;
+            r += tr * 0.08 * sky[0]! * skyR;
+            g += tg * 0.08 * sky[1]! * skyG;
+            b += tb * 0.08 * sky[2]! * skyB;
             tr *= 0.92 * (0.7 + 0.3 * m.rgb[0]);
             tg *= 0.92 * (0.7 + 0.3 * m.rgb[1]);
             tb *= 0.92 * (0.7 + 0.3 * m.rgb[2]);
@@ -273,8 +410,15 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           const px0 = hx + nx * EPS;
           const py0 = hy + ny * EPS;
           const pz0 = hz + nz * EPS;
+          // The lamps, directly.
+          if (lampPicks > 0) {
+            lampsAt(px0, py0, pz0, nx, ny, nz, lampE);
+            r += (tr * ar * lampE[0]!) / Math.PI;
+            g += (tg * ag * lampE[1]!) / Math.PI;
+            b += (tb * ab * lampE[2]!) / Math.PI;
+          }
           // The sun, directly: a point on its disc.
-          if (nx * sx + ny * sy + nz * sz > 0) {
+          if (sun.irradiance > 0 && nx * sx + ny * sy + nz * sz > 0) {
             const cosA = 1 - rng.next() * (1 - cosMax);
             const sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
             const phi = 2 * Math.PI * rng.next();
@@ -332,7 +476,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           oz = pz0;
         }
         const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        const k = lum > CLAMP ? CLAMP / lum : 1;
+        const k = lum > clamp ? clamp / lum : 1;
         const o = 3 * pixel;
         const d = (lum * k) / firstLum;
         moment1[pixel] = moment1[pixel]! + d;
@@ -371,13 +515,19 @@ const toSrgb = (c: number): number => {
 /** Narkowicz's fit of the ACES filmic curve. */
 const aces = (x: number): number => (x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14);
 
-/** Expose to the image's log-average luminance (key 0.18), tone-map, and write 8-bit sRGB. */
-export function toneMap(hdr: Float32Array, width: number, height: number): Uint8Array {
+/**
+ * Expose to the image's log-average luminance (key 0.18) — or to `exposure`, a fixed scale, so two
+ * pictures of one scene under different light can be compared — tone-map, and write 8-bit sRGB.
+ */
+export function toneMap(hdr: Float32Array, width: number, height: number, fixed?: number): Uint8Array {
   const n = width * height;
-  let sum = 0;
-  for (let i = 0; i < n; i++) sum += Math.log(1e-4 + 0.2126 * hdr[3 * i]! + 0.7152 * hdr[3 * i + 1]! + 0.0722 * hdr[3 * i + 2]!);
-  const avg = Math.exp(sum / Math.max(1, n));
-  const exposure = 0.18 / Math.max(1e-4, avg);
+  let exposure = fixed ?? 0;
+  if (fixed === undefined) {
+    let sum = 0;
+    for (let i = 0; i < n; i++) sum += Math.log(1e-4 + 0.2126 * hdr[3 * i]! + 0.7152 * hdr[3 * i + 1]! + 0.0722 * hdr[3 * i + 2]!);
+    const avg = Math.exp(sum / Math.max(1, n));
+    exposure = 0.18 / Math.max(1e-4, avg);
+  }
   const out = new Uint8Array(n * 3);
   for (let i = 0; i < 3 * n; i++) out[i] = Math.round(toSrgb(aces(hdr[i]! * exposure)) * 255);
   return out;

@@ -269,4 +269,36 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   await expect(sunButton).toHaveAttribute('aria-pressed', 'false');
   await expect(chip).toBeHidden();
   await expect.poll(async () => (await sunHook(page))?.light ?? null).toBeNull();
+
+  // ── FLR-T-12.22: the light fixtures. A ceiling light in the kitchen and a downlight in the living
+  // room; the Lights toggle turns them into lamps (and the view to dusk), and off again.
+  const fixtures = await page.request.post(`/api/projects/${project}/ops`, {
+    data: {
+      batch: [
+        { op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_electrical', value: '0.1.0' },
+        { op: 'placeElement', id: 'LT1', extension: 'FS_electrical', collection: 'lights', host: { mode: 'surface', room: 'Kitchen', surface: 'ceiling', at: [7_296_000, 3_840_000] }, element: { fixture: 'ceiling', fallback: { box: { min: [-217_600, -217_600, -153_600], max: [217_600, 217_600, 0] } } } },
+        { op: 'placeElement', id: 'LT2', extension: 'FS_electrical', collection: 'lights', host: { mode: 'surface', room: 'Living', surface: 'ceiling', at: [2_560_000, 5_120_000] }, element: { fixture: 'recessed', fallback: { box: { min: [-128_000, -128_000, -192_000], max: [128_000, 128_000, 0] } } } },
+      ],
+    },
+  });
+  expect(fixtures.status(), await fixtures.text()).toBe(201);
+  await settled(page);
+  await ready(page);
+  const lightsHook = () => page.evaluate(() => (window as unknown as Lit).__floorspec3d?.lights ?? null);
+  const lights = page.getByRole('toolbar', { name: '3D view' }).getByRole('button', { name: 'Lights' });
+  await expect(lights).toHaveAttribute('aria-pressed', 'false');
+  expect(await lightsHook()).toEqual({ on: false, lamps: [] });
+  await lights.click();
+  await expect(lights).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(async () => (await lightsHook())?.lamps.map((l) => `${l.id} ${l.kind} ${String(l.shadow)}`)).toEqual(['LT1 point true', 'LT2 spot true']);
+  expect((await lightsHook())!.on).toBe(true);
+  await page.waitForTimeout(400);
+  await shoot(page, 'lights-on');
+  await axe(page, 'lights on');
+  await lights.click();
+  await expect(lights).toHaveAttribute('aria-pressed', 'false');
+  await expect.poll(async () => (await lightsHook())?.lamps.length).toBe(0);
 });
+
+/** FLR-T-12.22: the lamps on the 3D view's hook. */
+type Lit = { __floorspec3d?: { lights: { on: boolean; lamps: { id: string; kind: 'point' | 'spot'; shadow: boolean; intensity: number }[] } } };

@@ -401,7 +401,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_create_project',
     {
       title: 'Create a project',
-      description: 'A new, empty house for a new design. It has no building or levels: add them first (addElement buildings, addLevel). Its result lists the US starter types and furniture a batch can name.',
+      description: 'A new, empty house. Add a building and levels first (addElement buildings, addLevel). Its result lists the US starter types and furniture a batch can name.',
       inputSchema: compactSchema(z.strictObject({ name: z.string().trim().min(1).max(200) })),
       annotations: { destructiveHint: false, openWorldHint: false },
     },
@@ -702,7 +702,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_validate',
     {
       title: 'Validate',
-      description: 'Schema, invariant and lint diagnostics for main or a pending changeset, from the reference engine.',
+      description: 'Schema, invariant and lint diagnostics for main or a pending changeset.',
       inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -780,10 +780,11 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           project: ProjectHandle,
           changeset: PendingChangeset,
           view: z.enum(['plan', '3d']).optional().describe('Default plan.'),
-          camera: z.string().optional().describe('3D: sw, se, ne, nw or top (default sw), or a room ID or name to stand in.'),
+          camera: z.string().optional().describe('3D: sw (default), se, ne, nw, top, or a room to stand in.'),
           level: z.string().min(1).max(64).optional().describe('Level to draw (3D: cut away above it); default the lowest.'),
           highlight: z.array(z.string().min(1).max(64)).optional().describe('IDs to draw in the accent colour.'),
           width: z.int().optional().describe('Pixels wide: plan to 4096, 3D to 2048.'),
+          lights: z.enum(['on', 'off']).optional().describe('3D at night: light fixtures on or off (slower).'),
         }),
       ),
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -800,6 +801,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           ...(changeset === undefined ? {} : { changeset }),
           ...(args.highlight === undefined ? {} : { highlight: args.highlight }),
           ...(args.width === undefined ? {} : { width: args.width }),
+          ...(args.lights === undefined ? {} : { lights: args.lights }),
         });
         return { content: [{ type: 'image', data: Buffer.from(png).toString('base64'), mimeType: 'image/png' }] };
       } catch (error) {
@@ -812,7 +814,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_export',
     {
       title: 'Export',
-      description: 'Export the model. Format "floorspec": the canonical Floorspec Core JSON.',
+      description: 'The model as canonical Floorspec Core JSON (format "floorspec").',
       inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset, format: z.enum(['floorspec']).optional() })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

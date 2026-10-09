@@ -296,7 +296,8 @@ describe('the MCP server', () => {
     process.stderr.write(`tools/list: ${String(size)} bytes (${String(JSON.stringify(listing, null, 2).length)} pretty-printed)\n`);
     // Was ~57 KB (130 KB pretty) with the operation union inlined at every member, twice over.
     // 25 KB → 26 KB for the twelfth verb, floorspec_create_project (~400 bytes). FLR-T-12.25 paid
-    // for the furniture catalogue and an opening's `at` (its near edge) by trimming other text.
+    // for the furniture catalogue and an opening's `at` (its near edge) by trimming other text, and
+    // FLR-T-12.22 for floorspec_render's `lights` the same way.
     expect(size).toBeLessThan(26_000);
   });
 
@@ -445,6 +446,10 @@ describe('the MCP server', () => {
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', camera: 'ne', level: 'L1' });
     await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Kitchen' } });
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'Kitchen' });
+    // FLR-T-12.22: the light fixtures on or off, passed through; anything else refused by the schema.
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Kitchen', lights: 'on' } });
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'Kitchen', lights: 'on' });
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', lights: 'dim' } })).isError).toBe(true);
     const missing = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Attic' } });
     expect(missing.isError).toBe(true);
     expect(texts(missing)).toContain('this 3D view cannot be drawn');
