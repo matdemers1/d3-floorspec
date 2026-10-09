@@ -457,9 +457,35 @@ const PANEL_BOX = { min: [0, -260_096, -520_192], max: [130_048, 260_096, 520_19
 const PANEL_ROOMS = ['garage', 'utility', 'mechanical', 'laundry', 'storage', 'circulation'];
 
 /**
- * Where to place a panel when the plan has none (FLR-T-12.18): the middle of the longest clear run,
- * at least 32" long, of the first room by PANEL_ROOMS (then any room), on the lowest level, by ID.
- * Advice like the rest: the note says to move it to where the service enters.
+ * The stretches of a run with no opening in them, each opening widened by `clear` either side: a
+ * run carries on under a window, which suits a receptacle but not a panel (FLR-T-12.19).
+ */
+function clearOf(run: WallRun, doc: FloorspecDocument, clear: number): [number, number][] {
+  const types = (doc.types ?? {}) as Record<string, { width?: number } | undefined>;
+  const blocks = Object.values((doc.openings ?? {}) as Record<string, { wall?: string; offset?: number; width?: number; fill?: string } | undefined>)
+    .flatMap((o) => {
+      if (o?.wall !== run.wall || typeof o.offset !== 'number') return [];
+      const width = o.width ?? (o.fill === undefined ? undefined : types[o.fill]?.width);
+      return typeof width === 'number' ? [[o.offset - clear, o.offset + width + clear] as [number, number]] : [];
+    })
+    .sort((a, b) => a[0] - b[0]);
+  const out: [number, number][] = [];
+  let from = run.from;
+  for (const [a, b] of blocks) {
+    if (b <= from) continue;
+    if (a >= run.to) break;
+    if (a > from) out.push([from, a]);
+    from = Math.max(from, b);
+  }
+  if (from < run.to) out.push([from, run.to]);
+  return out;
+}
+
+/**
+ * Where to place a panel when the plan has none (FLR-T-12.18): the middle of the longest stretch,
+ * at least panelMinRun long and clear of every door and window by 6", of the first room by
+ * PANEL_ROOMS (then any room), on the lowest level, by ID. Advice like the rest: the note says to
+ * move it to where the service enters.
  */
 export function panelAt(rooms: readonly RoomPlan[], doc: FloorspecDocument, d: ElectricalDefaults): { room: string; wall: string; side: 'left' | 'right'; offset: number } | null {
   const elevation = (level: string): number => (doc.levels as Record<string, { elevation?: number }> | undefined)?.[level]?.elevation ?? 0;
@@ -467,13 +493,18 @@ export function panelAt(rooms: readonly RoomPlan[], doc: FloorspecDocument, d: E
     const i = PANEL_ROOMS.indexOf(fn);
     return i < 0 ? PANEL_ROOMS.length : i;
   };
+  const CLEAR = 195_072; // 6"
   const candidates = rooms
-    .map((room) => ({ room, run: [...room.runs].filter((r) => r.to - r.from >= d.panelMinRun).sort((a, b) => b.to - b.from - (a.to - a.from) || cmp(a.wall, b.wall))[0] }))
-    .filter((c): c is { room: RoomPlan; run: WallRun } => c.run !== undefined)
+    .map((room) => {
+      const stretches = room.runs.flatMap((run) => clearOf(run, doc, CLEAR).map(([from, to]) => ({ run, from, to })));
+      const best = stretches.filter((x) => x.to - x.from >= d.panelMinRun).sort((a, b) => b.to - b.from - (a.to - a.from) || cmp(a.run.wall, b.run.wall))[0];
+      return { room, best };
+    })
+    .filter((c): c is { room: RoomPlan; best: { run: WallRun; from: number; to: number } } => c.best !== undefined)
     .sort((a, b) => rank(a.room.function) - rank(b.room.function) || elevation(a.room.level) - elevation(b.room.level) || cmp(a.room.id, b.room.id));
-  const best = candidates[0];
-  if (best === undefined) return null;
-  return { room: best.room.name, wall: best.run.wall, side: best.run.side, offset: Math.round((best.run.from + best.run.to) / 2) };
+  const pick = candidates[0];
+  if (pick === undefined) return null;
+  return { room: pick.room.name, wall: pick.best.run.wall, side: pick.best.run.side, offset: Math.round((pick.best.from + pick.best.to) / 2) };
 }
 
 export function switchAt(room: RoomPlan, d: ElectricalDefaults): { wall: string; side: 'left' | 'right'; offset: number } | null {
