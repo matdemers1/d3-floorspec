@@ -365,3 +365,38 @@ describe('a room with an arc wall (Core 21)', () => {
     expect(hosts.length).toBeGreaterThan(0);
   });
 });
+
+describe('counters and crowding (FLR-T-12.28)', () => {
+  const hosts = (p: ElectricalProposal) =>
+    p.batch
+      .filter((o) => (o as { collection?: string }).collection === 'receptacles')
+      .map((o) => (o as unknown as { host: { wall: string; side: string; at: number; height: number } }).host);
+
+  it('puts no two new receptacles on one wall face within a foot of each other', () => {
+    for (const doc of [HOUSE, DEMO, FLAT]) {
+      const byFace = new Map<string, number[]>();
+      for (const h of hosts(proposeElectrical(doc))) byFace.set(`${h.wall}/${h.side}`, [...(byFace.get(`${h.wall}/${h.side}`) ?? []), h.at]);
+      for (const [face, ats] of byFace) {
+        const s = ats.sort((a, b) => a - b);
+        for (let i = 1; i < s.length; i++) expect(s[i]! - s[i - 1]!, face).toBeGreaterThanOrEqual(FT);
+      }
+    }
+  });
+
+  it('covers cabinets side by side as one counter, and a cabinet whose end only touches a wall is no counter along it', () => {
+    const doc = JSON.parse(FLAT) as Json & { extensions: { FS_furniture: { collections: { casework: Record<string, Json> } } } };
+    const plan = readPlan(doc, { grid: DEFAULTS.grid, counterCategories: DEFAULTS.counterCategories });
+    for (const room of plan.rooms)
+      for (const c of room.counters) {
+        // Every counter span is along the face its casework backs onto: never the face its end meets.
+        const el = doc.extensions.FS_furniture.collections.casework[c.casework];
+        expect(el, c.casework).toBeDefined();
+      }
+    const counterHeights = hosts(proposeElectrical(FLAT)).filter((h) => h.height === DEFAULTS.counterHeight);
+    const perFace = new Map<string, number>();
+    for (const h of counterHeights) perFace.set(`${h.wall}/${h.side}`, (perFace.get(`${h.wall}/${h.side}`) ?? 0) + 1);
+    const cabinetsPerFace = new Map<string, number>();
+    for (const room of plan.rooms) for (const c of room.counters) cabinetsPerFace.set(`${c.wall}/${c.side}`, (cabinetsPerFace.get(`${c.wall}/${c.side}`) ?? 0) + 1);
+    for (const [face, n] of perFace) expect(n, face).toBeLessThanOrEqual(Math.max(1, cabinetsPerFace.get(face) ?? 1));
+  });
+});
