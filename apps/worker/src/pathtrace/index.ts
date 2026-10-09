@@ -258,7 +258,8 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   if (!Object.hasOwn(QUALITIES, quality)) throw new RangeError(`quality is one of ${Object.keys(QUALITIES).join(', ')}`);
   if (options.camera !== undefined && !PRESETS.includes(options.camera)) throw new RangeError(`camera is one of ${PRESETS.join(', ')}`);
   if (options.pixels === undefined && options.samples === undefined && !withinBudget(size, quality)) throw new RangeError(`a ${size} still at ${quality} quality is more work than a still may take: choose a smaller size or a lower quality`);
-  if (options.level !== undefined && !scene.levels.some((l) => l.id === options.level)) throw new RangeError(`the model has no level ${options.level} with anything to draw`);
+  // "all" is the whole house (FLR-T-12.23), unless the model has a level of that ID.
+  if (options.level !== undefined && options.level !== 'all' && !scene.levels.some((l) => l.id === options.level)) throw new RangeError(`the model has no level ${options.level} with anything to draw`);
   if (options.lights !== undefined && !(LIGHTS as readonly string[]).includes(options.lights)) throw new RangeError('lights is on or off');
   if (options.time !== undefined && !TIMES.includes(options.time)) throw new RangeError(`time is one of ${TIMES.join(', ')}`);
   const [width, height] = options.pixels === undefined ? SIZES[size] : [options.pixels.width, options.pixels.height];

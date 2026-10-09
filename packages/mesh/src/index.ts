@@ -14,6 +14,8 @@ export const PACKAGE_NAME = '@floorspec/mesh';
 export { loadMesher, meshDocument, type Mesher } from './mesher.js';
 export { loadKernel, type KernelOptions } from './kernel.js';
 export { flatShaded } from './shading.js';
+export { appearanceOf, DEFAULT_COLOURS, paletteFunction, ROOM_PALETTE, swatch, type Appearance, type DefaultColour, type FaceSide, type Hex, type PaletteFunction, type RoomPalette, type Swatch } from './appearance.js';
+export { openToSky } from './rooms.js';
 export { surfaceGroups, tileCoordinates, type Surface, type SurfaceGroup, type TilePlacement } from './surfaces.js';
 export { MODEL_ROLES, ROLE_LOOKS, type ModelRole, type RoleLook } from './roles.js';
 export { discriminant, elementKind } from './models/kinds.js';

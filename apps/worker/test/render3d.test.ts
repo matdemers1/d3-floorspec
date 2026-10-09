@@ -3,7 +3,10 @@ import { inflateSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { buildScene, exportGltf } from '../src/export/gltf/index.js';
 import { handlers } from '../src/queue/handlers.js';
-import { centroid, findRoom, PRESETS, presetCamera, render3dPng, renderGlb, renderScene, roomCamera, sceneTriangles } from '../src/render3d/index.js';
+import { ROOM_PALETTE } from '@floorspec/mesh';
+import { linear } from '../src/export/gltf/scene.js';
+import { encodePng } from '../src/render3d/png.js';
+import { centroid, cutOf, findRoom, PRESETS, presetCamera, render3dPng, renderGlb, renderScene, renderView, roomCamera, sceneTriangles, shoulder, tone } from '../src/render3d/index.js';
 import { pngSize } from '../src/render/png.js';
 
 /**
@@ -17,6 +20,12 @@ type Json = Record<string, unknown>;
 const load = (p: string): Json => JSON.parse(readFileSync(new URL(p, import.meta.url), 'utf8')) as Json;
 const TWO_STOREY = load('./fixtures/two-storey.json');
 const L_STAIR = load('../../web/e2e/fixtures/l-stair-hip-roof.json');
+/**
+ * The two-storey house with colourful walls (rooms' wallFinish), its living room's south wall a bay
+ * (an arc wall, Core 21), a roof deck — an outdoor room — on the upper floor where a bedroom was, and
+ * a hip roof over the rest (FLR-T-12.23).
+ */
+const APPEARANCE = load('./fixtures/appearance-house.json');
 
 /** Our own PNGs back to RGB: one IDAT, 8-bit truecolour, every row filtered by Sub. */
 function decode(png: Uint8Array): { width: number; height: number; rgb: Uint8Array } {
@@ -170,8 +179,12 @@ describe('doorways and corners (FLR-T-12.20)', () => {
     for (const level of scene.levels) {
       // The tops of the level's floors (glTF +Y is up).
       const tops = new Set<string>();
+      const floors = new Set<number>();
       for (const n of level.nodes)
-        for (const p of n.primitives.filter((q) => q.part === 'floor')) for (let i = 1; i < p.positions.length; i += 3) tops.add(p.positions[i]!.toFixed(5));
+        for (const p of n.primitives.filter((q) => q.part === 'floor')) {
+          floors.add(p.material);
+          for (let i = 1; i < p.positions.length; i += 3) tops.add(p.positions[i]!.toFixed(5));
+        }
       for (const n of level.nodes.filter((x) => x.kind === 'opening')) {
         const kind = openings[n.id]!.fill === undefined ? 'empty' : types[openings[n.id]!.fill!]!.kind;
         const ths = n.primitives.filter((p) => p.part === 'threshold');
@@ -182,7 +195,9 @@ describe('doorways and corners (FLR-T-12.20)', () => {
         expect(ths.length, `${n.id}: a threshold`).toBeGreaterThan(0);
         expect(n.parts).toEqual(['opening', 'threshold']);
         for (const p of ths) {
-          expect(scene.materials[p.material]!.key, n.id).toBe('default:floor');
+          // The floor of the room it continues: no finish named, so that room's default floor (FLR-T-12.23).
+          expect(scene.materials[p.material]!.key, n.id).toMatch(/^default:floor:/);
+          expect(floors.has(p.material), `${n.id}: a floor's material`).toBe(true);
           for (let i = 1; i < p.positions.length; i += 3) expect(tops.has(p.positions[i]!.toFixed(5)), `${n.id}: flush with a floor`).toBe(true);
         }
         floored++;
@@ -204,5 +219,112 @@ describe('doorways and corners (FLR-T-12.20)', () => {
       const up = Array.from({ length: p.normals.length / 3 }, (_, i) => p.normals[3 * i + 1]!).some((y) => y > 0.99);
       if (up) expect(scene.materials[p.material]!.key).toBe('M:STUD');
     }
+  });
+});
+
+describe('appearance (FLR-T-12.23)', () => {
+  type Tri = { a: number[]; b: number[]; c: number[] };
+  const area = (t: Tri): number => {
+    const u = [0, 1, 2].map((k) => t.b[k]! - t.a[k]!);
+    const v = [0, 1, 2].map((k) => t.c[k]! - t.a[k]!);
+    return Math.hypot(u[1]! * v[2]! - u[2]! * v[1]!, u[2]! * v[0]! - u[0]! * v[2]!, u[0]! * v[1]! - u[1]! * v[0]!) / 2;
+  };
+
+  it('draws an arc wall’s faces in their finishes, one curved surface each, not its framing in stripes', async () => {
+    const scene = await buildScene(APPEARANCE);
+    const bay = scene.levels.flatMap((l) => l.nodes).find((n) => n.id === 'S3')!;
+    const byMaterial = new Map<string, number>();
+    for (const p of bay.primitives) {
+      const key = scene.materials[p.material]!.key;
+      let a = 0;
+      for (let k = 0; k < p.indices.length; k += 3) {
+        const at = (i: number) => [p.positions[3 * i]!, p.positions[3 * i + 1]!, p.positions[3 * i + 2]!];
+        a += area({ a: at(p.indices[k]!), b: at(p.indices[k + 1]!), c: at(p.indices[k + 2]!) });
+      }
+      byMaterial.set(key, (byMaterial.get(key) ?? 0) + a);
+      // The siding outside and the living room's terracotta inside, each a curved surface: no ink between its segments.
+      if (key === 'M:SIDING' || key === 'M:TERRA') expect(p.smooth, key).toBe(true);
+    }
+    const siding = byMaterial.get('M:SIDING') ?? 0;
+    expect(siding).toBeGreaterThan(15);
+    expect(byMaterial.get('M:TERRA') ?? 0).toBeGreaterThan(0.8 * siding);
+    // The framing is only the wall's top and bottom, its ends and its window's reveals — not stripes down its faces.
+    expect(byMaterial.get('M:STUD') ?? 0).toBeLessThan(0.3 * siding);
+  });
+
+  it('draws an outdoor room with nothing over it open to the sky, and a room with no finishes in its function’s palette', async () => {
+    const scene = await buildScene(APPEARANCE);
+    const node = (id: string) => scene.levels.flatMap((l) => l.nodes).find((n) => n.id === id)!;
+    expect(node('BED2U').parts).toEqual(['floor']);
+    expect(node('LIVU').parts).toEqual(['floor', 'ceiling']);
+    const floorOf = (id: string) => scene.materials[node(id).primitives.find((p) => p.part === 'floor')!.material]!;
+    expect(floorOf('BED2U')).toMatchObject({ key: 'default:floor:exterior', color: ROOM_PALETTE.exterior.floor });
+    expect(floorOf('BATH')).toMatchObject({ key: 'default:floor:bath', color: ROOM_PALETTE.bath.floor });
+    expect(floorOf('LIV')).toMatchObject({ key: 'default:floor:living', color: ROOM_PALETTE.living.floor });
+  });
+
+  it('draws a material with a map and no colour in its map’s average colour, else in the surface’s default', async () => {
+    const doc = structuredClone(APPEARANCE) as Json & { materials: Json; rooms: Record<string, Json> };
+    doc.materials['PHOTO'] = { name: 'A photo of a rug', texture: { asset: 'RUG', size: [390_144, 390_144] } };
+    doc['assets'] = { RUG: { path: 'assets/rug.png', sha256: 'd'.repeat(64), mediaType: 'image/png' } };
+    doc.rooms['LIV']!['floorFinish'] = 'PHOTO';
+    // A 2 × 2 map: two red texels, two blue — its average in linear light.
+    const png = encodePng(Uint8Array.from([200, 40, 40, 40, 40, 200, 40, 40, 200, 200, 40, 40]), 2, 2);
+    const seen: string[] = [];
+    const withMap = await buildScene(doc, { images: (a) => (seen.push(a.id), png) });
+    expect(seen).toContain('RUG');
+    const rug = withMap.materials.find((m) => m.key === 'M:PHOTO')!;
+    const [r, , b] = linear('#c82828');
+    const [r2, , b2] = linear('#2828c8');
+    expect(rug.baseColor[0]).toBeCloseTo((r + r2) / 2, 3);
+    expect(rug.baseColor[2]).toBeCloseTo((b + b2) / 2, 3);
+    const without = (await buildScene(doc)).materials.find((m) => m.key === 'M:PHOTO')!;
+    expect(without.baseColor.slice(0, 3)).toEqual(linear(ROOM_PALETTE.living.floor));
+  });
+
+  it('draws the whole house — every ceiling and every roof — for level "all", as for no level', async () => {
+    const scene = await buildScene(APPEARANCE);
+    expect(cutOf(scene, undefined)).toBeUndefined();
+    expect(cutOf(scene, 'all')).toBeUndefined();
+    expect(cutOf(scene, 'UPPER')).toBe(1);
+    expect(() => cutOf(scene, 'ATTIC')).toThrow(/no level ATTIC.*"all" draws the whole house/);
+    // A model with a level called "all" means that level.
+    expect(cutOf({ levels: [{ id: 'G', elevation: 0, nodes: [] }, { id: 'all', elevation: 3, nodes: [] }] }, 'all')).toBe(1);
+    const all = sceneTriangles(scene, { level: 'all' });
+    expect(all.length).toBe(sceneTriangles(scene).length);
+    expect(all.length).toBeGreaterThan(sceneTriangles(scene, { level: 'UPPER' }).length);
+    const a = renderScene(scene, { camera: 'sw', width: 320, level: 'all' });
+    const b = renderScene(scene, { camera: 'sw', width: 320 });
+    expect(Buffer.from(a.png).equals(Buffer.from(b.png))).toBe(true);
+    const job = { id: 'j', projectId: 'p', kind: 'render.3d', versionHash: 'c'.repeat(64), params: { level: 'all', width: 320 } };
+    expect((await handlers['render.3d']!(APPEARANCE, job)).summary).toMatchObject({ camera: 'SW iso' });
+  });
+
+  it('tone-maps with a gentle shoulder that keeps a finish’s hue, and leaves the paper behind a drawing white', async () => {
+    expect(shoulder(0.3)).toBe(0.3);
+    let last = 0;
+    for (let x = 0; x <= 4; x += 0.05) {
+      const y = shoulder(x);
+      expect(y).toBeGreaterThanOrEqual(last);
+      expect(y).toBeLessThan(1);
+      last = y;
+    }
+    // A bright terracotta keeps its hue: its channels in the same order and proportion where none clips.
+    const [r, g, b] = tone(1.1, 0.33, 0.16);
+    expect(r).toBeLessThanOrEqual(1);
+    expect(r).toBeGreaterThan(g);
+    expect(g).toBeGreaterThan(b);
+    const [r2, g2, b2] = tone(0.4, 0.12, 0.06);
+    expect(g2 / r2).toBeCloseTo(0.12 / 0.4, 9);
+    expect(b2 / r2).toBeCloseTo(0.06 / 0.4, 9);
+    const view = renderView(await buildScene(APPEARANCE), { width: 200, height: 150 })!;
+    expect(pixel(decode(view.png), 1, 1)).toEqual([255, 255, 255]);
+  });
+
+  it('draws the house in its own colours: many more than the old greige', async () => {
+    const img = decode((await render3dPng(APPEARANCE, { camera: 'se', level: 'UPPER', width: 512 })).png);
+    expect(colours(img)).toBeGreaterThan(200);
+    const again = await render3dPng(structuredClone(APPEARANCE), { camera: 'se', level: 'UPPER', width: 512 });
+    expect(Buffer.from(again.png).equals(Buffer.from(encodePng(img.rgb, img.width, img.height)))).toBe(true);
   });
 });

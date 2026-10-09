@@ -202,33 +202,80 @@ interface FaceClass {
 }
 
 /**
- * A wall's two faces as surfaces (18.3, 18.5, 18.6): each one's material, (s, t) and regions; the
- * wall's left normal; and a point on each face's plane.
+ * One straight piece of a wall: the whole of a straight wall, or one segment of an arc wall's
+ * polyline (21.2) — where its location line starts (base units), its unit direction and left normal,
+ * its station (how far along the wall it starts, 21.6), and a point on each face's plane.
  */
-function wallFaces(doc: FloorspecDocument, derived: Derived, wid: string): { wall: string; left: readonly [number, number]; on: Record<Side, readonly [number, number]>; left_: FaceClass; right_: FaceClass } | undefined {
+interface Segment {
+  a: readonly [number, number];
+  e: readonly [number, number];
+  left: readonly [number, number];
+  station: number;
+  on: Record<Side, readonly [number, number]>;
+}
+
+interface WallFaces {
+  wall: string;
+  /** One for a straight wall; one per segment of an arc wall's polyline. */
+  segments: Segment[];
+  arc: boolean;
+  /** Each side's face on the given segment: its finish, its regions and its (s, t). */
+  face(side: Side, segment: Segment): FaceClass;
+}
+
+/**
+ * A wall's two faces as surfaces (18.3, 18.5, 18.6): each one's material, (s, t) and regions, per
+ * straight piece of the wall. On an arc wall (21.6) a face's `s` is the distance along the wall of
+ * a point's projection on the segment it lies against — the segment's station plus the distance
+ * along it — so its tiles and its regions run round the curve.
+ */
+function wallFaces(doc: FloorspecDocument, derived: Derived, wid: string): WallFaces | undefined {
   const w = get(doc.walls, wid);
   const dw = derived.walls[wid];
   const S = w && get(doc.junctions, w.start)?.position;
   const E = w && get(doc.junctions, w.end)?.position;
   if (!w || !dw || !S || !E) return undefined;
-  const dx = E[0] - S[0];
-  const dy = E[1] - S[1];
-  const len = Math.hypot(dx, dy);
-  if (len === 0) return undefined;
-  const e = [dx / len, dy / len] as const;
-  // The left of the location line, looking from start to end (5.4).
-  const left = [-e[1], e[0]] as const;
+  const line = dw.polyline !== undefined && dw.polyline.length > 2 ? dw.polyline : [S, E];
+  // Each face is the location line moved along its left normal (5.4): by as much on every segment of an arc wall (21.4).
+  const offset = (p: readonly [number, number]): number => {
+    const dx = line[1]![0] - line[0]![0];
+    const dy = line[1]![1] - line[0]![1];
+    const len = Math.hypot(dx, dy) || 1;
+    return ((p[0] - line[0]![0]) * -dy + (p[1] - line[0]![1]) * dx) / len;
+  };
+  const toLeft = offset(dw.startLeft);
+  const toRight = offset(dw.startRight);
+  const segments: Segment[] = [];
+  let station = 0;
+  for (let k = 0; k + 1 < line.length; k++) {
+    const a = line[k]!;
+    const b = line[k + 1]!;
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy);
+    if (len === 0) continue;
+    const e = [dx / len, dy / len] as const;
+    // The left of the location line, looking from start to end (5.4).
+    const left = [-e[1], e[0]] as const;
+    const at = (d: number): [number, number] => [a[0] + d * left[0], a[1] + d * left[1]];
+    segments.push({ a, e, left, station, on: { left: at(toLeft), right: at(toRight) } });
+    station += len;
+  }
+  if (segments.length === 0) return undefined;
   const base = dw.baseElevation;
   const finishes = derived.finishes?.walls[wid];
-  const along = (q: [number, number, number]) => (q[0] - S[0]) * e[0] + (q[1] - S[1]) * e[1];
-  const face = (side: Side): FaceClass => {
+  const faces = new Map<string, FaceClass>();
+  const face = (side: Side, seg: Segment): FaceClass => {
+    const key = `${side}:${String(seg.station)}`;
+    let fc = faces.get(key);
+    if (fc !== undefined) return fc;
     const f = finishes?.[side];
     const sgn = side === 'right' ? 1 : -1;
-    return {
+    fc = {
       key: `face:${side}`,
       surface: { kind: 'face', wall: wid, side },
       material: f?.material ?? null,
-      st: (q) => [sgn * along(q), q[2] - base],
+      st: (q) => [sgn * (seg.station + (q[0] - seg.a[0]) * seg.e[0] + (q[1] - seg.a[1]) * seg.e[1]), q[2] - base],
       // A region in the face's (s, t): along [from, to] is s in [from, to] on a right face and
       // in [−to, −from] on a left one, where s runs the other way.
       rects: (f?.regions ?? []).map((r, index) => ({
@@ -237,14 +284,28 @@ function wallFaces(doc: FloorspecDocument, derived: Derived, wid: string): { wal
         rect: side === 'right' ? { s0: r.from, s1: r.to, t0: r.bottom, t1: r.top } : { s0: -r.to, s1: -r.from, t0: r.bottom, t1: r.top },
       })),
     };
+    faces.set(key, fc);
+    return fc;
   };
-  return {
-    wall: wid,
-    left,
-    on: { left: dw.startLeft, right: dw.startRight },
-    left_: face('left'),
-    right_: face('right'),
-  };
+  return { wall: wid, segments, arc: segments.length > 1, face };
+}
+
+/**
+ * The face of a wall a triangle (its normal and centroid, base units) lies on, if any: the segment
+ * whose face plane holds it — for a straight wall, the side its normal points to.
+ */
+function onFace(f: WallFaces, n: readonly [number, number, number], c: readonly [number, number, number], planar: boolean): { side: Side; segment: Segment } | undefined {
+  let best: { side: Side; segment: Segment; off: number } | undefined;
+  for (const seg of f.segments) {
+    const d = n[0] * seg.left[0] + n[1] * seg.left[1];
+    if (Math.abs(d) <= ON_FACE) continue;
+    const side: Side = d > 0 ? 'left' : 'right';
+    if (!planar) return { side, segment: seg };
+    const at = seg.on[side];
+    const off = Math.abs((c[0] - at[0]) * seg.left[0] + (c[1] - at[1]) * seg.left[1]);
+    if (off <= IN_PLANE && (best === undefined || off < best.off)) best = { side, segment: seg, off };
+  }
+  return best;
 }
 
 /**
@@ -279,9 +340,10 @@ export function surfaceGroups(
     const faces = wallFaces(doc, derived, part.id);
     if (faces === undefined) classify = () => rest;
     else
-      classify = (n) => {
-        const d = n[0] * faces.left[0] + n[1] * faces.left[1];
-        return d > ON_FACE ? faces.left_ : d < -ON_FACE ? faces.right_ : { ...rest, material: null };
+      classify = (n, c) => {
+        // A straight wall's faces by their normal alone; an arc wall's by the segment whose face plane holds the triangle.
+        const on = onFace(faces, n, c, faces.arc);
+        return on === undefined ? { ...rest, material: null } : faces.face(on.side, on.segment);
       };
   } else if (part.kind === 'junctionFill') {
     // A fill's (or a closure's) face that lies in the plane of a face of one of its walls is that face —
@@ -297,12 +359,9 @@ export function surfaceGroups(
     const body = { ...rest, material: core };
     classify = (n, c) => {
       for (const f of all) {
-        const d = n[0] * f.left[0] + n[1] * f.left[1];
-        if (Math.abs(d) <= ON_FACE) continue;
-        const side = d > 0 ? 'left' : 'right';
-        const at = f.on[side];
-        if (Math.abs((c[0] - at[0]) * f.left[0] + (c[1] - at[1]) * f.left[1]) > IN_PLANE) continue;
-        const face = side === 'left' ? f.left_ : f.right_;
+        const on = onFace(f, n, c, true);
+        if (on === undefined) continue;
+        const face = f.face(on.side, on.segment);
         return { ...face, key: `${face.key}:${f.wall}` };
       }
       return body;

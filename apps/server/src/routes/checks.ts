@@ -263,8 +263,11 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
         res.send(Buffer.from(png));
         return;
       }
-      if (renderer === null) throw new ProblemError({ status: 501, type: 'not-available', title: RENDER_PENDING });
       const { level, highlight, width, theme } = options.data;
+      // "all" is the 3D render's whole house (FLR-T-12.23); a plan is one level — unless the model has a level called "all".
+      if (level === 'all' && !(isObject(document) && isObject(document['levels']) && Object.hasOwn(document['levels'], 'all')))
+        throw new HttpError(400, 'a plan is drawn one level at a time: name a level, or omit it for the lowest ("all" is for view=3d)');
+      if (renderer === null) throw new ProblemError({ status: 501, type: 'not-available', title: RENDER_PENDING });
       const symbols = await symbolBytes(document, req.project?.ownerAccountId);
       let png: Uint8Array;
       try {

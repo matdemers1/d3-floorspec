@@ -11,14 +11,19 @@
  * Materials are the document's own (Core 8.5, 18.1): a wall's faces take their resolved finishes
  * (18.6) — the face's material, the room's wallFinish, or the outermost layer — with each finish
  * region (18.5) cut out of its face and given its own material; a room's floor and ceiling take its
- * finishes; a roof and a slab their material. What the model names no material for takes the quiet
- * defaults the editor's 3D view uses. Surfaces whose material has a texture carry texture
+ * finishes; a roof and a slab their material. What the model names no material for takes the
+ * defaults @floorspec/mesh's appearance gives it (FLR-T-12.23) — a room's floor, ceiling and wall
+ * paint by what the room is for — which the editor's 3D view draws too; a material with a map but
+ * no colour is drawn in its map's average colour where the asset store has the map. An arc wall's
+ * faces are its faces, segment by segment (Core 21.6), each drawn as one curved surface. Surfaces whose material has a texture carry texture
  * coordinates exactly as 18.3 defines them, `u = s′ / w` and `v = −t′ / h`; the surfaces 18.3 does
  * not define (a wall's top and ends, a slab, a roof, a stair) are given a box projection, which is
  * this exporter's choice and not the standard's.
  */
 import { deriveEvaluation, evaluate, extElements, facingVector, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
-import { lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind } from '@floorspec/mesh';
+import { appearanceOf, DEFAULT_COLOURS, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch } from '@floorspec/mesh';
+import { decodeTexture } from '../../pathtrace/textures.js';
+import type { ImageSource } from './glb.js';
 
 export type Vec3 = [number, number, number];
 export type Rgba = [number, number, number, number];
@@ -171,6 +176,11 @@ export interface SceneOptions {
    * is built and one the editor calls invalid is refused.
    */
   readonly reader?: Omit<ValidateOptions, 'design'>;
+  /**
+   * The bytes of the assets a material's maps name, where the caller can have them: a material with
+   * a base colour map and no `color` is drawn in the map's average colour rather than a default.
+   */
+  readonly images?: ImageSource;
 }
 
 const M = UNITS_PER_METRE;
@@ -181,25 +191,8 @@ export const getMesher = (): Promise<Mesher> => (mesher ??= loadMesher());
 
 // ─── Colour ──────────────────────────────────────────────────────────────────────────────────
 
-/**
- * The colours of what the model names no material for: the editor's 3D view's (apps/web
- * editor/three/parts.ts), so an export looks like the house on screen.
- */
-export const DEFAULTS = {
-  exterior: '#d8d2c6',
-  interior: '#ebe8e1',
-  wallEdge: '#cfc9bd',
-  floor: '#c8b391',
-  ceiling: '#f2f0ea',
-  slab: '#b9b6ae',
-  roof: '#5b616d',
-  gable: '#d8d2c6',
-  stair: '#b58b5f',
-  fill: '#ddd8ce',
-  extension: '#9aa0ae',
-  glass: '#a9c7d6',
-} as const;
-type DefaultName = keyof typeof DEFAULTS;
+/** The colours of what the model names no material for: @floorspec/mesh's, which the editor's 3D view draws too. */
+export const DEFAULTS = DEFAULT_COLOURS;
 
 const channel = (c: number): number => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 
@@ -212,28 +205,60 @@ export function linear(hex: string): [number, number, number] {
 const HEX = /^#[0-9a-f]{6}$/i;
 type Json = Record<string, unknown>;
 
+/** Linear RGB of a material's base colour map, averaged over its texels; undefined when it cannot be read. */
+export type MapAverage = (material: string) => [number, number, number] | undefined;
+
+/** The average colour of each material's base colour map that `images` can supply and decode. */
+export function mapAverages(doc: FloorspecDocument, images: ImageSource | undefined): MapAverage | undefined {
+  if (images === undefined) return undefined;
+  return (material) => {
+    const tex = ((doc.materials as Record<string, Json> | undefined)?.[material]?.['texture'] as Json | undefined) ?? {};
+    const id = tex['asset'];
+    const a = typeof id === 'string' ? (doc.assets as Record<string, Json> | undefined)?.[id] : undefined;
+    if (typeof id !== 'string' || a === undefined || typeof a['sha256'] !== 'string' || typeof a['mediaType'] !== 'string') return undefined;
+    const bytes = images({ id, sha256: a['sha256'], mediaType: a['mediaType'] });
+    const t = bytes === undefined ? undefined : decodeTexture(bytes, a['mediaType']);
+    if (t === undefined) return undefined;
+    const sum = [0, 0, 0];
+    const n = t.width * t.height;
+    for (let i = 0; i < n; i++) for (let k = 0; k < 3; k++) sum[k]! += t.data[3 * i + k]!;
+    return [sum[0]! / n, sum[1]! / n, sum[2]! / n];
+  };
+}
+
 class Materials {
   readonly list: SceneMaterial[] = [];
   private readonly index = new Map<string, number>();
-  constructor(private readonly doc: FloorspecDocument) {}
+  constructor(
+    private readonly doc: FloorspecDocument,
+    private readonly average?: MapAverage,
+  ) {}
 
-  /** The document's material `id`, or `fallback` when it names none (or none that exists). */
-  of(id: string | null | undefined, fallback: DefaultName): number {
-    if (id !== null && id !== undefined && Object.hasOwn(this.doc.materials ?? {}, id)) return this.own(id);
-    return this.default(fallback);
+  /**
+   * The document's material `id`, or `fallback` when it names none (or none that exists). A material
+   * of the document's with no colour is drawn in its map's average colour, else in `fallback`'s.
+   */
+  of(id: string | null | undefined, fallback: Swatch): number {
+    if (id !== null && id !== undefined && Object.hasOwn(this.doc.materials ?? {}, id)) return this.own(id, fallback);
+    return this.palette(fallback);
   }
 
-  default(what: DefaultName): number {
-    const key = `default:${what}`;
+  default(what: keyof typeof DEFAULT_COLOURS): number {
+    return this.palette(swatch(what));
+  }
+
+  /** A default's material (FLR-T-12.23): `default:<key>`. */
+  palette(s: Swatch): number {
+    const key = `default:${s.key}`;
     const at = this.index.get(key);
     if (at !== undefined) return at;
-    const [r, g, b] = linear(DEFAULTS[what]);
-    const glass = what === 'glass';
+    const [r, g, b] = linear(s.color);
+    const glass = s.key === 'glass';
     return this.add({
       key,
-      name: `Default ${what}`,
+      name: `Default ${s.name}`,
       baseColor: [r, g, b, glass ? 0.35 : 1],
-      color: DEFAULTS[what],
+      color: s.color,
       metallic: 0,
       roughness: glass ? 0.05 : 1,
       declared: {},
@@ -262,13 +287,14 @@ class Materials {
     });
   }
 
-  private own(id: string): number {
+  private own(id: string, fallback: Swatch): number {
     const key = `M:${id}`;
     const at = this.index.get(key);
     if (at !== undefined) return at;
     const m = (this.doc.materials as Record<string, Json>)[id]!;
     const colour = typeof m['color'] === 'string' && HEX.test(m['color']) ? m['color'] : undefined;
-    const [r, g, b] = colour === undefined ? [0.5, 0.5, 0.5] : linear(colour);
+    // 18.1: no declared base colour — its map's average where it can be read, else the surface's default.
+    const [r, g, b] = colour === undefined ? (this.average?.(id) ?? linear(fallback.color)) : linear(colour);
     const metallic = typeof m['metallic'] === 'number' ? m['metallic'] : undefined;
     const roughness = typeof m['roughness'] === 'number' ? m['roughness'] : undefined;
     const tex = m['texture'] as Json | undefined;
@@ -468,44 +494,6 @@ function* triangles(part: MeshPart): Generator<{ tri: [Vec3, Vec3, Vec3]; n: Vec
   }
 }
 
-// ─── Clipping a face by its finish regions (18.5) ────────────────────────────────────────────
-
-/** `f(p) ≥ 0` keeps a point. */
-type Half = (p: Vec3) => number;
-
-function splitHalf(poly: readonly Vec3[], h: Half): [Vec3[], Vec3[]] {
-  const inside: Vec3[] = [];
-  const outside: Vec3[] = [];
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i]!;
-    const b = poly[(i + 1) % poly.length]!;
-    const fa = h(a);
-    const fb = h(b);
-    if (fa >= 0) inside.push(a);
-    if (fa <= 0) outside.push(a);
-    if ((fa > 0 && fb < 0) || (fa < 0 && fb > 0)) {
-      const t = fa / (fa - fb);
-      const x: Vec3 = [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]), a[2] + t * (b[2] - a[2])];
-      inside.push(x);
-      outside.push(x);
-    }
-  }
-  return [inside.length >= 3 ? inside : [], outside.length >= 3 ? outside : []];
-}
-
-/** A convex polygon split by a rectangle (four half-planes): what is in it, and the pieces outside. */
-function splitRect(poly: readonly Vec3[], hs: readonly Half[]): { inside: Vec3[]; outside: Vec3[][] } {
-  let rest: Vec3[] = [...poly];
-  const outside: Vec3[][] = [];
-  for (const h of hs) {
-    const [i, o] = splitHalf(rest, h);
-    if (o.length > 0) outside.push(o);
-    rest = i;
-    if (rest.length === 0) break;
-  }
-  return { inside: rest, outside };
-}
-
 // ─── The scene ───────────────────────────────────────────────────────────────────────────────
 
 const ELEMENT_KIND: Record<PartKind, ElementKind> = {
@@ -570,8 +558,6 @@ function wallFrame(doc: FloorspecDocument, derived: Derived, id: string): WallFr
   };
 }
 
-const along = (f: WallFrame, p: Vec3): number => (p[0] - f.S[0]) * f.e[0] + (p[1] - f.S[1]) * f.e[1];
-
 /**
  * Build the scene of a document: evaluated once (with `options.reader`, default `OFFICIAL_READER`,
  * in the design asked for, else the primary), derived and meshed. Throws the engine's
@@ -587,7 +573,7 @@ export async function buildScene(document: object, options: SceneOptions = {}): 
  * chose), without validating it again: the drawings' 3D views use the evaluation their plans were
  * drawn from. `options.design` and `options.reader` are the evaluation's and are not read.
  */
-export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions, 'levels'> = {}): Promise<Scene> {
+export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions, 'levels' | 'images'> = {}): Promise<Scene> {
   if (!ev.valid || ev.document === undefined) throw new InvalidDocumentError(ev.diagnostics);
   const derived = deriveEvaluation(ev);
   const doc = ev.view ?? ev.document;
@@ -595,12 +581,13 @@ export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions,
   const levelIds = Object.keys(doc.levels ?? {});
   for (const l of options.levels ?? []) if (!levelIds.includes(l)) throw new RangeError(`the model has no level ${l}`);
   const house = mesher.meshDerived(doc, derived, options.levels === undefined ? {} : { levels: options.levels });
-  return sceneOf(doc, derived, house.parts, ev.design ?? null);
+  return sceneOf(doc, derived, house.parts, ev.design ?? null, mapAverages(doc, options.images));
 }
 
 /** The scene of meshed parts: exported for tests that mesh once and build several ways. */
-export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonly MeshPart[], design: Readonly<Record<string, string>> | null): Scene {
-  const materials = new Materials(doc);
+export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonly MeshPart[], design: Readonly<Record<string, string>> | null, average?: MapAverage): Scene {
+  const materials = new Materials(doc, average);
+  const look = appearanceOf(doc, derived);
   const builders = new Map<string, { node: Omit<SceneNode, 'primitives' | 'parts'>; b: NodeBuilder }>();
   const frames = new Map<string, WallFrame | undefined>();
   const frameOf = (id: string): WallFrame | undefined => {
@@ -640,58 +627,27 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
     if (!b.parts.includes(part.kind)) b.parts.push(part.kind);
 
     switch (part.kind) {
-      case 'wall': {
-        const f = frameOf(part.id);
-        const layers = part.layers ?? [];
-        const edge = materials.of(layers[Math.floor(layers.length / 2)], 'wallEdge');
-        const fin = finishes?.walls[part.id];
-        const faces = {
-          left: { material: materials.of(fin?.left?.material ?? layers[0], 'exterior'), regions: fin?.left?.regions ?? [] },
-          right: { material: materials.of(fin?.right?.material ?? layers[layers.length - 1], 'interior'), regions: fin?.right?.regions ?? [] },
-        };
-        for (const { tri, n } of triangles(part)) {
-          const d = f === undefined ? 0 : n[0] * f.L[0] + n[1] * f.L[1];
-          if (f === undefined || Math.abs(d) < 0.98) {
-            b.add('wall', edge, tri, n, boxProjection(n));
-            continue;
-          }
-          const side = d > 0 ? 'left' : 'right';
-          const face = faces[side];
-          // 18.3: right face s = (P − S)·e, left face s = (S − P)·e; t = z − b.
-          const sign = side === 'right' ? 1 : -1;
-          const faceST: SurfaceST = (p) => [sign * along(f, p) * M, (p[2] - f.b) * M];
-          let pieces: Vec3[][] = [tri];
-          for (const r of face.regions) {
-            const from = r.from / M;
-            const to = r.to / M;
-            const bottom = r.bottom / M;
-            const top = r.top / M;
-            const hs: Half[] = [(p) => along(f, p) - from, (p) => to - along(f, p), (p) => p[2] - f.b - bottom, (p) => f.b + top - p[2]];
-            const regionMaterial = materials.of(r.material, side === 'left' ? 'exterior' : 'interior');
-            // 18.3: a region's own origin — (from, bottom) on a right face, (to, bottom) on a left face.
-            const regionST: SurfaceST =
-              side === 'right' ? (p) => [(along(f, p) - from) * M, (p[2] - f.b - bottom) * M] : (p) => [(to - along(f, p)) * M, (p[2] - f.b - bottom) * M];
-            const next: Vec3[][] = [];
-            for (const piece of pieces) {
-              const { inside, outside } = splitRect(piece, hs);
-              if (inside.length > 0) b.add('wall', regionMaterial, inside, n, regionST);
-              next.push(...outside);
-            }
-            pieces = next;
-          }
-          for (const piece of pieces) b.add('wall', face.material, piece, n, faceST);
-        }
-        break;
-      }
+      case 'wall':
       case 'junctionFill':
       case 'threshold': {
-        // A fill (or a closure) shows the face of the wall it continues where it lies in that face's
-        // plane, and its walls' core elsewhere; a threshold is the floor of the room on its side — as
-        // @floorspec/mesh groups them by surface (18.3, 18.6), the editor's 3D view's grouping too.
-        const rest: DefaultName = part.kind === 'threshold' ? 'floor' : 'fill';
+        // @floorspec/mesh groups each by finished surface (18.3, 18.6): a wall's faces and their
+        // regions — an arc wall's segment by segment (21.6) — and the rest of it (its top, its ends,
+        // its openings' reveals) in its core's material; a fill's (or a closure's) faces in its walls'
+        // planes are those faces, the rest its walls' core; a threshold is the floor of the room on its
+        // side. The editor's 3D view groups them the same way.
+        const layers = part.layers ?? [];
+        const arc = part.kind === 'wall' && (derived.walls[part.id]?.polyline?.length ?? 0) > 2;
+        const room = part.threshold?.room;
         for (const g of surfaceGroups(doc, derived, part)) {
           const s = g.surface;
-          const material = materials.of(g.material, s === null ? rest : s.kind === 'floor' ? 'floor' : s.kind === 'face' || s.kind === 'region' ? (s.side === 'left' ? 'exterior' : 'interior') : rest);
+          let material: number;
+          if (s === null) {
+            if (part.kind === 'wall') material = materials.of(layers[Math.floor(layers.length / 2)], swatch('wallEdge'));
+            else if (part.kind === 'threshold' && room !== undefined) material = materials.of(g.material, look.floor(room));
+            else material = materials.of(g.material, swatch('fill'));
+          } else if (s.kind === 'floor') material = materials.of(g.material, look.floor(s.room));
+          else if (s.kind === 'ceiling') material = materials.of(g.material, look.ceiling(s.room));
+          else material = materials.of(g.material ?? (part.kind === 'wall' && s.kind === 'face' ? (s.side === 'left' ? layers[0] : layers[layers.length - 1]) : null), look.face(s.wall, s.side));
           const P = g.positions;
           for (let t = 0; t < P.length / 9; t++) {
             const tri: Vec3[] = [0, 1, 2].map((k): Vec3 => [P[9 * t + 3 * k]!, P[9 * t + 3 * k + 1]!, P[9 * t + 3 * k + 2]!]);
@@ -701,7 +657,8 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
               const at = new Map(tri.map((p, k): [Vec3, [number, number]] => [p, [g.st[6 * t + 2 * k]!, g.st[6 * t + 2 * k + 1]!]]));
               st = (p) => at.get(p) ?? [0, 0];
             }
-            b.add(part.kind, material, tri, n, st);
+            // An arc wall's face is one curved surface: no ink between its segments.
+            b.add(part.kind, material, tri, n, st, arc && s !== null);
           }
         }
         break;
@@ -716,15 +673,14 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
       case 'floor':
       case 'ceiling': {
         const fin = finishes?.rooms[part.id];
-        const material = part.kind === 'floor' ? materials.of(fin?.floor, 'floor') : materials.of(fin?.ceiling, 'ceiling');
+        const material = part.kind === 'floor' ? materials.of(fin?.floor, look.floor(part.id)) : materials.of(fin?.ceiling, look.ceiling(part.id));
         // 18.3: a floor's (s, t) is the plan's (x, y); a ceiling's (−x, y), seen from below.
         const st: SurfaceST = part.kind === 'floor' ? (p) => [p[0] * M, p[1] * M] : (p) => [-p[0] * M, p[1] * M];
         for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, st);
         break;
       }
       default: {
-        const fallback: DefaultName =
-          part.kind === 'slab' ? 'slab' : part.kind === 'roof' ? 'roof' : part.kind === 'roofGable' ? 'gable' : part.kind === 'extension' ? 'extension' : 'stair';
+        const fallback = swatch(part.kind === 'slab' ? 'slab' : part.kind === 'roof' ? 'roof' : part.kind === 'roofGable' ? 'gable' : part.kind === 'extension' ? 'extension' : 'stair');
         // A piece of a model takes its role's look; a fallback box the quiet default.
         const material = part.model !== undefined ? materials.role(part.model.role) : materials.of(part.kind === 'roofGable' ? undefined : part.material, fallback);
         const smooth = part.model?.smooth === true;

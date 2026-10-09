@@ -247,8 +247,8 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
      */
     'render.3d': async (document, job) => {
       const p = render3dParams(job.params);
+      const images = claimedOnly(job, store.images);
       if (p.lights !== undefined) {
-        const images = claimedOnly(job, store.images);
         const lit = await renderLit(document, {
           lights: p.lights,
           ...(p.time === undefined ? {} : { time: p.time }),
@@ -261,7 +261,8 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
         });
         return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: lit.png, summary: { width: lit.width, height: lit.height, camera: lit.camera, design: lit.design, ...(lit.lit === undefined ? {} : { lit: lit.lit }), ms: lit.ms } };
       }
-      const r = await render3dPng(document, p);
+      // A material with a map and no colour is drawn in its map's average colour (FLR-T-12.23).
+      const r = await render3dPng(document, { ...p, ...(images === undefined ? {} : { images }) });
       return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: r.png, summary: { width: r.width, height: r.height, camera: r.camera, design: r.design } };
     },
   };

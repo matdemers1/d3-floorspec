@@ -781,7 +781,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           changeset: PendingChangeset,
           view: z.enum(['plan', '3d']).optional().describe('Default plan.'),
           camera: z.string().optional().describe('3D: sw (default), se, ne, nw, top, or a room to stand in.'),
-          level: z.string().min(1).max(64).optional().describe('Level to draw (3D: cut away above it); default the lowest.'),
+          level: z.string().min(1).max(64).optional().describe('Default the lowest. 3D: cut away above it; "all" for none.'),
           highlight: z.array(z.string().min(1).max(64)).optional().describe('IDs to draw in the accent colour.'),
           width: z.int().optional().describe('Pixels wide: plan to 4096, 3D to 2048.'),
           lights: z.enum(['on', 'off']).optional().describe('3D at night: light fixtures on or off (slower).'),

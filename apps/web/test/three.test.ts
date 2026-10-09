@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { flatShaded, loadMesher, ROLE_LOOKS, type HouseMesh, type MeshPart } from '@floorspec/mesh';
+import { DEFAULT_COLOURS, flatShaded, loadMesher, ROLE_LOOKS, ROOM_PALETTE, type HouseMesh, type MeshPart } from '@floorspec/mesh';
 import { readModel, type EditorModel } from '../src/editor/model';
 import { basisOf, eyeOf, fitOrbit, orbitBy, panBy, presetOf, PRESETS, zoomBy, type Orbit } from '../src/editor/three/camera';
 import { describeScene, elementOfPart, faceColours, isVisible, levelOrder, linear, lookOf, partsOfElement } from '../src/editor/three/parts';
@@ -199,6 +199,37 @@ describe('doorways and corners in 3D (FLR-T-12.20)', () => {
         expect(allowed.has(c), `${f.key}: ${c}`).toBe(true);
         if (b.normals[i + 2]! > 0.9) expect(c, `${f.key}: its top`).toBe(stud);
       }
+    }
+  });
+});
+
+describe('the palette where the model names no material (FLR-T-12.23)', () => {
+  // A one-storey house with two bays — arc walls (Core 21) — and no materials at all.
+  const BAY = readFileSync(new URL('../e2e/fixtures/bay-house.json', import.meta.url), 'utf8');
+  const hex = (c: ArrayLike<number>): string => Array.from(c, (v) => v.toFixed(6)).join();
+
+  it('draws each room’s floor by its function, and an arc wall’s faces as faces — its room’s paint, the exterior outside — round the curve', async () => {
+    const bay = readModel('bay', BAY);
+    expect(bay.valid).toBe(true);
+    const m = (await loadMesher()).meshDerived(bay.view, bay.derived!);
+    const floorColour = (room: string) => hex(surfaceBuffers(bay, m, m.parts.find((p) => p.kind === 'floor' && p.id === room)!).colors.slice(0, 3));
+    expect(floorColour('LIV')).toBe(hex(linear(ROOM_PALETTE.living.floor)));
+    expect(floorColour('KIT')).toBe(hex(linear(ROOM_PALETTE.kitchen.floor)));
+    const arcs = m.parts.filter((p) => p.kind === 'wall' && (bay.derived!.walls[p.id]!.polyline?.length ?? 0) > 2);
+    expect(arcs.length).toBe(2);
+    const faces = new Set([DEFAULT_COLOURS.exterior, ROOM_PALETTE.living.wall, ROOM_PALETTE.kitchen.wall].map((c) => hex(linear(c))));
+    for (const wall of arcs) {
+      const b = surfaceBuffers(bay, m, wall);
+      let face = 0;
+      let side = 0;
+      for (let i = 0; i < b.colors.length; i += 9) {
+        // Its faces stand upright; its top and bottom do not.
+        if (Math.abs(b.normals[i + 2]!) > 0.5) continue;
+        if (faces.has(hex(b.colors.slice(i, i + 3)))) face++;
+        else side++;
+      }
+      // Only its ends and its openings' reveals are its core: never a face's segment.
+      expect(face, wall.id).toBeGreaterThan(4 * side);
     }
   });
 });
