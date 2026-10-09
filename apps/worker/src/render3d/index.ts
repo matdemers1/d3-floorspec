@@ -141,7 +141,7 @@ export function sceneTriangles(scene: Scene, options: { level?: string; highligh
         if (cut === at && (p.part === 'ceiling' || p.part === 'roof' || p.part === 'roofGable')) continue;
         const m = scene.materials[p.material]!;
         const rgb = lit.has(node.id) ? mix(m.baseColor.slice(0, 3) as Vec3, ACCENT, 0.6) : (m.baseColor.slice(0, 3) as Vec3);
-        const bias = p.part === 'ceiling' ? 2 : p.part === 'floor' ? 1 : 0;
+        const bias = p.part === 'ceiling' ? 2 : p.part === 'floor' || p.part === 'threshold' ? 1 : 0;
         const P = p.positions;
         const at3 = (i: number): Vec3 => [P[3 * i]!, P[3 * i + 1]!, P[3 * i + 2]!];
         for (let k = 0; k < p.indices.length; k += 3) {

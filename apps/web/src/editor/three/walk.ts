@@ -160,7 +160,7 @@ export function buildWorld(model: EditorModel, mesh: HouseMesh): World {
   // Heights from the mesh: each wall's base and top (5.9), each opening's cut, each fill's span.
   const parts = new Map<string, { zMin: number; zMax: number }>();
   for (const part of mesh.parts) {
-    if (part.kind === 'wall' || part.kind === 'opening' || part.kind === 'junctionFill') parts.set(`${part.kind}:${part.id}`, { zMin: z(part.bbox.min[2]), zMax: z(part.bbox.max[2]) });
+    if (part.kind === 'wall' || part.kind === 'opening' || part.kind === 'junctionFill') parts.set(part.key, { zMin: z(part.bbox.min[2]), zMax: z(part.bbox.max[2]) });
   }
   const cutsOf = new Map<string, Cut[]>();
   for (const level of model.levels) {

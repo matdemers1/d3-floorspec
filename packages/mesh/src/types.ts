@@ -23,7 +23,7 @@ export interface Box3 {
  * | kind | element | closed |
  * |---|---|---|
  * | `wall` | wall | solid: its outline (5.7) from base to top (5.9), its openings cut through |
- * | `junctionFill` | junction | solid: the fill (5.7) from the least base to the greatest top of its walls |
+ * | `junctionFill` | junction | solid: the fill (5.7) from the least base to the greatest top of its walls; and, as the piece `closure:<wall>`, the corner a separator between two walls leaves open (see closures.ts) |
  * | `opening` | opening | solid: exactly the volume cut from its wall — a pick target, glass, a door leaf's slot |
  * | `floor` | room | solid between its top and bottom (15.1); a surface facing up when it declares no thickness |
  * | `ceiling` | room | surface facing down: flat, tray (with its step) or vault (15.2–15.4) |
@@ -35,6 +35,7 @@ export interface Box3 {
  * | `stairColumn` | stair | solid: a spiral stair's centre column, its column's radius (17.7) — or a slender pole when its treads meet at the centre — from its bottom to its top |
  * | `stairBlock` | stair | solid placeholder: the stair's box (17.4), for a winder or spiral stair whose steps are not derived (as a Core 0.3 reader reads it) |
  * | `extension` | extension element | solid: its fallback box (12.6) |
+ * | `threshold` | opening | a door's or an empty opening's sill where it is its wall's base: the plan its cut removes, each side of the location line, as the floor of the room on that side — solid between its top and bottom, a surface facing up without a thickness (see thresholds.ts) |
  */
 export type PartKind =
   | 'wall'
@@ -49,7 +50,8 @@ export type PartKind =
   | 'stairLanding'
   | 'stairColumn'
   | 'stairBlock'
-  | 'extension';
+  | 'extension'
+  | 'threshold';
 
 export const PART_KINDS: readonly PartKind[] = [
   'wall',
@@ -65,6 +67,7 @@ export const PART_KINDS: readonly PartKind[] = [
   'stairColumn',
   'stairBlock',
   'extension',
+  'threshold',
 ];
 
 /** An indexed triangle mesh in metres (Float32, relative to the result's `origin`), counter-clockwise seen from outside. */
@@ -107,6 +110,8 @@ export interface MeshPart {
   layers?: (string | null)[];
   /** An opening's fill type and what it is. */
   opening?: { category: 'door' | 'window' | 'empty'; fill?: string; wall: string };
+  /** A threshold's wall, the side of its location line, and the room whose floor it continues. */
+  threshold?: { wall: string; side: 'left' | 'right'; room: string };
   /** An extension element's extension and collection. */
   extension?: { name: string; collection: string };
   mesh: PartMesh;

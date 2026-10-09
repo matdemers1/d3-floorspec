@@ -3,9 +3,10 @@ import type { EditorModel } from '../model';
 import { DEFAULTS, linear, materialColour } from './parts';
 
 /**
- * Textured surfaces for the 3D view (FLR-T-8.2, Core 0.3 18.3): a wall, floor or ceiling part's
- * triangles as @floorspec/mesh groups them by finished surface — each face, each region cut out of
- * a face, a floor, a ceiling — with each group's colour and, where its material has a base colour
+ * Textured surfaces for the 3D view (FLR-T-8.2, Core 0.3 18.3): a wall, floor, ceiling, junction
+ * fill or threshold part's triangles as @floorspec/mesh groups them by finished surface — each face,
+ * each region cut out of a face (a fill's faces in its walls' planes among them, FLR-T-12.20), a
+ * floor, a ceiling — with each group's colour and, where its material has a base colour
  * map, texture coordinates in **world units**: the tile coordinates `(s'/w, t'/h)` of 18.3, so one
  * repeat of the image covers exactly the material's `size` of real surface, region-anchored. No
  * three.js here; the view turns these arrays into a geometry with one draw group per map.
@@ -64,7 +65,12 @@ function colourOf(model: EditorModel, part: MeshPart, g: SurfaceGroup): string {
       const core = layers.length === 0 ? null : layers[Math.floor(layers.length / 2)];
       return materialColour(model, core) ?? DEFAULTS.wallEdge;
     }
+    case 'junctionFill':
+      // A face in one of its walls' planes is that face; the rest (its top) is the walls' core, as a wall's top is.
+      if (g.surface?.kind === 'face' || g.surface?.kind === 'region') return g.surface.side === 'left' ? DEFAULTS.exterior : DEFAULTS.interior;
+      return DEFAULTS.fill;
     case 'floor':
+    case 'threshold':
       return DEFAULTS.floor;
     case 'ceiling':
       return DEFAULTS.ceiling;
@@ -74,7 +80,8 @@ function colourOf(model: EditorModel, part: MeshPart, g: SurfaceGroup): string {
 }
 
 /** Whether a part's faces are finished surfaces this module lays out. */
-export const isSurfacePart = (part: Pick<MeshPart, 'kind'>): boolean => part.kind === 'wall' || part.kind === 'floor' || part.kind === 'ceiling';
+export const isSurfacePart = (part: Pick<MeshPart, 'kind'>): boolean =>
+  part.kind === 'wall' || part.kind === 'floor' || part.kind === 'ceiling' || part.kind === 'junctionFill' || part.kind === 'threshold';
 
 /**
  * A surface part's buffers: its groups' triangles one after another, untextured groups first (one

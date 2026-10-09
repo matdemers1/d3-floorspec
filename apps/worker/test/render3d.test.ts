@@ -148,3 +148,49 @@ describe('3D render', () => {
     expect(gltf).toMatchObject({ name: 'stair-and-hip-roof-house-v7.glb', contentType: 'model/gltf-binary' });
   });
 });
+
+describe('doorways and corners (FLR-T-12.20)', () => {
+  it('floors every door and cased opening whose sill is its wall’s base, flush with the floors, in the floor’s material', async () => {
+    const scene = await buildScene(TWO_STOREY);
+    const openings = TWO_STOREY['openings'] as Record<string, { fill?: string }>;
+    const types = TWO_STOREY['types'] as Record<string, { kind: string }>;
+    let floored = 0;
+    for (const level of scene.levels) {
+      // The tops of the level's floors (glTF +Y is up).
+      const tops = new Set<string>();
+      for (const n of level.nodes)
+        for (const p of n.primitives.filter((q) => q.part === 'floor')) for (let i = 1; i < p.positions.length; i += 3) tops.add(p.positions[i]!.toFixed(5));
+      for (const n of level.nodes.filter((x) => x.kind === 'opening')) {
+        const kind = openings[n.id]!.fill === undefined ? 'empty' : types[openings[n.id]!.fill!]!.kind;
+        const ths = n.primitives.filter((p) => p.part === 'threshold');
+        if (kind === 'windowType') {
+          expect(ths, n.id).toHaveLength(0);
+          continue;
+        }
+        expect(ths.length, `${n.id}: a threshold`).toBeGreaterThan(0);
+        expect(n.parts).toEqual(['opening', 'threshold']);
+        for (const p of ths) {
+          expect(scene.materials[p.material]!.key, n.id).toBe('default:floor');
+          for (let i = 1; i < p.positions.length; i += 3) expect(tops.has(p.positions[i]!.toFixed(5)), `${n.id}: flush with a floor`).toBe(true);
+        }
+        floored++;
+      }
+    }
+    // The front door, the cased opening and six interior doors.
+    expect(floored).toBe(8);
+  });
+
+  it('closes the corners a separator leaves, its faces the walls’ finishes and its top their core', async () => {
+    const scene = await buildScene(load('../../../packages/engine/standard/conformance/core/0.3/examples/001-three-room-house/input.json'));
+    const tm = scene.levels.flatMap((l) => l.nodes).find((n) => n.id === 'TM')!;
+    expect(tm.kind).toBe('junction');
+    const names = new Set(tm.primitives.map((p) => scene.materials[p.material]!.key));
+    // The partitions' gypsum board on the faces that continue theirs, their studs on top; no flat fill colour.
+    expect([...names].sort()).toEqual(['M:GWB', 'M:STUD']);
+    for (const p of tm.primitives) {
+      // A primitive is one material: any triangle facing up (the top) is in the studs'.
+      const up = Array.from({ length: p.normals.length / 3 }, (_, i) => p.normals[3 * i + 1]!).some((y) => y > 0.99);
+      if (up) expect(scene.materials[p.material]!.key).toBe('M:STUD');
+    }
+  });
+});

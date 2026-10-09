@@ -13,7 +13,7 @@ const same = mesher.meshDerived(ev.document, derived, { levels: ['L1'], origin: 
 
 for (const part of house.parts) {
   part.id;     // the Floorspec element — what selecting it in 3D selects in 2D
-  part.kind;   // wall, junctionFill, opening, floor, ceiling, slab, roof, roofGable, stairFlight, …
+  part.kind;   // wall, junctionFill, opening, floor, ceiling, slab, roof, roofGable, stairFlight, …, threshold
   part.closed; // a watertight 2-manifold solid, or a surface (`facing` up, down or side)
   part.mesh;   // { positions: Float32Array (metres), indices: Uint32Array }, CCW from outside
   part.bbox;   // base units, exact
@@ -32,7 +32,7 @@ unioned) are built by manifold-3d in double precision in a local frame at an int
 | kind | from | closed |
 |---|---|---|
 | `wall` | outline (5.7) × base–top (5.9), each opening's box subtracted | solid |
-| `junctionFill` | fill (5.7) × least base – greatest top of its walls | solid |
+| `junctionFill` | fill (5.7) × least base – greatest top of its walls; piece `closure:<wall>`: the corner a separator between two walls leaves open, closed to where their faces would meet | solid |
 | `opening` | exactly the volume cut from its wall (pick target, glass) | solid |
 | `floor` | room polygon × bottom–top (15.1); no thickness → surface facing up | solid / surface |
 | `ceiling` | flat, tray (with its step) or vault split at the ridge (15.2–15.4) | surface, facing down |
@@ -43,6 +43,7 @@ unioned) are built by manifold-3d in double precision in a local frame at an int
 | `stairLanding` | a landing by the same rule | solid |
 | `stairBlock` | placeholder: a winder or spiral stair's box (17.4) | solid |
 | `extension` | an extension element's fallback box (12.6) | solid |
+| `threshold` | a door's or empty opening's cut plan, where its sill is the wall's base, split at the location line: each half the floor (top, bottom) of the room on its side | solid / surface |
 
 `part.bbox` is exact: for floors, ceilings, slabs, roofs and extension elements it is the engine's
 derived box; for a wall it is the exact box of the outline prism minus its cuts (computed slab by
@@ -61,6 +62,7 @@ NodeNext, so `src/kernel.ts` writes out the part of the API this package uses.
 `pnpm test` (Node) runs the property tests over every valid case of the vendored conformance suites,
 the editor's template, the plan renderer's fixture houses, the layout solver's ranch under a hip
 roof and 80 generated rectilinear houses: watertight (edge twins, manifold-3d status, Euler genus),
-volume against the exact analytic value, every opening cut (ray test), exact bounding boxes, and
+volume against the exact analytic value, every opening cut (ray test), every doorway floored by its
+thresholds and every corner a separator leaves closed (ray tests), exact bounding boxes, and
 determinism. `pnpm test:browser` runs the isomorphic ones in headless Chromium and compares every
 mesh byte for byte with Node's. `pnpm timings` prints how long the ranch takes.

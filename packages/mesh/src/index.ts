@@ -1,6 +1,7 @@
 /**
  * @floorspec/mesh — watertight 3D meshes derived from a Floorspec document (FLR-T-7.4,
- * FLR-REQ-112): walls with their openings cut, junction fills, floors, ceilings, slabs, roofs,
+ * FLR-REQ-112): walls with their openings cut, junction fills and the corners separators leave
+ * closed, doorways' thresholds, floors, ceilings, slabs, roofs,
  * stairs and extension fallback boxes, built from what @floorspec/engine derives exactly, with
  * manifold-3d (WASM, loaded lazily) for booleans and polygon triangulation.
  *

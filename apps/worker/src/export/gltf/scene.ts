@@ -18,7 +18,7 @@
  * this exporter's choice and not the standard's.
  */
 import { deriveEvaluation, evaluate, extElements, facingVector, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
-import { loadMesher, UNITS_PER_METRE, type MeshPart, type Mesher, type PartKind } from '@floorspec/mesh';
+import { loadMesher, surfaceGroups, UNITS_PER_METRE, type MeshPart, type Mesher, type PartKind } from '@floorspec/mesh';
 
 export type Vec3 = [number, number, number];
 export type Rgba = [number, number, number, number];
@@ -477,6 +477,7 @@ const ELEMENT_KIND: Record<PartKind, ElementKind> = {
   stairColumn: 'stair',
   stairBlock: 'stair',
   extension: 'extension',
+  threshold: 'opening',
 };
 
 const COLLECTION: Record<Exclude<ElementKind, 'extension'>, keyof FloorspecDocument> = {
@@ -637,34 +638,26 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
         }
         break;
       }
-      case 'junctionFill': {
-        // A fill shows the face of the wall it continues, where it is in that face's plane; else the fill colour.
-        const walls = Object.entries(doc.walls ?? {})
-          .filter(([, w]) => w !== undefined && (w.start === part.id || w.end === part.id))
-          .map(([id]) => id)
-          .sort();
-        const fill = materials.default('fill');
-        for (const { tri, n } of triangles(part)) {
-          let material = fill;
-          let st: SurfaceST = boxProjection(n);
-          const c: Vec3 = [(tri[0][0] + tri[1][0] + tri[2][0]) / 3, (tri[0][1] + tri[1][1] + tri[2][1]) / 3, 0];
-          for (const wid of walls) {
-            const f = frameOf(wid);
-            if (f === undefined) continue;
-            const d = n[0] * f.L[0] + n[1] * f.L[1];
-            if (Math.abs(d) < 0.98) continue;
-            const side = d > 0 ? 'left' : 'right';
-            const at = side === 'left' ? f.leftAt : f.rightAt;
-            if (Math.abs((c[0] - at[0]) * f.L[0] + (c[1] - at[1]) * f.L[1]) > 0.001) continue;
-            const w = doc.walls![wid]!;
-            const layers = (w.layers ?? (w.type === undefined ? undefined : (doc.types?.[w.type] as { layers?: { material?: string }[] } | undefined)?.layers))?.map((l) => l.material ?? null) ?? [];
-            const fin = finishes?.walls[wid]?.[side];
-            material = materials.of(fin?.material ?? (side === 'left' ? layers[0] : layers[layers.length - 1]), side === 'left' ? 'exterior' : 'interior');
-            const sign = side === 'right' ? 1 : -1;
-            st = (p) => [sign * along(f, p) * M, (p[2] - f.b) * M];
-            break;
+      case 'junctionFill':
+      case 'threshold': {
+        // A fill (or a closure) shows the face of the wall it continues where it lies in that face's
+        // plane, and its walls' core elsewhere; a threshold is the floor of the room on its side — as
+        // @floorspec/mesh groups them by surface (18.3, 18.6), the editor's 3D view's grouping too.
+        const rest: DefaultName = part.kind === 'threshold' ? 'floor' : 'fill';
+        for (const g of surfaceGroups(doc, derived, part)) {
+          const s = g.surface;
+          const material = materials.of(g.material, s === null ? rest : s.kind === 'floor' ? 'floor' : s.kind === 'face' || s.kind === 'region' ? (s.side === 'left' ? 'exterior' : 'interior') : rest);
+          const P = g.positions;
+          for (let t = 0; t < P.length / 9; t++) {
+            const tri: Vec3[] = [0, 1, 2].map((k): Vec3 => [P[9 * t + 3 * k]!, P[9 * t + 3 * k + 1]!, P[9 * t + 3 * k + 2]!]);
+            const n: Vec3 = [g.normals[9 * t]!, g.normals[9 * t + 1]!, g.normals[9 * t + 2]!];
+            let st: SurfaceST = boxProjection(n);
+            if (s !== null) {
+              const at = new Map(tri.map((p, k): [Vec3, [number, number]] => [p, [g.st[6 * t + 2 * k]!, g.st[6 * t + 2 * k + 1]!]]));
+              st = (p) => at.get(p) ?? [0, 0];
+            }
+            b.add(part.kind, material, tri, n, st);
           }
-          b.add('junctionFill', material, tri, n, st);
         }
         break;
       }

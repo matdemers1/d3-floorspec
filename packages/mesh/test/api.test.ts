@@ -26,10 +26,20 @@ const kinds = (m: HouseMesh): Record<string, number> => {
 };
 
 describe('meshDocument', () => {
-  it('meshes the three-room house into its walls, openings, fill, floors and ceilings', async () => {
+  it('meshes the three-room house into its walls, openings, fill, floors, ceilings and thresholds', async () => {
     const m = await meshDocument(house);
     expect(m.unitsPerMetre).toBe(UNITS_PER_METRE);
-    expect(kinds(m)).toEqual({ wall: 9, junctionFill: 1, opening: 6, floor: 3, ceiling: 3 });
+    expect(kinds(m)).toEqual({ wall: 9, junctionFill: 2, opening: 6, floor: 3, ceiling: 3, threshold: 4 });
+    // The fill at TM, and the corner its separator leaves open beside WI2 closed (FLR-T-12.20).
+    expect(m.parts.filter((p) => p.kind === 'junctionFill').map((p) => p.key)).toEqual(['junctionFill:TM', 'junctionFill:TM:closure:WI2']);
+    // A threshold each side of each door: the bedroom door's halves are each room's floor; the front
+    // door's outer half, outside the house, continues the living room's.
+    expect(m.parts.filter((p) => p.kind === 'threshold').map((p) => [p.key, p.threshold!.room])).toEqual([
+      ['threshold:BD:left', 'LIV'],
+      ['threshold:BD:right', 'BED'],
+      ['threshold:FD:left', 'LIV'],
+      ['threshold:FD:right', 'LIV'],
+    ]);
     // Parts are in kind order, then by key; every key is unique.
     expect(m.parts.map((p) => PART_KINDS.indexOf(p.kind))).toEqual([...m.parts.map((p) => PART_KINDS.indexOf(p.kind))].sort((a, b) => a - b));
     expect(new Set(m.parts.map((p) => p.key)).size).toBe(m.parts.length);
@@ -141,6 +151,33 @@ describe('the checks themselves', () => {
     const f = m.parts.find((p) => p.kind === 'floor')!;
     f.bbox.max[0] += 1;
     expect(checked(m)).toThrow(/box/);
+  });
+});
+
+describe('the doorway and corner checks (FLR-T-12.20)', () => {
+  const checked = (m: HouseMesh): (() => void) => {
+    const ev = evaluate(house);
+    return () => checkHouse(kernel, ev.document!, deriveEvaluation(ev), m, 'mutant');
+  };
+
+  it('catch a doorway left unfloored', () => {
+    const m = mesher.meshDocument(house, { stats: true });
+    m.parts = m.parts.filter((p) => p.key !== 'threshold:BD:right');
+    expect(checked(m)).toThrow(/right half of its doorway has a threshold/);
+  });
+
+  it('catch a corner left open', () => {
+    const m = mesher.meshDocument(house, { stats: true });
+    m.parts = m.parts.filter((p) => !p.key.includes(':closure:'));
+    expect(checked(m)).toThrow(/is closed/);
+  });
+
+  it('catch a closure that misses the corner', () => {
+    const m = mesher.meshDocument(house, { stats: true });
+    const c = m.parts.find((p) => p.key.includes(':closure:'))!;
+    // Stand the corner's closure in its fill's place: watertight, but not where the notch is.
+    c.mesh = m.parts.find((p) => p.key === 'junctionFill:TM')!.mesh;
+    expect(checked(m)).toThrow(/closure|volume|box/);
   });
 });
 
