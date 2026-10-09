@@ -3,6 +3,13 @@
  * depth buffer, supersampling for smooth edges, ink lines where planes meet (the drawing a person
  * reads a model by), and see-through glass blended over the rest.
  *
+ * Light (FLR-T-12.23): a hemisphere — a cool sky above, a warm bounce from the ground below — a warm
+ * key light over the viewer's left shoulder, a little of it bounced back onto what faces away, and a
+ * soft cool fill from their right, so every face the camera sees is lit and each orientation
+ * differently; then a gentle filmic shoulder on each pixel's
+ * luminance, which keeps a finish's own hue and saturation where a plain clamp would bleach a bright
+ * wall and dull a dark one.
+ *
  * Why not a browser: the render is a picture for an agent to check its work by — the walls, the
  * rooms, the roof, from a named view — and a z-buffer over the mesh's triangles draws that in a few
  * hundred milliseconds, in plain JavaScript, identically on every machine (no GPU, no driver, no
@@ -54,6 +61,47 @@ const norm = (a: Vec3): Vec3 => {
   return [a[0] / l, a[1] / l, a[2] / l];
 };
 
+/** Rec. 709 luminance of linear RGB. */
+const luma = (r: number, g: number, b: number): number => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+/** Where the shoulder starts, and how the curve rolls off above it towards 1. */
+const KNEE = 0.62;
+/** The filmic shoulder: linear up to the knee, then an exponential roll-off that never reaches 1. */
+export function shoulder(x: number): number {
+  return x <= KNEE ? x : KNEE + (1 - KNEE) * (1 - Math.exp(-(x - KNEE) / (1 - KNEE)));
+}
+
+/**
+ * Tone-map a linear RGB pixel: the shoulder on its luminance, the colour scaled with it, and a
+ * channel still above 1 pulled towards the pixel's grey rather than clipped — so the hue holds.
+ */
+export function tone(r: number, g: number, b: number): [number, number, number] {
+  const l = luma(r, g, b);
+  if (l <= 0) return [0, 0, 0];
+  const k = shoulder(l) / l;
+  let o: [number, number, number] = [r * k, g * k, b * k];
+  const m = Math.max(o[0], o[1], o[2]);
+  if (m > 1) {
+    const L = shoulder(l);
+    const t = (1 - L) / (m - L);
+    o = [L + (o[0] - L) * t, L + (o[1] - L) * t, L + (o[2] - L) * t];
+  }
+  return o;
+}
+
+/**
+ * The lights, each a linear RGB intensity: the sky above and the ground's bounce below (a
+ * hemisphere); a warm key, a part of which comes back off the floor onto what faces away from it (a
+ * ceiling, a wall turned from the key); and a cool fill.
+ */
+export const LIGHTS = {
+  sky: [0.45, 0.47, 0.5],
+  ground: [0.42, 0.39, 0.34],
+  key: [0.7, 0.66, 0.58],
+  bounce: 0.32,
+  fill: [0.15, 0.16, 0.18],
+} as const;
+
 const toSrgb = (c: number): number => {
   const x = c <= 0 ? 0 : c >= 1 ? 1 : c;
   return x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055;
@@ -73,10 +121,11 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
   if (Math.hypot(...right) < 1e-9) right = cross([0, 0, -1], back);
   right = norm(right);
   const up = cross(back, right);
-  // A light over the viewer's left shoulder, from above: every face the camera sees is lit, each
-  // orientation differently.
+  // A key light over the viewer's left shoulder, from above, and a fill low from their right: every
+  // face the camera sees is lit, each orientation differently.
   const flatBack = norm([back[0], 0, back[2]]);
   const light = norm([-0.5 * right[0] + 0.6 * flatBack[0], 1.1, -0.5 * right[2] + 0.6 * flatBack[2]]);
+  const fillLight = norm([0.8 * right[0] + 0.5 * flatBack[0], 0.25, 0.8 * right[2] + 0.5 * flatBack[2]]);
 
   const color = new Float32Array(W * H * 3);
   const depth = new Float32Array(W * H); // 1 / distance along the view: larger is nearer; 0 is the sky
@@ -107,11 +156,19 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
 
   const glass: number[] = [];
   const shadeOf = (t: number): Vec3 => {
-    const n: Vec3 = [list.normals[3 * t]!, list.normals[3 * t + 1]!, list.normals[3 * t + 2]!];
-    const lambert = Math.abs(dot(n, light));
-    const sky = 0.5 + 0.5 * n[1];
-    const k = list.unlit?.[t] === 1 ? 1 : 0.34 + 0.14 * sky + 0.58 * lambert;
-    return [list.colors[3 * t]! * k, list.colors[3 * t + 1]! * k, list.colors[3 * t + 2]! * k];
+    const rgb: Vec3 = [list.colors[3 * t]!, list.colors[3 * t + 1]!, list.colors[3 * t + 2]!];
+    if (list.unlit?.[t] === 1) return rgb;
+    let n: Vec3 = [list.normals[3 * t]!, list.normals[3 * t + 1]!, list.normals[3 * t + 2]!];
+    // A two-sided face is lit on the side the camera sees.
+    const toEye = sub(camera.eye, [P[9 * t]!, P[9 * t + 1]!, P[9 * t + 2]!]);
+    if (dot(n, toEye) < 0) n = [-n[0], -n[1], -n[2]];
+    const up = 0.5 + 0.5 * n[1];
+    const nl = dot(n, light);
+    const k = nl >= 0 ? nl : -LIGHTS.bounce * nl;
+    const q = Math.max(0, dot(n, fillLight));
+    const out: Vec3 = [0, 0, 0];
+    for (let c = 0; c < 3; c++) out[c] = rgb[c]! * (LIGHTS.ground[c]! + (LIGHTS.sky[c]! - LIGHTS.ground[c]!) * up + LIGHTS.key[c]! * k + LIGHTS.fill[c]! * q);
+    return out;
   };
 
   /** Clip a view-space polygon to the near plane and draw it. */
@@ -217,6 +274,15 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
     return za - zb || a - b;
   });
   for (const t of glass) draw(t, true);
+
+  // What was drawn is tone-mapped; the sky (or the paper) behind it keeps its colour.
+  for (let i = 0; i < W * H; i++) {
+    if (key[i] === -1) continue;
+    const [tr, tg, tb] = tone(color[3 * i]!, color[3 * i + 1]!, color[3 * i + 2]!);
+    color[3 * i] = tr;
+    color[3 * i + 1] = tg;
+    color[3 * i + 2] = tb;
+  }
 
   // Down to the output size, in linear light, then sRGB.
   const out = new Uint8Array(options.width * options.height * 3);

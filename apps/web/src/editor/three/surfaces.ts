@@ -1,6 +1,6 @@
 import { surfaceGroups, tileCoordinates, type HouseMesh, type MeshPart, type SurfaceGroup } from '@floorspec/mesh';
 import type { EditorModel } from '../model';
-import { DEFAULTS, linear, materialColour } from './parts';
+import { appearance, DEFAULTS, linear, materialColour } from './parts';
 
 /**
  * Textured surfaces for the 3D view (FLR-T-8.2, Core 0.3 18.3): a wall, floor, ceiling, junction
@@ -54,26 +54,31 @@ export function mapOf(model: EditorModel, material: string | null): { ref: MapRe
   };
 }
 
-/** The colour of a group with no map: its material's colour, or the view's default for that surface. */
+/**
+ * The colour of a group with no map: its material's colour, or the default for that surface — a
+ * room's floor, ceiling and wall paint by what the room is for (FLR-T-12.23), as the worker draws it.
+ */
 function colourOf(model: EditorModel, part: MeshPart, g: SurfaceGroup): string {
   const own = materialColour(model, g.material);
   if (own !== null) return own;
+  const look = appearance(model);
+  const s = g.surface;
+  if (s?.kind === 'face' || s?.kind === 'region') return look.face(s.wall, s.side).color;
+  if (s?.kind === 'floor') return look.floor(s.room).color;
+  if (s?.kind === 'ceiling') return look.ceiling(s.room).color;
   switch (part.kind) {
     case 'wall': {
+      // Its top, ends and reveals: its core's.
       const layers = part.layers ?? [];
-      if (g.surface?.kind === 'face' || g.surface?.kind === 'region') return g.surface.side === 'left' ? DEFAULTS.exterior : DEFAULTS.interior;
       const core = layers.length === 0 ? null : layers[Math.floor(layers.length / 2)];
       return materialColour(model, core) ?? DEFAULTS.wallEdge;
     }
-    case 'junctionFill':
-      // A face in one of its walls' planes is that face; the rest (its top) is the walls' core, as a wall's top is.
-      if (g.surface?.kind === 'face' || g.surface?.kind === 'region') return g.surface.side === 'left' ? DEFAULTS.exterior : DEFAULTS.interior;
-      return DEFAULTS.fill;
-    case 'floor':
     case 'threshold':
-      return DEFAULTS.floor;
+      return part.threshold === undefined ? DEFAULTS.floor : look.floor(part.threshold.room).color;
     case 'ceiling':
-      return DEFAULTS.ceiling;
+      return look.ceiling(part.id).color;
+    case 'floor':
+      return look.floor(part.id).color;
     default:
       return DEFAULTS.fill;
   }

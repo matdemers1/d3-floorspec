@@ -3,7 +3,8 @@
  * — `sw`, `se`, `ne`, `nw` (isometric corners) or `top` — or from inside a room, drawn by the worker
  * from the same scene the glTF and USDZ exports write (export/gltf/scene.ts), by a software
  * rasterizer (raster.ts). An agent asks for it through MCP `floorspec_render` with `view: "3d"`; the
- * api queues it on the job queue and waits for the worker.
+ * api queues it on the job queue and waits for the worker. A level cuts the house away above it;
+ * `"all"` (or none) draws the whole house, every level's ceilings and every roof (FLR-T-12.23).
  */
 import { buildScene, readGlb, type Scene, type SceneOptions, type Vec3 } from '../export/gltf/index.js';
 import { linear } from '../export/gltf/scene.js';
@@ -12,7 +13,7 @@ import { encodePng } from './png.js';
 import { rasterize, type DrawList } from './raster.js';
 
 export { PRESETS, presetCamera, roomCamera, findRoom, centroid, type Camera, type Preset } from './camera.js';
-export { rasterize, type DrawList, type RasterOptions } from './raster.js';
+export { LIGHTS, rasterize, shoulder, tone, type DrawList, type RasterOptions } from './raster.js';
 export { encodePng } from './png.js';
 
 export const DEFAULT_WIDTH = 1024;
@@ -23,7 +24,7 @@ export interface Render3dOptions extends Omit<SceneOptions, 'levels'> {
   readonly camera?: Preset;
   /** Stand in this room (its ID or name) instead. */
   readonly room?: string;
-  /** Cut away above this level: its ceilings and roof are left off, and every level above it. */
+  /** Cut away above this level: its ceilings and roof are left off, and every level above it. `"all"`: the whole house. */
   readonly level?: string;
   /** Element IDs drawn in the accent colour. */
   readonly highlight?: readonly string[];
@@ -42,7 +43,24 @@ export interface Render3dResult {
 
 /** The accent a highlighted element is drawn in (linear RGB). */
 const ACCENT = linear('#3d63dd');
-const GROUND = linear('#dedbd2');
+/** The ground: a muted lawn, so a house's own colours read against it. */
+const GROUND = linear('#b4bf9c');
+
+/** The level that means the whole house: no cutaway, every ceiling and every roof. */
+export const ALL_LEVELS = 'all';
+
+/**
+ * Where a view cuts the house away: the place of `level` among the scene's levels (lowest first), or
+ * undefined for none — no level, or `"all"`, unless the model has a level whose ID is "all", which
+ * is then the one meant. Throws for a level the scene does not draw.
+ */
+export function cutOf(scene: Pick<Scene, 'levels'>, level: string | undefined): number | undefined {
+  if (level === undefined) return undefined;
+  const at = scene.levels.findIndex((l) => l.id === level);
+  if (at >= 0) return at;
+  if (level === ALL_LEVELS) return undefined;
+  throw new RangeError(`the model has no level ${level} with anything to draw; "all" draws the whole house`);
+}
 /** The first outline key of a round piece: far past the planes' keys, which count up from 0. */
 const SMOOTH_KEYS = 1 << 24;
 
@@ -133,7 +151,7 @@ function ground(bounds: { min: Vec3; max: Vec3 }): Tri[] {
 /** The scene's triangles as drawn: cut away above `level`, highlighted, with a ground under them. */
 export function sceneTriangles(scene: Scene, options: { level?: string; highlight?: readonly string[]; ground?: boolean } = {}): Tri[] {
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
-  const cut = options.level === undefined ? undefined : order.get(options.level);
+  const cut = cutOf(scene, options.level);
   const lit = new Set(options.highlight ?? []);
   const tris: Tri[] = [];
   const min: Vec3 = [Infinity, Infinity, Infinity];
@@ -192,7 +210,7 @@ function sizeOf(width: number | undefined): { width: number; height: number } {
 /** Render a scene: from a named view, or from inside a room. */
 export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design'> = {}): Render3dResult {
   const { width, height } = sizeOf(options.width);
-  if (options.level !== undefined && !scene.levels.some((l) => l.id === options.level)) throw new RangeError(`the model has no level ${options.level} with anything to draw`);
+  cutOf(scene, options.level);
   let camera: Camera;
   let tris: Tri[];
   if (options.room !== undefined) {
@@ -246,7 +264,11 @@ export function renderView(scene: Scene, options: ViewOptions): { png: Uint8Arra
 export async function render3dPng(document: object, options: Render3dOptions = {}): Promise<Render3dResult> {
   if (options.camera !== undefined && !PRESETS.includes(options.camera)) throw new RangeError(`camera is one of ${PRESETS.join(', ')}`);
   // One evaluation, with the reader asked for (default OFFICIAL_READER, the editor's: FLR-T-12.10).
-  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }) });
+  const scene = await buildScene(document, {
+    ...(options.design === undefined ? {} : { design: options.design }),
+    ...(options.reader === undefined ? {} : { reader: options.reader }),
+    ...(options.images === undefined ? {} : { images: options.images }),
+  });
   return renderScene(scene, options);
 }
 

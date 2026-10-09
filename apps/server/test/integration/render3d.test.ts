@@ -94,6 +94,17 @@ describe('3D render-back', () => {
     expect((await operator.get(`/api/projects/${id}/render?view=3d&lights=dim`)).status).toBe(400);
   });
 
+  it('draws the whole house for level "all" in 3D, and says a plan is one level (FLR-T-12.23)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, L_STAIR, 'Stair house');
+    const all = await fetch(`${running.url}/api/projects/${id}/render?view=3d&level=all&width=256`, { headers: { cookie: cookieOf(operator) } });
+    expect(all.status, await all.clone().text()).toBe(200);
+    expect(pngSize(new Uint8Array(await all.arrayBuffer()))).toEqual({ width: 256, height: 192 });
+    const plan = await operator.get(`/api/projects/${id}/render?level=all`);
+    expect(plan.status).toBe(400);
+    expect(plan.text).toContain('one level at a time');
+  });
+
   it('says why it could not draw: no such room, both a camera and a room, too wide', async () => {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(db, operator, L_STAIR, 'Stair house');

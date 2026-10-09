@@ -1,11 +1,12 @@
-import { ROLE_LOOKS, type MeshPart, type PartKind } from '@floorspec/mesh';
+import { appearanceOf, DEFAULT_COLOURS, ROLE_LOOKS, type Appearance, type MeshPart, type PartKind } from '@floorspec/mesh';
 import type { EditorModel, WallView } from '../model';
 
 /**
  * What the 3D view does with each meshed part (FLR-T-7.5), without three.js: which element a part
  * selects, which parts show for a level and a cutaway, and what colour each face is drawn in —
  * from the document's own materials (Core 8.5), the walls' layers (8.3) and the rooms' finishes
- * (6.5), with quiet defaults where the model names none.
+ * (6.5), with @floorspec/mesh's appearance where the model names none (FLR-T-12.23): the same
+ * palette — by what each room is for — the worker's render and exports draw.
  */
 
 /**
@@ -74,21 +75,17 @@ export const levelOrder = (model: EditorModel): Map<string, number> => new Map([
 
 /**
  * The colours of what the model names no material for — a house's own surfaces drawn in 3D, not
- * interface colour, so not tokens: the same plaster and oak in either theme.
+ * interface colour, so not tokens: @floorspec/mesh's, shared with the worker's render and exports.
  */
-export const DEFAULTS = {
-  exterior: '#d8d2c6', // d3-allow: a default material colour of the 3D model, not chrome
-  interior: '#ebe8e1', // d3-allow: a default material colour of the 3D model, not chrome
-  wallEdge: '#cfc9bd', // d3-allow: a default material colour of the 3D model, not chrome
-  floor: '#c8b391', // d3-allow: a default material colour of the 3D model, not chrome
-  ceiling: '#f2f0ea', // d3-allow: a default material colour of the 3D model, not chrome
-  slab: '#b9b6ae', // d3-allow: a default material colour of the 3D model, not chrome
-  roof: '#5b616d', // d3-allow: a default material colour of the 3D model, not chrome
-  gable: '#d8d2c6', // d3-allow: a default material colour of the 3D model, not chrome
-  stair: '#b58b5f', // d3-allow: a default material colour of the 3D model, not chrome
-  fill: '#ddd8ce', // d3-allow: a default material colour of the 3D model, not chrome
-  extension: '#9aa0ae', // d3-allow: a default material colour of the 3D model, not chrome
-} as const;
+export const DEFAULTS = DEFAULT_COLOURS;
+
+const looks = new WeakMap<EditorModel, Appearance>();
+/** The appearance of a model's unfinished surfaces (FLR-T-12.23), one per model shown. */
+export function appearance(model: EditorModel): Appearance {
+  let a = looks.get(model);
+  if (a === undefined) looks.set(model, (a = appearanceOf(model.view, model.derived)));
+  return a;
+}
 
 type Json = Record<string, unknown>;
 
@@ -129,8 +126,8 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
     case 'wall': {
       const wall = walls.get(part.id);
       const layers = part.layers ?? [];
-      const left = linear(materialColour(model, layers[0]) ?? DEFAULTS.exterior);
-      const right = linear(materialColour(model, layers[layers.length - 1]) ?? DEFAULTS.interior);
+      const left = linear(materialColour(model, layers[0]) ?? appearance(model).face(part.id, 'left').color);
+      const right = linear(materialColour(model, layers[layers.length - 1]) ?? appearance(model).face(part.id, 'right').color);
       const coreIndex = layers.length === 0 ? -1 : Math.floor(layers.length / 2);
       const edge = linear(materialColour(model, layers[coreIndex]) ?? DEFAULTS.wallEdge);
       if (wall === undefined) return one(DEFAULTS.interior);
@@ -149,9 +146,9 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
       return out;
     }
     case 'floor':
-      return one(materialColour(model, rooms?.[part.id]?.['floorFinish'] as string | undefined) ?? DEFAULTS.floor);
+      return one(materialColour(model, rooms?.[part.id]?.['floorFinish'] as string | undefined) ?? appearance(model).floor(part.id).color);
     case 'ceiling':
-      return one(materialColour(model, rooms?.[part.id]?.['ceilingFinish'] as string | undefined) ?? DEFAULTS.ceiling);
+      return one(materialColour(model, rooms?.[part.id]?.['ceilingFinish'] as string | undefined) ?? appearance(model).ceiling(part.id).color);
     case 'slab':
       return one(materialColour(model, part.material) ?? DEFAULTS.slab);
     case 'roof':
@@ -166,7 +163,7 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
     case 'junctionFill':
       return one(DEFAULTS.fill);
     case 'threshold':
-      return one(materialColour(model, rooms?.[part.threshold?.room ?? '']?.['floorFinish'] as string | undefined) ?? DEFAULTS.floor);
+      return one(materialColour(model, rooms?.[part.threshold?.room ?? '']?.['floorFinish'] as string | undefined) ?? (part.threshold === undefined ? DEFAULTS.floor : appearance(model).floor(part.threshold.room).color));
     case 'extension':
       // A model's piece in its role's colour (FLR-T-12.21), the worker's render and export alike.
       return one(part.model === undefined ? DEFAULTS.extension : ROLE_LOOKS[part.model.role].color);
