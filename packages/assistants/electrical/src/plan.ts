@@ -5,7 +5,7 @@
  * its location line from its start junction, as a wall-face host states them (Core 13.3), computed
  * exactly from integers and rounded once.
  */
-import { deriveEvaluation, evaluate, extElements, isqrt, OFFICIAL_READER, officialElementRooms, predicates, type Derived, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
+import { deriveEvaluation, evaluate, extElements, facingVector, isqrt, OFFICIAL_READER, officialElementRooms, predicates, type Derived, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
 
 type Point = readonly [number, number];
 type Json = Record<string, unknown>;
@@ -59,6 +59,8 @@ export interface RoomPlan {
   counters: CounterSpan[];
   /** Whether it has counter casework at all — along a wall or not, an island say: when it does, only the spans above are counters. */
   hasCounters: boolean;
+  /** Its arc walls (Core 21): no wall run is read along a curve, so they get no receptacles. */
+  curved: string[];
 }
 
 export interface PlanReading {
@@ -112,6 +114,17 @@ function intoRoom(p: Point, f: Point, d: Point, len: bigint, side: 'left' | 'rig
   // The room is to the left of the location line walked start to end for the left face (Core 13.3).
   const cross = BigInt(d[0]) * BigInt(p[1] - f[1]) - BigInt(d[1]) * BigInt(p[0] - f[0]);
   return Number((side === 'left' ? cross : -cross) / len);
+}
+
+/**
+ * Whether a facing (Core 13.1, microdegrees) points into the room off a wall face — within 45° of the
+ * face's normal into the room: dot(F, n) > 0 and 2·dot² > |F|²·|n|², exactly.
+ */
+function facesInto(facing: number, d: Point, side: 'left' | 'right'): boolean {
+  const [fx, fy] = facingVector(facing);
+  const n: [bigint, bigint] = side === 'left' ? [BigInt(-d[1]), BigInt(d[0])] : [BigInt(d[1]), BigInt(-d[0])];
+  const dot = fx * n[0] + fy * n[1];
+  return dot > 0n && 2n * dot * dot > (fx * fx + fy * fy) * (n[0] * n[0] + n[1] * n[1]);
 }
 
 const centroid = (ps: readonly Point[]): Point => [Math.round(ps.reduce((a, p) => a + p[0], 0) / ps.length), Math.round(ps.reduce((a, p) => a + p[1], 0) / ps.length)];
@@ -185,13 +198,13 @@ export function readPlan(
 
   // Counter casework (FS_furniture 2.4): its footprint as derived (Core 13.2), by level.
   const categories = options.counterCategories ?? [];
-  const casework: { id: string; level: string; footprint: readonly Point[] }[] = [];
+  const casework: { id: string; level: string; footprint: readonly Point[]; facing: number | undefined }[] = [];
   for (const x of extElements(doc)) {
     if (x.extension !== 'FS_furniture' || x.collection !== 'casework') continue;
     const category = (x.element as unknown as Json)['category'];
     const fb = derived.fallbacks?.[x.id];
     if (typeof category !== 'string' || !categories.includes(category) || fb === undefined) continue;
-    casework.push({ id: x.id, level: fb.level, footprint: fb.footprint });
+    casework.push({ id: x.id, level: fb.level, footprint: fb.footprint, facing: derived.placements?.[x.id]?.facing });
   }
 
   const rooms: RoomPlan[] = [];
@@ -217,11 +230,18 @@ export function readPlan(
       }
     const openEntries: Entry[] = [];
     const counters: CounterSpan[] = [];
+    const curved: string[] = [];
     const mine = casework.filter((c) => c.level === room.level);
     for (const cycle of [f.outer, ...f.inner]) {
       for (const h of cycle.halfEdges) {
         const e = g.edges[h >> 1]!;
         if (e.kind !== 'wall') continue;
+        // A segment of an arc wall is `<id>~<k>` in the level graph (Core 21.3), not a wall of the
+        // document: a run is a straight stretch of one wall's face, so a curve gets none.
+        if (e.src !== undefined) {
+          if (!curved.includes(e.src)) curved.push(e.src);
+          continue;
+        }
         const wall = doc.walls![e.id]!;
         // The room is on the half-edge's left: the wall's left face when the half-edge runs its way.
         const side: 'left' | 'right' = ((h & 1) === 0) === (e.start === wall.start) ? 'left' : 'right';
@@ -246,10 +266,13 @@ export function readPlan(
           cuts.push([o.offset, o.offset + width]);
           entries.push({ room: rid, opening: oid, wall: e.id, side, from: o.offset, to: o.offset + width, hinge: fill?.kind === 'doorType' ? (o.hinge ?? 'start') : null });
         }
-        // Casework against this face: a corner of it within COUNTER_REACH of the face, none behind it.
+        // Casework against this face: a corner of it within COUNTER_REACH of the face, none behind it,
+        // and its back to the face — facing into the room — so a cabinet whose end only touches a
+        // wall, a vanity in a corner say, is no counter along that wall.
         for (const c of mine) {
           const into = c.footprint.map((p) => intoRoom(p, fa, d, len, side));
           if (Math.min(...into) > COUNTER_REACH || Math.min(...into) < -COUNTER_REACH) continue;
+          if (c.facing !== undefined && !facesInto(c.facing, d, side)) continue;
           const along = c.footprint.map((p) => clamp(offsetAlong(p, s, d, len)));
           const from = Math.max(Math.min(...along), Math.min(a, b));
           const to = Math.min(Math.max(...along), Math.max(a, b));
@@ -281,6 +304,7 @@ export function readPlan(
       devices: electricalRooms[rid] ?? [],
       counters: counters.sort((x, y) => cmp(x.wall, y.wall) || cmp(x.side, y.side) || x.from - y.from || cmp(x.casework, y.casework)),
       hasCounters: counters.length > 0 || mine.some((c) => insideRoom(centroid(c.footprint), polygon.outer, polygon.holes)),
+      curved: curved.sort(cmp),
     });
   }
   return { document: doc, evaluation, derived, rooms, receptaclesOn: (wall, side) => [...(onFace.get(`${wall}/${side}`) ?? [])].sort((a, b) => a.offset - b.offset || cmp(a.id, b.id)) };
