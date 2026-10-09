@@ -149,6 +149,22 @@ export interface SceneDoor {
   readonly sill: number;
 }
 
+/**
+ * An extension element's fallback box (Core 12.6) — a piece of furniture, a fixture, an appliance —
+ * for a camera that keeps out of it (FLR-T-12.29). Plan in metres, z-up.
+ */
+export interface SceneObstacle {
+  readonly id: string;
+  readonly level: string;
+  readonly extension: string;
+  readonly collection: string;
+  /** Its footprint: four corners, counter-clockwise. */
+  readonly footprint: [number, number][];
+  /** The box's bottom and top, metres. */
+  readonly bottom: number;
+  readonly top: number;
+}
+
 export interface Scene {
   readonly project: string;
   /** Every option set's chosen option, for a document with design options; else null. */
@@ -159,6 +175,8 @@ export interface Scene {
   readonly bounds: { min: Vec3; max: Vec3 } | null;
   readonly rooms: SceneRoom[];
   readonly doors: SceneDoor[];
+  /** Every extension element's fallback box, by ID: what a camera standing in a room keeps out of. */
+  readonly obstacles: SceneObstacle[];
   /** What FS_electrical's luminaires shine (FLR-T-12.22), for a view that turns them on. */
   readonly lights: SceneLight[];
   /** The assets a material's maps name: what an exporter asks the store for. */
@@ -736,6 +754,7 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
     bounds: builders.size === 0 ? null : { min, max },
     rooms: roomsOf(doc, derived),
     doors: doorsOf(derived, parts, frameOf),
+    obstacles: obstaclesOf(derived),
     lights: lightsOf(doc, derived).map((l) => ({
       id: l.id,
       level: l.level,
@@ -793,6 +812,20 @@ function roomsOf(doc: FloorspecDocument, derived: Derived): SceneRoom[] {
     });
   }
   return out;
+}
+
+function obstaclesOf(derived: Derived): SceneObstacle[] {
+  return Object.entries(derived.fallbacks ?? {})
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([id, f]) => ({
+      id,
+      level: f.level,
+      extension: f.extension,
+      collection: f.collection,
+      footprint: f.footprint.map(([x, y]) => [x / M, y / M] as [number, number]),
+      bottom: f.bottom / M,
+      top: f.top / M,
+    }));
 }
 
 function doorsOf(derived: Derived, parts: readonly MeshPart[], frameOf: (id: string) => WallFrame | undefined): SceneDoor[] {

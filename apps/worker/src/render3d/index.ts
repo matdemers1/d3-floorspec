@@ -219,7 +219,7 @@ export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design
       const known = scene.rooms.map((r) => (r.name === undefined ? r.id : `${r.id} (${r.name})`));
       throw new RangeError(`the model has no room ${options.room}${known.length === 0 ? '' : `; its rooms are ${known.slice(0, 20).join(', ')}`}`);
     }
-    camera = roomCamera(room, scene.doors);
+    camera = roomCamera(room, scene.doors, scene.obstacles);
     tris = sceneTriangles(scene, { ...(options.highlight === undefined ? {} : { highlight: options.highlight }), ground: true });
   } else {
     tris = sceneTriangles(scene, {

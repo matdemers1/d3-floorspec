@@ -215,7 +215,7 @@ function cameraFor(scene: Scene, pt: PtScene, options: StillOptions, aspect: num
       const known = scene.rooms.map((r) => (r.name === undefined ? r.id : `${r.id} (${r.name})`));
       throw new RangeError(`the model has no room ${options.room}${known.length === 0 ? '' : `; its rooms are ${known.slice(0, 20).join(', ')}`}`);
     }
-    return roomCamera(room, scene.doors);
+    return roomCamera(room, scene.doors, scene.obstacles);
   }
   // Framed on the house, not the ground plate (its last two triangles).
   const min: Vec3 = [Infinity, Infinity, Infinity];

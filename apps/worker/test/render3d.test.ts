@@ -112,9 +112,9 @@ describe('3D render', () => {
     expect(r.camera).toBe(c.label);
     expect(pngSize(r.png)).toEqual({ width: 640, height: 480 });
     expect(colours(decode(r.png))).toBeGreaterThan(50);
-    // A room with no door into it is seen from its far corner.
+    // A room with no door into it is seen from a corner.
     const corner = roomCamera({ ...kitchen }, []);
-    expect(corner.label).toBe('Kitchen (KIT) from its far corner');
+    expect(corner.label).toBe('Kitchen (KIT) from its corner');
   });
 
   it('says which rooms there are when asked for one that is not', async () => {
