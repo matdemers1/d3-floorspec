@@ -11,5 +11,5 @@
 export const PACKAGE_NAME = '@floorspec/assistant-electrical';
 
 export { DEFAULTS, withDefaults, type ElectricalDefaults } from './defaults.js';
-export { proposeElectrical, analyseGaps, runGaps, fillRun, switchAt, type ElectricalOptions, type ElectricalProposal, type Gap, type ProposedCircuit } from './propose.js';
-export { readPlan, PlanError, type RoomPlan, type WallRun, type Entry } from './plan.js';
+export { proposeElectrical, analyseGaps, runGaps, fillRun, receptacleStretches, switchAt, type ElectricalOptions, type ElectricalProposal, type Gap, type ProposedCircuit } from './propose.js';
+export { readPlan, PlanError, type RoomPlan, type WallRun, type Entry, type CounterSpan } from './plan.js';
