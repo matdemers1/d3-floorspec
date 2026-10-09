@@ -41,7 +41,7 @@ jobs:
       CLAUDE_CODE_VERSION: 2.1.278
     services:
       postgres:
-        image: postgres:16
+        image: mirror.gcr.io/library/postgres:16 # Docker Hub's postgres through Google's mirror: anonymous Hub pulls hit 429s (FLR-T-12.30)
         env:
           POSTGRES_USER: floorspec
           POSTGRES_PASSWORD: floorspec
