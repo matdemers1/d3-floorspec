@@ -25,10 +25,15 @@ const RenderQuery = z.object({
   camera: z.enum(['sw', 'se', 'ne', 'nw', 'top']).optional(),
   room: z.string().min(1).max(128).optional(),
   design: z.string().optional(),
+  // 3D (FLR-T-12.22): the luminaires on or off — path-traced — and the time of day it is seen at.
+  lights: z.enum(['on', 'off']).optional(),
+  time: z.enum(['day', 'dusk', 'night']).optional(),
 });
 
 /** The 3D render's widest picture: a software render, so its pixels are the worker's time. */
 export const MAX_3D_WIDTH = 2048;
+/** A render with its lights is path-traced: narrower, and waited for longer. */
+export const MAX_LIT_WIDTH = 1280;
 /** How many 3D renders a project may have waiting at once. */
 export const MAX_PENDING_RENDERS = 3;
 
@@ -196,6 +201,8 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
     if (project === undefined) throw new HttpError(404, 'project not found');
     if ((q.width ?? 0) > MAX_3D_WIDTH) throw new HttpError(400, `a 3D render is at most ${String(MAX_3D_WIDTH)} pixels wide`);
     if (q.camera !== undefined && q.room !== undefined) throw new HttpError(400, 'a 3D render is from a named camera or from a room, not both');
+    if (q.lights !== undefined && (q.width ?? 0) > MAX_LIT_WIDTH) throw new HttpError(400, `a 3D render with lights is at most ${String(MAX_LIT_WIDTH)} pixels wide`);
+    if (q.time !== undefined && q.lights === undefined) throw new HttpError(400, 'time is for a 3D render with lights: say lights "on" or "off"');
     const design = designQuery(q.design);
     // Read as the worker renders it and as the editor validates it (OFFICIAL_READER, FLR-T-12.10).
     const ev = evaluate(at.document as object, { ...OFFICIAL_READER, ...(design === undefined ? {} : { design }) });
@@ -216,13 +223,16 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(highlight === undefined || highlight.length === 0 ? {} : { highlight }),
           ...(q.width === undefined ? {} : { width: q.width }),
           ...(design === undefined ? {} : { design }),
+          ...(q.lights === undefined ? {} : { lights: q.lights }),
+          ...(q.time === undefined ? {} : { time: q.time }),
         },
         versionHash: at.hash,
         requestedByAccountId: req.auth?.accountId ?? req.token?.accountId ?? null,
         requestedByTokenId: req.auth === undefined ? (req.token?.tokenId ?? null) : null,
       },
     });
-    const timeout = wait.timeoutMs ?? 60_000;
+    // A path-traced render with its lights takes longer than a rasterized one.
+    const timeout = (wait.timeoutMs ?? 60_000) * (q.lights === undefined ? 1 : 3);
     const until = Date.now() + timeout;
     for (;;) {
       const now = await db.job.findUniqueOrThrow({ where: { id: job.id }, select: { status: true, error: true, output: { select: { bytes: true } } } });

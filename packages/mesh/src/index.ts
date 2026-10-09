@@ -18,3 +18,4 @@ export { surfaceGroups, tileCoordinates, type Surface, type SurfaceGroup, type T
 export { MODEL_ROLES, ROLE_LOOKS, type ModelRole, type RoleLook } from './roles.js';
 export { discriminant, elementKind } from './models/kinds.js';
 export { PART_KINDS, UNITS_PER_METRE, type Box3, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartMesh, type PartStats, type Vec3 } from './types.js';
+export { DEFAULT_LUMENS, kelvinColor, lightsOf, LUMENS_PER_WATT, type FixtureLight } from './lights.js';

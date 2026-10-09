@@ -39,6 +39,11 @@ export interface ThreeState {
   preset: PresetId | null;
   /** The walkthrough's eye height above the floor under it, metres. */
   eyeHeight: number;
+  /**
+   * The house's light fixtures turned on (FLR-T-12.22): each FS_electrical light a lamp, the view at
+   * dusk so their light reads. A way of looking, not part of the model, and not kept between visits.
+   */
+  lights: boolean;
 }
 
 export const EYE_HEIGHTS = [1.2, 1.5, 1.6, 1.7, 1.8] as const;
@@ -73,7 +78,7 @@ export class ThreeStore {
   private readonly listeners = new Set<() => void>();
 
   constructor() {
-    this.state = { mode: readMode(), walking: false, walkFrom: null, cutaway: true, roof: true, orbit: null, preset: 'sw', eyeHeight: readEye() };
+    this.state = { mode: readMode(), walking: false, walkFrom: null, cutaway: true, roof: true, orbit: null, preset: 'sw', eyeHeight: readEye(), lights: false };
   }
 
   get = (): ThreeState => this.state;
@@ -102,6 +107,11 @@ export class ThreeStore {
 
   stopWalking(): void {
     this.set({ walking: false, walkFrom: null });
+  }
+
+  /** Turn the light fixtures on or off; with no argument, the other way from now. */
+  toggleLights(on: boolean = !this.state.lights): void {
+    if (on !== this.state.lights) this.set({ lights: on });
   }
 
   setEyeHeight(metres: number): void {

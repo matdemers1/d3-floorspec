@@ -223,6 +223,8 @@ export interface RenderOptions {
   /** Element IDs drawn in the accent colour. */
   readonly highlight?: readonly string[];
   readonly width?: number;
+  /** 3D: the luminaires on or off, path-traced at night (FLR-T-12.22). */
+  readonly lights?: 'on' | 'off';
 }
 
 /** An answer from the API that is not a success: its status and its (problem+json) body. */
@@ -369,6 +371,7 @@ export class HttpFloorspecClient implements FloorspecClient {
     if (options.changeset !== undefined) params.set('changeset', options.changeset);
     if (options.highlight !== undefined && options.highlight.length > 0) params.set('highlight', options.highlight.join(','));
     if (options.width !== undefined) params.set('width', String(options.width));
+    if (options.lights !== undefined) params.set('lights', options.lights);
     const res = await this.send('GET', this.project(projectId, `/render?${params.toString()}`), undefined, { accept: 'image/png' });
     return new Uint8Array(await res.arrayBuffer());
   }

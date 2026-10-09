@@ -70,7 +70,7 @@ export function probeOf(store: EditorStore): SunProbe {
 
 const noRaycast = (): void => undefined;
 
-export function SunRig({ store, model, mesh, compact, walking }: { store: EditorStore; model: EditorModel; mesh: HouseMesh; compact: boolean; walking: boolean }) {
+export function SunRig({ store, model, mesh, compact, walking, lamps = false }: { store: EditorStore; model: EditorModel; mesh: HouseMesh; compact: boolean; walking: boolean; lamps?: boolean }) {
   const on = useSunState(store, (s) => s.on);
   const clock = useSunState(store, (s) => s.clock);
   const gl = useThree((s) => s.gl);
@@ -125,7 +125,8 @@ export function SunRig({ store, model, mesh, compact, walking }: { store: Editor
     probe.light = l;
     probe.size = size;
     invalidate();
-  }, [study, frame, size, target, store, gl, scene, invalidate]);
+    // `lamps` too: with the fixtures on, the sun is not drawn, and is placed again when it is back.
+  }, [study, frame, size, target, store, gl, scene, invalidate, lamps]);
 
   useEffect(() => () => {
     const probe = probeOf(store);
@@ -134,6 +135,23 @@ export function SunRig({ store, model, mesh, compact, walking }: { store: Editor
   }, [store]);
 
   useSunTestHook(store);
+
+  // The light fixtures on (FLR-T-12.22): dusk, whatever the sun study says — no sun, a dim blue
+  // sky — so the pools of light the lamps make read. The ground still takes their light.
+  if (lamps) {
+    return (
+      <>
+        <hemisphereLight args={[NIGHT_SKY, SKY_GROUND, 0.28]} position={[0, 0, 1]} />
+        <ambientLight intensity={0.05} />
+        {frame === null ? null : (
+          <mesh position={[frame.centre.x, frame.centre.y, frame.ground]} receiveShadow raycast={noRaycast} userData={{ ground: true }}>
+            <circleGeometry args={[frame.radius * 3, 96]} />
+            <meshLambertMaterial color={GROUND} />
+          </mesh>
+        )}
+      </>
+    );
+  }
 
   if (study === null || frame === null) {
     return (

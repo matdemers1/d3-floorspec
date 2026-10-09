@@ -6,7 +6,7 @@ import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/i
 import { exportIfc } from '../export/ifc/index.js';
 import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
 import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
-import { QUALITIES, renderStill, SIZES, withinBudget, type Quality, type Size, type SunInput } from '../pathtrace/index.js';
+import { LIGHTS, QUALITIES, renderLit, renderStill, SIZES, TIMES, withinBudget, type Lights, type Quality, type Size, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
 
 export interface JobRow {
   readonly id: string;
@@ -76,6 +76,9 @@ export interface Render3dParams {
   readonly highlight?: readonly string[];
   readonly width?: number;
   readonly design?: Record<string, string>;
+  /** FLR-T-12.22: the luminaires on or off — path-traced, at night unless `time` says otherwise. */
+  readonly lights?: Lights;
+  readonly time?: TimeOfDay;
 }
 
 export function render3dParams(raw: unknown): Render3dParams {
@@ -87,6 +90,8 @@ export function render3dParams(raw: unknown): Render3dParams {
   const highlight = Array.isArray(p['highlight']) && p['highlight'].every((h) => typeof h === 'string') ? p['highlight'] : undefined;
   const width = typeof p['width'] === 'number' && Number.isInteger(p['width']) ? p['width'] : undefined;
   const design = designOf(p['design']);
+  const lights = typeof p['lights'] === 'string' && (LIGHTS as readonly string[]).includes(p['lights']) ? (p['lights'] as Lights) : undefined;
+  const time = typeof p['time'] === 'string' && (TIMES as readonly string[]).includes(p['time']) ? (p['time'] as TimeOfDay) : undefined;
   return {
     ...(camera === undefined ? {} : { camera }),
     ...(room === undefined ? {} : { room }),
@@ -94,6 +99,8 @@ export function render3dParams(raw: unknown): Render3dParams {
     ...(highlight === undefined ? {} : { highlight }),
     ...(width === undefined ? {} : { width }),
     ...(design === undefined ? {} : { design }),
+    ...(lights === undefined ? {} : { lights }),
+    ...(time === undefined ? {} : { time }),
   };
 }
 
@@ -234,9 +241,27 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
         },
       };
     },
-    /** FLR-T-8.5: a PNG of the 3D model from a named view or a room; the api waits for it. */
+    /**
+     * FLR-T-8.5: a PNG of the 3D model from a named view or a room; the api waits for it. With
+     * `lights` (FLR-T-12.22), path-traced with the luminaires on or off instead of rasterized.
+     */
     'render.3d': async (document, job) => {
-      const r = await render3dPng(document, render3dParams(job.params));
+      const p = render3dParams(job.params);
+      if (p.lights !== undefined) {
+        const images = claimedOnly(job, store.images);
+        const lit = await renderLit(document, {
+          lights: p.lights,
+          ...(p.time === undefined ? {} : { time: p.time }),
+          ...(p.camera === undefined ? {} : { camera: p.camera }),
+          ...(p.room === undefined ? {} : { room: p.room }),
+          ...(p.level === undefined ? {} : { level: p.level }),
+          ...(p.width === undefined ? {} : { width: p.width }),
+          ...(p.design === undefined ? {} : { design: p.design }),
+          ...(images === undefined ? {} : { images }),
+        });
+        return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: lit.png, summary: { width: lit.width, height: lit.height, camera: lit.camera, design: lit.design, ...(lit.lit === undefined ? {} : { lit: lit.lit }), ms: lit.ms } };
+      }
+      const r = await render3dPng(document, p);
       return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: r.png, summary: { width: r.width, height: r.height, camera: r.camera, design: r.design } };
     },
   };

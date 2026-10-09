@@ -18,7 +18,7 @@
  * this exporter's choice and not the standard's.
  */
 import { deriveEvaluation, evaluate, extElements, facingVector, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
-import { loadMesher, ROLE_LOOKS, surfaceGroups, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind } from '@floorspec/mesh';
+import { lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind } from '@floorspec/mesh';
 
 export type Vec3 = [number, number, number];
 export type Rgba = [number, number, number, number];
@@ -117,6 +117,22 @@ export interface SceneRoom {
   readonly ceiling: number;
 }
 
+/** A luminaire's light (FLR-T-12.22, @floorspec/mesh `lightsOf`), in the scene's frame: metres, +Y up. */
+export interface SceneLight {
+  readonly id: string;
+  readonly level: string;
+  readonly fixture: string;
+  readonly position: Vec3;
+  /** Metres: the size of what shines. */
+  readonly radius: number;
+  /** A spot's direction (straight down) and its cone's cosines; absent for a light that shines every way. */
+  readonly spot?: { readonly dir: Vec3; readonly inner: number; readonly outer: number };
+  readonly lumens: number;
+  /** Linear RGB, luminance 1. */
+  readonly color: readonly [number, number, number];
+  readonly room: string | null;
+}
+
 /** A door, for a camera that stands in its doorway. Plan in metres, z-up. */
 export interface SceneDoor {
   readonly id: string;
@@ -138,6 +154,8 @@ export interface Scene {
   readonly bounds: { min: Vec3; max: Vec3 } | null;
   readonly rooms: SceneRoom[];
   readonly doors: SceneDoor[];
+  /** What FS_electrical's luminaires shine (FLR-T-12.22), for a view that turns them on. */
+  readonly lights: SceneLight[];
   /** The assets a material's maps name: what an exporter asks the store for. */
   readonly assets: Record<string, { readonly sha256: string; readonly mediaType: string; readonly path?: string; readonly uri?: string }>;
 }
@@ -762,6 +780,17 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
     bounds: builders.size === 0 ? null : { min, max },
     rooms: roomsOf(doc, derived),
     doors: doorsOf(derived, parts, frameOf),
+    lights: lightsOf(doc, derived).map((l) => ({
+      id: l.id,
+      level: l.level,
+      fixture: l.fixture,
+      position: [l.position[0] / M, l.position[2] / M, -l.position[1] / M],
+      radius: l.radius / M,
+      ...(l.cone === undefined ? {} : { spot: { dir: [0, -1, 0] as Vec3, inner: l.cone.inner, outer: l.cone.outer } }),
+      lumens: l.lumens,
+      color: l.color,
+      room: l.room,
+    })),
     assets,
   };
 }

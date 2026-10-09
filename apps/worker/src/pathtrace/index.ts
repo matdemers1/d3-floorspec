@@ -16,12 +16,12 @@ import { linear } from '../export/gltf/scene.js';
 import { findRoom, PRESETS, presetCamera, roomCamera, type Camera, type Preset } from '../render3d/camera.js';
 import { encodePng } from '../render3d/png.js';
 import { denoise } from './denoise.js';
-import { BUDGET_MS, DEFAULT_SUN, MAX_WORK, QUALITIES, SIZES, withinBudget, type Quality, type Size, type SunInput } from './presets.js';
+import { BUDGET_MS, DEFAULT_SUN, LIGHTS, MAX_WORK, QUALITIES, SIZES, TIMES, withinBudget, type Lights, type Quality, type Size, type SunInput, type TimeOfDay } from './presets.js';
 import { decodeTexture, type Texture } from './textures.js';
-import { toneMap, type PtMaterial, type PtScene, type Sun } from './trace.js';
+import { toneMap, type PtLamp, type PtMaterial, type PtScene, type Sun } from './trace.js';
 import { traceParallel } from './threads.js';
 
-export { trace, toneMap, skyRadiance, type PtScene, type PtMaterial, type Sun, type TraceOptions } from './trace.js';
+export { trace, toneMap, skyRadiance, type PtLamp, type PtScene, type PtMaterial, type Sun, type TraceOptions } from './trace.js';
 export { Bvh, type Hit } from './bvh.js';
 export { Rng, hash32 } from './rng.js';
 export { decodeTexture, imageSize, sample, type Texture } from './textures.js';
@@ -53,6 +53,14 @@ export interface StillOptions {
   readonly budgetMs?: number;
   /** Smooth the noise with the edge-aware filter (denoise.ts). Default true. */
   readonly denoise?: boolean;
+  /**
+   * The luminaires (FLR-T-12.22): `on`, each lamp lights its room and its lens glows; `off`, dark
+   * lenses and no lamps. Either way the still is exposed to a fixed exposure for its `time`, so the
+   * two can be compared. Absent: lenses glow and light nothing, exposed to the picture (FLR-T-12.21).
+   */
+  readonly lights?: Lights;
+  /** Default `night` with `lights`, else `day`. */
+  readonly time?: TimeOfDay;
 }
 
 export interface StillResult {
@@ -68,6 +76,8 @@ export interface StillResult {
   readonly threads: number;
   /** Base-colour maps drawn, and those the store did not have (their material's colour was used). */
   readonly maps: { readonly used: string[]; readonly missing: string[] };
+  /** With `lights`: how the still was lit, and how many lamps were on. */
+  readonly lit?: { readonly lights: Lights; readonly time: TimeOfDay; readonly lamps: number };
   readonly ms: number;
 }
 
@@ -75,6 +85,16 @@ const GROUND = linear('#cfcabd');
 /** How bright a luminaire's lens looks to the camera, over its colour: about a sunlit white wall's. */
 const LENS = 2.5;
 const DEG = Math.PI / 180;
+/** The tracer's irradiance unit in lux: the sun's 8 is about 100 000 lx. */
+const LUX_PER_UNIT = 12_500;
+
+/** The sky by time of day, scaled per channel: dusk a deep blue, night all but black. */
+const SKY: Readonly<Record<TimeOfDay, Vec3>> = { day: [1, 1, 1], dusk: [0.0006, 0.0008, 0.0014], night: [0.00008, 0.0001, 0.00018] };
+/**
+ * The fixed exposure of a still with `lights`, by time of day: by day, a sunlit house's; at dusk and
+ * at night, a room lit by its lamps' — about 50 lx on a pale floor reads as a mid-tone.
+ */
+export const EXPOSURE: Readonly<Record<TimeOfDay, number>> = { day: 0.2, dusk: 320, night: 320 };
 
 /** A sun in the scene's frame (x east-ish, +Y up, −Z project north), turned by the site's true north. */
 export function sunOf(input: SunInput, trueNorthDeg: number): Sun {
@@ -87,8 +107,28 @@ export function sunOf(input: SunInput, trueNorthDeg: number): Sun {
   return { dir, irradiance: 8 * (1 - 0.35 * low), radius: 0.6 * DEG, color: [1, 0.96 - 0.12 * low, 0.9 - 0.25 * low] };
 }
 
-/** The scene's triangles as the tracer reads them, cut away above `level`, on a ground plate. */
-export function ptScene(scene: Scene, options: { level?: string; textures?: ReadonlyMap<number, Texture> } = {}): PtScene {
+/**
+ * The lamps of a scene's luminaires (FLR-T-12.22) on the levels drawn: each a small sphere with its
+ * luminous flux spread over the sphere (every way) or over its cone (a spot), in the tracer's units.
+ */
+export function lampsOf(scene: Scene, drawn: (level: string) => boolean = () => true): PtLamp[] {
+  return scene.lights
+    .filter((l) => drawn(l.level))
+    .map((l) => {
+      // Intensity (candela) = flux / solid angle: 4π sr, or a cap out to the middle of the cone's edge.
+      const sr = l.spot === undefined ? 4 * Math.PI : 2 * Math.PI * (1 - (l.spot.inner + l.spot.outer) / 2);
+      const k = l.lumens / sr / LUX_PER_UNIT;
+      return {
+        position: l.position,
+        radius: Math.max(0.005, l.radius),
+        intensity: [l.color[0] * k, l.color[1] * k, l.color[2] * k] as Vec3,
+        ...(l.spot === undefined ? {} : { spot: { dir: l.spot.dir, inner: l.spot.inner, outer: l.spot.outer } }),
+      };
+    });
+}
+
+/** The scene's triangles as the tracer reads them, cut away above `level`, on a ground plate — with its lamps, when they are on. */
+export function ptScene(scene: Scene, options: { level?: string; textures?: ReadonlyMap<number, Texture>; lights?: Lights } = {}): PtScene {
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
   const cut = options.level === undefined ? undefined : order.get(options.level);
   const pos: number[] = [];
@@ -100,7 +140,8 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
       rgb: [m.baseColor[0], m.baseColor[1], m.baseColor[2]],
       glass: m.blend,
       ...(t === undefined ? {} : { texture: t }),
-      ...(m.emissive === undefined ? {} : { emission: [m.emissive[0] * LENS, m.emissive[1] * LENS, m.emissive[2] * LENS] as Vec3 }),
+      ...(m.emissive === undefined ? {} : { lens: true }),
+      ...(m.emissive === undefined || options.lights === 'off' ? {} : { emission: [m.emissive[0] * LENS, m.emissive[1] * LENS, m.emissive[2] * LENS] as Vec3 }),
     };
   });
   const min: Vec3 = [Infinity, Infinity, Infinity];
@@ -162,7 +203,8 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
     normals[3 * t + 1] = ny / l;
     normals[3 * t + 2] = nz / l;
   }
-  return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials };
+  const lamps = options.lights === 'on' ? lampsOf(scene, (l) => cut === undefined || (order.get(l) ?? Infinity) <= cut) : [];
+  return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials, ...(lamps.length === 0 ? {} : { lamps }) };
 }
 
 /** The camera a still looks from: a named view framed on what is drawn, or a room. */
@@ -217,17 +259,35 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   if (options.camera !== undefined && !PRESETS.includes(options.camera)) throw new RangeError(`camera is one of ${PRESETS.join(', ')}`);
   if (options.pixels === undefined && options.samples === undefined && !withinBudget(size, quality)) throw new RangeError(`a ${size} still at ${quality} quality is more work than a still may take: choose a smaller size or a lower quality`);
   if (options.level !== undefined && !scene.levels.some((l) => l.id === options.level)) throw new RangeError(`the model has no level ${options.level} with anything to draw`);
+  if (options.lights !== undefined && !(LIGHTS as readonly string[]).includes(options.lights)) throw new RangeError('lights is on or off');
+  if (options.time !== undefined && !TIMES.includes(options.time)) throw new RangeError(`time is one of ${TIMES.join(', ')}`);
   const [width, height] = options.pixels === undefined ? SIZES[size] : [options.pixels.width, options.pixels.height];
   const samples = options.samples ?? QUALITIES[quality];
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 8 || height < 8 || width * height * samples > MAX_WORK) throw new RangeError('the still is too big');
   const maps = texturesOf(scene, options.images);
-  const pt = ptScene(scene, { ...(options.room === undefined && options.level !== undefined ? { level: options.level } : {}), textures: maps.textures });
+  const pt = ptScene(scene, { ...(options.room === undefined && options.level !== undefined ? { level: options.level } : {}), textures: maps.textures, ...(options.lights === undefined ? {} : { lights: options.lights }) });
   const camera = cameraFor(scene, pt, options, width / height);
   const sunIn = options.sun ?? DEFAULT_SUN;
-  const sun = sunOf(sunIn, options.trueNorth ?? 0);
-  const traced = await traceParallel(pt, { width, height, samples, camera, sun, seed: SEED, budgetMs: options.budgetMs ?? BUDGET_MS, ...(options.onPass === undefined ? {} : { onPass: options.onPass }) });
+  const time = options.time ?? (options.lights === undefined ? 'day' : 'night');
+  const daylight = sunOf(sunIn, options.trueNorth ?? 0);
+  // After sunset, no sun: the sky (dimmed) and the lamps.
+  const sun = time === 'day' ? daylight : { ...daylight, irradiance: 0 };
+  const exposure = options.lights === undefined && options.time === undefined ? undefined : EXPOSURE[time];
+  const traced = await traceParallel(pt, {
+    width,
+    height,
+    samples,
+    camera,
+    sun,
+    seed: SEED,
+    budgetMs: options.budgetMs ?? BUDGET_MS,
+    ...(time === 'day' ? {} : { sky: SKY[time] }),
+    // A firefly's cap, in what the picture shows: the same after exposure by day and by night.
+    ...(exposure === undefined ? {} : { clamp: 12 * (EXPOSURE.day / exposure) }),
+    ...(options.onPass === undefined ? {} : { onPass: options.onPass }),
+  });
   const hdr = options.denoise === false ? traced.color : denoise(traced.color, traced.features, width, height);
-  const png = encodePng(toneMap(hdr, width, height), width, height);
+  const png = encodePng(toneMap(hdr, width, height, exposure), width, height);
   return {
     png,
     width,
@@ -239,6 +299,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     triangles: pt.count,
     threads: traced.threads,
     maps: { used: maps.used, missing: maps.missing },
+    ...(options.lights === undefined ? {} : { lit: { lights: options.lights, time, lamps: pt.lamps?.length ?? 0 } }),
     ms: Date.now() - started,
   };
 }
@@ -249,4 +310,55 @@ export async function renderStill(document: object, options: StillOptions = {}):
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
   return renderSceneStill(scene, { ...options, trueNorth });
+}
+
+/** A lit render's samples a pixel (FLR-T-12.22): few, smoothed by the denoiser, so an agent's render returns while it waits. */
+export const LIT_SAMPLES = 16;
+/** A lit render's default and widest pictures, pixels: path-traced, so its pixels are the worker's time. */
+export const LIT_WIDTH = 800;
+export const LIT_MAX_WIDTH = 1280;
+/** A lit render that runs past this is stopped: the api waits for it. */
+export const LIT_BUDGET_MS = 150_000;
+
+export interface LitOptions {
+  readonly camera?: Preset;
+  readonly room?: string;
+  /** Cut away above this level. Default: the lowest level, so the rooms and their lamps are seen from above. */
+  readonly level?: string;
+  /** Pixels; the height is three quarters of it. Default 800. */
+  readonly width?: number;
+  readonly lights: Lights;
+  /** Default night. */
+  readonly time?: TimeOfDay;
+  readonly design?: Record<string, string>;
+  readonly reader?: SceneOptions['reader'];
+  readonly images?: ImageSource;
+  readonly onPass?: (done: number, total: number) => void | Promise<void>;
+}
+
+/**
+ * The 3D render with its lights on or off (FLR-T-12.22, `floorspec_render` with `lights`): the same
+ * views as the headless render, path-traced — so a lamp's light pools on its room's floor and walls
+ * and stops at them — at a fixed exposure for the time of day, so on and off can be compared.
+ */
+export async function renderLit(document: object, options: LitOptions): Promise<StillResult> {
+  const w = options.width ?? LIT_WIDTH;
+  if (!Number.isInteger(w) || w < 64 || w > LIT_MAX_WIDTH) throw new RangeError(`a render with lights is 64 to ${String(LIT_MAX_WIDTH)} pixels wide`);
+  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }) });
+  const site = (document as { site?: { trueNorth?: unknown } }).site;
+  const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
+  const level = options.level ?? (options.room === undefined ? scene.levels[0]?.id : undefined);
+  return renderSceneStill(scene, {
+    ...(options.camera === undefined ? {} : { camera: options.camera }),
+    ...(options.room === undefined ? {} : { room: options.room }),
+    ...(level === undefined ? {} : { level }),
+    pixels: { width: w, height: Math.round((w * 3) / 4) },
+    samples: LIT_SAMPLES,
+    budgetMs: LIT_BUDGET_MS,
+    lights: options.lights,
+    time: options.time ?? 'night',
+    trueNorth,
+    ...(options.images === undefined ? {} : { images: options.images }),
+    ...(options.onPass === undefined ? {} : { onPass: options.onPass }),
+  });
 }

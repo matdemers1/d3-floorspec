@@ -76,6 +76,24 @@ describe('3D render-back', () => {
     expect(await db.job.count({ where: { projectId: kitchen } })).toBe(0);
   });
 
+  it('draws the light fixtures on and off, path-traced at night (FLR-T-12.22)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');
+    for (const lights of ['on', 'off'] as const) {
+      const lit = await fetch(`${running.url}/api/projects/${id}/render?view=3d&camera=sw&width=96&lights=${lights}`, { headers: { cookie: cookieOf(operator) } });
+      expect(lit.status, await lit.clone().text()).toBe(200);
+      expect(pngSize(new Uint8Array(await lit.arrayBuffer()))).toEqual({ width: 96, height: 72 });
+    }
+    const jobs = await db.job.findMany({ where: { projectId: id }, orderBy: { createdAt: 'asc' } });
+    expect(jobs.map((j) => (j.params as { lights?: string }).lights)).toEqual(['on', 'off']);
+    expect(jobs[0]?.result).toMatchObject({ lit: { lights: 'on', time: 'night' } });
+    expect(jobs[1]?.result).toMatchObject({ lit: { lights: 'off', time: 'night', lamps: 0 } });
+    // Too wide for a path-traced render, a time without lights, and lights that are neither.
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&lights=on&width=1600`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&time=dusk`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&lights=dim`)).status).toBe(400);
+  });
+
   it('says why it could not draw: no such room, both a camera and a room, too wide', async () => {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(db, operator, L_STAIR, 'Stair house');

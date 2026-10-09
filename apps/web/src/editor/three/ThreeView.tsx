@@ -4,7 +4,7 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three';
 import { flatShaded, type HouseMesh, type MeshPart, type Vec3 } from '@floorspec/mesh';
 import { Button, EmptyState, IconButton, Spinner, Tooltip } from '@d3cloud/ui';
-import { Box, Footprints, House, Layers, Orbit as OrbitIcon, RotateCcw, X } from 'lucide-react';
+import { Box, Footprints, House, Layers, Lightbulb, Orbit as OrbitIcon, RotateCcw, X } from 'lucide-react';
 import { useEditor, type EditorState, type EditorStore } from '../store';
 import { labelOf, type EditorModel, type LevelView } from '../model';
 import { formatLen } from '../units';
@@ -19,6 +19,8 @@ import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World 
 import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
 import { StillButton } from './still/StillDialog';
 import { SunRig } from './sun/SunRig';
+import { FixtureLights } from './FixtureLights';
+import { viewLights } from './lights';
 import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelled } from '../../furniture/Furniture3D';
 
 /**
@@ -141,6 +143,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const cutaway = useThreeState(store, (s) => s.cutaway);
   const roof = useThreeState(store, (s) => s.roof);
   const preset = useThreeState(store, (s) => s.preset);
+  const lightsOn = useThreeState(store, (s) => s.lights);
   const originRef = useRef<Vec3 | null>(null);
   const state = useHouseMesh(model, originRef);
   const host = useRef<HTMLDivElement>(null);
@@ -200,6 +203,11 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const visible = useMemo(
     () => built.filter((b) => isVisible(b.part, { walking, cutaway, roof, level: levelId, order })),
     [built, walking, cutaway, roof, levelId, order],
+  );
+  // FLR-T-12.22: the light fixtures as lamps, on the levels shown, when the Lights toggle is on.
+  const lamps = useMemo(
+    () => (ready === null || !lightsOn ? [] : viewLights(ready.model, ready.mesh, { level: levelId, cutaway: cutaway && !walking, order })),
+    [ready, lightsOn, levelId, cutaway, walking, order],
   );
   const summary = useMemo(() => (ready === null ? '' : describeScene(ready.model, visible.map((b) => b.part))), [ready, visible]);
   // Furniture (FLR-T-8.3): each item's glTF model in place of its fallback box, once the model is drawn.
@@ -427,11 +435,12 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           gl.domElement.setAttribute('aria-hidden', 'true');
         }}
       >
-        <color attach="background" args={[walking ? (night ? NIGHT : SKY) : tokens.background]} />
-        {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} /> : null}
+        <color attach="background" args={[walking ? (night || lightsOn ? NIGHT : SKY) : tokens.background]} />
+        {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} lamps={lightsOn} /> : null}
+        <FixtureLights lights={lamps} />
         <Rig ctl={ctl} />
         <SceneBridge />
-        <Parts visible={partsShown} selection={walking ? null : selection} accent={tokens.accent} textures={textures} onClick={onClick} onDoubleClick={onDoubleClick} />
+        <Parts visible={partsShown} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} onClick={onClick} onDoubleClick={onDoubleClick} />
         {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} /> : null}
         {!walking ? <LabelTracker built={visible} selection={selection} el={label} /> : null}
       </Canvas>
@@ -467,7 +476,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       ) : null}
       {ready !== null && !walking && !compact ? (
         <>
-          <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} cutaway={cutaway} roof={roof} />
+          <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} cutaway={cutaway} roof={roof} lights={lightsOn} />
           <button type="button" className="fs-three__chip fs-three__cutaway" aria-pressed={cutaway} onClick={() => { three.set({ cutaway: !cutaway }); }}>
             <Layers aria-hidden="true" />
             {cutaway ? `Cutaway · ${levelName} and below` : 'Whole house'}
@@ -539,6 +548,7 @@ function Parts({
   selection,
   accent,
   textures,
+  lit,
   onClick,
   onDoubleClick,
 }: {
@@ -546,6 +556,8 @@ function Parts({
   selection: string | null;
   accent: string;
   textures: TextureLibrary;
+  /** The light fixtures are on: a lens glows; off, it is matte like the rest. */
+  lit: boolean;
   onClick: (e: ThreeEvent<MouseEvent>) => void;
   onDoubleClick: (e: ThreeEvent<MouseEvent>) => void;
 }) {
@@ -558,16 +570,18 @@ function Parts({
     const ceiling = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
     const ceilingOn = new THREE.MeshLambertMaterial({ vertexColors: true, emissiveIntensity: 0.55, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
     const glass = new THREE.MeshLambertMaterial({ color: GLASS, transparent: true, opacity: 0.38, depthWrite: false });
-    // A model's glass (a shower's screen) in its own colour; a luminaire's lens unshaded, as if lit.
+    // A model's glass (a shower's screen) in its own colour; a luminaire's lens unshaded, as if lit,
+    // when the lights are on (FLR-T-12.22), and shaded like the rest when they are off.
     const modelGlass = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.38, depthWrite: false });
     const lens = new THREE.MeshBasicMaterial({ vertexColors: true });
+    const lensOff = new THREE.MeshLambertMaterial({ vertexColors: true });
     const lensOn = new THREE.MeshLambertMaterial({ vertexColors: true, emissiveIntensity: 0.55 });
     const glassOn = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.6, depthWrite: false });
     // A door's or an empty opening's cut: nothing drawn, still a target for the pointer.
     const pick = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
     const pickOn = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.4, depthWrite: false });
     const edges = new THREE.LineBasicMaterial({ depthTest: false, transparent: true, opacity: 0.95 });
-    return { solid, solidOn, floor, floorOn, ceiling, ceilingOn, glass, glassOn, modelGlass, lens, lensOn, pick, pickOn, edges };
+    return { solid, solidOn, floor, floorOn, ceiling, ceilingOn, glass, glassOn, modelGlass, lens, lensOff, lensOn, pick, pickOn, edges };
   }, []);
   useEffect(() => () => { for (const m of Object.values(materials)) m.dispose(); }, [materials]);
   const invalidate = useThree((s) => s.invalidate);
@@ -590,7 +604,7 @@ function Parts({
 
   const materialOf = (b: Built, on: boolean) => {
     if (b.look === 'glass') return on ? materials.glassOn : b.part.model !== undefined ? materials.modelGlass : materials.glass;
-    if (b.look === 'lens') return on ? materials.lensOn : materials.lens;
+    if (b.look === 'lens') return on ? materials.lensOn : lit ? materials.lens : materials.lensOff;
     if (b.look === 'pick') return on ? materials.pickOn : materials.pick;
     if (b.look === 'ceiling') return on ? materials.ceilingOn : materials.ceiling;
     if (b.look === 'floor') return on ? materials.floorOn : materials.floor;
@@ -605,7 +619,7 @@ function Parts({
           geometry={b.geometry}
           material={b.slots === undefined ? materialOf(b, b.part.id === selection) : b.slots.map((m) => (m === null ? materialOf(b, b.part.id === selection) : textures.material(m, b.look, b.part.id === selection)))}
           userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
-          castShadow={b.look !== 'glass' && b.look !== 'pick'}
+          castShadow={b.look !== 'glass' && b.look !== 'pick' && b.look !== 'lens'}
           receiveShadow={b.look !== 'glass' && b.look !== 'pick'}
           renderOrder={b.look === 'glass' || b.look === 'pick' ? 1 : 0}
         />
@@ -647,7 +661,7 @@ function LabelTracker({ built, selection, el }: { built: Built[]; selection: str
 
 // ─── Overlays ────────────────────────────────────────────────────────────────────────────────
 
-function Toolbar({ store, three, ctl, mesh, cutaway, roof }: { store: EditorStore; three: ThreeStore; ctl: ThreeController; mesh: HouseMesh; cutaway: boolean; roof: boolean }) {
+function Toolbar({ store, three, ctl, mesh, cutaway, roof, lights }: { store: EditorStore; three: ThreeStore; ctl: ThreeController; mesh: HouseMesh; cutaway: boolean; roof: boolean; lights: boolean }) {
   const selection = useEditor(store, (s) => s.selection);
   return (
     <div className="fs-three__tools" role="toolbar" aria-label="3D view">
@@ -661,6 +675,9 @@ function Toolbar({ store, three, ctl, mesh, cutaway, roof }: { store: EditorStor
         <IconButton label="Walk through" icon={<Footprints />} size="sm" onClick={() => { three.walk(null); }} />
       </Tooltip>
       <SunButton store={store} />
+      <Tooltip content={lights ? 'Turn the lights off' : 'Turn the lights on: each light fixture lights its room, at dusk'}>
+        <IconButton label="Lights" icon={<Lightbulb />} size="sm" pressed={lights} onClick={() => { three.toggleLights(); }} />
+      </Tooltip>
       <Tooltip content={cutaway ? 'The cutaway leaves the roof off — show the whole house to see it' : roof ? 'Hide the roof' : 'Show the roof'}>
         <IconButton label="Roof" icon={<House />} size="sm" pressed={roof && !cutaway} disabled={cutaway} onClick={() => { three.set({ roof: !roof }); }} />
       </Tooltip>
@@ -854,6 +871,8 @@ interface Hook {
    * digest, whether the image has arrived, and the texture coordinates' range — in tiles.
    */
   textured: { part: string; material: string; sha256: string; loaded: boolean; u: [number, number]; v: [number, number] }[];
+  /** FLR-T-12.22: whether the light fixtures are on, and the lamps drawn — each fixture's ID, kind and whether it casts shadows. */
+  lights: { on: boolean; lamps: { id: string; kind: 'point' | 'spot'; shadow: boolean; intensity: number }[] };
 }
 
 declare global {
@@ -906,6 +925,16 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
         return ready?.mesh.origin ?? null;
       },
       screenPoint: (id) => screenPoint(el.current, id),
+      get lights() {
+        const lamps: Hook['lights']['lamps'] = [];
+        const canvas = el.current?.querySelector('canvas');
+        const at = canvas === null || canvas === undefined ? undefined : sceneOf.get(canvas);
+        at?.scene.traverse((o) => {
+          const id = (o.userData as { fixture?: string }).fixture;
+          if (id !== undefined && o instanceof THREE.Light) lamps.push({ id, kind: o instanceof THREE.SpotLight ? 'spot' : 'point', shadow: o.castShadow, intensity: o.intensity });
+        });
+        return { on: three.get().lights, lamps: lamps.sort((a, b) => (a.id < b.id ? -1 : 1)) };
+      },
       walk: (from) => { three.walk(from); },
       face: (deg) => {
         if (ctl.walker !== null) ctl.walker = { ...ctl.walker, yaw: (deg * Math.PI) / 180 };

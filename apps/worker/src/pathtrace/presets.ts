@@ -27,3 +27,14 @@ export interface SunInput {
 }
 /** Mid-afternoon from the south-west: the sun when the request names none. */
 export const DEFAULT_SUN: SunInput = { azimuth: 225, altitude: 35 };
+
+/**
+ * The light a still with its lamps is seen in (FLR-T-12.22): by day, under the sun and sky; at dusk,
+ * the sun down and the sky a deep blue; at night, dark outside. A still with `lights` is night
+ * unless it says otherwise.
+ */
+export const TIMES = ['day', 'dusk', 'night'] as const;
+export type TimeOfDay = (typeof TIMES)[number];
+/** Whether a lamp setting is one. */
+export const LIGHTS = ['on', 'off'] as const;
+export type Lights = (typeof LIGHTS)[number];
