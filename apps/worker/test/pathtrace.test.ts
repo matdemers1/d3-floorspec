@@ -95,7 +95,7 @@ function box(x0: number, z0: number, x1: number, z1: number, h: number): number[
   return out;
 }
 
-function scene(positions: number[], materials: { rgb: [number, number, number] }[], materialOf: (tri: number) => number): PtScene {
+function scene(positions: number[], materials: { rgb: [number, number, number]; emission?: [number, number, number] }[], materialOf: (tri: number) => number): PtScene {
   const count = positions.length / 9;
   const normals = new Float64Array(3 * count);
   for (let t = 0; t < count; t++) {
@@ -112,7 +112,7 @@ function scene(positions: number[], materials: { rgb: [number, number, number] }
     normals,
     material: Int32Array.from({ length: count }, (_, t) => materialOf(t)),
     uvs: new Float32Array(6 * count).fill(NaN),
-    materials: materials.map((m) => ({ rgb: m.rgb, glass: false })),
+    materials: materials.map((m) => ({ rgb: m.rgb, glass: false, ...(m.emission === undefined ? {} : { emission: m.emission }) })),
   };
 }
 
@@ -158,6 +158,13 @@ describe('a lit scene against its analytic radiance', () => {
     const { color } = await trace(s, { width: 16, height: 16, samples: 256, camera: down(0, 0, 10), sun, seed: 1 });
     const want = (0.5 / Math.PI) * (5 + skyIrradiance(sun));
     expect(patch(color, 16, 8, 8, 6)).toBeCloseTo(want, 1);
+    expect(Math.abs(patch(color, 16, 8, 8, 6) / want - 1)).toBeLessThan(0.03);
+  });
+
+  it('a lens looks lit: its emission over what the sun and sky give it, and nothing lit by it (FLR-T-12.21)', async () => {
+    const s = scene(quad(0, -1000, -1000, 1000, 1000), [{ rgb: grey, emission: [2, 2, 2] }], () => 0);
+    const { color } = await trace(s, { width: 16, height: 16, samples: 256, camera: down(0, 0, 10), sun, seed: 1 });
+    const want = 2 + (0.5 / Math.PI) * (5 + skyIrradiance(sun));
     expect(Math.abs(patch(color, 16, 8, 8, 6) / want - 1)).toBeLessThan(0.03);
   });
 

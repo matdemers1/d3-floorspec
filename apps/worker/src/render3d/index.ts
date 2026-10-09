@@ -43,6 +43,8 @@ export interface Render3dResult {
 /** The accent a highlighted element is drawn in (linear RGB). */
 const ACCENT = linear('#3d63dd');
 const GROUND = linear('#dedbd2');
+/** The first outline key of a round piece: far past the planes' keys, which count up from 0. */
+const SMOOTH_KEYS = 1 << 24;
 
 interface Tri {
   readonly a: Vec3;
@@ -53,6 +55,7 @@ interface Tri {
   readonly twoSided: boolean;
   readonly key?: number;
   readonly bias?: number;
+  readonly unlit?: boolean;
 }
 
 /** Triangles into a draw list, each keyed by its plane, so coplanar neighbours draw no line. */
@@ -66,6 +69,7 @@ function drawList(tris: readonly Tri[]): DrawList {
     keys: new Int32Array(n),
     twoSided: new Uint8Array(n),
     bias: new Uint8Array(n),
+    unlit: new Uint8Array(n),
     count: n,
   };
   const planes = new Map<string, number>();
@@ -96,6 +100,7 @@ function drawList(tris: readonly Tri[]): DrawList {
     list.keys[kept] = key;
     list.twoSided[kept] = t.twoSided ? 1 : 0;
     list.bias[kept] = t.bias ?? 0;
+    list.unlit[kept] = t.unlit === true ? 1 : 0;
     kept++;
   }
   return { ...list, count: kept };
@@ -133,6 +138,8 @@ export function sceneTriangles(scene: Scene, options: { level?: string; highligh
   const tris: Tri[] = [];
   const min: Vec3 = [Infinity, Infinity, Infinity];
   const max: Vec3 = [-Infinity, -Infinity, -Infinity];
+  // A round piece's facets share one outline key, past every plane's (drawList), so ink is drawn only round it.
+  let round = SMOOTH_KEYS;
   for (const level of scene.levels) {
     const at = order.get(level.id)!;
     if (cut !== undefined && at > cut) continue;
@@ -142,6 +149,7 @@ export function sceneTriangles(scene: Scene, options: { level?: string; highligh
         const m = scene.materials[p.material]!;
         const rgb = lit.has(node.id) ? mix(m.baseColor.slice(0, 3) as Vec3, ACCENT, 0.6) : (m.baseColor.slice(0, 3) as Vec3);
         const bias = p.part === 'ceiling' ? 2 : p.part === 'floor' || p.part === 'threshold' ? 1 : 0;
+        const key = p.smooth === true ? round++ : undefined;
         const P = p.positions;
         const at3 = (i: number): Vec3 => [P[3 * i]!, P[3 * i + 1]!, P[3 * i + 2]!];
         for (let k = 0; k < p.indices.length; k += 3) {
@@ -153,7 +161,7 @@ export function sceneTriangles(scene: Scene, options: { level?: string; highligh
               min[j] = Math.min(min[j]!, q[j]!);
               max[j] = Math.max(max[j]!, q[j]!);
             }
-          tris.push({ a, b, c, rgb, alpha: m.baseColor[3], twoSided: m.blend, bias });
+          tris.push({ a, b, c, rgb, alpha: m.baseColor[3], twoSided: m.blend, bias, ...(key === undefined ? {} : { key }), ...(m.emissive === undefined ? {} : { unlit: true }) });
         }
       }
   }

@@ -67,7 +67,7 @@ function meshWith(kernel: Kernel, doc: FloorspecDocument, derived: Derived, opti
       ...roomParts(kernel, doc, derived, want),
       ...roofParts(kernel, doc, derived, want),
       ...stairParts(kernel, doc, derived, want),
-      ...extensionParts(kernel, derived, want),
+      ...extensionParts(kernel, doc, derived, want, options.models !== false),
     );
     const parts: MeshPart[] = [];
     for (const r of raw) {

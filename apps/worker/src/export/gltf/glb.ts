@@ -314,7 +314,15 @@ function materialJson(m: SceneMaterial, texture: (asset: string) => number | und
     ...(normal === undefined ? {} : { normalTexture: { index: normal } }),
     ...(occlusion === undefined ? {} : { occlusionTexture: { index: occlusion } }),
     ...(m.blend ? { alphaMode: 'BLEND', doubleSided: true } : {}),
-    extras: { floorspec: m.floorspec === undefined ? { default: m.key.slice('default:'.length) } : { id: m.floorspec, ...(m.color === undefined ? {} : { color: m.color }) } },
+    ...(m.emissive === undefined ? {} : { emissiveFactor: m.emissive.map(f) }),
+    extras: {
+      floorspec:
+        m.floorspec !== undefined
+          ? { id: m.floorspec, ...(m.color === undefined ? {} : { color: m.color }) }
+          : m.key.startsWith('role:')
+            ? { role: m.key.slice('role:'.length) }
+            : { default: m.key.slice('default:'.length) },
+    },
   };
 }
 

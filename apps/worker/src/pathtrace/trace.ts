@@ -28,6 +28,11 @@ export interface PtMaterial {
   readonly rgb: Vec3;
   readonly glass: boolean;
   readonly texture?: Texture;
+  /**
+   * Linear RGB a luminaire's lens shows (FLR-T-12.21): added where a camera ray meets it, so the lens
+   * looks lit; it lights nothing else — light from fixtures is FLR-T-12.22's.
+   */
+  readonly emission?: Vec3;
 }
 
 /** What the tracer traces: triangles with a material each and, for mapped materials, texture coordinates. */
@@ -246,6 +251,11 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             ar *= tex[0]!;
             ag *= tex[1]!;
             ab *= tex[2]!;
+          }
+          if (first && m.emission !== undefined) {
+            r += tr * m.emission[0];
+            g += tg * m.emission[1];
+            b += tb * m.emission[2];
           }
           if (first) {
             first = false;
