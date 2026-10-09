@@ -21,11 +21,12 @@ import { kindById } from './systems/catalog';
 import { anchorOf, circuitsOf } from './systems/view';
 import { RuleFindingLabels, RuleFindingsLayer } from '../findings/Overlay';
 import { RoofEdgeTags, RoofLayer, roofStairOutline, StairDraft, StairsLayer } from './RoofStairLayer';
+import { DOOR_CLASS, doorParts, SymbolParts } from './plansymbols';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
- * outlines and junction fills, separators dashed, openings with door swings and window glazing,
- * rooms with their names and areas — drawn in SVG, in screen pixels, with every colour a design
+ * outlines and junction fills, separators dashed, openings with window glazing and doors drawn by
+ * operation (render2d's symbols, FLR-T-12.27), rooms with their names and areas — drawn in SVG, in screen pixels, with every colour a design
  * token (canvas.css), so both themes work.
  *
  * Layers, bottom to top: grid, plan, findings, selection and hover, the ghost (a preview of what a
@@ -323,18 +324,9 @@ function OpeningShape({ view, opening, wall }: { view: Viewport; opening: Openin
       parts.push(<line key={`g${String(k)}`} className="fs-plan2__glass" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />);
     }
   } else if (opening.kind === 'door') {
-    const side = opening.swing === 'left' ? n : scale(n, -1);
-    const hingeAt = opening.hinge === 'start' ? s0 : e0;
-    const otherAt = opening.hinge === 'start' ? e0 : s0;
-    const width = dist(s0, e0);
-    const h = add(hingeAt, scale(side, half));
-    const o = add(otherAt, scale(side, half));
-    const tip = add(h, scale(side, width));
-    const [H, O, T] = [S(view, h), S(view, o), S(view, tip)];
-    const r = width * view.s;
-    const sweep = (T[0] - H[0]) * (O[1] - H[1]) - (T[1] - H[1]) * (O[0] - H[0]) > 0 ? 1 : 0;
-    parts.push(<line key="leaf" className="fs-plan2__leaf" x1={H[0]} y1={H[1]} x2={T[0]} y2={T[1]} />);
-    parts.push(<path key="swing" className="fs-plan2__swing" d={`M${T[0].toFixed(1)},${T[1].toFixed(1)}A${r.toFixed(1)},${r.toFixed(1)} 0 0 ${String(sweep)} ${O[0].toFixed(1)},${O[1].toFixed(1)}`} />);
+    // By its type's operation (Core 8.4), as render2d draws it (FLR-T-12.27): a single swing, a pair,
+    // double-acting, a pocket in the wall, bypass leaves, a barn door, a bifold, an overhead door, or no leaf.
+    parts.push(<SymbolParts key="door" view={view} parts={doorParts(opening, wall)} classes={DOOR_CLASS} />);
   } else {
     for (const at of [s0, e0]) {
       const a = S(view, add(at, scale(n, half)));
@@ -342,7 +334,11 @@ function OpeningShape({ view, opening, wall }: { view: Viewport; opening: Openin
       parts.push(<line key={`j${String(at[0])}`} className="fs-plan2__jamb" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />);
     }
   }
-  return <g>{parts}</g>;
+  return (
+    <g data-opening={opening.id} data-operation={opening.kind === 'door' ? (opening.operation ?? 'swing') : undefined}>
+      {parts}
+    </g>
+  );
 }
 
 function RoomLabels({ view, level, document, units }: { view: Viewport; level: LevelView; document: FloorspecDocument; units: UnitSystem }) {

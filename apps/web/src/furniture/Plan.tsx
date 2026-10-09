@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { EditorModel, LevelView, Point } from '../editor/model';
 import type { Layers, Viewport } from '../editor/store';
 import { toScreen } from '../editor/viewport';
@@ -5,15 +6,18 @@ import { facingVector, type DeviceView } from '../editor/systems/view';
 import { assetHref } from './api';
 import { filesOf, furnitureOn } from './view';
 import { overlaps } from './placement';
+import { LIBRARY } from './library';
+import { FIXTURE_CLASS, fixtureParts, SymbolParts } from '../editor/plansymbols';
 
 /**
- * Furniture on the plan (FLR-T-8.3): each FS_furniture element drawn with its plan symbol
+ * Furniture on the plan (FLR-T-8.3, FLR-T-12.27): each FS_furniture element drawn with its plan symbol
  * stretched over the footprint of its box, exactly as Core 12.6's table maps the image's corners —
  * top left at (min x, min y), top right at (min x, max y), bottom left at (max x, min y) of the
  * element's frame — so its front is along the image's bottom edge and it is never mirrored
  * (FS_furniture 3.3). The symbol is an SVG `<image>`: a browser draws it as a picture, runs nothing
- * in it and loads nothing it names. Under it the footprint is outlined, so an item whose symbol has
- * not arrived (or will not) is still where it is.
+ * in it and loads nothing it names. Over it the footprint is outlined, so an item reads at any zoom.
+ * An item with no symbol, or whose symbol will not load, is drawn as render2d draws it: its kind's
+ * outline (`fixtureSymbol`), else its box.
  *
  * An item in an FS_furniture interference lint (4.5: LINT-004, LINT-005) is outlined in the
  * warning tone, and with clearances shown, the envelope that is blocked is too. Its envelopes
@@ -85,6 +89,53 @@ export function blockedOwners(model: EditorModel): Set<string> {
   return out;
 }
 
+/**
+ * Where an item's symbol image is read from, in turn: the project's asset store, then the editor's own
+ * copy of the starter library's symbol with the same digest. Empty for an item with no symbol.
+ */
+export function symbolSources(projectId: string, sha256: string | null): string[] {
+  if (sha256 === null) return [];
+  const library = LIBRARY.find((i) => i.symbol.sha256 === sha256)?.symbol.url;
+  return [assetHref(projectId, sha256), ...(library === undefined || library === '' ? [] : [library])];
+}
+
+/**
+ * One item: its symbol image when its bytes are there (Core 12.6), else its kind's outline from
+ * render2d (FLR-T-12.27) — a bed and its pillows, a sofa's back and arms, a counter line — else its
+ * box. An image that does not load falls through to the next source, then to the outline.
+ */
+export function FurnitureItem({ view, d, symbol, blocked: isBlocked, projectId }: { view: Viewport; d: DeviceView; symbol: string | null; blocked: boolean; projectId: string }) {
+  const sources = symbolSources(projectId, symbol);
+  const [failed, setFailed] = useState<{ sha: string | null; count: number }>({ sha: symbol, count: 0 });
+  const tried = failed.sha === symbol ? failed.count : 0;
+  const href = sources[tried];
+  const placed = href === undefined ? null : symbolPlacement(view, d);
+  const outline = href === undefined || placed === null ? fixtureParts(d) : null;
+  const ring = pts(view, d.footprint);
+  return (
+    <g className={isBlocked ? 'fs-furn-item fs-furn-item--blocked' : 'fs-furn-item'} data-furniture={d.id} data-drawn={href !== undefined && placed !== null ? 'symbol' : outline !== null ? 'outline' : 'box'}>
+      <polygon className="fs-furn-item__fill" points={ring} />
+      {href !== undefined && placed !== null ? (
+        <image
+          className="fs-furn__symbol"
+          href={href}
+          x={0}
+          y={0}
+          width={f1(placed.width)}
+          height={f1(placed.height)}
+          preserveAspectRatio="none"
+          transform={placed.transform}
+          onError={() => { setFailed({ sha: symbol, count: tried + 1 }); }}
+        />
+      ) : null}
+      {outline !== null ? <SymbolParts view={view} parts={outline} classes={FIXTURE_CLASS} /> : null}
+      {/* The footprint's edge over the symbol, so an item reads at any zoom, its symbol's own lines or
+          not; an outline draws its own edge, and its box is edged only in the warning tone. */}
+      {outline === null || isBlocked ? <polygon className="fs-furn-item__outline" points={ring} /> : null}
+    </g>
+  );
+}
+
 export function FurnitureLayer({ view, level, model, layers, projectId }: { view: Viewport; level: LevelView; model: EditorModel; layers: Layers; projectId: string }) {
   if (layers.coreOnly || layers.furniture === false) return null;
   const items = furnitureOn(level);
@@ -93,20 +144,9 @@ export function FurnitureLayer({ view, level, model, layers, projectId }: { view
   const owners = blockedOwners(model);
   return (
     <g className="fs-furn-layer" aria-hidden="true">
-      {items.map((d) => {
-        const symbol = filesOf(model.document, d.element).symbol;
-        const placed = symbolPlacement(view, d);
-        return (
-          <g key={d.id} className={warn.has(d.id) ? 'fs-furn-item fs-furn-item--blocked' : 'fs-furn-item'} data-furniture={d.id}>
-            <polygon className="fs-furn-item__fill" points={pts(view, d.footprint)} />
-            {symbol !== null && placed !== null ? (
-              <image className="fs-furn__symbol" href={assetHref(projectId, symbol.sha256)} x={0} y={0} width={f1(placed.width)} height={f1(placed.height)} preserveAspectRatio="none" transform={placed.transform} />
-            ) : null}
-            {/* The footprint's edge over the symbol: an item reads at any zoom, its symbol's own lines or not. */}
-            <polygon className="fs-furn-item__outline" points={pts(view, d.footprint)} />
-          </g>
-        );
-      })}
+      {items.map((d) => (
+        <FurnitureItem key={d.id} view={view} d={d} symbol={filesOf(model.document, d.element).symbol?.sha256 ?? null} blocked={warn.has(d.id)} projectId={projectId} />
+      ))}
       {layers.clearances
         ? level.devices
             .filter((d) => owners.has(d.id))
