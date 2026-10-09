@@ -6,7 +6,7 @@ import { buildScene, type Scene, type SceneOptions } from './scene.js';
 import { writeGlb, type ImageSource } from './glb.js';
 import { writeUsdz } from './usdz.js';
 
-export { buildScene, buildSceneFrom, sceneOf, getMesher, linear, tileUV, DEFAULTS, MAP_ROLES, type Scene, type SceneMaterial, type SceneNode, type ScenePrimitive, type SceneLevel, type SceneRoom, type SceneDoor, type SceneOptions, type ElementKind, type Vec3 } from './scene.js';
+export { buildScene, buildSceneFrom, sceneOf, getMesher, linear, tileUV, DEFAULTS, MAP_ROLES, type Scene, type SceneMaterial, type SceneNode, type ScenePrimitive, type SceneLevel, type SceneRoom, type SceneDoor, type SceneObstacle, type SceneOptions, type ElementKind, type Vec3 } from './scene.js';
 export { writeGlb, readGlb, type GlbOptions, type GlbResult, type ImageSource, type ModelsReport } from './glb.js';
 export { writeUsdz, usdaOf, type UsdzResult } from './usdz.js';
 export { storeZip, readStoreZip } from './zip.js';

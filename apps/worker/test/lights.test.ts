@@ -34,7 +34,7 @@ const NIGHT = { sky: [0.00008, 0.0001, 0.00018] as [number, number, number] };
 
 /** The mean luminance a room's own camera sees, with the scene's lamps on or off, at night. */
 async function roomLuminance(pt: PtScene, room: string, seed = 7): Promise<{ mean: number; color: Float32Array }> {
-  const camera = roomCamera(findRoom(scene.rooms, room)!, scene.doors);
+  const camera = roomCamera(findRoom(scene.rooms, room)!, scene.doors, scene.obstacles);
   const sun = { ...sunOf(DEFAULT_SUN, 0), irradiance: 0 };
   const W = 40;
   const H = 30;
