@@ -297,14 +297,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      # The daemon pulls the stack's Docker Hub images (postgres) itself: through the mirror too.
+      # The stack's own Docker Hub image (postgres) through the mirror too: the runner's daemon
+      # ignores registry-mirrors, so name the mirror's copy in a CI-only override.
       - name: Pull Docker Hub images through mirror.gcr.io
         run: |
-          f=/etc/docker/daemon.json
-          if [ -s "$f" ]; then sudo jq '. + {"registry-mirrors": ["https://mirror.gcr.io"]}' "$f" > daemon.json; else echo '{"registry-mirrors": ["https://mirror.gcr.io"]}' > daemon.json; fi
-          sudo mv daemon.json "$f"
-          sudo systemctl restart docker
-          docker info --format '{{.RegistryConfig.Mirrors}}'
+          printf 'services:\n  postgres:\n    image: mirror.gcr.io/library/postgres:16\n' > deploy/compose.ci.yml
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
         with:
           # Docker Hub refuses anonymous runners at times (429 Too Many Requests): pull its images
@@ -328,15 +325,15 @@ jobs:
           fi
       - name: Boot the stack on an empty database
         run: |
-          docker compose -f deploy/compose.yml -f deploy/compose.dev.yml up -d --build --wait
+          docker compose -f deploy/compose.yml -f deploy/compose.dev.yml -f deploy/compose.ci.yml up -d --build --wait
           curl -fsS http://127.0.0.1:3400/health | tee health.json
           grep -q '"schemaRevision":"[0-9]\{14\}_' health.json
       - name: Show the logs when something failed
         if: failure()
-        run: docker compose -f deploy/compose.yml -f deploy/compose.dev.yml logs
+        run: docker compose -f deploy/compose.yml -f deploy/compose.dev.yml -f deploy/compose.ci.yml logs
       - name: Stop
         if: always()
-        run: docker compose -f deploy/compose.yml -f deploy/compose.dev.yml down -v
+        run: docker compose -f deploy/compose.yml -f deploy/compose.dev.yml -f deploy/compose.ci.yml down -v
 
   # The only job that publishes, and only from main once everything above is green. Tagged by long
   # SHA (`sha-<40 hex>`, the tag Shipyard resolves), labelled with the revision, schema and
