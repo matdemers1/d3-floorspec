@@ -22,8 +22,8 @@ export const TRACE_UNIT = LUX_PER_UNIT;
 /** The sky by time of day, scaled per channel: dusk a deep blue, night all but black (the worker's `SKY`). */
 export const SKY_SCALE: Readonly<Record<TimeOfDay, Vec3>> = { day: [1, 1, 1], dusk: [0.0006, 0.0008, 0.0014], night: [0.00008, 0.0001, 0.00018] };
 
-/** The ground plate under the house: the worker's, a pale gravel (#cfcabd). */
-export const GROUND = '#cfcabd';
+/** The ground plate under the house: the worker's, a pale gravel. */
+export const GROUND = '#cfcabd'; // d3-allow: the ground the path tracer stands the house on, not chrome
 
 /** Degrees. Azimuth clockwise from true north; altitude above the horizon. */
 export interface SunInput {
