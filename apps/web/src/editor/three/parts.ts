@@ -49,6 +49,16 @@ export function lookOf(part: Pick<MeshPart, 'kind' | 'opening' | 'model'>): Look
   return part.kind === 'opening' ? 'pick' : 'solid';
 }
 
+/**
+ * Whether a part casts shadows: what is opaque — not glass, a lens or a pick target — and not a
+ * piece of a luminaire (FLR-T-13.1). A fixture never shadows its own lamp: its canopy, trim and shade
+ * are left out of every lamp's shadow map, as the path tracer's shadow rays pass them.
+ */
+export function castsShadow(part: Pick<MeshPart, 'extension'>, look: Look): boolean {
+  if (look === 'glass' || look === 'pick' || look === 'lens') return false;
+  return !(part.extension?.name === 'FS_electrical' && part.extension.collection === 'lights');
+}
+
 const ROOFS: ReadonlySet<PartKind> = new Set(['roof', 'roofGable']);
 
 export interface Visibility {

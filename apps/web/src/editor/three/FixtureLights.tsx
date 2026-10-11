@@ -1,12 +1,14 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { ViewLight } from './lights';
+import { REACH, type ViewLight } from './lights';
 
 /**
  * The house's light fixtures, lit (FLR-T-12.22): a three.js point light for each light that shines
- * every way and a spot pointing down for each downlight, track and under-cabinet strip — placed,
- * sized and shadowed as lights.ts works out. Each light's `userData.fixture` is its element's ID.
+ * every way and a spot pointing down for each downlight, track, under-cabinet strip and pendant —
+ * placed, sized and shadowed as lights.ts works out. Each light's `userData.fixture` is its
+ * element's ID. Photometric (FLR-T-13.1): intensity in candela, falling off with the square of the
+ * distance in metres (decay 2), cut off only where lights.ts says.
  */
 export function FixtureLights({ lights }: { lights: readonly ViewLight[] }) {
   const invalidate = useThree((s) => s.invalidate);
@@ -34,7 +36,7 @@ function shade(shadow: THREE.LightShadow, far: number): void {
 function PointLamp({ light }: { light: ViewLight }) {
   const ref = useRef<THREE.PointLight>(null);
   useLayoutEffect(() => {
-    if (ref.current !== null && light.shadow) shade(ref.current.shadow, light.distance);
+    if (ref.current !== null && light.shadow) shade(ref.current.shadow, light.distance > 0 ? light.distance : REACH);
   }, [light]);
   return (
     <pointLight
@@ -57,7 +59,7 @@ function SpotLamp({ light }: { light: ViewLight }) {
     const [x, y, z] = light.position;
     target.position.set(x, y, z - 1);
     target.updateMatrixWorld();
-    if (ref.current !== null && light.shadow) shade(ref.current.shadow, light.distance);
+    if (ref.current !== null && light.shadow) shade(ref.current.shadow, light.distance > 0 ? light.distance : REACH);
   }, [light, target]);
   return (
     <>

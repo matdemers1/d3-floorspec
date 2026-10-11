@@ -12,12 +12,14 @@
  *   each diffuse bounce, beside the sun, one or two lamps are sampled directly — picked in proportion
  *   to what each could give the point, unshadowed — each with a shadow ray through the same BVH, so
  *   a lamp lights its own room and not the room behind the wall. A luminaire's lens lets its own
- *   lamp's light out: shadow rays toward a lamp pass through lenses.
+ *   lamp's light out: shadow rays toward a lamp pass through lenses — and a luminaire never shadows
+ *   its own lamp (FLR-T-13.1): a shadow ray toward a lamp passes every piece of the fixture it is
+ *   the lamp of (`PtScene.owner`), its canopy, trim and shade as well as its lens.
  * - Glass shows a glint of the sky (8%) and lets the rest through, tinted by its colour; a shadow
  *   ray passes through glass the same way, so sun reaches the floor through a window.
- * - The image is exposed to its own log-average luminance — or to a fixed exposure, so a room with
- *   its lamps on and off can be compared — and tone-mapped with an ACES-style filmic curve, then
- *   written in sRGB.
+ * - The image is exposed to its own log-average luminance — or to a fixed exposure, or metered
+ *   within a band (FLR-T-13.1: @floorspec/mesh `EXPOSURE_PER_NIT`), so a room with its lamps on and
+ *   off can be compared — and tone-mapped with an ACES-style filmic curve, then written in sRGB.
  *
  * What it is not: a lighting simulation. Metallic and roughness are ignored (every opaque surface is
  * matte), a lamp's photometry is a guess from its kind and watts (@floorspec/mesh lights.ts), and
@@ -54,6 +56,8 @@ export interface PtLamp {
   readonly intensity: Vec3;
   /** A spot: its axis (unit) and its cone's cosines — full inside `inner`, dark past `outer`. */
   readonly spot?: { readonly dir: Vec3; readonly inner: number; readonly outer: number };
+  /** The fixture it is the lamp of: the triangles of `PtScene.owner` this number never shadow it. */
+  readonly owner?: number;
 }
 
 /** What the tracer traces: triangles with a material each and, for mapped materials, texture coordinates. */
@@ -69,6 +73,11 @@ export interface PtScene {
   readonly materials: readonly PtMaterial[];
   /** The lamps that are on; none when the lights are off. */
   readonly lamps?: readonly PtLamp[];
+  /**
+   * One per triangle, when present: the luminaire it is a piece of (a lamp's `owner`), or −1 — what
+   * a shadow ray toward that luminaire's lamp passes (FLR-T-13.1).
+   */
+  readonly owner?: Int32Array;
 }
 
 export interface Sun {
@@ -204,7 +213,8 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   const light = new Float64Array(3);
 
   /** How much of a lamp's light reaches a point along `l`, up to `tMax`: through glass and lenses, not past anything else. */
-  const reaches = (ox: number, oy: number, oz: number, lx: number, ly: number, lz: number, tMax: number, out: Float64Array): void => {
+  const owners = scene.owner;
+  const reaches = (ox: number, oy: number, oz: number, lx: number, ly: number, lz: number, tMax: number, owner: number, out: Float64Array): void => {
     out[0] = 1;
     out[1] = 1;
     out[2] = 1;
@@ -212,7 +222,8 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
     for (let k = 0; k < 8; k++) {
       if (!bvh.intersect(ox, oy, oz, lx, ly, lz, tFrom, tMax, shadowHit)) return;
       const m = mats[scene.material[shadowHit.tri]!]!;
-      if (m.lens !== true) {
+      // A piece of the lamp's own fixture never shadows it; a lens lets the light out.
+      if (m.lens !== true && (owners === undefined || owner < 0 || owners[shadowHit.tri] !== owner)) {
         if (!m.glass) {
           out[0] = 0;
           out[1] = 0;
@@ -297,7 +308,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
       if (cosN <= 0) continue;
       const sp = lamp.spot === undefined ? 1 : spotFactor(lamp, -(lx * lamp.spot.dir[0] + ly * lamp.spot.dir[1] + lz * lamp.spot.dir[2]));
       if (sp <= 0) continue;
-      reaches(px, py, pz, lx, ly, lz, d, lampLight);
+      reaches(px, py, pz, lx, ly, lz, d, lamp.owner ?? -1, lampLight);
       if (lampLight[0] === 0 && lampLight[1] === 0 && lampLight[2] === 0) continue;
       const k = (sp * cosN) / d2 / p / lampPicks;
       out[0] += lamp.intensity[0] * k * lampLight[0]!;
@@ -515,20 +526,43 @@ const toSrgb = (c: number): number => {
 /** Narkowicz's fit of the ACES filmic curve. */
 const aces = (x: number): number => (x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14);
 
+/** A metered exposure's band: the least and most it may be, and the key it meters to (default 0.18). */
+export interface ExposureBand {
+  readonly min: number;
+  readonly max: number;
+  readonly key?: number;
+}
+
 /**
- * Expose to the image's log-average luminance (key 0.18) — or to `exposure`, a fixed scale, so two
- * pictures of one scene under different light can be compared — tone-map, and write 8-bit sRGB.
+ * The exposure that puts an image's log-average luminance at `key`; a pixel darker than `floor`
+ * counts as `floor`, so a black sky does not drag the average to nothing.
  */
-export function toneMap(hdr: Float32Array, width: number, height: number, fixed?: number): Uint8Array {
+export function meter(hdr: Float32Array, width: number, height: number, key = 0.18, floor = 1e-4): number {
   const n = width * height;
-  let exposure = fixed ?? 0;
-  if (fixed === undefined) {
-    let sum = 0;
-    for (let i = 0; i < n; i++) sum += Math.log(1e-4 + 0.2126 * hdr[3 * i]! + 0.7152 * hdr[3 * i + 1]! + 0.0722 * hdr[3 * i + 2]!);
-    const avg = Math.exp(sum / Math.max(1, n));
-    exposure = 0.18 / Math.max(1e-4, avg);
-  }
+  let sum = 0;
+  for (let i = 0; i < n; i++) sum += Math.log(floor + 0.2126 * hdr[3 * i]! + 0.7152 * hdr[3 * i + 1]! + 0.0722 * hdr[3 * i + 2]!);
+  const avg = Math.exp(sum / Math.max(1, n));
+  return key / Math.max(floor, avg);
+}
+
+/** The exposure an image is given: metered, a fixed scale, or metered and held within a band. */
+export function exposureOf(hdr: Float32Array, width: number, height: number, exposure?: number | ExposureBand): number {
+  if (typeof exposure === 'number') return exposure;
+  if (exposure === undefined) return meter(hdr, width, height);
+  // What the band's most open exposure would show at a hundredth of its key counts as black.
+  const key = exposure.key ?? 0.18;
+  return Math.min(exposure.max, Math.max(exposure.min, meter(hdr, width, height, key, key / exposure.max / 100)));
+}
+
+/**
+ * Expose to the image's log-average luminance (key 0.18) — or to `exposure`: a fixed scale, so two
+ * pictures of one scene under different light can be compared, or a band the metered exposure is
+ * held within (FLR-T-13.1) — tone-map, and write 8-bit sRGB.
+ */
+export function toneMap(hdr: Float32Array, width: number, height: number, exposure?: number | ExposureBand): Uint8Array {
+  const n = width * height;
+  const k = exposureOf(hdr, width, height, exposure);
   const out = new Uint8Array(n * 3);
-  for (let i = 0; i < 3 * n; i++) out[i] = Math.round(toSrgb(aces(hdr[i]! * exposure)) * 255);
+  for (let i = 0; i < 3 * n; i++) out[i] = Math.round(toSrgb(aces(hdr[i]! * k)) * 255);
   return out;
 }

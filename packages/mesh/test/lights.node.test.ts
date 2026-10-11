@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { deriveEvaluation, evaluate, OFFICIAL_READER, type Derived, type FloorspecDocument } from '@floorspec/engine';
 import showcase from './fixtures/showcase.floorspec.json' with { type: 'json' };
-import { DEFAULT_LUMENS, kelvinColor, lightsOf, LUMENS_PER_WATT } from '../src/index.js';
+import { DEFAULT_LUMENS, EXPOSURE_PER_NIT, kelvinColor, lightsOf, LUMENS_PER_WATT, WHITE_BALANCE } from '../src/index.js';
 
 type Json = Record<string, unknown>;
 const MM = 1280;
@@ -68,9 +68,9 @@ describe('lightsOf', () => {
     for (const id of ['R1', 'R2', 'R3']) expect(inside([byId.get('E15')!.position[0], byId.get('E15')!.position[1]], derived.rooms[id]!.outer)).toBe(false);
   });
 
-  it('points downlights, track and under-cabinet strips down a cone, and lets the rest shine every way', () => {
+  it('points downlights, track, under-cabinet strips and pendants down a cone, and lets the rest shine every way', () => {
     for (const l of lights) {
-      const spot = ['recessed', 'track', 'underCabinet'].includes(l.fixture);
+      const spot = ['recessed', 'track', 'underCabinet', 'pendant'].includes(l.fixture);
       expect(l.direction).toBe(spot ? 'down' : 'omni');
       if (spot) expect(l.cone!.inner).toBeGreaterThan(l.cone!.outer);
       else expect(l.cone).toBeUndefined();
@@ -85,10 +85,30 @@ describe('lightsOf', () => {
     for (const k of [2000, 2700, 3000, 4000, 9000]) expect(lum(kelvinColor(k))).toBeCloseTo(1, 9);
     // Warmer is redder.
     expect(kelvinColor(2700)[2] / kelvinColor(2700)[0]).toBeLessThan(kelvinColor(4000)[2] / kelvinColor(4000)[0]);
+    // FLR-T-13.1: the camera is balanced for warm-white lamps — 3000 K is white, 2700 K warm white, not orange.
+    for (const c of kelvinColor(WHITE_BALANCE)) expect(c).toBeCloseTo(1, 9);
+    const warm = kelvinColor(2700);
+    expect(warm[2] / warm[0]).toBeGreaterThan(0.55);
+    expect(warm[2] / warm[0]).toBeLessThan(0.8);
     const watts = structuredClone(showcase) as unknown as Json;
     ((watts['extensions'] as Json)['FS_electrical'] as { collections: { lights: Record<string, Json> } }).collections.lights['E12']!['watts'] = 15;
     const w = derive(watts);
     expect(lightsOf(w.doc, w.derived).find((l) => l.id === 'E12')!.lumens).toBe(15 * LUMENS_PER_WATT);
+  });
+
+  it('calibrates its defaults and the views\' exposure in photometric units (FLR-T-13.1)', () => {
+    // A bedroom's one ceiling light, a downlight, a pendant, a sconce and a lantern: typical lamps.
+    expect(DEFAULT_LUMENS).toMatchObject({ ceiling: 1500, recessed: 800, pendant: 800, wall: 400, exterior: 600 });
+    // Night: a white wall (ρ 0.8) at 200 lux is ρE/π cd/m², given about 0.5 — a light tone, under the shoulder.
+    const wall = (lux: number) => (0.8 * lux) / Math.PI;
+    expect(wall(200) * EXPOSURE_PER_NIT.night).toBeGreaterThan(0.4);
+    expect(wall(200) * EXPOSURE_PER_NIT.night).toBeLessThan(0.6);
+    // Opened up two stops at most: a 50-lux bedroom reads as a 200-lux room does.
+    expect(EXPOSURE_PER_NIT.nightMax / EXPOSURE_PER_NIT.night).toBe(4);
+    // Day: a white wall in full sun (about 80 000 lux on it) is given about 0.3; a daylit room metered up to seven stops more.
+    expect(wall(80_000) * EXPOSURE_PER_NIT.day).toBeGreaterThan(0.25);
+    expect(wall(80_000) * EXPOSURE_PER_NIT.day).toBeLessThan(0.4);
+    expect(wall(1000) * EXPOSURE_PER_NIT.dayMax).toBeGreaterThan(0.4);
   });
 
   it('is the same every time', () => {

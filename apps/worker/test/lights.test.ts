@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { EXPOSURE_PER_NIT } from '@floorspec/mesh';
 import { buildScene, type Scene } from '../src/export/gltf/index.js';
 import { createHandlers, render3dParams } from '../src/queue/handlers.js';
 import { EXPOSURE, lampsOf, ptScene, renderLit, sunOf, toneMap, trace, DEFAULT_SUN, type PtScene } from '../src/pathtrace/index.js';
@@ -86,13 +87,18 @@ describe('lamps in the path tracer', () => {
     expect(Buffer.from(a.color.buffer).equals(Buffer.from(c.color.buffer))).toBe(false);
   });
 
-  it('exposes to a fixed exposure when one is given, so on and off are not evened out', () => {
+  it('exposes within a band when one is given, so on and off are not evened out', () => {
     // Auto-exposure makes a room and the same room ten times brighter the same grey…
     expect(Math.abs(toneMap(new Float32Array(12).fill(0.05), 2, 2)[0]! - toneMap(new Float32Array(12).fill(0.5), 2, 2)[0]!)).toBeLessThanOrEqual(1);
-    // …a fixed exposure keeps them apart.
-    const dim = toneMap(new Float32Array(12).fill(0.0002), 2, 2, EXPOSURE.night)[0]!;
-    const bright = toneMap(new Float32Array(12).fill(0.002), 2, 2, EXPOSURE.night)[0]!;
+    // …a fixed exposure keeps them apart…
+    const dim = toneMap(new Float32Array(12).fill(0.0002), 2, 2, EXPOSURE.night.max)[0]!;
+    const bright = toneMap(new Float32Array(12).fill(0.002), 2, 2, EXPOSURE.night.max)[0]!;
     expect(bright).toBeGreaterThan(dim + 60);
+    // …and so does the night's band (FLR-T-13.1): metering opens a dark picture up two stops at most.
+    const off = toneMap(new Float32Array(12).fill(0.00001), 2, 2, EXPOSURE.night)[0]!;
+    const on = toneMap(new Float32Array(12).fill(0.001), 2, 2, EXPOSURE.night)[0]!;
+    expect(off).toBeLessThan(30);
+    expect(on).toBeGreaterThan(off + 100);
   });
 });
 
@@ -102,7 +108,7 @@ describe('a 3D render with lights', () => {
     expect(render3dParams({ lights: 'dim', time: 'noon' })).toEqual({});
   });
 
-  it('is path-traced at night by the render.3d job, cut away at the lowest level, at a fixed exposure', async () => {
+  it('is path-traced at night by the render.3d job, cut away at the lowest level, metered within the night\'s band', async () => {
     const handlers = createHandlers();
     const job = { id: 'j', projectId: 'p', kind: 'render.3d', versionHash: 'c'.repeat(64), params: { lights: 'on', width: 96 } };
     const out = await handlers['render.3d']!(darkBedroom(), job);
@@ -110,7 +116,8 @@ describe('a 3D render with lights', () => {
     expect(pngSize(out.bytes)).toEqual({ width: 96, height: 72 });
     expect(out.summary).toMatchObject({ lit: { lights: 'on', time: 'night', lamps: scene.lights.length } });
     const off = await renderLit(darkBedroom(), { lights: 'off', width: 96 });
-    expect(off.lit).toEqual({ lights: 'off', time: 'night', lamps: 0 });
+    // Off, nothing to meter: the night's most open exposure, and still dark.
+    expect(off.lit).toEqual({ lights: 'off', time: 'night', lamps: 0, exposure: EXPOSURE_PER_NIT.nightMax });
     await expect(renderLit(darkBedroom(), { lights: 'on', width: 4000 })).rejects.toThrow(/pixels wide/);
   });
 });

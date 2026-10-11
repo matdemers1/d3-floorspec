@@ -11,9 +11,17 @@
  *   just under the trim at its box's top; a wall light (a sconce, an exterior lantern) from just in
  *   front of the middle of its box's front face.
  * - **Which way:** recessed, track and under-cabinet lights are spots pointing straight down, each
- *   with a cone; every other light shines every way.
- * - **How much:** its `watts` at an LED's 90 lumens a watt, else a typical lamp of its kind.
- * - **How warm:** 2700 K inside, 3000 K for an exterior light; a colour from a fixed table.
+ *   with a cone, and so is a pendant — under its shade, which throws its light down (FLR-T-13.1);
+ *   every other light shines every way.
+ * - **How much** (FLR-T-13.1, photometric and the same in every view): its `watts` at an LED's 90
+ *   lumens a watt, else a typical lamp of its kind (`DEFAULT_LUMENS`). Each view spreads the lumens
+ *   over the sphere (a light that shines every way) or over its cone (a spot) as candela, and lights
+ *   a surface by the inverse square of its distance in metres — lux, with no other scale.
+ * - **How warm:** 2700 K inside, 3000 K for an exterior light; the colour a camera white-balanced for
+ *   warm-white lamps sees (`kelvinColor`).
+ * - **How it is seen** (FLR-T-13.1): `EXPOSURE_PER_NIT`, the calibration every view's tone curve
+ *   shares — a room lit to 150–300 lux reads as a normally lit room at night, and a daylit interior
+ *   as bright as a camera metering it would show it.
  *
  * Exact integers in base units (the document's frame, z up) except the colour; deterministic, and
  * no trigonometry — a spot's cone is the cosines of its angles, written out.
@@ -57,18 +65,45 @@ const MM = 1280;
 /** Lumens a watt: an LED lamp's. */
 export const LUMENS_PER_WATT = 90;
 
-/** A typical lamp of each kind, lumens: what a light without `watts` gives. */
+/**
+ * A typical lamp of each kind, lumens: what a light without `watts` gives (FLR-T-13.1).
+ *
+ * - `ceiling` 1500: a flush or semi-flush fitting with two A19 lamps of about 750 lm each — what a
+ *   bedroom's one ceiling light is bought with. It lights a 4 m × 4 m room to about 50–60 lux.
+ * - `recessed` 800: a 4″–6″ LED downlight (about 9 W). `pendant` 800: one lamp under a shade.
+ * - `wall` 400: a sconce. `track` 900: a short track of heads. `underCabinet` 300: a strip.
+ * - `fan` 1200: a fan's light kit. `exterior` 600: a porch lantern.
+ */
 export const DEFAULT_LUMENS: Readonly<Record<string, number>> = {
-  ceiling: 1100,
-  recessed: 650,
+  ceiling: 1500,
+  recessed: 800,
   pendant: 800,
-  wall: 450,
+  wall: 400,
   track: 900,
   underCabinet: 300,
-  fan: 800,
+  fan: 1200,
   exterior: 600,
 };
 const FALLBACK_LUMENS = 800;
+
+/**
+ * How every view exposes a picture (FLR-T-13.1): what its tone curve is given for each cd/m² of
+ * luminance, the luminance a surface of reflectance ρ under E lux shows being ρE/π. One calibration
+ * for the path tracer, the headless render and the editor's 3D view.
+ *
+ * - `night` 0.01: a room lit to 150–300 lux reads as a normally lit room — a white wall (ρ 0.8) at
+ *   200 lux, 51 cd/m², is given 0.5, a light tone short of the curve's shoulder; a kitchen's 500
+ *   lux on its counters is bright, not blown. The least a picture by lamplight is exposed to.
+ * - `nightMax` 0.04: how far a dimmer picture by lamplight may be opened up — two stops, as an eye
+ *   adapts to a room. A bedroom at 40–75 lux under its one ceiling light reads normally lit too, a
+ *   room with no lamp on stays dark, and so does the night outside.
+ * - `day` 1.6e-5: full sun outside — a white wall in it, about 20 000 cd/m², is given 0.3.
+ * - `dayMax` 2e-3: a daylit interior, at 500–3000 lux from its windows, metered as a camera would:
+ *   bright and natural, its windows blown a little, as a photograph of a room shows them.
+ *
+ * Between each pair, a picture is metered: its log-average luminance at the photographic key 0.18.
+ */
+export const EXPOSURE_PER_NIT = { night: 0.01, nightMax: 0.04, day: 1.6e-5, dayMax: 2e-3 } as const;
 
 /** Where each kind shines from: under its box, under its trim at the box's top, or in front of its face. */
 const EMITS: Readonly<Record<string, 'bottom' | 'top' | 'front'>> = { recessed: 'top', wall: 'front', exterior: 'front' };
@@ -81,31 +116,49 @@ const CONES: Readonly<Record<string, { inner: number; outer: number }>> = {
   track: { inner: 0.9063, outer: 0.766 },
   // 50° and 75°: a strip's wash over the counter under it.
   underCabinet: { inner: 0.6428, outer: 0.2588 },
+  // 55° and 85°: a pendant's shade throws its light down and out, and keeps it off the ceiling.
+  pendant: { inner: 0.5736, outer: 0.0872 },
 };
 
 /**
- * A colour temperature's colour, linear RGB with luminance 1 — a warm white as a camera balanced
- * for daylight-ish interiors renders it, not the raw blackbody (which reads as orange on screen).
+ * A black body's colour at each temperature, linear sRGB with red at 1 (Mitchell Charity's table,
+ * the sRGB values linearised).
  */
 const KELVIN: readonly (readonly [number, number, number, number])[] = [
-  [2200, 1, 0.56, 0.24],
-  [2700, 1, 0.67, 0.4],
-  [3000, 1, 0.72, 0.48],
-  [3500, 1, 0.79, 0.6],
-  [4000, 1, 0.85, 0.71],
-  [5000, 1, 0.94, 0.88],
-  [6500, 1, 1, 1],
+  [2200, 1, 0.291, 0.025],
+  [2700, 1, 0.397, 0.095],
+  [3000, 1, 0.456, 0.147],
+  [3500, 1, 0.552, 0.25],
+  [4000, 1, 0.638, 0.366],
+  [5000, 1, 0.776, 0.617],
+  [6500, 1, 0.948, 0.982],
 ];
 
-/** The colour of a colour temperature: linear RGB, luminance 1, from the table (linear between its rows). */
-export function kelvinColor(kelvin: number): [number, number, number] {
+/**
+ * The white balance every view's camera is set to (FLR-T-13.1): a warm-white lamp's 3000 K, as a
+ * photograph of a lamp-lit room is taken — so a 2700 K lamp reads warm white and a 3000 K one white,
+ * where a camera balanced for daylight shows both orange.
+ */
+export const WHITE_BALANCE = 3000;
+
+const blackbody = (kelvin: number): [number, number, number] => {
   const k = Math.min(Math.max(kelvin, KELVIN[0]![0]), KELVIN[KELVIN.length - 1]![0]);
   let i = 0;
   while (i < KELVIN.length - 2 && KELVIN[i + 1]![0] < k) i++;
   const a = KELVIN[i]!;
   const b = KELVIN[i + 1]!;
   const t = (k - a[0]) / (b[0] - a[0]);
-  const rgb: [number, number, number] = [a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t];
+  return [a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t];
+};
+
+/**
+ * The colour of a colour temperature as the views' camera sees it: the black body's, over the white
+ * balance's (`WHITE_BALANCE`), linear RGB scaled so its luminance is 1.
+ */
+export function kelvinColor(kelvin: number): [number, number, number] {
+  const c = blackbody(kelvin);
+  const w = blackbody(WHITE_BALANCE);
+  const rgb: [number, number, number] = [c[0] / w[0], c[1] / w[1], c[2] / w[2]];
   const lum = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
   return [rgb[0] / lum, rgb[1] / lum, rgb[2] / lum];
 }
