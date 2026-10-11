@@ -5,6 +5,7 @@
  */
 import { validate as validateSchema } from '../../generated/validate-FS_furniture.js';
 import type * as G from '../../generated/types-FS_furniture.js';
+import { STARTER_LIBRARY_MODELS } from '../../generated/furniture-library.js';
 import { halfString } from '../../derive/derive.js';
 import { elementFrame, envelopesOverlap, footprintOf, openingFrame, type Footprint } from '../../derive/frames.js';
 import { area2 } from '../../geometry/predicates.js';
@@ -27,6 +28,19 @@ export type Mounting = 'floor' | 'wall' | 'builtIn';
 const WALL = new Set(['shelf', 'wallCabinet', 'shelving']);
 const BUILT_IN = new Set(['wallOven', 'cooktop', 'microwave']);
 export const mounting = (category: string): Mounting => (WALL.has(category) ? 'wall' : BUILT_IN.has(category) ? 'builtIn' : 'floor');
+
+/**
+ * The starter library item (chapter 7) whose proxy glTF model has this SHA-256 digest, or
+ * undefined: the model is someone's own. The library's models are generic CC0 proxies — a box or
+ * two per item — so a reader that draws a procedural model of what an element is (the editor's 3D
+ * view, the worker's glTF and USDZ exports: @floorspec/mesh) draws that instead of a proxy, and
+ * lets only a project's own model, any other digest, replace it (FLR-T-12.33).
+ */
+export const starterLibraryItem = (sha256: unknown): string | undefined =>
+  typeof sha256 === 'string' && Object.hasOwn(STARTER_LIBRARY_MODELS, sha256) ? STARTER_LIBRARY_MODELS[sha256] : undefined;
+
+/** True when the digest is one of the starter library's proxy models (see starterLibraryItem). */
+export const isStarterLibraryModel = (sha256: unknown): boolean => starterLibraryItem(sha256) !== undefined;
 
 /** 6.2: what FS_furniture derives for one element. */
 export interface DerivedFurnitureItem {

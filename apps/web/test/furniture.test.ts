@@ -14,7 +14,8 @@ import { symbolMatrix } from '../src/furniture/Plan';
 import { lintsOf, lintText } from '../src/furniture/view';
 import { nudgeBatch } from '../src/editor/nudge';
 import { sizeText } from '../src/furniture/Preview';
-import { furnitureModels } from '../src/furniture/Furniture3D';
+import { furnitureModels, libraryModelled, withoutModelled } from '../src/furniture/Furniture3D';
+import { loadMesher } from '@floorspec/mesh';
 
 /**
  * FS_furniture in the editor (FLR-T-8.3): a model's box from its glTF bounds by Core 12.6's mapping,
@@ -34,21 +35,21 @@ function commit(doc: string, batch: Batch): string {
 }
 const model = (doc: string): EditorModel => readModel('h', doc);
 
-/** A library item's files as the asset route would answer them. */
-function stored(item: LibraryItem): { model: StoredFile; symbol: StoredFile } {
+/** A library item's files as the asset route would answer them; `own`, a model of the project's own in place of the library's. */
+function stored(item: LibraryItem, own?: string): { model: StoredFile; symbol: StoredFile } {
   return {
-    model: { sha256: item.model.sha256, mediaType: item.model.mediaType, byteLength: item.model.byteLength, path: `assets/${item.model.sha256}.glb`, name: `${item.id}.glb` },
+    model: own !== undefined ? { sha256: own, mediaType: 'model/gltf-binary', byteLength: item.model.byteLength, path: `assets/${own}.glb`, name: 'my-own.glb' } : { sha256: item.model.sha256, mediaType: item.model.mediaType, byteLength: item.model.byteLength, path: `assets/${item.model.sha256}.glb`, name: `${item.id}.glb` },
     symbol: { sha256: item.symbol.sha256, mediaType: item.symbol.mediaType, byteLength: item.symbol.byteLength, path: `assets/${item.symbol.sha256}.svg`, name: `${item.id}.svg` },
   };
 }
 
-function place(doc: string, id: string, room: string): string {
+function place(doc: string, id: string, room: string, own?: string): string {
   const m = model(doc);
   const item = libraryItem(id) as LibraryItem;
   const level = m.levels.find((l) => l.rooms.some((r) => r.id === room));
   const spot = spotIn(level!, room, { box: item.box, mounting: item.mounting, category: item.category, clearances: item.clearances, height: 1_756_160 });
   expect(spot).not.toBeNull();
-  return commit(doc, placeFurniture(m, { kind: item.kind, category: item.category, name: item.name, catalogue: item.id, box: item.box, clearances: item.clearances, ...stored(item), host: spot!.host })(0));
+  return commit(doc, placeFurniture(m, { kind: item.kind, category: item.category, name: item.name, catalogue: item.id, box: item.box, clearances: item.clearances, ...stored(item, own), host: spot!.host })(0));
 }
 
 describe('a model’s box (Core 12.6, FS_furniture 3.1)', () => {
@@ -242,12 +243,44 @@ describe('drawing it', () => {
     near([c + e, dd + f], toScreen(at(box.max[0], box.min[1])));
   });
 
-  it('places each model at its element’s frame for the 3D view', () => {
-    const doc = place(HOUSE, 'sofa-2100', 'LIV');
+  it('places each model of the project’s own at its element’s frame for the 3D view', () => {
+    const own = sha(new TextEncoder().encode('somebody’s own sofa'));
+    const doc = place(HOUSE, 'sofa-2100', 'LIV', own);
     const m = model(doc);
     const [item] = furnitureModels(m);
     const d = m.levels[0]!.devices[0]!;
-    expect(item).toMatchObject({ id: d.id, sha256: libraryItem('sofa-2100')!.model.sha256, origin: [d.placement!.point[0], d.placement!.point[1], d.placement!.z], facing: d.placement!.facing });
+    expect(item).toMatchObject({ id: d.id, sha256: own, origin: [d.placement!.point[0], d.placement!.point[1], d.placement!.z], facing: d.placement!.facing });
+    expect(libraryModelled(m)).toEqual([]);
+  });
+
+  it('draws a library item as the procedural model in its role colours, never its proxy model (FLR-T-12.33)', async () => {
+    const doc = place(place(HOUSE, 'sofa-2100', 'LIV'), 'dining-chair-450', 'LIV');
+    const m = model(doc);
+    const ids = m.levels[0]!.devices.map((d) => d.id).sort();
+    expect(ids).toHaveLength(2);
+    // Neither proxy is a model to fetch: the 3D view draws what the mesher draws for them.
+    expect(furnitureModels(m)).toEqual([]);
+    expect(libraryModelled(m)).toEqual(ids);
+    const mesh = (await loadMesher()).meshDerived(m.view, m.derived!);
+    const parts = withoutModelled(mesh.parts.map((part) => ({ part })), new Set<string>());
+    for (const id of ids) {
+      const pieces = parts.filter((p) => p.part.kind === 'extension' && p.part.id === id).map((p) => p.part.model);
+      // The sofa and the chair as @floorspec/mesh models them (FLR-T-12.21): many pieces, each with its role.
+      expect(pieces.length, id).toBeGreaterThan(1);
+      for (const piece of pieces) expect(piece?.role, id).toBeDefined();
+    }
+    expect(new Set(parts.filter((p) => ids.includes(p.part.id)).map((p) => p.part.model?.kind))).toEqual(new Set(['sofa', 'chair']));
+  });
+
+  it('lets a model of the project’s own replace the procedural model, and only that', () => {
+    const own = sha(new TextEncoder().encode('somebody’s own chair'));
+    const m = model(place(place(HOUSE, 'sofa-2100', 'LIV'), 'dining-chair-450', 'LIV', own));
+    const [sofa, chair] = ['sofa', 'chair'].map((c) => m.levels[0]!.devices.find((d) => d.element['category'] === c)!.id);
+    expect(furnitureModels(m).map((i) => [i.id, i.sha256])).toEqual([[chair, own]]);
+    expect(libraryModelled(m)).toEqual([sofa]);
+    // Once its model is drawn, the chair's procedural pieces are left out; the sofa's stay.
+    const parts = [sofa!, chair!].map((id) => ({ part: { kind: 'extension', id } }));
+    expect(withoutModelled(parts, new Set([chair!])).map((p) => p.part.id)).toEqual([sofa]);
   });
 
   it('finds overlapping footprints and leaves touching ones be', () => {

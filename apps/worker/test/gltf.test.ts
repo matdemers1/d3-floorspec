@@ -105,6 +105,39 @@ interface Node {
 
 const nodesOf = (json: Json): Node[] => json['nodes'] as Node[];
 
+const digest = (b: Uint8Array): string => createHash('sha256').update(b).digest('hex');
+
+/** A glTF binary of this JSON and binary chunk. */
+const glbOf = (json: Json, bin: Uint8Array): Uint8Array => {
+  const text = new TextEncoder().encode(JSON.stringify(json));
+  const jl = text.byteLength + ((4 - (text.byteLength % 4)) % 4);
+  const out = new Uint8Array(12 + 8 + jl + 8 + bin.byteLength);
+  const v = new DataView(out.buffer);
+  v.setUint32(0, 0x46546c67, true);
+  v.setUint32(4, 2, true);
+  v.setUint32(8, out.byteLength, true);
+  v.setUint32(12, jl, true);
+  v.setUint32(16, 0x4e4f534a, true);
+  out.set(text, 20);
+  out.fill(0x20, 20 + text.byteLength, 20 + jl);
+  v.setUint32(20 + jl, bin.byteLength, true);
+  v.setUint32(24 + jl, 0x004e4942, true);
+  out.set(bin, 28 + jl);
+  return out;
+};
+
+/** The starter library's refrigerator: a generic proxy, drawn as the procedural model instead (FLR-T-12.33). */
+const LIBRARY_FRIDGE_GLB = new Uint8Array(readFileSync(here('../../../packages/engine/standard/registry/FS_furniture/library/models/refrigerator-900.glb')));
+/**
+ * A project's own refrigerator model: the library's, saved again by somebody's tool (its generator
+ * changed), so its digest is not the library's — what an upload of one's own model is.
+ */
+const OWN_FRIDGE_GLB = ((): Uint8Array => {
+  const { json, bin } = readGlb(LIBRARY_FRIDGE_GLB);
+  return glbOf({ ...json, asset: { ...(json['asset'] as Json), generator: 'somebody’s modeller' } }, bin ?? new Uint8Array(0));
+})();
+const OWN_FRIDGE = { path: 'models/own-refrigerator.glb', mediaType: 'model/gltf-binary', sha256: digest(OWN_FRIDGE_GLB), byteLength: OWN_FRIDGE_GLB.byteLength };
+
 describe('glTF export', () => {
   it('passes the Khronos validator with no errors or warnings, for every house', async () => {
     for (const [name, doc] of Object.entries(HOUSES)) {
@@ -337,8 +370,8 @@ describe('glTF export', () => {
   });
 
   it('places an extension element’s fallback model by Core 12.6: its frame’s origin, turned by its facing alone', async () => {
-    // Each refrigerator with the library's model (FRIDGE) and symbol, as the editor's reader requires.
-    const doc = withFurnitureFallbacks(load(join(SUITE, 'options/034-fridge-in-each-option/input.json')));
+    // Each refrigerator with a model of the project's own (FRIDGE) and the library's symbol, as the editor's reader requires.
+    const doc = withFurnitureFallbacks(load(join(SUITE, 'options/034-fridge-in-each-option/input.json')), OWN_FRIDGE);
     expect(evaluate(doc, OFFICIAL_READER).valid).toBe(true);
     const bytes = (await exportGltf(doc, VERSION)).bytes;
     const glb = readGlb(bytes);
@@ -429,8 +462,7 @@ describe('maps from the asset store (FLR-T-9.2 with FLR-T-8.2)', () => {
 });
 
 describe('fallback models merged into the glTF (FLR-T-9.2, Core 12.6)', () => {
-  const FRIDGE_GLB = new Uint8Array(readFileSync(here('../../../packages/engine/standard/registry/FS_furniture/library/models/refrigerator-900.glb')));
-  const digest = (b: Uint8Array): string => createHash('sha256').update(b).digest('hex');
+  const FRIDGE_GLB = OWN_FRIDGE_GLB;
   /** An asset directory as the api writes it: `ab/cd/<sha256>`. */
   const store = (files: Uint8Array[]): string => {
     const dir = mkdtempSync(join(tmpdir(), 'models-'));
@@ -442,14 +474,15 @@ describe('fallback models merged into the glTF (FLR-T-9.2, Core 12.6)', () => {
     return dir;
   };
   /**
-   * The fridge-in-each-option case with the starter library's refrigerator as its model: FA (option
-   * A, the primary) and a second, common refrigerator FC on the far wall — two elements of the
-   * shown design sharing one model.
+   * The fridge-in-each-option case with a refrigerator model of the project's own: FA (option A, the
+   * primary) and a second, common refrigerator FC on the far wall — two elements of the shown design
+   * sharing one model. `category` makes them something @floorspec/mesh has a procedural model of.
    */
-  const kitchen = (bytes: Uint8Array = FRIDGE_GLB, mediaType = 'model/gltf-binary'): Json => {
+  const kitchen = (bytes: Uint8Array = FRIDGE_GLB, mediaType = 'model/gltf-binary', category?: string): Json => {
     const doc = load(join(SUITE, 'options/034-fridge-in-each-option/input.json'));
     const pieces = ((doc['extensions'] as Json)['FS_furniture'] as { collections: { pieces: Record<string, Json> } }).collections.pieces;
     (pieces['FA']!['fallback'] as Json)['asset'] = 'FRIDGE';
+    if (category !== undefined) for (const p of Object.values(pieces)) p['category'] = category;
     const fc = structuredClone(pieces['FA']!);
     delete fc['option'];
     fc['host'] = { mode: 'free', level: 'L1', position: [2_000_000, 2_000_000], rotation: 0 };
@@ -460,29 +493,13 @@ describe('fallback models merged into the glTF (FLR-T-9.2, Core 12.6)', () => {
     expect(evaluate(complete, OFFICIAL_READER).valid).toBe(true);
     return complete;
   };
-  const glbOf = (json: Json, bin: Uint8Array): Uint8Array => {
-    const text = new TextEncoder().encode(JSON.stringify(json));
-    const jl = text.byteLength + ((4 - (text.byteLength % 4)) % 4);
-    const out = new Uint8Array(12 + 8 + jl + 8 + bin.byteLength);
-    const v = new DataView(out.buffer);
-    v.setUint32(0, 0x46546c67, true);
-    v.setUint32(4, 2, true);
-    v.setUint32(8, out.byteLength, true);
-    v.setUint32(12, jl, true);
-    v.setUint32(16, 0x4e4f534a, true);
-    out.set(text, 20);
-    out.fill(0x20, 20 + text.byteLength, 20 + jl);
-    v.setUint32(20 + jl, bin.byteLength, true);
-    v.setUint32(24 + jl, 0x004e4942, true);
-    out.set(bin, 28 + jl);
-    return out;
-  };
-
-  it('draws the library refrigerator at each placement, its mesh and material once, and the validator passes with no errors or warnings', async () => {
+  it('draws the project’s own refrigerator at each placement, its mesh and material once, and the validator passes with no errors or warnings', async () => {
     const file = await exportGltf(kitchen(), { ...VERSION, models: assetDirModels(store([FRIDGE_GLB]))! });
     expect(file.summary['models']).toEqual({ merged: ['FRIDGE'], omitted: [] });
     const glb = readGlb(file.bytes);
     const library = readGlb(FRIDGE_GLB);
+    // The model replaces what the mesher drew for the element (FLR-T-12.33): its node draws no mesh of its own.
+    for (const id of ['FA', 'FC']) expect(nodesOf(glb.json).find((n) => n.extras?.floorspec?.['id'] === id && n.extras.floorspec['kind'] === 'extension')!.mesh, id).toBeUndefined();
     const meshes = glb.json['meshes'] as { name: string; primitives: { attributes: Record<string, number>; material: number }[] }[];
     const fridgeMeshes = meshes.flatMap((m, i) => (m.name === 'refrigerator-900' ? [i] : []));
     expect(fridgeMeshes).toHaveLength(1);
@@ -508,6 +525,38 @@ describe('fallback models merged into the glTF (FLR-T-9.2, Core 12.6)', () => {
     expect(report.warnings, report.messages.join('\n')).toBe(0);
     // The same scene writes the same bytes.
     expect((await exportGltf(kitchen(), { ...VERSION, models: assetDirModels(store([FRIDGE_GLB]))! })).bytes).toEqual(file.bytes);
+  });
+
+  it('draws a starter-library proxy as the procedural model, in its role colours, neither merged nor marked (FLR-T-12.33)', async () => {
+    // A wardrobe the size of the refrigerator, its model the starter library's: a generic proxy.
+    const doc = kitchen(LIBRARY_FRIDGE_GLB, 'model/gltf-binary', 'wardrobe');
+    const file = await exportGltf(doc, { ...VERSION, models: assetDirModels(store([LIBRARY_FRIDGE_GLB]))! });
+    expect(file.summary['models']).toEqual({ merged: [], omitted: [] });
+    const glb = readGlb(file.bytes);
+    const nodes = nodesOf(glb.json);
+    expect(nodes.filter((n) => n.extras?.floorspec?.['model'] !== undefined)).toEqual([]);
+    expect((glb.json['meshes'] as { name: string }[]).map((m) => m.name)).not.toContain('refrigerator-900');
+    // Each is its own mesh: the wardrobe's pieces, each in its role's material.
+    type Material = { extras: { floorspec: Json } };
+    const materials = glb.json['materials'] as Material[];
+    const meshes = glb.json['meshes'] as { primitives: { material: number }[] }[];
+    for (const id of ['FA', 'FC']) {
+      const node = nodes.find((n) => n.extras?.floorspec?.['id'] === id && n.extras.floorspec['kind'] === 'extension')!;
+      expect(node.mesh, id).toBeDefined();
+      expect(node.children, id).toBeUndefined();
+      const roles = meshes[node.mesh!]!.primitives.map((p) => materials[p.material]!.extras.floorspec['role']);
+      expect(roles.length, id).toBeGreaterThan(0);
+      for (const r of roles) expect(MODEL_ROLES, id).toContain(r);
+    }
+    const report = await validate(file.bytes);
+    expect(report.errors, report.messages.join('\n')).toBe(0);
+    // The same element with a model of the project's own is that model instead.
+    const own = await exportGltf(kitchen(OWN_FRIDGE_GLB, 'model/gltf-binary', 'wardrobe'), { ...VERSION, models: assetDirModels(store([OWN_FRIDGE_GLB]))! });
+    expect(own.summary['models']).toEqual({ merged: ['FRIDGE'], omitted: [] });
+    // USDZ has no marker for the proxy either.
+    const usdz = await exportUsdz(doc, VERSION);
+    expect(usdz.summary['models']).toEqual({ merged: [], omitted: [] });
+    expect(new TextDecoder().decode(readStoreZip(usdz.bytes)[0]!.bytes)).not.toContain('floorspecModel');
   });
 
   it('keeps the marker and says why when a model cannot be merged', async () => {

@@ -14,11 +14,13 @@ import { FT, firstRunSetup, historyOf, password, projectIn, settled } from './su
  * with its default door envelope — drawn on the plan with its symbol, the door's clearance showing.
  * model.json and the two files beside it are a valid package with FS_furniture known. An island
  * placed next lands in front of the door: FS-FURN-LINT-004 is a note in the refrigerator's
- * inspector and the blocked clearance turns to the warning tone. In 3D the refrigerator is its
- * model. Undo takes the island away in one step and the note goes with it. axe runs on the library
- * and the inspector in both themes; screenshots of each land in test-results/furniture-*.png.
- * Through a share link, with no account, the symbol and the model load from the link's own asset
- * route (FLR-T-9.6); a glTF export merges the model at its placement (FLR-T-9.2).
+ * inspector and the blocked clearance turns to the warning tone. In 3D the refrigerator and the
+ * island are the procedural models of what they are, in their role colours — the library's generic
+ * proxy models are never fetched (FLR-T-12.33). Undo takes the island away in one step and the note
+ * goes with it. axe runs on the library and the inspector in both themes; screenshots of each land in
+ * test-results/furniture-*.png. A sofa model of the project's own, uploaded, is drawn as itself.
+ * Through a share link, with no account, the symbols and that model load from the link's own asset
+ * route (FLR-T-9.6); a glTF export merges that model at its placement (FLR-T-9.2), and no proxy.
  */
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -55,7 +57,7 @@ async function audit(page: Page, state: string): Promise<void> {
   await page.emulateMedia({ colorScheme: 'light' });
 }
 
-test('the P8 furniture demo: place a fridge from the library, its door clearance shows, an island in its way is a note, 3D shows the model, undo', async ({ page, browser, baseURL }) => {
+test('the P8 furniture demo: place a fridge from the library, its door clearance shows, an island in its way is a note, 3D draws them as procedural models, undo, an own model drawn as itself', async ({ page, browser, baseURL }) => {
   test.setTimeout(180_000);
   await firstRunSetup(page, { name: 'Fitter', email: 'fitter@example.test', password: password('furniture') });
   await page.getByRole('button', { name: 'New project' }).first().click();
@@ -69,6 +71,8 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
 
   await page.goto(`/projects/${project}/editor`);
   await settled(page);
+  const requested = new Set<string>();
+  page.on('request', (r) => { const path = new URL(r.url()).pathname; if (path.includes('/assets/')) requested.add(path.split('/').pop()!); });
 
   // ── The library, from the rail: cards by kind, a search, the chosen item in detail.
   await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Furniture and appliances' }).click();
@@ -156,13 +160,14 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   await expect(notes).toContainText('Its clearance runs into');
   await audit(page, 'inspector-blocked');
 
-  // ── 3D: the refrigerator is its glTF model, not its fallback box.
+  // ── 3D: the refrigerator and the island are the procedural models of what they are (FLR-T-12.33):
+  // their models are the starter library's generic proxies, which are never fetched.
   await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: '3D' }).click();
   await page.waitForFunction(() => (window as unknown as { __floorspec3d?: { ready: boolean } }).__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
-  await page.waitForFunction((id) => ((window as unknown as { __floorspecFurniture3d?: { drawn: string[] } }).__floorspecFurniture3d?.drawn ?? []).includes(id), fridge!.id, { timeout: 30_000 });
-  const drawn = await page.evaluate(() => (window as unknown as { __floorspecFurniture3d: { drawn: string[]; failed: string[] } }).__floorspecFurniture3d);
-  expect(drawn.failed).toEqual([]);
-  expect(drawn.drawn).toEqual([fridge!.id, island.id].sort());
+  await page.waitForFunction(() => (window as unknown as { __floorspecFurniture3d?: { library: string[] } }).__floorspecFurniture3d?.library.length === 2, undefined, { timeout: 30_000 });
+  const drawn = await page.evaluate(() => (window as unknown as { __floorspecFurniture3d: { drawn: string[]; items: string[]; failed: string[]; library: string[] } }).__floorspecFurniture3d);
+  expect(drawn).toEqual({ drawn: [], items: [], failed: [], library: [fridge!.id, island.id].sort() });
+  expect(requested.has(model.assets![fridge!.fallback.asset]!.sha256)).toBe(false);
   // Clicking the model selects the refrigerator, as clicking its symbol does on the plan.
   const at = await page.evaluate((id) => (window as unknown as { __floorspec3d: { screenPoint(id: string): { x: number; y: number } | null } }).__floorspec3d.screenPoint(id), fridge!.id);
   if (at !== null) {
@@ -184,41 +189,6 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   await expect.poll(async () => furniture(await modelOf(page, project)).length).toBe(1);
   await expect(page.locator('.fs-clearance--blocked')).toHaveCount(0);
   expect(Object.keys((await modelOf(page, project)).assets ?? {})).toHaveLength(2);
-
-  // ── FLR-T-9.6's follow-up: somebody with no account opens a share link and sees the refrigerator
-  // as its symbol on the plan and its model in 3D — both from the link's own asset route, never
-  // the owner's, so nothing falls back to an outline or a box.
-  const shared = await page.request.post(`/api/projects/${project}/shares`, { data: {} });
-  expect(shared.status(), await shared.text()).toBe(201);
-  const { url } = (await shared.json()) as { url: string };
-  const via = `/api/share/${url.split('/s/')[1]!}/assets/`;
-  const fileOf = (key: string) => model.assets![key]!.sha256;
-  const stranger = await browser.newContext({ baseURL: baseURL! });
-  const viewer = await stranger.newPage();
-  const answered = new Map<string, number>();
-  viewer.on('response', (r) => { const path = new URL(r.url()).pathname; if (path.startsWith('/api/') && path.includes('/assets/')) answered.set(path, r.status()); });
-  await viewer.goto(url);
-  await expect(viewer.locator(`[data-furniture="${fridge!.id}"] image`)).toHaveAttribute('href', `${via}${fileOf(fridge!.fallback.symbol)}`);
-  await expect.poll(() => answered.get(`${via}${fileOf(fridge!.fallback.symbol)}`)).toBe(200);
-  await viewer.getByRole('radio', { name: '3D' }).click();
-  await viewer.waitForFunction(() => (window as unknown as { __floorspec3d?: { ready: boolean } }).__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
-  await viewer.waitForFunction((id) => ((window as unknown as { __floorspecFurniture3d?: { drawn: string[] } }).__floorspecFurniture3d?.drawn ?? []).includes(id), fridge!.id, { timeout: 30_000 });
-  expect((await viewer.evaluate(() => (window as unknown as { __floorspecFurniture3d: { failed: string[] } }).__floorspecFurniture3d)).failed).toEqual([]);
-  expect(answered.get(`${via}${fileOf(fridge!.fallback.asset)}`)).toBe(200);
-  // Every file the viewer asked for came through the link; the owner's route was never tried.
-  expect([...answered.keys()].filter((p) => !p.startsWith(via))).toEqual([]);
-  await viewer.waitForTimeout(400); // the frame the model arrived in, so the picture is of the model
-  await viewer.screenshot({ path: 'test-results/furniture-shared-3d.png' });
-  await stranger.close();
-
-  // ── FLR-T-9.2's follow-up: the glTF export draws the refrigerator's own model, merged from the
-  // asset store at its placement, not only a marker where it goes.
-  const queued = await page.request.post(`/api/projects/${project}/exports`, { data: { kind: 'gltf' } });
-  expect(queued.status(), await queued.text()).toBe(202);
-  const { export: job } = (await queued.json()) as { export: { id: string } };
-  const exported = async () => ((await (await page.request.get(`/api/projects/${project}/exports/${job.id}`)).json()) as { export: { status: string; result: { models?: unknown } | null } }).export;
-  await expect.poll(async () => (await exported()).status, { timeout: 30_000 }).toBe('done');
-  expect((await exported()).result?.models).toEqual({ merged: [fridge!.fallback.asset], omitted: [] });
 
   // ── Upload your own: a model made facing +Z, turned to face +X; a symbol with a script in it.
   await page.keyboard.press('f');
@@ -245,6 +215,7 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   await expect(upload).toBeHidden();
   await expect.poll(async () => furniture(await modelOf(page, project)).length).toBe(2);
   const after = await modelOf(page, project);
+  const sofaId = furniture(after).find((f) => f.category === 'sofa')!.id;
   const sofa = furniture(after).find((f) => f.category === 'sofa')! as unknown as { kind: string; name: string; clearances: Record<string, { purpose: string }>; fallback: { asset: string; symbol: string; box: { min: number[]; max: number[] } } };
   expect(sofa).toMatchObject({ kind: 'pieces', name: 'Turned sofa', clearances: { front: { purpose: 'access' } } });
   expect(sofa.fallback.box).toEqual({ min: [-1_344_000, 0, 0], max: [1_344_000, 1_152_000, 1_088_000] });
@@ -259,5 +230,49 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   for (const a of Object.values(after.assets!)) files2[a.path] = new Uint8Array(await (await page.request.get(`/api/projects/${project}/assets/${a.sha256}?download`)).body());
   const checked2 = validate(new Uint8Array(await (await page.request.get(`/api/projects/${project}/model.json`)).body()), { package: new Package(files2), ...OFFICIAL_READER });
   expect(checked2.valid, JSON.stringify(checked2.diagnostics)).toBe(true);
+
+  // ── 3D: the sofa is its own model, in place of the procedural one; the refrigerator stays procedural.
+  await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: '3D' }).click();
+  await page.waitForFunction((id) => ((window as unknown as { __floorspecFurniture3d?: { drawn: string[] } }).__floorspecFurniture3d?.drawn ?? []).includes(id), sofaId, { timeout: 30_000 });
+  expect(await page.evaluate(() => (window as unknown as { __floorspecFurniture3d: unknown }).__floorspecFurniture3d)).toEqual({ drawn: [sofaId], items: [sofaId], failed: [], library: [fridge!.id] });
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: 'test-results/furniture-3d-own-model.png' });
+  await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: '2D plan' }).click();
+
+  // ── FLR-T-9.6's follow-up: somebody with no account opens a share link and sees the refrigerator
+  // as its symbol on the plan, and in 3D the sofa as its own model — both from the link's own asset
+  // route, never the owner's, so nothing falls back to an outline or a box; no proxy is fetched.
+  const shared = await page.request.post(`/api/projects/${project}/shares`, { data: {} });
+  expect(shared.status(), await shared.text()).toBe(201);
+  const { url } = (await shared.json()) as { url: string };
+  const via = `/api/share/${url.split('/s/')[1]!}/assets/`;
+  const fileOf = (key: string) => after.assets![key]!.sha256;
+  const stranger = await browser.newContext({ baseURL: baseURL! });
+  const viewer = await stranger.newPage();
+  const answered = new Map<string, number>();
+  viewer.on('response', (r) => { const path = new URL(r.url()).pathname; if (path.startsWith('/api/') && path.includes('/assets/')) answered.set(path, r.status()); });
+  await viewer.goto(url);
+  await expect(viewer.locator(`[data-furniture="${fridge!.id}"] image`)).toHaveAttribute('href', `${via}${fileOf(fridge!.fallback.symbol)}`);
+  await expect.poll(() => answered.get(`${via}${fileOf(fridge!.fallback.symbol)}`)).toBe(200);
+  await viewer.getByRole('radio', { name: '3D' }).click();
+  await viewer.waitForFunction(() => (window as unknown as { __floorspec3d?: { ready: boolean } }).__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
+  await viewer.waitForFunction((id) => ((window as unknown as { __floorspecFurniture3d?: { drawn: string[] } }).__floorspecFurniture3d?.drawn ?? []).includes(id), sofaId, { timeout: 30_000 });
+  expect((await viewer.evaluate(() => (window as unknown as { __floorspecFurniture3d: { failed: string[] } }).__floorspecFurniture3d)).failed).toEqual([]);
+  expect(answered.get(`${via}${fileOf(sofa.fallback.asset)}`)).toBe(200);
+  expect(answered.has(`${via}${fileOf(fridge!.fallback.asset)}`)).toBe(false);
+  // Every file the viewer asked for came through the link; the owner's route was never tried.
+  expect([...answered.keys()].filter((p) => !p.startsWith(via))).toEqual([]);
+  await viewer.waitForTimeout(400); // the frame the model arrived in, so the picture is of the model
+  await viewer.screenshot({ path: 'test-results/furniture-shared-3d.png' });
+  await stranger.close();
+
+  // ── FLR-T-9.2's follow-up: the glTF export draws the sofa's own model, merged from the asset store
+  // at its placement, not only a marker where it goes; the refrigerator is its procedural model.
+  const queued = await page.request.post(`/api/projects/${project}/exports`, { data: { kind: 'gltf' } });
+  expect(queued.status(), await queued.text()).toBe(202);
+  const { export: job } = (await queued.json()) as { export: { id: string } };
+  const exported = async () => ((await (await page.request.get(`/api/projects/${project}/exports/${job.id}`)).json()) as { export: { status: string; result: { models?: unknown } | null } }).export;
+  await expect.poll(async () => (await exported()).status, { timeout: 30_000 }).toBe('done');
+  expect((await exported()).result?.models).toEqual({ merged: [sofa.fallback.asset], omitted: [] });
 });
 
