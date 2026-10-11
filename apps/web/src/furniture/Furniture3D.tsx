@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { furniture as fsFurniture } from '@floorspec/engine';
 import type { HouseMesh } from '@floorspec/mesh';
 import type { EditorModel } from '../editor/model';
 import { facingVector, type DeviceView } from '../editor/systems/view';
@@ -16,8 +17,14 @@ import { filesOf, isFurniture } from './view';
  * glTF axes turned onto Floorspec's, so the model point (X, Y, Z) is the local point (X, −Z, Y).
  * The model is drawn as it is, never stretched to its box.
  *
- * An element whose model has not arrived, or will not, keeps the fallback box the mesher draws for
- * every extension element (Core 12.6); the 3D view leaves that box out only once a model is drawn.
+ * Only a project's own model replaces what the mesher draws (FLR-T-12.33): an element whose model is
+ * one of the starter library's generic proxies — known by its digest (@floorspec/engine's
+ * furniture.isStarterLibraryModel) — is drawn as the mesher's procedural model of what it is, in its
+ * role colours (FLR-T-12.21), as the worker's exports draw it; its proxy file is never fetched.
+ *
+ * An element whose own model has not arrived, or will not, keeps what the mesher draws for every
+ * extension element — its procedural model, or its fallback box (Core 12.6); the 3D view leaves that
+ * out only once the model is drawn.
  * Clicking a model selects its element; the selection is outlined by the element's box. With the
  * Clearances layer on, each item's envelopes are drawn as translucent boxes in its frame.
  */
@@ -71,14 +78,17 @@ export interface FurnitureModel {
   clearances: { min: number[]; max: number[] }[];
 }
 
-/** The furniture with a model on every level of the shown model. */
+/**
+ * The furniture with a model of its own on every level of the shown model: a starter-library proxy
+ * is not one (FLR-T-12.33) — that element is drawn as the mesher's procedural model.
+ */
 export function furnitureModels(model: EditorModel): FurnitureModel[] {
   const out: FurnitureModel[] = [];
   for (const level of model.levels)
     for (const d of level.devices) {
       if (!isFurniture(d)) continue;
       const file = filesOf(model.document, d.element).model;
-      if (file === null) continue;
+      if (file === null || fsFurniture.isStarterLibraryModel(file.sha256)) continue;
       out.push({
         id: d.id,
         sha256: file.sha256,
@@ -90,6 +100,18 @@ export function furnitureModels(model: EditorModel): FurnitureModel[] {
       });
     }
   return out;
+}
+
+/** The furniture whose model is a starter-library proxy: drawn as the procedural model instead (FLR-T-12.33). */
+export function libraryModelled(model: EditorModel): string[] {
+  const out: string[] = [];
+  for (const level of model.levels)
+    for (const d of level.devices) {
+      if (!isFurniture(d)) continue;
+      const file = filesOf(model.document, d.element).model;
+      if (file !== null && fsFurniture.isStarterLibraryModel(file.sha256)) out.push(d.id);
+    }
+  return out.sort();
 }
 
 const boxOf = (d: DeviceView): { min: number[]; max: number[] } | null => {
@@ -122,7 +144,7 @@ export function useFurnitureModels(projectId: string, model: EditorModel | null)
     };
   }, [items, projectId, scenes]);
   const drawn = useMemo(() => new Set(items.filter((i) => scenes.has(i.sha256)).map((i) => i.id)), [items, scenes]);
-  useTestHook(projectId, items, drawn);
+  useTestHook(projectId, model, items, drawn);
   return { items, scenes, drawn };
 }
 
@@ -229,9 +251,11 @@ export function FurnitureScene({
 interface Hook {
   /** Elements whose model is drawn in 3D. */
   drawn: string[];
-  /** Elements with a model, drawn or not. */
+  /** Elements with a model of their own, drawn or not. */
   items: string[];
   failed: string[];
+  /** Elements whose model is a starter-library proxy, drawn as the procedural model instead (FLR-T-12.33). */
+  library: string[];
 }
 
 declare global {
@@ -241,19 +265,20 @@ declare global {
 }
 
 /** Under automation only (navigator.webdriver): which models are drawn. Nothing is exposed to a person's browser. */
-function useTestHook(projectId: string, items: FurnitureModel[], drawn: Set<string>): void {
+function useTestHook(projectId: string, model: EditorModel | null, items: FurnitureModel[], drawn: Set<string>): void {
   useEffect(() => {
     if (!navigator.webdriver) return;
     const hook: Hook = {
       drawn: [...drawn].sort(),
       items: items.map((i) => i.id).sort(),
       failed: items.filter((i) => failed.has(assetHref(projectId, i.sha256))).map((i) => i.id).sort(),
+      library: model === null ? [] : libraryModelled(model),
     };
     window.__floorspecFurniture3d = hook;
     return () => {
       if (window.__floorspecFurniture3d === hook) delete window.__floorspecFurniture3d;
     };
-  }, [projectId, items, drawn]);
+  }, [projectId, model, items, drawn]);
 }
 
 /** Leave out the fallback boxes the mesher drew for elements whose model is drawn instead. */

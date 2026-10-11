@@ -20,7 +20,7 @@
  * not define (a wall's top and ends, a slab, a roof, a stair) are given a box projection, which is
  * this exporter's choice and not the standard's.
  */
-import { deriveEvaluation, evaluate, extElements, facingVector, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
+import { deriveEvaluation, evaluate, extElements, facingVector, furniture, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { appearanceOf, DEFAULT_COLOURS, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch } from '@floorspec/mesh';
 import { decodeTexture } from '../../pathtrace/textures.js';
 import type { ImageSource } from './glb.js';
@@ -96,9 +96,10 @@ export interface SceneNode {
   readonly parts: PartKind[];
   readonly primitives: ScenePrimitive[];
   /**
-   * An extension element whose fallback has a model (Core 12.6): where the model's origin goes, in
-   * the scene (metres, +Y up), and its turn about +Y — the element's facing alone; and the asset's
-   * digest and media type as the document records them, for an exporter that merges the model.
+   * An extension element whose fallback has a model of its own (Core 12.6): where the model's origin
+   * goes, in the scene (metres, +Y up), and its turn about +Y — the element's facing alone; and the
+   * asset's digest and media type as the document records them, for an exporter that merges the
+   * model. A starter-library proxy is not one (FLR-T-12.33): the element is its procedural model.
    */
   readonly model?: { readonly asset: string; readonly sha256?: string; readonly mediaType?: string; readonly translation: Vec3; readonly rotation: [number, number, number, number] };
 }
@@ -770,17 +771,23 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
   };
 }
 
-/** Core 12.6: where an extension element's fallback model goes, when it has one. */
+/**
+ * Core 12.6: where an extension element's fallback model goes, when it has one of its own. A model
+ * that is one of the FS_furniture starter library's generic proxies, known by its digest, is not
+ * (FLR-T-12.33): the element is drawn as @floorspec/mesh's procedural model of what it is, in its
+ * role colours, as the editor's 3D view draws it — and only a project's own model replaces that.
+ */
 function modelOf(doc: FloorspecDocument, derived: Derived, el: ReturnType<typeof extElements>[number] | undefined): Pick<SceneNode, 'model'> {
   const fallback = (el?.element as { fallback?: { asset?: string; level?: string } } | undefined)?.fallback;
   if (el === undefined || fallback?.asset === undefined) return {};
+  const a = (doc.assets as Record<string, Json> | undefined)?.[fallback.asset];
+  if (furniture.isStarterLibraryModel(a?.['sha256'])) return {};
   const placed = derived.placements?.[el.id];
   const elevation = Number((doc.levels as Record<string, Json> | undefined)?.[fallback.level ?? '']?.['elevation'] ?? 0);
   // A hosted element is placed by its host's frame (13.4); an unhosted one by its level's.
   const [x, y, z] = placed?.point ?? [0, 0, elevation];
   const facing = placed?.facing ?? 0;
   const half = ((facing / 1e6) * Math.PI) / 360;
-  const a = (doc.assets as Record<string, Json> | undefined)?.[fallback.asset];
   return {
     model: {
       asset: fallback.asset,

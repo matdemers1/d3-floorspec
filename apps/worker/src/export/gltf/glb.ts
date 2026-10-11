@@ -12,8 +12,10 @@
  * were left out.
  *
  * An extension element's fallback model (Core 12.6) is merged in at its placement when its glTF
- * binary is given (`models`), its meshes shared by every element that names it (merge.ts); without
- * it, the element keeps its fallback box and a marker node where the model goes.
+ * binary is given (`models`), its meshes shared by every element that names it (merge.ts), in place
+ * of what the mesher drew for the element; without it, the element keeps that — its procedural model
+ * or its fallback box — and a marker node where the model goes. A starter-library proxy model is no
+ * model of the element's own (scene.ts, FLR-T-12.33): it is neither merged nor marked.
  *
  * Deterministic: the same scene writes the same bytes — no dates, no random IDs, keys in one order.
  */
@@ -185,8 +187,11 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
   scene.levels.forEach((level, li) => {
     const children: number[] = [];
     for (const node of level.nodes) {
+      // A model of the element's own, merged, replaces what the mesher drew for it — its procedural
+      // model or its fallback box — as it does in the editor's 3D view (FLR-T-12.33).
+      const merged = node.model === undefined ? null : modelFor(node.model.asset, node.model.sha256, node.model.mediaType);
       let mesh: number | undefined;
-      if (node.primitives.length > 0) {
+      if (node.primitives.length > 0 && merged === null) {
         const primitives = node.primitives.map((p) => {
           const n = p.positions.length / 3;
           const position = accessors.push({ bufferView: bin.view(asBytes(p.positions), ARRAY_BUFFER), componentType: FLOAT, count: n, type: 'VEC3', ...minMax(p.positions, 3) }) - 1;
@@ -225,7 +230,6 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
         nodes.push(marker);
         element['children'] = [nodes.length - 1];
         // The model's own scene under the marker: its frame is the export's (metres, +Y up, +X the front).
-        const merged = modelFor(node.model.asset, node.model.sha256, node.model.mediaType);
         if (merged !== null) marker['children'] = merged(node.id);
       }
     }
