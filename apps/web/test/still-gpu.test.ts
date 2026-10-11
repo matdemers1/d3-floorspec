@@ -2,7 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import { DirectionalLight, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, SpotLight, Vector3, type Object3D } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { UNITS_PER_METRE } from '@floorspec/mesh';
+import { EXPOSURE_PER_NIT, UNITS_PER_METRE } from '@floorspec/mesh';
+import { toneMappingExposure as viewToneMappingExposure } from '../src/editor/three/lights';
 import { eyeOf, PRESETS, type Orbit } from '../src/editor/three/camera';
 import { orbitCamera, presetCamera } from '../src/editor/three/still/gpu/cameras';
 import { perspectiveOf, prepareHouse, roomCamera, stillScene } from '../src/editor/three/still/gpu/scene';
@@ -277,6 +278,10 @@ describe('the GPU still’s cameras and light (FLR-T-13.13)', () => {
     expect(meteredExposure(1e9, 'day')).toBe(EXPOSURE_BAND.day.min);
     expect(meteredExposure(1e-9, 'night')).toBe(EXPOSURE_BAND.night.max);
     expect(toneMappingExposure(0.02)).toBeCloseTo(0.012, 12);
+    // FLR-T-13.1's calibration, as the editor's 3D view applies it.
+    expect(EXPOSURE_BAND.night).toEqual({ min: EXPOSURE_PER_NIT.night, max: EXPOSURE_PER_NIT.nightMax });
+    expect(EXPOSURE_BAND.day).toEqual({ min: EXPOSURE_PER_NIT.day, max: EXPOSURE_PER_NIT.dayMax });
+    expect(toneMappingExposure(0.02)).toBeCloseTo(viewToneMappingExposure(0.02), 12);
   });
 
   it('draws the sky as an equirectangular map in cd/m², the sun’s glow where the sun is', () => {

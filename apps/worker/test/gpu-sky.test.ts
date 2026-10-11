@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SUN, skyRadiance, sunOf, type Sun } from '../src/pathtrace/index.js';
-import { DEFAULT_SUN as GPU_DEFAULT_SUN, GROUND, LUX_PER_UNIT, SKY_SCALE, skyRadiance as gpuSkyRadiance, sunOf as gpuSunOf } from '../../web/src/editor/three/still/gpu/sky.js';
+import { DEFAULT_SUN, EXPOSURE, exposureOf, LUX_PER_UNIT as CPU_LUX_PER_UNIT, skyRadiance, sunOf, type Sun } from '../src/pathtrace/index.js';
+import { DEFAULT_SUN as GPU_DEFAULT_SUN, EXPOSURE_BAND, GROUND, LUX_PER_UNIT, meteredExposure, meterFloor, SKY_SCALE, skyRadiance as gpuSkyRadiance, sunOf as gpuSunOf, TIMES } from '../../web/src/editor/three/still/gpu/sky.js';
 
 /**
  * FLR-ADR-040: two light-transport implementations must agree. The editor's GPU still (FLR-T-13.13)
@@ -36,6 +36,22 @@ describe('the GPU still’s sun and sky are the path tracer’s', () => {
         const d: [number, number, number] = [r * Math.cos(2 * Math.PI * t), z, r * Math.sin(2 * Math.PI * t)];
         skyRadiance(d[0], d[1], d[2], cpu, out);
         gpuSkyRadiance(d, gpu).forEach((c, k) => { expect(c).toBeCloseTo(out[k]! * LUX_PER_UNIT, 6); });
+      }
+    }
+  });
+
+  it('meters within the same bands as the path tracer (FLR-T-13.1), in the same unit', () => {
+    expect(LUX_PER_UNIT).toBe(CPU_LUX_PER_UNIT);
+    for (const time of TIMES) {
+      expect(EXPOSURE_BAND[time].min * LUX_PER_UNIT).toBeCloseTo(EXPOSURE[time].min, 12);
+      expect(EXPOSURE_BAND[time].max * LUX_PER_UNIT).toBeCloseTo(EXPOSURE[time].max, 12);
+      // An image of one luminance, bright, dim and all but black: the same exposure either way.
+      for (const nits of [30_000, 800, 50, 3, 0.01]) {
+        const units = nits / LUX_PER_UNIT;
+        const hdr = new Float32Array(3 * 16).fill(units);
+        const floor = meterFloor(time);
+        const gpu = meteredExposure(Math.exp(Math.log(floor + nits)), time);
+        expect(gpu * LUX_PER_UNIT, `${time} ${String(nits)} cd/m²`).toBeCloseTo(exposureOf(hdr, 4, 4, EXPOSURE[time]), 6);
       }
     }
   });

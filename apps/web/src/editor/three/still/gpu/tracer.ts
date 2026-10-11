@@ -2,7 +2,7 @@ import { ACESFilmicToneMapping, SRGBColorSpace, WebGPURenderer, type Perspective
 import { OIDNDenoiser, WebGPUPathTracer } from 'three-gpu-pathtracer/webgpu';
 import { initUNetFromURL } from 'oidn-web';
 import weightsUrl from './oidn/rt_hdr_alb_nrm.tza?url';
-import { EXPOSURE_BAND, meteredExposure, toneMappingExposure, TRACE_UNIT, type TimeOfDay } from './sky';
+import { EXPOSURE_BAND, meteredExposure, meterFloor, toneMappingExposure, TRACE_UNIT, type TimeOfDay } from './sky';
 
 /**
  * The one module that path-traces on the GPU (FLR-T-13.13, FLR-ADR-040): three.js's WebGPU renderer,
@@ -64,7 +64,7 @@ export class TraceCancelled extends Error {
 }
 
 /** The log-average luminance of a few rows of the accumulated image (linear, in `TRACE_UNIT`s). */
-async function logAverage(renderer: WebGPURenderer, texture: Texture, width: number, height: number): Promise<number | null> {
+async function logAverage(renderer: WebGPURenderer, texture: Texture, width: number, height: number, floor: number): Promise<number | null> {
   const rows = Array.from({ length: Math.min(METER_ROWS, height) }, (_, i) => Math.floor(((i + 0.5) * height) / Math.min(METER_ROWS, height)));
   const target = { textures: [texture] } as unknown as Parameters<WebGPURenderer['readRenderTargetPixelsAsync']>[0];
   let sum = 0;
@@ -74,7 +74,7 @@ async function logAverage(renderer: WebGPURenderer, texture: Texture, width: num
     for (let x = 0; x < width; x++) {
       const l = 0.2126 * (data[4 * x] ?? 0) + 0.7152 * (data[4 * x + 1] ?? 0) + 0.0722 * (data[4 * x + 2] ?? 0);
       if (!Number.isFinite(l)) continue;
-      sum += Math.log(1e-4 + Math.max(0, l));
+      sum += Math.log(floor + Math.max(0, l));
       n++;
     }
   }
@@ -131,7 +131,7 @@ export async function traceStill(request: TraceRequest): Promise<TraceResult> {
         counts = { min: c.min, rate: c.samplesPerSecond > 0 ? c.samplesPerSecond : null };
         if (!metered && c.min >= Math.min(METER_AT, samples) && tracer.target !== null) {
           metered = true;
-          const avg = await logAverage(renderer, tracer.target, width, height).catch(() => null);
+          const avg = await logAverage(renderer, tracer.target, width, height, meterFloor(time) / TRACE_UNIT).catch(() => null);
           if (avg !== null) {
             exposure = meteredExposure(avg * TRACE_UNIT, time);
             renderer.toneMappingExposure = toneMappingExposure(exposure * TRACE_UNIT);

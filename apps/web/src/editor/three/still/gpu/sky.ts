@@ -7,8 +7,11 @@
  * two to each other (apps/worker/test/gpu-sky.test.ts) until FLR-T-13.4 shares the sky presets.
  */
 
+import { EXPOSURE_PER_NIT } from '@floorspec/mesh';
+
 export type Vec3 = [number, number, number];
 export type TimeOfDay = 'day' | 'dusk' | 'night';
+export const TIMES: readonly TimeOfDay[] = ['day', 'dusk', 'night'];
 
 /** The worker's tracer's irradiance unit, in lux: its sun's 8 is about 100 000 lx. */
 export const LUX_PER_UNIT = 12_500;
@@ -89,20 +92,34 @@ export function skyPixels(sun: Sun, time: TimeOfDay, width = 256, height = 128):
 }
 
 /**
- * What the tone curve is given per cd/m² (FLR-T-13.1's calibration): a still is metered to a key of
- * 0.18 within its time of day's band — by day from a sunlit exterior to a daylit room, after dark
- * from a room lit by its lamps to one lit by a single light.
+ * What the tone curve is given per cd/m² (FLR-T-13.1, @floorspec/mesh `EXPOSURE_PER_NIT`): a still is
+ * metered to a key of 0.18 within its time of day's band — by day from a sunlit exterior to a daylit
+ * room, after dark from a room lit by its lamps to one lit by a single light — as the worker's
+ * path tracer meters its own (pathtrace `EXPOSURE`, `exposureOf`).
  */
 export const EXPOSURE_BAND: Readonly<Record<TimeOfDay, { readonly min: number; readonly max: number }>> = {
-  day: { min: 1.6e-5, max: 2e-3 },
-  dusk: { min: 0.01, max: 0.04 },
-  night: { min: 0.01, max: 0.04 },
+  day: { min: EXPOSURE_PER_NIT.day, max: EXPOSURE_PER_NIT.dayMax },
+  dusk: { min: EXPOSURE_PER_NIT.night, max: EXPOSURE_PER_NIT.nightMax },
+  night: { min: EXPOSURE_PER_NIT.night, max: EXPOSURE_PER_NIT.nightMax },
 };
 
-/** The exposure for an image's log-average luminance (cd/m²): key 0.18, held within the band. */
+/** The photographic key a still is metered to. */
+export const KEY = 0.18;
+
+/**
+ * The luminance (cd/m²) a pixel darker than counts as, when a still is metered: what the band's most
+ * open exposure would show at a hundredth of the key — the worker's floor, so a black night sky does
+ * not drag the average to nothing.
+ */
+export const meterFloor = (time: TimeOfDay): number => KEY / EXPOSURE_BAND[time].max / 100;
+
+/**
+ * The exposure for an image's log-average luminance (cd/m², each pixel counted as at least
+ * `meterFloor`): the key over it, held within the band — the worker's `exposureOf`.
+ */
 export function meteredExposure(logAverage: number, time: TimeOfDay): number {
   const band = EXPOSURE_BAND[time];
-  const e = 0.18 / Math.max(1e-6, logAverage);
+  const e = KEY / Math.max(meterFloor(time), logAverage);
   return Math.min(band.max, Math.max(band.min, e));
 }
 
