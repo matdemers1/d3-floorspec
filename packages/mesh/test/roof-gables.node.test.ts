@@ -114,8 +114,9 @@ describe('a thick roof and its gable ends (FLR-T-12.35)', () => {
     const eave = 10 * FT;
     // The high edge is 16 ft from the low one, overhangs included, at 3 in 12: 4 ft above the 10 ft eave.
     expect(top('roof:RF2')).toBe(14 * FT);
-    expect(top('roofGable:RF2:gable0')).toBe(14 * FT - T);
-    expect(top('roofGable:RF2:gable1')).toBe(14 * FT - T);
+    // The south wall is a foot inside it (FLR-T-12.36): the surface over it is 3 in lower.
+    expect(top('roofGable:RF2:gable0')).toBe(14 * FT - FT / 4 - T);
+    expect(top('roofGable:RF2:gable1')).toBe(14 * FT - FT / 4 - T);
     for (const p of parts.filter((q) => q.kind === 'roofGable')) expect(p.bbox.min[2], p.key).toBe(eave);
     // Nothing of a gable end is above the underside of the roof over it: Float32 metres, within rounding.
     const roof = triangles(parts.filter((p) => p.key === 'roof:RF2'));
@@ -134,6 +135,30 @@ describe('a thick roof and its gable ends (FLR-T-12.35)', () => {
         expect(z, `${g.part.key}: no underside over (${q[0]}, ${q[1]})`).toBeDefined();
         expect(q[2]).toBeLessThanOrEqual(z! + 1e-5);
       }
+  });
+
+  it('each gable end stands on its wall, and the roof rakes past it (FLR-T-12.36)', () => {
+    const doc = JSON.parse(GUEST_WING) as { roofs: { RF2: { footprint: V2[] } } };
+    const fp = doc.roofs.RF2.footprint;
+    const result = mesher.meshDocument(GUEST_WING, { include: ['roof', 'roofGable'] });
+    const parts = result.parts;
+    const gables = parts.filter((p) => p.kind === 'roofGable');
+    expect(gables.map((p) => p.key).sort()).toEqual([0, 1, 3, 4, 5, 6].map((i) => `roofGable:RF2:gable${i}`).sort());
+    for (const g of gables) {
+      // Every point of gable end i lies on footprint edge i, the wall's face — within Float32 metres.
+      const i = Number(g.key.slice('roofGable:RF2:gable'.length));
+      const o = result.origin;
+      const [a, b] = [fp[i]!, fp[(i + 1) % fp.length]!].map((p): V2 => [(p[0] - o[0]) / 1_280_000, (p[1] - o[1]) / 1_280_000]) as [V2, V2];
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const P = g.mesh.positions;
+      for (let k = 0; k < P.length; k += 3) {
+        const off = ((b[0] - a[0]) * (P[k + 1]! - a[1]) - (b[1] - a[1]) * (P[k]! - a[0])) / len;
+        expect(Math.abs(off), `${g.key}: a point off its wall`).toBeLessThan(1e-5);
+      }
+    }
+    // The roof reaches a foot past the south wall: its underside shows over the rake.
+    const roof = parts.find((p) => p.key === 'roof:RF2')!;
+    expect(roof.bbox.min[1]).toBe(-FT);
   });
 
   it('a gable end lower than the roof’s thickness everywhere is not drawn', () => {

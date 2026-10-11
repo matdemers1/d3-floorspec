@@ -1,0 +1,8 @@
+{
+  "description": "The guest wing with its west wall curving in, three chords 3 feet deep, so the footprint has three reflex corners, and every edge but the north eave a gable overhanging a foot: the eave outline moves each chord out a foot and is narrower there than the footprint's corners, but each gable end still stands on its own chord of the footprint and rises to the plane over it (16.5).",
+  "covers": [
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.3.1"
+  ]
+}

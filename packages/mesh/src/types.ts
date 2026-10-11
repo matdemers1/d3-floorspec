@@ -29,8 +29,8 @@ export interface Box3 {
  * | `floor` | room | solid between its top and bottom (15.1); a surface facing up when it declares no thickness — or, on a level with a level below, a solid down to just above the ceiling below (`plenum`), a surface facing both ways where that leaves no depth (FLR-T-12.32) |
  * | `ceiling` | room | surface facing down: flat, tray (with its step) or vault (15.2–15.4) |
  * | `slab` | slab | solid (15.7) |
- * | `roof` | roof | solid: with a thickness, the surface thickened down by it; without, the shell closed by its gable ends and a soffit at the eave (16.5). A flat roof without thickness is a surface facing up |
- * | `roofGable` | roof | surface: a gable end (16.5), emitted only for a roof with a thickness, whose solid does not close it: the part below the solid's underside, never in its edge band |
+ * | `roof` | roof | solid: with a thickness, the surface thickened down by it, raking past its gable ends; without, the volume between the eave and the surface over the whole eave outline, closed by a soffit at the eave and, along each gable's edge of the outline, the surface's edge dropped to the eave (16.5). A flat roof without thickness is a surface facing up |
+ * | `roofGable` | roof | surface: a gable end (16.5) — on its wall, the gable's edge of the footprint, in Core 0.4 — emitted only for a roof with a thickness, whose solid does not close it: the part below the solid's underside |
  * | `stairFlight` | stair | solid: one flight's treads, each from two risers below its top to its top, unioned — a winder stair's flights and its winders between them are one, and so are a spiral stair's treads (17.7) |
  * | `stairLanding` | stair | solid: a landing plate, by the same rule |
  * | `stairColumn` | stair | solid: a spiral stair's centre column, its column's radius (17.7) — or a slender pole when its treads meet at the centre — from its bottom to its top |

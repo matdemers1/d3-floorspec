@@ -1,0 +1,7 @@
+{
+  "description": "A house 30 feet by 20 with its south-east corner cut on a 4 : 3 slope, the cut a gable with no overhang between eaves that overhang 2 inches, the south at 9 in 12 and the rest at 6. The eave outline's vertex where the south eave meets the cut is not an integer point and is rounded once (16.3), inside the cut's line by a third of a base unit, so the outline's edge on the cut lies inside the footprint's edge by less than a base unit, and both ends of the footprint's edge lie outside the outline. The gable end stands on the footprint edge, its top along the outline's edge through the node where the two hips meet on it, and each end at the elevation of the point of the outline nearest it (16.5).",
+  "covers": [
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.3.1"
+  ]
+}

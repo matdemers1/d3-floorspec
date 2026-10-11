@@ -673,7 +673,7 @@ export function deriveRoofs(doc: FloorspecDocument, core04 = false): Record<stri
       kind: roofKind(ks),
       outline: leastFirst2(ring).map((p) => [toSafeNumber(p[0]), toSafeNumber(p[1])]),
       eave: toSafeNumber(e),
-      surface: m === undefined ? null : surfaceOf(roof, outline, ks, e, m),
+      surface: m === undefined ? null : surfaceOf(roof, outline, ks, e, m, core04),
     };
     Object.defineProperty(out, id, { value: v, enumerable: true, writable: true, configurable: true });
   }
@@ -687,7 +687,13 @@ function gableEnd(index: number, a: IPoint, b: IPoint, on: readonly B3[], e: big
   return { edge: index, polygon: dedupe3([[a[0], a[1], e], [b[0], b[1], e], ...sorted]).map(num3) };
 }
 
-function surfaceOf(roof: Roof, outline: readonly IPoint[], ks: readonly EdgeKind[], e: bigint, m: Method): NonNullable<DerivedRoof['surface']> {
+/** The footprint walked as the counter-clockwise outline is — its edge j under the outline's edge j — with each ring edge's overhang. */
+function ccwFootprint(roof: Roof, o: Outline): { ring: IPoint[]; overhang: bigint[] } {
+  const fp = footprintOf(roof);
+  return { ring: area2(fp) > 0n ? fp : [...fp].reverse(), overhang: o.index.map((i) => overhangOf(roof, i)) };
+}
+
+function surfaceOf(roof: Roof, outline: readonly IPoint[], ks: readonly EdgeKind[], e: bigint, m: Method, core04 = false): NonNullable<DerivedRoof['surface']> {
   const o = new Outline(outline, ks);
   const faces: { edge?: number; poly: B3[] }[] = [];
   const gables: { edge: number; polygon: P3[] }[] = [];
@@ -707,13 +713,21 @@ function surfaceOf(roof: Roof, outline: readonly IPoint[], ks: readonly EdgeKind
     let hz = z(o.ring[0]!);
     for (const p of o.ring) if (z(p).cmp(hz) > 0) hz = z(p);
     high = hz.round();
+    const fp = ccwFootprint(roof, o).ring;
     for (let g = 0; g < o.n; g++)
       if (o.kind[g] === 'gable') {
+        if (core04) {
+          // 16.5 of 0.4: on the footprint edge, the wall, up to the plane over it.
+          const a0 = fp[g]!;
+          const b0 = fp[(g + 1) % o.n]!;
+          gables.push({ edge: o.index[g]!, polygon: dedupe3([[a0[0], a0[1], e], [b0[0], b0[1], e], [b0[0], b0[1], z(b0).round()], [a0[0], a0[1], z(a0).round()]]).map(num3) });
+          continue;
+        }
         const [ga, gb] = o.seg(g);
         gables.push(gableEnd(o.index[g]!, ga, gb, [ga, gb].map((p): B3 => [p[0], p[1], z(p).round()]), e));
       }
   } else if (m === 'weighted') {
-    const w = weightedSurface(o, ringPitches(roof, o), e);
+    const w = weightedSurface(o, ringPitches(roof, o), e, ccwFootprint(roof, o));
     faces.push(...w.faces);
     for (const g of w.gables) gables.push({ edge: g.edge, polygon: g.poly.map(num3) });
     lines = w.lines.map((l) => ({ kind: l.kind, from: num3(l.from), to: num3(l.to) }));

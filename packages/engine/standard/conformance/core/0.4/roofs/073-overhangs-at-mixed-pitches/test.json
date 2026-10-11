@@ -1,5 +1,5 @@
 {
-  "description": "The saltbox with a 2-foot overhang at the back and none elsewhere: the eave outline is computed first, 26 feet deep, and the skeleton from it, so the ridge, a third of the way across from the steep front, lies 26/3 feet north of the south eave and 26/3 feet above it.",
+  "description": "The saltbox with a 2-foot overhang at the back and none elsewhere: the eave outline is computed first, 26 feet deep, and the skeleton from it, so the ridge, a third of the way across from the steep front, lies 26/3 feet north of the south eave and 26/3 feet above it. The gables have no overhang of their own, but the back edge beside them has: each gable end stands on its wall and stops at the wall's back corner, a foot above the eave, and the back eave's overhang is open at its ends (16.5).",
   "covers": [
     "FS-CORE-16.4.2",
     "FS-CORE-16.4.3",

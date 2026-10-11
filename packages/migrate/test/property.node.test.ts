@@ -6,7 +6,7 @@
  * original, the migration is valid under 0.4, and every value its own draft's suite says that draft
  * derives (walls, rooms, openings, and from 0.2 the program, fallbacks, placements, clearances and
  * circulation) is preserved — a winder's steps and a roof's surface that 0.3 left underived aside, which a
- * reader of 0.4 derives. And the Ops batch the editor applies (migrationBatch) commits exactly the
+ * reader of 0.4 derives, and a roof's gable ends, which 0.4 stands on the footprint (16.5, FLR-T-12.36). And the Ops batch the editor applies (migrationBatch) commits exactly the
  * migration's canonical form.
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -67,11 +67,18 @@ for (const draft of ['0.1', '0.2', '0.3'] as const) {
           }
         } else if (member === 'roofs' && draft === '0.3') {
           // Core 0.4 derives the surface of more roofs than 0.3 did (16.4.3, the weighted straight
-          // skeleton): a surface 0.3 derived is kept exactly, and one 0.3 left underived may now be derived.
+          // skeleton): a surface 0.3 derived is kept exactly, and one 0.3 left underived may now be derived —
+          // but for its gable ends, which 0.4 stands on the footprint, where 0.3 stood them on the eave
+          // outline (16.5): the same unless a gable or an edge beside one overhangs.
           for (const [id, rf] of Object.entries(value as Record<string, Record<string, unknown>>)) {
             const now = (got as Record<string, Record<string, unknown>>)[id]!;
             const kept = rf['surface'] === null ? Object.keys(rf).filter((k) => k !== 'surface') : Object.keys(rf);
-            expect(Object.fromEntries(kept.map((k) => [k, now[k]]))).toEqual(Object.fromEntries(kept.map((k) => [k, rf[k]])));
+            const view = (r: Record<string, unknown>): Record<string, unknown> => {
+              const out = Object.fromEntries(kept.map((k) => [k, r[k]]));
+              if (out['surface']) out['surface'] = { ...(out['surface'] as Record<string, unknown>), gables: undefined };
+              return out;
+            };
+            expect(view(now)).toEqual(view(rf));
           }
         } else expect([member, got]).toEqual([member, value]);
       }

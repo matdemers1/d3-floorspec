@@ -1,5 +1,5 @@
 {
-  "description": "A gable roof with its footprint written clockwise: the outline is derived counter-clockwise from its least vertex; the gables, its short ends, are edges 0 and 2 as it is written - west, north, east, south - and every face and gable keeps its edge's index as written.",
+  "description": "A gable roof with its footprint written clockwise: the outline is derived counter-clockwise from its least vertex; the gables, its short ends, are edges 0 and 2 as it is written - west, north, east, south - and every face and gable keeps its edge's index as written. Each gable end stands on its edge of the footprint, the wall, 300 mm inside the outline, and rises 150 mm at the wall's corners before it meets the ridge (16.5).",
   "covers": [
     "FS-CORE-16.5.2",
     "FS-CORE-16.3.1"
