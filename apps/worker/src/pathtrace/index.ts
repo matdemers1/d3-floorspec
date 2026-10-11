@@ -334,6 +334,8 @@ export interface LitOptions {
   readonly design?: Record<string, string>;
   readonly reader?: SceneOptions['reader'];
   readonly images?: ImageSource;
+  /** The doors closed (default) or open (FLR-T-13.8). */
+  readonly doors?: SceneOptions['doors'];
   readonly onPass?: (done: number, total: number) => void | Promise<void>;
 }
 
@@ -345,7 +347,7 @@ export interface LitOptions {
 export async function renderLit(document: object, options: LitOptions): Promise<StillResult> {
   const w = options.width ?? LIT_WIDTH;
   if (!Number.isInteger(w) || w < 64 || w > LIT_MAX_WIDTH) throw new RangeError(`a render with lights is 64 to ${String(LIT_MAX_WIDTH)} pixels wide`);
-  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }) });
+  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }), ...(options.doors === undefined ? {} : { doors: options.doors }) });
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
   const level = options.level ?? (options.room === undefined ? scene.levels[0]?.id : undefined);

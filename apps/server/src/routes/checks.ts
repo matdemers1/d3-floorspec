@@ -28,6 +28,8 @@ const RenderQuery = z.object({
   // 3D (FLR-T-12.22): the luminaires on or off — path-traced — and the time of day it is seen at.
   lights: z.enum(['on', 'off']).optional(),
   time: z.enum(['day', 'dusk', 'night']).optional(),
+  // 3D (FLR-T-13.8): the doors closed (default) or open.
+  doors: z.enum(['open', 'closed']).optional(),
 });
 
 /** The 3D render's widest picture: a software render, so its pixels are the worker's time. */
@@ -225,6 +227,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(design === undefined ? {} : { design }),
           ...(q.lights === undefined ? {} : { lights: q.lights }),
           ...(q.time === undefined ? {} : { time: q.time }),
+          ...(q.doors === undefined ? {} : { doors: q.doors }),
         },
         versionHash: at.hash,
         requestedByAccountId: req.auth?.accountId ?? req.token?.accountId ?? null,

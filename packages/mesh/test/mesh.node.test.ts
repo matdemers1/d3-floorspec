@@ -45,7 +45,7 @@ describe('the conformance suites', () => {
     // with a thickness has as parts of their own: the starter templates (examples/005 and 006) declare one.
     // A Core 0.4 reader derives every stair's steps (17.7), so none is a placeholder block here; a
     // spiral's column is a part of its own.
-    expect([...kinds].sort()).toEqual(['ceiling', 'extension', 'floor', 'junctionFill', 'opening', 'roof', 'roofGable', 'slab', 'stairColumn', 'stairFlight', 'stairLanding', 'threshold', 'wall'].sort());
+    expect([...kinds].sort()).toEqual(['ceiling', 'extension', 'floor', 'junctionFill', 'opening', 'roof', 'roofGable', 'slab', 'stairColumn', 'stairFlight', 'stairLanding', 'threshold', 'wall', 'joinery'].sort());
     // Doorways floored and corners closed (FLR-T-12.20): the examples' separators leave corners open.
     expect(closures).toBeGreaterThan(10);
     expect(solids).toBeGreaterThan(1000);

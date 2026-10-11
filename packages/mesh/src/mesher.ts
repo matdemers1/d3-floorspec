@@ -5,6 +5,7 @@
 import { deriveEvaluation, evaluate, type Derived, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { closureParts } from './closures.js';
 import { extensionParts } from './extensions.js';
+import { joineryParts } from './joinery.js';
 import { loadKernel, type Kernel, type KernelOptions } from './kernel.js';
 import type { RawPart } from './part.js';
 import { roofParts } from './roofs.js';
@@ -70,6 +71,7 @@ function meshWith(kernel: Kernel, doc: FloorspecDocument, derived: Derived, opti
       ...roofParts(kernel, doc, derived, want),
       ...stairParts(kernel, doc, derived, want),
       ...extensionParts(kernel, doc, derived, want, options.models !== false),
+      ...joineryParts(kernel, doc, derived, want, options.doors ?? 'closed'),
     );
     const parts: MeshPart[] = [];
     for (const r of raw) {

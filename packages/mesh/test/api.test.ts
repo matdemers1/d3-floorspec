@@ -26,10 +26,11 @@ const kinds = (m: HouseMesh): Record<string, number> => {
 };
 
 describe('meshDocument', () => {
-  it('meshes the three-room house into its walls, openings, fill, floors, ceilings and thresholds', async () => {
+  it('meshes the three-room house into its walls, openings, fill, floors, ceilings, thresholds and joinery', async () => {
     const m = await meshDocument(house);
     expect(m.unitsPerMetre).toBe(UNITS_PER_METRE);
-    expect(kinds(m)).toEqual({ wall: 9, junctionFill: 2, opening: 6, floor: 3, ceiling: 3, threshold: 4 });
+    // Its six openings' joinery (FLR-T-13.8): two doors and four windows, piece by piece.
+    expect(kinds(m)).toEqual({ wall: 9, junctionFill: 2, opening: 6, floor: 3, ceiling: 3, threshold: 4, joinery: 90 });
     // The fill at TM, and the corner its separator leaves open beside WI2 closed (FLR-T-12.20).
     expect(m.parts.filter((p) => p.kind === 'junctionFill').map((p) => p.key)).toEqual(['junctionFill:TM', 'junctionFill:TM:closure:WI2']);
     // A threshold each side of each door: the bedroom door's halves are each room's floor; the front

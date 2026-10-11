@@ -292,3 +292,97 @@ export function paired(showcase: Json): Json {
   fixtures['WM3-P'] = { fixture: 'clothesWasher', fallback: washer(11_520_000) };
   return d;
 }
+
+/**
+ * A house with an opening of every operation (FLR-T-13.8): a 20 × 10 m box of two rooms either side
+ * of a partition. Its west and north walls hold a window of every window operation, a twin casement
+ * with grilles and a glass wall down to the floor; its north and east walls French doors, a garage
+ * door, a patio slider and a swing door; the partition a barn door, a pocket door (its pocket
+ * beyond its end jamb), a bifold, a double-acting door, a cased opening and a swing door hung at its
+ * end, opening to its left.
+ */
+export function joinery(): Json {
+  const MM = 1_280;
+  const at = (x: number, y: number): [number, number] => [x * MM, y * MM];
+  const door = (name: string, operation: string, w: number, h: number): Json => ({ kind: 'doorType', name, operation, width: w * MM, height: h * MM });
+  const win = (name: string, operation: string, w: number, h: number, sill: number): Json => ({ kind: 'windowType', name, operation, width: w * MM, height: h * MM, sill: sill * MM });
+  const opening = (wall: string, offset: number, fill: string, more: Json = {}): Json => ({ wall, offset: offset * MM, fill, ...more });
+  const doc: Json = {
+    floorspec: '0.3',
+    project: { name: 'Joinery' },
+    buildings: { H: { name: 'House' } },
+    levels: { L1: { building: 'H', elevation: 0, height: 3_000 * MM, name: 'Ground floor' } },
+    junctions: {
+      A: { level: 'L1', position: at(0, 0) },
+      D: { level: 'L1', position: at(0, 10_000) },
+      N: { level: 'L1', position: at(10_000, 10_000), join: { kind: 'butt', through: ['WN1', 'WN2'] } },
+      C: { level: 'L1', position: at(20_000, 10_000) },
+      B: { level: 'L1', position: at(20_000, 0) },
+      S: { level: 'L1', position: at(10_000, 0), join: { kind: 'butt', through: ['WS2', 'WS1'] } },
+    },
+    walls: {
+      WW: { level: 'L1', start: 'A', end: 'D', type: 'EXT' },
+      WN1: { level: 'L1', start: 'D', end: 'N', type: 'EXT' },
+      WN2: { level: 'L1', start: 'N', end: 'C', type: 'EXT' },
+      WE: { level: 'L1', start: 'C', end: 'B', type: 'EXT' },
+      WS2: { level: 'L1', start: 'B', end: 'S', type: 'EXT' },
+      WS1: { level: 'L1', start: 'S', end: 'A', type: 'EXT' },
+      WP: { level: 'L1', start: 'S', end: 'N', type: 'INT' },
+    },
+    rooms: {
+      R1: { level: 'L1', anchor: at(5_000, 5_000), name: 'West room', function: 'living' },
+      R2: { level: 'L1', anchor: at(15_000, 5_000), name: 'East room', function: 'garage' },
+    },
+    types: {
+      EXT: { kind: 'wallType', name: 'Exterior wall', layers: [{ thickness: 19 * MM, function: 'finish' }, { thickness: 140 * MM, function: 'core' }, { thickness: 13 * MM, function: 'finish' }] },
+      INT: { kind: 'wallType', name: 'Partition', layers: [{ thickness: 13 * MM, function: 'finish' }, { thickness: 89 * MM, function: 'core' }, { thickness: 13 * MM, function: 'finish' }] },
+      DSW: door('Swing door', 'swing', 914, 2_032),
+      DFR: door('Double swing doors', 'doubleSwing', 1_829, 2_032),
+      DDA: door('Double-acting door', 'doubleActing', 914, 2_032),
+      DPK: door('Pocket door', 'pocket', 813, 2_032),
+      DBP: door('Bypass sliding doors', 'bypassSlide', 1_829, 2_032),
+      DBN: door('Barn door', 'surfaceSlide', 914, 2_032),
+      DBF: door('Bifold doors', 'bifold', 1_219, 2_032),
+      DOH: door('Overhead garage door', 'overhead', 2_743, 2_134),
+      DCS: door('Cased opening', 'cased', 1_000, 2_100),
+      WFX: win('Fixed window', 'fixed', 1_219, 1_219, 762),
+      WCS: win('Casement window', 'casement', 610, 1_219, 762),
+      WAW: win('Awning window', 'awning', 914, 610, 1_219),
+      WHP: win('Hopper window', 'hopper', 610, 610, 1_219),
+      WSH: win('Single-hung window', 'singleHung', 914, 1_524, 610),
+      WDH: win('Double-hung window', 'doubleHung', 914, 1_524, 610),
+      WHS: win('Horizontal sliding window', 'horizontalSlider', 1_219, 914, 914),
+      WTT: win('Tilt-turn window', 'tiltTurn', 762, 1_219, 762),
+      WPV: win('Pivot window', 'pivot', 762, 1_219, 762),
+      WTG: win('Twin casement window with grilles', 'casement', 1_524, 1_219, 762),
+      WGL: win('Glass wall', 'fixed', 1_829, 2_400, 0),
+    },
+    openings: {
+      O1: opening('WW', 500, 'WFX'),
+      O2: opening('WW', 2_200, 'WCS'),
+      O3: opening('WW', 3_300, 'WAW'),
+      O4: opening('WW', 4_700, 'WHP'),
+      O5: opening('WW', 5_800, 'WSH'),
+      O6: opening('WW', 7_200, 'WDH'),
+      O7: opening('WW', 8_500, 'WHS'),
+      O8: opening('WN1', 1_000, 'WTT'),
+      O9: opening('WN1', 2_500, 'WPV'),
+      O10: opening('WN1', 4_000, 'WTG'),
+      O11: opening('WN1', 6_500, 'WGL'),
+      O12: opening('WN2', 1_000, 'DFR'),
+      O13: opening('WN2', 4_000, 'DOH'),
+      O14: opening('WE', 1_000, 'DBP'),
+      O15: opening('WE', 4_000, 'DSW', { hinge: 'start', swing: 'right' }),
+      O16: opening('WS2', 3_000, 'WDH'),
+      O17: opening('WP', 1_300, 'DBN'),
+      O18: opening('WP', 2_800, 'DPK', { hinge: 'end' }),
+      O19: opening('WP', 4_700, 'DBF'),
+      O20: opening('WP', 6_000, 'DDA'),
+      O21: opening('WP', 7_100, 'DCS', { width: 600 * MM }),
+      O22: opening('WP', 8_300, 'DSW', { hinge: 'end', swing: 'left' }),
+    },
+  };
+  const ev = evaluate(doc);
+  if (!ev.valid) throw new Error(`the joinery house is not valid: ${JSON.stringify(ev.diagnostics.filter((d) => d.severity === 'error').slice(0, 3))}`);
+  return doc;
+}

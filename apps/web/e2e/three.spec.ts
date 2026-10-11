@@ -165,12 +165,15 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
 
   // ── Live: an edit made elsewhere (an API batch, as an agent's accepted change arrives) is re-meshed
   //    in place, and the camera stays where it was.
-  const parts = await page.evaluate(() => window.__floorspec3d?.parts ?? 0);
+  const openings = await page.evaluate(() => window.__floorspec3d?.kinds['opening'] ?? 0);
+  const joinery = await page.evaluate(() => window.__floorspec3d?.kinds['joinery'] ?? 0);
   const added = await page.request.post(`/api/projects/${project}/ops`, {
     data: { batch: [{ op: 'addElement', collection: 'openings', id: 'GW5', element: { wall: 'GCD', offset: Math.round(3.4 * M), fill: 'WN' } }] },
   });
   expect(added.status(), await added.text()).toBe(201);
-  await expect.poll(() => page.evaluate(() => window.__floorspec3d?.parts ?? 0)).toBe(parts + 1);
+  // Its cut, and what fills it: a frame, a sash, glass, a stool and the rest (FLR-T-13.8).
+  await expect.poll(() => page.evaluate(() => window.__floorspec3d?.kinds['opening'] ?? 0)).toBe(openings + 1);
+  expect(await page.evaluate(() => window.__floorspec3d?.kinds['joinery'] ?? 0)).toBeGreaterThan(joinery);
   await expect(page.getByText('3D · SW iso')).toBeVisible();
 
   // ── Walk through, from the entry: inside the front door, in the kitchen, at eye height.

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { buildScene, exportGltf } from '../src/export/gltf/index.js';
-import { handlers } from '../src/queue/handlers.js';
+import { handlers, render3dParams } from '../src/queue/handlers.js';
 import { ROOM_PALETTE } from '@floorspec/mesh';
 import { linear } from '../src/export/gltf/scene.js';
 import { encodePng } from '../src/render3d/png.js';
@@ -226,7 +226,8 @@ describe('doorways and corners (FLR-T-12.20)', () => {
           continue;
         }
         expect(ths.length, `${n.id}: a threshold`).toBeGreaterThan(0);
-        expect(n.parts).toEqual(['opening', 'threshold']);
+        // Its cut, its threshold, and what fills it (FLR-T-13.8).
+        expect(n.parts).toEqual(['opening', 'threshold', 'joinery']);
         // An upper level's threshold goes down with its floor to the ceiling below (FLR-T-12.32): its
         // underside is that ceiling and its edges the structure's — the rest of it is the floor.
         const sills = ths.filter((p) => !/^default:(ceiling:|floorEdge$)/.test(scene.materials[p.material]!.key));
@@ -363,5 +364,30 @@ describe('appearance (FLR-T-12.23)', () => {
     expect(colours(img)).toBeGreaterThan(200);
     const again = await render3dPng(structuredClone(APPEARANCE), { camera: 'se', level: 'UPPER', width: 512 });
     expect(Buffer.from(again.png).equals(Buffer.from(encodePng(img.rgb, img.width, img.height)))).toBe(true);
+  });
+});
+
+describe('doors closed or open (FLR-T-13.8)', () => {
+  it('draws every opening filled, its doors closed by default and open when asked', async () => {
+    expect(render3dParams({ doors: 'open' })).toEqual({ doors: 'open' });
+    expect(render3dParams({ doors: 'ajar' })).toEqual({});
+    const shut = await buildScene(structuredClone(TWO_STOREY));
+    const open = await buildScene(structuredClone(TWO_STOREY), { doors: 'open' });
+    const openings = (s: typeof shut) => s.levels.flatMap((l) => l.nodes.filter((n) => n.kind === 'opening'));
+    // Every opening's node holds its joinery; a window's cut is no longer glass of its own.
+    for (const n of openings(shut)) expect(n.parts, n.id).toContain('joinery');
+    for (const n of openings(shut)) expect(n.primitives.filter((p) => p.part === 'opening'), n.id).toHaveLength(0);
+    // A door's slab moves; a window does not.
+    const bytes = (s: typeof shut, id: string): string => openings(s).find((n) => n.id === id)!.primitives.map((p) => Buffer.from(p.positions.buffer, p.positions.byteOffset, p.positions.byteLength).toString('base64')).join('|');
+    const types = TWO_STOREY['types'] as Record<string, { kind: string }>;
+    const fills = TWO_STOREY['openings'] as Record<string, { fill?: string }>;
+    const ids = Object.keys(fills);
+    const door = ids.find((id) => types[fills[id]!.fill ?? '']?.kind === 'doorType')!;
+    const window = ids.find((id) => types[fills[id]!.fill ?? '']?.kind === 'windowType')!;
+    expect(bytes(open, door)).not.toBe(bytes(shut, door));
+    expect(bytes(open, window)).toBe(bytes(shut, window));
+    const a = await render3dPng(structuredClone(TWO_STOREY), { width: 256 });
+    const b = await render3dPng(structuredClone(TWO_STOREY), { width: 256, doors: 'open' });
+    expect(Buffer.from(a.png).equals(Buffer.from(b.png))).toBe(false);
   });
 });

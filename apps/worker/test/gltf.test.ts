@@ -234,10 +234,11 @@ describe('glTF export', () => {
       if (d.color !== undefined) linear(d.color).forEach((c, k) => { expect(m.pbrMetallicRoughness.baseColorFactor[k]).toBeCloseTo(c, 6); });
     }
     expect(checked).toBeGreaterThan(0);
-    // The two-storey house: its siding and gypsum board, on the exterior and interior faces.
+    // The two-storey house: its siding and gypsum board, on the exterior and interior faces; its
+    // openings' joinery (FLR-T-13.8) — casings, frames, door slabs and glass — in their roles' looks.
     const house = readGlb((await exportGltf(HOUSES['two-storey']!, VERSION)).bytes);
     const names = (house.json['materials'] as { name: string }[]).map((m) => m.name);
-    expect(names).toEqual(expect.arrayContaining(['SIDING Fibre-cement lap siding', 'GWB Gypsum board', 'STUD SPF framing', 'Default glass']));
+    expect(names).toEqual(expect.arrayContaining(['SIDING Fibre-cement lap siding', 'GWB Gypsum board', 'STUD SPF framing', 'Model millwork', 'Model frame', 'Model door', 'Model glass']));
   });
 
   it('is deterministic: the same version gives the same bytes', async () => {
@@ -353,7 +354,8 @@ describe('glTF export', () => {
     const glb = readGlb(bytes);
     type Material = { pbrMetallicRoughness: { baseColorFactor: number[]; metallicFactor: number }; emissiveFactor?: number[]; alphaMode?: string; extras: { floorspec: Json } };
     const byRole = new Map((glb.json['materials'] as Material[]).filter((m) => typeof m.extras.floorspec['role'] === 'string').map((m) => [m.extras.floorspec['role'] as string, m]));
-    expect([...byRole.keys()].sort()).toEqual([...MODEL_ROLES].sort());
+    // Every role but the ones only an opening's joinery is made of (FLR-T-13.8): the showcase has no openings.
+    expect([...byRole.keys()].sort()).toEqual(MODEL_ROLES.filter((r) => r !== 'door' && r !== 'frame' && r !== 'millwork').sort());
     for (const [role, m] of byRole) {
       const look = ROLE_LOOKS[role as keyof typeof ROLE_LOOKS];
       const [r, g, b] = linear(look.color);

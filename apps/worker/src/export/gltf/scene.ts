@@ -21,7 +21,7 @@
  * this exporter's choice and not the standard's.
  */
 import { deriveEvaluation, evaluate, extElements, facingVector, furniture, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
-import { appearanceOf, DEFAULT_COLOURS, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch } from '@floorspec/mesh';
+import { appearanceOf, DEFAULT_COLOURS, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch, type DoorState } from '@floorspec/mesh';
 import { decodeTexture } from '../../pathtrace/textures.js';
 import type { ImageSource } from './glb.js';
 
@@ -205,6 +205,8 @@ export interface SceneOptions {
    * a base colour map and no `color` is drawn in the map's average colour rather than a default.
    */
   readonly images?: ImageSource;
+  /** The doors closed (default) or open — swung to 90°, slid, folded, raised (FLR-T-13.8). */
+  readonly doors?: DoorState;
 }
 
 const M = UNITS_PER_METRE;
@@ -535,6 +537,7 @@ const ELEMENT_KIND: Record<PartKind, ElementKind> = {
   stairBlock: 'stair',
   extension: 'extension',
   threshold: 'opening',
+  joinery: 'opening',
 };
 
 const COLLECTION: Record<Exclude<ElementKind, 'extension'>, keyof FloorspecDocument> = {
@@ -597,14 +600,14 @@ export async function buildScene(document: object, options: SceneOptions = {}): 
  * chose), without validating it again: the drawings' 3D views use the evaluation their plans were
  * drawn from. `options.design` and `options.reader` are the evaluation's and are not read.
  */
-export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions, 'levels' | 'images'> = {}): Promise<Scene> {
+export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions, 'levels' | 'images' | 'doors'> = {}): Promise<Scene> {
   if (!ev.valid || ev.document === undefined) throw new InvalidDocumentError(ev.diagnostics);
   const derived = deriveEvaluation(ev);
   const doc = ev.view ?? ev.document;
   const mesher = await getMesher();
   const levelIds = Object.keys(doc.levels ?? {});
   for (const l of options.levels ?? []) if (!levelIds.includes(l)) throw new RangeError(`the model has no level ${l}`);
-  const house = mesher.meshDerived(doc, derived, options.levels === undefined ? {} : { levels: options.levels });
+  const house = mesher.meshDerived(doc, derived, { ...(options.levels === undefined ? {} : { levels: options.levels }), ...(options.doors === undefined ? {} : { doors: options.doors }) });
   return sceneOf(doc, derived, house.parts, ev.design ?? null, mapAverages(doc, options.images));
 }
 
@@ -691,13 +694,10 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
         }
         break;
       }
-      case 'opening': {
-        // A window's glass; a door's or an empty opening's cut is a hole, so it has no geometry.
-        if (part.opening?.category !== 'window') break;
-        const glass = materials.default('glass');
-        for (const { tri, n } of triangles(part)) b.add('opening', glass, tri, n, boxProjection(n));
+      case 'opening':
+        // The cut itself is a hole: what fills it — a window's frame and glass, a door's slabs, the
+        // casings — is its joinery (FLR-T-13.8), drawn below as a model's pieces are.
         break;
-      }
       case 'floor':
       case 'ceiling': {
         const fin = finishes?.rooms[part.id];
@@ -709,7 +709,7 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
       }
       default: {
         const fallback = swatch(part.kind === 'slab' ? 'slab' : part.kind === 'roof' ? 'roof' : part.kind === 'roofGable' ? 'gable' : part.kind === 'extension' ? 'extension' : 'stair');
-        // A piece of a model takes its role's look; a fallback box the quiet default.
+        // A piece of a model or of an opening's joinery takes its role's look; a fallback box the quiet default.
         const material = part.model !== undefined ? materials.role(part.model.role) : materials.of(part.kind === 'roofGable' ? undefined : part.material, fallback);
         const smooth = part.model?.smooth === true;
         for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, boxProjection(n), smooth);
