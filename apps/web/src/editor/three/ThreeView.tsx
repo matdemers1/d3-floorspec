@@ -12,7 +12,7 @@ import { compass, PRESET_ORDER, PRESETS, type PresetId } from './camera';
 import { FOV, ThreeController } from './controller';
 import { useHouseMesh } from './meshing';
 import { threeOf, useThreeState, type LevelsShown, type ThreeStore, type WalkStart } from './mode';
-import { describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
+import { castsShadow, describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
 import { isSurfacePart, surfaceBuffers, type MapRef } from './surfaces';
 import { TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
@@ -578,7 +578,8 @@ function Parts({
     // A model's glass (a shower's screen) in its own colour; a luminaire's lens unshaded, as if lit,
     // when the lights are on (FLR-T-12.22), and shaded like the rest when they are off.
     const modelGlass = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.38, depthWrite: false });
-    const lens = new THREE.MeshBasicMaterial({ vertexColors: true });
+    // Not tone-mapped: a lit lens is as bright as the screen shows, whatever the view's exposure (FLR-T-13.1).
+    const lens = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false });
     const lensOff = new THREE.MeshLambertMaterial({ vertexColors: true });
     const lensOn = new THREE.MeshLambertMaterial({ vertexColors: true, emissiveIntensity: 0.55 });
     const glassOn = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.6, depthWrite: false });
@@ -624,7 +625,7 @@ function Parts({
           geometry={b.geometry}
           material={b.slots === undefined ? materialOf(b, partSelected(b.part, selection)) : b.slots.map((m) => (m === null ? materialOf(b, partSelected(b.part, selection)) : textures.material(m, b.look, partSelected(b.part, selection))))}
           userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
-          castShadow={b.look !== 'glass' && b.look !== 'pick' && b.look !== 'lens'}
+          castShadow={castsShadow(b.part, b.look)}
           receiveShadow={b.look !== 'glass' && b.look !== 'pick'}
           renderOrder={b.look === 'glass' || b.look === 'pick' ? 1 : 0}
         />

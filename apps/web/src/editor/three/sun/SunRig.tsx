@@ -5,6 +5,7 @@ import type { HouseMesh } from '@floorspec/mesh';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { shadowMapSize, sunOf, useStudy, useSunState, type Study } from './study';
+import { BOUNCE_LUX, LIT_EXPOSURE, NIGHT_SKY_LUX, toneMappingExposure } from '../lights';
 
 /**
  * The 3D view's lights (FLR-T-8.6). With the sun off — or no site location to place it from — the
@@ -26,6 +27,7 @@ const DAY_SKY = '#ffffff'; // d3-allow: skylight in the 3D model, not chrome
 const NIGHT_SKY = '#8ea3c8'; // d3-allow: moonlit skylight in the 3D model, not chrome
 const SUN = '#fff4e2'; // d3-allow: sunlight's warmth in the 3D model, not chrome
 const GROUND = '#cdc8bd'; // d3-allow: the ground the house stands on in the 3D model, not chrome
+const LAMP_BOUNCE = '#fff1e0'; // d3-allow: warm-white lamplight bounced about a room in the 3D model, not chrome
 
 interface Frame {
   centre: THREE.Vector3;
@@ -136,13 +138,22 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false }: 
 
   useSunTestHook(store);
 
+  // FLR-T-13.1: with the fixtures on, the view is exposed for lamplight — lux and candela, as the
+  // path tracer is — and back to the studio's exposure when they are off.
+  useLayoutEffect(() => {
+    gl.toneMappingExposure = lamps ? toneMappingExposure(LIT_EXPOSURE) : 1;
+    invalidate();
+    return () => { gl.toneMappingExposure = 1; };
+  }, [gl, lamps, invalidate]);
+
   // The light fixtures on (FLR-T-12.22): dusk, whatever the sun study says — no sun, a dim blue
-  // sky — so the pools of light the lamps make read. The ground still takes their light.
+  // sky — so the pools of light the lamps make read. The ground still takes their light. In lux
+  // (FLR-T-13.1): the sky's, and the fill that stands for what the lamps' light bounces.
   if (lamps) {
     return (
       <>
-        <hemisphereLight args={[NIGHT_SKY, SKY_GROUND, 0.28]} position={[0, 0, 1]} />
-        <ambientLight intensity={0.05} />
+        <hemisphereLight args={[NIGHT_SKY, SKY_GROUND, NIGHT_SKY_LUX]} position={[0, 0, 1]} />
+        <ambientLight color={LAMP_BOUNCE} intensity={BOUNCE_LUX} />
         {frame === null ? null : (
           <mesh position={[frame.centre.x, frame.centre.y, frame.ground]} receiveShadow raycast={noRaycast} userData={{ ground: true }}>
             <circleGeometry args={[frame.radius * 3, 96]} />

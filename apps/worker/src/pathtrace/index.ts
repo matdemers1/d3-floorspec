@@ -18,10 +18,11 @@ import { encodePng } from '../render3d/png.js';
 import { denoise } from './denoise.js';
 import { BUDGET_MS, DEFAULT_SUN, LIGHTS, MAX_WORK, QUALITIES, SIZES, TIMES, withinBudget, type Lights, type Quality, type Size, type SunInput, type TimeOfDay } from './presets.js';
 import { decodeTexture, type Texture } from './textures.js';
-import { toneMap, type PtLamp, type PtMaterial, type PtScene, type Sun } from './trace.js';
+import { EXPOSURE_PER_NIT } from '@floorspec/mesh';
+import { exposureOf, toneMap, type ExposureBand, type PtLamp, type PtMaterial, type PtScene, type Sun } from './trace.js';
 import { traceParallel } from './threads.js';
 
-export { trace, toneMap, skyRadiance, type PtLamp, type PtScene, type PtMaterial, type Sun, type TraceOptions } from './trace.js';
+export { trace, toneMap, meter, exposureOf, skyRadiance, type ExposureBand, type PtLamp, type PtScene, type PtMaterial, type Sun, type TraceOptions } from './trace.js';
 export { Bvh, type Hit } from './bvh.js';
 export { Rng, hash32 } from './rng.js';
 export { decodeTexture, imageSize, sample, type Texture } from './textures.js';
@@ -55,8 +56,9 @@ export interface StillOptions {
   readonly denoise?: boolean;
   /**
    * The luminaires (FLR-T-12.22): `on`, each lamp lights its room and its lens glows; `off`, dark
-   * lenses and no lamps. Either way the still is exposed to a fixed exposure for its `time`, so the
-   * two can be compared. Absent: lenses glow and light nothing, exposed to the picture (FLR-T-12.21).
+   * lenses and no lamps. Either way the still is metered within its `time`'s band (`EXPOSURE`), so
+   * a room with its lamps off at night stays dark beside the same room with them on. Absent: lenses
+   * glow and light nothing, exposed to the picture (FLR-T-12.21).
    */
   readonly lights?: Lights;
   /** Default `night` with `lights`, else `day`. */
@@ -76,8 +78,11 @@ export interface StillResult {
   readonly threads: number;
   /** Base-colour maps drawn, and those the store did not have (their material's colour was used). */
   readonly maps: { readonly used: string[]; readonly missing: string[] };
-  /** With `lights`: how the still was lit, and how many lamps were on. */
-  readonly lit?: { readonly lights: Lights; readonly time: TimeOfDay; readonly lamps: number };
+  /**
+   * With `lights`: how the still was lit, how many lamps were on, and the exposure it was metered
+   * to, per cd/m² (FLR-T-13.1, @floorspec/mesh `EXPOSURE_PER_NIT`).
+   */
+  readonly lit?: { readonly lights: Lights; readonly time: TimeOfDay; readonly lamps: number; readonly exposure?: number };
   readonly ms: number;
 }
 
@@ -85,16 +90,28 @@ const GROUND = linear('#cfcabd');
 /** How bright a luminaire's lens looks to the camera, over its colour: about a sunlit white wall's. */
 const LENS = 2.5;
 const DEG = Math.PI / 180;
-/** The tracer's irradiance unit in lux: the sun's 8 is about 100 000 lx. */
-const LUX_PER_UNIT = 12_500;
+/**
+ * The tracer's irradiance unit in lux: the sun's 8 is about 100 000 lx. Its radiance unit is then
+ * 12 500 cd/m² — a surface of reflectance ρ under E units shows ρE/π units.
+ */
+export const LUX_PER_UNIT = 12_500;
 
 /** The sky by time of day, scaled per channel: dusk a deep blue, night all but black. */
 const SKY: Readonly<Record<TimeOfDay, Vec3>> = { day: [1, 1, 1], dusk: [0.0006, 0.0008, 0.0014], night: [0.00008, 0.0001, 0.00018] };
 /**
- * The fixed exposure of a still with `lights`, by time of day: by day, a sunlit house's; at dusk and
- * at night, a room lit by its lamps' — about 50 lx on a pale floor reads as a mid-tone.
+ * The exposure of a still with `lights`, by time of day (FLR-T-13.1): metered, and held within the
+ * band @floorspec/mesh's `EXPOSURE_PER_NIT` calibrates, in the tracer's units. At dusk and at night,
+ * no less than a room lit to 150–300 lux reads normally lit at, and no more than two stops above it
+ * — so a bedroom at 50 lux under its one ceiling light reads lit too, and a room with its lamps off
+ * stays dark. By day, from a sunlit house's outside to a daylit room's inside.
  */
-export const EXPOSURE: Readonly<Record<TimeOfDay, number>> = { day: 0.2, dusk: 320, night: 320 };
+export const EXPOSURE: Readonly<Record<TimeOfDay, ExposureBand>> = {
+  day: { min: EXPOSURE_PER_NIT.day * LUX_PER_UNIT, max: EXPOSURE_PER_NIT.dayMax * LUX_PER_UNIT },
+  dusk: { min: EXPOSURE_PER_NIT.night * LUX_PER_UNIT, max: EXPOSURE_PER_NIT.nightMax * LUX_PER_UNIT },
+  night: { min: EXPOSURE_PER_NIT.night * LUX_PER_UNIT, max: EXPOSURE_PER_NIT.nightMax * LUX_PER_UNIT },
+};
+/** Diffuse bounces a still with `lights` traces: enough that a lamp-lit room's corners are not black. */
+export const LIT_BOUNCES = 6;
 
 /** A sun in the scene's frame (x east-ish, +Y up, −Z project north), turned by the site's true north. */
 export function sunOf(input: SunInput, trueNorthDeg: number): Sun {
@@ -109,12 +126,16 @@ export function sunOf(input: SunInput, trueNorthDeg: number): Sun {
 
 /**
  * The lamps of a scene's luminaires (FLR-T-12.22) on the levels drawn: each a small sphere with its
- * luminous flux spread over the sphere (every way) or over its cone (a spot), in the tracer's units.
+ * luminous flux spread over the sphere (every way) or over its cone (a spot), in the tracer's units
+ * — candela over `LUX_PER_UNIT`, so it lights a surface d metres away to I cos θ / d² lux. Each is
+ * owned by its luminaire: its place in `scene.lights`, which `ptScene` marks that fixture's
+ * triangles with, so the fixture never shadows its own lamp (FLR-T-13.1).
  */
 export function lampsOf(scene: Scene, drawn: (level: string) => boolean = () => true): PtLamp[] {
   return scene.lights
-    .filter((l) => drawn(l.level))
-    .map((l) => {
+    .map((l, owner) => ({ l, owner }))
+    .filter(({ l }) => drawn(l.level))
+    .map(({ l, owner }) => {
       // Intensity (candela) = flux / solid angle: 4π sr, or a cap out to the middle of the cone's edge.
       const sr = l.spot === undefined ? 4 * Math.PI : 2 * Math.PI * (1 - (l.spot.inner + l.spot.outer) / 2);
       const k = l.lumens / sr / LUX_PER_UNIT;
@@ -123,6 +144,7 @@ export function lampsOf(scene: Scene, drawn: (level: string) => boolean = () => 
         radius: Math.max(0.005, l.radius),
         intensity: [l.color[0] * k, l.color[1] * k, l.color[2] * k] as Vec3,
         ...(l.spot === undefined ? {} : { spot: { dir: l.spot.dir, inner: l.spot.inner, outer: l.spot.outer } }),
+        owner,
       };
     });
 }
@@ -134,6 +156,9 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
   const pos: number[] = [];
   const mat: number[] = [];
   const uv: number[] = [];
+  // Each triangle's luminaire, by its place in scene.lights: what never shadows that luminaire's lamp.
+  const fixtures = new Map(scene.lights.map((l, i) => [l.id, i]));
+  const own: number[] = [];
   const materials: PtMaterial[] = scene.materials.map((m, i) => {
     const t = options.textures?.get(i);
     return {
@@ -149,7 +174,8 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
   for (const level of scene.levels) {
     const at = order.get(level.id)!;
     if (cut !== undefined && at > cut) continue;
-    for (const node of level.nodes)
+    for (const node of level.nodes) {
+      const owner = fixtures.get(node.id) ?? -1;
       for (const p of node.primitives) {
         if (cut === at && (p.part === 'ceiling' || p.part === 'roof' || p.part === 'roofGable')) continue;
         const P = p.positions;
@@ -167,8 +193,10 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
             else uv.push(U[2 * i]!, U[2 * i + 1]!);
           }
           mat.push(p.material);
+          own.push(owner);
         }
       }
+    }
   }
   // The ground: a plate under the house out to the horizon, as the headless render's.
   if (Number.isFinite(min[0])) {
@@ -188,6 +216,7 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
       pos.push(...q[a]!, ...q[b]!, ...q[c]!);
       uv.push(NaN, NaN, NaN, NaN, NaN, NaN);
       mat.push(groundMat);
+      own.push(-1);
     }
   }
   const count = mat.length;
@@ -204,7 +233,7 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
     normals[3 * t + 2] = nz / l;
   }
   const lamps = options.lights === 'on' ? lampsOf(scene, (l) => cut === undefined || (order.get(l) ?? Infinity) <= cut) : [];
-  return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials, ...(lamps.length === 0 ? {} : { lamps }) };
+  return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials, ...(lamps.length === 0 ? {} : { lamps, owner: Int32Array.from(own) }) };
 }
 
 /** The camera a still looks from: a named view framed on what is drawn, or a room. */
@@ -274,6 +303,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   // After sunset, no sun: the sky (dimmed) and the lamps.
   const sun = time === 'day' ? daylight : { ...daylight, irradiance: 0 };
   const exposure = options.lights === undefined && options.time === undefined ? undefined : EXPOSURE[time];
+  const lit = options.lights !== undefined;
   const traced = await traceParallel(pt, {
     width,
     height,
@@ -283,12 +313,14 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     seed: SEED,
     budgetMs: options.budgetMs ?? BUDGET_MS,
     ...(time === 'day' ? {} : { sky: SKY[time] }),
-    // A firefly's cap, in what the picture shows: the same after exposure by day and by night.
-    ...(exposure === undefined ? {} : { clamp: 12 * (EXPOSURE.day / exposure) }),
+    // A firefly's cap, in what the picture shows: the same after the least exposure by day and by night.
+    ...(exposure === undefined ? {} : { clamp: 12 * (EXPOSURE.day.min / exposure.min) }),
+    ...(lit ? { bounces: LIT_BOUNCES } : {}),
     ...(options.onPass === undefined ? {} : { onPass: options.onPass }),
   });
   const hdr = options.denoise === false ? traced.color : denoise(traced.color, traced.features, width, height);
   const png = encodePng(toneMap(hdr, width, height, exposure), width, height);
+  const exposed = exposure === undefined ? undefined : exposureOf(hdr, width, height, exposure);
   return {
     png,
     width,
@@ -300,7 +332,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     triangles: pt.count,
     threads: traced.threads,
     maps: { used: maps.used, missing: maps.missing },
-    ...(options.lights === undefined ? {} : { lit: { lights: options.lights, time, lamps: pt.lamps?.length ?? 0 } }),
+    ...(options.lights === undefined ? {} : { lit: { lights: options.lights, time, lamps: pt.lamps?.length ?? 0, ...(exposed === undefined ? {} : { exposure: Number((exposed / LUX_PER_UNIT).toPrecision(3)) }) } }),
     ms: Date.now() - started,
   };
 }
@@ -315,6 +347,11 @@ export async function renderStill(document: object, options: StillOptions = {}):
 
 /** A lit render's samples a pixel (FLR-T-12.22): few, smoothed by the denoiser, so an agent's render returns while it waits. */
 export const LIT_SAMPLES = 16;
+/**
+ * By day, twice as many (FLR-T-13.1): a daylit room is lit by what comes in through its windows,
+ * found by paths that bounce, not by lamps sampled directly — noisier, and metered brighter.
+ */
+export const LIT_DAY_SAMPLES = 32;
 /** A lit render's default and widest pictures, pixels: path-traced, so its pixels are the worker's time. */
 export const LIT_WIDTH = 800;
 export const LIT_MAX_WIDTH = 1280;
@@ -342,7 +379,7 @@ export interface LitOptions {
 /**
  * The 3D render with its lights on or off (FLR-T-12.22, `floorspec_render` with `lights`): the same
  * views as the headless render, path-traced — so a lamp's light pools on its room's floor and walls
- * and stops at them — at a fixed exposure for the time of day, so on and off can be compared.
+ * and stops at them — metered within the time of day's band, so on and off can be compared.
  */
 export async function renderLit(document: object, options: LitOptions): Promise<StillResult> {
   const w = options.width ?? LIT_WIDTH;
@@ -356,7 +393,7 @@ export async function renderLit(document: object, options: LitOptions): Promise<
     ...(options.room === undefined ? {} : { room: options.room }),
     ...(level === undefined ? {} : { level }),
     pixels: { width: w, height: Math.round((w * 3) / 4) },
-    samples: LIT_SAMPLES,
+    samples: (options.time ?? 'night') === 'day' ? LIT_DAY_SAMPLES : LIT_SAMPLES,
     budgetMs: LIT_BUDGET_MS,
     lights: options.lights,
     time: options.time ?? 'night',

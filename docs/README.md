@@ -7,3 +7,5 @@ Skeleton. See FLR in Foreman for the tasks that fill this directory.
 - [runbooks/restore.md](runbooks/restore.md) — the nightly backup, the weekly restore drill and its
   recorded result, restoring for real, and the alert email for failed backups, drills, deploys and
   health checks.
+- [lighting.md](lighting.md) — light levels: lumens per fixture and watts, inverse-square in
+  metres, a fixture never shadowing itself, and the exposure every view shares (FLR-T-13.1).

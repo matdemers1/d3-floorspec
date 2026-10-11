@@ -23,4 +23,4 @@ export { MODEL_ROLES, ROLE_LOOKS, type ModelRole, type RoleLook } from './roles.
 export { discriminant, elementKind } from './models/kinds.js';
 export { PART_KINDS, UNITS_PER_METRE, type Box3, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartMesh, type PartStats, type Vec3, type DoorState } from './types.js';
 export { ENVELOPE, envelope, openEnvelope, openingFrame, type LocalBox, type OpeningFrame } from './joinery.js';
-export { DEFAULT_LUMENS, kelvinColor, lightsOf, LUMENS_PER_WATT, type FixtureLight } from './lights.js';
+export { DEFAULT_LUMENS, EXPOSURE_PER_NIT, kelvinColor, lightsOf, LUMENS_PER_WATT, WHITE_BALANCE, type FixtureLight } from './lights.js';
