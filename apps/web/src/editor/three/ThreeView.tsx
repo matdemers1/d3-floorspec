@@ -3,16 +3,16 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNod
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { flatShaded, type HouseMesh, type MeshPart, type Vec3 } from '@floorspec/mesh';
-import { Button, EmptyState, IconButton, Spinner, Tooltip } from '@d3cloud/ui';
-import { Box, Footprints, House, Layers, Lightbulb, Orbit as OrbitIcon, RotateCcw, X } from 'lucide-react';
+import { Button, EmptyState, IconButton, Select, Spinner, Tooltip } from '@d3cloud/ui';
+import { Box, Footprints, House, Lightbulb, Orbit as OrbitIcon, RotateCcw, X } from 'lucide-react';
 import { useEditor, type EditorState, type EditorStore } from '../store';
 import { labelOf, type EditorModel, type LevelView } from '../model';
 import { formatLen } from '../units';
 import { compass, PRESET_ORDER, PRESETS, type PresetId } from './camera';
 import { FOV, ThreeController } from './controller';
 import { useHouseMesh } from './meshing';
-import { threeOf, useThreeState, type ThreeStore, type WalkStart } from './mode';
-import { describeScene, faceColours, isVisible, levelOrder, lookOf, partSelected, type Look } from './parts';
+import { threeOf, useThreeState, type LevelsShown, type ThreeStore, type WalkStart } from './mode';
+import { describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
 import { isSurfacePart, surfaceBuffers, type MapRef } from './surfaces';
 import { TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
@@ -26,7 +26,8 @@ import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelle
 /**
  * The 3D view (FLR-T-7.5, FLR-REQ-113, 114), laid out as the board's "08 · Editor — 3D cutaway",
  * "split view" and "Walkthrough" frames: the house as @floorspec/mesh builds it, drawn with three.js
- * through React Three Fiber — orbited, cut away by level, and walked through at eye height.
+ * through React Three Fiber — orbited, shown whole or cut away by level or one level alone (the
+ * "3D levels: whole house" frame, FLR-T-13.2), and walked through at eye height.
  *
  * Selection is the editor's one selection: clicking a part selects its element (a wall, an opening,
  * a room's floor, a stair's flight), which the plan, the tree and the inspector show; selecting
@@ -140,7 +141,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const levelId = useEditor(store, (s) => s.level);
   const walking = useThreeState(store, (s) => s.walking);
   const walkFrom = useThreeState(store, (s) => s.walkFrom);
-  const cutaway = useThreeState(store, (s) => s.cutaway);
+  const levels = useThreeState(store, (s) => s.levels);
   const roof = useThreeState(store, (s) => s.roof);
   const preset = useThreeState(store, (s) => s.preset);
   const lightsOn = useThreeState(store, (s) => s.lights);
@@ -201,13 +202,18 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
 
   const order = useMemo(() => (ready === null ? new Map<string, number>() : levelOrder(ready.model)), [ready]);
   const visible = useMemo(
-    () => built.filter((b) => isVisible(b.part, { walking, cutaway, roof, level: levelId, order })),
-    [built, walking, cutaway, roof, levelId, order],
+    () => built.filter((b) => isVisible(b.part, { walking, levels, roof, level: levelId, order })),
+    [built, walking, levels, roof, levelId, order],
   );
   // FLR-T-12.22: the light fixtures as lamps, on the levels shown, when the Lights toggle is on.
   const lamps = useMemo(
-    () => (ready === null || !lightsOn ? [] : viewLights(ready.model, ready.mesh, { level: levelId, cutaway: cutaway && !walking, order })),
-    [ready, lightsOn, levelId, cutaway, walking, order],
+    () => {
+      if (ready === null || !lightsOn) return [];
+      const lit = viewLights(ready.model, ready.mesh, { level: levelId, cutaway: levels !== 'house' && !walking, order });
+      // One level alone (FLR-T-13.2): its own lamps only — the cutaway's, less those below it.
+      return levels === 'only' && !walking ? lit.filter((l) => l.level === levelId) : lit;
+    },
+    [ready, lightsOn, levelId, levels, walking, order],
   );
   const summary = useMemo(() => (ready === null ? '' : describeScene(ready.model, visible.map((b) => b.part))), [ready, visible]);
   // Furniture (FLR-T-8.3): each item's glTF model in place of its fallback box, once the model is drawn.
@@ -217,7 +223,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const clearancesShown = useEditor(store, (s) => s.layers.clearances);
   const triangles = visible.reduce((n, b) => n + b.triangles, 0);
 
-  useTestHook(store, three, ctl, ready, host, built, textures);
+  useTestHook(store, three, ctl, ready, host, built, visible, textures);
 
   // ── Orbit: pointer, wheel and keys on the canvas.
   const pointers = useRef(new Map<number, { x: number; y: number; button: number; shift: boolean }>());
@@ -384,7 +390,6 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     three.set({ walking: true, walkFrom: null });
   };
 
-  const levelName = ready?.model.levels.find((l) => l.id === levelId)?.name ?? 'this level';
   const name = walking ? `Walkthrough of ${project}` : `3D view of ${project}`;
   const hint = walking
     ? 'W, A, S and D or the arrow keys walk and turn; drag to look around; Shift walks faster; Escape ends the walk.'
@@ -476,13 +481,10 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       ) : null}
       {ready !== null && !walking && !compact ? (
         <>
-          <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} cutaway={cutaway} roof={roof} lights={lightsOn} />
-          <button type="button" className="fs-three__chip fs-three__cutaway" aria-pressed={cutaway} onClick={() => { three.set({ cutaway: !cutaway }); }}>
-            <Layers aria-hidden="true" />
-            {cutaway ? `Cutaway · ${levelName} and below` : 'Whole house'}
-          </button>
+          <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} levels={levels} roof={roof} lights={lightsOn} />
+          <LevelsControl store={store} three={three} model={ready.model} order={order} levels={levels} level={levelId} />
           <ViewCube ctl={ctl} preset={preset} />
-          <StillButton store={store} preset={preset} level={cutaway ? levelId : null} />
+          <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} />
           <SunPanel store={store} model={ready.model} />
           <SunChip store={store} />
           <div className="fs-three__chip fs-three__stats" role="note">
@@ -492,10 +494,13 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         </>
       ) : null}
       {ready !== null && !walking && compact ? (
-        <div className="fs-three__chip fs-three__pane-label" role="note">
-          <Box aria-hidden="true" />
-          3D · {preset === null ? 'free' : PRESETS[preset].label}
-        </div>
+        <>
+          <div className="fs-three__chip fs-three__pane-label" role="note">
+            <Box aria-hidden="true" />
+            3D · {preset === null ? 'free' : PRESETS[preset].label}
+          </div>
+          <LevelsControl store={store} three={three} model={ready.model} order={order} levels={levels} level={levelId} />
+        </>
       ) : null}
       {ready !== null && walking ? <WalkOverlay store={store} three={three} ctl={ctl} world={ready.world} model={ready.model} mesh={ready.mesh} /> : null}
     </div>
@@ -661,7 +666,8 @@ function LabelTracker({ built, selection, el }: { built: Built[]; selection: str
 
 // ─── Overlays ────────────────────────────────────────────────────────────────────────────────
 
-function Toolbar({ store, three, ctl, mesh, cutaway, roof, lights }: { store: EditorStore; three: ThreeStore; ctl: ThreeController; mesh: HouseMesh; cutaway: boolean; roof: boolean; lights: boolean }) {
+function Toolbar({ store, three, ctl, mesh, levels, roof, lights }: { store: EditorStore; three: ThreeStore; ctl: ThreeController; mesh: HouseMesh; levels: LevelsShown; roof: boolean; lights: boolean }) {
+  const whole = levels === 'house';
   const selection = useEditor(store, (s) => s.selection);
   return (
     <div className="fs-three__tools" role="toolbar" aria-label="3D view">
@@ -678,9 +684,34 @@ function Toolbar({ store, three, ctl, mesh, cutaway, roof, lights }: { store: Ed
       <Tooltip content={lights ? 'Turn the lights off' : 'Turn the lights on: each light fixture lights its room, at dusk'}>
         <IconButton label="Lights" icon={<Lightbulb />} size="sm" pressed={lights} onClick={() => { three.toggleLights(); }} />
       </Tooltip>
-      <Tooltip content={cutaway ? 'The cutaway leaves the roof off — show the whole house to see it' : roof ? 'Hide the roof' : 'Show the roof'}>
-        <IconButton label="Roof" icon={<House />} size="sm" pressed={roof && !cutaway} disabled={cutaway} onClick={() => { three.set({ roof: !roof }); }} />
+      <Tooltip content={!whole ? 'Cut away, this level’s roof is off — show the whole house to see it' : roof ? 'Hide the roofs' : 'Show the roofs'}>
+        <IconButton label="Roof" icon={<House />} size="sm" pressed={roof && whole} disabled={!whole} onClick={() => { three.set({ roof: !roof }); }} />
       </Tooltip>
+    </div>
+  );
+}
+
+/**
+ * Which levels the view shows (FLR-T-13.2), the board's "3D levels: whole house" frame: the whole
+ * house, each level cut away ("Level 2 and below") or alone ("Only Level 2"). Picking a level makes
+ * it the editor's current level, as the top bar's picker does, so the plan follows; Page Up and
+ * Page Down step the level and the cutaway or isolate goes with it.
+ */
+function LevelsControl({ store, three, model, order, levels, level }: { store: EditorStore; three: ThreeStore; model: EditorModel; order: ReadonlyMap<string, number>; levels: LevelsShown; level: string | null }) {
+  const choices = useMemo(() => levelChoices(model.levels, order), [model, order]);
+  return (
+    <div className="fs-three__levels">
+      <Select
+        aria-label="Levels in 3D"
+        size="sm"
+        options={choices}
+        value={levelChoiceOf(levels, level, order)}
+        onValueChange={(value) => {
+          const next = parseLevelChoice(value);
+          if (next.level !== null && next.level !== store.get().level) store.setLevel(next.level);
+          three.setLevels(next.levels);
+        }}
+      />
     </div>
   );
 }
@@ -857,6 +888,8 @@ interface Hook {
   parts: number;
   /** The mesh's parts by kind (packages/mesh's PartKind): how many of each are drawn. */
   kinds: Record<string, number>;
+  /** The parts showing now (FLR-T-13.2), counted by "level:kind": what the levels control leaves in. */
+  shown: Record<string, number>;
   walking: boolean;
   /** The walker, in metres in the document's frame; null when not walking. */
   walker: { x: number; y: number; feet: number; eye: number; ground: number; yaw: number; room: string | null; blocked: string | null } | null;
@@ -885,7 +918,7 @@ declare global {
  * Under automation only (navigator.webdriver), the e2e suite reads the walker and asks where on
  * screen an element can be clicked. Nothing is exposed to a person's browser.
  */
-function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController, ready: { mesh: HouseMesh; world: World } | null, el: { current: HTMLDivElement | null }, built: readonly Built[], textures: TextureLibrary) {
+function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController, ready: { mesh: HouseMesh; world: World } | null, el: { current: HTMLDivElement | null }, built: readonly Built[], visible: readonly Built[], textures: TextureLibrary) {
   useEffect(() => {
     if (!navigator.webdriver) return;
     const hook: Hook = {
@@ -898,6 +931,11 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
       get kinds() {
         const k: Record<string, number> = {};
         for (const p of ready?.mesh.parts ?? []) k[p.kind] = (k[p.kind] ?? 0) + 1;
+        return k;
+      },
+      get shown() {
+        const k: Record<string, number> = {};
+        for (const { part } of visible) k[`${part.level}:${part.kind}`] = (k[`${part.level}:${part.kind}`] ?? 0) + 1;
         return k;
       },
       get walking() {
@@ -961,7 +999,7 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
     return () => {
       if (window.__floorspec3d === hook) delete window.__floorspec3d;
     };
-  }, [store, three, ctl, ready, el, built, textures]);
+  }, [store, three, ctl, ready, el, built, visible, textures]);
 }
 
 /** Registered by the scene: what screenPoint needs from inside the canvas. */

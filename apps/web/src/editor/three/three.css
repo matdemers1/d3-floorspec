@@ -108,20 +108,21 @@
   border-radius: var(--radius-md);
   background: var(--color-surface);
 }
-.fs-three__cutaway {
-  top: 22px;
+/* Which levels show (FLR-T-13.2): a select in the chip's place, at the top of the view. */
+.fs-three__levels {
+  position: absolute;
+  top: 19px;
   left: 50%;
   transform: translateX(-50%);
-  cursor: pointer;
+  min-width: 168px;
 }
-.fs-three__cutaway:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-fg);
+/* In the split view the pane's label holds the top left; the levels go to the top right. */
+.fs-three[data-compact='on'] .fs-three__levels {
+  top: var(--space-16);
+  left: auto;
+  right: var(--space-16);
+  transform: none;
 }
-.fs-three__cutaway[aria-pressed='true'] {
-  color: var(--color-fg);
-}
-.fs-three__cutaway:focus-visible,
 .fs-three__cube:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;

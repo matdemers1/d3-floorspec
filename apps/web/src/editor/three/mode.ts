@@ -5,7 +5,7 @@ import type { Orbit, PresetId } from './camera';
 /**
  * The 3D view's state (FLR-T-7.5, FLR-REQ-113, 114), beside the editor's store rather than in it:
  * which view the canvas shows — the plan, 3D, or both side by side — and what the 3D view keeps
- * between visits: its camera, cutaway and roof, the walkthrough's eye height. Selection is not
+ * between visits: its camera, which levels it shows and the roof, the walkthrough's eye height. Selection is not
  * here: it is the editor's one selection, which is what keeps the views in step.
  *
  * The view is in the URL (`?view=3d`, `?view=split`), so a reload or a shared link opens it again.
@@ -14,6 +14,17 @@ import type { Orbit, PresetId } from './camera';
 export type ViewMode = 'plan' | '3d' | 'split';
 
 export const VIEW_LABELS: Record<ViewMode, string> = { plan: '2D plan', '3d': '3D', split: 'Split' };
+
+/**
+ * Which levels the 3D view shows (FLR-T-13.2), about the editor's current level — the one the top
+ * bar's picker and Page Up / Page Down choose, which the plan shows too:
+ * - `house`: the whole house — every level, every ceiling and every roof, nothing cut away
+ *   (floorspec_render's `level: "all"`);
+ * - `cutaway`: the current level and those below it, without the current level's ceilings or the
+ *   roof it carries, so its rooms are seen from above (floorspec_render's `level: <id>`);
+ * - `only`: the current level alone, cut the same way.
+ */
+export type LevelsShown = 'house' | 'cutaway' | 'only';
 
 /** A request to start walking: where (base units, the document's frame) and facing which way (radians, from east, anticlockwise). */
 export interface WalkStart {
@@ -30,8 +41,9 @@ export interface ThreeState {
   walking: boolean;
   /** A walk asked for and not yet begun (the mesh may still be loading); null to start at the entry. */
   walkFrom: WalkStart | null;
-  /** Show only the levels up to the current one, without the current level's ceilings. */
-  cutaway: boolean;
+  /** Which levels show, about the current level (FLR-T-13.2). Kept per project, in this browser. */
+  levels: LevelsShown;
+  /** In the whole house, the roofs on or off. */
   roof: boolean;
   /** The orbit camera, kept between visits and re-meshes; null until the first mesh frames it. */
   orbit: Orbit | null;
@@ -58,6 +70,22 @@ function readEye(): number {
   }
 }
 
+/**
+ * The levels shown are kept per project and per viewer (this browser), not in the model: the
+ * cutaway at the current level until a person picks otherwise — what they are drawing, seen from above.
+ */
+const levelsKey = (projectId: string): string => `floorspec.levels3d.${projectId}`;
+
+function readLevels(projectId: string | null): LevelsShown {
+  if (projectId === null) return 'cutaway';
+  try {
+    const v = localStorage.getItem(levelsKey(projectId));
+    return v === 'house' || v === 'only' ? v : 'cutaway';
+  } catch {
+    return 'cutaway';
+  }
+}
+
 function readMode(): ViewMode {
   if (typeof window === 'undefined') return 'plan';
   const v = new URLSearchParams(window.location.search).get('view');
@@ -77,8 +105,8 @@ export class ThreeStore {
   private state: ThreeState;
   private readonly listeners = new Set<() => void>();
 
-  constructor() {
-    this.state = { mode: readMode(), walking: false, walkFrom: null, cutaway: true, roof: true, orbit: null, preset: 'sw', eyeHeight: readEye(), lights: false };
+  constructor(private readonly projectId: string | null = null) {
+    this.state = { mode: readMode(), walking: false, walkFrom: null, levels: readLevels(projectId), roof: true, orbit: null, preset: 'sw', eyeHeight: readEye(), lights: false };
   }
 
   get = (): ThreeState => this.state;
@@ -114,6 +142,17 @@ export class ThreeStore {
     if (on !== this.state.lights) this.set({ lights: on });
   }
 
+  /** Show the whole house, a cutaway or one level alone; remembered for this project in this browser. */
+  setLevels(levels: LevelsShown): void {
+    if (levels !== this.state.levels) this.set({ levels });
+    if (this.projectId === null) return;
+    try {
+      localStorage.setItem(levelsKey(this.projectId), levels);
+    } catch {
+      // Storage refused (a private window): the choice lasts for this session.
+    }
+  }
+
   setEyeHeight(metres: number): void {
     this.set({ eyeHeight: metres });
     try {
@@ -130,7 +169,7 @@ const stores = new WeakMap<EditorStore, ThreeStore>();
 export function threeOf(store: EditorStore): ThreeStore {
   let three = stores.get(store);
   if (three === undefined) {
-    three = new ThreeStore();
+    three = new ThreeStore(store.projectId);
     stores.set(store, three);
   }
   return three;

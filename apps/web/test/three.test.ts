@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { readFileSync } from 'node:fs';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_COLOURS, flatShaded, loadMesher, ROLE_LOOKS, ROOM_PALETTE, type HouseMesh, type MeshPart } from '@floorspec/mesh';
 import { readModel, type EditorModel } from '../src/editor/model';
 import { basisOf, eyeOf, fitOrbit, orbitBy, panBy, presetOf, PRESETS, zoomBy, type Orbit } from '../src/editor/three/camera';
-import { describeScene, elementOfPart, faceColours, isVisible, levelOrder, linear, lookOf, partSelected, partsOfElement } from '../src/editor/three/parts';
+import { describeScene, elementOfPart, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, levelsLabel, linear, lookOf, parseLevelChoice, partSelected, partsOfElement } from '../src/editor/three/parts';
+import { ThreeStore, type LevelsShown } from '../src/editor/three/mode';
 import { isSurfacePart, surfaceBuffers } from '../src/editor/three/surfaces';
 import { blocked, buildWorld, entryOf, groundAt, look, NO_INPUT, placeAt, roomAt, standAt, stepWalker, WALK, type Walker, type WalkInput, type World } from '../src/editor/three/walk';
 
@@ -137,7 +138,7 @@ describe('parts in the 3D view', () => {
   it('shows the doors closed in the orbit views and open in the walkthrough, as the editor meshes them (FLR-T-13.8)', async () => {
     const both = (await loadMesher()).meshDerived(model.document, model.derived!, { doors: 'both' });
     const order = levelOrder(model);
-    const shown = (walking: boolean) => both.parts.filter((p) => isVisible(p, { walking, cutaway: false, roof: true, level: 'L1', order }));
+    const shown = (walking: boolean) => both.parts.filter((p) => isVisible(p, { walking, levels: 'house', roof: true, level: 'L1', order }));
     const moving = both.parts.filter((p) => p.state !== undefined);
     expect(new Set(moving.map((p) => p.state))).toEqual(new Set(['closed', 'open']));
     expect(shown(false).filter((p) => p.state !== undefined).every((p) => p.state === 'closed')).toBe(true);
@@ -150,7 +151,7 @@ describe('parts in the 3D view', () => {
 
   it('cut away: up to the current level, without its ceilings or the roof it carries; walking shows everything', () => {
     const order = levelOrder(model);
-    const at = (level: string, cutaway = true, roof = true, walking = false) => mesh.parts.filter((p) => isVisible(p, { walking, cutaway, roof, level, order }));
+    const at = (level: string, levels: LevelsShown = 'cutaway', roof = true, walking = false) => mesh.parts.filter((p) => isVisible(p, { walking, levels, roof, level, order }));
     const l1 = at('L1');
     expect(l1.every((p) => p.level === 'L1')).toBe(true);
     expect(l1.some((p) => p.kind === 'ceiling')).toBe(false);
@@ -159,15 +160,81 @@ describe('parts in the 3D view', () => {
     expect(l2.some((p) => p.level === 'L1' && p.kind === 'ceiling')).toBe(true);
     expect(l2.some((p) => p.level === 'L2' && p.kind === 'ceiling')).toBe(false);
     expect(l2.some((p) => p.kind === 'roof')).toBe(false);
-    expect(at('L1', false).some((p) => p.kind === 'roof')).toBe(true);
-    expect(at('L1', false, false).some((p) => p.kind === 'roof')).toBe(false);
+    expect(at('L1', 'house').some((p) => p.kind === 'roof')).toBe(true);
+    expect(at('L1', 'house', false).some((p) => p.kind === 'roof')).toBe(false);
     // Walking shows everything but a door drawn closed (FLR-T-13.8): the doors open, or — in a mesh of
     // closed doors alone — not at all, so a person walks through every doorway.
     const shut = mesh.parts.filter((p) => p.state === 'closed');
     expect(shut.length).toBeGreaterThan(0);
-    expect(at('L1', true, false, true)).toHaveLength(mesh.parts.length - shut.length);
-    expect(at('L1', false).filter((p) => p.state === 'closed')).toHaveLength(shut.length);
+    expect(at('L1', 'cutaway', false, true)).toHaveLength(mesh.parts.length - shut.length);
+    expect(at('L1', 'house').filter((p) => p.state === 'closed')).toHaveLength(shut.length);
     expect(describeScene(model, l1)).toBe('Level 1: 7 walls, 2 doors, 4 windows, 2 rooms, 1 stair, no roof showing.');
+  });
+
+  // FLR-T-13.2: the whole house, a cutaway at each level, and one level alone.
+  it('the whole house shows every level, ceiling and roof — the top level\'s roof too — wherever the current level is', () => {
+    const order = levelOrder(model);
+    for (const level of ['L1', 'L2']) {
+      const shown = mesh.parts.filter((p) => isVisible(p, { walking: false, levels: 'house', roof: true, level, order }));
+      expect(shown).toHaveLength(mesh.parts.length);
+      expect(shown.some((p) => p.level === 'L2' && (p.kind === 'roof' || p.kind === 'roofGable'))).toBe(true);
+      expect(shown.some((p) => p.level === 'L2' && p.kind === 'ceiling')).toBe(true);
+    }
+  });
+
+  it('only a level: that level alone, cut at its ceilings, its roof off; walking still shows everything', () => {
+    const order = levelOrder(model);
+    const only = (level: string, walking = false) => mesh.parts.filter((p) => isVisible(p, { walking, levels: 'only', roof: true, level, order }));
+    const l2 = only('L2');
+    expect(l2.length).toBeGreaterThan(0);
+    expect(l2.every((p) => p.level === 'L2')).toBe(true);
+    expect(l2.some((p) => p.kind === 'ceiling' || p.kind === 'roof' || p.kind === 'roofGable')).toBe(false);
+    expect(l2.some((p) => p.kind === 'floor')).toBe(true);
+    expect(only('L1').every((p) => p.level === 'L1')).toBe(true);
+    expect(only('L2', true)).toHaveLength(mesh.parts.filter((p) => p.state !== 'closed').length);
+  });
+
+  it('offers the whole house, then each level as a cutaway and alone, top first; the lowest as a cutaway only', () => {
+    const order = levelOrder(model);
+    const choices = levelChoices(model.levels, order);
+    expect(choices.map((c) => c.label)).toEqual(['Whole house', 'Level 2 and below', 'Only Level 2', 'Level 1 and below']);
+    expect(choices.map((c) => c.value)).toEqual(['house', 'cutaway:L2', 'only:L2', 'cutaway:L1']);
+    expect(levelChoiceOf('house', 'L2', order)).toBe('house');
+    expect(levelChoiceOf('cutaway', 'L2', order)).toBe('cutaway:L2');
+    expect(levelChoiceOf('only', 'L2', order)).toBe('only:L2');
+    expect(levelChoiceOf('only', 'L1', order)).toBe('cutaway:L1');
+    for (const c of choices) expect(choices.map((d) => d.value)).toContain(levelChoiceOf(parseLevelChoice(c.value).levels, parseLevelChoice(c.value).level ?? 'L1', order));
+    expect(parseLevelChoice('only:L2')).toEqual({ levels: 'only', level: 'L2' });
+    expect(parseLevelChoice('house')).toEqual({ levels: 'house', level: null });
+    expect(levelsLabel('house', 'Level 2')).toBe('Whole house');
+    expect(levelsLabel('cutaway', 'Level 2')).toBe('Level 2 and below');
+    expect(levelsLabel('only', 'Level 2')).toBe('Only Level 2');
+    expect(levelsLabel('only', 'Level 1', true)).toBe('Level 1 and below');
+  });
+
+  describe('kept per project, in this browser', () => {
+    afterEach(() => { vi.unstubAllGlobals(); });
+
+    it('opens on the cutaway, and remembers a choice for its project only', () => {
+      const kept = new Map<string, string>();
+      vi.stubGlobal('localStorage', { getItem: (k: string) => kept.get(k) ?? null, setItem: (k: string, v: string) => { kept.set(k, v); } });
+      expect(new ThreeStore('p1').get().levels).toBe('cutaway');
+      new ThreeStore('p1').setLevels('house');
+      expect(new ThreeStore('p1').get().levels).toBe('house');
+      expect(new ThreeStore('p2').get().levels).toBe('cutaway');
+      new ThreeStore('p2').setLevels('only');
+      expect(new ThreeStore('p2').get().levels).toBe('only');
+      kept.set('floorspec.levels3d.p3', 'nonsense');
+      expect(new ThreeStore('p3').get().levels).toBe('cutaway');
+    });
+
+    it('still works when storage is refused', () => {
+      vi.stubGlobal('localStorage', { getItem: () => { throw new Error('denied'); }, setItem: () => { throw new Error('denied'); } });
+      const three = new ThreeStore('p1');
+      expect(three.get().levels).toBe('cutaway');
+      three.setLevels('house');
+      expect(three.get().levels).toBe('house');
+    });
   });
 
   it('colours a wall’s faces from its layers: the left (exterior) face, the right face, and the core between', () => {

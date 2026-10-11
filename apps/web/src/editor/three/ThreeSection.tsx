@@ -5,6 +5,7 @@ import { elementOf, levelOfElement, type Kind } from '../model';
 import { formatLen } from '../units';
 import { EYE_HEIGHTS, threeOf, useThreeState } from './mode';
 import { Row, Section } from '../fields';
+import { levelOrder, levelsLabel } from './parts';
 import { ShadowsRow } from './sun/SunPanel';
 
 /**
@@ -17,10 +18,11 @@ const UNITS = 1_280_000;
 
 export function ThreeSection({ store, id, kind }: { store: EditorStore; id: string; kind: Kind }) {
   const mode = useThreeState(store, (s) => s.mode);
-  const cutaway = useThreeState(store, (s) => s.cutaway);
+  const levels = useThreeState(store, (s) => s.levels);
   const eye = useThreeState(store, (s) => s.eyeHeight);
   const model = useEditor(store, (s) => s.model);
   const levelName = useEditor(store, (s) => s.model?.levels.find((l) => l.id === s.level)?.name ?? null);
+  const lowest = useEditor(store, (s) => s.model !== null && s.level !== null && levelOrder(s.model).get(s.level) === 0);
   const units = useEditor(store, () => store.units);
   if (mode === 'plan' || model === null) return null;
   const from = walkPoint(store, id, kind);
@@ -28,7 +30,7 @@ export function ThreeSection({ store, id, kind }: { store: EditorStore; id: stri
   return (
     <Section title="3D">
       <Row label="Showing">
-        <span className="fs-three-section__value">{cutaway ? `${levelName ?? 'This level'} and below, cut away` : 'The whole house'}</span>
+        <span className="fs-three-section__value">{levelsLabel(levels, levelName, lowest)}</span>
       </Row>
       <ShadowsRow store={store} />
       <Row label="Eye height" htmlFor="fs-eye-height">

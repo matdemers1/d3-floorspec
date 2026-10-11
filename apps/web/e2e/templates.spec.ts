@@ -66,7 +66,7 @@ test('a project from each starter template: held exactly, drawn in plan and 3D, 
     // The plan editor opens on the lowest level, with every level to pick.
     await page.goto(`/projects/${project}/editor`);
     await settled(page);
-    const levels = page.getByRole('combobox', { name: 'Level' });
+    const levels = page.getByRole('combobox', { name: 'Level', exact: true });
     await expect(levels).toContainText(t.levels[0]);
     await expect(page.getByRole('application', { name: /^Plan of / })).toBeVisible();
     if (t.levels.length > 1) {
@@ -81,8 +81,9 @@ test('a project from each starter template: held exactly, drawn in plan and 3D, 
     await page.waitForFunction(() => (window as unknown as Hooked).__floorspec3d?.ready === true, undefined, { timeout: 60_000 });
     expect(await page.evaluate(() => (window as unknown as Hooked).__floorspec3d?.parts ?? 0)).toBeGreaterThan(t.rooms);
     // The whole house, roof on, as a person sees it first.
-    await page.getByRole('button', { name: /^Cutaway · / }).click();
-    await expect(page.getByRole('button', { name: 'Whole house' })).toHaveAttribute('aria-pressed', 'false');
+    await page.getByRole('combobox', { name: 'Levels in 3D' }).click();
+    await page.getByRole('option', { name: /^Whole house/ }).click();
+    await expect(page.getByRole('combobox', { name: 'Levels in 3D' })).toContainText('Whole house');
     await page.waitForTimeout(500);
     await page.screenshot({ path: `test-results/templates-${t.id}-3d.png` });
 
