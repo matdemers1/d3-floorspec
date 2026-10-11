@@ -1,8 +1,9 @@
 /**
  * 16.5 for a skeleton roof as Core 0.4 derives it (16.4.3 to 16.4.6), from the weighted straight
  * skeleton's exact faces: nodes, face polygons, gable ends and lines — ridges, breaks, hips and
- * valleys — every coordinate rounded once at the end. A port of the oracle's `_weighted_surface`
- * and `_weighted_lines` (tools/oracle/roofs.py).
+ * valleys — every coordinate rounded once at the end. A gable end stands on the gable's edge of the
+ * footprint, the wall under it, and rises to the surface over that edge (16.5). A port of the
+ * oracle's `_weighted_surface`, `_gable_on_wall` and `_weighted_lines` (tools/oracle/roofs.py).
  */
 import { exactSqrt } from '../../exact/bigint.js';
 import { Q } from '../../exact/rational.js';
@@ -16,6 +17,12 @@ export interface CcwOutline {
   readonly ring: readonly IPoint[];
   readonly index: readonly number[];
   readonly kind: readonly Kind[];
+}
+
+/** The footprint walked as the counter-clockwise outline is (its edge j under the outline's edge j), and each ring edge's overhang. */
+export interface CcwFootprint {
+  readonly ring: readonly IPoint[];
+  readonly overhang: readonly bigint[];
 }
 
 export interface WeightedSurface {
@@ -69,8 +76,53 @@ function dedupe3(pts: readonly B3[]): B3[] {
 
 const turns = (a: QP, p: QP, b: QP): boolean => qcross(qsub(p, a), qsub(b, p)).sign() !== 0;
 
-/** 16.5 of a skeleton roof whose faces are derived; `pitches` by ring edge. */
-export function weightedSurface(o: CcwOutline, pitches: readonly (Pitch | undefined)[], e: bigint): WeightedSurface {
+const qpOf = (p: IPoint): QP => [Q.of(p[0]), Q.of(p[1])];
+
+/** Where segment a–b meets segment c–d that is not parallel to it, or undefined. */
+function meetSeg(a: QP, b: QP, c: QP, d: QP): QP | undefined {
+  const r = dirOf(a, b);
+  const s = dirOf(c, d);
+  const den = qcross(r, s);
+  if (den.sign() === 0) return undefined;
+  const w = qsub(c, a);
+  const t = qcross(w, s).div(den);
+  const u = qcross(w, r).div(den);
+  if (t.sign() < 0 || t.cmp(Q.ONE) > 0 || u.sign() < 0 || u.cmp(Q.ONE) > 0) return undefined;
+  return [a[0].add(t.mul(r[0])), a[1].add(t.mul(r[1]))];
+}
+
+/** Does the closed polygon `ring` hold p — on its boundary or inside it? */
+function holds(p: QP, ring: readonly QP[]): boolean {
+  let w = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i]!;
+    const b = ring[(i + 1) % ring.length]!;
+    if (onClosed(p, a, b)) return true;
+    const side = qcross(qsub(b, a), qsub(p, a)).sign();
+    if (a[1].cmp(p[1]) <= 0) {
+      if (b[1].cmp(p[1]) > 0 && side > 0) w++;
+    } else if (b[1].cmp(p[1]) <= 0 && side < 0) w--;
+  }
+  return w !== 0;
+}
+
+/** The point of the closed ring nearest p — the least by x and then y of those as near. */
+function nearestOnRing(p: QP, ring: readonly IPoint[]): QP {
+  let best: { d2: Q; q: QP } | undefined;
+  for (let i = 0; i < ring.length; i++) {
+    const u = qpOf(ring[i]!);
+    const d = dirOf(u, qpOf(ring[(i + 1) % ring.length]!));
+    const t = Q.min(Q.max(qdot(qsub(p, u), d).div(qdot(d, d)), Q.ZERO), Q.ONE);
+    const q: QP = [u[0].add(t.mul(d[0])), u[1].add(t.mul(d[1]))];
+    const v = qsub(p, q);
+    const d2 = qdot(v, v);
+    if (best === undefined || d2.cmp(best.d2) < 0 || (d2.eq(best.d2) && qcmp(q, best.q) < 0)) best = { d2, q };
+  }
+  return best!.q;
+}
+
+/** 16.5 of a skeleton roof whose faces are derived; `pitches` by ring edge; `fp` its footprint, for the gable ends. */
+export function weightedSurface(o: CcwOutline, pitches: readonly (Pitch | undefined)[], e: bigint, fp: CcwFootprint): WeightedSurface {
   const rings = weightedFaces(o, pitches)!;
   const geo = new Map<number, { n: readonly [bigint, bigint]; c: bigint; L: bigint; k: Q }>();
   for (const j of rings.keys()) {
@@ -109,17 +161,44 @@ export function weightedSurface(o: CcwOutline, pitches: readonly (Pitch | undefi
       const poly = dedupe3(rg.filter((p) => nodes.has(qkey(p))).map(rd));
       if (poly.length >= 3) faces.push({ edge: o.index[j]!, poly });
     }
+  const zAt = (p: QP): Q => {
+    for (const [j, rs] of rings) for (const rg of rs) if (holds(p, rg)) return planeZ(j, p);
+    return zAt(nearestOnRing(p, o.ring));
+  };
   const gables: { edge: number; poly: B3[] }[] = [];
-  for (let g = 0; g < o.kind.length; g++) {
+  const n = o.ring.length;
+  for (let g = 0; g < n; g++) {
     if (o.kind[g] !== 'gable') continue;
-    const ga = o.ring[g]!;
-    const gb = o.ring[(g + 1) % o.ring.length]!;
-    const A: QP = [Q.of(ga[0]), Q.of(ga[1])];
-    const B: QP = [Q.of(gb[0]), Q.of(gb[1])];
-    const d = dirOf(A, B);
-    const on = [...pts.entries()].filter(([k, p]) => nodes.has(k) && onClosed(p, A, B)).map(([, p]) => p);
-    on.sort((p, q) => qdot(qsub(q, A), d).cmp(qdot(qsub(p, A), d)));
-    gables.push({ edge: o.index[g]!, poly: dedupe3([[ga[0], ga[1], e], [gb[0], gb[1], e], ...on.map(rd)]) });
+    // 16.5: on the footprint edge a0 → b0, the wall; its top back from b0 to a0 over that edge.
+    const a0i = fp.ring[g]!;
+    const b0i = fp.ring[(g + 1) % n]!;
+    const a0 = qpOf(a0i);
+    const b0 = qpOf(b0i);
+    const d = dirOf(a0, b0);
+    const span = qdot(d, d);
+    const proj = (p: QP): Q => qdot(qsub(p, a0), d);
+    const top = new Map<string, { p: QP; z: Q }>();
+    if (fp.overhang[g] === 0n) {
+      // No overhang: along the gable's edge of the outline, the nodes between the perpendiculars at a0 and b0.
+      const A = qpOf(o.ring[g]!);
+      const B = qpOf(o.ring[(g + 1) % n]!);
+      for (const [k, p] of pts)
+        if (nodes.has(k) && onClosed(p, A, B) && proj(p).sign() > 0 && proj(p).cmp(span) < 0) top.set(k, { p, z: zx.get(k)! });
+    } else {
+      for (const [k, p] of pts) if (nodes.has(k) && onClosed(p, a0, b0)) top.set(k, { p, z: zx.get(k)! });
+      for (const [j, rs] of rings)
+        for (const rg of rs)
+          rg.forEach((c, i) => {
+            const p = meetSeg(a0, b0, c, rg[(i + 1) % rg.length]!);
+            if (p !== undefined && !top.has(qkey(p))) top.set(qkey(p), { p, z: planeZ(j, p) });
+          });
+    }
+    for (const p of [a0, b0]) if (!top.has(qkey(p))) top.set(qkey(p), { p, z: zAt(p) });
+    const sorted = [...top.values()].sort((x, y) => proj(y.p).cmp(proj(x.p)));
+    gables.push({
+      edge: o.index[g]!,
+      poly: dedupe3([[a0i[0], a0i[1], e], [b0i[0], b0i[1], e], ...sorted.map(({ p, z }): B3 => [p[0].round(), p[1].round(), z.round()])]),
+    });
   }
   let high: Q | undefined;
   for (const z of zx.values()) if (high === undefined || z.cmp(high) > 0) high = z;

@@ -1,0 +1,7 @@
+{
+  "description": "A house 30 feet by 20 under a gable roof of 8 in 12 whose eaves overhang 2 feet and whose gables, the short ends, 1 foot: the rake. Each gable end stands on its wall, the gable's edge of the footprint, not on the eave outline a foot outside it (16.5): from the eave it rises to the surface over the wall - 16 inches at the wall's corners, which are 2 feet in from the eaves, and 8 feet at the ridge, which runs on past it to the outline. A pentagon, where the surface over the outline's edge would make a triangle.",
+  "covers": [
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.3.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "A guest wing 34 feet by 14 under a shed roof of 3 in 12 rising south from its north eave, whose west end is a curved wall drawn as three chords bulging 3 feet out; every edge but the north one is a gable, overhanging a foot, but the east one, against the house, overhangs nothing. Each gable end stands on its wall and rises to the plane over it (16.5): the south one a rectangle 3 feet 9 inches high, 15 feet in plan from the north eave, and the east one from 3 inches at its north corner, under the north eave's overhang, to the same height at its south corner; the three chords' gable ends follow the plane between. None of them stands on the eave outline, a foot outside its wall.",
+  "covers": [
+    "FS-CORE-16.5.2",
+    "FS-CORE-16.4.2",
+    "FS-CORE-16.3.1"
+  ]
+}

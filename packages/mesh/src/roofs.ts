@@ -6,11 +6,16 @@
  * - With a `thickness`, the roof is its surface thickened straight down by it: the faces on top,
  *   the same faces `thickness` lower underneath, and a vertical band round the surface's edge. Its
  *   box is the derived box, from eave − thickness to the surface's high. Its gable ends are not part
- *   of that solid and are emitted as `roofGable` surfaces — each only where it is below the solid:
- *   the band stands in the gable end's own plane, so the gable end's top `thickness` would lie in it,
- *   two coplanar faces drawn over each other that fight for depth (FLR-T-12.35).
- * - Without one, the roof is the closed shell its faces, its gable ends and a soffit at the eave
- *   bound: the attic volume. Its box is the derived box.
+ *   of that solid and are emitted as `roofGable` surfaces. A Core 0.4 gable end stands on its wall,
+ *   the gable's edge of the footprint, and the solid rakes past it by the gable's overhang, its
+ *   underside showing over the rake (FLR-T-12.36); each gable end is drawn only where it is below
+ *   the solid — up to the roof's underside over the wall — so that none of it lies inside the
+ *   solid, and so that where nothing overhangs, the band standing in the gable end's own plane, no
+ *   two coplanar faces fight for depth (FLR-T-12.35).
+ * - Without one, the roof is the volume between its eave and its surface over the whole eave
+ *   outline — the attic and its overhangs, boxed — closed by a soffit at the eave and, along each
+ *   gable's edge of the outline, the surface's edge dropped to the eave. Its box is the derived box.
+ *   Its gable ends, on the walls, lie inside it.
  * - A flat roof is a slab of its thickness under the eave outline, or a surface facing up without one.
  * - A roof whose surface this draft does not derive (16.4.4) is a placeholder surface: its eave
  *   outline at the eave.
@@ -114,6 +119,43 @@ function outward(poly: readonly P3[]): P3[] {
   return N[0] * (B[1] - A[1]) - N[1] * (B[0] - A[0]) >= 0 ? [...poly] : [...poly].reverse();
 }
 
+const k2 = (p: readonly number[]): string => `${p[0]},${p[1]}`;
+
+/**
+ * A thin roof's ends along its gables (FLR-T-12.36): for each edge A → B of the counter-clockwise
+ * eave outline over which the surface's rim rises above the eave, the rim from A to B dropped to the
+ * eave — A and B at the eave, then the rim back from B to A — the vertical polygon that closes the
+ * volume between the eave and the surface there. The rim is the faces' boundary, walked from their
+ * edges that no face runs the other way, so it has every point the faces have on the outline.
+ */
+function rakeEnds(faces: readonly (readonly P3[])[], outline: readonly P2[], eave: number): P3[][] {
+  const edges = new Map<string, [P3, P3]>();
+  for (const f of faces) for (let i = 0; i < f.length; i++) edges.set(`${key(f[i]!)}>${key(f[(i + 1) % f.length]!)}`, [f[i]!, f[(i + 1) % f.length]!]);
+  const next = new Map<string, P3>();
+  const at = new Map<string, P3>();
+  for (const [a, b] of edges.values()) {
+    if (edges.has(`${key(b)}>${key(a)}`)) continue;
+    next.set(key(a), b);
+    at.set(k2(a), a);
+  }
+  const out: P3[][] = [];
+  for (let i = 0; i < outline.length; i++) {
+    const A = outline[i]!;
+    const B = outline[(i + 1) % outline.length]!;
+    let p = at.get(k2(A));
+    if (!p) continue;
+    const rim: P3[] = [p];
+    while (k2(p) !== k2(B) && rim.length <= next.size) {
+      const q = next.get(key(p));
+      if (!q) break;
+      rim.push((p = q));
+    }
+    if (k2(p) !== k2(B) || rim.every((q) => q[2] === eave)) continue;
+    out.push(dedupe([[A[0], A[1], eave], [B[0], B[1], eave], ...rim.reverse()]));
+  }
+  return out;
+}
+
 /** The directed edges of a builder's triangles that no triangle runs the other way. */
 function boundary(tris: readonly number[]): [number, number][] {
   const edges = new Set<string>();
@@ -176,9 +218,9 @@ export function roofParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
         }
       continue;
     }
-    const gables = surface.gables.map((g) => outward(dedupe(g.polygon as P3[])));
+    const ends = rakeEnds(split(faces), outline, r.eave).map(outward);
     const soffit = [...outline].reverse().map((p): P3 => [p[0], p[1], r.eave]);
-    for (const f of split([...faces, ...gables, soffit])) b.face([f]);
+    for (const f of split([...faces, ...ends, soffit])) b.face([f]);
     out.push({ ...common, kind: 'roof', closed: true, exact: b });
   }
   return out;
