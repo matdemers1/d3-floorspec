@@ -139,8 +139,16 @@ describe('every modelled kind', () => {
     checkHouse(kernel, doc, derived, mesh, 'every kind');
     const byId = new Map<string, typeof mesh.parts>();
     for (const p of mesh.parts) if (p.kind === 'extension') byId.set(p.id, [...(byId.get(p.id) ?? []), p]);
+    // Packed this close, a gas cooktop or range lands in an FS_furniture one's box and is drawn as
+    // it (FLR-T-12.34): its own model is checked where nothing stands for it, below.
+    const stood = new Set(mesh.parts.flatMap((p) => p.standsFor ?? []));
     for (const [id, what] of kinds) {
       const parts = byId.get(id) ?? [];
+      if (stood.has(id)) {
+        expect(what, id).toMatch(/^FS_mechanical gasAppliances \{"appliance":"(range|cooktop|oven|dryer)"/);
+        expect(parts, what).toEqual([]);
+        continue;
+      }
       const boxed = BOXES.some(([e, c, m]) => what === `${e} ${c} ${JSON.stringify(m)}`);
       if (boxed) {
         expect(parts.map((p) => [p.key, p.model]), what).toEqual([[`extension:${id}`, undefined]]);
@@ -152,6 +160,19 @@ describe('every modelled kind', () => {
         expect(MODEL_ROLES).toContain(p.model!.role);
         expect(p.key.startsWith(`extension:${id}:`), p.key).toBe(true);
       }
+    }
+  });
+
+  it('draws each gas appliance as its model where no FS_furniture appliance stands for it', () => {
+    const { doc: input, kinds } = everyKind();
+    delete (input['extensions'] as Record<string, { collections: Record<string, Json> }>)['FS_furniture']!.collections['appliances'];
+    const { mesh } = meshed(input);
+    expect(mesh.parts.some((p) => p.standsFor !== undefined)).toBe(false);
+    for (const [id, what] of kinds) {
+      if (!what.startsWith('FS_mechanical gasAppliances') || BOXES.some(([e, c, m]) => what === `${e} ${c} ${JSON.stringify(m)}`)) continue;
+      const parts = mesh.parts.filter((p) => p.id === id);
+      expect(parts.length, `${what}: pieces`).toBeGreaterThanOrEqual(2);
+      for (const p of parts) expect(p.model, `${what} ${p.key}`).toBeDefined();
     }
   });
 

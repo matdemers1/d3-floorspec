@@ -235,12 +235,15 @@ export function FurnitureScene({
 }) {
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => { invalidate(); }, [furniture, selection, clearances, visibleIds, invalidate]);
+  // An appliance's model lights for the fixture or gas appliance it stands for too (FLR-T-12.34).
+  const stands = useMemo(() => new Map(mesh.parts.flatMap((p) => (p.standsFor === undefined ? [] : [[p.id, p.standsFor] as const]))), [mesh]);
   return (
     <group>
       {furniture.items.map((item) => {
         const scene = furniture.scenes.get(item.sha256);
         if (scene === undefined || !visibleIds.has(item.id)) return null;
-        return <Item key={item.id} item={item} scene={scene} mesh={mesh} selected={selection === item.id} accent={accent} clearances={clearances} onClick={onClick} />;
+        const selected = selection !== null && (selection === item.id || (stands.get(item.id)?.includes(selection) ?? false));
+        return <Item key={item.id} item={item} scene={scene} mesh={mesh} selected={selected} accent={accent} clearances={clearances} onClick={onClick} />;
       })}
     </group>
   );

@@ -35,7 +35,7 @@ export interface Box3 {
  * | `stairLanding` | stair | solid: a landing plate, by the same rule |
  * | `stairColumn` | stair | solid: a spiral stair's centre column, its column's radius (17.7) — or a slender pole when its treads meet at the centre — from its bottom to its top |
  * | `stairBlock` | stair | solid placeholder: the stair's box (17.4), for a winder or spiral stair whose steps are not derived (as a Core 0.3 reader reads it) |
- * | `extension` | extension element | solid: its fallback box (12.6) — or, for an element this reader models, each piece of its model (`model`), inside that box |
+ * | `extension` | extension element | solid: its fallback box (12.6) — or, for an element this reader models, each piece of its model (`model`), inside that box. None for an element an FS_furniture appliance stands for (`standsFor`, FLR-T-12.34) |
  * | `threshold` | opening | a door's or an empty opening's sill where it is its wall's base: the plan its cut removes, each side of the location line, as the floor of the room on that side — solid between its top and bottom, a surface facing up without a thickness, and drawn down as that floor is (`plenum`) (see thresholds.ts) |
  */
 export type PartKind =
@@ -129,6 +129,13 @@ export interface MeshPart {
   threshold?: { wall: string; side: 'left' | 'right'; room: string };
   /** An extension element's extension and collection. */
   extension?: { name: string; collection: string };
+  /**
+   * The elements an FS_furniture appliance's parts also stand for (FLR-T-12.34): the FS_plumbing
+   * fixture or FS_mechanical gas appliance paired with it — in its box, named in its `connections`
+   * or the same appliance — which draws no part of its own. By ID. Selecting one of them selects
+   * these parts in 3D.
+   */
+  standsFor?: string[];
   /**
    * A piece of an extension element's procedural model (FLR-T-12.21): what the element is (its
    * collection's discriminant — `waterCloset`, `recessed`, `baseCabinet` — or the collection's name)

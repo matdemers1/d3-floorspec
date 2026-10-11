@@ -161,11 +161,13 @@ export function sceneTriangles(scene: Scene, options: { level?: string; highligh
   for (const level of scene.levels) {
     const at = order.get(level.id)!;
     if (cut !== undefined && at > cut) continue;
-    for (const node of level.nodes)
+    for (const node of level.nodes) {
+      // An appliance lights for the elements it stands for too (FLR-T-12.34): they have no node of their own.
+      const on = lit.has(node.id) || (node.standsFor ?? []).some((id) => lit.has(id));
       for (const p of node.primitives) {
         if (cut === at && (p.part === 'ceiling' || p.part === 'roof' || p.part === 'roofGable')) continue;
         const m = scene.materials[p.material]!;
-        const rgb = lit.has(node.id) ? mix(m.baseColor.slice(0, 3) as Vec3, ACCENT, 0.6) : (m.baseColor.slice(0, 3) as Vec3);
+        const rgb = on ? mix(m.baseColor.slice(0, 3) as Vec3, ACCENT, 0.6) : (m.baseColor.slice(0, 3) as Vec3);
         const bias = p.part === 'ceiling' ? 2 : p.part === 'floor' || p.part === 'threshold' ? 1 : 0;
         const key = p.smooth === true ? round++ : undefined;
         const P = p.positions;
@@ -182,6 +184,7 @@ export function sceneTriangles(scene: Scene, options: { level?: string; highligh
           tris.push({ a, b, c, rgb, alpha: m.baseColor[3], twoSided: m.blend, bias, ...(key === undefined ? {} : { key }), ...(m.emissive === undefined ? {} : { unlit: true }) });
         }
       }
+    }
   }
   if (options.ground !== false && Number.isFinite(min[0])) tris.push(...ground({ min, max }));
   return tris;
@@ -315,11 +318,14 @@ export function glbTriangles(bytes: Uint8Array, options: { highlight?: readonly 
     return a['componentType'] === 5126 ? new Float32Array(copy) : a['componentType'] === 5123 ? new Uint16Array(copy) : new Uint32Array(copy);
   };
   const tris: Tri[] = [];
-  const walk = (index: number, parent: Mat4, id: string | undefined): void => {
+  const walk = (index: number, parent: Mat4, on: boolean): void => {
     const node = nodes[index]!;
     const m = mul(parent, trs(node));
-    const own = ((node['extras'] as Json | undefined)?.['floorspec'] as Json | undefined)?.['id'];
-    const element = typeof own === 'string' ? own : id;
+    const extras = (node['extras'] as Json | undefined)?.['floorspec'] as Json | undefined;
+    const own = extras?.['id'];
+    // An appliance lights for the elements it stands for too (FLR-T-12.34).
+    const stands = extras?.['standsFor'];
+    const lights = typeof own === 'string' ? lit.has(own) || (Array.isArray(stands) && stands.some((x) => typeof x === 'string' && lit.has(x))) : on;
     if (typeof node['mesh'] === 'number')
       for (const p of (meshes[node['mesh']]!['primitives'] as Json[] | undefined) ?? []) {
         const attrs = p['attributes'] as Record<string, number>;
@@ -329,7 +335,7 @@ export function glbTriangles(bytes: Uint8Array, options: { highlight?: readonly 
         const pbr = (mat?.['pbrMetallicRoughness'] ?? {}) as Json;
         const factor = (pbr['baseColorFactor'] as number[] | undefined) ?? [1, 1, 1, 1];
         const base: [number, number, number] = [factor[0]!, factor[1]!, factor[2]!];
-        const rgb = element !== undefined && lit.has(element) ? mix(base, ACCENT, 0.6) : base;
+        const rgb = lights ? mix(base, ACCENT, 0.6) : base;
         const blend = mat?.['alphaMode'] === 'BLEND';
         const at = (i: number): Vec3 => {
           const x = pos[3 * i]!;
@@ -340,10 +346,10 @@ export function glbTriangles(bytes: Uint8Array, options: { highlight?: readonly 
         for (let k = 0; k + 2 < idx.length; k += 3)
           tris.push({ a: at(idx[k]!), b: at(idx[k + 1]!), c: at(idx[k + 2]!), rgb, alpha: blend ? factor[3]! : 1, twoSided: mat?.['doubleSided'] === true });
       }
-    for (const child of (node['children'] as number[] | undefined) ?? []) walk(child, m, element);
+    for (const child of (node['children'] as number[] | undefined) ?? []) walk(child, m, lights);
   };
   const scene = ((json['scenes'] as Json[] | undefined) ?? [])[Number(json['scene'] ?? 0)];
-  for (const root of (scene?.['nodes'] as number[] | undefined) ?? []) walk(root, IDENTITY, undefined);
+  for (const root of (scene?.['nodes'] as number[] | undefined) ?? []) walk(root, IDENTITY, false);
   return tris;
 }
 

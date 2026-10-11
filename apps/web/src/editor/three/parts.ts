@@ -12,13 +12,22 @@ import type { EditorModel, WallView } from '../model';
 /**
  * The element a part selects: the part's own `id` — a wall for a wall, the opening for its cut
  * (a window's glass, a door's pick target), the room for its floor and ceiling, the stair for each
- * of its flights and landings, the roof for its gable ends.
+ * of its flights and landings, the roof for its gable ends, an appliance for its model (which a
+ * fixture or gas appliance paired with it has none of its own besides, FLR-T-12.34).
  */
 export const elementOfPart = (part: Pick<MeshPart, 'id'>): string => part.id;
 
+/**
+ * Whether a part lights up when an element is selected: its own, or — for an FS_furniture
+ * appliance's — one of the elements it stands for (FLR-T-12.34), the plumbing fixture or gas
+ * appliance in its box that @floorspec/mesh draws nothing of. Selected in the plan or a list, such
+ * an element shows as the appliance in 3D.
+ */
+export const partSelected = (part: Pick<MeshPart, 'id' | 'standsFor'>, id: string | null): boolean => id !== null && (part.id === id || (part.standsFor?.includes(id) ?? false));
+
 /** The parts that belong to an element: what lights up in 3D when it is selected anywhere. */
-export function partsOfElement<T extends Pick<MeshPart, 'id'>>(parts: readonly T[], id: string | null): T[] {
-  return id === null ? [] : parts.filter((p) => p.id === id);
+export function partsOfElement<T extends Pick<MeshPart, 'id' | 'standsFor'>>(parts: readonly T[], id: string | null): T[] {
+  return parts.filter((p) => partSelected(p, id));
 }
 
 export type Look = 'solid' | 'floor' | 'ceiling' | 'glass' | 'pick' | 'lens';

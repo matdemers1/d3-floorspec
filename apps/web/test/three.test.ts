@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_COLOURS, flatShaded, loadMesher, ROLE_LOOKS, ROOM_PALETTE, type HouseMesh, type MeshPart } from '@floorspec/mesh';
 import { readModel, type EditorModel } from '../src/editor/model';
 import { basisOf, eyeOf, fitOrbit, orbitBy, panBy, presetOf, PRESETS, zoomBy, type Orbit } from '../src/editor/three/camera';
-import { describeScene, elementOfPart, faceColours, isVisible, levelOrder, linear, lookOf, partsOfElement } from '../src/editor/three/parts';
+import { describeScene, elementOfPart, faceColours, isVisible, levelOrder, linear, lookOf, partSelected, partsOfElement } from '../src/editor/three/parts';
 import { isSurfacePart, surfaceBuffers } from '../src/editor/three/surfaces';
 import { blocked, buildWorld, entryOf, groundAt, look, NO_INPUT, placeAt, roomAt, standAt, stepWalker, WALK, type Walker, type WalkInput, type World } from '../src/editor/three/walk';
 
@@ -103,6 +103,28 @@ describe('parts in the 3D view', () => {
     expect(lookOf(mesh.parts.find((p) => p.kind === 'wall')!)).toBe('solid');
     expect(lookOf(mesh.parts.find((p) => p.kind === 'floor')!)).toBe('floor');
     expect(partsOfElement(mesh.parts, null)).toEqual([]);
+  });
+
+  it('show an appliance described twice once, and select it for either element (FLR-T-12.34)', async () => {
+    // The Courtyard House's kitchen and mudroom: a washer, a dishwasher and a cooktop, each with the
+    // plumbing fixture or gas appliance that serves it in its own box.
+    const courtyard = readModel('courtyard', readFileSync(new URL('../../../packages/mesh/test/fixtures/courtyard-kitchen-mudroom.floorspec.json', import.meta.url), 'utf8'));
+    expect(courtyard.valid).toBe(true);
+    const m = (await loadMesher()).meshDerived(courtyard.view, courtyard.derived!);
+    const listed = new Set(courtyard.levels.flatMap((l) => l.devices.map((d) => d.id)));
+    for (const [service, appliance] of [['KIT-DW-P', 'KIT-DW'], ['MUD-WASH-P', 'MUD-WASHER'], ['KIT-COOKTOP-G', 'KIT-COOKTOP']] as const) {
+      // Still in the model — in the plan, in the lists, selectable — but drawn in 3D as its appliance.
+      expect(listed.has(service), service).toBe(true);
+      expect(m.parts.some((p) => p.id === service), service).toBe(false);
+      const parts = partsOfElement(m.parts, service);
+      expect(parts.length, service).toBeGreaterThan(0);
+      expect(new Set(parts.map((p) => p.id)), service).toEqual(new Set([appliance]));
+      expect(partsOfElement(m.parts, appliance)).toEqual(parts);
+      // A click on the appliance selects the appliance.
+      for (const p of parts) expect(elementOfPart(p)).toBe(appliance);
+    }
+    expect(partSelected(m.parts.find((p) => p.id === 'KIT-DW')!, 'KIT-SINK')).toBe(false);
+    expect(partSelected(m.parts.find((p) => p.id === 'KIT-DW')!, null)).toBe(false);
   });
 
   it('cut away: up to the current level, without its ceilings or the roof it carries; walking shows everything', () => {
