@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api, ApiError } from '../lib/api';
 
 /**
  * Drawing exports (FLR-T-9.3) and the 3D model (FLR-T-9.2, glTF and USDZ): asked for, queued on the server's job queue, drawn by the worker,
@@ -41,8 +41,24 @@ export interface ExportJob {
   page: PageName | null;
   /** The design it was made in (Core 19.6): option set → option; null for the primary design asked for implicitly, or an IFC export. */
   design: Record<string, string> | null;
-  /** A still's options, as asked for; null for any other export. */
-  still?: (Omit<StillRequest, 'camera' | 'room' | 'level' | 'sun'> & { camera: string | null; room: string | null; level: string | null; sun: { azimuth: number; altitude: number } | null }) | null;
+  /**
+   * A still's options, as asked for; null for any other export. `source` says where it was traced:
+   * the worker's CPU (`server`), or the editor on the viewer's GPU (`gpu`, FLR-T-13.13), which has a
+   * view in words and its samples instead of a size and a quality.
+   */
+  still?:
+    | (Omit<StillRequest, 'camera' | 'room' | 'level' | 'sun' | 'size' | 'quality'> & {
+        source?: 'server' | 'gpu';
+        camera: string | null;
+        room: string | null;
+        level: string | null;
+        size: StillSize | null;
+        quality: StillQuality | null;
+        sun: { azimuth: number; altitude: number } | null;
+        view?: string | null;
+        samples?: number | null;
+      })
+    | null;
   /** While a still renders: the passes done and in all. */
   progress?: { pass: number; passes: number } | null;
   error: string | null;
@@ -84,6 +100,8 @@ export interface ExportRequest {
   design?: Record<string, string>;
   /** A still's options (FLR-T-12.6). */
   still?: StillRequest;
+  /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8). */
+  doors?: 'open' | 'closed';
 }
 
 /** The kinds made in one design: every export but the IFC model, which is of the primary. */
@@ -188,6 +206,48 @@ function describeStatus(job: ExportJob): string {
       return r?.name ?? what;
     }
   }
+}
+
+/** What a still traced on the viewer's GPU shows (FLR-T-13.13): saved with it, as its upload's query. */
+export interface GpuStillFacts {
+  /** The version traced: the one its glTF export was made from. */
+  readonly version: string;
+  /** The view, in words. */
+  readonly view: string;
+  readonly samples: number;
+  readonly ms: number;
+  readonly lights: 'on' | 'off';
+  readonly time: 'day' | 'dusk' | 'night';
+  /** The GPU, as the browser names it. */
+  readonly device?: string;
+  readonly design?: Record<string, string>;
+}
+
+/** Save a still the editor path-traced on this device's GPU to the version's exports (FLR-T-13.13). */
+export async function uploadStill(projectId: string, png: Blob, facts: GpuStillFacts): Promise<ExportJob> {
+  const query = new URLSearchParams({
+    version: facts.version,
+    view: facts.view.slice(0, 200),
+    samples: String(facts.samples),
+    ms: String(Math.round(facts.ms)),
+    lights: facts.lights,
+    time: facts.time,
+    ...(facts.device === undefined || facts.device === '' ? {} : { device: facts.device.slice(0, 200) }),
+    ...(facts.design === undefined || Object.keys(facts.design).length === 0 ? {} : { design: JSON.stringify(facts.design) }),
+  });
+  const res = await fetch(`/api/projects/${projectId}/exports/stills?${query.toString()}`, { method: 'POST', headers: { 'content-type': 'image/png' }, body: png, credentials: 'same-origin' });
+  const text = await res.text();
+  let body: unknown;
+  try {
+    body = text.length > 0 ? JSON.parse(text) : undefined;
+  } catch {
+    body = undefined;
+  }
+  if (!res.ok) {
+    const message = typeof body === 'object' && body !== null && 'error' in body ? String(body.error) : `saving the still failed with ${String(res.status)}`;
+    throw new ApiError(res.status, message, body);
+  }
+  return (body as { export: ExportJob }).export;
 }
 
 export function startDownload(job: ExportJob): void {

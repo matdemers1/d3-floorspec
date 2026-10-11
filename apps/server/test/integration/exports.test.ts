@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Prisma } from '../../src/generated/prisma/client.js';
 import { KITCHEN_AS_WRITTEN, KITCHEN_OPTIONS, projectWithDocument, REQUIRES_ELECTRICAL } from './drawings-support.js';
-import { upload, type UploadedAsset } from './assets-support.js';
+import { upload, uploadStill, type UploadedAsset } from './assets-support.js';
 import { tilePng } from '../support/images.js';
 import { contentHash } from '@floorspec/engine';
 
@@ -203,6 +203,26 @@ describe('drawing exports', () => {
     const v = new DataView(file.bytes.buffer, file.bytes.byteOffset);
     expect((30 + v.getUint16(26, true) + v.getUint16(28, true)) % 64).toBe(0);
     expect(await db.auditLog.count({ where: { action: 'export.request', targetId: { in: [gltf.id, usdz.id] } } })).toBe(2);
+  });
+
+  it('exports a 3D model with its doors open or closed, and refuses doors on a drawing (FLR-T-13.8, FLR-T-13.13)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    const sizes: Record<string, number> = {};
+    for (const doors of ['closed', 'open'] as const) {
+      const asked = await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf', doors });
+      expect(asked.status, asked.text).toBe(202);
+      expect(await drain.runOnce()).toBe(1);
+      const done = view(await operator.get(`/api/projects/${id}/exports/${view(asked).id}`));
+      expect(done.status, done.error ?? '').toBe('done');
+      sizes[doors] = done.result?.size ?? 0;
+      const row = await db.job.findUniqueOrThrow({ where: { id: view(asked).id } });
+      expect((row.params as { doors?: string }).doors).toBe(doors);
+    }
+    // An open door is not where a closed one is: the two files differ.
+    expect(sizes['open']).toBeGreaterThan(0);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', doors: 'open' })).status).toBe(400);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf', doors: 'ajar' })).status).toBe(400);
   });
 
   it('exports the design asked for, and refuses a design for an IFC export or one the model does not have', async () => {
@@ -439,6 +459,80 @@ describe('path-traced stills (FLR-T-12.6)', () => {
     expect((await ask({ kind: 'pdf', still: { size: 'small' } })).status).toBe(400);
     expect((await ask({ kind: 'still', levels: ['MAIN'] })).status).toBe(400);
     expect(await db.job.count()).toBe(0);
+  });
+});
+
+describe('stills path-traced on the viewer’s GPU (FLR-T-13.13)', () => {
+  let running: Running;
+
+  beforeAll(async () => {
+    running = await start();
+  });
+  afterAll(async () => {
+    await running.close();
+  });
+  beforeEach(async () => {
+    await reset(db);
+  });
+
+  it('saves the editor’s PNG as a finished still of its version: listed, downloaded, audited', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator);
+    const png = tilePng(32, 24, { meta: true });
+    const saved = await uploadStill(running.url, operator, id, png, { version: hash, view: 'Living room (LIV) from its doorway D1', samples: '256', ms: '118300', lights: 'on', time: 'night', device: 'apple m4-pro' });
+    expect(saved.status, saved.text).toBe(201);
+    const still = view(saved) as ExportView & { still: Record<string, unknown> | null; result: Record<string, unknown> | null };
+    expect(still).toMatchObject({ kind: 'still', status: 'done', version: hash, download: `/api/projects/${id}/exports/${still.id}/file` });
+    expect(still.still).toMatchObject({ source: 'gpu', view: 'Living room (LIV) from its doorway D1', samples: 256, lights: 'on', time: 'night', device: 'apple m4-pro' });
+    expect(still.result).toMatchObject({ contentType: 'image/png', source: 'gpu', width: 32, height: 24, samples: 256, camera: 'Living room (LIV) from its doorway D1', ms: 118300 });
+    expect(String(still.result?.['label'])).toMatch(/GPU/);
+    expect(saved.headers.get('location')).toBe(`/api/projects/${id}/exports/${still.id}`);
+
+    // Downloaded like any export; its metadata chunks stripped, as an uploaded image's are.
+    const file = await download(operator, `${running.url}${String(still.download)}`);
+    expect(file.status).toBe(200);
+    expect(file.type).toBe('image/png');
+    expect(file.disposition).toBe(`attachment; filename="still-gpu-living-room-liv-from-its-doorway-d1-${hash.slice(0, 8)}.png"`);
+    expect(file.bytes.byteLength).toBe(still.result?.['size']);
+    expect(file.bytes.byteLength).toBeLessThan(png.byteLength);
+    expect(Buffer.from(file.bytes).toString('latin1')).not.toContain('tEXt');
+
+    // Listed with the exports; nothing was queued for the worker; the upload was audited.
+    const list = (await operator.get(`/api/projects/${id}/exports`)).body as { exports: ExportView[] };
+    expect(list.exports.map((e) => e.id)).toEqual([still.id]);
+    expect(await db.job.count({ where: { status: { in: ['queued', 'running'] } } })).toBe(0);
+    expect(await db.auditLog.count({ where: { action: 'export.upload', targetId: still.id } })).toBe(1);
+    // A server still may still be asked for: the GPU still is not one rendering.
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'still', still: { size: 'small', quality: 'draft' } })).status).toBe(202);
+  });
+
+  it('refuses what is not a PNG still of a version of this project', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator);
+    const ok = { version: hash, view: 'SW iso', samples: '64' };
+    const save = (bytes: Uint8Array, query: Record<string, string>) => uploadStill(running.url, operator, id, bytes, query);
+    expect((await save(tilePng(8, 8), { ...ok, version: 'a'.repeat(64) })).status).toBe(404);
+    expect((await save(tilePng(8, 8), { ...ok, version: 'nope' })).status).toBe(400);
+    expect((await save(tilePng(8, 8), { version: hash, samples: '64' })).status).toBe(400);
+    expect((await save(tilePng(8, 8), { ...ok, samples: '0' })).status).toBe(400);
+    expect((await save(tilePng(8, 8), { ...ok, design: '{not json' })).status).toBe(400);
+    expect((await save(tilePng(8, 8), { ...ok, extra: 'x' })).status).toBe(400);
+    expect((await save(new Uint8Array(0), ok)).status).toBe(400);
+    expect((await save(new TextEncoder().encode('not an image'), ok)).status).toBe(415);
+    expect((await save(tilePng(4097, 2), ok)).status).toBe(422);
+    // JSON is not a still.
+    expect((await operator.post(`/api/projects/${id}/exports/stills?${new URLSearchParams(ok).toString()}`, {})).status).toBe(415);
+    expect(await db.job.count()).toBe(0);
+  });
+
+  it('lets an agent token that may propose save one, and refuses a read-only token', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator);
+    const query = { version: hash, view: 'SW iso', samples: '64' };
+    const reader = await tokenFor(operator, id, 'read');
+    expect((await uploadStill(running.url, { bearer: reader }, id, tilePng(8, 8), query)).status).toBe(403);
+    const agent = await tokenFor(operator, id, 'agent');
+    expect((await uploadStill(running.url, { bearer: agent }, id, tilePng(8, 8), query)).status).toBe(201);
   });
 });
 

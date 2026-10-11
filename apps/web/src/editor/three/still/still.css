@@ -46,3 +46,11 @@
   border-radius: var(--radius-md);
   background: var(--color-fill-quiet);
 }
+/* FLR-T-13.13: the GPU still as it is traced — its own canvas, at the still's size, shown to fit. */
+.fs-still__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  background: var(--color-fill-quiet);
+}

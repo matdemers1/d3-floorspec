@@ -1,0 +1,7 @@
+rt_hdr_alb_nrm.tza — the Intel Open Image Denoise network weights for HDR colour with albedo and
+normal buffers, from https://github.com/RenderKit/oidn-weights (Apache License 2.0, Copyright Intel
+Corporation). Unmodified: sha256 e586ef2ff48d7fbb7611986405220ed8fc5c13ca79bfc40be4dc742fbf959e1a,
+1 841 160 bytes, as that repository's Git LFS pointer records it.
+
+Served with the editor and fetched only when a still is denoised on the viewer's GPU (FLR-T-13.13):
+the editor reaches no third party for it.

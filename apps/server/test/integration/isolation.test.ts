@@ -51,6 +51,8 @@ const CALLS: Record<string, Call> = {
   'POST /api/projects/:projectId/changesets/:changesetId/reject': { body: {}, ownerStatus: 409 },
   // Answered, by a route that works: A's model has a building but no level to draw.
   'POST /api/projects/:projectId/exports': { body: { kind: 'pdf' }, ownerStatus: 422 },
+  // Answered, by a route that works: a GPU still says what it shows in its query, and has none here (FLR-T-13.13).
+  'POST /api/projects/:projectId/exports/stills': { body: {}, ownerStatus: 400 },
   'GET /api/projects/:projectId/exports': { ownerStatus: 200 },
   'GET /api/projects/:projectId/exports/:jobId': { ownerStatus: 200 },
   // Answered, by a route that works: A's export is still queued.

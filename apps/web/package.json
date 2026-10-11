@@ -26,10 +26,13 @@
     "@floorspec/rules-engine": "workspace:*",
     "@react-three/fiber": "9.8.1",
     "lucide-react": "^1.44.0",
+    "oidn-web": "0.4.0",
     "qrcode-generator": "2.0.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "three": "0.186.1"
+    "three": "0.186.1",
+    "three-gpu-pathtracer": "0.0.26",
+    "three-mesh-bvh": "0.9.15"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
