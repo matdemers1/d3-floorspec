@@ -113,7 +113,7 @@ test('setup to a compared undo: draw a room by hand, accept an agent’s proposa
 
   // A level.
   await page.getByRole('button', { name: 'Add Level 1' }).click();
-  await expect(page.getByRole('combobox', { name: 'Level' })).toContainText('Level 1');
+  await expect(page.getByRole('combobox', { name: 'Level', exact: true })).toContainText('Level 1');
   await settled(page);
   doc = await modelOf(page, project);
   expect(count(doc.levels)).toBe(1);

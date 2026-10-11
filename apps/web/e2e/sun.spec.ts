@@ -169,8 +169,9 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   expect(day.ground).toBe(true);
   await expect(panel.getByText(/^Sunrise 6:4\d am · solar noon 12:\d\d pm · sunset 6:2\d pm$/)).toBeVisible();
   // The whole house, roof on: what casts the long shadows.
-  await page.getByRole('button', { name: /Cutaway · / }).click();
-  await expect(page.getByRole('button', { name: 'Whole house' })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Levels in 3D' }).click();
+  await page.getByRole('option', { name: /^Whole house/ }).click();
+  await expect(page.getByRole('combobox', { name: 'Levels in 3D' })).toContainText('Whole house');
   // Back a little, so the shadows on the ground are in the picture.
   await page.getByRole('application', { name: /^3D view of / }).focus();
   for (let i = 0; i < 3; i++) await page.keyboard.press('-');

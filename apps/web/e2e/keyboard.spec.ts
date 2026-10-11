@@ -76,7 +76,7 @@ test('a house drawn, furnished with a door and a room, nudged and undone — wit
 
   // ── A level, from the command palette.
   await palette(page, 'add a level');
-  await expect(page.getByRole('combobox', { name: 'Level' })).toContainText('Level 1');
+  await expect(page.getByRole('combobox', { name: 'Level', exact: true })).toContainText('Level 1');
   await settled(page);
   expect(count((await modelOf(page, project)).levels)).toBe(1);
 

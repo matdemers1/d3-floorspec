@@ -1,5 +1,6 @@
 import { appearanceOf, DEFAULT_COLOURS, ROLE_LOOKS, type Appearance, type MeshPart, type PartKind } from '@floorspec/mesh';
 import type { EditorModel, WallView } from '../model';
+import type { LevelsShown } from './mode';
 
 /**
  * What the 3D view does with each meshed part (FLR-T-7.5), without three.js: which element a part
@@ -52,7 +53,9 @@ const ROOFS: ReadonlySet<PartKind> = new Set(['roof', 'roofGable']);
 
 export interface Visibility {
   walking: boolean;
-  cutaway: boolean;
+  /** Which levels show about the current one (FLR-T-13.2): the whole house, a cutaway, or it alone. */
+  levels: LevelsShown;
+  /** In the whole house, the roofs on or off. */
   roof: boolean;
   /** The current level. */
   level: string | null;
@@ -61,26 +64,69 @@ export interface Visibility {
 }
 
 /**
- * What shows. Walking shows the whole house with its doors open (FLR-T-13.8) — swung back, slid
- * into their pockets, raised — so a person walks through every doorway as the walls let them (the
- * walk's collision is the walls and their cuts, walk.ts, never a door); the orbit views show them
- * closed. Otherwise the cutaway shows the levels up to the current one and leaves off the current
- * level's ceilings, so the rooms are seen from above; without it every level shows. The roof shows
- * when it is on and its level shows.
+ * What shows. Walking shows the whole house, ceilings and roofs included, with its doors open
+ * (FLR-T-13.8) — swung back, slid into their pockets, raised — so a person walks through every
+ * doorway as the walls let them (the walk's collision is the walls and their cuts, walk.ts, never a
+ * door); the orbit views show them closed. Otherwise the whole house
+ * shows every level, every ceiling and every roof (the roofs unless they are turned off) — what
+ * floorspec_render draws for `level: "all"`. The cutaway shows the levels up to the current one and
+ * leaves off the current level's ceilings and the roof it carries, so its rooms are seen from above;
+ * a roof of a level below shows, since nothing above it is cut. Only the current level shows that
+ * level alone, cut the same way.
  */
 export function isVisible(part: Pick<MeshPart, 'kind' | 'level' | 'state'>, v: Visibility): boolean {
   if (part.state !== undefined && part.state !== (v.walking ? 'open' : 'closed')) return false;
   if (v.walking) return true;
-  if (ROOFS.has(part.kind) && !v.roof) return false;
-  if (!v.cutaway || v.level === null) return true;
+  if (v.levels === 'house' || v.level === null) return v.roof || !ROOFS.has(part.kind);
   const at = v.order.get(part.level);
   const current = v.order.get(v.level);
   if (at === undefined || current === undefined) return true;
   if (at > current) return false;
-  if (at === current && part.kind === 'ceiling') return false;
-  // A roof belongs to the level whose walls carry it: it sits on top of that level, so a cutaway at that level leaves it off.
-  if (at === current && ROOFS.has(part.kind)) return false;
-  return true;
+  if (at < current) return v.levels === 'cutaway';
+  // A roof belongs to the level whose walls carry it: it sits on top of that level, so cutting at that level leaves it off.
+  return part.kind !== 'ceiling' && !ROOFS.has(part.kind);
+}
+
+/** A choice of the 3D view's levels control: a select value, its label and a line under it. */
+export interface LevelChoice {
+  value: string;
+  label: string;
+  description: string;
+}
+
+/**
+ * The 3D view's levels control (FLR-T-13.2), top level first: the whole house, then each level as a
+ * cutaway ("Level 2 and below") and alone ("Only Level 2"). The lowest level is offered as a cutaway
+ * only: with nothing below it, it alone is the same view.
+ */
+export function levelChoices(levels: readonly { id: string; name: string }[], order: ReadonlyMap<string, number>): LevelChoice[] {
+  const sorted = [...levels].sort((a, b) => (order.get(b.id) ?? 0) - (order.get(a.id) ?? 0));
+  const choices: LevelChoice[] = [{ value: 'house', label: 'Whole house', description: 'Every level and every roof' }];
+  sorted.forEach((l, i) => {
+    choices.push({ value: `cutaway:${l.id}`, label: `${l.name} and below`, description: i === 0 ? 'Its ceilings and roof off' : 'The levels above cut away' });
+    if (i < sorted.length - 1) choices.push({ value: `only:${l.id}`, label: `Only ${l.name}`, description: 'This level alone' });
+  });
+  return choices;
+}
+
+/** The control's value for what the view shows: the lowest level alone is its cutaway. */
+export function levelChoiceOf(levels: LevelsShown, level: string | null, order: ReadonlyMap<string, number>): string {
+  if (levels === 'house' || level === null) return 'house';
+  const lowest = levels === 'only' && order.get(level) === 0;
+  return `${lowest ? 'cutaway' : levels}:${level}`;
+}
+
+/** A choice back into what the view shows and at which level (null for the whole house). */
+export function parseLevelChoice(value: string): { levels: LevelsShown; level: string | null } {
+  if (value.startsWith('cutaway:')) return { levels: 'cutaway', level: value.slice('cutaway:'.length) };
+  if (value.startsWith('only:')) return { levels: 'only', level: value.slice('only:'.length) };
+  return { levels: 'house', level: null };
+}
+
+/** What the levels control says the view shows, in words: its chip and the inspector's "Showing". */
+export function levelsLabel(levels: LevelsShown, levelName: string | null, lowest = false): string {
+  if (levels === 'house' || levelName === null) return 'Whole house';
+  return levels === 'cutaway' || lowest ? `${levelName} and below` : `Only ${levelName}`;
 }
 
 export const levelOrder = (model: EditorModel): Map<string, number> => new Map([...model.levels].sort((a, b) => a.elevation - b.elevation || (a.id < b.id ? -1 : 1)).map((l, i) => [l.id, i]));

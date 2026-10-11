@@ -52,6 +52,7 @@ declare global {
       ready: boolean;
       parts: number;
       kinds: Record<string, number>;
+      shown: Record<string, number>;
       walking: boolean;
       walker: Walker | null;
       screenPoint(id: string): { x: number; y: number } | null;
@@ -103,7 +104,7 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
 
   await page.goto(`/projects/${project}/editor`);
   await settled(page);
-  await expect(page.getByRole('combobox', { name: 'Level' })).toContainText('Level 1');
+  await expect(page.getByRole('combobox', { name: 'Level', exact: true })).toContainText('Level 1');
 
   // ── Toggle to 3D from the top bar: the view is in the URL, the canvas has a name and a description.
   const views = page.getByRole('radiogroup', { name: 'View' });
@@ -113,16 +114,28 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
   await expect(canvas).toBeVisible();
   await ready(page);
   await expect(page.getByRole('application', { name: /^Plan of / })).toBeHidden();
-  const description = page.locator(`[id="${(await canvas.getAttribute('aria-describedby'))!}"]`);
+  // Looked up again after a reload: React's IDs are per render.
+  let description = page.locator(`[id="${(await canvas.getAttribute('aria-describedby'))!}"]`);
   await expect(description).toContainText('Level 1: 7 walls, 2 doors, 4 windows, 2 rooms, 1 stair, no roof showing.');
   await expect(description).toContainText('Use the plan view for full keyboard editing.');
-  await expect(page.getByRole('button', { name: /Cutaway · Level 1 and below/ })).toHaveAttribute('aria-pressed', 'true');
+  const levelsIn3d = page.getByRole('combobox', { name: 'Levels in 3D' });
+  await expect(levelsIn3d).toContainText('Level 1 and below');
   await shoot(page, '3d-cutaway');
 
-  // The whole house, roof on; then back to the cutaway.
-  await page.getByRole('button', { name: /Cutaway · Level 1 and below/ }).click();
-  await expect(page.getByRole('button', { name: 'Whole house' })).toHaveAttribute('aria-pressed', 'false');
+  // ── FLR-T-13.2: which levels show — the whole house, a cutaway at each level, or one level alone.
+  const shown = () => page.evaluate(() => window.__floorspec3d?.shown ?? {});
+  const count = async (key: string) => (await shown())[key] ?? 0;
+  await levelsIn3d.click();
+  await expect(page.getByRole('option')).toContainText(['Whole house', 'Level 2 and below', 'Only Level 2', 'Level 1 and below']);
+  await page.getByRole('option', { name: /^Whole house/ }).click();
+  // The whole house: every level, every ceiling, and the roof Level 2 carries on top of it all.
+  await expect(levelsIn3d).toContainText('Whole house');
+  await expect(description).toContainText('Level 1, Level 2:');
   await expect(description).toContainText('1 roof');
+  await expect.poll(() => count('L2:roof')).toBeGreaterThan(0);
+  expect(await count('L2:ceiling')).toBeGreaterThan(0);
+  expect(await count('L1:ceiling')).toBeGreaterThan(0);
+  await expect(page.getByRole('toolbar', { name: '3D view' }).getByRole('button', { name: 'Roof', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: /View: SW iso/ }).click();
   await expect(page.getByRole('button', { name: /View: SE iso/ })).toBeVisible();
   await page.waitForTimeout(300);
@@ -131,7 +144,51 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
   await page.getByRole('button', { name: /View: NE iso/ }).click(); // → NW
   await page.getByRole('button', { name: /View: NW iso/ }).click(); // → Top
   await page.getByRole('button', { name: /View: Top/ }).click(); // → SW
-  await page.getByRole('button', { name: 'Whole house' }).click();
+
+  // The cutaway at Level 2, from the keyboard: the level above Level 2's floor — its ceilings and its roof — is off.
+  await levelsIn3d.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('option', { name: /^Whole house/ })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('option', { name: /^Level 2 and below/ })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(levelsIn3d).toContainText('Level 2 and below');
+  await expect(page.getByRole('combobox', { name: 'Level', exact: true })).toContainText('Level 2');
+  await expect.poll(() => count('L2:roof')).toBe(0);
+  expect(await count('L2:ceiling')).toBe(0);
+  expect(await count('L2:floor')).toBeGreaterThan(0);
+  expect(await count('L1:ceiling')).toBeGreaterThan(0);
+  await expect(description).toContainText('no roof showing');
+  await expect(page.getByRole('toolbar', { name: '3D view' }).getByRole('button', { name: 'Roof', exact: true })).toBeDisabled();
+
+  // Only Level 2: Level 1 is gone.
+  await levelsIn3d.click();
+  await page.getByRole('option', { name: /^Only Level 2/ }).click();
+  await expect(levelsIn3d).toContainText('Only Level 2');
+  await expect.poll(async () => Object.keys(await shown()).filter((k) => k.startsWith('L1:')).length).toBe(0);
+  expect(await count('L2:floor')).toBeGreaterThan(0);
+  await expect(description).toContainText('Level 2:');
+  await expect(description).not.toContainText('Level 1');
+  await page.waitForTimeout(300);
+  await shoot(page, '3d-only-level-2');
+
+  // Page Down steps the level and the choice goes with it; Level 1 alone is its cutaway.
+  await canvas.focus();
+  await page.keyboard.press('PageDown');
+  await expect(page.getByRole('combobox', { name: 'Level', exact: true })).toContainText('Level 1');
+  await expect(levelsIn3d).toContainText('Level 1 and below');
+
+  // Kept for this project, in this browser: the whole house again after a reload.
+  await levelsIn3d.click();
+  await page.getByRole('option', { name: /^Whole house/ }).click();
+  await page.reload();
+  await ready(page);
+  description = page.locator(`[id="${(await canvas.getAttribute('aria-describedby'))!}"]`);
+  await expect(page.getByRole('combobox', { name: 'Levels in 3D' })).toContainText('Whole house');
+  await expect.poll(() => count('L2:roof')).toBeGreaterThan(0);
+  await levelsIn3d.click();
+  await page.getByRole('option', { name: /^Level 1 and below/ }).click();
+  await expect(levelsIn3d).toContainText('Level 1 and below');
 
   // The keyboard orbits the canvas, and the plan's own arrow keys do not move underneath it.
   await canvas.focus();
@@ -161,7 +218,7 @@ test('the P7 exit demo: 3D, split with synced selection, and a walk up the L sta
   await page.getByRole('treeitem', { name: /^Kitchen/ }).first().click();
   await expect(inspector.getByRole('heading', { name: 'Kitchen' })).toBeVisible();
   await expect(page.locator('.fs-three__label')).toHaveText('Kitchen');
-  await expect(inspector.getByRole('region', { name: '3D' })).toContainText('Level 1 and below, cut away');
+  await expect(inspector.getByRole('region', { name: '3D' })).toContainText('ShowingLevel 1 and below');
 
   // ── Live: an edit made elsewhere (an API batch, as an agent's accepted change arrives) is re-meshed
   //    in place, and the camera stays where it was.

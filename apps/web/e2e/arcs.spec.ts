@@ -64,7 +64,7 @@ test('an arc wall drawn by keyboard, the curved room it closes and its area, and
   expect((await modelOf(page, project) as unknown as { floorspec: string }).floorspec).toBe('0.4');
   await page.goto(`/projects/${project}/editor`);
   await settled(page);
-  await expect(page.getByRole('combobox', { name: 'Level' })).toContainText('Level 1');
+  await expect(page.getByRole('combobox', { name: 'Level', exact: true })).toContainText('Level 1');
 
   // ── Three straight walls by keyboard: W, a typed start, then lengths aimed with the arrows; Esc ends the chain.
   await page.locator('body').focus();

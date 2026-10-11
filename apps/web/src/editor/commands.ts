@@ -153,15 +153,35 @@ export const COMMANDS: readonly Command[] = [
       else three.walk(null);
     },
   },
+  // FLR-T-13.2: which levels the 3D view shows — the same choices as its levels control.
+  {
+    id: 'view.wholeHouse',
+    label: 'Show the whole house in 3D',
+    group: 'View',
+    keywords: '3d whole house all levels roof top complete',
+    enabled: (store) => threeOf(store).get().mode !== 'plan',
+    run: (store) => {
+      threeOf(store).setLevels('house');
+    },
+  },
   {
     id: 'view.cutaway',
     label: 'Cut away the levels above in 3D',
     group: 'View',
-    keywords: '3d cutaway whole house levels roof',
-    enabled: (store) => threeOf(store).get().mode !== 'plan',
+    keywords: '3d cutaway levels below section',
+    enabled: (store) => threeOf(store).get().mode !== 'plan' && store.get().level !== null,
     run: (store) => {
-      const three = threeOf(store);
-      three.set({ cutaway: !three.get().cutaway });
+      threeOf(store).setLevels('cutaway');
+    },
+  },
+  {
+    id: 'view.onlyLevel',
+    label: 'Show only this level in 3D',
+    group: 'View',
+    keywords: '3d isolate one level floor selection',
+    enabled: (store) => threeOf(store).get().mode !== 'plan' && store.get().level !== null,
+    run: (store) => {
+      threeOf(store).setLevels('only');
     },
   },
   {

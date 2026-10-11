@@ -50,7 +50,7 @@ test('an option set with two kitchens, drawn, compared side by side and switched
   await page.getByRole('button', { name: 'Open editor' }).first().click();
   await expect(page).toHaveURL(new RegExp(`/projects/${project}/editor$`));
   await page.getByRole('button', { name: 'Add Level 1' }).click();
-  await expect(page.getByRole('combobox', { name: 'Level' })).toContainText('Level 1');
+  await expect(page.getByRole('combobox', { name: 'Level', exact: true })).toContainText('Level 1');
   await settled(page);
 
   // A 20 ft × 12 ft room around the origin: the kitchen.

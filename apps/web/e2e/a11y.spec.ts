@@ -546,6 +546,12 @@ test('every screen and state has no axe violations, in light and in dark', async
   await page.waitForFunction(() => window.__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
   await expect(page.getByRole('toolbar', { name: '3D view' })).toBeVisible();
   await audit(page, 'editor, 3D view');
+  // FLR-T-13.2: the whole house, picked from the levels control. (Not audited open: @d3cloud/ui's
+  // Select hides the page behind its listbox, which axe reports as aria-hidden-focus for any Select.)
+  await page.getByRole('combobox', { name: 'Levels in 3D' }).click();
+  await page.getByRole('option', { name: /^Whole house/ }).click();
+  await expect(page.getByRole('combobox', { name: 'Levels in 3D' })).toContainText('Whole house');
+  await audit(page, 'editor, 3D whole house');
   // FLR-T-12.6: the path-traced still's options.
   await page.getByRole('button', { name: 'Render still' }).click();
   await expect(page.getByRole('dialog', { name: 'Render a still' })).toBeVisible();

@@ -48,14 +48,14 @@ test('a hip roof over the walls and an L stair to the level above, as the model 
   await page.getByRole('button', { name: 'Open editor' }).first().click();
   await expect(page).toHaveURL(new RegExp(`/projects/${project}/editor$`));
   await page.getByRole('button', { name: 'Add Level 1' }).click();
-  await expect(page.getByRole('combobox', { name: 'Level' })).toContainText('Level 1');
+  await expect(page.getByRole('combobox', { name: 'Level', exact: true })).toContainText('Level 1');
   await settled(page);
 
   // Level 2 above it, added while both are empty; then back to Level 1, framed as an empty level.
   await page.getByRole('button', { name: 'Add a level' }).click();
   await expect.poll(async () => count((await modelOf(page, project)).levels)).toBe(2);
   await settled(page);
-  const levelPicker = page.getByRole('combobox', { name: 'Level' });
+  const levelPicker = page.getByRole('combobox', { name: 'Level', exact: true });
   if (!((await levelPicker.textContent()) ?? '').includes('Level 1')) {
     await levelPicker.click();
     await page.getByRole('option', { name: /Level 1/ }).click();
@@ -230,7 +230,8 @@ test('a hip roof over the walls and an L stair to the level above, as the model 
   // …and in 3D: the whole house, the saltbox among its parts.
   await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: '3D' }).click();
   await page.waitForFunction(() => (window as unknown as { __floorspec3d?: { ready: boolean } }).__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
-  await page.getByRole('button', { name: /Cutaway · Level 1 and below/ }).click();
+  await page.getByRole('combobox', { name: 'Levels in 3D' }).click();
+  await page.getByRole('option', { name: /^Whole house/ }).click();
   const canvas = page.getByRole('application', { name: /^3D view of / });
   const description = page.locator(`[id="${(await canvas.getAttribute('aria-describedby'))!}"]`);
   await expect(description).toContainText('1 roof');
