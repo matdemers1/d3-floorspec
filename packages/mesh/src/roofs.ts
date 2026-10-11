@@ -6,7 +6,9 @@
  * - With a `thickness`, the roof is its surface thickened straight down by it: the faces on top,
  *   the same faces `thickness` lower underneath, and a vertical band round the surface's edge. Its
  *   box is the derived box, from eave − thickness to the surface's high. Its gable ends are not part
- *   of that solid and are emitted as `roofGable` surfaces.
+ *   of that solid and are emitted as `roofGable` surfaces — each only where it is below the solid:
+ *   the band stands in the gable end's own plane, so the gable end's top `thickness` would lie in it,
+ *   two coplanar faces drawn over each other that fight for depth (FLR-T-12.35).
  * - Without one, the roof is the closed shell its faces, its gable ends and a soffit at the eave
  *   bound: the attic volume. Its box is the derived box.
  * - A flat roof is a slab of its thickness under the eave outline, or a surface facing up without one.
@@ -53,6 +55,58 @@ function split(rings: readonly (readonly P3[])[]): P3[][] {
   });
 }
 
+/** round(n / d) for d > 0, halves away from −∞. */
+function rdiv(n: bigint, d: bigint): bigint {
+  const q = 2n * n + d;
+  const m = 2n * d;
+  return q >= 0n ? q / m : -((-q + m - 1n) / m);
+}
+
+/**
+ * The part of a gable end below a thick roof's solid (FLR-T-12.35). A gable end (16.5) is A and B at
+ * the eave and then the surface back from B to A, so it is everything between the eave and the
+ * surface along its edge; the solid's band on that edge is everything between the surface and
+ * `t` below it, in the same plane. What is left is the gable end with its top lowered by `t` and
+ * cut at the eave: none where the surface is less than `t` above the eave, and one piece for each
+ * run of the edge where it is more. Each piece is A-side and B-side at the eave and then its top
+ * back from B to A, as a gable end is; a point where the lowered top crosses the eave is rounded
+ * once, and every other point is the derived one moved down by `t`, an integer.
+ */
+export function belowSolid(gable: readonly P3[], eave: number, t: number): P3[][] {
+  const [A, B] = [gable[0]!, gable[1]!];
+  const top = gable.slice(2);
+  const at = (p: P3, q: P3): boolean => p[0] === q[0] && p[1] === q[1];
+  // The surface's ends on the edge were dropped from the polygon where they are at the eave.
+  if (!top.length || !at(top[0]!, B)) top.unshift(B);
+  if (!at(top[top.length - 1]!, A)) top.push(A);
+  const low = top.map((p): P3 => [p[0], p[1], p[2] - t]);
+  const e = eave;
+  /** Where the lowered top crosses the eave between p, above it, and q, at or below it. */
+  const cross = (p: P3, q: P3): P3 => {
+    const n = BigInt(p[2] - e);
+    const d = BigInt(p[2] - q[2]);
+    const along = (k: 0 | 1): number => Number(BigInt(p[k]) + rdiv((BigInt(q[k]) - BigInt(p[k])) * n, d));
+    return [along(0), along(1), e];
+  };
+  const pieces: P3[][] = [];
+  let run: P3[] | null = null;
+  for (let i = 0; i < low.length; i++) {
+    const p = low[i]!;
+    if (p[2] > e) {
+      if (!run) run = [i === 0 ? [p[0], p[1], e] : cross(p, low[i - 1]!)];
+      run.push(p);
+      const q = low[i + 1];
+      if (q === undefined) run.push([p[0], p[1], e]);
+      else if (q[2] <= e) run.push(cross(p, q));
+      else continue;
+      const piece = dedupe([run[run.length - 1]!, run[0]!, ...run.slice(1, -1)]);
+      if (piece.length >= 3) pieces.push(piece);
+      run = null;
+    }
+  }
+  return pieces;
+}
+
 /** A gable end turned to face out of the roof: to the right of its eave edge A → B on the counter-clockwise outline. */
 function outward(poly: readonly P3[]): P3[] {
   const [A, B] = [poly[0]!, poly[1]!];
@@ -97,7 +151,6 @@ export function roofParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
       continue;
     }
     const faces = surface.faces.map((f) => dedupe(f.polygon as P3[]));
-    const gables = surface.gables.map((g) => outward(dedupe(g.polygon as P3[])));
     if (t > 0) {
       if (want('roof')) {
         for (const f of split(faces)) b.face([f]);
@@ -115,12 +168,15 @@ export function roofParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
         out.push({ ...common, kind: 'roof', closed: true, exact: b });
       }
       if (want('roofGable'))
-        surface.gables.forEach((g, i) => {
+        for (const g of surface.gables) {
           const gb = new MeshBuilder(kernel);
-          if (gb.face([gables[i]!])) out.push({ ...common, kind: 'roofGable', piece: `gable${g.edge}`, closed: false, facing: 'side', exact: gb });
-        });
+          let made = false;
+          for (const piece of belowSolid(dedupe(g.polygon as P3[]), r.eave, t)) made = gb.face([outward(piece)]) || made;
+          if (made) out.push({ ...common, kind: 'roofGable', piece: `gable${g.edge}`, closed: false, facing: 'side', exact: gb });
+        }
       continue;
     }
+    const gables = surface.gables.map((g) => outward(dedupe(g.polygon as P3[])));
     const soffit = [...outline].reverse().map((p): P3 => [p[0], p[1], r.eave]);
     for (const f of split([...faces, ...gables, soffit])) b.face([f]);
     out.push({ ...common, kind: 'roof', closed: true, exact: b });
