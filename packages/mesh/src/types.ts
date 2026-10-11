@@ -26,7 +26,7 @@ export interface Box3 {
  * | `wall` | wall | solid: its outline (5.7) from base to top (5.9), its openings cut through |
  * | `junctionFill` | junction | solid: the fill (5.7) from the least base to the greatest top of its walls; and, as the piece `closure:<wall>`, the corner a separator between two walls leaves open (see closures.ts) |
  * | `opening` | opening | solid: exactly the volume cut from its wall — a pick target, glass, a door leaf's slot |
- * | `floor` | room | solid between its top and bottom (15.1); a surface facing up when it declares no thickness |
+ * | `floor` | room | solid between its top and bottom (15.1); a surface facing up when it declares no thickness — or, on a level with a level below, a solid down to just above the ceiling below (`plenum`), a surface facing both ways where that leaves no depth (FLR-T-12.32) |
  * | `ceiling` | room | surface facing down: flat, tray (with its step) or vault (15.2–15.4) |
  * | `slab` | slab | solid (15.7) |
  * | `roof` | roof | solid: with a thickness, the surface thickened down by it; without, the shell closed by its gable ends and a soffit at the eave (16.5). A flat roof without thickness is a surface facing up |
@@ -36,7 +36,7 @@ export interface Box3 {
  * | `stairColumn` | stair | solid: a spiral stair's centre column, its column's radius (17.7) — or a slender pole when its treads meet at the centre — from its bottom to its top |
  * | `stairBlock` | stair | solid placeholder: the stair's box (17.4), for a winder or spiral stair whose steps are not derived (as a Core 0.3 reader reads it) |
  * | `extension` | extension element | solid: its fallback box (12.6) — or, for an element this reader models, each piece of its model (`model`), inside that box |
- * | `threshold` | opening | a door's or an empty opening's sill where it is its wall's base: the plan its cut removes, each side of the location line, as the floor of the room on that side — solid between its top and bottom, a surface facing up without a thickness (see thresholds.ts) |
+ * | `threshold` | opening | a door's or an empty opening's sill where it is its wall's base: the plan its cut removes, each side of the location line, as the floor of the room on that side — solid between its top and bottom, a surface facing up without a thickness, and drawn down as that floor is (`plenum`) (see thresholds.ts) |
  */
 export type PartKind =
   | 'wall'
@@ -71,6 +71,18 @@ export const PART_KINDS: readonly PartKind[] = [
   'threshold',
 ];
 
+/**
+ * A floor that declares no thickness (15.1) on a level with a level below, as a view draws it
+ * (FLR-T-12.32, rooms.ts `plenumsOf`): down from its top to `bottom` — just above the highest ceiling
+ * below it — so it is seen from below and closes the band between that ceiling and the floor.
+ */
+export interface Plenum {
+  /** Base units, an integer: the bottom of the solid; its top where there is no depth to fill (a surface facing both ways). */
+  bottom: number;
+  /** The room of a lower level it covers most, whose ceiling its underside is (18.6: its ceiling finish); absent over none. */
+  room?: string;
+}
+
 /** An indexed triangle mesh in metres (Float32, relative to the result's `origin`), counter-clockwise seen from outside. */
 export interface PartMesh {
   positions: Float32Array;
@@ -101,8 +113,8 @@ export interface MeshPart {
   level: string;
   /** A watertight 2-manifold solid, or a surface. */
   closed: boolean;
-  /** For a surface: which way it faces. */
-  facing?: 'up' | 'down' | 'side';
+  /** For a surface: which way it faces — `both` for a floor drawn down to a ceiling it has no depth above (`plenum`). */
+  facing?: 'up' | 'down' | 'side' | 'both';
   /** Set when the geometry stands in for what this draft does not derive (a roof's surface, a winder's steps). */
   placeholder?: true;
   /** A material the element references (roof, slab). */
@@ -111,6 +123,8 @@ export interface MeshPart {
   layers?: (string | null)[];
   /** An opening's fill type and what it is. */
   opening?: { category: 'door' | 'window' | 'empty'; fill?: string; wall: string };
+  /** A floor (or a threshold, as its room's floor) drawn down to the ceiling below (FLR-T-12.32). */
+  plenum?: Plenum;
   /** A threshold's wall, the side of its location line, and the room whose floor it continues. */
   threshold?: { wall: string; side: 'left' | 'right'; room: string };
   /** An extension element's extension and collection. */

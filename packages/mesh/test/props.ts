@@ -18,13 +18,19 @@
  *   is its half of the cut's plan between its room's floor's bottom and top;
  * - no corner is left open (FLR-T-12.20): where a separator sits between two walls whose faces are not
  *   parallel there, a point inside the corner those faces would have made is inside the junction's
- *   closure.
+ *   closure;
+ * - every floor that declares no thickness on a level with a level below is drawn down to the
+ *   ceiling below (FLR-T-12.32), and so is each threshold that continues it: its bottom is 1/16 in
+ *   above the level below's ceiling line or a lower room's ceiling between that line and its top —
+ *   never below the line — its volume exactly its plan's area times its depth, and where it has no
+ *   depth it is a surface facing both ways at its top.
  */
 import { expect } from 'vitest';
 import type { Derived, FloorspecDocument } from '@floorspec/engine';
 import { area2, clip, iarea2, Rat, rpoint, type IPoint, type RPoint } from '../src/exact.js';
 import type { Kernel } from '../src/kernel.js';
 import { UNITS_PER_METRE as BU, type Box3, type HouseMesh, type MeshPart, type PartMesh } from '../src/index.js';
+import { PLENUM_GAP } from '../src/rooms.js';
 import { treadOutlines } from '../src/stairs.js';
 
 const own = <T>(c: Record<string, T | undefined> | undefined, id: string): T => {
@@ -468,6 +474,34 @@ function shellVolume6(faces: readonly { polygon: [number, number, number][] }[],
   return { v6, planar };
 }
 
+/**
+ * A floor's (or its threshold's) plenum (FLR-T-12.32), checked against the document and the derived
+ * values: whether it has one, and the bottom it may have — 1/16 in over the level below's ceiling
+ * line, or over a lower room's ceiling between that line and the floor's top (the one it is over,
+ * which the overlap the mesher measures picks), and never at a depth that is not positive.
+ * Returns the bottom the part is drawn down to.
+ */
+function plenumBottom(doc: FloorspecDocument, d: Derived, p: MeshPart, room: string, label: string): number {
+  const fl = own(d.floors, room);
+  const level = own(doc.levels, own(doc.rooms, room).level);
+  const below = Object.values(doc.levels ?? {})
+    .filter((l) => l !== undefined && l.elevation < level.elevation)
+    .sort((a, b) => b!.elevation - a!.elevation || b!.elevation + (b!.ceilingHeight ?? b!.height) - (a!.elevation + (a!.ceilingHeight ?? a!.height)))[0];
+  const wants = below !== undefined && fl.top === fl.bottom;
+  expect(p.plenum !== undefined, `${label}: drawn down to the ceiling below`).toBe(wants);
+  if (!wants || p.plenum === undefined) return fl.bottom;
+  const line = below.elevation + (below.ceilingHeight ?? below.height);
+  const lower = Object.entries(doc.rooms ?? {})
+    .filter(([, r]) => r !== undefined && own(doc.levels, r.level).elevation < level.elevation)
+    .map(([id]) => id);
+  const highs = lower.map((id) => d.ceilings?.[id]?.high).filter((h): h is number => h !== undefined && h > line && h < fl.top);
+  const allowed = new Set([line, ...highs].map((h) => Math.min(h + PLENUM_GAP, fl.top)));
+  expect(allowed.has(p.plenum.bottom), `${label}: its bottom ${String(p.plenum.bottom)} is just over a ceiling below (${[...allowed].join(', ')})`).toBe(true);
+  if (p.plenum.room !== undefined) expect(lower, `${label}: its underside is a lower room's ceiling`).toContain(p.plenum.room);
+  expect([p.closed, p.facing], `${label}: a solid with depth, else a surface facing both ways`).toEqual(p.plenum.bottom < fl.top ? [true, undefined] : [false, 'both']);
+  return p.plenum.bottom;
+}
+
 /** What each part should be, computed from the document and the engine's derived values. */
 function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
   const ring2 = (r: readonly (readonly [number, number])[]): bigint => iarea2(r.map(I));
@@ -504,7 +538,10 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
       const fl = own(d.floors, p.id);
       const room = own(d.rooms, p.id);
       const twice = BigInt(room.area.replace('.5', '')) * 2n + (room.area.endsWith('.5') ? (room.area.startsWith('-') ? -1n : 1n) : 0n);
-      return p.closed ? { volume6: prism6(twice, fl.top - fl.bottom), box: box3(fl.box), genus: room.holes.length } : { box: box3(fl.box) };
+      const bottom = plenumBottom(doc, d, p, p.id, p.key);
+      const box = box3(fl.box);
+      box.min[2] = bottom;
+      return p.closed ? { volume6: prism6(twice, fl.top - bottom), box, genus: room.holes.length } : { box };
     }
     case 'ceiling':
       return { box: box3(own(d.ceilings, p.id).box) };
@@ -589,7 +626,9 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
       expect(p.threshold!.room).toBe(way!.rooms[side] ?? way!.rooms[side === 'left' ? 'right' : 'left']);
       const fl = own(d.floors, p.threshold!.room);
       const ring = half!.ring.map((q): [number, number] => [Number(q[0]), Number(q[1])]);
-      return p.closed ? { volume6: prism6(iarea2(half!.ring), fl.top - fl.bottom), box: planBox(ring, fl.bottom, fl.top), genus: 0 } : { box: planBox(ring, fl.top, fl.top) };
+      // Drawn down as its room's floor is (FLR-T-12.32).
+      const bottom = plenumBottom(doc, d, p, p.threshold!.room, p.key);
+      return p.closed ? { volume6: prism6(iarea2(half!.ring), fl.top - bottom), box: planBox(ring, bottom, fl.top), genus: 0 } : { box: planBox(ring, fl.top, fl.top) };
     }
     case 'extension': {
       const f = own(d.fallbacks, p.id);
@@ -708,6 +747,9 @@ export function checkHouse(kernel: Kernel, doc: FloorspecDocument, d: Derived, m
         const at = (z: number): number[] => [(half.probe[0] - mesh.origin[0]) / BU, (half.probe[1] - mesh.origin[1]) / BU, (z - mesh.origin[2]) / BU];
         const fl = own(d.floors, t!.threshold!.room);
         expect(hits(t!.mesh, at(fl.top + BU), at(fl.bottom - BU)), `${name} ${way.id}: a ray down the ${side} half of the doorway meets its threshold`).toBeGreaterThanOrEqual(1);
+        // Drawn down exactly as the floor it continues (FLR-T-12.32).
+        const floor = mesh.parts.find((q) => q.key === `floor:${t!.threshold!.room}`);
+        if (floor !== undefined) expect(t!.plenum, `${name} ${way.id}: its ${side} threshold is drawn down as its room's floor`).toEqual(floor.plenum);
       }
     }
 

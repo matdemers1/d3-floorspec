@@ -8,7 +8,7 @@ import { extensionParts } from './extensions.js';
 import { loadKernel, type Kernel, type KernelOptions } from './kernel.js';
 import type { RawPart } from './part.js';
 import { roofParts } from './roofs.js';
-import { roomParts } from './rooms.js';
+import { plenumsOf, roomParts } from './rooms.js';
 import { stairParts } from './stairs.js';
 import { thresholdParts } from './thresholds.js';
 import { PART_KINDS, UNITS_PER_METRE, type Box3, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartStats, type Vec3 } from './types.js';
@@ -60,11 +60,13 @@ function meshWith(kernel: Kernel, doc: FloorspecDocument, derived: Derived, opti
     for (const r of raw) if ('manifold' in r) r.manifold.delete();
   };
   try {
+    // The floors drawn down to the ceiling below (FLR-T-12.32): a room's floor and its doorways' thresholds alike.
+    const plenums = want('floor') || want('threshold') ? plenumsOf(kernel, doc, derived) : new Map<string, never>();
     raw.push(
       ...wallParts(kernel, doc, derived, want),
       ...closureParts(kernel, doc, derived, want),
-      ...thresholdParts(kernel, doc, derived, want),
-      ...roomParts(kernel, doc, derived, want),
+      ...thresholdParts(kernel, doc, derived, want, plenums),
+      ...roomParts(kernel, doc, derived, want, plenums),
       ...roofParts(kernel, doc, derived, want),
       ...stairParts(kernel, doc, derived, want),
       ...extensionParts(kernel, doc, derived, want, options.models !== false),

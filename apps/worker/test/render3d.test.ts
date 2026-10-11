@@ -170,6 +170,39 @@ describe('3D render', () => {
   });
 });
 
+describe('upper floors drawn down to the ceiling below (FLR-T-12.32)', () => {
+  const floorKeys = (scene: Awaited<ReturnType<typeof buildScene>>, level: string, id: string): string[] =>
+    scene.levels
+      .find((l) => l.id === level)!
+      .nodes.find((n) => n.id === id)!
+      .primitives.filter((p) => p.part === 'floor')
+      .map((p) => scene.materials[p.material]!.key)
+      .sort();
+
+  it('a floor with no depth to fill, both ways: its top the floor, its underside the ceiling of the room under it', async () => {
+    // The ground floor's ceiling is at its full height, the upper floor's top: no depth.
+    const scene = await buildScene(TWO_STOREY);
+    expect(floorKeys(scene, 'UPPER', 'LIVU')).toEqual(['default:ceiling:living', 'default:floor:living']);
+    // The study over the kitchen: its underside is the kitchen's ceiling.
+    expect(floorKeys(scene, 'UPPER', 'KITU')).toEqual(['default:ceiling:kitchen', 'default:floor:office']);
+    // The ground floor's floors are as they were.
+    expect(floorKeys(scene, 'MAIN', 'LIV')).toEqual(['default:floor:living']);
+  });
+
+  it('a solid down to just over the ceiling line below, its edges the structure’s band', async () => {
+    const doc = structuredClone(load('../../../packages/engine/standard/templates/two-storey.floorspec.json')) as Json & { levels: Record<string, Json> };
+    delete doc.levels['L2']!['floorThickness'];
+    const scene = await buildScene(doc);
+    // The hall's oak on top, the circulation ceiling below it, the band round it.
+    expect(floorKeys(scene, 'L2', 'HALL')).toEqual(['M:oak-flooring', 'default:ceiling:circulation', 'default:floorEdge']);
+    const hall = scene.levels.find((l) => l.id === 'L2')!.nodes.find((n) => n.id === 'HALL')!;
+    const ys = hall.primitives.filter((p) => p.part === 'floor').flatMap((p) => [...p.positions].filter((_, i) => i % 3 === 1));
+    // 1/16 in over L1's 9 ft ceiling line, up to L2's floor at 10 ft 2 in (glTF +Y up, metres).
+    expect(Math.min(...ys)).toBeCloseTo((3_511_296 + 2032) / 1_280_000, 6);
+    expect(Math.max(...ys)).toBeCloseTo(3_901_440 / 1_280_000, 6);
+  });
+});
+
 describe('doorways and corners (FLR-T-12.20)', () => {
   it('floors every door and cased opening whose sill is its wall’s base, flush with the floors, in the floor’s material', async () => {
     const scene = await buildScene(TWO_STOREY);
@@ -194,7 +227,11 @@ describe('doorways and corners (FLR-T-12.20)', () => {
         }
         expect(ths.length, `${n.id}: a threshold`).toBeGreaterThan(0);
         expect(n.parts).toEqual(['opening', 'threshold']);
-        for (const p of ths) {
+        // An upper level's threshold goes down with its floor to the ceiling below (FLR-T-12.32): its
+        // underside is that ceiling and its edges the structure's — the rest of it is the floor.
+        const sills = ths.filter((p) => !/^default:(ceiling:|floorEdge$)/.test(scene.materials[p.material]!.key));
+        expect(sills.length, `${n.id}: its floor`).toBeGreaterThan(0);
+        for (const p of sills) {
           // The floor of the room it continues: no finish named, so that room's default floor (FLR-T-12.23).
           expect(scene.materials[p.material]!.key, n.id).toMatch(/^default:floor:/);
           expect(floors.has(p.material), `${n.id}: a floor's material`).toBe(true);

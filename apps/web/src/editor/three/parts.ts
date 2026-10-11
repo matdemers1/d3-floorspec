@@ -145,8 +145,23 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
       }
       return out;
     }
-    case 'floor':
-      return one(materialColour(model, rooms?.[part.id]?.['floorFinish'] as string | undefined) ?? appearance(model).floor(part.id).color);
+    case 'floor': {
+      const top = materialColour(model, rooms?.[part.id]?.['floorFinish'] as string | undefined) ?? appearance(model).floor(part.id).color;
+      if (part.plenum === undefined) return one(top);
+      // Drawn down to the ceiling below (FLR-T-12.32): its top the floor, its underside the ceiling
+      // of the room under it, its edges the structure's band.
+      const under = part.plenum.room;
+      const colours = {
+        top: linear(top),
+        under: linear((under === undefined ? null : materialColour(model, rooms?.[under]?.['ceilingFinish'] as string | undefined)) ?? appearance(model).plenum('underside', under).color),
+        edge: linear(appearance(model).plenum('edge', under).color),
+      };
+      for (let i = 0; i < out.length; i += 3) {
+        const nz = normals[i + 2] ?? 0;
+        out.set(nz > 0.98 ? colours.top : nz < -0.98 ? colours.under : colours.edge, i);
+      }
+      return out;
+    }
     case 'ceiling':
       return one(materialColour(model, rooms?.[part.id]?.['ceilingFinish'] as string | undefined) ?? appearance(model).ceiling(part.id).color);
     case 'slab':

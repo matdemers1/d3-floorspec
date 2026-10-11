@@ -66,6 +66,8 @@ function colourOf(model: EditorModel, part: MeshPart, g: SurfaceGroup): string {
   if (s?.kind === 'face' || s?.kind === 'region') return look.face(s.wall, s.side).color;
   if (s?.kind === 'floor') return look.floor(s.room).color;
   if (s?.kind === 'ceiling') return look.ceiling(s.room).color;
+  // A floor drawn down to the ceiling below (FLR-T-12.32): its underside over no room, its edges.
+  if (g.plenum !== undefined) return look.plenum(g.plenum, part.plenum?.room).color;
   switch (part.kind) {
     case 'wall': {
       // Its top, ends and reveals: its core's.

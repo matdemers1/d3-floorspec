@@ -234,6 +234,48 @@ describe('the palette where the model names no material (FLR-T-12.23)', () => {
   });
 });
 
+describe('upper floors drawn down to the ceiling below (FLR-T-12.32)', () => {
+  const hex = (c: ArrayLike<number>): string => Array.from(c, (v) => v.toFixed(6)).join();
+  /** A colour as the buffers hold it: Float32. */
+  const f32 = (c: string): string => hex(Float32Array.from(linear(c)));
+
+  it('draws a loft’s floor with no thickness as its floor on top, the ceiling below under it and the structure’s band round it', async () => {
+    // The fixture's loft, its level's floor thickness taken away.
+    const json = JSON.parse(HOUSE) as { levels: Record<string, Record<string, unknown>> };
+    delete json.levels['L2']!['floorThickness'];
+    const loft = readModel('loft', JSON.stringify(json));
+    expect(loft.valid).toBe(true);
+    const m = (await loadMesher()).meshDerived(loft.view, loft.derived!);
+    const floor = m.parts.find((p) => p.kind === 'floor' && p.id === 'LOFT')!;
+    expect(floor.closed).toBe(true);
+    expect(floor.plenum?.room).toBeDefined();
+    const under = floor.plenum!.room!;
+    const want = {
+      // The loft's own finish: the fixture's white oak.
+      top: f32('#b98d5f'),
+      under: f32(ROOM_PALETTE[under === 'KIT' ? 'kitchen' : 'living'].ceiling),
+      edge: f32(DEFAULT_COLOURS.floorEdge),
+    };
+    const check = (colors: Float32Array, normals: Float32Array, label: string) => {
+      const seen = new Set<string>();
+      for (let i = 0; i < colors.length; i += 3) {
+        const c = hex(colors.slice(i, i + 3));
+        const nz = normals[i + 2]!;
+        expect(c, `${label}: ${nz > 0.98 ? 'top' : nz < -0.98 ? 'underside' : 'edge'}`).toBe(nz > 0.98 ? want.top : nz < -0.98 ? want.under : want.edge);
+        seen.add(c);
+      }
+      expect(seen.size, label).toBe(3);
+    };
+    // By finished surface, and — with no derived values to lay it out by — face by face.
+    const b = surfaceBuffers(loft, m, floor);
+    check(b.colors, b.normals, 'surfaces');
+    const flat = flatShaded(floor.mesh);
+    check(faceColours(loft, floor, flat.normals, new Map()), flat.normals, 'faces');
+    // Drawn as a floor: in front of what shares its plane, as before.
+    expect(lookOf(floor)).toBe('floor');
+  });
+});
+
 describe('the walkthrough', () => {
   const run = (w: Walker, input: WalkInput, until: (w: Walker) => boolean, limit = 30): Walker => {
     let t = 0;
