@@ -30,7 +30,7 @@ export interface Box3 {
  * | `ceiling` | room | surface facing down: flat, tray (with its step) or vault (15.2–15.4) |
  * | `slab` | slab | solid (15.7) |
  * | `roof` | roof | solid: with a thickness, the surface thickened down by it; without, the shell closed by its gable ends and a soffit at the eave (16.5). A flat roof without thickness is a surface facing up |
- * | `roofGable` | roof | surface: a gable end (16.5), emitted only for a roof with a thickness, whose solid does not close it |
+ * | `roofGable` | roof | surface: a gable end (16.5), emitted only for a roof with a thickness, whose solid does not close it: the part below the solid's underside, never in its edge band |
  * | `stairFlight` | stair | solid: one flight's treads, each from two risers below its top to its top, unioned — a winder stair's flights and its winders between them are one, and so are a spiral stair's treads (17.7) |
  * | `stairLanding` | stair | solid: a landing plate, by the same rule |
  * | `stairColumn` | stair | solid: a spiral stair's centre column, its column's radius (17.7) — or a slender pole when its treads meet at the centre — from its bottom to its top |

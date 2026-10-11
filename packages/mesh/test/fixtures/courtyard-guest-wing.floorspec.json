@@ -1,0 +1,376 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Courtyard House guest wing"
+  },
+  "buildings": {
+    "B1": {
+      "name": "Courtyard House"
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "ceilingHeight": 3511296,
+      "elevation": 0,
+      "height": 3901440,
+      "name": "Main floor"
+    }
+  },
+  "materials": {
+    "brick-veneer": {
+      "color": "#9a4b34",
+      "name": "Brick veneer",
+      "roughness": 950,
+      "source": {
+        "item": "brick-veneer",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "fibre-cement-siding": {
+      "color": "#8f9aa1",
+      "name": "Fibre-cement lap siding, painted",
+      "roughness": 750,
+      "source": {
+        "item": "fibre-cement-siding",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "gypsum-board": {
+      "color": "#efede8",
+      "name": "Gypsum board, painted",
+      "roughness": 900,
+      "source": {
+        "item": "gypsum-board",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "osb-sheathing": {
+      "color": "#c09a5b",
+      "name": "OSB sheathing",
+      "roughness": 900,
+      "source": {
+        "item": "osb-sheathing",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "standing-seam-metal": {
+      "color": "#3b4148",
+      "name": "Standing-seam metal roofing, charcoal",
+      "roughness": 350
+    },
+    "weather-resistive-barrier": {
+      "color": "#e9edf0",
+      "name": "Weather-resistive barrier",
+      "roughness": 600,
+      "source": {
+        "item": "weather-resistive-barrier",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wood-stud-framing": {
+      "color": "#c8a46e",
+      "name": "Wood stud framing",
+      "roughness": 850,
+      "source": {
+        "item": "wood-stud-framing",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wood-stud-framing-insulated": {
+      "color": "#dcc28c",
+      "name": "Wood stud framing, insulated cavities",
+      "roughness": 900,
+      "source": {
+        "item": "wood-stud-framing-insulated",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    }
+  },
+  "types": {
+    "wall-2x4-interior": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        },
+        {
+          "function": "core",
+          "material": "wood-stud-framing",
+          "thickness": 113792
+        },
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x4 interior partition, gypsum both faces",
+      "source": {
+        "item": "wall-2x4-interior",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wall-2x6-exterior-brick-veneer": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "brick-veneer",
+          "thickness": 117856
+        },
+        {
+          "function": "airGap",
+          "thickness": 32512
+        },
+        {
+          "function": "membrane",
+          "material": "weather-resistive-barrier",
+          "thickness": 508
+        },
+        {
+          "function": "substrate",
+          "material": "osb-sheathing",
+          "thickness": 14224
+        },
+        {
+          "function": "core",
+          "material": "wood-stud-framing-insulated",
+          "thickness": 178816
+        },
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x6 exterior wall, brick veneer",
+      "source": {
+        "item": "wall-2x6-exterior-brick-veneer",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    },
+    "wall-2x6-exterior-fibre-cement": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "fibre-cement-siding",
+          "thickness": 10160
+        },
+        {
+          "function": "membrane",
+          "material": "weather-resistive-barrier",
+          "thickness": 508
+        },
+        {
+          "function": "substrate",
+          "material": "osb-sheathing",
+          "thickness": 14224
+        },
+        {
+          "function": "core",
+          "material": "wood-stud-framing-insulated",
+          "thickness": 178816
+        },
+        {
+          "function": "finish",
+          "material": "gypsum-board",
+          "thickness": 16256
+        }
+      ],
+      "name": "2x6 exterior wall, fibre-cement siding",
+      "source": {
+        "item": "wall-2x6-exterior-fibre-cement",
+        "library": "https://d3cloud.io/floorspec/library/us-starter",
+        "version": "0.1.0"
+      }
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [
+        8583168,
+        0
+      ]
+    },
+    "J11": {
+      "level": "L1",
+      "position": [
+        8583168,
+        5462016
+      ]
+    },
+    "J13": {
+      "level": "L1",
+      "position": [
+        13264896,
+        3121152
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        5462016
+      ]
+    },
+    "J20": {
+      "level": "L1",
+      "position": [
+        13264896,
+        2340864
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        13264896,
+        5462016
+      ]
+    },
+    "J9": {
+      "level": "L1",
+      "position": [
+        13264896,
+        0
+      ]
+    }
+  },
+  "walls": {
+    "WGW": {
+      "arc": {
+        "sagitta": 1170432
+      },
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "wall-2x6-exterior-brick-veneer"
+    },
+    "W32": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J10",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W31": {
+      "end": "J10",
+      "level": "L1",
+      "start": "J9",
+      "type": "wall-2x6-exterior-fibre-cement"
+    },
+    "W8": {
+      "end": "J20",
+      "level": "L1",
+      "start": "J9",
+      "type": "wall-2x4-interior"
+    },
+    "W33": {
+      "end": "J13",
+      "level": "L1",
+      "start": "J20",
+      "type": "wall-2x4-interior"
+    },
+    "W34": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J13",
+      "type": "wall-2x4-interior"
+    },
+    "W19": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J11",
+      "type": "wall-2x6-exterior-brick-veneer"
+    },
+    "W1": {
+      "end": "J11",
+      "level": "L1",
+      "start": "J2",
+      "type": "wall-2x6-exterior-brick-veneer"
+    }
+  },
+  "roofs": {
+    "RF2": {
+      "edges": {
+        "0": {
+          "gable": true
+        },
+        "1": {
+          "gable": true,
+          "overhang": 0
+        },
+        "3": {
+          "gable": true
+        },
+        "4": {
+          "gable": true
+        },
+        "5": {
+          "gable": true
+        },
+        "6": {
+          "gable": true
+        }
+      },
+      "footprint": [
+        [
+          0,
+          0
+        ],
+        [
+          13264896,
+          0
+        ],
+        [
+          13264896,
+          5462016
+        ],
+        [
+          0,
+          5462016
+        ],
+        [
+          -858317,
+          4096512
+        ],
+        [
+          -1170432,
+          2731008
+        ],
+        [
+          -858317,
+          1365504
+        ]
+      ],
+      "level": "L1",
+      "material": "standing-seam-metal",
+      "name": "Guest wing shed roof",
+      "overhang": 390144,
+      "pitch": {
+        "rise": 3,
+        "run": 12
+      },
+      "thickness": 325120
+    }
+  }
+}
