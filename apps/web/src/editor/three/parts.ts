@@ -11,7 +11,8 @@ import type { EditorModel, WallView } from '../model';
 
 /**
  * The element a part selects: the part's own `id` — a wall for a wall, the opening for its cut
- * (a window's glass, a door's pick target), the room for its floor and ceiling, the stair for each
+ * (its pick target) and its joinery (a door's slab, a window's frame and glass, the casings,
+ * FLR-T-13.8), the room for its floor and ceiling, the stair for each
  * of its flights and landings, the roof for its gable ends, an appliance for its model (which a
  * fixture or gas appliance paired with it has none of its own besides, FLR-T-12.34).
  */
@@ -36,15 +37,15 @@ export type Look = 'solid' | 'floor' | 'ceiling' | 'glass' | 'pick' | 'lens';
  * How a part is drawn: opaque; a floor or a ceiling — opaque, and drawn in front of what shares
  * its plane (a wall running floor to floor ends at the top of the floor above; a ceiling at the
  * level's floor-to-floor height meets that floor's underside), a doorway's threshold as the floor
- * it continues; as glass (a window, a shower's screen); as a lit lens (a luminaire's, FLR-T-12.21);
- * or not at all but still clickable (a door's or an empty opening's cut).
+ * it continues; as glass (a window's or a glazed door's, a shower's screen); as a lit lens (a
+ * luminaire's, FLR-T-12.21); or not at all but still clickable (an opening's cut, which its joinery
+ * fills, FLR-T-13.8).
  */
 export function lookOf(part: Pick<MeshPart, 'kind' | 'opening' | 'model'>): Look {
   if (part.model !== undefined) return ROLE_LOOKS[part.model.role].opacity !== undefined ? 'glass' : ROLE_LOOKS[part.model.role].emissive === true ? 'lens' : 'solid';
   if (part.kind === 'ceiling') return 'ceiling';
   if (part.kind === 'floor' || part.kind === 'slab' || part.kind === 'threshold') return 'floor';
-  if (part.kind !== 'opening') return 'solid';
-  return part.opening?.category === 'window' ? 'glass' : 'pick';
+  return part.kind === 'opening' ? 'pick' : 'solid';
 }
 
 const ROOFS: ReadonlySet<PartKind> = new Set(['roof', 'roofGable']);
@@ -60,11 +61,15 @@ export interface Visibility {
 }
 
 /**
- * What shows. Walking shows the whole house. Otherwise the cutaway shows the levels up to the
- * current one and leaves off the current level's ceilings, so the rooms are seen from above; without
- * it every level shows. The roof shows when it is on and its level shows.
+ * What shows. Walking shows the whole house with its doors open (FLR-T-13.8) — swung back, slid
+ * into their pockets, raised — so a person walks through every doorway as the walls let them (the
+ * walk's collision is the walls and their cuts, walk.ts, never a door); the orbit views show them
+ * closed. Otherwise the cutaway shows the levels up to the current one and leaves off the current
+ * level's ceilings, so the rooms are seen from above; without it every level shows. The roof shows
+ * when it is on and its level shows.
  */
-export function isVisible(part: Pick<MeshPart, 'kind' | 'level'>, v: Visibility): boolean {
+export function isVisible(part: Pick<MeshPart, 'kind' | 'level' | 'state'>, v: Visibility): boolean {
+  if (part.state !== undefined && part.state !== (v.walking ? 'open' : 'closed')) return false;
   if (v.walking) return true;
   if (ROOFS.has(part.kind) && !v.roof) return false;
   if (!v.cutaway || v.level === null) return true;
@@ -189,7 +194,8 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
     case 'threshold':
       return one(materialColour(model, rooms?.[part.threshold?.room ?? '']?.['floorFinish'] as string | undefined) ?? (part.threshold === undefined ? DEFAULTS.floor : appearance(model).floor(part.threshold.room).color));
     case 'extension':
-      // A model's piece in its role's colour (FLR-T-12.21), the worker's render and export alike.
+    case 'joinery':
+      // A model's piece, or an opening's joinery, in its role's colour (FLR-T-12.21, FLR-T-13.8), the worker's render and export alike.
       return one(part.model === undefined ? DEFAULTS.extension : ROLE_LOOKS[part.model.role].color);
     case 'opening':
       return one(DEFAULTS.interior);

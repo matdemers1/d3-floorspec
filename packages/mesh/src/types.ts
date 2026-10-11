@@ -37,6 +37,7 @@ export interface Box3 {
  * | `stairBlock` | stair | solid placeholder: the stair's box (17.4), for a winder or spiral stair whose steps are not derived (as a Core 0.3 reader reads it) |
  * | `extension` | extension element | solid: its fallback box (12.6) — or, for an element this reader models, each piece of its model (`model`), inside that box. None for an element an FS_furniture appliance stands for (`standsFor`, FLR-T-12.34) |
  * | `threshold` | opening | a door's or an empty opening's sill where it is its wall's base: the plan its cut removes, each side of the location line, as the floor of the room on that side — solid between its top and bottom, a surface facing up without a thickness, and drawn down as that floor is (`plenum`) (see thresholds.ts) |
+ * | `joinery` | opening | solid: one piece of what fills it (FLR-T-13.8) — the jambs lining it and its casings; a door's slabs with their hinges and handles, by its operation; a window's frame, sashes and glass, its stool, apron and sill — each with its `model` (the operation and what the piece is made of) and, for a piece that moves, the doors `state` it is drawn in (see joinery.ts) |
  */
 export type PartKind =
   | 'wall'
@@ -52,7 +53,8 @@ export type PartKind =
   | 'stairColumn'
   | 'stairBlock'
   | 'extension'
-  | 'threshold';
+  | 'threshold'
+  | 'joinery';
 
 export const PART_KINDS: readonly PartKind[] = [
   'wall',
@@ -69,6 +71,7 @@ export const PART_KINDS: readonly PartKind[] = [
   'stairBlock',
   'extension',
   'threshold',
+  'joinery',
 ];
 
 /**
@@ -143,6 +146,12 @@ export interface MeshPart {
    * which a view may draw as one curved surface. Absent on an element drawn as its fallback box.
    */
   model?: { kind: string; role: ModelRole; smooth?: true };
+  /**
+   * A piece of a door's joinery that moves (FLR-T-13.8) — a slab, a sliding panel, a garage door's
+   * sections — and the state it is drawn in: closed, or open (swung to 90°, slid, folded, raised).
+   * Only with `doors: 'both'` does a mesh hold pieces in both; absent on every piece that does not move.
+   */
+  state?: DoorState;
   mesh: PartMesh;
   /** Its bounding box in base units, from the exact geometry. Exact integers except where an opening's cut ends at a rational point. */
   bbox: Box3;
@@ -169,4 +178,13 @@ export interface MeshOptions {
   stats?: boolean;
   /** Draw the extension elements this reader models as their models (default); false draws every one as its fallback box. */
   models?: boolean;
+  /**
+   * The doors as a view shows them (FLR-T-13.8): `closed` (default), `open` — swung to 90°, slid
+   * into their pockets or past their openings, folded, raised — or `both`, every moving piece drawn
+   * each way with its `state`, for a view that switches between them without meshing again.
+   */
+  doors?: DoorState | 'both';
 }
+
+/** Whether a door is drawn closed or open (FLR-T-13.8). */
+export type DoorState = 'closed' | 'open';

@@ -12,7 +12,7 @@ import showcase from './fixtures/showcase.floorspec.json' with { type: 'json' };
 import courtyard from './fixtures/courtyard-kitchen-mudroom.floorspec.json' with { type: 'json' };
 import { loadMesher } from '../src/index.js';
 import { digest } from './digest.js';
-import { paired, ranch, straddling } from './houses.js';
+import { joinery, paired, ranch, straddling } from './houses.js';
 
 describe('in the browser', () => {
   it('meshes exactly what Node meshes', async () => {
@@ -24,5 +24,8 @@ describe('in the browser', () => {
       const text = JSON.stringify(doc);
       expect(digest(mesher.meshDocument(text))).toBe(await commands.meshDigestInNode(text));
     }
+    // Every door and window operation's joinery (FLR-T-13.8), its doors closed, open and both.
+    const text = JSON.stringify(joinery());
+    for (const doors of ['closed', 'open', 'both'] as const) expect(digest(mesher.meshDocument(text, { doors }))).toBe(await commands.meshDigestInNode(text, doors));
   });
 });

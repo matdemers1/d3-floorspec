@@ -79,6 +79,8 @@ export interface Render3dParams {
   /** FLR-T-12.22: the luminaires on or off — path-traced, at night unless `time` says otherwise. */
   readonly lights?: Lights;
   readonly time?: TimeOfDay;
+  /** FLR-T-13.8: the doors closed (default) or open. */
+  readonly doors?: 'open' | 'closed';
 }
 
 export function render3dParams(raw: unknown): Render3dParams {
@@ -92,6 +94,7 @@ export function render3dParams(raw: unknown): Render3dParams {
   const design = designOf(p['design']);
   const lights = typeof p['lights'] === 'string' && (LIGHTS as readonly string[]).includes(p['lights']) ? (p['lights'] as Lights) : undefined;
   const time = typeof p['time'] === 'string' && (TIMES as readonly string[]).includes(p['time']) ? (p['time'] as TimeOfDay) : undefined;
+  const doors = p['doors'] === 'open' || p['doors'] === 'closed' ? p['doors'] : undefined;
   return {
     ...(camera === undefined ? {} : { camera }),
     ...(room === undefined ? {} : { room }),
@@ -101,6 +104,7 @@ export function render3dParams(raw: unknown): Render3dParams {
     ...(design === undefined ? {} : { design }),
     ...(lights === undefined ? {} : { lights }),
     ...(time === undefined ? {} : { time }),
+    ...(doors === undefined ? {} : { doors }),
   };
 }
 
@@ -257,6 +261,7 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
           ...(p.level === undefined ? {} : { level: p.level }),
           ...(p.width === undefined ? {} : { width: p.width }),
           ...(p.design === undefined ? {} : { design: p.design }),
+          ...(p.doors === undefined ? {} : { doors: p.doors }),
           ...(images === undefined ? {} : { images }),
         });
         return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: lit.png, summary: { width: lit.width, height: lit.height, camera: lit.camera, design: lit.design, ...(lit.lit === undefined ? {} : { lit: lit.lit }), ms: lit.ms } };

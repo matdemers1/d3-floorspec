@@ -95,7 +95,7 @@ export function thresholdPlans(doc: FloorspecDocument, derived: Derived): Thresh
 }
 
 /** The room each side of a wall faces at an opening: its finish's (18.6), or the one just past the face. */
-function roomsBeside(doc: FloorspecDocument, derived: Derived, oid: string): Record<Side, string | undefined> {
+export function roomsBeside(doc: FloorspecDocument, derived: Derived, oid: string): Record<Side, string | undefined> {
   const o = get(doc.openings, oid)!;
   const w = get(doc.walls, o.wall)!;
   const dw = derived.walls[o.wall]!;

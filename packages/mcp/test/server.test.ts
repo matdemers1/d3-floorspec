@@ -297,7 +297,7 @@ describe('the MCP server', () => {
     // Was ~57 KB (130 KB pretty) with the operation union inlined at every member, twice over.
     // 25 KB → 26 KB for the twelfth verb, floorspec_create_project (~400 bytes). FLR-T-12.25 paid
     // for the furniture catalogue and an opening's `at` (its near edge) by trimming other text, and
-    // FLR-T-12.22 for floorspec_render's `lights` the same way.
+    // FLR-T-12.22 for floorspec_render's `lights` the same way, and FLR-T-13.8 for its `doors`.
     expect(size).toBeLessThan(26_000);
   });
 
@@ -450,6 +450,10 @@ describe('the MCP server', () => {
     await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Kitchen', lights: 'on' } });
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'Kitchen', lights: 'on' });
     expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', lights: 'dim' } })).isError).toBe(true);
+    // FLR-T-13.8: the doors closed or open, passed through.
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'sw', doors: 'open' } });
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', camera: 'sw', doors: 'open' });
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', doors: 'ajar' } })).isError).toBe(true);
     const missing = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Attic' } });
     expect(missing.isError).toBe(true);
     expect(texts(missing)).toContain('this 3D view cannot be drawn');

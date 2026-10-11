@@ -86,18 +86,25 @@ describe('the orbit camera', () => {
 });
 
 describe('parts in the 3D view', () => {
-  it('select their element: a stair from each flight and landing, an opening from its cut, a room from its floor', () => {
+  it('select their element: a stair from each flight and landing, an opening from its cut and its joinery, a room from its floor', () => {
     const stair = mesh.parts.filter((p) => p.id === 'ST1');
     expect(new Set(stair.map((p) => p.kind))).toEqual(new Set(['stairFlight', 'stairLanding']));
     expect(stair.length).toBeGreaterThan(1);
     for (const p of stair) expect(elementOfPart(p)).toBe('ST1');
     expect(partsOfElement(mesh.parts, 'ST1')).toHaveLength(stair.length);
+    // An opening's cut is a pick target; what fills it is its joinery (FLR-T-13.8) — a window's glass
+    // drawn as glass, its frame and casings and a door's slab solid — and selects the opening too.
     const window = mesh.parts.find((p) => p.kind === 'opening' && p.opening?.category === 'window')!;
-    expect(lookOf(window)).toBe('glass');
+    expect(lookOf(window)).toBe('pick');
     expect(elementOfPart(window)).toBe(window.id);
     expect(model.document.openings?.[window.id]).toBeDefined();
+    const pane = mesh.parts.find((p) => p.kind === 'joinery' && p.id === window.id && p.model?.role === 'glass')!;
+    expect(lookOf(pane)).toBe('glass');
+    expect(elementOfPart(pane)).toBe(window.id);
+    expect(lookOf(mesh.parts.find((p) => p.kind === 'joinery' && p.id === window.id && p.model?.role === 'frame')!)).toBe('solid');
     const door = mesh.parts.find((p) => p.id === 'FRONT')!;
     expect(lookOf(door)).toBe('pick');
+    expect(partsOfElement(mesh.parts, 'FRONT').some((p) => p.kind === 'joinery' && p.model?.role === 'door')).toBe(true);
     expect(new Set(partsOfElement(mesh.parts, 'KIT').map((p) => p.kind))).toEqual(new Set(['floor', 'ceiling']));
     expect(lookOf(mesh.parts.find((p) => p.kind === 'ceiling')!)).toBe('ceiling');
     expect(lookOf(mesh.parts.find((p) => p.kind === 'wall')!)).toBe('solid');
@@ -127,6 +134,20 @@ describe('parts in the 3D view', () => {
     expect(partSelected(m.parts.find((p) => p.id === 'KIT-DW')!, null)).toBe(false);
   });
 
+  it('shows the doors closed in the orbit views and open in the walkthrough, as the editor meshes them (FLR-T-13.8)', async () => {
+    const both = (await loadMesher()).meshDerived(model.document, model.derived!, { doors: 'both' });
+    const order = levelOrder(model);
+    const shown = (walking: boolean) => both.parts.filter((p) => isVisible(p, { walking, cutaway: false, roof: true, level: 'L1', order }));
+    const moving = both.parts.filter((p) => p.state !== undefined);
+    expect(new Set(moving.map((p) => p.state))).toEqual(new Set(['closed', 'open']));
+    expect(shown(false).filter((p) => p.state !== undefined).every((p) => p.state === 'closed')).toBe(true);
+    expect(shown(true).filter((p) => p.state !== undefined).every((p) => p.state === 'open')).toBe(true);
+    expect(shown(true).filter((p) => p.state === 'open')).toHaveLength(moving.filter((p) => p.state === 'open').length);
+    // What does not move shows either way; the doorway stays walkable, the walls' cuts being what stops a person.
+    const fixed = both.parts.filter((p) => p.kind === 'joinery' && p.state === undefined);
+    for (const w of [false, true]) expect(shown(w).filter((p) => p.kind === 'joinery' && p.state === undefined)).toHaveLength(fixed.length);
+  });
+
   it('cut away: up to the current level, without its ceilings or the roof it carries; walking shows everything', () => {
     const order = levelOrder(model);
     const at = (level: string, cutaway = true, roof = true, walking = false) => mesh.parts.filter((p) => isVisible(p, { walking, cutaway, roof, level, order }));
@@ -140,7 +161,12 @@ describe('parts in the 3D view', () => {
     expect(l2.some((p) => p.kind === 'roof')).toBe(false);
     expect(at('L1', false).some((p) => p.kind === 'roof')).toBe(true);
     expect(at('L1', false, false).some((p) => p.kind === 'roof')).toBe(false);
-    expect(at('L1', true, false, true)).toHaveLength(mesh.parts.length);
+    // Walking shows everything but a door drawn closed (FLR-T-13.8): the doors open, or — in a mesh of
+    // closed doors alone — not at all, so a person walks through every doorway.
+    const shut = mesh.parts.filter((p) => p.state === 'closed');
+    expect(shut.length).toBeGreaterThan(0);
+    expect(at('L1', true, false, true)).toHaveLength(mesh.parts.length - shut.length);
+    expect(at('L1', false).filter((p) => p.state === 'closed')).toHaveLength(shut.length);
     expect(describeScene(model, l1)).toBe('Level 1: 7 walls, 2 doors, 4 windows, 2 rooms, 1 stair, no roof showing.');
   });
 

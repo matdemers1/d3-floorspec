@@ -19,6 +19,9 @@
  * - no corner is left open (FLR-T-12.20): where a separator sits between two walls whose faces are not
  *   parallel there, a point inside the corner those faces would have made is inside the junction's
  *   closure;
+ * - every piece of an opening's joinery (FLR-T-13.8) is one exact solid inside the opening's cut
+ *   grown by the casing allowances (`ENVELOPE`) when its doors are closed — along the wall by its
+ *   width more for a pocket or a barn door — and within a door's swing of it when they are open;
  * - every floor that declares no thickness on a level with a level below is drawn down to the
  *   ceiling below (FLR-T-12.32), and so is each threshold that continues it: its bottom is 1/16 in
  *   above the level below's ceiling line or a lower room's ceiling between that line and its top —
@@ -29,7 +32,7 @@ import { expect } from 'vitest';
 import type { Derived, FloorspecDocument } from '@floorspec/engine';
 import { area2, clip, iarea2, Rat, rpoint, type IPoint, type RPoint } from '../src/exact.js';
 import type { Kernel } from '../src/kernel.js';
-import { UNITS_PER_METRE as BU, type Box3, type HouseMesh, type MeshPart, type PartMesh } from '../src/index.js';
+import { envelope, openEnvelope, UNITS_PER_METRE as BU, type Box3, type HouseMesh, type LocalBox, type MeshPart, type PartMesh } from '../src/index.js';
 import { PLENUM_GAP } from '../src/rooms.js';
 import { treadOutlines } from '../src/stairs.js';
 
@@ -351,6 +354,54 @@ interface Expected {
    * stay inside — its fallback's footprint, bottom and top (12.6).
    */
   within?: { footprint: readonly (readonly [number, number])[]; bottom: number; top: number };
+  /** A piece of an opening's joinery (FLR-T-13.8): the opening's frame, and the box it must stay inside in that frame. */
+  joinery?: { frame: OpeningAxes; box: LocalBox };
+}
+
+/** An opening's own frame, from the derived values: its start point, along it, to its left, its sill. */
+export interface OpeningAxes {
+  start: readonly [number, number];
+  u: readonly [number, number];
+  n: readonly [number, number];
+  sill: number;
+  len: number;
+  H: number;
+  /** The wall's faces: left at a, right at −b. */
+  a: number;
+  b: number;
+}
+
+export function openingAxes(doc: FloorspecDocument, d: Derived, oid: string): OpeningAxes {
+  const dop = own(d.openings, oid);
+  const o = own(doc.openings, oid);
+  const w = own(doc.walls, o.wall);
+  const dw = own(d.walls, o.wall);
+  const len = Math.hypot(dop.end[0] - dop.start[0], dop.end[1] - dop.start[1]);
+  const u = [(dop.end[0] - dop.start[0]) / len, (dop.end[1] - dop.start[1]) / len] as const;
+  // The faces' offsets, square to the wall's location line at its start.
+  const line = dw.polyline ?? [own(doc.junctions, w.start).position, own(doc.junctions, w.end).position];
+  const [p0, p1] = [line[0]!, line[1]!];
+  const l = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]);
+  const n0 = [-(p1[1] - p0[1]) / l, (p1[0] - p0[0]) / l];
+  const a = (dw.startLeft[0] - p0[0]) * n0[0]! + (dw.startLeft[1] - p0[1]) * n0[1]!;
+  const b = -((dw.startRight[0] - p0[0]) * n0[0]! + (dw.startRight[1] - p0[1]) * n0[1]!);
+  return { start: dop.start, u, n: [-u[1], u[0]], sill: dop.sillElevation, len, H: dop.headElevation - dop.sillElevation, a, b };
+}
+
+/** Every vertex of a mesh inside a box in an opening's frame, to the base unit its points are rounded to (and Float32's step). */
+function expectInFrame(mesh: PartMesh, origin: readonly number[], f: OpeningAxes, box: LocalBox, label: string): void {
+  const P = mesh.positions;
+  for (let i = 0; i < P.length; i += 3) {
+    const x = P[i]! * BU + origin[0]! - f.start[0];
+    const y = P[i + 1]! * BU + origin[1]! - f.start[1];
+    const z = P[i + 2]! * BU + origin[2]! - f.sill;
+    const tol = 2 + 2 ** -22 * (Math.abs(P[i]!) + Math.abs(P[i + 1]!) + Math.abs(P[i + 2]!)) * BU;
+    const local = [x * f.u[0] + y * f.u[1], x * f.n[0] + y * f.n[1], z];
+    for (let k = 0; k < 3; k++) {
+      if (local[k]! < box.min[k]! - tol) expect(local[k], `${label}: vertex ${String(i / 3)} below its envelope on axis ${String(k)}`).toBeGreaterThanOrEqual(box.min[k]! - tol);
+      if (local[k]! > box.max[k]! + tol) expect(local[k], `${label}: vertex ${String(i / 3)} above its envelope on axis ${String(k)}`).toBeLessThanOrEqual(box.max[k]! + tol);
+    }
+  }
 }
 
 interface WallCut {
@@ -635,6 +686,13 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
       if (p.model !== undefined) return { within: f };
       return { volume6: prism6(ring2(f.footprint), f.top - f.bottom), box: planBox(f.footprint, f.bottom, f.top), genus: 0 };
     }
+    case 'joinery': {
+      const frame = openingAxes(doc, d, p.id);
+      const o = own(doc.openings, p.id);
+      const t = o.fill === undefined ? undefined : own(doc.types, o.fill);
+      const operation = t !== undefined && t.kind !== 'wallType' ? t.operation : undefined;
+      return { joinery: { frame, box: p.state === 'open' ? openEnvelope(frame) : envelope(frame, operation, o.hinge) } };
+    }
   }
 }
 
@@ -683,7 +741,14 @@ export function checkHouse(kernel: Kernel, doc: FloorspecDocument, d: Derived, m
     if (exp.genus !== undefined) expect(topo.components, `${label}: one piece`).toBe(1);
 
     let analytic: number;
-    if (exp.within !== undefined) {
+    if (exp.joinery !== undefined) {
+      // A piece of an opening's joinery: one exact solid, inside its envelope in the opening's frame.
+      expect(topo.components, `${label}: one piece`).toBe(1);
+      expect(stats.exactVolume, `${label}: an exact part's volume is exact`).toBe(true);
+      expect(p.model, `${label}: what it is and is made of`).toBeDefined();
+      expectInFrame(p.mesh, mesh.origin, exp.joinery.frame, exp.joinery.box, label);
+      analytic = stats.volume;
+    } else if (exp.within !== undefined) {
       // A model's piece: one solid, every vertex inside its element's box, its volume positive and
       // at most the box's.
       expect(topo.components, `${label}: one piece`).toBe(1);
@@ -707,7 +772,7 @@ export function checkHouse(kernel: Kernel, doc: FloorspecDocument, d: Derived, m
     expect(analytic, `${label}: positive volume`).toBeGreaterThan(0);
     // A model's small piece (an outlet's slot) far from the origin: Float32's step is a larger share of it.
     let f32 = 1e-4;
-    if (exp.within !== undefined) {
+    if (exp.within !== undefined || exp.joinery !== undefined) {
       const pb2 = positionsBox(p.mesh);
       const far = Math.max(...pb2.min.map(Math.abs), ...pb2.max.map(Math.abs));
       const thin = Math.min(...[0, 1, 2].map((k) => pb2.max[k]! - pb2.min[k]!));

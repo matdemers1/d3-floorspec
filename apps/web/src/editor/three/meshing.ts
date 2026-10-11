@@ -66,7 +66,8 @@ export function useHouseMesh(model: EditorModel | null, originRef: { current: Ve
             if (cancelled || model.derived === null) return;
             const started = performance.now();
             originRef.current ??= originOf(model);
-            const mesh = m.meshDerived(model.view, model.derived, { origin: originRef.current });
+            // Every door both ways (FLR-T-13.8): closed in the orbit views, open in the walkthrough.
+            const mesh = m.meshDerived(model.view, model.derived, { origin: originRef.current, doors: 'both' });
             const world = buildWorld(model, mesh);
             setState({ status: 'ready', mesh, world, model, ms: performance.now() - started });
           })

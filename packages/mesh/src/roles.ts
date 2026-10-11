@@ -1,12 +1,13 @@
 /**
- * What each piece of a fixture's procedural model is made of (FLR-T-12.21): a small set of roles —
- * porcelain, stainless steel, a counter's stone, a lamp's lens — and the one look each is drawn
- * with, so the editor's 3D view, the headless render, the path tracer and the glTF export colour a
- * toilet or a range the same way. A mesh is not normative (Core 0.5): these are a view's choices,
+ * What each piece of a fixture's procedural model (FLR-T-12.21) or an opening's joinery (FLR-T-13.8)
+ * is made of: a small set of roles — porcelain, stainless steel, a counter's stone, a lamp's lens, a
+ * door's casing, a window's frame, its glass — and the one look each is drawn with, so the editor's
+ * 3D view, the headless render, the path tracer and the glTF export colour a toilet, a range or a
+ * French door the same way. A mesh is not normative (Core 0.5): these are a view's choices,
  * not the standard's, and a document's own materials are not involved.
  */
 
-export const MODEL_ROLES = ['porcelain', 'stainless', 'darkMetal', 'wood', 'fabric', 'cushion', 'linen', 'stone', 'lens', 'trim', 'plate', 'glass'] as const;
+export const MODEL_ROLES = ['porcelain', 'stainless', 'darkMetal', 'wood', 'fabric', 'cushion', 'linen', 'stone', 'lens', 'trim', 'plate', 'glass', 'millwork', 'frame', 'door'] as const;
 export type ModelRole = (typeof MODEL_ROLES)[number];
 
 export interface RoleLook {
@@ -45,6 +46,15 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   trim: { color: '#e4e1da', metallic: 0, roughness: 0.5 },
   /** A wall plate: a receptacle's, a switch's. */
   plate: { color: '#f6f5f1', metallic: 0, roughness: 0.45 },
-  /** A shower's screen, a lantern's panes. */
+  /**
+   * A window's and a glazed door's glass, a shower's screen, a lantern's panes: faintly tinted, mostly
+   * see-through. How it reflects and transmits light is FLR-T-13.7's; here it is a tinted pane.
+   */
   glass: { color: '#bcd6e2', metallic: 0, roughness: 0.05, opacity: 0.35 },
+  /** An opening's painted trim (FLR-T-13.8): its casing, the jambs lining it, a window's stool and apron. */
+  millwork: { color: '#f1efe9', metallic: 0, roughness: 0.5 },
+  /** A window's frame and sashes, a glazed door's stiles and rails, a garage door's sections: clad in dark aluminium. */
+  frame: { color: '#3a3d42', metallic: 0.3, roughness: 0.45 },
+  /** A door's slab, a pocket door, a bifold's panels: stained oak. */
+  door: { color: '#9a7250', metallic: 0, roughness: 0.55 },
 };

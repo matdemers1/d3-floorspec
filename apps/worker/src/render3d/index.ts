@@ -271,6 +271,7 @@ export async function render3dPng(document: object, options: Render3dOptions = {
     ...(options.design === undefined ? {} : { design: options.design }),
     ...(options.reader === undefined ? {} : { reader: options.reader }),
     ...(options.images === undefined ? {} : { images: options.images }),
+    ...(options.doors === undefined ? {} : { doors: options.doors }),
   });
   return renderScene(scene, options);
 }

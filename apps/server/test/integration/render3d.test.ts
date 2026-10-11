@@ -94,6 +94,19 @@ describe('3D render-back', () => {
     expect((await operator.get(`/api/projects/${id}/render?view=3d&lights=dim`)).status).toBe(400);
   });
 
+  it('draws the doors closed, or open when asked (FLR-T-13.8)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');
+    for (const doors of ['closed', 'open'] as const) {
+      const r = await fetch(`${running.url}/api/projects/${id}/render?view=3d&camera=sw&width=128&doors=${doors}`, { headers: { cookie: cookieOf(operator) } });
+      expect(r.status, await r.clone().text()).toBe(200);
+      expect(pngSize(new Uint8Array(await r.arrayBuffer()))).toEqual({ width: 128, height: 96 });
+    }
+    const jobs = await db.job.findMany({ where: { projectId: id }, orderBy: { createdAt: 'asc' } });
+    expect(jobs.map((j) => (j.params as { doors?: string }).doors)).toEqual(['closed', 'open']);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&doors=ajar`)).status).toBe(400);
+  });
+
   it('draws the whole house for level "all" in 3D, and says a plan is one level (FLR-T-12.23)', async () => {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(db, operator, L_STAIR, 'Stair house');
