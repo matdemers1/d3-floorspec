@@ -438,15 +438,20 @@ const microwave: Model = (s) => {
   s.box('display', 'lens', X - dt * 0.5, Y * 0.78, Z * 0.72, X - dt * 0.3, Y * 0.94, Z * 0.86);
 };
 
-/** A dishwasher: its door, the control strip along its top, the handle. */
+/**
+ * A dishwasher: its door, the control strip along its top, the handle, and the dark kick under the
+ * door — in front of the body's base, not over its face, so the two never share a plane.
+ */
 const dishwasher: Model = (s) => {
   const { X, Y, Z } = s;
   const hd = min(30 * MM, X * 0.05);
   const dt = min(25 * MM, X * 0.04);
   const face = X - hd - dt;
   const kick = min(90 * MM, Z * 0.1);
-  s.box('body', 'stainless', 0, 0, 0, face, Y, Z);
-  s.box('kick', 'darkMetal', face - min(50 * MM, X * 0.08), Y * 0.02, 0, face, Y * 0.98, kick);
+  const kd = min(50 * MM, X * 0.08);
+  s.box('body', 'stainless', 0, 0, kick, face, Y, Z);
+  s.box('base', 'stainless', 0, 0, 0, face - kd, Y, kick);
+  s.box('kick', 'darkMetal', face - kd, 0, 0, face, Y, kick);
   s.box('door', 'stainless', face, Y * 0.01, kick, face + dt, Y * 0.99, Z * 0.88);
   s.box('controls', 'darkMetal', face, Y * 0.01, Z * 0.89, face + dt, Y * 0.99, Z);
   const r = min(10 * MM, hd * 0.35);

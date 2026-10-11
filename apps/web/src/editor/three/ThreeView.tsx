@@ -12,7 +12,7 @@ import { compass, PRESET_ORDER, PRESETS, type PresetId } from './camera';
 import { FOV, ThreeController } from './controller';
 import { useHouseMesh } from './meshing';
 import { threeOf, useThreeState, type ThreeStore, type WalkStart } from './mode';
-import { describeScene, faceColours, isVisible, levelOrder, lookOf, type Look } from './parts';
+import { describeScene, faceColours, isVisible, levelOrder, lookOf, partSelected, type Look } from './parts';
 import { isSurfacePart, surfaceBuffers, type MapRef } from './surfaces';
 import { TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
@@ -447,7 +447,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     );
   }
 
-  const selectedLabel = selection === null || ready === null || !built.some((b) => b.part.id === selection) ? null : labelOf(ready.model, selection);
+  const selectedLabel = selection === null || ready === null || !built.some((b) => partSelected(b.part, selection)) ? null : labelOf(ready.model, selection);
 
   return (
     <div className="fs-three" ref={host} data-walking={walking ? 'on' : undefined} data-compact={compact ? 'on' : undefined}>
@@ -597,7 +597,7 @@ function Parts({
     invalidate();
   }, [accent, materials, textures, invalidate]);
 
-  const selected = useMemo(() => visible.filter((b) => b.part.id === selection), [visible, selection]);
+  const selected = useMemo(() => visible.filter((b) => partSelected(b.part, selection)), [visible, selection]);
   const outlines = useMemo(() => selected.map((b) => ({ key: b.part.key, geometry: new THREE.EdgesGeometry(b.geometry, 30) })), [selected]);
   useEffect(() => () => { for (const o of outlines) o.geometry.dispose(); }, [outlines]);
   useEffect(() => { invalidate(); }, [visible, selection, invalidate]);
@@ -617,7 +617,7 @@ function Parts({
         <mesh
           key={b.part.key}
           geometry={b.geometry}
-          material={b.slots === undefined ? materialOf(b, b.part.id === selection) : b.slots.map((m) => (m === null ? materialOf(b, b.part.id === selection) : textures.material(m, b.look, b.part.id === selection)))}
+          material={b.slots === undefined ? materialOf(b, partSelected(b.part, selection)) : b.slots.map((m) => (m === null ? materialOf(b, partSelected(b.part, selection)) : textures.material(m, b.look, partSelected(b.part, selection))))}
           userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
           castShadow={b.look !== 'glass' && b.look !== 'pick' && b.look !== 'lens'}
           receiveShadow={b.look !== 'glass' && b.look !== 'pick'}
@@ -637,7 +637,7 @@ const noRaycast = (): void => undefined;
 /** The selection's label, kept over the top of its parts as the camera moves. */
 function LabelTracker({ built, selection, el }: { built: Built[]; selection: string | null; el: { current: HTMLDivElement | null } }) {
   const box = useMemo(() => {
-    const parts = built.filter((b) => b.part.id === selection);
+    const parts = built.filter((b) => partSelected(b.part, selection));
     if (parts.length === 0) return null;
     const b = new THREE.Box3();
     for (const p of parts) if (p.geometry.boundingBox !== null) b.union(p.geometry.boundingBox);

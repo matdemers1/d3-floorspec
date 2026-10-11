@@ -1,7 +1,8 @@
 /**
  * glTF 2.0 binary (.glb) from a scene (FLR-T-9.2, FLR-REQ-127): +Y up, metres, a node per element
  * named by its Floorspec ID and name with `extras.floorspec` = { id, kind, level }, under a node per
- * level under one node for the model. PBR metallic-roughness materials from the document's own
+ * level under one node for the model. An FS_furniture appliance's also names, as `standsFor`, the
+ * elements it stands for (FLR-T-12.34): the fixture or gas appliance in its box, which has no node. PBR metallic-roughness materials from the document's own
  * (Core 18.1 is glTF's model, so nothing is converted but sRGB to linear): `color` is the base
  * colour factor, `metallic` and `roughness` in thousandths the factors.
  *
@@ -214,6 +215,7 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
       if (node.category !== undefined) floorspec['category'] = node.category;
       if (node.extension !== undefined) floorspec['extension'] = node.extension.name;
       if (node.extension !== undefined) floorspec['collection'] = node.extension.collection;
+      if (node.standsFor !== undefined) floorspec['standsFor'] = [...node.standsFor];
       const element: Json = { name: node.name === undefined ? node.id : `${node.id} ${node.name}`, ...(mesh === undefined ? {} : { mesh }), extras: { floorspec } };
       nodes.push(element);
       const at = nodes.length - 1;
@@ -225,7 +227,7 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
           name: `${node.id} model`,
           translation: node.model.translation.map(f),
           rotation: node.model.rotation.map(f),
-          extras: { floorspec: { id: node.id, model: node.model.asset } },
+          extras: { floorspec: { id: node.id, model: node.model.asset, ...(node.standsFor === undefined ? {} : { standsFor: [...node.standsFor] }) } },
         };
         nodes.push(marker);
         element['children'] = [nodes.length - 1];

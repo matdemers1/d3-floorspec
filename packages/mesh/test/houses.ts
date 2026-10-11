@@ -256,3 +256,39 @@ export function straddling(showcase: Json, sinkAt = 3_724_800): Json {
   casework['V9'] = { ...structuredClone(casework['V1']), host: { ...(v1['host'] as Json), offset: 3_232_000 } };
   return d;
 }
+
+/**
+ * The showcase with appliances described twice (FLR-T-12.34), and the near misses that are not: its
+ * dishwasher X5 names X5-P, an FS_plumbing `dishwasher` fixture in its box; a washer WM1 names WM1-P,
+ * a `clothesWasher` fixture in its box, and WM1-B, a hose bibb inside it; a cooktop CT1 and an
+ * FS_mechanical gas `cooktop` CT1-G share a box and name nothing. And a `clothesWasher` fixture
+ * WM2-P with no appliance; a washer WM3 naming WM3-P, which stands a metre and a half away; a gas
+ * dryer GD1 overlapping the washer WM1, named by nothing.
+ */
+export function paired(showcase: Json): Json {
+  type Collections = { collections: Record<string, Record<string, Json>> };
+  const d = structuredClone(showcase);
+  const exts = d['extensions'] as Record<string, Collections>;
+  const appliances = exts['FS_furniture']!.collections['appliances']!;
+  const fixtures = exts['FS_plumbing']!.collections['fixtures']!;
+  const gas = exts['FS_mechanical']!.collections['gasAppliances']!;
+  const box = (x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): Json => ({ level: 'L1', box: { min: [x0, y0, z0], max: [x1, y1, z1] } });
+  const x5 = appliances['X5']!;
+  x5['connections'] = ['X5-P'];
+  fixtures['X5-P'] = { fixture: 'dishwasher', supply: ['hot'], fallback: structuredClone(x5['fallback']), host: structuredClone(x5['host']) };
+  // Out in the yard, south of the house, unhosted: each box in the level's frame. An appliance
+  // carries a model and a symbol (FS_furniture 3.1): the dishwasher's do.
+  const washer = (x: number): Json => box(x, -2_048_000, 0, x + 832_000, -1_164_800, 1_088_000);
+  const { asset, symbol } = x5['fallback'] as Json;
+  const item = (fallback: Json): Json => ({ ...fallback, asset, symbol });
+  appliances['WM1'] = { category: 'washer', connections: ['WM1-P', 'WM1-B'], fallback: item(washer(5_120_000)) };
+  fixtures['WM1-P'] = { fixture: 'clothesWasher', fallback: washer(5_120_000) };
+  fixtures['WM1-B'] = { fixture: 'hoseBibb', fallback: box(5_120_000, -1_664_000, 512_000, 5_248_000, -1_536_000, 640_000) };
+  gas['GD1'] = { appliance: 'dryer', fuel: 'naturalGas', fallback: washer(5_632_000) };
+  appliances['CT1'] = { category: 'cooktop', fallback: item(box(7_040_000, -2_048_000, 896_000, 7_680_000, -1_536_000, 960_000)) };
+  gas['CT1-G'] = { appliance: 'cooktop', fuel: 'naturalGas', fallback: box(7_040_000, -2_048_000, 896_000, 7_680_000, -1_536_000, 960_000) };
+  fixtures['WM2-P'] = { fixture: 'clothesWasher', fallback: washer(8_320_000) };
+  appliances['WM3'] = { category: 'washer', connections: ['WM3-P'], fallback: item(washer(9_600_000)) };
+  fixtures['WM3-P'] = { fixture: 'clothesWasher', fallback: washer(11_520_000) };
+  return d;
+}

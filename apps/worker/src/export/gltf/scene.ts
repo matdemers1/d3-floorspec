@@ -92,6 +92,11 @@ export interface SceneNode {
   readonly category?: string;
   /** For an extension element: its extension and collection. */
   readonly extension?: { readonly name: string; readonly collection: string };
+  /**
+   * For an FS_furniture appliance: the elements it also stands for (FLR-T-12.34) — the plumbing
+   * fixture or gas appliance in its box, which @floorspec/mesh draws no part of and so has no node.
+   */
+  readonly standsFor?: readonly string[];
   /** The kinds of the mesh parts it is made of. */
   readonly parts: PartKind[];
   readonly primitives: ScenePrimitive[];
@@ -636,6 +641,7 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
           ...(name === undefined ? {} : { name }),
           ...(part.opening === undefined ? {} : { category: part.opening.category }),
           ...(part.extension === undefined ? {} : { extension: { name: part.extension.name, collection: part.extension.collection } }),
+          ...(part.standsFor === undefined ? {} : { standsFor: [...part.standsFor] }),
           ...modelOf(doc, derived, ext.get(part.id)),
         },
         b: new NodeBuilder(materials),
