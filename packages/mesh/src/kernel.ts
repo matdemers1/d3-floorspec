@@ -36,7 +36,27 @@ export interface MeshData {
   triVerts: Uint32Array;
 }
 
+/** A plan region — polygons with holes — in WASM memory: free it with `delete()`. */
+export interface CrossSection {
+  subtract(other: CrossSection): CrossSection;
+  intersect(other: CrossSection): CrossSection;
+  /** Grown (or, negative, shrunk) by `delta`; mitred corners stay square. */
+  offset(delta: number, joinType?: 'Square' | 'Round' | 'Miter', miterLimit?: number): CrossSection;
+  /** Its connected parts, each one outline and its holes. */
+  decompose(): CrossSection[];
+  /** Its contours: outlines counter-clockwise, holes clockwise. */
+  toPolygons(): Vec2[][];
+  area(): number;
+  isEmpty(): boolean;
+  delete(): void;
+}
+
 export interface Kernel {
+  CrossSection: {
+    /** The region the contours fill: by default (`Positive`), where they wind counter-clockwise. */
+    new (contours: Vec2[][], fillRule?: 'EvenOdd' | 'NonZero' | 'Positive' | 'Negative'): CrossSection;
+    union(sections: readonly CrossSection[]): CrossSection;
+  };
   Manifold: {
     new (mesh: MeshData): Manifold;
     /** Extrude plan polygons (outer rings counter-clockwise, holes clockwise) from z = 0 up to `height`. */
@@ -79,8 +99,7 @@ interface Deletable {
  * Run `f` with a scope that frees every WASM object handed to `keep`, whatever `f` returns or
  * throws. Each Manifold is created inside such a scope.
  */
-export function scoped<T>(f: (keep: <D extends Deletable>(d: D) => D) => T): T {
-  const owned: Deletable[] = [];
+export function scoped<T>(f: (keep: <D extends Deletable>(d: D) => D) => T): T {  const owned: Deletable[] = [];
   try {
     return f((d) => {
       owned.push(d);
