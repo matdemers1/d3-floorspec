@@ -6,10 +6,12 @@
  *
  * One element's model may depend on another's in one way: a sink whose bowls lie inside a counter
  * top's outline, at its height, is set into it — the counter is cut for its bowls, the cabinet under
- * it kept clear of them, and the sink's rim taken to the counter's top.
+ * it kept clear of them, and the sink's rim taken to the counter's top. A sink whose bowls straddle
+ * counters side by side at one height (two base cabinets meeting under a window) is set into them
+ * all alike: each top cut where the bowls cross it (FLR-T-12.31).
  */
 import { footprintsOverlap, type Derived, type ExtensionElement, type FloorspecDocument } from '@floorspec/engine';
-import type { Kernel } from '../kernel.js';
+import { scoped, type Kernel } from '../kernel.js';
 import { MM, type Cutout, type Json, type Model, type ModelContext, type V2 } from './common.js';
 import { alarm, LIGHTS, panel, receptacle, switchModel } from './electrical.js';
 import { APPLIANCES, CASEWORK, PIECES } from './furniture.js';
@@ -37,6 +39,15 @@ export function modelOf(extension: string, collection: string, kind: string): Mo
 /** The counters a sink can be set into. */
 const COUNTERS: ReadonlySet<string> = new Set(['baseCabinet', 'island', 'vanity']);
 
+/** How far inside a counter top's edge a sink's bowls stay. */
+const MARGIN = 5 * MM;
+
+/** The widest gap between two counter tops side by side that a sink is still set across: 10 mm. */
+const GAP = 10 * MM;
+
+/** How much of a sink's bowls may lie outside the counters it is set into, base units squared: 1 mm². */
+const SLIVER = MM * MM;
+
 interface Plan {
   kind: string;
   model: Model;
@@ -51,11 +62,56 @@ interface Plan {
   cutouts: Cutout[];
 }
 
+/** A plan point in a counter's own frame: across its depth from its back, along its width from its right. */
+function local(c: Plan, p: V2): V2 {
+  const [c00, c10, , c01] = c.corners;
+  const ex = [c10[0] - c00[0], c10[1] - c00[1]] as const;
+  const ey = [c01[0] - c00[0], c01[1] - c00[1]] as const;
+  const lx = Math.hypot(ex[0], ex[1]);
+  const ly = Math.hypot(ey[0], ey[1]);
+  return [((p[0] - c00[0]) * ex[0] + (p[1] - c00[1]) * ex[1]) / lx, ((p[0] - c00[0]) * ey[0] + (p[1] - c00[1]) * ey[1]) / ly];
+}
+
+/** Whether a plan point is on a counter's top, at least MARGIN inside its edge. */
+function within(c: Plan, p: V2): boolean {
+  const [x, y] = local(c, p);
+  return x >= MARGIN && x <= c.X - MARGIN && y >= MARGIN && y <= c.Y - MARGIN;
+}
+
+/**
+ * The counters a sink straddles: of those whose tops stand at one height, side by side — touching,
+ * or no more than GAP apart — the ones its bowls cross, when the bowls lie within their tops taken
+ * together (MARGIN inside the run's outer edge, wherever two tops meet). None when no run holds them:
+ * a sink partly over no counter keeps its own deck.
+ */
+function across(kernel: Kernel, under: readonly (readonly [string, Plan])[], outlines: readonly V2[][]): (readonly [string, Plan])[] {
+  const heights = [...new Set(under.map(([, c]) => c.bottom + c.Z))];
+  const ring = (c: Plan): [number, number][] => {
+    const r = c.corners.map((p): [number, number] => [p[0], p[1]]);
+    const a = r.reduce((s, p, i) => s + p[0] * r[(i + 1) % 4]![1] - r[(i + 1) % 4]![0] * p[1], 0);
+    return a < 0 ? r.reverse() : r;
+  };
+  for (const h of heights) {
+    const run = under.filter(([, c]) => c.bottom + c.Z === h);
+    const crossed = scoped((keep) => {
+      const tops = run.map(([, c]) => keep(new kernel.CrossSection([ring(c)])));
+      // Each top grown by half the gap, so neighbours join, then the whole shrunk past that by MARGIN.
+      const joined = keep(kernel.CrossSection.union(tops.map((t) => keep(t.offset(GAP / 2, 'Miter')))));
+      const inner = keep(joined.offset(-(GAP / 2 + MARGIN), 'Miter'));
+      const bowls = keep(new kernel.CrossSection(outlines.map((o) => o.map((p): [number, number] => [p[0], p[1]])), 'NonZero'));
+      if (keep(bowls.subtract(inner)).area() > SLIVER) return undefined;
+      return run.filter((_, i) => keep(bowls.intersect(tops[i]!)).area() > SLIVER);
+    });
+    if (crossed !== undefined && crossed.length > 0) return crossed;
+  }
+  return [];
+}
+
 /**
  * Every modelled element's model, by ID, with what it needs to be drawn: its frame (corners of its
  * footprint), its box's extents, and — for counters and sinks — what each is set into or cut for.
  */
-function plan(doc: FloorspecDocument, derived: Derived, elements: ReadonlyMap<string, { extension: string; collection: string; element: ExtensionElement }>): Map<string, Plan> {
+function plan(kernel: Kernel, doc: FloorspecDocument, derived: Derived, elements: ReadonlyMap<string, { extension: string; collection: string; element: ExtensionElement }>): Map<string, Plan> {
   const out = new Map<string, Plan>();
   for (const id of Object.keys(derived.fallbacks ?? {}).sort()) {
     const f = derived.fallbacks![id]!;
@@ -73,37 +129,27 @@ function plan(doc: FloorspecDocument, derived: Derived, elements: ReadonlyMap<st
     const cutouts: Cutout[] = [];
     out.set(id, { kind, model, element, X, Y, Z, bottom: f.bottom, level: f.level, corners: corners(f, derived.placements?.[id]?.facing), ctx: { kind, originZ, cutouts }, cutouts });
   }
-  // Sinks into counters: a sink's bowls all inside a counter top's outline, the top within the sink's height.
+  // Sinks into counters: a sink's bowls all inside one counter top's outline, the top within the
+  // sink's height — or, failing that, inside the counter tops side by side at that one height.
   const counters = [...out.entries()].filter(([id, p]) => elements.get(id)!.collection === 'casework' && COUNTERS.has(p.kind));
-  const holes = new Map<string, (readonly (readonly [number, number])[])[]>();
+  const holes = new Map<string, V2[][]>();
   for (const [id, sink] of out) {
     if (elements.get(id)!.extension !== 'FS_plumbing' || !SINKS.has(sink.kind)) continue;
     const at = placer(sink.corners, sink.bottom, sink.X, sink.Y, sink.Z);
-    const outlines = cutoutsOf(sink.kind, sink.X, sink.Y).map((o) => o.map((p) => at(p[0], p[1], 0)).map((q): [number, number] => [q[0], q[1]]));
-    for (const [cid, c] of counters) {
-      if (c.level !== sink.level) continue;
-      const top = c.bottom + c.Z;
-      if (top <= sink.bottom || top > sink.bottom + sink.Z) continue;
-      const [c00, c10, , c01] = c.corners;
-      const ex = [c10[0] - c00[0], c10[1] - c00[1]];
-      const ey = [c01[0] - c00[0], c01[1] - c00[1]];
-      const lx = Math.hypot(ex[0]!, ex[1]!);
-      const ly = Math.hypot(ey[0]!, ey[1]!);
-      const local = (p: readonly [number, number]): V2 => [((p[0] - c00[0]) * ex[0]! + (p[1] - c00[1]) * ex[1]!) / lx, ((p[0] - c00[0]) * ey[0]! + (p[1] - c00[1]) * ey[1]!) / ly];
-      const m = 5 * MM;
-      const inside = outlines.every((o) => o.every((p) => {
-        const [x, y] = local(p);
-        return x >= m && x <= c.X - m && y >= m && y <= c.Y - m;
-      }));
-      const taken = holes.get(cid) ?? [];
-      if (!inside || outlines.some((o) => taken.some((t) => footprintsOverlap(o, t)))) continue;
-      const counter = top - sink.bottom;
-      sink.ctx.counter = counter;
-      const rim = rimIn(sink.Z, counter);
-      const basin = sink.bottom + rim - Math.min(BASIN_DEPTH[sink.kind]!, rim);
-      for (const o of outlines) c.cutouts.push({ outline: o.map(local), bottom: basin - c.bottom });
-      holes.set(cid, [...taken, ...outlines]);
-      break;
+    const outlines = cutoutsOf(sink.kind, sink.X, sink.Y).map((o) => o.map((p) => at(p[0], p[1], 0)).map((q): V2 => [q[0], q[1]]));
+    const free = ([cid]: readonly [string, Plan]): boolean => !outlines.some((o) => (holes.get(cid) ?? []).some((t) => footprintsOverlap(o, t)));
+    const under = counters.filter(([, c]) => c.level === sink.level && c.bottom + c.Z > sink.bottom && c.bottom + c.Z <= sink.bottom + sink.Z);
+    const one = under.find((c) => free(c) && outlines.every((o) => o.every((p) => within(c[1], p))));
+    const into = one !== undefined ? [one] : across(kernel, under.filter(free), outlines);
+    if (into.length === 0) continue;
+    const top = into[0]![1].bottom + into[0]![1].Z;
+    const counter = top - sink.bottom;
+    sink.ctx.counter = counter;
+    const rim = rimIn(sink.Z, counter);
+    const basin = sink.bottom + rim - Math.min(BASIN_DEPTH[sink.kind]!, rim);
+    for (const [cid, c] of into) {
+      for (const o of outlines) c.cutouts.push({ outline: o.map((p) => local(c, p)), bottom: basin - c.bottom });
+      holes.set(cid, [...(holes.get(cid) ?? []), ...outlines]);
     }
   }
   return out;
@@ -117,7 +163,7 @@ export interface ElementModel {
 /** Draw every modelled element's pieces, by ID. An element whose model draws nothing is left out (its box stands in). */
 export function drawModels(kernel: Kernel, doc: FloorspecDocument, derived: Derived, elements: ReadonlyMap<string, { extension: string; collection: string; element: ExtensionElement }>): Map<string, ElementModel> {
   const out = new Map<string, ElementModel>();
-  for (const [id, p] of plan(doc, derived, elements)) {
+  for (const [id, p] of plan(kernel, doc, derived, elements)) {
     const s = new Sketch(kernel, placer(p.corners, p.bottom, p.X, p.Y, p.Z), p.X, p.Y, p.Z);
     p.model(s, p.element, p.ctx);
     const pieces = s.pieces.filter((x) => x.b.tris.length > 0);

@@ -11,7 +11,7 @@ export const MM = 1_280;
 export type Json = Record<string, unknown>;
 export type V2 = readonly [number, number];
 
-/** An opening cut through a counter top: its outline in the counter's own frame, and how deep the basin under it goes. */
+/** An opening cut through a counter top: its outline in the counter's own frame — past its edge, for a sink set across two counters — and how deep the basin under it goes. */
 export interface Cutout {
   outline: V2[];
   /** The basin's bottom, local z of the counter. */

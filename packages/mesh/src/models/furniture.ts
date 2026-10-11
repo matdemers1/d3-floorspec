@@ -2,12 +2,16 @@
  * FS_furniture's casework, pieces and appliances (FS_furniture 2.2–2.5). Every one stands with its
  * back at x = 0 — against the wall it is set by — and its front, the side it is used from, at x = X.
  */
-import { doors, drawer, drawers, legs, max, min, MM, rect, type Front, type Model, type ModelContext } from './common.js';
+import { doors, drawer, drawers, legs, max, min, MM, type Front, type Model, type ModelContext } from './common.js';
 import type { Sketch } from './sketch.js';
 
 // ─── Casework ────────────────────────────────────────────────────────────────────────────────
 
-/** A carcass: a block, or — under a sink — sides, back and a bottom kept clear of the basins. */
+/**
+ * A carcass: a block, or — under a sink — sides, back and a bottom kept clear of the basins. A sink
+ * set across two counters crosses the side they meet at: that side is left out, the basin passing
+ * through where it would stand.
+ */
 function carcass(s: Sketch, x0: number, y0: number, x1: number, y1: number, z0: number, z1: number, ctx: ModelContext): void {
   if (ctx.cutouts.length === 0) {
     s.box('carcass', 'wood', x0, y0, z0, x1, y1, z1);
@@ -17,12 +21,14 @@ function carcass(s: Sketch, x0: number, y0: number, x1: number, y1: number, z0: 
   // Sides and back no thicker than the counter's edge beside the cut-outs, so none shows in a basin.
   const ys = ctx.cutouts.flatMap((c) => c.outline.map((p) => p[1]));
   const xs = ctx.cutouts.flatMap((c) => c.outline.map((p) => p[0]));
-  const t = min(18 * MM, (y1 - y0) * 0.05, (x1 - x0) * 0.05, min(...ys) - y0 - 2 * MM, y1 - max(...ys) - 2 * MM, min(...xs) - x0 - 2 * MM);
+  const [right, left, back] = [min(...ys) - y0, y1 - max(...ys), min(...xs) - x0];
+  const t = min(18 * MM, (y1 - y0) * 0.05, (x1 - x0) * 0.05, ...[right, left, back].filter((d) => d >= 0).map((d) => d - 2 * MM));
   if (low - z0 > 4 * MM) s.box('carcass', 'wood', x0, y0, z0, x1, y1, low);
   if (t < 2 * MM) return;
-  s.box('side', 'wood', x0, y0, max(z0, low), x1, y0 + t, z1);
-  s.box('side', 'wood', x0, y1 - t, max(z0, low), x1, y1, z1);
-  s.box('back', 'wood', x0, y0 + t, max(z0, low), x0 + t, y1 - t, z1);
+  const [ya, yb] = [right < 0 ? y0 : y0 + t, left < 0 ? y1 : y1 - t];
+  if (right >= 0) s.box('side', 'wood', x0, y0, max(z0, low), x1, y0 + t, z1);
+  if (left >= 0) s.box('side', 'wood', x0, y1 - t, max(z0, low), x1, y1, z1);
+  if (back >= 0) s.box('back', 'wood', x0, ya, max(z0, low), x0 + t, yb, z1);
 }
 
 /** The cabinet-maker's proportions for a box: counter, overhang, toe kick, door thickness. */
@@ -36,7 +42,7 @@ const baseCabinet: Model = (s, _el, ctx) => {
   const { X, Y, Z } = s;
   const c = cabinet(s);
   const f: Front = { x0: X - c.ov - c.dt, x1: X - c.ov, pull: c.ov - 2 * MM };
-  s.extrude('top', 'stone', 'z', rect(0, 0, X, Y), Z - c.t, Z, ctx.cutouts.map((k) => k.outline));
+  s.slab('top', 'stone', 0, 0, X, Y, Z - c.t, Z, ctx.cutouts.map((k) => k.outline));
   const top = Z - c.t;
   carcass(s, 0, 0, f.x0, Y, c.kick, top, ctx);
   s.box('kick', 'darkMetal', 0, 0, 0, f.x0 - c.kd, Y, c.kick);
@@ -76,7 +82,7 @@ const island: Model = (s, _el, ctx) => {
   const c = cabinet(s);
   const seat = X >= 800 * MM ? min(250 * MM, X * 0.3) : c.ov;
   const f: Front = { x0: X - c.ov - c.dt, x1: X - c.ov, pull: c.ov - 2 * MM };
-  s.extrude('top', 'stone', 'z', rect(0, 0, X, Y), Z - c.t, Z, ctx.cutouts.map((k) => k.outline));
+  s.slab('top', 'stone', 0, 0, X, Y, Z - c.t, Z, ctx.cutouts.map((k) => k.outline));
   const top = Z - c.t;
   const [y0, y1] = [c.ov, Y - c.ov];
   carcass(s, seat, y0, f.x0, y1, c.kick, top, ctx);

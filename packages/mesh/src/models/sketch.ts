@@ -14,7 +14,7 @@
  */
 import { facingVector, type DerivedFallback } from '@floorspec/engine';
 import { MeshBuilder, type P3 } from '../builder.js';
-import type { Kernel } from '../kernel.js';
+import { scoped, type Kernel } from '../kernel.js';
 import type { ModelRole } from '../roles.js';
 import { COS, SIDES, SIN } from './circle.js';
 
@@ -84,6 +84,18 @@ const signedArea = (ring: readonly V2[]): number => {
   return s;
 };
 
+/** A ring's points rounded to base units, a point the rounding made equal to the one before it left out. */
+function roundRing(ring: readonly (readonly [number, number])[]): V2[] {
+  const out: V2[] = [];
+  for (const p of ring) {
+    const q: V2 = [Math.round(p[0]), Math.round(p[1])];
+    const last = out[out.length - 1];
+    if (last === undefined || last[0] !== q[0] || last[1] !== q[1]) out.push(q);
+  }
+  while (out.length > 1 && out[0]![0] === out[out.length - 1]![0] && out[0]![1] === out[out.length - 1]![1]) out.pop();
+  return out;
+}
+
 export class Sketch {
   readonly pieces: Piece[] = [];
   private readonly names = new Set<string>();
@@ -137,6 +149,35 @@ export class Sketch {
         const q = r[(i + 1) % r.length]!;
         b.quad(at(p, h0), at(q, h0), at(q, h1), at(p, h1));
       }
+  }
+
+  /**
+   * A slab across z over (x0 … x1, y0 … y1), from h0 to h1, less the cuts through it: a cut wholly
+   * inside the slab is a hole in it; one that crosses its edge — a sink set across two counters —
+   * notches it, and what is left (in one part or more, each its own piece) is the plan region of the
+   * slab less the cuts, from manifold-3d's cross-section, its points rounded to base units.
+   */
+  slab(name: string, role: ModelRole, x0: number, y0: number, x1: number, y1: number, h0: number, h1: number, cuts: readonly (readonly V2[])[]): void {
+    const outer: V2[] = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+    if (cuts.every((c) => c.every((p) => p[0] > x0 && p[0] < x1 && p[1] > y0 && p[1] < y1))) {
+      this.extrude(name, role, 'z', outer, h0, h1, cuts);
+      return;
+    }
+    const ccw = (r: readonly V2[]): [number, number][] => (signedArea(r) < 0 ? [...r].reverse() : [...r]).map((p): [number, number] => [p[0], p[1]]);
+    const parts = scoped((keep) => {
+      const whole = keep(new this.kernel.CrossSection([ccw(outer)]));
+      const cut = keep(new this.kernel.CrossSection(cuts.map(ccw), 'NonZero'));
+      return keep(whole.subtract(cut))
+        .decompose()
+        .map((part) => keep(part).toPolygons());
+    });
+    for (const contours of parts) {
+      const rings = contours.map(roundRing).filter((r) => r.length >= 3 && signedArea(r) !== 0);
+      // Its outline is the ring of greatest area (counter-clockwise); every other is a hole in it.
+      const k = rings.reduce((best, r, i) => (signedArea(r) > signedArea(rings[best]!) ? i : best), 0);
+      if (rings[k] === undefined || signedArea(rings[k]) <= 0) continue;
+      this.extrude(name, role, 'z', rings[k], h0, h1, rings.filter((_, i) => i !== k));
+    }
   }
 
   /**

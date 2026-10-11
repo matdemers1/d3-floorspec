@@ -1,6 +1,7 @@
 /**
  * The houses the property tests mesh, other than the conformance suite's: the layout solver's
- * three-bedroom ranch under a hip roof, and generated rectilinear houses. Isomorphic, so the
+ * three-bedroom ranch under a hip roof, generated rectilinear houses, and the showcase with its
+ * sinks set across two counters each. Isomorphic, so the
  * browser project can use them too.
  */
 import { evaluate, exteriorOutline } from '@floorspec/engine';
@@ -232,3 +233,26 @@ export const houseSpec: fc.Arbitrary<HouseSpec> = fc
       rotate: fc.boolean(),
     }),
   );
+
+/**
+ * The showcase with its kitchen sink S1 moved to straddle the base cabinet X4 and a second one, X20,
+ * where the dishwasher was — in the box a real house gave it, 600 mm deep like the cabinets, its top
+ * at theirs — and its vanity V1 split into two, V1 and V9, the basin S3 across where they meet
+ * (FLR-T-12.31). `sinkAt` moves S1 along the wall.
+ */
+export function straddling(showcase: Json, sinkAt = 3_724_800): Json {
+  type Collections = { collections: Record<string, Record<string, Json>> };
+  const d = structuredClone(showcase);
+  const exts = d['extensions'] as Record<string, Collections>;
+  const casework = exts['FS_furniture']!.collections['casework']!;
+  delete exts['FS_furniture']!.collections['appliances']!['X5'];
+  const x4 = casework['X4']!;
+  casework['X20'] = { ...structuredClone(x4), host: { ...(x4['host'] as Json), offset: 4_108_800 } };
+  const s1 = exts['FS_plumbing']!.collections['fixtures']!['S1']!;
+  s1['fallback'] = { level: 'L1', box: { min: [0, -416_000, 896_000], max: [768_000, 416_000, 1_152_000] } };
+  s1['host'] = { ...(s1['host'] as Json), offset: sinkAt, height: 0 };
+  const v1 = casework['V1']!;
+  casework['V1'] = { ...v1, fallback: { ...(v1['fallback'] as Json), box: { min: [0, -288_000, 0], max: [704_000, 288_000, 1_088_000] } }, host: { ...(v1['host'] as Json), offset: 2_656_000 } };
+  casework['V9'] = { ...structuredClone(casework['V1']), host: { ...(v1['host'] as Json), offset: 3_232_000 } };
+  return d;
+}

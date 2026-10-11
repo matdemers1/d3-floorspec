@@ -1,7 +1,8 @@
 /**
  * Procedural models of extension elements (FLR-T-12.21): every modelled kind of every collection,
  * square to the level and turned 30°, drawn as pieces that are each a closed solid inside the
- * element's box (props.ts, `within`); a sink set into a counter; the plain box when models are off;
+ * element's box (props.ts, `within`); a sink set into a counter, and across two (FLR-T-12.31); the
+ * plain box when models are off;
  * and the conformance suites' extension examples.
  */
 import { readFileSync } from 'node:fs';
@@ -12,6 +13,7 @@ import flat from '../../engine/standard/conformance/ext/FS_furniture/0.1.0/examp
 import house from '../../engine/standard/conformance/ext/FS_plumbing/0.1.0/examples/001-p5-demo-house/input.json' with { type: 'json' };
 import { loadKernel, type Kernel } from '../src/kernel.js';
 import { discriminant, elementKind, loadMesher, MODEL_ROLES, ROLE_LOOKS, type HouseMesh, type Mesher } from '../src/index.js';
+import { straddling } from './houses.js';
 import { checkHouse } from './props.js';
 
 let kernel: Kernel;
@@ -194,6 +196,81 @@ describe('a sink set into a counter', () => {
       const bowl = mesh.parts.find((p) => p.id === sink && (p.key.endsWith(':basin') || p.key.endsWith(':basin2')))!;
       expect(top.bbox.max[2] - bowl.bbox.max[2], sink).toBeGreaterThanOrEqual(0);
       expect(top.bbox.max[2] - bowl.bbox.max[2], sink).toBeLessThanOrEqual(3 * MM);
+    }
+  });
+
+  /** Whether a plan point (base units) lies inside any triangle of a part, seen from above. */
+  function covers(mesh: HouseMesh, part: HouseMesh['parts'][number], p: readonly [number, number]): boolean {
+    const [x, y] = [(p[0] - mesh.origin[0]) / 1_280_000, (p[1] - mesh.origin[1]) / 1_280_000];
+    const { positions: v, indices: ix } = part.mesh;
+    for (let i = 0; i < ix.length; i += 3) {
+      const [a, b, c] = [ix[i]! * 3, ix[i + 1]! * 3, ix[i + 2]! * 3];
+      const s = (ax: number, ay: number, bx: number, by: number): number => (bx - ax) * (y - ay) - (by - ay) * (x - ax);
+      const d1 = s(v[a]!, v[a + 1]!, v[b]!, v[b + 1]!);
+      const d2 = s(v[b]!, v[b + 1]!, v[c]!, v[c + 1]!);
+      const d3 = s(v[c]!, v[c + 1]!, v[a]!, v[a + 1]!);
+      if ((d1 > 0 && d2 > 0 && d3 > 0) || (d1 < 0 && d2 < 0 && d3 < 0)) return true;
+    }
+    return false;
+  }
+
+  /** A grid of plan points inside a bowl: its basin's box, a quarter in from each side (inside an oval's cut too). */
+  function insideBowl(basin: HouseMesh['parts'][number]): [number, number][] {
+    const [x0, y0] = basin.bbox.min;
+    const [x1, y1] = basin.bbox.max;
+    const out: [number, number][] = [];
+    for (let i = 0; i <= 6; i++) for (let j = 0; j <= 6; j++) out.push([x0 + (x1 - x0) * (0.25 + 0.5 * (i / 6)), y0 + (y1 - y0) * (0.25 + 0.5 * (j / 6))]);
+    return out;
+  }
+
+  it('is set across two counters side by side: each top cut where the bowls cross it, nothing over the bowls (FLR-T-12.31)', () => {
+    const { doc, derived, mesh } = meshed(straddling(JSON.parse(showcase) as Json));
+    checkHouse(kernel, doc, derived, mesh, 'straddling');
+    for (const [counters, sink] of [
+      [['X4', 'X20'], 'S1'],
+      [['V1', 'V9'], 'S3'],
+    ] as const) {
+      expect(mesh.parts.some((p) => p.key === `extension:${sink}:deck`), sink).toBe(false);
+      const basins = mesh.parts.filter((p) => p.id === sink && /:basin\d*$/.test(p.key));
+      expect(basins.length, sink).toBeGreaterThan(0);
+      const points = basins.flatMap(insideBowl);
+      for (const counter of counters) {
+        const tops = mesh.parts.filter((p) => p.id === counter && /:top\d*$/.test(p.key));
+        expect(tops.length, counter).toBeGreaterThan(0);
+        const f = derived.fallbacks![counter]!;
+        const full = Math.abs(f.footprint.reduce((s, p, i) => s + p[0] * f.footprint[(i + 1) % 4]![1] - f.footprint[(i + 1) % 4]![0] * p[1], 0)) / 2;
+        const t = tops[0]!.bbox.max[2] - tops[0]!.bbox.min[2];
+        // Cut: less stone than its whole outline's slab.
+        expect(tops.reduce((s, p) => s + p.stats!.volume, 0), counter).toBeLessThan(full * t * 0.97);
+        // No top face — of this counter or any piece of it — covers the bowls.
+        for (const top of tops) expect(points.filter((p) => covers(mesh, top, p)), `${counter} over ${sink}`).toEqual([]);
+        // The cabinet under it kept clear: no carcass, side or back reaches into a basin.
+        for (const part of mesh.parts.filter((p) => p.id === counter && /:(carcass|side|back)\d*$/.test(p.key)))
+          for (const b of basins) {
+            const overlap = [0, 1, 2].every((k) => Math.min(part.bbox.max[k]!, b.bbox.max[k]!) - Math.max(part.bbox.min[k]!, b.bbox.min[k]!) > 0);
+            expect(overlap, `${part.key} in ${b.key}`).toBe(false);
+          }
+        // The rim on the counter: the bowl's top at the counter's top, or a little under it.
+        for (const b of basins) {
+          expect(tops[0]!.bbox.max[2] - b.bbox.max[2], `${sink} rim`).toBeGreaterThanOrEqual(0);
+          expect(tops[0]!.bbox.max[2] - b.bbox.max[2], `${sink} rim`).toBeLessThanOrEqual(3 * MM);
+        }
+      }
+    }
+  });
+
+  it('keeps its own deck over the counters when partly over no counter, and cuts none (FLR-T-12.31)', () => {
+    // S1 moved to the far end of X20, half of it past the run's end.
+    const { doc, derived, mesh } = meshed(straddling(JSON.parse(showcase) as Json, 4_108_800 + 384_000));
+    checkHouse(kernel, doc, derived, mesh, 'overhanging');
+    expect(mesh.parts.some((p) => p.key === 'extension:S1:deck')).toBe(true);
+    for (const counter of ['X4', 'X20']) {
+      const tops = mesh.parts.filter((p) => p.id === counter && /:top\d*$/.test(p.key));
+      expect(tops.map((p) => p.key), counter).toEqual([`extension:${counter}:top`]);
+      const f = derived.fallbacks![counter]!;
+      const full = Math.abs(f.footprint.reduce((s, p, i) => s + p[0] * f.footprint[(i + 1) % 4]![1] - f.footprint[(i + 1) % 4]![0] * p[1], 0)) / 2;
+      const t = tops[0]!.bbox.max[2] - tops[0]!.bbox.min[2];
+      expect(tops[0]!.stats!.volume, counter).toBeCloseTo(full * t, -6);
     }
   });
 });
