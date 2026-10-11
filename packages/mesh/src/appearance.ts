@@ -31,6 +31,8 @@ export const DEFAULT_COLOURS = {
   /** A floor of a room with no function this palette knows. */
   floor: '#b98a5c',
   ceiling: '#f4f1ea',
+  /** The edges of a floor drawn down to the ceiling below (FLR-T-12.32): the band of structure between, as a cased, painted fascia. */
+  floorEdge: '#e2dccf',
   slab: '#b3b0a8',
   roof: '#525965',
   gable: '#d6c9b2',
@@ -100,6 +102,11 @@ export interface Appearance {
   ceiling(room: string): Swatch;
   /** A wall face: its room's paint; outside, or facing an outdoor room, the exterior colour. */
   face(wall: string, side: FaceSide): Swatch;
+  /**
+   * A floor drawn down to the ceiling below (FLR-T-12.32): its underside, the ceiling of the room
+   * under it (`room`), else a plain ceiling; its edges, the structure's band.
+   */
+  plenum(which: 'underside' | 'edge', room: string | undefined): Swatch;
 }
 
 /** How far past a face its room is looked for: 10 mm, in base units. */
@@ -159,6 +166,10 @@ export function appearanceOf(doc: FloorspecDocument, derived: Derived | null): A
     if (!rooms.has(key)) rooms.set(key, derived === null ? undefined : (derived.finishes?.walls[wall]?.[side]?.room ?? roomPast(doc, derived, wall, side)));
     return rooms.get(key);
   };
+  const ceiling = (room: string): Swatch => {
+    const fn = fnOf(room);
+    return { key: `ceiling:${fn}`, color: ROOM_PALETTE[fn].ceiling, name: `${fn} ceiling` };
+  };
   return {
     roomOf,
     floor: (room) => {
@@ -166,16 +177,17 @@ export function appearanceOf(doc: FloorspecDocument, derived: Derived | null): A
       const p = ROOM_PALETTE[fn];
       return { key: `floor:${fn}`, color: p.floor, name: `${fn} floor (${p.floorIs})` };
     },
-    ceiling: (room) => {
-      const fn = fnOf(room);
-      return { key: `ceiling:${fn}`, color: ROOM_PALETTE[fn].ceiling, name: `${fn} ceiling` };
-    },
+    ceiling,
     face: (wall, side) => {
       const room = roomOf(wall, side);
       if (room === undefined) return side === 'left' ? { key: 'face:exterior', color: DEFAULT_COLOURS.exterior, name: 'exterior wall' } : { key: 'face:interior', color: DEFAULT_COLOURS.interior, name: 'interior wall' };
       const fn = fnOf(room);
       if (fn === 'exterior') return { key: 'face:exterior', color: DEFAULT_COLOURS.exterior, name: 'exterior wall' };
       return { key: `wall:${fn}`, color: ROOM_PALETTE[fn].wall, name: `${fn} wall paint` };
+    },
+    plenum: (which, room) => {
+      if (which === 'edge') return { key: 'floorEdge', color: DEFAULT_COLOURS.floorEdge, name: 'floor edge' };
+      return room === undefined ? swatch('ceiling') : ceiling(room);
     },
   };
 }

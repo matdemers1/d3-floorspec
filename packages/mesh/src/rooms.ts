@@ -3,7 +3,13 @@
  * ceilings and slabs.
  *
  * - A floor with a thickness is a solid prism of its room polygon from its bottom to its top; a
- *   floor with none ("not declared", 15.1) is a surface facing up at its top.
+ *   floor with none ("not declared", 15.1) is a surface facing up at its top — on the lowest level.
+ *   On a level with a level below, a floor that declares no thickness is drawn down to the ceiling
+ *   below it (FLR-T-12.32, `plenumsOf`): a solid from its top to just above that ceiling, so it is
+ *   seen from below, its edges close the band between the ceiling below and the floor where it
+ *   borders a void or a double-height room, and what stands on it does not float; or, where there
+ *   is no depth to fill, a surface facing both ways. Its derived floor (15.1) is unchanged: the
+ *   depth is the view's, not the standard's (a mesh is not normative, Core 0.5).
  * - A ceiling is a surface (15.5: "a ceiling is a surface") facing down: flat at E + h; a tray's
  *   border at E + h, its centre at E + h + depth, and the vertical step between them facing the
  *   border; a vault as the room polygon lifted to z(P) — split along the ridge line for a ceiling
@@ -18,8 +24,9 @@
 import { Surd, type Derived, type FloorspecDocument, type Room, type VaultedCeiling } from '@floorspec/engine';
 import { get } from './own.js';
 import { MeshBuilder, type P2, type P3 } from './builder.js';
-import { scoped, type Kernel } from './kernel.js';
+import { scoped, type CrossSection, type Kernel } from './kernel.js';
 import type { RawPart } from './part.js';
+import { UNITS_PER_METRE, type Plenum } from './types.js';
 
 type Ring = readonly P2[];
 
@@ -49,7 +56,24 @@ function vaultZ(base: bigint, c: VaultedCeiling, p: P2): number {
   return Number(Surd.sqrt(D).mulInt(-BigInt(c.pitch.rise) * f).divInt(BigInt(c.pitch.run) * D).addInt(base).round());
 }
 
-export function roomParts(kernel: Kernel, doc: FloorspecDocument, derived: Derived, want: (kind: RawPart['kind']) => boolean): RawPart[] {
+/**
+ * A floor's plan rings between its bottom and its top: a solid prism when it has a depth; else a
+ * surface facing up at its top — and down too, for a floor drawn down to the ceiling below with no
+ * depth to fill (FLR-T-12.32). Shared with the doorways' thresholds (thresholds.ts).
+ */
+export function floorBody(kernel: Kernel, rings: readonly Ring[], top: number, bottom: number, plenum: Plenum | undefined): Pick<RawPart, 'closed' | 'facing' | 'plenum'> & { exact: MeshBuilder } {
+  const b = new MeshBuilder(kernel);
+  const z0 = plenum?.bottom ?? bottom;
+  const closed = top > z0;
+  if (closed) b.prism(rings, z0, top);
+  else {
+    b.sheet(rings, top, 'up');
+    if (plenum !== undefined) b.sheet(rings, top, 'down');
+  }
+  return { closed, ...(closed ? {} : { facing: plenum === undefined ? ('up' as const) : ('both' as const) }), ...(plenum === undefined ? {} : { plenum }), exact: b };
+}
+
+export function roomParts(kernel: Kernel, doc: FloorspecDocument, derived: Derived, want: (kind: RawPart['kind']) => boolean, plenums: ReadonlyMap<string, Plenum> = new Map()): RawPart[] {
   const out: RawPart[] = [];
   for (const id of Object.keys(derived.rooms).sort()) {
     const room = get(doc.rooms, id);
@@ -57,13 +81,7 @@ export function roomParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
     if (!room) continue;
     const rings: Ring[] = [poly.outer, ...poly.holes];
     const fl = derived.floors?.[id];
-    if (fl && want('floor')) {
-      const b = new MeshBuilder(kernel);
-      const closed = fl.top > fl.bottom;
-      if (closed) b.prism(rings, fl.bottom, fl.top);
-      else b.sheet(rings, fl.top, 'up');
-      out.push({ kind: 'floor', id, level: room.level, closed, ...(closed ? {} : { facing: 'up' as const }), exact: b });
-    }
+    if (fl && want('floor')) out.push({ kind: 'floor', id, level: room.level, ...floorBody(kernel, rings, fl.top, fl.bottom, plenums.get(id)) });
     const ce = derived.ceilings?.[id];
     if (ce && want('ceiling') && !(room.function === 'exterior' && openToSky(kernel, doc, derived, id))) {
       const b = new MeshBuilder(kernel);
@@ -161,6 +179,114 @@ export function openToSky(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
     if (Math.max(top, M.elevation) >= above && covers(derived.rooms[other]!.outer)) return false;
   }
   return true;
+}
+
+/**
+ * How far above the ceiling below a floor's solid stops (FLR-T-12.32): 1/16 in, in base units. A
+ * ceiling and the underside of the floor over it then never share a plane, in any renderer: the
+ * headless raster's bias and the editor's polygon offset draw a ceiling over a floor's underside
+ * anyway, but the path tracer has neither, and a ray would meet the two at the same distance.
+ */
+export const PLENUM_GAP = 2032;
+
+/** How far inside a floor's edge a room below must reach to be under it: 150 mm, in metres. */
+const UNDER_INSET = 0.15;
+/** The least plan area, in square metres, past that inset, that counts as under: a square centimetre. */
+const UNDER_AREA = 1e-4;
+
+/** A room polygon as a cross-section in metres (outer ring counter-clockwise, holes clockwise). */
+function sectionOf(kernel: Kernel, outer: Ring, holes: readonly Ring[]): CrossSection {
+  const m = (r: Ring, ccwise: boolean): [number, number][] => {
+    const pts = r.map((p): [number, number] => [p[0] / UNITS_PER_METRE, p[1] / UNITS_PER_METRE]);
+    return area2(r) < 0 === ccwise ? pts.reverse() : pts;
+  };
+  return new kernel.CrossSection([m(outer, true), ...holes.map((h) => m(h, false))], 'Positive');
+}
+
+/**
+ * Where each floor that declares no thickness (15.1), on a level with a level below, is drawn down
+ * to (FLR-T-12.32), by room ID. Its bottom is PLENUM_GAP above the higher of:
+ *
+ * - the level below's ceiling line — its elevation plus its `ceilingHeight`, else its `height` (the
+ *   ceiling a room of it has unless the room says otherwise); the level below is the one of the
+ *   highest elevation under the floor's level's;
+ * - the highest point (`high`, 15.2–15.4) of the ceiling of any room of a lower level that is under
+ *   the floor and lower than the floor's top.
+ *
+ * So the solid never reaches into a room below it: a room whose ceiling is higher than its level's
+ * line raises it, one whose ceiling is lower sees its own ceiling with the solid out of sight above
+ * it, and a double-height room — whose ceiling is at or above the floor's top: the great room under a
+ * bridge — does not count, so a bridge over it is as deep as the level below's ceiling line. Where
+ * that leaves no depth (the bottom at or above the top) the bottom is the top: a surface facing both
+ * ways.
+ *
+ * A room is under the floor when the floor's polygon, inset by UNDER_INSET, and the room's share
+ * more than UNDER_AREA: a sliver along a wall, where the two levels' walls do not stack exactly, is
+ * not under it. Of the rooms under it, the one it covers most (the first by ID on a tie) is the
+ * room whose ceiling its underside is (`room`): its ceiling finish, else its function's ceiling.
+ *
+ * A floor with a thickness (its own or its level's) keeps it, and the floors of the lowest level are
+ * surfaces facing up, as before. None of this is derived: the standard's floor (15.1) is unchanged.
+ */
+export function plenumsOf(kernel: Kernel, doc: FloorspecDocument, derived: Derived): Map<string, Plenum> {
+  const out = new Map<string, Plenum>();
+  const floors = derived.floors;
+  if (floors === undefined) return out;
+  const levels = Object.keys(doc.levels ?? {})
+    .sort()
+    .map((id) => get(doc.levels, id)!);
+  const ids = Object.keys(derived.rooms)
+    .sort()
+    .filter((id) => get(doc.rooms, id) !== undefined && derived.rooms[id]!.outer.length >= 3);
+  const boxes = new Map(
+    ids.map((id) => {
+      const o = derived.rooms[id]!.outer;
+      const xs = o.map((p) => p[0]);
+      const ys = o.map((p) => p[1]);
+      return [id, [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] as const];
+    }),
+  );
+  return scoped((keep) => {
+    const sections = new Map<string, CrossSection>();
+    const section = (id: string): CrossSection => {
+      let s = sections.get(id);
+      if (s === undefined) sections.set(id, (s = keep(sectionOf(kernel, derived.rooms[id]!.outer, derived.rooms[id]!.holes))));
+      return s;
+    };
+    for (const id of ids) {
+      const room = get(doc.rooms, id)!;
+      const fl = floors[id];
+      const L = get(doc.levels, room.level);
+      if (fl === undefined || L === undefined || fl.top > fl.bottom) continue;
+      // The level below: the highest elevation under this level's; its ceiling line.
+      let below: { elevation: number; line: number } | undefined;
+      for (const M of levels) {
+        if (M.elevation >= L.elevation) continue;
+        const line = M.elevation + (M.ceilingHeight ?? M.height);
+        if (below === undefined || M.elevation > below.elevation || (M.elevation === below.elevation && line > below.line)) below = { elevation: M.elevation, line };
+      }
+      if (below === undefined) continue;
+      let base = below.line;
+      let over: { id: string; area: number } | undefined;
+      const [ax0, ay0, ax1, ay1] = boxes.get(id)!;
+      let inset: CrossSection | undefined;
+      for (const other of ids) {
+        const r = get(doc.rooms, other)!;
+        const M = get(doc.levels, r.level);
+        if (M === undefined || M.elevation >= L.elevation) continue;
+        const [bx0, by0, bx1, by1] = boxes.get(other)!;
+        if (bx0 >= ax1 || bx1 <= ax0 || by0 >= ay1 || by1 <= ay0) continue;
+        inset ??= keep(section(id).offset(-UNDER_INSET, 'Miter', 2));
+        const shared = keep(inset.intersect(section(other))).area();
+        if (!(shared > UNDER_AREA)) continue;
+        if (over === undefined || shared > over.area) over = { id: other, area: shared };
+        const high = derived.ceilings?.[other]?.high;
+        if (high !== undefined && high < fl.top && high > base) base = high;
+      }
+      out.set(id, { bottom: Math.min(base + PLENUM_GAP, fl.top), ...(over === undefined ? {} : { room: over.id }) });
+    }
+    return out;
+  });
 }
 
 /**

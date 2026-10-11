@@ -33,6 +33,20 @@ type Json = Record<string, unknown>;
 const template = (name: string): Json => JSON.parse(readFileSync(new URL(`../../../packages/engine/standard/templates/${name}.floorspec.json`, import.meta.url), 'utf8')) as Json;
 
 describe('BVH', () => {
+  it('of two faces in one plane, meets the one facing the ray (FLR-T-12.32)', () => {
+    // A triangle at y = 2 facing down, and the same one facing up — a floor drawn both ways — in either order.
+    const down = [0, 2, 0, 1, 2, 0, 0, 2, 1];
+    const up = [0, 2, 0, 0, 2, 1, 1, 2, 0];
+    const hit: Hit = { tri: -1, t: 0, u: 0, v: 0 };
+    for (const order of [[down, up], [up, down]]) {
+      const bvh = new Bvh({ positions: Float64Array.from(order.flat()), count: 2 });
+      expect(bvh.intersect(0.25, 0, 0.25, 0, 1, 0, 1e-6, Infinity, hit)).toBe(true);
+      expect(hit.tri, 'from below').toBe(order.indexOf(down));
+      expect(bvh.intersect(0.25, 4, 0.25, 0, -1, 0, 1e-6, Infinity, hit)).toBe(true);
+      expect(hit.tri, 'from above').toBe(order.indexOf(up));
+    }
+  });
+
   it('finds the nearest triangle brute force finds, for random rays through random triangles', () => {
     const rng = new Rng(7);
     const n = 500;

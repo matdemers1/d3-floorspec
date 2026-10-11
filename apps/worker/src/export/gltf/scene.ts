@@ -645,7 +645,8 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
     const b = entry.b;
     if (!b.parts.includes(part.kind)) b.parts.push(part.kind);
 
-    switch (part.kind) {
+    // A floor drawn down to the ceiling below (FLR-T-12.32) is laid out by surface, as a threshold is.
+    switch (part.kind === 'floor' && part.plenum !== undefined ? 'threshold' : part.kind) {
       case 'wall':
       case 'junctionFill':
       case 'threshold': {
@@ -653,16 +654,18 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
         // regions — an arc wall's segment by segment (21.6) — and the rest of it (its top, its ends,
         // its openings' reveals) in its core's material; a fill's (or a closure's) faces in its walls'
         // planes are those faces, the rest its walls' core; a threshold is the floor of the room on its
-        // side. The editor's 3D view groups them the same way.
+        // side; a floor or a threshold drawn down to the ceiling below has that room's ceiling for its
+        // underside and the structure's band for its edges. The editor's 3D view groups them the same way.
         const layers = part.layers ?? [];
         const arc = part.kind === 'wall' && (derived.walls[part.id]?.polyline?.length ?? 0) > 2;
-        const room = part.threshold?.room;
+        const room = part.threshold?.room ?? (part.kind === 'floor' ? part.id : undefined);
         for (const g of surfaceGroups(doc, derived, part)) {
           const s = g.surface;
           let material: number;
           if (s === null) {
-            if (part.kind === 'wall') material = materials.of(layers[Math.floor(layers.length / 2)], swatch('wallEdge'));
-            else if (part.kind === 'threshold' && room !== undefined) material = materials.of(g.material, look.floor(room));
+            if (g.plenum !== undefined) material = materials.of(g.material, look.plenum(g.plenum, part.plenum?.room));
+            else if (part.kind === 'wall') material = materials.of(layers[Math.floor(layers.length / 2)], swatch('wallEdge'));
+            else if ((part.kind === 'threshold' || part.kind === 'floor') && room !== undefined) material = materials.of(g.material, look.floor(room));
             else material = materials.of(g.material, swatch('fill'));
           } else if (s.kind === 'floor') material = materials.of(g.material, look.floor(s.room));
           else if (s.kind === 'ceiling') material = materials.of(g.material, look.ceiling(s.room));

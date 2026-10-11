@@ -9,7 +9,8 @@
  * The threshold fills it: the plan polygon the opening's cut removes from its wall (walls.ts,
  * `cutPolygon`), split at the wall's location line, each half the floor of the room on its side —
  * the same top and bottom (15.1), a solid prism between them, or a surface facing up at its top for
- * a floor that declares no thickness. The room on a side is the one its face faces (18.6), or the
+ * a floor that declares no thickness — drawn down to the ceiling below as that floor is, on a level
+ * with a level below (FLR-T-12.32, rooms.ts `plenumsOf`), so a doorway over a void is not a slot. The room on a side is the one its face faces (18.6), or the
  * room whose polygon holds a point just past that face at the opening's middle. A side that faces
  * no room (outside the house) continues the other side's floor, so the doorway has one sill; an
  * opening with a room on neither side has no threshold.
@@ -21,11 +22,13 @@
  * Not built: an opening in an arc wall (21.6), whose location line is a polyline.
  */
 import type { Derived, DerivedRoomPolygon, FloorspecDocument } from '@floorspec/engine';
-import { dedupe, MeshBuilder, type P2 } from './builder.js';
+import { dedupe, type P2 } from './builder.js';
 import { clip, iarea2, type IPoint, type RPoint } from './exact.js';
 import type { Kernel } from './kernel.js';
 import { get } from './own.js';
 import type { RawPart } from './part.js';
+import { floorBody } from './rooms.js';
+import type { Plenum } from './types.js';
 import { cutPolygon } from './walls.js';
 
 type Side = 'left' | 'right';
@@ -119,7 +122,7 @@ function roomsBeside(doc: FloorspecDocument, derived: Derived, oid: string): Rec
   return { left: find('left'), right: find('right') };
 }
 
-export function thresholdParts(kernel: Kernel, doc: FloorspecDocument, derived: Derived, want: (kind: RawPart['kind']) => boolean): RawPart[] {
+export function thresholdParts(kernel: Kernel, doc: FloorspecDocument, derived: Derived, want: (kind: RawPart['kind']) => boolean, plenums: ReadonlyMap<string, Plenum> = new Map()): RawPart[] {
   if (!want('threshold') || derived.floors === undefined) return [];
   const out: RawPart[] = [];
   const beside = new Map<string, Record<Side, string | undefined>>();
@@ -130,19 +133,13 @@ export function thresholdParts(kernel: Kernel, doc: FloorspecDocument, derived: 
     const room = rooms[t.side] ?? rooms[t.side === 'left' ? 'right' : 'left'];
     const fl = room === undefined ? undefined : derived.floors[room];
     if (room === undefined || fl === undefined) continue;
-    const b = new MeshBuilder(kernel);
-    const closed = fl.top > fl.bottom;
-    if (closed) b.prism([t.ring], fl.bottom, fl.top);
-    else b.sheet([t.ring], fl.top, 'up');
     out.push({
       kind: 'threshold',
       id: t.opening,
       level: get(doc.walls, t.wall)!.level,
-      closed,
-      ...(closed ? {} : { facing: 'up' as const }),
+      ...floorBody(kernel, [t.ring], fl.top, fl.bottom, plenums.get(room)),
       threshold: { wall: t.wall, side: t.side, room },
       piece: t.side,
-      exact: b,
     });
   }
   return out;

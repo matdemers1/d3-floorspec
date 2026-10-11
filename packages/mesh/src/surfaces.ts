@@ -28,6 +28,12 @@
  * (middle layer, 8.3) material of the first of its walls (by ID) that has one, as a wall's own top
  * does. A threshold (thresholds.ts) is the floor of the room on its side.
  *
+ * A floor drawn down to the ceiling below (FLR-T-12.32, `plenum`) — and a threshold drawn down with
+ * it — is three things: its top, the floor; its underside, the ceiling of the room below it covers
+ * most (that room's ceiling finish and (s, t)), or with no room under it a group with no surface;
+ * and its edges, a group with no surface, the structure's. Each such group is marked (`plenum`), so
+ * a view draws it in the underside's or the edge's default where nothing names a material.
+ *
  * These are for drawing, not for normative output: positions arrive as Float32 metres and the
  * coordinates are doubles. `tileCoordinates` turns them into a texture's tile coordinates
  * `(s'/w, t'/h)`; a glTF exporter writes `u = s'/w`, `v = −t'/h` (glTF's v runs down its image),
@@ -60,6 +66,8 @@ export interface SurfaceGroup {
   normals: Float32Array;
   /** Each vertex's surface coordinates (s, t) in base units; empty for a group with no surface. */
   st: Float64Array;
+  /** For a floor drawn down to the ceiling below (FLR-T-12.32): its underside or its edges, which are not its floor. */
+  plenum?: 'underside' | 'edge';
 }
 
 /** A texture's placement on a surface (18.2): the size of one tile, where a tile's corner is and how the tiles are turned. */
@@ -164,6 +172,7 @@ class Group {
   constructor(
     readonly surface: Surface | null,
     readonly material: string | null,
+    readonly plenum?: 'underside' | 'edge',
   ) {}
   add(poly: Poly, n: readonly [number, number, number], region?: { ds: number; dt: number }): void {
     // A convex polygon, wound as the triangle it came from: a fan keeps the winding.
@@ -175,7 +184,7 @@ class Group {
       }
   }
   done(): SurfaceGroup {
-    return { surface: this.surface, material: this.material, positions: new Float32Array(this.pos), normals: new Float32Array(this.nrm), st: new Float64Array(this.st) };
+    return { surface: this.surface, material: this.material, positions: new Float32Array(this.pos), normals: new Float32Array(this.nrm), st: new Float64Array(this.st), ...(this.plenum === undefined ? {} : { plenum: this.plenum }) };
   }
 }
 
@@ -316,23 +325,23 @@ function onFace(f: WallFaces, n: readonly [number, number, number], c: readonly 
 export function surfaceGroups(
   doc: FloorspecDocument,
   derived: Derived,
-  part: Pick<MeshPart, 'kind' | 'id' | 'mesh' | 'material' | 'threshold'>,
+  part: Pick<MeshPart, 'kind' | 'id' | 'mesh' | 'material' | 'threshold' | 'plenum'>,
   origin: Vec3 = [0, 0, 0],
   unitsPerMetre: number = UNITS_PER_METRE,
 ): SurfaceGroup[] {
   const { positions: P, indices } = part.mesh;
   const k = unitsPerMetre;
   const groups = new Map<string, Group>();
-  const group = (key: string, surface: Surface | null, material: string | null): Group => {
+  const group = (key: string, surface: Surface | null, material: string | null, plenum?: 'underside' | 'edge'): Group => {
     let g = groups.get(key);
-    if (g === undefined) groups.set(key, (g = new Group(surface, material)));
+    if (g === undefined) groups.set(key, (g = new Group(surface, material, plenum)));
     return g;
   };
   /** A vertex in base units, in the document's own frame. */
   const world = (i: number): [number, number, number] => [P[3 * i]! * k + origin[0], P[3 * i + 1]! * k + origin[1], P[3 * i + 2]! * k + origin[2]];
 
   // What each kind of part needs to place a vertex on its surface.
-  type Classify = (n: readonly [number, number, number], centroid: readonly [number, number, number]) => { key: string; surface: Surface | null; material: string | null; st?: (w: [number, number, number]) => [number, number]; rects?: { index: number; rect: Rect; material: string }[] };
+  type Classify = (n: readonly [number, number, number], centroid: readonly [number, number, number]) => { key: string; surface: Surface | null; material: string | null; st?: (w: [number, number, number]) => [number, number]; rects?: { index: number; rect: Rect; material: string }[]; plenum?: 'underside' | 'edge' };
   let classify: Classify;
   const rest = { key: 'rest', surface: null, material: part.material ?? null };
 
@@ -371,7 +380,18 @@ export function surfaceGroups(
     const room = part.kind === 'threshold' ? part.threshold!.room : part.id;
     const material = derived.finishes?.rooms[room]?.floor ?? null;
     const floor = { key: 'floor', surface: { kind: 'floor', room } as Surface, material, st: (q: [number, number, number]): [number, number] => [q[0], q[1]] };
-    classify = (n) => (n[2] > ON_FACE ? floor : { ...rest, material });
+    const plenum = part.plenum;
+    if (plenum === undefined) classify = (n) => (n[2] > ON_FACE ? floor : { ...rest, material });
+    else {
+      // Drawn down to the ceiling below (FLR-T-12.32): its underside is the ceiling of the room under it, seen from below (18.3); its edges the structure's.
+      const under = plenum.room;
+      const underside =
+        under === undefined
+          ? { key: 'underside', surface: null, material: null, plenum: 'underside' as const }
+          : { key: 'underside', surface: { kind: 'ceiling', room: under } as Surface, material: derived.finishes?.rooms[under]?.ceiling ?? null, st: (q: [number, number, number]): [number, number] => [-q[0], q[1]], plenum: 'underside' as const };
+      const edge = { key: 'edge', surface: null, material: null, plenum: 'edge' as const };
+      classify = (n) => (n[2] > ON_FACE ? floor : n[2] < -ON_FACE ? underside : edge);
+    }
   } else if (part.kind === 'ceiling') {
     const material = derived.finishes?.rooms[part.id]?.ceiling ?? null;
     // Seen from below, and a vault's slopes too: their coordinates are the plan's (18.3).
@@ -391,7 +411,7 @@ export function surfaceGroups(
     const c = classify(n, [(w3[0]![0] + w3[1]![0] + w3[2]![0]) / 3, (w3[0]![1] + w3[1]![1] + w3[2]![1]) / 3, (w3[0]![2] + w3[1]![2] + w3[2]![2]) / 3]);
     const st = c.st;
     if (st === undefined) {
-      group(c.key, c.surface, c.material).add(a.map((p) => ({ p, s: 0, t: 0 })), n);
+      group(c.key, c.surface, c.material, c.plenum).add(a.map((p) => ({ p, s: 0, t: 0 })), n);
       continue;
     }
     let pieces: Poly[] = [ids.map((_, j) => {
@@ -411,7 +431,7 @@ export function surfaceGroups(
       }
       pieces = next;
     }
-    const g = group(c.key, c.surface, c.material);
+    const g = group(c.key, c.surface, c.material, c.plenum);
     for (const piece of pieces) if (areaSt(piece) > MIN_AREA) g.add(piece, n);
   }
   return [...groups.values()].map((g) => g.done()).filter((g) => g.positions.length > 0);

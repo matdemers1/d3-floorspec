@@ -24,6 +24,12 @@ export interface Hit {
 
 const BINS = 12;
 const LEAF = 4;
+/**
+ * Metres within which two hits are at the same distance: two faces in one plane — a ceiling and the
+ * underside of the floor over it, the two faces of a floor drawn both ways (FLR-T-12.32). Of those,
+ * the one facing the ray is the one it meets, as a raster's back-face culling would have it.
+ */
+const TIE = 1e-6;
 
 export class Bvh {
   /** Per node: min xyz, max xyz. */
@@ -191,7 +197,8 @@ export class Bvh {
 
   /**
    * The nearest triangle the ray meets between `tMin` and `tMax`, skipping any `skip` says to (glass,
-   * for a shadow ray that looks through it): written into `hit`; false when it meets none.
+   * for a shadow ray that looks through it): written into `hit`; false when it meets none. Of
+   * triangles met at the same distance (within TIE), one facing the ray wins over one facing away.
    */
   intersect(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, tMin: number, tMax: number, hit: Hit): boolean {
     const ix = 1 / dx;
@@ -206,6 +213,7 @@ export class Bvh {
     let found = -1;
     let bu = 0;
     let bv = 0;
+    let front = false;
     while (sp > 0) {
       const node = stack[--sp]!;
       const o = 6 * node;
@@ -219,7 +227,7 @@ export class Bvh {
       const tz1 = ((iz >= 0 ? B[o + 5]! : B[o + 2]!) - oz) * iz;
       if (tz0 > t0) t0 = tz0;
       if (tz1 < t1) t1 = tz1;
-      if (t0 > t1 || t1 < tMin || t0 > best) continue;
+      if (t0 > t1 || t1 < tMin || t0 > best + TIE) continue;
       const bb = this.b[node]!;
       if (bb <= 0) {
         const first = this.a[node]!;
@@ -243,11 +251,13 @@ export class Bvh {
           const v = (dx * qx + dy * qy + dz * qz) * inv;
           if (v < 0 || u + v > 1) continue;
           const d = (e2x * qx + e2y * qy + e2z * qz) * inv;
-          if (d > tMin && d < best) {
+          // det > 0: the ray meets the triangle's front, its counter-clockwise side.
+          if (d > tMin && (found < 0 ? d < best : d < best - TIE || (d < best + TIE && det > 0 && !front))) {
             best = d;
             found = t;
             bu = u;
             bv = v;
+            front = det > 0;
           }
         }
         continue;
