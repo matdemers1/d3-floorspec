@@ -27,7 +27,7 @@ export interface Box3 {
  * | `junctionFill` | junction | solid: the fill (5.7) from the least base to the greatest top of its walls; and, as the piece `closure:<wall>`, the corner a separator between two walls leaves open (see closures.ts) |
  * | `opening` | opening | solid: exactly the volume cut from its wall — a pick target, glass, a door leaf's slot |
  * | `floor` | room | solid between its top and bottom (15.1); a surface facing up when it declares no thickness — or, on a level with a level below, a solid down to just above the ceiling below (`plenum`), a surface facing both ways where that leaves no depth (FLR-T-12.32) |
- * | `ceiling` | room | surface facing down: flat, tray (with its step) or vault (15.2–15.4) |
+ * | `ceiling` | room | surface facing down: flat, tray (with its step) or vault (15.2–15.4) — none of it inside a room of a higher level whose floor it is above, a bridge in a double-height room (FLR-T-12.37) |
  * | `slab` | slab | solid (15.7) |
  * | `roof` | roof | solid: with a thickness, the surface thickened down by it, raking past its gable ends; without, the volume between the eave and the surface over the whole eave outline, closed by a soffit at the eave and, along each gable's edge of the outline, the surface's edge dropped to the eave (16.5). A flat roof without thickness is a surface facing up |
  * | `roofGable` | roof | surface: a gable end (16.5) — on its wall, the gable's edge of the footprint, in Core 0.4 — emitted only for a roof with a thickness, whose solid does not close it: the part below the solid's underside; clad as the wall it stands on (`cladding`) |
