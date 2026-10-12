@@ -6,6 +6,7 @@ import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/i
 import { exportIfc } from '../export/ifc/index.js';
 import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
 import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
+import { normalizeOn, type Lighting } from '@floorspec/mesh';
 import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
 
 export interface JobRow {
@@ -48,6 +49,16 @@ export interface ExportParams {
   readonly design?: Record<string, string>;
   /** A 3D model's doors closed (default) or open (FLR-T-13.8): what the editor's GPU still traces (FLR-T-13.13). */
   readonly doors?: 'open' | 'closed';
+  /** A 3D model's lights (FLR-T-13.12): those on, at their output and colour temperature; default every one at full. */
+  readonly lighting?: Lighting;
+}
+
+/** A lighting from a job row (FLR-T-13.12): `{ on: { id: { output, cct } } }`, made well-formed, or nothing. */
+export function lightingOf(raw: unknown): Lighting | undefined {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
+  const on = (raw as { on?: unknown }).on;
+  if (typeof on !== 'object' || on === null || Array.isArray(on)) return undefined;
+  return { on: normalizeOn(on) };
 }
 
 /** A design input from a job row: an object of string → string, or nothing. */
@@ -68,7 +79,8 @@ export function exportParams(raw: unknown): ExportParams {
   const at = typeof p['versionAt'] === 'string' && !Number.isNaN(Date.parse(p['versionAt'])) ? p['versionAt'] : new Date(0).toISOString();
   const design = designOf(p['design']);
   const doors = p['doors'] === 'open' || p['doors'] === 'closed' ? p['doors'] : undefined;
-  return { ...(levels === undefined ? {} : { levels }), ...(page === undefined ? {} : { page }), versionSeq: seq, versionAt: at, ...(design === undefined ? {} : { design }), ...(doors === undefined ? {} : { doors }) };
+  const lighting = lightingOf(p['lighting']);
+  return { ...(levels === undefined ? {} : { levels }), ...(page === undefined ? {} : { page }), versionSeq: seq, versionAt: at, ...(design === undefined ? {} : { design }), ...(doors === undefined ? {} : { doors }), ...(lighting === undefined ? {} : { lighting }) };
 }
 
 /** The parameters of a 3D render job (FLR-T-8.5), as the api writes them. */
@@ -87,6 +99,9 @@ export interface Render3dParams {
   /** FLR-T-13.4: the sky it is seen under; FLR-T-13.9: a date and time at the site. */
   readonly sky?: Sky;
   readonly at?: string;
+  /** FLR-T-13.12: the lighting scene, by name (the api resolved it), and what it turns on. */
+  readonly scene?: string;
+  readonly lighting?: Lighting;
 }
 
 /** A job's sky and date and time, when they are one of the presets and a date and time. */
@@ -108,7 +123,11 @@ export function render3dParams(raw: unknown): Render3dParams {
   const lights = typeof p['lights'] === 'string' && (LIGHTS as readonly string[]).includes(p['lights']) ? (p['lights'] as Lights) : undefined;
   const time = typeof p['time'] === 'string' && (TIMES as readonly string[]).includes(p['time']) ? (p['time'] as TimeOfDay) : undefined;
   const doors = p['doors'] === 'open' || p['doors'] === 'closed' ? p['doors'] : undefined;
+  const scene = str('scene');
+  const lighting = lightingOf(p['lighting']);
   return {
+    ...(scene === undefined ? {} : { scene }),
+    ...(lighting === undefined ? {} : { lighting }),
     ...(camera === undefined ? {} : { camera }),
     ...(room === undefined ? {} : { room }),
     ...(level === undefined ? {} : { level }),
@@ -182,6 +201,7 @@ function modelOptions(job: JobRow, store: { images: ImageSource | undefined; mod
     ...(p.levels === undefined ? {} : { levels: p.levels }),
     ...(p.design === undefined ? {} : { design: p.design }),
     ...(p.doors === undefined ? {} : { doors: p.doors }),
+    ...(p.lighting === undefined ? {} : { lighting: p.lighting }),
     ...(images === undefined ? {} : { images }),
     ...(models === undefined ? {} : { models }),
   };
@@ -283,6 +303,8 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
           ...(p.width === undefined ? {} : { width: p.width }),
           ...(p.design === undefined ? {} : { design: p.design }),
           ...(p.doors === undefined ? {} : { doors: p.doors }),
+          ...(p.lighting === undefined ? {} : { lighting: p.lighting }),
+          ...(p.scene === undefined ? {} : { scene: p.scene }),
           ...(images === undefined ? {} : { images }),
         });
         return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: lit.png, summary: { width: lit.width, height: lit.height, camera: lit.camera, design: lit.design, ...(lit.lit === undefined ? {} : { lit: lit.lit }), ...(lit.sky === undefined ? {} : { sky: lit.sky }), ms: lit.ms } };

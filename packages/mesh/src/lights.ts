@@ -23,6 +23,10 @@
  *   a surface by the inverse square of its distance in metres — lux, with no other scale.
  * - **How warm:** 2700 K inside, 3000 K for an exterior light; the colour a camera white-balanced for
  *   warm-white lamps sees (`kelvinColor`).
+ * - **What FS_lighting says** (FLR-T-13.12, FLR-ADR-043): a luminaire's own `lumens` and `cct` take
+ *   the place of the typical lamp's, and a lighting scene (scenes.ts) says which lights are on, at
+ *   what output and colour temperature: a light it turns off is not in the list, and one it dims gives
+ *   its output's share of its lumens.
  * - **How it is seen** (FLR-T-13.1): `EXPOSURE_PER_NIT`, the calibration every view's tone curve
  *   shares — a room lit to 150–300 lux reads as a normally lit room at night, and a daylit interior
  *   as bright as a camera metering it would show it.
@@ -35,6 +39,7 @@ import { decorFamily, LAMP_SHADES, libraryItemOf } from './models/decor.js';
 import { ceilingDome } from './models/electrical.js';
 import { corners } from './models/sketch.js';
 import { elementKind } from './models/kinds.js';
+import { ALL_ON, luminairesOf, settingOf, type Lighting } from './scenes.js';
 import type { Vec3 } from './types.js';
 
 /** One luminaire's light. */
@@ -54,10 +59,16 @@ export interface FixtureLight {
    */
   readonly direction: 'down' | 'omni';
   readonly cone?: { readonly inner: number; readonly outer: number };
-  /** Luminous flux: the light it gives, in lumens. */
+  /** Luminous flux: the light it gives, in lumens — at its output. */
   readonly lumens: number;
-  /** Correlated colour temperature, kelvin. */
+  /** What it gives at full output, lumens: FS_lighting's `lumens`, else its watts', else a typical lamp's. */
+  readonly fullLumens: number;
+  /** Its output, percent of full (FS_lighting 3.1): 100 unless a scene dims it. */
+  readonly output: number;
+  /** Correlated colour temperature, kelvin: the scene's, else its own. */
   readonly kelvin: number;
+  /** Its own colour temperature: FS_lighting's `cct`, else a typical lamp's (2700 K inside, 3000 K outside). */
+  readonly ownKelvin: number;
   /** Its colour: linear RGB, scaled so its luminance is 1. */
   readonly color: readonly [number, number, number];
   /** The room it is in, as FS_electrical derives (each light's room); null when it is in none. */
@@ -163,14 +174,33 @@ export function kelvinColor(kelvin: number): [number, number, number] {
   return [rgb[0] / lum, rgb[1] / lum, rgb[2] / lum];
 }
 
+/** A luminaire's own colour temperature: FS_lighting's `cct`, else the typical lamp's, within its tunable range. */
+function ownCct(l: { cct?: number; cctRange?: readonly [number, number] } | undefined, typical: number): number {
+  if (l?.cct !== undefined) return l.cct;
+  const r = l?.cctRange;
+  return r === undefined ? typical : Math.min(Math.max(typical, r[0]), r[1]);
+}
+
 /** How far in front of or under what shines a light's sphere is put, so it is not inside its own lens. */
 const CLEAR = 5 * MM;
 /** Under a recessed light's trim, from its box's top. */
 const TRIM = 15 * MM;
 
-/** Every FS_electrical light's light, in ID order; then every decor lamp's (FLR-T-13.11). */
-export function lightsOf(doc: FloorspecDocument, derived: Derived): FixtureLight[] {
+/** A light's lumens and colour as a lighting sets them; null when it turns the light off. */
+function asLit(lighting: Lighting, id: string, full: number, own: number): Pick<FixtureLight, 'lumens' | 'fullLumens' | 'output' | 'kelvin' | 'ownKelvin' | 'color'> | null {
+  const s = settingOf(lighting, id);
+  if (s === null) return null;
+  const kelvin = s.cct ?? own;
+  return { lumens: Math.max(1, Math.round((full * s.output) / 100)), fullLumens: full, output: s.output, kelvin, ownKelvin: own, color: kelvinColor(kelvin) };
+}
+
+/**
+ * Every FS_electrical light's light, in ID order; then every decor lamp's (FLR-T-13.11) — those
+ * `lighting` turns on (every one, by default), at its output and colour temperature (FLR-T-13.12).
+ */
+export function lightsOf(doc: FloorspecDocument, derived: Derived, lighting: Lighting = ALL_ON): FixtureLight[] {
   const out: FixtureLight[] = [];
+  const own = luminairesOf(doc);
   const electrical = derived.extensions?.FS_electrical;
   const roomOf = new Map<string, string>();
   for (const [room, ids] of Object.entries(electrical?.rooms ?? {})) for (const id of ids) roomOf.set(id, room);
@@ -205,8 +235,10 @@ export function lightsOf(doc: FloorspecDocument, derived: Derived): FixtureLight
       position = [Math.round(cx), Math.round(cy), z];
     }
     const watts = typeof element['watts'] === 'number' && element['watts'] > 0 ? element['watts'] : undefined;
-    const lumens = watts === undefined ? (DEFAULT_LUMENS[fixture] ?? FALLBACK_LUMENS) : Math.min(20_000, Math.max(50, Math.round(watts * LUMENS_PER_WATT)));
-    const kelvin = fixture === 'exterior' ? 3000 : 2700;
+    const lum = own.get(e.id);
+    const full = lum?.lumens ?? (watts === undefined ? (DEFAULT_LUMENS[fixture] ?? FALLBACK_LUMENS) : Math.min(20_000, Math.max(50, Math.round(watts * LUMENS_PER_WATT))));
+    const lit = asLit(lighting, e.id, full, ownCct(lum, fixture === 'exterior' ? 3000 : 2700));
+    if (lit === null) continue;
     const cone = CONES[fixture];
     out.push({
       id: e.id,
@@ -216,9 +248,7 @@ export function lightsOf(doc: FloorspecDocument, derived: Derived): FixtureLight
       radius,
       direction: cone === undefined ? 'omni' : 'down',
       ...(cone === undefined ? {} : { cone }),
-      lumens,
-      kelvin,
-      color: kelvinColor(kelvin),
+      ...lit,
       room: roomOf.get(e.id) ?? null,
       switches: [...(electrical?.controls[e.id] ?? [])].sort(),
     });
@@ -239,6 +269,9 @@ export function lightsOf(doc: FloorspecDocument, derived: Derived): FixtureLight
     const cx = (ring[0]![0] + ring[1]![0] + ring[2]![0] + ring[3]![0]) / 4;
     const cy = (ring[0]![1] + ring[1]![1] + ring[2]![1] + ring[3]![1]) / 4;
     const fixture = family === 'lamp-floor' ? 'floorLamp' : 'tableLamp';
+    const lum = own.get(e.id);
+    const lit = asLit(lighting, e.id, lum?.lumens ?? LAMP_LUMENS[fixture]!, ownCct(lum, 2700));
+    if (lit === null) continue;
     out.push({
       id: e.id,
       level: f.level,
@@ -246,12 +279,37 @@ export function lightsOf(doc: FloorspecDocument, derived: Derived): FixtureLight
       position: [Math.round(cx), Math.round(cy), Math.round(f.bottom + ((f.top - f.bottom) * (shade[0] + shade[1])) / 2)],
       radius: 25 * MM,
       direction: 'omni',
-      lumens: LAMP_LUMENS[fixture]!,
-      kelvin: 2700,
-      color: kelvinColor(2700),
+      ...lit,
       room: furnitureItems?.[e.id]?.room ?? null,
       switches: [],
     });
+  }
+  return out;
+}
+
+/** How a fixture's glowing pieces (a lens, a shade) are drawn under a lighting: off (null), or scaled per channel. */
+export type LensGlow = readonly [number, number, number] | null;
+
+/**
+ * Each fixture whose lens a lighting changes (FLR-T-13.12): null for one it turns off; else its glow
+ * scaled by its output and tinted from its own colour temperature to the lighting's. `all` is every
+ * light (`lightsOf` with every one on), `lit` the lighting's. A fixture at full and its own colour is
+ * left out: its lens is drawn as it always is. Every view that draws a lit lens reads this.
+ */
+export function lensGlows(all: readonly FixtureLight[], lit: readonly FixtureLight[]): Map<string, LensGlow> {
+  const on = new Map(lit.map((l) => [l.id, l]));
+  const out = new Map<string, LensGlow>();
+  for (const l of all) {
+    const now = on.get(l.id);
+    if (now === undefined) {
+      out.set(l.id, null);
+      continue;
+    }
+    if (now.output === 100 && now.kelvin === now.ownKelvin) continue;
+    const k = now.output / 100;
+    const to = kelvinColor(now.kelvin);
+    const from = kelvinColor(now.ownKelvin);
+    out.set(l.id, [(k * to[0]) / from[0], (k * to[1]) / from[1], (k * to[2]) / from[2]]);
   }
   return out;
 }

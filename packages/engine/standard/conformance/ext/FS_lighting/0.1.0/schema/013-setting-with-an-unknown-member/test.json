@@ -1,0 +1,6 @@
+{
+  "description": "A setting has a member a setting does not define: `colour`.",
+  "covers": [
+    "FS-LGHT-1.3.1"
+  ]
+}

@@ -1,0 +1,196 @@
+/* Lighting design in the 3D view (FLR-T-13.12): the Lighting panel (in the Sky and sun panel's place
+   and style, .fs-sun), its scenes, the selected light's controls and its chip. Tokens only. */
+
+.fs-lighting__scenes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.fs-lighting__scene {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  border-radius: var(--radius-md);
+}
+.fs-lighting__scene[data-checked='true'] {
+  background: var(--color-fill-quiet);
+}
+.fs-lighting__radio {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 var(--space-8);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  text-align: left;
+  cursor: pointer;
+}
+.fs-lighting__radio:hover {
+  background: var(--color-surface-hover);
+}
+.fs-lighting__radio:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-lighting__dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--color-fg-muted);
+  border-radius: var(--radius-full);
+}
+.fs-lighting__radio[aria-checked='true'] .fs-lighting__dot {
+  border: 4px solid var(--color-accent);
+}
+.fs-lighting__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-lighting__builtin {
+  margin-left: auto;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-lighting__save {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.fs-lighting__naming {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.fs-lighting__problem {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-lighting__hint {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-lighting__light {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-lighting__light-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.fs-lighting__light-name {
+  min-width: 0;
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  font-weight: var(--weight-medium);
+}
+.fs-lighting__light-id {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+.fs-lighting__slider-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.fs-lighting__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-13);
+  color: var(--color-fg);
+}
+.fs-lighting__slider {
+  margin: 0;
+  width: 100%;
+}
+.fs-lighting__slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.fs-lighting__cct::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(to right, var(--fs-cct-from), var(--fs-cct-to));
+}
+.fs-lighting__cct::-moz-range-track {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(to right, var(--fs-cct-from), var(--fs-cct-to));
+}
+.fs-lighting__cct::-webkit-slider-thumb {
+  margin-top: -5px;
+}
+.fs-lighting__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-three__chips-left {
+  position: absolute;
+  left: var(--space-16);
+  bottom: var(--space-16);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-three__chips-left > .fs-three__chip {
+  position: static;
+}
+.fs-lighting__chip {
+  cursor: pointer;
+}
+.fs-lighting__chip:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-fg);
+}
+.fs-lighting__chip:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-editor .fs-lighting__chip svg.lucide {
+  width: var(--icon-16);
+  height: var(--icon-16);
+}
+.fs-three__switch-tip {
+  position: absolute;
+  z-index: 2;
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.fs-three__flipped {
+  left: 50%;
+  bottom: calc(var(--space-16) + 38px);
+  transform: translateX(-50%);
+  color: var(--color-fg);
+  pointer-events: none;
+}

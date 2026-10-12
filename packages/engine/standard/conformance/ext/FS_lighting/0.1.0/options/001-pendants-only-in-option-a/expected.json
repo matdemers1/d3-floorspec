@@ -1,0 +1,35 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-LGHT-INV-002",
+      "severity": "error",
+      "elements": ["X2"],
+      "design": "OP2"
+    },
+    {
+      "code": "FS-LGHT-INV-002",
+      "severity": "error",
+      "elements": ["X3"],
+      "design": "OP2"
+    },
+    {
+      "code": "FS-LGHT-INV-005",
+      "severity": "error",
+      "elements": ["LS1"],
+      "design": "OP2"
+    },
+    {
+      "code": "FS-LGHT-INV-005",
+      "severity": "error",
+      "elements": ["LS1"],
+      "design": "OP2"
+    },
+    {
+      "code": "FS-LGHT-INV-005",
+      "severity": "error",
+      "elements": ["LS2"],
+      "design": "OP2"
+    }
+  ]
+}

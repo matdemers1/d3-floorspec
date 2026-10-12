@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_lighting/scenes/LS2/on/X10 has the Night light turn on the dimmer X10: the result breaks 3.1.1, and the batch is rejected with FS-LGHT-INV-005.",
+  "covers": [
+    "FS-LGHT-3.1.1",
+    "FS-LGHT-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

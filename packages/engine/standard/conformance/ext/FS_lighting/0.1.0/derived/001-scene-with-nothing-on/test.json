@@ -1,0 +1,6 @@
+{
+  "description": "A scene LS3 \"Off\" with an empty `on` turns every light off: it turns on nothing and dims nothing.",
+  "covers": [
+    "FS-LGHT-6.1.1"
+  ]
+}

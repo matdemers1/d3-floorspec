@@ -1,0 +1,8 @@
+{
+  "description": "unsetProperty of $document /extensions/FS_lighting/scenes/LS2 removes the Night light: the lamp and the pendant X3 are turned on by the Evening scene alone. It commits.",
+  "covers": [
+    "FS-LGHT-1.2.1",
+    "FS-LGHT-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

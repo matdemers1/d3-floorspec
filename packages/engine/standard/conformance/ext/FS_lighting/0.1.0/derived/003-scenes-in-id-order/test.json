@@ -1,0 +1,6 @@
+{
+  "description": "A third scene LS10 \"Late\": scenes are in ID order by code unit, LS1, LS10, LS2, and a luminaire's scenes are sorted the same way.",
+  "covers": [
+    "FS-LGHT-6.1.1"
+  ]
+}

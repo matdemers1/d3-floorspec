@@ -1,0 +1,6 @@
+{
+  "description": "The downlight X4's range is [3000, 3000]: a luminaire that gives one colour temperature is not tunable, and has a `cct`.",
+  "covers": [
+    "FS-LGHT-2.1.2"
+  ]
+}

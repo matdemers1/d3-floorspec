@@ -1,0 +1,6 @@
+{
+  "description": "Whether a luminaire dims is true or false, not \"yes\".",
+  "covers": [
+    "FS-LGHT-1.3.1"
+  ]
+}

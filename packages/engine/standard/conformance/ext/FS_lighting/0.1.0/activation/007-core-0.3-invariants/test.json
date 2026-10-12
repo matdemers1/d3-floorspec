@@ -1,0 +1,8 @@
+{
+  "description": "The same \"0.3\" house with the Night light turning on a switch: FS_lighting is evaluated for a Core 0.3 document, so the invariant is reported.",
+  "covers": [
+    "FS-LGHT-1.2.1",
+    "FS-LGHT-1.2.3",
+    "FS-LGHT-3.1.1"
+  ]
+}

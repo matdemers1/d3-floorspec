@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { EditorStore } from '../store';
+import { ALL_OFF, ALL_ON, ALL_ON_NAME, toggled, withLights, withSetting, type Lighting, type NamedScene, type SceneSetting } from '@floorspec/mesh';
 import type { Orbit, PresetId } from './camera';
 
 /**
@@ -56,6 +57,16 @@ export interface ThreeState {
    * dusk so their light reads. A way of looking, not part of the model, and not kept between visits.
    */
   lights: boolean;
+  /**
+   * Which lights are on, how bright and how warm (FLR-T-13.12): the scene last chosen, as it was
+   * chosen or as switches, lamps and dimmers have changed it since. View state: a person saves it to
+   * the document as a scene (FS_lighting) from the Lighting panel.
+   */
+  lighting: Lighting;
+  /** The scene last chosen: a document scene's ID and name, or a built-in's (`id` null). */
+  scene: { readonly id: string | null; readonly name: string };
+  /** The Lighting panel is open. */
+  lightingOpen: boolean;
 }
 
 export const EYE_HEIGHTS = [1.2, 1.5, 1.6, 1.7, 1.8] as const;
@@ -106,7 +117,20 @@ export class ThreeStore {
   private readonly listeners = new Set<() => void>();
 
   constructor(private readonly projectId: string | null = null) {
-    this.state = { mode: readMode(), walking: false, walkFrom: null, levels: readLevels(projectId), roof: true, orbit: null, preset: 'sw', eyeHeight: readEye(), lights: false };
+    this.state = {
+      mode: readMode(),
+      walking: false,
+      walkFrom: null,
+      levels: readLevels(projectId),
+      roof: true,
+      orbit: null,
+      preset: 'sw',
+      eyeHeight: readEye(),
+      lights: false,
+      lighting: ALL_ON,
+      scene: { id: null, name: ALL_ON_NAME },
+      lightingOpen: false,
+    };
   }
 
   get = (): ThreeState => this.state;
@@ -140,6 +164,32 @@ export class ThreeStore {
   /** Turn the light fixtures on or off; with no argument, the other way from now. */
   toggleLights(on: boolean = !this.state.lights): void {
     if (on !== this.state.lights) this.set({ lights: on });
+  }
+
+  /** Light the house as a scene does (FLR-T-13.12): its lights on, the view lit. */
+  chooseScene(scene: NamedScene): void {
+    this.set({ lights: true, lighting: scene.lighting, scene: { id: scene.id, name: scene.name } });
+  }
+
+  /**
+   * Flip a switch (FLR-T-13.12): the lights it controls go off when any of them is on, else on —
+   * `all` is every light the house has, to expand "All on". With the view's lights off, the house is
+   * dark: the switch turns its lights on and nothing else.
+   */
+  flipSwitch(controls: readonly string[], all: readonly string[]): void {
+    if (controls.length === 0) return;
+    if (!this.state.lights) this.set({ lights: true, lighting: withLights(ALL_OFF, all, controls, true) });
+    else this.set({ lighting: toggled(this.state.lighting, all, controls) });
+  }
+
+  /** Turn lights on or off, as they are now set. */
+  setLightsOn(ids: readonly string[], on: boolean, all: readonly string[]): void {
+    this.set({ lights: true, lighting: withLights(this.state.lights ? this.state.lighting : ALL_OFF, all, ids, on) });
+  }
+
+  /** Dim a light or set its colour temperature (turning it on). */
+  setLight(id: string, setting: SceneSetting, all: readonly string[]): void {
+    this.set({ lights: true, lighting: withSetting(this.state.lighting, all, id, setting) });
   }
 
   /** Show the whole house, a cutaway or one level alone; remembered for this project in this browser. */

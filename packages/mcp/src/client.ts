@@ -241,6 +241,8 @@ export interface RenderOptions {
   readonly width?: number;
   /** 3D: the luminaires on or off, path-traced at night (FLR-T-12.22). */
   readonly lights?: 'on' | 'off';
+  /** 3D (FLR-T-13.12): a lighting scene by name — "All on", "Off" or one of the project's — path-traced. */
+  readonly scene?: string;
   /** 3D (FLR-T-13.8): the doors closed (default) or open. */
   readonly doors?: 'open' | 'closed';
   /** 3D (FLR-T-13.4): the sky it is seen under. */
@@ -398,6 +400,7 @@ export class HttpFloorspecClient implements FloorspecClient {
     if (options.highlight !== undefined && options.highlight.length > 0) params.set('highlight', options.highlight.join(','));
     if (options.width !== undefined) params.set('width', String(options.width));
     if (options.lights !== undefined) params.set('lights', options.lights);
+    if (options.scene !== undefined) params.set('scene', options.scene);
     if (options.doors !== undefined) params.set('doors', options.doors);
     if (options.sky !== undefined) params.set('sky', options.sky);
     if (options.at !== undefined) params.set('at', options.at);

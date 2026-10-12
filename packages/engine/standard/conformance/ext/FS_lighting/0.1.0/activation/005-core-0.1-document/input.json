@@ -1,0 +1,15 @@
+{
+  "floorspec": "0.1",
+  "project": {
+    "name": "Old"
+  },
+  "extensionsUsed": {
+    "FS_electrical": "0.1.0",
+    "FS_lighting": "0.1.0"
+  },
+  "extensions": {
+    "FS_lighting": {
+      "colour": "red"
+    }
+  }
+}

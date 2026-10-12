@@ -1,7 +1,7 @@
 # Light levels
 
 How bright a house's light fixtures are in every view that turns them on — the path tracer
-(`floorspec_render` with `lights`, and stills), and the editor's 3D view with its Lights toggle — and
+(`floorspec_render` with a `scene`, and stills), and the editor's 3D view with its Lights toggle — and
 how a picture of them is exposed (FLR-T-13.1). One calibration, in photometric units, kept in
 `packages/mesh/src/lights.ts` and read by every view.
 
@@ -38,6 +38,32 @@ candela are the same.
 
 Colour: 2700 K inside, 3000 K outside, seen by a camera white-balanced to 3000 K — as a photograph of a
 lamp-lit room is taken — so lamps read warm white, not orange.
+
+## Scenes, switches and dimmers
+
+Which lights are on, how bright and how warm is a **lighting** (FLR-T-13.12, `@floorspec/mesh`
+`scenes.ts`): every light at full ("All on", what every view drew before scenes), or a list of the
+lights that are on, each at an output (1–100 % of full) and, optionally, a colour temperature —
+every other off. A house's named scenes are design intent the owner keeps, so they live in the
+document: FS_lighting 0.1.0 (FLR-ADR-043), an official extension that requires FS_electrical, holds
+`scenes` (`LS1`: `{ "name": "Evening", "on": { "X12": { "output": 40, "cct": 2400 } } }`) and, by
+light ID, what a luminaire gives — `lumens`, `cct`, a tunable `cctRange`, `dimmable`. A luminaire's
+own `lumens` and `cct` take the place of the typical lamp's above. "All on" and "Off" are built in
+and never stored.
+
+Every view resolves a lighting the same way — `lightsOf(doc, derived, lighting)`: a light it turns
+off is not in the list, one it dims gives its output's share of its lumens, at its colour
+temperature; `lensGlows` says how each fixture's lens (and a lamp's shade) is drawn — dark when off,
+scaled and tinted when dimmed or recoloured. The editor's three.js lamps and lenses, the path tracer
+(`floorspec_render` with `scene`), the glTF export's KHR_lights_punctual lamps and emissive lenses —
+which the GPU still traces — and the headless render all draw that one list.
+
+In the editor, the Lights toggle turns the view's lighting on; with it on, clicking a switch in 3D
+(or on the plan, or Enter on a selected switch) turns exactly the lights its `controls` lists off
+when any of them is on, else on — and a floor or table lamp is its own switch. The Lighting panel
+lists the scenes, a selected light's dimmer and colour temperature, and saves the view's lighting as
+a scene with Ops on `$document` (declaring FS_lighting where it is not yet). What is on now is view
+state until it is saved.
 
 ## A fixture never shadows itself
 
@@ -83,7 +109,7 @@ The path tracer traces six diffuse bounces for a render with lights, so a lamp-l
 not black, and twice the samples by day, when a room is lit by what comes in through its windows.
 `floorspec_render` reports the exposure a lit render was metered to (`lit.exposure`, per cd/m²).
 
-The headless rasterized render (`floorspec_render` without `lights` or `sky`) is a drawing, not a
+The headless rasterized render (`floorspec_render` without a `scene` or `sky`) is a drawing, not a
 lighting simulation: it is lit by a fixed studio rig and is not part of this calibration.
 
 ## Skies and the sun

@@ -8,6 +8,8 @@ import { useEditor, type EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { PRESET_ORDER, PRESETS, type PresetId } from '../camera';
 import { useSunState } from '../sun/study';
+import { useThreeState } from '../mode';
+import { houseLights, panelScenes, unchanged } from '../lighting/lighting';
 import { useSkyLight } from '../sun/SunRig';
 import { skyMaps } from '../sky/maps';
 import { mapsFor, skyField, SKY_LABELS, SKY_PRESETS, type SkyPreset } from '@floorspec/mesh/sky';
@@ -78,7 +80,16 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
   const [view, setView] = useState<string>(current === null ? (preset ?? 'sw') : 'current');
   const [size, setSize] = useState<GpuSize>('1600x1200');
   const [samples, setSamples] = useState<number>(256);
-  const [lights, setLights] = useState(false);
+  // FLR-T-13.12: the view's lighting — its scene, switches and dimmers — when its lights are on.
+  const viewLit = useThreeState(store, (s) => s.lights);
+  const viewLighting = useThreeState(store, (s) => s.lighting);
+  const sceneChosen = useThreeState(store, (s) => s.scene);
+  const [lights, setLights] = useState(viewLit);
+  const sceneName = useMemo(() => {
+    if (model === null) return sceneChosen.name;
+    const chosen = panelScenes(model).find((s) => (sceneChosen.id !== null ? s.id === sceneChosen.id : s.id === null && s.name === sceneChosen.name));
+    return `${chosen?.name ?? sceneChosen.name}${unchanged(viewLighting, chosen, houseLights(model)) ? '' : ' (changed)'}`;
+  }, [model, viewLighting, sceneChosen]);
   // The view's sky by default; the date and time are the Sky and sun panel's.
   const [skyChoice, setSkyChoice] = useState<SkyPreset>(viewSky);
   const [doors, setDoors] = useState<'closed' | 'open'>('closed');
@@ -117,7 +128,8 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
       // The version's glTF export: the scene the still is made from, as every glTF consumer gets it.
       setPhase({ kind: 'exporting', job: null });
       const levels = cut === null ? undefined : only ? [cut] : levelsUpTo(model, cut);
-      const queued = await requestExport(store.projectId, { kind: 'gltf', doors, ...(levels === undefined ? {} : { levels }), ...(design === undefined ? {} : { design }) });
+      const lit = lights && !('all' in viewLighting) ? { lighting: { on: Object.fromEntries(Object.entries(viewLighting.on).map(([id, s]) => [id, { ...s }])) } } : {};
+      const queued = await requestExport(store.projectId, { kind: 'gltf', doors, ...lit, ...(levels === undefined ? {} : { levels }), ...(design === undefined ? {} : { design }) });
       setPhase({ kind: 'exporting', job: queued });
       const exported = await untilFinished(store.projectId, queued, (j) => { setPhase({ kind: 'exporting', job: j }); }, controller.signal);
       if (controller.signal.aborted) return;
@@ -180,7 +192,7 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
       let job: ExportJob | null = null;
       let saveError: string | null = null;
       try {
-        job = await uploadStill(store.projectId, traced.png, { version: exported.version, view: chosen.label, samples, ms: traced.ms, lights: lights ? 'on' : 'off', time, sky: skyChoice, device, ...(design === undefined ? {} : { design }) });
+        job = await uploadStill(store.projectId, traced.png, { version: exported.version, view: chosen.label, samples, ms: traced.ms, lights: lights ? 'on' : 'off', ...(lights ? { scene: sceneName } : {}), time, sky: skyChoice, device, ...(design === undefined ? {} : { design }) });
       } catch (caught) {
         saveError = messageOf(caught);
       }
@@ -329,6 +341,7 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
         <Switch checked={lights} onCheckedChange={setLights}>
           Lights on — the luminaires’ lamps lit and their shades glowing
         </Switch>
+        {lights ? <p className="fs-caption">Lit as the 3D view is: {sceneName}.</p> : null}
         <p className="fs-caption">
           {skyChoice === 'studio'
             ? 'Studio light: an even, bright dome over a pale floor.'

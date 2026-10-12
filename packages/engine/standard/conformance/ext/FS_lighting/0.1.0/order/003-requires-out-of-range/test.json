@@ -1,0 +1,7 @@
+{
+  "description": "The document uses FS_electrical at 0.2.0, outside the range ^0.1.0 FS_lighting requires: Core reports FS-INV-602 (Core 12.3.3), and FS_lighting is not evaluated.",
+  "covers": [
+    "FS-LGHT-1.2.2",
+    "FS-CORE-12.3.3"
+  ]
+}

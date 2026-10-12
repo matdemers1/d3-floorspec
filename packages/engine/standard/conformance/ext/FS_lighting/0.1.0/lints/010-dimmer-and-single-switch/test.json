@@ -1,0 +1,6 @@
+{
+  "description": "The porch light is controlled from a second switch X14 by the door, a dimmer, as well as by X13: the Evening scene sets it to 50 %, and some switch that controls it dims. No lint.",
+  "covers": [
+    "FS-LGHT-1.2.3"
+  ]
+}

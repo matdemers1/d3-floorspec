@@ -104,6 +104,8 @@ export interface ExportRequest {
   still?: StillRequest;
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8). */
   doors?: 'open' | 'closed';
+  /** glTF and USDZ (FLR-T-13.12): the lights on, each at an output and colour temperature; default every one at full. */
+  lighting?: { on: Record<string, { output?: number; cct?: number }> };
 }
 
 /** The kinds made in one design: every export but the IFC model, which is of the primary. */
@@ -219,6 +221,8 @@ export interface GpuStillFacts {
   readonly samples: number;
   readonly ms: number;
   readonly lights: 'on' | 'off';
+  /** The lighting scene it was lit by (FLR-T-13.12): "Evening", "Evening (changed)". */
+  readonly scene?: string;
   readonly time: 'day' | 'dusk' | 'night';
   /** The sky it was seen under (FLR-T-13.4). */
   readonly sky?: 'clear' | 'overcast' | 'dusk' | 'night' | 'studio';
@@ -235,6 +239,7 @@ export async function uploadStill(projectId: string, png: Blob, facts: GpuStillF
     samples: String(facts.samples),
     ms: String(Math.round(facts.ms)),
     lights: facts.lights,
+    ...(facts.scene === undefined ? {} : { scene: facts.scene.slice(0, 200) }),
     time: facts.time,
     ...(facts.sky === undefined ? {} : { sky: facts.sky }),
     ...(facts.device === undefined || facts.device === '' ? {} : { device: facts.device.slice(0, 200) }),

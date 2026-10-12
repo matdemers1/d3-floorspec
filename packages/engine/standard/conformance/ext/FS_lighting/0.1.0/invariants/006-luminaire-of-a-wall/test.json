@@ -1,0 +1,6 @@
+{
+  "description": "A luminaire keyed by the wall W1: a core element is no extension element.",
+  "covers": [
+    "FS-LGHT-2.1.1"
+  ]
+}

@@ -66,6 +66,15 @@ const ExportBody = z.strictObject({
   still: StillBody.optional(),
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8) — the editor's GPU still asks for either (FLR-T-13.13). */
   doors: z.enum(['open', 'closed']).optional(),
+  /**
+   * glTF and USDZ (FLR-T-13.12): the lights that are on — each by its ID, at an output (1–100 % of
+   * full) and a colour temperature (kelvin) — every other off: the editor's lighting, which its GPU
+   * still traces. Default every light at full.
+   */
+  lighting: z
+    .strictObject({ on: z.record(z.string().regex(ID), z.strictObject({ output: z.int().min(1).max(100).optional(), cct: z.int().min(1000).max(10000).optional() })) })
+    .refine((l) => Object.keys(l.on).length <= 2000, 'at most 2000 lights')
+    .optional(),
 });
 
 /** How many exports a project may have waiting or running at once. */
@@ -81,6 +90,7 @@ type Params = {
   readonly versionAt?: string;
   readonly design?: Record<string, string>;
   readonly doors?: 'open' | 'closed';
+  readonly lighting?: { on: Record<string, { output?: number; cct?: number }> };
   readonly camera?: string;
   readonly room?: string;
   readonly level?: string;
@@ -92,6 +102,7 @@ type Params = {
   /** A GPU still: the view in words, how it was lit, its samples and the device. */
   readonly view?: string;
   readonly lights?: 'on' | 'off';
+  readonly scene?: string;
   readonly time?: 'day' | 'dusk' | 'night';
   readonly sky?: string;
   readonly samples?: number;
@@ -114,6 +125,8 @@ const StillUpload = z.strictObject({
   /** How long it took, ms. */
   ms: z.coerce.number().int().min(0).max(7 * 24 * 3600 * 1000).optional(),
   lights: z.enum(['on', 'off']).optional(),
+  /** The lighting scene it was lit by (FLR-T-13.12), by name: "Evening", or "Evening (changed)". */
+  scene: z.string().trim().min(1).max(200).optional(),
   time: z.enum(['day', 'dusk', 'night']).optional(),
   /** The sky it was seen under (FLR-T-13.4). */
   sky: z.enum(SKIES).optional(),
@@ -147,7 +160,7 @@ export function exportView(projectId: string, job: Job) {
             quality: p.quality ?? (p.source === 'gpu' ? null : 'standard'),
             sun: p.sun ?? null,
             sky: p.sky ?? null,
-            ...(p.source === 'gpu' ? { view: p.view ?? null, samples: p.samples ?? null, lights: p.lights ?? null, time: p.time ?? null, device: p.device ?? null } : {}),
+            ...(p.source === 'gpu' ? { view: p.view ?? null, samples: p.samples ?? null, lights: p.lights ?? null, scene: p.scene ?? null, time: p.time ?? null, device: p.device ?? null } : {}),
           }
         : null,
     progress: job.status === 'running' ? (job.progress ?? null) : null,
@@ -214,6 +227,7 @@ export function exportRoutes(db: Db): Routes {
       if (body.kind === 'ifc' && body.levels !== undefined) throw new HttpError(400, 'an IFC export is of the whole model: it takes no levels');
       if (body.still !== undefined && body.kind !== 'still') throw new HttpError(400, 'only a still takes still options');
       if (body.doors !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes doors');
+      if (body.lighting !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes a lighting');
       const still = body.kind === 'still' ? StillBody.parse(body.still ?? {}) : undefined;
       if (still !== undefined) {
         if (body.levels !== undefined || body.page !== undefined) throw new HttpError(400, 'a still takes a view, a size and a quality, not levels or a page');
@@ -238,6 +252,7 @@ export function exportRoutes(db: Db): Routes {
         ...(body.kind === 'pdf' ? { page: body.page ?? 'tabloid' } : {}),
         ...(body.design === undefined ? {} : { design: body.design }),
         ...(body.doors === undefined ? {} : { doors: body.doors }),
+        ...(body.lighting === undefined ? {} : { lighting: { on: Object.fromEntries(Object.entries(body.lighting.on).map(([id, s]) => [id, { ...(s.output === undefined ? {} : { output: s.output }), ...(s.cct === undefined ? {} : { cct: s.cct }) }])) } }),
         ...(still === undefined
           ? {}
           : {
@@ -319,6 +334,7 @@ export function exportRoutes(db: Db): Routes {
         view: meta.view,
         samples: meta.samples,
         ...(meta.lights === undefined ? {} : { lights: meta.lights }),
+        ...(meta.scene === undefined ? {} : { scene: meta.scene }),
         ...(meta.time === undefined ? {} : { time: meta.time }),
         ...(meta.device === undefined || meta.device === '' ? {} : { device: meta.device }),
         ...(design === undefined ? {} : { design }),
@@ -338,6 +354,7 @@ export function exportRoutes(db: Db): Routes {
         camera: meta.view,
         ...(meta.ms === undefined ? {} : { ms: meta.ms }),
         ...(meta.lights === undefined ? {} : { lights: meta.lights }),
+        ...(meta.scene === undefined ? {} : { scene: meta.scene }),
         ...(meta.time === undefined ? {} : { time: meta.time }),
         ...(meta.device === undefined || meta.device === '' ? {} : { device: meta.device }),
         design: design ?? null,

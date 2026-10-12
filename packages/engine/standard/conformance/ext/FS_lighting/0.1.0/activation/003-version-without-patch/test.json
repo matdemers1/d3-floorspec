@@ -1,0 +1,7 @@
+{
+  "description": "\"0.1\" equals 0.1.0 (Core 12.3), so FS_lighting is evaluated: its data breaks the schema, FS-LGHT-SCH-001.",
+  "covers": [
+    "FS-LGHT-1.2.1",
+    "FS-LGHT-1.3.1"
+  ]
+}

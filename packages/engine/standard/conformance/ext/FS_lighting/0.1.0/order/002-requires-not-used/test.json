@@ -1,0 +1,7 @@
+{
+  "description": "The document uses FS_lighting, which requires FS_electrical (1.1), and no longer uses FS_electrical - neither its declaration nor its data, so the lights the scenes turn on are gone: Core reports FS-INV-601 (Core 12.3.2), a tier 4 error, so FS_lighting is not evaluated, and none of its broken references is reported.",
+  "covers": [
+    "FS-LGHT-1.2.2",
+    "FS-CORE-12.3.2"
+  ]
+}

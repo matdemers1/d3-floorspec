@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-LGHT-INV-006",
+      "severity": "error",
+      "elements": ["LS1", "LS2"]
+    }
+  ]
+}

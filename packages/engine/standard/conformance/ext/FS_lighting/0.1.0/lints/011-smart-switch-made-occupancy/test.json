@@ -1,0 +1,6 @@
+{
+  "description": "The downlights' smart switch is now an occupancy sensor: the Evening scene dims both downlights, which no dimmer or smart switch controls.",
+  "covers": [
+    "FS-LGHT-1.2.3"
+  ]
+}

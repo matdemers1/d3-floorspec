@@ -1,0 +1,20 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_lighting/scenes/LS1",
+      "value": {
+        "name": "Evening",
+        "on": {
+          "X2": {
+            "output": 60
+          },
+          "X3": {
+            "output": 60
+          }
+        }
+      }
+    }
+  ]
+}

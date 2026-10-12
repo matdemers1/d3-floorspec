@@ -1,0 +1,6 @@
+{
+  "description": "The Night light sets the pendant to 100 % written out and the lamp to 99 %: a setting without `output` and one of 100 are full, and 99 is dimmed.",
+  "covers": [
+    "FS-LGHT-6.1.1"
+  ]
+}

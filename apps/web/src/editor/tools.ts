@@ -27,6 +27,7 @@ import { interiorPoint } from './geometry';
 import type { FaceView } from './model';
 import { kindOf, labelOf } from './model';
 import { requestRemove } from './actions';
+import { flipFromPlan } from './three/lighting/lighting';
 import { deviceAt } from './systems/hit';
 import { centredOn, dragHost, hoverFor, type DeviceHover } from './systems/placement';
 import { moveDevice, placeDevice, setMember } from './systems/ops';
@@ -372,6 +373,7 @@ export class ToolController {
     }
     this.dragStart = null;
     const hit = this.deviceUnder(p) ?? hitTest(level, world, this.tol(p.type), { roofs: this.store.get().layers.roof });
+    if (hit !== null) flipFromPlan(this.store, hit.id);
     this.store.select(hit?.id ?? null);
   }
 
@@ -430,7 +432,8 @@ export class ToolController {
     this.store.set({ draft: null });
     if (start === null) return;
     if (!moved || drag === null) {
-      // A click on a handle selects what it belongs to.
+      // A click on a handle selects what it belongs to — and a switch's flips its lights (FLR-T-13.12).
+      flipFromPlan(this.store, start.target);
       this.store.select(start.target);
       return;
     }

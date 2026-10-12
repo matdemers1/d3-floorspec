@@ -1,0 +1,6 @@
+{
+  "description": "A scene LS3 turns on the Living room's downlight, which does not dim, at full: no lint.",
+  "covers": [
+    "FS-LGHT-1.2.3"
+  ]
+}

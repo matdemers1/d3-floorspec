@@ -1,0 +1,7 @@
+{
+  "description": "The Night light turns on X98 and X99, which are no elements: reported once for each, both naming the scene.",
+  "covers": [
+    "FS-LGHT-1.2.3",
+    "FS-LGHT-3.1.1"
+  ]
+}
