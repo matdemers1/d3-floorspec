@@ -39,9 +39,14 @@ export function imageSize(bytes: Uint8Array, mediaType: string): { width: number
 
 const channel = (c: number): number => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const SRGB = Float32Array.from({ length: 256 }, (_, i) => channel(i / 255));
+const LINEAR = Float32Array.from({ length: 256 }, (_, i) => i / 255);
 
-/** Decode a PNG or JPEG into linear RGB; undefined when it is not one, or too big. */
-export function decodeTexture(bytes: Uint8Array, mediaType: string): Texture | undefined {
+/**
+ * Decode a PNG or JPEG into linear RGB; undefined when it is not one, or too big. A base colour map
+ * is sRGB and is made linear; a data map — a normal map, a metallic-roughness or occlusion map
+ * (Core 18.2: linear) — is read as it is, each channel 0–1.
+ */
+export function decodeTexture(bytes: Uint8Array, mediaType: string, encoding: 'srgb' | 'linear' = 'srgb'): Texture | undefined {
   const size = imageSize(bytes, mediaType);
   if (size === undefined || size.width < 1 || size.height < 1 || size.width > MAX_TEXTURE_SIDE || size.height > MAX_TEXTURE_SIDE) return undefined;
   const { width, height } = size;
@@ -57,10 +62,11 @@ export function decodeTexture(bytes: Uint8Array, mediaType: string): Texture | u
   }
   // Shared memory: the tracer's threads read the same texels rather than a copy each.
   const data = new Float32Array(new SharedArrayBuffer(width * height * 3 * 4));
+  const curve = encoding === 'srgb' ? SRGB : LINEAR;
   for (let i = 0; i < width * height; i++) {
-    data[3 * i] = SRGB[pixels[4 * i]!]!;
-    data[3 * i + 1] = SRGB[pixels[4 * i + 1]!]!;
-    data[3 * i + 2] = SRGB[pixels[4 * i + 2]!]!;
+    data[3 * i] = curve[pixels[4 * i]!]!;
+    data[3 * i + 1] = curve[pixels[4 * i + 1]!]!;
+    data[3 * i + 2] = curve[pixels[4 * i + 2]!]!;
   }
   return { width, height, data };
 }
@@ -85,4 +91,52 @@ export function sample(t: Texture, u: number, v: number, out: Float64Array): voi
     const b = d[3 * (yb * W + xa) + c]! * (1 - fx) + d[3 * (yb * W + xb) + c]! * fx;
     out[c] = a * (1 - fy) + b * fy;
   }
+}
+
+/**
+ * A map's mip chain (FLR-T-13.6): the map, then each level a 2 × 2 box average of the one before,
+ * down to a texel — so a rasterizer that draws a brick wall far off draws its mean colour, not a
+ * shimmer of mortar and brick.
+ */
+export function mipChain(t: Texture): Texture[] {
+  const chain: Texture[] = [t];
+  let c = t;
+  while (c.width > 1 || c.height > 1) {
+    const w = Math.max(1, c.width >> 1);
+    const h = Math.max(1, c.height >> 1);
+    const data = new Float32Array(w * h * 3);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++)
+        for (let k = 0; k < 3; k++) {
+          let sum = 0;
+          let n = 0;
+          for (let dy = 0; dy < 2; dy++)
+            for (let dx = 0; dx < 2; dx++) {
+              const sx = Math.min(c.width - 1, 2 * x + dx);
+              const sy = Math.min(c.height - 1, 2 * y + dy);
+              sum += c.data[3 * (sy * c.width + sx) + k]!;
+              n++;
+            }
+          data[3 * (y * w + x) + k] = sum / n;
+        }
+    c = { width: w, height: h, data };
+    chain.push(c);
+  }
+  return chain;
+}
+
+/** Sample a mip chain at a level of detail (0 the map itself; each 1 a level smaller), trilinearly. */
+export function sampleLod(chain: readonly Texture[], u: number, v: number, lod: number, out: Float64Array): void {
+  const l = Math.max(0, Math.min(chain.length - 1, lod));
+  const l0 = Math.floor(l);
+  const f = l - l0;
+  sample(chain[l0]!, u, v, out);
+  if (f <= 0 || l0 + 1 >= chain.length) return;
+  const r = out[0]!;
+  const g = out[1]!;
+  const b = out[2]!;
+  sample(chain[l0 + 1]!, u, v, out);
+  out[0] = r + (out[0]! - r) * f;
+  out[1] = g + (out[1]! - g) * f;
+  out[2] = b + (out[2]! - b) * f;
 }

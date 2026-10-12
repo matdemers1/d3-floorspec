@@ -167,7 +167,8 @@ describe('glTF export extensions (FLR-T-13.13)', () => {
   });
 
   it('is deterministic: the same model writes the same bytes', async () => {
-    expect((await exportGltf(SHOWCASE, VERSION)).bytes).toEqual(bytes);
+    // Compared as buffers: a deep equality over five megabytes of embedded maps takes the test's whole budget.
+    expect(Buffer.from((await exportGltf(SHOWCASE, VERSION)).bytes).equals(Buffer.from(bytes))).toBe(true);
   });
 
   it('turns −Z to look along any direction, upright', () => {

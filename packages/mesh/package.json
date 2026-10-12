@@ -15,11 +15,17 @@
       "types": "./src/sky/index.ts",
       "default": "./dist/sky/index.js"
     },
-    "./sky/*.hdr": "./sky/*.hdr"
+    "./sky/*.hdr": "./sky/*.hdr",
+    "./materials": {
+      "types": "./src/materials/index.ts",
+      "default": "./dist/materials/index.js"
+    },
+    "./materials/*.jpg": "./materials/*.jpg"
   },
   "files": [
     "dist",
-    "sky"
+    "sky",
+    "materials"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

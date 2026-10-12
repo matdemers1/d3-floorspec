@@ -198,7 +198,11 @@ describe('drawing exports', () => {
     expect(u.result?.levels).toEqual(['MAIN']);
     const file = await download(operator, `${running.url}${u.download ?? ''}`);
     expect(file.type).toBe('model/vnd.usdz+zip');
-    expect(zipNames(file.bytes)).toEqual(['model.usda']);
+    // The root layer first; then the maps its materials use — the material library's, which dress
+    // its fixtures' pieces (FLR-T-13.6).
+    const names = zipNames(file.bytes);
+    expect(names[0]).toBe('model.usda');
+    for (const n of names.slice(1)) expect(n).toMatch(/^textures\/.+\.jpg$/);
     // The root layer's data starts on a 64-byte boundary (the USDZ rule).
     const v = new DataView(file.bytes.buffer, file.bytes.byteOffset);
     expect((30 + v.getUint16(26, true) + v.getUint16(28, true)) % 64).toBe(0);

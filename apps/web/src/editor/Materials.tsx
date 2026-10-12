@@ -12,6 +12,8 @@ import { nextIds } from './optionOps';
 import { messageOf } from '../lib/api';
 import { ACCEPT, assetHref, documentAsset, uploadTexture } from '../materials/api';
 import { CalibrateTexture } from '../materials/CalibrateDialog';
+import { librarySwatch, MaterialLibrary } from '../materials/MaterialLibrary';
+import { libraryItemOfMaterial, MATERIAL_LIBRARY } from '@floorspec/mesh/materials';
 import type { UploadedAsset } from '../materials/calibrate';
 import '../materials/materials.css';
 
@@ -68,12 +70,18 @@ export function addMaterial(model: EditorModel, name: string): BatchBuilder {
   };
 }
 
+/** The turns the inspector offers a texture (Core 18.2, microdegrees): planks along the width, along the height, and on the diagonal. */
+const TURNS = [0, 90_000_000, 45_000_000, -45_000_000];
+
 /** The width of surface a material card's swatch shows: 2 ft, so a 12" tile repeats twice across it. */
 const SWATCH_WIDTH = 2 * 390_144;
 
 /** A material card's or a swatch's background: its colour map, tiled at its real-world size, over its colour. */
 export function swatchStyle(projectId: string, document: FloorspecDocument, m: Json | undefined, width = SWATCH_WIDTH): React.CSSProperties | undefined {
   const color = str(m?.['color']);
+  // A material from the library (FLR-T-13.6): its swatch, in its own colour where its maps are only relief.
+  const item = libraryItemOfMaterial(m);
+  if (item !== undefined && width === SWATCH_WIDTH) return librarySwatch(item, color);
   const tex = m?.['texture'] as Json | undefined;
   const asset = str(tex?.['asset']);
   const sha = asset === undefined ? undefined : str((document.assets as Record<string, Json | undefined> | undefined)?.[asset]?.['sha256']);
@@ -239,6 +247,16 @@ export function MaterialsModal({ store }: { store: EditorStore }) {
           </div>
         </section>
       ) : null}
+      {!readOnly ? (
+        <MaterialLibrary
+          store={store}
+          held={new Set(materials.flatMap(([, m]) => { const i = libraryItemOfMaterial(m); return i === undefined ? [] : [i.id]; }))}
+          onAdded={(id) => {
+            close();
+            store.select(id);
+          }}
+        />
+      ) : null}
       {materials.length === 0 ? (
         <p className="fs-note">This project has no materials yet. Add one, then choose it as a room&rsquo;s floor, wall or ceiling finish.</p>
       ) : (
@@ -304,6 +322,8 @@ export function MaterialSurface({ store, id, element, model, units, readOnly, ed
   const size = (tex?.['size'] as [number, number] | undefined) ?? [DEFAULT_TILE, DEFAULT_TILE];
   const maps = ['asset', 'normal', 'metallicRoughness', 'occlusion'].filter((k) => tex?.[k] !== undefined);
   const [w, h] = size;
+  const rotation = num(tex?.['rotation']) ?? 0;
+  const library = libraryItemOfMaterial(element);
   const thousandths = (key: 'metallic' | 'roughness', label: string) => (
     <IntField
       label={label}
@@ -344,8 +364,12 @@ export function MaterialSurface({ store, id, element, model, units, readOnly, ed
         <p className="fs-note">Thousandths, as glTF's metallic-roughness model: 0 metallic is paint, wood, tile or stone; 1000 roughness is fully matte.</p>
       </Section>
       <Section title="Texture">
+        {library !== undefined ? (
+          <p className="fs-matlib-source">From the material library {MATERIAL_LIBRARY.version} · {library.name}</p>
+        ) : null}
         {mapSelect('asset', 'Colour map')}
         {mapSelect('normal', 'Normal map')}
+        {mapSelect('metallicRoughness', 'Roughness map')}
         {images.length === 0 ? <p className="fs-note">No images in this project yet. A material without a map shows its colour.</p> : null}
         {!readOnly ? (
           <div className="fs-materials__head">
@@ -396,6 +420,20 @@ export function MaterialSurface({ store, id, element, model, units, readOnly, ed
             <LengthField label="Tile width" value={w} units={units} positive disabled={readOnly} onCommit={(v) => { if (v !== null && v !== w) edit(`Set tile size of ${name}`, setProperty(id, '/texture/size', [v, h])); }} />
             <LengthField label="Tile height" value={h} units={units} positive disabled={readOnly} onCommit={(v) => { if (v !== null && v !== h) edit(`Set tile size of ${name}`, setProperty(id, '/texture/size', [w, v])); }} />
             <p className="fs-note">The real-world size of one tile: the image covers {prettyLen(w, units)} by {prettyLen(h, units)} of every surface it is on (Core 18.2).</p>
+            <Row label="Turn">
+              <Select
+                aria-label={`Turn the texture of ${name}`}
+                appearance="filled"
+                options={[...TURNS.map((t) => ({ value: String(t), label: `${String(t / 1_000_000)}°` })), ...(TURNS.includes(rotation) ? [] : [{ value: String(rotation), label: `${String(rotation / 1_000_000)}°` }])]}
+                value={String(rotation)}
+                disabled={readOnly}
+                onValueChange={(v) => {
+                  const r = Number(v);
+                  if (r !== rotation) edit(`Turn the texture of ${name}`, r === 0 ? unsetProperty(id, '/texture/rotation') : setProperty(id, '/texture/rotation', r));
+                }}
+              />
+            </Row>
+            <p className="fs-note">Planks, courses and seams run along a surface&rsquo;s width; 90° runs them along its height — north–south on a floor.</p>
           </>
         ) : null}
       </Section>

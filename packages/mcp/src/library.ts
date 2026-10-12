@@ -43,7 +43,7 @@ export function libraryText(): string {
 const REFERENCE_MEMBERS = new Set(['fill', 'type', 'material', 'wallFinish', 'floorFinish', 'ceilingFinish']);
 
 /** Every string a batch gives a type- or material-naming member, at any depth (an element's layers included). */
-function references(batch: readonly Op[]): Set<string> {
+export function references(batch: readonly Op[]): Set<string> {
   const found = new Set<string>();
   const walk = (value: unknown, key: string | null): void => {
     if (typeof value === 'string') {
@@ -57,18 +57,18 @@ function references(batch: readonly Op[]): Set<string> {
   for (const op of batch) {
     walk(op, null);
     // setProperty /fill, /type or /material: the value is the reference.
-    if (op.op === 'setProperty' && typeof op['path'] === 'string' && typeof op['value'] === 'string' && /\/(fill|type|material)$/.test(op['path'])) found.add(op['value']);
+    if (op.op === 'setProperty' && typeof op['path'] === 'string' && typeof op['value'] === 'string' && /\/(fill|type|material|wallFinish|floorFinish|ceilingFinish)$/.test(op['path'])) found.add(op['value']);
   }
   return found;
 }
 
 /** The IDs a batch adds itself, so an agent that embeds a type by hand gets no second copy. */
-function added(batch: readonly Op[]): Set<string> {
+export function added(batch: readonly Op[]): Set<string> {
   return new Set(batch.flatMap((op) => (op.op === 'addElement' && typeof op['id'] === 'string' ? [op['id']] : [])));
 }
 
 /** True when the document holds this ID in any collection. */
-function holds(document: unknown, id: string): boolean {
+export function holds(document: unknown, id: string): boolean {
   if (document === null || typeof document !== 'object') return false;
   return Object.values(document as Record<string, unknown>).some((c) => c !== null && typeof c === 'object' && !Array.isArray(c) && Object.hasOwn(c, id));
 }

@@ -2,7 +2,9 @@ import { McpServer, ResourceTemplate, type CallToolResult } from '@modelcontextp
 import { describeEstimate, estimateEnergy, EstimateError } from '@floorspec/analysis';
 import { z } from 'zod';
 import { FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type Layouts, type Op, type ProjectSummary, type RenderOptions } from './client.js';
-import { embedOps, libraryText, missingLibraryTypes, namesLibraryTypes, US_STARTER } from './library.js';
+import { embedOps, libraryText, missingLibraryTypes, namesLibraryTypes, references, US_STARTER } from './library.js';
+import { embedMaterialOps, libraryFilesAdded, materialFileBytes, materialsText, missingLibraryMaterials } from './materials.js';
+import { LIBRARY_FILES, LIBRARY_MATERIALS } from '@floorspec/mesh/materials';
 import { CatalogueError, fillFurniture, FS_FURNITURE, furnitureText, libraryFileBytes, namesFurniture, type FurnitureFill, type LibraryFile } from './furniture.js';
 import { fillLandscape, FS_LANDSCAPE, LandscapeError, namesLandscape } from './landscape.js';
 import { wells } from './stairwell.js';
@@ -162,11 +164,20 @@ interface Prepared {
  * name bytes the server has. The head is the pending changeset the batch is going into when it is
  * named and exists, else main — which is also what a new changeset starts from.
  */
+const MATERIAL_IDS = new Set(LIBRARY_MATERIALS.map((i) => i.id));
+
+/** True when a batch names any library material at all: only then is the document worth reading for it. */
+function namesLibraryMaterials(batch: readonly Op[]): boolean {
+  return [...references(batch)].some((id) => MATERIAL_IDS.has(id));
+}
+
 async function prepare(client: FloorspecClient, projectId: string, changeset: string | undefined, batch: readonly Op[]): Promise<Prepared> {
   const types = namesLibraryTypes(batch);
   const furnished = namesFurniture(batch);
   const landscaped = namesLandscape(batch);
-  if (!types && !furnished && !landscaped) return { batch, prefix: [], own: batch, embedded: [], furniture: [], landscape: { items: [], boxed: [] }, notes: [] };
+  const materials = namesLibraryMaterials(batch);
+  const handFiles = libraryFilesAdded(batch);
+  if (!types && !furnished && !landscaped && !materials && handFiles.length === 0) return { batch, prefix: [], own: batch, embedded: [], furniture: [], landscape: { items: [], boxed: [] }, notes: [] };
   let head: string | undefined;
   if (changeset !== undefined) {
     try {
@@ -196,9 +207,11 @@ async function prepare(client: FloorspecClient, projectId: string, changeset: st
   }
   const own = planted.batch;
   const ids = types ? missingLibraryTypes(model.document, own) : [];
-  const prefix = [...(ids.length === 0 ? [] : embedOps(model.document, own, ids)), ...placed.prefix, ...planted.prefix];
-  const notes = await storeLibraryFiles(client, projectId, placed.files);
-  return { batch: [...prefix, ...own], prefix, own, embedded: ids, furniture: placed.items, landscape: { items: planted.items, boxed: planted.boxed }, notes };
+  // FLR-T-13.6: the material library's materials the batch names, embedded with their maps' assets.
+  const mats = materials ? missingLibraryMaterials(model.document, own) : [];
+  const prefix = [...(ids.length === 0 ? [] : embedOps(model.document, own, ids)), ...(mats.length === 0 ? [] : embedMaterialOps(model.document, mats)), ...placed.prefix, ...planted.prefix];
+  const notes = [...(await storeLibraryFiles(client, projectId, placed.files)), ...(await storeMaterialFiles(client, projectId, libraryFilesAdded([...prefix, ...own])))];
+  return { batch: [...prefix, ...own], prefix, own, embedded: [...ids, ...mats], furniture: placed.items, landscape: { items: planted.items, boxed: planted.boxed }, notes };
 }
 
 /**
@@ -224,6 +237,27 @@ async function storeLibraryFiles(client: FloorspecClient, projectId: string, fil
   return problems.length === 0
     ? []
     : [`Note: the asset store did not take every library file (${problems.sort().join('; ')}). The plan names them, but the 3D view and an exported package lack them until they are uploaded.`];
+}
+
+/**
+ * Upload the material library's map files a batch's assets name (FLR-T-13.6), as the editor does
+ * when it adds a library material. A refusal does not stop the batch — every view draws a library
+ * map from the app's own copy — but it is said, since an exported package would lack the file.
+ */
+async function storeMaterialFiles(client: FloorspecClient, projectId: string, files: readonly string[]): Promise<string[]> {
+  const problems: string[] = [];
+  await Promise.all(
+    files.map(async (file) => {
+      try {
+        const stored = await client.uploadAsset(projectId, { bytes: materialFileBytes(file), name: file, as: 'texture' });
+        if (stored.sha256 !== LIBRARY_FILES[file]?.sha256) problems.push(`${file} was stored as ${stored.sha256}, not as its library digest`);
+      } catch (error) {
+        if (!(error instanceof FloorspecApiError)) throw error;
+        problems.push(`${file}: ${error.message}`);
+      }
+    }),
+  );
+  return problems.length === 0 ? [] : [`Note: the asset store did not take every material map (${problems.sort().join('; ')}). The views draw them from the library, but an exported package lacks them until they are uploaded.`];
 }
 
 /**
@@ -319,7 +353,7 @@ export function editedLevel(resolved: readonly Op[]): string | undefined {
 
 function embeddedText(prepared: Prepared): string {
   return [
-    prepared.embedded.length === 0 ? '' : ` Embedded from the US starter library ${US_STARTER.version}: ${prepared.embedded.join(', ')}.`,
+    prepared.embedded.length === 0 ? '' : ` Embedded from the ${prepared.embedded.some((id) => MATERIAL_IDS.has(id)) ? (prepared.embedded.every((id) => MATERIAL_IDS.has(id)) ? 'material library' : 'US starter library and the material library') : `US starter library ${US_STARTER.version}`}: ${prepared.embedded.join(', ')}.`,
     prepared.furniture.length === 0 ? '' : ` Filled in from the FS_furniture starter library ${FS_FURNITURE.version} (members, box, envelopes, model and symbol): ${prepared.furniture.join(', ')}.`,
     prepared.landscape.items.length === 0 ? '' : ` Planted from the FS_landscape ${FS_LANDSCAPE.version} starter sizes (form, name, box): ${prepared.landscape.items.join(', ')}.`,
     prepared.landscape.boxed.length === 0 ? '' : ` Boxed round their geometry (FS_landscape 3.3): ${prepared.landscape.boxed.join(', ')}.`,
@@ -428,7 +462,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         }
         const project = await client.createProject(args.name);
         return ok(
-          `Created "${project.name}" (${project.id}). It is empty: add a building and its levels next, then rooms. Name this project in every call while the credential reaches more than one. ${libraryText()} ${furnitureText()}`,
+          `Created "${project.name}" (${project.id}). It is empty: add a building and its levels next, then rooms. Name this project in every call while the credential reaches more than one. ${libraryText()} ${furnitureText()} ${materialsText()}`,
           { project: project.id, name: project.name, head: project.head },
         );
       } catch (error) {

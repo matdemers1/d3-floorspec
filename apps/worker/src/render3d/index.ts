@@ -13,6 +13,9 @@ import { encodePng } from './png.js';
 import { rasterize, type DrawList, type RasterSky } from './raster.js';
 import { skyBounce, skyExposure, skyHarmonics, type SkyPreset } from '@floorspec/mesh/sky';
 import { resolveSky, skySummary, type ResolvedSky, type SkySummary } from '../pathtrace/sky.js';
+import { texturesOf } from '../pathtrace/index.js';
+import { mipChain, type Texture } from '../pathtrace/textures.js';
+import { withLibrary } from '../export/gltf/library.js';
 
 export { PRESETS, presetCamera, roomCamera, findRoom, centroid, type Camera, type Preset } from './camera.js';
 export { LIGHTS, rasterize, shoulder, tone, type DrawList, type RasterOptions, type RasterSky } from './raster.js';
@@ -84,12 +87,30 @@ interface Tri {
   readonly key?: number;
   readonly bias?: number;
   readonly unlit?: boolean;
+  /** FLR-T-13.6: its base colour map (an index into the draw list's maps) and its corners' coordinates (glTF's). */
+  readonly map?: number;
+  /** Its normal map and its occlusion map, indices into the draw list's maps. */
+  readonly relief?: number;
+  readonly occlusion?: number;
+  readonly uv?: readonly [number, number, number, number, number, number];
+}
+
+/** A material's maps as the rasterizer draws them: indices into the draw list's mip chains. */
+export interface RasterMaps {
+  readonly albedo?: number;
+  readonly relief?: number;
+  readonly occlusion?: number;
 }
 
 /** Triangles into a draw list, each keyed by its plane, so coplanar neighbours draw no line. */
-function drawList(tris: readonly Tri[]): DrawList {
+function drawList(tris: readonly Tri[], maps: readonly (readonly Texture[])[] = []): DrawList {
   const n = tris.length;
   const list = {
+    map: new Int32Array(n).fill(-1),
+    relief: new Int32Array(n).fill(-1),
+    occlusion: new Int32Array(n).fill(-1),
+    uvs: new Float32Array(6 * n),
+    maps,
     positions: new Float32Array(9 * n),
     normals: new Float32Array(3 * n),
     colors: new Float32Array(3 * n),
@@ -129,6 +150,12 @@ function drawList(tris: readonly Tri[]): DrawList {
     list.twoSided[kept] = t.twoSided ? 1 : 0;
     list.bias[kept] = t.bias ?? 0;
     list.unlit[kept] = t.unlit === true ? 1 : 0;
+    if (t.uv !== undefined) {
+      list.map[kept] = t.map ?? -1;
+      list.relief[kept] = t.relief ?? -1;
+      list.occlusion[kept] = t.occlusion ?? -1;
+      list.uvs.set(t.uv, 6 * kept);
+    }
     kept++;
   }
   return { ...list, count: kept };
@@ -159,7 +186,7 @@ function ground(bounds: { min: Vec3; max: Vec3 }): Tri[] {
 }
 
 /** The scene's triangles as drawn: cut away above `level`, highlighted, with a ground under them. */
-export function sceneTriangles(scene: Scene, options: { level?: string; highlight?: readonly string[]; ground?: boolean } = {}): Tri[] {
+export function sceneTriangles(scene: Scene, options: { level?: string; highlight?: readonly string[]; ground?: boolean; maps?: ReadonlyMap<number, RasterMaps> } = {}): Tri[] {
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
   const cut = cutOf(scene, options.level);
   const lit = new Set(options.highlight ?? []);
@@ -177,7 +204,11 @@ export function sceneTriangles(scene: Scene, options: { level?: string; highligh
       for (const p of node.primitives) {
         if (cut === at && (p.part === 'ceiling' || p.part === 'roof' || p.part === 'roofGable')) continue;
         const m = scene.materials[p.material]!;
-        const rgb = on ? mix(m.baseColor.slice(0, 3) as Vec3, ACCENT, 0.6) : (m.baseColor.slice(0, 3) as Vec3);
+        // A mapped surface is white under its map, whose texel is its colour (Core 18.1).
+        const map = p.uvs === null ? undefined : options.maps?.get(p.material);
+        const base = map?.albedo === undefined ? (m.baseColor.slice(0, 3) as Vec3) : ([1, 1, 1] as Vec3);
+        const rgb = on ? mix(base, ACCENT, 0.6) : base;
+        const UV = p.uvs;
         const bias = p.part === 'ceiling' ? 2 : p.part === 'floor' || p.part === 'threshold' ? 1 : 0;
         const key = p.smooth === true ? round++ : undefined;
         const P = p.positions;
@@ -191,7 +222,8 @@ export function sceneTriangles(scene: Scene, options: { level?: string; highligh
               min[j] = Math.min(min[j]!, q[j]!);
               max[j] = Math.max(max[j]!, q[j]!);
             }
-          tris.push({ a, b, c, rgb, alpha: m.baseColor[3], twoSided: m.blend, bias, ...(key === undefined ? {} : { key }), ...(m.emissive === undefined ? {} : { unlit: true }) });
+          const uv = map === undefined || UV === null ? undefined : ([0, 1, 2].flatMap((j) => [UV[2 * p.indices[k + j]!]!, UV[2 * p.indices[k + j]! + 1]!]) as unknown as Tri['uv']);
+          tris.push({ a, b, c, rgb, alpha: m.baseColor[3], twoSided: m.blend, bias, ...(key === undefined ? {} : { key }), ...(m.emissive === undefined ? {} : { unlit: true }), ...(map === undefined || uv === undefined ? {} : { uv, ...(map.albedo === undefined ? {} : { map: map.albedo }), ...(map.relief === undefined ? {} : { relief: map.relief }), ...(map.occlusion === undefined ? {} : { occlusion: map.occlusion }) }) });
         }
       }
     }
@@ -241,6 +273,26 @@ export function rasterSky(sky: ResolvedSky, groundY: number): RasterSky {
 export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design' | 'sky' | 'at'> & { readonly skyLight?: ResolvedSky } = {}): Render3dResult {
   const { width, height } = sizeOf(options.width);
   cutOf(scene, options.level);
+  // FLR-T-13.6: each material's base colour map, the store's or the library's, as a mip chain.
+  const decoded = texturesOf(scene, withLibrary(options.images));
+  const chains: Texture[][] = [];
+  const maps = new Map<number, RasterMaps>();
+  const seen = new Map<Texture, number>();
+  const chainOf = (t: Texture | undefined): number | undefined => {
+    if (t === undefined) return undefined;
+    let at = seen.get(t);
+    if (at === undefined) {
+      at = chains.push(mipChain(t)) - 1;
+      seen.set(t, at);
+    }
+    return at;
+  };
+  for (const [material, m] of decoded.textures) {
+    const albedo = chainOf(m.albedo);
+    const relief = chainOf(m.normal);
+    const occlusion = chainOf(m.orm);
+    maps.set(material, { ...(albedo === undefined ? {} : { albedo }), ...(relief === undefined ? {} : { relief }), ...(occlusion === undefined ? {} : { occlusion }) });
+  }
   let camera: Camera;
   let tris: Tri[];
   if (options.room !== undefined) {
@@ -250,19 +302,20 @@ export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design
       throw new RangeError(`the model has no room ${options.room}${known.length === 0 ? '' : `; its rooms are ${known.slice(0, 20).join(', ')}`}`);
     }
     camera = roomCamera(room, scene.doors, scene.obstacles);
-    tris = sceneTriangles(scene, { ...(options.highlight === undefined ? {} : { highlight: options.highlight }), ground: options.skyLight === undefined });
+    tris = sceneTriangles(scene, { ...(options.highlight === undefined ? {} : { highlight: options.highlight }), ground: options.skyLight === undefined, maps });
   } else {
     tris = sceneTriangles(scene, {
       ...(options.level === undefined ? {} : { level: options.level }),
       ...(options.highlight === undefined ? {} : { highlight: options.highlight }),
       // Under a sky the ground is the rasterizer's own plane, out to the horizon.
       ground: options.skyLight === undefined,
+      maps,
     });
     camera = presetCamera(options.camera ?? 'sw', boundsOf(tris), width / height);
   }
   const all = boundsOf(sceneTriangles(scene, { ground: false }));
   const lighting = options.skyLight === undefined ? undefined : rasterSky(options.skyLight, all.min[1] - 0.003);
-  const rgb = rasterize(drawList(tris), camera, { width, height, supersample: 2, ...(lighting === undefined ? {} : { lighting }) });
+  const rgb = rasterize(drawList(tris, chains), camera, { width, height, supersample: 2, ...(lighting === undefined ? {} : { lighting }) });
   return { png: encodePng(rgb, width, height), width, height, camera: camera.label, design: scene.design, ...(options.skyLight === undefined || lighting === undefined ? {} : { sky: skySummary(options.skyLight, Number(lighting.exposure.toPrecision(3))) }) };
 }
 

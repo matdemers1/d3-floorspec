@@ -51,3 +51,4 @@ export {
   type NamedScene,
   type SceneSetting,
 } from './scenes.js';
+export { boxST, isSlope, slopeST, worldCoordinates } from './texcoords.js';
