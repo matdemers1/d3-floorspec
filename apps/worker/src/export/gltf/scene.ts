@@ -17,11 +17,15 @@
  * no colour is drawn in its map's average colour where the asset store has the map. An arc wall's
  * faces are its faces, segment by segment (Core 21.6), each drawn as one curved surface. Surfaces whose material has a texture carry texture
  * coordinates exactly as 18.3 defines them, `u = s′ / w` and `v = −t′ / h`; the surfaces 18.3 does
- * not define (a wall's top and ends, a slab, a roof, a stair) are given a box projection, which is
- * this exporter's choice and not the standard's.
+ * not define are given @floorspec/mesh's world-scale coordinates (FLR-T-13.6) — a roof's slopes laid
+ * along them, a wall's top and ends, a slab, a stair and a model's pieces by a box projection — which
+ * is this exporter's choice and not the standard's. A model's pieces of a role the material library
+ * dresses (`ROLE_LIBRARY`) are drawn in that item's maps, read from the library's own files.
  */
 import { deriveEvaluation, evaluate, extElements, facingVector, furniture, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { appearanceOf, decorFamily, DEFAULT_COLOURS, libraryItemOf, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch, type DoorState } from '@floorspec/mesh';
+import { isLibraryGlass, LIBRARY_FILES, packagePathOf, roleMaterial, textureMembers } from '@floorspec/mesh/materials';
+import { isSlope, slopeST } from '@floorspec/mesh';
 import { decodeTexture } from '../../pathtrace/textures.js';
 import type { ImageSource } from './glb.js';
 
@@ -259,6 +263,8 @@ export function mapAverages(doc: FloorspecDocument, images: ImageSource | undefi
 
 class Materials {
   readonly list: SceneMaterial[] = [];
+  /** The library's map files a role's material names (FLR-T-13.6), as `library:<file>` assets. */
+  readonly library = new Set<string>();
   private readonly index = new Map<string, number>();
   constructor(
     private readonly doc: FloorspecDocument,
@@ -305,16 +311,28 @@ class Materials {
     const look = ROLE_LOOKS[role];
     const [r, g, b] = linear(look.color);
     const opacity = look.opacity ?? 1;
+    // FLR-T-13.6: a role the library dresses is drawn in its item's maps, at their real size.
+    const item = roleMaterial(role);
+    let texture: SceneTexture | undefined;
+    if (item?.texture !== undefined) {
+      const maps: Partial<Record<MapRole, string>> = {};
+      for (const [member, file] of Object.entries(textureMembers(item.texture.maps)) as [MapRole, string][]) {
+        maps[member] = `library:${file}`;
+        this.library.add(file);
+      }
+      texture = { size: [item.texture.size[0], item.texture.size[1]], offset: [0, 0], rotation: 0, maps };
+    }
     return this.add({
       key,
       name: `Model ${role}`,
       baseColor: [r, g, b, opacity],
       color: look.color,
-      metallic: look.metallic,
-      roughness: look.roughness,
-      declared: {},
+      metallic: texture === undefined ? look.metallic : (item?.metallic ?? 0) / 1000,
+      roughness: texture === undefined ? look.roughness : (item?.roughness ?? 1000) / 1000,
+      declared: texture === undefined ? {} : { ...(item?.metallic === undefined ? {} : { metallic: item.metallic }), ...(item?.roughness === undefined ? {} : { roughness: item.roughness }) },
       blend: opacity < 1,
       ...(look.emissive === true ? { emissive: [r, g, b] as const } : {}),
+      ...(texture === undefined ? {} : { texture }),
     });
   }
 
@@ -338,16 +356,18 @@ class Materials {
       texture = { size: [size[0], size[1]], offset: [offset[0], offset[1]], rotation: typeof tex['rotation'] === 'number' ? tex['rotation'] : 0, maps };
     }
     const name = typeof m['name'] === 'string' ? `${id} ${m['name']}` : id;
+    // Glass from the material library (FLR-T-13.6): see-through, as a window's is — Core 18.1 has no transmission to say so.
+    const glass = isLibraryGlass(m);
     return this.add({
       key,
       name,
       floorspec: id,
-      baseColor: [r, g, b, 1],
+      baseColor: [r, g, b, glass ? 0.35 : 1],
       ...(colour === undefined ? {} : { color: colour }),
       metallic: (metallic ?? 0) / 1000,
       roughness: (roughness ?? 1000) / 1000,
       declared: { ...(metallic === undefined ? {} : { metallic }), ...(roughness === undefined ? {} : { roughness }) },
-      blend: false,
+      blend: glass,
       ...(texture === undefined ? {} : { texture }),
     });
   }
@@ -391,6 +411,11 @@ function boxProjection(n: Vec3): SurfaceST {
   if (az >= ax && az >= ay) return n[2] >= 0 ? boxST : (p) => [-p[0] * M, p[1] * M];
   if (ax >= ay) return n[0] >= 0 ? (p) => [p[1] * M, p[2] * M] : (p) => [-p[1] * M, p[2] * M];
   return n[1] >= 0 ? (p) => [-p[0] * M, p[2] * M] : (p) => [p[0] * M, p[2] * M];
+}
+
+/** A roof's slope (FLR-T-13.6): `s` along its eave, `t` up it, true lengths — @floorspec/mesh's `slopeST`. */
+function slopeProjection(n: Vec3): SurfaceST {
+  return (p) => slopeST([p[0] * M, p[1] * M, p[2] * M], n);
 }
 
 // ─── Building primitives ─────────────────────────────────────────────────────────────────────
@@ -725,7 +750,8 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
         // A piece of a model or of an opening's joinery takes its role's look; a fallback box the quiet default.
         const material = part.model !== undefined ? materials.role(part.model.role) : materials.of(part.material, fallback);
         const smooth = part.model?.smooth === true;
-        for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, boxProjection(n), smooth);
+        // A roof's slopes are laid along them (FLR-T-13.6, @floorspec/mesh texcoords): a seam runs down the slope at its true width.
+        for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, part.kind === 'roof' && isSlope(n) ? slopeProjection(n) : boxProjection(n), smooth);
       }
     }
   }
@@ -768,6 +794,12 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
         ...(typeof a['uri'] === 'string' ? { uri: a['uri'] } : {}),
       };
     }
+
+  // The library's maps a model's pieces are drawn in (FLR-T-13.6): its files, by digest.
+  for (const file of [...materials.library].sort()) {
+    const f = LIBRARY_FILES[file]!;
+    assets[`library:${file}`] = { sha256: f.sha256, mediaType: f.mediaType, path: packagePathOf(f) };
+  }
 
   return {
     project: typeof doc.project.name === 'string' ? doc.project.name : 'Floorspec model',

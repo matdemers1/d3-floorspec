@@ -22,8 +22,9 @@
  *   within a band (FLR-T-13.1: @floorspec/mesh `EXPOSURE_PER_NIT`), so a room with its lamps on and
  *   off can be compared — and tone-mapped with an ACES-style filmic curve, then written in sRGB.
  *
- * What it is not: a lighting simulation. Metallic and roughness are ignored (every opaque surface is
- * matte), a lamp's photometry is a guess from its kind and watts (@floorspec/mesh lights.ts), and
+ * What it is not: a lighting simulation. Surfaces are diffuse, in their maps' colours and relief
+ * (FLR-T-13.6: base colour, normal and occlusion maps), with a glint of the sun by their roughness
+ * on what the camera sees; reflections are not traced (FLR-T-13.14), a lamp's photometry is a guess from its kind and watts (@floorspec/mesh lights.ts), and
  * the sky is a simple gradient — approximate lighting, which is what
  * the screen says. Seeded (rng.ts), so the same scene and options give the same picture.
  */
@@ -47,6 +48,16 @@ export interface PtMaterial {
   readonly emission?: Vec3;
   /** A luminaire's lens (lit or not): what a shadow ray toward a lamp passes through. */
   readonly lens?: boolean;
+  /**
+   * How rough and how metallic it is, 0–1 (Core 18.1): the factors — multiplying the ORM map's green
+   * and blue where there is one (FLR-T-13.6). Absent: matte (1) and not metal (0).
+   */
+  readonly roughness?: number;
+  readonly metallic?: number;
+  /** Occlusion in red, roughness in green, metalness in blue, linear (glTF's channels, Core 18.2). */
+  readonly orm?: Texture;
+  /** A tangent-space normal map, linear, +X along u and +Y up the tile (Core 18.2). */
+  readonly normalMap?: Texture;
 }
 
 /** A lamp (FLR-T-12.22): a small sphere that shines every way, or a spot down a cone. */
@@ -357,6 +368,81 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
     }
   };
   const lampE = new Float64Array(3);
+  const shade = new Float64Array(3);
+  /**
+   * A normal map's normal (x, y, z in −1…1, tangent space) at a point of triangle `t`, in the scene:
+   * the tangent along increasing u, the bitangent up the tile (decreasing v, glTF's v running down
+   * its image), the triangle's own normal — turned with the geometric normal `n` the hit faces, so
+   * it lies on the side the ray came from. Falls back to `n` where the mapping is degenerate.
+   */
+  const shadingNormal = (t: number, x: number, y: number, z: number, gnx: number, gny: number, gnz: number, out: Float64Array): void => {
+    const o = 9 * t;
+    const P = scene.positions;
+    const e1x = P[o + 3]! - P[o]!, e1y = P[o + 4]! - P[o + 1]!, e1z = P[o + 5]! - P[o + 2]!;
+    const e2x = P[o + 6]! - P[o]!, e2y = P[o + 7]! - P[o + 1]!, e2z = P[o + 8]! - P[o + 2]!;
+    const du1 = UV[6 * t + 2]! - UV[6 * t]!, dv1 = UV[6 * t + 3]! - UV[6 * t + 1]!;
+    const du2 = UV[6 * t + 4]! - UV[6 * t]!, dv2 = UV[6 * t + 5]! - UV[6 * t + 1]!;
+    const det = du1 * dv2 - du2 * dv1;
+    out[0] = gnx;
+    out[1] = gny;
+    out[2] = gnz;
+    if (Math.abs(det) < 1e-12) return;
+    // The triangle's normal as stored, and whether the hit turned it round.
+    const n0x = N[3 * t]!, n0y = N[3 * t + 1]!, n0z = N[3 * t + 2]!;
+    const flip = n0x * gnx + n0y * gny + n0z * gnz < 0 ? -1 : 1;
+    let tx = (e1x * dv2 - e2x * dv1) / det, ty = (e1y * dv2 - e2y * dv1) / det, tz = (e1z * dv2 - e2z * dv1) / det;
+    const bvx = (e2x * du1 - e1x * du2) / det, bvy = (e2y * du1 - e1y * du2) / det, bvz = (e2z * du1 - e1z * du2) / det;
+    const d = tx * n0x + ty * n0y + tz * n0z;
+    tx -= n0x * d;
+    ty -= n0y * d;
+    tz -= n0z * d;
+    const tl = Math.hypot(tx, ty, tz);
+    if (tl < 1e-12) return;
+    tx /= tl;
+    ty /= tl;
+    tz /= tl;
+    // The bitangent: n × T, turned to point up the tile (−dP/dv).
+    let bx = n0y * tz - n0z * ty, by = n0z * tx - n0x * tz, bz = n0x * ty - n0y * tx;
+    if (bx * -bvx + by * -bvy + bz * -bvz < 0) {
+      bx = -bx;
+      by = -by;
+      bz = -bz;
+    }
+    let sx2 = tx * x + bx * y + n0x * z, sy2 = ty * x + by * y + n0y * z, sz2 = tz * x + bz * y + n0z * z;
+    const l = Math.hypot(sx2, sy2, sz2);
+    if (l < 1e-9) return;
+    sx2 = (flip * sx2) / l;
+    sy2 = (flip * sy2) / l;
+    sz2 = (flip * sz2) / l;
+    // Never past the surface's horizon as seen from the side it is hit.
+    if (sx2 * gnx + sy2 * gny + sz2 * gnz < 0.05) return;
+    out[0] = sx2;
+    out[1] = sy2;
+    out[2] = sz2;
+  };
+  /** Schlick's (1 − l·h)⁵ of the last `glint`: its Fresnel weight. */
+  let fresnelK = 0;
+  /**
+   * A light's specular glint, per unit of its irradiance on a surface square to it, toward the
+   * viewer: a normalized Blinn-Phong lobe whose exponent the roughness gives (α = roughness²),
+   * over 4 (l·h)² (Kelemen's visibility). Sets `fresnelK`.
+   */
+  const glint = (lx: number, ly: number, lz: number, vx: number, vy: number, vz: number, nx2: number, ny2: number, nz2: number, roughness: number): number => {
+    let hx = lx + vx, hy = ly + vy, hz = lz + vz;
+    const hl = Math.hypot(hx, hy, hz);
+    if (hl < 1e-9) return 0;
+    hx /= hl;
+    hy /= hl;
+    hz /= hl;
+    const nh = nx2 * hx + ny2 * hy + nz2 * hz;
+    const nv = nx2 * vx + ny2 * vy + nz2 * vz;
+    if (nh <= 0 || nv <= 0) return 0;
+    const a = Math.max(0.05, roughness * roughness);
+    const e = Math.min(4000, 2 / (a * a) - 2);
+    const lh = Math.max(0.05, lx * hx + ly * hy + lz * hz);
+    fresnelK = (1 - lh) ** 5;
+    return (((e + 2) / (2 * Math.PI)) * nh ** e) / (4 * lh * lh);
+  };
 
   for (let pass = 0; pass < samples; pass++) {
     const step = options.rows?.of ?? 1;
@@ -454,15 +540,51 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             ar = tex[0]!;
             ag = tex[1]!;
             ab = tex[2]!;
-          } else if (m.texture !== undefined && !Number.isNaN(UV[6 * t]!)) {
+          }
+          // FLR-T-13.6: the surface's maps — its colour, how rough and metallic it is, and its relief.
+          let snx = nx;
+          let sny = ny;
+          let snz = nz;
+          let rough = m.roughness ?? 1;
+          let metal = m.metallic ?? 0;
+          let cavity = 1;
+          if (!onGround && !Number.isNaN(UV[6 * t]!) && (m.texture !== undefined || m.orm !== undefined || m.normalMap !== undefined)) {
             const w0 = 1 - hit.u - hit.v;
             const u = w0 * UV[6 * t]! + hit.u * UV[6 * t + 2]! + hit.v * UV[6 * t + 4]!;
             const v = w0 * UV[6 * t + 1]! + hit.u * UV[6 * t + 3]! + hit.v * UV[6 * t + 5]!;
-            sample(m.texture, u, v, tex);
-            ar *= tex[0]!;
-            ag *= tex[1]!;
-            ab *= tex[2]!;
+            if (m.texture !== undefined) {
+              sample(m.texture, u, v, tex);
+              ar *= tex[0]!;
+              ag *= tex[1]!;
+              ab *= tex[2]!;
+            }
+            if (m.orm !== undefined) {
+              sample(m.orm, u, v, tex);
+              cavity = tex[0]!;
+              rough *= tex[1]!;
+              metal *= tex[2]!;
+            }
+            if (m.normalMap !== undefined) {
+              sample(m.normalMap, u, v, tex);
+              shadingNormal(t, tex[0]! * 2 - 1, tex[1]! * 2 - 1, tex[2]! * 2 - 1, nx, ny, nz, shade);
+              snx = shade[0]!;
+              sny = shade[1]!;
+              snz = shade[2]!;
+            }
           }
+          // A metal's colour is its reflection, which this tracer does not follow yet (FLR-T-13.14):
+          // it keeps a part of it as diffuse, so brushed steel reads grey, not black. A map's
+          // occlusion is what the map's relief hides from the light round it — a mortar joint, the
+          // shadow line under a lap board: it darkens the light a bounce brings (below) fully, and
+          // the sun's and the lamps' by half, for the relief's own shadow the normal map cannot cast.
+          const keep = (1 - metal + 0.35 * metal) * (0.5 + 0.5 * cavity);
+          const bounced = cavity / (0.5 + 0.5 * cavity);
+          const f0r = 0.04 + (ar - 0.04) * metal;
+          const f0g = 0.04 + (ag - 0.04) * metal;
+          const f0b = 0.04 + (ab - 0.04) * metal;
+          ar *= keep;
+          ag *= keep;
+          ab *= keep;
           if (first && m.emission !== undefined) {
             r += tr * m.emission[0];
             g += tg * m.emission[1];
@@ -474,6 +596,8 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             albedo[o] = albedo[o]! + ar;
             albedo[o + 1] = albedo[o + 1]! + ag;
             albedo[o + 2] = albedo[o + 2]! + ab;
+            // The face's own normal, not its relief's: the denoiser finds edges by it, and a normal
+            // map's every bump would read as one and keep its noise.
             normal[o] = normal[o]! + nx;
             normal[o + 1] = normal[o + 1]! + ny;
             normal[o + 2] = normal[o + 2]! + nz;
@@ -487,7 +611,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           const pz0 = hz + nz * EPS;
           // The lamps, directly.
           if (lampPicks > 0) {
-            lampsAt(px0, py0, pz0, nx, ny, nz, depth === 0 ? lampPicks : 1, lampE);
+            lampsAt(px0, py0, pz0, snx, sny, snz, depth === 0 ? lampPicks : 1, lampE);
             r += (tr * ar * lampE[0]!) / Math.PI;
             g += (tg * ag * lampE[1]!) / Math.PI;
             b += (tb * ab * lampE[2]!) / Math.PI;
@@ -502,13 +626,24 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             const lx = sx * cosA + sa[0] * ca + sb[0] * cb;
             const ly = sy * cosA + sa[1] * ca + sb[1] * cb;
             const lz = sz * cosA + sa[2] * ca + sb[2] * cb;
-            const cosN = nx * lx + ny * ly + nz * lz;
-            if (cosN > 0) {
+            const cosN = snx * lx + sny * ly + snz * lz;
+            if (cosN > 0 && nx * lx + ny * ly + nz * lz > 0) {
               transmit(px0, py0, pz0, lx, ly, lz, light);
               const k = (sun.irradiance / Math.PI) * cosN;
               r += tr * ar * k * sun.color[0] * light[0]!;
               g += tg * ag * k * sun.color[1] * light[1]!;
               b += tb * ab * k * sun.color[2] * light[2]!;
+              // The sun's glint on what the camera sees, by the surface's roughness (FLR-T-13.6) — a
+              // normalized Blinn-Phong lobe with Schlick's Fresnel; FLR-T-13.14 brings GGX and reflections.
+              if (depth === 0 && rough < 0.95) {
+                const s = glint(lx, ly, lz, -dx, -dy, -dz, snx, sny, snz, rough) * sun.irradiance * cosN;
+                if (s > 0) {
+                  const fr = fresnelK;
+                  r += tr * s * (f0r + (1 - f0r) * fr) * sun.color[0] * light[0]!;
+                  g += tg * s * (f0g + (1 - f0g) * fr) * sun.color[1] * light[1]!;
+                  b += tb * s * (f0b + (1 - f0b) * fr) * sun.color[2] * light[2]!;
+                }
+              }
             }
           }
           if (depth === 0) {
@@ -518,9 +653,9 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             db = b;
           }
           if (++depth > bounces) break;
-          tr *= ar;
-          tg *= ag;
-          tb *= ab;
+          tr *= ar * bounced;
+          tg *= ag * bounced;
+          tb *= ab * bounced;
           if (depth >= 3) {
             const p = Math.max(tr, tg, tb);
             if (p <= 0 || rng.next() >= p) break;

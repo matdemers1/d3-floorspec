@@ -101,6 +101,16 @@ every piece stays inside the cut grown by `ENVELOPE` (100 mm along the wall and 
 120 mm above the head and below the sill), a pocket's or barn door's by its width more along the wall
 on its side; open, within a door's width (or a garage door's height) of either face.
 
+## Materials (FLR-T-13.6)
+
+`@floorspec/mesh/materials` is the material library: 56 CC0 physically based materials at their
+real size — each a Core material ready to embed (`embedLibraryMaterial`) or to put in place of one
+a document has (`swapToLibraryMaterial`), its maps as assets and its `source` naming the item — and
+the files of their maps in `materials/` (`SOURCES.json`, `NOTICE.md`, `scripts/prepare-materials.py`).
+`ROLE_LIBRARY` dresses a model's pieces by role. `worldCoordinates` (`src/texcoords.ts`) lays a
+texture at true scale where Core 18.3 does not: a roof along its slopes, the rest by a box
+projection, square roots only. See `docs/materials.md`.
+
 ## manifold-3d
 
 Pinned at **3.2.1**, the newest release with no dependencies (3.3 onwards pulls in the manifoldCAD

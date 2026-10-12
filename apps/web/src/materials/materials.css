@@ -227,3 +227,69 @@
   background-color: var(--color-fill-quiet);
   background-size: cover;
 }
+
+/* The material library (FLR-T-13.6; the board's frame 13c). Tokens only. */
+.fs-matlib {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+}
+.fs-matlib__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.fs-matlib__hint {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-matlib__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-matlib-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0 0 var(--space-12);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  color: var(--color-fg);
+}
+.fs-matlib-card__swatch {
+  display: block;
+  aspect-ratio: 12 / 7;
+  margin-bottom: var(--space-4);
+  background-position: center;
+}
+.fs-matlib-card__name,
+.fs-matlib-card__meta,
+.fs-matlib-card__actions {
+  padding: 0 var(--space-12);
+}
+.fs-matlib-card__name {
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+.fs-matlib-card__meta {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-matlib-card__actions {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.fs-matlib-source {
+  margin: 0 0 var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}

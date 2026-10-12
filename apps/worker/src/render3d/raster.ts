@@ -18,6 +18,7 @@
 import { groundAt, hazeAt, irradianceAt, skyRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
 import type { Vec3 } from '../export/gltf/scene.js';
 import type { Camera } from './camera.js';
+import { sampleLod, type Texture } from '../pathtrace/textures.js';
 
 /** Triangles to draw: nine floats each in metres (+Y up), with a colour and an outline key each. */
 export interface DrawList {
@@ -40,6 +41,17 @@ export interface DrawList {
   readonly bias: Uint8Array;
   /** One per triangle, when present: drawn in its own colour, unshaded — a luminaire's lens. */
   readonly unlit?: Uint8Array;
+  /**
+   * FLR-T-13.6: a base colour map per triangle, when present — its index in `maps`, or −1 — and six
+   * texture coordinates each (glTF's: v down the image). A mapped triangle's colour is white and the
+   * map's texel is its colour, sampled perspective-correct from the map's mip chain.
+   */
+  readonly map?: Int32Array;
+  /** Per triangle, when present: its normal map and its occlusion-roughness-metalness map, indices into `maps` or −1 — its relief, lit per pixel, and its occlusion. */
+  readonly relief?: Int32Array;
+  readonly occlusion?: Int32Array;
+  readonly uvs?: Float32Array;
+  readonly maps?: readonly (readonly Texture[])[];
   readonly count: number;
 }
 
@@ -75,6 +87,17 @@ export interface RasterSky {
   /** An even fill for the light the house and the lawn bounce (@floorspec/mesh `skyBounce`), lux, linear RGB. */
   readonly bounce?: Vec3;
   readonly areas?: readonly GroundArea[];
+}
+
+/** What a triangle's maps are, as it is filled (FLR-T-13.6). */
+interface Mapped {
+  readonly albedo: readonly Texture[] | undefined;
+  readonly relief: readonly Texture[] | undefined;
+  readonly occlusion: readonly Texture[] | undefined;
+  /** The normal map's frame and the light its relief is lit by (null: none, or no direct light). */
+  readonly frame: { readonly t: Vec3; readonly b: Vec3; readonly n: Vec3; readonly l: Vec3 | null } | null;
+  readonly lod: number;
+  readonly uv: readonly [readonly [number, number], readonly [number, number], readonly [number, number]];
 }
 
 /** Narkowicz's fit of the ACES filmic curve: the path tracer's. */
@@ -362,17 +385,36 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
   /** Clip a view-space polygon to the near plane and draw it. */
   const draw = (t: number, blend: boolean): void => {
     const poly: Vec3[] = [view(9 * t), view(9 * t + 3), view(9 * t + 6)];
+    const mi = list.map?.[t] ?? -1;
+    const ni = list.relief?.[t] ?? -1;
+    const oi = list.occlusion?.[t] ?? -1;
+    const albedoChain = mi >= 0 ? list.maps?.[mi] : undefined;
+    const reliefChain = ni >= 0 ? list.maps?.[ni] : undefined;
+    const occlusionChain = oi >= 0 ? list.maps?.[oi] : undefined;
+    // The chain that sets the level of detail, and whether the triangle has coordinates at all.
+    const chain = albedoChain ?? reliefChain ?? occlusionChain;
+    const U = list.uvs;
+    const uvIn: [number, number][] = chain === undefined || U === undefined ? [] : [0, 1, 2].map((j) => [U[6 * t + 2 * j]!, U[6 * t + 2 * j + 1]!]);
     const near = camera.near;
     const clipped: Vec3[] = [];
+    const uvOut: [number, number][] = [];
     for (let i = 0; i < poly.length; i++) {
       const a = poly[i]!;
       const b = poly[(i + 1) % poly.length]!;
       const ina = a[2] <= -near;
       const inb = b[2] <= -near;
-      if (ina) clipped.push(a);
+      if (ina) {
+        clipped.push(a);
+        if (chain !== undefined) uvOut.push(uvIn[i]!);
+      }
       if (ina !== inb) {
         const s = (-near - a[2]) / (b[2] - a[2]);
         clipped.push([a[0] + s * (b[0] - a[0]), a[1] + s * (b[1] - a[1]), -near]);
+        if (chain !== undefined) {
+          const ua = uvIn[i]!;
+          const ub = uvIn[(i + 1) % poly.length]!;
+          uvOut.push([ua[0] + s * (ub[0] - ua[0]), ua[1] + s * (ub[1] - ua[1])]);
+        }
       }
     }
     if (clipped.length < 3) return;
@@ -380,6 +422,20 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
       const w = -v[2];
       return [((v[0] * f) / aspect / w) * 0.5 * W + 0.5 * W, 0.5 * H - ((v[1] * f) / w) * 0.5 * H, 1 / w] as const;
     });
+    // The map's level of detail: texels a subpixel covers, from the whole polygon's areas on screen and in the map.
+    let lod = 0;
+    if (chain !== undefined) {
+      const base = chain[0]!;
+      let sa = 0;
+      let ua = 0;
+      for (let i = 1; i + 1 < screen.length; i++) {
+        const [p0, p1, p2] = [screen[0]!, screen[i]!, screen[i + 1]!];
+        sa += Math.abs((p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0])) / 2;
+        const [q0, q1, q2] = [uvOut[0]!, uvOut[i]!, uvOut[i + 1]!];
+        ua += Math.abs((q1[0] - q0[0]) * (q2[1] - q0[1]) - (q1[1] - q0[1]) * (q2[0] - q0[0])) / 2;
+      }
+      lod = sa > 0 ? 0.5 * Math.log2(Math.max(1e-12, (ua * base.width * base.height) / sa)) : 0;
+    }
     const lightOf = sky === undefined ? null : skyShade(t);
     const c = lightOf === null ? shadeOf(t) : lightOf.ambient;
     const alpha = list.alpha[t]!;
@@ -388,10 +444,34 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
     // The sun's share, where the shadow map says it reaches: a face turned from it has none.
     const direct = lightOf === null || shadows === null || (lightOf.direct[0] === 0 && lightOf.direct[1] === 0 && lightOf.direct[2] === 0) ? null : lightOf.direct;
     const bias = lightOf === null || sky === undefined || sky.sun === null ? 0 : 0.03 + 0.05 * Math.sqrt(Math.max(0, 1 - dot(lightOf.n, sky.sun.dir) ** 2));
-    for (let i = 1; i + 1 < screen.length; i++) fill(screen[0]!, screen[i]!, screen[i + 1]!, c, alpha, k, blend, lift, direct, bias);
+    // A normal map's frame on this triangle, in the world: the tangent along u, the bitangent up the
+    // tile (glTF's v runs down its image), the face's normal turned to the camera.
+    let frame: { t: Vec3; b: Vec3; n: Vec3; l: Vec3 | null } | null = null;
+    if (reliefChain !== undefined && U !== undefined) {
+      const p = (j: number): Vec3 => [P[9 * t + 3 * j]!, P[9 * t + 3 * j + 1]!, P[9 * t + 3 * j + 2]!];
+      const e1 = sub(p(1), p(0));
+      const e2 = sub(p(2), p(0));
+      const du1 = U[6 * t + 2]! - U[6 * t]!, dv1 = U[6 * t + 3]! - U[6 * t + 1]!;
+      const du2 = U[6 * t + 4]! - U[6 * t]!, dv2 = U[6 * t + 5]! - U[6 * t + 1]!;
+      const det = du1 * dv2 - du2 * dv1;
+      let n: Vec3 = [list.normals[3 * t]!, list.normals[3 * t + 1]!, list.normals[3 * t + 2]!];
+      if (dot(n, sub(camera.eye, p(0))) < 0) n = [-n[0], -n[1], -n[2]];
+      if (Math.abs(det) > 1e-12) {
+        const tan = norm([(e1[0] * dv2 - e2[0] * dv1) / det, (e1[1] * dv2 - e2[1] * dv1) / det, (e1[2] * dv2 - e2[2] * dv1) / det]);
+        let bit = cross(n, tan);
+        const up: Vec3 = [-(e2[0] * du1 - e1[0] * du2) / det, -(e2[1] * du1 - e1[1] * du2) / det, -(e2[2] * du1 - e1[2] * du2) / det];
+        if (dot(bit, up) < 0) bit = [-bit[0], -bit[1], -bit[2]];
+        frame = { t: tan, b: bit, n, l: sky === undefined ? light : sky.sun === null ? null : sky.sun.dir };
+      }
+    }
+    for (let i = 1; i + 1 < screen.length; i++) {
+      const tex = chain === undefined ? null : { albedo: albedoChain, relief: reliefChain, occlusion: occlusionChain, frame, lod, uv: [uvOut[0]!, uvOut[i]!, uvOut[i + 1]!] as const };
+      fill(screen[0]!, screen[i]!, screen[i + 1]!, c, alpha, k, blend, lift, direct, bias, tex);
+    }
   };
 
-  const fill = (a: readonly [number, number, number], b: readonly [number, number, number], c: readonly [number, number, number], rgb: Vec3, alpha: number, k: number, blend: boolean, lift: number, direct: Vec3 | null = null, bias = 0): void => {
+  const texel = new Float64Array(3);
+  const fill = (a: readonly [number, number, number], b: readonly [number, number, number], c: readonly [number, number, number], rgb: Vec3, alpha: number, k: number, blend: boolean, lift: number, direct: Vec3 | null = null, bias = 0, tex: Mapped | null = null): void => {
     const area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
     if (Math.abs(area) < 1e-12) return;
     const minX = Math.max(0, Math.floor(Math.min(a[0], b[0], c[0])));
@@ -417,11 +497,63 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
         let r0 = rgb[0];
         let g0 = rgb[1];
         let b0 = rgb[2];
+        // FLR-T-13.6: a mapped surface's texel (perspective-correct: each corner's coordinates over its
+        // distance, interpolated, over 1 / distance interpolated), its relief lit by the key light or
+        // the sun, and its occlusion on the light round it.
+        let relief = 1;
+        let ao = 1;
+        if (tex !== null) {
+          const za = w0 * a[2];
+          const zb = w1 * b[2];
+          const zc = w2 * c[2];
+          const zs = za + zb + zc;
+          const u = (za * tex.uv[0][0] + zb * tex.uv[1][0] + zc * tex.uv[2][0]) / zs;
+          const v = (za * tex.uv[0][1] + zb * tex.uv[1][1] + zc * tex.uv[2][1]) / zs;
+          if (tex.occlusion !== undefined) {
+            sampleLod(tex.occlusion, u, v, tex.lod, texel);
+            ao = texel[0]!;
+          }
+          const f0 = tex.frame;
+          if (tex.relief !== undefined && f0 !== null && f0.l !== null) {
+            sampleLod(tex.relief, u, v, tex.lod, texel);
+            const nx = texel[0]! * 2 - 1;
+            const ny = texel[1]! * 2 - 1;
+            const nz = texel[2]! * 2 - 1;
+            const sx = f0.t[0] * nx + f0.b[0] * ny + f0.n[0] * nz;
+            const sy = f0.t[1] * nx + f0.b[1] * ny + f0.n[1] * nz;
+            const sz = f0.t[2] * nx + f0.b[2] * ny + f0.n[2] * nz;
+            const sl = Math.hypot(sx, sy, sz) || 1;
+            const flat = dot(f0.n, f0.l);
+            const bumped = (sx * f0.l[0] + sy * f0.l[1] + sz * f0.l[2]) / sl;
+            relief = flat > 0.02 ? Math.max(0, Math.min(2.5, bumped / flat)) : 1;
+          }
+          if (direct === null) {
+            // The studio's light, every part of it one shade: the relief on a part of it, the occlusion on the rest.
+            const k2 = (0.6 + 0.4 * relief) * (0.55 + 0.45 * ao);
+            r0 *= k2;
+            g0 *= k2;
+            b0 *= k2;
+          } else {
+            r0 *= ao;
+            g0 *= ao;
+            b0 *= ao;
+          }
+        }
         if (direct !== null && shadows !== null) {
-          const s = lit(shadows, worldAt(x, y, z / lift), bias);
+          const s = lit(shadows, worldAt(x, y, z / lift), bias) * relief * (0.5 + 0.5 * ao);
           r0 += direct[0] * s;
           g0 += direct[1] * s;
           b0 += direct[2] * s;
+        }
+        if (tex?.albedo !== undefined) {
+          const za = w0 * a[2];
+          const zb = w1 * b[2];
+          const zc = w2 * c[2];
+          const zs = za + zb + zc;
+          sampleLod(tex.albedo, (za * tex.uv[0][0] + zb * tex.uv[1][0] + zc * tex.uv[2][0]) / zs, (za * tex.uv[0][1] + zb * tex.uv[1][1] + zc * tex.uv[2][1]) / zs, tex.lod, texel);
+          r0 *= texel[0]!;
+          g0 *= texel[1]!;
+          b0 *= texel[2]!;
         }
         if (blend) {
           color[o] = color[o]! * (1 - alpha) + r0 * alpha;

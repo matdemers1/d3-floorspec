@@ -383,6 +383,9 @@ importers:
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../engine
+      '@floorspec/mesh':
+        specifier: workspace:*
+        version: link:../mesh
       '@modelcontextprotocol/server':
         specifier: 2.1.0
         version: 2.1.0

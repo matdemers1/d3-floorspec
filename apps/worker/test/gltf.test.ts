@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { evaluate, facingVector, OFFICIAL_READER } from '@floorspec/engine';
 import { DECOR_ROLES, LANDSCAPE_ROLES, MODEL_ROLES, ROLE_LOOKS } from '@floorspec/mesh';
+import { roleMaterial } from '@floorspec/mesh/materials';
 import { validateBytes } from 'gltf-validator';
 import { describe, expect, it } from 'vitest';
 import { assetDirImages, assetDirModels, buildScene, exportGltf, exportUsdz, linear, readGlb, readStoreZip, type ImageSource } from '../src/export/gltf/index.js';
@@ -378,7 +379,7 @@ describe('glTF export', () => {
     const doc = load(here('../../../packages/mesh/test/fixtures/showcase.floorspec.json'));
     const bytes = (await exportGltf(doc, VERSION)).bytes;
     const glb = readGlb(bytes);
-    type Material = { pbrMetallicRoughness: { baseColorFactor: number[]; metallicFactor: number }; emissiveFactor?: number[]; alphaMode?: string; extras: { floorspec: Json } };
+    type Material = { pbrMetallicRoughness: { baseColorFactor: number[]; metallicFactor: number; baseColorTexture?: { index: number } }; normalTexture?: unknown; emissiveFactor?: number[]; alphaMode?: string; extras: { floorspec: Json } };
     const byRole = new Map((glb.json['materials'] as Material[]).filter((m) => typeof m.extras.floorspec['role'] === 'string').map((m) => [m.extras.floorspec['role'] as string, m]));
     // Every role but the ones only an opening's joinery is made of (FLR-T-13.8) — the showcase has no
     // openings — the landscape's (FLR-T-13.5), which it has no garden for, and decor's (FLR-T-13.11), which it has none of.
@@ -386,6 +387,14 @@ describe('glTF export', () => {
     for (const [role, m] of byRole) {
       const look = ROLE_LOOKS[role as keyof typeof ROLE_LOOKS];
       const [r, g, b] = linear(look.color);
+      // A role the material library dresses (FLR-T-13.6) is its item's maps, the texel its colour.
+      const item = roleMaterial(role as keyof typeof ROLE_LOOKS);
+      if (item?.texture !== undefined) {
+        expect(m.pbrMetallicRoughness.baseColorTexture, role).toBeDefined();
+        expect(m.normalTexture, role).toBeDefined();
+        expect(m.pbrMetallicRoughness.baseColorFactor.slice(0, 3), role).toEqual([1, 1, 1]);
+        continue;
+      }
       expect(m.pbrMetallicRoughness.baseColorFactor.slice(0, 3).map((c) => c.toFixed(5)), role).toEqual([r, g, b].map((c) => c.toFixed(5)));
       expect(m.pbrMetallicRoughness.metallicFactor, role).toBeCloseTo(look.metallic, 6);
       expect(m.emissiveFactor !== undefined, role).toBe(look.emissive === true);

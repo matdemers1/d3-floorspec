@@ -5,6 +5,7 @@
 import { buildScene, type Scene, type SceneOptions } from './scene.js';
 import { writeGlb, type ImageSource } from './glb.js';
 import { writeUsdz } from './usdz.js';
+import { withLibrary } from './library.js';
 
 export { buildScene, buildSceneFrom, sceneOf, getMesher, linear, tileUV, DEFAULTS, MAP_ROLES, type Scene, type SceneMaterial, type SceneNode, type ScenePrimitive, type SceneLevel, type SceneRoom, type SceneDoor, type SceneObstacle, type SceneOptions, type ElementKind, type Vec3 } from './scene.js';
 export { writeGlb, readGlb, type GlbOptions, type GlbResult, type ImageSource, type ModelsReport } from './glb.js';
@@ -12,6 +13,7 @@ export { writeUsdz, usdaOf, type UsdzResult } from './usdz.js';
 export { storeZip, readStoreZip } from './zip.js';
 export { assetDirImages, assetDirModels, looksLike } from './assets.js';
 export { mergeModel, type MergeTarget, type MergedModel } from './merge.js';
+export { libraryBytes, withLibrary } from './library.js';
 
 export interface VersionFacts {
   readonly hash: string;
@@ -65,7 +67,7 @@ function summaryOf(scene: Scene, extra: Record<string, unknown>): Record<string,
 /** glTF 2.0 binary: +Y up, metres, PBR materials, a node per element. */
 export async function exportGltf(document: object, options: ModelExportOptions): Promise<ModelFile> {
   const scene = await buildScene(document, options);
-  const glb = writeGlb(scene, { generator: GENERATOR, about: about(scene, options), ...(options.images === undefined ? {} : { images: options.images }), ...(options.models === undefined ? {} : { models: options.models }) });
+  const glb = writeGlb(scene, { generator: GENERATOR, about: about(scene, options), images: withLibrary(options.images), ...(options.models === undefined ? {} : { models: options.models }) });
   return {
     name: fileName(scene, options.version, 'glb'),
     contentType: 'model/gltf-binary',
@@ -77,7 +79,7 @@ export async function exportGltf(document: object, options: ModelExportOptions):
 /** USDZ for AR Quick Look: a USDA root layer, UsdPreviewSurface materials, metres, +Y up. */
 export async function exportUsdz(document: object, options: ModelExportOptions): Promise<ModelFile> {
   const scene = await buildScene(document, options);
-  const usdz = writeUsdz(scene, { about: about(scene, options), ...(options.images === undefined ? {} : { images: options.images }) });
+  const usdz = writeUsdz(scene, { about: about(scene, options), images: withLibrary(options.images) });
   return {
     name: fileName(scene, options.version, 'usdz'),
     contentType: 'model/vnd.usdz+zip',

@@ -12,6 +12,7 @@
  */
 import { buildScene, type Scene, type SceneOptions, type Vec3 } from '../export/gltf/scene.js';
 import type { ImageSource } from '../export/gltf/glb.js';
+import { withLibrary } from '../export/gltf/library.js';
 import { linear } from '../export/gltf/scene.js';
 import { findRoom, PRESETS, presetCamera, roomCamera, type Camera, type Preset } from '../render3d/camera.js';
 import { encodePng } from '../render3d/png.js';
@@ -168,7 +169,7 @@ export function lampsOf(scene: Scene, drawn: (level: string) => boolean = () => 
 }
 
 /** The scene's triangles as the tracer reads them, cut away above `level`, on a ground plate — with its lamps, when they are on. */
-export function ptScene(scene: Scene, options: { level?: string; textures?: ReadonlyMap<number, Texture>; lights?: Lights; plate?: boolean } = {}): PtScene & { readonly floor: number; readonly plate: boolean } {
+export function ptScene(scene: Scene, options: { level?: string; textures?: ReadonlyMap<number, Texture | MaterialMaps>; lights?: Lights; plate?: boolean } = {}): PtScene & { readonly floor: number; readonly plate: boolean } {
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
   const cut = options.level === undefined ? undefined : order.get(options.level);
   const pos: number[] = [];
@@ -178,11 +179,16 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
   const fixtures = new Map(scene.lights.map((l, i) => [l.id, i]));
   const own: number[] = [];
   const materials: PtMaterial[] = scene.materials.map((m, i) => {
-    const t = options.textures?.get(i);
+    const got = options.textures?.get(i);
+    const maps: MaterialMaps = got === undefined ? {} : 'data' in got ? { albedo: got } : got;
+    const t = maps.albedo;
     return {
       rgb: [m.baseColor[0], m.baseColor[1], m.baseColor[2]],
       glass: m.blend,
       ...(t === undefined ? {} : { texture: t }),
+      // FLR-T-13.6: roughness and metalness (Core 18.1: a map's channel times a declared factor), and the surface's relief.
+      ...(maps.orm === undefined ? { roughness: m.roughness, metallic: m.metallic } : { orm: maps.orm, roughness: (m.declared.roughness ?? 1000) / 1000, metallic: (m.declared.metallic ?? 1000) / 1000 }),
+      ...(maps.normal === undefined ? {} : { normalMap: maps.normal }),
       ...(m.emissive === undefined ? {} : { lens: true }),
       ...(m.emissive === undefined || options.lights === 'off' ? {} : { emission: [m.emissive[0] * LENS, m.emissive[1] * LENS, m.emissive[2] * LENS] as Vec3 }),
     };
@@ -278,22 +284,42 @@ function cameraFor(scene: Scene, pt: PtScene & { readonly plate: boolean }, opti
   return presetCamera(options.camera ?? 'sw', box, aspect);
 }
 
-/** Decode every base-colour map the scene's materials name and the store has. */
-function texturesOf(scene: Scene, images: ImageSource | undefined): { textures: Map<number, Texture>; used: string[]; missing: string[] } {
-  const textures = new Map<number, Texture>();
+/** A material's maps as the tracer reads them (FLR-T-13.6): its base colour, its normals, and occlusion-roughness-metalness. */
+export interface MaterialMaps {
+  readonly albedo?: Texture;
+  readonly normal?: Texture;
+  /** Occlusion in red, roughness in green, metalness in blue — glTF's channels (Core 18.2). */
+  readonly orm?: Texture;
+}
+
+/**
+ * Decode every map the scene's materials name and the store (or the material library, FLR-T-13.6)
+ * has: base colour, normal, and metallic-roughness with occlusion — each file once, however many
+ * materials share it. `used` and `missing` list base colour maps, as they always have.
+ */
+export function texturesOf(scene: Scene, images: ImageSource | undefined): { textures: Map<number, MaterialMaps>; used: string[]; missing: string[] } {
+  const textures = new Map<number, MaterialMaps>();
   const used = new Set<string>();
   const missing = new Set<string>();
-  scene.materials.forEach((m, i) => {
-    const id = m.texture?.maps.asset;
-    if (id === undefined) return;
+  const decoded = new Map<string, Texture | undefined>();
+  const read = (id: string | undefined, encoding: 'srgb' | 'linear'): Texture | undefined => {
+    if (id === undefined) return undefined;
+    const key = `${encoding}:${id}`;
+    if (decoded.has(key)) return decoded.get(key);
     const asset = scene.assets[id];
     const bytes = asset === undefined || images === undefined ? undefined : images({ id, sha256: asset.sha256, mediaType: asset.mediaType });
-    const t = bytes === undefined || asset === undefined ? undefined : decodeTexture(bytes, asset.mediaType);
-    if (t === undefined) missing.add(id);
-    else {
-      textures.set(i, t);
-      used.add(id);
-    }
+    const t = bytes === undefined || asset === undefined ? undefined : decodeTexture(bytes, asset.mediaType, encoding);
+    decoded.set(key, t);
+    return t;
+  };
+  scene.materials.forEach((m, i) => {
+    const maps = m.texture?.maps;
+    if (maps === undefined) return;
+    const albedo = read(maps.asset, 'srgb');
+    if (maps.asset !== undefined) (albedo === undefined ? missing : used).add(maps.asset);
+    const normal = read(maps.normal, 'linear');
+    const orm = read(maps.metallicRoughness, 'linear');
+    if (albedo !== undefined || normal !== undefined || orm !== undefined) textures.set(i, { ...(albedo === undefined ? {} : { albedo }), ...(normal === undefined ? {} : { normal }), ...(orm === undefined ? {} : { orm }) });
   });
   return { textures, used: [...used].sort(), missing: [...missing].sort() };
 }
@@ -314,7 +340,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   const [width, height] = options.pixels === undefined ? SIZES[size] : [options.pixels.width, options.pixels.height];
   const samples = options.samples ?? QUALITIES[quality];
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 8 || height < 8 || width * height * samples > MAX_WORK) throw new RangeError('the still is too big');
-  const maps = texturesOf(scene, options.images);
+  const maps = texturesOf(scene, withLibrary(options.images));
   const sky = options.skyLight;
   const pt = ptScene(scene, { ...(options.room === undefined && options.level !== undefined ? { level: options.level } : {}), textures: maps.textures, ...(options.lights === undefined ? {} : { lights: options.lights }), plate: sky === undefined });
   const camera = cameraFor(scene, pt, options, width / height);

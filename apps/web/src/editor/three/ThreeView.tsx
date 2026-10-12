@@ -13,7 +13,7 @@ import { FOV, ThreeController } from './controller';
 import { useHouseMesh } from './meshing';
 import { threeOf, useThreeState, type LevelsShown, type ThreeStore, type WalkStart } from './mode';
 import { castsShadow, describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
-import { isSurfacePart, surfaceBuffers, type MapRef } from './surfaces';
+import { isSurfacePart, mappedPartBuffers, surfaceBuffers, type MapRef } from './surfaces';
 import { TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
 import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
@@ -112,6 +112,20 @@ function buildParts(model: EditorModel, mesh: HouseMesh): Built[] {
       geometry.computeBoundingBox();
       geometry.computeBoundingSphere();
       return { part, geometry, look, triangles: b.positions.length / 9, slots: b.groups.map((g) => g.map) };
+    }
+    // A roof, a slab, a gable end in a mapped material, and a model's piece the material library
+    // dresses (FLR-T-13.6): flat-shaded, with world-scale coordinates.
+    const mapped = look === 'pick' || look === 'lens' ? null : mappedPartBuffers(model, mesh, part, (n) => faceColours(model, part, n, walls));
+    if (mapped !== null) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(mapped.positions, 3));
+      geometry.setAttribute('normal', new THREE.BufferAttribute(mapped.normals, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(mapped.colors, 3));
+      geometry.setAttribute('uv', new THREE.BufferAttribute(mapped.uvs, 2));
+      mapped.groups.forEach((g, i) => { geometry.addGroup(g.start, g.count, i); });
+      geometry.computeBoundingBox();
+      geometry.computeBoundingSphere();
+      return { part, geometry, look, triangles: mapped.positions.length / 9, slots: mapped.groups.map((g) => g.map) };
     }
     const { positions, normals } = flatShaded(part.mesh);
     const geometry = new THREE.BufferGeometry();
@@ -989,7 +1003,8 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
       get textured() {
         return built.flatMap((b) =>
           (b.slots ?? []).flatMap((m, i) => {
-            if (m === null) return [];
+            // A document material's maps (a model's piece in its role's library material is the view's own).
+            if (m === null || m.material.startsWith('role:')) return [];
             const g = b.geometry.groups[i];
             const uv = b.geometry.getAttribute('uv');
             let [u0, u1, v0, v1] = [Infinity, -Infinity, Infinity, -Infinity];
