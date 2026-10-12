@@ -24,7 +24,7 @@
  */
 import { deriveEvaluation, evaluate, extElements, facingVector, furniture, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { appearanceOf, decorFamily, DEFAULT_COLOURS, libraryItemOf, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch, type DoorState } from '@floorspec/mesh';
-import { isLibraryGlass, LIBRARY_FILES, packagePathOf, roleMaterial, textureMembers } from '@floorspec/mesh/materials';
+import { assetIdOf, isLibraryGlass, LIBRARY_FILES, packagePathOf, roleMaterial, textureMembers } from '@floorspec/mesh/materials';
 import { ALL_ON, isSlope, lensGlows, slopeST, type Lighting } from '@floorspec/mesh';
 import { relight } from './relight.js';
 import { decodeTexture } from '../../pathtrace/textures.js';
@@ -323,7 +323,7 @@ class Materials {
     if (item?.texture !== undefined) {
       const maps: Partial<Record<MapRole, string>> = {};
       for (const [member, file] of Object.entries(textureMembers(item.texture.maps)) as [MapRole, string][]) {
-        maps[member] = `library:${file}`;
+        maps[member] = `library:${assetIdOf(file)}`;
         this.library.add(file);
       }
       texture = { size: [item.texture.size[0], item.texture.size[1]], offset: [0, 0], rotation: 0, maps };
@@ -804,7 +804,7 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
   // The library's maps a model's pieces are drawn in (FLR-T-13.6): its files, by digest.
   for (const file of [...materials.library].sort()) {
     const f = LIBRARY_FILES[file]!;
-    assets[`library:${file}`] = { sha256: f.sha256, mediaType: f.mediaType, path: packagePathOf(f) };
+    assets[`library:${assetIdOf(file)}`] = { sha256: f.sha256, mediaType: f.mediaType, path: packagePathOf(f) };
   }
 
   // FLR-T-13.12: the lamps the lighting turns on, and the lenses of those it turns off, dims or recolours.
