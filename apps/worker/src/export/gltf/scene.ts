@@ -21,7 +21,7 @@
  * this exporter's choice and not the standard's.
  */
 import { deriveEvaluation, evaluate, extElements, facingVector, furniture, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
-import { appearanceOf, DEFAULT_COLOURS, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch, type DoorState } from '@floorspec/mesh';
+import { appearanceOf, decorFamily, DEFAULT_COLOURS, libraryItemOf, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch, type DoorState } from '@floorspec/mesh';
 import { decodeTexture } from '../../pathtrace/textures.js';
 import type { ImageSource } from './glb.js';
 
@@ -169,6 +169,11 @@ export interface SceneObstacle {
   /** The box's bottom and top, metres. */
   readonly bottom: number;
   readonly top: number;
+  /**
+   * Decor from the FS_furniture starter library (FLR-T-13.11) — a rug, a picture, a lamp, a cushion:
+   * what dresses a room, not what it holds, so no camera is aimed by it, and a rug is walked on.
+   */
+  readonly decor?: true;
 }
 
 export interface Scene {
@@ -772,7 +777,7 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
     bounds: builders.size === 0 ? null : { min, max },
     rooms: roomsOf(doc, derived),
     doors: doorsOf(derived, parts, frameOf),
-    obstacles: obstaclesOf(derived),
+    obstacles: obstaclesOf(doc, derived),
     lights: lightsOf(doc, derived).map((l) => ({
       id: l.id,
       level: l.level,
@@ -838,18 +843,24 @@ function roomsOf(doc: FloorspecDocument, derived: Derived): SceneRoom[] {
   return out;
 }
 
-function obstaclesOf(derived: Derived): SceneObstacle[] {
+function obstaclesOf(doc: FloorspecDocument, derived: Derived): SceneObstacle[] {
+  const elements = new Map(extElements(doc).map((e) => [e.id, e.element as unknown as Record<string, unknown>]));
   return Object.entries(derived.fallbacks ?? {})
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([id, f]) => ({
-      id,
-      level: f.level,
-      extension: f.extension,
-      collection: f.collection,
-      footprint: f.footprint.map(([x, y]) => [x / M, y / M] as [number, number]),
-      bottom: f.bottom / M,
-      top: f.top / M,
-    }));
+    .map(([id, f]) => {
+      const el = elements.get(id);
+      const decor = f.extension === 'FS_furniture' && el !== undefined && el['category'] === 'other' && decorFamily(libraryItemOf(doc, el)) !== undefined;
+      return {
+        id,
+        level: f.level,
+        extension: f.extension,
+        collection: f.collection,
+        footprint: f.footprint.map(([x, y]) => [x / M, y / M] as [number, number]),
+        bottom: f.bottom / M,
+        top: f.top / M,
+        ...(decor ? { decor: true as const } : {}),
+      };
+    });
 }
 
 function doorsOf(derived: Derived, parts: readonly MeshPart[], frameOf: (id: string) => WallFrame | undefined): SceneDoor[] {

@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileS
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { evaluate, facingVector, OFFICIAL_READER } from '@floorspec/engine';
-import { MODEL_ROLES, ROLE_LOOKS } from '@floorspec/mesh';
+import { DECOR_ROLES, MODEL_ROLES, ROLE_LOOKS } from '@floorspec/mesh';
 import { validateBytes } from 'gltf-validator';
 import { describe, expect, it } from 'vitest';
 import { assetDirImages, assetDirModels, buildScene, exportGltf, exportUsdz, linear, readGlb, readStoreZip, type ImageSource } from '../src/export/gltf/index.js';
@@ -380,8 +380,9 @@ describe('glTF export', () => {
     const glb = readGlb(bytes);
     type Material = { pbrMetallicRoughness: { baseColorFactor: number[]; metallicFactor: number }; emissiveFactor?: number[]; alphaMode?: string; extras: { floorspec: Json } };
     const byRole = new Map((glb.json['materials'] as Material[]).filter((m) => typeof m.extras.floorspec['role'] === 'string').map((m) => [m.extras.floorspec['role'] as string, m]));
-    // Every role but the ones only an opening's joinery is made of (FLR-T-13.8): the showcase has no openings.
-    expect([...byRole.keys()].sort()).toEqual(MODEL_ROLES.filter((r) => r !== 'door' && r !== 'frame' && r !== 'millwork').sort());
+    // Every role but the ones only an opening's joinery is made of (FLR-T-13.8) — the showcase has no
+    // openings — and those only decor is (FLR-T-13.11): it has none.
+    expect([...byRole.keys()].sort()).toEqual(MODEL_ROLES.filter((r) => r !== 'door' && r !== 'frame' && r !== 'millwork' && !DECOR_ROLES.includes(r)).sort());
     for (const [role, m] of byRole) {
       const look = ROLE_LOOKS[role as keyof typeof ROLE_LOOKS];
       const [r, g, b] = linear(look.color);

@@ -136,6 +136,24 @@ class MemoryClient implements FloorspecClient {
       candidates: [candidate(1, 97.56, 'Bedroom wing along a hall'), candidate(2, 97.23, 'Compact, no hall'), candidate(3, 96.88, 'Split bedrooms')],
     });
   }
+  proposeStaging(projectId: string, input: { rooms?: readonly string[] }) {
+    this.record('proposeStaging', projectId, input);
+    return Promise.resolve({
+      main: PROJECT.head,
+      changeset: { id: 'cs-s', name: 'Staging: Great room', status: 'pending' as const, base: PROJECT.head, head: 's'.repeat(64), ops: 1 },
+      proposal: {
+        name: 'Staging: Great room',
+        explanation: ['Stages Great room with 2 pieces of decor from the FS_furniture starter library (CC0).', 'Great room: a 3000 × 2000 mm rug under the seating group and a floor lamp beside the sofa.'],
+        added: [
+          { id: 'R7-RUG1', item: 'rug-3000x2000', room: 'R7', rule: 'under the seating group', with: 'GR-SOFA' },
+          { id: 'R7-LAMP1', item: 'lamp-floor-1600', room: 'R7', rule: 'beside the sofa', with: 'GR-SOFA' },
+        ],
+        rooms: ['R7'],
+        notes: [],
+        ops: 6,
+      },
+    });
+  }
   proposeElectrical(projectId: string, input: { rooms?: readonly string[] }) {
     this.record('proposeElectrical', projectId, input);
     return Promise.resolve({
@@ -289,6 +307,19 @@ describe('the MCP server', () => {
     expect(texts(unnamed)).toContain('Name the changeset');
   });
 
+  it('lets the staging assistant dress a room as a changeset', async () => {
+    const client = new MemoryClient();
+    const mcp = await connect(client);
+    const result = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'staging', rooms: ['Great room'] } });
+    expect(result.isError, texts(result)).toBeFalsy();
+    expect(client.calls.at(-1)).toEqual({ method: 'proposeStaging', args: [PROJECT.id, { rooms: ['Great room'] }] });
+    const said = texts(result);
+    expect(said).toContain('Changeset "Staging: Great room" (cs-s) is pending: 2 pieces of decor from the staging assistant. Main has not changed until a person accepts it.');
+    expect(said).toContain('- Great room: a 3000 × 2000 mm rug under the seating group');
+    const both = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'staging', batch: [] } });
+    expect(both.isError).toBe(true);
+  });
+
   it('keeps tools/list within its budget', async () => {
     const mcp = await connect(new MemoryClient());
     const listing = await mcp.listTools();
@@ -297,7 +328,8 @@ describe('the MCP server', () => {
     // Was ~57 KB (130 KB pretty) with the operation union inlined at every member, twice over.
     // 25 KB → 26 KB for the twelfth verb, floorspec_create_project (~400 bytes). FLR-T-12.25 paid
     // for the furniture catalogue and an opening's `at` (its near edge) by trimming other text, and
-    // FLR-T-12.22 for floorspec_render's `lights` the same way, and FLR-T-13.8 for its `doors`.
+    // FLR-T-12.22 for floorspec_render's `lights` the same way, and FLR-T-13.8 for its `doors`, and
+    // FLR-T-13.11 for floorspec_propose's assistant "staging" (floorspec_propose_layouts said shorter).
     expect(size).toBeLessThan(26_000);
   });
 

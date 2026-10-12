@@ -31,6 +31,7 @@
  * no trigonometry — a spot's cone is the cosines of its angles, written out.
  */
 import { extElements, type Derived, type FloorspecDocument } from '@floorspec/engine';
+import { decorFamily, LAMP_SHADES, libraryItemOf } from './models/decor.js';
 import { ceilingDome } from './models/electrical.js';
 import { corners } from './models/sketch.js';
 import { elementKind } from './models/kinds.js';
@@ -90,6 +91,12 @@ export const DEFAULT_LUMENS: Readonly<Record<string, number>> = {
   exterior: 600,
 };
 const FALLBACK_LUMENS = 800;
+
+/**
+ * A decor lamp's light (FLR-T-13.11): a floor lamp with a 1100 lm bulb (a 75 W incandescent's), a
+ * table lamp with 450 lm (a 40 W one's) — warm, under a shade, the light a staged room is lit by.
+ */
+export const LAMP_LUMENS: Readonly<Record<string, number>> = { floorLamp: 1100, tableLamp: 450 };
 
 /**
  * How every view exposes a picture (FLR-T-13.1): what its tone curve is given for each cd/m² of
@@ -178,7 +185,7 @@ const CLEAR = 5 * MM;
 /** Under a recessed light's trim, from its box's top. */
 const TRIM = 15 * MM;
 
-/** Every FS_electrical light's light, in ID order. */
+/** Every FS_electrical light's light, in ID order; then every decor lamp's (FLR-T-13.11). */
 export function lightsOf(doc: FloorspecDocument, derived: Derived): FixtureLight[] {
   const out: FixtureLight[] = [];
   const electrical = derived.extensions?.FS_electrical;
@@ -231,6 +238,36 @@ export function lightsOf(doc: FloorspecDocument, derived: Derived): FixtureLight
       color: kelvinColor(kelvin),
       room: roomOf.get(e.id) ?? null,
       switches: [...(electrical?.controls[e.id] ?? [])].sort(),
+    });
+  }
+  // The floor and table lamps of FS_furniture's starter library (FLR-T-13.11): plugged in, not wired,
+  // so no switch; each shines every way from the middle of its shade, which glows and, like a
+  // luminaire's own fixture, never shadows its lamp.
+  const furnitureItems = derived.extensions?.FS_furniture?.items;
+  for (const e of extElements(doc)) {
+    if (e.extension !== 'FS_furniture' || e.collection !== 'pieces') continue;
+    const element = e.element as unknown as Record<string, unknown>;
+    if (element['category'] !== 'other') continue;
+    const family = decorFamily(libraryItemOf(doc, element));
+    const shade = family === undefined ? undefined : LAMP_SHADES[family];
+    const f = derived.fallbacks?.[e.id];
+    if (shade === undefined || f === undefined || f.top <= f.bottom) continue;
+    const ring = f.footprint;
+    const cx = (ring[0]![0] + ring[1]![0] + ring[2]![0] + ring[3]![0]) / 4;
+    const cy = (ring[0]![1] + ring[1]![1] + ring[2]![1] + ring[3]![1]) / 4;
+    const fixture = family === 'lamp-floor' ? 'floorLamp' : 'tableLamp';
+    out.push({
+      id: e.id,
+      level: f.level,
+      fixture,
+      position: [Math.round(cx), Math.round(cy), Math.round(f.bottom + ((f.top - f.bottom) * (shade[0] + shade[1])) / 2)],
+      radius: 25 * MM,
+      direction: 'omni',
+      lumens: LAMP_LUMENS[fixture]!,
+      kelvin: 2700,
+      color: kelvinColor(2700),
+      room: furnitureItems?.[e.id]?.room ?? null,
+      switches: [],
     });
   }
   return out;

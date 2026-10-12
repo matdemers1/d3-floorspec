@@ -9,7 +9,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const LIB = new URL('../../engine/standard/registry/FS_furniture/library/', import.meta.url);
-const OUT = new URL('../src/library/fs-furniture-0.1.0.json', import.meta.url);
+const OUT = new URL('../src/library/fs-furniture-0.2.0.json', import.meta.url);
 
 const library = JSON.parse(readFileSync(new URL('library.json', LIB), 'utf8'));
 const files = {};

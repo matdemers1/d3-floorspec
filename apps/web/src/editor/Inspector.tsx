@@ -52,6 +52,7 @@ import {
 import { ThreeSection } from './three/ThreeSection';
 import { SiteSection } from './three/sun/SiteFields';
 import { FurnitureBody } from '../furniture/Inspector';
+import { StagingSection } from './systems/Staging';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -807,6 +808,7 @@ function RoomBody({ ctx, focusName }: { ctx: Ctx; focusName: boolean }) {
         {finish('wall', 'Walls')}
         {finish('ceiling', 'Ceiling')}
       </Section>
+      <StagingSection store={ctx.store} room={id} readOnly={readOnly} />
     </>
   );
 }

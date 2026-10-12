@@ -180,6 +180,12 @@ const EXERCISES: Record<string, Exercise> = {
     // A plan with no rooms: nothing to propose, and the request is still audited.
     return { reply: await operator.post(`/api/projects/${id}/assistants/electrical`, {}), action: 'assistants.electrical.propose' };
   },
+  'POST /api/projects/:projectId/assistants/staging': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    // A plan with no rooms: nothing to stage, and the request is still audited.
+    return { reply: await operator.post(`/api/projects/${id}/assistants/staging`, {}), action: 'assistants.staging.propose' };
+  },
   'POST /api/projects/:projectId/changesets/:changesetId/accept': async ({ running }) => {
     const operator = await setupOperator(running);
     const { id } = await createProjectAs(operator);

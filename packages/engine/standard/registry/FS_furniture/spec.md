@@ -416,7 +416,14 @@ position is on a location line; and no room otherwise.
 This chapter is informative.
 
 `registry/FS_furniture/library/` holds a starter library: generic furniture, appliances and
-casework, each an FS_furniture element ready to place. `library.json` lists each item by an ID such
+casework, and — since the library's 0.2.0 — decor: rugs, wall art and a mirror, floor and table
+lamps, indoor plants, cushions and throws, curtains and a blind, a media console and a television,
+books, and kitchen and bath accessories. Each is an FS_furniture element ready to place. No
+category of 2.5 names a rug or a lamp, so the decor is of category `other` (the media console is a
+`mediaUnit`), mounted as `other` is, and placed with whatever host suits it: a rug on a floor, art
+or curtains on a wall face at the height they hang, a lamp on a nightstand with its box raised to
+the nightstand's top. Its plan symbols are drawn unfilled, so what stands on a rug or in front of a
+curtain stays seen. `library.json` lists each item by an ID such
 as `refrigerator-900`, with its kind, how its category is mounted (2.5), and `element` — its
 `category`, its `catalogue` (the item's ID), its `name`, `seats` where it has them, its box in the
 convention of 3.1 and its default envelopes (4.2), all in base units — and the `path`, `mediaType`,

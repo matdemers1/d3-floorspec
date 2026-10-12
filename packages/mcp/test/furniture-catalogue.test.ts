@@ -79,7 +79,7 @@ describe('FS_furniture by catalogue through MCP', () => {
     const placed = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch: [SOFA, FRIDGE] } });
     expect(placed.isError, texts(placed)).toBeFalsy();
     expect(placed.structuredContent).toMatchObject({ embedded: ['sofa-2100', 'refrigerator-900'] });
-    expect(texts(placed)).toContain('Filled in from the FS_furniture starter library 0.1.0 (members, box, envelopes, model and symbol): sofa-2100, refrigerator-900.');
+    expect(texts(placed)).toContain('Filled in from the FS_furniture starter library 0.2.0 (members, box, envelopes, model and symbol): sofa-2100, refrigerator-900.');
 
     const doc = client.document as Doc;
     expect(doc.extensionsUsed).toMatchObject({ FS_furniture: '0.1.0' });

@@ -131,11 +131,12 @@ export class Sketch {
    * A polygon in the plane across `axis` — (x, y) across z, (y, z) across x, (z, x) across y —
    * from h0 to h1 along it, with holes; either winding.
    */
-  extrude(name: string, role: ModelRole, axis: Axis, outer: readonly V2[], h0: number, h1: number, holes: readonly (readonly V2[])[] = []): void {
+  extrude(name: string, role: ModelRole, axis: Axis, outer: readonly V2[], h0: number, h1: number, holes: readonly (readonly V2[])[] = [], smooth = false): void {
     if (outer.length < 3 || h1 - h0 < 2) return;
     const o = signedArea(outer) < 0 ? [...outer].reverse() : [...outer];
     const hs = holes.map((h) => (signedArea(h) > 0 ? [...h].reverse() : [...h]));
-    const b = this.piece(name, role);
+    // `smooth`: one curved surface — a curtain's pleats, a throw's drape — drawn without lines between its facets.
+    const b = this.piece(name, role, smooth);
     const at = (p: V2, h: number): P3 => {
       const [x, y, z] = along(axis, p[0], p[1], h);
       return this.place(x, y, z);

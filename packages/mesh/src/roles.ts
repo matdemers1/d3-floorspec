@@ -7,7 +7,14 @@
  * not the standard's, and a document's own materials are not involved.
  */
 
-export const MODEL_ROLES = ['porcelain', 'stainless', 'darkMetal', 'wood', 'fabric', 'cushion', 'linen', 'stone', 'lens', 'trim', 'plate', 'glass', 'millwork', 'frame', 'door'] as const;
+export const MODEL_ROLES = [
+  'porcelain', 'stainless', 'darkMetal', 'wood', 'fabric', 'cushion', 'linen', 'stone', 'lens', 'trim', 'plate', 'glass', 'millwork', 'frame', 'door',
+  // Decor (FLR-T-13.11): a rug's wool, foliage, glazes and planters, a picture's canvas and its muted accents, a lamp's shade, brass, a screen, a mirror.
+  'rug', 'rugBorder', 'foliage', 'ceramic', 'terracotta', 'canvas', 'clay', 'ochre', 'sage', 'slate', 'shade', 'brass', 'screen', 'mirror',
+] as const;
+
+/** The roles only decor is made of (FLR-T-13.11): a house without the starter library's decor has none of them. */
+export const DECOR_ROLES: readonly ModelRole[] = ['rug', 'rugBorder', 'foliage', 'ceramic', 'terracotta', 'canvas', 'clay', 'ochre', 'sage', 'slate', 'shade', 'brass', 'screen', 'mirror'];
 export type ModelRole = (typeof MODEL_ROLES)[number];
 
 export interface RoleLook {
@@ -57,4 +64,30 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   frame: { color: '#3a3d42', metallic: 0.3, roughness: 0.45 },
   /** A door's slab, a pocket door, a bifold's panels: stained oak. */
   door: { color: '#9a7250', metallic: 0, roughness: 0.55 },
+  // ─── Decor (FLR-T-13.11): a quiet, warm palette, every accent muted ───
+  /** A rug's wool field: oatmeal. */
+  rug: { color: '#cdbfa6', metallic: 0, roughness: 1 },
+  /** A rug's border, a dark cushion: ink. */
+  rugBorder: { color: '#3c424e', metallic: 0, roughness: 1 },
+  /** Leaves: a deep green. */
+  foliage: { color: '#45633d', metallic: 0, roughness: 0.75 },
+  /** A white glaze: a vase, a bowl, a lamp's base, a planter. */
+  ceramic: { color: '#eeeae2', metallic: 0, roughness: 0.3 },
+  /** An unglazed planter. */
+  terracotta: { color: '#ad6b4b', metallic: 0, roughness: 0.85 },
+  /** A picture's mat, a book's pages. */
+  canvas: { color: '#eee8dc', metallic: 0, roughness: 0.9 },
+  /** The accents — a picture's colours, a cushion's, a throw's, a book's: clay, ochre, sage and slate. */
+  clay: { color: '#b37a5e', metallic: 0, roughness: 0.9 },
+  ochre: { color: '#c8a35e', metallic: 0, roughness: 0.85 },
+  sage: { color: '#8f9d85', metallic: 0, roughness: 0.85 },
+  slate: { color: '#5a636e', metallic: 0, roughness: 0.85 },
+  /** A lamp's shade and bulb: parchment, lit from within. */
+  shade: { color: '#f4ebd8', metallic: 0, roughness: 0.9, emissive: true },
+  /** A lamp's stem, a picture's frame, a curtain rod, a towel bar: brushed brass. */
+  brass: { color: '#b4935f', metallic: 0.85, roughness: 0.3 },
+  /** A television's screen, off. */
+  screen: { color: '#0e0f11', metallic: 0.3, roughness: 0.08 },
+  /** A mirror's glass. */
+  mirror: { color: '#d3d9dc', metallic: 1, roughness: 0.04 },
 };

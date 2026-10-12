@@ -1,9 +1,9 @@
 import { OFFICIAL_EXTENSIONS } from '@floorspec/engine';
-import index from './library/fs-furniture-0.1.0.json' with { type: 'json' };
+import index from './library/fs-furniture-0.2.0.json' with { type: 'json' };
 import type { Op } from './client.js';
 
 /**
- * The FS_furniture starter library 0.1.0 (CC0-1.0; FS_furniture chapter 7) through MCP, as the
+ * The FS_furniture starter library 0.2.0 (CC0-1.0; FS_furniture chapter 7) through MCP, as the
  * editor's furniture panel offers it (apps/web/src/furniture): an agent names an item in a
  * `placeElement`'s `catalogue` — `{"catalogue":"sofa-2100"}` — and the tools fill in the rest of
  * the element from the library: category, name, seats, the box and default envelopes, and

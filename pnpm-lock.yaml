@@ -44,6 +44,9 @@ importers:
       '@floorspec/assistant-electrical':
         specifier: workspace:*
         version: link:../../packages/assistants/electrical
+      '@floorspec/assistant-staging':
+        specifier: workspace:*
+        version: link:../../packages/assistants/staging
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../../packages/engine
@@ -282,6 +285,21 @@ importers:
 
   packages/assistants/electrical:
     dependencies:
+      '@floorspec/engine':
+        specifier: workspace:*
+        version: link:../../engine
+      '@floorspec/migrate':
+        specifier: workspace:*
+        version: link:../../migrate
+      '@floorspec/ops':
+        specifier: workspace:*
+        version: link:../../ops
+
+  packages/assistants/staging:
+    dependencies:
+      '@floorspec/assistant-electrical':
+        specifier: workspace:*
+        version: link:../electrical
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../../engine

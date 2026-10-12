@@ -92,6 +92,8 @@ export const CLEARANCE = 0.3;
 const HALF_VIEW = 40 * DEG;
 /** A footprint smaller than this (m²) — a receptacle, a switch — is not something to look at. */
 const SMALL = 0.05;
+/** A rug's height, or less: a thing stood on (metres). */
+const FLAT = 0.03;
 /** Nearer than this to what it looks at, a camera sees its feet. */
 const NEAR_TARGET = 1;
 
@@ -147,9 +149,10 @@ interface Spot {
 export function roomCamera(room: SceneRoom, doors: readonly SceneDoor[], obstacles: readonly SceneObstacle[] = []): Camera {
   const c = centroid(room.outer);
   const eyeZ = room.floor + Math.min(1.6, Math.max(0.3, (room.ceiling - room.floor) * 0.62));
-  const here = obstacles.filter((o) => o.level === room.level).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  // Decor (FLR-T-13.11) dresses a room: a rug is stood on, and nothing of it aims the camera.
+  const here = obstacles.filter((o) => o.level === room.level && !(o.decor === true && o.top - o.bottom < FLAT)).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   // What the room holds: what stands in it below the eye and is big enough to look at.
-  const contents = here.filter((o) => o.bottom < eyeZ && area(o.footprint) >= SMALL).map((o) => centroid(o.footprint)).filter((p) => inside(p, room.outer));
+  const contents = here.filter((o) => o.decor !== true && o.bottom < eyeZ && area(o.footprint) >= SMALL).map((o) => centroid(o.footprint)).filter((p) => inside(p, room.outer));
   let look: [number, number] = contents.length === 0 ? c : [contents.reduce((s, p) => s + p[0], 0) / contents.length, contents.reduce((s, p) => s + p[1], 0) / contents.length];
   const clearance = (p: Pt): number => here.reduce((m, o) => Math.min(m, clearOf(p, o.footprint)), Infinity);
   const standable = (p: Pt): boolean => inside(p, room.outer) && clearance(p) >= CLEARANCE;

@@ -1,7 +1,12 @@
 import { z } from 'zod';
 import { parseLength } from '@floorspec/ops';
 import { PlanError, proposeElectrical, type ElectricalProposal } from '@floorspec/assistant-electrical';
-import type { Db } from '../db.js';
+import { proposeStaging, type StagingProposal } from '@floorspec/assistant-staging';
+import { libraryFileBytes } from '@floorspec/mcp';
+import type { AssetStore } from '../assets/store.js';
+import { prepareUpload } from '../assets/upload.js';
+import type { Request } from 'express';
+import type { Db, Tx } from '../db.js';
 import { Routes, type MutationResult } from '../http/routes.js';
 import { HttpError } from '../http/errors.js';
 import { ProblemError } from '../http/problem.js';
@@ -37,6 +42,65 @@ export const ElectricalBody = z.strictObject({
   changeset: z.string().trim().min(1).max(120).optional(),
 });
 
+export const StagingBody = z.strictObject({
+  /** Only the rooms on this level. */
+  level: z.string().trim().min(1).max(64).optional(),
+  /** Only these rooms: IDs or names. */
+  rooms: z.array(z.string().trim().min(1).max(200)).min(1).max(200).optional(),
+  /** A pending changeset, by ID or name, whose plan to read instead of main's (as the electrical assistant's). */
+  changeset: z.string().trim().min(1).max(120).optional(),
+});
+
+/** What the answer says of a staging proposal besides its changeset. */
+export function stagingView(p: StagingProposal) {
+  return { name: p.name, explanation: p.explanation, added: p.added, rooms: p.rooms, notes: p.notes, ops: p.batch.length };
+}
+
+/** Rooms by ID, or by name ignoring case when exactly one room has it (Ops 3.3). */
+function roomRefs(document: unknown, refs: readonly string[] | undefined, where: string): string[] | undefined {
+  const doc = document as { rooms?: Record<string, { name?: string }> };
+  return refs?.map((ref) => {
+    if (Object.hasOwn(doc.rooms ?? {}, ref)) return ref;
+    const named = Object.entries(doc.rooms ?? {}).filter(([, r]) => r.name?.toLowerCase() === ref.toLowerCase());
+    if (named.length !== 1) throw new HttpError(400, 'the request body is not valid', { fields: [{ path: 'rooms', message: `no room is called "${ref}" ${where}, or more than one is` }] });
+    return named[0]?.[0] as string;
+  });
+}
+
+/**
+ * Copy the starter-library files a staging batch's assets name into the project's asset store, as
+ * an upload of them would (FLR-T-8.2), so the decor's models and symbols travel with the project —
+ * its package, a share link. Only a file whose bytes come out of the upload checks unchanged is kept
+ * under its library digest; without a store there is nothing to copy into.
+ */
+async function storeLibraryFiles(tx: Tx, store: AssetStore | null, projectId: string, req: Request, files: StagingProposal['files']): Promise<number> {
+  if (store === null) return 0;
+  let n = 0;
+  for (const file of files) {
+    const bytes = libraryFileBytes(file);
+    const prepared = prepareUpload(bytes, file.mediaType === 'model/gltf-binary' ? 'model' : 'symbol');
+    const put = await store.put(prepared.bytes);
+    if (put.sha256 !== file.sha256) continue;
+    await tx.projectAsset.upsert({
+      where: { projectId_sha256: { projectId, sha256: put.sha256 } },
+      update: {},
+      create: {
+        projectId,
+        sha256: put.sha256,
+        mediaType: prepared.mediaType,
+        byteLength: put.byteLength,
+        width: prepared.width,
+        height: prepared.height,
+        name: file.path.split('/').at(-1) ?? null,
+        uploadedByAccountId: req.auth?.accountId ?? req.token?.accountId ?? null,
+        uploadedByTokenId: req.auth === undefined ? (req.token?.tokenId ?? null) : null,
+      },
+    });
+    n++;
+  }
+  return n;
+}
+
 /** What the answer says of a proposal besides its changeset. */
 export function proposalView(p: ElectricalProposal) {
   return {
@@ -61,8 +125,80 @@ export function proposalView(p: ElectricalProposal) {
  *
  * An agent token may call it (scope `propose`): what it makes is a changeset, as `POST /changesets`.
  */
-export function assistantRoutes(db: Db, applier: Applier): Routes {
+export function assistantRoutes(db: Db, applier: Applier, store: AssetStore | null = null): Routes {
   const routes = new Routes(db);
+
+  /**
+   * The staging assistant (FLR-T-13.11): run `@floorspec/assistant-staging` on main — or on a pending
+   * changeset's plan — and open what it proposes as one pending changeset: rugs, art, lamps, plants,
+   * textiles, window dressings and accessories from the FS_furniture starter library, placed by
+   * rule around the furniture already there. Nothing is written to main; a person accepts it
+   * (FLR-ADR-016). The library files the decor names are copied into the project's asset store.
+   */
+  routes.mutate(
+    'POST',
+    '/:projectId/assistants/staging',
+    async (req, tx): Promise<MutationResult> => {
+      const project = req.project;
+      if (project === undefined) throw new HttpError(404, 'project not found');
+      const body = parse(StagingBody, req.body ?? {});
+      const author = authorOf(req);
+      await lockProject(tx, project.id);
+      const main = await readHead(tx, project.id, MAIN);
+      const source = body.changeset === undefined ? null : await readSource(tx, project.id, body.changeset, main.hash, 'a plan');
+      const plan = source === null ? main : source.head;
+      const rooms = roomRefs(plan.document, body.rooms, source === null ? 'on main — an agent\'s plan is in its changeset: name it as "changeset"' : `in "${source.changeset.name}"`);
+      let proposal: StagingProposal;
+      try {
+        proposal = proposeStaging(plan.document as object, {
+          retired: await retiredFor(tx, project.id),
+          ...(body.level === undefined ? {} : { level: body.level }),
+          ...(rooms === undefined ? {} : { rooms }),
+        });
+      } catch (error) {
+        if (!(error instanceof PlanError)) throw error;
+        throw new ProblemError({ status: 422, type: 'staging-unproposable', title: 'no staging could be proposed', detail: `${error.message.charAt(0).toUpperCase()}${error.message.slice(1)}.`, head: MAIN });
+      }
+      const view = stagingView(proposal);
+      if (proposal.batch.length === 0) {
+        return {
+          reply: (res) => res.status(200).json({ main: main.hash, changeset: null, proposal: view }),
+          audit: { action: 'assistants.staging.propose', targetType: 'project', targetId: project.id, detail: { project: project.id, main: main.hash, changeset: null, ops: 0 } },
+        };
+      }
+      const stored = await storeLibraryFiles(tx, store, project.id, req, proposal.files);
+      const pending = await tx.changeset.findMany({ where: { projectId: project.id, status: 'pending' }, select: { name: true } });
+      const name = freeName(proposal.name, new Set(pending.map((c) => c.name)));
+      const { changeset } = await openChangeset(tx, project.id, name, author);
+      const head = changesetHead(changeset.id);
+      if (source !== null) {
+        const refused = await carry(tx, applier, { projectId: project.id, head, changesetId: changeset.id, source, author });
+        if (refused !== null) throw rejection(refused.result, head);
+      }
+      const outcome = await applyToHead(tx, applier, { projectId: project.id, head, batch: proposal.batch as unknown as Batch, author, kind: 'apply', changesetId: changeset.id });
+      // The assistant reads the plan with the same engine the applier validates with: a refusal here
+      // is a fault in the assistant, and nothing of this request is kept.
+      if (outcome.status === 'rejected') throw rejection(outcome.result, head);
+      const committed = committedView(outcome);
+      return {
+        reply: (res) =>
+          res.status(201).json({
+            main: main.hash,
+            changeset: changesetView(changeset, { head: committed.hash, ops: (source?.ops.length ?? 0) + 1 }),
+            proposal: view,
+            ...(source === null ? {} : { carries: { changeset: source.changeset.id, name: source.changeset.name, ops: source.ops.length } }),
+          }),
+        events: [changesetEvent(changeset, 'opened', { hash: committed.hash, ops: await countChangesetOps(tx, changeset) })],
+        audit: {
+          action: 'assistants.staging.propose',
+          targetType: 'project',
+          targetId: project.id,
+          detail: { project: project.id, main: main.hash, changeset: changeset.id, ops: proposal.batch.length, items: proposal.added.length, files: stored },
+        },
+      };
+    },
+    { token: 'propose' },
+  );
 
   routes.mutate(
     'POST',
