@@ -707,10 +707,18 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
         for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, st);
         break;
       }
+      case 'roofGable': {
+        // Clad as the wall it stands on (FLR-T-12.38): that wall's outside face's material, else its
+        // default; with no wall under it, the gable's own.
+        const c = part.cladding;
+        const material = materials.of(c?.material, c === undefined ? swatch('gable') : look.face(c.wall, c.side));
+        for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, boxProjection(n));
+        break;
+      }
       default: {
-        const fallback = swatch(part.kind === 'slab' ? 'slab' : part.kind === 'roof' ? 'roof' : part.kind === 'roofGable' ? 'gable' : part.kind === 'extension' ? 'extension' : 'stair');
+        const fallback = swatch(part.kind === 'slab' ? 'slab' : part.kind === 'roof' ? 'roof' : part.kind === 'extension' ? 'extension' : 'stair');
         // A piece of a model or of an opening's joinery takes its role's look; a fallback box the quiet default.
-        const material = part.model !== undefined ? materials.role(part.model.role) : materials.of(part.kind === 'roofGable' ? undefined : part.material, fallback);
+        const material = part.model !== undefined ? materials.role(part.model.role) : materials.of(part.material, fallback);
         const smooth = part.model?.smooth === true;
         for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, boxProjection(n), smooth);
       }

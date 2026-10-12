@@ -5,11 +5,11 @@
  *
  * A document's own materials always win (Core 8.5, 18.1, 18.6): a face's material, its room's
  * `wallFinish`, its assembly's outer layer, a room's `floorFinish` and `ceilingFinish`, a roof's or a
- * slab's `material`. Only where none of them names a material — or the one named has no colour and
- * no map this view can read — is a surface drawn in a default, and that default follows what the room
- * is for (4.1): oak under living rooms and bedrooms, tile in a bath, a kitchen or a laundry, epoxy on a
- * garage's concrete, decking outdoors; warm-white paint on the walls, each function a tint of its
- * own. These are a view's choices, not the standard's (a mesh is not normative, Core 0.5).
+ * slab's `material`; a gable end is its wall's outside face carried up (FLR-T-12.38). Only where
+ * none of them names a material — or the one named has no colour and no map this view can read — is
+ * a surface drawn in a default, and that default follows what the room is for (4.1): oak under
+ * living rooms and bedrooms, tile in a bath, a kitchen or a laundry, epoxy on a garage's concrete,
+ * decking outdoors; warm-white paint on the walls, each function a tint of its own. These are a view's choices, not the standard's (a mesh is not normative, Core 0.5).
  */
 import type { Derived, FloorspecDocument } from '@floorspec/engine';
 import { get } from './own.js';
@@ -22,7 +22,7 @@ export type Hex = string;
  * house's own surfaces, not interface colour, so the same in either theme.
  */
 export const DEFAULT_COLOURS = {
-  /** A wall's left (outside) face that faces no room, and a roof's gable end. */
+  /** A wall's left (outside) face that faces no room — and so a gable end over one (FLR-T-12.38). */
   exterior: '#d6c9b2',
   /** A wall's right (inside) face that faces no room. */
   interior: '#efe9df',
@@ -35,6 +35,7 @@ export const DEFAULT_COLOURS = {
   floorEdge: '#e2dccf',
   slab: '#b3b0a8',
   roof: '#525965',
+  /** A roof's gable end with no wall under it; over a wall it is clad as that wall's outside face (FLR-T-12.38). */
   gable: '#d6c9b2',
   stair: '#a97d54',
   fill: '#ddd5c7',

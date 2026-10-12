@@ -257,6 +257,25 @@ describe('parts in the 3D view', () => {
     expect([...tile.slice(0, 3)].map((v) => v.toFixed(6))).toEqual(linear('#cfd3da').map((v) => v.toFixed(6)));
   });
 
+  it('colours a gable end as the wall it stands on, the gable default with none (FLR-T-12.38)', async () => {
+    const wing = readModel('wing', readFileSync(new URL('../../../packages/mesh/test/fixtures/courtyard-guest-wing.floorspec.json', import.meta.url), 'utf8'));
+    expect(wing.valid).toBe(true);
+    const m = (await loadMesher()).meshDerived(wing.document, wing.derived!, { include: ['roofGable'] });
+    const colour = (p: MeshPart): string[] => [...faceColours(wing, p, flatShaded(p.mesh).normals, new Map()).slice(0, 3)].map((v) => v.toFixed(6));
+    const hex = (h: string): string[] => linear(h).map((v) => v.toFixed(6));
+    const gable = (i: number): MeshPart => m.parts.find((p) => p.key === `roofGable:RF2:gable${String(i)}`)!;
+    // The south gable over fibre-cement siding; the arc wall's, brick veneer.
+    expect(colour(gable(0))).toEqual(hex('#8f9aa1'));
+    for (const i of [3, 4, 5, 6]) expect(colour(gable(i))).toEqual(hex('#9a4b34'));
+    // Over a wall whose outside face names no material: that face's default, as the wall draws it.
+    const bare = { ...gable(0), cladding: { wall: 'W32', side: 'left' as const } };
+    expect(colour(bare)).toEqual(hex(DEFAULT_COLOURS.exterior));
+    // With no wall under it, the gable's own default.
+    const alone: MeshPart = { ...gable(0) };
+    delete alone.cladding;
+    expect(colour(alone)).toEqual(hex(DEFAULT_COLOURS.gable));
+  });
+
   it('draws a fixture model’s pieces in their roles’ colours: glass see-through, a lens lit (FLR-T-12.21)', async () => {
     const showcase = readModel('showcase', readFileSync(new URL('../../../packages/mesh/test/fixtures/showcase.floorspec.json', import.meta.url), 'utf8'));
     expect(showcase.valid).toBe(true);

@@ -11,7 +11,8 @@
  *   underside showing over the rake (FLR-T-12.36); each gable end is drawn only where it is below
  *   the solid — up to the roof's underside over the wall — so that none of it lies inside the
  *   solid, and so that where nothing overhangs, the band standing in the gable end's own plane, no
- *   two coplanar faces fight for depth (FLR-T-12.35).
+ *   two coplanar faces fight for depth (FLR-T-12.35). A gable end is clad as the wall it stands
+ *   on (FLR-T-12.38, cladding.ts), so it carries no roof material.
  * - Without one, the roof is the volume between its eave and its surface over the whole eave
  *   outline — the attic and its overhangs, boxed — closed by a soffit at the eave and, along each
  *   gable's edge of the outline, the surface's edge dropped to the eave. Its box is the derived box.
@@ -24,6 +25,7 @@
  * both, so no edge of the shell has a T-junction.
  */
 import type { Derived, FloorspecDocument } from '@floorspec/engine';
+import { gableCladding } from './cladding.js';
 import { get } from './own.js';
 import { dedupe, MeshBuilder, newell, type P2, type P3 } from './builder.js';
 import type { Kernel } from './kernel.js';
@@ -214,7 +216,10 @@ export function roofParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
           const gb = new MeshBuilder(kernel);
           let made = false;
           for (const piece of belowSolid(dedupe(g.polygon as P3[]), r.eave, t)) made = gb.face([outward(piece)]) || made;
-          if (made) out.push({ ...common, kind: 'roofGable', piece: `gable${g.edge}`, closed: false, facing: 'side', exact: gb });
+          if (!made) continue;
+          // Clad as the wall it stands on (FLR-T-12.38), not in the roof's material.
+          const cladding = gableCladding(doc, derived, id, g.edge);
+          out.push({ id, level: roof.level, kind: 'roofGable', piece: `gable${g.edge}`, closed: false, facing: 'side', ...(cladding && { cladding }), exact: gb });
         }
       continue;
     }

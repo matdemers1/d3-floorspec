@@ -30,7 +30,7 @@ export interface Box3 {
  * | `ceiling` | room | surface facing down: flat, tray (with its step) or vault (15.2–15.4) |
  * | `slab` | slab | solid (15.7) |
  * | `roof` | roof | solid: with a thickness, the surface thickened down by it, raking past its gable ends; without, the volume between the eave and the surface over the whole eave outline, closed by a soffit at the eave and, along each gable's edge of the outline, the surface's edge dropped to the eave (16.5). A flat roof without thickness is a surface facing up |
- * | `roofGable` | roof | surface: a gable end (16.5) — on its wall, the gable's edge of the footprint, in Core 0.4 — emitted only for a roof with a thickness, whose solid does not close it: the part below the solid's underside |
+ * | `roofGable` | roof | surface: a gable end (16.5) — on its wall, the gable's edge of the footprint, in Core 0.4 — emitted only for a roof with a thickness, whose solid does not close it: the part below the solid's underside; clad as the wall it stands on (`cladding`) |
  * | `stairFlight` | stair | solid: one flight's treads, each from two risers below its top to its top, unioned — a winder stair's flights and its winders between them are one, and so are a spiral stair's treads (17.7) |
  * | `stairLanding` | stair | solid: a landing plate, by the same rule |
  * | `stairColumn` | stair | solid: a spiral stair's centre column, its column's radius (17.7) — or a slender pole when its treads meet at the centre — from its bottom to its top |
@@ -86,6 +86,17 @@ export interface Plenum {
   room?: string;
 }
 
+/**
+ * What a gable end is clad in (FLR-T-12.38, cladding.ts): the wall under it, the side of that wall
+ * that looks out of the roof (5.4), and the material that face is finished in (18.6) — absent when
+ * none resolves, and the face's default colour (appearance.ts `face`) is drawn.
+ */
+export interface Cladding {
+  wall: string;
+  side: 'left' | 'right';
+  material?: string;
+}
+
 /** An indexed triangle mesh in metres (Float32, relative to the result's `origin`), counter-clockwise seen from outside. */
 export interface PartMesh {
   positions: Float32Array;
@@ -122,6 +133,11 @@ export interface MeshPart {
   placeholder?: true;
   /** A material the element references (roof, slab). */
   material?: string;
+  /**
+   * A gable end's wall (FLR-T-12.38): the wall of the roof's level it stands on, and that wall's face
+   * looking out of the roof, whose finish it is drawn in. Absent where no wall runs along its edge.
+   */
+  cladding?: Cladding;
   /** A wall's layer materials, in the order of its layers (8.3); `null` for a layer without one. */
   layers?: (string | null)[];
   /** An opening's fill type and what it is. */
