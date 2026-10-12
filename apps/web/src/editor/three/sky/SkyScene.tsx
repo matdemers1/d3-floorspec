@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { softwareWebGL } from '../software';
 import { GRASS_TILE, grassTexture, HORIZON_BAND, lawnMacro, type SkyField, type SkyMap, type SkyMapId } from '@floorspec/mesh/sky';
 
 /**
@@ -46,6 +47,8 @@ varying vec3 vDir;
 void main() {
   vDir = position;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  // At the far plane: drawn last, the sky is shaded only where nothing nearer already is.
+  gl_Position.z = gl_Position.w;
 }`;
 
 // The dome as @floorspec/mesh's sky.ts \`dome\` and \`skyRadiance\` compute it, in cd/m².
@@ -102,13 +105,15 @@ export function SkyDome({ field }: { field: SkyField }) {
         band: { value: HORIZON_BAND },
       },
       side: THREE.BackSide,
-      depthTest: false,
+      depthTest: true,
+      depthFunc: THREE.LessEqualDepth,
       depthWrite: false,
       fog: false,
     });
     const m = new THREE.Mesh(new THREE.SphereGeometry(3000, 64, 32), material);
     m.frustumCulled = false;
-    m.renderOrder = -10;
+    // After the house and the lawn, so the depth test leaves only the sky's own pixels to shade.
+    m.renderOrder = 10;
     m.raycast = () => undefined;
     m.userData = { sky: true };
     // Always round the camera: the sky is at infinity.
@@ -199,10 +204,12 @@ function lawnMap(anisotropy: number): THREE.DataTexture {
  */
 function lawnGeometry(cx: number, cy: number): THREE.BufferGeometry {
   const radii: number[] = [0];
-  for (let r = 0.5; r < 40; r += 0.5) radii.push(r);
-  for (let r = 40; r < 2500; r *= 1.06) radii.push(r);
+  // A metre apart near the house, then farther and farther: few triangles toward the horizon, where
+  // they would be thinner than a pixel and cost a software renderer dear.
+  for (let r = 1; r < 24; r += 1) radii.push(r);
+  for (let r = 24; r < 2500; r *= 1.15) radii.push(r);
   radii.push(2500);
-  const SEG = 144;
+  const SEG = 96;
   const pos: number[] = [];
   const uv: number[] = [];
   const col: number[] = [];
@@ -251,7 +258,8 @@ export function Lawn({ centre, ground, field }: { centre: THREE.Vector3; ground:
   const geometry = useMemo(() => lawnGeometry(cx, cy), [cx, cy]);
   const haze = useMemo(() => ({ hazeColor: { value: new THREE.Vector3() }, hazeNear: { value: 200 }, hazeFar: { value: 2400 } }), []);
   const material = useMemo(() => {
-    const m = new THREE.MeshLambertMaterial({ map: lawnMap(gl.capabilities.getMaxAnisotropy()), vertexColors: true, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 6, fog: false });
+    // Anisotropic filtering keeps the lawn crisp toward the horizon; eight taps are plenty.
+    const m = new THREE.MeshLambertMaterial({ map: lawnMap(softwareWebGL() ? 1 : Math.min(8, gl.capabilities.getMaxAnisotropy())), vertexColors: true, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 6, fog: false });
     // The haze (@floorspec/mesh hazeAt): the lawn's light fades into the horizon's with distance, in
     // cd/m² before the tone curve — as the path tracer mixes it — so the far lawn meets the sky.
     m.onBeforeCompile = (shader) => {
@@ -274,7 +282,7 @@ export function Lawn({ centre, ground, field }: { centre: THREE.Vector3; ground:
   }, [field, haze, invalidate]);
   useEffect(() => () => { geometry.dispose(); }, [geometry]);
   useEffect(() => () => { material.dispose(); }, [material]);
-  return <mesh geometry={geometry} material={material} position={[cx, cy, ground]} receiveShadow raycast={noRaycast} userData={{ ground: true, lawn: true }} renderOrder={-1} />;
+  return <mesh geometry={geometry} material={material} position={[cx, cy, ground]} receiveShadow raycast={noRaycast} userData={{ ground: true, lawn: true }} renderOrder={1} />;
 }
 
 // ─── The tone curve ──────────────────────────────────────────────────────────────────────────

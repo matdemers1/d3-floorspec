@@ -22,6 +22,7 @@ import { orbitCamera } from './still/gpu/cameras';
 import { SunRig } from './sun/SunRig';
 import { FixtureLights } from './FixtureLights';
 import { glow } from './highlight';
+import { softwareWebGL } from './software';
 import { viewLights } from './lights';
 import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelled } from '../../furniture/Furniture3D';
 
@@ -436,7 +437,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         className="fs-three__canvas"
         frameloop={walking ? 'always' : 'demand'}
         dpr={[1, 2]}
-        shadows="percentage"
+        shadows={softwareWebGL() ? 'basic' : 'percentage'}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{ fov: FOV, near: 0.05, far: 4000, position: [0, -20, 10], up: [0, 0, 1] }}
         onPointerMissed={(e: MouseEvent) => {

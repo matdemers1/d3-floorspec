@@ -89,7 +89,7 @@ async function axe(page: Page, state: string): Promise<void> {
 const near = (a: readonly number[], b: readonly number[], eps: number) => a.every((v, i) => Math.abs(v - (b[i] ?? NaN)) <= eps);
 
 test('the sun and shadow study: site, date and time place the sun and cast shadows in 3D', async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
   await firstRunSetup(page, { name: 'Sunny', email: 'sunny@example.test', password: password('sun') });
   await page.getByRole('button', { name: 'New project' }).first().click();
   const created = page.getByRole('dialog', { name: 'New project' });

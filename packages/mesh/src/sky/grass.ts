@@ -5,7 +5,7 @@
  *
  * A tile is `GRASS_TILE` metres square: blades and tufts from periodic value noise, a little straw
  * among the green, and mowing stripes a metre wide along project x. Everything coarser —
- * patches from half a metre to thirty — is `lawnMacro`'s, which does not repeat, so the tile's
+ * patches from two metres to thirty — is `lawnMacro`'s, which does not repeat, so the tile's
  * repeat does not show from above.
  *
  * Where hardscape or planting covers the ground — slabs, patios and driveways are drawn on it by the
@@ -149,7 +149,7 @@ export function lawnAlbedo(): Rgb {
  * nine and thirty metres across, so the tile's repeat does not read from above.
  */
 export function lawnMacro(x: number, y: number): number {
-  return 0.82 + 0.07 * noise(x / 0.45, y / 0.45, 5) + 0.08 * noise(x / 1.7, y / 1.7, 6) + 0.12 * noise(x / 9, y / 9, 7) + 0.1 * noise(x / 31, y / 31, 8);
+  return 0.84 + 0.1 * noise(x / 2.3, y / 2.3, 6) + 0.12 * noise(x / 9, y / 9, 7) + 0.1 * noise(x / 31, y / 31, 8);
 }
 
 /**
