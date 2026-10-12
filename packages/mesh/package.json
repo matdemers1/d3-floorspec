@@ -10,15 +10,21 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./sky": {
+      "types": "./src/sky/index.ts",
+      "default": "./dist/sky/index.js"
+    },
+    "./sky/*.hdr": "./sky/*.hdr"
   },
   "files": [
-    "dist"
+    "dist",
+    "sky"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit && tsc -p test",
+    "typecheck": "tsc --noEmit && tsc -p test && tsc -p scripts",
     "test": "vitest run --project node",
     "test:browser": "vitest run --project browser",
     "timings": "vitest run --project node test/timings.node.test.ts --silent=false"

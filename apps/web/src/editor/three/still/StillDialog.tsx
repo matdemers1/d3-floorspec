@@ -7,7 +7,9 @@ import { QUALITIES, requestExport, SIZES, startDownload, stillWithinBudget as wi
 import { useEditor, type EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { PRESET_ORDER, PRESETS, type PresetId } from '../camera';
-import { useStudy, useSunState } from '../sun/study';
+import { useSunState } from '../sun/study';
+import { useSkyLight } from '../sun/SunRig';
+import { SKY_LABELS } from '@floorspec/mesh/sky';
 import { webGpuDevice } from './gpu/probe';
 import type { StillCamera } from './gpu/cameras';
 
@@ -84,8 +86,8 @@ function StillDialog({ store, preset, level, only, roof, current, onClose }: { s
 
 function ServerStillDialog({ store, preset, level, onClose, fallback = false }: { store: EditorStore; preset: PresetId | null; level: string | null; onClose: () => void; fallback?: boolean }) {
   const model = useEditor(store, (s) => s.model);
-  const sun = useSunState(store, (s) => s);
-  const study = useStudy(model, sun.on, sun.clock);
+  const skyPreset = useSunState(store, (s) => s.sky);
+  const { full: sky } = useSkyLight(store, model, false);
   const toast = useToast();
   const [view, setView] = useState<string>(preset ?? 'sw');
   const [size, setSize] = useState<Size>('medium');
@@ -99,10 +101,13 @@ function ServerStillDialog({ store, preset, level, onClose, fallback = false }: 
     ...PRESET_ORDER.map((p) => ({ value: p, label: `${PRESETS[p].label}${p === preset ? ' — the view you are looking at' : ''}` })),
     ...rooms.map((r) => ({ value: `room:${r.id}`, label: `Stand in ${r.name}`, description: 'From its doorway, as a walkthrough does' })),
   ];
-  const useSun = study !== null && !study.night;
-  const sunText = useSun
-    ? `Sun from the sun study: ${String(Math.round(study.position.azimuth))}° azimuth, ${String(Math.round(study.position.altitude))}° up.`
-    : 'Sun: mid-afternoon from the south-west (turn on the sun study to choose the date and time).';
+  // The view's sky (FLR-T-13.4), its sun where the Sky and sun panel's date and time put it.
+  const useSun = sky.sun !== null && sky.sun.altitude > 0 && (skyPreset === 'clear' || skyPreset === 'overcast');
+  const sunText = skyPreset === 'studio'
+    ? 'Sky: the studio — an even, bright dome over a pale floor.'
+    : useSun
+      ? `${SKY_LABELS[skyPreset]}, the sun from the Sky and sun panel: ${String(Math.round(sky.sun.azimuth))}° azimuth, ${String(Math.round(sky.sun.altitude))}° up.`
+      : `${SKY_LABELS[skyPreset]}, as the 3D view shows it.`;
   const tooBig = !withinBudget(size, quality);
 
   async function render() {
@@ -112,7 +117,8 @@ function ServerStillDialog({ store, preset, level, onClose, fallback = false }: 
       ...(room === undefined ? { camera: view as PresetId, ...(level === null ? {} : { level }) } : { room }),
       size,
       quality,
-      ...(useSun ? { sun: { azimuth: Math.round(study.position.azimuth * 10) / 10, altitude: Math.round(study.position.altitude * 10) / 10 } } : {}),
+      sky: skyPreset,
+      ...(useSun ? { sun: { azimuth: Math.round(sky.sun.azimuth * 10) / 10, altitude: Math.round(sky.sun.altitude * 10) / 10 } } : {}),
     };
     const design = Object.keys(model.design).length > 0 ? { design: { ...model.design } } : {};
     try {
@@ -159,7 +165,7 @@ function ServerStillDialog({ store, preset, level, onClose, fallback = false }: 
             <span className="fs-spacer" />
             <span>{left === null ? '' : `about ${formatSeconds(left)} left`}</span>
           </div>
-          <p className="fs-caption">Each pass adds one sample to every pixel; the picture is ready after the last. Approximate lighting — one sun and a clear sky.</p>
+          <p className="fs-caption">Each pass adds one sample to every pixel; the picture is ready after the last. Approximate lighting — the 3D view’s sky, its sun and the lawn.</p>
         </div>
       </Modal>
     );
@@ -203,7 +209,7 @@ function ServerStillDialog({ store, preset, level, onClose, fallback = false }: 
       onOpenChange={(o) => { if (!o) onClose(); }}
       size="lg"
       title="Render a still"
-      description="A path-traced picture of a view, rendered offline on the server from the same model. The lighting is approximate — one sun and a clear sky, no lamps — and it is not a daylight study. Medium at Standard takes a minute or two; Large, High or a room inside can take several."
+      description="A path-traced picture of a view, rendered offline on the server from the same model. The lighting is approximate — the 3D view’s sky and its sun, no lamps — and it is not a daylight study. Medium at Standard takes a minute or two; Large, High or a room inside can take several."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>

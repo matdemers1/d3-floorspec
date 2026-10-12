@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { evaluate, OFFICIAL_READER } from '@floorspec/engine';
-import { QUALITIES, SIZES, withinBudget, type Quality, type Size } from '@d3-floorspec/worker/stills';
+import { QUALITIES, SIZES, SKIES, withinBudget, type Quality, type Size } from '@d3-floorspec/worker/stills';
 import type { Request } from 'express';
 import { z } from 'zod';
 import type { Db, Tx } from '../db.js';
@@ -47,6 +47,8 @@ const StillBody = z.strictObject({
   size: z.enum(Object.keys(SIZES) as [Size, ...Size[]]).default('medium'),
   quality: z.enum(Object.keys(QUALITIES) as [Quality, ...Quality[]]).default('standard'),
   sun: z.strictObject({ azimuth: z.number().min(0).max(360), altitude: z.number().gt(0).max(90) }).optional(),
+  /** The sky it is seen under (FLR-T-13.4): the 3D view's preset. */
+  sky: z.enum(SKIES).optional(),
 });
 export const PAGE_NAMES = ['tabloid', 'arch-c', 'arch-d', 'letter', 'a4', 'a3'] as const;
 
@@ -91,6 +93,7 @@ type Params = {
   readonly view?: string;
   readonly lights?: 'on' | 'off';
   readonly time?: 'day' | 'dusk' | 'night';
+  readonly sky?: string;
   readonly samples?: number;
   readonly device?: string;
 };
@@ -112,6 +115,8 @@ const StillUpload = z.strictObject({
   ms: z.coerce.number().int().min(0).max(7 * 24 * 3600 * 1000).optional(),
   lights: z.enum(['on', 'off']).optional(),
   time: z.enum(['day', 'dusk', 'night']).optional(),
+  /** The sky it was seen under (FLR-T-13.4). */
+  sky: z.enum(SKIES).optional(),
   /** The GPU it was traced on, as the browser names it: GPU stills are repeatable per machine, not across machines. */
   device: z.string().trim().max(200).optional(),
   /** The design (Core 19.6), as JSON: option set → option. */
@@ -141,6 +146,7 @@ export function exportView(projectId: string, job: Job) {
             size: p.size ?? (p.source === 'gpu' ? null : 'medium'),
             quality: p.quality ?? (p.source === 'gpu' ? null : 'standard'),
             sun: p.sun ?? null,
+            sky: p.sky ?? null,
             ...(p.source === 'gpu' ? { view: p.view ?? null, samples: p.samples ?? null, lights: p.lights ?? null, time: p.time ?? null, device: p.device ?? null } : {}),
           }
         : null,
@@ -241,6 +247,7 @@ export function exportRoutes(db: Db): Routes {
               size: still.size,
               quality: still.quality,
               ...(still.sun === undefined ? {} : { sun: still.sun }),
+              ...(still.sky === undefined ? {} : { sky: still.sky }),
             }),
         versionSeq: version.seq,
         versionAt: version.at.toISOString(),

@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
+import { DEFAULT_SITE, DEFAULT_SKY, isSkyPreset, type SkyPreset } from '@floorspec/mesh/sky';
 import { instantOfClock, midnightOf, nowIn, offsetOf, type Clock } from './clock';
 import { sunAt, sunDay, sunVector, type SunDay, type SunPosition } from './solar';
 
@@ -14,23 +15,44 @@ import { sunAt, sunDay, sunVector, type SunDay, type SunPosition } from './solar
 export const MICRO = 1_000_000;
 
 export interface SunState {
-  /** The sun lights the 3D view and casts shadows. */
+  /**
+   * The sky the 3D view is seen under (FLR-T-13.4): a clear day by default, kept per project in this
+   * browser. Every preset but `studio` lights the view by its sky and sun and stands the house on
+   * the lawn; `studio` is the even light the view has always had.
+   */
+  sky: SkyPreset;
+  /** The sun lights the 3D view and casts shadows: any sky but the studio. */
   on: boolean;
-  /** The Sun panel is showing over the 3D view. */
+  /** The Sky and sun panel is showing over the 3D view. */
   open: boolean;
   clock: Clock;
   /** The time slider advancing by itself; only ever started by a person. */
   playing: boolean;
+  /** Playing as a timelapse (FLR-T-13.9): from sunrise to sunset on the date, then stopping at sunset. */
+  lapse: boolean;
+}
+
+const skyKey = (projectId: string): string => `floorspec.sky3d.${projectId}`;
+
+function readSky(projectId: string | null): SkyPreset {
+  if (projectId === null) return DEFAULT_SKY;
+  try {
+    const v = localStorage.getItem(skyKey(projectId));
+    return isSkyPreset(v) ? v : DEFAULT_SKY;
+  } catch {
+    return DEFAULT_SKY;
+  }
 }
 
 export class SunStore {
   private state: SunState;
   private readonly listeners = new Set<() => void>();
 
-  constructor() {
+  constructor(private readonly projectId: string | null = null) {
     const today = nowIn('auto');
+    const sky = readSky(projectId);
     // The board's "Sun · Oct 4 · 3 pm": today, mid-afternoon, when shadows read well.
-    this.state = { on: false, open: false, clock: { date: today.date, minutes: 15 * 60, offset: 'auto' }, playing: false };
+    this.state = { sky, on: sky !== 'studio', open: false, clock: { date: today.date, minutes: 15 * 60, offset: 'auto' }, playing: false, lapse: false };
   }
 
   get = (): SunState => this.state;
@@ -49,9 +71,20 @@ export class SunStore {
     this.set({ clock: { ...this.state.clock, ...patch } });
   }
 
-  /** The toolbar's Sun button: on with its panel open, or off. */
+  /** The toolbar's Sun button: the Sky and sun panel open, or closed. */
   toggle(): void {
-    this.set(this.state.on ? { on: false, open: false, playing: false } : { on: true, open: true });
+    this.set(this.state.open ? { open: false, playing: false, lapse: false } : { open: true });
+  }
+
+  /** Pick a sky; remembered for this project in this browser (FLR-T-13.4). */
+  setSky(sky: SkyPreset): void {
+    if (sky !== this.state.sky) this.set({ sky, on: sky !== 'studio', ...(sky === 'dusk' || sky === 'night' || sky === 'studio' ? { playing: false, lapse: false } : {}) });
+    if (this.projectId === null) return;
+    try {
+      localStorage.setItem(skyKey(this.projectId), sky);
+    } catch {
+      // Storage refused (a private window): the choice lasts for this session.
+    }
   }
 }
 
@@ -60,7 +93,7 @@ const stores = new WeakMap<EditorStore, SunStore>();
 export function sunOf(store: EditorStore): SunStore {
   let sun = stores.get(store);
   if (sun === undefined) {
-    sun = new SunStore();
+    sun = new SunStore(store.projectId);
     stores.set(store, sun);
   }
   return sun;
@@ -86,6 +119,15 @@ export interface Site {
 interface SiteJson {
   trueNorth?: number;
   location?: { latitude: number; longitude: number };
+}
+
+/**
+ * The site the sky is placed from: the document's, or — when it records no location — DEFAULT_SITE
+ * (40° N, 75° W), which the panel says it is assuming.
+ */
+export function placedSite(site: Site): Site & { assumed: boolean } {
+  if (site.latitude !== null && site.longitude !== null) return { ...site, assumed: false };
+  return { ...site, latitude: DEFAULT_SITE.latitude, longitude: DEFAULT_SITE.longitude, assumed: true };
 }
 
 export function siteOf(model: EditorModel | null): Site {

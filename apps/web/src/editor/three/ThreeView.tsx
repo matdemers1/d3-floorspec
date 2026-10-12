@@ -21,6 +21,8 @@ import { StillButton } from './still/StillDialog';
 import { orbitCamera } from './still/gpu/cameras';
 import { SunRig } from './sun/SunRig';
 import { FixtureLights } from './FixtureLights';
+import { glow } from './highlight';
+import { softwareWebGL } from './software';
 import { viewLights } from './lights';
 import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelled } from '../../furniture/Furniture3D';
 
@@ -225,6 +227,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const extensionIds = useMemo(() => visibleExtensionIds(visible), [visible]);
   const clearancesShown = useEditor(store, (s) => s.layers.clearances);
   const triangles = visible.reduce((n, b) => n + b.triangles, 0);
+  // What casts a shadow, as one value: a new one when the parts, the furniture or the lamps drawn change.
+  const shadowKey = useMemo(() => ({ partsShown, drawn: furniture.drawn, lamps }), [partsShown, furniture.drawn, lamps]);
 
   useTestHook(store, three, ctl, ready, host, built, visible, textures);
 
@@ -433,7 +437,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         className="fs-three__canvas"
         frameloop={walking ? 'always' : 'demand'}
         dpr={[1, 2]}
-        shadows="percentage"
+        shadows={softwareWebGL() ? 'basic' : 'percentage'}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{ fov: FOV, near: 0.05, far: 4000, position: [0, -20, 10], up: [0, 0, 1] }}
         onPointerMissed={(e: MouseEvent) => {
@@ -444,7 +448,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         }}
       >
         <color attach="background" args={[walking ? (night || lightsOn ? NIGHT : SKY) : tokens.background]} />
-        {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} lamps={lightsOn} /> : null}
+        {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} lamps={lightsOn} casters={shadowKey} /> : null}
         <FixtureLights lights={lamps} />
         <Rig ctl={ctl} />
         <SceneBridge />
@@ -571,12 +575,12 @@ function Parts({
 }) {
   const materials = useMemo(() => {
     const solid = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const solidOn = new THREE.MeshLambertMaterial({ vertexColors: true, emissiveIntensity: 0.55 });
+    const solidOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true }));
     // Floors and ceilings win where they share a plane with something else (parts.ts, lookOf).
     const floor = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-    const floorOn = new THREE.MeshLambertMaterial({ vertexColors: true, emissiveIntensity: 0.55, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+    const floorOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
     const ceiling = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
-    const ceilingOn = new THREE.MeshLambertMaterial({ vertexColors: true, emissiveIntensity: 0.55, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
+    const ceilingOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 }));
     const glass = new THREE.MeshLambertMaterial({ color: GLASS, transparent: true, opacity: 0.38, depthWrite: false });
     // A model's glass (a shower's screen) in its own colour; a luminaire's lens unshaded, as if lit,
     // when the lights are on (FLR-T-12.22), and shaded like the rest when they are off.
@@ -584,12 +588,13 @@ function Parts({
     // Not tone-mapped: a lit lens is as bright as the screen shows, whatever the view's exposure (FLR-T-13.1).
     const lens = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false });
     const lensOff = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const lensOn = new THREE.MeshLambertMaterial({ vertexColors: true, emissiveIntensity: 0.55 });
+    const lensOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true }));
     const glassOn = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.6, depthWrite: false });
     // A door's or an empty opening's cut: nothing drawn, still a target for the pointer.
     const pick = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
-    const pickOn = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.4, depthWrite: false });
-    const edges = new THREE.LineBasicMaterial({ depthTest: false, transparent: true, opacity: 0.95 });
+    // Not tone-mapped: the selection's outline and an opening's highlight read the same under every sky.
+    const pickOn = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.4, depthWrite: false, toneMapped: false });
+    const edges = new THREE.LineBasicMaterial({ depthTest: false, transparent: true, opacity: 0.95, toneMapped: false });
     return { solid, solidOn, floor, floorOn, ceiling, ceilingOn, glass, glassOn, modelGlass, lens, lensOff, lensOn, pick, pickOn, edges };
   }, []);
   useEffect(() => () => { for (const m of Object.values(materials)) m.dispose(); }, [materials]);

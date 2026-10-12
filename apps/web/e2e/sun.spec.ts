@@ -7,7 +7,8 @@ import { firstRunSetup, modelOf, password, projectIn, settled } from './support.
 
 /**
  * FLR-T-8.6, FLR-REQ-123: "With site orientation and latitude, a date/time control positions the
- * sun and casts shadows in 3D."
+ * sun and casts shadows in 3D." FLR-T-13.4, 13.9: the view is seen under a sky preset — a clear day
+ * by default, on a lawn — chosen in the Sky and sun panel, and a sunrise-to-sunset timelapse.
  *
  * The house is the three suite's (e2e/fixtures/l-stair-hip-roof.json), built through the API with
  * no site. In the 3D view the toolbar's Sun turns the study on; the panel asks for the site's place,
@@ -35,6 +36,7 @@ type V3 = [number, number, number];
 interface SunHook {
   on: boolean;
   located: boolean;
+  sky: { preset: string; band: string; direct: 'sun' | 'moon' | null; exposure: number | null; dome: boolean; lawn: boolean; ibl: number | null } | null;
   study: { azimuth: number; altitude: number; vector: V3; night: boolean; instant: string } | null;
   light: { direction: V3; intensity: number; castShadow: boolean; mapSize: number; frustum: number } | null;
   shadowMap: boolean;
@@ -54,7 +56,7 @@ const sunHook = (page: Page) =>
   page.evaluate(() => {
     const h = window.__floorspecSun;
     if (h === undefined) return null;
-    return { on: h.on, located: h.located, study: h.study, light: h.light, shadowMap: h.shadowMap, casters: h.casters, receivers: h.receivers, ground: h.ground };
+    return { on: h.on, located: h.located, sky: h.sky, study: h.study, light: h.light, shadowMap: h.shadowMap, casters: h.casters, receivers: h.receivers, ground: h.ground };
   });
 
 /** The 3D view's own hook (declared fully by three.spec.ts): only what this suite reads. */
@@ -87,7 +89,7 @@ async function axe(page: Page, state: string): Promise<void> {
 const near = (a: readonly number[], b: readonly number[], eps: number) => a.every((v, i) => Math.abs(v - (b[i] ?? NaN)) <= eps);
 
 test('the sun and shadow study: site, date and time place the sun and cast shadows in 3D', async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
   await firstRunSetup(page, { name: 'Sunny', email: 'sunny@example.test', password: password('sun') });
   await page.getByRole('button', { name: 'New project' }).first().click();
   const created = page.getByRole('dialog', { name: 'New project' });
@@ -102,21 +104,30 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   await settled(page);
   await ready(page);
 
-  // ── The sun is off: the view's even light, nothing casting.
-  const sunButton = page.getByRole('toolbar', { name: '3D view' }).getByRole('button', { name: 'Sun and shadow' });
+  // ── FLR-T-13.4: a clear day by default — the HDRI sky round the view, the lawn under the house,
+  // its image-based light — and the sun, from an assumed site while the document records none.
+  const sunButton = page.getByRole('toolbar', { name: '3D view' }).getByRole('button', { name: 'Sky and sun' });
   await expect(sunButton).toBeEnabled();
   await expect(sunButton).toHaveAttribute('aria-pressed', 'false');
-  expect((await sunHook(page))?.light).toBeNull();
+  await expect.poll(async () => (await sunHook(page))?.sky?.dome).toBe(true);
+  const first = (await sunHook(page))!;
+  expect(first.sky).toMatchObject({ preset: 'clear', band: 'day', direct: 'sun', lawn: true });
+  expect(first.sky!.ibl).toBeGreaterThan(1000);
+  expect(first.located).toBe(false);
+  expect(first.light).not.toBeNull();
+  expect(first.ground).toBe(true);
+  await shoot(page, 'clear-default');
 
-  // ── On: the panel opens, and asks for the site's place.
+  // ── The panel opens, and asks for the site's place.
   await sunButton.click();
   await expect(sunButton).toHaveAttribute('aria-pressed', 'true');
-  const panel = page.getByRole('region', { name: 'Sun and shadow' });
+  const panel = page.getByRole('region', { name: 'Sky and sun' });
   await expect(panel).toBeVisible();
   const status = panel.getByRole('status');
-  await expect(status).toHaveText('The site has no location yet: add its latitude and longitude to place the sun.');
-  expect((await sunHook(page))?.located).toBe(false);
-  await axe(page, 'sun panel, no site location');
+  await expect(status).toContainText('The site has no location yet, so the sun is placed as if at 40° N, 75° W: add its latitude and longitude for its own.');
+  const skies = panel.getByRole('radiogroup', { name: 'Sky' });
+  await expect(skies.getByRole('radio', { name: 'Clear day' })).toHaveAttribute('aria-checked', 'true');
+  await axe(page, 'sky and sun panel, no site location');
 
   // The site's place, typed: latitude waits for longitude, then both land as one Op on $site.
   await panel.getByLabel('Latitude').fill('42.3601 N');
@@ -209,7 +220,9 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   await expect(status).toContainText('Night: the sun is');
   const night = (await sunHook(page))!;
   expect(night.study!.night).toBe(true);
-  expect(night.light!.intensity).toBe(0);
+  // A clear sky past sunset is night's: the moon, too faint to cast, in the sun's place.
+  expect(night.sky).toMatchObject({ preset: 'clear', band: 'night', direct: 'moon' });
+  expect(night.light!.intensity).toBeLessThan(2);
   expect(night.light!.castShadow).toBe(false);
   await shoot(page, 'night');
 
@@ -236,15 +249,45 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   for (let i = 0; i < 15; i++) await slider.press('PageUp');
   await expect(slider).toHaveAttribute('aria-valuetext', '3:00 pm');
 
-  // ── Closed, the panel is a chip; the inspector's 3D section says what lights the view.
-  await panel.getByRole('button', { name: 'Close the sun panel' }).click();
+  // ── FLR-T-13.9: the timelapse runs from the date's sunrise to its sunset, and stops at sunset.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await panel.getByRole('button', { name: 'Timelapse · sunrise to sunset' }).click();
+  await expect(slider).toHaveAttribute('aria-valuetext', /^6:(4\d|5\d) am$/);
+  await expect(slider).toHaveAttribute('aria-valuetext', /^7:\d\d am$/, { timeout: 5000 });
+  await panel.getByRole('button', { name: 'Stop the timelapse' }).click();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await slider.press('Home');
+  for (let i = 0; i < 15; i++) await slider.press('PageUp');
+  await expect(slider).toHaveAttribute('aria-valuetext', '3:00 pm');
+
+  // ── FLR-T-13.4: the other skies. Overcast: no direct sun; dusk and night: no time of day to set.
+  await skies.getByRole('radio', { name: 'Overcast' }).click();
+  await expect.poll(async () => (await sunHook(page))?.sky?.preset).toBe('overcast');
+  expect((await sunHook(page))!.sky).toMatchObject({ band: 'day', direct: null, dome: true, lawn: true });
+  await shoot(page, 'overcast');
+  await skies.getByRole('radio', { name: 'Overcast' }).press('ArrowRight');
+  await expect(skies.getByRole('radio', { name: 'Dusk' })).toHaveAttribute('aria-checked', 'true');
+  await expect.poll(async () => (await sunHook(page))?.sky?.band).toBe('dusk');
+  await expect(status).toContainText('Dusk: just after sunset on Oct 4');
+  await expect(slider).toBeHidden();
+  await shoot(page, 'dusk');
+  await skies.getByRole('radio', { name: 'Night' }).click();
+  await expect.poll(async () => (await sunHook(page))?.sky?.band).toBe('night');
+  await expect(status).toHaveText('Night: moonlight, no sun.');
+  await shoot(page, 'night-sky');
+  await axe(page, 'sky and sun panel, night');
+  await skies.getByRole('radio', { name: 'Clear day' }).click();
+  await expect(slider).toHaveAttribute('aria-valuetext', '3:00 pm');
+
+  // ── Closed, the panel is a chip; the inspector's 3D section says what the view is seen under.
+  await panel.getByRole('button', { name: 'Close the sky and sun' }).click();
   await expect(panel).toBeHidden();
-  const chip = page.getByRole('button', { name: 'Sun · Oct 4 · 3 pm. Open the sun panel' });
+  const chip = page.getByRole('button', { name: 'Clear day · Oct 4 · 3 pm. Open the sky and sun' });
   await expect(chip).toBeVisible();
   await page.getByRole('treeitem', { name: /^Kitchen/ }).first().click();
   const three = page.getByRole('complementary', { name: 'Inspector' }).getByRole('region', { name: '3D' });
-  await expect(three).toContainText('Shadows');
-  await expect(three).toContainText('Sun · Oct 4 · 3 pm');
+  await expect(three).toContainText('Sky');
+  await expect(three).toContainText('Clear day · Oct 4 · 3 pm');
   await shoot(page, 'chip');
 
   // ── The walkthrough keeps the sun.
@@ -265,11 +308,19 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   await expect(site.getByLabel('Latitude')).toHaveValue('42.3601° N');
   await expect(site.getByLabel('True north')).toHaveValue('-12.5°');
 
-  // ── Off: the even light again.
+  // ── The studio: the even light again, no sky and no lawn — and remembered for the project.
   await sunButton.click();
-  await expect(sunButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(sunButton).toHaveAttribute('aria-pressed', 'true');
+  await skies.getByRole('radio', { name: 'Studio' }).click();
+  await expect(status).toContainText('Studio light');
+  await panel.getByRole('button', { name: 'Close the sky and sun' }).click();
   await expect(chip).toBeHidden();
   await expect.poll(async () => (await sunHook(page))?.light ?? null).toBeNull();
+  expect((await sunHook(page))!.sky).toBeNull();
+  await page.reload();
+  await settled(page);
+  await ready(page);
+  await expect.poll(async () => (await sunHook(page))?.on).toBe(false);
 
   // ── FLR-T-12.22: the light fixtures. A ceiling light in the kitchen and a downlight in the living
   // room; the Lights toggle turns them into lamps (and the view to dusk), and off again.

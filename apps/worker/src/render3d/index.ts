@@ -10,10 +10,12 @@ import { buildScene, readGlb, type Scene, type SceneOptions, type Vec3 } from '.
 import { linear } from '../export/gltf/scene.js';
 import { findRoom, PRESETS, presetCamera, roomCamera, type Camera, type Preset } from './camera.js';
 import { encodePng } from './png.js';
-import { rasterize, type DrawList } from './raster.js';
+import { rasterize, type DrawList, type RasterSky } from './raster.js';
+import { skyBounce, skyExposure, skyHarmonics, type SkyPreset } from '@floorspec/mesh/sky';
+import { resolveSky, skySummary, type ResolvedSky, type SkySummary } from '../pathtrace/sky.js';
 
 export { PRESETS, presetCamera, roomCamera, findRoom, centroid, type Camera, type Preset } from './camera.js';
-export { LIGHTS, rasterize, shoulder, tone, type DrawList, type RasterOptions } from './raster.js';
+export { LIGHTS, rasterize, shoulder, tone, type DrawList, type RasterOptions, type RasterSky } from './raster.js';
 export { encodePng } from './png.js';
 
 export const DEFAULT_WIDTH = 1024;
@@ -30,6 +32,12 @@ export interface Render3dOptions extends Omit<SceneOptions, 'levels'> {
   readonly highlight?: readonly string[];
   /** Pixels; the height is three quarters of it. Default 1024. */
   readonly width?: number;
+  /**
+   * Seen under a sky (FLR-T-13.4) — and with `at`, a date and time at the site, under its sun
+   * (FLR-T-13.9) — instead of the studio drawing: the sun's shadows, the sky's light, the lawn.
+   */
+  readonly sky?: SkyPreset;
+  readonly at?: string;
 }
 
 export interface Render3dResult {
@@ -39,6 +47,8 @@ export interface Render3dResult {
   /** What the camera was, in words. */
   readonly camera: string;
   readonly design: Record<string, string> | null;
+  /** Under a sky: which, where the sun was, and the site. */
+  readonly sky?: SkySummary;
 }
 
 /** The accent a highlighted element is drawn in (linear RGB). */
@@ -210,8 +220,25 @@ function sizeOf(width: number | undefined): { width: number; height: number } {
   return { width: w, height: Math.round((w * 3) / 4) };
 }
 
+/** A resolved sky as the rasterizer draws with it: its light in this frame, its harmonics and its exposure. */
+export function rasterSky(sky: ResolvedSky, groundY: number): RasterSky {
+  const d = sky.light.direct;
+  return {
+    field: sky.field,
+    sh: skyHarmonics(sky.field),
+    exposure: skyExposure(sky.light, sky.field.maps),
+    sun: d === null ? null : { dir: [d.dir[0], d.dir[2], -d.dir[1]], lux: d.lux, color: d.color },
+    groundY,
+    ...(sky.light.ground.grass ? {} : { floor: sky.light.ground.albedo }),
+    bounce: (() => {
+      const b = skyBounce(sky.light);
+      return [b.lux * b.color[0], b.lux * b.color[1], b.lux * b.color[2]] as Vec3;
+    })(),
+  };
+}
+
 /** Render a scene: from a named view, or from inside a room. */
-export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design'> = {}): Render3dResult {
+export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design' | 'sky' | 'at'> & { readonly skyLight?: ResolvedSky } = {}): Render3dResult {
   const { width, height } = sizeOf(options.width);
   cutOf(scene, options.level);
   let camera: Camera;
@@ -223,16 +250,20 @@ export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design
       throw new RangeError(`the model has no room ${options.room}${known.length === 0 ? '' : `; its rooms are ${known.slice(0, 20).join(', ')}`}`);
     }
     camera = roomCamera(room, scene.doors, scene.obstacles);
-    tris = sceneTriangles(scene, { ...(options.highlight === undefined ? {} : { highlight: options.highlight }), ground: true });
+    tris = sceneTriangles(scene, { ...(options.highlight === undefined ? {} : { highlight: options.highlight }), ground: options.skyLight === undefined });
   } else {
     tris = sceneTriangles(scene, {
       ...(options.level === undefined ? {} : { level: options.level }),
       ...(options.highlight === undefined ? {} : { highlight: options.highlight }),
+      // Under a sky the ground is the rasterizer's own plane, out to the horizon.
+      ground: options.skyLight === undefined,
     });
     camera = presetCamera(options.camera ?? 'sw', boundsOf(tris), width / height);
   }
-  const rgb = rasterize(drawList(tris), camera, { width, height, supersample: 2 });
-  return { png: encodePng(rgb, width, height), width, height, camera: camera.label, design: scene.design };
+  const all = boundsOf(sceneTriangles(scene, { ground: false }));
+  const lighting = options.skyLight === undefined ? undefined : rasterSky(options.skyLight, all.min[1] - 0.003);
+  const rgb = rasterize(drawList(tris), camera, { width, height, supersample: 2, ...(lighting === undefined ? {} : { lighting }) });
+  return { png: encodePng(rgb, width, height), width, height, camera: camera.label, design: scene.design, ...(options.skyLight === undefined || lighting === undefined ? {} : { sky: skySummary(options.skyLight, Number(lighting.exposure.toPrecision(3))) }) };
 }
 
 export interface ViewOptions {
@@ -273,7 +304,9 @@ export async function render3dPng(document: object, options: Render3dOptions = {
     ...(options.images === undefined ? {} : { images: options.images }),
     ...(options.doors === undefined ? {} : { doors: options.doors }),
   });
-  return renderScene(scene, options);
+  const { sky, at, ...rest } = options;
+  const skyLight = sky === undefined && at === undefined ? undefined : resolveSky(document, { ...(sky === undefined ? {} : { sky }), ...(at === undefined ? {} : { at }) });
+  return renderScene(scene, { ...rest, ...(skyLight === undefined ? {} : { skyLight }) });
 }
 
 // ─── An exported .glb, drawn back ────────────────────────────────────────────────────────────

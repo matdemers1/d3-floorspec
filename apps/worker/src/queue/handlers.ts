@@ -6,7 +6,7 @@ import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/i
 import { exportIfc } from '../export/ifc/index.js';
 import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
 import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
-import { LIGHTS, QUALITIES, renderLit, renderStill, SIZES, TIMES, withinBudget, type Lights, type Quality, type Size, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
+import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
 
 export interface JobRow {
   readonly id: string;
@@ -84,6 +84,16 @@ export interface Render3dParams {
   readonly time?: TimeOfDay;
   /** FLR-T-13.8: the doors closed (default) or open. */
   readonly doors?: 'open' | 'closed';
+  /** FLR-T-13.4: the sky it is seen under; FLR-T-13.9: a date and time at the site. */
+  readonly sky?: Sky;
+  readonly at?: string;
+}
+
+/** A job's sky and date and time, when they are one of the presets and a date and time. */
+function skyParams(p: Record<string, unknown>): { sky?: Sky; at?: string } {
+  const sky = typeof p['sky'] === 'string' && (SKIES as readonly string[]).includes(p['sky']) ? (p['sky'] as Sky) : undefined;
+  const at = typeof p['at'] === 'string' && AT_PATTERN.test(p['at']) ? p['at'] : undefined;
+  return { ...(sky === undefined ? {} : { sky }), ...(at === undefined ? {} : { at }) };
 }
 
 export function render3dParams(raw: unknown): Render3dParams {
@@ -108,6 +118,7 @@ export function render3dParams(raw: unknown): Render3dParams {
     ...(lights === undefined ? {} : { lights }),
     ...(time === undefined ? {} : { time }),
     ...(doors === undefined ? {} : { doors }),
+    ...skyParams(p),
   };
 }
 
@@ -122,6 +133,8 @@ export interface StillParams {
   readonly quality: Quality;
   readonly sun?: SunInput;
   readonly design?: Record<string, string>;
+  readonly sky?: Sky;
+  readonly at?: string;
 }
 
 export function stillParams(raw: unknown): StillParams {
@@ -144,6 +157,7 @@ export function stillParams(raw: unknown): StillParams {
     quality,
     ...(sun === undefined ? {} : { sun }),
     ...(design === undefined ? {} : { design }),
+    ...skyParams(p),
   };
 }
 
@@ -243,6 +257,7 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
           quality: p.quality,
           camera: r.camera,
           sun: r.sun,
+          ...(r.sky === undefined ? {} : { sky: r.sky }),
           design: r.design,
           maps: r.maps,
           ms: r.ms,
@@ -260,6 +275,8 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
         const lit = await renderLit(document, {
           lights: p.lights,
           ...(p.time === undefined ? {} : { time: p.time }),
+          ...(p.sky === undefined ? {} : { sky: p.sky }),
+          ...(p.at === undefined ? {} : { at: p.at }),
           ...(p.camera === undefined ? {} : { camera: p.camera }),
           ...(p.room === undefined ? {} : { room: p.room }),
           ...(p.level === undefined ? {} : { level: p.level }),
@@ -268,11 +285,11 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
           ...(p.doors === undefined ? {} : { doors: p.doors }),
           ...(images === undefined ? {} : { images }),
         });
-        return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: lit.png, summary: { width: lit.width, height: lit.height, camera: lit.camera, design: lit.design, ...(lit.lit === undefined ? {} : { lit: lit.lit }), ms: lit.ms } };
+        return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: lit.png, summary: { width: lit.width, height: lit.height, camera: lit.camera, design: lit.design, ...(lit.lit === undefined ? {} : { lit: lit.lit }), ...(lit.sky === undefined ? {} : { sky: lit.sky }), ms: lit.ms } };
       }
       // A material with a map and no colour is drawn in its map's average colour (FLR-T-12.23).
       const r = await render3dPng(document, { ...p, ...(images === undefined ? {} : { images }) });
-      return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: r.png, summary: { width: r.width, height: r.height, camera: r.camera, design: r.design } };
+      return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: r.png, summary: { width: r.width, height: r.height, camera: r.camera, design: r.design, ...(r.sky === undefined ? {} : { sky: r.sky }) } };
     },
   };
 }

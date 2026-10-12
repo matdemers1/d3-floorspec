@@ -7,7 +7,8 @@ import { toneMappingExposure as viewToneMappingExposure } from '../src/editor/th
 import { eyeOf, PRESETS, type Orbit } from '../src/editor/three/camera';
 import { orbitCamera, presetCamera } from '../src/editor/three/still/gpu/cameras';
 import { perspectiveOf, prepareHouse, roomCamera, stillScene } from '../src/editor/three/still/gpu/scene';
-import { EXPOSURE_BAND, LUX_PER_UNIT, TRACE_UNIT, meteredExposure, skyPixels, skyRadiance, sunOf, toneMappingExposure } from '../src/editor/three/still/gpu/sky';
+import { EXPOSURE_BAND, LUX_PER_UNIT, TRACE_UNIT, meteredExposure, skyPixels, stillSun, toneMappingExposure } from '../src/editor/three/still/gpu/sky';
+import { skyField, skyLight, skyMapOf, type SkyMaps } from '@floorspec/mesh/sky';
 
 /**
  * FLR-T-13.13: the scene a GPU still traces, built from a glTF export as the worker writes one —
@@ -217,34 +218,45 @@ describe('the GPU still’s scene (FLR-T-13.13)', () => {
     expect(camera.getWorldDirection(new Vector3()).z).toBeCloseTo(-1, 6);
   });
 
-  it('puts the house on the worker’s ground plate under its sun and sky', async () => {
+  it('puts the house on the lawn under the shared sky: its sun, its dome, in the tracer’s units', async () => {
     const { scene: root } = await load();
     const house = prepareHouse(root, { lights: false });
-    const day = stillScene(root, house.bounds, { lights: false, time: 'day', sun: { azimuth: 225, altitude: 35 }, trueNorth: 0 });
+    const sky = skyField(skyLight('clear', { azimuth: 225, altitude: 35 }, 0), MAPS);
+    const day = stillScene(root, house.bounds, { lights: false, sky, skyWidth: 64 });
     const sun = find(day.scene, (o): o is DirectionalLight => o instanceof DirectionalLight)[0]!;
-    // Traced in the worker's units (12 500 lx): its sun's 8.
-    expect(sun.intensity).toBeCloseTo(8, 6);
+    // Traced in the worker's units (12 500 lx).
+    const want = stillSun(sky.light)!;
+    expect(sun.intensity).toBeCloseTo(want.lux / TRACE_UNIT, 6);
     expect(TRACE_UNIT).toBe(LUX_PER_UNIT);
     const toward = sun.position.clone().sub(sun.target.position).normalize();
-    sunOf({ azimuth: 225, altitude: 35 }, 0).dir.forEach((c, k) => { expect(toward.getComponent(k)).toBeCloseTo(c, 6); });
+    want.dir.forEach((c, k) => { expect(toward.getComponent(k)).toBeCloseTo(c, 6); });
     const ground = day.scene.getObjectByName('ground') as Mesh;
     expect(ground.position.y).toBeCloseTo(-0.003, 6);
+    // The lawn: its tile, at true scale.
+    expect((ground.material as MeshStandardMaterial).map).not.toBeNull();
     expect(day.scene.environment).toBe(day.scene.background);
     day.dispose();
     // The lamps and lit lenses too, once however often the scene is made.
     const { scene: lit } = await load();
     prepareHouse(lit, { lights: true });
-    stillScene(lit, null, { lights: true, time: 'night', sun: { azimuth: 225, altitude: 35 }, trueNorth: 0 });
-    stillScene(lit, null, { lights: true, time: 'night', sun: { azimuth: 225, altitude: 35 }, trueNorth: 0 });
+    const night = skyField(skyLight('night', null, 0), MAPS);
+    stillScene(lit, null, { lights: true, sky: night, skyWidth: 64 });
+    stillScene(lit, null, { lights: true, sky: night, skyWidth: 64 });
     expect(find(lit, (o): o is SpotLight => o instanceof SpotLight)[0]!.intensity).toBeCloseTo(120 / TRACE_UNIT, 12);
     const lens = meshes(lit).find((m) => (m.material as MeshStandardMaterial).name === 'Lens')!.material as MeshStandardMaterial;
     expect(lens.emissiveIntensity).toBeCloseTo(31250 / TRACE_UNIT, 6);
-    // After dark: no sun, a sky all but black.
-    const night = stillScene(root, house.bounds, { lights: false, time: 'night', sun: { azimuth: 225, altitude: 35 }, trueNorth: 0 });
-    expect(find(night.scene, (o): o is DirectionalLight => o instanceof DirectionalLight)).toHaveLength(0);
-    night.dispose();
-  });
+    // At dusk: no sun at all. In the studio: a pale floor, no lawn.
+    const dusk = stillScene(root, house.bounds, { lights: false, sky: skyField(skyLight('dusk', null, 0), MAPS), skyWidth: 64 });
+    expect(find(dusk.scene, (o): o is DirectionalLight => o instanceof DirectionalLight)).toHaveLength(0);
+    dusk.dispose();
+    const studio = stillScene(root, house.bounds, { lights: false, sky: skyField(skyLight('studio', null, 0), MAPS), skyWidth: 64 });
+    expect(((studio.scene.getObjectByName('ground') as Mesh).material as MeshStandardMaterial).map).toBeNull();
+    studio.dispose();
+  }, 30_000);
 });
+
+/** Synthetic even maps: the scene's wiring, not the real HDRIs (the worker's tests read those). */
+const MAPS: SkyMaps = Object.fromEntries((['clear', 'overcast', 'dusk', 'night'] as const).map((id) => [id, skyMapOf(id, { width: 64, height: 17, data: new Float32Array(64 * 17 * 3).fill(1) })]));
 
 describe('the GPU still’s cameras and light (FLR-T-13.13)', () => {
   it('turns the editor’s orbit into the export’s frame: (x, y, z) at (x, z, −y), from the mesh’s origin', () => {
@@ -284,23 +296,17 @@ describe('the GPU still’s cameras and light (FLR-T-13.13)', () => {
     expect(toneMappingExposure(0.02)).toBeCloseTo(viewToneMappingExposure(0.02), 12);
   });
 
-  it('draws the sky as an equirectangular map in cd/m², the sun’s glow where the sun is', () => {
-    const sun = sunOf({ azimuth: 180, altitude: 45 }, 0);
+  it('draws the sky as an equirectangular map in cd/m², the lawn far off below the horizon', () => {
+    const sky = skyField(skyLight('overcast', { azimuth: 180, altitude: 45 }, 0), MAPS);
     const W = 64;
     const H = 32;
-    const sky = skyPixels(sun, 'day', W, H);
-    // The brightest texel is toward the sun (south, +Z, up).
-    let best = 0;
-    let at = 0;
-    for (let i = 0; i < W * H; i++) if (sky[4 * i + 1]! > best) { best = sky[4 * i + 1]!; at = i; }
-    const [i, j] = [at % W, Math.floor(at / W)];
-    const phi = ((i + 0.5) / W - 0.5) * 2 * Math.PI;
-    const theta = ((j + 0.5) / H - 0.5) * Math.PI;
-    const d = [Math.cos(theta) * Math.cos(phi), Math.sin(theta), Math.cos(theta) * Math.sin(phi)];
-    expect(d[0]! * sun.dir[0] + d[1]! * sun.dir[1] + d[2]! * sun.dir[2]).toBeGreaterThan(0.95);
-    // Below the horizon: the worker's warm ground light.
-    expect(skyRadiance([0, -1, 0], sun)[0]).toBeCloseTo(0.12 * LUX_PER_UNIT, 6);
-    // Night: all but black.
-    expect(Math.max(...skyPixels(sun, 'night', 8, 4))).toBeLessThan(10);
+    const px = skyPixels(sky, W, H);
+    // An even map: every texel well above the horizon the same, its illuminance over π.
+    const top = px[4 * ((H - 1) * W) + 1]!;
+    expect(Math.abs((top * Math.PI) / sky.light.layers[0]!.lux - 1)).toBeLessThan(0.01);
+    // Straight down: the lawn, lit, far darker than the sky.
+    expect(px[1]!).toBeLessThan(0.3 * top);
+    expect(px[1]!).toBeGreaterThan(px[0]!);
   });
+
 });

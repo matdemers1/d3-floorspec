@@ -83,5 +83,34 @@ The path tracer traces six diffuse bounces for a render with lights, so a lamp-l
 not black, and twice the samples by day, when a room is lit by what comes in through its windows.
 `floorspec_render` reports the exposure a lit render was metered to (`lit.exposure`, per cd/m²).
 
-The headless rasterized render (`floorspec_render` without `lights`) is a drawing, not a lighting
-simulation: it is lit by a fixed studio rig and is not part of this calibration.
+The headless rasterized render (`floorspec_render` without `lights` or `sky`) is a drawing, not a
+lighting simulation: it is lit by a fixed studio rig and is not part of this calibration.
+
+## Skies and the sun
+
+Every view — the editor's 3D view, the headless render with `sky`, the worker's path tracer and the
+editor's GPU still — is seen under one sky, `@floorspec/mesh/sky` (FLR-T-13.4, 13.9):
+
+- **Presets:** Clear day (the default), Overcast, Dusk, Night and Studio. The editor keeps the choice
+  per project in the browser; `floorspec_render` and stills take `sky`.
+- **The dome** is a CC0 HDRI from Poly Haven (`packages/mesh/sky`, its sources, digests and licence in
+  `SOURCES.json` and `NOTICE.md`), its sun taken out, turned about the vertical so the glow its sun
+  left sits where the real sun is, and scaled so the sky alone lights a level surface to a calibrated
+  illuminance: a clear sky 2.5–23.5 klx by the sun's altitude, overcast 0.5–20.5 klx, dusk about
+  25 lx, a moonlit night under 1 lx (seen blue).
+- **The sun** is placed by the NOAA algorithm from the site's latitude, longitude and true north
+  (Core 1.8) at a date and time — the editor's Sky and sun panel, or a render's `at` (ISO 8601; with
+  no offset, the site's zone by its longitude). A document with no location is placed as if at
+  40° N, 75° W, and every view says so. Its illuminance falls through the air mass (Kasten and Young;
+  about 93 klx at noon, 50 klx 15° up) and it reddens as it sets. A clear sky follows its sun: past
+  6° it fades through the dusk sky into night's, and a moon opposite the sun takes its place.
+- **The ground** is a lawn at true scale (a procedural tile every 4 m, varied across the site), out to
+  the horizon, lost in the haze between 200 m and 2.4 km. Slabs, patios and driveways sit on it;
+  what FS_landscape lays on the ground (FLR-T-13.5) is drawn in place of the lawn (`GroundArea`).
+- **Image-based light:** the editor lights the house with the sky's nine spherical harmonics (a
+  light probe) and the raster render with the same; the tracers sample the dome itself. Views that do
+  not bounce light add a fill of a twelfth of the sun's light on a level surface (`skyBounce`).
+- **Exposure:** an outside view is exposed for the sky's light — the key 0.18 on a surface of
+  reflectance 0.2 under the sun and sky (0.08 after dark) — within the day band by day, and after dark up to 0.3 per
+  cd/m², the long exposure of a night photograph; a render with its lamps on keeps the night band
+  above, and a room is metered. The editor's view uses the renderers' filmic curve under a sky.

@@ -1,13 +1,14 @@
 /**
- * The light a GPU still is seen in (FLR-T-13.13, FLR-ADR-040): the worker's path tracer's sun and
- * sky (apps/worker/src/pathtrace — `sunOf`, `skyRadiance`, the dusk and night skies, the ground
- * plate), in photometric units — lux for the sun, cd/m² for the sky — so the editor's still and the
- * server's agree. The worker's tracer is the reference: its unit of irradiance is 12 500 lx, so a
- * radiance of 1 there is 12 500 cd/m² here. Kept free of three.js so the worker's tests can hold the
- * two to each other (apps/worker/test/gpu-sky.test.ts) until FLR-T-13.4 shares the sky presets.
+ * The light a GPU still is seen in (FLR-T-13.13, FLR-ADR-040; FLR-T-13.4): @floorspec/mesh's sky —
+ * the same presets, sun and HDRI dome the worker's path tracer reads — in photometric units, lux for
+ * the sun and cd/m² for the sky, so the editor's still and the server's agree. The worker's tracer
+ * is the reference for units: its unit of irradiance is 12 500 lx, so a radiance of 1 there is
+ * 12 500 cd/m² here. Kept free of three.js so the worker's tests can hold the two to each other
+ * (apps/worker/test/gpu-sky.test.ts).
  */
 
 import { EXPOSURE_PER_NIT } from '@floorspec/mesh';
+import { DEFAULT_SUN as MESH_DEFAULT_SUN, skyRadiance, type SkyField, type SkyLight } from '@floorspec/mesh/sky';
 
 export type Vec3 = [number, number, number];
 export type TimeOfDay = 'day' | 'dusk' | 'night';
@@ -22,19 +23,13 @@ export const LUX_PER_UNIT = 12_500;
  */
 export const TRACE_UNIT = LUX_PER_UNIT;
 
-/** The sky by time of day, scaled per channel: dusk a deep blue, night all but black (the worker's `SKY`). */
-export const SKY_SCALE: Readonly<Record<TimeOfDay, Vec3>> = { day: [1, 1, 1], dusk: [0.0006, 0.0008, 0.0014], night: [0.00008, 0.0001, 0.00018] };
-
-/** The ground plate under the house: the worker's, a pale gravel. */
-export const GROUND = '#cfcabd'; // d3-allow: the ground the path tracer stands the house on, not chrome
-
 /** Degrees. Azimuth clockwise from true north; altitude above the horizon. */
 export interface SunInput {
   readonly azimuth: number;
   readonly altitude: number;
 }
 /** Mid-afternoon from the south-west: the worker's default sun. */
-export const DEFAULT_SUN: SunInput = { azimuth: 225, altitude: 35 };
+export const DEFAULT_SUN: SunInput = MESH_DEFAULT_SUN;
 
 export interface Sun {
   /** Unit, toward the sun, in the scene's frame (x east-ish, +Y up, −Z project north). */
@@ -45,46 +40,41 @@ export interface Sun {
   readonly color: Vec3;
 }
 
-const DEG = Math.PI / 180;
+/** A project-frame direction (x, y north, z up) in the scene's (x, +Y up, −Z north). */
+const toScene = (d: readonly [number, number, number]): Vec3 => [d[0], d[2], -d[1]];
 
-/** The sun in the scene's frame, turned by the site's true north: the worker's `sunOf`, in lux. */
-export function sunOf(input: SunInput, trueNorthDeg: number): Sun {
-  const b = (input.azimuth - trueNorthDeg) * DEG;
-  const alt = Math.max(1, Math.min(90, input.altitude)) * DEG;
-  const dir: Vec3 = [Math.sin(b) * Math.cos(alt), Math.sin(alt), -Math.cos(b) * Math.cos(alt)];
-  const low = Math.max(0, Math.min(1, (25 - input.altitude) / 25));
-  return { dir, lux: 8 * (1 - 0.35 * low) * LUX_PER_UNIT, color: [1, 0.96 - 0.12 * low, 0.9 - 0.25 * low] };
-}
-
-/** The sky's radiance along a direction, cd/m² (the sun's disc excluded): the worker's `skyRadiance`. */
-export function skyRadiance(d: Vec3, sun: Sun): Vec3 {
-  if (d[1] <= 0) return [0.12 * LUX_PER_UNIT, 0.115 * LUX_PER_UNIT, 0.1 * LUX_PER_UNIT];
-  const t = Math.pow(d[1], 0.55);
-  const glow = Math.pow(Math.max(0, d[0] * sun.dir[0] + d[1] * sun.dir[1] + d[2] * sun.dir[2]), 12) * 0.35;
-  return [
-    ((0.62 + (0.16 - 0.62) * t) * 0.62 + glow * sun.color[0]) * LUX_PER_UNIT,
-    ((0.69 + (0.27 - 0.69) * t) * 0.62 + glow * sun.color[1]) * LUX_PER_UNIT,
-    ((0.78 + (0.55 - 0.78) * t) * 0.62 + glow * sun.color[2]) * LUX_PER_UNIT,
-  ];
+/** The sky's direct light — the sun, the moon, the studio's key — in the scene's frame, lux; null at dusk. */
+export function stillSun(light: SkyLight): Sun | null {
+  const d = light.direct;
+  return d === null ? null : { dir: toScene(d.dir), lux: d.lux, color: [d.color[0], d.color[1], d.color[2]] };
 }
 
 /**
  * The sky as an equirectangular map, RGBA floats, cd/m², rows from straight down to straight up —
- * three.js's equirectangular convention: u = atan2(z, x) / 2π + ½, v = asin(y) / π + ½.
+ * three.js's equirectangular convention: u = atan2(z, x) / 2π + ½, v = asin(y) / π + ½ — read from
+ * @floorspec/mesh's sky (FLR-T-13.4), the worker's tracer's own: its HDRI dome, and below the
+ * horizon the lawn far off in the haze.
  */
-export function skyPixels(sun: Sun, time: TimeOfDay, width = 256, height = 128): Float32Array {
+export function skyPixels(field: SkyField, width = 1024, height = 512): Float32Array {
   const out = new Float32Array(width * height * 4);
-  const scale = SKY_SCALE[time];
+  const L = new Float64Array(3);
+  const d = new Float64Array(3);
   for (let j = 0; j < height; j++) {
     const theta = ((j + 0.5) / height - 0.5) * Math.PI;
     for (let i = 0; i < width; i++) {
       const phi = ((i + 0.5) / width - 0.5) * 2 * Math.PI;
-      const d: Vec3 = [Math.cos(theta) * Math.cos(phi), Math.sin(theta), Math.cos(theta) * Math.sin(phi)];
-      const r = skyRadiance(d, sun);
+      // The scene's (x, y, z) is the project's (x, −z, y).
+      const sx = Math.cos(theta) * Math.cos(phi);
+      const sy = Math.sin(theta);
+      const sz = Math.cos(theta) * Math.sin(phi);
+      d[0] = sx;
+      d[1] = -sz;
+      d[2] = sy;
+      skyRadiance(field, d, L);
       const o = 4 * (j * width + i);
-      out[o] = r[0] * scale[0];
-      out[o + 1] = r[1] * scale[1];
-      out[o + 2] = r[2] * scale[2];
+      out[o] = (L[0] ?? 0);
+      out[o + 1] = (L[1] ?? 0);
+      out[o + 2] = (L[2] ?? 0);
       out[o + 3] = 1;
     }
   }

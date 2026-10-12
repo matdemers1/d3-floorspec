@@ -7,7 +7,7 @@ export default defineConfig(
     // The mesher indexes rings, triangles and vertex arrays whose lengths it has just established.
     // Under noUncheckedIndexedAccess each such index is `T | undefined`, and the non-null
     // assertion is the honest way to say it is in range — the engine's and the renderer's reasoning.
-    files: ['src/**/*.ts', 'test/**/*.ts'],
+    files: ['src/**/*.ts', 'test/**/*.ts', 'scripts/**/*.ts'],
     rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
   },
   {
