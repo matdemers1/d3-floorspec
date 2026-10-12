@@ -1,0 +1,6 @@
+{
+  "description": "A scene LS3 sets the Living room's downlight, which does not dim and is on a single switch, to 50 %: both lints.",
+  "covers": [
+    "FS-LGHT-1.2.3"
+  ]
+}

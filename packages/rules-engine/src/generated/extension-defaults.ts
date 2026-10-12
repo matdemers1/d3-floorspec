@@ -43,6 +43,7 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
       "habit": "rounded"
     }
   },
+  "FS_lighting": {},
   "FS_lowvoltage": {
     "doorbells": {},
     "headEnds": {},
@@ -81,6 +82,12 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
   },
   "FS_furniture": {},
   "FS_landscape": {},
+  "FS_lighting": {
+    "luminaires": {},
+    "scenes": {
+      "on": {}
+    }
+  },
   "FS_lowvoltage": {},
   "FS_mechanical": {
     "gasSources": {

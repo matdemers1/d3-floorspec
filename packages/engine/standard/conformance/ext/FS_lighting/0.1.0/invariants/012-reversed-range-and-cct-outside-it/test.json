@@ -1,0 +1,7 @@
+{
+  "description": "X4's range is reversed and its colour temperature, 6,500 K, is outside it either way: FS-LGHT-INV-003 only, since FS-LGHT-INV-004 is evaluated only for a luminaire without it (5.2).",
+  "covers": [
+    "FS-LGHT-2.1.2",
+    "FS-LGHT-5.2.1"
+  ]
+}

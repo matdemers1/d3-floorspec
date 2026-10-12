@@ -1,0 +1,6 @@
+{
+  "description": "An empty `collections` member: FS_lighting adds no kind of element, so its data has no `collections`, even an empty one. Core finds no collection in it; FS_lighting's schema rejects it.",
+  "covers": [
+    "FS-LGHT-1.3.1"
+  ]
+}

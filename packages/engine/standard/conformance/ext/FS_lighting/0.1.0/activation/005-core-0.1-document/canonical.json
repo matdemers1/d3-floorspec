@@ -1,0 +1,15 @@
+{
+  "extensions": {
+    "FS_lighting": {
+      "colour": "red"
+    }
+  },
+  "extensionsUsed": {
+    "FS_electrical": "0.1.0",
+    "FS_lighting": "0.1.0"
+  },
+  "floorspec": "0.1",
+  "project": {
+    "name": "Old"
+  }
+}

@@ -303,6 +303,7 @@ export async function render3dPng(document: object, options: Render3dOptions = {
     ...(options.reader === undefined ? {} : { reader: options.reader }),
     ...(options.images === undefined ? {} : { images: options.images }),
     ...(options.doors === undefined ? {} : { doors: options.doors }),
+    ...(options.lighting === undefined ? {} : { lighting: options.lighting }),
   });
   const { sky, at, ...rest } = options;
   const skyLight = sky === undefined && at === undefined ? undefined : resolveSky(document, { ...(sky === undefined ? {} : { sky }), ...(at === undefined ? {} : { at }) });

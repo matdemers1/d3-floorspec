@@ -1,0 +1,6 @@
+{
+  "description": "A luminaire keyed by the dimmer X10: a switch of FS_electrical gives no light.",
+  "covers": [
+    "FS-LGHT-2.1.1"
+  ]
+}

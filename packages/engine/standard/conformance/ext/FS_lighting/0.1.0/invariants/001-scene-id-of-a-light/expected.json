@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-LGHT-INV-001",
+      "severity": "error",
+      "elements": ["X3"]
+    }
+  ]
+}

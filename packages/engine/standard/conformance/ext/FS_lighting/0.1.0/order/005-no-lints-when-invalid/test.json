@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too - the Evening scene dims the Living room's downlight, which does not dim: the document is invalid, so no lint is reported, FS_lighting's or Core's.",
+  "covers": [
+    "FS-LGHT-1.2.2",
+    "FS-LGHT-1.2.3"
+  ]
+}

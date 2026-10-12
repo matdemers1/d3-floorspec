@@ -1,0 +1,7 @@
+{
+  "description": "A scene LS3 \"Living\" turns on the Living room's downlight X6 and the porch light X7, and X7's luminaire is removed: a scene may turn on a light FS_lighting says nothing of (2.2). Valid, and X7 is still among the derived luminaires, by its scenes.",
+  "covers": [
+    "FS-LGHT-3.1.1",
+    "FS-LGHT-6.1.1"
+  ]
+}

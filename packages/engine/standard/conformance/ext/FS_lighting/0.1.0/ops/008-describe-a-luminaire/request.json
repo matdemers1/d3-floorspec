@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_lighting/luminaires/X6",
+      "value": {
+        "lumens": 900,
+        "cct": 3000,
+        "cctRange": [2700, 4000],
+        "dimmable": true
+      }
+    }
+  ]
+}

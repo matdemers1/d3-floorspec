@@ -1,0 +1,6 @@
+{
+  "description": "A scene LS3 named \"evening\": names are compared exactly, so it is another name. Valid.",
+  "covers": [
+    "FS-LGHT-3.1.2"
+  ]
+}

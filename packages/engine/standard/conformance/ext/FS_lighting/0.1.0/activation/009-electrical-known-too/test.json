@@ -1,0 +1,8 @@
+{
+  "description": "The house read with FS_electrical's entry known as well as FS_lighting's, by an implementation of FS_lighting alone: FS_electrical is checked only as Core 12 checks a known extension, and FS_lighting is evaluated and derived exactly as with its own entry alone.",
+  "covers": [
+    "FS-LGHT-1.2.1",
+    "FS-LGHT-1.2.4",
+    "FS-LGHT-6.1.1"
+  ]
+}

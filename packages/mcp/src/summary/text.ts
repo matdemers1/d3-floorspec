@@ -228,6 +228,13 @@ export function summaryText(s: DocumentSummary): string {
     for (const a of s.program.adjacency)
       out.push(`- ${a.kind} ${a.a} | ${a.b}: ${a.adjacent ? 'adjacent' : 'not adjacent'}${a.connected ? ', connected' : ''} — ${a.met ? 'met' : 'NOT met'}`);
   }
+  if (s.scenes) {
+    out.push('', '## Lighting scenes (FS_lighting; floorspec_render takes one by name)');
+    for (const sc of s.scenes) {
+      const on = sc.on.map((l) => `${l.id}${l.output < 100 ? ` at ${String(l.output)}%` : ''}${l.cct === undefined ? '' : ` ${String(l.cct)} K`}`);
+      out.push(`- ${sc.id}${q(sc.name)}: ${on.length ? `on ${on.join(', ')}` : 'everything off'}; every other light off`);
+    }
+  }
   if (s.circulation) {
     const c = s.circulation;
     out.push('', '## Circulation');

@@ -1,0 +1,350 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "04baa4593643d764963a5aecb3f5c0a6a4771cebdb8fb6896cd4a5f9d67331c7",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extensions/FS_lighting/scenes/LS2"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions",
+      "value": {
+        "FS_electrical": {
+          "circuits": {
+            "C1": {
+              "breaker": 15,
+              "loads": ["X2", "X3", "X4", "X5", "X6", "X7"],
+              "name": "Lights",
+              "panel": "X1",
+              "protection": ["afci"],
+              "rating": 15,
+              "space": 1,
+              "volts": 120
+            }
+          },
+          "collections": {
+            "lights": {
+              "X2": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [192000, 192000, 0],
+                    "min": [-192000, -192000, -1152000]
+                  }
+                },
+                "fixture": "pendant",
+                "host": {
+                  "position": [1950720, 2340864],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "ceiling"
+                },
+                "name": "Island pendant",
+                "watts": 10
+              },
+              "X3": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [192000, 192000, 0],
+                    "min": [-192000, -192000, -1152000]
+                  }
+                },
+                "fixture": "pendant",
+                "host": {
+                  "position": [2731008, 2340864],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "ceiling"
+                },
+                "name": "Island pendant",
+                "watts": 10
+              },
+              "X4": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 128000, 0],
+                    "min": [-128000, -128000, -192000]
+                  }
+                },
+                "fixture": "recessed",
+                "host": {
+                  "position": [1170432, 3511296],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "ceiling"
+                },
+                "watts": 12
+              },
+              "X5": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 128000, 0],
+                    "min": [-128000, -128000, -192000]
+                  }
+                },
+                "fixture": "recessed",
+                "host": {
+                  "position": [3511296, 3511296],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "ceiling"
+                },
+                "watts": 12
+              },
+              "X6": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 128000, 0],
+                    "min": [-128000, -128000, -192000]
+                  }
+                },
+                "fixture": "recessed",
+                "host": {
+                  "position": [6242304, 3511296],
+                  "mode": "surface",
+                  "room": "R2",
+                  "surface": "ceiling"
+                },
+                "watts": 12
+              },
+              "X7": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [192000, 128000, 192000],
+                    "min": [0, -128000, -192000]
+                  }
+                },
+                "fixture": "exterior",
+                "host": {
+                  "height": 2560000,
+                  "mode": "wallFace",
+                  "offset": 2340864,
+                  "side": "left",
+                  "wall": "W7"
+                },
+                "name": "Porch light",
+                "watts": 15
+              }
+            },
+            "panels": {
+              "X1": {
+                "clearances": {
+                  "working": {
+                    "max": [1280000, 512000, 1024000],
+                    "min": [0, -512000, -1536000],
+                    "purpose": "workingSpace",
+                    "shape": "box"
+                  }
+                },
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [128000, 256000, 512000],
+                    "min": [0, -256000, -512000]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 1170432,
+                  "side": "right",
+                  "wall": "W5"
+                },
+                "mainBreaker": 200,
+                "name": "Main panel",
+                "rating": 200,
+                "spaces": 40,
+                "volts": [120, 240]
+              }
+            },
+            "switches": {
+              "X10": {
+                "control": "dimmer",
+                "controls": ["X2", "X3"],
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 390144,
+                  "side": "left",
+                  "wall": "W8"
+                }
+              },
+              "X11": {
+                "control": "smart",
+                "controls": ["X4", "X5"],
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 780288,
+                  "side": "left",
+                  "wall": "W8"
+                }
+              },
+              "X12": {
+                "controls": ["X6"],
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 390144,
+                  "side": "right",
+                  "wall": "W9"
+                }
+              },
+              "X13": {
+                "controls": ["X7"],
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [32000, 51200, 76800],
+                    "min": [0, -51200, -76800]
+                  }
+                },
+                "host": {
+                  "height": 1536000,
+                  "mode": "wallFace",
+                  "offset": 780288,
+                  "side": "right",
+                  "wall": "W1"
+                }
+              }
+            }
+          }
+        },
+        "FS_furniture": {
+          "collections": {
+            "pieces": {
+              "X20": {
+                "catalogue": "lamp-table-600",
+                "category": "other",
+                "fallback": {
+                  "level": "L1",
+                  "asset": "M-lamp-table-600",
+                  "box": {
+                    "max": [460800, 230400, 768000],
+                    "min": [0, -230400, 0]
+                  },
+                  "symbol": "S-lamp-table-600"
+                },
+                "host": {
+                  "position": [7022592, 3901440],
+                  "mode": "surface",
+                  "room": "R2",
+                  "surface": "floor"
+                },
+                "name": "Table lamp"
+              }
+            }
+          }
+        },
+        "FS_lighting": {
+          "luminaires": {
+            "X2": {
+              "cct": 2700,
+              "dimmable": true,
+              "lumens": 450
+            },
+            "X20": {
+              "cct": 2700,
+              "dimmable": true,
+              "lumens": 400
+            },
+            "X3": {
+              "cct": 2700,
+              "dimmable": true,
+              "lumens": 450
+            },
+            "X4": {
+              "cct": 3000,
+              "cctRange": [2700, 5000],
+              "dimmable": true,
+              "lumens": 800
+            },
+            "X5": {
+              "cct": 3000,
+              "cctRange": [2700, 5000],
+              "dimmable": true,
+              "lumens": 800
+            },
+            "X6": {
+              "cct": 2700,
+              "dimmable": false,
+              "lumens": 800
+            },
+            "X7": {
+              "cct": 3000,
+              "lumens": 600
+            }
+          },
+          "scenes": {
+            "LS1": {
+              "name": "Evening",
+              "on": {
+                "X2": {
+                  "output": 60
+                },
+                "X20": {},
+                "X3": {
+                  "output": 60
+                },
+                "X4": {
+                  "cct": 2700,
+                  "output": 40
+                },
+                "X5": {
+                  "cct": 2700,
+                  "output": 40
+                },
+                "X7": {}
+              }
+            },
+            "LS2": {
+              "name": "Night light",
+              "on": {
+                "X20": {
+                  "output": 20
+                },
+                "X3": {
+                  "output": 10
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

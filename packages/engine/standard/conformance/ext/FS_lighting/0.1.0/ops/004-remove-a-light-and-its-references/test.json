@@ -1,0 +1,9 @@
+{
+  "description": "The same removal, with the pendant's luminaire and its settings in both scenes unset in the same batch (3.1): it commits.",
+  "covers": [
+    "FS-LGHT-2.1.1",
+    "FS-LGHT-3.1.1",
+    "FS-LGHT-1.2.1",
+    "FS-OPS-2.3.1"
+  ]
+}

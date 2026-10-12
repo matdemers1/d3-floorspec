@@ -22,6 +22,8 @@
  */
 import { deriveEvaluation, evaluate, extElements, facingVector, furniture, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { appearanceOf, decorFamily, DEFAULT_COLOURS, libraryItemOf, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch, type DoorState } from '@floorspec/mesh';
+import { ALL_ON, lensGlows, type Lighting } from '@floorspec/mesh';
+import { relight } from './relight.js';
 import { decodeTexture } from '../../pathtrace/textures.js';
 import type { ImageSource } from './glb.js';
 
@@ -212,6 +214,11 @@ export interface SceneOptions {
   readonly images?: ImageSource;
   /** The doors closed (default) or open — swung to 90°, slid, folded, raised (FLR-T-13.8). */
   readonly doors?: DoorState;
+  /**
+   * Which luminaires are on, how bright and how warm (FLR-T-13.12, @floorspec/mesh `Lighting`): the
+   * scene's `lights` and its lenses. Default every one at full.
+   */
+  readonly lighting?: Lighting;
 }
 
 const M = UNITS_PER_METRE;
@@ -605,7 +612,7 @@ export async function buildScene(document: object, options: SceneOptions = {}): 
  * chose), without validating it again: the drawings' 3D views use the evaluation their plans were
  * drawn from. `options.design` and `options.reader` are the evaluation's and are not read.
  */
-export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions, 'levels' | 'images' | 'doors'> = {}): Promise<Scene> {
+export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions, 'levels' | 'images' | 'doors' | 'lighting'> = {}): Promise<Scene> {
   if (!ev.valid || ev.document === undefined) throw new InvalidDocumentError(ev.diagnostics);
   const derived = deriveEvaluation(ev);
   const doc = ev.view ?? ev.document;
@@ -613,11 +620,11 @@ export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions,
   const levelIds = Object.keys(doc.levels ?? {});
   for (const l of options.levels ?? []) if (!levelIds.includes(l)) throw new RangeError(`the model has no level ${l}`);
   const house = mesher.meshDerived(doc, derived, { ...(options.levels === undefined ? {} : { levels: options.levels }), ...(options.doors === undefined ? {} : { doors: options.doors }) });
-  return sceneOf(doc, derived, house.parts, ev.design ?? null, mapAverages(doc, options.images));
+  return sceneOf(doc, derived, house.parts, ev.design ?? null, mapAverages(doc, options.images), options.lighting);
 }
 
 /** The scene of meshed parts: exported for tests that mesh once and build several ways. */
-export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonly MeshPart[], design: Readonly<Record<string, string>> | null, average?: MapAverage): Scene {
+export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonly MeshPart[], design: Readonly<Record<string, string>> | null, average?: MapAverage, lighting: Lighting = ALL_ON): Scene {
   const materials = new Materials(doc, average);
   const look = appearanceOf(doc, derived);
   const builders = new Map<string, { node: Omit<SceneNode, 'primitives' | 'parts'>; b: NodeBuilder }>();
@@ -769,16 +776,19 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
       };
     }
 
+  // FLR-T-13.12: the lamps the lighting turns on, and the lenses of those it turns off, dims or recolours.
+  const lit = lightsOf(doc, derived, lighting);
+  const shown = relight(levels.filter((l) => l.nodes.length > 0), materials.list, lensGlows('all' in lighting ? lit : lightsOf(doc, derived), lit));
   return {
     project: typeof doc.project.name === 'string' ? doc.project.name : 'Floorspec model',
     design: design === null ? null : { ...design },
     materials: materials.list,
-    levels: levels.filter((l) => l.nodes.length > 0),
+    levels: shown,
     bounds: builders.size === 0 ? null : { min, max },
     rooms: roomsOf(doc, derived),
     doors: doorsOf(derived, parts, frameOf),
     obstacles: obstaclesOf(doc, derived),
-    lights: lightsOf(doc, derived).map((l) => ({
+    lights: lit.map((l) => ({
       id: l.id,
       level: l.level,
       fixture: l.fixture,

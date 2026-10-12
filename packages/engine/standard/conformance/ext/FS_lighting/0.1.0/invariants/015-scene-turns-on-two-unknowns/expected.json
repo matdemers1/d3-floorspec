@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-LGHT-INV-005",
+      "severity": "error",
+      "elements": ["LS2"]
+    },
+    {
+      "code": "FS-LGHT-INV-005",
+      "severity": "error",
+      "elements": ["LS2"]
+    }
+  ]
+}
