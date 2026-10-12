@@ -78,7 +78,8 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Furniture and appliances' }).click();
   const library = page.getByRole('dialog', { name: 'Furniture & appliances' });
   await expect(library).toBeVisible();
-  await expect(library.getByRole('list', { name: 'Library items' }).getByRole('listitem')).toHaveCount(25);
+  // 25 of furniture, appliances and casework, and the decor of the library's 0.2.0 (FLR-T-13.11).
+  await expect(library.getByRole('list', { name: 'Library items' }).getByRole('listitem')).toHaveCount(55);
   await audit(page, 'library');
   await library.getByRole('radio', { name: /^Appliances/ }).click();
   await expect(library.getByRole('list', { name: 'Library items' }).getByRole('listitem')).toHaveCount(9);
