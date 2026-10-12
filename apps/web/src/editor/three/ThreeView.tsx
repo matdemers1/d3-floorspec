@@ -2,7 +2,7 @@ import './three.css';
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
-import { flatShaded, lensGlows, lightsOf, settingOf, type HouseMesh, type LensGlow, type MeshPart, type Vec3 } from '@floorspec/mesh';
+import { DEFAULT_COLOURS, flatShaded, lensGlows, lightsOf, ROLE_LOOKS, settingOf, type HouseMesh, type LensGlow, type MeshPart, type Vec3 } from '@floorspec/mesh';
 import { Button, EmptyState, IconButton, Select, Spinner, Tooltip } from '@d3cloud/ui';
 import { Box, Footprints, House, Lightbulb, Orbit as OrbitIcon, RotateCcw, X } from 'lucide-react';
 import { LightingButton, LightingChip, LightingPanel } from './lighting/LightingPanel';
@@ -14,9 +14,9 @@ import { compass, PRESET_ORDER, PRESETS, type PresetId } from './camera';
 import { FOV, ThreeController } from './controller';
 import { useHouseMesh } from './meshing';
 import { threeOf, useThreeState, type LevelsShown, type ThreeStore, type WalkStart } from './mode';
-import { castsShadow, describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
+import { castsShadow, describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, linear, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
 import { isSurfacePart, mappedPartBuffers, surfaceBuffers, type MapRef } from './surfaces';
-import { TextureLibrary } from './textures';
+import { MATERIAL_TEXTURE_UNITS, paneMaterial, TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
 import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
 import { StillButton } from './still/StillDialog';
@@ -25,7 +25,7 @@ import { SunRig } from './sun/SunRig';
 import { FixtureLights } from './FixtureLights';
 import { glow } from './highlight';
 import { softwareWebGL } from './software';
-import { viewLights } from './lights';
+import { shadowBudget, viewLights } from './lights';
 import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelled } from '../../furniture/Furniture3D';
 
 /**
@@ -82,7 +82,6 @@ function useTokens(host: { current: HTMLElement | null }): Tokens {
 }
 
 // Glass and daylight are what the house is made of and lit by, not interface colour.
-const GLASS = '#9ec9ea'; // d3-allow: window glass in the 3D model, not chrome
 const SKY = '#d6e4f0'; // d3-allow: daylight behind the windows in a walkthrough, not chrome
 const NIGHT = '#1d2433'; // d3-allow: the night sky behind the windows when the sun study is below the horizon
 
@@ -179,6 +178,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const ready = state.status === 'ready' ? state : null;
   const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);
   const textures = useMemo(() => new TextureLibrary(store.projectId, () => { ctl.invalidate(); }), [store, ctl]);
+  // The texture units a fragment shader may sample on this GPU: 16 on most, and what decides how many lamps cast shadows.
+  const [textureUnits, setTextureUnits] = useState(16);
   useEffect(() => () => { textures.dispose(); }, [textures]);
   useEffect(() => () => { for (const b of built) b.geometry.dispose(); }, [built]);
 
@@ -231,11 +232,11 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const lamps = useMemo(
     () => {
       if (ready === null || !lightsOn) return [];
-      const lit = viewLights(ready.model, ready.mesh, { level: levelId, cutaway: levels !== 'house' && !walking, order }, lighting);
+      const lit = viewLights(ready.model, ready.mesh, { level: levelId, cutaway: levels !== 'house' && !walking, order }, lighting, shadowBudget(textureUnits, MATERIAL_TEXTURE_UNITS));
       // One level alone (FLR-T-13.2): its own lamps only — the cutaway's, less those below it.
       return levels === 'only' && !walking ? lit.filter((l) => l.level === levelId) : lit;
     },
-    [ready, lightsOn, levelId, levels, walking, order, lighting],
+    [ready, lightsOn, levelId, levels, walking, order, lighting, textureUnits],
   );
   // FLR-T-13.12: every light of the house, and the lenses the lighting turns off, dims or recolours.
   const allLights = useMemo(() => (ready === null ? [] : houseLights(ready.model)), [ready]);
@@ -504,6 +505,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         }}
         onCreated={({ gl }) => {
           gl.domElement.setAttribute('aria-hidden', 'true');
+          setTextureUnits(gl.capabilities.maxTextures);
         }}
       >
         <color attach="background" args={[walking ? (night || lightsOn ? NIGHT : SKY) : tokens.background]} />
@@ -665,10 +667,11 @@ function Parts({
     const floorOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
     const ceiling = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
     const ceilingOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 }));
-    const glass = new THREE.MeshLambertMaterial({ color: GLASS, transparent: true, opacity: 0.38, depthWrite: false });
-    // A model's glass (a shower's screen) in its own colour; a luminaire's lens unshaded, as if lit,
-    // when the lights are on (FLR-T-12.22), and shaded like the rest when they are off.
-    const modelGlass = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.38, depthWrite: false });
+    // Glass lets through what is behind it, about 90% and a little green, and reflects a sheen (FLR-T-13.17).
+    const glass = paneMaterial(linear(DEFAULT_COLOURS.glass));
+    // A model's glass (a window's, a shower's screen): its role's; a luminaire's lens unshaded, as if
+    // lit, when the lights are on (FLR-T-12.22), and shaded like the rest when they are off.
+    const modelGlass = paneMaterial(linear(ROLE_LOOKS.glass.color));
     // Not tone-mapped: a lit lens is as bright as the screen shows, whatever the view's exposure (FLR-T-13.1).
     const lens = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false });
     const lensOff = new THREE.MeshLambertMaterial({ vertexColors: true });
@@ -1021,6 +1024,12 @@ interface Hook {
   textured: { part: string; material: string; sha256: string; loaded: boolean; u: [number, number]; v: [number, number] }[];
   /** FLR-T-12.22: whether the light fixtures are on, and the lamps drawn — each fixture's ID, kind and whether it casts shadows. */
   lights: { on: boolean; lamps: { id: string; kind: 'point' | 'spot'; shadow: boolean; intensity: number }[] };
+  /**
+   * FLR-T-13.17: every shader program the view has compiled — whether it linked, and how many
+   * texture units its fragment shader samples — against the GPU's limit. A program over the limit
+   * fails to link and three.js draws nothing with it.
+   */
+  programs: { units: number; list: { name: string; linked: boolean; samplers: number }[] };
 }
 
 declare global {
@@ -1088,6 +1097,25 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
         });
         return { on: three.get().lights, lamps: lamps.sort((a, b) => (a.id < b.id ? -1 : 1)) };
       },
+      get programs() {
+        const canvas = el.current?.querySelector('canvas');
+        const at = canvas === null || canvas === undefined ? undefined : sceneOf.get(canvas);
+        if (at === undefined) return { units: 0, list: [] };
+        const g = at.gl.getContext();
+        const SAMPLERS = new Set<number>([g.SAMPLER_2D, g.SAMPLER_CUBE, (g as WebGL2RenderingContext).SAMPLER_2D_SHADOW, (g as WebGL2RenderingContext).SAMPLER_CUBE_SHADOW, (g as WebGL2RenderingContext).SAMPLER_3D, (g as WebGL2RenderingContext).SAMPLER_2D_ARRAY]);
+        const list = (at.gl.info.programs ?? []).map((p) => {
+          const program = p.program as WebGLProgram;
+          const linked = g.getProgramParameter(program, g.LINK_STATUS) === true;
+          let samplers = 0;
+          const n = linked ? (g.getProgramParameter(program, g.ACTIVE_UNIFORMS) as number) : 0;
+          for (let i = 0; i < n; i++) {
+            const u = g.getActiveUniform(program, i);
+            if (u !== null && SAMPLERS.has(u.type)) samplers += u.size;
+          }
+          return { name: p.name, linked, samplers };
+        });
+        return { units: at.gl.capabilities.maxTextures, list };
+      },
       walk: (from) => { three.walk(from); },
       face: (deg) => {
         if (ctl.walker !== null) ctl.walker = { ...ctl.walker, yaw: (deg * Math.PI) / 180 };
@@ -1119,14 +1147,14 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
 }
 
 /** Registered by the scene: what screenPoint needs from inside the canvas. */
-const sceneOf = new WeakMap<HTMLCanvasElement, { scene: THREE.Scene; camera: THREE.Camera }>();
+const sceneOf = new WeakMap<HTMLCanvasElement, { scene: THREE.Scene; camera: THREE.Camera; gl: THREE.WebGLRenderer }>();
 
 export function SceneBridge() {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   useEffect(() => {
-    sceneOf.set(gl.domElement, { scene, camera });
+    sceneOf.set(gl.domElement, { scene, camera, gl });
   }, [gl, scene, camera]);
   return null;
 }

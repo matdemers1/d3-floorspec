@@ -27,6 +27,17 @@ terrazzo, marble and red brick — about 36 MB in all, JPEG, so every view and d
 (KTX2 would need a transcoder in the worker and the editor). Sources, digests and licence:
 `packages/mesh/materials/SOURCES.json` and `NOTICE.md`; `scripts/prepare-materials.py` makes them.
 
+**A colour map averages to its item's colour** (FLR-T-13.17). Core 18.1 makes a material's base
+colour the texel of its colour map where the map is drawn, and its `color` where it is not — a
+plan, a swatch, a distant view; the colour never multiplies the map, and no view multiplies them
+(the editor's vertex colours, the raster's, the path tracer's and the glTF's base colour factor are
+white under a map). So the two are one material only when the map averages to the colour: the
+prepare script scales each map's channels in linear light until its mean is its item's `color`
+(`calibrate`), keeping its grain, veining and joints. Library 0.1.0 took the publishers' scans as
+they were exposed, and white oak came out a mid brown half as light as white oak — under a sunny
+window it read as walnut. A bare metal's map (`metallic` 1000) is its measured reflectance and is
+left as it is.
+
 **Colour-agnostic items** — the paints, smooth plaster, stucco, siding, the standing seam, V-groove
 boards — have no base colour map: their `color` is their base colour (18.1), so a person's colour is
 kept, and the maps are only their relief and sheen. A paint's sheen is its `roughness`: flat 950,
@@ -50,6 +61,11 @@ item (Core 8.1). Core needs nothing new: a tile's size is `texture.size`, a plan
 - **In place**: `swapToLibraryMaterial` turns an existing material into an item without moving a
   reference — every finish, layer, slab and roof that names it is the library's now, and a
   colour-agnostic item keeps the material's colour.
+
+- **Brought up to date**: `refreshLibraryMaterials(document)` is the batch that moves every material
+  embedded from an earlier build of the library to this one (0.2.0's calibrated maps): each one
+  swapped in place — the new map files added as assets, so a tool uploads them, its turn, offset,
+  name and a colour-agnostic item's colour kept — and every asset only the old maps used removed.
 
 A view that holds the package draws a library digest from its own copy when the project's store
 lacks it (a batch applied without uploads): the editor from its bundled files, the worker from
@@ -79,7 +95,25 @@ brass, pavers, brick and concrete in the landscape as theirs.
 | Path tracer | yes | lights every hit | the sun's glint by roughness (Blinn-Phong, Schlick); metals keep 60% of their colour as diffuse | the light a bounce brings, and half the sun's and lamps' |
 | glTF, USDZ, GPU still | yes | yes, with tangents | yes | yes |
 
+In the editor a surface's ORM map is read through one texture unit (roughness, metalness and
+occlusion from the one image), and as many lamps cast shadows as a 16-unit GPU has units for beside
+a surface's maps and the sun's shadow (`shadowBudget`, FLR-T-13.17): over it a shader fails to link
+and three.js draws nothing with it — with "All on", every textured floor and wall vanished.
+
 The tracer's glint is a stand-in: GGX, Fresnel on every bounce and traced reflections are
 FLR-T-13.14's, which replaces `glint` and the metals' diffuse share. Library glass is drawn
 see-through where a view can (the glTF's transmission, the tracer's and the raster's thin glass) — a
 view's reading of the item, since Core 18.1 has no transmission.
+
+## Glass
+
+Every view draws a pane by `@floorspec/mesh` `glass.ts` (FLR-T-13.17): what is behind it times what
+the pane lets through, plus what its face reflects. Clear float glass lets about 90% through face on
+(two faces at 4% each, Fresnel at n = 1.5) with the faint green of its iron; seen at a slant its faces
+reflect more (Schlick) and its path through the glass is longer, so a pane seen edge-on is a
+mirror with a green cast. A glass's colour is what it lets through: `paneTransmission` softens a
+document's or a look's colour to it (a bronze glass is browner). The raster composites
+`behind × transmission + reflected sky`, the tracer multiplies its path by the transmission and adds
+the sky the face reflects, the editor blends with the transmission as a constant blend colour, and
+the glTF's glass has the transmission as its base colour under KHR_materials_transmission. Drawn
+before as a pale blue surface laid over the view at 35%, a window turned the lawn behind it to teal.

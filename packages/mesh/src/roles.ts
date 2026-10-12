@@ -62,10 +62,11 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   /** A wall plate: a receptacle's, a switch's. */
   plate: { color: '#f6f5f1', metallic: 0, roughness: 0.45 },
   /**
-   * A window's and a glazed door's glass, a shower's screen, a lantern's panes: faintly tinted, mostly
-   * see-through. How it reflects and transmits light is FLR-T-13.7's; here it is a tinted pane.
+   * A window's and a glazed door's glass, a shower's screen, a lantern's panes: clear float glass, its
+   * faint green the iron in it. Every view draws it by glass.ts — about 90% through, more reflected and
+   * a little greener seen at a slant; `opacity` only marks it see-through.
    */
-  glass: { color: '#bcd6e2', metallic: 0, roughness: 0.05, opacity: 0.35 },
+  glass: { color: '#dde9e3', metallic: 0, roughness: 0.05, opacity: 0.35 },
   /** An opening's painted trim (FLR-T-13.8): its casing, the jambs lining it, a window's stool and apron. */
   millwork: { color: '#f1efe9', metallic: 0, roughness: 0.5 },
   /** A window's frame and sashes, a glazed door's stiles and rails, a garage door's sections: clad in dark aluminium. */
@@ -81,8 +82,8 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   foliageDark: { color: '#3a5434', metallic: 0, roughness: 0.9 },
   /** A tree's trunk. */
   trunk: { color: '#5e4c3e', metallic: 0, roughness: 0.85 },
-  /** An ornamental grass's blades: sage turning to straw. */
-  grass: { color: '#a6a571', metallic: 0, roughness: 0.9 },
+  /** An ornamental grass's young blades, the upright heart of the clump; its arching skirt is `meadow`. */
+  grass: { color: '#748c4a', metallic: 0, roughness: 0.9 },
   /** An ornamental grass's plumes. */
   plume: { color: '#d8cba0', metallic: 0, roughness: 0.9 },
   /** Mown turf. */

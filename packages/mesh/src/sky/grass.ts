@@ -3,8 +3,8 @@
  * rather than photographed — the same texels in the editor, the headless render and both path
  * tracers, from a few lines of arithmetic, with no asset to fetch or decode and no licence to carry.
  *
- * A tile is `GRASS_TILE` metres square: blades and tufts from periodic value noise, a little straw
- * among the green, and mowing stripes a metre wide along project x. Everything coarser —
+ * A tile is `GRASS_TILE` metres square: blades and tufts from periodic value noise, and a little
+ * straw among the green. Everything coarser —
  * patches from two metres to thirty — is `lawnMacro`'s, which does not repeat, so the tile's
  * repeat does not show from above.
  *
@@ -123,12 +123,13 @@ export function grassTexture(): GrassTexture {
       const dry = Math.max(0, hash(i, j, 5) - 0.985) * 40 * (1 - clump);
       c = mix(c, STRAW, Math.min(0.7, dry));
       const shade = 0.97 + 0.04 * clump;
-      // Mowing stripes, a metre wide along project x: the mower's two directions catch the light differently.
-      const stripe = 1 + 0.035 * Math.sin(2 * Math.PI * u * GRASS_TILE * 0.5);
+      // No mowing stripes (FLR-T-13.17): the tile repeats to the horizon, and stripes a metre wide
+      // along project x, the same over every field round the house, read from above as diagonal
+      // bands across the whole ground plane.
       const o = 3 * ((N - 1 - j) * N + i);
-      data[o] = c[0] * shade * stripe;
-      data[o + 1] = c[1] * shade * stripe;
-      data[o + 2] = c[2] * shade * stripe;
+      data[o] = c[0] * shade;
+      data[o + 1] = c[1] * shade;
+      data[o + 2] = c[2] * shade;
     }
   }
   cached = { width: N, height: N, data };
@@ -159,8 +160,29 @@ export function lawnMacro(x: number, y: number): number {
  */
 export function lawnAt(x: number, y: number, out: Rgb | Float64Array, footprint = 0): void {
   const levels = grassMips();
-  const level = footprint <= 0 ? 0 : Math.max(0, Math.min(levels.length - 1, Math.round(Math.log2(footprint / (GRASS_TILE / GRASS_SIZE)))));
-  const t = levels[level]!;
+  // Between the two halvings either side of the footprint, blended (trilinear): a level chosen by
+  // rounding switched at fixed distances, and the lawn showed rings and bands where it did.
+  const lod = footprint <= 0 ? 0 : Math.max(0, Math.min(levels.length - 1, Math.log2(footprint / (GRASS_TILE / GRASS_SIZE))));
+  const lo = Math.floor(lod);
+  const w = lod - lo;
+  const m = lawnMacro(x, y);
+  tileAt(levels[lo]!, x, y, out);
+  if (w > 0 && lo + 1 < levels.length) {
+    const r = out[0];
+    const g = out[1];
+    const b = out[2];
+    tileAt(levels[lo + 1]!, x, y, out);
+    out[0] = r + (out[0] - r) * w;
+    out[1] = g + (out[1] - g) * w;
+    out[2] = b + (out[2] - b) * w;
+  }
+  out[0] = out[0] * m;
+  out[1] = out[1] * m;
+  out[2] = out[2] * m;
+}
+
+/** One halving of the tile at a point, bilinear, into `out`. */
+function tileAt(t: GrassTexture, x: number, y: number, out: Rgb | Float64Array): void {
   const N = t.width;
   const fx = (x / GRASS_TILE) * N - 0.5;
   const fy = (1 - y / GRASS_TILE) * N - 0.5;
@@ -172,12 +194,11 @@ export function lawnAt(x: number, y: number, out: Rgb | Float64Array, footprint 
   const xb = (xa + 1) % N;
   const ya = ((y0 % N) + N) % N;
   const yb = (ya + 1) % N;
-  const m = lawnMacro(x, y);
   const d = t.data;
   for (let c = 0; c < 3; c++) {
     const top = d[3 * (ya * N + xa) + c]! * (1 - ax) + d[3 * (ya * N + xb) + c]! * ax;
     const bottom = d[3 * (yb * N + xa) + c]! * (1 - ax) + d[3 * (yb * N + xb) + c]! * ax;
-    out[c] = (top * (1 - ay) + bottom * ay) * m;
+    out[c] = top * (1 - ay) + bottom * ay;
   }
 }
 

@@ -28,7 +28,7 @@
  * the sky is a simple gradient — approximate lighting, which is what
  * the screen says. Seeded (rng.ts), so the same scene and options give the same picture.
  */
-import { groundAt, hazeAt, skyRadiance as fieldRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
+import { glassAt, groundAt, hazeAt, skyRadiance as fieldRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
 import type { Vec3 } from '../export/gltf/scene.js';
 import type { Camera } from '../render3d/camera.js';
 import { Bvh, type Hit } from './bvh.js';
@@ -220,6 +220,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   const hit: Hit = { tri: -1, t: 0, u: 0, v: 0 };
   const tex = new Float64Array(3);
   const sky = new Float64Array(3);
+  const pane = new Float64Array(3);
   const field = options.field;
   const unit = field?.unit ?? 1;
   const ground = options.ground;
@@ -511,15 +512,18 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           tMin = EPS;
           if (m.glass) {
             if (++crossings > 8) break;
-            // A glint of the sky (8%, not traced further), and the rest straight through, tinted.
+            // The sky its face reflects (Fresnel, not traced further), and the rest straight through,
+            // as much as the pane lets through at this angle (glass.ts, FLR-T-13.17): about 90% face on.
+            const cos = -(dx * nx + dy * ny + dz * nz);
+            const f = glassAt(m.rgb, cos, pane);
             const k = 2 * (dx * nx + dy * ny + dz * nz);
             skyAlong(dx - k * nx, dy - k * ny, dz - k * nz, sky);
-            r += tr * 0.08 * sky[0]!;
-            g += tg * 0.08 * sky[1]!;
-            b += tb * 0.08 * sky[2]!;
-            tr *= 0.92 * (0.7 + 0.3 * m.rgb[0]);
-            tg *= 0.92 * (0.7 + 0.3 * m.rgb[1]);
-            tb *= 0.92 * (0.7 + 0.3 * m.rgb[2]);
+            r += tr * f * sky[0]!;
+            g += tg * f * sky[1]!;
+            b += tb * f * sky[2]!;
+            tr *= pane[0]!;
+            tg *= pane[1]!;
+            tb *= pane[2]!;
             ox = hx;
             oy = hy;
             oz = hz;

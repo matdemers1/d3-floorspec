@@ -14,6 +14,7 @@ import {
   isSkyPreset,
   lawnAlbedo,
   lawnAt,
+  lawnMacro,
   mapsFor,
   placeVector,
   SKY_LABELS,
@@ -38,6 +39,9 @@ function evenMap(id: 'clear' | 'overcast' | 'dusk' | 'night', w = 64): SkyMap {
   const h = Math.round((w / 2) * (96 / 180));
   return skyMapOf(id, { width: w, height: h, data: new Float32Array(w * h * 3).fill(1) });
 }
+/** cos and sin of a fraction of a turn: a test's own discrete Fourier transform. */
+const COS_OF = (turns: number): number => Math.cos(2 * Math.PI * turns);
+const SIN_OF = (turns: number): number => Math.sin(2 * Math.PI * turns);
 const maps = { clear: evenMap('clear'), overcast: evenMap('overcast'), dusk: evenMap('dusk'), night: evenMap('night') };
 
 describe('the sky presets', () => {
@@ -209,6 +213,59 @@ describe('the lawn', () => {
     const lum = 0.2126 * mean[0] + 0.7152 * mean[1] + 0.0722 * mean[2];
     expect(lum).toBeGreaterThan(0.06);
     expect(lum).toBeLessThan(0.2);
+  });
+
+  it('has no stripes or bands: averaged along any line, the tile has no repeating swing across it, at every distance it is seen from (FLR-T-13.17)', () => {
+    // Mowing stripes a metre wide along x, the same over the whole plane to the horizon, read from
+    // above at dusk as diagonal bands. Lines along x, y and the diagonals, each averaged along its
+    // whole repeat: across them the means have no strong harmonic — the lawn's variation is
+    // lawnMacro's alone — at each footprint a view reads the tile with, from a pixel at your feet
+    // to one on the far lawn. (With the stripes, lines along y swung 3.5% at the half-tile's harmonic.)
+    const out = new Float64Array(3);
+    const lum = (x: number, y: number, foot: number) => {
+      lawnAt(x, y, out, foot);
+      return (0.2126 * out[0]! + 0.7152 * out[1]! + 0.0722 * out[2]!) / lawnMacro(x, y);
+    };
+    const n = 512;
+    const lines = 64;
+    for (const foot of [0, 0.03, 0.12, 0.5])
+      for (const [ax, ay, bx, by] of [[1, 0, 0, 1], [0, 1, 1, 0], [1, 1, -1, 1], [1, -1, 1, 1]] as const) {
+        const means: number[] = [];
+        const reach = ax !== 0 && ay !== 0 ? 2 * GRASS_TILE : GRASS_TILE;
+        for (let i = 0; i < lines; i++) {
+          const o = (i / lines) * GRASS_TILE;
+          let sum = 0;
+          for (let k = 0; k < n; k++) {
+            const s = (k / n) * reach;
+            sum += lum(o * bx + s * ax + 0.37, o * by + s * ay + 0.61, foot);
+          }
+          means.push(sum / n);
+        }
+        const avg = means.reduce((a, b) => a + b, 0) / lines;
+        // The strongest harmonic across the lines, as a fraction of the mean: a stripe's amplitude.
+        let swing = 0;
+        for (let k = 1; k <= lines / 2; k++) {
+          let re = 0;
+          let im = 0;
+          means.forEach((m, i) => {
+            re += m * COS_OF((k * i) / lines);
+            im += m * SIN_OF((k * i) / lines);
+          });
+          swing = Math.max(swing, (2 * Math.hypot(re, im)) / lines / avg);
+        }
+        expect(swing, `footprint ${String(foot)} m, along (${String(ax)}, ${String(ay)})`).toBeLessThan(0.015);
+      }
+  });
+
+  it('blends between the tile\'s halvings as the footprint grows, with no step at any distance (FLR-T-13.17)', () => {
+    const out = new Float64Array(3);
+    const at = (foot: number) => {
+      lawnAt(2.345, 7.891, out, foot);
+      return out[1]!;
+    };
+    let worst = 0;
+    for (let foot = 0.005; foot < 5; foot *= 1.02) worst = Math.max(worst, Math.abs(at(foot * 1.02) - at(foot)) / at(foot));
+    expect(worst).toBeLessThan(0.05);
   });
 
   it('gives way where something is laid on the ground (FLR-T-13.5’s hook)', () => {

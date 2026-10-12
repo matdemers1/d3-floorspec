@@ -6,7 +6,9 @@ import { readModel, type EditorModel } from '../src/editor/model';
 import { ThreeStore } from '../src/editor/three/mode';
 import { levelOrder } from '../src/editor/three/parts';
 import { EXPOSURE_PER_NIT, lightsOf } from '@floorspec/mesh';
-import { LIT_EXPOSURE, MAX_LIGHTS, MAX_SPOT_ANGLE, MAX_SHADOWED, OUTSIDE, SPILL, toneMappingExposure, viewLights } from '../src/editor/three/lights';
+import { GUARANTEED_TEXTURE_UNITS, LIT_EXPOSURE, MAX_LIGHTS, MAX_SPOT_ANGLE, MAX_SHADOWED, OUTSIDE, SCENE_TEXTURE_UNITS, SPILL, shadowBudget, toneMappingExposure, viewLights } from '../src/editor/three/lights';
+import { MATERIAL_TEXTURE_UNITS, packOrm } from '../src/editor/three/textures';
+import * as THREE from 'three';
 import { castsShadow } from '../src/editor/three/parts';
 
 /**
@@ -108,6 +110,49 @@ describe('the lamps the 3D view draws', () => {
       expect(l.distance).toBeGreaterThan(SPILL * 2.7);
       if (rooms.get(l.id) === null) expect(l.distance).toBe(OUTSIDE);
     }
+  });
+
+  it('casts no more shadows than a 16-unit GPU has texture units for beside a surface\'s maps (FLR-T-13.17)', () => {
+    // The worst case a lit surface's fragment shader samples: its own maps, the sun's shadow, every shadowed lamp's.
+    const budget = shadowBudget(16, MATERIAL_TEXTURE_UNITS);
+    expect(MATERIAL_TEXTURE_UNITS + SCENE_TEXTURE_UNITS + budget).toBeLessThanOrEqual(16);
+    expect(budget).toBe(11);
+    // Planned for WebGL 2's guaranteed 16 on a GPU with more, and fewer on one with fewer; never negative.
+    expect(shadowBudget(32, MATERIAL_TEXTURE_UNITS)).toBe(budget);
+    expect(shadowBudget(GUARANTEED_TEXTURE_UNITS, MATERIAL_TEXTURE_UNITS)).toBe(budget);
+    expect(shadowBudget(8, MATERIAL_TEXTURE_UNITS)).toBe(3);
+    expect(shadowBudget(4, MATERIAL_TEXTURE_UNITS)).toBe(0);
+    expect(shadowBudget(64, 0)).toBe(MAX_SHADOWED);
+    const doc = JSON.parse(SHOWCASE) as { extensions: { FS_electrical: { collections: { lights: Record<string, Record<string, unknown>> } } } };
+    const lights = doc.extensions.FS_electrical.collections.lights;
+    for (let i = 0; i < 24; i++) lights[`A${String(i).padStart(2, '0')}`] = { ...structuredClone(lights['E12']!), host: { mode: 'surface', room: 'R3', surface: 'ceiling', position: [6_400_000 + 32_000 * i, 1_408_000] } };
+    const many = readModel('many', JSON.stringify(doc));
+    const lamps = viewLights(many, mesh, { level: 'L1', cutaway: true, order: levelOrder(many) }, undefined, budget);
+    expect(lamps).toHaveLength(MAX_LIGHTS);
+    expect(lamps.filter((l) => l.shadow)).toHaveLength(budget);
+    expect(lamps.slice(0, budget).every((l) => l.shadow)).toBe(true);
+  });
+
+  it('reads an ORM map\'s roughness, metalness and occlusion through one texture unit (FLR-T-13.17)', () => {
+    const fragment = ['#include <roughnessmap_pars_fragment>', '#include <metalnessmap_pars_fragment>', '#include <aomap_pars_fragment>'].join('\n');
+    const compile = (occlusion: boolean) => {
+      const m = new THREE.MeshStandardMaterial();
+      packOrm(m, occlusion);
+      const shader = { fragmentShader: fragment, vertexShader: '', uniforms: {} } as unknown as THREE.WebGLProgramParametersWithUniforms;
+      m.onBeforeCompile(shader, undefined as unknown as THREE.WebGLRenderer);
+      return { text: shader.fragmentShader, key: m.customProgramCacheKey() };
+    };
+    const packed = compile(true);
+    expect(packed.text).toContain('#include <roughnessmap_pars_fragment>');
+    expect(packed.text).toContain('#define metalnessMap roughnessMap');
+    expect(packed.text).toContain('#define aoMap roughnessMap');
+    expect(packed.text).not.toContain('metalnessmap_pars_fragment');
+    expect(packed.text).not.toContain('aomap_pars_fragment');
+    // An occlusion map of its own keeps its own sampler; the two programs are cached apart.
+    const own = compile(false);
+    expect(own.text).toContain('#define metalnessMap roughnessMap');
+    expect(own.text).toContain('#include <aomap_pars_fragment>');
+    expect(own.key).not.toBe(packed.key);
   });
 
   it('leaves every piece of a luminaire out of the shadow maps: a fixture never shadows its own lamp', () => {

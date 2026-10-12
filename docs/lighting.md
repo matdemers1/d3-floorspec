@@ -32,6 +32,8 @@ candela — over the sphere, or over the cone of a spot out to the middle of its
 surface to I cos θ / d² lux, d in metres, with no other scale: three.js's physically based lights
 (`decay` 2, intensity in candela) and the path tracer's lamps (`LUX_PER_UNIT`, 12 500 lux to its unit).
 A shadowed lamp in the editor is not cut off; one without a shadow is cut off past its own room.
+The editor shadows no more lamps than a 16-unit GPU has texture units for beside a surface's maps and
+the sun's shadow (11; `shadowBudget`, FLR-T-13.17), one a room before any room has two.
 The editor draws a spot no wider than 85° (three.js's shadow camera cannot span 180°) and glTF
 writes one no wider than 90°, so there a ceiling light's dome stops short of the ceiling's glow; the
 candela are the same.
@@ -131,7 +133,10 @@ editor's GPU still — is seen under one sky, `@floorspec/mesh/sky` (FLR-T-13.4,
   about 93 klx at noon, 50 klx 15° up) and it reddens as it sets. A clear sky follows its sun: past
   6° it fades through the dusk sky into night's, and a moon opposite the sun takes its place.
 - **The ground** is a lawn at true scale (a procedural tile every 4 m, varied across the site), out to
-  the horizon, lost in the haze between 200 m and 2.4 km. Slabs, patios and driveways sit on it;
+  the horizon, lost in the haze between 200 m and 2.4 km. It has no mowing stripes (FLR-T-13.17):
+  the same stripes over the whole plane read from above at dusk as diagonal bands; and a view reading
+  it from far off blends the tile's two halvings either side of its pixel's footprint, so no
+  distance shows a step. Slabs, patios and driveways sit on it;
   what FS_landscape lays on the ground (FLR-T-13.5) is drawn in place of the lawn (`GroundArea`).
 - **Image-based light:** the editor lights the house with the sky's nine spherical harmonics (a
   light probe) and the raster render with the same; the tracers sample the dome itself. Views that do

@@ -37,7 +37,8 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `moonshots` — FLR-T-12.6: the ranch's advisory energy estimate, its climate changed through Ops,
  *                   and a path-traced still of its 3D view rendered on the job queue.
  *   - `materials` — FLR-T-13.6: a library material added with its maps uploaded, a kitchen floor finished
- *                   in it and turned 90°, and the 3D view drawing it at its real size.
+ *                   in it and turned 90°, and the 3D view drawing it at its real size; FLR-T-13.17: every
+ *                   lamp on over textured materials, every shader program linked within 16 texture units.
  *   - `arcs`      — FLR-T-11.1: an arc wall drawn by keyboard (Core 0.4, chapter 21), the curved room it
  *                   closes with its area, the arc wall's inspector, and the curved wall in 3D.
  *

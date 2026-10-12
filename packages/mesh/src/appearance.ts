@@ -40,7 +40,7 @@ export const DEFAULT_COLOURS = {
   stair: '#a97d54',
   fill: '#ddd5c7',
   extension: '#9aa0ae',
-  glass: '#a9c7d6',
+  glass: '#dde9e3',
 } as const satisfies Record<string, Hex>;
 export type DefaultColour = keyof typeof DEFAULT_COLOURS;
 
