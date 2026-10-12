@@ -114,6 +114,15 @@ const SUITES: Suite[] = [
   { name: 'arcs', spec: 'arcs.spec.ts', port: PORT + 17, database: databaseFor('arcs'), setupToken: true, gl: true },
 ];
 
+/**
+ * CI splits the suites across runners (`E2E_SUITES=a11y` on one, `three,sun,…` on another): a runner
+ * boots the servers of, and runs, only its own. Unset, every suite runs.
+ */
+const only = (process.env['E2E_SUITES'] ?? '').split(',').map((name) => name.trim()).filter((name) => name !== '');
+const unknown = only.filter((name) => !SUITES.some((suite) => suite.name === name));
+if (unknown.length > 0) throw new Error(`E2E_SUITES names no suite: ${unknown.join(', ')}`);
+const RUN = only.length === 0 ? SUITES : SUITES.filter((suite) => only.includes(suite.name));
+
 const origin = (port: number) => `http://localhost:${String(port)}`;
 
 export default defineConfig({
@@ -130,12 +139,12 @@ export default defineConfig({
     viewport: { width: 1440, height: 900 },
     trace: 'retain-on-failure',
   },
-  projects: SUITES.map((suite) => ({
+  projects: RUN.map((suite) => ({
     name: suite.name,
     testMatch: suite.spec,
     use: { baseURL: origin(suite.port), ...(suite.gl === true ? { launchOptions: { args: GL_ARGS } } : {}) },
   })),
-  webServer: SUITES.map((suite) => ({
+  webServer: RUN.map((suite) => ({
     // Reset the database, then boot the API on it: it migrates, and serves the built editor.
     command: `node ${web}e2e/reset-db.mjs && node --import tsx src/index.ts`,
     cwd: server,
