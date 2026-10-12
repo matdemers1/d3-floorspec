@@ -96,7 +96,7 @@ test('adds a library material with its maps, finishes a floor in it, and draws i
   expect(floor.status(), await floor.text()).toBe(201);
   await page.reload();
   await page.getByRole('button', { name: 'Materials' }).click();
-  await page.getByRole('dialog', { name: /^Materials/ }).getByRole('list', { name: 'Materials' }).getByRole('button', { name: /White oak plank/ }).click();
+  await page.getByRole('dialog', { name: /^Materials/ }).getByRole('list', { name: 'Materials', exact: true }).getByRole('button', { name: /^White oak plank/ }).click();
   const turn = page.getByRole('combobox', { name: 'Turn the texture of White oak plank, 8 in, matte' });
   await expect(page.getByText(`From the material library ${MATERIAL_LIBRARY.version} · White oak plank, 8 in, matte`)).toBeVisible();
   await turn.click();
@@ -114,10 +114,14 @@ test('adds a library material with its maps, finishes a floor in it, and draws i
   const textured = await page.evaluate(() => (window as unknown as { __floorspec3d: { textured: Textured[] } }).__floorspec3d.textured);
   const onFloor = textured.find((t) => t.part === 'floor:KIT' && t.material === 'white-oak-plank')!;
   expect(onFloor.sha256).toBe(LIBRARY_FILES['white-oak-plank.albedo.jpg']!.sha256);
-  // Turned 90°: the floor's 10 ft run north–south is along the tile's u, its 12 ft east–west along v.
-  const span = (r: [number, number]) => r[1] - r[0];
-  expect(span(onFloor.u) * 1.7).toBeCloseTo(10 * 0.3048, 1);
-  expect(span(onFloor.v) * 1.7).toBeCloseTo(12 * 0.3048, 1);
+  // Turned 90°: the floor's north–south run (10 ft between the walls' centre lines, less the walls)
+  // is along the tile's u, its east–west run (12 ft, less the walls) along v — a tile every 1.7 m.
+  const metres = (r: [number, number]) => (r[1] - r[0]) * 1.7;
+  const inside = (ft: number) => [ft * 0.3048 - 0.2, ft * 0.3048] as const;
+  expect(metres(onFloor.u)).toBeGreaterThan(inside(10)[0]);
+  expect(metres(onFloor.u)).toBeLessThan(inside(10)[1]);
+  expect(metres(onFloor.v)).toBeGreaterThan(inside(12)[0]);
+  expect(metres(onFloor.v)).toBeLessThan(inside(12)[1]);
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'test-results/materials-3d.png' });
 });

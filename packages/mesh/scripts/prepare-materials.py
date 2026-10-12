@@ -117,7 +117,7 @@ ITEMS: list[dict] = [
          description='Exterior sand-finish stucco. Its colour is yours.'),
     dict(id='concrete-smooth', name='Concrete, smooth', category='concrete', uses=['floor', 'wall'], src=('ph', 'smooth_concrete_floor'), mm=2000, px=1024, maps='ANO', color='#a19d97', tint='#a19d97', tint_contrast=0.8,
          description='Troweled concrete, sealed.'),
-    dict(id='concrete-broom', name='Concrete, broom finish', category='concrete', uses=['floor', 'exterior'], src=('ph', 'brushed_concrete_03'), mm=2000, px=1024, maps='ANO', color='#a6a39d',
+    dict(id='concrete-broom', name='Concrete, broom finish', category='concrete', uses=['floor', 'exterior'], src=('ph', 'brushed_concrete_03'), mm=2000, px=1024, maps='ANO', color='#a6a39d', tint='#a6a39d', tint_contrast=0.9,
          description='Exterior slab with a broom finish.'),
     dict(id='epoxy-floor', name='Epoxy floor coating', category='concrete', uses=['floor'], src=None, color='#8c9196', roughness=300,
          description='A seamless resin floor. Its colour is yours.'),
@@ -139,7 +139,7 @@ ITEMS: list[dict] = [
          description='Brushed stainless, grain along s.'),
     dict(id='brass-satin', name='Brass, satin', category='metal', uses=['furniture'], src=('ac', 'Metal048A'), mm=1000, px=1024, maps='ANO', color='#c9a560', metallic=1000,
          description='Unlacquered satin brass.'),
-    dict(id='steel-blackened', name='Steel, black powder coat', category='metal', uses=['furniture', 'exterior'], src=('ac', 'Metal027'), mm=1000, px=1024, maps='ANO', color='#26272b',
+    dict(id='steel-blackened', name='Steel, black powder coat', category='metal', uses=['furniture', 'exterior'], src=('ac', 'Metal027'), mm=1000, px=1024, maps='ANO', color='#26272b', metallic=0,
          description='Black powder-coated steel, for railings, frames and fixtures.'),
     dict(id='copper', name='Copper', category='metal', uses=['furniture', 'roof'], src=('ac', 'Metal035'), mm=1000, px=1024, maps='ANO', color='#b6714a', metallic=1000,
          description='Bright copper.'),
@@ -604,8 +604,10 @@ def main() -> None:
     lines += ['};', '', 'export const ITEMS: readonly LibraryItemData[] = [']
     for item, maps, size in items:
         parts = [f"id: '{item['id']}'", f"name: {ts_string(item['name'])}", f"category: '{item['category']}' satisfies LibraryCategory", f"uses: [{', '.join(repr(u).replace(chr(39), chr(39)) for u in item['uses'])}]", f"description: {ts_string(item['description'])}", f"color: '{item['color']}'"]
-        if 'metallic' in item:
-            parts.append(f"metallic: {item['metallic']}")
+        # Not a metal: metalness 0, whatever a map's blue channel says (Core 18.1: the factor times the map).
+        metallic = item.get('metallic', 0 if item['category'] != 'metal' and 'O' in item.get('maps', '') else None)
+        if metallic is not None:
+            parts.append(f"metallic: {metallic}")
         if 'roughness' in item:
             parts.append(f"roughness: {item['roughness']}")
         if item.get('look'):

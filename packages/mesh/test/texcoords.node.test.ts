@@ -13,7 +13,7 @@ let house: HouseMesh;
 
 beforeAll(async () => {
   const mesher = await loadMesher();
-  house = mesher.meshDocument(ranch() as never);
+  house = mesher.meshDocument(ranch());
 });
 
 /** Every triangle's edges, in metres in 3D and in (s, t). */

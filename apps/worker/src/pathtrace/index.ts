@@ -185,7 +185,8 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
     const maps: MaterialMaps = got === undefined ? {} : 'data' in got ? { albedo: got } : got;
     const t = maps.albedo;
     return {
-      rgb: [m.baseColor[0], m.baseColor[1], m.baseColor[2]],
+      // Under a base colour map the texel is the colour (Core 18.1), not the colour times it.
+      rgb: t === undefined ? [m.baseColor[0], m.baseColor[1], m.baseColor[2]] : [1, 1, 1],
       glass: m.blend,
       ...(t === undefined ? {} : { texture: t }),
       // FLR-T-13.6: roughness and metalness (Core 18.1: a map's channel times a declared factor), and the surface's relief.

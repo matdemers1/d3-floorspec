@@ -140,6 +140,23 @@ export function materialElement(item: LibraryItemData, assets: (file: string) =>
   };
 }
 
+/**
+ * A document of Core 0.1 or 0.2 cannot hold a texture's normal or metallic-roughness map, a
+ * material's factors, an asset's length or a `source` (0.3, 8.1, 18.1–18.4): the op that makes it
+ * 0.3 first — which every 0.1 and 0.2 document already is a valid 0.3 document of — or none.
+ */
+export function coreUpgradeOps(document: unknown): LibraryOp[] {
+  const v = (document as { floorspec?: unknown } | null)?.floorspec;
+  return v === '0.1' || v === '0.2' ? [{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }] : [];
+}
+
+/** The upgrade, once in a batch of embeds sharing `pending`. */
+function upgradeOnce(document: unknown, pending: Map<string, string>): LibraryOp[] {
+  if (pending.has('$document')) return [];
+  pending.set('$document', '0.3');
+  return coreUpgradeOps(document);
+}
+
 /** The asset ops an item needs that a document does not hold yet, and the asset ID of each of its files. */
 function assetOps(document: unknown, item: LibraryItemData, pending: Map<string, string>): { ops: LibraryOp[]; idOf: (file: string) => string } {
   const held = heldAssets(document);
@@ -173,7 +190,7 @@ export function embedLibraryMaterial(document: unknown, itemId: string, options:
   let id = options.id ?? item.id;
   if (options.id === undefined) for (let n = 2; holds(document, id); n++) id = `${item.id}-${String(n)}`;
   const assets = assetOps(document, item, pending);
-  return { id, ops: [...assets.ops, { op: 'addElement', collection: 'materials', id, element: materialElement(item, assets.idOf, options) }] };
+  return { id, ops: [...upgradeOnce(document, pending), ...assets.ops, { op: 'addElement', collection: 'materials', id, element: materialElement(item, assets.idOf, options) }] };
 }
 
 /**
@@ -195,7 +212,7 @@ export function swapToLibraryMaterial(document: unknown, materialId: string, ite
     ...(options.color !== undefined ? { color: options.color } : agnostic && keep !== undefined ? { color: keep } : {}),
     ...(options.rotation === undefined ? {} : { rotation: options.rotation }),
   });
-  const ops: LibraryOp[] = [...assets.ops];
+  const ops: LibraryOp[] = [...upgradeOnce(document, pending), ...assets.ops];
   for (const key of ['metallic', 'roughness', 'texture'])
     if (current[key] !== undefined && next[key] === undefined) ops.push({ op: 'unsetProperty', id: materialId, path: `/${key}` });
   for (const [key, value] of Object.entries(next)) if (JSON.stringify(current[key]) !== JSON.stringify(value)) ops.push({ op: 'setProperty', id: materialId, path: `/${key}`, value });

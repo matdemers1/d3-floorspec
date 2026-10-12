@@ -1674,8 +1674,8 @@
     },
     {
       "file": "concrete-broom.albedo.jpg",
-      "sha256": "65043c75a96283db5e3f8948a55ddb57a2e0c97004c9191eadfc04a5eec4f9cd",
-      "byteLength": 266357,
+      "sha256": "698dc727533b65b9b592903961d187c1574b1d29332c3fed1faa6da882a67bfc",
+      "byteLength": 335025,
       "width": 1024,
       "height": 1024,
       "mediaType": "image/jpeg",
@@ -2555,5 +2555,5 @@
       "origin": "generated: prepare-materials.py zellige"
     }
   ],
-  "totalBytes": 36015439
+  "totalBytes": 36084107
 }

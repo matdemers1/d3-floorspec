@@ -67,7 +67,7 @@ describe('the library\'s files', () => {
       if (item.texture === undefined) continue;
       expect(item.texture.size[0], item.id).toBeGreaterThan(0);
       expect(Number.isInteger(item.texture.size[0]) && Number.isInteger(item.texture.size[1]), item.id).toBe(true);
-      for (const file of Object.values(item.texture.maps)) {
+      for (const file of Object.values(item.texture.maps) as string[]) {
         const f = LIBRARY_FILES[file]!;
         expect(Math.max(f.width, f.height), file).toBeLessThanOrEqual(2048);
         // Square pixels: the image's aspect is the tile's.
@@ -94,7 +94,7 @@ describe('the library\'s items', () => {
     for (const item of LIBRARY_MATERIALS) {
       const { id, ops } = embedLibraryMaterial(doc, item.id);
       expect(id).toBe(item.id);
-      const r = apply(doc as never, { batch: ops } as never);
+      const r = apply(doc as never, { batch: ops });
       expect(r.status, item.id).toBe('committed');
       if (r.status !== 'committed') return;
       doc = JSON.parse(r.document) as unknown;
@@ -113,20 +113,30 @@ describe('the library\'s items', () => {
     // A second embed of an item is a second material, on the assets already there.
     const again = embedLibraryMaterial(doc, 'white-oak-plank', { rotation: 90_000_000 });
     expect(again.id).toBe('white-oak-plank-2');
-    expect(again.ops).toEqual([{ op: 'addElement', collection: 'materials', id: 'white-oak-plank-2', element: expect.objectContaining({ texture: expect.objectContaining({ rotation: 90_000_000 }) }) as unknown }]);
+    expect(again.ops).toHaveLength(1);
+    expect(again.ops[0]).toMatchObject({ op: 'addElement', collection: 'materials', id: 'white-oak-plank-2', element: { texture: { rotation: 90_000_000 } } });
   });
 
   it('replace a document\'s material in place, keeping a person\'s colour on a colour-agnostic one', () => {
     const doc = { floorspec: '0.3', project: { name: 'Swap' }, materials: { 'paint-sage': { name: 'Paint, sage', color: '#a7b59c', roughness: 900 }, oak: { name: 'Oak', color: '#c9a77c', roughness: 600 } } };
     const pending = new Map<string, string>();
     const ops = [...swapToLibraryMaterial(doc, 'paint-sage', 'paint-eggshell', {}, pending), ...swapToLibraryMaterial(doc, 'oak', 'white-oak-plank', {}, pending)];
-    const r = apply(doc as never, { batch: ops } as never);
+    const r = apply(doc, { batch: ops });
     expect(r.status).toBe('committed');
     if (r.status !== 'committed') return;
     const d = JSON.parse(r.document) as { materials: Record<string, Json> };
     expect(d.materials['paint-sage']).toMatchObject({ name: 'Paint, sage', color: '#a7b59c', roughness: 720, texture: { normal: 'paint-stipple.normal' } });
     expect(d.materials['oak']).toMatchObject({ name: 'Oak', color: '#b9a283', source: { item: 'white-oak-plank' } });
     expect(d.materials['oak']!['roughness']).toBeUndefined();
+  });
+
+  it('make a Core 0.2 document 0.3 first, once, since only 0.3 holds their maps and factors', () => {
+    const doc = { floorspec: '0.2', project: { name: 'Old' } };
+    const pending = new Map<string, string>();
+    const ops = [...embedLibraryMaterial(doc, 'paint-satin', {}, pending).ops, ...embedLibraryMaterial(doc, 'brick-red-running', {}, pending).ops];
+    expect(ops.filter((o) => o['id'] === '$document')).toEqual([{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }]);
+    expect(ops[0]).toMatchObject({ id: '$document' });
+    expect(apply(doc as never, { batch: ops }).status).toBe('committed');
   });
 
   it('dress the roles of a model\'s pieces with items that exist', () => {

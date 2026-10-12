@@ -36,6 +36,8 @@ import { defineConfig, devices } from '@playwright/test';
  *                   opened in the plan, in 3D and in the schedules.
  *   - `moonshots` — FLR-T-12.6: the ranch's advisory energy estimate, its climate changed through Ops,
  *                   and a path-traced still of its 3D view rendered on the job queue.
+ *   - `materials` — FLR-T-13.6: a library material added with its maps uploaded, a kitchen floor finished
+ *                   in it and turned 90°, and the 3D view drawing it at its real size.
  *   - `arcs`      — FLR-T-11.1: an arc wall drawn by keyboard (Core 0.4, chapter 21), the curved room it
  *                   closes with its area, the arc wall's inspector, and the curved wall in 3D.
  *
@@ -45,7 +47,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`). E2E_PORT is the keyboard suite's port; the others take the next eighteen.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`). E2E_PORT is the keyboard suite's port; the others take the next nineteen.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -114,6 +116,8 @@ const SUITES: Suite[] = [
   { name: 'arcs', spec: 'arcs.spec.ts', port: PORT + 17, database: databaseFor('arcs'), setupToken: true, gl: true },
   // FLR-T-13.12: lighting design in 3D — a switch clicked, scenes chosen, a dimmer, scenes saved as Ops.
   { name: 'lighting', spec: 'lighting.spec.ts', port: PORT + 18, database: databaseFor('lighting'), setupToken: true, gl: true },
+  // FLR-T-13.6: a library material added with its maps, a floor finished in it, turned, drawn in 3D at its real size.
+  { name: 'materials', spec: 'materials.spec.ts', port: PORT + 19, database: databaseFor('materials'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-materials-assets') } },
 ];
 
 /**
@@ -159,7 +163,9 @@ export default defineConfig({
       DATABASE_URL: suite.database,
       PORT: String(suite.port),
       PUBLIC_URL: origin(suite.port),
-      WEB_DIST: `${web}dist`,
+      // E2E_WEB_DIST: a copy of the build outside any dot directory — express will not send a file
+      // under one, so a checkout in a worktree under .claude/ serves its editor from a copy.
+      WEB_DIST: process.env['E2E_WEB_DIST'] ?? `${web}dist`,
       // Fresh secrets per run: nothing outlives the run that needs them.
       KEK: randomBytes(32).toString('base64'),
       PEPPER: randomBytes(32).toString('base64'),

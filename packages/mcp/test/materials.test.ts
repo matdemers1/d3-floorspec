@@ -22,7 +22,7 @@ describe('the material library through MCP', () => {
     expect(assets).toEqual(['paint-stipple.normal', 'white-oak-plank.albedo', 'white-oak-plank.normal', 'white-oak-plank.orm']);
     expect(ops.filter((o) => o['collection'] === 'materials').map((o) => o['id'])).toEqual(['paint-eggshell', 'paint-satin', 'white-oak-plank']);
     expect(libraryFilesAdded(ops)).toEqual(['paint-stipple.normal.jpg', 'white-oak-plank.albedo.jpg', 'white-oak-plank.normal.jpg', 'white-oak-plank.orm.jpg']);
-    expect(materialFileBytes('paint-stipple.normal.jpg').length).toBe(LIBRARY_FILES['paint-stipple.normal.jpg']!.byteLength);
+    expect(materialFileBytes('paint-stipple.normal.jpg').length).toBe(LIBRARY_FILES['paint-stipple.normal.jpg']?.byteLength);
     expect(materialsText()).toContain('white-oak-plank');
   });
 });
