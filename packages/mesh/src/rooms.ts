@@ -20,10 +20,16 @@
  *   nothing is over it: no roof, no room of a higher level and no slab a metre or more above its
  *   floor covers half of it or more in plan (FLR-T-12.23). Its derived ceiling (15.5) is unchanged;
  *   it is only not drawn, so a roof deck is open to the sky and a porch under a roof keeps its ceiling.
+ * - A ceiling is not drawn over a room of a higher level whose floor it is above (FLR-T-12.37,
+ *   `standingOver`): a double-height room's ceiling stops where a bridge or a gallery stands in it.
+ *   There it would be inside that room or above its ceiling — and at the same elevation as that
+ *   room's ceiling, the two would fight for depth — while the room below sees the upper floor drawn
+ *   down to it (its underside that room's ceiling, FLR-T-12.32). Its derived ceiling (15.5) is
+ *   unchanged: only less of it is drawn.
  */
 import { Surd, type Derived, type FloorspecDocument, type Room, type VaultedCeiling } from '@floorspec/engine';
 import { get } from './own.js';
-import { MeshBuilder, type P2, type P3 } from './builder.js';
+import { dedupe, MeshBuilder, type P2, type P3 } from './builder.js';
 import { scoped, type CrossSection, type Kernel } from './kernel.js';
 import type { RawPart } from './part.js';
 import { UNITS_PER_METRE, type Plenum } from './types.js';
@@ -75,6 +81,7 @@ export function floorBody(kernel: Kernel, rings: readonly Ring[], top: number, b
 
 export function roomParts(kernel: Kernel, doc: FloorspecDocument, derived: Derived, want: (kind: RawPart['kind']) => boolean, plenums: ReadonlyMap<string, Plenum> = new Map()): RawPart[] {
   const out: RawPart[] = [];
+  const over = want('ceiling') ? standingOver(doc, derived) : new Map<string, Over[]>();
   for (const id of Object.keys(derived.rooms).sort()) {
     const room = get(doc.rooms, id);
     const poly = derived.rooms[id]!;
@@ -87,24 +94,37 @@ export function roomParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
       const b = new MeshBuilder(kernel);
       const c = room.ceiling ?? { kind: 'flat' };
       const base = Number(ceilingBase(doc, room));
+      // What of a plan region is drawn: all of it, or what the rooms standing over it leave of it
+      // (FLR-T-12.37) — each room's polygon where this ceiling is above its floor: everywhere for a
+      // flat ceiling, over the centre for a tray whose border is not, along the ridge for a vault.
+      const cut = (over.get(id) ?? []).map((o): Cut => {
+        const at: Ring[] = [derived.rooms[o.id]!.outer, ...derived.rooms[o.id]!.holes];
+        if (c.kind === 'tray' && ce.tray && base <= o.top) return { rings: at, band: [ce.tray.outer, ...ce.tray.holes] };
+        if (c.kind === 'vaulted') return { rings: at, band: ridgeBand(c, ceilingBase(doc, room), o.top, rings) };
+        return { rings: at };
+      });
+      const drawn = (region: Ring[]): Ring[][] => (cut.length ? uncovered(kernel, region, cut) : [region]);
       if (c.kind === 'tray' && ce.tray) {
         const top = base + c.depth;
         const centre: Ring[] = [ce.tray.outer, ...ce.tray.holes];
         // The border: the room polygon with the centre's rings as holes — its outer ring reversed
         // into a hole, each of its holes reversed into an island around the room's hole.
-        b.sheet([...rings, ...centre.map(reversed)], base, 'down');
-        b.sheet(centre, top, 'down');
+        for (const piece of drawn([...rings, ...centre.map(reversed)])) b.sheet(piece, base, 'down');
+        const middle = drawn(centre);
+        for (const piece of middle) b.sheet(piece, top, 'down');
         // The step, on every edge of every ring of the centre, facing out of the centre: to the
         // right of the ring's walk, which runs counter-clockwise outside and clockwise round a hole.
-        for (const r of centre)
+        // Where the centre is cut, only on what is left of its own edges.
+        for (const r of middle.flat())
           for (let i = 0; i < r.length; i++) {
             const p = r[i]!;
             const q = r[(i + 1) % r.length]!;
+            if (cut.length && !centre.some((e) => onRing(e, p, q))) continue;
             b.quad([p[0], p[1], base], [q[0], q[1], base], [q[0], q[1], top], [p[0], p[1], top]);
           }
       } else if (c.kind === 'vaulted') {
-        vault(kernel, b, rings, c, ceilingBase(doc, room));
-      } else b.sheet(rings, base, 'down');
+        for (const piece of drawn(rings)) vault(kernel, b, piece, c, ceilingBase(doc, room));
+      } else for (const piece of drawn(rings)) b.sheet(piece, base, 'down');
       out.push({ kind: 'ceiling', id, level: room.level, closed: false, facing: 'down', exact: b });
     }
   }
@@ -117,6 +137,127 @@ export function roomParts(kernel: Kernel, doc: FloorspecDocument, derived: Deriv
       out.push({ kind: 'slab', id, level: slab.level, closed: true, ...(slab.material !== undefined && { material: slab.material }), exact: b });
     }
   return out;
+}
+
+/** A room of a higher level standing over a ceiling (FLR-T-12.37): its ID and its floor's top. */
+export interface Over {
+  id: string;
+  top: number;
+}
+
+/**
+ * The rooms of higher levels standing over each room's ceiling (FLR-T-12.37), by room ID: those
+ * whose floor's top (15.1, else their level's elevation) is below the ceiling's highest point and
+ * whose polygon's box overlaps the room's. A double-height room's ceiling is above the floor of a
+ * bridge or a gallery in it — within that room, or over its ceiling, or (the great room whose
+ * ceiling is the upper level's ceiling line) in the very plane of its ceiling — so it is not drawn
+ * there. A ceiling at the floor's top, or below it, is the ordinary storey under it and is drawn
+ * whole; so is every ceiling under no room of a higher level.
+ */
+export function standingOver(doc: FloorspecDocument, derived: Derived): Map<string, Over[]> {
+  const out = new Map<string, Over[]>();
+  const ids = Object.keys(derived.rooms)
+    .sort()
+    .filter((id) => get(doc.rooms, id) !== undefined && derived.rooms[id]!.outer.length >= 3);
+  const box = (id: string): [number, number, number, number] => {
+    const o = derived.rooms[id]!.outer;
+    const xs = o.map((p) => p[0]);
+    const ys = o.map((p) => p[1]);
+    return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+  };
+  for (const id of ids) {
+    const high = derived.ceilings?.[id]?.high;
+    const L = get(doc.levels, get(doc.rooms, id)!.level);
+    if (high === undefined || L === undefined) continue;
+    const [ax0, ay0, ax1, ay1] = box(id);
+    const mine: Over[] = [];
+    for (const other of ids) {
+      const M = get(doc.levels, get(doc.rooms, other)!.level);
+      if (M === undefined || M.elevation <= L.elevation) continue;
+      const top = derived.floors?.[other]?.top ?? M.elevation;
+      if (high <= top) continue;
+      const [bx0, by0, bx1, by1] = box(other);
+      if (bx0 >= ax1 || bx1 <= ax0 || by0 >= ay1 || by1 <= ay0) continue;
+      mine.push({ id: other, top });
+    }
+    if (mine.length) out.set(id, mine);
+  }
+  return out;
+}
+
+/** A room's polygon standing over a ceiling, and the plan region where the ceiling is above its floor when that is not everywhere. */
+interface Cut {
+  rings: Ring[];
+  band?: Ring[] | undefined;
+}
+
+/**
+ * Where a vault (15.3) is above an elevation F, in plan: within (base − F) · run / rise of its ridge
+ * line — on both sides of it, or on the side it falls to — as a polygon reaching past the room's
+ * rings; its corners rounded once. Everywhere (no band) for a vault with no rise.
+ */
+function ridgeBand(c: VaultedCeiling, base: bigint, F: number, rings: readonly Ring[]): Ring[] | undefined {
+  if (c.pitch.rise === 0) return undefined;
+  const [[ax, ay], [bx, by]] = c.ridge;
+  const len = Math.hypot(bx - ax, by - ay);
+  const u = [(bx - ax) / len, (by - ay) / len] as const;
+  // The left normal: c(P) / √D is the signed distance along it (15.3).
+  const n = [-u[1], u[0]] as const;
+  const d = (Number(base - BigInt(F)) * c.pitch.run) / c.pitch.rise;
+  const pts = rings.flat();
+  const far = 2 * Math.max(...pts.map((p) => Math.hypot(p[0] - ax, p[1] - ay))) + 2 * d + UNITS_PER_METRE;
+  const slopes = c.slopes ?? 'both';
+  // The band's two sides as offsets along the normal: f = |c|, c or −c below d · √D.
+  const [lo, hi] = slopes === 'both' ? [-d, d] : slopes === 'left' ? [-far, d] : [-d, far];
+  const at = (s: number, t: number): P2 => [Math.round(ax + u[0] * s + n[0] * t), Math.round(ay + u[1] * s + n[1] * t)];
+  return [[at(-far, lo), at(far, lo), at(far, hi), at(-far, hi)]];
+}
+
+/**
+ * A plan region (outer rings counter-clockwise, holes clockwise, islands in holes counter-clockwise
+ * again) less the cuts, as its connected pieces — each an outer ring and its holes, every point an
+ * integer: the region's own points and the cuts' exactly, a point where their edges cross rounded
+ * once. The region itself, as it was, where the cuts take none of it.
+ */
+function uncovered(kernel: Kernel, region: readonly Ring[], cuts: readonly Cut[]): Ring[][] {
+  const o = region[0]![0]!;
+  const local = (r: Ring): [number, number][] => r.map((p): [number, number] => [p[0] - o[0], p[1] - o[1]]);
+  return scoped((keep) => {
+    const section = (rings: readonly Ring[]): CrossSection => keep(new kernel.CrossSection(rings.map(local), 'NonZero'));
+    const a = section(region);
+    const b = keep(kernel.CrossSection.union(cuts.map((c) => (c.band ? keep(section(c.rings).intersect(section(c.band))) : section(c.rings)))));
+    const left = keep(a.subtract(b));
+    // Nothing taken (to within a square base unit): the region as it was, every point its own.
+    if (a.area() - left.area() <= 1) return [[...region]];
+    const pieces: Ring[][] = [];
+    for (const part of left.decompose()) {
+      keep(part);
+      const rings = part
+        .toPolygons()
+        .map((r) => dedupe(r.map((p): P2 => [Math.round(p[0]) + o[0], Math.round(p[1]) + o[1]])))
+        .filter((r) => r.length >= 3 && area2(r) !== 0);
+      const outer = rings.filter((r) => area2(r) > 0);
+      if (outer.length === 1) pieces.push([outer[0]!, ...rings.filter((r) => area2(r) < 0)]);
+    }
+    return pieces;
+  });
+}
+
+/** Does the segment p–q lie along an edge of the ring, to the base unit its points were rounded to? */
+function onRing(ring: Ring, p: P2, q: P2): boolean {
+  const near = (a: P2, b: P2, x: P2): boolean => {
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy);
+    if (len === 0) return false;
+    const along = ((x[0] - a[0]) * dx + (x[1] - a[1]) * dy) / len;
+    const off = Math.abs(dx * (x[1] - a[1]) - dy * (x[0] - a[0])) / len;
+    return off <= 1 && along >= -1 && along <= len + 1;
+  };
+  return ring.some((a, i) => {
+    const b = ring[(i + 1) % ring.length]!;
+    return near(a, b, p) && near(a, b, q);
+  });
 }
 
 /** Twice a ring's signed area, in square base units (as doubles: a test of half the room, not a measure). */

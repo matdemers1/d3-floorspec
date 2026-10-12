@@ -35,7 +35,7 @@ unioned) are built by manifold-3d in double precision in a local frame at an int
 | `junctionFill` | fill (5.7) × least base – greatest top of its walls; piece `closure:<wall>`: the corner a separator between two walls leaves open, closed to where their faces would meet | solid |
 | `opening` | exactly the volume cut from its wall (a pick target; its joinery fills it) | solid |
 | `floor` | room polygon × bottom–top (15.1); no thickness → surface facing up | solid / surface |
-| `ceiling` | flat, tray (with its step) or vault split at the ridge (15.2–15.4) | surface, facing down |
+| `ceiling` | flat, tray (with its step) or vault split at the ridge (15.2–15.4); not drawn inside a room of a higher level whose floor it is above — a double-height room's ceiling stops at a bridge in it | surface, facing down |
 | `slab` | outline × bottom–top (15.7) | solid |
 | `roof` | thickness: the surface thickened down; none: the attic shell (faces, a soffit at the eave, the surface's edge dropped to the eave along each gable's edge of the outline); flat without thickness, or surface not derived (placeholder) → surface | solid / surface |
 | `roofGable` | a gable end, only for a roof with a thickness: on its wall (Core 0.4, 16.5), the roof raking past it; the part of it below the roof's solid, so never in the solid's edge band | surface, facing side |
@@ -47,8 +47,9 @@ unioned) are built by manifold-3d in double precision in a local frame at an int
 | `joinery` | what fills an opening, a part per piece (`part.model`): lining, casings, a door's slabs and hardware, a window's frame, sashes, glass, stool, apron and sill; a moving piece's `state` | solid |
 
 `part.bbox` is exact: for floors, ceilings, slabs, roofs and extension elements it is the engine's
-derived box; for a wall it is the exact box of the outline prism minus its cuts (computed slab by
-slab in rationals), which equals manifold-3d's double-precision box within a nanometre.
+derived box (for a ceiling a bridge stands in, the box of what is left of it, inside the engine's);
+for a wall it is the exact box of the outline prism minus its cuts (computed slab by slab in
+rationals), which equals manifold-3d's double-precision box within a nanometre.
 
 ## Fixture models (FLR-T-12.21)
 

@@ -26,7 +26,12 @@
  *   ceiling below (FLR-T-12.32), and so is each threshold that continues it: its bottom is 1/16 in
  *   above the level below's ceiling line or a lower room's ceiling between that line and its top —
  *   never below the line — its volume exactly its plan's area times its depth, and where it has no
- *   depth it is a surface facing both ways at its top.
+ *   depth it is a surface facing both ways at its top;
+ * - no ceiling is drawn inside a room of a higher level whose floor it is above (FLR-T-12.37): a
+ *   double-height room's ceiling stops where a bridge stands in it — no point of it is over that
+ *   room's floor within its polygon — and nothing else of it goes: its plan area is at least its
+ *   room's less what those rooms cover, and its box is inside the engine's; a ceiling under no such
+ *   room is drawn whole, its box exactly the engine's.
  */
 import { expect } from 'vitest';
 import type { Derived, FloorspecDocument } from '@floorspec/engine';
@@ -553,6 +558,85 @@ function plenumBottom(doc: FloorspecDocument, d: Derived, p: MeshPart, room: str
   return p.plenum.bottom;
 }
 
+// ── ceilings under a bridge (FLR-T-12.37) ──────────────────────────────────────
+
+type Plan = readonly (readonly [number, number])[];
+
+/** The rooms of higher levels whose floor's top (15.1, else their level's elevation) is below a room's ceiling's highest point. */
+function standingIn(doc: FloorspecDocument, d: Derived, id: string): { id: string; outer: Plan; holes: readonly Plan[]; top: number }[] {
+  const high = d.ceilings?.[id]?.high;
+  if (high === undefined) return [];
+  const elevation = own(doc.levels, own(doc.rooms, id).level).elevation;
+  return Object.entries(doc.rooms ?? {})
+    .filter(([oid, r]) => r !== undefined && oid !== id && d.rooms[oid] !== undefined && own(doc.levels, r.level).elevation > elevation)
+    .map(([oid, r]) => ({ id: oid, outer: d.rooms[oid]!.outer, holes: d.rooms[oid]!.holes, top: d.floors?.[oid]?.top ?? own(doc.levels, r!.level).elevation }))
+    .filter((u) => high > u.top);
+}
+
+/** A plan region's area in square base units, by manifold-3d (outer rings and holes, whatever their turn). */
+function planArea(kernel: Kernel, regions: readonly (readonly Plan[])[], less: readonly (readonly Plan[])[] = []): number {
+  const sec = (rs: readonly (readonly Plan[])[]) => new kernel.CrossSection(rs.flat().map((r) => r.map((q): [number, number] => [q[0] / BU, q[1] / BU])), 'NonZero');
+  const a = sec(regions);
+  if (!less.length) {
+    const area = a.area() * BU * BU;
+    a.delete();
+    return area;
+  }
+  const b = sec(less);
+  const c = a.subtract(b);
+  try {
+    return c.area() * BU * BU;
+  } finally {
+    for (const x of [a, b, c]) x.delete();
+  }
+}
+
+/**
+ * A ceiling stops where a room of a higher level whose floor it is above stands over it: no point of
+ * its triangles (each sampled near its corners and at its centroid) lies over such a room's floor
+ * inside that room's polygon, clear of its edges by Float32's step; its plan area is at most its
+ * room's and at least its room's less those rooms'; and its box is inside the engine's.
+ */
+function checkCeiling(kernel: Kernel, doc: FloorspecDocument, d: Derived, p: MeshPart, origin: readonly number[], label: string): void {
+  const over = standingIn(doc, d, p.id);
+  const P = p.mesh.positions;
+  const at = (i: number): [number, number, number] => [P[3 * i]! * BU + origin[0]!, P[3 * i + 1]! * BU + origin[1]!, P[3 * i + 2]! * BU + origin[2]!];
+  const CLEAR = 16; // base units: well past Float32's step this far from the origin
+  const clear = (r: Plan, x: number, y: number): boolean =>
+    r.every((a, k) => {
+      const b = r[(k + 1) % r.length]!;
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const t = ((x - a[0]) * (b[0] - a[0]) + (y - a[1]) * (b[1] - a[1])) / (len * len);
+      const cx = a[0] + Math.max(0, Math.min(1, t)) * (b[0] - a[0]);
+      const cy = a[1] + Math.max(0, Math.min(1, t)) * (b[1] - a[1]);
+      return Math.hypot(x - cx, y - cy) > CLEAR;
+    });
+  let plan = 0;
+  const I3 = p.mesh.indices;
+  for (let k = 0; k < I3.length; k += 3) {
+    const [a, b, c] = [at(I3[k]!), at(I3[k + 1]!), at(I3[k + 2]!)];
+    plan -= ((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])) / 2;
+    for (const w of [[1 / 3, 1 / 3, 1 / 3], [2 / 3, 1 / 6, 1 / 6], [1 / 6, 2 / 3, 1 / 6], [1 / 6, 1 / 6, 2 / 3]]) {
+      const q = [0, 1, 2].map((j) => w[0]! * a[j]! + w[1]! * b[j]! + w[2]! * c[j]!);
+      for (const u of over) {
+        const inside = inPoly(u.outer, q[0]!, q[1]!) && !u.holes.some((h) => inPoly(h, q[0]!, q[1]!)) && [u.outer, ...u.holes].every((r) => clear(r, q[0]!, q[1]!));
+        if (inside && q[2]! > u.top + CLEAR) expect(`(${q.map((v) => v.toFixed(0)).join(', ')})`, `${label}: a point of the ceiling over ${u.id}'s floor, inside it`).toBe('nowhere');
+      }
+    }
+  }
+  const room = d.rooms[p.id]!;
+  const whole = planArea(kernel, [[room.outer, ...room.holes]]);
+  const least = over.length ? planArea(kernel, [[room.outer, ...room.holes]], over.map((u) => [u.outer, ...u.holes])) : whole;
+  const tol = 1e-5 * whole + 1e3;
+  expect(plan, `${label}: no more of the ceiling than its room`).toBeLessThanOrEqual(whole + tol);
+  expect(plan, `${label}: no less of the ceiling than its room less the rooms standing in it`).toBeGreaterThanOrEqual(least - tol);
+  const box = box3(own(d.ceilings, p.id).box);
+  for (let k = 0; k < 3; k++) {
+    expect(p.bbox.min[k], `${label}: inside the engine's box`).toBeGreaterThanOrEqual(box.min[k]!);
+    expect(p.bbox.max[k], `${label}: inside the engine's box`).toBeLessThanOrEqual(box.max[k]!);
+  }
+}
+
 /** What each part should be, computed from the document and the engine's derived values. */
 function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
   const ring2 = (r: readonly (readonly [number, number])[]): bigint => iarea2(r.map(I));
@@ -595,7 +679,7 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
       return p.closed ? { volume6: prism6(twice, fl.top - bottom), box, genus: room.holes.length } : { box };
     }
     case 'ceiling':
-      return { box: box3(own(d.ceilings, p.id).box) };
+      return standingIn(doc, d, p.id).length ? {} : { box: box3(own(d.ceilings, p.id).box) };
     case 'slab': {
       const s = own(d.slabs, p.id);
       return { volume6: prism6(ring2(s.outline), s.top - s.bottom), box: box3(s.box), genus: 0 };
@@ -727,6 +811,7 @@ export function checkHouse(kernel: Kernel, doc: FloorspecDocument, d: Derived, m
     if (exp.box) expect(p.bbox, `${label}: box`).toEqual(exp.box);
     expectBoxNear(stats.box, p.bbox, NANOMETRE, `${label}: source box`);
 
+    if (p.kind === 'ceiling') checkCeiling(kernel, doc, d, p, mesh.origin, label);
     if (!p.closed) {
       sum.surfaces++;
       continue;
