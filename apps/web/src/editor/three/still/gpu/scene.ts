@@ -12,15 +12,20 @@ import {
   MeshStandardMaterial,
   PerspectiveCamera,
   PlaneGeometry,
+  RepeatWrapping,
   RGBAFormat,
   Scene,
+  SRGBColorSpace,
+  UnsignedByteType,
+  LinearMipmapLinearFilter,
   Vector3,
   type Light,
   type Material,
   type Object3D,
 } from 'three';
 import type { StillCamera } from './cameras';
-import { GROUND, skyPixels, sunOf, TRACE_UNIT, type SunInput, type TimeOfDay, type Vec3 } from './sky';
+import { GRASS_TILE, grassTexture, type SkyField } from '@floorspec/mesh/sky';
+import { skyPixels, stillSun, TRACE_UNIT, type Vec3 } from './sky';
 
 export { orbitCamera, presetCamera, type StillCamera } from './cameras';
 
@@ -28,8 +33,8 @@ export { orbitCamera, presetCamera, type StillCamera } from './cameras';
  * The scene a GPU still traces (FLR-T-13.13, FLR-ADR-040), built from what the glTF export writes —
  * the same file Blender gets — and nothing the export does not know: its meshes and PBR materials,
  * its KHR_lights_punctual lamps (candela), its glass (KHR_materials_transmission + ior), its lit
- * lenses (KHR_materials_emissive_strength, cd/m²) and its room cameras; then the worker tracer's sun,
- * sky and ground plate (sky.ts). Plain three.js, no renderer: the tracer (tracer.ts) is the only
+ * lenses (KHR_materials_emissive_strength, cd/m²) and its room cameras; then the sky every view
+ * shares (@floorspec/mesh's, FLR-T-13.4) — its sun, its HDRI dome — and the lawn (sky.ts). Plain three.js, no renderer: the tracer (tracer.ts) is the only
  * module that knows a GPU is involved, and this one is tested without one.
  *
  * Everything is in the export's frame: metres, +Y up, Floorspec (x, y, z) at (x, z, −y).
@@ -38,10 +43,32 @@ export { orbitCamera, presetCamera, type StillCamera } from './cameras';
 export interface StillLighting {
   /** The luminaires' lamps lit, their lenses glowing; or dark. */
   readonly lights: boolean;
-  readonly time: TimeOfDay;
-  readonly sun: SunInput;
-  /** The site's true north, degrees (Core 1.8). */
-  readonly trueNorth: number;
+  /** The sky (FLR-T-13.4): @floorspec/mesh's preset with its sun, true north and maps — the worker tracer's. */
+  readonly sky: SkyField;
+}
+
+/** The lawn's tile as an sRGB texture (FLR-T-13.4). */
+function lawnTexture(): DataTexture {
+  const g = grassTexture();
+  const n = g.width * g.height;
+  const data = new Uint8Array(4 * n);
+  const enc = (c: number) => Math.round(255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.min(1, c) ** (1 / 2.4) - 0.055));
+  for (let i = 0; i < n; i++) {
+    const from = 3 * ((g.height - 1 - Math.floor(i / g.width)) * g.width + (i % g.width));
+    data[4 * i] = enc(g.data[from] ?? 0);
+    data[4 * i + 1] = enc(g.data[from + 1] ?? 0);
+    data[4 * i + 2] = enc(g.data[from + 2] ?? 0);
+    data[4 * i + 3] = 255;
+  }
+  const t = new DataTexture(data, g.width, g.height, RGBAFormat, UnsignedByteType);
+  t.colorSpace = SRGBColorSpace;
+  t.wrapS = RepeatWrapping;
+  t.wrapT = RepeatWrapping;
+  t.minFilter = LinearMipmapLinearFilter;
+  t.magFilter = LinearFilter;
+  t.generateMipmaps = true;
+  t.needsUpdate = true;
+  return t;
 }
 
 /** The parts a cutaway leaves off the level it cuts at, as the editor's 3D view does. */
@@ -210,8 +237,8 @@ export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | n
     }
   });
   scene.add(house);
-  const sun = sunOf(lighting.sun, lighting.trueNorth);
-  const sky = new DataTexture(skyPixels(sun, lighting.time).map((v, i) => (i % 4 === 3 ? 1 : v / TRACE_UNIT)), 256, 128, RGBAFormat, FloatType);
+  const sun = stillSun(lighting.sky.light);
+  const sky = new DataTexture(skyPixels(lighting.sky, 1024, 512).map((v, i) => (i % 4 === 3 ? 1 : v / TRACE_UNIT)), 1024, 512, RGBAFormat, FloatType);
   sky.mapping = EquirectangularReflectionMapping;
   sky.magFilter = LinearFilter;
   sky.minFilter = LinearFilter;
@@ -221,12 +248,19 @@ export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | n
   scene.background = sky;
   const disposables: { dispose: () => void }[] = [sky];
   if (bounds !== null) {
-    // The worker's plate: under the house, out to the horizon.
+    // The ground under the house, out toward the horizon: the lawn at true scale (a tile every
+    // GRASS_TILE metres), or the studio's floor.
     const cx = (bounds.min[0] + bounds.max[0]) / 2;
     const cz = (bounds.min[2] + bounds.max[2]) / 2;
     const r = 40 * Math.max(5, Math.hypot(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2]));
     const geometry = new PlaneGeometry(2 * r, 2 * r);
-    const material = new MeshStandardMaterial({ color: new Color(GROUND), roughness: 1, metalness: 0 });
+    const floor = lighting.sky.light.ground;
+    const map = floor.grass ? lawnTexture() : null;
+    if (map !== null) {
+      map.repeat.set((2 * r) / GRASS_TILE, (2 * r) / GRASS_TILE);
+      disposables.push(map);
+    }
+    const material = new MeshStandardMaterial({ color: map === null ? new Color(...floor.albedo) : new Color(1, 1, 1), map, roughness: 1, metalness: 0 });
     const ground = new Mesh(geometry, material);
     ground.name = 'ground';
     ground.rotation.x = -Math.PI / 2;
@@ -234,7 +268,7 @@ export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | n
     scene.add(ground);
     disposables.push(geometry, material);
   }
-  if (lighting.time === 'day') {
+  if (sun !== null) {
     const light = new DirectionalLight(new Color(...sun.color), sun.lux / TRACE_UNIT);
     light.name = 'sun';
     const target = bounds === null ? new Vector3() : new Vector3((bounds.min[0] + bounds.max[0]) / 2, bounds.min[1], (bounds.min[2] + bounds.max[2]) / 2);

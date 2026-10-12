@@ -21,6 +21,8 @@ import { decodeTexture, type Texture } from './textures.js';
 import { EXPOSURE_PER_NIT } from '@floorspec/mesh';
 import { exposureOf, toneMap, type ExposureBand, type PtLamp, type PtMaterial, type PtScene, type Sun } from './trace.js';
 import { traceParallel } from './threads.js';
+import { resolveSky, skySummary, type ResolvedSky, type SkySummary } from './sky.js';
+import { skyExposure, type SkyPreset } from '@floorspec/mesh/sky';
 
 export { trace, toneMap, meter, exposureOf, skyRadiance, type ExposureBand, type PtLamp, type PtScene, type PtMaterial, type Sun, type TraceOptions } from './trace.js';
 export { Bvh, type Hit } from './bvh.js';
@@ -28,6 +30,7 @@ export { Rng, hash32 } from './rng.js';
 export { decodeTexture, imageSize, sample, type Texture } from './textures.js';
 export { denoise, type Features } from './denoise.js';
 export { traceParallel, stillThreads, canThread } from './threads.js';
+export { resolveSky, siteOf, loadSkyMap, skySummary, type ResolvedSky, type Site, type SkyRequest, type SkySummary } from './sky.js';
 export * from './presets.js';
 
 /** The seed every still is traced with: the picture depends on the version and the options alone. */
@@ -63,6 +66,11 @@ export interface StillOptions {
   readonly lights?: Lights;
   /** Default `night` with `lights`, else `day`. */
   readonly time?: TimeOfDay;
+  /** The sky (FLR-T-13.4), from `renderStill`/`renderLit`: its preset, sun and maps. Without it, the old gradient sky over a plate. */
+  readonly skyLight?: ResolvedSky;
+  /** For `renderStill`: the sky preset (FLR-T-13.4) and a date and time at the site (FLR-T-13.9) that places the sun. */
+  readonly sky?: SkyPreset;
+  readonly at?: string;
 }
 
 export interface StillResult {
@@ -83,8 +91,11 @@ export interface StillResult {
    * to, per cd/m² (FLR-T-13.1, @floorspec/mesh `EXPOSURE_PER_NIT`).
    */
   readonly lit?: { readonly lights: Lights; readonly time: TimeOfDay; readonly lamps: number; readonly exposure?: number };
+  /** The sky it was seen under (FLR-T-13.4, 13.9): the preset, the sun's place and why, and the site's place, assumed or the document's. */
+  readonly sky?: SkySummary;
   readonly ms: number;
 }
+
 
 const GROUND = linear('#cfcabd');
 /** How bright a luminaire's lens looks to the camera, over its colour: about a sunlit white wall's. */
@@ -112,6 +123,13 @@ export const EXPOSURE: Readonly<Record<TimeOfDay, ExposureBand>> = {
 };
 /** Diffuse bounces a still with `lights` traces: enough that a lamp-lit room's corners are not black. */
 export const LIT_BOUNCES = 6;
+
+/** A sky's direct light (the sun, the moon, the studio's key) in the tracer's frame and units; none at dusk. */
+export function directOf(sky: ResolvedSky): Sun {
+  const d = sky.light.direct;
+  if (d === null) return { dir: [0, 1, 0], irradiance: 0, radius: 0.01, color: [1, 1, 1] };
+  return { dir: [d.dir[0], d.dir[2], -d.dir[1]], irradiance: d.lux / LUX_PER_UNIT, radius: d.radius, color: [d.color[0], d.color[1], d.color[2]] };
+}
 
 /** A sun in the scene's frame (x east-ish, +Y up, −Z project north), turned by the site's true north. */
 export function sunOf(input: SunInput, trueNorthDeg: number): Sun {
@@ -150,7 +168,7 @@ export function lampsOf(scene: Scene, drawn: (level: string) => boolean = () => 
 }
 
 /** The scene's triangles as the tracer reads them, cut away above `level`, on a ground plate — with its lamps, when they are on. */
-export function ptScene(scene: Scene, options: { level?: string; textures?: ReadonlyMap<number, Texture>; lights?: Lights } = {}): PtScene {
+export function ptScene(scene: Scene, options: { level?: string; textures?: ReadonlyMap<number, Texture>; lights?: Lights; plate?: boolean } = {}): PtScene & { readonly floor: number; readonly plate: boolean } {
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
   const cut = options.level === undefined ? undefined : order.get(options.level);
   const pos: number[] = [];
@@ -198,8 +216,10 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
       }
     }
   }
-  // The ground: a plate under the house out to the horizon, as the headless render's.
-  if (Number.isFinite(min[0])) {
+  // The ground: a plate under the house out to the horizon, as the headless render's — unless the
+  // tracer is given the ground as a plane of its own (FLR-T-13.4).
+  const plate = options.plate !== false && Number.isFinite(min[0]);
+  if (plate) {
     const groundMat = materials.length;
     materials.push({ rgb: GROUND, glass: false });
     const cx = (min[0] + max[0]) / 2;
@@ -233,11 +253,11 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
     normals[3 * t + 2] = nz / l;
   }
   const lamps = options.lights === 'on' ? lampsOf(scene, (l) => cut === undefined || (order.get(l) ?? Infinity) <= cut) : [];
-  return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials, ...(lamps.length === 0 ? {} : { lamps, owner: Int32Array.from(own) }) };
+  return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials, floor: Number.isFinite(min[1]) ? min[1] - 0.003 : 0, plate, ...(lamps.length === 0 ? {} : { lamps, owner: Int32Array.from(own) }) };
 }
 
 /** The camera a still looks from: a named view framed on what is drawn, or a room. */
-function cameraFor(scene: Scene, pt: PtScene, options: StillOptions, aspect: number): Camera {
+function cameraFor(scene: Scene, pt: PtScene & { readonly plate: boolean }, options: StillOptions, aspect: number): Camera {
   if (options.room !== undefined) {
     const room = findRoom(scene.rooms, options.room);
     if (room === undefined) {
@@ -246,10 +266,10 @@ function cameraFor(scene: Scene, pt: PtScene, options: StillOptions, aspect: num
     }
     return roomCamera(room, scene.doors, scene.obstacles);
   }
-  // Framed on the house, not the ground plate (its last two triangles).
+  // Framed on the house, not the ground plate (its last two triangles, when it has one).
   const min: Vec3 = [Infinity, Infinity, Infinity];
   const max: Vec3 = [-Infinity, -Infinity, -Infinity];
-  for (let i = 0; i < 9 * Math.max(0, pt.count - 2); i += 3)
+  for (let i = 0; i < 9 * Math.max(0, pt.count - (pt.plate ? 2 : 0)); i += 3)
     for (let c = 0; c < 3; c++) {
       min[c] = Math.min(min[c]!, pt.positions[i + c]!);
       max[c] = Math.max(max[c]!, pt.positions[i + c]!);
@@ -295,14 +315,19 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   const samples = options.samples ?? QUALITIES[quality];
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 8 || height < 8 || width * height * samples > MAX_WORK) throw new RangeError('the still is too big');
   const maps = texturesOf(scene, options.images);
-  const pt = ptScene(scene, { ...(options.room === undefined && options.level !== undefined ? { level: options.level } : {}), textures: maps.textures, ...(options.lights === undefined ? {} : { lights: options.lights }) });
+  const sky = options.skyLight;
+  const pt = ptScene(scene, { ...(options.room === undefined && options.level !== undefined ? { level: options.level } : {}), textures: maps.textures, ...(options.lights === undefined ? {} : { lights: options.lights }), plate: sky === undefined });
   const camera = cameraFor(scene, pt, options, width / height);
   const sunIn = options.sun ?? DEFAULT_SUN;
-  const time = options.time ?? (options.lights === undefined ? 'day' : 'night');
+  // FLR-T-13.4: under a sky, its band is the time of day the still is exposed for.
+  const time = sky !== undefined ? sky.light.band : (options.time ?? (options.lights === undefined ? 'day' : 'night'));
   const daylight = sunOf(sunIn, options.trueNorth ?? 0);
-  // After sunset, no sun: the sky (dimmed) and the lamps.
-  const sun = time === 'day' ? daylight : { ...daylight, irradiance: 0 };
-  const exposure = options.lights === undefined && options.time === undefined ? undefined : EXPOSURE[time];
+  // After sunset, no sun: the sky (dimmed) and the lamps. Under a sky, its direct light: the sun, the moon or the studio's key.
+  const sun = sky !== undefined ? directOf(sky) : time === 'day' ? daylight : { ...daylight, irradiance: 0 };
+  // Under a sky, an outside view is exposed as the editor's is — for the sky's own light (FLR-T-13.4),
+  // so a lawn filling the frame does not open it up and burn the house out; a room is metered.
+  const outside = sky !== undefined && options.room === undefined && (sky.light.band === 'day' || options.lights === undefined) ? skyExposure(sky.light, sky.field.maps) * LUX_PER_UNIT : undefined;
+  const exposure = outside !== undefined ? outside : sky === undefined && options.lights === undefined && options.time === undefined ? undefined : EXPOSURE[time];
   const lit = options.lights !== undefined;
   const traced = await traceParallel(pt, {
     width,
@@ -312,9 +337,9 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     sun,
     seed: SEED,
     budgetMs: options.budgetMs ?? BUDGET_MS,
-    ...(time === 'day' ? {} : { sky: SKY[time] }),
+    ...(sky !== undefined ? { field: { sky: sky.field, unit: LUX_PER_UNIT }, ground: { y: pt.floor, ...(sky.light.ground.grass ? {} : { floor: sky.light.ground.albedo }) } } : time === 'day' ? {} : { sky: SKY[time] }),
     // A firefly's cap, in what the picture shows: the same after the least exposure by day and by night.
-    ...(exposure === undefined ? {} : { clamp: 12 * (EXPOSURE.day.min / exposure.min) }),
+    ...(exposure === undefined ? {} : { clamp: 12 * (EXPOSURE.day.min / (typeof exposure === 'number' ? exposure : exposure.min)) }),
     ...(lit ? { bounces: LIT_BOUNCES } : {}),
     ...(options.onPass === undefined ? {} : { onPass: options.onPass }),
   });
@@ -327,12 +352,13 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     height,
     samples,
     camera: camera.label,
-    sun: { azimuth: sunIn.azimuth, altitude: sunIn.altitude, source: options.sun === undefined ? 'default' : 'yours' },
+    sun: sky !== undefined && sky.sun !== null ? { azimuth: sky.sun.azimuth, altitude: sky.sun.altitude, source: sky.sun.source === 'yours' ? 'yours' : 'default' } : { azimuth: sunIn.azimuth, altitude: sunIn.altitude, source: options.sun === undefined ? 'default' : 'yours' },
     design: scene.design,
     triangles: pt.count,
     threads: traced.threads,
     maps: { used: maps.used, missing: maps.missing },
     ...(options.lights === undefined ? {} : { lit: { lights: options.lights, time, lamps: pt.lamps?.length ?? 0, ...(exposed === undefined ? {} : { exposure: Number((exposed / LUX_PER_UNIT).toPrecision(3)) }) } }),
+    ...(sky === undefined ? {} : { sky: skySummary(sky, exposed === undefined ? undefined : Number((exposed / LUX_PER_UNIT).toPrecision(3))) }),
     ms: Date.now() - started,
   };
 }
@@ -342,7 +368,8 @@ export async function renderStill(document: object, options: StillOptions = {}):
   const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }) });
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
-  return renderSceneStill(scene, { ...options, trueNorth });
+  const skyLight = resolveSky(document, { ...(options.sky === undefined ? {} : { sky: options.sky }), ...(options.at === undefined ? {} : { at: options.at }), ...(options.sun === undefined ? {} : { sun: options.sun }), ...(options.time === undefined ? {} : { time: options.time }) });
+  return renderSceneStill(scene, { ...options, trueNorth, skyLight });
 }
 
 /** A lit render's samples a pixel (FLR-T-12.22): few, smoothed by the denoiser, so an agent's render returns while it waits. */
@@ -373,6 +400,9 @@ export interface LitOptions {
   readonly images?: ImageSource;
   /** The doors closed (default) or open (FLR-T-13.8). */
   readonly doors?: SceneOptions['doors'];
+  /** The sky (FLR-T-13.4) and a date and time at the site (FLR-T-13.9); `time` maps to a sky when no `sky` is given. */
+  readonly sky?: SkyPreset;
+  readonly at?: string;
   readonly onPass?: (done: number, total: number) => void | Promise<void>;
 }
 
@@ -387,16 +417,18 @@ export async function renderLit(document: object, options: LitOptions): Promise<
   const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }), ...(options.doors === undefined ? {} : { doors: options.doors }) });
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
+  const skyLight = resolveSky(document, { ...(options.sky === undefined ? {} : { sky: options.sky }), ...(options.at === undefined ? {} : { at: options.at }), time: options.time ?? (options.sky === undefined && options.at === undefined ? 'night' : 'day') });
   const level = options.level ?? (options.room === undefined ? scene.levels[0]?.id : undefined);
+  const day = skyLight.light.band === 'day';
   return renderSceneStill(scene, {
+    skyLight,
     ...(options.camera === undefined ? {} : { camera: options.camera }),
     ...(options.room === undefined ? {} : { room: options.room }),
     ...(level === undefined ? {} : { level }),
     pixels: { width: w, height: Math.round((w * 3) / 4) },
-    samples: (options.time ?? 'night') === 'day' ? LIT_DAY_SAMPLES : LIT_SAMPLES,
+    samples: day ? LIT_DAY_SAMPLES : LIT_SAMPLES,
     budgetMs: LIT_BUDGET_MS,
     lights: options.lights,
-    time: options.time ?? 'night',
     trueNorth,
     ...(options.images === undefined ? {} : { images: options.images }),
     ...(options.onPass === undefined ? {} : { onPass: options.onPass }),

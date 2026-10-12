@@ -28,6 +28,8 @@ export interface StillRequest {
   quality: StillQuality;
   /** Degrees: azimuth clockwise from true north, altitude above the horizon. */
   sun?: { azimuth: number; altitude: number };
+  /** The sky it is seen under (FLR-T-13.4). */
+  sky?: 'clear' | 'overcast' | 'dusk' | 'night' | 'studio';
 }
 export type PageName = 'tabloid' | 'arch-c' | 'arch-d' | 'letter' | 'a4' | 'a3';
 
@@ -218,6 +220,8 @@ export interface GpuStillFacts {
   readonly ms: number;
   readonly lights: 'on' | 'off';
   readonly time: 'day' | 'dusk' | 'night';
+  /** The sky it was seen under (FLR-T-13.4). */
+  readonly sky?: 'clear' | 'overcast' | 'dusk' | 'night' | 'studio';
   /** The GPU, as the browser names it. */
   readonly device?: string;
   readonly design?: Record<string, string>;
@@ -232,6 +236,7 @@ export async function uploadStill(projectId: string, png: Blob, facts: GpuStillF
     ms: String(Math.round(facts.ms)),
     lights: facts.lights,
     time: facts.time,
+    ...(facts.sky === undefined ? {} : { sky: facts.sky }),
     ...(facts.device === undefined || facts.device === '' ? {} : { device: facts.device.slice(0, 200) }),
     ...(facts.design === undefined || Object.keys(facts.design).length === 0 ? {} : { design: JSON.stringify(facts.design) }),
   });

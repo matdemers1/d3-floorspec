@@ -151,3 +151,56 @@
     transition: none;
   }
 }
+
+/* The sky presets (FLR-T-13.4): the board's "Sky/Preset tile" radiogroup. */
+.fs-sky__presets {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.fs-sky__preset {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-fg-muted);
+  font: inherit;
+  font-size: var(--text-11);
+  line-height: var(--leading-11);
+  cursor: pointer;
+}
+.fs-sky__swatch {
+  display: block;
+  width: 100%;
+  max-width: 48px;
+  aspect-ratio: 48 / 34;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-sm);
+}
+.fs-sky__preset[aria-checked='true'] {
+  color: var(--color-fg);
+  font-weight: var(--weight-medium);
+}
+.fs-sky__preset[aria-checked='true'] .fs-sky__swatch {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+.fs-sky__preset:focus-visible {
+  outline: none;
+}
+.fs-sky__preset:focus-visible .fs-sky__swatch {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-sky__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

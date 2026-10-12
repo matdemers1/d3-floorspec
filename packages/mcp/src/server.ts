@@ -53,10 +53,10 @@ const ProjectHandle = z
   .min(1)
   .max(64)
   .optional()
-  .describe('Project ID or name; optional if only one is reachable.');
+  .describe('Project ID or name; optional if only one.');
 const ChangesetHandle = z.string().min(1).max(120);
 /** A changeset to read: by name or ID, exactly as floorspec_apply takes one. */
-const PendingChangeset = ChangesetHandle.optional().describe("A pending changeset's name or ID; omitted, main.");
+const PendingChangeset = ChangesetHandle.optional().describe('Pending changeset name or ID; else main.');
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface ServerOptions {
@@ -442,7 +442,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Describe the house',
       description:
-        'A room-centric summary: rooms with ft-in sizes and net areas, walls by side with their openings, adjacency, the door graph, roofs, stairs, finished area, diagnostics and the room functions. Read it before any edit.',
+        'Rooms with ft-in sizes and net areas, walls by side with their openings, adjacency, the door graph, roofs, stairs, finished area, diagnostics and room functions. Read it before any edit.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
@@ -514,7 +514,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Apply operations',
       description:
-        'Apply `batch`, a list of typed Floorspec Ops, as one transaction: all commit or none. ' +
+        'Apply `batch`, typed Floorspec Ops, as one transaction: all commit or none. ' +
         'Example: {"changeset":"Widen the kitchen","batch":[{"op":"resizeRoom","room":"Kitchen","side":"east","by":"2\'"}],"render":true}. ' +
         'A write token commits to main; an agent credential writes into a pending changeset (`changeset`, or one named after the credential). ' +
         'A rejection returns diagnostics with fixes. ' +
@@ -681,7 +681,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose layouts',
       description:
-        'Lay out a brief (its program and adjacencies) as ranked candidate plans, each a pending changeset a person accepts. The brief is main\'s, or a pending changeset\'s (`changeset`): each candidate then carries that changeset\'s ops too. One empty level at a time: lay out the next level from the chosen candidate.',
+        'Lay out a brief (its program and adjacencies) as ranked candidate plans, each a pending changeset a person accepts. The brief is main\'s or `changeset`\'s, whose ops each candidate carries too. One empty level at a time: lay out the next level from the chosen candidate.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
@@ -691,7 +691,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
             .optional()
             .describe('East–west width and north–south depth, e.g. "44\'"; default sized from the brief.'),
           count: z.int().min(3).max(6).optional().describe('Candidates; default 3.'),
-          changeset: ChangesetHandle.optional().describe('The pending changeset holding the brief; omitted, main.'),
+          changeset: ChangesetHandle.optional().describe('The pending changeset holding the brief; else main.'),
         }),
       ),
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -799,8 +799,10 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           level: z.string().min(1).max(64).optional().describe('Default the lowest. 3D: cut away above it; "all" for none.'),
           highlight: z.array(z.string().min(1).max(64)).optional().describe('IDs drawn in the accent colour.'),
           width: z.int().optional().describe('Pixels wide: plan ≤4096, 3D ≤2048.'),
-          lights: z.enum(['on', 'off']).optional().describe('3D at night: fixtures on or off (slower).'),
+          lights: z.enum(['on', 'off']).optional().describe('3D, path-traced (slower): fixtures on/off; night unless sky/at say.'),
           doors: z.enum(['closed', 'open']).optional(),
+          sky: z.enum(['clear', 'overcast', 'dusk', 'night', 'studio']).optional().describe('3D: under a sky, on a lawn.'),
+          at: z.string().max(32).optional().describe('3D: site date-time placing the sun, as 2026-06-21T19:30-04:00.'),
         }),
       ),
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -819,6 +821,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           ...(args.width === undefined ? {} : { width: args.width }),
           ...(args.lights === undefined ? {} : { lights: args.lights }),
           ...(args.doors === undefined ? {} : { doors: args.doors }),
+          ...(args.sky === undefined ? {} : { sky: args.sky }),
+          ...(args.at === undefined ? {} : { at: args.at }),
         });
         return { content: [{ type: 'image', data: Buffer.from(png).toString('base64'), mimeType: 'image/png' }] };
       } catch (error) {

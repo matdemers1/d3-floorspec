@@ -7,10 +7,13 @@ import { requestExport, startDownload, untilFinished, uploadStill, type ExportJo
 import { useEditor, type EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { PRESET_ORDER, PRESETS, type PresetId } from '../camera';
-import { siteOf, useStudy, useSunState } from '../sun/study';
+import { useSunState } from '../sun/study';
+import { useSkyLight } from '../sun/SunRig';
+import { skyMaps } from '../sky/maps';
+import { mapsFor, skyField, SKY_LABELS, SKY_PRESETS, type SkyPreset } from '@floorspec/mesh/sky';
 import type { PerspectiveCamera } from 'three';
 import type { StillCamera } from './gpu/cameras';
-import { DEFAULT_SUN, type TimeOfDay } from './gpu/sky';
+import type { TimeOfDay } from './gpu/sky';
 
 /**
  * Render a still on this device's GPU (FLR-T-13.13, FLR-ADR-040; the board's "28 · Path-traced
@@ -44,11 +47,8 @@ type GpuSize = keyof typeof GPU_SIZES;
 export const GPU_SAMPLES = [64, 256, 512, 1024] as const;
 const SAMPLE_LABELS: Record<number, string> = { 64: 'Preview', 256: 'Standard', 512: 'High', 1024: 'Very high' };
 
-const TIMES: { value: TimeOfDay; label: string }[] = [
-  { value: 'day', label: 'Day — the sun and a clear sky' },
-  { value: 'dusk', label: 'Dusk — the sun down, a deep blue sky' },
-  { value: 'night', label: 'Night — dark outside' },
-];
+/** The skies a still may be seen under (FLR-T-13.4): the 3D view's presets. */
+const SKIES = SKY_PRESETS.map((p) => ({ value: p, label: SKY_LABELS[p] }));
 
 const DOORS: { value: 'closed' | 'open'; label: string }[] = [
   { value: 'closed', label: 'Closed' },
@@ -73,14 +73,14 @@ export interface GpuStillDialogProps {
 
 export default function GpuStillDialog({ store, preset, level, only, roof, current, device, onClose }: GpuStillDialogProps) {
   const model = useEditor(store, (s) => s.model);
-  const sunState = useSunState(store, (s) => s);
-  const study = useStudy(model, sunState.on, sunState.clock);
+  const viewSky = useSunState(store, (s) => s.sky);
   const toast = useToast();
   const [view, setView] = useState<string>(current === null ? (preset ?? 'sw') : 'current');
   const [size, setSize] = useState<GpuSize>('1600x1200');
   const [samples, setSamples] = useState<number>(256);
   const [lights, setLights] = useState(false);
-  const [time, setTime] = useState<TimeOfDay>('day');
+  // The view's sky by default; the date and time are the Sky and sun panel's.
+  const [skyChoice, setSkyChoice] = useState<SkyPreset>(viewSky);
   const [doors, setDoors] = useState<'closed' | 'open'>('closed');
   const [phase, setPhase] = useState<Phase>({ kind: 'options' });
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -100,8 +100,10 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
     ...PRESET_ORDER.map((p) => ({ value: p, label: PRESETS[p].label })),
     ...rooms.map((r) => ({ value: `room:${r.id}`, label: `Stand in ${r.name}`, description: 'From its doorway, as a walkthrough does' })),
   ];
-  const useSun = study !== null && !study.night;
-  const sun = useSun ? { azimuth: study.position.azimuth, altitude: study.position.altitude } : DEFAULT_SUN;
+  const pickedSky = useSkyLight(store, model, false, skyChoice);
+  const sky = pickedSky.full;
+  const time: TimeOfDay = sky.band;
+  const sun = sky.sun;
   const { w, h } = GPU_SIZES[size];
 
   async function render() {
@@ -136,7 +138,9 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
               ? null
               : scenes.presetCamera(view as PresetId, house.bounds, w / h);
       if (chosen === null) throw new Error(room !== null ? 'the export has no camera in that room' : 'there is nothing to look at');
-      const { scene, dispose } = scenes.stillScene(gltf.scene, house.bounds, { lights, time, sun, trueNorth: siteOf(model).trueNorth });
+      const lighting = pickedSky.full;
+      const field = skyField(lighting, await skyMaps(mapsFor(lighting)));
+      const { scene, dispose } = scenes.stillScene(gltf.scene, house.bounds, { lights, sky: field });
       const camera = scenes.perspectiveOf(chosen, w / h);
 
       const started = Date.now();
@@ -176,7 +180,7 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
       let job: ExportJob | null = null;
       let saveError: string | null = null;
       try {
-        job = await uploadStill(store.projectId, traced.png, { version: exported.version, view: chosen.label, samples, ms: traced.ms, lights: lights ? 'on' : 'off', time, device, ...(design === undefined ? {} : { design }) });
+        job = await uploadStill(store.projectId, traced.png, { version: exported.version, view: chosen.label, samples, ms: traced.ms, lights: lights ? 'on' : 'off', time, sky: skyChoice, device, ...(design === undefined ? {} : { design }) });
       } catch (caught) {
         saveError = messageOf(caught);
       }
@@ -223,7 +227,7 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
         onOpenChange={(o) => { if (!o) close(); }}
         size="lg"
         title="Rendering a still…"
-        description={`${views.find((v) => v.value === view)?.label ?? view} · ${GPU_SIZES[size].label} · ${String(samples)} samples a pixel · ${lights ? 'lights on' : 'lights off'}, ${time}, doors ${doors}. Path-traced on this device’s GPU (${device}): keep this open until it is done.`}
+        description={`${views.find((v) => v.value === view)?.label ?? view} · ${GPU_SIZES[size].label} · ${String(samples)} samples a pixel · ${lights ? 'lights on' : 'lights off'}, ${SKY_LABELS[skyChoice].toLowerCase()}, doors ${doors}. Path-traced on this device’s GPU (${device}): keep this open until it is done.`}
         footer={
           <Button variant="secondary" icon={<X />} disabled={phase.kind === 'saving'} onClick={cancel}>
             Cancel
@@ -319,18 +323,18 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
         <FormField label="Doors" help="Open: swung to a right angle, slid or folded away, so a still sees through the doorways.">
           <Select options={DOORS} value={doors} onValueChange={(v) => { setDoors(v as 'closed' | 'open'); }} appearance="filled" />
         </FormField>
-        <FormField label="Time of day">
-          <Select options={TIMES} value={time} onValueChange={(v) => { setTime(v as TimeOfDay); }} appearance="filled" />
+        <FormField label="Sky">
+          <Select options={SKIES} value={skyChoice} onValueChange={(v) => { setSkyChoice(v as SkyPreset); }} appearance="filled" />
         </FormField>
         <Switch checked={lights} onCheckedChange={setLights}>
           Lights on — the luminaires’ lamps lit and their shades glowing
         </Switch>
         <p className="fs-caption">
-          {time === 'day'
-            ? useSun
-              ? `Sun from the sun study: ${String(Math.round(sun.azimuth))}° azimuth, ${String(Math.round(sun.altitude))}° up.`
-              : 'Sun: mid-afternoon from the south-west (turn on the sun study to choose the date and time).'
-            : 'After sunset: the sky and, with the lights on, the lamps.'}
+          {skyChoice === 'studio'
+            ? 'Studio light: an even, bright dome over a pale floor.'
+            : sun === null || time !== 'day'
+              ? 'After sunset: the sky and, with the lights on, the lamps.'
+              : `Sun from the Sky and sun panel’s date and time: ${String(Math.round(sun.azimuth))}° azimuth, ${String(Math.round(sun.altitude))}° up.`}
         </p>
       </div>
     </Modal>

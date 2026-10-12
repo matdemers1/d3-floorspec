@@ -12,6 +12,7 @@ import { changesetHead } from '../domain/history.js';
 import { RENDER_PENDING, type PlanRenderer } from '../render.js';
 import { SHA256, type AssetStore } from '../assets/store.js';
 import { NO_PACKS, type InstalledPacks } from '../rules/packs.js';
+import { AT_PATTERN, SKIES } from '@d3-floorspec/worker/stills';
 import { profileOfProject } from '../rules/profiles.js';
 
 const RenderQuery = z.object({
@@ -30,6 +31,9 @@ const RenderQuery = z.object({
   time: z.enum(['day', 'dusk', 'night']).optional(),
   // 3D (FLR-T-13.8): the doors closed (default) or open.
   doors: z.enum(['open', 'closed']).optional(),
+  // 3D (FLR-T-13.4): the sky it is seen under; (FLR-T-13.9) a date and time at the site, which places the sun.
+  sky: z.enum(SKIES).optional(),
+  at: z.string().regex(AT_PATTERN, 'at is a date and time at the site, such as 2026-06-21T19:30 or 2026-06-21T19:30-04:00').optional(),
 });
 
 /** The 3D render's widest picture: a software render, so its pixels are the worker's time. */
@@ -228,6 +232,8 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(q.lights === undefined ? {} : { lights: q.lights }),
           ...(q.time === undefined ? {} : { time: q.time }),
           ...(q.doors === undefined ? {} : { doors: q.doors }),
+          ...(q.sky === undefined ? {} : { sky: q.sky }),
+          ...(q.at === undefined ? {} : { at: q.at }),
         },
         versionHash: at.hash,
         requestedByAccountId: req.auth?.accountId ?? req.token?.accountId ?? null,

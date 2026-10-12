@@ -94,6 +94,20 @@ describe('3D render-back', () => {
     expect((await operator.get(`/api/projects/${id}/render?view=3d&lights=dim`)).status).toBe(400);
   });
 
+  it('draws the house under a sky, its sun placed by a date and time at the site (FLR-T-13.4, 13.9)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');
+    const sky = await fetch(`${running.url}/api/projects/${id}/render?view=3d&camera=sw&width=96&sky=clear&at=2026-06-21T19:30-04:00`, { headers: { cookie: cookieOf(operator) } });
+    expect(sky.status, await sky.clone().text()).toBe(200);
+    expect(pngSize(new Uint8Array(await sky.arrayBuffer()))).toEqual({ width: 96, height: 72 });
+    const job = (await db.job.findMany({ where: { projectId: id }, orderBy: { createdAt: 'asc' } })).at(-1);
+    expect(job?.params).toMatchObject({ sky: 'clear', at: '2026-06-21T19:30-04:00' });
+    expect(job?.result).toMatchObject({ sky: { preset: 'clear', at: '2026-06-21T19:30-04:00', sun: { source: 'at' } } });
+    // A sky that is not a preset, and a date and time that is not one.
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&sky=sunny`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&sky=clear&at=June%2021`)).status).toBe(400);
+  });
+
   it('draws the doors closed, or open when asked (FLR-T-13.8)', async () => {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');

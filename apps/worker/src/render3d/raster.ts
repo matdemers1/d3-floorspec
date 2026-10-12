@@ -15,6 +15,7 @@
  * hundred milliseconds, in plain JavaScript, identically on every machine (no GPU, no driver, no
  * Chromium in the worker image). Floats are fine here: no measurement is read from a picture.
  */
+import { groundAt, hazeAt, irradianceAt, skyRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
 import type { Vec3 } from '../export/gltf/scene.js';
 import type { Camera } from './camera.js';
 
@@ -51,6 +52,112 @@ export interface RasterOptions {
   readonly sky?: readonly [Vec3, Vec3];
   /** Outlines. Default true. */
   readonly edges?: boolean;
+  /**
+   * Seen under a sky (FLR-T-13.4, 13.9) instead of the studio rig: lit by its sun (with shadows)
+   * and its sky's image-based light, standing on the lawn out to the hazy horizon, exposed as the
+   * editor's view is and tone-mapped with the path tracer's filmic curve.
+   */
+  readonly lighting?: RasterSky;
+}
+
+export interface RasterSky {
+  readonly field: SkyField;
+  /** The sky's harmonics (@floorspec/mesh `skyHarmonics`), the project's frame. */
+  readonly sh: Float64Array;
+  /** What the tone curve is given per cd/m². */
+  readonly exposure: number;
+  /** The direct light, toward it in this frame (+Y up, −Z project north); null when there is none. */
+  readonly sun: { readonly dir: Vec3; readonly lux: number; readonly color: Vec3 } | null;
+  /** The ground plane's height, metres. */
+  readonly groundY: number;
+  /** The studio's floor (linear RGB) instead of the lawn. */
+  readonly floor?: Vec3;
+  /** An even fill for the light the house and the lawn bounce (@floorspec/mesh `skyBounce`), lux, linear RGB. */
+  readonly bounce?: Vec3;
+  readonly areas?: readonly GroundArea[];
+}
+
+/** Narkowicz's fit of the ACES filmic curve: the path tracer's. */
+const aces = (x: number): number => (x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14);
+
+/** A depth map from the sun over the opaque triangles: what is in shadow. */
+interface ShadowMap {
+  readonly size: number;
+  readonly a: Vec3;
+  readonly b: Vec3;
+  readonly l: Vec3;
+  readonly u0: number;
+  readonly v0: number;
+  readonly scale: number;
+  readonly depth: Float32Array;
+}
+
+function shadowMap(list: DrawList, toSun: Vec3, size = 2048): ShadowMap | null {
+  const l = norm(toSun);
+  const a = norm(Math.abs(l[1]) < 0.99 ? cross([0, 1, 0], l) : cross([1, 0, 0], l));
+  const b = cross(l, a);
+  const P = list.positions;
+  let u0 = Infinity, v0 = Infinity, u1 = -Infinity, v1 = -Infinity;
+  for (let t = 0; t < list.count; t++) {
+    if (list.alpha[t]! < 1 || list.keys[t] === -2) continue;
+    for (let k = 0; k < 3; k++) {
+      const p: Vec3 = [P[9 * t + 3 * k]!, P[9 * t + 3 * k + 1]!, P[9 * t + 3 * k + 2]!];
+      const u = dot(p, a);
+      const v = dot(p, b);
+      u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v);
+    }
+  }
+  if (!Number.isFinite(u0)) return null;
+  const scale = (size - 2) / Math.max(1e-6, u1 - u0, v1 - v0);
+  const depth = new Float32Array(size * size).fill(-Infinity);
+  for (let t = 0; t < list.count; t++) {
+    if (list.alpha[t]! < 1 || list.keys[t] === -2) continue;
+    const q = [0, 1, 2].map((k) => {
+      const p: Vec3 = [P[9 * t + 3 * k]!, P[9 * t + 3 * k + 1]!, P[9 * t + 3 * k + 2]!];
+      return [(dot(p, a) - u0) * scale + 1, (dot(p, b) - v0) * scale + 1, dot(p, l)] as const;
+    });
+    const [A, B, C] = q as [readonly [number, number, number], readonly [number, number, number], readonly [number, number, number]];
+    const area = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]);
+    if (Math.abs(area) < 1e-12) continue;
+    const minX = Math.max(0, Math.floor(Math.min(A[0], B[0], C[0])));
+    const maxX = Math.min(size - 1, Math.ceil(Math.max(A[0], B[0], C[0])));
+    const minY = Math.max(0, Math.floor(Math.min(A[1], B[1], C[1])));
+    const maxY = Math.min(size - 1, Math.ceil(Math.max(A[1], B[1], C[1])));
+    for (let y = minY; y <= maxY; y++)
+      for (let x = minX; x <= maxX; x++) {
+        const px = x + 0.5;
+        const py = y + 0.5;
+        const w0 = ((B[0] - px) * (C[1] - py) - (B[1] - py) * (C[0] - px)) / area;
+        const w1 = ((C[0] - px) * (A[1] - py) - (C[1] - py) * (A[0] - px)) / area;
+        const w2 = 1 - w0 - w1;
+        // A texel the triangle touches at all: conservative, so thin walls cast whole shadows.
+        if (w0 < -0.5 / scale || w1 < -0.5 / scale || w2 < -0.5 / scale) continue;
+        const z = w0 * A[2] + w1 * B[2] + w2 * C[2];
+        const i = y * size + x;
+        if (z > depth[i]!) depth[i] = z;
+      }
+  }
+  return { size, a, b, l, u0, v0, scale, depth };
+}
+
+/** 1 in the sun, 0 in shadow, between at a shadow's edge: four texels round the point. */
+function lit(map: ShadowMap, p: Vec3, bias: number): number {
+  const x = (dot(p, map.a) - map.u0) * map.scale + 1 - 0.5;
+  const y = (dot(p, map.b) - map.v0) * map.scale + 1 - 0.5;
+  const z = dot(p, map.l) + bias;
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const fx = x - x0;
+  const fy = y - y0;
+  let s = 0;
+  for (let j = 0; j < 2; j++)
+    for (let i = 0; i < 2; i++) {
+      const xi = x0 + i;
+      const yj = y0 + j;
+      const inside = xi < 0 || yj < 0 || xi >= map.size || yj >= map.size ? true : z >= map.depth[yj * map.size + xi]!;
+      s += (inside ? 1 : 0) * (i === 0 ? 1 - fx : fx) * (j === 0 ? 1 - fy : fy);
+    }
+  return s;
 }
 
 const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -130,22 +237,81 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
   const color = new Float32Array(W * H * 3);
   const depth = new Float32Array(W * H); // 1 / distance along the view: larger is nearer; 0 is the sky
   const key = new Int32Array(W * H).fill(-1);
+  const sky = options.lighting;
+  const shadows = sky === undefined || sky.sun === null ? null : shadowMap(list, sky.sun.dir);
+  /** A subpixel's point in the world, from its place and its 1 / distance along the view. */
+  const worldAt = (x: number, y: number, inv: number): Vec3 => {
+    const w = 1 / inv;
+    const vx = (((x + 0.5) / W) * 2 - 1) * (aspect / f) * w;
+    const vy = (1 - ((y + 0.5) / H) * 2) * (1 / f) * w;
+    return [camera.eye[0] + right[0] * vx + up[0] * vy - back[0] * w, camera.eye[1] + right[1] * vx + up[1] * vy - back[1] * w, camera.eye[2] + right[2] * vx + up[2] * vy - back[2] * w];
+  };
 
   const [skyTop, skyBottom] = options.sky ?? [
     [0.86, 0.89, 0.93],
     [0.97, 0.97, 0.96],
   ];
-  for (let y = 0; y < H; y++) {
-    const t = y / Math.max(1, H - 1);
-    const r = skyTop[0] + (skyBottom[0] - skyTop[0]) * t;
-    const g = skyTop[1] + (skyBottom[1] - skyTop[1]) * t;
-    const b = skyTop[2] + (skyBottom[2] - skyTop[2]) * t;
-    for (let x = 0; x < W; x++) {
-      const o = 3 * (y * W + x);
-      color[o] = r;
-      color[o + 1] = g;
-      color[o + 2] = b;
+  if (sky === undefined)
+    for (let y = 0; y < H; y++) {
+      const t = y / Math.max(1, H - 1);
+      const r = skyTop[0] + (skyBottom[0] - skyTop[0]) * t;
+      const g = skyTop[1] + (skyBottom[1] - skyTop[1]) * t;
+      const b = skyTop[2] + (skyBottom[2] - skyTop[2]) * t;
+      for (let x = 0; x < W; x++) {
+        const o = 3 * (y * W + x);
+        color[o] = r;
+        color[o + 1] = g;
+        color[o + 2] = b;
+      }
     }
+  else {
+    // The sky behind, and the ground out to the horizon: a plane, lit and hazed as the tracer's is.
+    const out = new Float64Array(3);
+    const alb = new Float64Array(3);
+    const d = new Float64Array(3);
+    const k = sky.exposure;
+    const up3: Vec3 = [0, 0, 1];
+    const E = new Float64Array(3);
+    irradianceAt(sky.sh, up3, E);
+    const sun = sky.sun;
+    const sunUp = sun === null ? 0 : sun.lux * Math.max(0, sun.dir[1]);
+    const hz = sky.field.horizon;
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        const vx = (((x + 0.5) / W) * 2 - 1) * (aspect / f);
+        const vy = (1 - ((y + 0.5) / H) * 2) * (1 / f);
+        const wx = right[0] * vx + up[0] * vy - back[0];
+        const wy = right[1] * vx + up[1] * vy - back[1];
+        const wz = right[2] * vx + up[2] * vy - back[2];
+        const len = Math.hypot(wx, wy, wz);
+        const i = y * W + x;
+        const o = 3 * i;
+        if (wy < 0 && camera.eye[1] > sky.groundY) {
+          // Along the view, 1 unit of -back per unit of this ray's w: the plane is `t` units of it away.
+          const t = (sky.groundY - camera.eye[1]) / wy;
+          const p: Vec3 = [camera.eye[0] + wx * t, sky.groundY, camera.eye[2] + wz * t];
+          // A subpixel's footprint on the ground: its angle times the distance, stretched at a glancing view.
+          const foot = ((t * len) / (f * H * 0.5)) / Math.max(0.05, -wy / len);
+          if (sky.floor === undefined) groundAt(p[0], -p[2], sky.areas ?? [], alb, foot);
+          else alb.set(sky.floor);
+          const s = sun === null || shadows === null ? 1 : lit(shadows, p, 0.04);
+          const h = hazeAt(sky.field.light, t * len);
+          for (let c = 0; c < 3; c++) {
+            const L = (alb[c]! * (E[c]! + sunUp * s * (sun?.color[c] ?? 1))) / Math.PI;
+            color[o + c] = (L * (1 - h) + hz[c]! * h) * k;
+          }
+          depth[i] = 1 / t;
+          key[i] = -2;
+          continue;
+        }
+        d[0] = wx / len;
+        d[1] = -wz / len;
+        d[2] = wy / len;
+        skyRadiance(sky.field, d, out);
+        color[o] = out[0]! * k;
+        color[o + 1] = out[1]! * k;
+        color[o + 2] = out[2]! * k;
+      }
   }
 
   const P = list.positions;
@@ -155,6 +321,28 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
   };
 
   const glass: number[] = [];
+  const irr = new Float64Array(3);
+  /** Under a sky: a triangle's light without the sun (its sky), and the sun's when it is not shadowed, times its colour and the exposure. */
+  const skyShade = (t: number): { ambient: Vec3; direct: Vec3; n: Vec3 } => {
+    const rgb: Vec3 = [list.colors[3 * t]!, list.colors[3 * t + 1]!, list.colors[3 * t + 2]!];
+    const k = sky!.exposure / Math.PI;
+    if (list.unlit?.[t] === 1) return { ambient: rgb, direct: [0, 0, 0], n: [0, 1, 0] };
+    let n: Vec3 = [list.normals[3 * t]!, list.normals[3 * t + 1]!, list.normals[3 * t + 2]!];
+    const toEye = sub(camera.eye, [P[9 * t]!, P[9 * t + 1]!, P[9 * t + 2]!]);
+    if (dot(n, toEye) < 0) n = [-n[0], -n[1], -n[2]];
+    irradianceAt(sky!.sh, [n[0], -n[2], n[1]], irr);
+    const fill = sky!.bounce ?? [0, 0, 0];
+    irr[0] = irr[0]! + fill[0];
+    irr[1] = irr[1]! + fill[1];
+    irr[2] = irr[2]! + fill[2];
+    const sun = sky!.sun;
+    const nl = sun === null ? 0 : Math.max(0, dot(n, sun.dir)) * sun.lux;
+    return {
+      ambient: [rgb[0] * irr[0] * k, rgb[1] * irr[1] * k, rgb[2] * irr[2] * k],
+      direct: sun === null ? [0, 0, 0] : [rgb[0] * nl * sun.color[0] * k, rgb[1] * nl * sun.color[1] * k, rgb[2] * nl * sun.color[2] * k],
+      n,
+    };
+  };
   const shadeOf = (t: number): Vec3 => {
     const rgb: Vec3 = [list.colors[3 * t]!, list.colors[3 * t + 1]!, list.colors[3 * t + 2]!];
     if (list.unlit?.[t] === 1) return rgb;
@@ -192,14 +380,18 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
       const w = -v[2];
       return [((v[0] * f) / aspect / w) * 0.5 * W + 0.5 * W, 0.5 * H - ((v[1] * f) / w) * 0.5 * H, 1 / w] as const;
     });
-    const c = shadeOf(t);
+    const lightOf = sky === undefined ? null : skyShade(t);
+    const c = lightOf === null ? shadeOf(t) : lightOf.ambient;
     const alpha = list.alpha[t]!;
     const k = list.keys[t]!;
     const lift = 1 + list.bias[t]! * 2e-5;
-    for (let i = 1; i + 1 < screen.length; i++) fill(screen[0]!, screen[i]!, screen[i + 1]!, c, alpha, k, blend, lift);
+    // The sun's share, where the shadow map says it reaches: a face turned from it has none.
+    const direct = lightOf === null || shadows === null || (lightOf.direct[0] === 0 && lightOf.direct[1] === 0 && lightOf.direct[2] === 0) ? null : lightOf.direct;
+    const bias = lightOf === null || sky === undefined || sky.sun === null ? 0 : 0.03 + 0.05 * Math.sqrt(Math.max(0, 1 - dot(lightOf.n, sky.sun.dir) ** 2));
+    for (let i = 1; i + 1 < screen.length; i++) fill(screen[0]!, screen[i]!, screen[i + 1]!, c, alpha, k, blend, lift, direct, bias);
   };
 
-  const fill = (a: readonly [number, number, number], b: readonly [number, number, number], c: readonly [number, number, number], rgb: Vec3, alpha: number, k: number, blend: boolean, lift: number): void => {
+  const fill = (a: readonly [number, number, number], b: readonly [number, number, number], c: readonly [number, number, number], rgb: Vec3, alpha: number, k: number, blend: boolean, lift: number, direct: Vec3 | null = null, bias = 0): void => {
     const area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
     if (Math.abs(area) < 1e-12) return;
     const minX = Math.max(0, Math.floor(Math.min(a[0], b[0], c[0])));
@@ -222,16 +414,25 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
         // so a pane never shimmers on the reveal it shares a plane with.
         if (blend ? z <= depth[i]! * (1 + 1e-5) : z <= depth[i]!) continue;
         const o = 3 * i;
+        let r0 = rgb[0];
+        let g0 = rgb[1];
+        let b0 = rgb[2];
+        if (direct !== null && shadows !== null) {
+          const s = lit(shadows, worldAt(x, y, z / lift), bias);
+          r0 += direct[0] * s;
+          g0 += direct[1] * s;
+          b0 += direct[2] * s;
+        }
         if (blend) {
-          color[o] = color[o]! * (1 - alpha) + rgb[0] * alpha;
-          color[o + 1] = color[o + 1]! * (1 - alpha) + rgb[1] * alpha;
-          color[o + 2] = color[o + 2]! * (1 - alpha) + rgb[2] * alpha;
+          color[o] = color[o]! * (1 - alpha) + r0 * alpha;
+          color[o + 1] = color[o + 1]! * (1 - alpha) + g0 * alpha;
+          color[o + 2] = color[o + 2]! * (1 - alpha) + b0 * alpha;
         } else {
           depth[i] = z;
           key[i] = k;
-          color[o] = rgb[0];
-          color[o + 1] = rgb[1];
-          color[o + 2] = rgb[2];
+          color[o] = r0;
+          color[o + 1] = g0;
+          color[o + 2] = b0;
         }
       }
     }
@@ -260,11 +461,13 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
         const d = y + 1 < H ? key[i + W]! : k;
         if (k !== r || k !== d) ink[k === -1 ? (k !== r ? i + 1 : i + W) : i] = 1;
       }
+    // Under a sky the house is a picture more than a drawing: its lines lighter.
+    const inkK = sky === undefined ? [0.42, 0.42, 0.44] : [0.62, 0.62, 0.64];
     for (let i = 0; i < W * H; i++)
       if (ink[i] === 1 && key[i] !== -2) {
-        color[3 * i] = color[3 * i]! * 0.42;
-        color[3 * i + 1] = color[3 * i + 1]! * 0.42;
-        color[3 * i + 2] = color[3 * i + 2]! * 0.44;
+        color[3 * i] = color[3 * i]! * inkK[0]!;
+        color[3 * i + 1] = color[3 * i + 1]! * inkK[1]!;
+        color[3 * i + 2] = color[3 * i + 2]! * inkK[2]!;
       }
   }
 
@@ -275,8 +478,10 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
   });
   for (const t of glass) draw(t, true);
 
-  // What was drawn is tone-mapped; the sky (or the paper) behind it keeps its colour.
-  for (let i = 0; i < W * H; i++) {
+  // What was drawn is tone-mapped; the sky (or the paper) behind it keeps its colour. Under a sky,
+  // everything — sky and ground included — through the path tracer's filmic curve.
+  if (sky !== undefined) for (let i = 0; i < 3 * W * H; i++) color[i] = aces(color[i]!);
+  else for (let i = 0; i < W * H; i++) {
     if (key[i] === -1) continue;
     const [tr, tg, tb] = tone(color[3 * i]!, color[3 * i + 1]!, color[3 * i + 2]!);
     color[3 * i] = tr;

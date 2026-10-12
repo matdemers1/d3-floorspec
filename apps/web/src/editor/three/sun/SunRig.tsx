@@ -4,15 +4,24 @@ import * as THREE from 'three';
 import type { HouseMesh } from '@floorspec/mesh';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
-import { shadowMapSize, sunOf, useStudy, useSunState, type Study } from './study';
-import { BOUNCE_LUX, LIT_EXPOSURE, NIGHT_SKY_LUX, toneMappingExposure } from '../lights';
+import { mapsFor, skyBounce, skyExposure, skyField, skyHarmonics, skyLight, sunDay, sunsetPlace, type SkyLight, type SkyPreset } from '@floorspec/mesh/sky';
+import { placedSite, shadowMapSize, siteOf, studyOf, sunOf, useSunState, type Study } from './study';
+import { instantOfClock, midnightOf } from './clock';
+import { BOUNCE_LUX, LIT_EXPOSURE, toneMappingExposure } from '../lights';
+import { useSkyMaps } from '../sky/maps';
+import { Lawn, SkyDome, SkyProbe } from '../sky/SkyScene';
+import { setHighlightExposure } from '../highlight';
 
 /**
- * The 3D view's lights (FLR-T-8.6). With the sun off — or no site location to place it from — the
- * even studio light the view has always had. With it on: a directional light from the sun's
- * azimuth and altitude turned into the project's frame by the site's true north, casting shadows
- * from walls, roofs, slabs and stairs onto floors and onto a disc of ground under the house; a sky
- * light that fades with the sun; below the horizon, a dim night with no sun at all.
+ * The 3D view's lights (FLR-T-8.6, FLR-T-13.4, FLR-T-13.9): the sky the project is seen under —
+ * @floorspec/mesh's presets, the same skies the headless render and the path tracers draw. In the
+ * studio, the even light the view has always had. Under any other sky: its HDRI dome round the
+ * view, its image-based light (a light probe of its harmonics), the lawn out to the hazy horizon,
+ * and its sun — placed by the NOAA algorithm from the site's latitude, longitude and true north at
+ * the panel's date and time (an assumed site when the document records none) — as a directional
+ * light casting shadows from walls, roofs, slabs and stairs onto floors and the lawn. Past sunset a
+ * clear sky darkens through dusk into night and the moon takes the sun's place, too faint to cast.
+ * The view is exposed for its sky (`skyExposure`), or for its lamps when the Lights are on, at dusk.
  *
  * The shadow camera is fitted to the house: an orthographic box around its bounding sphere,
  * looking along the sunlight, so every shadow the house casts lands inside it (a receiver in shadow
@@ -23,10 +32,7 @@ import { BOUNCE_LUX, LIT_EXPOSURE, NIGHT_SKY_LUX, toneMappingExposure } from '..
 
 // What the house is lit by, not interface colour.
 const SKY_GROUND = '#b8b1a4'; // d3-allow: the hemisphere light's bounce from the ground
-const DAY_SKY = '#ffffff'; // d3-allow: skylight in the 3D model, not chrome
-const NIGHT_SKY = '#8ea3c8'; // d3-allow: moonlit skylight in the 3D model, not chrome
 const SUN = '#fff4e2'; // d3-allow: sunlight's warmth in the 3D model, not chrome
-const GROUND = '#cdc8bd'; // d3-allow: the ground the house stands on in the 3D model, not chrome
 const LAMP_BOUNCE = '#fff1e0'; // d3-allow: warm-white lamplight bounced about a room in the 3D model, not chrome
 
 interface Frame {
@@ -53,6 +59,11 @@ function frameOf(model: EditorModel, mesh: HouseMesh): Frame | null {
 export interface SunProbe {
   light: THREE.DirectionalLight | null;
   study: Study | null;
+  sky: SkyLight | null;
+  /** What the tone curve is given per cd/m²; null in the studio. */
+  exposure: number | null;
+  /** The document records the site's location. */
+  located: boolean;
   size: number;
   gl: THREE.WebGLRenderer | null;
   scene: THREE.Scene | null;
@@ -64,40 +75,78 @@ const probes = new WeakMap<EditorStore, SunProbe>();
 export function probeOf(store: EditorStore): SunProbe {
   let p = probes.get(store);
   if (p === undefined) {
-    p = { light: null, study: null, size: 0, gl: null, scene: null };
+    p = { light: null, study: null, sky: null, exposure: null, located: false, size: 0, gl: null, scene: null };
     probes.set(store, p);
   }
   return p;
 }
 
-const noRaycast = (): void => undefined;
+
+/**
+ * The sky the view is seen under, its sun placed from the site at the clock (FLR-T-13.4, 13.9):
+ * `light` is null for the studio, which the 3D view draws its own way; `full` is the sky every
+ * renderer draws, the studio's even dome included. `override` asks for another preset at the same
+ * date and time (the GPU still's choice).
+ */
+export function useSkyLight(store: EditorStore, model: EditorModel | null, lamps: boolean, override?: SkyPreset): { light: SkyLight | null; full: SkyLight; study: Study | null; preset: SkyPreset } {
+  const chosen = useSunState(store, (s) => s.sky);
+  const sky = override ?? chosen;
+  const clock = useSunState(store, (s) => s.clock);
+  const site = placedSite(siteOf(model));
+  // The light fixtures on (FLR-T-12.22): dusk, so the pools of light the lamps make read — unless it is night.
+  const preset: SkyPreset = lamps ? (sky === 'night' ? 'night' : 'dusk') : sky;
+  const key = `${String(site.latitude)},${String(site.longitude)},${String(site.trueNorth)}`;
+  const minute = instantOfClock(clock);
+  const midnight = midnightOf(clock);
+  return useMemo(() => {
+    if (preset === 'studio') return { light: null, full: skyLight('studio', null, site.trueNorth), study: null, preset };
+    const study = studyOf(site, clock);
+    const lat = site.latitude ?? 0;
+    const lon = site.longitude ?? 0;
+    const place = preset === 'dusk' ? (sunsetPlace(sunDay(midnight, lat, lon), lat, lon) ?? null) : study === null ? null : { azimuth: study.position.azimuth, altitude: study.position.altitude };
+    const light = skyLight(preset, place, site.trueNorth);
+    return { light, full: light, study, preset };
+    // The site by its key and the clock by its minute: a new model with the same site keeps the same sky.
+  }, [preset, key, minute, midnight]);
+}
 
 export function SunRig({ store, model, mesh, compact, walking, lamps = false }: { store: EditorStore; model: EditorModel; mesh: HouseMesh; compact: boolean; walking: boolean; lamps?: boolean }) {
-  const on = useSunState(store, (s) => s.on);
-  const clock = useSunState(store, (s) => s.clock);
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const invalidate = useThree((s) => s.invalidate);
-  const study = useStudy(model, on, clock);
+  const { light: sky, study } = useSkyLight(store, model, lamps);
+  const located = !placedSite(siteOf(model)).assumed;
+  const maps = useSkyMaps(sky === null ? [] : mapsFor(sky));
+  const field = useMemo(() => (sky === null || maps === null ? null : skyField(sky, maps)), [sky, maps]);
+  const sh = useMemo(() => (field === null ? null : skyHarmonics(field)), [field]);
+  const exposure = lamps ? LIT_EXPOSURE : field === null || sky === null ? null : skyExposure(sky, field.maps);
+  const toneExposure = exposure === null ? 1 : toneMappingExposure(exposure);
+  const direct = sky?.direct ?? null;
+  const bounce: { lux: number; color: [number, number, number] } = sky === null ? { lux: 0, color: [1, 1, 1] } : skyBounce(sky);
+  // The sun casts shadows; the moon is too faint to.
+  const casting = direct !== null && direct.kind === 'sun';
   const frame = useMemo(() => frameOf(model, mesh), [model, mesh]);
   const light = useRef<THREE.DirectionalLight>(null);
   const target = useMemo(() => new THREE.Object3D(), []);
   const size = frame === null ? 1024 : shadowMapSize(frame.radius, { compact: compact && !walking, max: gl.capabilities.maxTextureSize });
 
-  // Place the sun and fit its shadow camera to the house.
+  // Place the sun (or the moon) and fit its shadow camera to the house.
   useLayoutEffect(() => {
     const l = light.current;
     const probe = probeOf(store);
     probe.study = study;
+    probe.sky = sky;
     probe.gl = gl;
     probe.scene = scene;
-    if (l === null || study === null || frame === null) {
+    probe.exposure = exposure;
+    probe.located = located;
+    if (l === null || direct === null || frame === null) {
       probe.light = null;
       invalidate();
       return;
     }
     const { centre, radius } = frame;
-    const [x, y, z] = study.vector;
+    const [x, y, z] = direct.dir;
     const back = radius * 3;
     target.position.copy(centre);
     target.updateMatrixWorld();
@@ -115,7 +164,7 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false }: 
     cam.bottom = -r;
     cam.near = Math.max(0.1, back - radius * 1.1);
     // Beyond the house, along the light: as far as a low sun's shadows reach across the ground.
-    const reach = study.position.altitude > 0.5 ? (2 * radius) / Math.tan((study.position.altitude * Math.PI) / 180) : 20 * radius;
+    const reach = direct.place.altitude > 0.5 ? (2 * radius) / Math.tan((direct.place.altitude * Math.PI) / 180) : 20 * radius;
     cam.far = back + radius * 1.1 + Math.min(reach, 20 * radius);
     cam.updateProjectionMatrix();
     if (l.shadow.mapSize.x !== size) {
@@ -127,44 +176,32 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false }: 
     probe.light = l;
     probe.size = size;
     invalidate();
-    // `lamps` too: with the fixtures on, the sun is not drawn, and is placed again when it is back.
-  }, [study, frame, size, target, store, gl, scene, invalidate, lamps]);
+  }, [study, sky, direct, frame, size, target, store, gl, scene, invalidate, exposure, located]);
 
   useEffect(() => () => {
     const probe = probeOf(store);
     probe.light = null;
     probe.study = null;
+    probe.sky = null;
   }, [store]);
 
   useSunTestHook(store);
 
-  // FLR-T-13.1: with the fixtures on, the view is exposed for lamplight — lux and candela, as the
-  // path tracer is — and back to the studio's exposure when they are off.
+  // The view is exposed for its sky (FLR-T-13.4) — or for lamplight, in lux and candela as the path
+  // tracer is (FLR-T-13.1) — and back to the studio's when it is the studio. A selection's glow is
+  // given back what the exposure takes, so it reads the same under every sky.
+  // Under a sky, the renderers' filmic curve (SkyScene's CustomToneMapping); in the studio, three.js's ACES.
+  const curve = field === null && !lamps ? THREE.ACESFilmicToneMapping : THREE.CustomToneMapping;
   useLayoutEffect(() => {
-    gl.toneMappingExposure = lamps ? toneMappingExposure(LIT_EXPOSURE) : 1;
+    gl.toneMappingExposure = toneExposure;
+    gl.toneMapping = curve;
+    setHighlightExposure(toneExposure);
     invalidate();
-    return () => { gl.toneMappingExposure = 1; };
-  }, [gl, lamps, invalidate]);
+    return () => { gl.toneMappingExposure = 1; gl.toneMapping = THREE.ACESFilmicToneMapping; setHighlightExposure(1); };
+  }, [gl, toneExposure, curve, invalidate]);
 
-  // The light fixtures on (FLR-T-12.22): dusk, whatever the sun study says — no sun, a dim blue
-  // sky — so the pools of light the lamps make read. The ground still takes their light. In lux
-  // (FLR-T-13.1): the sky's, and the fill that stands for what the lamps' light bounces.
-  if (lamps) {
-    return (
-      <>
-        <hemisphereLight args={[NIGHT_SKY, SKY_GROUND, NIGHT_SKY_LUX]} position={[0, 0, 1]} />
-        <ambientLight color={LAMP_BOUNCE} intensity={BOUNCE_LUX} />
-        {frame === null ? null : (
-          <mesh position={[frame.centre.x, frame.centre.y, frame.ground]} receiveShadow raycast={noRaycast} userData={{ ground: true }}>
-            <circleGeometry args={[frame.radius * 3, 96]} />
-            <meshLambertMaterial color={GROUND} />
-          </mesh>
-        )}
-      </>
-    );
-  }
-
-  if (study === null || frame === null) {
+  // The studio: the even light the view has always had, on the theme's own backdrop.
+  if (sky === null || frame === null) {
     return (
       <>
         <hemisphereLight args={[0xffffff, SKY_GROUND, 1.6]} position={[0, 0, 1]} />
@@ -173,28 +210,30 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false }: 
       </>
     );
   }
-
-  // Twilight from 6° below the horizon (civil) up to sunrise; daylight a few degrees above it.
-  const twilight = Math.min(1, Math.max(0, (study.position.altitude + 6) / 6));
-  const d = study.daylight;
-  // Night stays legible: the house in moonlight, not gone.
-  const sky = study.night ? 0.7 + 0.4 * twilight : 0.75 + 0.45 * d;
+  // The sky's maps on their way: its even light meanwhile, so the house is never dark.
+  if (field === null || sh === null) {
+    return (
+      <>
+        <hemisphereLight args={[0xffffff, SKY_GROUND, 1.6]} position={[0, 0, 1]} />
+        <ambientLight intensity={0.5} />
+      </>
+    );
+  }
   return (
     <>
-      <hemisphereLight args={[study.night ? NIGHT_SKY : DAY_SKY, SKY_GROUND, sky]} position={[0, 0, 1]} />
-      <ambientLight intensity={study.night ? 0.22 : 0.2 + 0.1 * d} />
+      <SkyDome field={field} />
+      <SkyProbe sh={sh} />
+      {lamps ? <ambientLight color={LAMP_BOUNCE} intensity={BOUNCE_LUX} /> : null}
+      {bounce.lux > 0 ? <ambientLight color={new THREE.Color(bounce.color[0], bounce.color[1], bounce.color[2])} intensity={bounce.lux} /> : null}
       <primitive object={target} />
       <directionalLight
         ref={light}
-        color={SUN}
-        intensity={study.night ? 0 : 2.6 * d}
-        castShadow={!study.night}
+        color={direct === null ? SUN : new THREE.Color(direct.color[0], direct.color[1], direct.color[2])}
+        intensity={direct === null ? 0 : direct.lux}
+        castShadow={casting}
         target={target}
       />
-      <mesh position={[frame.centre.x, frame.centre.y, frame.ground]} receiveShadow raycast={noRaycast} userData={{ ground: true }}>
-        <circleGeometry args={[frame.radius * 3, 96]} />
-        <meshLambertMaterial color={GROUND} />
-      </mesh>
+      <Lawn centre={frame.centre} ground={frame.ground} field={field} />
     </>
   );
 }
@@ -203,7 +242,10 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false }: 
 
 export interface SunHook {
   on: boolean;
+  /** The document records the site's location (otherwise the sky is placed from an assumed one). */
   located: boolean;
+  /** The sky preset drawn (null in the studio), its band, and the exposure the view is given per cd/m². */
+  sky: { preset: SkyPreset; band: 'day' | 'dusk' | 'night'; direct: 'sun' | 'moon' | null; exposure: number | null; dome: boolean; lawn: boolean; ibl: number | null } | null;
   /** What the solar module computed: degrees, and the unit vector towards the sun in the project's frame. */
   study: { azimuth: number; altitude: number; vector: [number, number, number]; night: boolean; instant: string } | null;
   /** The directional light as three.js has it: towards the light from its target, unit length. */
@@ -238,7 +280,23 @@ function useSunTestHook(store: EditorStore) {
     };
     const hook: SunHook = {
       get on() { return sun.get().on; },
-      get located() { return probe.study !== null; },
+      get located() { return probe.located; },
+      get sky() {
+        const s = probe.sky;
+        if (s === null) return null;
+        let dome = false;
+        let lawn = false;
+        probe.scene?.traverse((o) => {
+          const u = o.userData as { sky?: boolean; lawn?: boolean };
+          if (u.sky === true) dome = true;
+          if (u.lawn === true) lawn = true;
+        });
+        let ibl: number | null = null;
+        probe.scene?.traverse((o) => {
+          if (o instanceof THREE.LightProbe) ibl = (o.sh.coefficients[0]?.y ?? 0) * o.intensity;
+        });
+        return { preset: s.preset, band: s.band, direct: s.direct?.kind ?? null, exposure: probe.exposure, dome, lawn, ibl };
+      },
       get study() {
         const s = probe.study;
         return s === null ? null : { azimuth: s.position.azimuth, altitude: s.position.altitude, vector: s.vector, night: s.night, instant: new Date(s.instant).toISOString() };

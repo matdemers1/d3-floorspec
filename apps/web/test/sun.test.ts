@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { clockAt, formatDate, formatOffset, formatTime, formatTimeShort, instantOfClock, midnightOf, summaryOf, type Clock } from '../src/editor/three/sun/clock';
 import { compassPoint, julianDay, refraction, seasonInstant, sunAt, sunAtJulian, sunCoordinates, sunDay, sunVector } from '../src/editor/three/sun/solar';
-import { dayOf, shadowMapSize, studyOf, type Site } from '../src/editor/three/sun/study';
+import { dayOf, placedSite, shadowMapSize, studyOf, SunStore, type Site } from '../src/editor/three/sun/study';
+import { skySummary } from '../src/editor/three/sun/SunPanel';
 import { formatDegrees, parseDegrees } from '../src/editor/three/sun/degrees';
 
 /**
@@ -209,5 +210,53 @@ describe('words and fields', () => {
     for (const [v, axis] of [[42.3601, 'latitude'], [-71.0589, 'longitude'], [-12.5, 'north']] as const) {
       expect(parseDegrees(formatDegrees(v, axis), axis)).toEqual({ value: Math.round(v * 1e6) });
     }
+  });
+});
+
+describe('the sky preset (FLR-T-13.4)', () => {
+  it('is a clear day until a person picks another, then that one for this project in this browser', () => {
+    const kept = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => kept.get(k) ?? null, setItem: (k: string, v: string) => { kept.set(k, v); } });
+    try {
+      const a = new SunStore('p1');
+      expect(a.get().sky).toBe('clear');
+      expect(a.get().on).toBe(true);
+      a.setSky('studio');
+      expect(a.get()).toMatchObject({ sky: 'studio', on: false });
+      a.setSky('dusk');
+      expect(kept.get('floorspec.sky3d.p1')).toBe('dusk');
+      // Another project keeps its own; the same project opened again finds its choice.
+      expect(new SunStore('p2').get().sky).toBe('clear');
+      expect(new SunStore('p1').get().sky).toBe('dusk');
+      // Something that is not a preset is not believed.
+      kept.set('floorspec.sky3d.p3', 'sunny');
+      expect(new SunStore('p3').get().sky).toBe('clear');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('stops a timelapse when the sky has no time of day, and the toolbar button opens and closes the panel', () => {
+    const s = new SunStore(null);
+    s.set({ playing: true, lapse: true });
+    s.setSky('night');
+    expect(s.get()).toMatchObject({ playing: false, lapse: false });
+    s.toggle();
+    expect(s.get().open).toBe(true);
+    s.toggle();
+    expect(s.get().open).toBe(false);
+  });
+
+  it('says what the sky is: the preset, the date and, by day, the time', () => {
+    const clock: Clock = { date: '2026-06-21', minutes: 19 * 60 + 30, offset: -240 };
+    expect(skySummary('clear', clock)).toBe('Clear day · Jun 21 · 7:30 pm');
+    expect(skySummary('dusk', clock)).toBe('Dusk · Jun 21');
+    expect(skySummary('studio', clock)).toBe('Studio');
+  });
+
+  it('places the sun from an assumed site when the document records none', () => {
+    const none: Site = { latitude: null, longitude: null, trueNorth: 5, present: false };
+    expect(placedSite(none)).toEqual({ latitude: 40, longitude: -75, trueNorth: 5, present: false, assumed: true });
+    expect(placedSite({ latitude: 1, longitude: 2, trueNorth: 0, present: true }).assumed).toBe(false);
   });
 });
