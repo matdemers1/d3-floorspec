@@ -1,9 +1,9 @@
 name: CI
 
-# A gated pipeline, cheapest first: lint → conformance → unit → integration + e2e → python →
-# compose → images.
-# Every job needs the one before it, so a type error never spends minutes waiting for a database,
-# and only a push to main that passed all of them publishes `sha-` images to GHCR.
+# Every check runs at once — lint, conformance, unit, integration, e2e (split across runners by
+# suite), python and compose — so a pull request waits for the slowest job, not the sum of them
+# (FLR-T-12.40: a chained run took ~36 minutes). Only a push to main on which all of them passed
+# publishes `sha-` images to GHCR.
 #
 # GitHub-hosted runners only: this repo is public, and a self-hosted runner would execute any fork's
 # pull request. Every action is pinned to a commit SHA, never a tag: a tag is a mutable pointer, and
@@ -40,7 +40,6 @@ jobs:
   # suites — Core in packages/engine/standard, Ops in packages/ops/standard, Rules in
   # packages/rules-engine/standard — each pinned to a floorspec commit (FLR-ADR-009).
   conformance:
-    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -170,7 +169,6 @@ jobs:
         run: pnpm turbo run build --filter='@floorspec/mesh^...' && pnpm --filter @floorspec/mesh test:browser
 
   unit:
-    needs: conformance
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -184,7 +182,6 @@ jobs:
       - run: pnpm build
 
   integration:
-    needs: unit
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -234,9 +231,23 @@ jobs:
   #                an agent's changeset posted with its token, accepted, undone, compared;
   #   - a11y:      axe (WCAG 2.0/2.1/2.2 A and AA) on every screen and state in the light and the
   #                dark theme, plus the plan's SVG text contrast. Any violation fails the build.
-  e2e:
-    needs: unit
+  #
+  # The suites run on three runners, balanced by their run time: a11y alone (axe on every screen in
+  # both themes is the longest), then the 3D-heavy suites, then the rest. A suite added to the
+  # config must be added to a group here too — `e2e` below fails a run that leaves one out.
+  e2e-suites:
+    name: e2e (${{ matrix.group }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: a11y
+            suites: a11y
+          - group: 3d
+            suites: three,sun,furniture,share,assets
+          - group: editor
+            suites: moonshots,arcs,findings,templates,roofs-stairs,package,exports,systems,program,options,main-path,keyboard
     services:
       postgres:
         image: mirror.gcr.io/library/postgres:16 # Docker Hub's postgres through Google's mirror: anonymous Hub pulls hit 429s (FLR-T-12.30)
@@ -264,17 +275,37 @@ jobs:
           # The keyboard suite's database; main-path and a11y use floorspec_e2e_main_test and
           # floorspec_e2e_a11y_test beside it.
           E2E_DATABASE_URL: postgresql://floorspec:floorspec@127.0.0.1:5432/floorspec_e2e_test
+          E2E_SUITES: ${{ matrix.suites }}
         run: pnpm --filter @d3-floorspec/web e2e
       - name: Keep the traces of a failed run
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: e2e-test-results
+          name: e2e-test-results-${{ matrix.group }}
           path: apps/web/test-results
           retention-days: 7
 
+  # The one `e2e` check branch protection requires: green only when every group above passed, and
+  # when the groups between them run every suite the config declares.
+  e2e:
+    needs: e2e-suites
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Every suite belongs to a group
+        run: |
+          declared=$(grep -oE "name: '[a-z0-9-]+', spec:" apps/web/e2e/playwright.config.ts | sed -E "s/name: '([a-z0-9-]+)'.*/\1/" | sort)
+          grouped=$(grep -E '^ +suites: ' .github/workflows/ci.yml | sed -E 's/^ +suites: //' | tr ',' '\n' | sort)
+          if [ "$declared" != "$grouped" ]; then
+            echo "::error::the e2e groups in ci.yml do not run exactly the suites playwright.config.ts declares"
+            diff <(echo "$declared") <(echo "$grouped") || true
+            exit 1
+          fi
+      - name: Every group passed
+        run: test "${{ needs.e2e-suites.result }}" = success
+
   python:
-    needs: [integration, e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -293,7 +324,6 @@ jobs:
   # the stack is booted on an empty database: the api migrates on boot and answers /health with
   # the schema revision Shipyard will check.
   compose:
-    needs: python
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -335,12 +365,12 @@ jobs:
         if: always()
         run: docker compose -f deploy/compose.yml -f deploy/compose.dev.yml -f deploy/compose.ci.yml down -v
 
-  # The only job that publishes, and only from main once everything above is green. Tagged by long
+  # The only job that publishes, and only from main once every check above is green. Tagged by long
   # SHA (`sha-<40 hex>`, the tag Shipyard resolves), labelled with the revision, schema and
   # migration kind Shipyard verifies before and after a swap. The web editor is not its own image:
   # the api serves it, as Foreman's server serves its console (one origin, one cookie, no CORS).
   images:
-    needs: compose
+    needs: [lint, conformance, unit, integration, e2e, python, compose]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
