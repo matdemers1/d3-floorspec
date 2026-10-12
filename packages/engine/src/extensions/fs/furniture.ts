@@ -5,7 +5,9 @@
  */
 import { validate as validateSchema } from '../../generated/validate-FS_furniture.js';
 import type * as G from '../../generated/types-FS_furniture.js';
-import { STARTER_LIBRARY_MODELS } from '../../generated/furniture-library.js';
+import { STARTER_LIBRARY_ITEMS, STARTER_LIBRARY_MODELS, STARTER_LIBRARY_VERSION, type StarterLibraryFile, type StarterLibraryItem } from '../../generated/furniture-library.js';
+
+export { STARTER_LIBRARY_ITEMS, STARTER_LIBRARY_VERSION, type StarterLibraryFile, type StarterLibraryItem };
 import { halfString } from '../../derive/derive.js';
 import { elementFrame, envelopesOverlap, footprintOf, openingFrame, type Footprint } from '../../derive/frames.js';
 import { area2 } from '../../geometry/predicates.js';

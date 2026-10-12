@@ -1,0 +1,30 @@
+{
+  "name": "@floorspec/assistant-staging",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Non-normative staging assistant: dresses a Floorspec plan's rooms with the FS_furniture starter library's decor — rugs, art, lamps, plants, textiles, window dressings, media and accessories — around the furniture already there, by geometric rules, as one Floorspec Ops batch. Isomorphic and deterministic.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc -p test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@floorspec/assistant-electrical": "workspace:*",
+    "@floorspec/engine": "workspace:*",
+    "@floorspec/migrate": "workspace:*",
+    "@floorspec/ops": "workspace:*"
+  }
+}

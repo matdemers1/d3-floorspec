@@ -9,6 +9,7 @@ import { kindById, kindsOf, type SystemId } from './systems/catalog';
 import { navigate } from '../lib/router';
 import { threeOf } from './three/mode';
 import { FURNITURE_COMMANDS } from '../furniture/commands';
+import { stageRooms } from './systems/Staging';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -337,6 +338,17 @@ export const COMMANDS: readonly Command[] = [
     run: (_store, tools) => {
       const face = tools.unnamedSpaces()[0];
       if (face !== undefined) tools.nameRoomIn(face);
+    },
+  },
+  {
+    id: 'model.stageRoom',
+    label: 'Stage this room',
+    group: 'Model',
+    keywords: 'decor rug art lamp plant curtains staging assistant',
+    enabled: (store) => editable(store) && selectedKind(store) === 'room',
+    run: (store) => {
+      const room = store.get().selection;
+      if (room !== null) void stageRooms(store, [room]);
     },
   },
   {

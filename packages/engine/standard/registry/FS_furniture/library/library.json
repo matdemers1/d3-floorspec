@@ -1,10 +1,10 @@
 {
   "library": "FS_furniture starter library",
   "extension": "FS_furniture",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "CC0-1.0",
   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "description": "Generic furniture, appliances and casework as FS_furniture 0.1.0 elements ready to place: lengths in base units (1/1280 mm), each item's box and default clearance envelopes in its frame (spec.md 3.1, 4.2), and a generated proxy model and plan symbol with their SHA-256 digests and lengths. Written by tools/furniture-library.ts.",
+  "description": "Generic furniture, appliances, casework and decor as FS_furniture 0.1.0 elements ready to place: lengths in base units (1/1280 mm), each item's box and default clearance envelopes in its frame (spec.md 3.1, 4.2), and a generated proxy model and plan symbol with their SHA-256 digests and lengths. Written by tools/furniture-library.ts.",
   "items": {
     "refrigerator-900": {
       "kind": "appliances",
@@ -1202,6 +1202,1056 @@
         "mediaType": "image/svg+xml",
         "sha256": "6e1b28f798e263d1b6b514ac76b89a8dde732459410367529efae093ff51da10",
         "byteLength": 521
+      }
+    },
+    "rug-3000x2000": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "rug-3000x2000",
+        "name": "Rug, 3000 x 2000 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1920000,
+              0
+            ],
+            "max": [
+              2560000,
+              1920000,
+              15360
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/rug-3000x2000.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "9d0e8bed645bd77cb3d5a03c6d5017e965955070015fe53de5c35f999f1b5566",
+        "byteLength": 2248
+      },
+      "symbol": {
+        "path": "symbols/rug-3000x2000.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "342f26d526f53f13fec4b6ea71328afbffdf2bad85dc1ffaf1fa40dc3e2802a2",
+        "byteLength": 382
+      }
+    },
+    "rug-2400x1700": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "rug-2400x1700",
+        "name": "Rug, 2400 x 1700 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1536000,
+              0
+            ],
+            "max": [
+              2176000,
+              1536000,
+              15360
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/rug-2400x1700.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "41ddebe824630e82dcdf6bbd12d88f01d1ac81b7576f030515383becde51b95c",
+        "byteLength": 2292
+      },
+      "symbol": {
+        "path": "symbols/rug-2400x1700.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "a556aec8351755d7c5ad648f9d6ed5fe469eeb26ca923e2877d1fd305e49f5df",
+        "byteLength": 382
+      }
+    },
+    "rug-2000x1400": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "rug-2000x1400",
+        "name": "Rug, 2000 x 1400 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1280000,
+              0
+            ],
+            "max": [
+              1792000,
+              1280000,
+              15360
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/rug-2000x1400.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "ea6ba53b9b5a935008fdb9003f0f5ccfda1fe6fcd44ddc1d7bc41a70d711ce4a",
+        "byteLength": 2260
+      },
+      "symbol": {
+        "path": "symbols/rug-2000x1400.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "e7d067acbb4522890d504ddf20c8d305021faceaa8e763e4d3acbae016956bfb",
+        "byteLength": 382
+      }
+    },
+    "runner-2400x800": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "runner-2400x800",
+        "name": "Runner, 2400 x 800 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1536000,
+              0
+            ],
+            "max": [
+              1024000,
+              1536000,
+              12800
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/runner-2400x800.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "bb4a3f69c68fa5f84526da6521175ad754e96f72c03fb7cb83eb631a1b6cc0ae",
+        "byteLength": 2296
+      },
+      "symbol": {
+        "path": "symbols/runner-2400x800.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "1a1f50294c30a7c162b2ecfa96e70c78b03dc1aa40299df201a740769c735c21",
+        "byteLength": 380
+      }
+    },
+    "bath-mat-800x500": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "bath-mat-800x500",
+        "name": "Bath mat",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -512000,
+              0
+            ],
+            "max": [
+              640000,
+              512000,
+              19200
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/bath-mat-800x500.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "845d1bc3edb75660ca05d375d325bb2c42b0f0641689c79dbcefd46eb56db834",
+        "byteLength": 2284
+      },
+      "symbol": {
+        "path": "symbols/bath-mat-800x500.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "0a680ef62402494ae41305a5a641145814e7e93ea9b86b00e840361b55511c25",
+        "byteLength": 363
+      }
+    },
+    "art-1200x800": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "art-1200x800",
+        "name": "Framed art, 1200 x 800 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -768000,
+              0
+            ],
+            "max": [
+              51200,
+              768000,
+              1024000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/art-1200x800.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "968767abe31da801e0c81ce0fc8b31fcfa13c65d7c1f54ad5abe00e8d709d445",
+        "byteLength": 2288
+      },
+      "symbol": {
+        "path": "symbols/art-1200x800.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "a6cc3c95775d5c8596b787c6f7a544ca03535f8aea9e127c34de81007889489e",
+        "byteLength": 355
+      }
+    },
+    "art-600x800": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "art-600x800",
+        "name": "Framed art, 600 x 800 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -384000,
+              0
+            ],
+            "max": [
+              51200,
+              384000,
+              1024000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/art-600x800.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "db28f5e9de6c6a2189e68cb6693824c02525a702b0e6b94a02c036c6c8a59735",
+        "byteLength": 2288
+      },
+      "symbol": {
+        "path": "symbols/art-600x800.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "7c05f0bfe76c972ef4cf057988f6b7b767a8194bf6d7b940599c7d17b05af3d9",
+        "byteLength": 350
+      }
+    },
+    "art-500x500": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "art-500x500",
+        "name": "Framed art, 500 x 500 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -320000,
+              0
+            ],
+            "max": [
+              44800,
+              320000,
+              640000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/art-500x500.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "f93fb3900ef5ea67ce265396afaca72c5af4eb6ddbdc27437c317a82fe0dcade",
+        "byteLength": 2244
+      },
+      "symbol": {
+        "path": "symbols/art-500x500.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "940ecca0c0fe34cc5ec6a98a4087928a78c8f1e9999ad1bf08c7e9eb8360c360",
+        "byteLength": 350
+      }
+    },
+    "mirror-800x1000": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "mirror-800x1000",
+        "name": "Wall mirror, 800 x 1000 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -512000,
+              0
+            ],
+            "max": [
+              38400,
+              512000,
+              1280000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/mirror-800x1000.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "9c4aa22ec88bd3ebcac89214df36cd4f90bbff0347e7c1ed7ba1520da1a94623",
+        "byteLength": 2280
+      },
+      "symbol": {
+        "path": "symbols/mirror-800x1000.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "89614c75d650289b35e273256c851316d5bad34f418435102eebe51d09a5d55e",
+        "byteLength": 352
+      }
+    },
+    "lamp-floor-1600": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "lamp-floor-1600",
+        "name": "Floor lamp",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -288000,
+              0
+            ],
+            "max": [
+              576000,
+              288000,
+              2048000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/lamp-floor-1600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "ccfe3d93538e910302dda1ee378f5f0b308558251b301b3a2ea3df82e2b70682",
+        "byteLength": 2944
+      },
+      "symbol": {
+        "path": "symbols/lamp-floor-1600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "ff05e2e06147d5443d84e254af8693d57f14da2a1b4c37a43270199c4a469ae4",
+        "byteLength": 596
+      }
+    },
+    "lamp-table-600": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "lamp-table-600",
+        "name": "Table lamp",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -230400,
+              0
+            ],
+            "max": [
+              460800,
+              230400,
+              768000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/lamp-table-600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "d7b827a6361af8e9bf2411232751ce63a2b6e2a417c942388fd7ddf9a0268bc6",
+        "byteLength": 2944
+      },
+      "symbol": {
+        "path": "symbols/lamp-table-600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "28e20a5c14a8b07acecce5f595650b7cc4d3cedbb9f206c45afae134a862c016",
+        "byteLength": 598
+      }
+    },
+    "plant-tree-1700": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "plant-tree-1700",
+        "name": "Indoor tree in a planter",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -480000,
+              0
+            ],
+            "max": [
+              960000,
+              480000,
+              2176000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/plant-tree-1700.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "028999728f578d01a83aaf330b5451160d1a3c6bb04b2c1c20eed6de8ec85cf8",
+        "byteLength": 2256
+      },
+      "symbol": {
+        "path": "symbols/plant-tree-1700.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "86382d725efbf8dc89dceee987e89052a6d0481e82cb3d15dc0fd1878c6b454b",
+        "byteLength": 520
+      }
+    },
+    "plant-floor-900": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "plant-floor-900",
+        "name": "Floor plant in a planter",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -352000,
+              0
+            ],
+            "max": [
+              704000,
+              352000,
+              1152000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/plant-floor-900.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "e02ffe24d663c89f6a460ea7e1e31e68ad90a2b9bb0fb9cacb63dcf2a62a95b4",
+        "byteLength": 2292
+      },
+      "symbol": {
+        "path": "symbols/plant-floor-900.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "1f92fdbe26c3714b9665dd4601b047d45cf356f0c240ddd5d6f03c9bcc80c7ca",
+        "byteLength": 520
+      }
+    },
+    "plant-small-350": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "plant-small-350",
+        "name": "Potted plant, small",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -140800,
+              0
+            ],
+            "max": [
+              281600,
+              140800,
+              448000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/plant-small-350.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "c72f31d36314caab269dbe672a9151928af4a7c9da842acb69f5292e15349d26",
+        "byteLength": 2296
+      },
+      "symbol": {
+        "path": "symbols/plant-small-350.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "6a0c6484dab1e5546d541126ccb011d9b46139404819746357eb84f5276061f2",
+        "byteLength": 431
+      }
+    },
+    "cushion-450": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "cushion-450",
+        "name": "Cushion, 450 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -288000,
+              0
+            ],
+            "max": [
+              192000,
+              288000,
+              576000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/cushion-450.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "56c2cf41b714292f3564452168a572c5ce77d0fbd44eb35b5112055d4001e6e4",
+        "byteLength": 1640
+      },
+      "symbol": {
+        "path": "symbols/cushion-450.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "99be2ee21461a600ef1b0d9da06ebf4b1257d1090644c9e4cc36b5172c29c320",
+        "byteLength": 252
+      }
+    },
+    "throw-sofa": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "throw-sofa",
+        "name": "Throw over a sofa arm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -268800,
+              0
+            ],
+            "max": [
+              665600,
+              268800,
+              307200
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/throw-sofa.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "87d2409f0160b5e8ecd72b468e3fb984c4c1a6be9f19a9f8aaccfb398ba67f43",
+        "byteLength": 2936
+      },
+      "symbol": {
+        "path": "symbols/throw-sofa.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "5ba3cc99d1db2e13edef71a5cf94b56d7ea1bcc91ceab047fc418fa6f6a8a126",
+        "byteLength": 533
+      }
+    },
+    "throw-bed-1640": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "throw-bed-1640",
+        "name": "Bed throw, 1640 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1049600,
+              0
+            ],
+            "max": [
+              768000,
+              1049600,
+              409600
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/throw-bed-1640.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "b137773ecabf1fee16521d28a2a3e1f5285ad9aefeafbc7131d0938c06769f37",
+        "byteLength": 2940
+      },
+      "symbol": {
+        "path": "symbols/throw-bed-1640.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "15720224f80aa76c65c1f38e65709d44b48a9a221d773889498b4e7d8a3e1b30",
+        "byteLength": 466
+      }
+    },
+    "curtains-2000": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "curtains-2000",
+        "name": "Curtains on a rod, 2000 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1280000,
+              0
+            ],
+            "max": [
+              179200,
+              1280000,
+              3072000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/curtains-2000.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "7fb73068e513d7d18fb338b1d86d733be8fc53d5346b0615d7ce0f0d6ddbdc74",
+        "byteLength": 4208
+      },
+      "symbol": {
+        "path": "symbols/curtains-2000.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "a8a80c59c9a61cf8dcbd8b294582cad5622f4a2be69590e7cbc05faad6336f43",
+        "byteLength": 754
+      }
+    },
+    "blind-roman-900": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "blind-roman-900",
+        "name": "Roman blind, 900 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -576000,
+              0
+            ],
+            "max": [
+              76800,
+              576000,
+              640000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/blind-roman-900.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "aa7a20bb4c264be9393c78509804cd4e814d1bb018a1d6d1c7ed026c32d4dfc6",
+        "byteLength": 2284
+      },
+      "symbol": {
+        "path": "symbols/blind-roman-900.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "28c36f65626bf5abed23f8deeba951b9b87ab28f03090fb4b843f6616f15de8d",
+        "byteLength": 368
+      }
+    },
+    "media-console-1800": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "mediaUnit",
+        "catalogue": "media-console-1800",
+        "name": "Media console, 1800 mm",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -1152000,
+              0
+            ],
+            "max": [
+              576000,
+              1152000,
+              640000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/media-console-1800.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "7297cf1edc965da90bfcdb40b749ecfbb8a7b3eae5177510f1cc1d207cf3451f",
+        "byteLength": 2288
+      },
+      "symbol": {
+        "path": "symbols/media-console-1800.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "25e74c95bad0055c59a4df6bb65b220354ba04883bb0ac2cfee440ba252d7e07",
+        "byteLength": 440
+      }
+    },
+    "tv-65": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "tv-65",
+        "name": "Television, 65 in, on its stand",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -928000,
+              0
+            ],
+            "max": [
+              358400,
+              928000,
+              1152000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/tv-65.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "85eb1ffafc28d525a6e16f2ba399e232db7773e457c8df339a0513e9e5328cb9",
+        "byteLength": 2924
+      },
+      "symbol": {
+        "path": "symbols/tv-65.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "a9070e2bdc01c29d55230f2998d92b7c465e541750f80f0e0ce037bdf2de2eef",
+        "byteLength": 550
+      }
+    },
+    "books-stack": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "books-stack",
+        "name": "Books, a stack of three",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -179200,
+              0
+            ],
+            "max": [
+              268800,
+              179200,
+              121600
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/books-stack.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "f460e464ebcb50b1dcc95c92bd5554830b66c743312136942f5c3e020f3e903c",
+        "byteLength": 2936
+      },
+      "symbol": {
+        "path": "symbols/books-stack.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "8b09648fa3d7653050f93c3166e9242eb81439aca59d46dbf9822599c5ea4261",
+        "byteLength": 446
+      }
+    },
+    "vase-stems-450": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "vase-stems-450",
+        "name": "Vase with stems",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -166400,
+              0
+            ],
+            "max": [
+              332800,
+              166400,
+              665600
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/vase-stems-450.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "9dd911749e20075fbd9f9dcaf42869e6ef96ea867b9d08f167d8d876e571e570",
+        "byteLength": 2296
+      },
+      "symbol": {
+        "path": "symbols/vase-stems-450.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "53afab750a123377641c3c0dfc450da711079825f5301abcfd4032c0c4962db4",
+        "byteLength": 426
+      }
+    },
+    "bowl-fruit-320": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "bowl-fruit-320",
+        "name": "Fruit bowl",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -204800,
+              0
+            ],
+            "max": [
+              409600,
+              204800,
+              192000
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/bowl-fruit-320.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "d7e200378c8e50d97be191b23a2753c553b264bf54e3354cc8b97068c2b8ae4a",
+        "byteLength": 1644
+      },
+      "symbol": {
+        "path": "symbols/bowl-fruit-320.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "ae2fdb2d7c40538a041207f0e4c2e192855c004a7ea9a1efdd586d266229b7d8",
+        "byteLength": 410
+      }
+    },
+    "cutting-board-450": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "cutting-board-450",
+        "name": "Cutting board, leaning",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -288000,
+              0
+            ],
+            "max": [
+              89600,
+              288000,
+              435200
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/cutting-board-450.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "e9a354ab5dc532ae4d4643f65b3fe50b514a8775419628b5adabd18ef47b54a4",
+        "byteLength": 1652
+      },
+      "symbol": {
+        "path": "symbols/cutting-board-450.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "25197d24b4ed4404e702630f26dbb955d898893722bb160b13dc86c08f9ca839",
+        "byteLength": 256
+      }
+    },
+    "kettle": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "kettle",
+        "name": "Kettle",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -153600,
+              0
+            ],
+            "max": [
+              256000,
+              153600,
+              332800
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/kettle.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "596540f9a807e7b2bf0e2cfb3869b80ccb5948636eb2ca0654a793ed4e0a5cfc",
+        "byteLength": 2280
+      },
+      "symbol": {
+        "path": "symbols/kettle.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "862d3a51331764b2f81f52ab02b00ffe4cbb5f2d64cab0965c370c0d7c5d29a9",
+        "byteLength": 507
+      }
+    },
+    "canisters-3": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "canisters-3",
+        "name": "Canisters, three",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -256000,
+              0
+            ],
+            "max": [
+              166400,
+              256000,
+              307200
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/canisters-3.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "82cc67bfa1556a5746c0c33e6c2e3d78f9669d6dc6a857cba49097f21c8ed5aa",
+        "byteLength": 2940
+      },
+      "symbol": {
+        "path": "symbols/canisters-3.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "905a7fee1ccefc7bef1614caa2c7088e71e83b9909f35b6f868284fca5820f5b",
+        "byteLength": 530
+      }
+    },
+    "towel-bar-600": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "towel-bar-600",
+        "name": "Towel bar with towel",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -384000,
+              0
+            ],
+            "max": [
+              115200,
+              384000,
+              614400
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/towel-bar-600.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "dbe09e007b3c853780f3cdd75d28b2a6dd2e0c0f401b4c137591b5ab2c08ccee",
+        "byteLength": 2296
+      },
+      "symbol": {
+        "path": "symbols/towel-bar-600.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "161f9e3569470a7e4b8646897c2dd04bbe6e1ac9979db5ce7f744579bc6edb50",
+        "byteLength": 346
+      }
+    },
+    "towels-folded": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "towels-folded",
+        "name": "Towels, folded",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -204800,
+              0
+            ],
+            "max": [
+              307200,
+              204800,
+              217600
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/towels-folded.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "3c1abc51b369c3563e940c07070f2e9a3870f129fb3dc818739c90fe54add5ff",
+        "byteLength": 1640
+      },
+      "symbol": {
+        "path": "symbols/towels-folded.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "131ee1287a1d929a6e4bbd0ac46fa14945b89e498e4b454ea7e4f79495cdf67c",
+        "byteLength": 251
+      }
+    },
+    "soap-set": {
+      "kind": "pieces",
+      "mounting": "floor",
+      "element": {
+        "category": "other",
+        "catalogue": "soap-set",
+        "name": "Soap dispenser and tumbler",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              -140800,
+              0
+            ],
+            "max": [
+              166400,
+              140800,
+              243200
+            ]
+          }
+        }
+      },
+      "model": {
+        "path": "models/soap-set.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "92ed28c8ed3bf3a2c41f3f80f67847817dd017df37e6b4ce2067b0fb7e59d567",
+        "byteLength": 2932
+      },
+      "symbol": {
+        "path": "symbols/soap-set.svg",
+        "mediaType": "image/svg+xml",
+        "sha256": "b31fc4bedcc59c9780305ca3b796d14ed3a6c96a786294d41143e6394bdb50fb",
+        "byteLength": 446
       }
     }
   }

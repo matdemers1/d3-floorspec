@@ -173,6 +173,21 @@ export interface ElectricalProposal {
   };
 }
 
+/** The staging assistant's answer (FLR-T-13.11): its proposal, and the changeset it became — none when there was nothing to stage. */
+export interface StagingProposal {
+  readonly main: string;
+  readonly changeset: ChangesetView | null;
+  readonly carries?: { readonly changeset: string; readonly name: string; readonly ops: number };
+  readonly proposal: {
+    readonly name: string;
+    readonly explanation: readonly string[];
+    readonly added: readonly { readonly id: string; readonly item: string; readonly room: string; readonly rule: string; readonly with?: string }[];
+    readonly rooms: readonly string[];
+    readonly notes: readonly string[];
+    readonly ops: number;
+  };
+}
+
 export interface FloorspecClient {
   listProjects(): Promise<readonly ProjectSummary[]>;
   /** A new, empty project owned by the caller's account. */
@@ -185,6 +200,7 @@ export interface FloorspecClient {
   reject(projectId: string, changesetId: string): Promise<{ changeset: ChangesetView }>;
   proposeLayouts(projectId: string, input: LayoutsInput): Promise<Layouts>;
   proposeElectrical(projectId: string, input: ElectricalInput): Promise<ElectricalProposal>;
+  proposeStaging(projectId: string, input: ElectricalInput): Promise<StagingProposal>;
   validate(projectId: string, changeset?: string): Promise<Validation>;
   findings(projectId: string, changeset?: string): Promise<Findings>;
   render(projectId: string, options: RenderOptions): Promise<Uint8Array>;
@@ -359,6 +375,10 @@ export class HttpFloorspecClient implements FloorspecClient {
 
   proposeElectrical(projectId: string, input: ElectricalInput): Promise<ElectricalProposal> {
     return this.json<ElectricalProposal>('POST', this.project(projectId, '/assistants/electrical'), input);
+  }
+
+  proposeStaging(projectId: string, input: ElectricalInput): Promise<StagingProposal> {
+    return this.json<StagingProposal>('POST', this.project(projectId, '/assistants/staging'), input);
   }
 
   validate(projectId: string, changeset?: string): Promise<Validation> {

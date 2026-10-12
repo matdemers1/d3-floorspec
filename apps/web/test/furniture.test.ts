@@ -98,8 +98,9 @@ describe('a model’s box (Core 12.6, FS_furniture 3.1)', () => {
 });
 
 describe('the starter library', () => {
-  it('has the 25 CC0 items, each with a model and a symbol the editor serves', () => {
-    expect(LIBRARY).toHaveLength(25);
+  it('has the 55 CC0 items — 25 of furniture, 30 of decor (FLR-T-13.11) — each with a model and a symbol the editor serves', () => {
+    expect(LIBRARY).toHaveLength(55);
+    expect(LIBRARY.filter((i) => i.category === 'other')).toHaveLength(29);
     for (const i of LIBRARY) {
       expect(i.model.url, i.id).not.toBe('');
       expect(i.symbol.url, i.id).not.toBe('');

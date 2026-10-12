@@ -58,6 +58,9 @@ export class ApplierClient implements FloorspecClient {
   proposeElectrical(): never {
     throw new Error('not used');
   }
+  proposeStaging(): never {
+    throw new Error('not used');
+  }
   validate(): Promise<Validation> {
     return Promise.resolve({ head: 'main', hash: contentHash(this.document), valid: true, diagnostics: [] });
   }

@@ -572,14 +572,14 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose a changeset',
       description:
-        'Open a named changeset (or add to the pending one of that name), with an optional batch as floorspec_apply takes; or let assistant "electrical" propose receptacles, switches, lights and circuits. Main does not change; a person accepts or rejects it.',
+        'Open a named changeset (or add to the pending one of that name) with an optional batch as floorspec_apply takes, or let assistant "electrical" (receptacles, lights, circuits) or "staging" (decor) propose one. Main is unchanged until a person accepts it.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
           name: z.string().trim().min(1).max(120).optional().describe('What the change is, for the reviewer: "Widen the kitchen 2 ft". Not for an assistant.'),
           batch: Batch.optional(),
           locks: z.array(Lock).max(200).optional(),
-          assistant: z.enum(['electrical']).optional(),
+          assistant: z.enum(['electrical', 'staging']).optional(),
           rooms: z.array(z.string().min(1).max(200)).max(200).optional().describe('The assistant\'s rooms; default all.'),
           changeset: ChangesetHandle.optional().describe('Assistant: the changeset whose plan to read.'),
           render: z.boolean().optional(),
@@ -592,6 +592,23 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
+        if (args.assistant === 'staging') {
+          if (args.batch !== undefined) throw new ToolError('Send either a batch or an assistant, not both.');
+          const source = args.changeset === undefined ? undefined : await resolveChangeset(client, project.id, args.changeset);
+          const result = await client.proposeStaging(project.id, {
+            ...(args.rooms === undefined ? {} : { rooms: args.rooms }),
+            ...(source === undefined ? {} : { changeset: source.id }),
+          });
+          const structured = { project: project.id, ...result };
+          const lead =
+            result.changeset === null
+              ? 'Nothing staged: main is unchanged.'
+              : `Changeset "${result.changeset.name}" (${result.changeset.id}) is pending: ${String(result.proposal.added.length)} pieces of decor from the staging assistant. Main has not changed until a person accepts it.` +
+                (result.carries === undefined ? '' : ` It carries the ${String(result.carries.ops)} op(s) of "${result.carries.name}" ahead of them: accepting it brings that plan in too.`);
+          const content: CallToolResult['content'] = [text([lead, ...result.proposal.explanation.map((l) => `- ${l}`)].join('\n')), text(structured)];
+          if (args.render === true && result.changeset !== null) content.push(...(await renderContent(client, project.id, { changeset: result.changeset.id, highlight: result.proposal.added.map((a) => a.id) })));
+          return { content, structuredContent: structured };
+        }
         if (args.assistant === 'electrical') {
           if (args.batch !== undefined) throw new ToolError('Send either a batch or an assistant, not both.');
           const source = args.changeset === undefined ? undefined : await resolveChangeset(client, project.id, args.changeset);
@@ -681,7 +698,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose layouts',
       description:
-        'Lay out a brief (its program and adjacencies) as ranked candidate plans, each a pending changeset a person accepts. The brief is main\'s or `changeset`\'s, whose ops each candidate carries too. One empty level at a time: lay out the next level from the chosen candidate.',
+        'Lay out a brief (program and adjacencies) as ranked candidate plans, each a pending changeset. The brief is main\'s or `changeset`\'s, whose ops each candidate carries. One empty level at a time: lay out the next from the chosen candidate.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,

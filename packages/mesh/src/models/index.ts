@@ -14,6 +14,7 @@ import { footprintsOverlap, type Derived, type ExtensionElement, type FloorspecD
 import { scoped, type Kernel } from '../kernel.js';
 import { MM, type Cutout, type Json, type Model, type ModelContext, type V2 } from './common.js';
 import { alarm, LIGHTS, panel, receptacle, switchModel } from './electrical.js';
+import { DECOR, decorFamily, libraryItemOf, seedOf } from './decor.js';
 import { APPLIANCES, CASEWORK, PIECES } from './furniture.js';
 import { elementKind } from './kinds.js';
 import { bed, hardscape, lawn, PLANTS } from './landscape.js';
@@ -120,8 +121,10 @@ function plan(kernel: Kernel, doc: FloorspecDocument, derived: Derived, elements
     const e = elements.get(id);
     if (e === undefined || f.top <= f.bottom) continue;
     const element = e.element as unknown as Json;
-    const kind = elementKind(e.extension, e.collection, element);
-    const model = modelOf(e.extension, e.collection, kind);
+    // Decor (FLR-T-13.11): an `other` piece placed from the starter library is drawn as its item's family.
+    const decor = e.extension === 'FS_furniture' && element['category'] === 'other' ? decorFamily(libraryItemOf(doc, element)) : undefined;
+    const kind = decor ?? elementKind(e.extension, e.collection, element);
+    const model = decor !== undefined ? DECOR[decor] : modelOf(e.extension, e.collection, kind);
     if (model === undefined) continue;
     const box = e.element.fallback.box;
     const X = box.max[0] - box.min[0];
@@ -129,7 +132,7 @@ function plan(kernel: Kernel, doc: FloorspecDocument, derived: Derived, elements
     const Z = box.max[2] - box.min[2];
     const originZ = -box.min[2] > 0 && -box.min[2] <= Z ? -box.min[2] : undefined;
     const cutouts: Cutout[] = [];
-    out.set(id, { kind, model, element, X, Y, Z, bottom: f.bottom, level: f.level, corners: corners(f, derived.placements?.[id]?.facing), ctx: { kind, originZ, cutouts }, cutouts });
+    out.set(id, { kind, model, element, X, Y, Z, bottom: f.bottom, level: f.level, corners: corners(f, derived.placements?.[id]?.facing), ctx: { kind, originZ, cutouts, seed: seedOf(typeof element['with'] === 'string' ? element['with'] : id) }, cutouts });
   }
   // Sinks into counters: a sink's bowls all inside one counter top's outline, the top within the
   // sink's height — or, failing that, inside the counter tops side by side at that one height.

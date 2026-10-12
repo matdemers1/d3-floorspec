@@ -27,6 +27,12 @@ export interface ModelContext {
   cutouts: readonly Cutout[];
   /** For a sink set into a counter: the counter top's height in the sink's box. */
   counter?: number;
+  /**
+   * A number from the element's ID — or, for one grouped with another (FS_furniture 4.3), from that
+   * one's (decor.ts `seedOf`): what a model that varies chooses by, so a bed's two lamps and its two
+   * cushions match, and the next bed's differ.
+   */
+  seed?: number;
 }
 
 export type Model = (s: Sketch, el: Json, ctx: ModelContext) => void;
