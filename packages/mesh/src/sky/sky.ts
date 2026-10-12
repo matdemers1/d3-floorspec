@@ -474,7 +474,8 @@ export function skyBounce(light: SkyLight): { lux: number; color: Vec3 } {
 // ─── Image-based light: spherical harmonics ──────────────────────────────────────────────────
 
 /**
- * The sky's radiance projected onto the first nine spherical harmonics, in the project's frame,
+ * The sky's radiance projected onto the first nine spherical harmonics, in the project's frame (its
+ * ground's bounce greyed),
  * nine RGB triples — three.js's `SphericalHarmonics3` convention, so a `LightProbe` given these
  * lights a surface with the sky's irradiance in lux (`irradianceAt`).
  */
@@ -495,6 +496,12 @@ export function skyHarmonics(field: SkyField): Float64Array {
       d[1] = r * Math.sin(phi);
       d[2] = z;
       skyRadiance(field, d, L);
+      // From below, a neutral bounce of the ground's brightness, not its green: in a view without
+      // occlusion every ceiling sees the ground, and a lawn-green ceiling indoors reads as wrong.
+      if (z < 0) {
+        const g = LUM([L[0]!, L[1]!, L[2]!]);
+        L[0] = L[1] = L[2] = g;
+      }
       const x = d[0];
       const y = d[1];
       const basis = [0.282095, 0.488603 * y, 0.488603 * z, 0.488603 * x, 1.092548 * x * y, 1.092548 * y * z, 0.315392 * (3 * z * z - 1), 1.092548 * x * z, 0.546274 * (x * x - y * y)];
@@ -540,14 +547,16 @@ export const NIGHT_SKY_EXPOSURE_MAX = 0.3;
 /**
  * What a view that does not meter its picture gives the tone curve per cd/m² under a sky: the key
  * (0.18) on a surface of reflectance 0.2 under the sky's and the sun's light on a level surface —
- * what a camera metering an outdoor scene does — held within the day band by day, and after dark
- * between the night band's least and `NIGHT_SKY_EXPOSURE_MAX`.
+ * what a camera metering an outdoor scene does — held within the day band by day; after dark, the
+ * key 0.08, between the night band's least and `NIGHT_SKY_EXPOSURE_MAX`.
  */
 export function skyExposure(light: SkyLight, maps: SkyMaps): number {
   const e = skyIlluminance(light, maps);
   const nits = (0.2 * (e.sky + e.direct)) / Math.PI;
   const band = light.band === 'day' ? exposureBand(light) : { min: EXPOSURE_PER_NIT.night, max: NIGHT_SKY_EXPOSURE_MAX };
-  return Math.min(band.max, Math.max(band.min, 0.18 / Math.max(1e-9, nits)));
+  // After dark, a stop and more under the day's key: dusk and night read as dusk and night.
+  const key = light.band === 'day' ? 0.18 : 0.08;
+  return Math.min(band.max, Math.max(band.min, key / Math.max(1e-9, nits)));
 }
 
 /** A sky preset's swatch for a picker: its zenith, its horizon and its ground, as linear RGB at its own exposure. */

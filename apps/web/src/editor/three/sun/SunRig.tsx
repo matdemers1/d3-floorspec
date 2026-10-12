@@ -52,8 +52,26 @@ function frameOf(model: EditorModel, mesh: HouseMesh): Frame | null {
   const centre = min.clone().add(max).multiplyScalar(0.5);
   const radius = Math.max(1, min.distanceTo(max) / 2);
   const lowest = model.levels.reduce((z, l) => Math.min(z, l.elevation), Infinity);
-  const ground = (Number.isFinite(lowest) ? (lowest - o[2]) / k : min.z) - 0.005;
-  return { centre, radius, ground };
+  const floor = Number.isFinite(lowest) ? (lowest - o[2]) / k : min.z;
+  return { centre, radius, ground: gradeOf(mesh, floor) - 0.005 };
+}
+
+/**
+ * Where the lawn lies (FLR-T-13.4), metres in the view's frame: at the lowest floor — or under
+ * whatever is laid at grade a little below it, a slab, a patio, FS_landscape's lawns, beds and
+ * pavers (FLR-T-13.5, whose tops sit a few centimetres under the floor) — so the lawn never covers
+ * them. Only tops within 0.6 m under the floor count: a basement's is not the ground.
+ */
+export function gradeOf(mesh: HouseMesh, floor: number): number {
+  let grade = floor;
+  for (const part of mesh.parts) {
+    if (part.kind !== 'slab' && part.kind !== 'extension') continue;
+    const p = part.mesh.positions;
+    let top = -Infinity;
+    for (let i = 2; i < p.length; i += 3) top = Math.max(top, p[i] ?? -Infinity);
+    if (top < floor && top >= floor - 0.6) grade = Math.min(grade, top);
+  }
+  return grade;
 }
 
 export interface SunProbe {

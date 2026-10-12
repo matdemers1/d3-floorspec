@@ -246,7 +246,7 @@ export function SunPanel({ store, model }: { store: EditorStore; model: EditorMo
   return (
     <section
       className="fs-sun"
-      aria-label="Sun and shadow"
+      aria-label="Sky and sun"
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
           e.preventDefault();

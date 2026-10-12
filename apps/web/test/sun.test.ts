@@ -260,3 +260,16 @@ describe('the sky preset (FLR-T-13.4)', () => {
     expect(placedSite({ latitude: 1, longitude: 2, trueNorth: 0, present: true }).assumed).toBe(false);
   });
 });
+
+describe('where the lawn lies (FLR-T-13.4)', () => {
+  it('at the lowest floor, or under a slab or landscape laid a little below it — never over them', async () => {
+    const { gradeOf } = await import('../src/editor/three/sun/SunRig');
+    const part = (kind: string, zs: number[]) => ({ kind, mesh: { positions: Float32Array.from(zs.flatMap((z) => [0, 0, z])), indices: new Uint32Array() } });
+    const mesh = (parts: ReturnType<typeof part>[]) => ({ parts }) as unknown as Parameters<typeof gradeOf>[0];
+    expect(gradeOf(mesh([]), 0)).toBe(0);
+    // A lawn's top 40 mm under the floor, pavers' 50.8 mm: the lawn goes under the pavers.
+    expect(gradeOf(mesh([part('extension', [-0.2, -0.04]), part('slab', [-0.3, -0.0508])]), 0)).toBeCloseTo(-0.0508, 6);
+    // A basement slab two metres down is not the ground; furniture on the floor is not either.
+    expect(gradeOf(mesh([part('slab', [-2.3, -2]), part('extension', [0, 0.9])]), 0)).toBe(0);
+  });
+});

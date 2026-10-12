@@ -3,9 +3,10 @@
  * rather than photographed — the same texels in the editor, the headless render and both path
  * tracers, from a few lines of arithmetic, with no asset to fetch or decode and no licence to carry.
  *
- * A tile is `GRASS_TILE` metres square: blades and clumps from periodic value noise at three
- * scales, a little straw among the green, and mowing stripes a metre wide along project x. Beyond a
- * tile, `lawnMacro` varies the lawn over tens of metres, so the repeat does not show from above.
+ * A tile is `GRASS_TILE` metres square: blades and tufts from periodic value noise, a little straw
+ * among the green, and mowing stripes a metre wide along project x. Everything coarser —
+ * patches from half a metre to thirty — is `lawnMacro`'s, which does not repeat, so the tile's
+ * repeat does not show from above.
  *
  * Where hardscape or planting covers the ground — slabs, patios and driveways are drawn on it by the
  * mesher; FS_landscape's beds, lawns and paving (FLR-T-13.5) are `GroundArea`s — it is drawn instead
@@ -114,12 +115,14 @@ export function grassTexture(): GrassTexture {
       const clump = periodic(u, v, 8, 1);
       const tuft = periodic(u, v, 96, 2);
       const blade = periodic(u + 0.35 * v, v, 320, 3) * 0.6 + hash(i, j, 4) * 0.4;
-      let c = mix(DARK, GREEN, Math.min(1, 0.25 + 0.55 * tuft + 0.45 * blade));
+      // Little but blades inside a tile: what varies over more than a few centimetres is lawnMacro's,
+      // which does not repeat, so the tile's four metres never show as a grid from above.
+      let c = mix(DARK, GREEN, Math.min(1, 0.4 + 0.25 * tuft + 0.55 * blade));
       c = mix(c, LIGHT, Math.max(0, blade - 0.62) * 1.6);
       // Straw: a few pale, dry blades where the clump is thin.
       const dry = Math.max(0, hash(i, j, 5) - 0.985) * 40 * (1 - clump);
       c = mix(c, STRAW, Math.min(0.7, dry));
-      const shade = 0.92 + 0.12 * clump;
+      const shade = 0.97 + 0.04 * clump;
       // Mowing stripes, a metre wide along project x: the mower's two directions catch the light differently.
       const stripe = 1 + 0.035 * Math.sin(2 * Math.PI * u * GRASS_TILE * 0.5);
       const o = 3 * ((N - 1 - j) * N + i);
@@ -146,7 +149,7 @@ export function lawnAlbedo(): Rgb {
  * nine and thirty metres across, so the tile's repeat does not read from above.
  */
 export function lawnMacro(x: number, y: number): number {
-  return 0.86 + 0.08 * noise(x / 1.7, y / 1.7, 6) + 0.12 * noise(x / 9, y / 9, 7) + 0.1 * noise(x / 31, y / 31, 8);
+  return 0.82 + 0.07 * noise(x / 0.45, y / 0.45, 5) + 0.08 * noise(x / 1.7, y / 1.7, 6) + 0.12 * noise(x / 9, y / 9, 7) + 0.1 * noise(x / 31, y / 31, 8);
 }
 
 /**

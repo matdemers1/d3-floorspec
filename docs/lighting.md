@@ -111,6 +111,6 @@ editor's GPU still — is seen under one sky, `@floorspec/mesh/sky` (FLR-T-13.4,
   light probe) and the raster render with the same; the tracers sample the dome itself. Views that do
   not bounce light add a fill of a twelfth of the sun's light on a level surface (`skyBounce`).
 - **Exposure:** an outside view is exposed for the sky's light — the key 0.18 on a surface of
-  reflectance 0.2 under the sun and sky — within the day band by day, and after dark up to 0.3 per
+  reflectance 0.2 under the sun and sky (0.08 after dark) — within the day band by day, and after dark up to 0.3 per
   cd/m², the long exposure of a night photograph; a render with its lamps on keeps the night band
   above, and a room is metered. The editor's view uses the renderers' filmic curve under a sky.
