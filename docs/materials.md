@@ -76,7 +76,7 @@ brass, pavers, brick and concrete in the landscape as theirs.
 |---|---|---|---|---|
 | Editor (three.js `MeshStandardMaterial`) | yes | yes | yes, metalness held to 0.5 (no reflections traced; a probe lights it) | yes, on the probe's light |
 | Raster render | yes, mip-mapped | lit by the key light or the sun | — | yes |
-| Path tracer | yes | lights every hit | the sun's glint by roughness (Blinn-Phong, Schlick); metals keep a part of their colour as diffuse | the light a bounce brings, and half the sun's and lamps' |
+| Path tracer | yes | lights every hit | the sun's glint by roughness (Blinn-Phong, Schlick); metals keep 60% of their colour as diffuse | the light a bounce brings, and half the sun's and lamps' |
 | glTF, USDZ, GPU still | yes | yes, with tangents | yes | yes |
 
 The tracer's glint is a stand-in: GGX, Fresnel on every bounce and traced reflections are

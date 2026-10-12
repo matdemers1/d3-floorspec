@@ -577,7 +577,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           // occlusion is what the map's relief hides from the light round it — a mortar joint, the
           // shadow line under a lap board: it darkens the light a bounce brings (below) fully, and
           // the sun's and the lamps' by half, for the relief's own shadow the normal map cannot cast.
-          const keep = (1 - metal + 0.35 * metal) * (0.5 + 0.5 * cavity);
+          const keep = (1 - metal + 0.6 * metal) * (0.5 + 0.5 * cavity);
           const bounced = cavity / (0.5 + 0.5 * cavity);
           const f0r = 0.04 + (ar - 0.04) * metal;
           const f0g = 0.04 + (ag - 0.04) * metal;
