@@ -18,6 +18,7 @@ import { TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
 import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
 import { StillButton } from './still/StillDialog';
+import { orbitCamera } from './still/gpu/cameras';
 import { SunRig } from './sun/SunRig';
 import { FixtureLights } from './FixtureLights';
 import { viewLights } from './lights';
@@ -153,6 +154,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const ctl = useMemo(() => new ThreeController(three), [three]);
   const describedBy = useId();
   const night = useSunNight(store, model);
+  // The GPU still's "view you are looking at" (FLR-T-13.13): the orbit now, in the glTF export's frame.
+  const currentView = useCallback(() => (ctl.orbit === null || originRef.current === null ? null : orbitCamera(ctl.orbit, originRef.current, FOV)), [ctl]);
 
   const ready = state.status === 'ready' ? state : null;
   const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);
@@ -484,7 +487,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} levels={levels} roof={roof} lights={lightsOn} />
           <LevelsControl store={store} three={three} model={ready.model} order={order} levels={levels} level={levelId} />
           <ViewCube ctl={ctl} preset={preset} />
-          <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} />
+          <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} only={levels === 'only'} roof={roof} current={currentView} />
           <SunPanel store={store} model={ready.model} />
           <SunChip store={store} />
           <div className="fs-three__chip fs-three__stats" role="note">

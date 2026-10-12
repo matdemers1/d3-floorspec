@@ -1,5 +1,5 @@
 import './still.css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, FormField, Modal, Select, useToast } from '@d3cloud/ui';
 import { Download, Sparkles } from 'lucide-react';
 import { messageOf } from '../../../lib/api';
@@ -8,9 +8,17 @@ import { useEditor, type EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { PRESET_ORDER, PRESETS, type PresetId } from '../camera';
 import { useStudy, useSunState } from '../sun/study';
+import { webGpuDevice } from './gpu/probe';
+import type { StillCamera } from './gpu/cameras';
+
+/** The GPU still (FLR-T-13.13): its own chunk, loaded only on a browser with WebGPU. */
+const GpuStillDialog = lazy(() => import('./GpuStillDialog'));
 
 /**
- * Render a still (FLR-T-12.6, FLR-REQ-154; the board's "28 · Path-traced still"): a path-traced
+ * Render a still. With WebGPU, on the viewer's own GPU in the editor (FLR-T-13.13, FLR-ADR-040:
+ * GpuStillDialog.tsx); without it — or with no adapter — the server's still, below, which says why.
+ *
+ * The server's still (FLR-T-12.6, FLR-REQ-154; the board's "28 · Path-traced still"): a path-traced
  * picture of a view of main — one of the named views, or standing in a room — rendered offline by the
  * worker, polled here like an export, and downloaded as a PNG. Labelled for what it is: an offline
  * render with approximate lighting, one sun and a clear sky, which takes a while.
@@ -21,19 +29,60 @@ type Phase = { kind: 'options' } | { kind: 'rendering'; job: ExportJob; started:
 const SIZE_LABELS: Record<Size, string> = { small: 'Small', medium: 'Medium', large: 'Large' };
 const QUALITY_LABELS: Record<Quality, string> = { draft: 'Draft', standard: 'Standard', high: 'High' };
 
-export function StillButton({ store, preset, level }: { store: EditorStore; preset: PresetId | null; level: string | null }) {
+/**
+ * `level` is the level the 3D view cuts at (null: the whole house); `only` that it shows that level
+ * alone (FLR-T-13.2); `roof` whether the whole house is drawn with its roofs.
+ */
+export function StillButton({ store, preset, level, only = false, roof = true, current = null }: { store: EditorStore; preset: PresetId | null; level: string | null; only?: boolean; roof?: boolean; current?: (() => StillCamera | null) | null }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="fs-three__still">
       <Button size="sm" variant="secondary" icon={<Sparkles />} onClick={() => { setOpen(true); }}>
         Render still
       </Button>
-      {open ? <StillDialog store={store} preset={preset} level={level} onClose={() => { setOpen(false); }} /> : null}
+      {open ? <StillDialog store={store} preset={preset} level={level} only={only} roof={roof} current={current} onClose={() => { setOpen(false); }} /> : null}
     </div>
   );
 }
 
-function StillDialog({ store, preset, level, onClose }: { store: EditorStore; preset: PresetId | null; level: string | null; onClose: () => void }) {
+/** The GPU still where this browser has WebGPU, else the server's. */
+function StillDialog({ store, preset, level, only, roof, current, onClose }: { store: EditorStore; preset: PresetId | null; level: string | null; only: boolean; roof: boolean; current: (() => StillCamera | null) | null; onClose: () => void }) {
+  // undefined while asking the browser; null when it has no usable WebGPU.
+  const [device, setDevice] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    void webGpuDevice()
+      .catch(() => null)
+      .then((d) => { if (live) setDevice(d); });
+    return () => { live = false; };
+  }, []);
+  if (device === undefined) {
+    return (
+      <Modal
+        open
+        onOpenChange={(o) => { if (!o) onClose(); }}
+        size="lg"
+        title="Render a still"
+        description="Checking whether this browser can render on its GPU…"
+        footer={
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+        }
+      >
+        <div className="fs-still" role="status">Checking for WebGPU…</div>
+      </Modal>
+    );
+  }
+  if (device === null) return <ServerStillDialog store={store} preset={preset} level={level} onClose={onClose} fallback />;
+  return (
+    <Suspense fallback={null}>
+      <GpuStillDialog store={store} preset={preset} level={level} only={only} roof={roof} current={current} device={device} onClose={onClose} />
+    </Suspense>
+  );
+}
+
+function ServerStillDialog({ store, preset, level, onClose, fallback = false }: { store: EditorStore; preset: PresetId | null; level: string | null; onClose: () => void; fallback?: boolean }) {
   const model = useEditor(store, (s) => s.model);
   const sun = useSunState(store, (s) => s);
   const study = useStudy(model, sun.on, sun.clock);
@@ -167,6 +216,11 @@ function StillDialog({ store, preset, level, onClose }: { store: EditorStore; pr
       }
     >
       <div className="fs-still">
+        {fallback ? (
+          <Alert tone="info" title="Rendering on the server">
+            This browser has no WebGPU, so the still is rendered on the server’s CPU instead. In a browser with WebGPU — Safari 26 or a current Chrome — it renders on your own GPU, larger and with lamps, glass and glowing shades.
+          </Alert>
+        ) : null}
         {phase.kind === 'failed' ? (
           <Alert tone="danger" title="The still was not rendered" dynamic>
             {phase.message}

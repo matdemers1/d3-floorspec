@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { evaluate, OFFICIAL_READER } from '@floorspec/engine';
 import { QUALITIES, SIZES, withinBudget, type Quality, type Size } from '@d3-floorspec/worker/stills';
 import type { Request } from 'express';
@@ -8,6 +9,8 @@ import { Routes } from '../http/routes.js';
 import { HttpError } from '../http/errors.js';
 import { ProblemError } from '../http/problem.js';
 import { MAIN } from '../domain/projects.js';
+import { MediaError, prepareImage } from '../assets/media.js';
+import { rawBody } from './assets.js';
 
 /**
  * Drawing exports (FLR-T-9.3): a dimensioned PDF sheet per level, or DXF drawings on NCS-pattern
@@ -22,6 +25,12 @@ import { MAIN } from '../domain/projects.js';
  * view, size and quality in `still`: the worker renders it offline, writing its passes to the job's
  * `progress` as it goes, and its PNG is downloaded like any export. One still renders at a time per
  * project, and a size and quality over the work budget are refused here, before anything is queued.
+ *
+ * A still path-traced in the editor on the viewer's own GPU (FLR-T-13.13, FLR-ADR-040) is saved to
+ * the same list: `POST …/exports/stills` takes the PNG as the body and what it shows as the query —
+ * the version it was rendered from (whose glTF export the editor traced), the view in words, the
+ * samples — and records a finished `still` export with the file, so it is downloaded, listed and
+ * kept like one the worker rendered. Nothing is queued: the browser did the work.
  */
 
 const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still'] as const;
@@ -53,6 +62,8 @@ const ExportBody = z.strictObject({
   design: z.record(z.string().regex(ID), z.string().regex(ID)).optional(),
   /** A still: what to render (FLR-T-12.6). */
   still: StillBody.optional(),
+  /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8) — the editor's GPU still asks for either (FLR-T-13.13). */
+  doors: z.enum(['open', 'closed']).optional(),
 });
 
 /** How many exports a project may have waiting or running at once. */
@@ -67,13 +78,46 @@ type Params = {
   readonly versionSeq?: number | null;
   readonly versionAt?: string;
   readonly design?: Record<string, string>;
+  readonly doors?: 'open' | 'closed';
   readonly camera?: string;
   readonly room?: string;
   readonly level?: string;
   readonly size?: string;
   readonly quality?: string;
   readonly sun?: { azimuth: number; altitude: number };
+  /** A still: `server` (the worker's CPU tracer) unless the editor rendered it on its GPU (FLR-T-13.13). */
+  readonly source?: 'server' | 'gpu';
+  /** A GPU still: the view in words, how it was lit, its samples and the device. */
+  readonly view?: string;
+  readonly lights?: 'on' | 'off';
+  readonly time?: 'day' | 'dusk' | 'night';
+  readonly samples?: number;
+  readonly device?: string;
 };
+
+/** The largest still the editor may save: a 4K PNG with room to spare. */
+export const STILL_MAX_BYTES = 64 * 1024 * 1024;
+/** The widest and tallest a saved still may be, pixels: the editor's largest size is 4K (3840 × 2160). */
+export const STILL_MAX_SIDE = 4096;
+
+/** What a GPU still shows, as the query of its upload. */
+const StillUpload = z.strictObject({
+  /** The version rendered: its 64-character hash. */
+  version: z.string().regex(/^[0-9a-f]{64}$/, 'a version is its 64-character hash'),
+  /** The view, in words: "SW iso", "Kitchen (R3) from its doorway D2", "The view in the editor". */
+  view: z.string().trim().min(1).max(200),
+  /** Samples a pixel. */
+  samples: z.coerce.number().int().min(1).max(1 << 16),
+  /** How long it took, ms. */
+  ms: z.coerce.number().int().min(0).max(7 * 24 * 3600 * 1000).optional(),
+  lights: z.enum(['on', 'off']).optional(),
+  time: z.enum(['day', 'dusk', 'night']).optional(),
+  /** The GPU it was traced on, as the browser names it: GPU stills are repeatable per machine, not across machines. */
+  device: z.string().trim().max(200).optional(),
+  /** The design (Core 19.6), as JSON: option set → option. */
+  design: z.string().max(4000).optional(),
+});
+const Design = z.record(z.string().regex(ID), z.string().regex(ID));
 
 /** A job as the API shows it: no worker internals, and where to get the file once there is one. */
 export function exportView(projectId: string, job: Job) {
@@ -87,7 +131,19 @@ export function exportView(projectId: string, job: Job) {
     levels: p.levels ?? null,
     page: job.kind === 'export.pdf' ? (p.page ?? 'tabloid') : null,
     design: p.design ?? null,
-    still: job.kind === 'export.still' ? { camera: p.camera ?? null, room: p.room ?? null, level: p.level ?? null, size: p.size ?? 'medium', quality: p.quality ?? 'standard', sun: p.sun ?? null } : null,
+    still:
+      job.kind === 'export.still'
+        ? {
+            source: p.source ?? 'server',
+            camera: p.camera ?? null,
+            room: p.room ?? null,
+            level: p.level ?? null,
+            size: p.size ?? (p.source === 'gpu' ? null : 'medium'),
+            quality: p.quality ?? (p.source === 'gpu' ? null : 'standard'),
+            sun: p.sun ?? null,
+            ...(p.source === 'gpu' ? { view: p.view ?? null, samples: p.samples ?? null, lights: p.lights ?? null, time: p.time ?? null, device: p.device ?? null } : {}),
+          }
+        : null,
     progress: job.status === 'running' ? (job.progress ?? null) : null,
     error: job.error,
     result: job.result,
@@ -151,6 +207,7 @@ export function exportRoutes(db: Db): Routes {
       if (levels.length === 0) throw new ProblemError({ status: 422, type: 'not-drawable', title: 'this version has no levels to draw' });
       if (body.kind === 'ifc' && body.levels !== undefined) throw new HttpError(400, 'an IFC export is of the whole model: it takes no levels');
       if (body.still !== undefined && body.kind !== 'still') throw new HttpError(400, 'only a still takes still options');
+      if (body.doors !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes doors');
       const still = body.kind === 'still' ? StillBody.parse(body.still ?? {}) : undefined;
       if (still !== undefined) {
         if (body.levels !== undefined || body.page !== undefined) throw new HttpError(400, 'a still takes a view, a size and a quality, not levels or a page');
@@ -174,6 +231,7 @@ export function exportRoutes(db: Db): Routes {
         ...(body.levels === undefined ? {} : { levels: [...new Set(body.levels)] }),
         ...(body.kind === 'pdf' ? { page: body.page ?? 'tabloid' } : {}),
         ...(body.design === undefined ? {} : { design: body.design }),
+        ...(body.doors === undefined ? {} : { doors: body.doors }),
         ...(still === undefined
           ? {}
           : {
@@ -199,10 +257,106 @@ export function exportRoutes(db: Db): Routes {
       });
       return {
         reply: (res) => res.status(202).location(`/api/projects/${project.id}/exports/${job.id}`).json({ export: exportView(project.id, job) }),
-        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }) } },
+        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }) } },
       };
     },
     { token: 'read' },
+  );
+
+  /**
+   * Save a still the editor path-traced on the viewer's GPU (FLR-T-13.13): the PNG as the body, what
+   * it shows as the query. Recorded as a finished still of that version, with its file.
+   */
+  routes.mutate(
+    'POST',
+    '/:projectId/exports/stills',
+    async (req, tx) => {
+      const project = req.project;
+      if (project === undefined) throw new HttpError(404, 'project not found');
+      const parsed = StillUpload.safeParse(req.query);
+      if (!parsed.success) throw new HttpError(400, 'the still’s description is not valid', { fields: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) });
+      const meta = parsed.data;
+      let design: Record<string, string> | undefined;
+      if (meta.design !== undefined) {
+        let raw: unknown;
+        try {
+          raw = JSON.parse(meta.design);
+        } catch {
+          throw new HttpError(400, 'design is JSON: option set → option');
+        }
+        const d = Design.safeParse(raw);
+        if (!d.success) throw new HttpError(400, 'design is JSON: option set → option');
+        design = d.data;
+      }
+      const body: unknown = req.body;
+      if (!Buffer.isBuffer(body)) throw new HttpError(415, 'send the PNG itself as the request body');
+      if (body.length === 0) throw new HttpError(400, 'the still is empty');
+      let image;
+      try {
+        image = prepareImage(new Uint8Array(body.buffer, body.byteOffset, body.length));
+      } catch (error) {
+        if (error instanceof MediaError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+      if (image.mediaType !== 'image/png') throw new HttpError(415, 'a still is a PNG image');
+      if (image.width > STILL_MAX_SIDE || image.height > STILL_MAX_SIDE) throw new HttpError(422, `this still is ${String(image.width)} × ${String(image.height)} px; a still may be at most ${String(STILL_MAX_SIDE)} px on a side`);
+      // The version the editor traced: main's head when it asked for the glTF, or one this project reached.
+      const head = await tx.head.findUnique({ where: { projectId_name: { projectId: project.id, name: MAIN } } });
+      const version = await versionFor(tx, project.id, head?.versionHash === meta.version ? undefined : meta.version);
+      const bytes = new Uint8Array(image.bytes);
+      const sha256 = createHash('sha256').update(bytes).digest('hex');
+      const slug = meta.view.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'view';
+      const name = `still-gpu-${slug}-${version.hash.slice(0, 8)}.png`;
+      const params: Params = {
+        source: 'gpu',
+        view: meta.view,
+        samples: meta.samples,
+        ...(meta.lights === undefined ? {} : { lights: meta.lights }),
+        ...(meta.time === undefined ? {} : { time: meta.time }),
+        ...(meta.device === undefined || meta.device === '' ? {} : { device: meta.device }),
+        ...(design === undefined ? {} : { design }),
+        versionSeq: version.seq,
+        versionAt: version.at.toISOString(),
+      };
+      const result = {
+        name,
+        contentType: 'image/png',
+        size: bytes.byteLength,
+        sha256,
+        label: 'Path-traced on your GPU — repeatable on this device, not across devices',
+        source: 'gpu',
+        width: image.width,
+        height: image.height,
+        samples: meta.samples,
+        camera: meta.view,
+        ...(meta.ms === undefined ? {} : { ms: meta.ms }),
+        ...(meta.lights === undefined ? {} : { lights: meta.lights }),
+        ...(meta.time === undefined ? {} : { time: meta.time }),
+        ...(meta.device === undefined || meta.device === '' ? {} : { device: meta.device }),
+        design: design ?? null,
+      };
+      const now = new Date();
+      const job = await tx.job.create({
+        data: {
+          projectId: project.id,
+          kind: 'export.still',
+          status: 'done',
+          params,
+          result,
+          versionHash: version.hash,
+          startedAt: now,
+          finishedAt: now,
+          requestedByAccountId: req.auth?.accountId ?? req.token?.accountId ?? null,
+          requestedByTokenId: req.auth === undefined ? (req.token?.tokenId ?? null) : null,
+          output: { create: { name, contentType: 'image/png', bytes, sha256 } },
+        },
+      });
+      return {
+        reply: (res) => res.status(201).location(`/api/projects/${project.id}/exports/${job.id}`).json({ export: exportView(project.id, job) }),
+        audit: { action: 'export.upload', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: 'still', source: 'gpu', version: version.hash, view: meta.view, width: image.width, height: image.height, samples: meta.samples, size: bytes.byteLength, sha256 } },
+      };
+    },
+    { token: 'propose', before: [rawBody(STILL_MAX_BYTES)] },
   );
 
   /** This project's exports, newest first. */

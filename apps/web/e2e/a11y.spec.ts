@@ -555,6 +555,8 @@ test('every screen and state has no axe violations, in light and in dark', async
   // FLR-T-12.6: the path-traced still's options.
   await page.getByRole('button', { name: 'Render still' }).click();
   await expect(page.getByRole('dialog', { name: 'Render a still' })).toBeVisible();
+  // Its options, once the browser has said whether it can render on its GPU (FLR-T-13.13).
+  await expect(page.getByRole('dialog', { name: 'Render a still' }).getByRole('combobox', { name: 'View' })).toBeVisible();
   await audit(page, 'editor, render a still');
   await page.getByRole('dialog', { name: 'Render a still' }).getByRole('button', { name: 'Cancel' }).click();
   await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: 'Split' }).click();

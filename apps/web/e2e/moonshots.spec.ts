@@ -9,6 +9,9 @@ import { firstRunSetup, historyOf, modelOf, password, projectIn, settled } from 
  * calculation, its climate changed through Ops — and a path-traced still of the 3D view, rendered on
  * the job queue at the small size and draft quality, shown, and downloaded. axe on the states the
  * a11y suite cannot reach (a still rendering, and done), in both themes. WebGL through SwiftShader.
+ *
+ * The still is the fallback path of FLR-T-13.13: the browser is given no WebGPU (as most CI has
+ * none), so "Render still" says so and queues the server's CPU still instead of tracing on the GPU.
  */
 
 type Hooked = { __floorspec3d?: { ready: boolean; parts: number } };
@@ -91,13 +94,24 @@ test('the energy estimate of a template, its climate changed, and a path-traced 
   expect(held.extras?.d3floorspec?.energy?.assemblies?.['window']?.u).toBeCloseTo(5.678263 / 5, 6);
   expect((await historyOf(page, project))[0]?.kind).toBe('apply');
 
-  // ── A path-traced still of the 3D view: small, draft, on the job queue.
+  // ── A path-traced still of the 3D view: small, draft, on the job queue — the fallback for a
+  // browser without WebGPU (FLR-T-13.13), which this one is made to be.
+  await page.addInitScript(() => {
+    delete (Navigator.prototype as { gpu?: unknown }).gpu;
+  });
+  const gltfAsked: string[] = [];
+  page.on('request', (r) => {
+    if (r.method() === 'POST' && r.url().endsWith(`/api/projects/${project}/exports`) && (r.postData() ?? '').includes('"gltf"')) gltfAsked.push(r.url());
+  });
   await page.goto(`/projects/${project}/editor`);
+  expect(await page.evaluate(() => 'gpu' in navigator)).toBe(false);
   await settled(page);
   await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: '3D' }).click();
   await page.waitForFunction(() => (window as unknown as Hooked).__floorspec3d?.ready === true, undefined, { timeout: 60_000 });
   await page.getByRole('button', { name: 'Render still' }).click();
   const still = page.getByRole('dialog', { name: 'Render a still' });
+  await expect(still.getByText('Rendering on the server', { exact: true })).toBeVisible();
+  await expect(still).toContainText('This browser has no WebGPU, so the still is rendered on the server’s CPU instead.');
   await expect(still).toContainText('approximate');
   await still.getByRole('combobox', { name: 'Size' }).click();
   await page.getByRole('option', { name: /^Small/ }).click();
@@ -132,5 +146,7 @@ test('the energy estimate of a template, its climate changed, and a path-traced 
   // The still is under Exports on the dashboard.
   await page.goto(`/projects/${project}`);
   await expect(page.locator('[data-region="exports"]')).toContainText(/still-sw-/);
+  // The GPU path was never taken: no glTF was exported to trace.
+  expect(gltfAsked).toEqual([]);
   expect(errors).toEqual([]);
 });

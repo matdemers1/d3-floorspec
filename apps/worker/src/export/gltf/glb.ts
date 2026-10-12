@@ -18,10 +18,17 @@
  * or its fallback box — and a marker node where the model goes. A starter-library proxy model is no
  * model of the element's own (scene.ts, FLR-T-12.33): it is neither merged nor marked.
  *
+ * The lamps of the house's luminaires are KHR_lights_punctual lights, each under its luminaire's
+ * node, and a person standing in each room is a camera under the room's; glass carries KHR_materials_transmission and
+ * KHR_materials_ior, a luminaire's lens KHR_materials_emissive_strength; and each primitive says, in
+ * `extras.floorspec.part`, which part of its element it is — a ceiling, a roof — so a view can cut
+ * the house away as the editor does (khr.ts, FLR-T-13.13).
+ *
  * Deterministic: the same scene writes the same bytes — no dates, no random IDs, keys in one order.
  */
 import type { Scene, SceneMaterial } from './scene.js';
 import { mergeModel, type MergedModel } from './merge.js';
+import { KHR_LIGHTS, materialExtensions, punctualParts } from './khr.js';
 
 /** The bytes of an asset a material's map names, when the exporter can have them. */
 export type ImageSource = (asset: { id: string; sha256: string; mediaType: string }) => Uint8Array | undefined;
@@ -149,6 +156,8 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
   };
 
   const materials = scene.materials.map((m) => materialJson(m, texture));
+  const extensionsUsed = new Set<string>();
+  for (const m of materials) for (const name of Object.keys((m['extensions'] as Json | undefined) ?? {})) extensionsUsed.add(name);
   // A normal map needs a tangent space: written, not left to each viewer to generate.
   const normalMapped = new Set(materials.flatMap((m, i) => (m['normalTexture'] === undefined ? [] : [i])));
 
@@ -157,7 +166,6 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
   let triangles = 0;
 
   // Fallback models (Core 12.6): each glTF binary read and copied in once, by asset ID.
-  const extensionsUsed = new Set<string>();
   const target = { view: (bytes: Uint8Array, extra?: Json) => bin.view(bytes, undefined, extra), accessors, meshes, materials, textures, images, samplers, nodes, extensionsUsed };
   const mergedOf = new Map<string, MergedModel | null>();
   const models: ModelsReport = { merged: [], omitted: [] };
@@ -179,6 +187,9 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
     mergedOf.set(asset, merged);
     return merged;
   };
+  // The lamps and the room cameras (khr.ts): written under their luminaire's and their room's nodes.
+  const punctual = punctualParts(scene);
+  if (punctual.lights.length > 0) extensionsUsed.add(KHR_LIGHTS);
   nodes.push({}); // the model's node, filled in below
   const levelNodes: number[] = [];
   for (let i = 0; i < scene.levels.length; i++) {
@@ -207,7 +218,7 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
           const indices =
             accessors.push({ bufferView: bin.view(asBytes(idx), ELEMENT_ARRAY_BUFFER), componentType: short ? UNSIGNED_SHORT : UNSIGNED_INT, count: p.indices.length, type: 'SCALAR' }) - 1;
           triangles += p.indices.length / 3;
-          return { attributes: { POSITION: position, NORMAL: normal, ...(tangent === undefined ? {} : { TANGENT: tangent }), ...(uv === undefined ? {} : { TEXCOORD_0: uv }) }, indices, material: p.material, mode: 4 };
+          return { attributes: { POSITION: position, NORMAL: normal, ...(tangent === undefined ? {} : { TANGENT: tangent }), ...(uv === undefined ? {} : { TEXCOORD_0: uv }) }, indices, material: p.material, mode: 4, extras: { floorspec: { part: p.part } } };
         });
         mesh = meshes.push({ name: node.id, primitives }) - 1;
       }
@@ -234,6 +245,26 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
         // The model's own scene under the marker: its frame is the export's (metres, +Y up, +X the front).
         if (merged !== null) marker['children'] = merged(node.id);
       }
+      // A luminaire's lamp, a room's camera: under the element's node, which has no transform.
+      const attached = punctual.nodes.get(node.id);
+      if (attached !== undefined) {
+        punctual.nodes.delete(node.id);
+        const under = (element['children'] as number[] | undefined) ?? [];
+        for (const extra of attached.nodes) {
+          nodes.push(extra);
+          under.push(nodes.length - 1);
+        }
+        element['children'] = under;
+      }
+    }
+    // One whose element has no node of its own: under its level's.
+    for (const [id, attached] of [...punctual.nodes]) {
+      if (attached.level !== level.id) continue;
+      punctual.nodes.delete(id);
+      for (const extra of attached.nodes) {
+        nodes.push(extra);
+        children.push(nodes.length - 1);
+      }
     }
     nodes[levelNodes[li]!] = { name: level.name === undefined ? level.id : `${level.id} ${level.name}`, children, extras: { floorspec: { id: level.id, kind: 'level', elevation: f(level.elevation) } } };
   });
@@ -246,10 +277,12 @@ export function writeGlb(scene: Scene, options: GlbOptions = {}): GlbResult {
       extras: { floorspec: { ...options.about, design: scene.design, upAxis: 'Y', unit: 'metre' } },
     },
     ...(extensionsUsed.size === 0 ? {} : { extensionsUsed: [...extensionsUsed].sort() }),
+    ...(punctual.lights.length === 0 ? {} : { extensions: { [KHR_LIGHTS]: { lights: punctual.lights } } }),
     scene: 0,
     scenes: [{ name: scene.project, nodes: [0] }],
     nodes,
     ...(meshes.length === 0 ? {} : { meshes }),
+    ...(punctual.cameras.length === 0 ? {} : { cameras: punctual.cameras }),
     ...(materials.length === 0 ? {} : { materials }),
     ...(textures.length === 0 ? {} : { textures }),
     ...(images.length === 0 ? {} : { images }),
@@ -314,13 +347,17 @@ function materialJson(m: SceneMaterial, texture: (asset: string) => number | und
     ...(base === undefined ? {} : { baseColorTexture: { index: base } }),
     ...(mr === undefined ? {} : { metallicRoughnessTexture: { index: mr } }),
   };
+  // Glass lets light through and a lens glows as bright as it is lit (khr.ts); a viewer without the
+  // extensions still draws glass see-through (BLEND) and the lens in its colour.
+  const khr = materialExtensions(m);
   return {
     name: m.name,
     pbrMetallicRoughness: pbr,
     ...(normal === undefined ? {} : { normalTexture: { index: normal } }),
     ...(occlusion === undefined ? {} : { occlusionTexture: { index: occlusion } }),
     ...(m.blend ? { alphaMode: 'BLEND', doubleSided: true } : {}),
-    ...(m.emissive === undefined ? {} : { emissiveFactor: m.emissive.map(f) }),
+    ...(khr.emissiveFactor !== undefined ? { emissiveFactor: khr.emissiveFactor } : m.emissive === undefined ? {} : { emissiveFactor: m.emissive.map(f) }),
+    ...(Object.keys(khr.extensions).length === 0 ? {} : { extensions: khr.extensions }),
     extras: {
       floorspec:
         m.floorspec !== undefined

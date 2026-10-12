@@ -1,0 +1,257 @@
+import {
+  Box3,
+  Color,
+  DataTexture,
+  DirectionalLight,
+  DoubleSide,
+  EquirectangularReflectionMapping,
+  FloatType,
+  LinearFilter,
+  Mesh,
+  MeshPhysicalMaterial,
+  MeshStandardMaterial,
+  PerspectiveCamera,
+  PlaneGeometry,
+  RGBAFormat,
+  Scene,
+  Vector3,
+  type Light,
+  type Material,
+  type Object3D,
+} from 'three';
+import type { StillCamera } from './cameras';
+import { GROUND, skyPixels, sunOf, TRACE_UNIT, type SunInput, type TimeOfDay, type Vec3 } from './sky';
+
+export { orbitCamera, presetCamera, type StillCamera } from './cameras';
+
+/**
+ * The scene a GPU still traces (FLR-T-13.13, FLR-ADR-040), built from what the glTF export writes —
+ * the same file Blender gets — and nothing the export does not know: its meshes and PBR materials,
+ * its KHR_lights_punctual lamps (candela), its glass (KHR_materials_transmission + ior), its lit
+ * lenses (KHR_materials_emissive_strength, cd/m²) and its room cameras; then the worker tracer's sun,
+ * sky and ground plate (sky.ts). Plain three.js, no renderer: the tracer (tracer.ts) is the only
+ * module that knows a GPU is involved, and this one is tested without one.
+ *
+ * Everything is in the export's frame: metres, +Y up, Floorspec (x, y, z) at (x, z, −y).
+ */
+
+export interface StillLighting {
+  /** The luminaires' lamps lit, their lenses glowing; or dark. */
+  readonly lights: boolean;
+  readonly time: TimeOfDay;
+  readonly sun: SunInput;
+  /** The site's true north, degrees (Core 1.8). */
+  readonly trueNorth: number;
+}
+
+/** The parts a cutaway leaves off the level it cuts at, as the editor's 3D view does. */
+const CUT_PARTS = new Set(['ceiling', 'roof', 'roofGable']);
+/** The parts the whole house leaves off with its roofs hidden. */
+const ROOF_PARTS = new Set(['roof', 'roofGable']);
+
+const floorspecOf = (o: { userData: Record<string, unknown> }): Record<string, unknown> | undefined => {
+  const f = o.userData['floorspec'];
+  return typeof f === 'object' && f !== null ? (f as Record<string, unknown>) : undefined;
+};
+
+/** The camera the export stands in a room (its `extras.floorspec.room`), as a still's. */
+export function roomCamera(cameras: readonly PerspectiveCamera[], room: string): StillCamera | null {
+  const camera = cameras.find((c) => floorspecOf(c)?.['room'] === room);
+  if (camera === undefined) return null;
+  camera.updateWorldMatrix(true, false);
+  const eye = new Vector3().setFromMatrixPosition(camera.matrixWorld);
+  const forward = new Vector3(0, 0, -1).transformDirection(camera.matrixWorld);
+  const up = new Vector3(0, 1, 0).transformDirection(camera.matrixWorld);
+  const label = floorspecOf(camera)?.['label'];
+  return {
+    eye: eye.toArray(),
+    target: eye.clone().add(forward).toArray(),
+    up: up.toArray(),
+    fovY: camera.fov,
+    near: Math.max(0.01, camera.near),
+    label: typeof label === 'string' ? label : camera.name,
+  };
+}
+
+export interface PreparedHouse {
+  /** Lamps lit (0 with the lights off). */
+  readonly lamps: number;
+  readonly glass: number;
+  readonly lenses: number;
+  /** Of what is drawn, metres; null when nothing is. */
+  readonly bounds: { min: Vec3; max: Vec3 } | null;
+}
+
+/** The levels of an exported house, lowest first, by their nodes' `extras.floorspec`. */
+function levelsOf(root: Object3D): { id: string; node: Object3D }[] {
+  const out: { id: string; node: Object3D }[] = [];
+  root.traverse((o) => {
+    const f = floorspecOf(o);
+    if (f?.['kind'] === 'level' && typeof f['id'] === 'string') out.push({ id: f['id'], node: o });
+  });
+  return out;
+}
+
+const materialsOf = (m: Material | Material[]): Material[] => (Array.isArray(m) ? m : [m]);
+
+/**
+ * Make an exported house ready to trace, in place: its lamps lit or taken out, its lenses glowing or
+ * dark, its glass a thin clear pane, and — for a cutaway at `cut` — the levels above it gone and its
+ * own ceilings and roofs left off; with `roofs: false`, every roof left off, as the 3D view's roof
+ * toggle does. A level shown alone (FLR-T-13.2) is an export of that level only, cut the same way.
+ */
+export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: string | null; roofs?: boolean }): PreparedHouse {
+  const levels = levelsOf(root);
+  if (options.roofs === false)
+    root.traverse((o) => {
+      if (o instanceof Mesh && ROOF_PARTS.has(String(floorspecOf((o as Mesh).geometry)?.['part']))) o.visible = false;
+    });
+  const at = options.cut === undefined || options.cut === null ? -1 : levels.findIndex((l) => l.id === options.cut);
+  const cutLevel = levels[at];
+  if (cutLevel !== undefined) {
+    for (const l of levels.slice(at + 1)) l.node.visible = false;
+    cutLevel.node.traverse((o) => {
+      if (o instanceof Mesh && CUT_PARTS.has(String(floorspecOf((o as Mesh).geometry)?.['part']))) o.visible = false;
+    });
+  }
+  const lights: Light[] = [];
+  const seen = new Set<Material>();
+  /** Glass, as the tracer gets it: a fresh physical material in place of the loader's blended one. */
+  const panes = new Map<Material, MeshPhysicalMaterial>();
+  let glass = 0;
+  let lenses = 0;
+  root.traverse((o) => {
+    if ((o as Partial<Light>).isLight) lights.push(o as Light);
+    if (!(o instanceof Mesh)) return;
+    for (const m of materialsOf(o.material as Material | Material[])) {
+      if (seen.has(m)) continue;
+      seen.add(m);
+      const physical = m as Material & { transmission?: number; ior?: number; color?: Color; emissiveIntensity?: number; emissive?: Color };
+      if ((physical.transmission ?? 0) > 0) {
+        // A thin pane (no KHR_materials_volume): clear, its tint light — the glTF's colour is the
+        // see-through look a viewer without transmission draws (FLR-T-13.7 finishes the optics).
+        // Made afresh: the loader's material carries its blended, depth-less fallback look.
+        glass++;
+        panes.set(
+          m,
+          new MeshPhysicalMaterial({
+            name: m.name,
+            color: (physical.color ?? new Color(1, 1, 1)).clone().lerp(new Color(1, 1, 1), 0.75),
+            roughness: 0,
+            metalness: 0,
+            transmission: physical.transmission ?? 1,
+            ior: physical.ior ?? 1.5,
+            thickness: 0,
+            side: DoubleSide,
+          }),
+        );
+      } else if ((physical.emissiveIntensity ?? 0) > 1 && physical.emissive !== undefined && physical.emissive.getHex() !== 0) {
+        // A lens (KHR_materials_emissive_strength): lit with its lamp, dark without.
+        lenses++;
+        if (!options.lights) physical.emissiveIntensity = 0;
+      }
+    }
+  });
+  if (panes.size > 0)
+    root.traverse((o) => {
+      if (!(o instanceof Mesh)) return;
+      const mesh = o as Mesh;
+      mesh.material = Array.isArray(mesh.material) ? mesh.material.map((m) => panes.get(m) ?? m) : (panes.get(mesh.material) ?? mesh.material);
+    });
+  let lamps = 0;
+  for (const light of lights) {
+    // Hidden with its level, or the lights off: out of the scene, so the tracer gathers none of it.
+    let shown = options.lights;
+    for (let p: Object3D | null = light; p !== null && shown; p = p.parent) if (!p.visible) shown = false;
+    if (!shown) {
+      light.removeFromParent();
+      continue;
+    }
+    const lamp = light as Light & { decay?: number; distance?: number; radius?: number; isSpotLight?: boolean };
+    lamp.decay = 2;
+    lamp.distance = 0;
+    const radius = floorspecOf(light)?.['radius'];
+    if (lamp.isSpotLight === true && typeof radius === 'number') lamp.radius = radius;
+    lamps++;
+  }
+  root.updateMatrixWorld(true);
+  const box = new Box3();
+  root.traverse((o) => {
+    if (!(o instanceof Mesh)) return;
+    for (let p: Object3D | null = o; p !== null; p = p.parent) if (!p.visible) return;
+    box.expandByObject(o);
+  });
+  return { lamps, glass, lenses, bounds: box.isEmpty() ? null : { min: box.min.toArray(), max: box.max.toArray() } };
+}
+
+/**
+ * The scene a still traces: the prepared house on the worker's ground plate, under its sun (by day)
+ * and its sky — an equirectangular map the tracer samples, which is also what the windows show.
+ *
+ * Traced in the worker tracer's units, not in lux and cd/m²: every light — sun, sky, lamps, lit
+ * lenses — over `TRACE_UNIT`, so radiance is of order 1, where the tracer's firefly clamps are set
+ * (an indirect path's at 10). In cd/m² the clamp would cut the daylight that comes in through the
+ * windows to nothing. The tracer exposes the picture back in cd/m² (tracer.ts).
+ */
+export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | null, lighting: StillLighting): { scene: Scene; dispose: () => void } {
+  const scene = new Scene();
+  house.traverse((o) => {
+    const light = o as Partial<Light>;
+    if (light.isLight === true && typeof light.intensity === 'number' && o.userData['traceUnit'] !== true) {
+      light.intensity /= TRACE_UNIT;
+      o.userData['traceUnit'] = true;
+    }
+    if (!(o instanceof Mesh)) return;
+    for (const m of materialsOf(o.material as Material | Material[])) {
+      const lit = m as Material & { emissiveIntensity?: number; userData: { traceUnit?: true } };
+      if (lit.emissiveIntensity === undefined || lit.userData.traceUnit === true) continue;
+      lit.emissiveIntensity /= TRACE_UNIT;
+      lit.userData.traceUnit = true;
+    }
+  });
+  scene.add(house);
+  const sun = sunOf(lighting.sun, lighting.trueNorth);
+  const sky = new DataTexture(skyPixels(sun, lighting.time).map((v, i) => (i % 4 === 3 ? 1 : v / TRACE_UNIT)), 256, 128, RGBAFormat, FloatType);
+  sky.mapping = EquirectangularReflectionMapping;
+  sky.magFilter = LinearFilter;
+  sky.minFilter = LinearFilter;
+  sky.generateMipmaps = false;
+  sky.needsUpdate = true;
+  scene.environment = sky;
+  scene.background = sky;
+  const disposables: { dispose: () => void }[] = [sky];
+  if (bounds !== null) {
+    // The worker's plate: under the house, out to the horizon.
+    const cx = (bounds.min[0] + bounds.max[0]) / 2;
+    const cz = (bounds.min[2] + bounds.max[2]) / 2;
+    const r = 40 * Math.max(5, Math.hypot(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2]));
+    const geometry = new PlaneGeometry(2 * r, 2 * r);
+    const material = new MeshStandardMaterial({ color: new Color(GROUND), roughness: 1, metalness: 0 });
+    const ground = new Mesh(geometry, material);
+    ground.name = 'ground';
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(cx, bounds.min[1] - 0.003, cz);
+    scene.add(ground);
+    disposables.push(geometry, material);
+  }
+  if (lighting.time === 'day') {
+    const light = new DirectionalLight(new Color(...sun.color), sun.lux / TRACE_UNIT);
+    light.name = 'sun';
+    const target = bounds === null ? new Vector3() : new Vector3((bounds.min[0] + bounds.max[0]) / 2, bounds.min[1], (bounds.min[2] + bounds.max[2]) / 2);
+    light.position.copy(target).addScaledVector(new Vector3(...sun.dir), 100);
+    light.target.position.copy(target);
+    scene.add(light, light.target);
+  }
+  scene.updateMatrixWorld(true);
+  return { scene, dispose: () => { for (const d of disposables) d.dispose(); } };
+}
+
+/** A still camera as three.js's, for a picture of this aspect. */
+export function perspectiveOf(c: StillCamera, aspect: number): PerspectiveCamera {
+  const camera = new PerspectiveCamera(c.fovY, aspect, c.near, 5000);
+  camera.position.set(...c.eye);
+  camera.up.set(...c.up);
+  camera.lookAt(...c.target);
+  camera.updateMatrixWorld(true);
+  return camera;
+}

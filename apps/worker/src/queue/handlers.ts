@@ -46,6 +46,8 @@ export interface ExportParams {
   readonly versionAt: string;
   /** The design to export or draw (FLR-T-9.2, FLR-T-9.7), option set → option; default the primary. IFC ignores it. */
   readonly design?: Record<string, string>;
+  /** A 3D model's doors closed (default) or open (FLR-T-13.8): what the editor's GPU still traces (FLR-T-13.13). */
+  readonly doors?: 'open' | 'closed';
 }
 
 /** A design input from a job row: an object of string → string, or nothing. */
@@ -65,7 +67,8 @@ export function exportParams(raw: unknown): ExportParams {
   const seq = typeof p['versionSeq'] === 'number' && Number.isInteger(p['versionSeq']) ? p['versionSeq'] : null;
   const at = typeof p['versionAt'] === 'string' && !Number.isNaN(Date.parse(p['versionAt'])) ? p['versionAt'] : new Date(0).toISOString();
   const design = designOf(p['design']);
-  return { ...(levels === undefined ? {} : { levels }), ...(page === undefined ? {} : { page }), versionSeq: seq, versionAt: at, ...(design === undefined ? {} : { design }) };
+  const doors = p['doors'] === 'open' || p['doors'] === 'closed' ? p['doors'] : undefined;
+  return { ...(levels === undefined ? {} : { levels }), ...(page === undefined ? {} : { page }), versionSeq: seq, versionAt: at, ...(design === undefined ? {} : { design }), ...(doors === undefined ? {} : { doors }) };
 }
 
 /** The parameters of a 3D render job (FLR-T-8.5), as the api writes them. */
@@ -164,6 +167,7 @@ function modelOptions(job: JobRow, store: { images: ImageSource | undefined; mod
     version: { hash: job.versionHash, seq: p.versionSeq ?? null },
     ...(p.levels === undefined ? {} : { levels: p.levels }),
     ...(p.design === undefined ? {} : { design: p.design }),
+    ...(p.doors === undefined ? {} : { doors: p.doors }),
     ...(images === undefined ? {} : { images }),
     ...(models === undefined ? {} : { models }),
   };

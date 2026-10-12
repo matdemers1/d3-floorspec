@@ -18,7 +18,7 @@ import {
 } from './helpers.js';
 import { projectWithDocument } from './drawings-support.js';
 import { commentOn, shareOf } from './share-support.js';
-import { upload } from './assets-support.js';
+import { upload, uploadStill } from './assets-support.js';
 import { reconciliation, stepCarrying, stubWorker, uploadIfc } from './imports-support.js';
 import { tilePng } from '../support/images.js';
 
@@ -196,6 +196,11 @@ const EXERCISES: Record<string, Exercise> = {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(running.db, operator);
     return { reply: await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' }), action: 'export.request' };
+  },
+  'POST /api/projects/:projectId/exports/stills': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(running.db, operator);
+    return { reply: await uploadStill(running.url, operator, id, tilePng(16, 12), { version: hash, view: 'SW iso', samples: '64' }), action: 'export.upload' };
   },
   'POST /api/projects/:projectId/assets': async ({ running }) => {
     const operator = await setupOperator(running);
