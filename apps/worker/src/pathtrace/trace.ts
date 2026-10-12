@@ -8,6 +8,7 @@
  * - At each diffuse bounce the sun is sampled directly (next-event estimation, a shadow ray to a
  *   point on its disc), and the path continues in a cosine-weighted direction; a path that escapes
  *   sees the sky. Russian roulette ends paths after the third bounce.
+ * - A shadow ray asks only whether anything blocks it (`Bvh.occluded`), and stops at the first wall.
  * - Lamps (`PtScene.lamps`) are small spheres, each shining every way or as a spot down a cone. At
  *   each diffuse bounce, beside the sun, one or two lamps are sampled directly — picked in proportion
  *   to what each could give the point, unshadowed — each with a shadow ray through the same BVH, so
@@ -99,7 +100,11 @@ export interface TraceOptions {
   readonly seed: number;
   /** The sky's radiance, scaled per channel: dimmed and blued at dusk and at night. Default [1, 1, 1]. */
   readonly sky?: Vec3;
-  /** The most a single sample may add to a pixel, in luminance. Default 12: a dim night's is less. */
+  /**
+   * The most the light a single sample gathers past its first bounce may add to a pixel, in
+   * luminance (what the camera's first surface shows lit directly is never clamped, FLR-T-13.16).
+   * Default 12: a dim night's is less.
+   */
   readonly clamp?: number;
   /** Diffuse bounces after the first hit. Default 4. */
   readonly bounces?: number;
@@ -116,7 +121,7 @@ export interface TraceOptions {
 }
 
 const EPS = 1e-4;
-/** The most a single sample may add to a pixel (in luminance), so a rare lucky path does not spark. */
+/** The most a single sample's bounced light may add to a pixel (in luminance), so a rare lucky path does not spark. */
 const CLAMP = 12;
 
 /** Sky radiance seen along a direction (the sun's disc excluded: it is sampled directly). */
@@ -146,7 +151,11 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   const clamp = options.clamp ?? CLAMP;
   const lamps = scene.lamps ?? [];
   const lampW = new Float64Array(lamps.length);
-  /** How many lamps each diffuse bounce samples. */
+  /**
+   * How many lamps the first surface a pixel sees samples; every later bounce samples one
+   * (FLR-T-13.16): its light reaches the picture dimmed by the bounces before it, and a shadow ray
+   * is most of a lit render's time.
+   */
   const lampPicks = Math.min(2, lamps.length);
   const started = Date.now();
   const bvh = new Bvh({ positions: scene.positions, count: scene.count });
@@ -185,62 +194,56 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   const moment2 = new Float64Array(W * H);
   const rng = new Rng(seed);
   const hit: Hit = { tri: -1, t: 0, u: 0, v: 0 };
-  const shadowHit: Hit = { tri: -1, t: 0, u: 0, v: 0 };
   const tex = new Float64Array(3);
   const sky = new Float64Array(3);
 
-  /** How much sunlight reaches a point along `l`: 0 behind anything opaque, less through glass. */
-  const transmit = (ox: number, oy: number, oz: number, lx: number, ly: number, lz: number, out: Float64Array): void => {
+  // A shadow ray asks only whether something blocks it (Bvh.occluded), not what is nearest: glass
+  // and lenses it passes dim or pass it in any order, and the first wall it meets ends it. Its state
+  // is kept here, so the one test function is not made anew for every ray.
+  const owners = scene.owner;
+  /** Toward a lamp (not the sun), and the fixture it is the lamp of (−1: none). */
+  let toLamp = false;
+  let shadowOwner = -1;
+  let crossed = 0;
+  let through: Float64Array = new Float64Array(3);
+  /** Whether triangle `tri` blocks a shadow ray; glass it passes dims `through`. */
+  const blocks = (tri: number): boolean => {
+    const m = mats[scene.material[tri]!]!;
+    // A piece of the lamp's own fixture never shadows it; a lens lets the light out.
+    if (toLamp && (m.lens === true || (shadowOwner >= 0 && owners !== undefined && owners[tri] === shadowOwner))) return false;
+    if (!m.glass) return true;
+    // Past eight crossings, call it blocked.
+    if (++crossed > 8) return true;
+    through[0] = through[0]! * 0.9 * (0.7 + 0.3 * m.rgb[0]);
+    through[1] = through[1]! * 0.9 * (0.7 + 0.3 * m.rgb[1]);
+    through[2] = through[2]! * 0.9 * (0.7 + 0.3 * m.rgb[2]);
+    return false;
+  };
+  /** How much light reaches a point along `l` from up to `tMax` away: 0 behind anything opaque, less through glass. */
+  const shadow = (ox: number, oy: number, oz: number, lx: number, ly: number, lz: number, tMax: number, lamp: boolean, owner: number, out: Float64Array): void => {
     out[0] = 1;
     out[1] = 1;
     out[2] = 1;
-    let tFrom = EPS;
-    for (let k = 0; k < 8; k++) {
-      if (!bvh.intersect(ox, oy, oz, lx, ly, lz, tFrom, Infinity, shadowHit)) return;
-      const m = mats[scene.material[shadowHit.tri]!]!;
-      if (!m.glass) {
-        out[0] = 0;
-        out[1] = 0;
-        out[2] = 0;
-        return;
-      }
-      out[0] *= 0.9 * (0.7 + 0.3 * m.rgb[0]);
-      out[1] *= 0.9 * (0.7 + 0.3 * m.rgb[1]);
-      out[2] *= 0.9 * (0.7 + 0.3 * m.rgb[2]);
-      tFrom = shadowHit.t + EPS;
+    toLamp = lamp;
+    shadowOwner = owner;
+    crossed = 0;
+    through = out;
+    if (bvh.occluded(ox, oy, oz, lx, ly, lz, EPS, tMax, blocks)) {
+      out[0] = 0;
+      out[1] = 0;
+      out[2] = 0;
     }
   };
+  /** How much sunlight reaches a point along `l`: 0 behind anything opaque, less through glass. */
+  const transmit = (ox: number, oy: number, oz: number, lx: number, ly: number, lz: number, out: Float64Array): void => { shadow(ox, oy, oz, lx, ly, lz, Infinity, false, -1, out); };
   const light = new Float64Array(3);
 
-  /** How much of a lamp's light reaches a point along `l`, up to `tMax`: through glass and lenses, not past anything else. */
-  const owners = scene.owner;
-  const reaches = (ox: number, oy: number, oz: number, lx: number, ly: number, lz: number, tMax: number, owner: number, out: Float64Array): void => {
-    out[0] = 1;
-    out[1] = 1;
-    out[2] = 1;
-    let tFrom = EPS;
-    for (let k = 0; k < 8; k++) {
-      if (!bvh.intersect(ox, oy, oz, lx, ly, lz, tFrom, tMax, shadowHit)) return;
-      const m = mats[scene.material[shadowHit.tri]!]!;
-      // A piece of the lamp's own fixture never shadows it; a lens lets the light out.
-      if (m.lens !== true && (owners === undefined || owner < 0 || owners[shadowHit.tri] !== owner)) {
-        if (!m.glass) {
-          out[0] = 0;
-          out[1] = 0;
-          out[2] = 0;
-          return;
-        }
-        out[0] *= 0.9 * (0.7 + 0.3 * m.rgb[0]);
-        out[1] *= 0.9 * (0.7 + 0.3 * m.rgb[1]);
-        out[2] *= 0.9 * (0.7 + 0.3 * m.rgb[2]);
-      }
-      tFrom = shadowHit.t + EPS;
-    }
-    // Past eight crossings, call it blocked.
-    out[0] = 0;
-    out[1] = 0;
-    out[2] = 0;
-  };
+  /**
+   * How much of a lamp's light reaches a point along `l`, up to `tMax`: through glass, through
+   * lenses, through every piece of its own fixture (`owner`, its place in `PtScene.owner`, or −1
+   * when it has none), and not past anything else.
+   */
+  const reaches = (ox: number, oy: number, oz: number, lx: number, ly: number, lz: number, tMax: number, owner: number, out: Float64Array): void => { shadow(ox, oy, oz, lx, ly, lz, tMax, true, owner, out); };
   /** A spot's falloff toward its cone's edge, for the cosine of the angle off its axis. */
   const spotFactor = (lamp: PtLamp, cosA: number): number => {
     const s = lamp.spot;
@@ -252,11 +255,11 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   };
   const lampLight = new Float64Array(3);
   /**
-   * The lamps' light at a point with normal n, directly: `lampPicks` lamps picked in proportion to
+   * The lamps' light at a point with normal n, directly: `picks` lamps picked in proportion to
    * what each could give it unshadowed, each sampled at a point on its sphere and shadow-tested.
    * Irradiance (linear RGB) into `out`.
    */
-  const lampsAt = (px: number, py: number, pz: number, nx: number, ny: number, nz: number, out: Float64Array): void => {
+  const lampsAt = (px: number, py: number, pz: number, nx: number, ny: number, nz: number, picks: number, out: Float64Array): void => {
     out[0] = 0;
     out[1] = 0;
     out[2] = 0;
@@ -281,7 +284,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
       total += w;
     }
     if (total <= 0) return;
-    for (let pick = 0; pick < lampPicks; pick++) {
+    for (let pick = 0; pick < picks; pick++) {
       let x = rng.next() * total;
       let i = 0;
       while (i < lamps.length - 1 && x >= lampW[i]!) x -= lampW[i++]!;
@@ -310,7 +313,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
       if (sp <= 0) continue;
       reaches(px, py, pz, lx, ly, lz, d, lamp.owner ?? -1, lampLight);
       if (lampLight[0] === 0 && lampLight[1] === 0 && lampLight[2] === 0) continue;
-      const k = (sp * cosN) / d2 / p / lampPicks;
+      const k = (sp * cosN) / d2 / p / picks;
       out[0] += lamp.intensity[0] * k * lampLight[0]!;
       out[1] += lamp.intensity[1] * k * lampLight[1]!;
       out[2] += lamp.intensity[2] * k * lampLight[2]!;
@@ -348,6 +351,12 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
         let first = true;
         let firstLum = 1;
         let travelled = 0;
+        // What the camera's first surface shows lit directly (and the sky and glass before it): kept
+        // apart from what later bounces bring, which alone is clamped.
+        let direct = false;
+        let dr = 0;
+        let dg = 0;
+        let db = 0;
         for (;;) {
           if (!bvh.intersect(ox, oy, oz, dx, dy, dz, tMin, Infinity, hit)) {
             skyRadiance(dx, dy, dz, sun, sky);
@@ -423,7 +432,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           const pz0 = hz + nz * EPS;
           // The lamps, directly.
           if (lampPicks > 0) {
-            lampsAt(px0, py0, pz0, nx, ny, nz, lampE);
+            lampsAt(px0, py0, pz0, nx, ny, nz, depth === 0 ? lampPicks : 1, lampE);
             r += (tr * ar * lampE[0]!) / Math.PI;
             g += (tg * ag * lampE[1]!) / Math.PI;
             b += (tb * ab * lampE[2]!) / Math.PI;
@@ -446,6 +455,12 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
               g += tg * ag * k * sun.color[1] * light[1]!;
               b += tb * ab * k * sun.color[2] * light[2]!;
             }
+          }
+          if (depth === 0) {
+            direct = true;
+            dr = r;
+            dg = g;
+            db = b;
           }
           if (++depth > bounces) break;
           tr *= ar;
@@ -486,15 +501,27 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           oy = py0;
           oz = pz0;
         }
-        const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        const k = lum > clamp ? clamp / lum : 1;
+        if (!direct) {
+          dr = r;
+          dg = g;
+          db = b;
+        }
+        // Only the light a path gathers past its first bounce is clamped (FLR-T-13.16): a lucky bounce
+        // onto the bright ceiling over a lamp is what sparks, while a lit lens, a surface by a lamp
+        // and a sunlit wall seen directly are smooth — clamped, they flattened to one white and a
+        // fixture vanished into the ceiling around it.
+        const ir = r - dr;
+        const ig = g - dg;
+        const ib = b - db;
+        const lumIn = 0.2126 * ir + 0.7152 * ig + 0.0722 * ib;
+        const k = lumIn > clamp ? clamp / lumIn : 1;
         const o = 3 * pixel;
-        const d = (lum * k) / firstLum;
+        const d = (0.2126 * dr + 0.7152 * dg + 0.0722 * db + lumIn * k) / firstLum;
         moment1[pixel] = moment1[pixel]! + d;
         moment2[pixel] = moment2[pixel]! + d * d;
-        accum[o] = accum[o]! + r * k;
-        accum[o + 1] = accum[o + 1]! + g * k;
-        accum[o + 2] = accum[o + 2]! + b * k;
+        accum[o] = accum[o]! + dr + ir * k;
+        accum[o + 1] = accum[o + 1]! + dg + ig * k;
+        accum[o + 2] = accum[o + 2]! + db + ib * k;
       }
     }
     if (options.budgetMs !== undefined && Date.now() - started > options.budgetMs)

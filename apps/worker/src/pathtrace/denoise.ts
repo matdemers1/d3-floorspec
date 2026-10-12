@@ -61,6 +61,15 @@ export function denoise(color: Float32Array, f: Features, width: number, height:
           continue;
         }
         const npx = f.normal[3 * p]!, npy = f.normal[3 * p + 1]!, npz = f.normal[3 * p + 2]!;
+        // A pixel on an edge saw two faces, and its normal is their average, shorter than one. Its
+        // likeness to a neighbour is measured against its own (FLR-T-13.16) — a neighbour on either
+        // face is about as like it as it is like itself — and, the more mixed it is, the more gently:
+        // so it is smoothed from both faces, the one it saw more of the more. Compared as a unit
+        // normal at the full power, it matched neither face, was left with its own few samples, and
+        // every casing, sill and wall-to-ceiling line sparkled. A pixel on one face (its normal's
+        // length one) is weighed exactly as before.
+        const self = Math.max(1e-6, npx * npx + npy * npy + npz * npz);
+        const sharp = 64 ** Math.min(1, Math.max(0, (self - 0.5) / 0.5));
         const lp = lum(irr, p);
         const sigma = 4 * Math.sqrt(Math.max(0, variance[p]!)) + 1e-4;
         let wr = 0, wg = 0, wb = 0, ws = 0, wv = 0;
@@ -74,8 +83,8 @@ export function denoise(color: Float32Array, f: Features, width: number, height:
             const zq = f.depth[q]!;
             if (!Number.isFinite(zq)) continue;
             const h = KERNEL[i + 2]! * KERNEL[j + 2]!;
-            const dn = Math.max(0, npx * f.normal[3 * q]! + npy * f.normal[3 * q + 1]! + npz * f.normal[3 * q + 2]!);
-            const wn = dn ** 64;
+            const dn = Math.min(1, Math.max(0, npx * f.normal[3 * q]! + npy * f.normal[3 * q + 1]! + npz * f.normal[3 * q + 2]!) / self);
+            const wn = dn ** sharp;
             const wz = Math.exp(-Math.abs(zp - zq) / (0.02 * zp * step + 1e-3));
             const wl = Math.exp(-Math.abs(lp - lum(irr, q)) / sigma);
             const w = q === p ? h : h * wn * wz * wl;

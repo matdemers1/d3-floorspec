@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { deriveEvaluation, evaluate, OFFICIAL_READER, type Derived, type FloorspecDocument } from '@floorspec/engine';
 import showcase from './fixtures/showcase.floorspec.json' with { type: 'json' };
 import { DEFAULT_LUMENS, EXPOSURE_PER_NIT, kelvinColor, lightsOf, LUMENS_PER_WATT, WHITE_BALANCE } from '../src/index.js';
+import { ceilingDome } from '../src/models/electrical.js';
 
 type Json = Record<string, unknown>;
 const MM = 1280;
@@ -43,16 +44,25 @@ describe('lightsOf', () => {
     expect(byId.get('E7')!.switches).toEqual([]);
   });
 
-  it('puts a hung light under its box, a downlight under its trim, a wall light in front of its face', () => {
+  it('puts a hung light under its box, a ceiling light in its dome, a downlight under its trim, a wall light in front of its face', () => {
     for (const l of lights) expect(l.position.every(Number.isInteger)).toBe(true);
     const f = (id: string) => derived.fallbacks![id]!;
     const centre = (id: string) => [f(id).footprint.reduce((s, p) => s + p[0], 0) / 4, f(id).footprint.reduce((s, p) => s + p[1], 0) / 4];
-    for (const id of ['E7', 'E12', 'E14', 'E10', 'E11']) {
+    for (const id of ['E7', 'E14', 'E10', 'E11']) {
       const l = byId.get(id)!;
       expect(l.position.slice(0, 2)).toEqual(centre(id).map(Math.round));
       expect(l.position[2]).toBeLessThan(f(id).bottom);
       expect(l.position[2]).toBeGreaterThan(f(id).bottom - 50 * MM);
     }
+    // FLR-T-13.16: a ceiling light's lamp is inside the dome the model draws — under its canopy and
+    // above the dome's crown — not in the air under the fitting, where the box's bottom is.
+    const e12 = byId.get('E12')!;
+    const sides = [0, 1].map((k) => Math.hypot(f('E12').footprint[k + 1]![0] - f('E12').footprint[k]![0], f('E12').footprint[k + 1]![1] - f('E12').footprint[k]![1]));
+    const dome = ceilingDome(sides[0]!, sides[1]!, f('E12').top - f('E12').bottom);
+    expect(e12.position.slice(0, 2)).toEqual(centre('E12').map(Math.round));
+    expect(e12.position[2] + e12.radius).toBeLessThanOrEqual(f('E12').top - dome.canopy);
+    expect(e12.position[2] - e12.radius).toBeGreaterThanOrEqual(f('E12').top - dome.canopy - dome.depth);
+    expect(e12.position[2]).toBeGreaterThan(f('E12').bottom);
     // A recessed light: just under the ceiling, not in the air at its box's bottom.
     const e8 = byId.get('E8')!;
     expect(e8.position[2]).toBeLessThan(f('E8').top);
@@ -68,13 +78,19 @@ describe('lightsOf', () => {
     for (const id of ['R1', 'R2', 'R3']) expect(inside([byId.get('E15')!.position[0], byId.get('E15')!.position[1]], derived.rooms[id]!.outer)).toBe(false);
   });
 
-  it('points downlights, track, under-cabinet strips and pendants down a cone, and lets the rest shine every way', () => {
+  it('points downlights, track, under-cabinet strips, pendants and ceiling lights down a cone, and lets the rest shine every way', () => {
     for (const l of lights) {
-      const spot = ['recessed', 'track', 'underCabinet', 'pendant'].includes(l.fixture);
+      const spot = ['recessed', 'track', 'underCabinet', 'pendant', 'ceiling'].includes(l.fixture);
       expect(l.direction).toBe(spot ? 'down' : 'omni');
       if (spot) expect(l.cone!.inner).toBeGreaterThan(l.cone!.outer);
       else expect(l.cone).toBeUndefined();
     }
+    // FLR-T-13.16: a ceiling light's dome lights down and out, a little past the horizontal so it
+    // grazes the ceiling around it, and nothing straight up into its canopy.
+    const dome = byId.get('E12')!.cone!;
+    expect(dome.inner).toBeGreaterThan(0);
+    expect(dome.outer).toBeLessThan(0);
+    expect(dome.outer).toBeGreaterThan(-0.5);
   });
 
   it('gives a typical lamp\'s lumens, or 90 a watt, warm white inside and a little cooler outside', () => {

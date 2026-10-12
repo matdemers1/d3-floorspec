@@ -96,13 +96,23 @@ export const alarm: Model = (s) => {
 /** A quarter-ellipse dome, its rim radius r at z1 and its crown h below it. */
 const dome = (r: number, z1: number, h: number): [number, number][] => [...Array.from({ length: 7 }, (_, k): [number, number] => [r * SIN[k]!, z1 - h * COS[k]!]), [0, z1]];
 
+/**
+ * A ceiling light's canopy (its height, at the box's top) and the dome of its diffuser under it (its
+ * depth below the canopy), for a box X × Y × Z: what the model draws, and where lights.ts puts its
+ * lamp — inside the dome, not in the air under the box (FLR-T-13.16).
+ */
+export function ceilingDome(X: number, Y: number, Z: number): { readonly canopy: number; readonly depth: number } {
+  const ch = min(15 * MM, Z * 0.12);
+  return { canopy: ch, depth: min(Z - ch, (min(X, Y) / 2) * 0.55) };
+}
+
 const ceilingLight: Model = (s) => {
   const { X, Y, Z } = s;
   const R = min(X, Y) / 2;
   const c = [X / 2, Y / 2] as const;
-  const ch = min(15 * MM, Z * 0.12);
+  const { canopy: ch, depth } = ceilingDome(X, Y, Z);
   s.cylinder('canopy', 'trim', 'z', c, R, Z - ch, Z);
-  s.lathe('dome', 'lens', 'z', c, dome(R * 0.9, Z - ch, min(Z - ch, R * 0.55)));
+  s.lathe('dome', 'lens', 'z', c, dome(R * 0.9, Z - ch, depth));
 };
 
 const recessed: Model = (s) => {

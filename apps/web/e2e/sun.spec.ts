@@ -291,7 +291,8 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   expect(await lightsHook()).toEqual({ on: false, lamps: [] });
   await lights.click();
   await expect(lights).toHaveAttribute('aria-pressed', 'true');
-  await expect.poll(async () => (await lightsHook())?.lamps.map((l) => `${l.id} ${l.kind} ${String(l.shadow)}`)).toEqual(['LT1 point true', 'LT2 spot true']);
+  // A ceiling light's dome shines down and out (FLR-T-13.16): a spot, as a downlight is.
+  await expect.poll(async () => (await lightsHook())?.lamps.map((l) => `${l.id} ${l.kind} ${String(l.shadow)}`)).toEqual(['LT1 spot true', 'LT2 spot true']);
   expect((await lightsHook())!.on).toBe(true);
   await page.waitForTimeout(400);
   await shoot(page, 'lights-on');

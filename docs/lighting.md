@@ -22,11 +22,19 @@ FS_electrical records a light's kind and, optionally, its `watts` — not its ph
 | `exterior` | 600 | a porch lantern |
 
 Recessed, track, under-cabinet and pendant lights are spots pointing down (a pendant's shade throws
-its light down and keeps it off the ceiling); the rest shine every way. Each view turns lumens into
+its light down and keeps it off the ceiling), and so is a ceiling light (FLR-T-13.16): its lamp sits
+inside the dome of its diffuser, just under the canopy, and the dome sends its light down and out —
+fully to 70° from straight down, fading to nothing at 110°, so a little past the horizontal grazes the
+ceiling around the fitting and none goes straight up into the canopy. A bare lamp hung 12 cm under
+the fitting, shining every way as it did before, lit the ceiling around it to some 3000 lux, and the
+fitting was lost in the white. A fan's light kit, a sconce and a lantern shine every way. Each view turns lumens into
 candela — over the sphere, or over the cone of a spot out to the middle of its edge — and lights a
 surface to I cos θ / d² lux, d in metres, with no other scale: three.js's physically based lights
 (`decay` 2, intensity in candela) and the path tracer's lamps (`LUX_PER_UNIT`, 12 500 lux to its unit).
 A shadowed lamp in the editor is not cut off; one without a shadow is cut off past its own room.
+The editor draws a spot no wider than 85° (three.js's shadow camera cannot span 180°) and glTF
+writes one no wider than 90°, so there a ceiling light's dome stops short of the ceiling's glow; the
+candela are the same.
 
 Colour: 2700 K inside, 3000 K outside, seen by a camera white-balanced to 3000 K — as a photograph of a
 lamp-lit room is taken — so lamps read warm white, not orange.
@@ -37,6 +45,24 @@ A luminaire's lamp sits just outside its model (under the lens, under a downligh
 a sconce), and on top of that no piece of a luminaire's own model — canopy, trim, shade, lens — ever
 blocks its lamp: the path tracer's shadow rays toward a lamp pass every triangle of that lamp's
 fixture (`PtScene.owner`), and the editor leaves every luminaire piece out of the shadow maps.
+
+## Noise
+
+A lit render is 16 samples a pixel, smoothed by an edge-aware denoiser (FLR-T-13.16):
+
+- **Only bounced light is clamped.** The firefly cap applies to what a path gathers past its first
+  bounce — a lucky bounce onto the bright ceiling over a lamp is what sparks. What the camera's first
+  surface shows lit directly, a lit lens included, is never clamped: clamped, a lens and the ceiling
+  beside it were cut to the same white.
+- **A pixel on an edge is smoothed from both faces.** Its normal is the average of the faces it saw,
+  shorter than one; the denoiser weighs its neighbours against that, more gently the more mixed it
+  is. Weighed as a unit normal it matched neither face and kept its own few samples, and every
+  casing, sill, cabinet edge and wall-to-ceiling line sparkled.
+
+Shadow rays are most of a lit render's time: one stops at the first wall in its way rather than
+finding the nearest, and every bounce past the first samples one lamp where the first surface samples
+two. A 1280-pixel lit render of a room takes about 30% less time for it, the picture's light the
+same.
 
 ## Exposure
 

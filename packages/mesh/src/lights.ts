@@ -6,13 +6,17 @@
  * Like a model (models/), this is a view's picture, not the standard's: FS_electrical records a
  * light's kind, its watts, its box and its switches, not its photometry. So:
  *
- * - **Where:** a ceiling-hung light (ceiling, pendant, fan, track, under-cabinet) shines from just
- *   under its box's bottom at the centre of its footprint — under its lens; a recessed light from
- *   just under the trim at its box's top; a wall light (a sconce, an exterior lantern) from just in
- *   front of the middle of its box's front face.
+ * - **Where:** a hung light (pendant, fan, track, under-cabinet) shines from just under its box's
+ *   bottom at the centre of its footprint — under its lens; a ceiling light from inside the dome of
+ *   its diffuser, where its lamps are (FLR-T-13.16: the dome is shallower than its box, and a lamp
+ *   under the box hung in the air under the fitting it is the light of); a recessed light from just
+ *   under the trim at its box's top; a wall light (a sconce, an exterior lantern) from just in front
+ *   of the middle of its box's front face.
  * - **Which way:** recessed, track and under-cabinet lights are spots pointing straight down, each
- *   with a cone, and so is a pendant — under its shade, which throws its light down (FLR-T-13.1);
- *   every other light shines every way.
+ *   with a cone, and so is a pendant — under its shade, which throws its light down (FLR-T-13.1) —
+ *   and a ceiling light, whose dome sends its light down and out to a little above the horizontal
+ *   and none up into its canopy (FLR-T-13.16); a fan's light kit, a sconce and a lantern shine
+ *   every way.
  * - **How much** (FLR-T-13.1, photometric and the same in every view): its `watts` at an LED's 90
  *   lumens a watt, else a typical lamp of its kind (`DEFAULT_LUMENS`). Each view spreads the lumens
  *   over the sphere (a light that shines every way) or over its cone (a spot) as candela, and lights
@@ -27,6 +31,7 @@
  * no trigonometry — a spot's cone is the cosines of its angles, written out.
  */
 import { extElements, type Derived, type FloorspecDocument } from '@floorspec/engine';
+import { ceilingDome } from './models/electrical.js';
 import { corners } from './models/sketch.js';
 import { elementKind } from './models/kinds.js';
 import type { Vec3 } from './types.js';
@@ -118,6 +123,11 @@ const CONES: Readonly<Record<string, { inner: number; outer: number }>> = {
   underCabinet: { inner: 0.6428, outer: 0.2588 },
   // 55° and 85°: a pendant's shade throws its light down and out, and keeps it off the ceiling.
   pendant: { inner: 0.5736, outer: 0.0872 },
+  // 70° and 110° (FLR-T-13.16): a flush fitting's dome lights the room under it and, from its sides,
+  // grazes the ceiling around it — a glow brightest by the fitting, not the 3000-lux blaze a bare
+  // lamp a hand's breadth under a white ceiling gives it, in which the fitting itself was lost. Its
+  // canopy, against the ceiling, lets nothing straight up.
+  ceiling: { inner: 0.342, outer: -0.342 },
 };
 
 /**
@@ -187,9 +197,13 @@ export function lightsOf(doc: FloorspecDocument, derived: Derived): FixtureLight
     const half = Math.min(sides[0]!, sides[1]!) / 2;
     const emits = EMITS[fixture] ?? 'bottom';
     // Small: a lamp, not the fixture — and clear of its own trim and canopy.
-    const radius = Math.round(Math.min(emits === 'top' ? TRIM - 3 * MM : 30 * MM, Math.max(8 * MM, half * 0.3)));
+    const dome = fixture === 'ceiling' ? ceilingDome(sides[0]!, sides[1]!, f.top - f.bottom) : undefined;
+    const radius = Math.round(Math.min(emits === 'top' ? TRIM - 3 * MM : 30 * MM, Math.max(8 * MM, half * 0.3), dome === undefined ? Infinity : Math.max(3 * MM, dome.depth * 0.35)));
     let position: Vec3;
-    if (emits === 'front') {
+    if (dome !== undefined) {
+      // Inside its dome, just under its canopy: the lamps a flush fitting's diffuser covers.
+      position = [Math.round(cx), Math.round(cy), Math.round(f.top - dome.canopy - radius)];
+    } else if (emits === 'front') {
       // The middle of the front face (the frame's x = X), a little in front of it.
       const [c00, c10, c11] = corners(f, derived.placements?.[e.id]?.facing);
       const [fx, fy] = [c10[0] - c00[0], c10[1] - c00[1]];

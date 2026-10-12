@@ -5,7 +5,8 @@ import { REACH, type ViewLight } from './lights';
 
 /**
  * The house's light fixtures, lit (FLR-T-12.22): a three.js point light for each light that shines
- * every way and a spot pointing down for each downlight, track, under-cabinet strip and pendant —
+ * every way and a spot pointing down for each downlight, track, under-cabinet strip, pendant and
+ * ceiling light (its dome, FLR-T-13.16, drawn no wider than `MAX_SPOT_ANGLE`) —
  * placed, sized and shadowed as lights.ts works out. Each light's `userData.fixture` is its
  * element's ID. Photometric (FLR-T-13.1): intensity in candela, falling off with the square of the
  * distance in metres (decay 2), cut off only where lights.ts says.
