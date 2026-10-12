@@ -199,10 +199,10 @@ function lawnMap(anisotropy: number): THREE.DataTexture {
  */
 function lawnGeometry(cx: number, cy: number): THREE.BufferGeometry {
   const radii: number[] = [0];
-  for (let r = 0.25; r < 40; r += 0.25) radii.push(r);
+  for (let r = 0.5; r < 40; r += 0.5) radii.push(r);
   for (let r = 40; r < 2500; r *= 1.06) radii.push(r);
   radii.push(2500);
-  const SEG = 240;
+  const SEG = 144;
   const pos: number[] = [];
   const uv: number[] = [];
   const col: number[] = [];

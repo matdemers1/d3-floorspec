@@ -45,6 +45,8 @@ export interface StillLighting {
   readonly lights: boolean;
   /** The sky (FLR-T-13.4): @floorspec/mesh's preset with its sun, true north and maps — the worker tracer's. */
   readonly sky: SkyField;
+  /** The sky map's width, texels (its height is half): 1024 by default. */
+  readonly skyWidth?: number;
 }
 
 /** The lawn's tile as an sRGB texture (FLR-T-13.4). */
@@ -238,7 +240,8 @@ export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | n
   });
   scene.add(house);
   const sun = stillSun(lighting.sky.light);
-  const sky = new DataTexture(skyPixels(lighting.sky, 1024, 512).map((v, i) => (i % 4 === 3 ? 1 : v / TRACE_UNIT)), 1024, 512, RGBAFormat, FloatType);
+  const sw = lighting.skyWidth ?? 1024;
+  const sky = new DataTexture(skyPixels(lighting.sky, sw, sw / 2).map((v, i) => (i % 4 === 3 ? 1 : v / TRACE_UNIT)), sw, sw / 2, RGBAFormat, FloatType);
   sky.mapping = EquirectangularReflectionMapping;
   sky.magFilter = LinearFilter;
   sky.minFilter = LinearFilter;

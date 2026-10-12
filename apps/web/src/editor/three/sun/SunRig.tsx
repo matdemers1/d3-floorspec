@@ -128,7 +128,7 @@ export function useSkyLight(store: EditorStore, model: EditorModel | null, lamps
   }, [preset, key, minute, midnight]);
 }
 
-export function SunRig({ store, model, mesh, compact, walking, lamps = false }: { store: EditorStore; model: EditorModel; mesh: HouseMesh; compact: boolean; walking: boolean; lamps?: boolean }) {
+export function SunRig({ store, model, mesh, compact, walking, lamps = false, casters }: { store: EditorStore; model: EditorModel; mesh: HouseMesh; compact: boolean; walking: boolean; lamps?: boolean; casters?: unknown }) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const invalidate = useThree((s) => s.invalidate);
@@ -204,6 +204,19 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false }: 
   }, [store]);
 
   useSunTestHook(store);
+
+  // Shadows are drawn again only when what casts them or what lights them changes — not every frame
+  // of a walk or an orbit, when only the camera moves (a 4096² sun map and the lamps' maps, redrawn
+  // per frame, are most of a frame's time in software WebGL).
+  useLayoutEffect(() => {
+    gl.shadowMap.autoUpdate = false;
+    gl.shadowMap.needsUpdate = true;
+    return () => { gl.shadowMap.autoUpdate = true; };
+  }, [gl]);
+  useLayoutEffect(() => {
+    gl.shadowMap.needsUpdate = true;
+    invalidate();
+  }, [gl, casters, study, sky, frame, size, lamps, walking, invalidate]);
 
   // The view is exposed for its sky (FLR-T-13.4) — or for lamplight, in lux and candela as the path
   // tracer is (FLR-T-13.1) — and back to the studio's when it is the studio. A selection's glow is

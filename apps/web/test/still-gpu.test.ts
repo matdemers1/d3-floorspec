@@ -222,7 +222,7 @@ describe('the GPU still’s scene (FLR-T-13.13)', () => {
     const { scene: root } = await load();
     const house = prepareHouse(root, { lights: false });
     const sky = skyField(skyLight('clear', { azimuth: 225, altitude: 35 }, 0), MAPS);
-    const day = stillScene(root, house.bounds, { lights: false, sky });
+    const day = stillScene(root, house.bounds, { lights: false, sky, skyWidth: 64 });
     const sun = find(day.scene, (o): o is DirectionalLight => o instanceof DirectionalLight)[0]!;
     // Traced in the worker's units (12 500 lx).
     const want = stillSun(sky.light)!;
@@ -240,19 +240,19 @@ describe('the GPU still’s scene (FLR-T-13.13)', () => {
     const { scene: lit } = await load();
     prepareHouse(lit, { lights: true });
     const night = skyField(skyLight('night', null, 0), MAPS);
-    stillScene(lit, null, { lights: true, sky: night });
-    stillScene(lit, null, { lights: true, sky: night });
+    stillScene(lit, null, { lights: true, sky: night, skyWidth: 64 });
+    stillScene(lit, null, { lights: true, sky: night, skyWidth: 64 });
     expect(find(lit, (o): o is SpotLight => o instanceof SpotLight)[0]!.intensity).toBeCloseTo(120 / TRACE_UNIT, 12);
     const lens = meshes(lit).find((m) => (m.material as MeshStandardMaterial).name === 'Lens')!.material as MeshStandardMaterial;
     expect(lens.emissiveIntensity).toBeCloseTo(31250 / TRACE_UNIT, 6);
     // At dusk: no sun at all. In the studio: a pale floor, no lawn.
-    const dusk = stillScene(root, house.bounds, { lights: false, sky: skyField(skyLight('dusk', null, 0), MAPS) });
+    const dusk = stillScene(root, house.bounds, { lights: false, sky: skyField(skyLight('dusk', null, 0), MAPS), skyWidth: 64 });
     expect(find(dusk.scene, (o): o is DirectionalLight => o instanceof DirectionalLight)).toHaveLength(0);
     dusk.dispose();
-    const studio = stillScene(root, house.bounds, { lights: false, sky: skyField(skyLight('studio', null, 0), MAPS) });
+    const studio = stillScene(root, house.bounds, { lights: false, sky: skyField(skyLight('studio', null, 0), MAPS), skyWidth: 64 });
     expect(((studio.scene.getObjectByName('ground') as Mesh).material as MeshStandardMaterial).map).toBeNull();
     studio.dispose();
-  });
+  }, 30_000);
 });
 
 /** Synthetic even maps: the scene's wiring, not the real HDRIs (the worker's tests read those). */

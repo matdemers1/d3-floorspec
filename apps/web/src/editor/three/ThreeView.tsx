@@ -226,6 +226,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const extensionIds = useMemo(() => visibleExtensionIds(visible), [visible]);
   const clearancesShown = useEditor(store, (s) => s.layers.clearances);
   const triangles = visible.reduce((n, b) => n + b.triangles, 0);
+  // What casts a shadow, as one value: a new one when the parts, the furniture or the lamps drawn change.
+  const shadowKey = useMemo(() => ({ partsShown, drawn: furniture.drawn, lamps }), [partsShown, furniture.drawn, lamps]);
 
   useTestHook(store, three, ctl, ready, host, built, visible, textures);
 
@@ -445,7 +447,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         }}
       >
         <color attach="background" args={[walking ? (night || lightsOn ? NIGHT : SKY) : tokens.background]} />
-        {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} lamps={lightsOn} /> : null}
+        {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} lamps={lightsOn} casters={shadowKey} /> : null}
         <FixtureLights lights={lamps} />
         <Rig ctl={ctl} />
         <SceneBridge />
