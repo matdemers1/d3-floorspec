@@ -1,0 +1,6 @@
+{
+  "description": "The courtyard tree's canopy starts one base unit under its top: valid.",
+  "covers": [
+    "FS-LAND-2.2.1"
+  ]
+}

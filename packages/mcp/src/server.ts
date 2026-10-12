@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type Layouts, type Op, type ProjectSummary, type RenderOptions } from './client.js';
 import { embedOps, libraryText, missingLibraryTypes, namesLibraryTypes, US_STARTER } from './library.js';
 import { CatalogueError, fillFurniture, FS_FURNITURE, furnitureText, libraryFileBytes, namesFurniture, type FurnitureFill, type LibraryFile } from './furniture.js';
+import { fillLandscape, FS_LANDSCAPE, LandscapeError, namesLandscape } from './landscape.js';
 import { wells } from './stairwell.js';
 import { Batch, Lock, OP_BY_NAME_ONLY } from './ops-schema.js';
 import { hintsFor } from './hints.js';
@@ -148,6 +149,8 @@ interface Prepared {
   readonly embedded: readonly string[];
   /** The FS_furniture library items placed by their catalogue ID. */
   readonly furniture: readonly string[];
+  /** The FS_landscape starter sizes planted by their catalogue ID, and the elements boxed round their geometry. */
+  readonly landscape: { readonly items: readonly string[]; readonly boxed: readonly string[] };
   /** Anything the agent should know about the embedding: a library file the store did not take. */
   readonly notes: readonly string[];
 }
@@ -162,7 +165,8 @@ interface Prepared {
 async function prepare(client: FloorspecClient, projectId: string, changeset: string | undefined, batch: readonly Op[]): Promise<Prepared> {
   const types = namesLibraryTypes(batch);
   const furnished = namesFurniture(batch);
-  if (!types && !furnished) return { batch, prefix: [], own: batch, embedded: [], furniture: [], notes: [] };
+  const landscaped = namesLandscape(batch);
+  if (!types && !furnished && !landscaped) return { batch, prefix: [], own: batch, embedded: [], furniture: [], landscape: { items: [], boxed: [] }, notes: [] };
   let head: string | undefined;
   if (changeset !== undefined) {
     try {
@@ -181,11 +185,20 @@ async function prepare(client: FloorspecClient, projectId: string, changeset: st
       throw error;
     }
   }
-  const own = placed.batch;
+  let planted = { prefix: [] as readonly Op[], batch: placed.batch, items: [] as readonly string[], boxed: [] as readonly string[] };
+  if (landscaped) {
+    try {
+      planted = fillLandscape(model.document, placed.batch);
+    } catch (error) {
+      if (error instanceof LandscapeError) throw new ToolError(error.message);
+      throw error;
+    }
+  }
+  const own = planted.batch;
   const ids = types ? missingLibraryTypes(model.document, own) : [];
-  const prefix = [...(ids.length === 0 ? [] : embedOps(model.document, own, ids)), ...placed.prefix];
+  const prefix = [...(ids.length === 0 ? [] : embedOps(model.document, own, ids)), ...placed.prefix, ...planted.prefix];
   const notes = await storeLibraryFiles(client, projectId, placed.files);
-  return { batch: [...prefix, ...own], prefix, own, embedded: ids, furniture: placed.items, notes };
+  return { batch: [...prefix, ...own], prefix, own, embedded: ids, furniture: placed.items, landscape: { items: planted.items, boxed: planted.boxed }, notes };
 }
 
 /**
@@ -308,6 +321,8 @@ function embeddedText(prepared: Prepared): string {
   return [
     prepared.embedded.length === 0 ? '' : ` Embedded from the US starter library ${US_STARTER.version}: ${prepared.embedded.join(', ')}.`,
     prepared.furniture.length === 0 ? '' : ` Filled in from the FS_furniture starter library ${FS_FURNITURE.version} (members, box, envelopes, model and symbol): ${prepared.furniture.join(', ')}.`,
+    prepared.landscape.items.length === 0 ? '' : ` Planted from the FS_landscape ${FS_LANDSCAPE.version} starter sizes (form, name, box): ${prepared.landscape.items.join(', ')}.`,
+    prepared.landscape.boxed.length === 0 ? '' : ` Boxed round their geometry (FS_landscape 3.3): ${prepared.landscape.boxed.join(', ')}.`,
     ...prepared.notes.map((n) => ` ${n}`),
   ].join('');
 }
@@ -315,7 +330,7 @@ function embeddedText(prepared: Prepared): string {
 /** What the structured result says was embedded: US starter types, then furniture library items. */
 function embeddedMember(prepared: Prepared | null): Record<string, unknown> {
   if (prepared === null) return {};
-  const all = [...prepared.embedded, ...prepared.furniture];
+  const all = [...prepared.embedded, ...prepared.furniture, ...prepared.landscape.items];
   return all.length === 0 ? {} : { embedded: all };
 }
 

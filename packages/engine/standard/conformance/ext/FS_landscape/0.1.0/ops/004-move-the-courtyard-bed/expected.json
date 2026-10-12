@@ -1,0 +1,67 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "8ddc7ebd334d6c02bfce3496fa8df94894cdfbe17ccb88d3806cf97f477854f2",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "X12",
+      "path": "/host",
+      "value": {
+        "position": [9753600, 2340864],
+        "mode": "surface",
+        "room": "R4",
+        "surface": "floor"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X12",
+      "path": "/fallback/level",
+      "value": "L1"
+    },
+    {
+      "op": "setProperty",
+      "id": "X6",
+      "path": "/host",
+      "value": {
+        "position": [9753600, 2340864],
+        "mode": "surface",
+        "room": "R4",
+        "surface": "floor"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X6",
+      "path": "/fallback/level",
+      "value": "L1"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X12",
+      "path": "/host",
+      "value": {
+        "position": [9363456, 2340864],
+        "mode": "surface",
+        "room": "R4",
+        "surface": "floor"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X6",
+      "path": "/host",
+      "value": {
+        "position": [9363456, 2340864],
+        "mode": "surface",
+        "room": "R4",
+        "surface": "floor"
+      }
+    }
+  ]
+}

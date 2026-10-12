@@ -1,0 +1,7 @@
+{
+  "description": "The garden read with every official entry known, by an implementation of FS_landscape alone: only FS_landscape is evaluated and derived.",
+  "covers": [
+    "FS-LAND-1.2.1",
+    "FS-LAND-1.2.4"
+  ]
+}

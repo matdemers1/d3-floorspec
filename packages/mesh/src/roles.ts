@@ -7,7 +7,17 @@
  * not the standard's, and a document's own materials are not involved.
  */
 
-export const MODEL_ROLES = ['porcelain', 'stainless', 'darkMetal', 'wood', 'fabric', 'cushion', 'linen', 'stone', 'lens', 'trim', 'plate', 'glass', 'millwork', 'frame', 'door'] as const;
+export const MODEL_ROLES = [
+  'porcelain', 'stainless', 'darkMetal', 'wood', 'fabric', 'cushion', 'linen', 'stone', 'lens', 'trim', 'plate', 'glass', 'millwork', 'frame', 'door',
+  'foliage', 'foliageLight', 'foliageDark', 'trunk', 'grass', 'plume', 'lawn', 'meadow', 'mulch', 'barkMulch', 'soil', 'gravel', 'paver', 'concrete', 'corten', 'brick',
+] as const;
+
+/**
+ * The roles only FS_landscape's models are made of (FLR-T-13.5): foliage, trunks, lawns, beds' covers
+ * and hardscape. A view that draws a ground plane keeps these on top of it: a lawn's and a path's
+ * surface stand a few millimetres above the ground they are laid on, never on it.
+ */
+export const LANDSCAPE_ROLES: readonly ModelRole[] = ['foliage', 'foliageLight', 'foliageDark', 'trunk', 'grass', 'plume', 'lawn', 'meadow', 'mulch', 'barkMulch', 'soil', 'gravel', 'paver', 'concrete', 'corten', 'brick'];
 export type ModelRole = (typeof MODEL_ROLES)[number];
 
 export interface RoleLook {
@@ -57,4 +67,37 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   frame: { color: '#3a3d42', metallic: 0.3, roughness: 0.45 },
   /** A door's slab, a pocket door, a bifold's panels: stained oak. */
   door: { color: '#9a7250', metallic: 0, roughness: 0.55 },
+  // ─── FS_landscape (FLR-T-13.5): muted, layered greens, so a planting reads as one composition ───
+  /** A canopy's or a shrub's main mass. */
+  foliage: { color: '#58733f', metallic: 0, roughness: 0.9 },
+  /** The sunlit lobes of a canopy, a groundcover's mat. */
+  foliageLight: { color: '#7f9651', metallic: 0, roughness: 0.9 },
+  /** The shaded lobes, an evergreen's and a conifer's needles. */
+  foliageDark: { color: '#3a5434', metallic: 0, roughness: 0.9 },
+  /** A tree's trunk. */
+  trunk: { color: '#5e4c3e', metallic: 0, roughness: 0.85 },
+  /** An ornamental grass's blades: sage turning to straw. */
+  grass: { color: '#a6a571', metallic: 0, roughness: 0.9 },
+  /** An ornamental grass's plumes. */
+  plume: { color: '#d8cba0', metallic: 0, roughness: 0.9 },
+  /** Mown turf. */
+  lawn: { color: '#6b8d43', metallic: 0, roughness: 0.95 },
+  /** Long grass, a meadow. */
+  meadow: { color: '#98a35b', metallic: 0, roughness: 0.95 },
+  /** A bed's shredded mulch. */
+  mulch: { color: '#3f2f25', metallic: 0, roughness: 1 },
+  /** A bed's bark mulch. */
+  barkMulch: { color: '#5d3d29', metallic: 0, roughness: 1 },
+  /** Bare soil, a planter's. */
+  soil: { color: '#3b3029', metallic: 0, roughness: 1 },
+  /** Gravel: a bed's cover, a path. */
+  gravel: { color: '#c3baa7', metallic: 0, roughness: 0.95 },
+  /** Stone pavers and stepping stones: bluestone grey. */
+  paver: { color: '#9fa3a1', metallic: 0, roughness: 0.8 },
+  /** Board-formed concrete: a planter's walls, a seat wall, a curb. */
+  concrete: { color: '#c2beb5', metallic: 0, roughness: 0.85 },
+  /** Weathering steel: edging, a planter. */
+  corten: { color: '#8a4b2c', metallic: 0.3, roughness: 0.7 },
+  /** Brick: edging, a path, a wall. */
+  brick: { color: '#9a5a45', metallic: 0, roughness: 0.85 },
 };

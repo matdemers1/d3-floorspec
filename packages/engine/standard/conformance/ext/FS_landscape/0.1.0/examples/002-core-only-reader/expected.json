@@ -1,0 +1,298 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "d03d955d8604c2cf92c3adcc6446c5cd8bd91d380e4f622d998360d99b276ea0",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 4617728],
+        "endLeft": [-64000, 4745728],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W10": {
+        "startRight": [4745728, 2276864],
+        "endRight": [7738880, 2276864],
+        "endLeft": [7738880, 2404864],
+        "startLeft": [4745728, 2404864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W11": {
+        "startRight": [7866880, 4617728],
+        "endRight": [10860032, 4617728],
+        "endLeft": [10988032, 4745728],
+        "startLeft": [7802880, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W12": {
+        "startRight": [10860032, 4617728],
+        "endRight": [10860032, 64000],
+        "endLeft": [10988032, -64000],
+        "startLeft": [10988032, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W13": {
+        "startRight": [10860032, 64000],
+        "endRight": [7866880, 64000],
+        "endLeft": [7802880, -64000],
+        "startLeft": [10988032, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 4617728],
+        "endRight": [4617728, 4617728],
+        "endLeft": [4681728, 4745728],
+        "startLeft": [-64000, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4745728, 4617728],
+        "endRight": [7738880, 4617728],
+        "endLeft": [7802880, 4745728],
+        "startLeft": [4681728, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [7738880, 4617728],
+        "endRight": [7738880, 2404864],
+        "endLeft": [7866880, 2340864],
+        "startLeft": [7866880, 4617728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [7738880, 2276864],
+        "endRight": [7738880, 64000],
+        "endLeft": [7866880, 64000],
+        "startLeft": [7866880, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W6": {
+        "startRight": [7738880, 64000],
+        "endRight": [4745728, 64000],
+        "endLeft": [4681728, -64000],
+        "startLeft": [7802880, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W7": {
+        "startRight": [4617728, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [4681728, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W8": {
+        "startRight": [4745728, 64000],
+        "endRight": [4745728, 2276864],
+        "endLeft": [4617728, 2340864],
+        "startLeft": [4617728, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W9": {
+        "startRight": [4745728, 2404864],
+        "endRight": [4745728, 4617728],
+        "endLeft": [4617728, 4617728],
+        "startLeft": [4617728, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J3": [[4617728, 4617728], [4745728, 4617728], [4681728, 4745728]],
+      "J4": [[7738880, 4617728], [7866880, 4617728], [7802880, 4745728]],
+      "J5": [[7738880, 64000], [7802880, -64000], [7866880, 64000]],
+      "J6": [[4617728, 64000], [4681728, -64000], [4745728, 64000]],
+      "J7": [[4617728, 2340864], [4745728, 2276864], [4745728, 2404864]],
+      "J8": [[7738880, 2276864], [7866880, 2340864], [7738880, 2404864]]
+    },
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [4617728, 64000], [4617728, 2340864], [4617728, 4617728], [64000, 4617728]],
+        "holes": [],
+        "area": "20736438697984"
+      },
+      "R2": {
+        "outer": [[4745728, 2404864], [7738880, 2404864], [7738880, 4617728], [4745728, 4617728]],
+        "holes": [],
+        "area": "6623438307328"
+      },
+      "R3": {
+        "outer": [[4745728, 64000], [7738880, 64000], [7738880, 2276864], [4745728, 2276864]],
+        "holes": [],
+        "area": "6623438307328"
+      },
+      "R4": {
+        "outer": [[7866880, 64000], [10860032, 64000], [10860032, 4617728], [7866880, 4617728], [7866880, 2340864]],
+        "holes": [],
+        "area": "13630000070656"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "X1": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "plants",
+        "footprint": [[-10582016, -7460864], [-342016, -7460864], [-342016, 2779136], [-10582016, 2779136]],
+        "bottom": 0,
+        "top": 14080000
+      },
+      "X10": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "beds",
+        "footprint": [[-1560576, -1560576], [780288, -1560576], [780288, 4681728], [-1560576, 4681728]],
+        "bottom": -128000,
+        "top": 32000
+      },
+      "X11": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "beds",
+        "footprint": [[3121152, -3511296], [4291584, -3511296], [4291584, -2340864], [3121152, -2340864]],
+        "bottom": 0,
+        "top": 576000
+      },
+      "X12": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "beds",
+        "footprint": [[8193024, 1170432], [10533888, 1170432], [10533888, 3511296], [8193024, 3511296]],
+        "bottom": -128000,
+        "top": 32000
+      },
+      "X15": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "hardscape",
+        "footprint": [[-3505152, -3505152], [1164288, -3505152], [1164288, -1956864], [-3505152, -1956864]],
+        "bottom": -38400,
+        "top": 19200
+      },
+      "X16": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "hardscape",
+        "footprint": [[588288, -4483584], [4873728, -4483584], [4873728, -4099584], [588288, -4099584]],
+        "bottom": 0,
+        "top": 576000
+      },
+      "X2": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "plants",
+        "footprint": [[-1743360, 1572864], [-207360, 1572864], [-207360, 3108864], [-1743360, 3108864]],
+        "bottom": 0,
+        "top": 1536000
+      },
+      "X20": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "lawns",
+        "footprint": [[-9363456, -9363456], [11704320, -9363456], [11704320, 7022592], [-9363456, 7022592]],
+        "bottom": -64000,
+        "top": 12800
+      },
+      "X3": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "plants",
+        "footprint": [[-1359360, 396288], [-591360, 396288], [-591360, 1164288], [-1359360, 1164288]],
+        "bottom": 0,
+        "top": 640000
+      },
+      "X4": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "plants",
+        "footprint": [[3130368, -3502080], [4282368, -3502080], [4282368, -2350080], [3130368, -2350080]],
+        "bottom": 512000,
+        "top": 1664000
+      },
+      "X5": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "plants",
+        "footprint": [[-380928, -1551360], [771072, -1551360], [771072, -399360], [-380928, -399360]],
+        "bottom": 0,
+        "top": 256000
+      },
+      "X6": {
+        "level": "L1",
+        "extension": "FS_landscape",
+        "collection": "plants",
+        "footprint": [[6483456, -539136], [12243456, -539136], [12243456, 5220864], [6483456, 5220864]],
+        "bottom": 0,
+        "top": 7680000
+      }
+    },
+    "placements": {
+      "X1": {
+        "point": [-5462016, -2340864, 0],
+        "facing": 0
+      },
+      "X12": {
+        "point": [9363456, 2340864, 0],
+        "facing": 0
+      },
+      "X2": {
+        "point": [-975360, 2340864, 0],
+        "facing": 0
+      },
+      "X3": {
+        "point": [-975360, 780288, 0],
+        "facing": 0
+      },
+      "X4": {
+        "point": [3706368, -2926080, 0],
+        "facing": 0
+      },
+      "X5": {
+        "point": [195072, -975360, 0],
+        "facing": 0
+      },
+      "X6": {
+        "point": [9363456, 2340864, 0],
+        "facing": 0
+      }
+    },
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      },
+      "R2": {
+        "entry": false,
+        "reachable": false
+      },
+      "R3": {
+        "entry": false,
+        "reachable": false
+      },
+      "R4": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "extensions": {}
+  }
+}

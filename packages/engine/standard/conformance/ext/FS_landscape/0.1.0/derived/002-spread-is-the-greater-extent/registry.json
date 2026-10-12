@@ -1,0 +1,33 @@
+[
+  {
+    "name": "FS_landscape",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_landscape/0.1.0/landscape.schema.json",
+    "title": "Landscape: plants, beds, lawns and hardscape",
+    "requires": {},
+    "kinds": {
+      "plants": {
+        "title": "Plant"
+      },
+      "beds": {
+        "title": "Planting bed"
+      },
+      "lawns": {
+        "title": "Lawn"
+      },
+      "hardscape": {
+        "title": "Hardscape"
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  }
+]

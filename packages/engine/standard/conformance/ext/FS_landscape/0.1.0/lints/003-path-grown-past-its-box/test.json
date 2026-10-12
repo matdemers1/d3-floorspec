@@ -1,0 +1,7 @@
+{
+  "description": "The seat wall's box is its line grown by 100 mm, not by half its 300 mm width.",
+  "covers": [
+    "FS-LAND-1.2.3",
+    "FS-LAND-3.3.2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A bed has a member a bed does not define: `depth`.",
+  "covers": [
+    "FS-LAND-1.3.1"
+  ]
+}

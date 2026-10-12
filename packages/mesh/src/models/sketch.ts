@@ -181,6 +181,36 @@ export class Sketch {
   }
 
   /**
+   * A plan region across z, from h0 to h1: the union of `polys`, grown by `grow` (shrunk, when it is
+   * negative; mitred), less the union of `minus` — from manifold-3d's cross-section, its points
+   * rounded to base units. Each connected part is a piece of its own: a bed's cover, a lawn, a path
+   * swept along its line, a band of edging (FLR-T-13.5).
+   */
+  region(name: string, role: ModelRole, polys: readonly (readonly V2[])[], h0: number, h1: number, grow = 0, minus: readonly (readonly V2[])[] = []): void {
+    if (polys.length === 0 || h1 - h0 < 2) return;
+    const ccw = (r: readonly V2[]): [number, number][] => (signedArea(r) < 0 ? [...r].reverse() : [...r]).map((p): [number, number] => [p[0], p[1]]);
+    const parts = scoped((keep) => {
+      let whole = keep(this.kernel.CrossSection.union(polys.filter((p) => p.length >= 3).map((p) => keep(new this.kernel.CrossSection([ccw(p)])))));
+      if (grow !== 0) whole = keep(whole.offset(grow, 'Miter'));
+      if (minus.length > 0) whole = keep(whole.subtract(keep(this.kernel.CrossSection.union(minus.filter((p) => p.length >= 3).map((p) => keep(new this.kernel.CrossSection([ccw(p)])))))));
+      return whole.decompose().map((part) => keep(part).toPolygons());
+    });
+    for (const contours of parts) {
+      const rings = contours.map(roundRing).filter((r) => r.length >= 3 && signedArea(r) !== 0);
+      const k = rings.reduce((best, r, i) => (signedArea(r) > signedArea(rings[best]!) ? i : best), 0);
+      if (rings[k] === undefined || signedArea(rings[k]) <= 0) continue;
+      this.extrude(name, role, 'z', rings[k], h0, h1, rings.filter((_, i) => i !== k));
+    }
+  }
+
+  /** The band inside an outline's edge, `width` wide, from h0 to h1: edging, a raised bed's walls. */
+  band(name: string, role: ModelRole, outline: readonly V2[], width: number, h0: number, h1: number): void {
+    if (width < 2) return;
+    const inner = scoped((keep) => keep(keep(new this.kernel.CrossSection([(signedArea(outline) < 0 ? [...outline].reverse() : [...outline]).map((p): [number, number] => [p[0], p[1]])])).offset(-width, 'Miter')).toPolygons());
+    this.region(name, role, [outline], h0, h1, 0, inner.map((r) => r.map((p): V2 => [p[0], p[1]])));
+  }
+
+  /**
    * A solid of revolution about an axis through `centre` — (a, b) across it, as for `extrude` —
    * swept from a closed profile of (radius, height) points; a point at radius 0 is on the axis. Each
    * ring is an ellipse when `aspect` stretches it (a toilet's bowl).

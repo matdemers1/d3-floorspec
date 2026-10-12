@@ -1,0 +1,6 @@
+{
+  "description": "A shrub whose position is on the patio's edge is not strictly inside it: no lint.",
+  "covers": [
+    "FS-LAND-1.2.3"
+  ]
+}

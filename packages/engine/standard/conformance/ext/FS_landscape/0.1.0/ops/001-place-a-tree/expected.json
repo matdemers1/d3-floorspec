@@ -1,0 +1,39 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "f59ab93cbe38b7fc5ef5a2b07eb40c8da9409a2c64780ae0d24c4bb49ab9ef2d",
+  "created": ["X7"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "plants",
+      "id": "X7",
+      "element": {
+        "catalogue": "tree-medium",
+        "clearHeight": 2816000,
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [5120000, 5120000, 14080000],
+            "min": [-5120000, -5120000, 0]
+          }
+        },
+        "form": "tree",
+        "host": {
+          "level": "L1",
+          "position": [-7802880, -780288],
+          "mode": "free"
+        },
+        "name": "Medium tree"
+      },
+      "extension": "FS_landscape"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "X7"
+    }
+  ]
+}

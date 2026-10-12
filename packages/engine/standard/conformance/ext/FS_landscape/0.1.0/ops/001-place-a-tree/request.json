@@ -1,0 +1,27 @@
+{
+  "batch": [
+    {
+      "op": "placeElement",
+      "extension": "FS_landscape",
+      "collection": "plants",
+      "id": "X7",
+      "host": {
+        "mode": "free",
+        "level": "L1",
+        "at": ["-20'", "-2'"]
+      },
+      "element": {
+        "form": "tree",
+        "catalogue": "tree-medium",
+        "name": "Medium tree",
+        "clearHeight": 2816000,
+        "fallback": {
+          "box": {
+            "min": [-5120000, -5120000, 0],
+            "max": [5120000, 5120000, 14080000]
+          }
+        }
+      }
+    }
+  ]
+}

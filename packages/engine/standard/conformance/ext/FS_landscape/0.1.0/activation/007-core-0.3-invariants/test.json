@@ -1,0 +1,8 @@
+{
+  "description": "The same \"0.3\" garden with its tree unhosted: FS_landscape is evaluated for a Core 0.3 document, so the invariant is reported.",
+  "covers": [
+    "FS-LAND-1.2.1",
+    "FS-LAND-1.2.3",
+    "FS-LAND-3.2.1"
+  ]
+}

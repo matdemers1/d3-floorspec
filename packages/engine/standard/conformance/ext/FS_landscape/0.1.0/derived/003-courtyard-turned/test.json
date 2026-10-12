@@ -1,0 +1,7 @@
+{
+  "description": "The courtyard bed's host turned by 45 degrees: its outline turns with it, about its host's position, each corner rounded once - the diamond's area is close to, and not exactly, the square's - and the tree at its centre is still in it.",
+  "covers": [
+    "FS-LAND-3.4.1",
+    "FS-LAND-6.1.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "The garden; placeElement puts the starter size tree-medium (chapter 7) in the lawn with a free host 20' west and 2' south of the house's south-west corner. It commits, valid under FS_landscape: a medium tree in no room.",
+  "covers": [
+    "FS-LAND-1.2.1",
+    "FS-LAND-3.2.1",
+    "FS-OPS-4.10.1"
+  ]
+}

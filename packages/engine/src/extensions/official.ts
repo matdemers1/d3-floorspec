@@ -1,6 +1,6 @@
 /**
  * The official extensions the engine implements — FS_electrical, FS_plumbing, FS_mechanical,
- * FS_lowvoltage, FS_furniture and FS_structural (Draft) 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
+ * FS_lowvoltage, FS_furniture, FS_structural (Draft) and FS_landscape (Draft) 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
  *
  * An extension is **evaluated** for a document when the reader implements it (its name is in
  * `ValidateOptions.extensions`), the document declares "0.2", "0.3" or "0.4" and uses it at a version equal to the
@@ -21,6 +21,7 @@ import { FS_MECHANICAL, type DerivedMechanical } from './fs/mechanical.js';
 import { FS_PLUMBING, type DerivedPlumbing } from './fs/plumbing.js';
 import { FS_FURNITURE, type DerivedFurniture } from './fs/furniture.js';
 import { FS_STRUCTURAL, type DerivedStructural } from './fs/structural.js';
+import { FS_LANDSCAPE, type DerivedLandscape } from './fs/landscape.js';
 
 /**
  * The official extensions' registry entries (registry/<NAME>/extension.json, vendored), ready to
@@ -47,7 +48,7 @@ export const OFFICIAL_EXTENSION_SCHEMAS: Readonly<Record<string, unknown>> = OFF
 
 /** Every extension implementation the engine has, by name. */
 export const IMPLEMENTATIONS: ReadonlyMap<string, ExtensionImplementation> = new Map(
-  ([FS_ELECTRICAL, FS_PLUMBING, FS_MECHANICAL, FS_LOWVOLTAGE, FS_FURNITURE, FS_STRUCTURAL] as ExtensionImplementation[]).map((x) => [x.name, x]),
+  ([FS_ELECTRICAL, FS_PLUMBING, FS_MECHANICAL, FS_LOWVOLTAGE, FS_FURNITURE, FS_STRUCTURAL, FS_LANDSCAPE] as ExtensionImplementation[]).map((x) => [x.name, x]),
 );
 
 /** The names of the official extensions the engine implements. */
@@ -61,6 +62,7 @@ export interface DerivedExtensions {
   FS_lowvoltage?: DerivedLowVoltage;
   FS_furniture?: DerivedFurniture;
   FS_structural?: DerivedStructural;
+  FS_landscape?: DerivedLandscape;
 }
 
 /** One evaluated extension: its implementation and its data, ready for lints and derivation. */

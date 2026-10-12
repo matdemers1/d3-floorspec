@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-LAND-INV-005",
+      "severity": "error",
+      "elements": ["X15"]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "The garden declaring Core \"0.3\", a draft FS_landscape 0.1.0 lists (1.1): FS_landscape is evaluated, reports nothing, and derives exactly what it derives for the garden declaring \"0.2\".",
+  "covers": [
+    "FS-LAND-1.2.1",
+    "FS-LAND-1.2.3",
+    "FS-LAND-1.2.4",
+    "FS-LAND-6.1.1"
+  ]
+}

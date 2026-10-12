@@ -1,0 +1,7 @@
+{
+  "description": "The lawn placed with a free host at the level's origin: its outline is in that frame, which is the level's own. Valid, and its area is unchanged.",
+  "covers": [
+    "FS-LAND-3.2.2",
+    "FS-LAND-6.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The tree's box is drawn wholly east of its position: a reader without FS_landscape draws it in the wrong place.",
+  "covers": [
+    "FS-LAND-1.2.3",
+    "FS-LAND-3.3.1"
+  ]
+}

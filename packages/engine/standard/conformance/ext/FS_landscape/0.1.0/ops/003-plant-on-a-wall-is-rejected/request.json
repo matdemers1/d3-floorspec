@@ -1,0 +1,26 @@
+{
+  "batch": [
+    {
+      "op": "placeElement",
+      "extension": "FS_landscape",
+      "collection": "plants",
+      "id": "X7",
+      "host": {
+        "mode": "wallFace",
+        "wall": "W7",
+        "side": "left",
+        "at": "3'",
+        "height": 0
+      },
+      "element": {
+        "form": "shrub",
+        "fallback": {
+          "box": {
+            "min": [-384000, -384000, 0],
+            "max": [384000, 384000, 640000]
+          }
+        }
+      }
+    }
+  ]
+}

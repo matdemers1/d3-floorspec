@@ -30,6 +30,19 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
     "casework": {},
     "pieces": {}
   },
+  "FS_landscape": {
+    "beds": {
+      "cover": "mulch",
+      "edging": "none"
+    },
+    "hardscape": {},
+    "lawns": {
+      "cover": "turf"
+    },
+    "plants": {
+      "habit": "rounded"
+    }
+  },
   "FS_lowvoltage": {
     "doorbells": {},
     "headEnds": {},
@@ -67,6 +80,7 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
     }
   },
   "FS_furniture": {},
+  "FS_landscape": {},
   "FS_lowvoltage": {},
   "FS_mechanical": {
     "gasSources": {

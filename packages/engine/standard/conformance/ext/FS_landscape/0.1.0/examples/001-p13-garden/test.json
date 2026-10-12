@@ -1,0 +1,10 @@
+{
+  "description": "The Phase 13 garden, read by an implementation of FS_landscape that knows it: a medium tree in the lawn, a steel-edged bed with two shrubs and a groundcover along the west wall, a raised concrete planter on the patio with a grass planted in its soil, a small tree in a bed in the walled courtyard - both hosted on the courtyard's floor, the bed's outline in its host's frame - a lawn, stepping stones and a seat wall. It is valid, reports nothing - the grass on the patio stands in its planter, and the courtyard is exterior - and derives each plant's form, size class, spread, height, position and room, each bed's area and the plants in it, the lawn's area and each hardscape line's length.",
+  "covers": [
+    "FS-LAND-1.2.1",
+    "FS-LAND-1.2.3",
+    "FS-LAND-1.2.4",
+    "FS-LAND-1.3.1",
+    "FS-LAND-6.1.1"
+  ]
+}
