@@ -1,0 +1,11 @@
+{
+  "description": "Five elements break five rules at once: each is reported once, naming its element.",
+  "covers": [
+    "FS-LAND-1.2.3",
+    "FS-LAND-2.2.1",
+    "FS-LAND-3.2.1",
+    "FS-LAND-3.2.2",
+    "FS-LAND-3.4.1",
+    "FS-LAND-3.4.2"
+  ]
+}

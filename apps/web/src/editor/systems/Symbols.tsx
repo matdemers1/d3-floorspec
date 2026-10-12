@@ -9,6 +9,7 @@ import { angleOf, type DeviceHover } from './placement';
 import { membersFor, systemOfExtension, type DeviceKind, type ReceptacleOptions } from './catalog';
 import { compareIds } from './view';
 import { FIXTURE_CLASS, fixtureParts, SymbolParts } from '../plansymbols';
+import { landscapeLayers, landscapeOf, PALETTES, type SceneLandscape } from '@floorspec/render2d';
 
 /**
  * The building systems on the plan (FLR-T-5.7): each device as its symbol — a receptacle's circle
@@ -240,11 +241,31 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
           <polyline key={r.circuit} className={`fs-run fs-run--${String(r.tone)}${selectedCircuit === r.circuit ? ' is-selected' : ''}`} points={r.points.map((p) => S(view, p).map(f1).join(',')).join(' ')} />
         ))}
       </g>
-      {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx). */}
-      {shown.filter((d) => d.extension !== 'FS_furniture').map((d) => <DeviceShape key={d.id} view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}`} />)}
+      <LandscapeShapes view={view} devices={shown} selection={selection} />
+      {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx); FS_landscape its plants, beds, lawns and lines (above). */}
+      {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape').map((d) => <DeviceShape key={d.id} view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}`} />)}
       {layers.electrical ? <PanelCallouts view={view} level={level} /> : null}
     </g>
   );
+}
+
+/**
+ * FS_landscape on the plan (FLR-T-13.5): lawns, beds and hardscape lines from their own geometry, and
+ * each plant as its canopy, drawn as the server's plan render draws them (@floorspec/render2d's
+ * landscape layers), in the palette of the editor's theme. A landscape architect's colours have no
+ * design-system token, so they are render2d's own, light and dark.
+ */
+function LandscapeShapes({ view, devices, selection }: { view: Viewport; devices: readonly DeviceView[]; selection: string | null }) {
+  const items = devices.flatMap((d): [string, SceneLandscape][] => {
+    if (d.extension !== 'FS_landscape') return [];
+    const x = landscapeOf(d.collection, d.element, d.placement === null ? undefined : { point: d.placement.point, facing: d.placement.facing });
+    return x === undefined ? [] : [[d.id, x]];
+  });
+  if (items.length === 0) return null;
+  const dark = typeof document !== 'undefined' && document.documentElement.dataset['theme'] === 'dark';
+  const { lawns, ground, plants } = landscapeLayers(items, { s: view.s, P: (p) => S(view, p) }, PALETTES[dark ? 'dark' : 'light'], (id) => id === selection);
+  // render2d writes the SVG, the same text the plan render serves: markup of numbers and palette colours only
+  return <g className="fs-landscape" dangerouslySetInnerHTML={{ __html: lawns + ground + plants }} />;
 }
 
 function PanelCallouts({ view, level }: { view: Viewport; level: LevelView }) {

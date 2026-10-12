@@ -1,0 +1,8 @@
+{
+  "description": "moveElement moves the lawn's tree onto the courtyard's floor: it is now in R4, an exterior room, and in the courtyard bed beside the small tree.",
+  "covers": [
+    "FS-LAND-1.2.1",
+    "FS-LAND-6.1.1",
+    "FS-OPS-4.10.1"
+  ]
+}

@@ -1,43 +1,56 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SUN, EXPOSURE, exposureOf, LUX_PER_UNIT as CPU_LUX_PER_UNIT, skyRadiance, sunOf, type Sun } from '../src/pathtrace/index.js';
-import { DEFAULT_SUN as GPU_DEFAULT_SUN, EXPOSURE_BAND, GROUND, LUX_PER_UNIT, meteredExposure, meterFloor, SKY_SCALE, skyRadiance as gpuSkyRadiance, sunOf as gpuSunOf, TIMES } from '../../web/src/editor/three/still/gpu/sky.js';
+import { SKY_PRESETS, skyRadiance as meshSkyRadiance } from '@floorspec/mesh/sky';
+import { directOf, EXPOSURE, exposureOf, LUX_PER_UNIT as CPU_LUX_PER_UNIT, resolveSky, SKIES } from '../src/pathtrace/index.js';
+import { DEFAULT_SUN as GPU_DEFAULT_SUN, EXPOSURE_BAND, LUX_PER_UNIT, meteredExposure, meterFloor, skyPixels, stillSun, TIMES } from '../../web/src/editor/three/still/gpu/sky.js';
 
 /**
- * FLR-ADR-040: two light-transport implementations must agree. The editor's GPU still (FLR-T-13.13)
- * lights the house with this tracer's sun and sky, in photometric units — so the two are held to
- * each other here, sun by sun and direction by direction, until FLR-T-13.4 shares the sky presets.
+ * FLR-ADR-040: two light-transport implementations must agree. Since FLR-T-13.4 the editor's GPU
+ * still and this tracer read one sky — @floorspec/mesh's presets, sun and HDRI dome — so what is
+ * held here is that each turns it into its own frame and units the same way: the sun's direction
+ * and illuminance, and the sky's radiance along every direction.
  */
 
-const SUNS = [DEFAULT_SUN, { azimuth: 90, altitude: 10 }, { azimuth: 300, altitude: 70 }, { azimuth: 180, altitude: 2 }];
+const site = { site: { location: { latitude: 33_749_000, longitude: -84_388_000 }, trueNorth: 12_500_000 } };
 
 describe('the GPU still’s sun and sky are the path tracer’s', () => {
-  it('places and sizes the sun the same, 12 500 lx to the tracer’s unit', () => {
-    expect(GPU_DEFAULT_SUN).toEqual(DEFAULT_SUN);
-    for (const input of SUNS)
-      for (const north of [0, 17.5, -40]) {
-        const cpu = sunOf(input, north);
-        const gpu = gpuSunOf(input, north);
+  it('offers the same presets, and the same default sun', () => {
+    expect([...SKIES]).toEqual([...SKY_PRESETS]);
+    expect(GPU_DEFAULT_SUN).toEqual({ azimuth: 225, altitude: 35 });
+  });
+
+  it('places and sizes the direct light the same, 12 500 lx to the tracer’s unit', () => {
+    for (const sky of SKY_PRESETS)
+      for (const at of ['2026-06-21T19:30-04:00', '2026-12-21T09:00-05:00', '2026-03-20T23:00-04:00']) {
+        const r = resolveSky(site, { sky, at });
+        const cpu = directOf(r);
+        const gpu = stillSun(r.light);
+        if (gpu === null) {
+          expect(cpu.irradiance).toBe(0);
+          continue;
+        }
         gpu.dir.forEach((c, k) => { expect(c).toBeCloseTo(cpu.dir[k]!, 12); });
         gpu.color.forEach((c, k) => { expect(c).toBeCloseTo(cpu.color[k]!, 12); });
         expect(gpu.lux).toBeCloseTo(cpu.irradiance * LUX_PER_UNIT, 6);
       }
   });
 
-  it('gives the same sky radiance along every direction, in cd/m²', () => {
-    const out = new Float64Array(3);
-    for (const input of SUNS) {
-      const cpu: Sun = sunOf(input, 0);
-      const gpu = gpuSunOf(input, 0);
-      for (let i = 0; i < 200; i++) {
-        const t = (i * 0.61803398875) % 1;
-        const z = 2 * ((i * 0.7548776662) % 1) - 1;
-        const r = Math.sqrt(1 - z * z);
-        const d: [number, number, number] = [r * Math.cos(2 * Math.PI * t), z, r * Math.sin(2 * Math.PI * t)];
-        skyRadiance(d[0], d[1], d[2], cpu, out);
-        gpuSkyRadiance(d, gpu).forEach((c, k) => { expect(c).toBeCloseTo(out[k]! * LUX_PER_UNIT, 6); });
+  it('draws the same sky along every direction, in cd/m², each in its own frame', () => {
+    const r = resolveSky(site, { sky: 'clear', at: '2026-06-21T18:00-04:00' });
+    const W = 32;
+    const H = 16;
+    const gpu = skyPixels(r.field, W, H);
+    const L = new Float64Array(3);
+    for (let j = 0; j < H; j++)
+      for (let i = 0; i < W; i++) {
+        // three.js's equirectangular direction, in the scene's frame (+Y up, −Z project north)…
+        const theta = ((j + 0.5) / H - 0.5) * Math.PI;
+        const phi = ((i + 0.5) / W - 0.5) * 2 * Math.PI;
+        const d = [Math.cos(theta) * Math.cos(phi), Math.sin(theta), Math.cos(theta) * Math.sin(phi)] as const;
+        // …is the project's (x, −z, y), where the tracer reads the shared sky.
+        meshSkyRadiance(r.field, [d[0], -d[2], d[1]], L);
+        for (let c = 0; c < 3; c++) expect(gpu[4 * (j * W + i) + c]).toBeCloseTo(L[c]!, 1);
       }
-    }
   });
 
   it('meters within the same bands as the path tracer (FLR-T-13.1), in the same unit', () => {
@@ -54,11 +67,5 @@ describe('the GPU still’s sun and sky are the path tracer’s', () => {
         expect(gpu * LUX_PER_UNIT, `${time} ${String(nits)} cd/m²`).toBeCloseTo(exposureOf(hdr, 4, 4, EXPOSURE[time]), 6);
       }
     }
-  });
-
-  it('dims the sky after sunset and stands the house on the same ground', () => {
-    expect(SKY_SCALE.day).toEqual([1, 1, 1]);
-    expect(SKY_SCALE.night[2]).toBeLessThan(0.001);
-    expect(GROUND).toBe('#cfcabd');
   });
 });

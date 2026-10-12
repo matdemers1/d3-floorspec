@@ -1,0 +1,7 @@
+{
+  "description": "The bed's box stops a foot short of its west edge.",
+  "covers": [
+    "FS-LAND-1.2.3",
+    "FS-LAND-3.3.2"
+  ]
+}

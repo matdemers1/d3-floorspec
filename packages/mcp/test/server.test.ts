@@ -329,7 +329,8 @@ describe('the MCP server', () => {
     // 25 KB → 26 KB for the twelfth verb, floorspec_create_project (~400 bytes). FLR-T-12.25 paid
     // for the furniture catalogue and an opening's `at` (its near edge) by trimming other text, and
     // FLR-T-12.22 for floorspec_render's `lights` the same way, and FLR-T-13.8 for its `doors`, and
-    // FLR-T-13.11 for floorspec_propose's assistant "staging" (floorspec_propose_layouts said shorter).
+    // FLR-T-13.4 and 13.9 for its `sky` and `at` (the shared project and changeset handles shortened),
+    // and FLR-T-13.11 for floorspec_propose's assistant "staging" (descriptions said shorter).
     expect(size).toBeLessThan(26_000);
   });
 
@@ -486,6 +487,10 @@ describe('the MCP server', () => {
     await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'sw', doors: 'open' } });
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', camera: 'sw', doors: 'open' });
     expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', doors: 'ajar' } })).isError).toBe(true);
+    // FLR-T-13.4, 13.9: a sky and a date and time at the site, passed through; a sky that is not a preset refused.
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'R17', sky: 'clear', at: '2026-06-21T19:30-04:00', lights: 'off' } });
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'R17', sky: 'clear', at: '2026-06-21T19:30-04:00', lights: 'off' });
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', sky: 'sunny' } })).isError).toBe(true);
     const missing = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Attic' } });
     expect(missing.isError).toBe(true);
     expect(texts(missing)).toContain('this 3D view cannot be drawn');

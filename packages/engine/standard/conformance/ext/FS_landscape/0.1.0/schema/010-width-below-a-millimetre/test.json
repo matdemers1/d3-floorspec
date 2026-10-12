@@ -1,0 +1,6 @@
+{
+  "description": "A hardscape line is at least 1 mm wide.",
+  "covers": [
+    "FS-LAND-1.3.1"
+  ]
+}

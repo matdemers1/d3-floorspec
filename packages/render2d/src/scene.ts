@@ -27,6 +27,7 @@ const ipoint = (p: readonly [number, number]): readonly [bigint, bigint] => [Big
 const toPt = (p: readonly [bigint, bigint]): Pt => [Number(p[0]), Number(p[1])];
 import { columnRadius, newelOutline } from './symbols.js';
 import type { BoxFrame } from './plansymbols.js';
+import { landscapeOf, type SceneLandscape } from './landscape.js';
 
 export type Pt = readonly [number, number];
 
@@ -116,6 +117,8 @@ export interface SceneFallback {
   readonly frame?: BoxFrame;
   /** Its fallback's 2D symbol (Core 12.6), when it names a packaged asset with a digest. */
   readonly symbol?: { readonly id: string; readonly sha256: string; readonly mediaType: string };
+  /** An FS_landscape element's own geometry in plan (FLR-T-13.5): a plant's canopy, an outline, a line. */
+  readonly landscape?: SceneLandscape;
 }
 
 /** A clearance envelope in plan (Core 0.2, 13.5), by owner — an opening or an extension element — and name. */
@@ -302,6 +305,7 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     const frame = element === undefined ? undefined : boxFrame(element, fb.footprint, derived.placements?.[id]);
     const category = element === undefined ? undefined : categoryOf(element);
     const symbol = element === undefined ? undefined : symbolOf(doc, element);
+    const landscape = element === undefined || fb.extension !== 'FS_landscape' ? undefined : landscapeOf(fb.collection, element, derived.placements?.[id]);
     fallbacks.set(id, {
       id,
       extension: fb.extension,
@@ -310,6 +314,7 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
       ...(category === undefined ? {} : { category }),
       ...(frame === undefined ? {} : { frame }),
       ...(symbol === undefined ? {} : { symbol }),
+      ...(landscape === undefined ? {} : { landscape }),
     });
   }
   const clearances: SceneClearance[] = [];

@@ -1,0 +1,289 @@
+{
+  "library": "FS_landscape starter sizes",
+  "extension": "FS_landscape",
+  "version": "0.1.0",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "description": "A generic plant of each form in each size class as an FS_landscape 0.1.0 element ready to place: lengths in base units (1/1280 mm), its box in the convention of spec.md 3.3, planted at grade. Written by tools/landscape-library.ts.",
+  "items": {
+    "tree-small": {
+      "kind": "plants",
+      "size": "small",
+      "element": {
+        "form": "tree",
+        "catalogue": "tree-small",
+        "name": "Small tree",
+        "clearHeight": 1920000,
+        "fallback": {
+          "box": {
+            "min": [
+              -2880000,
+              -2880000,
+              0
+            ],
+            "max": [
+              2880000,
+              2880000,
+              7680000
+            ]
+          }
+        }
+      }
+    },
+    "tree-medium": {
+      "kind": "plants",
+      "size": "medium",
+      "element": {
+        "form": "tree",
+        "catalogue": "tree-medium",
+        "name": "Medium tree",
+        "clearHeight": 2816000,
+        "fallback": {
+          "box": {
+            "min": [
+              -5120000,
+              -5120000,
+              0
+            ],
+            "max": [
+              5120000,
+              5120000,
+              14080000
+            ]
+          }
+        }
+      }
+    },
+    "tree-large": {
+      "kind": "plants",
+      "size": "large",
+      "element": {
+        "form": "tree",
+        "catalogue": "tree-large",
+        "name": "Large tree",
+        "clearHeight": 3840000,
+        "fallback": {
+          "box": {
+            "min": [
+              -8320000,
+              -8320000,
+              0
+            ],
+            "max": [
+              8320000,
+              8320000,
+              23040000
+            ]
+          }
+        }
+      }
+    },
+    "shrub-small": {
+      "kind": "plants",
+      "size": "small",
+      "element": {
+        "form": "shrub",
+        "catalogue": "shrub-small",
+        "name": "Small shrub",
+        "fallback": {
+          "box": {
+            "min": [
+              -384000,
+              -384000,
+              0
+            ],
+            "max": [
+              384000,
+              384000,
+              640000
+            ]
+          }
+        }
+      }
+    },
+    "shrub-medium": {
+      "kind": "plants",
+      "size": "medium",
+      "element": {
+        "form": "shrub",
+        "catalogue": "shrub-medium",
+        "name": "Medium shrub",
+        "fallback": {
+          "box": {
+            "min": [
+              -768000,
+              -768000,
+              0
+            ],
+            "max": [
+              768000,
+              768000,
+              1536000
+            ]
+          }
+        }
+      }
+    },
+    "shrub-large": {
+      "kind": "plants",
+      "size": "large",
+      "element": {
+        "form": "shrub",
+        "catalogue": "shrub-large",
+        "name": "Large shrub",
+        "fallback": {
+          "box": {
+            "min": [
+              -1536000,
+              -1536000,
+              0
+            ],
+            "max": [
+              1536000,
+              1536000,
+              3456000
+            ]
+          }
+        }
+      }
+    },
+    "grass-small": {
+      "kind": "plants",
+      "size": "small",
+      "element": {
+        "form": "grass",
+        "catalogue": "grass-small",
+        "name": "Small ornamental grass",
+        "fallback": {
+          "box": {
+            "min": [
+              -288000,
+              -288000,
+              0
+            ],
+            "max": [
+              288000,
+              288000,
+              448000
+            ]
+          }
+        }
+      }
+    },
+    "grass-medium": {
+      "kind": "plants",
+      "size": "medium",
+      "element": {
+        "form": "grass",
+        "catalogue": "grass-medium",
+        "name": "Medium ornamental grass",
+        "fallback": {
+          "box": {
+            "min": [
+              -576000,
+              -576000,
+              0
+            ],
+            "max": [
+              576000,
+              576000,
+              1152000
+            ]
+          }
+        }
+      }
+    },
+    "grass-large": {
+      "kind": "plants",
+      "size": "large",
+      "element": {
+        "form": "grass",
+        "catalogue": "grass-large",
+        "name": "Large ornamental grass",
+        "fallback": {
+          "box": {
+            "min": [
+              -960000,
+              -960000,
+              0
+            ],
+            "max": [
+              960000,
+              960000,
+              2304000
+            ]
+          }
+        }
+      }
+    },
+    "groundcover-small": {
+      "kind": "plants",
+      "size": "small",
+      "element": {
+        "form": "groundcover",
+        "catalogue": "groundcover-small",
+        "name": "Small groundcover",
+        "fallback": {
+          "box": {
+            "min": [
+              -288000,
+              -288000,
+              0
+            ],
+            "max": [
+              288000,
+              288000,
+              128000
+            ]
+          }
+        }
+      }
+    },
+    "groundcover-medium": {
+      "kind": "plants",
+      "size": "medium",
+      "element": {
+        "form": "groundcover",
+        "catalogue": "groundcover-medium",
+        "name": "Medium groundcover",
+        "fallback": {
+          "box": {
+            "min": [
+              -576000,
+              -576000,
+              0
+            ],
+            "max": [
+              576000,
+              576000,
+              256000
+            ]
+          }
+        }
+      }
+    },
+    "groundcover-large": {
+      "kind": "plants",
+      "size": "large",
+      "element": {
+        "form": "groundcover",
+        "catalogue": "groundcover-large",
+        "name": "Large groundcover",
+        "fallback": {
+          "box": {
+            "min": [
+              -960000,
+              -960000,
+              0
+            ],
+            "max": [
+              960000,
+              960000,
+              448000
+            ]
+          }
+        }
+      }
+    }
+  }
+}

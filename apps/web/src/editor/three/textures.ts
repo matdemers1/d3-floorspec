@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { glow } from './highlight';
 import type { Look } from './parts';
 import type { MapRef } from './surfaces';
 import { assetUrl } from '../../lib/assets';
@@ -77,6 +78,7 @@ export class TextureLibrary {
       ...(on ? { emissiveIntensity: 0.55 } : {}),
     });
     if (on && this.accent !== '') m.emissive.set(this.accent);
+    if (on) glow(m);
     this.materials.set(key, m);
     const tex = this.texture(ref.sha256);
     if (this.loaded.has(ref.sha256)) this.show(m, tex);

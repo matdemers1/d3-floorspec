@@ -10,4 +10,5 @@ export { roofSymbol, stairSymbol, upPlacement, columnRadius, newelOutline, CUT_H
 export { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type DoorSymbol, type DoorSource, type WallFaces, type BoxFrame, type FixtureSource, type SymbolPart, type SymbolPath, type SymbolArc, type SymbolStroke } from './plansymbols.js';
 export { diffScenes, type Change, type SceneDiff, type Diff } from './ghost.js';
 export { PALETTES, ACCENT, type Palette, type ThemeName } from './theme.js';
+export { landscapeOf, landscapeLayers, type SceneLandscape } from './landscape.js';
 export { feetInches, inches, squareFeet, num, BU_PER_FOOT, BU_PER_INCH, SQ_BU_PER_SQ_FT } from './format.js';

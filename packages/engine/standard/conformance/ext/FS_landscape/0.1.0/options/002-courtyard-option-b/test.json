@@ -1,0 +1,8 @@
+{
+  "description": "The same document, deriving the design that chooses B (design.json): the columnar tree, a medium tree by its height, in the courtyard bed.",
+  "covers": [
+    "FS-LAND-1.2.4",
+    "FS-LAND-6.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

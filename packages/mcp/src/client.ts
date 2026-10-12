@@ -243,6 +243,10 @@ export interface RenderOptions {
   readonly lights?: 'on' | 'off';
   /** 3D (FLR-T-13.8): the doors closed (default) or open. */
   readonly doors?: 'open' | 'closed';
+  /** 3D (FLR-T-13.4): the sky it is seen under. */
+  readonly sky?: 'clear' | 'overcast' | 'dusk' | 'night' | 'studio';
+  /** 3D (FLR-T-13.9): a date and time at the site (ISO 8601, an offset optional), which places the sun. */
+  readonly at?: string;
 }
 
 /** An answer from the API that is not a success: its status and its (problem+json) body. */
@@ -395,6 +399,8 @@ export class HttpFloorspecClient implements FloorspecClient {
     if (options.width !== undefined) params.set('width', String(options.width));
     if (options.lights !== undefined) params.set('lights', options.lights);
     if (options.doors !== undefined) params.set('doors', options.doors);
+    if (options.sky !== undefined) params.set('sky', options.sky);
+    if (options.at !== undefined) params.set('at', options.at);
     const res = await this.send('GET', this.project(projectId, `/render?${params.toString()}`), undefined, { accept: 'image/png' });
     return new Uint8Array(await res.arrayBuffer());
   }

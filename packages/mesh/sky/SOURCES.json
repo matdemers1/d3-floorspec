@@ -1,0 +1,57 @@
+{
+  "licence": "CC0 1.0 Universal (public domain dedication). Poly Haven publishes every asset under CC0: https://polyhaven.com/license",
+  "maps": [
+    {
+      "id": "clear",
+      "original": "kloofendal_48d_partly_cloudy_puresky_2k.hdr",
+      "title": "Kloofendal 48d Partly Cloudy (Pure Sky)",
+      "authors": "Greg Zaal (photography), Jarod Guest (sky edits)",
+      "page": "https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/kloofendal_48d_partly_cloudy_puresky_2k.hdr",
+      "sha256": "5244534e9cf5b606f2ff513aa00ddb161b0a4826ffd88a0d3bd03ac29247d198",
+      "prepared": {
+        "file": "clear.hdr",
+        "sha256": "16e7f192cabbb3cc005abeb558e071655020cf112520df299153cf76fb661bc6"
+      }
+    },
+    {
+      "id": "overcast",
+      "original": "kloofendal_overcast_puresky_2k.hdr",
+      "title": "Kloofendal Overcast (Pure Sky)",
+      "authors": "Greg Zaal (photography), Jarod Guest (sky edits)",
+      "page": "https://polyhaven.com/a/kloofendal_overcast_puresky",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/kloofendal_overcast_puresky_2k.hdr",
+      "sha256": "312b1b04b7f10057a4f1418abc59d1166c8933cc93fc72051502edaf8d6b2fcd",
+      "prepared": {
+        "file": "overcast.hdr",
+        "sha256": "17637aeb1844545830b0ebc0394dd72044ab096bdd496eca7f720729cbc25601"
+      }
+    },
+    {
+      "id": "dusk",
+      "original": "belfast_sunset_puresky_2k.hdr",
+      "title": "Belfast Sunset (Pure Sky)",
+      "authors": "Dimitrios Savva (photography), Greg Zaal (processing), Jarod Guest (sky edits)",
+      "page": "https://polyhaven.com/a/belfast_sunset_puresky",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/belfast_sunset_puresky_2k.hdr",
+      "sha256": "273003109ca1cfb798ce6b96e09ac8440f763d0ef0c376bbe77492613540b4a3",
+      "prepared": {
+        "file": "dusk.hdr",
+        "sha256": "b9281d203c688cb16dc542af923a4808228b8f5c6b08c45488c2ed40f82c6f2d"
+      }
+    },
+    {
+      "id": "night",
+      "original": "kloppenheim_02_puresky_2k.hdr",
+      "title": "Kloppenheim 02 (Pure Sky)",
+      "authors": "Greg Zaal (photography), Jarod Guest (sky edits)",
+      "page": "https://polyhaven.com/a/kloppenheim_02_puresky",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/kloppenheim_02_puresky_2k.hdr",
+      "sha256": "e06091a38c4c778b06123ba13dca8f2c91a21c13c14eec91048c5003815d21b8",
+      "prepared": {
+        "file": "night.hdr",
+        "sha256": "1fc6173ba48dae84ba72843a59ad2ec7934953e79473d5d417597b6b027e9794"
+      }
+    }
+  ]
+}

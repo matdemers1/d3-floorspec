@@ -91,7 +91,8 @@ async function holdUntil(page: Page, key: string, until: string): Promise<Walker
 }
 
 test('the P7 exit demo: 3D, split with synced selection, and a walk up the L stair under the hip roof', async ({ page }) => {
-  test.setTimeout(180_000);
+  // FLR-T-13.4: the view opens under a clear sky — its lawn and the sun's shadows — drawn in software WebGL here.
+  test.setTimeout(300_000);
   await firstRunSetup(page, { name: 'Walker', email: 'walker@example.test', password: password('three') });
   await page.getByRole('button', { name: 'New project' }).first().click();
   const created = page.getByRole('dialog', { name: 'New project' });

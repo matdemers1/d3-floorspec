@@ -1,0 +1,384 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Phase 13 garden"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 4681728]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [4681728, 4681728]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [7802880, 4681728]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [7802880, 0]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [4681728, 0]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [4681728, 2340864]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [7802880, 2340864]
+    },
+    "J9": {
+      "level": "L1",
+      "position": [10924032, 4681728]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [10924032, 0]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J8",
+      "type": "WT"
+    },
+    "W5": {
+      "level": "L1",
+      "start": "J8",
+      "end": "J5",
+      "type": "WT"
+    },
+    "W6": {
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    },
+    "W7": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J1",
+      "type": "WT"
+    },
+    "W8": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J7",
+      "type": "WT"
+    },
+    "W9": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W10": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J8",
+      "type": "WT"
+    },
+    "W11": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J9",
+      "type": "WT"
+    },
+    "W12": {
+      "level": "L1",
+      "start": "J9",
+      "end": "J10",
+      "type": "WT"
+    },
+    "W13": {
+      "level": "L1",
+      "start": "J10",
+      "end": "J5",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2340864, 2340864],
+      "name": "Kitchen",
+      "function": "kitchen"
+    },
+    "R2": {
+      "level": "L1",
+      "anchor": [6242304, 3511296],
+      "name": "Bath",
+      "function": "bath"
+    },
+    "R3": {
+      "level": "L1",
+      "anchor": [6242304, 1170432],
+      "name": "Utility",
+      "function": "mechanical"
+    },
+    "R4": {
+      "level": "L1",
+      "anchor": [9363456, 2340864],
+      "name": "Courtyard",
+      "function": "exterior"
+    }
+  },
+  "slabs": {
+    "S1": {
+      "level": "L1",
+      "boundary": [[780288, -3901440], [4681728, -3901440], [4681728, -390144], [780288, -390144]],
+      "thickness": 128000,
+      "name": "Patio"
+    }
+  },
+  "extensionsUsed": {
+    "FS_landscape": "0.1.0"
+  },
+  "extensions": {
+    "FS_landscape": {
+      "collections": {
+        "plants": {
+          "X1": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-5120000, -5120000, 0],
+                "max": [5120000, 5120000, 14080000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [-5462016, -2340864]
+            },
+            "form": "tree",
+            "clearHeight": 2816000,
+            "habit": "spreading",
+            "foliage": "deciduous",
+            "species": "Acer rubrum",
+            "commonName": "Red maple",
+            "catalogue": "tree-medium"
+          },
+          "X2": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-768000, -768000, 0],
+                "max": [768000, 768000, 1536000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [-975360, 2340864]
+            },
+            "form": "shrub",
+            "foliage": "evergreen",
+            "catalogue": "shrub-medium"
+          },
+          "X3": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-384000, -384000, 0],
+                "max": [384000, 384000, 640000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [-975360, 780288]
+            },
+            "form": "shrub",
+            "catalogue": "shrub-small"
+          },
+          "X4": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-576000, -576000, 512000],
+                "max": [576000, 576000, 1664000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [3706368, -2926080]
+            },
+            "form": "grass",
+            "catalogue": "grass-medium",
+            "clearHeight": 1150720
+          },
+          "X5": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-576000, -576000, 0],
+                "max": [576000, 576000, 256000]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [195072, -975360]
+            },
+            "form": "groundcover"
+          },
+          "X6": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-2880000, -2880000, 0],
+                "max": [2880000, 2880000, 7680000]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R4",
+              "surface": "floor",
+              "position": [9363456, 2340864]
+            },
+            "form": "tree",
+            "clearHeight": 1920000,
+            "habit": "rounded",
+            "name": "Courtyard tree"
+          }
+        },
+        "beds": {
+          "X10": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-1560576, -1560576, -128000],
+                "max": [780288, 4681728, 32000]
+              }
+            },
+            "boundary": [[-1560576, -1560576], [780288, -1560576], [780288, -390144], [-390144, -390144], [-390144, 4681728], [-1560576, 4681728]],
+            "edging": "steel",
+            "cover": "bark"
+          },
+          "X11": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [3121152, -3511296, 0],
+                "max": [4291584, -2340864, 576000]
+              }
+            },
+            "boundary": [[3121152, -3511296], [4291584, -3511296], [4291584, -2340864], [3121152, -2340864]],
+            "cover": "soil",
+            "edging": "concrete",
+            "name": "Patio planter"
+          },
+          "X12": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-1170432, -1170432, -128000],
+                "max": [1170432, 1170432, 32000]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R4",
+              "surface": "floor",
+              "position": [9363456, 2340864]
+            },
+            "boundary": [[-1170432, -1170432], [1170432, -1170432], [1170432, 1170432], [-1170432, 1170432]],
+            "edging": "stone"
+          }
+        },
+        "lawns": {
+          "X20": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-9363456, -9363456, -64000],
+                "max": [11704320, 7022592, 12800]
+              }
+            },
+            "boundary": [[-9363456, -9363456], [11704320, -9363456], [11704320, -4681728], [-1560576, -4681728], [-1560576, 7022592], [-9363456, 7022592]]
+          }
+        },
+        "hardscape": {
+          "X15": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-3505152, -3505152, -38400],
+                "max": [1164288, -1956864, 19200]
+              }
+            },
+            "form": "steppingStones",
+            "points": [[780288, -2340864], [-780288, -3121152], [-3121152, -3121152]],
+            "width": 768000,
+            "material": "stone"
+          },
+          "X16": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [588288, -4483584, 0],
+                "max": [4873728, -4099584, 576000]
+              }
+            },
+            "form": "wall",
+            "points": [[780288, -4291584], [4681728, -4291584]],
+            "width": 384000,
+            "material": "concrete",
+            "name": "Seat wall"
+          }
+        }
+      }
+    }
+  }
+}

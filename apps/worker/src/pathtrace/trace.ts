@@ -27,6 +27,7 @@
  * the sky is a simple gradient — approximate lighting, which is what
  * the screen says. Seeded (rng.ts), so the same scene and options give the same picture.
  */
+import { groundAt, hazeAt, skyRadiance as fieldRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
 import type { Vec3 } from '../export/gltf/scene.js';
 import type { Camera } from '../render3d/camera.js';
 import { Bvh, type Hit } from './bvh.js';
@@ -101,6 +102,16 @@ export interface TraceOptions {
   /** The sky's radiance, scaled per channel: dimmed and blued at dusk and at night. Default [1, 1, 1]. */
   readonly sky?: Vec3;
   /**
+   * The sky as @floorspec/mesh draws it (FLR-T-13.4): a preset's HDRI dome in cd/m², read in place
+   * of the simple gradient; `unit` is the tracer's, in lux (`LUX_PER_UNIT`).
+   */
+  readonly field?: { readonly sky: SkyField; readonly unit: number };
+  /**
+   * The ground (FLR-T-13.4): a level plane at height `y` out to the horizon, the lawn (or what
+   * `areas` lay on it) under the sun and sky, lost in the haze with distance.
+   */
+  readonly ground?: { readonly y: number; readonly areas?: readonly GroundArea[]; /** The studio's floor instead of the lawn. */ readonly floor?: Vec3 };
+  /**
    * The most the light a single sample gathers past its first bounce may add to a pixel, in
    * luminance (what the camera's first surface shows lit directly is never clamped, FLR-T-13.16).
    * Default 12: a dim night's is less.
@@ -121,6 +132,8 @@ export interface TraceOptions {
 }
 
 const EPS = 1e-4;
+/** The ground plane's material (FLR-T-13.4): its colour is the lawn's, looked up where it is hit. */
+const GROUND: PtMaterial = { rgb: [1, 1, 1], glass: false };
 /** The most a single sample's bounced light may add to a pixel (in luminance), so a rare lucky path does not spark. */
 const CLAMP = 12;
 
@@ -196,6 +209,30 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   const hit: Hit = { tri: -1, t: 0, u: 0, v: 0 };
   const tex = new Float64Array(3);
   const sky = new Float64Array(3);
+  const field = options.field;
+  const unit = field?.unit ?? 1;
+  const ground = options.ground;
+  const areas = ground?.areas ?? [];
+  const look = new Float64Array(3);
+  /** The sky along a direction, in the tracer's units, scaled: the field's, else the gradient. */
+  const skyAlong = (x: number, y: number, z: number, out: Float64Array): void => {
+    if (field === undefined) {
+      skyRadiance(x, y, z, sun, out);
+      out[0] = out[0]! * skyR;
+      out[1] = out[1]! * skyG;
+      out[2] = out[2]! * skyB;
+      return;
+    }
+    // The scene's frame (+Y up, −Z project north) to the project's (x, y north, z up).
+    look[0] = x;
+    look[1] = -z;
+    look[2] = y;
+    fieldRadiance(field.sky, look, out);
+    out[0] = out[0]! / unit;
+    out[1] = out[1]! / unit;
+    out[2] = out[2]! / unit;
+  };
+  const horizon = field === undefined ? null : field.sky.horizon.map((c) => c / unit);
 
   // A shadow ray asks only whether something blocks it (Bvh.occluded), not what is nearest: glass
   // and lenses it passes dim or pass it in any order, and the first wall it meets ends it. Its state
@@ -351,6 +388,8 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
         let first = true;
         let firstLum = 1;
         let travelled = 0;
+        /** How far the camera's first surface is, metres. */
+        let firstAt = 0;
         // What the camera's first surface shows lit directly (and the sky and glass before it): kept
         // apart from what later bounces bring, which alone is clamped.
         let direct = false;
@@ -358,22 +397,26 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
         let dg = 0;
         let db = 0;
         for (;;) {
-          if (!bvh.intersect(ox, oy, oz, dx, dy, dz, tMin, Infinity, hit)) {
-            skyRadiance(dx, dy, dz, sun, sky);
-            r += tr * sky[0]! * skyR;
-            g += tg * sky[1]! * skyG;
-            b += tb * sky[2]! * skyB;
+          // The ground plane, when there is one: nothing past it is seen.
+          const tGround = ground !== undefined && dy < 0 && oy > ground.y ? (ground.y - oy) / dy : Infinity;
+          const onGround = !bvh.intersect(ox, oy, oz, dx, dy, dz, tMin, tGround, hit);
+          if (onGround && tGround === Infinity) {
+            skyAlong(dx, dy, dz, sky);
+            r += tr * sky[0]!;
+            g += tg * sky[1]!;
+            b += tb * sky[2]!;
             break;
           }
-          const t = hit.tri;
-          const m = mats[scene.material[t]!]!;
-          travelled += hit.t;
-          const hx = ox + dx * hit.t;
-          const hy = oy + dy * hit.t;
-          const hz = oz + dz * hit.t;
-          let nx = N[3 * t]!;
-          let ny = N[3 * t + 1]!;
-          let nz = N[3 * t + 2]!;
+          const t = onGround ? -1 : hit.tri;
+          const tHit = onGround ? tGround : hit.t;
+          const m = onGround ? GROUND : mats[scene.material[t]!]!;
+          travelled += tHit;
+          const hx = ox + dx * tHit;
+          const hy = onGround ? ground!.y : oy + dy * tHit;
+          const hz = oz + dz * tHit;
+          let nx = onGround ? 0 : N[3 * t]!;
+          let ny = onGround ? 1 : N[3 * t + 1]!;
+          let nz = onGround ? 0 : N[3 * t + 2]!;
           if (nx * dx + ny * dy + nz * dz > 0) {
             nx = -nx;
             ny = -ny;
@@ -384,10 +427,10 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             if (++crossings > 8) break;
             // A glint of the sky (8%, not traced further), and the rest straight through, tinted.
             const k = 2 * (dx * nx + dy * ny + dz * nz);
-            skyRadiance(dx - k * nx, dy - k * ny, dz - k * nz, sun, sky);
-            r += tr * 0.08 * sky[0]! * skyR;
-            g += tg * 0.08 * sky[1]! * skyG;
-            b += tb * 0.08 * sky[2]! * skyB;
+            skyAlong(dx - k * nx, dy - k * ny, dz - k * nz, sky);
+            r += tr * 0.08 * sky[0]!;
+            g += tg * 0.08 * sky[1]!;
+            b += tb * 0.08 * sky[2]!;
             tr *= 0.92 * (0.7 + 0.3 * m.rgb[0]);
             tg *= 0.92 * (0.7 + 0.3 * m.rgb[1]);
             tb *= 0.92 * (0.7 + 0.3 * m.rgb[2]);
@@ -400,7 +443,18 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           let ar = m.rgb[0];
           let ag = m.rgb[1];
           let ab = m.rgb[2];
-          if (m.texture !== undefined && !Number.isNaN(UV[6 * t]!)) {
+          if (onGround && ground!.floor !== undefined) {
+            ar = ground!.floor[0];
+            ag = ground!.floor[1];
+            ab = ground!.floor[2];
+          } else if (onGround) {
+            // The lawn, or what is laid on it: the scene's (x, −z) is the project's (x, y).
+            // Seen from the camera, its pixel's footprint there, so the far lawn is its mean, not sparkle.
+            groundAt(hx, -hz, areas, tex, depth === 0 && crossings === 0 ? (travelled * 2 * tanY) / H / Math.max(0.05, -dy) : 0.05);
+            ar = tex[0]!;
+            ag = tex[1]!;
+            ab = tex[2]!;
+          } else if (m.texture !== undefined && !Number.isNaN(UV[6 * t]!)) {
             const w0 = 1 - hit.u - hit.v;
             const u = w0 * UV[6 * t]! + hit.u * UV[6 * t + 2]! + hit.v * UV[6 * t + 4]!;
             const v = w0 * UV[6 * t + 1]! + hit.u * UV[6 * t + 3]! + hit.v * UV[6 * t + 5]!;
@@ -425,6 +479,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             normal[o + 2] = normal[o + 2]! + nz;
             depthSum[pixel] = depthSum[pixel]! + travelled;
             hits[pixel] = hits[pixel]! + 1;
+            firstAt = travelled;
             firstLum = Math.max(0.02, 0.2126 * ar + 0.7152 * ag + 0.0722 * ab);
           }
           const px0 = hx + nx * EPS;
@@ -505,6 +560,18 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           dr = r;
           dg = g;
           db = b;
+        } else if (horizon !== null && field !== undefined) {
+          // The haze between the camera and the first surface it sees (FLR-T-13.4): the far lawn
+          // fades into the horizon's colour.
+          const h = hazeAt(field.sky.light, firstAt);
+          if (h > 0) {
+            dr = dr * (1 - h) + horizon[0]! * h;
+            dg = dg * (1 - h) + horizon[1]! * h;
+            db = db * (1 - h) + horizon[2]! * h;
+            r = r * (1 - h) + horizon[0]! * h;
+            g = g * (1 - h) + horizon[1]! * h;
+            b = b * (1 - h) + horizon[2]! * h;
+          }
         }
         // Only the light a path gathers past its first bounce is clamped (FLR-T-13.16): a lucky bounce
         // onto the bright ceiling over a lamp is what sparks, while a lit lens, a surface by a lamp
