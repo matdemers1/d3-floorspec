@@ -196,6 +196,79 @@ export class Bvh {
   private readonly stack = new Int32Array(128);
 
   /**
+   * A shadow ray's question (FLR-T-13.16): is anything that blocks it crossed between `tMin` and
+   * `tMax`? `visit` is called for each triangle the ray crosses there — nearer subtrees first, but in
+   * no promised order — and says whether that one blocks it; the walk stops at the first that does.
+   * No nearest hit is sought, so a shadow ray stops at the first wall in its way instead of finding
+   * which wall is nearest.
+   */
+  occluded(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, tMin: number, tMax: number, visit: (tri: number) => boolean): boolean {
+    const ix = 1 / dx;
+    const iy = 1 / dy;
+    const iz = 1 / dz;
+    const B = this.bounds;
+    const T = this.tri;
+    const stack = this.stack;
+    let sp = 0;
+    stack[sp++] = 0;
+    while (sp > 0) {
+      const node = stack[--sp]!;
+      const o = 6 * node;
+      let t0 = ((ix >= 0 ? B[o]! : B[o + 3]!) - ox) * ix;
+      let t1 = ((ix >= 0 ? B[o + 3]! : B[o]!) - ox) * ix;
+      const ty0 = ((iy >= 0 ? B[o + 1]! : B[o + 4]!) - oy) * iy;
+      const ty1 = ((iy >= 0 ? B[o + 4]! : B[o + 1]!) - oy) * iy;
+      if (ty0 > t0) t0 = ty0;
+      if (ty1 < t1) t1 = ty1;
+      const tz0 = ((iz >= 0 ? B[o + 2]! : B[o + 5]!) - oz) * iz;
+      const tz1 = ((iz >= 0 ? B[o + 5]! : B[o + 2]!) - oz) * iz;
+      if (tz0 > t0) t0 = tz0;
+      if (tz1 < t1) t1 = tz1;
+      if (t0 > t1 || t1 < tMin || t0 > tMax) continue;
+      const bb = this.b[node]!;
+      if (bb <= 0) {
+        const first = this.a[node]!;
+        for (let k = first; k < first - bb; k++) {
+          const t = this.order[k]!;
+          const p = 9 * t;
+          const e1x = T[p + 3]!, e1y = T[p + 4]!, e1z = T[p + 5]!;
+          const e2x = T[p + 6]!, e2y = T[p + 7]!, e2z = T[p + 8]!;
+          const px = dy * e2z - dz * e2y;
+          const py = dz * e2x - dx * e2z;
+          const pz = dx * e2y - dy * e2x;
+          const det = e1x * px + e1y * py + e1z * pz;
+          if (det > -1e-14 && det < 1e-14) continue;
+          const inv = 1 / det;
+          const sx = ox - T[p]!, sy = oy - T[p + 1]!, sz = oz - T[p + 2]!;
+          const u = (sx * px + sy * py + sz * pz) * inv;
+          if (u < 0 || u > 1) continue;
+          const qx = sy * e1z - sz * e1y;
+          const qy = sz * e1x - sx * e1z;
+          const qz = sx * e1y - sy * e1x;
+          const v = (dx * qx + dy * qy + dz * qz) * inv;
+          if (v < 0 || u + v > 1) continue;
+          const d = (e2x * qx + e2y * qy + e2z * qz) * inv;
+          if (d > tMin && d < tMax && visit(t)) return true;
+        }
+        continue;
+      }
+      const l = this.a[node]!;
+      const lo = 6 * l;
+      const ro = 6 * bb;
+      const nearLeft = (B[lo]! + B[lo + 3]! - B[ro]! - B[ro + 3]!) * dx + (B[lo + 1]! + B[lo + 4]! - B[ro + 1]! - B[ro + 4]!) * dy + (B[lo + 2]! + B[lo + 5]! - B[ro + 2]! - B[ro + 5]!) * dz < 0;
+      if (sp + 2 > stack.length) throw new Error('the scene is too deep to trace');
+      if (nearLeft) {
+        stack[sp++] = bb;
+        stack[sp++] = l;
+      } else {
+        stack[sp++] = l;
+        stack[sp++] = bb;
+      }
+    }
+    return false;
+  }
+
+  /**
    * The nearest triangle the ray meets between `tMin` and `tMax`, skipping any `skip` says to (glass,
    * for a shadow ray that looks through it): written into `hit`; false when it meets none. Of
    * triangles met at the same distance (within TIE), one facing the ray wins over one facing away.

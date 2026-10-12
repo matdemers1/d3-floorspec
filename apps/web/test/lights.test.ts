@@ -6,7 +6,7 @@ import { readModel, type EditorModel } from '../src/editor/model';
 import { ThreeStore } from '../src/editor/three/mode';
 import { levelOrder } from '../src/editor/three/parts';
 import { EXPOSURE_PER_NIT, lightsOf } from '@floorspec/mesh';
-import { LIT_EXPOSURE, MAX_LIGHTS, MAX_SHADOWED, OUTSIDE, SPILL, toneMappingExposure, viewLights } from '../src/editor/three/lights';
+import { LIT_EXPOSURE, MAX_LIGHTS, MAX_SPOT_ANGLE, MAX_SHADOWED, OUTSIDE, SPILL, toneMappingExposure, viewLights } from '../src/editor/three/lights';
 import { castsShadow } from '../src/editor/three/parts';
 
 /**
@@ -56,7 +56,13 @@ describe('the lamps the 3D view draws', () => {
     expect(e8.position[1]).toBeCloseTo(3.3, 6);
     expect(e8.position[2]).toBeGreaterThan(2.65);
     expect(e8.position[2]).toBeLessThan(2.7);
-    expect(lamps.find((l) => l.id === 'E12')!.kind).toBe('point');
+    // A fan's light kit shines every way; a ceiling light's dome down and out (FLR-T-13.16), within
+    // the widest a three.js spot's shadow can be.
+    expect(lamps.find((l) => l.id === 'E14')!.kind).toBe('point');
+    const e12 = lamps.find((l) => l.id === 'E12')!;
+    expect(e12.kind).toBe('spot');
+    expect(e12.angle!).toBeLessThanOrEqual(MAX_SPOT_ANGLE);
+    expect(e12.angle!).toBeGreaterThan(Math.PI / 3);
     // A pendant throws its light down from under its shade.
     expect(lamps.find((l) => l.id === 'E7')!.kind).toBe('spot');
     for (const l of lamps) {
@@ -68,10 +74,10 @@ describe('the lamps the 3D view draws', () => {
   it('is photometric: candela from lumens, as three.js\'s own power would set it', () => {
     const lamps = viewLights(model, mesh, { level: 'L1', cutaway: true, order: levelOrder(model) });
     const lumens = new Map(lightsOf(model.view, model.derived!).map((l) => [l.id, l.lumens]));
-    const e12 = lamps.find((l) => l.id === 'E12')!;
+    const e14 = lamps.find((l) => l.id === 'E14')!;
     // three.js: a point light's power (lm) is 4π times its intensity (cd).
-    expect(e12.intensity * 4 * Math.PI).toBeCloseTo(lumens.get('E12')!, 6);
-    expect(e12.lumens).toBe(lumens.get('E12'));
+    expect(e14.intensity * 4 * Math.PI).toBeCloseTo(lumens.get('E14')!, 6);
+    expect(e14.lumens).toBe(lumens.get('E14'));
     // A spot's candela is its lumens over its cone's solid angle: more than over the whole sphere.
     const e8 = lamps.find((l) => l.id === 'E8')!;
     expect(e8.intensity).toBeGreaterThan(lumens.get('E8')! / (4 * Math.PI));

@@ -94,14 +94,19 @@ export function lookRotation(forward: Vec3, up: Vec3 = [0, 1, 0]): [number, numb
   return q.map((c) => c / l) as [number, number, number, number];
 }
 
+/** The widest a spot's cone may be written, radians: just inside glTF's right angle. */
+const RIGHT_ANGLE = Math.PI / 2 - 1e-5;
+
 /** One lamp as a KHR_lights_punctual light. */
 function lightJson(l: SceneLight): Json {
   const { color, scale } = normalized(l.color);
   const extras = { floorspec: { id: l.id, fixture: l.fixture, radius: f(l.radius), lumens: f(l.lumens) } };
   const intensity = f(candelaOf(l) * scale);
   if (l.spot === undefined) return { name: l.id, type: 'point', color, intensity, extras };
-  // Cosines to angles, inner strictly inside outer and both within a right angle (as glTF requires).
-  const outer = Math.min(Math.PI / 2, Math.acos(Math.max(-1, Math.min(1, l.spot.outer))));
+  // Cosines to angles, inner strictly inside outer and both within a right angle (as glTF requires):
+  // a ceiling light's dome, which shines a little past the horizontal (FLR-T-13.16), is written out to
+  // the right angle, a hair inside it so a 32-bit reader does not round it past.
+  const outer = Math.min(RIGHT_ANGLE, Math.acos(Math.max(-1, Math.min(1, l.spot.outer))));
   const inner = Math.min(Math.acos(Math.max(-1, Math.min(1, l.spot.inner))), outer * 0.999);
   return { name: l.id, type: 'spot', color, intensity, spot: { innerConeAngle: f(Math.max(0, inner)), outerConeAngle: f(outer) }, extras };
 }

@@ -51,6 +51,12 @@ export const REACH = 15;
 export const SPILL = 1.6;
 /** Metres: an unshadowed lamp's cut-off when it is in no room. */
 export const OUTSIDE = 6;
+/**
+ * The widest half-angle a spot is drawn with, radians (85°): a three.js spot's shadow camera spans
+ * twice it, and cannot reach 180°. A ceiling light's dome shines to 110° (FLR-T-13.16); here it
+ * stops at this, with the same candela, and its ceiling is lit by the bounce fill.
+ */
+export const MAX_SPOT_ANGLE = (85 * Math.PI) / 180;
 
 export interface ViewLight {
   readonly id: string;
@@ -100,7 +106,7 @@ function viewLight(l: FixtureLight, model: EditorModel, mesh: HouseMesh, shadow:
   const distance = shadow ? 0 : Math.round(SPILL * (roomReach(l, model, k) ?? OUTSIDE / SPILL) * 100) / 100;
   const base = { id: l.id, level: l.level, position, color: hex(l.color), lumens: l.lumens, distance, shadow };
   if (l.cone === undefined) return { ...base, kind: 'point', intensity: l.lumens / (4 * Math.PI) };
-  const outer = Math.acos(l.cone.outer);
+  const outer = Math.min(MAX_SPOT_ANGLE, Math.acos(l.cone.outer));
   const inner = Math.acos(l.cone.inner);
   const sr = 2 * Math.PI * (1 - (l.cone.inner + l.cone.outer) / 2);
   return { ...base, kind: 'spot', intensity: l.lumens / sr, angle: outer, penumbra: Math.min(1, Math.max(0, 1 - inner / outer)) };

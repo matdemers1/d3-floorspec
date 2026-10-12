@@ -116,7 +116,9 @@ describe('glTF export extensions (FLR-T-13.13)', () => {
       if (l.spot !== undefined) {
         rotate(node.rotation!, [0, 0, -1]).forEach((c, k) => { expect(c).toBeCloseTo(l.spot!.dir[k]!, 5); });
         expect(light.spot!.innerConeAngle).toBeLessThan(light.spot!.outerConeAngle);
-        expect(Math.cos(light.spot!.outerConeAngle)).toBeCloseTo(l.spot.outer, 5);
+        // A cone past the horizontal — a ceiling light's dome (FLR-T-13.16) — is written to the right angle glTF allows.
+        if (l.spot.outer >= 0) expect(Math.cos(light.spot!.outerConeAngle)).toBeCloseTo(l.spot.outer, 5);
+        else expect(light.spot!.outerConeAngle).toBeCloseTo(Math.PI / 2, 4);
       }
     });
   });
