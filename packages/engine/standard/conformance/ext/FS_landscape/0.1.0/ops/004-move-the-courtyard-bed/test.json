@@ -1,0 +1,8 @@
+{
+  "description": "moveElement moves the courtyard bed and its tree 1' east on the courtyard's floor, in one batch: the bed's outline, in its host's frame, is unchanged and moves with it, and the tree still stands in it. It commits.",
+  "covers": [
+    "FS-LAND-3.4.1",
+    "FS-LAND-6.1.1",
+    "FS-OPS-4.10.1"
+  ]
+}

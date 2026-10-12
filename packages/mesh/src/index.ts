@@ -19,7 +19,7 @@ export { appearanceOf, DEFAULT_COLOURS, paletteFunction, ROOM_PALETTE, swatch, t
 export { openToSky } from './rooms.js';
 export { pairedElements } from './paired.js';
 export { surfaceGroups, tileCoordinates, type Surface, type SurfaceGroup, type TilePlacement } from './surfaces.js';
-export { MODEL_ROLES, ROLE_LOOKS, type ModelRole, type RoleLook } from './roles.js';
+export { LANDSCAPE_ROLES, MODEL_ROLES, ROLE_LOOKS, type ModelRole, type RoleLook } from './roles.js';
 export { discriminant, elementKind } from './models/kinds.js';
 export { gableCladding } from './cladding.js';
 export { PART_KINDS, UNITS_PER_METRE, type Box3, type Cladding, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartMesh, type PartStats, type Vec3, type DoorState } from './types.js';

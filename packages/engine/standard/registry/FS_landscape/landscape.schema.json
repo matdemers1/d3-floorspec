@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/ext/FS_landscape/0.1.0/landscape.schema.json",
+  "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_landscape 0.1.0, registry/FS_landscape/spec.md. Applied to the extension's top-level data, extensions.FS_landscape, by a validator that implements FS_landscape and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, option, name, extras) are checked by Floorspec Core, so this schema only names them. Geometry - a polygon's simplicity, a line's repeated points - is checked by the invariants (spec.md 3.4).",
+  "title": "FS_landscape 0.1.0",
+  "description": "Plants by species-agnostic size, planting beds, lawns and hardscape lines around a house.",
+  "type": "object",
+  "properties": {
+    "collections": {
+      "description": "Core 12.5: the extension's elements, by kind.",
+      "type": "object",
+      "properties": {
+        "plants": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/plant"
+          },
+          "description": "Plants: an ID → element map (Core 12.5)."
+        },
+        "beds": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/bed"
+          },
+          "description": "Beds: an ID → element map (Core 12.5)."
+        },
+        "lawns": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/lawn"
+          },
+          "description": "Lawns: an ID → element map (Core 12.5)."
+        },
+        "hardscape": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/hardscape"
+          },
+          "description": "Hardscape: an ID → element map (Core 12.5)."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "description": "Core 3.1.1: an ID."
+    },
+    "length": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "Core 2.1: a length, an integer of base units (1/1280 mm)."
+    },
+    "point": {
+      "description": "Core 2.6: a point, [x, y], in the element's frame (spec.md 3.1).",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/length"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "polygon": {
+      "description": "Core 2.6: a polygon of at least three points, in the element's frame; simple, with a positive area (FS-LAND-3.4.1, an invariant).",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/point"
+      },
+      "minItems": 3
+    },
+    "plant": {
+      "title": "Plant",
+      "description": "2.2: a plant at its host's position, its size its box.",
+      "type": "object",
+      "required": [
+        "form"
+      ],
+      "properties": {
+        "form": {
+          "description": "2.2: what kind of plant it is.",
+          "type": "string",
+          "enum": [
+            "tree",
+            "shrub",
+            "grass",
+            "groundcover"
+          ]
+        },
+        "habit": {
+          "description": "2.2: the shape of its canopy. Default rounded.",
+          "type": "string",
+          "enum": [
+            "rounded",
+            "spreading",
+            "columnar",
+            "conical",
+            "weeping"
+          ],
+          "default": "rounded"
+        },
+        "foliage": {
+          "description": "2.2: whether it keeps its leaves. Absent: not stated.",
+          "type": "string",
+          "enum": [
+            "deciduous",
+            "evergreen"
+          ]
+        },
+        "clearHeight": {
+          "description": "2.2: the height of the canopy's underside above the plant's bottom; less than its height (FS-LAND-2.2.1, an invariant).",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "species": {
+          "description": "2.2: its botanical name. A label only.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "commonName": {
+          "description": "2.2: its common name. A label only.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "catalogue": {
+          "description": "2.1: where it came from - a starter size, a nursery's item. A label only.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "bed": {
+      "title": "Bed",
+      "description": "2.4: a planting bed, at grade or raised.",
+      "type": "object",
+      "required": [
+        "boundary"
+      ],
+      "properties": {
+        "boundary": {
+          "description": "2.4: its outline, in its frame (3.4).",
+          "$ref": "#/$defs/polygon"
+        },
+        "cover": {
+          "description": "2.4: what covers its soil. Default mulch.",
+          "type": "string",
+          "enum": [
+            "mulch",
+            "bark",
+            "gravel",
+            "soil"
+          ],
+          "default": "mulch"
+        },
+        "edging": {
+          "description": "2.4: what edges it; a raised bed's walls. Default none.",
+          "type": "string",
+          "enum": [
+            "none",
+            "steel",
+            "stone",
+            "brick",
+            "timber",
+            "concrete"
+          ],
+          "default": "none"
+        },
+        "catalogue": {
+          "description": "2.1: where it came from - a starter size, a nursery's item. A label only.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "lawn": {
+      "title": "Lawn",
+      "description": "2.5: an area of grass.",
+      "type": "object",
+      "required": [
+        "boundary"
+      ],
+      "properties": {
+        "boundary": {
+          "description": "2.5: its outline, in its frame (3.4).",
+          "$ref": "#/$defs/polygon"
+        },
+        "cover": {
+          "description": "2.5: mown turf or long grass. Default turf.",
+          "type": "string",
+          "enum": [
+            "turf",
+            "meadow"
+          ],
+          "default": "turf"
+        },
+        "catalogue": {
+          "description": "2.1: where it came from - a starter size, a nursery's item. A label only.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "hardscape": {
+      "title": "Hardscape",
+      "description": "2.6: a path, stepping stones, a curb or a garden wall, a line swept to its width.",
+      "type": "object",
+      "required": [
+        "form",
+        "points",
+        "width"
+      ],
+      "properties": {
+        "form": {
+          "description": "2.6: what it is.",
+          "type": "string",
+          "enum": [
+            "path",
+            "steppingStones",
+            "curb",
+            "wall"
+          ]
+        },
+        "points": {
+          "description": "2.6: its line, in its frame (3.4); no two consecutive points equal (FS-LAND-3.4.2, an invariant).",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          },
+          "minItems": 2
+        },
+        "width": {
+          "description": "2.6: its width across its line, at least 1 mm.",
+          "type": "integer",
+          "minimum": 1280,
+          "maximum": 9007199254740991
+        },
+        "material": {
+          "description": "2.6: what it is made of. Absent: not stated.",
+          "type": "string",
+          "enum": [
+            "stone",
+            "gravel",
+            "concrete",
+            "brick",
+            "timber",
+            "steel"
+          ]
+        },
+        "catalogue": {
+          "description": "2.1: where it came from - a starter size, a nursery's item. A label only.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "fallback": {
+          "description": "Core 12.6: checked by Core, not here."
+        },
+        "host": {
+          "description": "Core 13.3: checked by Core, not here."
+        },
+        "clearances": {
+          "description": "Core 13.5: checked by Core, not here."
+        },
+        "option": {
+          "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+        },
+        "name": {
+          "description": "Core 12.5: checked by Core, not here."
+        },
+        "extras": {
+          "description": "Core 1.7: checked by Core, not here."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

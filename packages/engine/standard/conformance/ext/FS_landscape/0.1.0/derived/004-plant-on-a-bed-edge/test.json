@@ -1,0 +1,6 @@
+{
+  "description": "A shrub whose position is on the west bed's edge is not in the bed; one a base unit inside it is.",
+  "covers": [
+    "FS-LAND-6.1.1"
+  ]
+}

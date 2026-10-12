@@ -1,0 +1,6 @@
+{
+  "description": "A species is a label of 1 to 200 characters.",
+  "covers": [
+    "FS-LAND-1.3.1"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-LAND-INV-001",
+      "severity": "error",
+      "elements": ["X7"]
+    }
+  ]
+}

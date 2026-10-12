@@ -1,0 +1,7 @@
+{
+  "description": "A path that comes back to where it started and crosses itself is a line, not an outline: valid, and its length is every segment's.",
+  "covers": [
+    "FS-LAND-3.4.2",
+    "FS-LAND-6.1.1"
+  ]
+}

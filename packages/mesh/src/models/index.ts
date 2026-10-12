@@ -16,6 +16,7 @@ import { MM, type Cutout, type Json, type Model, type ModelContext, type V2 } fr
 import { alarm, LIGHTS, panel, receptacle, switchModel } from './electrical.js';
 import { APPLIANCES, CASEWORK, PIECES } from './furniture.js';
 import { elementKind } from './kinds.js';
+import { bed, hardscape, lawn, PLANTS } from './landscape.js';
 import { GAS_APPLIANCES } from './mechanical.js';
 import { BASIN_DEPTH, cutoutsOf, FIXTURES, rimIn, SINKS, waterHeater } from './plumbing.js';
 import { corners, placer, Sketch, type Piece } from './sketch.js';
@@ -26,6 +27,7 @@ const MODELS: Readonly<Record<string, Readonly<Record<string, Model | Readonly<R
   FS_plumbing: { fixtures: FIXTURES, waterHeaters: waterHeater },
   FS_furniture: { pieces: PIECES, appliances: APPLIANCES, casework: CASEWORK },
   FS_mechanical: { gasAppliances: GAS_APPLIANCES },
+  FS_landscape: { plants: PLANTS, beds: bed, lawns: lawn, hardscape: { path: hardscape, steppingStones: hardscape, curb: hardscape, wall: hardscape } },
 };
 
 /** The model an element of a collection is drawn with, or undefined: its fallback box then. */

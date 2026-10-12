@@ -1,0 +1,6 @@
+{
+  "description": "A Core invariant breaks - the courtyard tree's floor position is outside the courtyard - and so does FS_landscape's schema: Core's error is reported, and FS_landscape is not evaluated.",
+  "covers": [
+    "FS-LAND-1.2.2"
+  ]
+}

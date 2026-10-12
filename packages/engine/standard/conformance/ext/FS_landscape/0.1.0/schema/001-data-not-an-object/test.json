@@ -1,0 +1,6 @@
+{
+  "description": "FS_landscape's top-level data is an array: Core allows any JSON there, FS_landscape's schema does not.",
+  "covers": [
+    "FS-LAND-1.3.1"
+  ]
+}

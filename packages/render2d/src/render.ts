@@ -14,6 +14,7 @@ import { base64, el, escText as esc, linePath, polylinePath, ringsPath, type XY 
 import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
 import { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type SymbolPart, type SymbolStroke } from './plansymbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
+import { landscapeLayers, type SceneLandscape } from './landscape.js';
 
 export interface RenderOptions {
   /** The level to draw. Default: the lowest by elevation, then by ID. */
@@ -473,6 +474,15 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     ),
   );
 
+  // ── FS_landscape (FLR-T-13.5): lawns under the paving, beds and hardscape over it, plants on top ──
+  const landscape = landscapeLayers(
+    [...scene.fallbacks.values()].flatMap((fb): [string, SceneLandscape][] => (fb.landscape === undefined ? [] : [[fb.id, fb.landscape]])),
+    f,
+    pal,
+    (id) => hi.has(id),
+  );
+  if (landscape.lawns !== '') parts.push(el('g', { id: 'lawns' }, landscape.lawns));
+
   // ── slabs (Core 6.7): authored floors outside the rooms, drawn first and hatched ──
   if (scene.slabs.size) {
     let slabs = '';
@@ -502,6 +512,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     floors += el('path', { d, fill: pal.unanchored, 'fill-rule': 'evenodd' }) + el('path', { d, fill: 'url(#fs-hatch)', 'fill-rule': 'evenodd' });
   }
   parts.push(el('g', { id: 'floors' }, floors));
+  if (landscape.ground !== '') parts.push(el('g', { id: 'landscape' }, landscape.ground));
 
   // ── ceilings that are not flat (Core 0.3, 15.3, 15.4): a tray's centre dashed, a vault's ridge dash-dotted ──
   let ceilings = '';
@@ -629,6 +640,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     let fbs = '';
     let inked = false;
     for (const fb of scene.fallbacks.values()) {
+      if (fb.landscape !== undefined) continue;
       const a = hi.has(fb.id);
       const image = symbolImage(fb, options.symbols, f);
       const outline = image === null ? fixtureSymbol(fb) : null;
@@ -648,6 +660,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     if (inked) parts.push(el('defs', {}, inkFilter(pal)));
     parts.push(el('g', { id: 'fallbacks' }, fbs));
   }
+  if (landscape.plants !== '') parts.push(el('g', { id: 'plants' }, landscape.plants));
 
   // ── clearance envelopes (Core 0.2, 13.5), when asked for ──
   if (showClearances && scene.clearances.length) {

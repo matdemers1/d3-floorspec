@@ -38,6 +38,20 @@ export interface Palette {
   readonly winder: string;
   /** --color-warning: where the floor above a stair must be open from (Core 0.4, 17.6). */
   readonly opening: string;
+  /** FS_landscape (FLR-T-13.5): a lawn, its edge, and a meadow. */
+  readonly lawn: string;
+  readonly lawnEdge: string;
+  readonly meadow: string;
+  /** A bed's cover, and its edging. */
+  readonly bed: string;
+  readonly edging: string;
+  /** A path's or a stepping stone's stone, and a garden wall. */
+  readonly paving: string;
+  readonly gardenWall: string;
+  /** A canopy, an evergreen's, and a grass's blades. */
+  readonly canopy: string;
+  readonly canopyDark: string;
+  readonly grassInk: string;
 }
 
 /** The Floorspec accent, the same in both themes. */
@@ -60,6 +74,16 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     ghost: '#747888',
     winder: '#5432be',
     opening: '#714e00',
+    lawn: '#e3ead6',
+    lawnEdge: '#b9c7a3',
+    meadow: '#ebecd2',
+    bed: '#e9e1d4',
+    edging: '#8a6a55',
+    paving: '#dcdad4',
+    gardenWall: '#a9a59d',
+    canopy: '#6f8f4e',
+    canopyDark: '#3f5d3a',
+    grassInk: '#8c8a58',
   },
   dark: {
     paper: '#101117',
@@ -77,5 +101,15 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     ghost: '#999ead',
     winder: '#978cff',
     opening: '#e7b45d',
+    lawn: '#222b1d',
+    lawnEdge: '#3a4a2e',
+    meadow: '#2c2d1d',
+    bed: '#2e2620',
+    edging: '#a07c62',
+    paving: '#3a3c40',
+    gardenWall: '#6c6a66',
+    canopy: '#8fb06a',
+    canopyDark: '#6c9465',
+    grassInk: '#b9b67a',
   },
 };

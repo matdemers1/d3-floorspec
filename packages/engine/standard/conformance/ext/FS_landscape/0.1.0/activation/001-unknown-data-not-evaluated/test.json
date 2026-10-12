@@ -1,0 +1,6 @@
+{
+  "description": "The tree's form is \"palm\", which FS_landscape's schema does not allow, but no extension is known: nothing of it is evaluated, and the document is valid.",
+  "covers": [
+    "FS-LAND-1.2.1"
+  ]
+}

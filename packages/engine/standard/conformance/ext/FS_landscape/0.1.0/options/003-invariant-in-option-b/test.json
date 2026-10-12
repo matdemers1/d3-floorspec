@@ -1,0 +1,8 @@
+{
+  "description": "Option B's tree is clear to above its top: FS-LAND-INV-003 is reported for option B's design, with `design`.",
+  "covers": [
+    "FS-LAND-1.2.1",
+    "FS-LAND-1.2.3",
+    "FS-LAND-2.2.1"
+  ]
+}

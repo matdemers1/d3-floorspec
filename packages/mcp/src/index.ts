@@ -30,6 +30,7 @@ export { CRITIQUE_CATEGORIES, CRITIQUE_PROMPT_NAME, CritiqueArgs, critiquePrompt
 export { ARC_04_HINT, ARC_FIT_HINT, ARC_ROUTE_HINT, hintsFor, NEWEL_HINT, OPENING_FIT_HINT, SET_PROPERTY_HINT, STAIR_04_HINT, TAPER_HINT, UPGRADE_HINT } from './hints.js';
 export { libraryText, libraryTypes, missingLibraryTypes, US_STARTER } from './library.js';
 export { fillFurniture, FS_FURNITURE, furnitureItems, furnitureText, libraryFileBytes, vendoredFurniture, type FurnitureFill, type LibraryFile } from './furniture.js';
+export { fillLandscape, FS_LANDSCAPE, landscapeItems, landscapeText, vendoredLandscape, type LandscapeFill } from './landscape.js';
 export { landings, wells, type Landing, type Well } from './stairwell.js';
 export { ROOM_FUNCTIONS, ROOM_FUNCTION_MAPPINGS, ROOM_FUNCTIONS_TEXT } from './vocabulary.js';
 export { query } from './query.js';

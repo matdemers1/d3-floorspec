@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too - the grass is moved out of its planter, onto the patio: the document is invalid, so no lint is reported, FS_landscape's or Core's.",
+  "covers": [
+    "FS-LAND-1.2.2",
+    "FS-LAND-1.2.3"
+  ]
+}
