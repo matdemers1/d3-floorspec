@@ -20,7 +20,8 @@ import type { EditorModel } from '../model';
  *   (three.js compiles a shader per light count).
  * - Shadows are what keep a lamp's light in its room (a wall between is a wall in its shadow map),
  *   and a point light's shadow is six renders and a texture unit: so only the first `MAX_SHADOWED`
- *   in that order cast them. A shadowed lamp reaches as far as inverse-square takes it; a lamp
+ *   in that order cast them — fewer where the GPU has too few texture units for them beside a
+ *   surface's maps (`shadowBudget`) — one a room before any room has two. A shadowed lamp reaches as far as inverse-square takes it; a lamp
  *   without a shadow is cut off past its own room — at `SPILL` times the distance to its room's
  *   farthest corner (`OUTSIDE` for a light in none) — so what it leaks through a wall fades within a
  *   room of it.
@@ -47,6 +48,23 @@ export const NIGHT_SKY_LUX = 12;
 
 export const MAX_LIGHTS = 24;
 export const MAX_SHADOWED = 12;
+/**
+ * WebGL 2's least `MAX_TEXTURE_IMAGE_UNITS`, and what most GPUs give: the budget is planned for it
+ * on every GPU, so a view with more (SwiftShader's 32) draws the same shadows as the owner's laptop.
+ */
+export const GUARANTEED_TEXTURE_UNITS = 16;
+/** Texture units a fragment shader spends on the scene rather than its surface: the sun's shadow map. */
+export const SCENE_TEXTURE_UNITS = 1;
+
+/**
+ * How many lamps may cast shadows on a GPU with `units` texture units a fragment shader can sample
+ * (FLR-T-13.17): each shadowed lamp's shadow map is a sampler in every lit surface's shader, beside
+ * the surface's own maps (`materialUnits`) and the sun's shadow. Over the limit a program fails to
+ * link and three.js silently draws nothing with it — every textured floor and wall vanished with
+ * "All on" on a 16-unit GPU once the house was dressed in the material library. Planned for at most
+ * `GUARANTEED_TEXTURE_UNITS`.
+ */
+export const shadowBudget = (units: number, materialUnits: number): number => Math.max(0, Math.min(MAX_SHADOWED, Math.min(units, GUARANTEED_TEXTURE_UNITS) - materialUnits - SCENE_TEXTURE_UNITS));
 /** Metres: how far a shadowed lamp's shadow camera sees. */
 export const REACH = 15;
 /** An unshadowed lamp's cut-off, over the distance to its room's farthest corner. */
@@ -133,7 +151,7 @@ function byRoom(lights: readonly FixtureLight[]): FixtureLight[] {
 }
 
 /** The lamps to draw for a model's mesh, seen at `level` (null: none chosen), cut away or not, under a lighting. */
-export function viewLights(model: EditorModel, mesh: HouseMesh, v: { level: string | null; cutaway: boolean; order: ReadonlyMap<string, number> }, lighting: Lighting = ALL_ON): ViewLight[] {
+export function viewLights(model: EditorModel, mesh: HouseMesh, v: { level: string | null; cutaway: boolean; order: ReadonlyMap<string, number> }, lighting: Lighting = ALL_ON, shadowed = MAX_SHADOWED): ViewLight[] {
   if (model.derived === null) return [];
   const all = lightsOf(model.view, model.derived, lighting);
   const current = v.level === null ? undefined : v.order.get(v.level);
@@ -144,5 +162,5 @@ export function viewLights(model: EditorModel, mesh: HouseMesh, v: { level: stri
   });
   const here = (l: FixtureLight) => (v.level !== null && l.level === v.level) || (v.level === null && current === undefined);
   const ordered = [...byRoom(shown.filter(here)), ...byRoom(shown.filter((l) => !here(l)))].slice(0, MAX_LIGHTS);
-  return ordered.map((l, i) => viewLight(l, model, mesh, i < MAX_SHADOWED));
+  return ordered.map((l, i) => viewLight(l, model, mesh, i < Math.min(shadowed, MAX_SHADOWED)));
 }

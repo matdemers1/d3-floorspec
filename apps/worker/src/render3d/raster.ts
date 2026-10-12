@@ -15,7 +15,7 @@
  * hundred milliseconds, in plain JavaScript, identically on every machine (no GPU, no driver, no
  * Chromium in the worker image). Floats are fine here: no measurement is read from a picture.
  */
-import { groundAt, hazeAt, irradianceAt, skyRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
+import { glassAt, groundAt, hazeAt, irradianceAt, skyRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
 import type { Vec3 } from '../export/gltf/scene.js';
 import type { Camera } from './camera.js';
 import { sampleLod, type Texture } from '../pathtrace/textures.js';
@@ -382,6 +382,8 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
     return out;
   };
 
+  /** The pane being drawn: what it lets through and what it reflects. */
+  let pane: { through: Vec3; reflected: Vec3 } | null = null;
   /** Clip a view-space polygon to the near plane and draw it. */
   const draw = (t: number, blend: boolean): void => {
     const poly: Vec3[] = [view(9 * t), view(9 * t + 3), view(9 * t + 6)];
@@ -463,6 +465,27 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
         if (dot(bit, up) < 0) bit = [-bit[0], -bit[1], -bit[2]];
         frame = { t: tan, b: bit, n, l: sky === undefined ? light : sky.sun === null ? null : sky.sun.dir };
       }
+    }
+    // Glass (FLR-T-13.17, @floorspec/mesh glass.ts): what is behind it, times what the pane lets
+    // through at the angle it is seen at, and what its face reflects — the sky, under one; the
+    // studio's light, else. Its colour is what it lets through face on; it has no colour of its own.
+    pane = null;
+    if (blend) {
+      const p0: Vec3 = [(P[9 * t]! + P[9 * t + 3]! + P[9 * t + 6]!) / 3, (P[9 * t + 1]! + P[9 * t + 4]! + P[9 * t + 7]!) / 3, (P[9 * t + 2]! + P[9 * t + 5]! + P[9 * t + 8]!) / 3];
+      const v = norm(sub(p0, camera.eye));
+      let n: Vec3 = [list.normals[3 * t]!, list.normals[3 * t + 1]!, list.normals[3 * t + 2]!];
+      if (dot(n, v) > 0) n = [-n[0], -n[1], -n[2]];
+      const through = new Float64Array(3);
+      const f = glassAt([list.colors[3 * t]!, list.colors[3 * t + 1]!, list.colors[3 * t + 2]!], -dot(n, v), through);
+      let reflected: Vec3;
+      if (sky === undefined) reflected = [c[0] * f, c[1] * f, c[2] * f];
+      else {
+        const k2 = 2 * dot(v, n);
+        const out = new Float64Array(3);
+        skyRadiance(sky.field, [v[0] - k2 * n[0], -(v[2] - k2 * n[2]), v[1] - k2 * n[1]], out);
+        reflected = [out[0]! * sky.exposure * f, out[1]! * sky.exposure * f, out[2]! * sky.exposure * f];
+      }
+      pane = { through: [through[0]!, through[1]!, through[2]!], reflected };
     }
     for (let i = 1; i + 1 < screen.length; i++) {
       const tex = chain === undefined ? null : { albedo: albedoChain, relief: reliefChain, occlusion: occlusionChain, frame, lod, uv: [uvOut[0]!, uvOut[i]!, uvOut[i + 1]!] as const };
@@ -555,7 +578,11 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
           g0 *= texel[1]!;
           b0 *= texel[2]!;
         }
-        if (blend) {
+        if (blend && pane !== null) {
+          color[o] = color[o]! * pane.through[0] + pane.reflected[0];
+          color[o + 1] = color[o + 1]! * pane.through[1] + pane.reflected[1];
+          color[o + 2] = color[o + 2]! * pane.through[2] + pane.reflected[2];
+        } else if (blend) {
           color[o] = color[o]! * (1 - alpha) + r0 * alpha;
           color[o + 1] = color[o + 1]! * (1 - alpha) + g0 * alpha;
           color[o + 2] = color[o + 2]! * (1 - alpha) + b0 * alpha;

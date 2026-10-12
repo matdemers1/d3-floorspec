@@ -10,7 +10,7 @@ Every original is downloaded into <cache-dir> (each in a folder of its own) unle
 already, checked against the digest `materials/SOURCES.json` records for it once it has been
 recorded, and turned into the library's maps:
 
-- **albedo** — the base colour map, sRGB;
+- **albedo** — the base colour map, sRGB, averaging to the item's colour (all but a bare metal's);
 - **normal** — a tangent-space normal map, +Y up (glTF's convention, Core 18.2);
 - **orm** — occlusion in red, roughness in green, metalness in blue: glTF's metallic-roughness map
   with its occlusion map packed in, so one file is both of a material's maps.
@@ -305,6 +305,28 @@ def tint(img: Image.Image, colour: str, contrast: float) -> Image.Image:
     return Image.fromarray((linear_to_srgb(out) * 255 + 0.5).astype(np.uint8))
 
 
+def calibrate(img: Image.Image, colour: str) -> Image.Image:
+    """
+    The map's mean made its item's colour (FLR-T-13.17), each channel scaled in linear light — the
+    grain, veining and joints kept, only their level and cast moved. Core 18.1 makes a material's
+    `color` the colour shown where its map is not (a plan, a swatch, a distant view) and the map's
+    texel the colour where it is: the two are one material only when the map averages to the colour.
+    A publisher's scan is lit and exposed as its photographer chose — white oak came out a mid
+    brown, half as light as white oak is — so every map is brought to the colour the library states.
+    A few rounds, as texels scaled past white are clipped.
+    """
+    a = srgb_to_linear(np.asarray(img.convert('RGB')).astype(np.float64) / 255)
+    target = hex_linear(colour)
+    for _ in range(6):
+        a = np.clip(a * (target / np.maximum(a.reshape(-1, 3).mean(0), 1e-6))[None, None, :], 0, 1)
+    return Image.fromarray((linear_to_srgb(a) * 255 + 0.5).astype(np.uint8))
+
+
+def calibrated(item: dict) -> bool:
+    """Whether an item's albedo map is brought to its colour: every one but a bare metal's, whose map is its measured reflectance."""
+    return item.get('metallic', 0) < 1000
+
+
 def flatten_normal(img: Image.Image, strength: float) -> Image.Image:
     """A normal map's relief scaled by `strength` (< 1 flatter)."""
     a = np.asarray(img.convert('RGB')).astype(np.float64) / 255 * 2 - 1
@@ -472,7 +494,8 @@ def prepare(item: dict, o: Originals, files: dict) -> dict[str, str]:
         g = gen(src[1], mm, px)
         origin = f'generated: prepare-materials.py {src[1]}'
         if 'A' in want:
-            out['albedo'] = write(f'{stem}.albedo.jpg', 'albedo', Image.fromarray(g['albedo']), files, origin)
+            a = Image.fromarray(g['albedo'])
+            out['albedo'] = write(f'{stem}.albedo.jpg', 'albedo', calibrate(a, item['color']) if calibrated(item) else a, files, origin)
         if 'N' in want:
             out['normal'] = write(f'{stem}.normal.jpg', 'normal', Image.fromarray(g['normal']), files, origin)
         if 'O' in want:
@@ -485,6 +508,8 @@ def prepare(item: dict, o: Originals, files: dict) -> dict[str, str]:
         a = seamless_resize(maps['albedo'].convert('RGB'), px)
         if item.get('tint'):
             a = tint(a, item['tint'], item.get('tint_contrast', 1.0))
+        if calibrated(item):
+            a = calibrate(a, item['color'])
         out['albedo'] = write(f'{item["id"]}.albedo.jpg', 'albedo', turn(a, False) if q else a, files, origin)
     if 'N' in want:
         n = seamless_resize(maps['normal'].convert('RGB'), px)

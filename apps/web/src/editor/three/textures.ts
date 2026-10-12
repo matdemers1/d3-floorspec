@@ -1,9 +1,16 @@
 import * as THREE from 'three';
+import { GLASS_F0, paneTransmission } from '@floorspec/mesh';
 import { glow } from './highlight';
 import type { Look } from './parts';
 import type { MapRef } from './surfaces';
 import { assetUrl } from '../../lib/assets';
 import { libraryUrl } from '../../materials/library';
+
+/** A `#rrggbb` as linear RGB. */
+const linearOf = (hex: string): [number, number, number] => {
+  const c = new THREE.Color(hex);
+  return [c.r, c.g, c.b];
+};
 
 /** A textured material with no colour of its own, before its image arrives: a quiet neutral. */
 const FALLBACK = '#d9d6cf'; // d3-allow: a default material colour of the 3D model, not chrome
@@ -24,6 +31,55 @@ export const EDITOR_METALNESS_MAX = 0.5;
 export const textureUrl = (store: string, sha256: string): string => libraryUrl(sha256) ?? assetUrl(store, sha256);
 
 type Kind = 'albedo' | 'data';
+
+/**
+ * The most texture units a surface's own maps take in the 3D view (FLR-T-13.17): its base colour,
+ * its normals, its occlusion-roughness-metalness map read through one sampler (`packOrm`), and an
+ * occlusion map of its own when a document's material has one apart from its metallic-roughness
+ * map. What a fragment shader has left over is the lamps' and the sun's shadow maps' (lights.ts).
+ */
+export const MATERIAL_TEXTURE_UNITS = 4;
+
+/**
+ * Glass in the 3D view (FLR-T-13.17, @floorspec/mesh glass.ts): what is behind a pane is multiplied
+ * by what the pane lets through — about 90%, a little green, from the glass's colour — and the pane
+ * adds only what its face reflects: a faint sheen of the light on it and the sun's and lamps'
+ * glints. Blended as `behind × pane + reflection` (a constant blend colour), not as a pale
+ * surface laid over the view at 38% — which turned the lawn and sky seen through a window teal.
+ */
+export function paneMaterial(color: readonly [number, number, number], options: { vertexColors?: boolean } = {}): THREE.MeshStandardMaterial {
+  const pane = paneTransmission(color);
+  const m = new THREE.MeshStandardMaterial({
+    vertexColors: options.vertexColors === true,
+    // The face's reflection of the light about it: F0 of a white surface's, in the pane's colour.
+    color: new THREE.Color(GLASS_F0 * 1.5, GLASS_F0 * 1.5, GLASS_F0 * 1.5),
+    roughness: 0.05,
+    metalness: 0,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.CustomBlending,
+    blendEquation: THREE.AddEquation,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.ConstantColorFactor,
+  });
+  // The canvas holds sRGB: the blend's constant is the pane's transmission encoded as the canvas is.
+  const enc = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
+  m.blendColor.setRGB(enc(pane[0]), enc(pane[1]), enc(pane[2]));
+  return m;
+}
+
+/**
+ * Read metalness — and occlusion, when it is the same image — from the roughness map's sampler:
+ * the library's ORM file is all three (glTF's channels: occlusion red, roughness green, metalness
+ * blue), so one texture unit serves where three.js would bind it three times.
+ */
+export function packOrm(m: THREE.MeshStandardMaterial, occlusion: boolean): void {
+  m.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace('#include <metalnessmap_pars_fragment>', '#ifdef USE_METALNESSMAP\n#define metalnessMap roughnessMap\n#endif');
+    if (occlusion) shader.fragmentShader = shader.fragmentShader.replace('#include <aomap_pars_fragment>', '#ifdef USE_AOMAP\n#define aoMap roughnessMap\nuniform float aoMapIntensity;\n#endif');
+  };
+  m.customProgramCacheKey = () => (occlusion ? 'floorspec-orm' : 'floorspec-rm');
+}
 
 /**
  * The 3D view's textures (FLR-T-8.2, FLR-T-13.6): each map loaded once — the library's from the
@@ -101,6 +157,12 @@ export class TextureLibrary {
     let m = this.materials.get(key);
     if (m !== undefined) return m;
     const glass = ref.glass === true || look === 'glass';
+    if (glass && !on) {
+      // Library glass: a pane (paneMaterial), in its own colour's transmission.
+      const pane = paneMaterial(linearOf(ref.color ?? FALLBACK));
+      this.materials.set(key, pane);
+      return pane;
+    }
     m = new THREE.MeshStandardMaterial({
       vertexColors: true,
       color: ref.sha256 === '' ? 0xffffff : (ref.color ?? FALLBACK),
@@ -111,6 +173,10 @@ export class TextureLibrary {
       ...(look === 'ceiling' ? { polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 } : {}),
       ...(on ? { emissiveIntensity: 0.55 } : {}),
     });
+    // One sampler for the ORM map (FLR-T-13.17): three.js gives roughness, metalness and occlusion a
+    // texture unit each even when they are one image, and with the lamps' shadow maps a textured
+    // floor ran out of units — its program failed to link and it was not drawn at all.
+    if (ref.orm !== undefined) packOrm(m, ref.occlusion === undefined);
     if (on && this.accent !== '') m.emissive.set(this.accent);
     if (on) glow(m);
     this.materials.set(key, m);

@@ -25,7 +25,7 @@
 import { deriveEvaluation, evaluate, extElements, facingVector, furniture, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { appearanceOf, decorFamily, DEFAULT_COLOURS, libraryItemOf, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch, type DoorState } from '@floorspec/mesh';
 import { assetIdOf, isLibraryGlass, LIBRARY_FILES, packagePathOf, roleMaterial, textureMembers } from '@floorspec/mesh/materials';
-import { ALL_ON, isSlope, lensGlows, slopeST, type Lighting } from '@floorspec/mesh';
+import { ALL_ON, isSlope, lensGlows, paneTransmission, slopeST, type Lighting } from '@floorspec/mesh';
 import { relight } from './relight.js';
 import { decodeTexture } from '../../pathtrace/textures.js';
 import type { ImageSource } from './glb.js';
@@ -295,8 +295,9 @@ class Materials {
     const key = `default:${s.key}`;
     const at = this.index.get(key);
     if (at !== undefined) return at;
-    const [r, g, b] = linear(s.color);
     const glass = s.key === 'glass';
+    // Glass's colour is what it lets through at normal incidence (glass.ts, FLR-T-13.17): about 90%, a little green.
+    const [r, g, b] = glass ? paneTransmission(linear(s.color)) : linear(s.color);
     return this.add({
       key,
       name: `Default ${s.name}`,
@@ -315,8 +316,8 @@ class Materials {
     const at = this.index.get(key);
     if (at !== undefined) return at;
     const look = ROLE_LOOKS[role];
-    const [r, g, b] = linear(look.color);
     const opacity = look.opacity ?? 1;
+    const [r, g, b] = opacity < 1 ? paneTransmission(linear(look.color)) : linear(look.color);
     // FLR-T-13.6: a role the library dresses is drawn in its item's maps, at their real size.
     const item = roleMaterial(role);
     let texture: SceneTexture | undefined;
@@ -364,11 +365,12 @@ class Materials {
     const name = typeof m['name'] === 'string' ? `${id} ${m['name']}` : id;
     // Glass from the material library (FLR-T-13.6): see-through, as a window's is — Core 18.1 has no transmission to say so.
     const glass = isLibraryGlass(m);
+    const pane = glass ? paneTransmission([r, g, b]) : null;
     return this.add({
       key,
       name,
       floorspec: id,
-      baseColor: [r, g, b, glass ? 0.35 : 1],
+      baseColor: pane === null ? [r, g, b, 1] : [pane[0], pane[1], pane[2], 0.35],
       ...(colour === undefined ? {} : { color: colour }),
       metallic: (metallic ?? 0) / 1000,
       roughness: (roughness ?? 1000) / 1000,

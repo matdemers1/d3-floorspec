@@ -141,14 +141,63 @@ const shrub: Model = (s, el) => {
   lobe(s, 'mound', main === 'foliage' ? 'foliageDark' : 'foliage', around(c, R * 0.42, 14), R * 0.52, H * 0.36 * flat, H * 0.36 * flat);
 };
 
-/** An ornamental grass: a fountain of blades, narrow at its crown and wide at its tips, with plumes above. */
+/** A level direction between table angles: `k` in half steps of 15°, so 48 about the circle. */
+function heading(k: number): V2 {
+  const i = Math.floor(k / 2) % 24;
+  if (k % 2 === 0) return [COS[i]!, SIN[i]!];
+  const x = COS[i]! + COS[(i + 1) % 24]!;
+  const y = SIN[i]! + SIN[(i + 1) % 24]!;
+  const n = Math.hypot(x, y);
+  return [x / n, y / n];
+}
+
+/**
+ * A blade rising from `base` out of the crown at `c` toward heading `u`, at height `z0`, reaching
+ * `reach` further out at its tip: it climbs to `peak` at `at` of its run (past 1, still rising at
+ * its tip) and arches over after it.
+ */
+function blade(c: V2, u: V2, z0: number, base: number, reach: number, peak: number, at: number, width: number): { points: [number, number, number][]; widths: number[] } {
+  const S = [0, 0.3, 0.6, 0.85, 1];
+  const points = S.map((s): [number, number, number] => {
+    const d = base + reach * s;
+    const q = s / at;
+    return [c[0] + u[0] * d, c[1] + u[1] * d, max(z0 * 0.5, z0 + peak * (2 * q - q * q))];
+  });
+  // Narrower at its base than a little way up, as a leaf is: the base is a hole in the crown's top.
+  return { points, widths: [width * 0.55, width, width * 0.75, width * 0.4, 0] };
+}
+
+/**
+ * An ornamental grass (FLR-T-13.17): a clump of thin blades fanning out of a low crown — the young
+ * ones upright and green in the middle, the older ones arching over and drooping toward the ground
+ * at the edge, turning to straw — with feathery plumes on stalks above it. It reads as a clump of
+ * grass from the street and from the room; drawn before as one lathed cup, it read as a cone.
+ */
 const grass: Model = (s, el) => {
   const c = stem(s, el);
   const H = s.Z;
   const R = min(c[0], s.X - c[0], c[1], s.Y - c[1]);
-  s.lathe('blades', 'grass', 'z', c, [[0, 0], [R * 0.28, 0], [R * 0.6, H * 0.34], [R * 0.97, H * 0.66], [R * 0.78, H * 0.72], [R * 0.4, H * 0.66], [0, H * 0.7]]);
-  // plumes: thin spikes rising out of the fountain
-  for (const k of [0, 5, 10, 14, 19]) cone(s, 'plume', 'plume', around(c, R * 0.26, k), R * 0.07, H * 0.5, H);
+  const w = max(R * 0.045, 1 * MM);
+  const zc = min(H * 0.04, 30 * MM);
+  // Each ring of blades leaves the crown at a radius of its own, the blades of a ring evenly round
+  // it with room between their bases: the crown's top is triangulated round them.
+  const ring = (n: number, offset: number, base: number, reach: number, peak: number, at: number, width: number) =>
+    Array.from({ length: n }, (_, i) => blade(c, heading(Math.round(((i + offset) * 48) / n) % 48), zc, base, reach, peak, at, width));
+  const circle = (r: number): V2[] => Array.from({ length: 24 }, (_, k): V2 => [c[0] + r * COS[k]!, c[1] + r * SIN[k]!]);
+  // the upright heart, green
+  s.tuft('blades', 'grass', circle(R * 0.17), null, zc, [...ring(10, 0.2, R * 0.075, R * 0.26, H * 0.9, 1.25, w), ...ring(16, 0.6, R * 0.13, R * 0.52, H * 0.76, 0.95, w)]);
+  // the arching skirt, its tips down toward the ground, sun-bleached
+  s.tuft('skirt', 'meadow', circle(R * 0.27), circle(R * 0.18), zc, ring(24, 0.35, R * 0.225, R * 0.7, H * 0.48, 0.62, w * 1.1));
+  // plumes: a stalk each, and a feathery head on it above the blades
+  [1, 9, 17, 25, 33, 41].forEach((k, i) => {
+    const u = heading(k);
+    const d = R * (0.08 + 0.05 * (i % 3));
+    const top = H * (0.98 - 0.05 * (i % 3));
+    const z0 = H * 0.72;
+    const r = max(R * 0.045, 8 * MM);
+    const rs = max(R * 0.008, 2 * MM);
+    s.lathe('plume', 'plume', 'z', [c[0] + u[0] * d, c[1] + u[1] * d], [[0, 0], [rs, 0], [rs, z0], [r * 0.6, z0 + (top - z0) * 0.2], [r, z0 + (top - z0) * 0.5], [r * 0.55, z0 + (top - z0) * 0.85], [0, top]]);
+  });
 };
 
 /** A groundcover: low mounds over the ground. */

@@ -2,7 +2,7 @@
 // The named export: under NodeNext the default resolves to the module namespace, not the class.
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { LIBRARY_FILES, MATERIAL_LIBRARY } from '@floorspec/mesh/materials';
+import { embedLibraryMaterial, LIBRARY_FILES, MATERIAL_LIBRARY } from '@floorspec/mesh/materials';
 import { FT, firstRunSetup, password, projectIn } from './support.js';
 
 /**
@@ -14,6 +14,24 @@ import { FT, firstRunSetup, password, projectIn } from './support.js';
  * plank's maps at their real size — 1.7 m a tile, so a 12 ft floor is 2.15 tiles across. axe runs
  * on the library in both themes; screenshots land in test-results/materials-*.png.
  */
+
+/** The suite's one account: set up by whichever test runs first, signed in to by the rest. */
+const OWNER = { name: 'Finisher', email: 'finisher@example.test', password: password('materials') };
+
+async function signIn(page: Page): Promise<void> {
+  await page.goto('/');
+  const setup = page.getByRole('heading', { name: 'Set up D3 Floorspec' });
+  const signin = page.getByRole('button', { name: /Sign in/ }).first();
+  await expect(setup.or(signin)).toBeVisible();
+  if (await setup.isVisible()) {
+    await firstRunSetup(page, OWNER);
+    return;
+  }
+  await page.getByLabel('Email').fill(OWNER.email);
+  await page.getByLabel('Password', { exact: true }).fill(OWNER.password);
+  await signin.click();
+  await expect(page.getByRole('heading', { name: 'Projects', level: 1 })).toBeVisible();
+}
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
@@ -49,7 +67,7 @@ async function audit(page: Page, state: string): Promise<void> {
 
 test('adds a library material with its maps, finishes a floor in it, and draws it in 3D at its real size', async ({ page }) => {
   test.setTimeout(180_000);
-  await firstRunSetup(page, { name: 'Finisher', email: 'finisher@example.test', password: password('materials') });
+  await signIn(page);
   await page.getByRole('button', { name: 'New project' }).first().click();
   const created = page.getByRole('dialog', { name: 'New project' });
   await created.getByLabel('Name').fill('Library kitchen');
@@ -124,4 +142,72 @@ test('adds a library material with its maps, finishes a floor in it, and draws i
   expect(metres(onFloor.v)).toBeLessThan(inside(12)[1]);
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'test-results/materials-3d.png' });
+});
+
+/**
+ * FLR-T-13.17: with every lamp on, a house dressed in the library still draws every surface. Each
+ * shadowed lamp's shadow map is a texture unit in every lit surface's shader beside the surface's own
+ * maps; over the GPU's limit (16 on most) a program fails to link and three.js draws nothing with it —
+ * the Courtyard House's textured floors and walls vanished under "All on". Sixteen downlights over a
+ * kitchen floored in white oak, its walls in brick with an occlusion map of their own (the most maps
+ * a surface takes) and its ceiling painted: every program the view compiles links, and none samples
+ * more than WebGL 2's guaranteed 16 units — on any GPU, SwiftShader's 32 included.
+ */
+test('All on over textured materials: every program links within 16 texture units, and every wall and floor is drawn', async ({ page }) => {
+  test.setTimeout(180_000);
+  await signIn(page);
+  await page.getByRole('button', { name: 'New project' }).first().click();
+  const created = page.getByRole('dialog', { name: 'New project' });
+  await created.getByLabel('Name').fill('Lit library kitchen');
+  await created.getByRole('button', { name: 'Create project' }).click();
+  await expect(page).toHaveURL(/\/projects\/[0-9a-f-]{36}$/);
+  const project = projectIn(page.url());
+  expect((await page.request.post(`/api/projects/${project}/ops`, { data: { batch: KITCHEN } })).status()).toBe(201);
+  const doc = (await (await page.request.get(`/api/projects/${project}/model.json`)).json()) as unknown;
+  const pending = new Map<string, string>();
+  const oak = embedLibraryMaterial(doc, 'white-oak-plank', {}, pending);
+  const brick = embedLibraryMaterial(doc, 'brick-red-running', {}, pending);
+  const paint = embedLibraryMaterial(doc, 'paint-eggshell', {}, pending);
+  const downlight = { min: [-128_000, -128_000, -192_000], max: [128_000, 128_000, 0] };
+  const lights = Array.from({ length: 16 }, (_, i) => ({
+    op: 'placeElement', id: `LT${String(i + 1)}`, extension: 'FS_electrical', collection: 'lights',
+    host: { mode: 'surface', room: 'Kitchen', surface: 'ceiling', at: [Math.round(((i % 4) + 0.5) * 3 * FT * 0.9), Math.round((Math.floor(i / 4) + 0.5) * 2.5 * FT * 0.9)] },
+    element: { fixture: 'recessed', fallback: { box: downlight } },
+  }));
+  const batch = [
+    ...oak.ops, ...brick.ops, ...paint.ops,
+    // The most maps a surface takes: an occlusion map apart from its metallic-roughness map.
+    { op: 'setProperty', id: brick.id, path: '/texture/occlusion', value: 'brick-red-running.normal' },
+    { op: 'setProperty', id: 'KIT', path: '/floorFinish', value: oak.id },
+    { op: 'setProperty', id: 'KIT', path: '/wallFinish', value: brick.id },
+    { op: 'setProperty', id: 'KIT', path: '/ceilingFinish', value: paint.id },
+    { op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_electrical', value: '0.1.0' },
+    ...lights,
+  ];
+  const applied = await page.request.post(`/api/projects/${project}/ops`, { data: { batch } });
+  expect(applied.status(), await applied.text()).toBe(201);
+
+  type Programs = { units: number; list: { name: string; linked: boolean; samplers: number }[] };
+  type View = { __floorspec3d?: { ready: boolean; textured: Textured[]; lights: { lamps: { shadow: boolean }[] }; programs: Programs; shown: Record<string, number> } };
+  await page.goto(`/projects/${project}/editor`);
+  await page.getByRole('radiogroup', { name: 'View' }).getByRole('radio', { name: '3D' }).click();
+  await page.waitForFunction(() => (window as unknown as View).__floorspec3d?.ready === true, undefined, { timeout: 30_000 });
+  await page.getByRole('toolbar', { name: '3D view' }).getByRole('button', { name: 'Lights' }).click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as View).__floorspec3d!.lights.lamps.length)).toBe(16);
+  // Every map arrived, so every material has compiled with all its maps.
+  await page.waitForFunction(() => {
+    const t = (window as unknown as View).__floorspec3d!.textured;
+    return ['white-oak-plank', 'brick-red-running'].every((m) => t.some((x) => x.material === m && x.loaded));
+  }, undefined, { timeout: 30_000 });
+  await page.waitForTimeout(1500);
+  const programs = await page.evaluate(() => (window as unknown as View).__floorspec3d!.programs);
+  expect(programs.list.length).toBeGreaterThan(0);
+  expect.soft(programs.list.filter((p) => !p.linked).map((p) => p.name), 'programs that failed to link').toEqual([]);
+  expect.soft(Math.max(...programs.list.map((p) => p.samplers)), 'the most texture units a program samples').toBeLessThanOrEqual(16);
+  const lamps = await page.evaluate(() => (window as unknown as View).__floorspec3d!.lights.lamps);
+  expect(lamps.filter((l) => l.shadow).length, 'shadowed lamps').toBeLessThanOrEqual(11);
+  const shown = await page.evaluate(() => (window as unknown as View).__floorspec3d!.shown);
+  expect(shown['L1:wall'] ?? 0).toBe(4);
+  expect(shown['L1:floor'] ?? 0).toBeGreaterThan(0);
+  await page.screenshot({ path: 'test-results/materials-all-on.png' });
 });

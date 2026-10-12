@@ -238,6 +238,74 @@ export class Sketch {
     }
   }
 
+  /**
+   * A tuft (FLR-T-13.17): a low crown — a ring of `outer` in plan, or a band between `outer` and
+   * `inner` — from the ground to `z1`, with thin tapering blades growing out of its top: an
+   * ornamental grass's clump, one closed solid. Each blade follows a path in local (x, y, z) from
+   * its base, on the crown's top at `z1`, to its tip, with its width at each point (the tip's 0): a
+   * ribbon of that width across its run, a quarter of it thick upward, coming to a point. Its base
+   * is a hole in the crown's top that its sides rise from, so the crown and every blade are one
+   * watertight piece. No blade's base may touch another's or the crown's edge.
+   */
+  tuft(name: string, role: ModelRole, outer: readonly V2[], inner: readonly V2[] | null, z1: number, paths: readonly { readonly points: readonly V3[]; readonly widths: readonly number[] }[]): void {
+    const b = this.piece(name, role);
+    const ccw = (r: readonly V2[]) => (signedArea(r) < 0 ? [...r].reverse() : [...r]);
+    const o = ccw(outer);
+    const i = inner === null ? null : ccw(inner);
+    const at = (z: number) => (p: V2): P3 => this.place(p[0], p[1], z);
+    const holes: P3[][] = [];
+    for (const { points, widths } of paths) {
+      if (points.length < 2) continue;
+      const first = points[0]!;
+      const last = points[points.length - 1]!;
+      const run = Math.hypot(last[0] - first[0], last[1] - first[1]);
+      // Along the blade's run in plan, and level across it (any level direction for one straight up).
+      const [dx, dy] = run < 1 ? [0, 1] : [(last[0] - first[0]) / run, (last[1] - first[1]) / run];
+      const [px, py] = [-dy, dx];
+      const sections: P3[][] = points.slice(0, -1).map((p, k) => {
+        const w = (widths[k] ?? 0) / 2;
+        const t = Math.max(widths[k] ?? 0, 4) / 4;
+        const left = this.place(p[0] - px * w, p[1] - py * w, p[2]);
+        const right = this.place(p[0] + px * w, p[1] + py * w, p[2]);
+        // Its base lies in the crown's top: thick along its run there, upward above it.
+        const third = k === 0 ? this.place(p[0] + dx * t, p[1] + dy * t, p[2]) : this.place(p[0], p[1], p[2] + t);
+        return [left, right, third];
+      });
+      const tip = this.place(last[0], last[1], last[2]);
+      const base = sections[0]!;
+      const faces: P3[][] = [];
+      for (let k = 0; k + 1 < sections.length; k++) {
+        const a = sections[k]!;
+        const c = sections[k + 1]!;
+        for (let j = 0; j < 3; j++) faces.push([a[j]!, a[(j + 1) % 3]!, c[(j + 1) % 3]!], [a[j]!, c[(j + 1) % 3]!, c[j]!]);
+      }
+      const end = sections[sections.length - 1]!;
+      for (let j = 0; j < 3; j++) faces.push([end[j]!, end[(j + 1) % 3]!, tip]);
+      // Wound as a closed blade is whose base [0, 2, 1] is a cap facing down into the crown: the sides
+      // as built when that cap faces down, every face turned when it faces up.
+      const [b0, b1, b2] = [base[0]!, base[1]!, base[2]!];
+      const v = -((b2[0] - b0[0]) * (b1[1] - b0[1]) - (b2[1] - b0[1]) * (b1[0] - b0[0]));
+      for (const f of faces) {
+        const [x, y, z] = f.map((q) => b.vertex(q)) as [number, number, number];
+        if (v >= 0) b.tri(x, y, z);
+        else b.tri(x, z, y);
+      }
+      // The cap's winding is the hole's in the top — clockwise from above — the crown's top taking its place.
+      holes.push(v >= 0 ? [base[0]!, base[2]!, base[1]!] : [base[0]!, base[1]!, base[2]!]);
+    }
+    const top = at(z1);
+    const ground = at(0);
+    b.face([o.map(top), ...(i === null ? [] : [[...i].reverse().map(top)]), ...holes]);
+    b.face([[...o].reverse().map(ground), ...(i === null ? [] : [i.map(ground)])]);
+    for (const [r, outward] of [[o, true], ...(i === null ? [] : [[i, false] as const])] as const)
+      for (let k = 0; k < r.length; k++) {
+        const p = r[k]!;
+        const q = r[(k + 1) % r.length]!;
+        if (outward) b.quad(ground(p), ground(q), top(q), top(p));
+        else b.quad(ground(q), ground(p), top(p), top(q));
+      }
+  }
+
   /** A cylinder about an axis: radius r, from h0 to h1. */
   cylinder(name: string, role: ModelRole, axis: Axis, centre: V2, r: number, h0: number, h1: number): void {
     if (r < 2 || h1 - h0 < 2) return;

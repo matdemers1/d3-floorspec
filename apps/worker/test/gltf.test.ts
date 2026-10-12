@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileS
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { evaluate, facingVector, OFFICIAL_READER } from '@floorspec/engine';
-import { DECOR_ROLES, LANDSCAPE_ROLES, MODEL_ROLES, ROLE_LOOKS } from '@floorspec/mesh';
+import { DECOR_ROLES, LANDSCAPE_ROLES, MODEL_ROLES, paneTransmission, ROLE_LOOKS } from '@floorspec/mesh';
 import { roleMaterial } from '@floorspec/mesh/materials';
 import { validateBytes } from 'gltf-validator';
 import { describe, expect, it } from 'vitest';
@@ -386,7 +386,8 @@ describe('glTF export', () => {
     expect([...byRole.keys()].sort()).toEqual(MODEL_ROLES.filter((r) => r !== 'door' && r !== 'frame' && r !== 'millwork' && !LANDSCAPE_ROLES.includes(r) && !DECOR_ROLES.includes(r)).sort());
     for (const [role, m] of byRole) {
       const look = ROLE_LOOKS[role as keyof typeof ROLE_LOOKS];
-      const [r, g, b] = linear(look.color);
+      // Glass's base colour is what the pane lets through (FLR-T-13.17, glass.ts); every other look's its colour.
+      const [r, g, b] = look.opacity === undefined ? linear(look.color) : paneTransmission(linear(look.color));
       // A role the material library dresses (FLR-T-13.6) is its item's maps, the texel its colour.
       const item = roleMaterial(role as keyof typeof ROLE_LOOKS);
       if (item?.texture !== undefined) {

@@ -26,7 +26,7 @@ import type { LibraryCategory, LibraryFile, LibraryItemData, LibraryMaps } from 
 export type { LibraryCategory, LibraryFile, LibraryItemData, LibraryMaps, LibraryUse } from './types.js';
 
 /** The library, as a material's `source` names it (Core 8.1.3). */
-export const MATERIAL_LIBRARY = { library: 'https://d3cloud.io/floorspec/library/materials', version: '0.1.0', license: 'CC0-1.0' } as const;
+export const MATERIAL_LIBRARY = { library: 'https://d3cloud.io/floorspec/library/materials', version: '0.2.0', license: 'CC0-1.0' } as const;
 
 /** Every item, in the library's order: by category, then as listed. */
 export const LIBRARY_MATERIALS: readonly LibraryItemData[] = ITEMS;
@@ -193,6 +193,10 @@ export function embedLibraryMaterial(document: unknown, itemId: string, options:
   return { id, ops: [...upgradeOnce(document, pending), ...assets.ops, { op: 'addElement', collection: 'materials', id, element: materialElement(item, assets.idOf, options) }] };
 }
 
+/** JSON with every object's keys in order: two values the same whichever order their members were written in. */
+const canonical = (v: unknown): string =>
+  JSON.stringify(v, (_, x: unknown) => (x !== null && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x as Json).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : x));
+
 /**
  * The batch that turns a document's existing material into a library item, in place — so every
  * finish, layer, slab and roof that names it is the library's now, and no reference moves. Its
@@ -215,7 +219,49 @@ export function swapToLibraryMaterial(document: unknown, materialId: string, ite
   const ops: LibraryOp[] = [...upgradeOnce(document, pending), ...assets.ops];
   for (const key of ['metallic', 'roughness', 'texture'])
     if (current[key] !== undefined && next[key] === undefined) ops.push({ op: 'unsetProperty', id: materialId, path: `/${key}` });
-  for (const [key, value] of Object.entries(next)) if (JSON.stringify(current[key]) !== JSON.stringify(value)) ops.push({ op: 'setProperty', id: materialId, path: `/${key}`, value });
+  for (const [key, value] of Object.entries(next)) if (canonical(current[key]) !== canonical(value)) ops.push({ op: 'setProperty', id: materialId, path: `/${key}`, value });
+  return ops;
+}
+
+/**
+ * The batch that brings every material a document embedded from an earlier build of the library up
+ * to this one (FLR-T-13.17: 0.2.0's colour maps average to their item's colour; 0.1.0's were the
+ * publishers' exposure, white oak a mid brown): each such material swapped in place to its item as
+ * it is now — its maps' new files as assets, its colour the item's (a colour-agnostic item's stays
+ * the person's), its name, turn and offset kept — and every asset only its old maps used removed.
+ * Empty when every library material is current.
+ */
+export function refreshLibraryMaterials(document: unknown): LibraryOp[] {
+  const doc = (document ?? {}) as { materials?: Record<string, Json | undefined>; assets?: Record<string, Json | undefined> };
+  const pending = new Map<string, string>();
+  const ops: LibraryOp[] = [];
+  const dropped = new Set<string>();
+  for (const id of Object.keys(doc.materials ?? {}).sort()) {
+    const m = doc.materials![id]!;
+    const item = libraryItemOfMaterial(m);
+    if (item === undefined) continue;
+    const tex = (m['texture'] ?? {}) as Json;
+    const maps = item.texture === undefined ? {} : textureMembers(item.texture.maps);
+    const current = Object.entries(maps).every(([k, file]) => {
+      const a = typeof tex[k] === 'string' ? doc.assets?.[tex[k]] : undefined;
+      return a?.['sha256'] === FILES[file]?.sha256;
+    });
+    if (current && (m['source'] as Json)['version'] === MATERIAL_LIBRARY.version) continue;
+    const rotation = typeof tex['rotation'] === 'number' ? tex['rotation'] : undefined;
+    const swap = swapToLibraryMaterial(document, id, item.id, rotation === undefined ? {} : { rotation }, pending);
+    // The tile's offset is the person's placement: kept.
+    if (Array.isArray(tex['offset']))
+      for (const op of swap) if (op.op === 'setProperty' && op['path'] === '/texture') op['value'] = { ...(op['value'] as Json), offset: tex['offset'] };
+    ops.push(...swap);
+    for (const k of ['asset', 'normal', 'metallicRoughness', 'occlusion']) if (typeof tex[k] === 'string') dropped.add(tex[k]);
+  }
+  if (ops.length === 0) return ops;
+  // An old map's asset goes when no material — nor anything else in the document — names it once the swaps are made.
+  const named = new Set<string>();
+  const swapped = new Set(ops.filter((o) => o.op === 'setProperty' && o['path'] === '/texture').map((o) => o['id'] as string));
+  for (const op of ops) if (op.op === 'setProperty' && op['path'] === '/texture') for (const v of Object.values(op['value'] as Json)) if (typeof v === 'string') named.add(v);
+  const rest = JSON.stringify({ ...doc, assets: undefined, materials: Object.fromEntries(Object.entries(doc.materials ?? {}).filter(([id]) => !swapped.has(id))) });
+  for (const asset of [...dropped].sort()) if (!named.has(asset) && !rest.includes(JSON.stringify(asset))) ops.push({ op: 'removeElement', id: asset });
   return ops;
 }
 

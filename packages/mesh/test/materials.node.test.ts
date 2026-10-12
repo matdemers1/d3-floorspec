@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { apply } from '@floorspec/ops';
 import { describe, expect, it } from 'vitest';
-import { embedLibraryMaterial, isLibraryGlass, LIBRARY_CATEGORIES, LIBRARY_FILES, LIBRARY_MATERIALS, libraryFileOf, libraryItemOfMaterial, MATERIAL_LIBRARY, ROLE_LIBRARY, swapToLibraryMaterial } from '../src/materials/index.js';
+import { embedLibraryMaterial, isLibraryGlass, LIBRARY_CATEGORIES, LIBRARY_FILES, LIBRARY_MATERIALS, libraryFileOf, libraryItemOfMaterial, MATERIAL_LIBRARY, refreshLibraryMaterials, ROLE_LIBRARY, swapToLibraryMaterial } from '../src/materials/index.js';
 import { MODEL_ROLES } from '../src/roles.js';
 
 /**
@@ -137,6 +137,34 @@ describe('the library\'s items', () => {
     expect(ops.filter((o) => o['id'] === '$document')).toEqual([{ op: 'setProperty', id: '$document', path: '/floorspec', value: '0.3' }]);
     expect(ops[0]).toMatchObject({ id: '$document' });
     expect(apply(doc as never, { batch: ops }).status).toBe('committed');
+  });
+
+  it('bring a material embedded from an earlier build of the library up to this one, keeping its turn and colour-agnostic colour (FLR-T-13.17)', () => {
+    const doc = { floorspec: '0.3', project: { name: 'Old library' }, rooms: {}, materials: {} as Record<string, Json>, assets: {} as Record<string, Json> };
+    const pending = new Map<string, string>();
+    const oak = embedLibraryMaterial(doc, 'white-oak-plank', { rotation: 90_000_000 }, pending);
+    const sage = embedLibraryMaterial(doc, 'paint-eggshell', { id: 'paint-sage', color: '#a7b59c' }, pending);
+    const first = apply(doc, { batch: [...oak.ops, ...sage.ops] });
+    if (first.status !== 'committed') throw new Error(JSON.stringify(first));
+    // As 0.1.0 embedded it: its colour map another file (the publisher's exposure), the version older.
+    const old = JSON.parse(first.document) as { materials: Record<string, Json>; assets: Record<string, Json> };
+    old.assets['white-oak-plank.albedo'] = { ...old.assets['white-oak-plank.albedo']!, sha256: '9'.repeat(64), path: `assets/${'9'.repeat(64)}.jpg` };
+    for (const m of Object.values(old.materials)) (m['source'] as Json)['version'] = '0.1.0';
+    old.materials[oak.id]!['texture'] = { ...(old.materials[oak.id]!['texture'] as Json), offset: [12_800, 0] };
+    const ops = refreshLibraryMaterials(old);
+    // The new colour map added (so a tool uploads it), the texture pointed at it, the old one removed.
+    expect(ops.filter((o) => o.op === 'addElement').map((o) => (o['element'] as Json)['sha256'])).toEqual([LIBRARY_FILES['white-oak-plank.albedo.jpg']!.sha256]);
+    expect(ops).toContainEqual({ op: 'removeElement', id: 'white-oak-plank.albedo' });
+    const r = apply(old, { batch: ops });
+    expect(r.status).toBe('committed');
+    if (r.status !== 'committed') return;
+    const now = JSON.parse(r.document) as { materials: Record<string, Json>; assets: Record<string, Json> };
+    const tex = now.materials[oak.id]!['texture'] as Json;
+    expect(tex).toMatchObject({ rotation: 90_000_000, offset: [12_800, 0], normal: 'white-oak-plank.normal' });
+    expect(now.assets[tex['asset'] as string]!['sha256']).toBe(LIBRARY_FILES['white-oak-plank.albedo.jpg']!.sha256);
+    expect(now.materials['paint-sage']).toMatchObject({ color: '#a7b59c', source: { version: MATERIAL_LIBRARY.version } });
+    expect(now.assets['white-oak-plank.albedo']).toBeUndefined();
+    expect(refreshLibraryMaterials(now)).toEqual([]);
   });
 
   it('dress the roles of a model\'s pieces with items that exist', () => {
