@@ -241,6 +241,32 @@ describe('glTF export', () => {
     expect(names).toEqual(expect.arrayContaining(['SIDING Fibre-cement lap siding', 'GWB Gypsum board', 'STUD SPF framing', 'Model millwork', 'Model frame', 'Model door', 'Model glass']));
   });
 
+  it('clads a gable end as the wall it stands on, in the scene and in the file (FLR-T-12.38)', async () => {
+    const wing = load(here('../../../packages/mesh/test/fixtures/courtyard-guest-wing.floorspec.json'));
+    /** Each material a roof's gable ends are drawn in, by its key. */
+    const gableMaterials = async (doc: Json): Promise<string[]> => {
+      const scene = await buildScene(doc);
+      const roof = scene.levels.flatMap((l) => l.nodes).find((n) => n.id === 'RF2')!;
+      return [...new Set(roof.primitives.filter((p) => p.part === 'roofGable').map((p) => scene.materials[p.material]!.key))].sort();
+    };
+    // The south gable over fibre-cement siding, the four over the arc wall's brick, the east one
+    // over the gypsum of the interior walls the fixture ends at: never the roof's metal, never the tan default.
+    expect(await gableMaterials(wing)).toEqual(['M:brick-veneer', 'M:fibre-cement-siding', 'M:gypsum-board']);
+    // With no wall under it, the gable's own default.
+    const away = structuredClone(wing);
+    const roof = (away['roofs'] as Record<string, { footprint: number[][] }>)['RF2']!;
+    roof.footprint = roof.footprint.map(([x, y]) => [x! + 25_600_000, y! + 25_600_000]);
+    expect(await gableMaterials(away)).toEqual(['default:gable']);
+    // In the glTF: the brick veneer is a material of the file, used by the roof's node.
+    const glb = readGlb((await exportGltf(wing, VERSION)).bytes);
+    const materials = glb.json['materials'] as { extras: { floorspec: Json } }[];
+    const brick = materials.findIndex((m) => m.extras.floorspec['id'] === 'brick-veneer');
+    expect(brick).toBeGreaterThanOrEqual(0);
+    const node = nodesOf(glb.json).find((n) => n.extras?.floorspec?.['id'] === 'RF2')!;
+    const meshes = glb.json['meshes'] as { primitives: { material: number }[] }[];
+    expect(meshes[node.mesh!]!.primitives.map((p) => p.material)).toContain(brick);
+  });
+
   it('is deterministic: the same version gives the same bytes', async () => {
     for (const doc of [HOUSES['l-stair-hip-roof']!, HOUSES['kitchen-options']!]) {
       const a = await exportGltf(doc, VERSION);

@@ -238,8 +238,11 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
       return one(materialColour(model, part.material) ?? DEFAULTS.slab);
     case 'roof':
       return one(materialColour(model, part.material) ?? DEFAULTS.roof);
-    case 'roofGable':
-      return one(DEFAULTS.gable);
+    case 'roofGable': {
+      // Clad as the wall it stands on (FLR-T-12.38): that wall's outside face, as the wall draws it.
+      const c = part.cladding;
+      return one(materialColour(model, c?.material) ?? (c === undefined ? DEFAULTS.gable : appearance(model).face(c.wall, c.side).color));
+    }
     case 'stairFlight':
     case 'stairLanding':
     case 'stairColumn':
