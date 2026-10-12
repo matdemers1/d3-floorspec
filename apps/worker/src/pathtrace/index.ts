@@ -19,7 +19,7 @@ import { encodePng } from '../render3d/png.js';
 import { denoise } from './denoise.js';
 import { BUDGET_MS, DEFAULT_SUN, LIGHTS, MAX_WORK, QUALITIES, SIZES, TIMES, withinBudget, type Lights, type Quality, type Size, type SunInput, type TimeOfDay } from './presets.js';
 import { decodeTexture, type Texture } from './textures.js';
-import { EXPOSURE_PER_NIT } from '@floorspec/mesh';
+import { EXPOSURE_PER_NIT, type Lighting } from '@floorspec/mesh';
 import { exposureOf, toneMap, type ExposureBand, type PtLamp, type PtMaterial, type PtScene, type Sun } from './trace.js';
 import { traceParallel } from './threads.js';
 import { resolveSky, skySummary, type ResolvedSky, type SkySummary } from './sky.js';
@@ -67,6 +67,8 @@ export interface StillOptions {
   readonly lights?: Lights;
   /** Default `night` with `lights`, else `day`. */
   readonly time?: TimeOfDay;
+  /** The lighting scene the scene was built with (FLR-T-13.12), by name: reported with `lit`. */
+  readonly scene?: string;
   /** The sky (FLR-T-13.4), from `renderStill`/`renderLit`: its preset, sun and maps. Without it, the old gradient sky over a plate. */
   readonly skyLight?: ResolvedSky;
   /** For `renderStill`: the sky preset (FLR-T-13.4) and a date and time at the site (FLR-T-13.9) that places the sun. */
@@ -91,7 +93,7 @@ export interface StillResult {
    * With `lights`: how the still was lit, how many lamps were on, and the exposure it was metered
    * to, per cd/m² (FLR-T-13.1, @floorspec/mesh `EXPOSURE_PER_NIT`).
    */
-  readonly lit?: { readonly lights: Lights; readonly time: TimeOfDay; readonly lamps: number; readonly exposure?: number };
+  readonly lit?: { readonly lights: Lights; readonly scene?: string; readonly time: TimeOfDay; readonly lamps: number; readonly exposure?: number };
   /** The sky it was seen under (FLR-T-13.4, 13.9): the preset, the sun's place and why, and the site's place, assumed or the document's. */
   readonly sky?: SkySummary;
   readonly ms: number;
@@ -383,7 +385,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     triangles: pt.count,
     threads: traced.threads,
     maps: { used: maps.used, missing: maps.missing },
-    ...(options.lights === undefined ? {} : { lit: { lights: options.lights, time, lamps: pt.lamps?.length ?? 0, ...(exposed === undefined ? {} : { exposure: Number((exposed / LUX_PER_UNIT).toPrecision(3)) }) } }),
+    ...(options.lights === undefined ? {} : { lit: { lights: options.lights, ...(options.scene === undefined ? {} : { scene: options.scene }), time, lamps: pt.lamps?.length ?? 0, ...(exposed === undefined ? {} : { exposure: Number((exposed / LUX_PER_UNIT).toPrecision(3)) }) } }),
     ...(sky === undefined ? {} : { sky: skySummary(sky, exposed === undefined ? undefined : Number((exposed / LUX_PER_UNIT).toPrecision(3))) }),
     ms: Date.now() - started,
   };
@@ -426,6 +428,12 @@ export interface LitOptions {
   readonly images?: ImageSource;
   /** The doors closed (default) or open (FLR-T-13.8). */
   readonly doors?: SceneOptions['doors'];
+  /**
+   * With `lights` on, which are on, how bright and how warm (FLR-T-13.12): a lighting scene's. Default
+   * every one at full. `scene` is its name, for the summary.
+   */
+  readonly lighting?: Lighting;
+  readonly scene?: string;
   /** The sky (FLR-T-13.4) and a date and time at the site (FLR-T-13.9); `time` maps to a sky when no `sky` is given. */
   readonly sky?: SkyPreset;
   readonly at?: string;
@@ -440,7 +448,7 @@ export interface LitOptions {
 export async function renderLit(document: object, options: LitOptions): Promise<StillResult> {
   const w = options.width ?? LIT_WIDTH;
   if (!Number.isInteger(w) || w < 64 || w > LIT_MAX_WIDTH) throw new RangeError(`a render with lights is 64 to ${String(LIT_MAX_WIDTH)} pixels wide`);
-  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }), ...(options.doors === undefined ? {} : { doors: options.doors }) });
+  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }), ...(options.doors === undefined ? {} : { doors: options.doors }), ...(options.lighting === undefined || options.lights !== 'on' ? {} : { lighting: options.lighting }) });
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
   const skyLight = resolveSky(document, { ...(options.sky === undefined ? {} : { sky: options.sky }), ...(options.at === undefined ? {} : { at: options.at }), time: options.time ?? (options.sky === undefined && options.at === undefined ? 'night' : 'day') });
@@ -455,6 +463,7 @@ export async function renderLit(document: object, options: LitOptions): Promise<
     samples: day ? LIT_DAY_SAMPLES : LIT_SAMPLES,
     budgetMs: LIT_BUDGET_MS,
     lights: options.lights,
+    ...(options.scene === undefined ? {} : { scene: options.scene }),
     trueNorth,
     ...(options.images === undefined ? {} : { images: options.images }),
     ...(options.onPass === undefined ? {} : { onPass: options.onPass }),

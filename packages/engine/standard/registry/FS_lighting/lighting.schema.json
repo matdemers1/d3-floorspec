@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/ext/FS_lighting/0.1.0/lighting.schema.json",
+  "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_lighting 0.1.0, registry/FS_lighting/spec.md. Applied to the extension's top-level data, extensions.FS_lighting, by a validator that implements FS_lighting and knows it (spec.md 1.2). FS_lighting adds no kind of element: its data is what a light gives (luminaires, keyed by the light's ID) and the named scenes of a house (scenes, records in the document's one space of IDs). What an ID names, a range's order, a colour temperature within a range and names that repeat are checked by the invariants (spec.md 2 and 3).",
+  "title": "FS_lighting 0.1.0",
+  "description": "Lighting design over FS_electrical's lights: what each luminaire gives - its light output, its colour temperature or tunable range, whether it dims - and named lighting scenes, each the luminaires it turns on, at what output and colour temperature.",
+  "type": "object",
+  "properties": {
+    "luminaires": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/luminaire"
+      },
+      "description": "2.1: what a light gives, by the ID of the light (an FS_electrical light, or an element of another extension that gives light)."
+    },
+    "scenes": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/scene"
+      },
+      "description": "3.1: named lighting scenes: an ID -> record map; the IDs share the document's one space of IDs."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "description": "Core 3.1.1: an ID."
+    },
+    "kelvin": {
+      "description": "1.4: a correlated colour temperature, in kelvin.",
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 10000
+    },
+    "luminaire": {
+      "title": "Luminaire",
+      "description": "2.1: what a light gives.",
+      "type": "object",
+      "properties": {
+        "lumens": {
+          "description": "Its light output at full, in lumens.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "cct": {
+          "description": "Its colour temperature at full output; for a tunable-white luminaire, the one it gives when a scene names none.",
+          "$ref": "#/$defs/kelvin"
+        },
+        "cctRange": {
+          "description": "A tunable-white luminaire's range: its warmest and its coolest colour temperature (FS-LGHT-2.1.2: the first below the second).",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/kelvin"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "dimmable": {
+          "description": "Whether its output can be dimmed.",
+          "type": "boolean"
+        },
+        "extras": {
+          "description": "As Core 1.7: data no specification defines.",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "setting": {
+      "title": "Setting",
+      "description": "3.1: how a scene sets one luminaire it turns on.",
+      "type": "object",
+      "properties": {
+        "output": {
+          "description": "Its light output, in percent of full.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 100
+        },
+        "cct": {
+          "description": "The colour temperature it is set to; absent, the luminaire's own.",
+          "$ref": "#/$defs/kelvin"
+        }
+      },
+      "additionalProperties": false
+    },
+    "scene": {
+      "title": "Scene",
+      "description": "3.1: a named lighting scene.",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "What it is called, 1-200 characters: \"Evening\".",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "on": {
+          "description": "The luminaires it turns on, by ID, and how; every other is off.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/setting"
+          },
+          "default": {}
+        },
+        "extras": {
+          "description": "As Core 1.7: data no specification defines.",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

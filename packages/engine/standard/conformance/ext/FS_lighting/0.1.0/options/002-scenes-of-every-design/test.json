@@ -1,0 +1,10 @@
+{
+  "description": "The same options, with the pendants taken out of FS_lighting: no luminaire describes them and no scene turns them, or B's pendant, on, so every scene names lights of every design. Valid, and the primary design is derived.",
+  "covers": [
+    "FS-LGHT-1.2.1",
+    "FS-LGHT-1.2.4",
+    "FS-LGHT-3.1.1",
+    "FS-LGHT-6.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

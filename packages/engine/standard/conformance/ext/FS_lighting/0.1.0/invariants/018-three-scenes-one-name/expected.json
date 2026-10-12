@@ -1,0 +1,20 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-LGHT-INV-006",
+      "severity": "error",
+      "elements": ["LS1", "LS2"]
+    },
+    {
+      "code": "FS-LGHT-INV-006",
+      "severity": "error",
+      "elements": ["LS1", "LS3"]
+    },
+    {
+      "code": "FS-LGHT-INV-006",
+      "severity": "error",
+      "elements": ["LS2", "LS3"]
+    }
+  ]
+}

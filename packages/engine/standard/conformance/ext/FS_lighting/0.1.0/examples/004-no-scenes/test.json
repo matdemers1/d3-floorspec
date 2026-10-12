@@ -1,0 +1,7 @@
+{
+  "description": "FS_lighting used with empty top-level data: valid, and both derived members empty.",
+  "covers": [
+    "FS-LGHT-1.3.1",
+    "FS-LGHT-6.1.1"
+  ]
+}

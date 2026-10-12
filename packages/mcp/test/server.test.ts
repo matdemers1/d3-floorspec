@@ -328,7 +328,7 @@ describe('the MCP server', () => {
     // Was ~57 KB (130 KB pretty) with the operation union inlined at every member, twice over.
     // 25 KB → 26 KB for the twelfth verb, floorspec_create_project (~400 bytes). FLR-T-12.25 paid
     // for the furniture catalogue and an opening's `at` (its near edge) by trimming other text, and
-    // FLR-T-12.22 for floorspec_render's `lights` the same way, and FLR-T-13.8 for its `doors`, and
+    // FLR-T-12.22 for floorspec_render's `lights` the same way (FLR-T-13.12 folded it into `scene`), and FLR-T-13.8 for its `doors`, and
     // FLR-T-13.4 and 13.9 for its `sky` and `at` (the shared project and changeset handles shortened),
     // and FLR-T-13.11 for floorspec_propose's assistant "staging" (descriptions said shorter).
     expect(size).toBeLessThan(26_000);
@@ -479,17 +479,18 @@ describe('the MCP server', () => {
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', camera: 'ne', level: 'L1' });
     await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Kitchen' } });
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'Kitchen' });
-    // FLR-T-12.22: the light fixtures on or off, passed through; anything else refused by the schema.
-    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Kitchen', lights: 'on' } });
-    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'Kitchen', lights: 'on' });
-    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', lights: 'dim' } })).isError).toBe(true);
+    // FLR-T-13.12: a lighting scene by name ("All on" and "Off" are FLR-T-12.22's lights on and off),
+    // passed through for the api to resolve; `lights` is folded into it, and refused by the schema.
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Kitchen', scene: 'Evening' } });
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'Kitchen', scene: 'Evening' });
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', lights: 'on' } })).isError).toBe(true);
     // FLR-T-13.8: the doors closed or open, passed through.
     await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'sw', doors: 'open' } });
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', camera: 'sw', doors: 'open' });
     expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', doors: 'ajar' } })).isError).toBe(true);
     // FLR-T-13.4, 13.9: a sky and a date and time at the site, passed through; a sky that is not a preset refused.
-    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'R17', sky: 'clear', at: '2026-06-21T19:30-04:00', lights: 'off' } });
-    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'R17', sky: 'clear', at: '2026-06-21T19:30-04:00', lights: 'off' });
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'R17', sky: 'clear', at: '2026-06-21T19:30-04:00', scene: 'Off' } });
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'R17', sky: 'clear', at: '2026-06-21T19:30-04:00', scene: 'Off' });
     expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', sky: 'sunny' } })).isError).toBe(true);
     const missing = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Attic' } });
     expect(missing.isError).toBe(true);

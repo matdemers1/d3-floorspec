@@ -1,0 +1,6 @@
+{
+  "description": "The pendants' dimmer no longer says how it switches, so it is a single switch (FS_electrical 2.3): both scenes dim a pendant it controls.",
+  "covers": [
+    "FS-LGHT-1.2.3"
+  ]
+}

@@ -45,7 +45,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`). E2E_PORT is the keyboard suite's port; the others take the next seventeen.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`). E2E_PORT is the keyboard suite's port; the others take the next eighteen.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -112,6 +112,8 @@ const SUITES: Suite[] = [
   { name: 'moonshots', spec: 'moonshots.spec.ts', port: PORT + 16, database: databaseFor('moonshots'), setupToken: true, gl: true },
   // FLR-T-11.1: an arc wall drawn by keyboard, the curved room it closes and its area, and the wall in 3D.
   { name: 'arcs', spec: 'arcs.spec.ts', port: PORT + 17, database: databaseFor('arcs'), setupToken: true, gl: true },
+  // FLR-T-13.12: lighting design in 3D — a switch clicked, scenes chosen, a dimmer, scenes saved as Ops.
+  { name: 'lighting', spec: 'lighting.spec.ts', port: PORT + 18, database: databaseFor('lighting'), setupToken: true, gl: true },
 ];
 
 /**

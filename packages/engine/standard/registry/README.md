@@ -150,7 +150,7 @@ see; they make sure nothing is merged that the lifecycle forbids.
 Every kind an extension adds carries a fallback — a box, and optionally a glTF model and a 2D
 symbol — so that a reader without the extension still shows that something is there. An extension
 never changes what core data means (Core 12.7). Building systems — electrical, plumbing,
-mechanical, low-voltage, structural, furniture — and the landscape around a house ship as first-party `FS_` extensions
+mechanical, low-voltage, structural, furniture, lighting — and the landscape around a house ship as first-party `FS_` extensions
 (FLR-ADR-001).
 
 ## Official extensions
@@ -164,20 +164,21 @@ mechanical, low-voltage, structural, furniture — and the landscape around a ho
 | [`FS_furniture`](FS_furniture/spec.md) | 0.1.0 | Release Candidate | furniture, appliances and casework, each with a glTF model, a plan symbol and clearance envelopes — a refrigerator's door swing, the access beside a bed — with a starter library ([`library/`](FS_furniture/library/), CC0 1.0) | `FS-FURN-` |
 | [`FS_structural`](FS_structural/spec.md) | 0.1.0 | Draft | bearing and shear flags, framing (material, system, member size, spacing), floor spans and headers, recorded on walls, openings, slabs, rooms' floors and roofs for handoff to an engineer — never a structural design or a check of one | `FS-STRC-` |
 | [`FS_landscape`](FS_landscape/spec.md) | 0.1.0 | Draft | plants — trees, shrubs, grasses and groundcover by a species-agnostic size class derived from their box — planting beds and raised planters, lawns, and hardscape lines: paths, stepping stones, curbs and garden walls, on a level's ground or an outdoor room's floor, with starter sizes ([`library.json`](FS_landscape/library.json), CC0 1.0) | `FS-LAND-` |
+| [`FS_lighting`](FS_lighting/spec.md) | 0.1.0 | Draft | what each light gives — its lumens, its colour temperature or tunable-white range, whether it dims — over FS_electrical's lights and other extensions' lamps, and the house's named lighting scenes: the luminaires each turns on, at what output and colour temperature; it requires FS_electrical and adds no kind of element | `FS-LGHT-` |
 
 The first six list one implementation, D3 Floorspec's engine, with evidence of its passing their
-suites at e5fd4ca in a public CI run (`<NAME>/evidence/`); FS_landscape, a Draft, lists the engine too,
-and has no evidence yet. Each Release Candidate stays one until a
+suites at e5fd4ca in a public CI run (`<NAME>/evidence/`); FS_landscape and FS_lighting, Drafts, list the
+engine too, and have no evidence yet. Each Release Candidate stays one until a
 second, independent implementation passes its suite (FLR-REQ-092). FS_structural is a Draft whose
-suite the engine passes; it becomes a Release Candidate by its own pull request, which freezes it, and so does FS_landscape. The conformance oracle in
-`tools/oracle/ext/` implements all seven, and is evidence for none.
+suite the engine passes; it becomes a Release Candidate by its own pull request, which freezes it, and so do FS_landscape and FS_lighting. The conformance oracle in
+`tools/oracle/ext/` implements all eight, and is evidence for none.
 
 Every official extension follows the same conventions, each stated in its own specification's
-chapter 1: its rules apply to a document of a Core draft it lists — all seven list Core 0.2, 0.3
+chapter 1: its rules apply to a document of a Core draft it lists — all eight list Core 0.2, 0.3
 and 0.4 — that uses it at a version a validator both implements and knows; its diagnostics are `FS-<CODE>-SCH-`, `-INV-` and `-LINT-`, evaluated after
 Core's invariants and never with a Core error; its errors make a document invalid; and what it
 derives is `extensions.<NAME>` of the derived values. Records that are not elements — circuits,
-stacks, gas sources — share the document's one space of IDs, so diagnostics can name them. Data an
+stacks, gas sources, lighting scenes — share the document's one space of IDs, so diagnostics can name them. Data an
 extension records on core elements (FS_structural's, on walls, openings, slabs, rooms and roofs) is
 each element's own `extensions.<NAME>`, defined by the schema's `#/$defs/coreElements`, and checked
 with the top-level data as the schema tier. Default

@@ -56,6 +56,9 @@ importers:
       '@floorspec/mcp':
         specifier: workspace:*
         version: link:../../packages/mcp
+      '@floorspec/mesh':
+        specifier: workspace:*
+        version: link:../../packages/mesh
       '@floorspec/ops':
         specifier: workspace:*
         version: link:../../packages/ops

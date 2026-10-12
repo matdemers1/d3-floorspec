@@ -1,0 +1,6 @@
+{
+  "description": "The Night light is keyed by X3, a pendant's ID: a scene's ID is in the document's one space of IDs. Its own `on` names X3 too.",
+  "covers": [
+    "FS-LGHT-1.3.2"
+  ]
+}

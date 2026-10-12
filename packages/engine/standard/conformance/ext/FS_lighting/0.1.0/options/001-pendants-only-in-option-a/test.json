@@ -1,0 +1,10 @@
+{
+  "description": "Island options A and B as Core 0.3 design options (Core 19): the pair of pendants in A, the primary, and a linear pendant in B. The pendants' luminaires and the scenes that turn them on name lights that option B's design does not have: FS_lighting is evaluated in each checked design, so B's design breaks 2.1.1 and 3.1.1, each reported with `design` (Core 19.5.2).",
+  "covers": [
+    "FS-LGHT-1.2.1",
+    "FS-LGHT-1.2.3",
+    "FS-LGHT-2.1.1",
+    "FS-LGHT-3.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

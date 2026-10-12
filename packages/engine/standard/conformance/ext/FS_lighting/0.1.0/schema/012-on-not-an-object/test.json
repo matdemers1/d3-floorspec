@@ -1,0 +1,6 @@
+{
+  "description": "A scene's `on` is an object of settings, not a list of IDs.",
+  "covers": [
+    "FS-LGHT-1.3.1"
+  ]
+}

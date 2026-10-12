@@ -30,6 +30,7 @@
     "@floorspec/assistant-staging": "workspace:*",
     "@floorspec/layout-solver": "workspace:*",
     "@floorspec/mcp": "workspace:*",
+    "@floorspec/mesh": "workspace:*",
     "@floorspec/ops": "workspace:*",
     "@floorspec/package": "workspace:*",
     "@floorspec/rules-engine": "workspace:*",

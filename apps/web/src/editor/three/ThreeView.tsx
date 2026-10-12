@@ -2,9 +2,11 @@ import './three.css';
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
-import { flatShaded, type HouseMesh, type MeshPart, type Vec3 } from '@floorspec/mesh';
+import { flatShaded, lensGlows, lightsOf, settingOf, type HouseMesh, type LensGlow, type MeshPart, type Vec3 } from '@floorspec/mesh';
 import { Button, EmptyState, IconButton, Select, Spinner, Tooltip } from '@d3cloud/ui';
 import { Box, Footprints, House, Lightbulb, Orbit as OrbitIcon, RotateCcw, X } from 'lucide-react';
+import { LightingButton, LightingChip, LightingPanel } from './lighting/LightingPanel';
+import { controlsOf, houseLights, switchHint } from './lighting/lighting';
 import { useEditor, type EditorState, type EditorStore } from '../store';
 import { labelOf, type EditorModel, type LevelView } from '../model';
 import { formatLen } from '../units';
@@ -162,6 +164,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const roof = useThreeState(store, (s) => s.roof);
   const preset = useThreeState(store, (s) => s.preset);
   const lightsOn = useThreeState(store, (s) => s.lights);
+  const lighting = useThreeState(store, (s) => s.lighting);
   const originRef = useRef<Vec3 | null>(null);
   const state = useHouseMesh(model, originRef);
   const host = useRef<HTMLDivElement>(null);
@@ -228,12 +231,39 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const lamps = useMemo(
     () => {
       if (ready === null || !lightsOn) return [];
-      const lit = viewLights(ready.model, ready.mesh, { level: levelId, cutaway: levels !== 'house' && !walking, order });
+      const lit = viewLights(ready.model, ready.mesh, { level: levelId, cutaway: levels !== 'house' && !walking, order }, lighting);
       // One level alone (FLR-T-13.2): its own lamps only — the cutaway's, less those below it.
       return levels === 'only' && !walking ? lit.filter((l) => l.level === levelId) : lit;
     },
-    [ready, lightsOn, levelId, levels, walking, order],
+    [ready, lightsOn, levelId, levels, walking, order, lighting],
   );
+  // FLR-T-13.12: every light of the house, and the lenses the lighting turns off, dims or recolours.
+  const allLights = useMemo(() => (ready === null ? [] : houseLights(ready.model)), [ready]);
+  const glows = useMemo(
+    () => (ready === null || ready.model.derived === null || !lightsOn ? new Map<string, LensGlow>() : lensGlows(allLights, lightsOf(ready.model.view, ready.model.derived, lighting))),
+    [ready, allLights, lightsOn, lighting],
+  );
+  const allIds = useMemo(() => allLights.map((l) => l.id), [allLights]);
+  // A switch's hover tip, and what the last flip did (spoken, and shown for a moment).
+  const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [flipped, setFlipped] = useState<string | null>(null);
+  useEffect(() => {
+    if (flipped === null) return;
+    const t = window.setTimeout(() => { setFlipped(null); }, 2500);
+    return () => { window.clearTimeout(t); };
+  }, [flipped]);
+  /** Flip what a switch (or a lamp) controls, when the view's lights are on: true when it was one. */
+  const flip = (id: string): boolean => {
+    if (ready === null || !lightsOn) return false;
+    const controls = controlsOf(ready.model, id, allLights);
+    if (controls === null) return false;
+    const now = three.get().lighting;
+    const before = controls.some((c) => settingOf(now, c) !== null);
+    three.flipSwitch(controls, allIds);
+    setFlipped(`${labelOf(ready.model, id)}: ${String(controls.length)} light${controls.length === 1 ? '' : 's'} ${before ? 'off' : 'on'}`);
+    setTip(null);
+    return true;
+  };
   const summary = useMemo(() => (ready === null ? '' : describeScene(ready.model, visible.map((b) => b.part))), [ready, visible]);
   // Furniture (FLR-T-8.3): each item's glTF model in place of its fallback box, once the model is drawn.
   const furniture = useFurnitureModels(store.projectId, ready?.model ?? null);
@@ -337,6 +367,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         return m !== undefined;
       }
       switch (e.key) {
+        case 'Enter': return selection !== null && flip(selection);
         case 'ArrowLeft': ctl.orbitBy(step, 0); return true;
         case 'ArrowRight': ctl.orbitBy(-step, 0); return true;
         case 'ArrowUp': ctl.orbitBy(0, step / 2); return true;
@@ -397,9 +428,23 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // ── Picking.
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    if (dragged() || walking) return;
+    if (dragged()) return;
     const id = (e.object.userData as { id?: string }).id;
+    // FLR-T-13.12: with the lights on, a switch turns its lights on or off, and a lamp itself — walking too.
+    if (id !== undefined) flip(id);
+    if (walking) return;
     if (id !== undefined) store.select(id);
+  };
+  const onHover = (e: ThreeEvent<PointerEvent>) => {
+    const id = (e.object.userData as { id?: string }).id;
+    const controls = ready === null || id === undefined || !lightsOn ? null : controlsOf(ready.model, id, allLights);
+    const box = host.current?.getBoundingClientRect();
+    if (controls === null || id === undefined || ready === null || box === undefined) {
+      if (tip !== null) setTip(null);
+      return;
+    }
+    e.stopPropagation();
+    setTip({ x: e.nativeEvent.clientX - box.left, y: e.nativeEvent.clientY - box.top, text: `${labelOf(ready.model, id)} — ${switchHint(lighting, lightsOn, controls)}` });
   };
   const onDoubleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -466,7 +511,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <FixtureLights lights={lamps} />
         <Rig ctl={ctl} />
         <SceneBridge />
-        <Parts visible={partsShown} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} onClick={onClick} onDoubleClick={onDoubleClick} />
+        <Parts visible={partsShown} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
         {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} /> : null}
         {!walking ? <LabelTracker built={visible} selection={selection} el={label} /> : null}
       </Canvas>
@@ -495,6 +540,20 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       <div id={describedBy} className="fs-three__sr">
         {summary} {selectedLabel === null ? '' : `Selected: ${selectedLabel}.`} {hint}
       </div>
+      <div className="fs-three__sr" role="status" aria-live="polite">
+        {flipped ?? ''}
+      </div>
+      {tip !== null ? (
+        <div className="fs-three__switch-tip" style={{ left: tip.x + 14, top: tip.y + 18 }} aria-hidden="true">
+          {tip.text}
+        </div>
+      ) : null}
+      {flipped !== null ? (
+        <div className="fs-three__chip fs-three__flipped" aria-hidden="true">
+          <Lightbulb aria-hidden="true" />
+          {flipped}
+        </div>
+      ) : null}
       {ready !== null && !walking && selectedLabel !== null ? (
         <div className="fs-three__label" ref={label} aria-hidden="true">
           {selectedLabel}
@@ -507,10 +566,14 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           <ViewCube ctl={ctl} preset={preset} />
           <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} only={levels === 'only'} roof={roof} current={currentView} />
           <SunPanel store={store} model={ready.model} />
+          <LightingPanel store={store} model={ready.model} />
           <SunChip store={store} />
-          <div className="fs-three__chip fs-three__stats" role="note">
-            <Box aria-hidden="true" />
-            WebGL · {String(visible.length)} parts · {triangles >= 1000 ? `${(triangles / 1000).toFixed(1)}k` : String(triangles)} triangles
+          <div className="fs-three__chips-left">
+            <div className="fs-three__chip fs-three__stats" role="note">
+              <Box aria-hidden="true" />
+              WebGL · {String(visible.length)} parts · {triangles >= 1000 ? `${(triangles / 1000).toFixed(1)}k` : String(triangles)} triangles
+            </div>
+            <LightingChip store={store} model={ready.model} />
           </div>
         </>
       ) : null}
@@ -575,8 +638,11 @@ function Parts({
   accent,
   textures,
   lit,
+  glows,
   onClick,
   onDoubleClick,
+  onHover,
+  onLeave,
 }: {
   visible: Built[];
   selection: string | null;
@@ -584,8 +650,12 @@ function Parts({
   textures: TextureLibrary;
   /** The light fixtures are on: a lens glows; off, it is matte like the rest. */
   lit: boolean;
+  /** FLR-T-13.12: the lenses the lighting turns off (null) or dims and recolours (a scale per channel). */
+  glows: ReadonlyMap<string, LensGlow>;
   onClick: (e: ThreeEvent<MouseEvent>) => void;
   onDoubleClick: (e: ThreeEvent<MouseEvent>) => void;
+  onHover: (e: ThreeEvent<PointerEvent>) => void;
+  onLeave: () => void;
 }) {
   const materials = useMemo(() => {
     const solid = new THREE.MeshLambertMaterial({ vertexColors: true });
@@ -630,9 +700,30 @@ function Parts({
   useEffect(() => () => { for (const o of outlines) o.geometry.dispose(); }, [outlines]);
   useEffect(() => { invalidate(); }, [visible, selection, invalidate]);
 
+  // A dimmed or recoloured lens: the lit lens's material, its colour scaling the vertex colours.
+  const dimmed = useMemo(() => new Map<string, THREE.MeshBasicMaterial>(), []);
+  useEffect(() => () => { for (const m of dimmed.values()) m.dispose(); }, [dimmed]);
+  const lensOf = (id: string): THREE.Material => {
+    const g = glows.get(id);
+    if (g === undefined) return materials.lens;
+    if (g === null) return materials.lensOff;
+    const key = g.map((c) => c.toFixed(3)).join(',');
+    let m = dimmed.get(key);
+    if (m === undefined) {
+      // A dimmer dragged makes a material a step; keep the last few.
+      if (dimmed.size > 96) {
+        const first = dimmed.keys().next().value;
+        if (first !== undefined) dimmed.delete(first);
+      }
+      m = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, color: new THREE.Color(g[0], g[1], g[2]) });
+      dimmed.set(key, m);
+    }
+    return m;
+  };
+  useEffect(() => { invalidate(); }, [glows, invalidate]);
   const materialOf = (b: Built, on: boolean) => {
     if (b.look === 'glass') return on ? materials.glassOn : b.part.model !== undefined ? materials.modelGlass : materials.glass;
-    if (b.look === 'lens') return on ? materials.lensOn : lit ? materials.lens : materials.lensOff;
+    if (b.look === 'lens') return on ? materials.lensOn : lit ? lensOf(b.part.id) : materials.lensOff;
     if (b.look === 'pick') return on ? materials.pickOn : materials.pick;
     if (b.look === 'ceiling') return on ? materials.ceilingOn : materials.ceiling;
     if (b.look === 'floor') return on ? materials.floorOn : materials.floor;
@@ -640,7 +731,7 @@ function Parts({
   };
 
   return (
-    <group onClick={onClick} onDoubleClick={onDoubleClick}>
+    <group onClick={onClick} onDoubleClick={onDoubleClick} onPointerMove={onHover} onPointerOut={onLeave}>
       {visible.map((b) => (
         <mesh
           key={b.part.key}
@@ -707,6 +798,7 @@ function Toolbar({ store, three, ctl, mesh, levels, roof, lights }: { store: Edi
       <Tooltip content={lights ? 'Turn the lights off' : 'Turn the lights on: each light fixture lights its room, at dusk'}>
         <IconButton label="Lights" icon={<Lightbulb />} size="sm" pressed={lights} onClick={() => { three.toggleLights(); }} />
       </Tooltip>
+      <LightingButton store={store} />
       <Tooltip content={!whole ? 'Cut away, this level’s roof is off — show the whole house to see it' : roof ? 'Hide the roofs' : 'Show the roofs'}>
         <IconButton label="Roof" icon={<House />} size="sm" pressed={roof && whole} disabled={!whole} onClick={() => { three.set({ roof: !roof }); }} />
       </Tooltip>

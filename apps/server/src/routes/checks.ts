@@ -13,6 +13,7 @@ import { RENDER_PENDING, type PlanRenderer } from '../render.js';
 import { SHA256, type AssetStore } from '../assets/store.js';
 import { NO_PACKS, type InstalledPacks } from '../rules/packs.js';
 import { AT_PATTERN, SKIES } from '@d3-floorspec/worker/stills';
+import { sceneNamed, scenesOf } from '@floorspec/mesh';
 import { profileOfProject } from '../rules/profiles.js';
 
 const RenderQuery = z.object({
@@ -29,6 +30,9 @@ const RenderQuery = z.object({
   // 3D (FLR-T-12.22): the luminaires on or off — path-traced — and the time of day it is seen at.
   lights: z.enum(['on', 'off']).optional(),
   time: z.enum(['day', 'dusk', 'night']).optional(),
+  // 3D (FLR-T-13.12): a lighting scene by name — "All on", "Off" or one of the project's (FS_lighting):
+  // path-traced with its lights as the scene sets them.
+  scene: z.string().trim().min(1).max(200).optional(),
   // 3D (FLR-T-13.8): the doors closed (default) or open.
   doors: z.enum(['open', 'closed']).optional(),
   // 3D (FLR-T-13.4): the sky it is seen under; (FLR-T-13.9) a date and time at the site, which places the sun.
@@ -207,14 +211,20 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
     if (project === undefined) throw new HttpError(404, 'project not found');
     if ((q.width ?? 0) > MAX_3D_WIDTH) throw new HttpError(400, `a 3D render is at most ${String(MAX_3D_WIDTH)} pixels wide`);
     if (q.camera !== undefined && q.room !== undefined) throw new HttpError(400, 'a 3D render is from a named camera or from a room, not both');
-    if (q.lights !== undefined && (q.width ?? 0) > MAX_LIT_WIDTH) throw new HttpError(400, `a 3D render with lights is at most ${String(MAX_LIT_WIDTH)} pixels wide`);
-    if (q.time !== undefined && q.lights === undefined) throw new HttpError(400, 'time is for a 3D render with lights: say lights "on" or "off"');
+    if (q.scene !== undefined && q.lights === 'off') throw new HttpError(400, 'a lighting scene says which lights are on: give a scene or lights "off", not both');
+    // A scene is a render with its lights, as the scene sets them (FLR-T-13.12).
+    const lights = q.lights ?? (q.scene === undefined ? undefined : 'on');
+    if (lights !== undefined && (q.width ?? 0) > MAX_LIT_WIDTH) throw new HttpError(400, `a 3D render with lights is at most ${String(MAX_LIT_WIDTH)} pixels wide`);
+    if (q.time !== undefined && lights === undefined) throw new HttpError(400, 'time is for a 3D render with lights: say lights "on" or "off", or name a scene');
     const design = designQuery(q.design);
     // Read as the worker renders it and as the editor validates it (OFFICIAL_READER, FLR-T-12.10).
     const ev = evaluate(at.document as object, { ...OFFICIAL_READER, ...(design === undefined ? {} : { design }) });
     if (!ev.valid || ev.document === undefined)
       throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this model cannot be drawn in 3D', detail: 'The model is not valid. Run validate to see why.' });
     if (ev.view === undefined) throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this design cannot be drawn', detail: 'The design names no design of this model, or that design is not valid.' });
+    const scene = q.scene === undefined ? undefined : sceneNamed(ev.document, q.scene);
+    if (q.scene !== undefined && scene === undefined)
+      throw new HttpError(400, `the model has no lighting scene "${q.scene}"; its scenes are ${scenesOf(ev.document).map((s) => `"${s.name}"`).join(', ')}`);
     const pending = await db.job.count({ where: { projectId: project.id, kind: 'render.3d', status: { in: ['queued', 'running'] } } });
     if (pending >= MAX_PENDING_RENDERS) throw new HttpError(429, `this project already has ${String(pending)} 3D renders waiting; try again when one finishes`);
     const highlight = q.highlight?.split(',').filter((id) => id.length > 0);
@@ -229,7 +239,8 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(highlight === undefined || highlight.length === 0 ? {} : { highlight }),
           ...(q.width === undefined ? {} : { width: q.width }),
           ...(design === undefined ? {} : { design }),
-          ...(q.lights === undefined ? {} : { lights: q.lights }),
+          ...(lights === undefined ? {} : { lights }),
+          ...(scene === undefined ? {} : { scene: scene.name, ...('all' in scene.lighting ? {} : { lighting: { on: { ...scene.lighting.on } as Record<string, Record<string, number>> } }) }),
           ...(q.time === undefined ? {} : { time: q.time }),
           ...(q.doors === undefined ? {} : { doors: q.doors }),
           ...(q.sky === undefined ? {} : { sky: q.sky }),
@@ -241,7 +252,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
       },
     });
     // A path-traced render with its lights takes longer than a rasterized one.
-    const timeout = (wait.timeoutMs ?? 60_000) * (q.lights === undefined ? 1 : 3);
+    const timeout = (wait.timeoutMs ?? 60_000) * (lights === undefined ? 1 : 3);
     const until = Date.now() + timeout;
     for (;;) {
       const now = await db.job.findUniqueOrThrow({ where: { id: job.id }, select: { status: true, error: true, output: { select: { bytes: true } } } });

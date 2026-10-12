@@ -1,0 +1,9 @@
+{
+  "description": "The lit house declaring FS_lighting with no data of it yet: setProperty of $document /extensions/FS_lighting/scenes/LS1 creates FS_lighting's data, and its `scenes`, on the way (Ops 2.3) - an \"Evening\" of the pendants at 60 %. It commits, valid under FS_lighting.",
+  "covers": [
+    "FS-LGHT-1.2.1",
+    "FS-LGHT-1.3.1",
+    "FS-LGHT-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

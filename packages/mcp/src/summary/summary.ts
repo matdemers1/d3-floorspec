@@ -327,7 +327,36 @@ export interface DocumentSummary {
    * many elements each holds. Everything else in the summary describes the primary design.
    */
   readonly options?: readonly OptionSetSummary[];
+  /** FS_lighting's named lighting scenes (FLR-T-13.12), in ID order; absent when there are none. */
+  readonly scenes?: readonly LightSceneSummary[];
   readonly diagnostics: readonly DiagnosticSummary[];
+}
+
+/** A lighting scene (FS_lighting 3.1): what it turns on, at what output and colour temperature; every other light is off. */
+export interface LightSceneSummary {
+  readonly id: string;
+  readonly name: string;
+  readonly on: readonly { readonly id: string; readonly output: number; readonly cct?: number }[];
+}
+
+/** FS_lighting's scenes, when the document declares FS_lighting and has some. */
+export function sceneSummaries(doc: FloorspecDocument): LightSceneSummary[] | undefined {
+  const used = doc.extensionsUsed as Record<string, unknown> | undefined;
+  if (used === undefined || !Object.hasOwn(used, 'FS_lighting')) return undefined;
+  const scenes = ((doc.extensions as Record<string, { scenes?: Record<string, { name?: unknown; on?: Record<string, { output?: unknown; cct?: unknown }> }> }> | undefined)?.['FS_lighting'])?.scenes;
+  const out: LightSceneSummary[] = [];
+  for (const id of Object.keys(scenes ?? {}).sort()) {
+    const sc = scenes![id]!;
+    if (typeof sc.name !== 'string') continue;
+    const on = Object.keys(sc.on ?? {})
+      .sort()
+      .map((lid) => {
+        const set = sc.on![lid] ?? {};
+        return { id: lid, output: typeof set.output === 'number' ? set.output : 100, ...(typeof set.cct === 'number' ? { cct: set.cct } : {}) };
+      });
+    out.push({ id, name: sc.name, on });
+  }
+  return out.length === 0 ? undefined : out;
 }
 
 export interface OptionSetSummary {
@@ -1013,7 +1042,8 @@ export function describeJson(document: string | Uint8Array | object, options: De
   }
   const area = ev.valid && options.room === undefined ? z765(doc).buildings.map((b) => ({ building: b.building, aboveGradeSqFt: b.aboveGradeSqFt, belowGradeSqFt: b.belowGradeSqFt })) : undefined;
   const site = siteSummary(doc);
-  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), diagnostics: diags };
+  const scenes = options.room === undefined && options.level === undefined ? sceneSummaries(doc) : undefined;
+  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), diagnostics: diags };
 }
 
 const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'] as const;

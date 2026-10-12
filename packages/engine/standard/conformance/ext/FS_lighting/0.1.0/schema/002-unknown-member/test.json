@@ -1,0 +1,6 @@
+{
+  "description": "A top-level member FS_lighting does not define, `fixtures`.",
+  "covers": [
+    "FS-LGHT-1.3.1"
+  ]
+}

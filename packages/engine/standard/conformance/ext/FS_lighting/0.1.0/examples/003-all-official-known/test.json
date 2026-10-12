@@ -1,0 +1,7 @@
+{
+  "description": "The house read with every official entry known, by an implementation of FS_lighting alone: FS_electrical and FS_furniture are checked only as Core 12 checks a known extension - the lamp has the model and symbol its kind requires - and only FS_lighting is evaluated and derived.",
+  "covers": [
+    "FS-LGHT-1.2.1",
+    "FS-LGHT-1.2.4"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A luminaire has a member a luminaire does not define: `watts`, which is FS_electrical's.",
+  "covers": [
+    "FS-LGHT-1.3.1"
+  ]
+}

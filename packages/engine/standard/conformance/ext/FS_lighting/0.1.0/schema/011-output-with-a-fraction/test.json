@@ -1,0 +1,6 @@
+{
+  "description": "An output written with a fraction is not an integer, even when it is a whole number (1.4).",
+  "covers": [
+    "FS-LGHT-1.3.1"
+  ]
+}

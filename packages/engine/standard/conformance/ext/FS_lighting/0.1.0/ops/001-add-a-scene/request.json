@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_lighting/scenes/LS3",
+      "value": {
+        "name": "Reading",
+        "on": {
+          "X6": {},
+          "X20": {}
+        }
+      }
+    }
+  ]
+}

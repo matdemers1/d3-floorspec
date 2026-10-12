@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_lighting/scenes/LS2/name: the Night light is now \"Late\". It commits.",
+  "covers": [
+    "FS-LGHT-1.2.1",
+    "FS-LGHT-3.1.2",
+    "FS-OPS-2.3.1"
+  ]
+}

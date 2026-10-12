@@ -25,5 +25,30 @@ export { decorFamily, libraryItemOf, LAMP_SHADES } from './models/decor.js';
 export { gableCladding } from './cladding.js';
 export { PART_KINDS, UNITS_PER_METRE, type Box3, type Cladding, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartMesh, type PartStats, type Vec3, type DoorState } from './types.js';
 export { ENVELOPE, envelope, openEnvelope, openingFrame, type LocalBox, type OpeningFrame } from './joinery.js';
-export { DEFAULT_LUMENS, EXPOSURE_PER_NIT, kelvinColor, LAMP_LUMENS, lightsOf, LUMENS_PER_WATT, WHITE_BALANCE, type FixtureLight } from './lights.js';
+export { DEFAULT_LUMENS, EXPOSURE_PER_NIT, kelvinColor, LAMP_LUMENS, lensGlows, lightsOf, LUMENS_PER_WATT, WHITE_BALANCE, type FixtureLight, type LensGlow } from './lights.js';
+export {
+  ALL_OFF,
+  ALL_ON,
+  ALL_ON_NAME,
+  CCT_MAX,
+  CCT_MIN,
+  CCT_SLIDER,
+  documentScenes,
+  explicit,
+  lightingData,
+  luminairesOf,
+  normalizeOn,
+  OFF_NAME,
+  sameLighting,
+  sceneNamed,
+  scenesOf,
+  settingOf,
+  toggled,
+  withLights,
+  withSetting,
+  type Lighting,
+  type LuminaireData,
+  type NamedScene,
+  type SceneSetting,
+} from './scenes.js';
 export { boxST, isSlope, slopeST, worldCoordinates } from './texcoords.js';

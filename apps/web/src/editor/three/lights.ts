@@ -1,4 +1,4 @@
-import { EXPOSURE_PER_NIT, lightsOf, type FixtureLight, type HouseMesh, type Vec3 } from '@floorspec/mesh';
+import { ALL_ON, EXPOSURE_PER_NIT, lightsOf, type FixtureLight, type HouseMesh, type Lighting, type Vec3 } from '@floorspec/mesh';
 import type { EditorModel } from '../model';
 
 /**
@@ -11,7 +11,9 @@ import type { EditorModel } from '../model';
  * a surface to I cos θ / d² lux with d in metres (decay 2). The view's exposure, not the lamps, says
  * how bright that looks (`LIT_EXPOSURE`, SunRig).
  *
- * - Only lights on the levels shown: in a cutaway, the current level and those below it.
+ * - Only lights the lighting turns on (FLR-T-13.12: a scene, a switch, a dimmer — at its output and
+ *   colour temperature, @floorspec/mesh `lightsOf`), on the levels shown: in a cutaway, the current
+ *   level and those below it.
  * - Every room first (FLR-T-13.1): the current level's rooms take turns — each room's brightest
  *   lamp, then each room's next — before a light in no room (an exterior lantern) or on another
  *   level, so no room is left dark because its light's ID sorts late. At most `MAX_LIGHTS` in all
@@ -130,10 +132,10 @@ function byRoom(lights: readonly FixtureLight[]): FixtureLight[] {
   return [...out, ...none];
 }
 
-/** The lamps to draw for a model's mesh, seen at `level` (null: none chosen), cut away or not. */
-export function viewLights(model: EditorModel, mesh: HouseMesh, v: { level: string | null; cutaway: boolean; order: ReadonlyMap<string, number> }): ViewLight[] {
+/** The lamps to draw for a model's mesh, seen at `level` (null: none chosen), cut away or not, under a lighting. */
+export function viewLights(model: EditorModel, mesh: HouseMesh, v: { level: string | null; cutaway: boolean; order: ReadonlyMap<string, number> }, lighting: Lighting = ALL_ON): ViewLight[] {
   if (model.derived === null) return [];
-  const all = lightsOf(model.view, model.derived);
+  const all = lightsOf(model.view, model.derived, lighting);
   const current = v.level === null ? undefined : v.order.get(v.level);
   const shown = all.filter((l) => {
     if (!v.cutaway || current === undefined) return true;

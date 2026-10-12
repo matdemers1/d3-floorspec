@@ -1,0 +1,6 @@
+{
+  "description": "The pendants' luminaires no longer say whether they dim: dimming them is no lint (5.3), and they are on a dimmer.",
+  "covers": [
+    "FS-LGHT-1.2.3"
+  ]
+}

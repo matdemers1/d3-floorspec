@@ -94,6 +94,42 @@ describe('3D render-back', () => {
     expect((await operator.get(`/api/projects/${id}/render?view=3d&lights=dim`)).status).toBe(400);
   });
 
+  it('draws a lighting scene by name, path-traced with what it turns on (FLR-T-13.12)', async () => {
+    const operator = await setupOperator(running);
+    const base = REQUIRES_ELECTRICAL as unknown as { extensions: { FS_electrical: { collections: Record<string, unknown> } }; extensionsUsed: Record<string, string> };
+    const doc = {
+      ...base,
+      extensionsUsed: { ...base.extensionsUsed, FS_lighting: '0.1.0' },
+      extensions: {
+        ...base.extensions,
+        FS_electrical: {
+          ...base.extensions.FS_electrical,
+          collections: {
+            ...base.extensions.FS_electrical.collections,
+            lights: { LX1: { fallback: { level: 'MAIN', box: { min: [-128000, -128000, -192000], max: [128000, 128000, 0] } }, host: { mode: 'surface', room: 'LIV', surface: 'ceiling', position: [4681728, 3121152] }, fixture: 'recessed' } },
+          },
+        },
+        FS_lighting: { scenes: { LS1: { name: 'Evening', on: { LX1: { output: 50, cct: 2400 } } } } },
+      },
+    } as unknown as Prisma.InputJsonObject;
+    const { id } = await projectWithDocument(db, operator, doc, 'Lit ranch');
+    for (const scene of ['evening', 'Off']) {
+      const r = await fetch(`${running.url}/api/projects/${id}/render?view=3d&camera=sw&width=96&scene=${scene}`, { headers: { cookie: cookieOf(operator) } });
+      expect(r.status, await r.clone().text()).toBe(200);
+      expect(pngSize(new Uint8Array(await r.arrayBuffer()))).toEqual({ width: 96, height: 72 });
+    }
+    const jobs = await db.job.findMany({ where: { projectId: id }, orderBy: { createdAt: 'asc' } });
+    // Found by name ignoring case; the worker is given what it turns on.
+    expect(jobs[0]?.params).toMatchObject({ lights: 'on', scene: 'Evening', lighting: { on: { LX1: { output: 50, cct: 2400 } } } });
+    expect(jobs[0]?.result).toMatchObject({ lit: { lights: 'on', scene: 'Evening', lamps: 1 } });
+    expect(jobs[1]?.result).toMatchObject({ lit: { scene: 'Off', lamps: 0 } });
+    // A scene the model does not have, named with the ones it does; a scene with the lights off.
+    const unknown = await operator.get(`/api/projects/${id}/render?view=3d&scene=Dinner`);
+    expect(unknown.status).toBe(400);
+    expect(unknown.text).toMatch(/no lighting scene .*Dinner.*All on.*Evening.*Off/);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&scene=Evening&lights=off`)).status).toBe(400);
+  });
+
   it('draws the house under a sky, its sun placed by a date and time at the site (FLR-T-13.4, 13.9)', async () => {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');
