@@ -1,0 +1,127 @@
+/* Resizing and turning an item (FLR-T-18.4; the board's frames 18.4). Tokens only. */
+
+.fs-resize__handle {
+  fill: var(--color-surface);
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+.fs-resize__handle--edge {
+  fill: var(--color-accent);
+}
+.fs-resize__stem {
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+.fs-resize__rotate {
+  fill: var(--color-accent);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+.fs-resize__ghost {
+  fill: var(--color-accent);
+  fill-opacity: 0.16;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+.fs-resize__clearance {
+  fill: var(--color-success);
+  fill-opacity: 0.08;
+  stroke: var(--color-success);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.fs-resize__tag rect {
+  fill: var(--color-fg);
+  fill-opacity: 0.92;
+}
+.fs-resize__tag text {
+  fill: var(--color-bg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.fs-resize__tag--hint rect {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-border);
+}
+.fs-resize__tag--hint text {
+  fill: var(--color-fg);
+}
+
+/* The inspector's Size section */
+.fs-size__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 var(--space-8);
+}
+.fs-size__chip {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  min-height: 24px;
+  min-width: 24px;
+  padding: 2px var(--space-8);
+  cursor: pointer;
+}
+.fs-size__chip[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.fs-size__chip:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+.fs-size__anchor {
+  display: grid;
+  grid-template-columns: repeat(3, 24px);
+  grid-template-rows: repeat(3, 24px);
+  gap: 0;
+  width: max-content;
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-sunken);
+}
+.fs-size__dot {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.fs-size__dot::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--color-fg-muted);
+}
+.fs-size__dot[aria-checked='true']::after {
+  width: 10px;
+  height: 10px;
+  background: var(--color-accent);
+}
+.fs-size__dot:focus-visible {
+  outline: 2px solid var(--color-accent);
+}
+.fs-size__model {
+  display: flex;
+  gap: var(--space-8);
+  align-items: flex-start;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  margin-top: var(--space-8);
+}
+.fs-size__model--fixed {
+  border-color: var(--color-warning);
+}
+.fs-size__model strong {
+  display: block;
+}

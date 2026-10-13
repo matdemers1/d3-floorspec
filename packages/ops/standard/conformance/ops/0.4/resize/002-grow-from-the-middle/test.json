@@ -1,0 +1,7 @@
+{
+  "description": "resizeElement makes the island 96\" wide from its center: it keeps FS_furniture's convention, -48\" to 48\"; the bowl at its middle does not move, and the stool past its north end moves 12\" with that end.",
+  "covers": [
+    "FS-OPS-4.11.1",
+    "FS-OPS-4.11.2"
+  ]
+}

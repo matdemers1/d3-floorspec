@@ -1,0 +1,7 @@
+{
+  "description": "The island turned 90 degrees, facing north - its x is north and its y west. resizeElement makes it 8' wide holding its left, west, end: it grows 24\" east; the bowl on its back edge, 18\" east of its middle, and the stool past its front, 12\" west of its middle - both between its ends - move with its middle, 12\" east.",
+  "covers": [
+    "FS-OPS-4.11.1",
+    "FS-OPS-4.11.2"
+  ]
+}

@@ -304,6 +304,16 @@ test('setup to a compared undo: draw a room by hand, accept an agent’s proposa
   expect(Object.values(((await before.json()) as Doc).rooms ?? {}).map((r) => r.name).sort()).toEqual(['Great room', 'Study']);
   expect((await after.json()) as Doc).toEqual(drawn);
 
+  // ── A mouse wheel over the plan zooms it, and the page itself does not scroll.
+  const zoom = page.locator('.fs-zoom__value');
+  const zoomBefore = await zoom.textContent();
+  const box = await svg.boundingBox();
+  if (box === null) throw new Error('the plan is not on screen');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(0, -100);
+  await expect(zoom).not.toHaveText(zoomBefore ?? '');
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
   // ── Revoke the token: the agent is locked out at once.
   await page.goto('/account');
   await page.getByRole('button', { name: 'Revoke' }).click();

@@ -5,8 +5,8 @@ import { furnitureOf } from './state';
 import { EXTENSION, turnFurniture } from './ops';
 
 /**
- * The furniture's commands (FLR-T-8.3), in the editor's one registry (editor/commands.ts): F opens
- * the library, and `[` and `]` turn the selected item a quarter left or right — with Shift, by 15°.
+ * The furniture's commands (FLR-T-8.3), in the editor's one registry (editor/commands.ts): I opens
+ * the library (F is full screen since FLR-T-18.2), and `[` and `]` turn the selected item a quarter left or right — with Shift, by 15°.
  */
 
 const editable = (store: EditorStore) => {
@@ -39,8 +39,8 @@ export const FURNITURE_COMMANDS: readonly Command[] = [
     label: 'Place furniture and appliances',
     group: 'Tools',
     keywords: 'furniture appliance fridge refrigerator sofa bed cabinet library glTF',
-    keys: ['f'],
-    hint: 'F',
+    keys: ['i'],
+    hint: 'I',
     enabled: (store) => editable(store) && store.get().level !== null,
     run: (store) => {
       furnitureOf(store).set({ open: true, uploading: false });

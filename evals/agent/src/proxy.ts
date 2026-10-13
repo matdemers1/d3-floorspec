@@ -27,7 +27,7 @@ import { DEFAULT_DATABASE_URL, EVAL_OPERATOR, Operator, REPO_ROOT, SERVER_ENTRY,
 import { measure } from './measure.js';
 import { markdownReport, summarise, type RunConfig, type TaskRun } from './report.js';
 import { scoreMeasured } from './scorer.js';
-import { EVAL_ROOT, hashOf, seedBatches, seedDocument } from './seeds.js';
+import { EVAL_ROOT, expectedSeedHash, seedBatches, seedDocument } from './seeds.js';
 import { loadTasks, promptFor } from './tasks.js';
 import type { Task } from './types.js';
 
@@ -160,10 +160,10 @@ async function prepare(taskId: string | undefined, run: number, force: boolean):
     rmSync(dir, { recursive: true, force: true });
   }
   mkdirSync(dir, { recursive: true });
+  const seedHash = expectedSeedHash(task.seed);
   const operator = Operator.resume(server.url, server.operator.session);
   const projectId = await operator.createProject(`${task.id} ${task.title} (proxy run ${String(run)})`);
   for (const batch of seedBatches(task.seed)) await operator.applyToMain(projectId, batch);
-  const seedHash = hashOf(seedDocument(task.seed));
   const main = await operator.model(projectId);
   if (main.hash !== seedHash) fail(`the seeded model is at ${main.hash}, expected ${seedHash}`);
   const token = await operator.agentToken(projectId);

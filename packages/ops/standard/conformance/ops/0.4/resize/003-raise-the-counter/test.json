@@ -1,0 +1,7 @@
+{
+  "description": "resizeElement makes the island 42\" tall: it grows up from its bottom; the bowl standing on its top - its box's bottom at the island's old top, on the same floor - rises 6\" with it; the stool, standing on the floor, does not; and the working space's top, above the island's, rises with it.",
+  "covers": [
+    "FS-OPS-4.11.1",
+    "FS-OPS-4.11.2"
+  ]
+}

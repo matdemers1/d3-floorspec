@@ -1,0 +1,6 @@
+{
+  "description": "resizeElement with none of width, depth and height, of which it takes at least one: the request is malformed, FS-OPS-001.",
+  "covers": [
+    "FS-OPS-1.1.4"
+  ]
+}

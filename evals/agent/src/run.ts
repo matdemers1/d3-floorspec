@@ -21,7 +21,7 @@ import { measure, type Measured } from './measure.js';
 import { runReference } from './reference.js';
 import { markdownReport, summarise, type RunConfig, type TaskRun } from './report.js';
 import { scoreMeasured } from './scorer.js';
-import { EVAL_ROOT, hashOf, seedBatches, seedDocument } from './seeds.js';
+import { EVAL_ROOT, expectedSeedHash, seedBatches, seedDocument } from './seeds.js';
 import { loadTasks, promptFor } from './tasks.js';
 import type { Task } from './types.js';
 
@@ -73,18 +73,55 @@ if (agent === 'claude' && claudeVersion === null) {
   process.exit(2);
 }
 
+const log = (line: string) => process.stdout.write(`${line}\n`);
+
+/**
+ * Every seed is held to its recorded hash (seed-hashes.json, FLR-T-12.42) before any task runs:
+ * first as the reference applier computes it, then through the API exactly as a task is seeded.
+ * A seed that has moved stops the run with every drift listed — never a pass rate over tasks that
+ * started from a different house.
+ */
+const drift: string[] = [];
 const seeds = new Map<string, { measured: Measured; hash: string; batches: readonly (readonly object[])[] }>();
 for (const t of tasks) {
-  const doc = seedDocument(t.seed);
-  seeds.set(t.id, { measured: measure(doc), hash: hashOf(doc), batches: seedBatches(t.seed) });
+  try {
+    const doc = seedDocument(t.seed);
+    seeds.set(t.id, { measured: measure(doc), hash: expectedSeedHash(t.seed), batches: seedBatches(t.seed) });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!drift.includes(message)) drift.push(message);
+  }
 }
+function stopForDrift(): never {
+  process.stderr.write(`\nThe eval stopped: a seed no longer lands at its recorded hash.\n${drift.map((d) => `  - ${d}`).join('\n')}\n`);
+  writeFileSync(join(outDir, 'SEED-DRIFT.txt'), `${drift.join('\n')}\n`);
+  process.exit(1);
+}
+if (drift.length > 0) stopForDrift();
 
-const log = (line: string) => process.stdout.write(`${line}\n`);
 log(`agent eval: ${String(tasks.length)} task(s) × ${String(runs)} run(s), agent ${agent}${agent === 'claude' ? ` (${claudeVersion ?? ''}, model ${values.model})` : ''} → ${outDir}`);
 
 const api = await startApi(values['database-url'], join(outDir, 'server.log'));
 const operator = new Operator(api.url);
 await operator.setup();
+
+const checked = new Set<string>();
+for (const t of tasks) {
+  const key = typeof t.seed === 'string' ? t.seed : `inline seed of ${t.id}`;
+  if (checked.has(key)) continue;
+  checked.add(key);
+  const seed = seeds.get(t.id);
+  if (seed === undefined) continue;
+  const project = await operator.createProject(`seed check: ${key}`);
+  for (const batch of seed.batches) await operator.applyToMain(project, batch);
+  const main = await operator.model(project);
+  if (main.hash === seed.hash) log(`seed ${key} lands at ${seed.hash.slice(0, 12)} through the API`);
+  else drift.push(`seed ${key}: the API lands it at ${main.hash}, but its recorded hash is ${seed.hash}`);
+}
+if (drift.length > 0) {
+  await api.stop();
+  stopForDrift();
+}
 
 const results: TaskRun[] = [];
 const state: { aborted: string | null } = { aborted: null };

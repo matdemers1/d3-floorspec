@@ -1,0 +1,6 @@
+{
+  "description": "A rug with no host - its box is in the level's own frame, east of the house - and a coffee table standing free on it: resizeElement makes the rug 10' deep holding its back, at x = 30'; the table, between its back and its front, moves with its middle, 1' east.",
+  "covers": [
+    "FS-OPS-4.11.2"
+  ]
+}
