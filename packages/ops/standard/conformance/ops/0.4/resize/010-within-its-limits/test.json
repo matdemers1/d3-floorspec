@@ -1,0 +1,6 @@
+{
+  "description": "resizeElement with the sizes the island comes in, 72\" to 120\" wide: 96\" is one of them, and the batch commits.",
+  "covers": [
+    "FS-OPS-4.11.1"
+  ]
+}

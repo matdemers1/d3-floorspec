@@ -76,6 +76,15 @@ const tallCabinet: Model = (s) => {
   doors(s, f, 0, Y, split, Z, 'bottom');
 };
 
+/**
+ * How many bays an island of depth X and width Y is drawn with: one for each ~600 mm between its
+ * end overhangs — so a longer island gets more bays, never stretched ones (FLR-T-18.4).
+ */
+export function islandBays(X: number, Y: number): number {
+  const ov = min(25 * MM, X * 0.05);
+  return max(1, Math.round((Y - 2 * ov) / (600 * MM)));
+}
+
 /** An island: a counter top overhanging every side — deeply at its back, for stools — over drawers and doors. */
 const island: Model = (s, _el, ctx) => {
   const { X, Y, Z } = s;
@@ -87,7 +96,7 @@ const island: Model = (s, _el, ctx) => {
   const [y0, y1] = [c.ov, Y - c.ov];
   carcass(s, seat, y0, f.x0, y1, c.kick, top, ctx);
   s.box('kick', 'darkMetal', seat + c.kd, y0 + c.kd, 0, f.x0 - c.kd, y1 - c.kd, c.kick);
-  const n = max(1, Math.round((y1 - y0) / (600 * MM)));
+  const n = islandBays(X, Y);
   const dh = min(150 * MM, (top - c.kick) * 0.22);
   for (let i = 0; i < n; i++) {
     const a = y0 + ((y1 - y0) * i) / n;

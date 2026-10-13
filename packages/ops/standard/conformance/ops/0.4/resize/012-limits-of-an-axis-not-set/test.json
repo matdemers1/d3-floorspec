@@ -1,0 +1,6 @@
+{
+  "description": "A limit on the depth, which the island already exceeds, and a batch that sets only its width: only the extents it sets are checked, and it commits.",
+  "covers": [
+    "FS-OPS-4.11.1"
+  ]
+}

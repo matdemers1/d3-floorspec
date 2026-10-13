@@ -1,0 +1,6 @@
+{
+  "description": "The cabinet made one base unit wider holding its right, and the oven one unit past its middle, at an odd offset: the oven moves half a unit, which is rounded to even - from 1,560,577 to 1,560,578.",
+  "covers": [
+    "FS-OPS-4.11.2"
+  ]
+}

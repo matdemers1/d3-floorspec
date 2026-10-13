@@ -12,6 +12,7 @@ import { EXTENSION, setMember, turnFurniture } from './ops';
 import { ClearancePreview, reachText, sizeText } from './Preview';
 import { bytesText, filesOf, lintsOf, lintText } from './view';
 import type { Box } from './gltf';
+import { SizeSection } from './SizeSection';
 
 /**
  * The inspector of an FS_furniture element (FLR-T-8.3): what it is (category, name, catalogue,
@@ -82,6 +83,7 @@ export function FurnitureBody({ ctx, device }: { ctx: SystemsCtx; device: Device
           <ClearancePreview box={box} clearances={clearances} symbol={files.symbol === null ? null : assetHref(store.projectId, files.symbol.sha256)} units={units} label={`${label}: plan symbol and clearance envelopes`} />
         </div>
       ) : null}
+      <SizeSection key={id} ctx={ctx} device={device} />
       <PlacementSection ctx={ctx} device={device} />
       {turnable && !readOnly ? (
         <div className="fs-furn__turn" role="group" aria-label="Turn">

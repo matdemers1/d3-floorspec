@@ -12,7 +12,7 @@ import { ROOM_FUNCTIONS_TEXT } from './vocabulary.js';
 const DRAWING_OPS = new Set(['drawWall', 'drawSeparator', 'addWall', 'addSeparator', 'addJunction', 'moveJunction']);
 
 /** The Ops 0.2 operations that write a program or an extension element: what a Core 0.1 document cannot hold. */
-const PROGRAM_OPS = new Set(['addProgramItem', 'setAdjacency', 'removeAdjacency', 'setRoomBrief', 'placeElement', 'moveElement']);
+const PROGRAM_OPS = new Set(['addProgramItem', 'setAdjacency', 'removeAdjacency', 'setRoomBrief', 'placeElement', 'moveElement', 'resizeElement']);
 
 const OPENING_SIZE = /(?:^|\s)\S+'s (width|height) does not resolve/;
 const ANCHOR_ON_LINE = /anchor is on a location line/;

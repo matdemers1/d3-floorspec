@@ -1,0 +1,44 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "c414a33045a05bda53514409e4cac0d2b6ff4bb3ca98b817eb0ad881d4c0fd30",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/fallback/box",
+      "value": {
+        "max": [2340864, 1170432, 195072],
+        "min": [0, 0, 0]
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/boundary",
+      "value": [[0, 0], [2340864, 0], [2340864, 780288], [1170432, 1170432], [0, 780288]]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/boundary",
+      "value": [[0, 0], [1560576, 0], [1560576, 780288], [780288, 1170432], [0, 780288]]
+    },
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/fallback",
+      "value": {
+        "level": "L1",
+        "box": {
+          "max": [1560576, 1170432, 195072],
+          "min": [0, 0, 0]
+        }
+      }
+    }
+  ]
+}
