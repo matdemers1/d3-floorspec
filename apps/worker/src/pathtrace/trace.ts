@@ -1,36 +1,47 @@
 /**
- * A small Monte-Carlo path tracer (FLR-T-12.6, FLR-REQ-154): diffuse surfaces in their material's
- * colour and base-colour map, thin glass that lets light through, one sun, a clear sky, and — when
- * they are turned on (FLR-T-12.22) — the lamps of the house's luminaires.
+ * A small Monte-Carlo path tracer (FLR-T-12.6, FLR-REQ-154): surfaces in their material's colour,
+ * maps, roughness and metalness, glazing that reflects and lets light through, one sun, the sky,
+ * and — when they are turned on (FLR-T-12.22) — the lamps of the house's luminaires.
  *
  * - Every pixel is traced `samples` times, one sample a pass, each pass over the whole image — so a
  *   pass is the unit of progress, and an image is never part-traced.
- * - At each diffuse bounce the sun is sampled directly (next-event estimation, a shadow ray to a
- *   point on its disc), and the path continues in a cosine-weighted direction; a path that escapes
- *   sees the sky. Russian roulette ends paths after the third bounce.
+ * - Surfaces reflect as the editor's GPU still's do (FLR-T-13.14, FLR-ADR-040; brdf.ts): a diffuse
+ *   base under a GGX gloss — Smith's masking, Schlick's Fresnel, F₀ 4% for a dielectric and the base
+ *   colour for a metal, its lost multiple scattering put back — so oak has a sheen, quartz a polish,
+ *   steel and mirrors reflect the room in their own colour, and a metal has no diffuse at all.
+ * - At each bounce the sun is sampled directly (next-event estimation, a shadow ray to a point on its
+ *   disc) through the whole lobe, gloss and diffuse; the path then continues in a direction drawn
+ *   from the lobe — a cosine-weighted one off the diffuse, or along a facet the viewer sees off the
+ *   gloss (in proportion to what each reflects). A path that escapes sees the sky. Russian roulette
+ *   ends paths after the third bounce.
  * - A shadow ray asks only whether anything blocks it (`Bvh.occluded`), and stops at the first wall.
  * - Lamps (`PtScene.lamps`) are small spheres, each shining every way or as a spot down a cone. At
- *   each diffuse bounce, beside the sun, one or two lamps are sampled directly — picked in proportion
- *   to what each could give the point, unshadowed — each with a shadow ray through the same BVH, so
- *   a lamp lights its own room and not the room behind the wall. A luminaire's lens lets its own
- *   lamp's light out: shadow rays toward a lamp pass through lenses — and a luminaire never shadows
- *   its own lamp (FLR-T-13.1): a shadow ray toward a lamp passes every piece of the fixture it is
- *   the lamp of (`PtScene.owner`), its canopy, trim and shade as well as its lens.
- * - Glass shows a glint of the sky (8%) and lets the rest through, tinted by its colour; a shadow
- *   ray passes through glass the same way, so sun reaches the floor through a window.
+ *   each bounce, beside the sun, one or two lamps are sampled directly — picked in proportion to what
+ *   each could give the point, unshadowed — each with a shadow ray through the same BVH, so a lamp
+ *   lights its own room and not the room behind the wall. A luminaire's lens lets its own lamp's
+ *   light out: shadow rays toward a lamp pass through lenses — and a luminaire never shadows its own
+ *   lamp (FLR-T-13.1): a shadow ray toward a lamp passes every piece of the fixture it is the lamp of
+ *   (`PtScene.owner`), its canopy, trim and shade as well as its lens.
+ * - Glazing is a thin pane of dielectric (brdf.ts `thinPane`, the rule @floorspec/mesh's glass.ts
+ *   draws every view with): Fresnel by its ior at the angle it is seen, both faces, its tint along the
+ *   slant. Where nothing stands in the way of what a pane reflects it shows the sky, and the path goes
+ *   on through; where something does — the room behind the camera at night — the path is reflected
+ *   or let through in proportion. A shadow ray passes glass the same way, so sun reaches the floor
+ *   through a window.
+ * - What the camera sees in a mirror or a polished face is the camera's own view: a lens glows in it,
+ *   and its light is not clamped as bounced light is (FLR-T-13.16).
  * - The image is exposed to its own log-average luminance — or to a fixed exposure, or metered
  *   within a band (FLR-T-13.1: @floorspec/mesh `EXPOSURE_PER_NIT`), so a room with its lamps on and
  *   off can be compared — and tone-mapped with an ACES-style filmic curve, then written in sRGB.
  *
- * What it is not: a lighting simulation. Surfaces are diffuse, in their maps' colours and relief
- * (FLR-T-13.6: base colour, normal and occlusion maps), with a glint of the sun by their roughness
- * on what the camera sees; reflections are not traced (FLR-T-13.14), a lamp's photometry is a guess from its kind and watts (@floorspec/mesh lights.ts), and
- * the sky is a simple gradient — approximate lighting, which is what
- * the screen says. Seeded (rng.ts), so the same scene and options give the same picture.
+ * What it is not: a lighting simulation. A lamp's photometry is a guess from its kind and watts
+ * (@floorspec/mesh lights.ts) — approximate lighting, which is what the screen says. Seeded (rng.ts),
+ * so the same scene and options give the same picture.
  */
-import { glassAt, groundAt, hazeAt, skyRadiance as fieldRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
+import { GLASS_IOR, groundAt, hazeAt, skyRadiance as fieldRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
 import type { Vec3 } from '../export/gltf/scene.js';
 import type { Camera } from '../render3d/camera.js';
+import { alphaOf, DIELECTRIC_F0, ggxD, lobeAlbedo, paneAbsorption, sampleVndf, smithLambda, smithV, thinPane } from './brdf.js';
 import { Bvh, type Hit } from './bvh.js';
 import type { Features } from './denoise.js';
 import { Rng } from './rng.js';
@@ -39,7 +50,10 @@ import { sample, type Texture } from './textures.js';
 export interface PtMaterial {
   /** Linear RGB. */
   readonly rgb: Vec3;
+  /** Glazing: a thin pane whose `rgb` is what it lets through face on (glass.ts `paneTransmission`). */
   readonly glass: boolean;
+  /** Glass's index of refraction (KHR_materials_ior). Default @floorspec/mesh's `GLASS_IOR`, 1.5. */
+  readonly ior?: number;
   readonly texture?: Texture;
   /**
    * Linear RGB a luminaire's lens shows (FLR-T-12.21): added where a camera ray meets it, so the lens
@@ -54,6 +68,11 @@ export interface PtMaterial {
    */
   readonly roughness?: number;
   readonly metallic?: number;
+  /**
+   * How much of a dielectric's 4% gloss it has, 0–1 (glTF's KHR_materials_specular specularFactor).
+   * Default 1, as every glTF material; 0 is a pure diffuser — a lux meter's probe.
+   */
+  readonly specular?: number;
   /** Occlusion in red, roughness in green, metalness in blue, linear (glTF's channels, Core 18.2). */
   readonly orm?: Texture;
   /** A tangent-space normal map, linear, +X along u and +Y up the tile (Core 18.2). */
@@ -220,7 +239,6 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   const hit: Hit = { tri: -1, t: 0, u: 0, v: 0 };
   const tex = new Float64Array(3);
   const sky = new Float64Array(3);
-  const pane = new Float64Array(3);
   const field = options.field;
   const unit = field?.unit ?? 1;
   const ground = options.ground;
@@ -255,17 +273,33 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   let shadowOwner = -1;
   let crossed = 0;
   let through: Float64Array = new Float64Array(3);
-  /** Whether triangle `tri` blocks a shadow ray; glass it passes dims `through`. */
+  /** The shadow ray's direction: the angle it crosses a pane at. */
+  let sdx = 0;
+  let sdy = 0;
+  let sdz = 0;
+  // Each pane's tint, one pass face on (brdf.ts `paneAbsorption`): worked out once, not per crossing.
+  const absorb = mats.map((m) => {
+    const a = new Float64Array(3);
+    if (m.glass) paneAbsorption(m.rgb, m.ior ?? GLASS_IOR, a);
+    return a;
+  });
+  const paneT = new Float64Array(3);
+  const paneR = new Float64Array(3);
+  /** Any triangle at all: whether something stands in the way of what a pane reflects. */
+  const always = (): boolean => true;
+  /** Whether triangle `tri` blocks a shadow ray; glass it passes dims `through`, by what the pane lets through at its angle. */
   const blocks = (tri: number): boolean => {
-    const m = mats[scene.material[tri]!]!;
+    const mi = scene.material[tri]!;
+    const m = mats[mi]!;
     // A piece of the lamp's own fixture never shadows it; a lens lets the light out.
     if (toLamp && (m.lens === true || (shadowOwner >= 0 && owners !== undefined && owners[tri] === shadowOwner))) return false;
     if (!m.glass) return true;
     // Past eight crossings, call it blocked.
     if (++crossed > 8) return true;
-    through[0] = through[0]! * 0.9 * (0.7 + 0.3 * m.rgb[0]);
-    through[1] = through[1]! * 0.9 * (0.7 + 0.3 * m.rgb[1]);
-    through[2] = through[2]! * 0.9 * (0.7 + 0.3 * m.rgb[2]);
+    thinPane(absorb[mi]!, Math.abs(sdx * N[3 * tri]! + sdy * N[3 * tri + 1]! + sdz * N[3 * tri + 2]!), m.ior ?? GLASS_IOR, paneT, paneR);
+    through[0] = through[0]! * paneT[0]!;
+    through[1] = through[1]! * paneT[1]!;
+    through[2] = through[2]! * paneT[2]!;
     return false;
   };
   /** How much light reaches a point along `l` from up to `tMax` away: 0 behind anything opaque, less through glass. */
@@ -276,6 +310,9 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
     toLamp = lamp;
     shadowOwner = owner;
     crossed = 0;
+    sdx = lx;
+    sdy = ly;
+    sdz = lz;
     through = out;
     if (bvh.occluded(ox, oy, oz, lx, ly, lz, EPS, tMax, blocks)) {
       out[0] = 0;
@@ -306,12 +343,16 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   /**
    * The lamps' light at a point with normal n, directly: `picks` lamps picked in proportion to
    * what each could give it unshadowed, each sampled at a point on its sphere and shadow-tested.
-   * Irradiance (linear RGB) into `out`.
+   * Irradiance (linear RGB) into `out`, and the radiance the surface's gloss (`glossAt`) reflects of
+   * it toward the viewer into `gloss`.
    */
-  const lampsAt = (px: number, py: number, pz: number, nx: number, ny: number, nz: number, picks: number, out: Float64Array): void => {
+  const lampsAt = (px: number, py: number, pz: number, nx: number, ny: number, nz: number, picks: number, out: Float64Array, gloss: Float64Array): void => {
     out[0] = 0;
     out[1] = 0;
     out[2] = 0;
+    gloss[0] = 0;
+    gloss[1] = 0;
+    gloss[2] = 0;
     let total = 0;
     for (let i = 0; i < lamps.length; i++) {
       const lamp = lamps[i]!;
@@ -362,13 +403,18 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
       if (sp <= 0) continue;
       reaches(px, py, pz, lx, ly, lz, d, lamp.owner ?? -1, lampLight);
       if (lampLight[0] === 0 && lampLight[1] === 0 && lampLight[2] === 0) continue;
-      const k = (sp * cosN) / d2 / p / picks;
-      out[0] += lamp.intensity[0] * k * lampLight[0]!;
-      out[1] += lamp.intensity[1] * k * lampLight[1]!;
-      out[2] += lamp.intensity[2] * k * lampLight[2]!;
+      const k = sp / d2 / p / picks;
+      out[0] += lamp.intensity[0] * k * cosN * lampLight[0]!;
+      out[1] += lamp.intensity[1] * k * cosN * lampLight[1]!;
+      out[2] += lamp.intensity[2] * k * cosN * lampLight[2]!;
+      glossAt(lx, ly, lz, spec);
+      gloss[0] += lamp.intensity[0] * k * lampLight[0]! * spec[0]!;
+      gloss[1] += lamp.intensity[1] * k * lampLight[1]! * spec[1]!;
+      gloss[2] += lamp.intensity[2] * k * lampLight[2]! * spec[2]!;
     }
   };
   const lampE = new Float64Array(3);
+  const lampS = new Float64Array(3);
   const shade = new Float64Array(3);
   /**
    * A normal map's normal (x, y, z in −1…1, tangent space) at a point of triangle `t`, in the scene:
@@ -421,29 +467,42 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
     out[1] = sy2;
     out[2] = sz2;
   };
-  /** Schlick's (1 − l·h)⁵ of the last `glint`: its Fresnel weight. */
-  let fresnelK = 0;
+  // The surface a path is at, as `glossAt` and the lobe's sampling read it (brdf.ts): toward the
+  // viewer (V), its shading normal (S), α², n·v, how metallic, its base colour, and the boosts that
+  // put back what a single bounce off the facets loses — the dielectric's and, per channel, a metal's.
+  let Vx = 0, Vy = 0, Vz = 0, Sx = 0, Sy = 0, Sz = 0;
+  let A2 = 1, NV = 1, MET = 0, SPEC = 1, BR = 0, BG = 0, BB = 0, BD = 1, BMR = 1, BMG = 1, BMB = 1;
+  const spec = new Float64Array(3);
   /**
-   * A light's specular glint, per unit of its irradiance on a surface square to it, toward the
-   * viewer: a normalized Blinn-Phong lobe whose exponent the roughness gives (α = roughness²),
-   * over 4 (l·h)² (Kelemen's visibility). Sets `fresnelK`.
+   * The radiance the surface's gloss reflects toward the viewer from a light arriving along `l`, per
+   * unit of the light's irradiance on a surface square to it: the GGX lobe D V F (n·l) — F Schlick's,
+   * from 4% for the dielectric part and from the base colour for the metal part — linear RGB.
    */
-  const glint = (lx: number, ly: number, lz: number, vx: number, vy: number, vz: number, nx2: number, ny2: number, nz2: number, roughness: number): number => {
-    let hx = lx + vx, hy = ly + vy, hz = lz + vz;
+  const glossAt = (lx: number, ly: number, lz: number, out: Float64Array): void => {
+    out[0] = 0;
+    out[1] = 0;
+    out[2] = 0;
+    const nl = Sx * lx + Sy * ly + Sz * lz;
+    if (nl <= 0) return;
+    let hx = lx + Vx, hy = ly + Vy, hz = lz + Vz;
     const hl = Math.hypot(hx, hy, hz);
-    if (hl < 1e-9) return 0;
+    if (hl < 1e-9) return;
     hx /= hl;
     hy /= hl;
     hz /= hl;
-    const nh = nx2 * hx + ny2 * hy + nz2 * hz;
-    const nv = nx2 * vx + ny2 * vy + nz2 * vz;
-    if (nh <= 0 || nv <= 0) return 0;
-    const a = Math.max(0.05, roughness * roughness);
-    const e = Math.min(4000, 2 / (a * a) - 2);
-    const lh = Math.max(0.05, lx * hx + ly * hy + lz * hz);
-    fresnelK = (1 - lh) ** 5;
-    return (((e + 2) / (2 * Math.PI)) * nh ** e) / (4 * lh * lh);
+    const s = ggxD(Sx * hx + Sy * hy + Sz * hz, A2) * smithV(nl, NV, A2) * nl;
+    if (!(s > 0)) return;
+    const k = 1 - Math.min(1, Math.max(0, Vx * hx + Vy * hy + Vz * hz));
+    const fw = k * k * k * k * k;
+    const fd = (1 - MET) * SPEC * (DIELECTRIC_F0 + (1 - DIELECTRIC_F0) * fw) * BD;
+    out[0] = s * (fd + MET * (BR + (1 - BR) * fw) * BMR);
+    out[1] = s * (fd + MET * (BG + (1 - BG) * fw) * BMG);
+    out[2] = s * (fd + MET * (BB + (1 - BB) * fw) * BMB);
   };
+  const lobe = new Float64Array(3);
+  const facet = new Float64Array(3);
+  /** Past a bounce along a lobe this narrow (roughness 0.2), the camera still sees a reflection, not light that bounced. */
+  const MIRROR_ALPHA = 0.04;
 
   for (let pass = 0; pass < samples; pass++) {
     const step = options.rows?.of ?? 1;
@@ -472,13 +531,18 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
         let tb = 1;
         let depth = 0;
         let crossings = 0;
+        /** The first surface's features (for the denoiser) are yet to be recorded: past a mirror, they are what it shows. */
         let first = true;
+        /** Still the camera's own view: through glass, and off mirrors and polished faces. */
+        let chain = true;
+        let surfaced = false;
         let firstLum = 1;
         let travelled = 0;
         /** How far the camera's first surface is, metres. */
         let firstAt = 0;
-        // What the camera's first surface shows lit directly (and the sky and glass before it): kept
-        // apart from what later bounces bring, which alone is clamped.
+        // What the camera's own view shows lit directly — its first surface, and what it sees of the
+        // room in a mirror or a polished floor (and the sky and glass before them): kept apart from
+        // what later bounces bring, which alone is clamped.
         let direct = false;
         let dr = 0;
         let dg = 0;
@@ -496,7 +560,8 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           }
           const t = onGround ? -1 : hit.tri;
           const tHit = onGround ? tGround : hit.t;
-          const m = onGround ? GROUND : mats[scene.material[t]!]!;
+          const mi = onGround ? -1 : scene.material[t]!;
+          const m = onGround ? GROUND : mats[mi]!;
           travelled += tHit;
           const hx = ox + dx * tHit;
           const hy = onGround ? ground!.y : oy + dy * tHit;
@@ -512,21 +577,57 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
           tMin = EPS;
           if (m.glass) {
             if (++crossings > 8) break;
-            // The sky its face reflects (Fresnel, not traced further), and the rest straight through,
-            // as much as the pane lets through at this angle (glass.ts, FLR-T-13.17): about 90% face on.
+            // A thin pane (brdf.ts, FLR-T-13.14): Fresnel by its ior at this angle, both faces, its tint.
             const cos = -(dx * nx + dy * ny + dz * nz);
-            const f = glassAt(m.rgb, cos, pane);
+            const ior = m.ior ?? GLASS_IOR;
+            thinPane(absorb[mi]!, cos, ior, paneT, paneR);
             const k = 2 * (dx * nx + dy * ny + dz * nz);
-            skyAlong(dx - k * nx, dy - k * ny, dz - k * nz, sky);
-            r += tr * f * sky[0]!;
-            g += tg * f * sky[1]!;
-            b += tb * f * sky[2]!;
-            tr *= pane[0]!;
-            tg *= pane[1]!;
-            tb *= pane[2]!;
-            ox = hx;
-            oy = hy;
-            oz = hz;
+            const rx = dx - k * nx;
+            const ry = dy - k * ny;
+            const rz = dz - k * nz;
+            const qx = hx + nx * EPS;
+            const qy = hy + ny * EPS;
+            const qz = hz + nz * EPS;
+            if (chain && !(ground !== undefined && ry < 0 && qy > ground.y) && !bvh.occluded(qx, qy, qz, rx, ry, rz, EPS, Infinity, always)) {
+              // Seen by the camera, and nothing stands in the way of what its face reflects: the sky,
+              // added here, and the path goes on through — no noise for a window seen from outside.
+              // (Bounced light is not looked at: it is reflected or let through by chance, below,
+              // without the shadow ray.)
+              skyAlong(rx, ry, rz, sky);
+              r += tr * paneR[0]! * sky[0]!;
+              g += tg * paneR[1]! * sky[1]!;
+              b += tb * paneR[2]! * sky[2]!;
+              tr *= paneT[0]!;
+              tg *= paneT[1]!;
+              tb *= paneT[2]!;
+              ox = hx;
+              oy = hy;
+              oz = hz;
+              continue;
+            }
+            // Something does — the lit room behind the camera, at night — or the light has bounced:
+            // reflected or let through, in proportion.
+            const lr = 0.2126 * paneR[0]! + 0.7152 * paneR[1]! + 0.0722 * paneR[2]!;
+            const lt = 0.2126 * paneT[0]! + 0.7152 * paneT[1]! + 0.0722 * paneT[2]!;
+            const pr = lr / Math.max(1e-9, lr + lt);
+            if (rng.next() < pr) {
+              tr *= paneR[0]! / pr;
+              tg *= paneR[1]! / pr;
+              tb *= paneR[2]! / pr;
+              dx = rx;
+              dy = ry;
+              dz = rz;
+              ox = qx;
+              oy = qy;
+              oz = qz;
+            } else {
+              tr *= paneT[0]! / (1 - pr);
+              tg *= paneT[1]! / (1 - pr);
+              tb *= paneT[2]! / (1 - pr);
+              ox = hx;
+              oy = hy;
+              oz = hz;
+            }
             continue;
           }
           // The surface's colour: its material's, times its map where it has one.
@@ -576,30 +677,70 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
               snz = shade[2]!;
             }
           }
-          // A metal's colour is its reflection, which this tracer does not follow yet (FLR-T-13.14):
-          // it keeps a part of it as diffuse, so brushed steel reads grey, not black. A map's
-          // occlusion is what the map's relief hides from the light round it — a mortar joint, the
-          // shadow line under a lap board: it darkens the light a bounce brings (below) fully, and
-          // the sun's and the lamps' by half, for the relief's own shadow the normal map cannot cast.
-          const keep = (1 - metal + 0.6 * metal) * (0.5 + 0.5 * cavity);
-          const bounced = cavity / (0.5 + 0.5 * cavity);
-          const f0r = 0.04 + (ar - 0.04) * metal;
-          const f0g = 0.04 + (ag - 0.04) * metal;
-          const f0b = 0.04 + (ab - 0.04) * metal;
-          ar *= keep;
-          ag *= keep;
-          ab *= keep;
-          if (first && m.emission !== undefined) {
+          // The lobe (brdf.ts, FLR-T-13.14): GGX gloss over a diffuse base, as the GPU still's glTF
+          // material. Its albedo E — 4% face on for a dielectric, the base colour for a metal, more at
+          // a grazing angle — with what one bounce off the facets loses put back; what the gloss
+          // reflects, the diffuse beneath it does not get.
+          rough = Math.min(1, Math.max(0, rough));
+          metal = Math.min(1, Math.max(0, metal));
+          const alpha = alphaOf(rough);
+          A2 = alpha * alpha;
+          Vx = -dx;
+          Vy = -dy;
+          Vz = -dz;
+          Sx = snx;
+          Sy = sny;
+          Sz = snz;
+          NV = Math.max(1e-4, Sx * Vx + Sy * Vy + Sz * Vz);
+          MET = metal;
+          SPEC = Math.min(1, Math.max(0, m.specular ?? 1));
+          BR = ar;
+          BG = ag;
+          BB = ab;
+          lobeAlbedo(NV, rough, lobe);
+          const ess = Math.max(1e-4, lobe[0]! + lobe[1]!);
+          const lost = (1 - ess) / ess;
+          BD = 1 + DIELECTRIC_F0 * lost;
+          BMR = 1 + ar * lost;
+          BMG = 1 + ag * lost;
+          BMB = 1 + ab * lost;
+          const eD = SPEC * (DIELECTRIC_F0 * lobe[0]! + lobe[1]!) * BD;
+          const esr = (1 - metal) * eD + metal * (ar * lobe[0]! + lobe[1]!) * BMR;
+          const esg = (1 - metal) * eD + metal * (ag * lobe[0]! + lobe[1]!) * BMG;
+          const esb = (1 - metal) * eD + metal * (ab * lobe[0]! + lobe[1]!) * BMB;
+          // The diffuse base. A map's occlusion is what the map's relief hides from the light round it
+          // — a mortar joint, the shadow line under a lap board: it darkens the light a bounce brings
+          // (below) fully, and the sun's and the lamps' by half, for the relief's own shadow the normal
+          // map cannot cast (FLR-T-13.6).
+          const base = (1 - metal) * (1 - eD);
+          const lit = base * (0.5 + 0.5 * cavity);
+          const kdr = ar * lit;
+          const kdg = ag * lit;
+          const kdb = ab * lit;
+          const kbr = ar * base * cavity;
+          const kbg = ag * base * cavity;
+          const kbb = ab * base * cavity;
+          // Which way the path goes on: off the gloss or the diffuse, in proportion to what each reflects.
+          const ws = 0.2126 * esr + 0.7152 * esg + 0.0722 * esb;
+          const wd = 0.2126 * kbr + 0.7152 * kbg + 0.0722 * kbb;
+          const pGloss = ws + wd > 0 ? ws / (ws + wd) : 1;
+          if (chain && m.emission !== undefined) {
             r += tr * m.emission[0];
             g += tg * m.emission[1];
             b += tb * m.emission[2];
           }
-          if (first) {
+          if (!surfaced) {
+            surfaced = true;
+            firstAt = travelled;
+          }
+          // A mirror's features are what it shows (as a denoiser's guide is made): its own are one
+          // flat face, and the room in it would be smoothed away.
+          if (first && !(chain && alpha < MIRROR_ALPHA && pGloss > 0.9)) {
             first = false;
             const o = 3 * pixel;
-            albedo[o] = albedo[o]! + ar;
-            albedo[o + 1] = albedo[o + 1]! + ag;
-            albedo[o + 2] = albedo[o + 2]! + ab;
+            albedo[o] = albedo[o]! + kdr + esr;
+            albedo[o + 1] = albedo[o + 1]! + kdg + esg;
+            albedo[o + 2] = albedo[o + 2]! + kdb + esb;
             // The face's own normal, not its relief's: the denoiser finds edges by it, and a normal
             // map's every bump would read as one and keep its noise.
             normal[o] = normal[o]! + nx;
@@ -607,18 +748,17 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             normal[o + 2] = normal[o + 2]! + nz;
             depthSum[pixel] = depthSum[pixel]! + travelled;
             hits[pixel] = hits[pixel]! + 1;
-            firstAt = travelled;
-            firstLum = Math.max(0.02, 0.2126 * ar + 0.7152 * ag + 0.0722 * ab);
+            firstLum = Math.max(0.02, 0.2126 * (kdr + esr) + 0.7152 * (kdg + esg) + 0.0722 * (kdb + esb));
           }
           const px0 = hx + nx * EPS;
           const py0 = hy + ny * EPS;
           const pz0 = hz + nz * EPS;
-          // The lamps, directly.
+          // The lamps, directly: their light on the diffuse, and the gloss's highlight of them.
           if (lampPicks > 0) {
-            lampsAt(px0, py0, pz0, snx, sny, snz, depth === 0 ? lampPicks : 1, lampE);
-            r += (tr * ar * lampE[0]!) / Math.PI;
-            g += (tg * ag * lampE[1]!) / Math.PI;
-            b += (tb * ab * lampE[2]!) / Math.PI;
+            lampsAt(px0, py0, pz0, snx, sny, snz, chain ? lampPicks : 1, lampE, lampS);
+            r += tr * ((kdr * lampE[0]!) / Math.PI + lampS[0]!);
+            g += tg * ((kdg * lampE[1]!) / Math.PI + lampS[1]!);
+            b += tb * ((kdb * lampE[2]!) / Math.PI + lampS[2]!);
           }
           // The sun, directly: a point on its disc.
           if (sun.irradiance > 0 && nx * sx + ny * sy + nz * sz > 0) {
@@ -633,33 +773,74 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             const cosN = snx * lx + sny * ly + snz * lz;
             if (cosN > 0 && nx * lx + ny * ly + nz * lz > 0) {
               transmit(px0, py0, pz0, lx, ly, lz, light);
-              const k = (sun.irradiance / Math.PI) * cosN;
-              r += tr * ar * k * sun.color[0] * light[0]!;
-              g += tg * ag * k * sun.color[1] * light[1]!;
-              b += tb * ab * k * sun.color[2] * light[2]!;
-              // The sun's glint on what the camera sees, by the surface's roughness (FLR-T-13.6) — a
-              // normalized Blinn-Phong lobe with Schlick's Fresnel; FLR-T-13.14 brings GGX and reflections.
-              if (depth === 0 && rough < 0.95) {
-                const s = glint(lx, ly, lz, -dx, -dy, -dz, snx, sny, snz, rough) * sun.irradiance * cosN;
-                if (s > 0) {
-                  const fr = fresnelK;
-                  r += tr * s * (f0r + (1 - f0r) * fr) * sun.color[0] * light[0]!;
-                  g += tg * s * (f0g + (1 - f0g) * fr) * sun.color[1] * light[1]!;
-                  b += tb * s * (f0b + (1 - f0b) * fr) * sun.color[2] * light[2]!;
-                }
+              if (light[0]! > 0 || light[1]! > 0 || light[2]! > 0) {
+                glossAt(lx, ly, lz, spec);
+                const k = sun.irradiance;
+                const d = cosN / Math.PI;
+                r += tr * k * sun.color[0] * light[0]! * (kdr * d + spec[0]!);
+                g += tg * k * sun.color[1] * light[1]! * (kdg * d + spec[1]!);
+                b += tb * k * sun.color[2] * light[2]! * (kdb * d + spec[2]!);
               }
             }
           }
-          if (depth === 0) {
+          if (chain) {
             direct = true;
             dr = r;
             dg = g;
             db = b;
           }
           if (++depth > bounces) break;
-          tr *= ar * bounced;
-          tg *= ag * bounced;
-          tb *= ab * bounced;
+          // A lobe is drawn only where both reflect: a pure diffuser traces as it always has.
+          const glossy = pGloss >= 1 || (pGloss > 0 && rng.next() < pGloss);
+          if (glossy) {
+            // Off the gloss: a facet the viewer sees (Heitz 2018), and the mirror direction about it.
+            // Its weight is F G₂ / G₁(v) over the chance of choosing the gloss.
+            const ux = Math.abs(Sx) < 0.9 ? 1 : 0;
+            const uy = ux === 1 ? 0 : 1;
+            let t1x = uy * Sz;
+            let t1y = -ux * Sz;
+            let t1z = ux * Sy - uy * Sx;
+            const tl = Math.hypot(t1x, t1y, t1z);
+            t1x /= tl;
+            t1y /= tl;
+            t1z /= tl;
+            const t2x = Sy * t1z - Sz * t1y;
+            const t2y = Sz * t1x - Sx * t1z;
+            const t2z = Sx * t1y - Sy * t1x;
+            sampleVndf(Vx * t1x + Vy * t1y + Vz * t1z, Vx * t2x + Vy * t2y + Vz * t2z, NV, alpha, rng.next(), rng.next(), facet);
+            const fhx = t1x * facet[0]! + t2x * facet[1]! + Sx * facet[2]!;
+            const fhy = t1y * facet[0]! + t2y * facet[1]! + Sy * facet[2]!;
+            const fhz = t1z * facet[0]! + t2z * facet[1]! + Sz * facet[2]!;
+            const vh = Vx * fhx + Vy * fhy + Vz * fhz;
+            if (vh <= 0) break;
+            let lx = 2 * vh * fhx - Vx;
+            let ly = 2 * vh * fhy - Vy;
+            let lz = 2 * vh * fhz - Vz;
+            const nl = Sx * lx + Sy * ly + Sz * lz;
+            if (nl <= 0) break;
+            // Below the face itself (a normal map tilted it): turned back above it, as the GPU tracer does.
+            const gl = nx * lx + ny * ly + nz * lz;
+            if (gl <= 0) {
+              lx -= 2 * gl * nx;
+              ly -= 2 * gl * ny;
+              lz -= 2 * gl * nz;
+            }
+            const lv = smithLambda(NV, A2);
+            const w = (1 + lv) / (1 + lv + smithLambda(nl, A2)) / pGloss;
+            const kk = 1 - Math.min(1, vh);
+            const fw = kk * kk * kk * kk * kk;
+            const fd = (1 - metal) * SPEC * (DIELECTRIC_F0 + (1 - DIELECTRIC_F0) * fw) * BD;
+            tr *= w * (fd + metal * (ar + (1 - ar) * fw) * BMR);
+            tg *= w * (fd + metal * (ag + (1 - ag) * fw) * BMG);
+            tb *= w * (fd + metal * (ab + (1 - ab) * fw) * BMB);
+            dx = lx;
+            dy = ly;
+            dz = lz;
+          } else {
+            tr *= kbr / (1 - pGloss);
+            tg *= kbg / (1 - pGloss);
+            tb *= kbb / (1 - pGloss);
+          }
           if (depth >= 3) {
             const p = Math.max(tr, tg, tb);
             if (p <= 0 || rng.next() >= p) break;
@@ -667,30 +848,34 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             tg /= p;
             tb /= p;
           }
-          // A cosine-weighted direction about the normal.
-          const r1 = rng.next();
-          const r2 = rng.next();
-          const rad = Math.sqrt(r1);
-          const phi = 2 * Math.PI * r2;
-          const lx = rad * Math.cos(phi);
-          const ly = rad * Math.sin(phi);
-          const lz = Math.sqrt(Math.max(0, 1 - r1));
-          const ux = Math.abs(nx) < 0.9 ? 1 : 0;
-          const uy = ux === 1 ? 0 : 1;
-          // t1 = normalize(cross(u, n)), t2 = cross(n, t1)
-          let t1x = uy * nz;
-          let t1y = -ux * nz;
-          let t1z = ux * ny - uy * nx;
-          const tl = Math.hypot(t1x, t1y, t1z);
-          t1x /= tl;
-          t1y /= tl;
-          t1z /= tl;
-          const t2x = ny * t1z - nz * t1y;
-          const t2y = nz * t1x - nx * t1z;
-          const t2z = nx * t1y - ny * t1x;
-          dx = t1x * lx + t2x * ly + nx * lz;
-          dy = t1y * lx + t2y * ly + ny * lz;
-          dz = t1z * lx + t2z * ly + nz * lz;
+          if (!glossy) {
+            // Off the diffuse: a cosine-weighted direction about the face's normal.
+            const r1 = rng.next();
+            const r2 = rng.next();
+            const rad = Math.sqrt(r1);
+            const phi = 2 * Math.PI * r2;
+            const lx = rad * Math.cos(phi);
+            const ly = rad * Math.sin(phi);
+            const lz = Math.sqrt(Math.max(0, 1 - r1));
+            const ux = Math.abs(nx) < 0.9 ? 1 : 0;
+            const uy = ux === 1 ? 0 : 1;
+            // t1 = normalize(cross(u, n)), t2 = cross(n, t1)
+            let t1x = uy * nz;
+            let t1y = -ux * nz;
+            let t1z = ux * ny - uy * nx;
+            const tl = Math.hypot(t1x, t1y, t1z);
+            t1x /= tl;
+            t1y /= tl;
+            t1z /= tl;
+            const t2x = ny * t1z - nz * t1y;
+            const t2y = nz * t1x - nx * t1z;
+            const t2z = nx * t1y - ny * t1x;
+            dx = t1x * lx + t2x * ly + nx * lz;
+            dy = t1y * lx + t2y * ly + ny * lz;
+            dz = t1z * lx + t2z * ly + nz * lz;
+          }
+          // Past a mirror or a polished face, still the camera's view; past anything rougher, bounced light.
+          chain = chain && glossy && alpha < MIRROR_ALPHA;
           ox = px0;
           oy = py0;
           oz = pz0;
