@@ -48,7 +48,7 @@ function PointLamp({ light }: { light: ViewLight }) {
       distance={light.distance}
       decay={2}
       castShadow={light.shadow}
-      userData={{ fixture: light.id }}
+      userData={{ fixture: light.id, size: light.size }}
     />
   );
 }
@@ -76,7 +76,7 @@ function SpotLamp({ light }: { light: ViewLight }) {
         angle={light.angle ?? Math.PI / 4}
         penumbra={light.penumbra ?? 0.5}
         castShadow={light.shadow}
-        userData={{ fixture: light.id }}
+        userData={{ fixture: light.id, size: light.size }}
       />
     </>
   );

@@ -202,3 +202,39 @@ editor's GPU still — is seen under one sky, `@floorspec/mesh/sky` (FLR-T-13.4,
   reflectance 0.2 under the sun and sky (0.08 after dark) — within the day band by day, and after dark up to 0.3 per
   cd/m², the long exposure of a night photograph; a render with its lamps on keeps the night band
   above, and a room is metered. The editor's view uses the renderers' filmic curve under a sky.
+
+## Presentation (FLR-T-13.7)
+
+The editor's 3D view draws in **Draft** — as it always has: Lambert's even diffuse, the panes in one
+blended pass, light and fast — or **Presentation**, chosen from the Quality control in the chips at
+the bottom left and kept in the browser. Presentation is the default where WebGL runs on a GPU and
+Draft where it is drawn in software (SwiftShader, llvmpipe), where Presentation is offered but slow.
+Its passes and three.js's post-processing load the first time it is chosen, in a chunk of their own.
+
+It is the same light, seen better. **The exposure and the tone curve are Draft's** — the renderers'
+filmic curve under a sky, three.js's ACES in the studio, at `skyExposure` or `LIT_EXPOSURE` — applied
+once to the whole picture at the end (three.js's OutputPass reads the renderer's own) instead of in
+each material, so a room reads as bright in both; the e2e holds the picture's mean luminance to
+Draft's within a band. The sky still lights the house through its light probe.
+
+| Pass | What it does |
+|---|---|
+| Materials | every surface physically based (MeshStandard): walls 0.85 rough, floors 0.5, ceilings 0.95, a model's untextured piece its role's finish; the library's textured materials as they are |
+| Reflections of the sky | the dome prefiltered (three.js's PMREM) as `scene.environment` — reflections only: its irradiance is not added to the probe's |
+| Soft shadows | PCSS on the sun (its angular radius) and on every shadowed lamp (its emitter's radius): a penumbra that widens with the gap between what casts it and what it falls on, found with the comparison samplers three.js already binds — no texture unit more |
+| Ambient occlusion | GTAO at half size, denoised, over corners, under furniture, where walls meet floors; never over glass, a lit lens or the sky |
+| Screen-space reflections | from every surface smoother than 0.6, a ray marched in screen space against the depth; what it finds takes the place of the sky's reflection there, blurrier the rougher and the longer. Indoors (inside a room's footprint, between its floor and ceiling) the sky's reflection is taken out altogether — a floor reflects the room, not the sky |
+| Glass | glass.ts per pixel: what is behind multiplied by `glassTransmission` at the angle it is seen at, then the face's Fresnel reflection added (the sky's, the sun's and lamps' glints, and what the trace finds) |
+| Bloom | only a lit lens (drawn far over the curve's white, as a lamp is far brighter than what it lights) and the sky; a surface is clipped to white, never glows |
+| Anti-aliasing | SMAA on each frame while moving; standing still, twelve frames a sub-pixel apart averaged (temporal accumulation), which also smooths the shadows', occlusion's and reflections' noise |
+
+**Texture units.** A lit surface in Presentation also samples the sky's prefiltered map: one unit
+more, so `shadowBudget` gives 10 shadowed lamps rather than 11 on a 16-unit GPU
+(`PRESENTATION_SCENE_TEXTURE_UNITS`). PCSS adds none; the screen-space passes sample their own
+buffers in passes of their own.
+
+**Frame rate.** Moving, it measures itself and draws at a lower resolution (down to 40% of each side) when the
+GPU cannot hold 40 fps; a moment after the camera stops it draws at full resolution and refines.
+Every program the scene needs is compiled off the frame (KHR_parallel_shader_compile where there is
+one), so turning to a room not yet seen does not stall on its shaders. Half floats top out at
+65 504 cd/m²: the sky by the sun can pass it, so the resolve and the prefiltered dome are held under it.

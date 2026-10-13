@@ -46,6 +46,8 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `drawers`   — FLR-T-18.2: full screen and the edge drawers — the hot zones' peek, open and leave,
  *                   pins, the shortcuts and F6, a touch swipe, reduced motion, the 3D and split views,
  *                   axe in both themes.
+ *   - `presentation` — FLR-T-13.7: the 3D view's Presentation quality chosen from the chips, every pass
+ *                   drawn, the same exposure as Draft, every program linked within 16 texture units.
  *
  * Run with:
  *
@@ -53,7 +55,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`). E2E_PORT is the keyboard suite's port; the others take the next twenty-one.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`). E2E_PORT is the keyboard suite's port; the others take the next twenty-two.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -128,6 +130,8 @@ const SUITES: Suite[] = [
   { name: 'resize', spec: 'resize.spec.ts', port: PORT + 20, database: databaseFor('resize'), setupToken: true, gl: true },
   // FLR-T-18.2: full screen and the edge drawers — hot zones, pins, keys, touch, reduced motion, 3D and split, axe.
   { name: 'drawers', spec: 'drawers.spec.ts', port: PORT + 21, database: databaseFor('drawers'), setupToken: true, gl: true },
+  // FLR-T-13.7: Presentation quality — its passes, its exposure against Draft's, its texture units with every lamp on.
+  { name: 'presentation', spec: 'presentation.spec.ts', port: PORT + 22, database: databaseFor('presentation'), setupToken: true, gl: true },
 ];
 
 /**
