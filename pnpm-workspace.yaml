@@ -54,3 +54,12 @@ trustPolicyExclude:
 # through.
 minimumReleaseAgeExclude:
   - '@d3cloudio/auth-client@0.1.1'
+
+# One library patched, pinned to the exact version it was written against (FLR-T-13.18): the GPU
+# still's path tracer (three-gpu-pathtracer, apps/web/src/editor/three/still/gpu/tracer.ts — the only
+# module that imports it) lets the sun and the lamps through glass, lets a lamp through its own
+# fixture, and keeps a lit lens's glow out of the room's light. What it changes and why, and what to
+# do at the next version: patches/README.md. Keyed to 0.0.26, so a bump fails the install until the
+# patch is redone or dropped — it never applies silently to a version it was not written for.
+patchedDependencies:
+  three-gpu-pathtracer@0.0.26: patches/three-gpu-pathtracer@0.0.26.patch

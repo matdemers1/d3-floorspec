@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { describe, expect, it } from 'vitest';
-import { DirectionalLight, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, SpotLight, Vector3, type Object3D } from 'three';
+import { DirectionalLight, DoubleSide, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, SpotLight, Vector3, type Object3D } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EXPOSURE_PER_NIT, UNITS_PER_METRE } from '@floorspec/mesh';
 import { toneMappingExposure as viewToneMappingExposure } from '../src/editor/three/lights';
 import { eyeOf, PRESETS, type Orbit } from '../src/editor/three/camera';
 import { orbitCamera, presetCamera } from '../src/editor/three/still/gpu/cameras';
-import { perspectiveOf, prepareHouse, roomCamera, stillScene } from '../src/editor/three/still/gpu/scene';
+import { paneGain, paneIor, perspectiveOf, prepareHouse, roomCamera, spotSetback, stillScene } from '../src/editor/three/still/gpu/scene';
 import { EXPOSURE_BAND, LUX_PER_UNIT, TRACE_UNIT, meteredExposure, skyPixels, stillSun, toneMappingExposure } from '../src/editor/three/still/gpu/sky';
 import { skyField, skyLight, skyMapOf, type SkyMaps } from '@floorspec/mesh/sky';
 
@@ -167,7 +167,8 @@ describe('the GPU still’s scene (FLR-T-13.13)', () => {
     // Glass: a clear thin pane that lets light through, not a see-through blend.
     const glass = meshes(scene).find((m) => (m.material as MeshPhysicalMaterial).transmission > 0)!.material as MeshPhysicalMaterial;
     expect(glass.transmission).toBe(1);
-    expect(glass.ior).toBeCloseTo(1.5, 6);
+    // Traced at the index whose one face reflects what a pane's two faces do (FLR-T-13.18).
+    expect(glass.ior).toBeCloseTo(paneIor(1.5), 6);
     expect(glass.transparent).toBe(false);
     expect(glass.opacity).toBe(1);
     expect(glass.thickness).toBe(0);
@@ -175,6 +176,40 @@ describe('the GPU still’s scene (FLR-T-13.13)', () => {
     // A lens glows at the export's strength.
     const lens = meshes(scene).find((m) => (m.material as MeshStandardMaterial).emissiveIntensity > 1)!.material as MeshStandardMaterial;
     expect(lens.emissiveIntensity).toBeCloseTo(31250, 0);
+  });
+
+  it('traces the house as the worker’s tracer does: both sides of every face, no lit luminaire in its own lamp’s way, a spot’s disc on its lamp (FLR-T-13.18)', async () => {
+    const { scene } = await load();
+    const house = prepareHouse(scene, { lights: true });
+    // glTF's faces are one-sided; seen from behind, a gable let the sky in.
+    for (const m of meshes(scene)) expect((m.material as MeshStandardMaterial).side).toBe(DoubleSide);
+    // The luminaire X1 (its lamp hangs under it): its pieces stop no lamp's shadow ray — the patched
+    // tracer reads the material's castShadow, three-gpu-pathtracer 0.0.27 the mesh's visibleToShadowRays.
+    expect(house.fixtures).toBe(1);
+    const piece = meshes(scene).find((m) => m.parent?.name === 'X1' || m.name === 'X1')!;
+    expect((piece.material as MeshStandardMaterial & { castShadow?: boolean }).castShadow).toBe(false);
+    expect((piece as Mesh & { visibleToShadowRays?: boolean }).visibleToShadowRays).toBe(false);
+    // Everything else still shadows.
+    const room = meshes(scene).find((m) => partOf(m) === 'floor')!;
+    expect((room.material as MeshStandardMaterial & { castShadow?: boolean }).castShadow).toBeUndefined();
+    expect((room as Mesh & { visibleToShadowRays?: boolean }).visibleToShadowRays).toBeUndefined();
+    // The tracer samples a spot on a disc radius / tan(cone) ahead of the light: the light is set
+    // back that far up its axis, so the disc is the lamp where the export put it (2.4 m up).
+    const spot = find(scene, (o): o is SpotLight => o instanceof SpotLight)[0]!;
+    spot.updateWorldMatrix(true, false);
+    expect(spot.getWorldPosition(new Vector3()).y).toBeCloseTo(2.4 + spotSetback(0.03, 0.7), 6);
+    // With the lights off, nothing is lit, and the luminaire shadows as anything does.
+    const dark = await load();
+    expect(prepareHouse(dark.scene, { lights: false }).fixtures).toBe(0);
+  });
+
+  it('traces a pane at the index whose one face reflects what its two faces do', () => {
+    const reflects = (n: number) => ((n - 1) / (n + 1)) ** 2;
+    // A pane of 1.5: 4% a face, and the light between them: 2F / (1 + F), about 7.7%.
+    expect(reflects(paneIor(1.5))).toBeCloseTo((2 * 0.04) / 1.04, 9);
+    expect(paneIor(1.5)).toBeCloseTo(1.7676, 3);
+    // What it lets through face on is kept: its colour raised by what the stronger face reflects.
+    expect(paneGain(1.5) * (1 - reflects(paneIor(1.5)))).toBeCloseTo(1 - reflects(1.5), 9);
   });
 
   it('takes the lamps out and darkens the lenses with the lights off', async () => {

@@ -72,7 +72,13 @@ state until it is saved.
 A luminaire's lamp sits just outside its model (under the lens, under a downlight's trim, in front of
 a sconce), and on top of that no piece of a luminaire's own model — canopy, trim, shade, lens — ever
 blocks its lamp: the path tracer's shadow rays toward a lamp pass every triangle of that lamp's
-fixture (`PtScene.owner`), and the editor leaves every luminaire piece out of the shadow maps.
+fixture (`PtScene.owner`), and the editor leaves every luminaire piece out of the shadow maps. The
+GPU still lets a lamp's shadow rays through every lit luminaire's pieces (FLR-T-13.18).
+
+A lit lens shows; it does not light. Its glow (31 250 cd/m²) is what the camera sees of it, directly,
+in a mirror or a polished face, or through glass. The light the room gets is its lamp's. In the GPU
+still the lens's glow once lit the room on top of its lamp, and a kitchen at night came out about two
+stops bright.
 
 ## Noise
 
@@ -118,12 +124,24 @@ glTF's metallic-roughness model as three-gpu-pathtracer traces it:
   reflects about 0.39 in all.
 
 **Against the GPU still.** `apps/worker/test/gpu-parity.test.ts` holds the CPU still to stored GPU stills
-of the Courtyard House (traced on an M4 Pro by the editor's own still modules, read before the meter):
-the mean luminance of each region of a 4 × 3 grid, in cd/m², within 0.6 of a stop, and their mean within
-0.3 — the kitchen, great room and primary bath under an overcast sky, and the house outside in the sun.
-A room by a clear day's sun, or by its lamps, is not compared: there the GPU still (three-gpu-pathtracer
-0.0.26) lets no sun through glass, lights the room with its lit lenses on top of their lamps, and sees
-through single-sided faces from behind — the CPU still keeps its own calibration.
+of the Courtyard House. They were traced on an M4 Pro by the editor's own still modules and read
+before the meter. Each region of a 4 × 3 grid must match in mean luminance (cd/m²) within 0.6 of a
+stop, and the regions' mean within 0.3. Six views are compared: the kitchen, great room and primary
+bath under an overcast sky; the house outside in the sun; the great room on a clear afternoon with
+the sun through its windows; and the kitchen at night with its lamps on.
+
+The last two agree because the GPU still was made to trace them as the CPU still does (FLR-T-13.18).
+Its library, three-gpu-pathtracer 0.0.26, is patched; `patches/README.md` says how, and what to do
+at 0.0.27. The scene side is in `gpu/scene.ts` `prepareHouse`. Together they make these changes:
+
+- Shadow rays toward the sun and the lamps pass glass, dimmed by what it lets through.
+- A pane's far-side lamps and sun are not sampled from the pane itself, so they are not counted twice.
+- A lamp's shadow rays pass lit luminaires' pieces.
+- A lit lens lights nothing.
+- Every face is seen from both sides.
+- A pane is traced at the index whose one face reflects what its two faces do (`paneIor`): 7.7% face
+  on. Its colour is raised by what that takes from the light it lets through (`paneGain`).
+- A spot's sampled disc sits on its lamp.
 
 ## Exposure
 
@@ -135,6 +153,12 @@ held within a band:
 |---|---|---|---|
 | night, dusk | 0.01 | 0.04 | a room lit to 150–300 lux reads normally lit at the least — a white wall at 200 lux is 0.5 before the curve; a bedroom at 40–75 lux under its one ceiling light is opened up two stops and reads lit too, as an eye adapts; a room with its lamps off stays dark |
 | day | 1.6e-5 | 2e-3 | a sunlit house outside reads right at the least; a daylit room inside, at 500–3000 lux from its windows, is metered up and reads bright and natural, its windows a little blown, as a photograph shows them |
+
+The editor's GPU still is metered as the worker's still is: on the finished picture, after the
+denoiser (FLR-T-13.18). Metered on its first 16 samples a pixel, as it was, the noise pulled the
+log-average down — dark pixels count for more in it than bright ones. The great room on a sunny
+afternoon came out at the day band's most open, 1.3 stops over the worker's still; now it is within
+0.15 of a stop.
 
 The editor's view meters nothing: with the Lights on it is exposed at the night band's open end
 (0.04 — where the tracer exposes a room lit by its one ceiling light), and lamps that do not bounce
