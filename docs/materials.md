@@ -116,5 +116,10 @@ mirror with a green cast. A glass's colour is what it lets through: `paneTransmi
 document's or a look's colour to it (a bronze glass is browner). The raster composites
 `behind × transmission + reflected sky`, the tracer multiplies its path by the transmission and adds
 the sky the face reflects, the editor blends with the transmission as a constant blend colour, and
-the glTF's glass has the transmission as its base colour under KHR_materials_transmission. Drawn
+the glTF's glass has the transmission as its base colour under KHR_materials_transmission. The GPU
+still traces that glass as three-gpu-pathtracer's thin wall, which reflects as a single face does. It
+is traced at the index whose one face reflects what the pane's two faces do (`paneIor`, FLR-T-13.18),
+so a window at night shows the lit room as the worker's tracer does. Its colour is raised by what that
+reflection takes from the light it lets through (`paneGain`), so a room lit through its windows is as
+bright as it was. Drawn
 before as a pale blue surface laid over the view at 35%, a window turned the lawn behind it to teal.

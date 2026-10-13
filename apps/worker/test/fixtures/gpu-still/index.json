@@ -1,16 +1,70 @@
 {
-  "about": "GPU still reference renders of the Courtyard House (FLR-T-13.14, FLR-ADR-040): the editor's GPU still — its scene as apps/web/src/editor/three/still/gpu/scene.ts builds it from the worker's glTF export (prepareHouse, stillScene, perspectiveOf, roomCamera/presetCamera) and three-gpu-pathtracer's WebGPUPathTracer set as gpu/tracer.ts sets it (6 bounces, multiple importance sampling) — read back before the meter, the tone curve and the denoiser, as linear RGB in cd/m², box-filtered from 320 × 240 to 80 × 60. Little-endian float32, three a pixel, rows top to bottom.",
+  "about": "GPU still reference renders of the Courtyard House (FLR-T-13.14, FLR-T-13.18, FLR-ADR-040): the editor's GPU still — its scene as apps/web/src/editor/three/still/gpu/scene.ts builds it from the worker's glTF export (prepareHouse, stillScene, perspectiveOf, roomCamera/presetCamera) and traced by gpu/tracer.ts's traceStill (three-gpu-pathtracer's WebGPUPathTracer, 6 bounces, multiple importance sampling, the library patched by patches/three-gpu-pathtracer@0.0.26.patch) with `radiance` — read back before the meter, the tone curve and the denoiser, as linear RGB in cd/m², box-filtered from 320 × 240 to 80 × 60. Little-endian float32, three a pixel, rows top to bottom. The export is the worker's with doors closed and its lighting 'All on'; the sky is skyLight(sky, the sun at `at` at the document's site, true north 0). Re-record them whenever the library, its patch or the still's scene changes: patches/README.md.",
   "document": "courtyard-house.json",
   "version": "65054bb12181ba7e887ec5f462ca2dbf9cd531918c67703efed23c03f5bfe065",
   "device": "Apple M4 Pro (apple metal-3), headless Chromium WebGPU",
-  "libraries": { "three": "0.186.1", "three-gpu-pathtracer": "0.0.26" },
-  "rendered": "2026-10-12",
+  "libraries": {
+    "three": "0.186.1",
+    "three-gpu-pathtracer": "0.0.26 + patches/three-gpu-pathtracer@0.0.26.patch"
+  },
+  "rendered": "2026-10-13",
   "width": 80,
   "height": 60,
   "views": [
-    { "name": "kitchen, overcast", "file": "kitchen-overcast.rgb32", "room": "R8", "sky": "overcast", "at": "2026-10-12T15:00-04:00", "samples": 2048 },
-    { "name": "great room, overcast", "file": "great-room-overcast.rgb32", "room": "R7", "sky": "overcast", "at": "2026-10-12T15:00-04:00", "samples": 2048 },
-    { "name": "primary bath, overcast", "file": "primary-bath-overcast.rgb32", "room": "R19", "sky": "overcast", "at": "2026-10-12T15:00-04:00", "samples": 2048 },
-    { "name": "south-west, clear day", "file": "sw-clear.rgb32", "camera": "sw", "sky": "clear", "at": "2026-10-12T15:00-04:00", "samples": 1024, "crop": [0.15, 0.28, 0.78, 0.92] }
+    {
+      "name": "kitchen, overcast",
+      "file": "kitchen-overcast.rgb32",
+      "room": "R8",
+      "sky": "overcast",
+      "at": "2026-10-12T15:00-04:00",
+      "samples": 2048
+    },
+    {
+      "name": "great room, overcast",
+      "file": "great-room-overcast.rgb32",
+      "room": "R7",
+      "sky": "overcast",
+      "at": "2026-10-12T15:00-04:00",
+      "samples": 2048
+    },
+    {
+      "name": "primary bath, overcast",
+      "file": "primary-bath-overcast.rgb32",
+      "room": "R19",
+      "sky": "overcast",
+      "at": "2026-10-12T15:00-04:00",
+      "samples": 2048
+    },
+    {
+      "name": "south-west, clear day",
+      "file": "sw-clear.rgb32",
+      "camera": "sw",
+      "sky": "clear",
+      "at": "2026-10-12T15:00-04:00",
+      "samples": 1024,
+      "crop": [
+        0.15,
+        0.28,
+        0.78,
+        0.92
+      ]
+    },
+    {
+      "name": "great room, clear day",
+      "file": "great-room-clear.rgb32",
+      "room": "R7",
+      "sky": "clear",
+      "at": "2026-10-12T15:00-04:00",
+      "samples": 2048
+    },
+    {
+      "name": "kitchen at night, lamps on",
+      "file": "kitchen-night.rgb32",
+      "room": "R8",
+      "sky": "night",
+      "at": "2026-10-12T15:00-04:00",
+      "lights": true,
+      "samples": 2048
+    }
   ]
 }
