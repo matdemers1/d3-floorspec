@@ -126,7 +126,7 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
     camera: new THREE.Matrix4(),
     projection: new THREE.Matrix4(),
     settle: 0,
-    stats: { ready: false, fps: null, scale: 1, refined: 0, passes: pipeline.passes, env: false },
+    stats: { ready: false, fps: null, scale: 1, refined: 0, passes: pipeline.passes, env: false, warms: 0 },
     reported: '',
     envKey: '',
     env: null,
@@ -217,6 +217,7 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
     if (s.signature !== s.warmed && !moved && now - s.lastMove >= SETTLE_MS && now - s.changed.at >= WARM_STABLE_MS) {
       pipeline.warm(scene, camera);
       s.warmed = s.signature;
+      s.stats.warms++;
     }
 
     if (moved) {
