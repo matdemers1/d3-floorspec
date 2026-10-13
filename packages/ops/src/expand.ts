@@ -636,7 +636,7 @@ function resizeElement(ctx: Ctx, op: ResizeElement, base: string, emit: (p: Reso
   emit({ op: 'setProperty', id, path: '/fallback/box', value: { min: news.map((n) => num(n[0])), max: news.map((n) => num(n[1])) } }, ptr);
   const cl = getMember(el, 'clearances');
   if (isObject(cl)) {
-    const out = clone(cl) as JsonObject;
+    const out = clone(cl);
     let changed = false;
     for (const name of Object.keys(out)) {
       const env = out[name];

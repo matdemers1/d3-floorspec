@@ -344,7 +344,7 @@ export const MoveElement = z.strictObject({
 /** 4.11 (Ops 0.4): the sizes an item comes in, on one axis. */
 const Limit = shared(z.strictObject({ min: Length.optional(), max: Length.optional() }), 'Limit');
 
-/** 4.11 (Ops 0.4): resize an extension element's box from an anchor, in its own frame. No description: the op schema says it. */
+/** 4.11 (Ops 0.4): resize an extension element's box from an anchor, in its own frame; the guidance is in prompts.ts. */
 export const ResizeElement = z.strictObject({
   op: z.literal('resizeElement'),
   element: Element,
@@ -353,7 +353,7 @@ export const ResizeElement = z.strictObject({
   depth: Length.optional(),
   height: Length.optional(),
   limits: z.strictObject({ width: Limit.optional(), depth: Limit.optional(), height: Limit.optional() }).optional(),
-});
+}).describe('Resizes an item\'s box from anchor: width its y, depth its x; clearances and items with it follow.');
 
 /** Every operation Floorspec Ops 0.4 defines — one `$defs` entry per tool, referenced by the batch. */
 export const OpUnion = shared(

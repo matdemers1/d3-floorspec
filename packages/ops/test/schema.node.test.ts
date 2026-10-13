@@ -1,10 +1,10 @@
 /**
- * The request checker (Ops 0.1: 1.1.1; Ops 0.2: 1.1.2; Ops 0.3: 1.1.3) agrees with schema/ops/0.1,
- * 0.2 and 0.3, the normative shapes of an apply request: for every request of each draft's
+ * The request checker (Ops 0.1: 1.1.1; Ops 0.2: 1.1.2; Ops 0.3: 1.1.3; Ops 0.4: 1.1.4) agrees with schema/ops/0.1,
+ * 0.2, 0.3 and 0.4, the normative shapes of an apply request: for every request of each draft's
  * conformance suite and a corpus of malformed ones, checkRequest — run as that draft — accepts
  * exactly what that draft's schema accepts (numbers written with a fraction or an exponent mapped
  * to non-numbers first, as the schema's $comment says). Ops 0.3's schema is Ops 0.2's with roofs
- * and stairs among addElement's collections (Ops 0.3 §0.4, §1.1).
+ * and stairs among addElement's collections (Ops 0.3 §0.4, §1.1); Ops 0.4's is 0.3's with resizeElement (§4.11).
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';

@@ -215,7 +215,7 @@ function checkLimits(limits: Record<string, unknown>, base: string, tokens: (str
     const ptr = `${base}/${axis}`;
     if (!(RESIZE_AXES as readonly string[]).includes(axis)) fail('FS-OPS-001', `resizeElement's limits have no member ${JSON.stringify(axis)}`, [], toPointer([...tokens, axis]));
     if (!isObject(bound) || Object.keys(bound).length === 0) fail('FS-OPS-001', `a limit is an object of a "min", a "max" or both`, [], ptr);
-    checkMembers(`the limit of ${axis}`, bound as Record<string, unknown>, LIMIT_SHAPE, ptr, [...tokens, axis], nonInteger, '');
+    checkMembers(`the limit of ${axis}`, bound, LIMIT_SHAPE, ptr, [...tokens, axis], nonInteger, '');
   }
 }
 
