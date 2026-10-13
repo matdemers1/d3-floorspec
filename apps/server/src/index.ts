@@ -106,6 +106,12 @@ const server = app.listen(config.PORT, () => {
     'd3-floorspec api listening',
   );
 });
+// Keep idle connections open longer than the clients that reuse them (cloudflared, browsers,
+// Playwright's request pool). With Node's 5 s default, a client that sends on a pooled socket just as
+// the server closes it gets ECONNRESET — the e2e `three` suite hit it after idle stretches. The
+// headers timeout must exceed the keep-alive timeout.
+server.keepAliveTimeout = 65_000;
+server.headersTimeout = 66_000;
 
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {
   process.on(signal, () => {
