@@ -8,6 +8,9 @@ export default defineConfig({
   test: {
     // Meshing every conformance case and the generated houses takes a while under a cold cache.
     testTimeout: 120_000,
+    // Loading manifold-3d's WASM in a beforeAll can outlast the default 10 s hook timeout on a
+    // busy CI runner, with several test files loading it at once.
+    hookTimeout: 120_000,
     projects: [
       {
         extends: true,
