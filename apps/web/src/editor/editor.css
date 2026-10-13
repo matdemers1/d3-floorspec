@@ -3,15 +3,19 @@
 
 /* ─── Frame ──────────────────────────────────────────────────────────────────────────────── */
 .fs-editor {
+  /* The edge drawers (FLR-T-18.2) are the grid's top, left and right: a pinned drawer docks in its
+     track; one that is not floats over the canvas, and its track collapses to nothing. */
+  --fs-top-h: 52px;
+  --fs-status-h: 28px;
   position: fixed;
   inset: 0;
   display: grid;
-  grid-template-columns: 52px 256px minmax(0, 1fr) 320px;
-  grid-template-rows: 52px minmax(0, 1fr) 28px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: var(--fs-top-h) minmax(0, 1fr) var(--fs-status-h);
   grid-template-areas:
-    'top top top top'
-    'rail tree canvas inspector'
-    'rail status status status';
+    'top top top'
+    'left canvas right'
+    'left status status';
   background: var(--color-bg-sunken);
   color: var(--color-fg);
   font-family: var(--font-sans);
@@ -595,6 +599,313 @@
   gap: var(--space-8);
   margin: 0;
   font-size: var(--text-12);
+}
+
+
+/* ─── Full screen and the edge drawers (FLR-T-18.2) ───────────────────────────────────────────
+   After the board's "18.2 · Full screen" frames and the drawer spec: three drawers, four states
+   (hidden, peeking, open, pinned). Pinned docks flush in the grid; the others float over the canvas
+   area — absolutely positioned in the grid's canvas area, so a pinned neighbour is never covered. */
+.fs-editor[data-chrome] {
+  overflow: hidden;
+}
+.fs-editor[data-top]:not([data-top='pinned']) {
+  --fs-top-h: 0px;
+}
+.fs-drawer {
+  min-width: 0;
+  min-height: 0;
+  outline: none;
+}
+.fs-drawer--top {
+  grid-area: top;
+  display: flex;
+  flex-direction: column;
+  container: fs-top / inline-size;
+}
+/* A top bar narrower than the window (a pinned side drawer beside it in full screen) lets the
+   links that are also commands go first: Schedules, Materials and Brief stay in the palette (⌘K). */
+@container fs-top (max-width: 1239px) {
+  .fs-topbar__brief,
+  .fs-topbar__avatar {
+    display: none;
+  }
+}
+.fs-drawer--top > .fs-topbar {
+  flex: 1 1 auto;
+  box-sizing: border-box;
+  min-height: 52px;
+}
+.fs-drawer--left {
+  grid-area: left;
+  display: flex;
+}
+.fs-drawer--left > .fs-rail {
+  box-sizing: border-box;
+  flex: none;
+  width: 52px;
+}
+.fs-drawer--left > .fs-editor__tree {
+  box-sizing: border-box;
+  flex: none;
+  width: 256px;
+}
+.fs-drawer--right {
+  grid-area: right;
+  display: flex;
+  width: 320px;
+}
+.fs-drawer--right > .fs-editor__inspector {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.fs-drawer__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-8) 0 var(--space-12);
+  background: var(--color-surface);
+}
+.fs-rail__pin,
+.fs-topbar__pin {
+  display: inline-flex;
+}
+.fs-topbar__rule {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+}
+
+/* Floating: a card over the canvas, sliding in from its edge (160 ms out of the edge, 120 ms back). */
+.fs-drawer:not([data-state='pinned']) {
+  position: absolute;
+  grid-area: canvas;
+  z-index: 6;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sheet);
+  transition:
+    transform 160ms var(--ease-out),
+    opacity 160ms var(--ease-out),
+    visibility 160ms;
+}
+.fs-drawer--left:not([data-state='pinned']) {
+  top: var(--space-8);
+  bottom: var(--space-8);
+  left: var(--space-8);
+}
+.fs-drawer--right:not([data-state='pinned']) {
+  top: var(--space-8);
+  right: var(--space-8);
+  bottom: var(--space-8);
+}
+.fs-drawer--top:not([data-state='pinned']) {
+  top: var(--space-8);
+  right: var(--space-8);
+  left: var(--space-8);
+}
+.fs-drawer:not([data-state='pinned']) > .fs-topbar,
+.fs-drawer:not([data-state='pinned']) > .fs-editor__tree,
+.fs-drawer:not([data-state='pinned']) > .fs-editor__inspector {
+  border: 0;
+}
+.fs-drawer[data-state='hidden'] {
+  visibility: hidden;
+  transition:
+    transform 120ms var(--ease-in),
+    opacity 120ms var(--ease-in),
+    visibility 120ms;
+}
+.fs-drawer--left[data-state='hidden'] {
+  transform: translateX(calc(-100% - var(--space-16)));
+}
+.fs-drawer--right[data-state='hidden'] {
+  transform: translateX(calc(100% + var(--space-16)));
+}
+.fs-drawer--top[data-state='hidden'] {
+  transform: translateY(calc(-100% - var(--space-16)));
+}
+/* Peeking: the left drawer shows its tools only; the top and right show a sliver of themselves. */
+.fs-drawer--left[data-state='peeking'] > .fs-editor__tree {
+  display: none;
+}
+.fs-drawer--right[data-state='peeking'] {
+  transform: translateX(calc(100% - var(--space-40)));
+}
+.fs-drawer--top[data-state='peeking'] {
+  transform: translateY(calc(-100% + var(--space-40)));
+}
+.fs-drawer--right[data-state='peeking'] > *,
+.fs-drawer--top[data-state='peeking'] > * {
+  visibility: hidden;
+}
+/* Reduced motion: the drawer fades where it stands instead of sliding. */
+@media (prefers-reduced-motion: reduce) {
+  .fs-editor .fs-drawer:not([data-state='pinned']) {
+    transition-property: opacity, visibility !important;
+    transition-duration: 160ms !important;
+  }
+  .fs-editor .fs-drawer[data-state='hidden'] {
+    transform: none;
+    opacity: 0;
+    transition-duration: 120ms !important;
+  }
+}
+
+/* The edges of hidden drawers: a 3 px grip, brightening while the pointer is in its hot zone. */
+.fs-grip {
+  position: absolute;
+  grid-area: canvas;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.fs-grip--left,
+.fs-grip--right {
+  top: 50%;
+  width: 10px;
+  height: 64px;
+  transform: translateY(-50%);
+}
+.fs-grip--left {
+  left: 0;
+}
+.fs-grip--right {
+  right: 0;
+}
+.fs-grip--top {
+  top: 0;
+  left: 50%;
+  width: 64px;
+  height: 10px;
+  transform: translateX(-50%);
+}
+.fs-grip__bar {
+  border-radius: var(--radius-full);
+  background: var(--color-fg-faint);
+  opacity: 0.55;
+}
+.fs-grip--left .fs-grip__bar,
+.fs-grip--right .fs-grip__bar {
+  width: 3px;
+  height: 40px;
+}
+.fs-grip--top .fs-grip__bar {
+  width: 40px;
+  height: 3px;
+}
+.fs-grip[data-active='on'] .fs-grip__bar,
+.fs-grip:hover .fs-grip__bar {
+  background: var(--color-fg-muted);
+  opacity: 1;
+}
+@media (pointer: coarse) {
+  .fs-grip--left,
+  .fs-grip--right {
+    width: 28px;
+  }
+  .fs-grip--top {
+    height: 28px;
+  }
+}
+
+/* Full screen: the plan, three grips and a quiet HUD. */
+.fs-editor[data-chrome='full'] {
+  --fs-status-h: 0px;
+}
+.fs-editor[data-chrome='full']:not([data-walk='on']) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: var(--fs-top-h) minmax(0, 1fr) 0;
+  grid-template-areas:
+    'top top top'
+    'left canvas right'
+    'left status status';
+}
+.fs-editor[data-chrome='full'] .fs-statusbar,
+.fs-editor[data-chrome='full'] .fs-zoom,
+.fs-editor[data-chrome='full'] .fs-north {
+  display: none;
+}
+.fs-hud {
+  position: absolute;
+  grid-area: canvas;
+  right: var(--space-16);
+  bottom: var(--space-16);
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-12);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  font-weight: var(--weight-medium);
+  pointer-events: none;
+}
+.fs-editor .fs-hud svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+}
+.fs-hud__rule,
+.fs-fs-notice__rule {
+  width: 1px;
+  height: 12px;
+  background: var(--color-border);
+}
+.fs-hud__zoom {
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+.fs-fs-notice__live {
+  position: absolute;
+  grid-area: canvas;
+  bottom: var(--space-24);
+  left: 50%;
+  z-index: 7;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.fs-fs-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  animation: rise-near var(--motion-toast-enter) backwards;
+}
+.fs-editor .fs-fs-notice svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+}
+.fs-fs-notice__faint {
+  color: var(--color-fg-faint);
+  font-size: var(--text-12);
+  font-weight: var(--weight-regular);
+}
+/* The walkthrough steps the side drawers aside, as it did the side panels. */
+.fs-editor[data-walk='on'] > .fs-drawer--left,
+.fs-editor[data-walk='on'] > .fs-drawer--right,
+.fs-editor[data-walk='on'] > .fs-grip--left,
+.fs-editor[data-walk='on'] > .fs-grip--right {
+  display: none;
 }
 
 /* ─── Status bar ─────────────────────────────────────────────────────────────────────────── */
@@ -1317,7 +1628,17 @@ path.fs-hl--danger {
       'top'
       'canvas';
   }
-  .fs-topbar__tree {
+  /* The tablet layout owns the panels outside full screen: the drawers step out of the grid's way. */
+  .fs-editor[data-chrome='windowed'] > .fs-drawer {
+    display: contents;
+  }
+  .fs-editor[data-chrome='windowed'] .fs-drawer__head,
+  .fs-editor[data-chrome='windowed'] .fs-rail__pin,
+  .fs-editor[data-chrome='windowed'] .fs-topbar__pin,
+  .fs-editor[data-chrome='windowed'] .fs-topbar__rule {
+    display: none;
+  }
+  .fs-editor[data-chrome='windowed'] .fs-topbar__tree {
     display: inline-flex;
   }
   .fs-topbar__views,
@@ -1329,9 +1650,11 @@ path.fs-hl--danger {
   .fs-statusbar {
     display: none;
   }
-  .fs-rail {
+  .fs-editor[data-chrome='windowed'] .fs-rail {
     position: absolute;
     z-index: 3;
+    box-sizing: content-box;
+    width: auto;
     top: 100px;
     left: 16px;
     border: 1px solid var(--color-border);
@@ -1343,7 +1666,7 @@ path.fs-hl--danger {
   .fs-rail .fs-rail__rule {
     display: none;
   }
-  .fs-editor__tree {
+  .fs-editor[data-chrome='windowed'] .fs-editor__tree {
     position: absolute;
     z-index: 4;
     top: 60px;
@@ -1353,10 +1676,10 @@ path.fs-hl--danger {
     box-shadow: var(--shadow-sheet);
     display: none;
   }
-  .fs-editor[data-tree='open'] .fs-editor__tree {
+  .fs-editor[data-chrome='windowed'][data-tree='open'] .fs-editor__tree {
     display: block;
   }
-  .fs-editor__inspector {
+  .fs-editor[data-chrome='windowed'] .fs-editor__inspector {
     position: absolute;
     z-index: 3;
     top: 76px;
@@ -1367,7 +1690,7 @@ path.fs-hl--danger {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-float);
   }
-  .fs-editor[data-inspector='idle'] .fs-editor__inspector {
+  .fs-editor[data-chrome='windowed'][data-inspector='idle'] .fs-editor__inspector {
     display: none;
   }
   .fs-scalebar {

@@ -139,7 +139,7 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   await settled(page);
 
   // ── An island in front of the door: a note, never an error.
-  await page.keyboard.press('f');
+  await page.keyboard.press('i');
   await expect(library).toBeVisible();
   // The library keeps its kind and search between visits: back to every kind.
   await library.getByRole('radio', { name: /^All/ }).click();
@@ -192,7 +192,7 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   expect(Object.keys((await modelOf(page, project)).assets ?? {})).toHaveLength(2);
 
   // ── Upload your own: a model made facing +Z, turned to face +X; a symbol with a script in it.
-  await page.keyboard.press('f');
+  await page.keyboard.press('i');
   await library.getByRole('button', { name: 'Upload glTF' }).click();
   const upload = page.getByRole('dialog', { name: 'Upload a model' });
   await expect(upload).toBeVisible();

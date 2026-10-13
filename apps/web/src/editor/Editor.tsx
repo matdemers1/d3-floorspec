@@ -14,6 +14,8 @@ import { ProjectTree } from './Tree';
 import { Inspector } from './Inspector';
 import { RejectionBanner } from './Diagnostics';
 import { COMMANDS, commandById, commandFor, keyOf } from './commands';
+import { cycleFocus, drawersOf, escapeDrawer, setFullScreen, summonDrawer } from './drawers';
+import { Drawer, DrawerHead, Edges, FullScreenButton, PinButton, useChrome } from './EdgeDrawers';
 import { confirmPrompt, newLevel, switchUnits } from './actions';
 import { connectLive } from './live';
 import { ProposalPanel } from './Proposal';
@@ -55,7 +57,9 @@ import {
 /**
  * `/projects/:id/editor` — the 2D plan editor (FLR-T-3.3, 3.4, 3.8), laid out as the board's
  * "07 · Editor" frames: a top bar, the tool rail, the project tree, the canvas, the inspector and a
- * status bar. On a tablet the tree folds away and the inspector floats over the canvas.
+ * status bar. On a tablet the tree folds away and the inspector floats over the canvas. The top bar,
+ * the rail with the tree, and the inspector are the edge drawers (FLR-T-18.2): pinned by default,
+ * collapsible to their edge, and summoned from it in full screen (F).
  */
 export default function Editor({ id, you }: { id: string; you: string }) {
   const store = useMemo(() => {
@@ -94,6 +98,13 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   const walking = useThreeState(store, (s) => s.walking);
   // Comments from share links (FLR-T-9.6) take the inspector's place while they are open.
   const comments = useCommentsOpen(store) && right === 'inspector';
+  // Full screen and the edge drawers (FLR-T-18.2): the frame carries which chrome and each drawer's state.
+  const chrome = useChrome(store);
+  // A proposal, the findings, a comparison or the comments asked for: a hidden right drawer comes out to show them.
+  const showing = comments ? 'comments' : right;
+  useEffect(() => {
+    if (showing !== 'inspector') drawersOf(store).reveal('right');
+  }, [showing, store]);
 
   useEffect(() => {
     if (notice === null) return;
@@ -102,6 +113,8 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   }, [notice, toast, store]);
 
   useKeyboard(store, tools);
+
+  const rightLabel = comments ? 'Comments' : right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : right === 'options' || right === 'optionCompare' ? 'Design options' : 'Inspector';
 
   if (status === 'missing' || status === 'error') {
     return (
@@ -125,10 +138,14 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   }
 
   return (
-    <div className="fs-editor" tabIndex={-1} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle && !comments ? 'idle' : 'active'} data-walk={walking ? 'on' : undefined}>
-      <TopBar store={store} you={you} />
-      <ToolRail store={store} tools={tools} />
-      <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : left === 'history' ? <HistoryPanel store={store} you={you} /> : <ProjectTree store={store} />}</aside>
+    <div className="fs-editor" tabIndex={-1} {...chrome} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle && !comments ? 'idle' : 'active'} data-walk={walking ? 'on' : undefined}>
+      <Drawer store={store} side="top">
+        <TopBar store={store} you={you} />
+      </Drawer>
+      <Drawer store={store} side="left">
+        <ToolRail store={store} tools={tools} />
+        <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : left === 'history' ? <HistoryPanel store={store} you={you} /> : <ProjectTree store={store} />}</aside>
+      </Drawer>
       <main className="fs-editor__canvas" aria-label={viewMode === '3d' || walking ? '3D view' : viewMode === 'split' ? 'Plan and 3D view' : 'Plan'}>
         {status === 'loading' ? (
           <div className="fs-canvas fs-canvas--loading">
@@ -146,33 +163,34 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
           </div>
         ) : null}
       </main>
-      <aside
-        className="fs-editor__inspector"
-        aria-label={comments ? 'Comments' : right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : right === 'options' || right === 'optionCompare' ? 'Design options' : 'Inspector'}
-      >
-        {status === 'loading' ? (
-          <TreeSkeleton />
-        ) : comments ? (
-          <EditorComments store={store} />
-        ) : right === 'compare' ? (
-          <ComparePanel store={store} />
-        ) : right === 'optionCompare' ? (
-          <OptionComparePanel store={store} />
-        ) : right === 'review' ? (
-          <ProposalPanel store={store} />
-        ) : right === 'findings' ? (
-          <FindingsPanel store={store} />
-        ) : right === 'options' ? (
-          <OptionsPanel store={store} />
-        ) : (
-          <Inspector store={store} tools={tools} />
-        )}
-      </aside>
+      <Drawer store={store} side="right">
+        <aside className="fs-editor__inspector" aria-label={rightLabel}>
+          <DrawerHead store={store} side="right" title={rightLabel} />
+          {status === 'loading' ? (
+            <TreeSkeleton />
+          ) : comments ? (
+            <EditorComments store={store} />
+          ) : right === 'compare' ? (
+            <ComparePanel store={store} />
+          ) : right === 'optionCompare' ? (
+            <OptionComparePanel store={store} />
+          ) : right === 'review' ? (
+            <ProposalPanel store={store} />
+          ) : right === 'findings' ? (
+            <FindingsPanel store={store} />
+          ) : right === 'options' ? (
+            <OptionsPanel store={store} />
+          ) : (
+            <Inspector store={store} tools={tools} />
+          )}
+        </aside>
+      </Drawer>
       <MaterialsModal store={store} />
       <FurnitureLibrary store={store} />
       <StatusBar store={store} />
       <PromptModal store={store} />
       {status === 'ready' ? <Palette store={store} tools={tools} /> : null}
+      <Edges store={store} />
     </div>
   );
 }
@@ -375,6 +393,11 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
       <Avatar className="fs-topbar__avatar" name={you} size="sm" />
       {project !== null ? <ShareButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} /> : null}
       {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} optionSets={model?.optionSets} /> : null}
+      <span className="fs-topbar__rule" />
+      <span className="fs-topbar__pin">
+        <PinButton store={store} side="top" />
+      </span>
+      <FullScreenButton store={store} />
     </header>
   );
 }
@@ -452,13 +475,18 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
           </Tooltip>
         );
       })}
-      <Tooltip content="Furniture and appliances (F)" side="right">
+      <Tooltip content="Furniture and appliances (I)" side="right">
         <IconButton label="Furniture and appliances" icon={<SofaIcon />} pressed={furnitureOpen} disabled={!canDraw} onClick={() => { furnitureOf(store).set({ open: true, uploading: false }); }} />
       </Tooltip>
       <span className="fs-rail__rule" />
       <Tooltip content="Measure — arrives with dimensions in P4" side="right">
         <IconButton label="Measure" icon={<MeasureIcon />} disabled className="fs-rail__later" />
       </Tooltip>
+      <span className="fs-spacer" />
+      {/* The left drawer's pin (FLR-T-18.2): on the rail, the one part of the drawer every state shows. */}
+      <span className="fs-rail__pin">
+        <PinButton store={store} side="left" />
+      </span>
     </nav>
   );
 }
@@ -601,6 +629,12 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
         store.set({ palette: !store.get().palette });
         return;
       }
+      // Esc in a drawer — on anything but a text field, a closed picker included — puts it away
+      // and comes back to the canvas (FLR-T-18.2). A menu that took the Esc to close itself marks it handled.
+      if (e.key === 'Escape' && !e.defaultPrevented && !(target !== null && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) && document.querySelector('[role="dialog"]') === null && escapeDrawer(store, target)) {
+        e.preventDefault();
+        return;
+      }
       const typing = target !== null && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.getAttribute('role') === 'combobox');
       if (typing || store.get().prompt !== null || document.querySelector('[role="dialog"]') !== null) return;
       if (e.key === ' ' && !e.repeat) {
@@ -629,9 +663,15 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
         return;
       }
       if (e.key === 'Escape') {
-        if (store.get().compare !== null && store.get().draft === null) endCompare(store);
-        else tools.escape();
+        // A menu or a listbox took this Esc to close itself (Radix marks it handled).
+        if (e.defaultPrevented) return;
         e.preventDefault();
+        const s = store.get();
+        const quiet = s.tool === 'select' && s.selection === null && s.rejection === null && s.picking === null && (s.draft === null || (s.draft.tool === 'select' && s.draft.drag === null && s.draft.typed === ''));
+        if (s.compare !== null && s.draft === null) endCompare(store);
+        // With nothing left to escape, Esc leaves full screen.
+        else if (quiet && drawersOf(store).get().full) setFullScreen(store, false);
+        else tools.escape();
         return;
       }
       // Arrows: aim the next wall while drawing; nudge the selection; otherwise pan.
@@ -658,9 +698,26 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
     const onUp = (e: KeyboardEvent) => {
       if (e.key === ' ') tools.space = false;
     };
+    // The edge drawers' keys reach them from anywhere, a field that keeps its keys to itself
+    // included — so they are read on the way down (FLR-T-18.2): ⌘\ left, ⌘⌥\ top, ⌘⇧\ right, by
+    // the key's place since ⌥ and ⇧ change the character it types; F6 and ⇧F6 to cycle.
+    const onDrawerKey = (e: KeyboardEvent) => {
+      if (document.querySelector('[role="dialog"]') !== null) return;
+      if ((mac ? e.metaKey : e.ctrlKey) && (e.code === 'Backslash' || e.key === '\\' || e.key === '|')) {
+        e.preventDefault();
+        e.stopPropagation();
+        summonDrawer(store, e.altKey ? 'top' : e.shiftKey ? 'right' : 'left');
+      } else if (e.key === 'F6') {
+        e.preventDefault();
+        e.stopPropagation();
+        cycleFocus(store, e.shiftKey);
+      }
+    };
+    window.addEventListener('keydown', onDrawerKey, true);
     window.addEventListener('keydown', onKey);
     window.addEventListener('keyup', onUp);
     return () => {
+      window.removeEventListener('keydown', onDrawerKey, true);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('keyup', onUp);
     };

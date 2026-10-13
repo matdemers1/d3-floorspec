@@ -247,7 +247,7 @@ jobs:
           - group: 3d
             suites: three,sun,furniture,share,assets,lighting
           - group: editor
-            suites: moonshots,arcs,materials,findings,templates,roofs-stairs,package,exports,systems,program,options,main-path,keyboard
+            suites: moonshots,arcs,materials,findings,templates,roofs-stairs,package,exports,systems,program,options,main-path,keyboard,drawers
     services:
       postgres:
         image: mirror.gcr.io/library/postgres:16 # Docker Hub's postgres through Google's mirror: anonymous Hub pulls hit 429s (FLR-T-12.30)
