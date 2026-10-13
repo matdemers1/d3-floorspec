@@ -7,11 +7,11 @@ import { ROOM_FUNCTIONS } from '../src/vocabulary.js';
 
 /**
  * The typed tool inputs advertise exactly the members the standard's own schema allows for each
- * operation (the vendored `packages/ops/standard/schema/ops/0.2`, the source of truth — the draft the
+ * operation (the vendored `packages/ops/standard/schema/ops/0.4`, the source of truth — the draft the
  * server's applier runs): a member the applier accepts but the tool schema refuses is an edit the
  * agent cannot make.
  */
-const SCHEMA = join(import.meta.dirname, '../../ops/standard/schema/ops/0.2');
+const SCHEMA = join(import.meta.dirname, '../../ops/standard/schema/ops/0.4');
 const schema = JSON.parse(readFileSync(join(SCHEMA, 'operation.schema.json'), 'utf8')) as {
   $defs: Record<string, { properties?: Record<string, { const?: string; enum?: string[] }>; required?: string[] }>;
 };

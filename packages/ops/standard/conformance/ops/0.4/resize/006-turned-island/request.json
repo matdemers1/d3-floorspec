@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "resizeElement",
+      "element": "X1",
+      "anchor": "left",
+      "width": "8'"
+    }
+  ]
+}

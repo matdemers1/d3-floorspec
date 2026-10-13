@@ -1,0 +1,7 @@
+{
+  "description": "resizeElement makes the island 0 wide: its box, and its working space stretched with it, are each narrower than 1 mm (Core 13.2.2), and the batch is rejected with FS-INV-505 once for each.",
+  "covers": [
+    "FS-OPS-4.11.1",
+    "FS-OPS-1.2.3"
+  ]
+}

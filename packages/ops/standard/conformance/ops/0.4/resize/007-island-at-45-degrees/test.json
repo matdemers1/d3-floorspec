@@ -1,0 +1,6 @@
+{
+  "description": "The island turned 45 degrees, and the bowl 1' east and 1' north of its back: sqrt 2 feet along its depth and on its middle line. resizeElement makes it 96\" wide holding its right end: the bowl moves with its middle, 12\" along the island's y, (-1, 1) / sqrt 2 - each coordinate of the move computed exactly and rounded once.",
+  "covers": [
+    "FS-OPS-4.11.2"
+  ]
+}
