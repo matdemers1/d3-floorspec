@@ -10,6 +10,7 @@ import { navigate } from '../lib/router';
 import { threeOf } from './three/mode';
 import { FURNITURE_COMMANDS } from '../furniture/commands';
 import { stageRooms } from './systems/Staging';
+import { DRAWER_HINTS, drawersOf, setFullScreen, summonDrawer } from './drawers';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -370,14 +371,47 @@ export const COMMANDS: readonly Command[] = [
       store.set({ palette: !store.get().palette });
     },
   },
+  // Full screen and the edge drawers (FLR-T-18.2). The drawers' keys are read by the editor's key
+  // handler itself, by the key's place (⌥ and ⇧ change the character \\ types): ⌘\\, ⌘⌥\\, ⌘⇧\\.
   {
-    id: 'view.tree',
-    label: 'Show or hide the project tree',
+    id: 'view.fullscreen',
+    label: 'Full screen',
     group: 'View',
-    keys: ['Mod+\\'],
-    hint: '⌘\\',
+    keywords: 'fullscreen chrome hide drawers edges focus plan only',
+    keys: ['f'],
+    hint: 'F',
     run: (store) => {
-      store.set({ treeOpen: !store.get().treeOpen, left: 'tree' });
+      setFullScreen(store, !drawersOf(store).get().full);
+    },
+  },
+  {
+    id: 'view.drawerLeft',
+    label: 'Show the left drawer: tools and the project tree',
+    group: 'View',
+    keywords: 'project tree tools panel sidebar collapse pin',
+    hint: DRAWER_HINTS.left,
+    run: (store) => {
+      summonDrawer(store, 'left');
+    },
+  },
+  {
+    id: 'view.drawerTop',
+    label: 'Show the top drawer: the top bar',
+    group: 'View',
+    keywords: 'top bar toolbar levels views collapse pin',
+    hint: DRAWER_HINTS.top,
+    run: (store) => {
+      summonDrawer(store, 'top');
+    },
+  },
+  {
+    id: 'view.drawerRight',
+    label: 'Show the right drawer: the inspector',
+    group: 'View',
+    keywords: 'inspector properties panel sidebar collapse pin review findings',
+    hint: DRAWER_HINTS.right,
+    run: (store) => {
+      summonDrawer(store, 'right');
     },
   },
   {
@@ -496,7 +530,7 @@ export const COMMANDS: readonly Command[] = [
       switchUnits(store, 'imperial');
     },
   },
-  // Furniture (FLR-T-8.3): F opens the library; [ and ] turn the selected item.
+  // Furniture (FLR-T-8.3): I opens the library; [ and ] turn the selected item.
   ...FURNITURE_COMMANDS,
 ];
 

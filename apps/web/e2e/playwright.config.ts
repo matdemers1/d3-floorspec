@@ -43,6 +43,9 @@ import { defineConfig, devices } from '@playwright/test';
  *                   closes with its area, the arc wall's inspector, and the curved wall in 3D.
  *   - `resize`    — FLR-T-18.4: the Courtyard House's island made 10 ft long (resizeElement, Ops 0.4), its
  *                   cooktop kept at its middle, a handle dragged to the 3" module, a turn in 15° steps, 3D.
+ *   - `drawers`   — FLR-T-18.2: full screen and the edge drawers — the hot zones' peek, open and leave,
+ *                   pins, the shortcuts and F6, a touch swipe, reduced motion, the 3D and split views,
+ *                   axe in both themes.
  *
  * Run with:
  *
@@ -50,7 +53,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`). E2E_PORT is the keyboard suite's port; the others take the next twenty.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`). E2E_PORT is the keyboard suite's port; the others take the next twenty-one.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -123,6 +126,8 @@ const SUITES: Suite[] = [
   { name: 'materials', spec: 'materials.spec.ts', port: PORT + 19, database: databaseFor('materials'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-materials-assets') } },
   // FLR-T-18.4: the Courtyard House island resized — typed, by a handle, turned — and drawn in 3D.
   { name: 'resize', spec: 'resize.spec.ts', port: PORT + 20, database: databaseFor('resize'), setupToken: true, gl: true },
+  // FLR-T-18.2: full screen and the edge drawers — hot zones, pins, keys, touch, reduced motion, 3D and split, axe.
+  { name: 'drawers', spec: 'drawers.spec.ts', port: PORT + 21, database: databaseFor('drawers'), setupToken: true, gl: true },
 ];
 
 /**
