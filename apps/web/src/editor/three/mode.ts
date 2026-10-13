@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { EditorStore } from '../store';
 import { ALL_OFF, ALL_ON, ALL_ON_NAME, toggled, withLights, withSetting, type Lighting, type NamedScene, type SceneSetting } from '@floorspec/mesh';
 import type { Orbit, PresetId } from './camera';
+import { softwareWebGL } from './software';
 
 /**
  * The 3D view's state (FLR-T-7.5, FLR-REQ-113, 114), beside the editor's store rather than in it:
@@ -26,6 +27,26 @@ export const VIEW_LABELS: Record<ViewMode, string> = { plan: '2D plan', '3d': '3
  * - `only`: the current level alone, cut the same way.
  */
 export type LevelsShown = 'house' | 'cutaway' | 'only';
+
+/**
+ * How the 3D view draws (FLR-T-13.7): `draft`, as it always has — light, fast — or `presentation`:
+ * ambient occlusion, soft shadows, bloom on lamps, reflections on glossy floors and glass, under the
+ * same exposure and tone curve. Kept in this browser; Presentation is the default where WebGL runs
+ * on a GPU, Draft where it is drawn in software.
+ */
+export type Quality = 'draft' | 'presentation';
+const QUALITY_KEY = 'floorspec.quality3d';
+
+/** The quality kept in this browser, or the default for this GPU. */
+export function readQuality(software: () => boolean): Quality {
+  try {
+    const v = localStorage.getItem(QUALITY_KEY);
+    if (v === 'draft' || v === 'presentation') return v;
+  } catch {
+    // Storage refused (a private window): the default.
+  }
+  return software() ? 'draft' : 'presentation';
+}
 
 /** A request to start walking: where (base units, the document's frame) and facing which way (radians, from east, anticlockwise). */
 export interface WalkStart {
@@ -67,6 +88,8 @@ export interface ThreeState {
   scene: { readonly id: string | null; readonly name: string };
   /** The Lighting panel is open. */
   lightingOpen: boolean;
+  /** Draft or Presentation (FLR-T-13.7). */
+  quality: Quality;
 }
 
 export const EYE_HEIGHTS = [1.2, 1.5, 1.6, 1.7, 1.8] as const;
@@ -116,7 +139,10 @@ export class ThreeStore {
   private state: ThreeState;
   private readonly listeners = new Set<() => void>();
 
-  constructor(private readonly projectId: string | null = null) {
+  constructor(
+    private readonly projectId: string | null = null,
+    software: () => boolean = () => true,
+  ) {
     this.state = {
       mode: readMode(),
       walking: false,
@@ -130,6 +156,7 @@ export class ThreeStore {
       lighting: ALL_ON,
       scene: { id: null, name: ALL_ON_NAME },
       lightingOpen: false,
+      quality: readQuality(software),
     };
   }
 
@@ -203,6 +230,16 @@ export class ThreeStore {
     }
   }
 
+  /** Draw in Draft or Presentation; remembered in this browser. */
+  setQuality(quality: Quality): void {
+    if (quality !== this.state.quality) this.set({ quality });
+    try {
+      localStorage.setItem(QUALITY_KEY, quality);
+    } catch {
+      // Storage refused (a private window): the choice lasts for this session.
+    }
+  }
+
   setEyeHeight(metres: number): void {
     this.set({ eyeHeight: metres });
     try {
@@ -219,7 +256,7 @@ const stores = new WeakMap<EditorStore, ThreeStore>();
 export function threeOf(store: EditorStore): ThreeStore {
   let three = stores.get(store);
   if (three === undefined) {
-    three = new ThreeStore(store.projectId);
+    three = new ThreeStore(store.projectId, softwareWebGL);
     stores.set(store, three);
   }
   return three;

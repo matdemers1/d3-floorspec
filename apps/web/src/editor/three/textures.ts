@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLASS_F0, paneTransmission } from '@floorspec/mesh';
+import { GLASS_F0, GLASS_GLSL, paneTransmission } from '@floorspec/mesh';
 import { glow } from './highlight';
 import type { Look } from './parts';
 import type { MapRef } from './surfaces';
@@ -66,6 +66,71 @@ export function paneMaterial(color: readonly [number, number, number], options: 
   const enc = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
   m.blendColor.setRGB(enc(pane[0]), enc(pane[1]), enc(pane[2]));
   return m;
+}
+
+/**
+ * Glass in Presentation (FLR-T-13.7), as @floorspec/mesh's glass.ts has it, per pixel and in linear
+ * light: two passes over the pane. The first multiplies what is behind it by what it lets through at
+ * the angle it is seen at (`glassTransmission`: less, and a little greener, at a slant); the second
+ * adds what its face reflects — the sky's prefiltered light and the sun's and lamps' glints, by
+ * Fresnel (a black dielectric: reflection only), which the screen-space reflections then make the
+ * room's where they can. Front faces only, as Draft's pane: a glazing modelled as a slab is one pane,
+ * not two.
+ */
+export interface PresentationPane {
+  transmit: THREE.ShaderMaterial;
+  reflect: THREE.MeshStandardMaterial;
+}
+
+export function presentationPane(color: readonly [number, number, number]): PresentationPane {
+  const pane = paneTransmission(color);
+  const transmit = new THREE.ShaderMaterial({
+    uniforms: { pane: { value: new THREE.Vector3(pane[0], pane[1], pane[2]) } },
+    vertexShader: /* glsl */ `
+      #include <common>
+      #include <batching_pars_vertex>
+      varying vec3 vNormalV;
+      varying vec3 vViewPos;
+      void main() {
+        #include <batching_vertex>
+        #include <beginnormal_vertex>
+        #include <defaultnormal_vertex>
+        vNormalV = normalize( transformedNormal );
+        #include <begin_vertex>
+        #include <project_vertex>
+        vViewPos = mvPosition.xyz;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform vec3 pane;
+      varying vec3 vNormalV;
+      varying vec3 vViewPos;
+      ${GLASS_GLSL}
+      void main() {
+        float c = abs( dot( normalize( vNormalV ), normalize( - vViewPos ) ) );
+        gl_FragColor = vec4( glassTransmission( pane, c ), 1.0 );
+      }`,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.CustomBlending,
+    blendEquation: THREE.AddEquation,
+    blendSrc: THREE.ZeroFactor,
+    blendDst: THREE.SrcColorFactor,
+  });
+  // Not a reflector of its own: the reflecting pass stands for the pane in the geometry buffer.
+  transmit.userData = { gbuffer: false };
+  const reflect = new THREE.MeshStandardMaterial({
+    color: 0x000000,
+    roughness: 0.04,
+    metalness: 0,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.CustomBlending,
+    blendEquation: THREE.AddEquation,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneFactor,
+  });
+  reflect.userData = { glass: true };
+  return { transmit, reflect };
 }
 
 /**

@@ -53,4 +53,4 @@ export {
   type SceneSetting,
 } from './scenes.js';
 export { boxST, isSlope, slopeST, worldCoordinates } from './texcoords.js';
-export { GLASS_F0, GLASS_IOR, glassAt, glassFresnel, paneTransmission } from './sky/glass.js';
+export { GLASS_F0, GLASS_GLSL, GLASS_IOR, glassAt, glassFresnel, paneTransmission } from './sky/glass.js';

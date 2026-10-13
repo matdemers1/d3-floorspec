@@ -10,4 +10,4 @@ export { decodeHdr, encodeHdr, type HdrImage } from './hdr.js';
 
 /** The file each map is kept in, beside this package's `sky/` (`@floorspec/mesh/sky/<file>`). */
 export const SKY_MAP_FILES = { clear: 'clear.hdr', overcast: 'overcast.hdr', dusk: 'dusk.hdr', night: 'night.hdr' } as const;
-export { GLASS_F0, GLASS_IOR, glassAt, glassFresnel, paneTransmission } from './glass.js';
+export { GLASS_F0, GLASS_GLSL, GLASS_IOR, glassAt, glassFresnel, paneTransmission } from './glass.js';

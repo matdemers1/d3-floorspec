@@ -1,9 +1,9 @@
 import './three.css';
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { DEFAULT_COLOURS, flatShaded, lensGlows, lightsOf, ROLE_LOOKS, settingOf, type HouseMesh, type LensGlow, type MeshPart, type Vec3 } from '@floorspec/mesh';
-import { Button, EmptyState, IconButton, Select, Spinner, Tooltip } from '@d3cloud/ui';
+import { Button, EmptyState, IconButton, SegmentedControl, Select, Spinner, Tooltip } from '@d3cloud/ui';
 import { Box, Footprints, House, Lightbulb, Orbit as OrbitIcon, RotateCcw, X } from 'lucide-react';
 import { LightingButton, LightingChip, LightingPanel } from './lighting/LightingPanel';
 import { controlsOf, houseLights, switchHint } from './lighting/lighting';
@@ -13,10 +13,10 @@ import { formatLen } from '../units';
 import { compass, PRESET_ORDER, PRESETS, type PresetId } from './camera';
 import { FOV, ThreeController } from './controller';
 import { useHouseMesh } from './meshing';
-import { threeOf, useThreeState, type LevelsShown, type ThreeStore, type WalkStart } from './mode';
+import { threeOf, useThreeState, type LevelsShown, type Quality, type ThreeStore, type WalkStart } from './mode';
 import { castsShadow, describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, linear, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
 import { isSurfacePart, mappedPartBuffers, surfaceBuffers, type MapRef } from './surfaces';
-import { MATERIAL_TEXTURE_UNITS, paneMaterial, TextureLibrary } from './textures';
+import { EDITOR_METALNESS_MAX, MATERIAL_TEXTURE_UNITS, paneMaterial, presentationPane, TextureLibrary } from './textures';
 import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
 import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
 import { StillButton } from './still/StillDialog';
@@ -25,7 +25,8 @@ import { SunRig } from './sun/SunRig';
 import { FixtureLights } from './FixtureLights';
 import { glow } from './highlight';
 import { softwareWebGL } from './software';
-import { shadowBudget, viewLights } from './lights';
+import { PRESENTATION_SCENE_TEXTURE_UNITS, SCENE_TEXTURE_UNITS, shadowBudget, viewLights } from './lights';
+import { ACCUMULATE, StatsStore, useStats, type PresentationStats } from './presentation/stats';
 import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelled } from '../../furniture/Furniture3D';
 
 /**
@@ -41,6 +42,12 @@ import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelle
  */
 
 const UNITS = 1_280_000;
+
+/**
+ * Presentation (FLR-T-13.7): its passes and three.js's post-processing, loaded the first time it is
+ * chosen — never in Draft, never in the editor's bundle.
+ */
+const Presentation = lazy(() => import('./presentation/Presentation'));
 
 /** What the 3D view draws: the ghost of an edit in progress, a proposal under review, the newer side of a comparison, or main. */
 function shownModel(s: EditorState): EditorModel | null {
@@ -164,6 +171,10 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const preset = useThreeState(store, (s) => s.preset);
   const lightsOn = useThreeState(store, (s) => s.lights);
   const lighting = useThreeState(store, (s) => s.lighting);
+  const quality = useThreeState(store, (s) => s.quality);
+  const presenting = quality === 'presentation';
+  // What Presentation reports: whether its first full frame is drawn, and its frame rate moving.
+  const stats = useMemo(() => new StatsStore(), []);
   const originRef = useRef<Vec3 | null>(null);
   const state = useHouseMesh(model, originRef);
   const host = useRef<HTMLDivElement>(null);
@@ -232,11 +243,13 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const lamps = useMemo(
     () => {
       if (ready === null || !lightsOn) return [];
-      const lit = viewLights(ready.model, ready.mesh, { level: levelId, cutaway: levels !== 'house' && !walking, order }, lighting, shadowBudget(textureUnits, MATERIAL_TEXTURE_UNITS));
+      // Presentation samples the sky's reflection map beside a surface's maps: one shadowed lamp fewer (FLR-T-13.7).
+      const budget = shadowBudget(textureUnits, MATERIAL_TEXTURE_UNITS, presenting ? PRESENTATION_SCENE_TEXTURE_UNITS : SCENE_TEXTURE_UNITS);
+      const lit = viewLights(ready.model, ready.mesh, { level: levelId, cutaway: levels !== 'house' && !walking, order }, lighting, budget);
       // One level alone (FLR-T-13.2): its own lamps only — the cutaway's, less those below it.
       return levels === 'only' && !walking ? lit.filter((l) => l.level === levelId) : lit;
     },
-    [ready, lightsOn, levelId, levels, walking, order, lighting, textureUnits],
+    [ready, lightsOn, levelId, levels, walking, order, lighting, textureUnits, presenting],
   );
   // FLR-T-13.12: every light of the house, and the lenses the lighting turns off, dims or recolours.
   const allLights = useMemo(() => (ready === null ? [] : houseLights(ready.model)), [ready]);
@@ -513,9 +526,14 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <FixtureLights lights={lamps} />
         <Rig ctl={ctl} />
         <SceneBridge />
-        <Parts visible={partsShown} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
+        <Parts visible={partsShown} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
         {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} /> : null}
         {!walking ? <LabelTracker built={visible} selection={selection} el={label} /> : null}
+        {presenting ? (
+          <Suspense fallback={null}>
+            <Presentation stats={stats} model={ready?.model ?? null} mesh={ready?.mesh ?? null} />
+          </Suspense>
+        ) : null}
       </Canvas>
     );
   }
@@ -571,10 +589,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           <LightingPanel store={store} model={ready.model} />
           <SunChip store={store} />
           <div className="fs-three__chips-left">
-            <div className="fs-three__chip fs-three__stats" role="note">
-              <Box aria-hidden="true" />
-              WebGL · {String(visible.length)} parts · {triangles >= 1000 ? `${(triangles / 1000).toFixed(1)}k` : String(triangles)} triangles
-            </div>
+            <QualityControl three={three} quality={quality} />
+            <StatsChip quality={quality} stats={stats} parts={visible.length} triangles={triangles} />
             <LightingChip store={store} model={ready.model} />
           </div>
         </>
@@ -641,6 +657,7 @@ function Parts({
   textures,
   lit,
   glows,
+  quality,
   onClick,
   onDoubleClick,
   onHover,
@@ -654,37 +671,21 @@ function Parts({
   lit: boolean;
   /** FLR-T-13.12: the lenses the lighting turns off (null) or dims and recolours (a scale per channel). */
   glows: ReadonlyMap<string, LensGlow>;
+  quality: Quality;
   onClick: (e: ThreeEvent<MouseEvent>) => void;
   onDoubleClick: (e: ThreeEvent<MouseEvent>) => void;
   onHover: (e: ThreeEvent<PointerEvent>) => void;
   onLeave: () => void;
 }) {
-  const materials = useMemo(() => {
-    const solid = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const solidOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true }));
-    // Floors and ceilings win where they share a plane with something else (parts.ts, lookOf).
-    const floor = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-    const floorOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
-    const ceiling = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
-    const ceilingOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 }));
-    // Glass lets through what is behind it, about 90% and a little green, and reflects a sheen (FLR-T-13.17).
-    const glass = paneMaterial(linear(DEFAULT_COLOURS.glass));
-    // A model's glass (a window's, a shower's screen): its role's; a luminaire's lens unshaded, as if
-    // lit, when the lights are on (FLR-T-12.22), and shaded like the rest when they are off.
-    const modelGlass = paneMaterial(linear(ROLE_LOOKS.glass.color));
-    // Not tone-mapped: a lit lens is as bright as the screen shows, whatever the view's exposure (FLR-T-13.1).
-    const lens = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false });
-    const lensOff = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const lensOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true }));
-    const glassOn = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.6, depthWrite: false });
-    // A door's or an empty opening's cut: nothing drawn, still a target for the pointer.
-    const pick = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
-    // Not tone-mapped: the selection's outline and an opening's highlight read the same under every sky.
-    const pickOn = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.4, depthWrite: false, toneMapped: false });
-    const edges = new THREE.LineBasicMaterial({ depthTest: false, transparent: true, opacity: 0.95, toneMapped: false });
-    return { solid, solidOn, floor, floorOn, ceiling, ceilingOn, glass, glassOn, modelGlass, lens, lensOff, lensOn, pick, pickOn, edges };
-  }, []);
+  const presenting = quality === 'presentation';
+  const materials = useMemo(() => (presenting ? presentationMaterials() : draftMaterials()), [presenting]);
   useEffect(() => () => { for (const m of Object.values(materials)) m.dispose(); }, [materials]);
+  // Presentation's untextured model pieces in their role's finish (FLR-T-13.7): a glossy counter, a matte sofa.
+  const roles = useMemo(() => new Map<string, THREE.MeshStandardMaterial>(), [materials]);
+  useEffect(() => () => { for (const m of roles.values()) m.dispose(); }, [roles]);
+  // Presentation's panes: a transmitting pass, and a reflecting one drawn over it.
+  const panes = useMemo(() => (presenting ? { glass: presentationPane(linear(DEFAULT_COLOURS.glass)), model: presentationPane(linear(ROLE_LOOKS.glass.color)) } : null), [presenting]);
+  useEffect(() => () => { if (panes !== null) for (const p of [panes.glass, panes.model]) { p.transmit.dispose(); p.reflect.dispose(); } }, [panes]);
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => {
     materials.solidOn.emissive.set(accent);
@@ -701,7 +702,7 @@ function Parts({
   const selected = useMemo(() => visible.filter((b) => partSelected(b.part, selection)), [visible, selection]);
   const outlines = useMemo(() => selected.map((b) => ({ key: b.part.key, geometry: new THREE.EdgesGeometry(b.geometry, 30) })), [selected]);
   useEffect(() => () => { for (const o of outlines) o.geometry.dispose(); }, [outlines]);
-  useEffect(() => { invalidate(); }, [visible, selection, invalidate]);
+  useEffect(() => { invalidate(); }, [visible, selection, invalidate, materials]);
 
   // A dimmed or recoloured lens: the lit lens's material, its colour scaling the vertex colours.
   const dimmed = useMemo(() => new Map<string, THREE.MeshBasicMaterial>(), []);
@@ -719,19 +720,39 @@ function Parts({
         if (first !== undefined) dimmed.delete(first);
       }
       m = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, color: new THREE.Color(g[0], g[1], g[2]) });
+      // A light, not a colour: Presentation draws it over the tone curve's white, and it blooms.
+      m.userData = { lens: true };
       dimmed.set(key, m);
     }
     return m;
   };
   useEffect(() => { invalidate(); }, [glows, invalidate]);
+  const roleMaterial = (b: Built): THREE.Material => {
+    const role = b.part.model?.role;
+    if (!presenting || role === undefined) return materials.solid;
+    let m = roles.get(role);
+    if (m === undefined) {
+      const look = ROLE_LOOKS[role];
+      m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: look.roughness, metalness: Math.min(EDITOR_METALNESS_MAX, look.metallic) });
+      roles.set(role, m);
+    }
+    return m;
+  };
   const materialOf = (b: Built, on: boolean) => {
-    if (b.look === 'glass') return on ? materials.glassOn : b.part.model !== undefined ? materials.modelGlass : materials.glass;
+    if (b.look === 'glass') return on ? materials.glassOn : panes !== null ? (b.part.model !== undefined ? panes.model : panes.glass).transmit : b.part.model !== undefined ? materials.modelGlass : materials.glass;
     if (b.look === 'lens') return on ? materials.lensOn : lit ? lensOf(b.part.id) : materials.lensOff;
     if (b.look === 'pick') return on ? materials.pickOn : materials.pick;
     if (b.look === 'ceiling') return on ? materials.ceilingOn : materials.ceiling;
     if (b.look === 'floor') return on ? materials.floorOn : materials.floor;
-    return on ? materials.solidOn : materials.solid;
+    return on ? materials.solidOn : roleMaterial(b);
   };
+  /** Presentation: a textured slot in library glass gets the reflecting pass over its transmitting one. */
+  const slotOf = (b: Built, m: MapRef | null, on: boolean): THREE.Material => {
+    if (m === null) return materialOf(b, on);
+    if (panes !== null && !on && (m.glass === true || b.look === 'glass')) return panes.glass.transmit;
+    return textures.material(m, b.look, on);
+  };
+  const reflects = (b: Built): boolean => panes !== null && !partSelected(b.part, selection) && (b.look === 'glass' || (b.slots ?? []).some((m) => m?.glass === true));
 
   return (
     <group onClick={onClick} onDoubleClick={onDoubleClick} onPointerMove={onHover} onPointerOut={onLeave}>
@@ -739,18 +760,89 @@ function Parts({
         <mesh
           key={b.part.key}
           geometry={b.geometry}
-          material={b.slots === undefined ? materialOf(b, partSelected(b.part, selection)) : b.slots.map((m) => (m === null ? materialOf(b, partSelected(b.part, selection)) : textures.material(m, b.look, partSelected(b.part, selection))))}
+          material={b.slots === undefined ? materialOf(b, partSelected(b.part, selection)) : b.slots.map((m) => slotOf(b, m, partSelected(b.part, selection)))}
           userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
           castShadow={castsShadow(b.part, b.look)}
           receiveShadow={b.look !== 'glass' && b.look !== 'pick'}
           renderOrder={b.look === 'glass' || b.look === 'pick' ? 1 : 0}
         />
       ))}
+      {panes !== null
+        ? visible.filter(reflects).map((b) => (
+            <mesh
+              key={`reflect:${b.part.key}`}
+              geometry={b.geometry}
+              material={b.slots === undefined ? (b.part.model !== undefined ? panes.model : panes.glass).reflect : b.slots.map((m) => (m?.glass === true || b.look === 'glass' ? panes.glass.reflect : HIDDEN))}
+              renderOrder={1.5}
+              raycast={noRaycast}
+            />
+          ))
+        : null}
       {outlines.map((o) => (
         <lineSegments key={`edges:${o.key}`} geometry={o.geometry} material={materials.edges} renderOrder={2} raycast={noRaycast} />
       ))}
     </group>
   );
+}
+
+/** A slot the reflecting pass leaves undrawn. */
+const HIDDEN = new THREE.MeshBasicMaterial({ visible: false });
+
+/** Draft's materials (as the view has always drawn): Lambert's even diffuse, the panes blended in one pass. */
+function draftMaterials() {
+  const solid = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const solidOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true }));
+  // Floors and ceilings win where they share a plane with something else (parts.ts, lookOf).
+  const floor = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+  const floorOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
+  const ceiling = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
+  const ceilingOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 }));
+  // Glass lets through what is behind it, about 90% and a little green, and reflects a sheen (FLR-T-13.17).
+  const glass = paneMaterial(linear(DEFAULT_COLOURS.glass));
+  // A model's glass (a window's, a shower's screen): its role's; a luminaire's lens unshaded, as if
+  // lit, when the lights are on (FLR-T-12.22), and shaded like the rest when they are off.
+  const modelGlass = paneMaterial(linear(ROLE_LOOKS.glass.color));
+  const lensOff = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const lensOn = glow(new THREE.MeshLambertMaterial({ vertexColors: true }));
+  const glassOn = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.6, depthWrite: false });
+  return { solid, solidOn, floor, floorOn, ceiling, ceilingOn, glass, glassOn, modelGlass, lensOff, lensOn, ...overlayMaterials() };
+}
+
+/**
+ * Presentation's (FLR-T-13.7): physically based — walls, floors and ceilings with a roughness each,
+ * reflecting the sky's prefiltered light by Fresnel as the textured surfaces already do — and the
+ * panes in two passes (presentationPane), drawn in Parts.
+ */
+function presentationMaterials() {
+  const std = (roughness: number, offset?: [number, number]) =>
+    new THREE.MeshStandardMaterial({ vertexColors: true, roughness, metalness: 0, ...(offset === undefined ? {} : { polygonOffset: true, polygonOffsetFactor: offset[0], polygonOffsetUnits: offset[1] }) });
+  const solid = std(0.85);
+  const solidOn = glow(std(0.85));
+  const floor = std(0.5, [-1, -2]);
+  const floorOn = glow(std(0.5, [-1, -2]));
+  const ceiling = std(0.95, [-2, -6]);
+  const ceilingOn = glow(std(0.95, [-2, -6]));
+  // Draft's single-pass panes stay for nothing here but the shape of the set; Parts draws presentationPane.
+  const glass = paneMaterial(linear(DEFAULT_COLOURS.glass));
+  const modelGlass = paneMaterial(linear(ROLE_LOOKS.glass.color));
+  const lensOff = std(ROLE_LOOKS.lens.roughness);
+  const lensOn = glow(std(ROLE_LOOKS.lens.roughness));
+  const glassOn = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.6, depthWrite: false, roughness: 0.2 });
+  return { solid, solidOn, floor, floorOn, ceiling, ceilingOn, glass, glassOn, modelGlass, lensOff, lensOn, ...overlayMaterials() };
+}
+
+/** What is drawn the same in both: the lit lens, the pick targets and the selection's outline. */
+function overlayMaterials() {
+  // Not tone-mapped: a lit lens is as bright as the screen shows, whatever the view's exposure (FLR-T-13.1);
+  // in Presentation, a light over the curve's white (`lens`).
+  const lens = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false });
+  lens.userData = { lens: true };
+  // A door's or an empty opening's cut: nothing drawn, still a target for the pointer.
+  const pick = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
+  // Not tone-mapped: the selection's outline and an opening's highlight read the same under every sky.
+  const pickOn = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.4, depthWrite: false, toneMapped: false });
+  const edges = new THREE.LineBasicMaterial({ depthTest: false, transparent: true, opacity: 0.95, toneMapped: false });
+  return { lens, pick, pickOn, edges };
 }
 
 /** Outlines are drawn over the house, not picked through it. */
@@ -807,6 +899,55 @@ function Toolbar({ store, three, ctl, mesh, levels, roof, lights }: { store: Edi
       </Tooltip>
     </div>
   );
+}
+
+/**
+ * Draft or Presentation (FLR-T-13.7), the board's "08 · Editor — 3D presentation quality" frame: a
+ * radio group in the chips at the bottom left. Kept in this browser. Where WebGL is drawn in software
+ * Presentation is offered but not the default, and says why it will be slow.
+ */
+function QualityControl({ three, quality }: { three: ThreeStore; quality: Quality }) {
+  const software = softwareWebGL();
+  const tip = software
+    ? 'Presentation: ambient occlusion, soft shadows, bloom on lamps, reflections — slow here: this browser draws WebGL in software'
+    : quality === 'presentation'
+      ? 'Presentation: ambient occlusion, soft shadows, bloom on lamps, reflections. Draft is lighter on the battery.'
+      : 'Draft: fast and light. Presentation adds ambient occlusion, soft shadows, bloom on lamps and reflections.';
+  return (
+    <Tooltip content={tip}>
+      <div className="fs-three__quality">
+        <SegmentedControl
+          aria-label="Quality"
+          size="sm"
+          value={quality}
+          onValueChange={(v) => { three.setQuality(v === 'presentation' ? 'presentation' : 'draft'); }}
+          items={[
+            { value: 'draft', label: 'Draft' },
+            { value: 'presentation', label: 'Presentation' },
+          ]}
+        />
+      </div>
+    </Tooltip>
+  );
+}
+
+/** The stats chip: the renderer, the quality, and in Presentation its state or frame rate. */
+function StatsChip({ quality, stats, parts, triangles }: { quality: Quality; stats: StatsStore; parts: number; triangles: number }) {
+  const s = useStats(stats);
+  return (
+    <div className="fs-three__chip fs-three__stats" role="note">
+      <Box aria-hidden="true" />
+      {statsLine(quality, quality === 'presentation' ? s : null, parts, triangles)}
+    </div>
+  );
+}
+
+function statsLine(quality: Quality, stats: PresentationStats | null, parts: number, triangles: number): string {
+  const tris = triangles >= 1000 ? `${(triangles / 1000).toFixed(1)}k` : String(triangles);
+  if (quality === 'draft') return `WebGL · Draft · ${String(parts)} parts · ${tris} triangles`;
+  if (stats === null || !stats.ready) return 'WebGL · Preparing presentation…';
+  const refining = stats.refined < ACCUMULATE ? ' · refining' : '';
+  return `WebGL · Presentation${stats.fps === null ? '' : ` · ${String(stats.fps)} fps`}${refining} · ${tris} triangles`;
 }
 
 /**
