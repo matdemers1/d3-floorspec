@@ -176,7 +176,7 @@ more, so `shadowBudget` gives 10 shadowed lamps rather than 11 on a 16-unit GPU
 (`PRESENTATION_SCENE_TEXTURE_UNITS`). PCSS adds none; the screen-space passes sample their own
 buffers in passes of their own.
 
-**Frame rate.** Moving, it measures itself and draws at a lower resolution (down to half) when the
+**Frame rate.** Moving, it measures itself and draws at a lower resolution (down to 40% of each side) when the
 GPU cannot hold 40 fps; a moment after the camera stops it draws at full resolution and refines.
 Every program the scene needs is compiled off the frame (KHR_parallel_shader_compile where there is
 one), so turning to a room not yet seen does not stall on its shaders. Half floats top out at

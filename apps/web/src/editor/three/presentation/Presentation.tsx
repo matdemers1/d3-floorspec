@@ -39,7 +39,7 @@ installPresentationShadows();
 export const LENS_OVER_WHITE = 48;
 /** Frames per second the view aims for while moving, and the fewest drawn pixels it will go to. */
 export const TARGET_FPS = 40;
-export const MIN_SCALE = 0.5;
+export const MIN_SCALE = 0.4;
 /** Milliseconds after the last movement before the full-resolution, refining frames begin. */
 export const SETTLE_MS = 140;
 
@@ -72,8 +72,9 @@ interface State {
   envKey: string;
   env: THREE.WebGLRenderTarget | null;
   defined: Set<THREE.Material>;
-  compiled: number;
-  compiling: boolean;
+  /** What every material compiles to, as a sum of their versions and counts; and the last warmed. */
+  signature: string;
+  warmed: string;
   shown: Map<THREE.Material, Shown>;
   lights: Set<Shadowed>;
   background: { own: THREE.Color; drawn: THREE.Color } | null;
@@ -109,8 +110,8 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
     envKey: '',
     env: null,
     defined: new Set(),
-    compiled: 0,
-    compiling: false,
+    signature: '',
+    warmed: '',
     shown: new Map(),
     lights: new Set(),
     background: null,
@@ -166,21 +167,14 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
       pipeline.skip = new Set(t?.skip ?? []);
       if (t?.scale !== undefined) s.scale = t.scale;
     }
-    const env0 = s.envKey;
-    const made0 = pipeline.created;
     prepare(s, scene, gl, pmrem);
-    const t0 = performance.now();
-    // Every program the scene will need, compiled off the frame (KHR_parallel_shader_compile where
-    // the GPU has it): turning to face a room not yet drawn must not stall on compiling its shaders.
-    if (s.compiled !== s.defined.size && !s.compiling) {
-      s.compiling = true;
-      const size = s.defined.size;
-      gl.compileAsync(scene, camera)
-        .catch(() => undefined)
-        .finally(() => {
-          s.compiled = size;
-          s.compiling = false;
-        });
+    // Anything that changes what a material compiles to (Presentation's first frame, a lamp turned
+    // on, a texture or a model arrived): every object drawn once into the passes' buffers, so the
+    // driver's pipelines and vertex arrays for the new programs exist before they are needed.
+    const warming = s.signature !== s.warmed;
+    if (warming) {
+      pipeline.warm(scene, camera);
+      s.warmed = s.signature;
     }
 
     camera.updateMatrixWorld();
@@ -191,7 +185,8 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
 
     if (moved) {
       // Moving: as fast as the GPU allows, at the resolution it can keep up with.
-      if (now - s.lastMove < 250) s.frames.push(now);
+      // Frames of one movement: a slow GPU's frames are far apart, and must still count as one.
+      if (now - s.lastMove < 1000) s.frames.push(now);
       else s.frames = [now];
       if (s.frames.length > 30) s.frames.shift();
       s.lastMove = now;
@@ -230,11 +225,6 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
     }
     s.stats.scale = s.scale;
     s.stats.env = s.env !== null;
-    if (navigator.webdriver) {
-      const dt = performance.now() - now;
-      const trace = ((window as unknown as { __floorspecQualityTrace?: unknown[] }).__floorspecQualityTrace ??= []);
-      if (dt > 40) trace.push({ at: Math.round(now), ms: Math.round(dt), prepare: Math.round(t0 - now), moved, k: s.k, scale: s.scale, made: pipeline.created - made0, env: env0 !== s.envKey });
-    }
     const key = `${String(s.stats.ready)}|${String(s.stats.fps)}|${String(s.stats.scale)}|${String(s.stats.refined >= ACCUMULATE)}`;
     if (key !== s.reported) {
       s.reported = key;
@@ -252,7 +242,10 @@ function prepare(s: State, scene: THREE.Scene, gl: THREE.WebGLRenderer, pmrem: T
   const mapping = gl.toneMapping;
   let dome: THREE.Mesh | null = null;
   const resized = { shadows: false };
+  const sig = { meshes: 0, versions: 0, lights: 0 };
   scene.traverse((o) => {
+    if (o instanceof THREE.Mesh) sig.meshes++;
+    if (o instanceof THREE.Light) sig.lights += o.castShadow ? 1001 : 1;
     if ((o.userData as { sky?: boolean }).sky === true) dome = o as THREE.Mesh;
     if (o instanceof THREE.Light && o.castShadow) {
       const light = o as Shadowed;
@@ -262,6 +255,7 @@ function prepare(s: State, scene: THREE.Scene, gl: THREE.WebGLRenderer, pmrem: T
       if (light.shadow !== undefined && light.shadow.mapSize.x !== before) resized.shadows = true;
     }
     for (const m of materialsOf(o)) {
+      sig.versions += m.version;
       if (lit(m)) {
         if (!s.defined.has(m)) {
           m.defines = { ...(m.defines ?? {}), [DEFINE]: '' };
@@ -283,6 +277,7 @@ function prepare(s: State, scene: THREE.Scene, gl: THREE.WebGLRenderer, pmrem: T
     }
   });
   if (resized.shadows) gl.shadowMap.needsUpdate = true;
+  s.signature = `${String(sig.meshes)}|${String(sig.versions)}|${String(sig.lights)}|${String(scene.environment?.uuid)}`;
   // The backdrop (the studio's theme colour, or the walkthrough's sky without one).
   if (scene.background instanceof THREE.Color) {
     const bg = scene.background;

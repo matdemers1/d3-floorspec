@@ -180,26 +180,20 @@ export class GBuffer {
         mesh.material = s;
       }
     });
+    // Only the backdrop is left out. The lights, their shadows and the sky's map stay as they are:
+    // three.js keys every lit material's program to the lights' state, and a pass that changed it
+    // would have every material of the next pass looked over again — every frame.
     const background = scene.background;
-    const environment = scene.environment;
-    const fog = scene.fog;
     scene.background = null;
-    scene.environment = null;
-    scene.fog = null;
     const clear = renderer.getClearColor(new THREE.Color());
     const alpha = renderer.getClearAlpha();
-    const shadows = renderer.shadowMap.enabled;
-    renderer.shadowMap.enabled = false;
     renderer.setRenderTarget(this.target);
     // Clear: a normal facing the camera, and "sky" in alpha.
     renderer.setClearColor(new THREE.Color(0.5, 0.5, 1), SURFACE.sky);
     renderer.clear(true, true, false);
     renderer.render(scene, camera);
-    renderer.shadowMap.enabled = shadows;
     renderer.setClearColor(clear, alpha);
     scene.background = background;
-    scene.environment = environment;
-    scene.fog = fog;
     for (const s of this.swapped) s.mesh.material = s.material;
     for (const o of this.hidden) o.visible = true;
     this.swapped.length = 0;

@@ -56,6 +56,27 @@ const COPY = new THREE.ShaderMaterial({
   depthWrite: false,
 });
 
+/**
+ * Unbind every texture from every unit. The last frame's passes leave their inputs bound — the
+ * picture, the geometry buffer, the depth — and the next frame draws into those very buffers. A
+ * texture bound to a unit while it is also the target being drawn is a feedback loop the driver
+ * must rule out at every draw (ANGLE on Metal does, at great cost: the first seconds of a turn ran at
+ * a third of a second a frame). three.js's own record of the bindings is then reset to match.
+ */
+function unbindTextures(r: THREE.WebGLRenderer): void {
+  const g = r.getContext() as WebGL2RenderingContext;
+  const units = r.capabilities.maxTextures;
+  for (let i = 0; i < units; i++) {
+    g.activeTexture(g.TEXTURE0 + i);
+    g.bindTexture(g.TEXTURE_2D, null);
+    g.bindTexture(g.TEXTURE_CUBE_MAP, null);
+    g.bindTexture(g.TEXTURE_2D_ARRAY, null);
+    g.bindTexture(g.TEXTURE_3D, null);
+  }
+  g.activeTexture(g.TEXTURE0);
+  r.state.reset();
+}
+
 class Targets {
   readonly gbuffer: GBuffer;
   readonly hdr: THREE.WebGLRenderTarget;
@@ -172,6 +193,7 @@ export class PresentationPipeline {
     const jitter = o.accumulate !== null && k > 0;
     const autoClear = r.autoClear;
     r.autoClear = false;
+    unbindTextures(r);
 
     // A sub-pixel step of the projection for an accumulated frame.
     this.saved.copy(camera.projectionMatrix);
@@ -238,6 +260,31 @@ export class PresentationPipeline {
     this.copy.render(r);
     r.autoClear = autoClear;
     return jitter ? k + 1 : 1;
+  }
+
+  /**
+   * Draw everything once, nothing culled, into the passes' buffers. A GPU driver (ANGLE on Metal)
+   * builds a pipeline for each program, target format and blend the first time it is drawn with
+   * them — a shader compile of its own, which compiling the WebGL programs ahead does not do. Drawn
+   * here while the view says "Preparing", turning to face a room not yet seen does not stall on it.
+   */
+  warm(scene: THREE.Scene, camera: THREE.PerspectiveCamera): void {
+    const r = this.renderer;
+    const buffer = r.getDrawingBufferSize(new THREE.Vector2());
+    const t = this.targetsFor(Math.max(1, buffer.x), Math.max(1, buffer.y), scene, camera);
+    unbindTextures(r);
+    const culled: THREE.Object3D[] = [];
+    scene.traverse((o) => {
+      if (o.frustumCulled) {
+        o.frustumCulled = false;
+        culled.push(o);
+      }
+    });
+    t.gbuffer.render(r, scene, camera);
+    r.setRenderTarget(t.hdr);
+    r.render(scene, camera);
+    for (const o of culled) o.frustumCulled = true;
+    r.setRenderTarget(null);
   }
 
   /** Show the last accumulated picture again, without drawing the scene. */
