@@ -101,7 +101,9 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
     return () => { query.removeEventListener('change', update); };
   }, []);
 
-  // The wheel must not scroll the page: a native, non-passive listener.
+  // The wheel must not scroll the page: a native, non-passive listener. The plan's <svg> is drawn
+  // only once the view exists (the ResizeObserver sets it after mount), so the listener is
+  // attached when it appears, not just on mount — on mount there is nothing to attach it to.
   useEffect(() => {
     const el = svg.current;
     if (el === null) return;
@@ -113,7 +115,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => { el.removeEventListener('wheel', onWheel); };
-  }, [tools]);
+  }, [tools, hasView]);
 
   const info = (e: React.PointerEvent): PointerInfo => {
     const r = (svg.current as SVGSVGElement).getBoundingClientRect();
