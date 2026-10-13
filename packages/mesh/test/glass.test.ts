@@ -65,7 +65,7 @@ describe('glass', () => {
       const glsl = pane.map((p) => (1 - f) ** 2 * Math.min(1, p / define('GLASS_FACES')) ** (1 / inside));
       const out: [number, number, number] = [0, 0, 0];
       expect(glassAt(pane, cos, out)).toBeCloseTo(f, 9);
-      for (let k = 0; k < 3; k++) expect(glsl[k]).toBeCloseTo(out[k], 5);
+      for (let k = 0; k < 3; k++) expect(glsl[k]).toBeCloseTo(out[k] ?? Number.NaN, 5);
     }
   });
 });
