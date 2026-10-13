@@ -4,7 +4,7 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
-import { GBuffer } from './gbuffer';
+import { SURFACE } from './reflectors';
 import { resolveMaterial, setResolve } from './resolve';
 import type { Indoor } from './indoor';
 import { ACCUMULATE } from './stats';
@@ -14,7 +14,9 @@ export { ACCUMULATE };
 /**
  * Presentation's frame (FLR-T-13.7), in passes, all at one resolution:
  *
- *   geometry buffer → the scene in linear light (float) → ambient occlusion (GTAO, half size)
+ *   the scene in linear light (float; in alpha, each pixel's kind of reflector — reflectors.ts — and
+ *   its depth in a depth texture, so the scene is drawn once a frame) → ambient occlusion (GTAO, half
+ *   size, its normals rebuilt from the depth)
  *   → resolve: occlusion and screen-space reflections → bloom → tone curve and sRGB (three.js's
  *   OutputPass: the renderer's own curve and exposure, the path tracer's) → SMAA, or a jittered
  *   frame folded into the accumulation → the screen.
@@ -58,7 +60,7 @@ const COPY = new THREE.ShaderMaterial({
 
 /**
  * Unbind every texture from every unit. The last frame's passes leave their inputs bound — the
- * picture, the geometry buffer, the depth — and the next frame draws into those very buffers. A
+ * picture, the depth — and the next frame draws into those very buffers. A
  * texture bound to a unit while it is also the target being drawn is a feedback loop the driver
  * must rule out at every draw (ANGLE on Metal does, at great cost: the first seconds of a turn ran at
  * a third of a second a frame). three.js's own record of the bindings is then reset to match.
@@ -78,7 +80,6 @@ function unbindTextures(r: THREE.WebGLRenderer): void {
 }
 
 class Targets {
-  readonly gbuffer: GBuffer;
   readonly hdr: THREE.WebGLRenderTarget;
   readonly lit: THREE.WebGLRenderTarget;
   readonly ldr: THREE.WebGLRenderTarget;
@@ -95,20 +96,22 @@ class Targets {
     readonly camera: THREE.PerspectiveCamera,
   ) {
     this.size = new THREE.Vector2(width, height);
-    this.gbuffer = new GBuffer(width, height);
-    this.hdr = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: true });
+    // The scene's light, and in alpha what reflects (reflectors.ts); its depth a texture the passes read.
+    const depth = new THREE.DepthTexture(width, height);
+    depth.type = THREE.UnsignedIntType;
+    this.hdr = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: true, depthTexture: depth });
     this.lit = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, depthBuffer: false });
     this.ldr = new THREE.WebGLRenderTarget(width, height, { type: THREE.UnsignedByteType, depthBuffer: false });
     this.accum = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, depthBuffer: false });
     const aw = Math.max(1, Math.round(width / 2));
     const ah = Math.max(1, Math.round(height / 2));
-    const depth = this.gbuffer.target.depthTexture ?? undefined;
-    // Made with its own (small) buffer and then pointed at ours: three.js's GTAOPass reads its own
-    // normal buffer's depth while it is set up, which it does not have when given one at construction.
+    // Made with its own (small) buffer and then pointed at our depth, with no normals: three.js's
+    // GTAOPass reads its own normal buffer's depth while it is set up, which it does not have when
+    // given one at construction; without a normal texture it rebuilds the normals from the depth.
     // (@types/three lags the class: it takes the AO and denoise parameters too.)
     const Gtao = GTAOPass as unknown as new (...args: unknown[]) => GTAOPass;
     this.gtao = new Gtao(scene, camera, aw, ah, undefined, { radius: AO_RADIUS, distanceExponent: 1, thickness: 1, scale: 1, samples: 16, distanceFallOff: 1 }, { radius: 6, rings: 2, samples: 12 });
-    if (depth !== undefined) this.gtao.setGBuffer(depth, this.gbuffer.target.texture);
+    this.gtao.setGBuffer(depth, undefined);
     this.gtao.output = GTAOPass.OUTPUT.Off;
     this.bloom = new UnrealBloomPass(new THREE.Vector2(width, height), BLOOM_STRENGTH, BLOOM_RADIUS, 1);
     // Only what the resolve marks in alpha blooms (a lit lens, the sky): a counter under a pendant
@@ -123,7 +126,7 @@ class Targets {
   }
 
   dispose(): void {
-    this.gbuffer.dispose();
+    this.hdr.depthTexture?.dispose();
     this.hdr.dispose();
     this.lit.dispose();
     this.ldr.dispose();
@@ -155,8 +158,8 @@ export class PresentationPipeline {
   private readonly saved = new THREE.Matrix4();
   private readonly savedInverse = new THREE.Matrix4();
   /** The passes a frame draws, for the test hook. */
-  readonly passes = ['gbuffer', 'scene', 'gtao', 'resolve:ao+ssr', 'bloom', 'output:tone+srgb', 'smaa|accumulate'] as const;
-  /** Under automation: 0 the picture, 1 the reflections alone, 2 the occlusion, 3 the reflectors (gbuffer.ts), 4 indoors (green) and out (red). */
+  readonly passes = ['scene', 'gtao', 'resolve:ao+ssr', 'bloom', 'output:tone+srgb', 'smaa|accumulate'] as const;
+  /** Under automation: 0 the picture, 1 the reflections alone, 2 the occlusion, 3 the reflectors (reflectors.ts), 4 indoors (green) and out (red). */
   debugView = 0;
   /** Under automation: passes left out, to measure what each costs. */
   skip = new Set<string>();
@@ -207,17 +210,13 @@ export class PresentationPipeline {
       camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
     }
 
-    // 1. Normals, reflectors and depth.
-    if (!this.skip.has('gbuffer')) t.gbuffer.render(r, scene, camera);
-    // 2. The scene, in linear light.
-    r.setRenderTarget(t.hdr);
-    r.clear(true, true, true);
-    r.render(scene, camera);
+    // 1–2. The scene, in linear light, its reflectors and its depth.
+    this.drawScene(t, scene, camera);
     // 3. Ambient occlusion (half size, denoised).
     const ao = !this.skip.has('ao');
     if (ao) t.gtao.render(r, null as unknown as THREE.WebGLRenderTarget, null as unknown as THREE.WebGLRenderTarget, 0, false);
     // 4. Occlusion and reflections.
-    setResolve(this.resolve, { color: t.hdr.texture, indoor: o.indoor, ao: ao ? t.gtao.gtaoMap : null, normal: t.gbuffer.target.texture, depth: t.gbuffer.target.depthTexture as THREE.Texture, env: o.env }, camera, t.size, AO_INTENSITY, this.skip.has('ssr') ? 0 : SSR_INTENSITY);
+    setResolve(this.resolve, { color: t.hdr.texture, indoor: o.indoor, ao: ao ? t.gtao.gtaoMap : null, depth: t.hdr.depthTexture as THREE.Texture, env: o.env }, camera, t.size, AO_INTENSITY, this.skip.has('ssr') ? 0 : SSR_INTENSITY);
     const dbg = this.resolve.uniforms['debugView'];
     if (dbg !== undefined) dbg.value = this.debugView;
     const dbs = this.resolve.uniforms['debugScale'];
@@ -280,11 +279,31 @@ export class PresentationPipeline {
         culled.push(o);
       }
     });
-    t.gbuffer.render(r, scene, camera);
-    r.setRenderTarget(t.hdr);
-    r.render(scene, camera);
+    this.drawScene(t, scene, camera);
     for (const o of culled) o.frustumCulled = true;
     r.setRenderTarget(null);
+  }
+
+  /**
+   * The scene into the float target: cleared to "sky" in alpha, so what draws nothing there (the sky's
+   * dome keeps the alpha under it) reads as the sky. A backdrop colour is cleared here rather than by
+   * three.js, which would clear its alpha to 1 — a surface's — and three.js premultiplies a clear
+   * colour by its alpha (on a premultiplied canvas): the colour is divided by it first.
+   */
+  private drawScene(t: Targets, scene: THREE.Scene, camera: THREE.PerspectiveCamera): void {
+    const r = this.renderer;
+    const background = scene.background;
+    const clear = r.getClearColor(new THREE.Color());
+    const alpha = r.getClearAlpha();
+    r.setRenderTarget(t.hdr);
+    const premultiplied = r.getContext().getContextAttributes()?.premultipliedAlpha !== false;
+    const fill = background instanceof THREE.Color ? background.clone().multiplyScalar(premultiplied ? 1 / SURFACE.sky : 1) : new THREE.Color(0, 0, 0);
+    if (background instanceof THREE.Color) scene.background = null;
+    r.setClearColor(fill, SURFACE.sky);
+    r.clear(true, true, true);
+    r.render(scene, camera);
+    r.setClearColor(clear, alpha);
+    scene.background = background;
   }
 
   /** Show the last accumulated picture again, without drawing the scene. */

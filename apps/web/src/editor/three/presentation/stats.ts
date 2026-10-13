@@ -18,6 +18,8 @@ export interface PresentationStats {
   refined: number;
   passes: readonly string[];
   env: boolean;
+  /** Times the whole scene has been drawn to warm the driver (pipeline.ts `warm`). */
+  warms: number;
 }
 
 export class StatsStore {

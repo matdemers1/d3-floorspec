@@ -233,8 +233,19 @@ more, so `shadowBudget` gives 10 shadowed lamps rather than 11 on a 16-unit GPU
 (`PRESENTATION_SCENE_TEXTURE_UNITS`). PCSS adds none; the screen-space passes sample their own
 buffers in passes of their own.
 
+**One draw of the scene a frame** (FLR-T-13.19). The screen-space passes need to know, per pixel, what
+kind of reflector is there and how rough it is: the scene's own draw writes that into the alpha of its
+float target (three.js's `opaque_fragment`, patched under Presentation's defines — a physically based
+surface its kind and roughness, a lit lens "light", a pane's reflecting pass "glass", over the
+transmitting pass's unchanged alpha), its depth goes to a depth texture, and the normals the occlusion
+and the reflections need are rebuilt from the depth. What is blended over the house — a highlight, an
+outline — and the sky's dome keep the alpha under them. There is no second, geometry-buffer pass
+swapping every mesh's material.
+
 **Frame rate.** Moving, it measures itself and draws at a lower resolution (down to 40% of each side) when the
 GPU cannot hold 40 fps; a moment after the camera stops it draws at full resolution and refines.
 Every program the scene needs is compiled off the frame (KHR_parallel_shader_compile where there is
-one), so turning to a room not yet seen does not stall on its shaders. Half floats top out at
+one), and the whole scene is drawn once, unculled, to have the driver build its pipelines — once what
+every material compiles to has stayed the same for 600 ms with the camera still, not on each of a
+house's textures as it arrives — so turning to a room not yet seen does not stall on its shaders. Half floats top out at
 65 504 cd/m²: the sky by the sun can pass it, so the resolve and the prefiltered dome are held under it.

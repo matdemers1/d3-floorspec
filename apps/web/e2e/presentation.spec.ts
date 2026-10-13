@@ -138,7 +138,7 @@ test('Presentation: chosen from the chips, every pass drawn, the same exposure, 
   // ── Presentation: loaded on first use, every pass of its frame drawn, the sky prefiltered.
   await quality.getByRole('radio', { name: 'Presentation' }).click();
   const q = await presented(page);
-  expect(q.passes).toEqual(['gbuffer', 'scene', 'gtao', 'resolve:ao+ssr', 'bloom', 'output:tone+srgb', 'smaa|accumulate']);
+  expect(q.passes).toEqual(['scene', 'gtao', 'resolve:ao+ssr', 'bloom', 'output:tone+srgb', 'smaa|accumulate']);
   expect(q.env).toBe(true);
   await expect(page.locator('.fs-three__stats')).toContainText('WebGL · Presentation');
   // One exposure and one curve: the sky's, as Draft and the renderers have it.
