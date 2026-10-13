@@ -10,6 +10,7 @@ import {
   critiquePrompt,
   DESIGN_PARTNER_PROMPT,
   FloorspecApiError,
+  GUIDE_URI,
   parseFocus,
   formatFeetInches,
   OP_NAMES,
@@ -226,14 +227,17 @@ describe('the MCP server', () => {
   it('advertises the Floorspec Ops union once, under apply\'s $defs, with exactly each op\'s members', async () => {
     const mcp = await connect(new MemoryClient());
     const { tools } = await mcp.listTools();
-    type Variant = { properties: { op: { const: string } }; additionalProperties: boolean };
-    type Schema = { properties: { batch: { items: { $ref: string } } }; $defs: Record<string, { type?: string; oneOf?: Variant[]; properties?: { op: { enum: string[] } } }> };
+    type Variant = { properties: { op: { const: string } }; additionalProperties?: boolean };
+    type Union = { type?: string; oneOf?: Variant[]; properties?: { op: { enum: string[] } }; required?: string[]; unevaluatedProperties?: boolean };
+    type Schema = { properties: { batch: { items: { $ref: string } } }; $defs: Record<string, Union> };
     const apply = tools.find((t) => t.name === 'floorspec_apply')?.inputSchema as unknown as Schema;
     expect(apply.properties.batch.items.$ref).toBe('#/$defs/Op');
     const variants = apply.$defs['Op']?.oneOf ?? [];
     expect(apply.$defs['Op']?.type).toBe('object');
     expect(variants.map((v) => v.properties.op.const).sort()).toEqual([...OP_NAMES].sort());
-    expect(variants.every((v) => !v.additionalProperties && 'additionalProperties' in v)).toBe(true);
+    // Each operation is closed: said once, on the union, which the matching operation's members alone satisfy.
+    expect(apply.$defs['Op']).toMatchObject({ required: ['op'], unevaluatedProperties: false });
+    expect(variants.every((v) => !('additionalProperties' in v))).toBe(true);
     expect(OP_NAMES).toEqual(expect.arrayContaining(['resizeRoom', 'addOpening', 'drawWall', 'moveWall', 'removeWall', 'setProperty', 'moveOpening', 'addLevel']));
     // Propose names the same operations and leaves their members to apply's schema.
     const propose = tools.find((t) => t.name === 'floorspec_propose')?.inputSchema as unknown as Schema;
@@ -331,6 +335,10 @@ describe('the MCP server', () => {
     // FLR-T-12.22 for floorspec_render's `lights` the same way (FLR-T-13.12 folded it into `scene`), and FLR-T-13.8 for its `doors`, and
     // FLR-T-13.4 and 13.9 for its `sky` and `at` (the shared project and changeset handles shortened),
     // and FLR-T-13.11 for floorspec_propose's assistant "staging" (descriptions said shorter).
+    // FLR-T-12.41 gave it room to grow, 25,992 → ~21,900, without moving the ceiling: the long
+    // guidance moved to the design-partner prompt (and floorspec://guide), the project handle is said
+    // once in the server's instructions, propose names apply's locks rather than repeating them, and
+    // closed unions are said once (tool-schema.ts). The ~4 KB under the ceiling is for new params.
     expect(size).toBeLessThan(26_000);
   });
 
@@ -345,6 +353,12 @@ describe('the MCP server', () => {
       { batch: [{ op: 'moveOpening', opening: 'O1', by: "1'", toward: 'east' }], ok: true },
       { batch: [{ op: 'addLevel', building: 'B1', below: 'L1', height: "8'" }], ok: true },
       { batch: [{ op: 'drawWall', level: 'L1', from: [0, 0], to: "12' east of J4", justification: 'center' }], ok: true },
+      { batch: [{ op: 'drawWall', level: 'L1', from: [0, 0], to: 'J2', name: 'Spine', extras: {} }], ok: true },
+      { batch: [{ op: 'placeElement', extension: 'FS_electrical', collection: 'receptacles', host: { mode: 'wallFace', wall: 'W1', toward: 'Kitchen', at: 'centered', height: '12"' }, element: {} }], ok: true },
+      { batch: [{ op: 'placeElement', extension: 'FS_electrical', collection: 'receptacles', host: { mode: 'wallFace', wall: 'W1', at: 'centered', height: '12"', level: 'L1' }, element: {} }], ok: false },
+      { batch: [{ op: 'placeElement', extension: 'FS_electrical', collection: 'receptacles', host: { wall: 'W1', at: 'centered', height: '12"' }, element: {} }], ok: false },
+      { batch: [{ op: 'moveRoom', room: 'Kitchen', by: [0, 0], side: 'east' }], ok: false },
+      { batch: [{ room: 'Kitchen', side: 'east', by: "2'" }], ok: false },
       { batch: [{ op: 'resizeRoom', room: 'Kitchen', side: 'up', by: "2'" }], ok: false },
       { batch: [{ op: 'removeElement', id: 'W1', also: 1 }], ok: false },
       { batch: [{ op: 'runScript', code: 'rm -rf /' }], ok: false },
@@ -358,6 +372,19 @@ describe('the MCP server', () => {
       expect(check({ batch }).valid, JSON.stringify(batch)).toBe(ok);
       const result = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch } });
       expect(result.isError ?? false, JSON.stringify(batch)).toBe(!ok);
+    }
+    // A lock is exactly one of an element, a length or a distance, as the tool takes it.
+    const batch = [{ op: 'resizeRoom', room: 'Kitchen', side: 'east', by: "2'" }];
+    for (const [locks, ok] of [
+      [[{ element: 'W1' }, { length: 'W2' }, { distance: ['W1', 'W3'] }], true],
+      [[{ element: 'W1', length: 'W2' }], false],
+      [[{}], false],
+      [[{ wall: 'W1' }], false],
+      [[{ distance: ['W1'] }], false],
+    ] as const) {
+      expect(check({ batch, locks }).valid, JSON.stringify(locks)).toBe(ok);
+      const result = await mcp.callTool({ name: 'floorspec_apply', arguments: { batch, locks } });
+      expect(result.isError ?? false, JSON.stringify(locks)).toBe(!ok);
     }
   });
 
@@ -613,6 +640,29 @@ describe('the MCP server', () => {
     expect(body).toContain('An estimate to compare options — not an energy-code calculation.');
     expect(body).toMatch(/Design loads: heating [\d.,]+–[\d.,]+ kBtu\/h/);
     expect(body).not.toMatch(/complian/i);
+  });
+
+  it('advertises every parameter the tools take, so a client that caches the listing can send them', async () => {
+    const mcp = await connect(new MemoryClient());
+    const { tools } = await mcp.listTools();
+    const params = (name: string) => tools.find((t) => t.name === name)?.inputSchema.properties ?? {};
+    // floorspec_render: every RenderOptions member but view's default, a room (camera) and lights (scene).
+    expect(Object.keys(params('floorspec_render')).sort()).toEqual(['at', 'camera', 'changeset', 'doors', 'highlight', 'level', 'project', 'scene', 'sky', 'view', 'width']);
+    expect(params('floorspec_render')['sky']).toMatchObject({ enum: ['clear', 'overcast', 'dusk', 'night', 'studio'] });
+    expect(params('floorspec_render')['doors']).toMatchObject({ enum: ['closed', 'open'] });
+    expect(params('floorspec_propose')['assistant']).toMatchObject({ enum: ['electrical', 'staging'] });
+    expect(Object.keys(params('floorspec_propose')).sort()).toEqual(['assistant', 'batch', 'changeset', 'locks', 'name', 'project', 'render', 'rooms']);
+    expect(Object.keys(params('floorspec_apply')).sort()).toEqual(['batch', 'changeset', 'ifMatch', 'locks', 'option', 'project', 'render']);
+  });
+
+  it('offers the design partner guidance as the resource floorspec://guide too', async () => {
+    const mcp = await connect(new MemoryClient());
+    expect((await mcp.listResources()).resources.map((r) => r.uri)).toContain(GUIDE_URI);
+    const read = await mcp.readResource({ uri: GUIDE_URI });
+    expect(read.contents[0]).toMatchObject({ uri: GUIDE_URI, mimeType: 'text/markdown', text: DESIGN_PARTNER_PROMPT });
+    // What left the tool listing for it (FLR-T-12.41) is said there.
+    for (const moved of ['needed only while your credential reaches more than one project', 'never resolved', '/clearOpening', 'door-interior-swing-30x80', 'refused with the list'])
+      expect(DESIGN_PARTNER_PROMPT).toContain(moved);
   });
 
   it('offers the design partner prompt, the same text the plugin skill carries', async () => {
