@@ -1,7 +1,7 @@
 /**
  * The shape of an apply request (1.1): a batch of at least one operation the draft defines, each
  * with exactly the members its definition lists, and an optional context of locks and retired IDs.
- * Anything else is FS-OPS-001 (Ops 0.1: 1.1.1; Ops 0.2: 1.1.2; Ops 0.3: 1.1.3) — including an operation with none,
+ * Anything else is FS-OPS-001 (Ops 0.1: 1.1.1; Ops 0.2: 1.1.2; Ops 0.3: 1.1.3; Ops 0.4: 1.1.4) — including an operation with none,
  * or more than one, of a group of members of which it takes exactly one (moveOpening's `at` and
  * `by`, addLevel's `elevation`, `above` and `below`, a wall-face host's `side` and `toward`), or
  * with `toward` but no `by` on moveOpening.
@@ -32,13 +32,17 @@ type MemberType =
   | 'surface'
   | 'toward' // moveOpening's: start, end or a side
   | 'kind' // an adjacency's: required, preferred or forbidden
-  | 'host'; // 4.10: a host reference, checked by its mode
+  | 'host' // 4.10: a host reference, checked by its mode
+  | 'anchor' // 4.11: a resize anchor
+  | 'limits'; // 4.11: resizeElement's limits, checked member by member
 
 interface OpShape {
   readonly required: Readonly<Record<string, MemberType>>;
   readonly optional: Readonly<Record<string, MemberType>>;
   /** Groups of optional members of which exactly one must be present (4.5, 4.8). */
   readonly oneOf?: readonly (readonly string[])[];
+  /** Groups of optional members of which at least one must be present (Ops 0.4, 4.11). */
+  readonly anyOf?: readonly (readonly string[])[];
   /** Optional members allowed only beside another member. */
   readonly needs?: Readonly<Record<string, string>>;
 }
@@ -78,7 +82,7 @@ const SHAPES_01: Readonly<Partial<Record<OperationName, OpShape>>> = {
 };
 
 /** Ops 0.2: the 0.1 table, with these operations added or changed. */
-const SHAPES_02: Readonly<Record<OperationName, OpShape>> = {
+const SHAPES_02: Readonly<Record<Exclude<OperationName, 'resizeElement'>, OpShape>> = {
   ...(SHAPES_01 as Record<OperationName, OpShape>),
   // 2.1: the eleven collections, `items`, or — with `extension` — an extension's collection.
   addElement: { required: { collection: 'string', element: 'object' }, optional: { id: 'string', extension: 'string' } },
@@ -100,14 +104,29 @@ const SHAPES_02: Readonly<Record<OperationName, OpShape>> = {
   moveElement: { required: { element: 'string', host: 'host' }, optional: {} },
 };
 
+/** 4.11: the anchors of resizeElement, and the axes its sizes and limits are given on. */
+export const RESIZE_ANCHORS = ['center', 'back', 'front', 'right', 'left', 'back-right', 'back-left', 'front-right', 'front-left'] as const;
+export const RESIZE_AXES = ['width', 'depth', 'height'] as const;
+
+/** Ops 0.4: the 0.2 table and resizeElement (4.11), which takes at least one of width, depth and height. */
+const SHAPES_04: Readonly<Record<OperationName, OpShape>> = {
+  ...SHAPES_02,
+  resizeElement: {
+    required: { element: 'string', anchor: 'anchor' },
+    optional: { width: 'length', depth: 'length', height: 'length', limits: 'limits' },
+    anyOf: [RESIZE_AXES],
+  },
+};
+
 /** The operations of each draft and their members. */
 /**
  * Ops 0.3 adds no operation and no member: its requests have Ops 0.2's shape, except that addElement
- * may name the collections roofs and stairs (schema/ops/0.3, Ops 0.3 §0.4, §1.1.3).
+ * may name the collections roofs and stairs (schema/ops/0.3, Ops 0.3 §0.4, §1.1.3). Ops 0.4 adds
+ * resizeElement (schema/ops/0.4, §4.11, §1.1.4).
  */
-export const OP_SHAPES_BY_VERSION: Readonly<Record<OpsVersion, Readonly<Partial<Record<OperationName, OpShape>>>>> = { '0.1': SHAPES_01, '0.2': SHAPES_02, '0.3': SHAPES_02, '0.4': SHAPES_02 };
-/** The operations of Ops 0.3 — the current draft, whose operations are Ops 0.2's — and their members. */
-export const OP_SHAPES: Readonly<Record<OperationName, OpShape>> = SHAPES_02;
+export const OP_SHAPES_BY_VERSION: Readonly<Record<OpsVersion, Readonly<Partial<Record<OperationName, OpShape>>>>> = { '0.1': SHAPES_01, '0.2': SHAPES_02, '0.3': SHAPES_02, '0.4': SHAPES_04 };
+/** The operations of Ops 0.4 — the current draft: Ops 0.2's and resizeElement — and their members. */
+export const OP_SHAPES: Readonly<Record<OperationName, OpShape>> = SHAPES_04;
 
 /** 4.10: the members of a host reference, by mode. */
 export const HOST_SHAPES: Readonly<Record<'wallFace' | 'surface' | 'free', OpShape>> = {
@@ -145,6 +164,10 @@ function typeOk(t: MemberType, v: unknown, nonInteger: ReadonlySet<string>, ptr:
       return v === 'required' || v === 'preferred' || v === 'forbidden';
     case 'host':
       return isObject(v);
+    case 'anchor':
+      return typeof v === 'string' && (RESIZE_ANCHORS as readonly string[]).includes(v);
+    case 'limits':
+      return isObject(v);
   }
 }
 
@@ -162,6 +185,8 @@ function checkMembers(name: string, obj: Record<string, unknown>, shape: OpShape
   }
   for (const group of shape.oneOf ?? [])
     if (group.filter((m) => Object.hasOwn(obj, m)).length !== 1) fail('FS-OPS-001', `${name} takes exactly one of ${group.map((m) => JSON.stringify(m)).join(', ')}`, [], base);
+  for (const group of shape.anyOf ?? [])
+    if (!group.some((m) => Object.hasOwn(obj, m))) fail('FS-OPS-001', `${name} takes at least one of ${group.map((m) => JSON.stringify(m)).join(', ')}`, [], base);
   for (const [m, other] of Object.entries(shape.needs ?? {}))
     if (Object.hasOwn(obj, m) && !Object.hasOwn(obj, other)) fail('FS-OPS-001', `${name}'s ${JSON.stringify(m)} is allowed only with ${JSON.stringify(other)}`, [], `${base}/${m}`);
 }
@@ -179,6 +204,19 @@ function checkHost(host: Record<string, unknown>, base: string, tokens: (string 
   checkMembers(`a ${mode} host`, host, HOST_SHAPES[mode], base, tokens, nonInteger, 'mode');
   for (const [m, values] of Object.entries(HOST_ENUMS[mode]!))
     if (Object.hasOwn(host, m) && !values.includes(host[m] as string)) fail('FS-OPS-001', `a ${mode} host's ${JSON.stringify(m)} is ${values.join(' or ')}`, [], `${base}/${m}`);
+}
+
+const LIMIT_SHAPE: OpShape = { required: {}, optional: { min: 'length', max: 'length' } };
+
+/** 4.11: `limits` has only width, depth and height, each an object of a min, a max or both, lengths. */
+function checkLimits(limits: Record<string, unknown>, base: string, tokens: (string | number)[], nonInteger: ReadonlySet<string>): void {
+  if (Object.keys(limits).length === 0) fail('FS-OPS-001', 'resizeElement\'s limits name at least one of "width", "depth" and "height"', [], base);
+  for (const [axis, bound] of Object.entries(limits)) {
+    const ptr = `${base}/${axis}`;
+    if (!(RESIZE_AXES as readonly string[]).includes(axis)) fail('FS-OPS-001', `resizeElement's limits have no member ${JSON.stringify(axis)}`, [], toPointer([...tokens, axis]));
+    if (!isObject(bound) || Object.keys(bound).length === 0) fail('FS-OPS-001', `a limit is an object of a "min", a "max" or both`, [], ptr);
+    checkMembers(`the limit of ${axis}`, bound as Record<string, unknown>, LIMIT_SHAPE, ptr, [...tokens, axis], nonInteger, '');
+  }
 }
 
 /**
@@ -203,6 +241,7 @@ export function checkRequest(request: unknown, nonInteger: ReadonlySet<string> =
     if (name === 'addElement' && !Object.hasOwn(op, 'extension') && !collectionsOf(ops).includes(op.collection as never) && op.collection !== ITEMS)
       fail('FS-OPS-001', `addElement's collection is one of ${[...collectionsOf(ops), ITEMS].join(', ')}, unless it has an extension`, [], `${base}/collection`);
     if ((name === 'placeElement' || name === 'moveElement') && isObject(op.host)) checkHost(op.host, `${base}/host`, ['batch', i, 'host'], nonInteger);
+    if (name === 'resizeElement' && isObject(op.limits)) checkLimits(op.limits, `${base}/limits`, ['batch', i, 'limits'], nonInteger);
     return undefined;
   });
   if (Object.hasOwn(request, 'context')) {
@@ -261,5 +300,9 @@ function describe(t: MemberType): string {
       return 'required, preferred or forbidden';
     case 'host':
       return 'a host reference';
+    case 'anchor':
+      return RESIZE_ANCHORS.join(', ');
+    case 'limits':
+      return 'an object of width, depth and height limits';
   }
 }

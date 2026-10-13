@@ -15,7 +15,7 @@ import { checkRequest, OpsFailure, OP_SHAPES_BY_VERSION, type OpsVersion } from 
 import { listCases, SUITES } from './suite.js';
 
 /** The schema of each draft's requests. */
-const SCHEMA_OF: Record<OpsVersion, OpsVersion> = { '0.1': '0.1', '0.2': '0.2', '0.3': '0.3', '0.4': '0.3' };
+const SCHEMA_OF: Record<OpsVersion, OpsVersion> = { '0.1': '0.1', '0.2': '0.2', '0.3': '0.3', '0.4': '0.4' };
 const schemaDir = (ops: OpsVersion): string => join(import.meta.dirname, '..', 'standard', 'schema', 'ops', SCHEMA_OF[ops]);
 
 const validators = new Map<OpsVersion, (v: unknown) => boolean>();

@@ -341,12 +341,26 @@ export const MoveElement = z.strictObject({
   host: Host,
 });
 
-/** Every operation Floorspec Ops 0.2 defines — one `$defs` entry per tool, referenced by the batch. */
+/** 4.11 (Ops 0.4): the sizes an item comes in, on one axis. */
+const Limit = shared(z.strictObject({ min: Length.optional(), max: Length.optional() }), 'Limit');
+
+/** 4.11 (Ops 0.4): resize an extension element's box from an anchor, in its own frame. No description: the op schema says it. */
+export const ResizeElement = z.strictObject({
+  op: z.literal('resizeElement'),
+  element: Element,
+  anchor: z.enum(['center', 'back', 'front', 'right', 'left', 'back-right', 'back-left', 'front-right', 'front-left']),
+  width: Length.optional(),
+  depth: Length.optional(),
+  height: Length.optional(),
+  limits: z.strictObject({ width: Limit.optional(), depth: Limit.optional(), height: Limit.optional() }).optional(),
+});
+
+/** Every operation Floorspec Ops 0.4 defines — one `$defs` entry per tool, referenced by the batch. */
 export const OpUnion = shared(
   z.discriminatedUnion('op', [
     AddElement, AddJunction, AddWall, AddSeparator, RemoveElement, SetProperty, UnsetProperty, MoveJunction, SetAdjacency, RemoveAdjacency,
     DrawWall, DrawSeparator, MoveWall, MoveRoom, ResizeRoom, AddOpening, MoveOpening, AddRoom, SetRoomFinish, SetRoomBrief, RemoveWall, AddLevel,
-    AddProgramItem, PlaceElement, MoveElement,
+    AddProgramItem, PlaceElement, MoveElement, ResizeElement,
   ]),
   'Op',
 );

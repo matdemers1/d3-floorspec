@@ -1,0 +1,6 @@
+{
+  "description": "The island's box unset earlier in the batch: there is no box to resize - FS-OPS-003, naming it.",
+  "covers": [
+    "FS-OPS-4.11.1"
+  ]
+}

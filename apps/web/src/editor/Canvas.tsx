@@ -16,6 +16,7 @@ import { diffModels, type ModelDiff } from './diff';
 import { reviewDiagnostics, reviewTarget } from './review';
 import { DeviceGhost, DeviceOutline, SystemsLayer } from './systems/Symbols';
 import { FurnitureLayer } from '../furniture/Plan';
+import { ResizeGhost, ResizeHandles, resizableOn } from '../furniture/Handles';
 import { GapMarkers } from './systems/Assistant';
 import { kindById } from './systems/catalog';
 import { anchorOf, circuitsOf } from './systems/view';
@@ -497,6 +498,9 @@ function Selection({ store, view, level, coarse }: { store: EditorStore; view: V
   // A sloped roof's edges are numbered on the plan as its inspector's Edges section numbers them.
   const roof = useEditor(store, (s) => (selection === null ? undefined : (s.model?.document.roofs?.[selection] as { pitch?: unknown; edges?: Record<string, { pitch?: unknown }> } | undefined)));
   const sloped = roof !== undefined && (roof.pitch !== undefined || Object.values(roof.edges ?? {}).some((e) => e.pitch !== undefined));
+  // FLR-T-18.4: an item that resizes shows its eight handles and, standing on a floor, a rotate handle.
+  const resizable = resizableOn(level, selection);
+  const dragging = useEditor(store, (s) => s.draft?.tool === 'select' && s.draft.drag !== null);
   return (
     <g className="fs-selection" aria-hidden="true">
       {hover !== null && hover !== selection && tool === 'select' ? <Outline view={view} level={level} id={hover} className="fs-hl fs-hl--hover" /> : null}
@@ -511,6 +515,7 @@ function Selection({ store, view, level, coarse }: { store: EditorStore; view: V
         );
       })}
       {bulge !== undefined ? <circle className="fs-handle fs-handle--bulge" data-testid="arc-bulge-handle" cx={S(view, bulge)[0]} cy={S(view, bulge)[1]} r={size} /> : null}
+      {resizable !== undefined && tool === 'select' && !dragging ? <ResizeHandles view={view} device={resizable} coarse={coarse} /> : null}
     </g>
   );
 }
@@ -613,6 +618,7 @@ function RidgePick({ store, view }: { store: EditorStore; view: Viewport }) {
 function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: Viewport; level: LevelView; model: EditorModel }) {
   const draft = useEditor(store, (s) => s.draft);
   const draw = useEditor(store, (s) => s.draw);
+  const previewed = useEditor(store, (s) => s.preview?.model ?? null);
   if (draft === null) return null;
   if (draft.tool === 'stair') return <StairDraft view={view} foot={draft.foot} cursor={draft.cursor} />;
   if (draft.tool === 'slab' || draft.tool === 'roof') {
@@ -741,6 +747,13 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
         <DeviceGhost view={view} level={level.id} hover={draft.drag.hover} kind={device.kind} receptacle={{ gfci: false, afci: false, usb: false, v240: false }} />
       </g>
     );
+  }
+  // Select: an item's handle dragged (FLR-T-18.4) — the footprint it would have, from the previewed batch.
+  if ('drag' in draft && (draft.drag?.kind === 'resize' || draft.drag?.kind === 'rotate')) {
+    const drag = draft.drag;
+    const ghost = previewed?.levels.find((l) => l.id === level.id)?.devices.find((d) => d.id === drag.id);
+    if (ghost === undefined) return null;
+    return <ResizeGhost view={view} device={ghost} units={store.units} label={drag.kind === 'resize' ? drag.hint : `${String(Math.round(drag.rotation / 1_000_000))}° · 15° steps · ⇧ 1°`} />;
   }
   // Select: a dragged junction's snap guides.
   if ('drag' in draft && draft.drag?.kind === 'junction') {

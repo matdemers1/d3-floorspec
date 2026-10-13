@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "resizeElement",
+      "element": "X1",
+      "anchor": "center",
+      "height": "42\""
+    }
+  ]
+}

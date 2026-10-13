@@ -1,0 +1,11 @@
+{
+  "batch": [
+    {
+      "op": "resizeElement",
+      "element": "X1",
+      "anchor": "front-left",
+      "width": "84\"",
+      "depth": "30\""
+    }
+  ]
+}
