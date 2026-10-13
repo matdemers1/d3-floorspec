@@ -1,0 +1,7 @@
+{
+  "description": "resizeElement of R3, a room: the member expects an extension element, and a room is not one - FS-OPS-003.",
+  "covers": [
+    "FS-OPS-4.11.1",
+    "FS-OPS-3.3.1"
+  ]
+}

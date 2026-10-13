@@ -1,0 +1,7 @@
+{
+  "description": "resizeElement makes the island 42\" deep holding its back: its front moves 6\" forward, and its working space with it, as deep as it was; the bowl, inside its depth, moves 3\" - what its middle moves - and the stool behind its back stays.",
+  "covers": [
+    "FS-OPS-4.11.1",
+    "FS-OPS-4.11.2"
+  ]
+}

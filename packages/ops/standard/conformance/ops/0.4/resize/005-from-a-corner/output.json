@@ -1,0 +1,346 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "extensions": {
+    "FS_furniture": {
+      "collections": {
+        "casework": {
+          "X1": {
+            "category": "island",
+            "clearances": {
+              "working": {
+                "max": [
+                  2450432,
+                  1170432,
+                  2560000
+                ],
+                "min": [
+                  1170432,
+                  -1560576,
+                  0
+                ],
+                "purpose": "workingSpace",
+                "shape": "box"
+              }
+            },
+            "fallback": {
+              "box": {
+                "max": [
+                  1170432,
+                  1170432,
+                  1170432
+                ],
+                "min": [
+                  195072,
+                  -1560576,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "mode": "surface",
+              "position": [
+                6242304,
+                1560576
+              ],
+              "room": "R3",
+              "surface": "floor"
+            }
+          }
+        },
+        "pieces": {
+          "X2": {
+            "category": "other",
+            "fallback": {
+              "box": {
+                "max": [
+                  325120,
+                  162560,
+                  1300480
+                ],
+                "min": [
+                  0,
+                  -162560,
+                  1170432
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "mode": "surface",
+              "position": [
+                6925056,
+                1365504
+              ],
+              "room": "R3",
+              "surface": "floor"
+            },
+            "with": "X1"
+          },
+          "X3": {
+            "category": "stool",
+            "fallback": {
+              "box": {
+                "max": [
+                  520192,
+                  260096,
+                  975360
+                ],
+                "min": [
+                  0,
+                  -260096,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "mode": "surface",
+              "position": [
+                6047232,
+                2861056
+              ],
+              "room": "R3",
+              "surface": "floor"
+            },
+            "with": "X1"
+          },
+          "X4": {
+            "category": "chair",
+            "fallback": {
+              "box": {
+                "max": [
+                  585216,
+                  292608,
+                  1105408
+                ],
+                "min": [
+                  0,
+                  -292608,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "mode": "surface",
+              "position": [
+                8193024,
+                2340864
+              ],
+              "room": "R3",
+              "surface": "floor"
+            }
+          },
+          "X5": {
+            "category": "other",
+            "fallback": {
+              "box": {
+                "max": [
+                  32512,
+                  390144,
+                  975360
+                ],
+                "min": [
+                  0,
+                  -390144,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "height": 1560576,
+              "mode": "wallFace",
+              "offset": 2340864,
+              "side": "right",
+              "wall": "W5"
+            },
+            "with": "X1"
+          }
+        }
+      }
+    }
+  },
+  "extensionsUsed": {
+    "FS_furniture": "0.1.0"
+  },
+  "floorspec": "0.4",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        3121152
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        0,
+        4681728
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        4681728,
+        4681728
+      ]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [
+        9363456,
+        4681728
+      ]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [
+        9363456,
+        0
+      ]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [
+        4681728,
+        0
+      ]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [
+        4681728,
+        3121152
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Conformance"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2340864,
+        1560576
+      ],
+      "function": "kitchen",
+      "level": "L1",
+      "name": "Kitchen"
+    },
+    "R2": {
+      "anchor": [
+        2340864,
+        3901440
+      ],
+      "function": "storage",
+      "level": "L1",
+      "name": "Pantry"
+    },
+    "R3": {
+      "anchor": [
+        7022592,
+        2340864
+      ],
+      "function": "dining",
+      "level": "L1",
+      "name": "Dining"
+    }
+  },
+  "types": {
+    "T-door-36": {
+      "height": 2600960,
+      "kind": "doorType",
+      "width": 1170432
+    },
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W10": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J5",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    },
+    "W5": {
+      "end": "J6",
+      "level": "L1",
+      "start": "J5",
+      "type": "WT"
+    },
+    "W6": {
+      "end": "J7",
+      "level": "L1",
+      "start": "J6",
+      "type": "WT"
+    },
+    "W7": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    },
+    "W8": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    },
+    "W9": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J8",
+      "type": "WT"
+    }
+  }
+}

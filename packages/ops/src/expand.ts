@@ -3,7 +3,7 @@
  * against the working copy as it stands, expand a composite into the exact primitives chapter 4
  * defines, and apply them. Returns the resolved primitives, for the echo (1.4).
  */
-import { predicates, roundHalfEvenRational, Surd } from '@floorspec/engine';
+import { facingVector, predicates, roundHalfEvenRational, Surd } from '@floorspec/engine';
 import { fail } from './diagnostics.js';
 import { asPoint, editDesign, SIDE_UNIT, type LevelFaces } from './model/faces.js';
 import { EXTENSION_PREFIX, ITEMS, RESERVED_TARGETS, type CollectionName, type ReservedTarget } from './model/working.js';
@@ -31,7 +31,7 @@ import {
   type Ctx,
   type IPoint,
 } from './references/resolve.js';
-import type { HostRef, Operation, Point, ResolvedPrimitive, Side } from './types.js';
+import type { HostRef, Operation, Point, ResizeAnchor, ResizeElement, ResolvedPrimitive, Side } from './types.js';
 import { clone, cmpStr, getMember, isObject, setMember, type JsonObject } from './lib/json.js';
 
 const pt = (p: IPoint, ptr: string): Point => [toJsonInt(p[0], ptr), toJsonInt(p[1], ptr)];
@@ -368,6 +368,11 @@ export function runOperation(ctx: Ctx, op: Operation, index: number): ResolvedPr
       emit({ op: 'setProperty', id, path: '/fallback/level', value: level }, `${base}/element`);
       break;
     }
+
+    // ── 4.11 resizeElement (Ops 0.4) ──
+    case 'resizeElement':
+      resizeElement(ctx, op, base, emit);
+      break;
   }
   return out;
 }
@@ -555,3 +560,210 @@ function resizeRoom(ctx: Ctx, roomRef: string, side: Side, byRef: unknown, base:
   }
 }
 
+
+// ── 4.11 resizeElement (Ops 0.4) ─────────────────────────────────────────────
+
+type Hold = 'min' | 'max' | 'mid';
+/** What each anchor holds on x (back = min, front = max) and on y (right = min, left = max); z always holds its min. */
+const RESIZE_HOLD: Readonly<Record<ResizeAnchor, readonly [Hold, Hold]>> = {
+  center: ['mid', 'mid'],
+  back: ['min', 'mid'],
+  front: ['max', 'mid'],
+  right: ['mid', 'min'],
+  left: ['mid', 'max'],
+  'back-right': ['min', 'min'],
+  'back-left': ['min', 'max'],
+  'front-right': ['max', 'min'],
+  'front-left': ['max', 'max'],
+};
+/** The axes in box order — x, y, z — and the member that sizes each. */
+const BOX_AXES = ['depth', 'width', 'height'] as const;
+
+/** A triple of integers, or undefined. */
+function triple(v: unknown): [bigint, bigint, bigint] | undefined {
+  return Array.isArray(v) && v.length === 3 && v.every((c) => typeof c === 'number' && Number.isSafeInteger(c)) ? [BigInt(v[0] as number), BigInt(v[1] as number), BigInt(v[2] as number)] : undefined;
+}
+const floorHalf = (e: bigint): bigint => (e >= 0n ? e / 2n : -((-e + 1n) / 2n));
+
+/** 4.11: resize an extension element's box from an anchor, stretching what is measured from it, and move its group. */
+function resizeElement(ctx: Ctx, op: ResizeElement, base: string, emit: (p: ResolvedPrimitive, idPtr?: string) => void): void {
+  const id = resolveElement(op.element, `${base}/element`, ctx, EXTENSION_ELEMENT);
+  const ptr = `${base}/element`;
+  const sized: Partial<Record<(typeof BOX_AXES)[number], bigint>> = {};
+  for (const ax of ['width', 'depth', 'height'] as const) if (op[ax] !== undefined) sized[ax] = resolveLength(op[ax], `${base}/${ax}`);
+  const limits: { ax: (typeof BOX_AXES)[number]; b: 'min' | 'max'; v: bigint }[] = [];
+  for (const ax of ['width', 'depth', 'height'] as const)
+    for (const b of ['min', 'max'] as const) {
+      const l = op.limits?.[ax]?.[b];
+      if (l !== undefined) limits.push({ ax, b, v: resolveLength(l, `${base}/limits/${ax}/${b}`) });
+    }
+  const loc = ctx.wc.locate(id)!;
+  const place = loc.place;
+  const el = ctx.wc.element(id);
+  const fb = getMember(el, 'fallback');
+  const box = isObject(fb) ? getMember(fb, 'box') : undefined;
+  const lo = isObject(box) ? triple(getMember(box, 'min')) : undefined;
+  const hi = isObject(box) ? triple(getMember(box, 'max')) : undefined;
+  if (lo === undefined || hi === undefined) return fail('FS-OPS-003', `${id} has no box of two triples of integers to resize`, [id], ptr);
+  for (const { ax, b, v } of limits) {
+    const n = sized[ax];
+    if (n !== undefined && (b === 'min' ? n < v : n > v)) fail('FS-OPS-008', `${id} comes no ${b === 'min' ? 'smaller' : 'larger'} than ${v} base units in ${ax}`, [id], `${base}/${ax}`);
+  }
+  const hold: readonly Hold[] = [...RESIZE_HOLD[op.anchor], 'min'];
+  const olds: [bigint, bigint][] = [];
+  const news: [bigint, bigint][] = [];
+  BOX_AXES.forEach((ax, i) => {
+    const a = lo[i]!;
+    const b = hi[i]!;
+    const e = b - a;
+    const e2 = sized[ax] ?? e;
+    let a2: bigint;
+    if (hold[i] === 'min') a2 = a;
+    else if (hold[i] === 'max') a2 = b - e2;
+    else a2 = a + floorHalf(e) - floorHalf(e2);
+    olds.push([a, b]);
+    news.push([a2, a2 + e2]);
+  });
+  const num = (v: bigint): number => toJsonInt(v, ptr);
+  /** The stretch of axis i (4.11): beyond a side with that side, inside in proportion, rounded once. */
+  const stretch = (i: number, c: bigint): bigint => {
+    const [a, b] = olds[i]!;
+    const [a2, b2] = news[i]!;
+    if (c <= a) return c + (a2 - a);
+    if (c >= b) return c + (b2 - b);
+    return a2 + roundHalfEvenRational((c - a) * (b2 - a2), b - a);
+  };
+  emit({ op: 'setProperty', id, path: '/fallback/box', value: { min: news.map((n) => num(n[0])), max: news.map((n) => num(n[1])) } }, ptr);
+  const cl = getMember(el, 'clearances');
+  if (isObject(cl)) {
+    const out = clone(cl);
+    let changed = false;
+    for (const name of Object.keys(out)) {
+      const env = out[name];
+      if (!isObject(env)) continue;
+      const mn = triple(getMember(env, 'min'));
+      const mx = triple(getMember(env, 'max'));
+      if (mn === undefined || mx === undefined) continue;
+      const m2 = mn.map((c, i) => stretch(i, c));
+      const x2 = mx.map((c, i) => stretch(i, c));
+      if (m2.some((c, i) => c !== mn[i]) || x2.some((c, i) => c !== mx[i])) changed = true;
+      setMember(env, 'min', m2.map(num));
+      setMember(env, 'max', x2.map(num));
+    }
+    if (changed) emit({ op: 'setProperty', id, path: '/clearances', value: out }, ptr);
+  }
+  if (place.kind === 'ext' && place.extension === 'FS_landscape')
+    for (const m of ['boundary', 'points'] as const) {
+      const pts = getMember(el, m);
+      if (!Array.isArray(pts) || !pts.every((p) => asPoint(p) !== undefined)) continue;
+      const out = pts.map((p) => {
+        const q = asPoint(p)!;
+        return [stretch(0, q[0]), stretch(1, q[1])] as const;
+      });
+      if (out.some((q, k) => q[0] !== asPoint(pts[k])![0] || q[1] !== asPoint(pts[k])![1])) emit({ op: 'setProperty', id, path: `/${m}`, value: out.map((q) => [num(q[0]), num(q[1])]) }, ptr);
+    }
+  if (place.kind === 'ext') resizeGroup(ctx, id, place.extension, el, olds, news, ptr, emit);
+}
+
+/** 4.11: the elements grouped with a resized element, in ID order, moved by the shift of the part of it their origin stands by. */
+function resizeGroup(
+  ctx: Ctx,
+  id: string,
+  extension: string,
+  el: unknown,
+  olds: readonly [bigint, bigint][],
+  news: readonly [bigint, bigint][],
+  ptr: string,
+  emit: (p: ResolvedPrimitive, idPtr?: string) => void,
+): void {
+  /** Twice the shift of axis i for a coordinate c (exact): the side it is at or beyond, else the middle's. */
+  const shift2 = (i: number, c: Surd): bigint => {
+    const [a, b] = olds[i]!;
+    const [a2, b2] = news[i]!;
+    if (c.cmp(Surd.of(a)) <= 0) return 2n * (a2 - a);
+    if (c.cmp(Surd.of(b)) >= 0) return 2n * (b2 - b);
+    return a2 - a + (b2 - b);
+  };
+  const host = getMember(el, 'host');
+  const h = isObject(host) ? host : undefined;
+  const hMode = h ? getMember(h, 'mode') : undefined;
+  const members = ctx.wc
+    .extElements()
+    .filter((x) => x.extension === extension && x.id !== id && isObject(x.element) && getMember(x.element, 'with') === id)
+    .map((x) => x.id)
+    .sort(cmpStr);
+  for (const gid of members) {
+    const g = ctx.wc.element(gid) as JsonObject;
+    const gh0 = getMember(g, 'host');
+    const gh = isObject(gh0) ? gh0 : undefined;
+    const gMode = gh ? getMember(gh, 'mode') : undefined;
+    const gPos = gh ? asPoint(getMember(gh, 'position')) : undefined;
+    const ePos = h ? asPoint(getMember(h, 'position')) : ([0n, 0n] as const);
+    if ((h === undefined || hMode === 'free' || hMode === 'surface') && (gMode === 'free' || gMode === 'surface') && gPos !== undefined && ePos !== undefined) {
+      const rot = h ? getMember(h, 'rotation') : undefined;
+      const [fx, fy] = h === undefined ? [1n, 0n] : facingVector(typeof rot === 'number' && Number.isSafeInteger(rot) ? rot : 0);
+      const M = fx * fx + fy * fy;
+      const dx = gPos[0] - ePos[0];
+      const dy = gPos[1] - ePos[1];
+      const root = Surd.sqrt(M);
+      // x = (P − O)·f/|f| = (P − O)·f · √M / M, and y likewise with (−fy, fx).
+      const x = root.mulInt(dx * fx + dy * fy).divInt(M);
+      const y = root.mulInt(-dx * fy + dy * fx).divInt(M);
+      const sx2 = shift2(0, x);
+      const sy2 = shift2(1, y);
+      // (sx·fx − sy·fy, sx·fy + sy·fx) / |f|, with s = s2 / 2: × √M / (2M), each rounded once.
+      const mx = root.mulInt(sx2 * fx - sy2 * fy).divInt(2n * M).round();
+      const my = root.mulInt(sx2 * fy + sy2 * fx).divInt(2n * M).round();
+      if (mx !== 0n || my !== 0n) emit({ op: 'setProperty', id: gid, path: '/host/position', value: pt([gPos[0] + mx, gPos[1] + my], ptr) }, ptr);
+    } else if (
+      h !== undefined &&
+      gh !== undefined &&
+      hMode === 'wallFace' &&
+      gMode === 'wallFace' &&
+      getMember(h, 'wall') === getMember(gh, 'wall') &&
+      getMember(h, 'side') === getMember(gh, 'side')
+    ) {
+      const eo = getMember(h, 'offset');
+      const go = getMember(gh, 'offset');
+      if (typeof eo === 'number' && Number.isSafeInteger(eo) && typeof go === 'number' && Number.isSafeInteger(go)) {
+        const left = getMember(h, 'side') === 'left';
+        const y = left ? BigInt(eo) - BigInt(go) : BigInt(go) - BigInt(eo);
+        const sy2 = shift2(1, Surd.of(y));
+        const off = roundHalfEvenRational(2n * BigInt(go) + (left ? -sy2 : sy2), 2n);
+        if (off !== BigInt(go)) emit({ op: 'setProperty', id: gid, path: '/host/offset', value: toJsonInt(off, ptr) }, ptr);
+      }
+    }
+    const dz = news[2]![1] - olds[2]![1];
+    const gfb = getMember(g, 'fallback');
+    const gbox = isObject(gfb) ? getMember(gfb, 'box') : undefined;
+    const gmn = isObject(gbox) ? triple(getMember(gbox, 'min')) : undefined;
+    const gmx = isObject(gbox) ? triple(getMember(gbox, 'max')) : undefined;
+    if (dz !== 0n && gmn !== undefined && gmx !== undefined && sameGround(el, g) && gmn[2] >= olds[2]![1])
+      emit(
+        {
+          op: 'setProperty',
+          id: gid,
+          path: '/fallback/box',
+          value: { min: [Number(gmn[0]), Number(gmn[1]), toJsonInt(gmn[2] + dz, ptr)], max: [Number(gmx[0]), Number(gmx[1]), toJsonInt(gmx[2] + dz, ptr)] },
+        },
+        ptr,
+      );
+  }
+}
+
+/** 4.11: whether g stands on e's ground — hosts of one mode on the same room and surface, level, or wall, side and height; or neither hosted, on one level. */
+function sameGround(e: unknown, g: unknown): boolean {
+  const he = getMember(e, 'host');
+  const hg = getMember(g, 'host');
+  if (!isObject(he) || !isObject(hg)) {
+    const fe = getMember(e, 'fallback');
+    const fg = getMember(g, 'fallback');
+    return !isObject(he) && !isObject(hg) && isObject(fe) && isObject(fg) && jsonSame(getMember(fe, 'level'), getMember(fg, 'level'));
+  }
+  const mode = getMember(he, 'mode');
+  if (mode !== getMember(hg, 'mode')) return false;
+  const keys = mode === 'surface' ? ['room', 'surface'] : mode === 'free' ? ['level'] : mode === 'wallFace' ? ['wall', 'side', 'height'] : undefined;
+  return keys !== undefined && keys.every((k) => jsonSame(getMember(he, k), getMember(hg, k)));
+}
+
+const jsonSame = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
