@@ -1,0 +1,6 @@
+{
+  "description": "resizeElement whose limits name a \"length\", which is not one of its axes: malformed, FS-OPS-001.",
+  "covers": [
+    "FS-OPS-1.1.4"
+  ]
+}

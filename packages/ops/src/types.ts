@@ -264,6 +264,24 @@ export interface MoveElement {
   host: HostRef;
 }
 
+/** 4.11 (Ops 0.4): which point of an element's footprint stays when it is resized, in its own terms. */
+export type ResizeAnchor = 'center' | 'back' | 'front' | 'right' | 'left' | 'back-right' | 'back-left' | 'front-right' | 'front-left';
+/** 4.11 (Ops 0.4): the sizes an item comes in, on one axis. */
+export type ResizeLimit = { min?: Length; max?: Length };
+/** 4.11 (Ops 0.4): resize an extension element's box from an anchor, in its frame. At least one of width, depth, height. */
+export interface ResizeElement {
+  op: 'resizeElement';
+  element: ElementRef;
+  anchor: ResizeAnchor;
+  /** Along y, from its right to its left. */
+  width?: Length;
+  /** Along x, from its back to its front. */
+  depth?: Length;
+  /** Along z, up from its bottom. */
+  height?: Length;
+  limits?: { width?: ResizeLimit; depth?: ResizeLimit; height?: ResizeLimit };
+}
+
 export type Composite =
   | DrawWall
   | DrawSeparator
@@ -279,7 +297,8 @@ export type Composite =
   | AddLevel
   | AddProgramItem
   | PlaceElement
-  | MoveElement;
+  | MoveElement
+  | ResizeElement;
 export type Operation = Primitive | Composite;
 export type OperationName = Operation['op'];
 

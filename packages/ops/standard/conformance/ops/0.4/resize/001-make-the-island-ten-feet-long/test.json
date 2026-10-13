@@ -1,0 +1,7 @@
+{
+  "description": "resizeElement makes the island 10' wide, holding its right (south) end: its box runs from -36\" to 84\" along its width now, its working space is as wide as it is, the bowl at its middle moves with its middle - 24\" north - and the stool past its north end with that end, 48\"; the picture with it on the wall, and the chair with nothing, stay where they are.",
+  "covers": [
+    "FS-OPS-4.11.1",
+    "FS-OPS-4.11.2"
+  ]
+}

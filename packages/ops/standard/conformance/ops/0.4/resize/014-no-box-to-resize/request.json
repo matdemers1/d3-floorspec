@@ -1,0 +1,15 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "X1",
+      "path": "/fallback/box"
+    },
+    {
+      "op": "resizeElement",
+      "element": "X1",
+      "anchor": "center",
+      "width": "10'"
+    }
+  ]
+}
