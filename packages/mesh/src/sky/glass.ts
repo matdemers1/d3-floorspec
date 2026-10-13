@@ -54,3 +54,27 @@ export function glassAt(pane: readonly [number, number, number], cos: number, ou
   for (let k = 0; k < 3; k++) out[k] = faces * Math.min(1, (pane[k]! / FACES)) ** (1 / inside);
   return f;
 }
+
+/**
+ * The same rule for a GPU (FLR-T-13.7): `glassFresnel` and `glassAt` in GLSL, term for term, for a
+ * view that blends a pane per pixel — the editor's Presentation multiplies what is behind a pane by
+ * `glassTransmission( pane, cos )` and adds the face's reflection on top. Kept here beside the
+ * TypeScript so the two cannot drift apart unseen (test/glass.test.ts reads the constants back).
+ */
+export const GLASS_GLSL = /* glsl */ `
+#define GLASS_F0 ${GLASS_F0.toFixed(4)}
+#define GLASS_IOR ${GLASS_IOR.toFixed(4)}
+#define GLASS_FACES ${FACES.toFixed(6)}
+float glassFresnel( float cosine ) {
+  float c = clamp( cosine, 0.0, 1.0 );
+  float k = 1.0 - c;
+  return GLASS_F0 + ( 1.0 - GLASS_F0 ) * k * k * k * k * k;
+}
+vec3 glassTransmission( vec3 pane, float cosine ) {
+  float c = clamp( cosine, 0.0, 1.0 );
+  float f = glassFresnel( c );
+  float inside = sqrt( 1.0 - ( 1.0 - c * c ) / ( GLASS_IOR * GLASS_IOR ) );
+  float faces = ( 1.0 - f ) * ( 1.0 - f );
+  return faces * pow( min( vec3( 1.0 ), pane / GLASS_FACES ), vec3( 1.0 / inside ) );
+}
+`;

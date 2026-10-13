@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_COLOURS, GLASS_F0, glassAt, glassFresnel, paneTransmission, ROLE_LOOKS } from '../src/index.js';
+import { DEFAULT_COLOURS, GLASS_F0, GLASS_GLSL, GLASS_IOR, glassAt, glassFresnel, paneTransmission, ROLE_LOOKS } from '../src/index.js';
 
 /** `#rrggbb` to linear RGB. */
 const linear = (hex: string): [number, number, number] =>
@@ -49,4 +49,24 @@ describe('glass', () => {
       for (let c = 0; c < 3; c++) expect(t[c]! + r).toBeLessThanOrEqual(1 + 1e-9);
     }
   });
+
+  it('is the same rule in GLSL (FLR-T-13.7): the constants, and both functions', () => {
+    const define = (name: string): number => Number(new RegExp(`#define ${name} ([0-9.]+)`).exec(GLASS_GLSL)?.[1]);
+    expect(define('GLASS_F0')).toBeCloseTo(GLASS_F0, 6);
+    expect(define('GLASS_IOR')).toBeCloseTo(GLASS_IOR, 6);
+    expect(define('GLASS_FACES')).toBeCloseTo((1 - GLASS_F0) ** 2, 6);
+    expect(GLASS_GLSL).toContain('float glassFresnel( float cosine )');
+    expect(GLASS_GLSL).toContain('vec3 glassTransmission( vec3 pane, float cosine )');
+    // The GLSL, read as arithmetic, gives glassAt's numbers.
+    const pane = paneTransmission(linear(DEFAULT_COLOURS.glass));
+    for (const cos of [1, 0.7, 0.3, 0.05]) {
+      const f = GLASS_F0 + (1 - GLASS_F0) * (1 - cos) ** 5;
+      const inside = Math.sqrt(1 - (1 - cos * cos) / (GLASS_IOR * GLASS_IOR));
+      const glsl = pane.map((p) => (1 - f) ** 2 * Math.min(1, p / define('GLASS_FACES')) ** (1 / inside));
+      const out: [number, number, number] = [0, 0, 0];
+      expect(glassAt(pane, cos, out)).toBeCloseTo(f, 9);
+      for (let k = 0; k < 3; k++) expect(glsl[k]).toBeCloseTo(out[k], 5);
+    }
+  });
 });
+

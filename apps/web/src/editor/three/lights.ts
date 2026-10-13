@@ -55,6 +55,11 @@ export const MAX_SHADOWED = 12;
 export const GUARANTEED_TEXTURE_UNITS = 16;
 /** Texture units a fragment shader spends on the scene rather than its surface: the sun's shadow map. */
 export const SCENE_TEXTURE_UNITS = 1;
+/**
+ * In Presentation (FLR-T-13.7) a lit surface also samples the sky's reflection map (three.js's
+ * prefiltered environment): one unit more, so one shadowed lamp fewer.
+ */
+export const PRESENTATION_SCENE_TEXTURE_UNITS = SCENE_TEXTURE_UNITS + 1;
 
 /**
  * How many lamps may cast shadows on a GPU with `units` texture units a fragment shader can sample
@@ -64,7 +69,7 @@ export const SCENE_TEXTURE_UNITS = 1;
  * "All on" on a 16-unit GPU once the house was dressed in the material library. Planned for at most
  * `GUARANTEED_TEXTURE_UNITS`.
  */
-export const shadowBudget = (units: number, materialUnits: number): number => Math.max(0, Math.min(MAX_SHADOWED, Math.min(units, GUARANTEED_TEXTURE_UNITS) - materialUnits - SCENE_TEXTURE_UNITS));
+export const shadowBudget = (units: number, materialUnits: number, sceneUnits: number = SCENE_TEXTURE_UNITS): number => Math.max(0, Math.min(MAX_SHADOWED, Math.min(units, GUARANTEED_TEXTURE_UNITS) - materialUnits - sceneUnits));
 /** Metres: how far a shadowed lamp's shadow camera sees. */
 export const REACH = 15;
 /** An unshadowed lamp's cut-off, over the distance to its room's farthest corner. */
@@ -93,6 +98,8 @@ export interface ViewLight {
   /** Metres: three.js's cut-off — 0 for none, inverse-square all the way. */
   readonly distance: number;
   readonly shadow: boolean;
+  /** Metres: the radius of what shines (a lens, a shade, a bulb) — how soft its shadows are in Presentation (FLR-T-13.7). */
+  readonly size: number;
   /** A spot's half-angle (radians) and penumbra (0–1, three.js's). */
   readonly angle?: number;
   readonly penumbra?: number;
@@ -124,7 +131,7 @@ function viewLight(l: FixtureLight, model: EditorModel, mesh: HouseMesh, shadow:
   const o = mesh.origin;
   const position: Vec3 = [(l.position[0] - o[0]) / k, (l.position[1] - o[1]) / k, (l.position[2] - o[2]) / k];
   const distance = shadow ? 0 : Math.round(SPILL * (roomReach(l, model, k) ?? OUTSIDE / SPILL) * 100) / 100;
-  const base = { id: l.id, level: l.level, position, color: hex(l.color), lumens: l.lumens, distance, shadow };
+  const base = { id: l.id, level: l.level, position, color: hex(l.color), lumens: l.lumens, distance, shadow, size: Math.max(0.01, l.radius / k) };
   if (l.cone === undefined) return { ...base, kind: 'point', intensity: l.lumens / (4 * Math.PI) };
   const outer = Math.min(MAX_SPOT_ANGLE, Math.acos(l.cone.outer));
   const inner = Math.acos(l.cone.inner);

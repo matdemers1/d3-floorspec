@@ -245,7 +245,7 @@ jobs:
           - group: a11y
             suites: a11y
           - group: 3d
-            suites: three,sun,furniture,share,assets,lighting
+            suites: three,sun,furniture,share,assets,lighting,presentation
           - group: editor
             suites: moonshots,arcs,materials,findings,templates,roofs-stairs,package,exports,systems,program,options,main-path,keyboard
     services:

@@ -41,6 +41,8 @@ import { defineConfig, devices } from '@playwright/test';
  *                   lamp on over textured materials, every shader program linked within 16 texture units.
  *   - `arcs`      — FLR-T-11.1: an arc wall drawn by keyboard (Core 0.4, chapter 21), the curved room it
  *                   closes with its area, the arc wall's inspector, and the curved wall in 3D.
+ *   - `presentation` — FLR-T-13.7: the 3D view's Presentation quality chosen from the chips, every pass
+ *                   drawn, the same exposure as Draft, every program linked within 16 texture units.
  *
  * Run with:
  *
@@ -48,7 +50,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`). E2E_PORT is the keyboard suite's port; the others take the next nineteen.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_presentation_test`). E2E_PORT is the keyboard suite's port; the others take the next twenty.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -119,6 +121,8 @@ const SUITES: Suite[] = [
   { name: 'lighting', spec: 'lighting.spec.ts', port: PORT + 18, database: databaseFor('lighting'), setupToken: true, gl: true },
   // FLR-T-13.6: a library material added with its maps, a floor finished in it, turned, drawn in 3D at its real size.
   { name: 'materials', spec: 'materials.spec.ts', port: PORT + 19, database: databaseFor('materials'), setupToken: true, gl: true, env: { ASSET_DIR: join(tmpdir(), 'floorspec-e2e-materials-assets') } },
+  // FLR-T-13.7: Presentation quality — its passes, its exposure against Draft's, its texture units with every lamp on.
+  { name: 'presentation', spec: 'presentation.spec.ts', port: PORT + 20, database: databaseFor('presentation'), setupToken: true, gl: true },
 ];
 
 /**
