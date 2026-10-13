@@ -15,12 +15,13 @@ import type { SkyPreset } from '@floorspec/mesh/sky';
  * run on CI's runners. Each was traced on an M4 Pro by the editor's own still modules from the
  * worker's glTF export of the same version, and read back before the meter.
  *
- * The views are the ones where the GPU still is the whole picture: rooms under an overcast sky, and
- * the house outside in the sun. In a room by a clear day's sun, or by its lamps, the GPU still is
- * not yet a reference — it lets no sun through glass (three-gpu-pathtracer 0.0.26 shadow rays stop
- * at a transmissive surface), its lit lenses light the room on top of their lamps, and it sees
- * through a single-sided face from behind — so a CPU still there is held to its own calibration
- * (FLR-T-13.1's light-levels tests), not to the GPU's.
+ * The views: rooms under an overcast sky, the house outside in the sun, and (FLR-T-13.18) a room by
+ * a clear day's sun through its windows and a room at night by its lamps. The last two became
+ * comparable when the GPU still was made to trace them as this tracer does (gpu/scene.ts
+ * `prepareHouse` and patches/three-gpu-pathtracer@0.0.26.patch): shadow rays toward the sun and the
+ * lamps pass glass by what it lets through, and toward a lamp pass the luminaires' own pieces; a lit
+ * lens glows for the camera and lights nothing; every face is seen from both sides; a pane reflects
+ * as two faces do.
  */
 
 interface View {
@@ -30,6 +31,8 @@ interface View {
   readonly camera?: Preset;
   readonly sky: SkyPreset;
   readonly at: string;
+  /** The luminaires on (their lamps lit, their lenses glowing), as the export draws "All on". Default off. */
+  readonly lights?: boolean;
   /** Where the regions are taken, as fractions of the picture: x0, y0, x1, y1. Default the whole of it. */
   readonly crop?: readonly [number, number, number, number];
 }
@@ -43,9 +46,11 @@ const GX = 4;
 const GY = 3;
 /**
  * The bands: each region's mean luminance within 0.6 of a stop of the GPU still's, and the regions'
- * mean difference within 0.3. Measured: within 0.51 (a kitchen's terrazzo floor seen at a slant) and
- * 0.22 indoors, 0.07 and 0.02 outside; before FLR-T-13.14 the steel, the mirrors and the windows
- * were as far off as a stop and a half.
+ * mean difference within 0.3. Measured (FLR-T-13.18's references): within 0.55 (the primary bath,
+ * high on its far wall) and 0.18 indoors, 0.12 and 0.04 outside; the great room in the sun within 0.36 and
+ * 0.18, the kitchen by its lamps within 0.28 and 0.08. Before FLR-T-13.14 the steel, the mirrors and
+ * the windows were as far off as a stop and a half; before FLR-T-13.18 the sunlit great room was 1.7
+ * stops off, and the lamp-lit kitchen 1.85 stops bright on average.
  */
 const REGION_STOPS = 0.6;
 const MEAN_STOPS = 0.3;
@@ -86,7 +91,7 @@ describe('a CPU still agrees with the GPU still of the same view (FLR-ADR-040)',
         ...(view.room === undefined ? {} : { room: view.room }),
         ...(view.camera === undefined ? {} : { camera: view.camera }),
         skyLight: resolveSky(DOCUMENT, { sky: view.sky, at: view.at }),
-        lights: 'off',
+        lights: view.lights === true ? 'on' : 'off',
         pixels: { width: WIDTH, height: HEIGHT },
         samples: SAMPLES,
         radiance: true,

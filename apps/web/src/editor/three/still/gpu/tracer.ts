@@ -1,4 +1,5 @@
-import { ACESFilmicToneMapping, SRGBColorSpace, WebGPURenderer, type PerspectiveCamera, type Scene, type Texture } from 'three/webgpu';
+import { ACESFilmicToneMapping, FloatType, MeshBasicNodeMaterial, NoToneMapping, QuadMesh, RenderTarget, SRGBColorSpace, WebGPURenderer, type PerspectiveCamera, type Scene, type Texture } from 'three/webgpu';
+import { texture as sample } from 'three/tsl';
 import { OIDNDenoiser, WebGPUPathTracer } from 'three-gpu-pathtracer/webgpu';
 import { initUNetFromURL } from 'oidn-web';
 import weightsUrl from './oidn/rt_hdr_alb_nrm.tza?url';
@@ -13,9 +14,18 @@ import { EXPOSURE_BAND, meteredExposure, meterFloor, toneMappingExposure, TRACE_
  *
  * The picture is its own renderer on its own canvas, not the live 3D view's: traced at the still's
  * size, `samples` a pixel, then denoised. Exposure is metered as the worker meters its stills — key
- * 0.18 on the log-average luminance, held within the time of day's band — once the image has enough
- * samples to say, and the tone curve is applied as the samples are shown, so the meter changes
- * nothing already traced.
+ * 0.18 on the log-average luminance, held within the time of day's band — on the finished picture:
+ * the denoised one, or with no denoiser every sample traced (FLR-T-13.18). A few samples' noise pulls
+ * a log-average down — its dark pixels count for more than its bright ones — and metered at 16 a
+ * pixel the great room on a sunny afternoon came out at the day band's most open, 1.3 stops over the
+ * worker's still of it. While it traces, the picture shown is exposed by a
+ * first reading at 16; the tone curve is applied as the samples are shown, so neither meter changes
+ * anything traced.
+ *
+ * The library is patched (patches/three-gpu-pathtracer@0.0.26.patch, patches/README.md): shadow rays
+ * toward the sun and the lamps pass glass, dimmed by what it lets through; toward a lamp they pass
+ * every lit luminaire's pieces (scene.ts `prepareHouse`); and a lit lens glows for the camera, in
+ * mirrors and through glass but lights nothing — its lamp lights the room.
  */
 
 export interface TraceProgress {
@@ -37,6 +47,12 @@ export interface TraceRequest {
   readonly time: TimeOfDay;
   /** Denoise once traced. Default true. */
   readonly denoise?: boolean;
+  /**
+   * Also read back the picture as traced — before the meter, the tone curve and the denoiser: linear
+   * RGB in cd/m², three floats a pixel, rows top to bottom. What the worker's CPU still is held to
+   * (apps/worker/test/gpu-parity.test.ts).
+   */
+  readonly radiance?: boolean;
   readonly onProgress?: (p: TraceProgress) => void;
   readonly signal?: AbortSignal;
 }
@@ -47,6 +63,8 @@ export interface TraceResult {
   readonly exposure: number;
   readonly denoised: boolean;
   readonly ms: number;
+  /** With `radiance`: the picture as traced, linear RGB in cd/m². */
+  readonly radiance?: Float32Array;
 }
 
 /** The light bounces a path may make: enough for a room lit through its windows and off its walls. */
@@ -63,10 +81,33 @@ export class TraceCancelled extends Error {
   }
 }
 
-/** The log-average luminance of a few rows of the accumulated image (linear, in `TRACE_UNIT`s). */
-async function logAverage(renderer: WebGPURenderer, texture: Texture, width: number, height: number, floor: number): Promise<number | null> {
+type Readable = Parameters<WebGPURenderer['readRenderTargetPixelsAsync']>[0];
+/** The tracer's accumulated image as a target its pixels can be read from. */
+const readable = (texture: Texture): Readable => ({ textures: [texture] }) as unknown as Readable;
+
+/**
+ * The denoised picture (the denoiser's own texture, which cannot be copied from) drawn as it is —
+ * linear, untoned — into a float target its pixels can be read from. The caller disposes it.
+ */
+function copyOf(renderer: WebGPURenderer, picture: Texture, width: number, height: number): RenderTarget {
+  const target = new RenderTarget(width, height, { type: FloatType, depthBuffer: false });
+  const material = new MeshBasicNodeMaterial();
+  material.colorNode = sample(picture);
+  const quad = new QuadMesh(material);
+  const toneMapping = renderer.toneMapping;
+  const was = renderer.getRenderTarget();
+  renderer.toneMapping = NoToneMapping;
+  renderer.setRenderTarget(target);
+  quad.render(renderer);
+  renderer.setRenderTarget(was);
+  renderer.toneMapping = toneMapping;
+  material.dispose();
+  return target;
+}
+
+/** The log-average luminance of a few rows of an image (linear, in `TRACE_UNIT`s). */
+async function logAverage(renderer: WebGPURenderer, target: Readable, width: number, height: number, floor: number): Promise<number | null> {
   const rows = Array.from({ length: Math.min(METER_ROWS, height) }, (_, i) => Math.floor(((i + 0.5) * height) / Math.min(METER_ROWS, height)));
-  const target = { textures: [texture] } as unknown as Parameters<WebGPURenderer['readRenderTargetPixelsAsync']>[0];
   let sum = 0;
   let n = 0;
   for (const y of rows) {
@@ -131,7 +172,7 @@ export async function traceStill(request: TraceRequest): Promise<TraceResult> {
         counts = { min: c.min, rate: c.samplesPerSecond > 0 ? c.samplesPerSecond : null };
         if (!metered && c.min >= Math.min(METER_AT, samples) && tracer.target !== null) {
           metered = true;
-          const avg = await logAverage(renderer, tracer.target, width, height, meterFloor(time) / TRACE_UNIT).catch(() => null);
+          const avg = await logAverage(renderer, readable(tracer.target), width, height, meterFloor(time) / TRACE_UNIT).catch(() => null);
           if (avg !== null) {
             exposure = meteredExposure(avg * TRACE_UNIT, time);
             renderer.toneMappingExposure = toneMappingExposure(exposure * TRACE_UNIT);
@@ -143,13 +184,30 @@ export async function traceStill(request: TraceRequest): Promise<TraceResult> {
       }
       await nextFrame();
     }
+    // The picture as traced, before anything is done to it.
+    let radiance: Float32Array | undefined;
+    if (request.radiance === true && tracer.target !== null) {
+      const data = (await renderer.readRenderTargetPixelsAsync(readable(tracer.target), 0, 0, width, height)) as Float32Array;
+      radiance = new Float32Array(3 * width * height);
+      for (let i = 0; i < width * height; i++) for (let k = 0; k < 3; k++) radiance[3 * i + k] = (data[4 * i + k] ?? 0) * TRACE_UNIT;
+    }
+    // Metered on the finished picture: denoised, or every sample traced.
+    const finished = denoiser?.texture ?? null;
+    const copy = finished === null ? null : copyOf(renderer, finished, width, height);
+    const source = copy === null ? (tracer.target === null ? null : readable(tracer.target)) : copy;
+    const avg = source === null ? null : await logAverage(renderer, source, width, height, meterFloor(time) / TRACE_UNIT).catch(() => null);
+    copy?.dispose();
+    if (avg !== null) {
+      exposure = meteredExposure(avg * TRACE_UNIT, time);
+      renderer.toneMappingExposure = toneMappingExposure(exposure * TRACE_UNIT);
+    }
     // Shown once more, the denoised picture with its exposure, and read in the same task.
     tracer.renderSample();
     const png = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((b) => { if (b === null) reject(new Error('the canvas gave no picture')); else resolve(b); }, 'image/png');
     });
     say({ phase: 'done', samples, target: samples, rate: counts.rate });
-    return { png, exposure, denoised: denoiser !== null, ms: performance.now() - started };
+    return { png, exposure, denoised: denoiser !== null, ms: performance.now() - started, ...(radiance === undefined ? {} : { radiance }) };
   } finally {
     tracer?.dispose();
     void renderer.dispose();

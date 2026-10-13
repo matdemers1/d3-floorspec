@@ -15,6 +15,7 @@ import {
   RepeatWrapping,
   RGBAFormat,
   Scene,
+  type SpotLight,
   SRGBColorSpace,
   UnsignedByteType,
   LinearMipmapLinearFilter,
@@ -107,6 +108,8 @@ export interface PreparedHouse {
   readonly lamps: number;
   readonly glass: number;
   readonly lenses: number;
+  /** Meshes of the luminaires whose lamps are lit: what no lamp's shadow ray stops at. */
+  readonly fixtures: number;
   /** Of what is drawn, metres; null when nothing is. */
   readonly bounds: { min: Vec3; max: Vec3 } | null;
 }
@@ -123,11 +126,52 @@ function levelsOf(root: Object3D): { id: string; node: Object3D }[] {
 
 const materialsOf = (m: Material | Material[]): Material[] => (Array.isArray(m) ? m : [m]);
 
+/** What one face of glass of index `ior` reflects, face on. */
+const faceReflectance = (ior: number): number => ((ior - 1) / (ior + 1)) ** 2;
+
+/**
+ * The index of refraction a thin pane is traced with, for glass of index `ior` (FLR-T-13.18).
+ * three-gpu-pathtracer's thin wall reflects as one face does — 4% face on at 1.5 — where a pane has
+ * two, and the light between them: about 7.7% (@floorspec/mesh glass.ts, the worker tracer's
+ * `thinPane`). Traced at the index whose one face reflects what the pane's two do, a window at night
+ * shows the lit room in it as brightly as the worker's.
+ */
+export function paneIor(ior: number): number {
+  const face = faceReflectance(ior);
+  const pane = Math.sqrt((2 * face) / (1 + face));
+  return (1 + pane) / (1 - pane);
+}
+
+/**
+ * How much a pane's colour is raised when it is traced at `paneIor`: by what the stronger reflection
+ * takes from what it lets through face on, so the light it lets through is what it was before the
+ * index changed. Lowered by it, the GPU still's rooms under an overcast sky — already a fifth of a stop
+ * under the worker's, measured by apps/worker/test/gpu-parity.test.ts — lost another eighth.
+ */
+export const paneGain = (ior: number): number => (1 - faceReflectance(ior)) / (1 - faceReflectance(paneIor(ior)));
+
+/**
+ * Where three-gpu-pathtracer samples a spot light: on a disc of the lamp's radius, `radius / tan(cone)`
+ * ahead of the light along its axis — the cross-section of a cone whose apex is the light. The
+ * distance a lamp is set back so that disc is the lamp (FLR-T-13.18).
+ */
+export const spotSetback = (radius: number, angle: number): number => radius / Math.max(Math.tan(angle), 1e-6);
+
 /**
  * Make an exported house ready to trace, in place: its lamps lit or taken out, its lenses glowing or
  * dark, its glass a thin clear pane, and — for a cutaway at `cut` — the levels above it gone and its
  * own ceilings and roofs left off; with `roofs: false`, every roof left off, as the 3D view's roof
  * toggle does. A level shown alone (FLR-T-13.2) is an export of that level only, cut the same way.
+ *
+ * As the worker's path tracer traces a house (FLR-T-13.18, lighting.md "A fixture never shadows
+ * itself"):
+ * - every surface is seen from both sides — glTF's single-sided faces, a gable from inside, would
+ *   let the sky in from behind;
+ * - no piece of a lit luminaire — canopy, trim, shade, lens — stands in a lamp's way (`castShadow`
+ *   false, read by the patched tracer, and three-gpu-pathtracer 0.0.27's `visibleToShadowRays`), as
+ *   the editor leaves them out of its shadow maps;
+ * - a spot lamp is set back along its axis by `spotSetback`, so the disc the tracer samples is the
+ *   lamp where the export puts it, not that far ahead of it.
  */
 export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: string | null; roofs?: boolean }): PreparedHouse {
   const levels = levelsOf(root);
@@ -165,11 +209,14 @@ export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: s
           m,
           new MeshPhysicalMaterial({
             name: m.name,
-            color: (physical.color ?? new Color(1, 1, 1)).clone().lerp(new Color(1, 1, 1), 0.75),
+            color: (physical.color ?? new Color(1, 1, 1))
+              .clone()
+              .lerp(new Color(1, 1, 1), 0.75)
+              .multiplyScalar(paneGain(physical.ior ?? 1.5)),
             roughness: 0,
             metalness: 0,
             transmission: physical.transmission ?? 1,
-            ior: physical.ior ?? 1.5,
+            ior: paneIor(physical.ior ?? 1.5),
             thickness: 0,
             side: DoubleSide,
           }),
@@ -179,6 +226,8 @@ export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: s
         lenses++;
         if (!options.lights) physical.emissiveIntensity = 0;
       }
+      // Seen from both sides, as the worker's tracer sees every triangle.
+      m.side = DoubleSide;
     }
   });
   if (panes.size > 0)
@@ -188,6 +237,8 @@ export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: s
       mesh.material = Array.isArray(mesh.material) ? mesh.material.map((m) => panes.get(m) ?? m) : (panes.get(mesh.material) ?? mesh.material);
     });
   let lamps = 0;
+  /** The luminaires whose lamps are lit: the element node a lamp hangs under (its `extras.floorspec.id` is the lamp's). */
+  const lit = new Set<Object3D>();
   for (const light of lights) {
     // Hidden with its level, or the lights off: out of the scene, so the tracer gathers none of it.
     let shown = options.lights;
@@ -200,9 +251,45 @@ export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: s
     lamp.decay = 2;
     lamp.distance = 0;
     const radius = floorspecOf(light)?.['radius'];
-    if (lamp.isSpotLight === true && typeof radius === 'number') lamp.radius = radius;
+    if (lamp.isSpotLight === true && typeof radius === 'number') {
+      lamp.radius = radius;
+      const spot = light as unknown as SpotLight;
+      if (light.userData['setBack'] !== true) {
+        light.position.addScaledVector(new Vector3(0, 0, -1).applyQuaternion(light.quaternion), -spotSetback(radius, spot.angle));
+        light.userData['setBack'] = true;
+      }
+    }
+    const id = floorspecOf(light)?.['id'];
+    for (let p = light.parent; p !== null; p = p.parent) {
+      const f = floorspecOf(p);
+      if (f?.['id'] === id && f?.['kind'] !== 'light') {
+        lit.add(p);
+        break;
+      }
+    }
     lamps++;
   }
+  // A lit luminaire's own pieces never stand in a lamp's way: their materials made afresh where the
+  // house shares them with anything else, so a brass knob still shadows.
+  const pieces = new Map<Material, Material>();
+  let fixtures = 0;
+  for (const fixture of lit)
+    fixture.traverse((o) => {
+      if (!(o instanceof Mesh)) return;
+      const mesh = o as Mesh;
+      const unshadowing = (m: Material): Material => {
+        let piece = pieces.get(m);
+        if (piece === undefined) {
+          piece = m.clone();
+          (piece as Material & { castShadow?: boolean }).castShadow = false;
+          pieces.set(m, piece);
+        }
+        return piece;
+      };
+      mesh.material = Array.isArray(mesh.material) ? mesh.material.map(unshadowing) : unshadowing(mesh.material);
+      (mesh as Mesh & { visibleToShadowRays?: boolean }).visibleToShadowRays = false;
+      fixtures++;
+    });
   root.updateMatrixWorld(true);
   const box = new Box3();
   root.traverse((o) => {
@@ -210,7 +297,7 @@ export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: s
     for (let p: Object3D | null = o; p !== null; p = p.parent) if (!p.visible) return;
     box.expandByObject(o);
   });
-  return { lamps, glass, lenses, bounds: box.isEmpty() ? null : { min: box.min.toArray(), max: box.max.toArray() } };
+  return { lamps, glass, lenses, fixtures, bounds: box.isEmpty() ? null : { min: box.min.toArray(), max: box.max.toArray() } };
 }
 
 /**

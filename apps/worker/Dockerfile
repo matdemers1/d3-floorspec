@@ -9,6 +9,8 @@ RUN npm install -g pnpm@10.34.5
 WORKDIR /repo
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
+# The patched dependencies (pnpm-workspace.yaml `patchedDependencies`): the lockfile names their hashes.
+COPY patches ./patches
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch --frozen-lockfile
 
 COPY . .

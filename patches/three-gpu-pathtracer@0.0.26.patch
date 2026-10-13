@@ -1,0 +1,194 @@
+diff --git a/src/webgpu/compute/wavefront/LogicKernel.js b/src/webgpu/compute/wavefront/LogicKernel.js
+index 96d4cc82ee78708de91d1e671593c524d108fef1..eccb6a711b27615a3132c465797c623f5b8d5744 100644
+--- a/src/webgpu/compute/wavefront/LogicKernel.js
++++ b/src/webgpu/compute/wavefront/LogicKernel.js
+@@ -120,7 +120,8 @@ export class LogicKernel extends ComputeKernel {
+ 
+ 						// env + area lights are also bsdf-sampled, so MIS-weight them; punctual take full weight
+ 						let misWeight = select( 1.0, ${ misHeuristicFn }( input.lightPdf, input.lightBsdfPdf ), ${ isMISWeightLightFn }( input.lightType ) );
+-						let directLight = throughputColor * input.lightEmission * input.lightBsdf * misWeight / input.lightPdf;
++						// D3 Floorspec patch (FLR-T-13.18): what the glass the shadow ray passed lets through
++						let directLight = throughputColor * input.lightEmission * input.lightBsdf * shadowHit.barycoord * misWeight / input.lightPdf;
+ 						let contribution = ${ clampPathContributionFunc }( directLight, input.currentBounce, clampDirect, clampIndirect );
+ 						resultColor += vec4f( contribution, 0.0 );
+ 
+diff --git a/src/webgpu/compute/wavefront/MaterialKernel.js b/src/webgpu/compute/wavefront/MaterialKernel.js
+index 6830df9f0a0cad1ff708c4111f9833d50820f39a..026142abd58d8a8852dde25763d4fd65741dba93 100644
+--- a/src/webgpu/compute/wavefront/MaterialKernel.js
++++ b/src/webgpu/compute/wavefront/MaterialKernel.js
+@@ -8,7 +8,7 @@ import { rayDataStruct, rayQueueAtomicStruct, pixelQueueStruct } from './structs
+ import { SAMPLE_ACTIVE_FLAG, SAMPLE_COUNT_MASK, SAMPLE_DISPATCHED_FLAG } from '../../constants.js';
+ import { applyDispersionFunc, dispersionColorWeightFunc, DISPERSION_MIN_WAVELENGTH, DISPERSION_MAX_WAVELENGTH, transmissionAttenuationFunc } from '../../nodes/material.wgsl.js';
+ import { isTerminatingScatterFunc, offsetRayOriginFunc } from '../../nodes/utils.wgsl.js';
+-import { LIGHT_EPSILON } from '../../nodes/lights.wgsl.js';
++import { LIGHT_EPSILON, ENVIRONMENT_LIGHT_TYPE, SPOT_LIGHT_TYPE, DIR_LIGHT_TYPE, POINT_LIGHT_TYPE } from '../../nodes/lights.wgsl.js';
+ 
+ // Pure material evaluation and ray generation: terminated slots pull a recycled pixel and emit a
+ // fresh camera ray; live slots evaluate the surface staged by LogicKernel, sample the bsdf, and
+@@ -194,6 +194,7 @@ export class MaterialKernel extends ComputeKernel {
+ 
+ 					// blur glossy surfaces after low-probability bounces to suppress fireflies,
+ 					// from the Cycles "filter glossy" approach in integrator/surface_shader.h
++					let isThinPane = materialInfo.transmission > 0.0 && materialInfo.thinWall != 0;
+ 					let blurRoughness = sqrt( clamp( 1.0 - filterGlossy * input.minPdf, 0.0, 1.0 ) ) * 0.5;
+ 
+ 					var surface = ${ getSurfaceRecordFn }( materialInfo, vertexData, input.side, input.normal, view, blurRoughness );
+@@ -299,7 +300,10 @@ export class MaterialKernel extends ComputeKernel {
+ 					rayDataStorage[ index ].scatterPdf = select( scatterRec.pdf, 0.0, isTerminated );
+ 					rayDataStorage[ index ].minPdf = min( input.minPdf, scatterRec.pdf );
+ 					rayDataStorage[ index ].isFullyTransmissive = input.isFullyTransmissive & select( 0u, 1u, scatterRec.isTransmissive );
+-					rayDataStorage[ index ].emission = surface.emission;
++					// D3 Floorspec patch (FLR-T-13.18): an emissive surface is a lit lens, whose light the room
++					// gets from its lamp - it shows to the camera, directly or in a mirror or polished face (a
++					// path whose every scatter so far had a pdf of at least 1), and lights nothing else
++					rayDataStorage[ index ].emission = select( vec3f( 0.0 ), surface.emission, input.minPdf >= 1.0 );
+ 					rayDataStorage[ index ].currentBounce = newBounce;
+ 
+ 					// the NEE shadow ray below still resolves the surface's direct light, so only
+@@ -324,6 +328,17 @@ export class MaterialKernel extends ComputeKernel {
+ 					// evaluate the bsdf toward the light LogicKernel selected and enqueue the shadow ray.
+ 					// the light pdf will be 0 if NEE is disabled.
+ 					var lightPdf = input.lightPdf;
++
++					// D3 Floorspec patch (FLR-T-13.18): a punctual light ( the sun, a lamp ) on the far side of
++					// a thin pane is not sampled from the pane: the shadow kernel lets its light through the pane
++					// to the surface beyond, which samples it - sampled here too, it was counted twice
++					let isPunctual = input.lightType == ${ SPOT_LIGHT_TYPE } || input.lightType == ${ DIR_LIGHT_TYPE } || input.lightType == ${ POINT_LIGHT_TYPE };
++					if ( isPunctual && isThinPane && dot( input.lightDirection, input.normal ) * dot( view, input.normal ) < 0.0 ) {
++
++						lightPdf = 0.0;
++
++					}
++
+ 					if ( lightPdf > 0.0 ) {
+ 
+ 						let evalRec = ${ bsdfEvalPdfFn }( view, input.lightDirection, surface );
+@@ -339,7 +354,9 @@ export class MaterialKernel extends ComputeKernel {
+ 							shadowRayQueue.elements[ shadowIndex ].currentBounce = input.currentBounce;
+ 							shadowRayQueue.elements[ shadowIndex ].seed = input.seed;
+ 							shadowRayQueue.elements[ shadowIndex ].alphaDepth = input.alphaDepth;
+-							shadowRayQueue.elements[ shadowIndex ].maxDist = input.lightDist - ${ LIGHT_EPSILON };
++							// D3 Floorspec patch (FLR-T-13.18): the environment's shadow ray unbounded ( 0 ), so the
++							// shadow kernel tells it from the sun's and the lamps', which pass glass
++							shadowRayQueue.elements[ shadowIndex ].maxDist = select( input.lightDist - ${ LIGHT_EPSILON }, 0.0, input.lightType == ${ ENVIRONMENT_LIGHT_TYPE } );
+ 							rayDataStorage[ index ].shadowRayIntersectionIndex = i32( shadowIndex );
+ 
+ 						} else {
+diff --git a/src/webgpu/compute/wavefront/TraceShadowRayKernel.js b/src/webgpu/compute/wavefront/TraceShadowRayKernel.js
+index be051cff07e7d016ed8e20c43bf5fd6fdcab17b7..8a33f3eabc72cfadcb71622f6ae8af0f57d3805b 100644
+--- a/src/webgpu/compute/wavefront/TraceShadowRayKernel.js
++++ b/src/webgpu/compute/wavefront/TraceShadowRayKernel.js
+@@ -8,6 +8,17 @@ import { rayQueueStruct, intersectionResultStruct } from './structs.js';
+ // Pure BVH traversal over the queued shadow rays. Uses the same first-hit traversal as the bounce
+ // rays ( no dedicated any-hit traversal exists yet ); LogicKernel decides occlusion by comparing the
+ // hit distance against the light distance.
++//
++// D3 Floorspec patch (FLR-T-13.18): a shadow ray toward a punctual light ( a lamp or the sun - not the
++// environment, which MaterialKernel queues unbounded, "maxDist" 0, and which bsdf rays also reach
++// through glass under MIS ) goes on through a thin-walled transmissive surface, dimmed by what the
++// surface lets straight through at its angle - its transmission and colour less its Fresnel
++// reflectance, as the bsdf's straight-through lobe - and a shadow ray toward a lamp ( a finite
++// "maxDist" ) goes on through a material whose "castShadow" is false. The light it carries is
++// written to "barycoord" for LogicKernel, ( 1, 1, 1 ) when nothing was passed.
++const MAX_CROSSINGS = 8;
++const SUN_DISTANCE = 1e29;
++
+ export class TraceShadowRayKernel extends ComputeKernel {
+ 
+ 	constructor( ) {
+@@ -23,6 +34,8 @@ export class TraceShadowRayKernel extends ComputeKernel {
+ 
+ 		const raycastOutput = proxy( 'bvhData.value.fns.raycastFirstHit.outputType', params );
+ 		const raycastFirstHitFn = proxy( 'bvhData.value.fns.raycastFirstHit', params );
++		const materials = proxy( 'bvhData.value.storage.materials', params );
++		const transforms = proxy( 'bvhData.value.storage.transforms', params );
+ 
+ 		const fn = wgslTagFn /* wgsl */`
+ 
+@@ -30,6 +43,8 @@ export class TraceShadowRayKernel extends ComputeKernel {
+ 
+ 				let shadowRayQueue = &${ params.shadowRayQueue };
+ 				let shadowRayIntersectionsStorage = &${ params.shadowRayIntersectionsStorage };
++				let materials = &${ materials };
++				let transforms = &${ transforms };
+ 
+ 				let index = globalId.x;
+ 				if ( index >= shadowRayQueue.length ) {
+@@ -42,19 +57,70 @@ export class TraceShadowRayKernel extends ComputeKernel {
+ 				let indexUV = vec2u( queuedRay.pixelIndex >> 16, queuedRay.pixelIndex & 0xFFFF );
+ 				${ rngInit }( indexUV, queuedRay.seed, queuedRay.currentBounce + queuedRay.alphaDepth );
+ 
+-				let ray = Ray( queuedRay.origin, queuedRay.direction, queuedRay.maxDist );
+-				var hitResult: ${ raycastOutput };
+-				if ( ${ raycastFirstHitFn }( ray, &hitResult ) ) {
++				let toEnvironment = queuedRay.maxDist <= 0.0;
++				let toLamp = ! toEnvironment && queuedRay.maxDist < ${ SUN_DISTANCE };
++
++				var origin = queuedRay.origin;
++				var remaining = queuedRay.maxDist;
++				var travelled = 0.0;
++				var through = vec3f( 1.0 );
++				var blocker = - 1;
++				var blockerDist = 0.0;
++				for ( var crossing = 0u; crossing <= ${ MAX_CROSSINGS }u; crossing ++ ) {
++
++					let ray = Ray( origin, queuedRay.direction, remaining );
++					var hitResult: ${ raycastOutput };
++					if ( ! ${ raycastFirstHitFn }( ray, &hitResult ) ) {
++
++						break;
++
++					}
++
++					let material = ( *materials )[ ( *transforms )[ hitResult.objectIndex ].materialIndex ];
++					var passes = false;
++					if ( toLamp && material.castShadow == 0 ) {
++
++						passes = true;
++
++					} else if ( ! toEnvironment && material.transmission > 0.0 && material.thinWall != 0 && crossing < ${ MAX_CROSSINGS }u ) {
+ 
+-					shadowRayIntersectionsStorage[ index ].objectIndex = i32( hitResult.objectIndex );
+-					shadowRayIntersectionsStorage[ index ].dist = hitResult.dist;
++						let cosine = saturate( abs( dot( hitResult.normal, queuedRay.direction ) ) );
++						let f0 = min( pow( ( material.ior - 1.0 ) / ( material.ior + 1.0 ), 2.0 ) * material.specularColor, vec3f( 1.0 ) );
++						let reflectance = material.specularIntensity * ( f0 + ( 1.0 - f0 ) * pow( 1.0 - cosine, 5.0 ) );
++						through *= ( 1.0 - material.metalness ) * material.transmission * material.color * ( vec3f( 1.0 ) - saturate( reflectance ) );
++						passes = any( through > vec3f( 0.0 ) );
+ 
+-				} else {
++					}
+ 
+-					shadowRayIntersectionsStorage[ index ].objectIndex = - 1;
++					if ( ! passes ) {
++
++						blocker = i32( hitResult.objectIndex );
++						blockerDist = travelled + hitResult.dist;
++						break;
++
++					}
++
++					// on past the surface, by as little as keeps it from being hit again
++					let step = hitResult.dist + max( 1e-4, 1e-6 * travelled );
++					origin += queuedRay.direction * step;
++					travelled += step;
++					if ( remaining > 0.0 ) {
++
++						remaining -= step;
++						if ( remaining <= 0.0 ) {
++
++							break;
++
++						}
++
++					}
+ 
+ 				}
+ 
++				shadowRayIntersectionsStorage[ index ].objectIndex = blocker;
++				shadowRayIntersectionsStorage[ index ].dist = blockerDist;
++				shadowRayIntersectionsStorage[ index ].barycoord = through;
++
+ 			}
+ 		`;
+ 
