@@ -30,8 +30,8 @@ export { ACCUMULATE };
  * white counter under a pendant at 1000 lux is about 10): only what the resolve marks blooms.
  */
 export const BLOOM_THRESHOLD = 16;
-export const BLOOM_STRENGTH = 0.22;
-export const BLOOM_RADIUS = 0.55;
+export const BLOOM_STRENGTH = 0.16;
+export const BLOOM_RADIUS = 0.45;
 /** GTAO, metres. */
 export const AO_RADIUS = 0.55;
 export const AO_INTENSITY = 0.85;

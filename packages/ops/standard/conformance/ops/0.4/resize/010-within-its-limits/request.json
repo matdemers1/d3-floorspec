@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "resizeElement",
+      "element": "X1",
+      "anchor": "center",
+      "width": "96\"",
+      "limits": {
+        "width": {
+          "min": "72\"",
+          "max": "120\""
+        }
+      }
+    }
+  ]
+}

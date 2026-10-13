@@ -22,6 +22,8 @@ import type { Snap } from './snap';
 import { unitsOf, type UnitSystem } from './units';
 import { NO_OPTIONS, type ReceptacleOptions } from './systems/catalog';
 import type { DeviceHover } from './systems/placement';
+import type { ResizeAnchor } from '@floorspec/ops';
+import type { HandleSide, Size } from '../furniture/resize';
 import type { ImportReport } from '../exports/ifcImport';
 
 /**
@@ -102,6 +104,10 @@ export type Draft =
         | { kind: 'wall'; id: string; by: number }
         | { kind: 'opening'; id: string; offset: number; centered: boolean }
         | { kind: 'device'; id: string; hover: DeviceHover }
+        /** FLR-T-18.4: a handle of an item's footprint dragged — the resizeElement it would be. */
+        | { kind: 'resize'; id: string; side: HandleSide; anchor: ResizeAnchor; size: Partial<Size>; hint: string }
+        /** FLR-T-18.4: the rotate handle dragged — the facing, and the position that keeps the item's middle. */
+        | { kind: 'rotate'; id: string; rotation: number }
         | null;
       typed: string;
     };

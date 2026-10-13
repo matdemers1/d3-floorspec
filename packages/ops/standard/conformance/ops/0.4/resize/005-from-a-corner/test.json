@@ -1,0 +1,7 @@
+{
+  "description": "resizeElement makes the island 84\" wide and 30\" deep holding its front-left corner: its box runs from 6\" to 36\" deep and from -48\" to 36\" wide; the bowl moves by what its middle moves on both axes, 3\" forward and 6\" south, and the stool, behind its old back and past its left end, by what each of those sides moves: 6\" forward and not at all along it.",
+  "covers": [
+    "FS-OPS-4.11.1",
+    "FS-OPS-4.11.2"
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "5fe9be13705598bec5abd34c9301000dc164d9206bc2bc79922e5d70349d5236",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/fallback/box",
+      "value": {
+        "max": [1170432, 1170432, 1365504],
+        "min": [0, -1170432, 0]
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/clearances",
+      "value": {
+        "working": {
+          "max": [2450432, 1170432, 2755072],
+          "min": [1170432, -1170432, 0],
+          "purpose": "workingSpace",
+          "shape": "box"
+        }
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X2",
+      "path": "/fallback/box",
+      "value": {
+        "max": [325120, 162560, 1495552],
+        "min": [0, -162560, 1365504]
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/clearances",
+      "value": {
+        "working": {
+          "max": [2450432, 1170432, 2560000],
+          "min": [1170432, -1170432, 0],
+          "purpose": "workingSpace",
+          "shape": "box"
+        }
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X1",
+      "path": "/fallback",
+      "value": {
+        "level": "L1",
+        "box": {
+          "max": [1170432, 1170432, 1170432],
+          "min": [0, -1170432, 0]
+        }
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "X2",
+      "path": "/fallback",
+      "value": {
+        "level": "L1",
+        "box": {
+          "max": [325120, 162560, 1300480],
+          "min": [0, -162560, 1170432]
+        }
+      }
+    }
+  ]
+}

@@ -26,21 +26,25 @@ function meshAndCheck(input: string | object, name: string): ReturnType<typeof c
   return { ...checkHouse(kernel, doc, derived, mesh, name), kinds: new Set(mesh.parts.map((p) => p.kind)), closures: mesh.parts.filter((p) => p.key.includes(':closure:')).length };
 }
 
+// One test per case, so the time any one test takes stays put as the suites grow (meshing them all in
+// one test outgrew its timeout), and a failure names its case. The last test checks the totals.
 describe('the conformance suites', () => {
-  it('meshes every valid case with every property holding', () => {
-    const valid: Named[] = conformanceInputs().filter((c) => evaluate(c.text).valid);
-    expect(valid.length).toBeGreaterThan(300);
-    const kinds = new Set<string>();
-    let solids = 0;
-    let openings = 0;
-    let closures = 0;
-    for (const c of valid) {
+  const valid: Named[] = conformanceInputs().filter((c) => evaluate(c.text).valid);
+  const kinds = new Set<string>();
+  let solids = 0;
+  let openings = 0;
+  let closures = 0;
+  for (const c of valid)
+    it(`meshes ${c.name} with every property holding`, () => {
       const r = meshAndCheck(c.text, c.name);
       for (const k of r.kinds) kinds.add(k);
       solids += r.solids;
       openings += r.openings;
       closures += r.closures;
-    }
+    });
+
+  it('meshed every valid case, and every kind of part among them', () => {
+    expect(valid.length).toBeGreaterThan(300);
     // Every kind of part was produced and checked — a roof's gable ends among them, which only a roof
     // with a thickness has as parts of their own: the starter templates (examples/005 and 006) declare one.
     // A Core 0.4 reader derives every stair's steps (17.7), so none is a placeholder block here; a

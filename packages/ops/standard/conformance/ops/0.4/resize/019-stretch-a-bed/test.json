@@ -1,0 +1,6 @@
+{
+  "description": "An FS_landscape bed standing free east of the house, its outline in its frame: resizeElement makes it 6' deep holding its back. The outline follows its box: the points on its back stay, those on its front move 2' with it, and the point between, 2' from the back, moves in proportion to 3'.",
+  "covers": [
+    "FS-OPS-4.11.1"
+  ]
+}

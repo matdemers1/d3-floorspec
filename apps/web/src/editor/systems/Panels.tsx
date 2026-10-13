@@ -17,6 +17,8 @@ import { addCircuit, addGasSource, addStack, assignCircuit, moveDevice, nextReco
 import { memberSpecs, type MemberSpec } from './schema';
 import { AssistantCard } from './Assistant';
 import { circuitsOf, compareIds, elementsOfExtension, recordsOf, switchesOf, type DeviceView } from './view';
+import { isResizable, normalRotation, turnBatch } from '../../furniture/resize';
+import { SizeSection } from '../../furniture/SizeSection';
 
 /**
  * The inspector for the building systems (FLR-T-5.7, the board's "23 · Building systems"): the
@@ -416,6 +418,7 @@ export function DeviceBody({ ctx, device }: { ctx: SystemsCtx; device: DeviceVie
   const asLoad = device === undefined ? canBeLoadAt(at) : canBeLoad(device);
   return (
     <>
+      <SizeSection key={id} ctx={ctx} device={device} />
       <PlacementSection ctx={ctx} device={device} />
       {asLoad && elementsOfExtension(model.document, 'FS_electrical', 'panels').length > 0 ? <CircuitSection ctx={ctx} /> : null}
       {at.extension === 'FS_electrical' && at.collection === 'switches' ? <ControlsSection ctx={ctx} /> : null}
@@ -532,7 +535,16 @@ export function PlacementSection({ ctx, device }: { ctx: SystemsCtx; device: Dev
       )}
       <LengthField label="East (x)" value={position[0]} units={units} disabled={readOnly} onCommit={(v) => { if (v !== null) move(same([v, position[1]]), 'Move'); }} />
       <LengthField label="North (y)" value={position[1]} units={units} disabled={readOnly} onCommit={(v) => { if (v !== null) move(same([position[0], v]), 'Move'); }} />
-      <IntField label="Facing" unit="°" value={Math.round(rotation / 1_000_000)} min={-359} max={360} disabled={readOnly} onCommit={(v) => { if (v !== null) ctx.edit(`Turn ${label}`, rotateDevice(id, v * 1_000_000)); }} />
+      <IntField
+        label="Facing"
+        unit="°"
+        value={Math.round(rotation / 1_000_000)}
+        min={-359}
+        max={360}
+        disabled={readOnly}
+        // An item that resizes turns about its middle (FLR-T-18.4); anything else about its frame's origin.
+        onCommit={(v) => { if (v !== null) ctx.edit(`Turn ${label}`, device !== undefined && isResizable(device) ? turnBatch(device, normalRotation(v * 1_000_000)) : rotateDevice(id, v * 1_000_000)); }}
+      />
     </Section>
   );
 }

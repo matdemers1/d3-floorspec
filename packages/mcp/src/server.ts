@@ -8,7 +8,7 @@ import { LIBRARY_FILES, LIBRARY_MATERIALS } from '@floorspec/mesh/materials';
 import { CatalogueError, fillFurniture, FS_FURNITURE, furnitureText, libraryFileBytes, namesFurniture, type FurnitureFill, type LibraryFile } from './furniture.js';
 import { fillLandscape, FS_LANDSCAPE, LandscapeError, namesLandscape } from './landscape.js';
 import { wells } from './stairwell.js';
-import { Batch, Lock, OP_BY_NAME_ONLY } from './ops-schema.js';
+import { Batch, Lock, LOCK_BY_REFERENCE, OP_BY_NAME_ONLY } from './ops-schema.js';
 import { hintsFor } from './hints.js';
 import { compactSchema } from './tool-schema.js';
 import { describe, describeJson } from './summary/index.js';
@@ -50,15 +50,14 @@ export const TOOL_NAMES = [
   'floorspec_export',
 ] as const;
 
-const ProjectHandle = z
-  .string()
-  .min(1)
-  .max(64)
-  .optional()
-  .describe('Project ID or name; optional if only one.');
+/**
+ * Every tool's `project`: its ID or name, needed only while the credential reaches more than one.
+ * Said once, in the server's instructions and the design-partner prompt, not on all twelve tools.
+ */
+const ProjectHandle = z.string().min(1).max(64).optional();
 const ChangesetHandle = z.string().min(1).max(120);
-/** A changeset to read: by name or ID, exactly as floorspec_apply takes one. */
-const PendingChangeset = ChangesetHandle.optional().describe('Pending changeset name or ID; else main.');
+/** A changeset to read: by name or ID, exactly as floorspec_apply takes one; without one, main. */
+const PendingChangeset = ChangesetHandle.optional().describe('Pending, by name or ID; else main.');
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface ServerOptions {
@@ -441,8 +440,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         'Design a house as code. Read with floorspec_describe before editing; edit with floorspec_apply, whose `batch` is a list of typed Floorspec Ops ' +
         '(references like "north wall of Kitchen", lengths like 12\' 6"), the brief (addProgramItem, setAdjacency, setRoomBrief) and devices — receptacles, panels, fixtures, equipment (placeElement; the first of an extension declares it in extensionsUsed) — included; ' +
         'render and validate after every change. ' +
-        'Agent edits land in a pending changeset a person accepts; every tool takes a changeset by name or ID. ' +
-        'The design-partner prompt has the working rules and example calls; the design-critique prompt reviews a plan on daylight, circulation, storage, privacy and furniture fit. Never claim a change without a committed result and a render.',
+        'Agent edits land in a pending changeset a person accepts. Every tool takes `project` (ID or name; needed only when the credential reaches more than one) and a `changeset` by name or ID (reads default to main). ' +
+        'The design-partner prompt (also the resource floorspec://guide) has the working rules, example calls and the model\'s members; the design-critique prompt reviews a plan on daylight, circulation, storage, privacy and furniture fit. Never claim a change without a committed result and a render.',
     },
   );
 
@@ -450,7 +449,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_create_project',
     {
       title: 'Create a project',
-      description: 'A new, empty house. Add a building and levels first (addElement buildings, addLevel). Its result lists the US starter types and furniture a batch can name.',
+      description: 'A new, empty house: add a building and levels first (addElement buildings, addLevel).',
       inputSchema: compactSchema(z.strictObject({ name: z.string().trim().min(1).max(200) })),
       annotations: { destructiveHint: false, openWorldHint: false },
     },
@@ -476,13 +475,13 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Describe the house',
       description:
-        'Rooms with ft-in sizes and net areas, walls by side with their openings, adjacency, the door graph, roofs, stairs, finished area, diagnostics and room functions. Read it before any edit.',
+        'Rooms with ft-in sizes and net areas, walls by side with their openings, adjacency, the door graph, roofs, stairs, devices, diagnostics. Read it before any edit.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
           changeset: PendingChangeset,
-          level: z.string().min(1).max(64).optional().describe('Only this level.'),
-          room: z.string().min(1).max(200).optional().describe('Only this room (ID or name).'),
+          level: z.string().min(1).max(64).optional(),
+          room: z.string().min(1).max(200).optional().describe('ID or name.'),
         }),
       ),
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -523,7 +522,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Query elements',
       description:
-        'Elements by ID, kind, level, room or relationship (the walls bounding a room, the openings in a wall), with geometry in ft-in and base units.',
+        'Elements by ID, kind, level, room or relationship, with geometry in ft-in and base units.',
       inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset, ...QueryInput })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -551,20 +550,19 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         'Apply `batch`, typed Floorspec Ops, as one transaction: all commit or none. ' +
         'Example: {"changeset":"Widen the kitchen","batch":[{"op":"resizeRoom","room":"Kitchen","side":"east","by":"2\'"}],"render":true}. ' +
         'A write token commits to main; an agent credential writes into a pending changeset (`changeset`, or one named after the credential). ' +
-        'A rejection returns diagnostics with fixes. ' +
-        'US starter types (door-interior-swing-30x80) and furniture catalogue items are embedded on first use.',
+        'A rejection returns diagnostics with fixes.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
           batch: Batch,
           locks: z.array(Lock).max(200).optional(),
           option: z.string().min(1).max(64).optional().describe('Design option to edit in.'),
-          changeset: ChangesetHandle.optional().describe('A changeset\'s name or ID; a new name opens one.'),
-          ifMatch: z.string().regex(/^[0-9a-f]{64}$/).optional().describe('Apply only if the head is at this version hash.'),
+          changeset: ChangesetHandle.optional().describe('A name or ID; a new name opens one.'),
+          ifMatch: z.string().regex(/^[0-9a-f]{64}$/).optional().describe('Only if the head is this hash.'),
           render: z.boolean().optional().describe('Also return a plan render; look at it.'),
         }),
       ),
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      annotations: { destructiveHint: false, openWorldHint: false },
     },
     async (args) => {
       try {
@@ -606,22 +604,22 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose a changeset',
       description:
-        'Open a named changeset (or add to the pending one of that name) with an optional batch as floorspec_apply takes, or let assistant "electrical" (receptacles, lights, circuits) or "staging" (decor) propose one. Main is unchanged until a person accepts it.',
+        'Open a named changeset (or add to the pending one of that name) with an optional batch as floorspec_apply takes, or let an assistant propose one. Main is unchanged until a person accepts it.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
-          name: z.string().trim().min(1).max(120).optional().describe('What the change is, for the reviewer: "Widen the kitchen 2 ft". Not for an assistant.'),
+          name: z.string().trim().min(1).max(120).optional().describe('What the change is, for the reviewer: "Widen the kitchen 2 ft".'),
           batch: Batch.optional(),
           locks: z.array(Lock).max(200).optional(),
-          assistant: z.enum(['electrical', 'staging']).optional(),
+          assistant: z.enum(['electrical', 'staging']).optional().describe('Not with name/batch. electrical: receptacles, lights, circuits; staging: decor.'),
           rooms: z.array(z.string().min(1).max(200)).max(200).optional().describe('The assistant\'s rooms; default all.'),
           changeset: ChangesetHandle.optional().describe('Assistant: the changeset whose plan to read.'),
           render: z.boolean().optional(),
         }),
-        // The union is spelled out once, on floorspec_apply; the batch is validated the same here.
-        { advertise: { Op: OP_BY_NAME_ONLY } },
+        // The union and the locks are spelled out once, on floorspec_apply; both are validated the same here.
+        { advertise: { Op: OP_BY_NAME_ONLY, Lock: LOCK_BY_REFERENCE } },
       ),
-      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+      annotations: { destructiveHint: false, openWorldHint: false },
     },
     async (args) => {
       try {
@@ -705,10 +703,10 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         title: verb === 'accept' ? 'Accept a changeset' : 'Reject a changeset',
         description:
           verb === 'accept'
-            ? 'Merge a pending changeset into main (fast-forward, or a replay refused with diagnostics if it no longer applies). A person\'s decision: agent credentials are refused.'
+            ? 'Merge a pending changeset into main; one that no longer applies is refused with diagnostics. A person\'s decision: agent credentials are refused.'
             : 'Discard a pending changeset. A person\'s decision: agent credentials are refused.',
-        inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: ChangesetHandle.describe("The pending changeset's name or ID.") })),
-        annotations: { readOnlyHint: false, destructiveHint: verb === 'reject', openWorldHint: false },
+        inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: ChangesetHandle.describe('Pending, by name or ID.') })),
+        annotations: { destructiveHint: verb === 'reject', openWorldHint: false },
       },
       async (args) => {
         try {
@@ -732,20 +730,20 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose layouts',
       description:
-        'Lay out a brief (program and adjacencies) as ranked candidate plans, each a pending changeset. The brief is main\'s or `changeset`\'s, whose ops each candidate carries. One empty level at a time: lay out the next from the chosen candidate.',
+        'Lay out the brief (program and adjacencies) on one empty level as ranked candidate plans, each a pending changeset carrying the brief\'s ops.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
-          level: z.string().min(1).max(64).optional().describe('An empty level to lay out on.'),
+          level: z.string().min(1).max(64).optional(),
           footprint: z
             .strictObject({ width: z.union([z.int().min(1), z.string().min(1).max(64)]), depth: z.union([z.int().min(1), z.string().min(1).max(64)]) })
             .optional()
-            .describe('East–west width and north–south depth, e.g. "44\'"; default sized from the brief.'),
+            .describe('East–west by north–south, e.g. "44\'"; default from the brief.'),
           count: z.int().min(3).max(6).optional().describe('Candidates; default 3.'),
-          changeset: ChangesetHandle.optional().describe('The pending changeset holding the brief; else main.'),
+          changeset: ChangesetHandle.optional().describe('The one holding the brief; else main.'),
         }),
       ),
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async (args) => {
       try {
@@ -768,7 +766,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_validate',
     {
       title: 'Validate',
-      description: 'Schema, invariant and lint diagnostics for main or a pending changeset.',
+      description: 'Schema, invariant and lint diagnostics.',
       inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -802,7 +800,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Advisory findings',
       description:
-        'Advisory code findings with citations, for main or a pending changeset. Findings advise and never block; nothing here means a design is compliant.',
+        'Advisory code findings with citations. Findings advise and never block; nothing here means a design is compliant.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
@@ -850,7 +848,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           level: z.string().min(1).max(64).optional().describe('Default the lowest. 3D: cut away above it; "all" for none.'),
           highlight: z.array(z.string().min(1).max(64)).optional().describe('IDs drawn in the accent colour.'),
           width: z.int().optional().describe('Pixels wide: plan ≤4096, 3D ≤2048.'),
-          scene: z.string().optional().describe('3D, path-traced (slower): a lighting scene, "All on", "Off" or the project\'s; night unless sky/at say.'),
+          scene: z.string().optional().describe('3D, path-traced: a lighting scene ("All on", "Off", the project\'s); night unless sky/at.'),
           doors: z.enum(['closed', 'open']).optional(),
           sky: z.enum(['clear', 'overcast', 'dusk', 'night', 'studio']).optional().describe('3D: under a sky, on a lawn.'),
           at: z.string().max(32).optional().describe('3D: site date-time placing the sun, as 2026-06-21T19:30-04:00.'),
@@ -886,7 +884,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     'floorspec_export',
     {
       title: 'Export',
-      description: 'The model as canonical Floorspec Core JSON (format "floorspec").',
+      description: 'The model as canonical Floorspec Core JSON.',
       inputSchema: compactSchema(z.strictObject({ project: ProjectHandle, changeset: PendingChangeset, format: z.enum(['floorspec']).optional() })),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -955,6 +953,19 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     },
   );
 
+  // FLR-T-12.41: the design-partner text as a resource too, for a client that reads resources but
+  // never offers prompts. It is where guidance too long for a tool description lives.
+  server.registerResource(
+    'guide',
+    GUIDE_URI,
+    {
+      title: 'Floorspec guide',
+      description: 'How to work on a house with these tools, and what the model takes: the design-partner prompt.',
+      mimeType: 'text/markdown',
+    },
+    (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: DESIGN_PARTNER_PROMPT }] }),
+  );
+
   server.registerPrompt(
     'design-partner',
     { title: 'Design partner', description: 'How to work on a house with these tools: read, propose, render, check, never claim without a render.' },
@@ -976,6 +987,9 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
 
   return server;
 }
+
+/** The design-partner guidance as a resource (FLR-T-12.41). */
+export const GUIDE_URI = 'floorspec://guide';
 
 export function energyUri(projectId: string): string {
   return `floorspec://${projectId}/energy`;

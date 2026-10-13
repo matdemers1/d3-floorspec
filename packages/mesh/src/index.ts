@@ -22,6 +22,7 @@ export { surfaceGroups, tileCoordinates, type Surface, type SurfaceGroup, type T
 export { DECOR_ROLES, LANDSCAPE_ROLES, MODEL_ROLES, ROLE_LOOKS, type ModelRole, type RoleLook } from './roles.js';
 export { discriminant, elementKind } from './models/kinds.js';
 export { decorFamily, libraryItemOf, LAMP_SHADES } from './models/decor.js';
+export { islandBays } from './models/furniture.js';
 export { gableCladding } from './cladding.js';
 export { PART_KINDS, UNITS_PER_METRE, type Box3, type Cladding, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartMesh, type PartStats, type Vec3, type DoorState } from './types.js';
 export { ENVELOPE, envelope, openEnvelope, openingFrame, type LocalBox, type OpeningFrame } from './joinery.js';

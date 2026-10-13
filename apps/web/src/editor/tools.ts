@@ -33,6 +33,7 @@ import { centredOn, dragHost, hoverFor, type DeviceHover } from './systems/place
 import { moveDevice, placeDevice, setMember } from './systems/ops';
 import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
 import type { DeviceView } from './systems/view';
+import { boxOf, dragResize, dragRotate, handlesOf, isResizable, resizeBatch, rotateHandleOf, ruleFor, sizeOf, turnBatch, type HandleSide } from '../furniture/resize';
 
 /**
  * Pointer and keyboard input on the plan (FLR-T-3.3). Pointer events throughout, so a mouse, a
@@ -73,7 +74,7 @@ export class ToolController {
   private readonly pointers = new Map<number, Tracked>();
   private mode: Mode = 'idle';
   private pinch: { d: number; mid: Point } | null = null;
-  private dragStart: { world: Point; target: string; kind: 'junction' | 'wall' | 'opening' | 'device' } | null = null;
+  private dragStart: { world: Point; target: string; kind: 'junction' | 'wall' | 'opening' | 'device' | 'resize' | 'rotate'; side?: HandleSide } | null = null;
   space = false;
 
   constructor(private readonly store: EditorStore) {}
@@ -227,9 +228,33 @@ export class ToolController {
     return deviceAt(level, this.world(p), this.tol(p.type), view.s, this.store.get().layers);
   }
 
-  private grabTarget(p: PointerInfo): { kind: 'junction' | 'wall' | 'opening' | 'device'; id: string } | null {
+  /**
+   * FLR-T-18.4: a handle of the selected item under the pointer — its rotate handle, or one of the
+   * eight on its footprint — when the item is one the editor resizes.
+   */
+  private handleUnder(p: PointerInfo): { kind: 'resize'; id: string; side: HandleSide } | { kind: 'rotate'; id: string } | null {
+    const level = this.level;
+    const s = this.store.get();
+    if (level === undefined || s.view === null || s.selection === null) return null;
+    const device = level.devices.find((d) => d.id === s.selection);
+    if (device === undefined || !isResizable(device)) return null;
+    const world = this.world(p);
+    const tol = (p.type === 'touch' ? 18 : 9) / s.view.s;
+    const rotate = rotateHandleOf(device, s.view.s);
+    if (rotate !== null && dist(rotate, world) <= tol) return { kind: 'rotate', id: device.id };
+    let best: { side: HandleSide; d: number } | null = null;
+    for (const h of handlesOf(device)) {
+      const d = dist(h.at, world);
+      if (d <= tol && (best === null || d < best.d)) best = { side: h.side, d };
+    }
+    return best === null ? null : { kind: 'resize', id: device.id, side: best.side };
+  }
+
+  private grabTarget(p: PointerInfo): { kind: 'junction' | 'wall' | 'opening' | 'device' | 'resize' | 'rotate'; id: string; side?: HandleSide } | null {
     const level = this.level;
     if (level === undefined) return null;
+    const handle = this.handleUnder(p);
+    if (handle !== null) return handle;
     const device = this.deviceUnder(p);
     if (device !== null && (p.type !== 'touch' || this.store.get().selection === device.id)) return { kind: 'device', id: device.id };
     const hit = hitTest(level, this.world(p), this.tol(p.type));
@@ -368,7 +393,7 @@ export class ToolController {
     }
     const grab = this.editable ? this.grabTarget(p) : null;
     if (grab !== null) {
-      this.dragStart = { world, target: grab.id, kind: grab.kind };
+      this.dragStart = { world, target: grab.id, kind: grab.kind, ...(grab.side === undefined ? {} : { side: grab.side }) };
       return;
     }
     this.dragStart = null;
@@ -389,6 +414,26 @@ export class ToolController {
       const snap = snapPoint(level, this.world(p), { tol: this.tol(p.type), grid, exclude: new Set([start.target]), excludeWalls: walls, lock45: p.shift, free: p.alt });
       this.store.set({ draft: { tool: 'select', drag: { kind: 'junction', id: start.target, to: snap.point, snap }, typed } });
       this.store.preview(moveJunction(start.target, snap.point));
+      return;
+    }
+    if (start.kind === 'resize' || start.kind === 'rotate') {
+      const device = level.devices.find((d) => d.id === start.target);
+      if (device === undefined) return;
+      if (start.kind === 'rotate') {
+        const turn = dragRotate(device, this.world(p), p.shift);
+        if (turn === null) return;
+        this.store.set({ draft: { tool: 'select', drag: { kind: 'rotate', id: device.id, rotation: turn.rotation }, typed } });
+        const batch = turnBatch(device, turn.rotation);
+        this.store.preview(batch.length === 0 ? null : batch);
+        return;
+      }
+      const handle = handlesOf(device).find((h) => h.side === start.side);
+      if (handle === undefined) return;
+      const r = dragResize(device, handle, this.world(p), { free: p.shift && !start.side?.includes('-'), centre: p.alt, keepRatio: p.shift && start.side?.includes('-') === true });
+      if (r === null) return;
+      const rule = ruleFor(device);
+      this.store.set({ draft: { tool: 'select', drag: { kind: 'resize', id: device.id, side: handle.side, anchor: r.anchor, size: r.size, hint: rule.stepLabel }, typed } });
+      this.store.preview(resizeBatch(device.id, r.anchor, r.size, rule));
       return;
     }
     if (start.kind === 'device') {
@@ -447,6 +492,14 @@ export class ToolController {
       if (drag.by !== 0) void this.store.apply(`Move ${name}`, moveWall(drag.id, drag.by), { select: () => drag.id });
     } else if (drag.kind === 'device') {
       void this.store.apply(`Move ${name}`, moveDevice(drag.id, drag.hover.host), { select: () => drag.id });
+    } else if (drag.kind === 'resize' || drag.kind === 'rotate') {
+      const device = this.level?.devices.find((d) => d.id === drag.id);
+      if (device === undefined) return;
+      const box = boxOf(device.element);
+      const now = box === null ? null : sizeOf(box);
+      const changed = drag.kind === 'resize' && now !== null && (Object.keys(drag.size) as (keyof typeof now)[]).some((a) => drag.size[a] !== now[a]);
+      const batch = drag.kind === 'rotate' ? turnBatch(device, drag.rotation) : changed ? resizeBatch(drag.id, drag.anchor, drag.size, ruleFor(device)) : [];
+      if (batch.length > 0) void this.store.apply(`${drag.kind === 'rotate' ? 'Turn' : 'Resize'} ${name}`, batch, { select: () => drag.id });
     } else {
       void this.store.apply(`Move ${name}`, moveOpening(drag.id, drag.centered ? 'centered' : drag.offset), { select: () => drag.id });
     }
