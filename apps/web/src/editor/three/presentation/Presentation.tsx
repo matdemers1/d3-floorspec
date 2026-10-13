@@ -6,6 +6,7 @@ import { draftShadow, installPresentationShadows, presentationShadow, type Shado
 import { untoneMap } from './tone';
 import type { PresentationStats, StatsStore } from './stats';
 import { indoorMap } from './indoor';
+import { installReflectorCodes, keepAlpha, LIGHT, PRESENTATION, restoreAlpha } from './reflectors';
 import type { HouseMesh } from '@floorspec/mesh';
 import type { EditorModel } from '../../model';
 
@@ -16,9 +17,11 @@ import type { EditorModel } from '../../model';
  * every material, light and setting it touched put back as Draft had it.
  *
  * What it does to the scene, every frame, before drawing it:
- *  - every lit material is compiled with `FLOORSPEC_PRESENTATION`: soft shadows (shadows.ts), and the
+ *  - every lit material is compiled with `FLOORSPEC_PRESENTATION`: soft shadows (shadows.ts), the
  *    prefiltered sky for reflections only — the sky's light probe still lights the house, so the
- *    view's light is Draft's;
+ *    view's light is Draft's — and its kind of reflector written into alpha (reflectors.ts); a lit
+ *    lens with `FLOORSPEC_LIGHT`; what is blended over the house (a highlight, an outline) and the
+ *    sky's dome keep the alpha under them;
  *  - the sky's dome is prefiltered (three.js's PMREM) into `scene.environment` whenever it changes;
  *  - a colour that must reach the screen as it is (`toneMapped: false`: a selection's outline, an
  *    opening's highlight, the backdrop) is drawn as what the tone curve turns back into it; a lit lens
@@ -30,6 +33,7 @@ import type { EditorModel } from '../../model';
  */
 
 installPresentationShadows();
+installReflectorCodes();
 
 /**
  * How far over the curve's white a lit lens is drawn (the curve's input, after the exposure): a lamp's
@@ -48,6 +52,13 @@ export const MIN_SCALE = 0.4;
 export const MOVING_PIXELS = 2.2e6;
 /** Milliseconds after the last movement before the full-resolution, refining frames begin. */
 export const SETTLE_MS = 140;
+/**
+ * Milliseconds what every material compiles to must stay the same, the camera still, before the
+ * scene is drawn whole to warm the driver (pipeline.ts `warm`). A house's textures arrive one by one
+ * — some 250 of them — each changing a material: warmed on every one, the view would draw the whole
+ * house unculled again and again and barely refine while they load.
+ */
+export const WARM_STABLE_MS = 600;
 
 declare global {
   interface Window {
@@ -57,7 +68,7 @@ declare global {
   }
 }
 
-const DEFINE = 'FLOORSPEC_PRESENTATION';
+const DEFINES = new Set([PRESENTATION, LIGHT]);
 const lit = (m: THREE.Material): boolean => m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshLambertMaterial || m instanceof THREE.MeshPhongMaterial;
 const materialsOf = (o: THREE.Object3D): THREE.Material[] => {
   const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
@@ -78,9 +89,13 @@ interface State {
   envKey: string;
   env: THREE.WebGLRenderTarget | null;
   defined: Set<THREE.Material>;
-  /** What every material compiles to, as a sum of their versions and counts; and the last warmed. */
+  /** What every material compiles to, as a sum of their versions and counts; when it last changed; and the last warmed. */
   signature: string;
+  changed: { signature: string; at: number };
   warmed: string;
+  warm: ReturnType<typeof setTimeout> | 0;
+  /** Materials drawn keeping the alpha under them (reflectors.ts keepAlpha). */
+  kept: Set<THREE.Material>;
   shown: Map<THREE.Material, Shown>;
   lights: Set<Shadowed>;
   background: { own: THREE.Color; drawn: THREE.Color } | null;
@@ -117,7 +132,10 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
     env: null,
     defined: new Set(),
     signature: '',
+    changed: { signature: '', at: 0 },
     warmed: '',
+    warm: 0,
+    kept: new Set(),
     shown: new Map(),
     lights: new Set(),
     background: null,
@@ -145,10 +163,12 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
     s.orig?.();
     return () => {
       if (s.settle !== 0) clearTimeout(s.settle);
+      if (s.warm !== 0) clearTimeout(s.warm);
       for (const m of s.defined) {
-        m.defines = Object.fromEntries(Object.entries(m.defines ?? {}).filter(([k]) => k !== DEFINE));
+        m.defines = Object.fromEntries(Object.entries(m.defines ?? {}).filter(([k]) => !DEFINES.has(k)));
         m.needsUpdate = true;
       }
+      for (const m of s.kept) restoreAlpha(m);
       for (const [m, c] of s.shown) if ((m as THREE.MeshBasicMaterial).color.equals(c.drawn)) (m as THREE.MeshBasicMaterial).color.copy(c.own);
       for (const l of s.lights) draftShadow(l);
       if (s.background !== null && scene.background instanceof THREE.Color && scene.background.equals(s.background.drawn)) scene.background.copy(s.background.own);
@@ -178,20 +198,26 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
       if (t?.scale !== undefined) s.scale = t.scale;
     }
     prepare(s, scene, gl, pmrem);
-    // Anything that changes what a material compiles to (Presentation's first frame, a lamp turned
-    // on, a texture or a model arrived): every object drawn once into the passes' buffers, so the
-    // driver's pipelines and vertex arrays for the new programs exist before they are needed.
-    const warming = s.signature !== s.warmed;
-    if (warming) {
-      pipeline.warm(scene, camera);
-      s.warmed = s.signature;
-    }
+    const invalidate = s.orig ?? three.invalidate;
 
     camera.updateMatrixWorld();
     const moved = !s.camera.equals(camera.matrixWorld) || !s.projection.equals(camera.projectionMatrix);
     s.camera.copy(camera.matrixWorld);
     s.projection.copy(camera.projectionMatrix);
-    const invalidate = s.orig ?? three.invalidate;
+
+    // Anything that changes what a material compiles to (Presentation's first frame, a lamp turned
+    // on, a texture or a model arrived): every object drawn once into the passes' buffers, so the
+    // driver's pipelines and vertex arrays for the new programs exist before they are needed — once
+    // the materials have settled (WARM_STABLE_MS) and the camera is still, not on every change.
+    if (s.signature !== s.changed.signature) {
+      s.changed = { signature: s.signature, at: now };
+      if (s.warm !== 0) clearTimeout(s.warm);
+      s.warm = s.signature === s.warmed ? 0 : setTimeout(() => { s.warm = 0; invalidate(); }, WARM_STABLE_MS);
+    }
+    if (s.signature !== s.warmed && !moved && now - s.lastMove >= SETTLE_MS && now - s.changed.at >= WARM_STABLE_MS) {
+      pipeline.warm(scene, camera);
+      s.warmed = s.signature;
+    }
 
     if (moved) {
       // Moving: as fast as the GPU allows, at the resolution it can keep up with.
@@ -264,15 +290,24 @@ function prepare(s: State, scene: THREE.Scene, gl: THREE.WebGLRenderer, pmrem: T
       s.lights.add(light);
       if (light.shadow !== undefined && light.shadow.mapSize.x !== before) resized.shadows = true;
     }
+    // Not a surface: lines, points and sprites (an outline, a marker) and the sky's dome keep the
+    // reflector's code under them, as does whatever is blended normally over the house.
+    const overlay = o instanceof THREE.Line || o instanceof THREE.Points || o instanceof THREE.Sprite || (o.userData as { sky?: boolean }).sky === true;
     for (const m of materialsOf(o)) {
       sig.versions += m.version;
-      if (lit(m)) {
-        if (!s.defined.has(m)) {
-          m.defines = { ...(m.defines ?? {}), [DEFINE]: '' };
-          m.needsUpdate = true;
-          s.defined.add(m);
-        }
-      } else if (!m.toneMapped && 'color' in m && m.color instanceof THREE.Color) {
+      if (overlay || (m.transparent && (m.blending === THREE.NormalBlending || s.kept.has(m)))) {
+        if (!s.kept.has(m) && keepAlpha(m)) s.kept.add(m);
+      } else if (s.kept.has(m)) {
+        restoreAlpha(m);
+        s.kept.delete(m);
+      }
+      const define = lit(m) ? PRESENTATION : (m.userData as { lens?: boolean }).lens === true ? LIGHT : null;
+      if (define !== null && !s.defined.has(m)) {
+        m.defines = { ...(m.defines ?? {}), [define]: '' };
+        m.needsUpdate = true;
+        s.defined.add(m);
+      }
+      if (!lit(m) && !m.toneMapped && 'color' in m && m.color instanceof THREE.Color) {
         const color = m.color;
         let shown = s.shown.get(m);
         // Changed since this view set it (a new accent, a dimmer): that is its own colour now.
@@ -322,6 +357,8 @@ function prepare(s: State, scene: THREE.Scene, gl: THREE.WebGLRenderer, pmrem: T
     // The dome as it is now, held under half float's largest value: the sky by the sun can pass it,
     // and an infinity in the cube would spread through the prefiltering as NaN.
     const material = (d.material as THREE.ShaderMaterial).clone();
+    // Drawn as it is, not keeping an alpha under it (reflectors.ts keepAlpha): there is nothing under it here.
+    material.blending = THREE.NormalBlending;
     material.fragmentShader = material.fragmentShader.replace('gl_FragColor = vec4(L, 1.0);', 'gl_FragColor = vec4(min(L, vec3(6.0e4)), 1.0);');
     const copy = new THREE.Mesh(d.geometry, material);
     copy.frustumCulled = false;

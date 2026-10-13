@@ -76,6 +76,11 @@ export function paneMaterial(color: readonly [number, number, number], options: 
  * Fresnel (a black dielectric: reflection only), which the screen-space reflections then make the
  * room's where they can. Front faces only, as Draft's pane: a glazing modelled as a slab is one pane,
  * not two.
+ *
+ * In the float target Presentation draws into (presentation/reflectors.ts), the transmitting pass
+ * leaves the alpha under it as it is (its alpha blend multiplies it by 1), and the reflecting pass
+ * puts the pane's own there — glass, and its roughness (`FLOORSPEC_GLASS`) — and its depth, so the
+ * screen-space passes see the pane, not what is behind it.
  */
 export interface PresentationPane {
   transmit: THREE.ShaderMaterial;
@@ -116,19 +121,20 @@ export function presentationPane(color: readonly [number, number, number]): Pres
     blendSrc: THREE.ZeroFactor,
     blendDst: THREE.SrcColorFactor,
   });
-  // Not a reflector of its own: the reflecting pass stands for the pane in the geometry buffer.
-  transmit.userData = { gbuffer: false };
   const reflect = new THREE.MeshStandardMaterial({
     color: 0x000000,
     roughness: 0.04,
     metalness: 0,
     transparent: true,
-    depthWrite: false,
+    depthWrite: true,
     blending: THREE.CustomBlending,
     blendEquation: THREE.AddEquation,
     blendSrc: THREE.OneFactor,
     blendDst: THREE.OneFactor,
+    blendSrcAlpha: THREE.OneFactor,
+    blendDstAlpha: THREE.ZeroFactor,
   });
+  reflect.defines = { FLOORSPEC_GLASS: '' };
   reflect.userData = { glass: true };
   return { transmit, reflect };
 }

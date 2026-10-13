@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { EXPOSURE_PER_NIT } from '@floorspec/mesh';
 import { narkowicz, toneMap, untoneMap } from '../src/editor/three/presentation/tone';
 import { installPresentationShadows, presentationShadow, draftShadow, SUN_ANGULAR_RADIUS } from '../src/editor/three/presentation/shadows';
-import { surfaceOf, SURFACE } from '../src/editor/three/presentation/gbuffer';
+import { installReflectorCodes, keepAlpha, restoreAlpha, SURFACE } from '../src/editor/three/presentation/reflectors';
 import { GUARANTEED_TEXTURE_UNITS, LIT_EXPOSURE, PRESENTATION_SCENE_TEXTURE_UNITS, SCENE_TEXTURE_UNITS, shadowBudget, toneMappingExposure } from '../src/editor/three/lights';
 import { MATERIAL_TEXTURE_UNITS, presentationPane } from '../src/editor/three/textures';
 import { readQuality, ThreeStore } from '../src/editor/three/mode';
@@ -11,7 +11,7 @@ import { readQuality, ThreeStore } from '../src/editor/three/mode';
 /**
  * FLR-T-13.7: the 3D view's Presentation quality — its tone curve's inverse (for colours that must
  * reach the screen as they are), its soft shadows patched into three.js only where asked for, the
- * texture units it spends, what the geometry buffer calls a reflector, its glass, and the choice
+ * texture units it spends, the reflector codes the scene's draw writes into alpha (FLR-T-13.19), its glass, and the choice
  * between it and Draft.
  */
 
@@ -100,20 +100,48 @@ describe('texture units', () => {
   });
 });
 
-describe('the geometry buffer', () => {
-  it('calls glossy surfaces, metals and glass reflectors, and overlays nothing', () => {
-    expect(surfaceOf(new THREE.MeshStandardMaterial({ roughness: 0.3 }))).toMatchObject({ code: 0, roughness: 0.3 });
-    expect(surfaceOf(new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.5 }))?.code).toBe(SURFACE.metal);
-    expect(surfaceOf(new THREE.MeshLambertMaterial())?.code).toBe(SURFACE.matte);
-    const pane = presentationPane([0.8, 0.85, 0.82]);
-    expect(surfaceOf(pane.reflect)?.code).toBe(SURFACE.glass);
-    expect(surfaceOf(pane.transmit)).toBeNull();
-    expect(surfaceOf(new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.4 }))).toBeNull();
-    expect(surfaceOf(new THREE.MeshBasicMaterial({ colorWrite: false }))).toBeNull();
-    // A lit lens is a light: what blooms, and what the occlusion leaves alone.
-    const lens = new THREE.MeshBasicMaterial({ toneMapped: false });
-    lens.userData = { lens: true };
-    expect(surfaceOf(lens)?.code).toBe(SURFACE.light);
+describe("the reflectors, in the scene's alpha", () => {
+  it('patches three.js once, and only under Presentation\'s defines', () => {
+    const before = THREE.ShaderChunk.opaque_fragment;
+    installReflectorCodes();
+    const once = THREE.ShaderChunk.opaque_fragment;
+    installReflectorCodes();
+    expect(THREE.ShaderChunk.opaque_fragment).toBe(once);
+    // three.js's own line first, then the codes over its alpha — nothing else changed.
+    expect(once.startsWith(before)).toBe(true);
+    expect(once).toContain('gl_FragColor = vec4( outgoingLight, diffuseColor.a );');
+    const after = once.slice(before.length);
+    expect(after.match(/^\s*#(if|elif) .*$/gm)?.map((l) => l.trim())).toEqual([
+      '#if defined( FLOORSPEC_GLASS )',
+      '#elif defined( FLOORSPEC_LIGHT )',
+      '#elif defined( FLOORSPEC_PRESENTATION ) && defined( OPAQUE ) && defined( STANDARD )',
+    ]);
+    // A metal from its metalness; a material with a metalness map (the library's ORM) a dielectric, as before.
+    expect(after).toContain(`metalnessFactor >= 0.35 ? ${SURFACE.metal.toFixed(1)} : ${SURFACE.dielectric.toFixed(1)}`);
+    expect(after).toContain(`gl_FragColor.a = ${SURFACE.light.toFixed(1)};`);
+    // Kinds with room for a roughness of 0–1 between them; what nothing patches writes 1, "matte".
+    expect(SURFACE.matte).toBe(1);
+    expect(SURFACE.dielectric + 1).toBeLessThan(SURFACE.metal);
+    expect(SURFACE.metal + 1).toBeLessThan(SURFACE.glass);
+    expect(SURFACE.glass + 1).toBeLessThan(SURFACE.light);
+    expect(SURFACE.light).toBeLessThan(SURFACE.sky);
+  });
+
+  it('draws an overlay keeping the alpha under it, and puts it back', () => {
+    const over = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.4 });
+    expect(keepAlpha(over)).toBe(true);
+    expect(over.blending).toBe(THREE.CustomBlending);
+    // The colour blended as three.js's normal blending; the alpha under it kept.
+    expect([over.blendSrc, over.blendDst, over.blendSrcAlpha, over.blendDstAlpha]).toEqual([THREE.SrcAlphaFactor, THREE.OneMinusSrcAlphaFactor, THREE.ZeroFactor, THREE.OneFactor]);
+    restoreAlpha(over);
+    expect(over.blending).toBe(THREE.NormalBlending);
+    expect(over.blendSrcAlpha).toBeNull();
+    // The sky's dome: opaque, its colour replacing what is there, its alpha ("sky") kept.
+    const dome = new THREE.ShaderMaterial();
+    keepAlpha(dome);
+    expect([dome.blendSrc, dome.blendDst, dome.blendSrcAlpha, dome.blendDstAlpha]).toEqual([THREE.OneFactor, THREE.ZeroFactor, THREE.ZeroFactor, THREE.OneFactor]);
+    // A pane's passes blend as they must already.
+    expect(keepAlpha(presentationPane([0.8, 0.85, 0.82]).transmit)).toBe(false);
   });
 
   it('draws a pane in two passes: what it lets through, multiplied, then what it reflects, added', () => {
@@ -122,6 +150,13 @@ describe('the geometry buffer', () => {
     expect(transmit.fragmentShader).toContain('glassTransmission( pane, c )');
     expect([reflect.blendSrc, reflect.blendDst]).toEqual([THREE.OneFactor, THREE.OneFactor]);
     expect(reflect.color.getHex()).toBe(0);
+    // In alpha: the transmitting pass keeps what is under it (× its alpha, 1); the reflecting pass puts
+    // glass there, and its depth — the screen-space passes see the pane, not what is behind it.
+    expect([transmit.blendSrcAlpha, transmit.blendDstAlpha]).toEqual([null, null]);
+    expect(transmit.fragmentShader).toContain('gl_FragColor = vec4( glassTransmission( pane, c ), 1.0 );');
+    expect([reflect.blendSrcAlpha, reflect.blendDstAlpha]).toEqual([THREE.OneFactor, THREE.ZeroFactor]);
+    expect(reflect.defines).toHaveProperty('FLOORSPEC_GLASS');
+    expect(reflect.depthWrite).toBe(true);
   });
 });
 

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SURFACE, TRACE_ROUGHNESS } from './gbuffer';
+import { SURFACE, TRACE_ROUGHNESS } from './reflectors';
 import type { Indoor } from './indoor';
 
 /**
@@ -8,14 +8,18 @@ import type { Indoor } from './indoor';
  *
  * - **Ambient occlusion** (GTAO) darkens the light in corners, under furniture and where walls meet
  *   floors; glass is left alone, so the garden through a window is not darkened at its frame.
- * - **Reflections**: from every pixel of a glossy surface (a floor, a counter, a pane — the geometry
- *   buffer's alpha) a ray is marched in screen space along the mirror direction against the depth
+ * - **Reflections**: from every pixel of a glossy surface (a floor, a counter, a pane — the scene's
+ *   alpha, reflectors.ts) a ray is marched in screen space along the mirror direction against the depth
  *   buffer, perspective-correct (McGuire and Mara's DDA), jittered per pixel, refined by bisection. A
  *   hit's light — from the picture's mip chain, blurrier the rougher the surface and the longer the
  *   ray — takes the place of what the material already reflects there: the sky's prefiltered light
  *   in that direction (the same `envMap` three.js read), weighed by the split-sum Fresnel term. A ray
  *   leaving the screen, passing behind a surface or meeting one from behind fades out, and the sky's
  *   light stays.
+ *
+ * The normals are rebuilt from the depth (as GTAO rebuilds them): of the two neighbours on each axis,
+ * the one on the same surface — whose depth continues the line through this pixel — so a pixel at a
+ * silhouette takes its own surface's slope, not the step to what is behind it.
  *
  * All in scene-referred light (cd/m² before the exposure): the tone curve comes after.
  */
@@ -37,7 +41,6 @@ const FRAGMENT = /* glsl */ `
 #endif
 uniform sampler2D tColor;
 uniform sampler2D tAO;
-uniform sampler2D tNormal;
 uniform sampler2D tDepth;
 uniform mat4 proj;
 uniform mat4 invProj;
@@ -66,6 +69,33 @@ vec3 viewAt( vec2 uv, float depth ) {
   return v.xyz / v.w;
 }
 float zAt( vec2 uv ) { return perspectiveDepthToViewZ( textureLod( tDepth, uv, 0.0 ).r, near, far ); }
+ivec2 texelOf( vec2 uv ) { return clamp( ivec2( uv * resolution ), ivec2( 0 ), ivec2( resolution ) - 1 ); }
+// What kind of reflector (reflectors.ts): the scene's alpha, unfiltered.
+float codeAt( vec2 uv ) { return texelFetch( tColor, texelOf( uv ), 0 ).a; }
+float depthAt( ivec2 p ) { return texelFetch( tDepth, clamp( p, ivec2( 0 ), ivec2( resolution ) - 1 ), 0 ).r; }
+// The view-space normal, from the depth about the pixel (three.js's GTAO's computeNormalFromDepth).
+vec3 normalAt( vec2 uv ) {
+  ivec2 p = texelOf( uv );
+  vec2 c = ( vec2( p ) + 0.5 ) / resolution;
+  vec2 px = 1.0 / resolution;
+  float c0 = depthAt( p );
+  float l2 = depthAt( p - ivec2( 2, 0 ) );
+  float l1 = depthAt( p - ivec2( 1, 0 ) );
+  float r1 = depthAt( p + ivec2( 1, 0 ) );
+  float r2 = depthAt( p + ivec2( 2, 0 ) );
+  float b2 = depthAt( p - ivec2( 0, 2 ) );
+  float b1 = depthAt( p - ivec2( 0, 1 ) );
+  float t1 = depthAt( p + ivec2( 0, 1 ) );
+  float t2 = depthAt( p + ivec2( 0, 2 ) );
+  float dl = abs( ( 2.0 * l1 - l2 ) - c0 );
+  float dr = abs( ( 2.0 * r1 - r2 ) - c0 );
+  float db = abs( ( 2.0 * b1 - b2 ) - c0 );
+  float dt = abs( ( 2.0 * t1 - t2 ) - c0 );
+  vec3 ce = viewAt( c, c0 );
+  vec3 dpdx = dl < dr ? ce - viewAt( c - vec2( px.x, 0.0 ), l1 ) : viewAt( c + vec2( px.x, 0.0 ), r1 ) - ce;
+  vec3 dpdy = db < dt ? ce - viewAt( c - vec2( 0.0, px.y ), b1 ) : viewAt( c + vec2( 0.0, px.y ), t1 ) - ce;
+  return normalize( cross( dpdx, dpdy ) );
+}
 float ign( vec2 p ) { return fract( 52.9829189 * fract( dot( p, vec2( 0.06711056, 0.00583715 ) ) ) ); }
 
 // Karis's analytic fit of the split-sum environment BRDF.
@@ -85,9 +115,8 @@ vec3 finite( vec3 c ) {
 
 void main() {
   vec3 col = finite( textureLod( tColor, vUv, 0.0 ).rgb );
-  vec4 g = textureLod( tNormal, vUv, 0.0 );
-  float code = g.a;
-  bool glass = code >= ${SURFACE.glass.toFixed(1)} && code < ${(SURFACE.glass + 2).toFixed(1)};
+  float code = codeAt( vUv );
+  bool glass = code >= ${(SURFACE.glass - 0.5).toFixed(1)} && code < ${(SURFACE.glass + 1.5).toFixed(1)};
   float ao = textureLod( tAO, vUv, 0.0 ).r;
   // Occlusion darkens surfaces: not glass (the view through it), a lit lens or the sky.
   float aoF = code < ${(SURFACE.light - 0.5).toFixed(1)} && ! glass ? mix( 1.0, ao, aoIntensity ) : 1.0;
@@ -97,21 +126,23 @@ void main() {
     return;
   }
   if ( debugView == 3 ) {
-    gl_FragColor = vec4( ( code < 2.0 ? vec3( 1.0 - code, 0.0, 0.0 ) : code < 4.0 ? vec3( 0.0, 3.0 - code, 0.0 ) : code < 6.0 ? vec3( 0.0, 0.0, 5.0 - code ) : vec3( code < 16.0 ? 0.2 : 0.0 ) ) * debugScale, 1.0 );
+    // Red a dielectric, green a metal, blue glass — brighter the smoother; grey nothing traced, black the sky.
+    vec3 kind = code < 1.5 ? vec3( 0.2 ) : code < 3.5 ? vec3( 3.0 - code, 0.0, 0.0 ) : code < 5.5 ? vec3( 0.0, 5.0 - code, 0.0 ) : code < 7.5 ? vec3( 0.0, 0.0, 7.0 - code ) : vec3( code < 15.5 ? 0.2 : 0.0 );
+    gl_FragColor = vec4( kind * debugScale, 1.0 );
     return;
   }
   vec3 shown = col;
   // Alpha: what may bloom — a lamp's lens and the sky, never a surface however brightly lit.
   float blooms = code > ${(SURFACE.light - 0.5).toFixed(1)} ? 1.0 : 0.0;
-  if ( code >= ${(SURFACE.glass + 2).toFixed(1)} ) {
+  if ( code < ${(SURFACE.dielectric - 0.5).toFixed(1)} || code >= ${(SURFACE.glass + 1.5).toFixed(1)} ) {
     gl_FragColor = vec4( debugView == 1 ? vec3( 0.0 ) : col * aoF, blooms );
     return;
   }
-  float base = code >= ${SURFACE.glass.toFixed(1)} ? ${SURFACE.glass.toFixed(1)} : code >= ${SURFACE.metal.toFixed(1)} ? ${SURFACE.metal.toFixed(1)} : 0.0;
+  float base = code >= ${(SURFACE.glass - 0.5).toFixed(1)} ? ${SURFACE.glass.toFixed(1)} : code >= ${(SURFACE.metal - 0.5).toFixed(1)} ? ${SURFACE.metal.toFixed(1)} : ${SURFACE.dielectric.toFixed(1)};
   float rough = clamp( code - base, 0.0, 1.0 );
   float depth = textureLod( tDepth, vUv, 0.0 ).r;
   vec3 P = viewAt( vUv, depth );
-  vec3 N = normalize( g.rgb * 2.0 - 1.0 );
+  vec3 N = normalAt( vUv );
   vec3 V = normalize( - P );
   float NoV = clamp( dot( N, V ), 0.0, 1.0 );
   vec3 R = normalize( reflect( - V, N ) );
@@ -184,10 +215,8 @@ void main() {
     if ( hitT > 0.0 ) {
       vec2 S = mix( S0, S1, hitT );
       vec2 uv = S / resolution;
-      vec4 gh = textureLod( tNormal, uv, 0.0 );
-      vec3 Nh = normalize( gh.rgb * 2.0 - 1.0 );
       // Met from behind, or the sky: no hit.
-      float facing = gh.a >= ${(SURFACE.sky - 0.5).toFixed(1)} ? 0.0 : smoothstep( 0.0, 0.25, - dot( Nh, R ) );
+      float facing = codeAt( uv ) >= ${(SURFACE.sky - 0.5).toFixed(1)} ? 0.0 : smoothstep( 0.0, 0.25, - dot( normalAt( uv ), R ) );
       vec2 edge = smoothstep( vec2( 0.0 ), vec2( 0.08 ), uv ) * ( 1.0 - smoothstep( vec2( 0.92 ), vec2( 1.0 ), uv ) );
       conf = edge.x * edge.y * ( 1.0 - smoothstep( 0.7, 1.0, hitT ) ) * facing * weight;
       float spread = rough * rough * length( S - S0 ) * 0.6 + rough * 6.0;
@@ -207,7 +236,6 @@ export interface ResolveInputs {
   indoor: Indoor | null;
   color: THREE.Texture;
   ao: THREE.Texture | null;
-  normal: THREE.Texture;
   depth: THREE.Texture;
   env: THREE.Texture | null;
 }
@@ -219,7 +247,6 @@ export function resolveMaterial(): THREE.ShaderMaterial {
     uniforms: {
       tColor: { value: null },
       tAO: { value: null },
-      tNormal: { value: null },
       tDepth: { value: null },
       envMap: { value: null },
       envIntensity: { value: 1 },
@@ -254,7 +281,6 @@ export function setResolve(m: THREE.ShaderMaterial, inputs: ResolveInputs, camer
   };
   set('tColor', inputs.color);
   set('tAO', inputs.ao);
-  set('tNormal', inputs.normal);
   set('tDepth', inputs.depth);
   set('envMap', inputs.env);
   if (inputs.indoor !== null) {
