@@ -92,6 +92,39 @@ finding the nearest, and every bounce past the first samples one lamp where the 
 two. A 1280-pixel lit render of a room takes about 30% less time for it, the picture's light the
 same.
 
+## Gloss, metal and glass
+
+The path tracer's surfaces are the GPU still's (FLR-T-13.14, FLR-ADR-040; `apps/worker/src/pathtrace/brdf.ts`),
+glTF's metallic-roughness model as three-gpu-pathtracer traces it:
+
+- **GGX.** A diffuse base under a microfacet gloss: Trowbridge-Reitz's distribution with α the
+  roughness squared, Smith's height-correlated masking, Schlick's Fresnel. A dielectric's facets reflect
+  4% face on; a metal's reflect its base colour, and a metal has no diffuse — steel and mirrors show the
+  room in their own colour. What a single bounce off the facets loses is put back (the GPU tracer's
+  energy compensation), and what the gloss reflects the diffuse beneath it does not get.
+- **Sampled where it reflects.** A path goes on off the gloss or the diffuse in proportion to what each
+  reflects, off the gloss along a facet the viewer sees. The sun and the lamps are sampled through the
+  whole lobe, so a polished floor shows their highlights. Seen in a mirror or a polished face (roughness
+  under 0.2), the room is still the camera's view: a lit lens glows in it, and its light is not clamped.
+- **Glass.** Glazing is a thin pane: each face reflects by Fresnel's equations for its ior (1.5), light
+  bounces between the faces, and the tint absorbs along the slanted path — glass.ts's rule worked out
+  from first principles, held to it within 4% of what it lets through. Where nothing stands in the way
+  of what a pane reflects, it shows the sky; where something does — the lit room behind the camera at
+  night — the reflection is traced. Shadow rays pass a pane by what it lets through at their angle, so
+  the sun lays sharp patches through a window.
+- **Specular 0.** A material may say it has none of the dielectric's gloss (glTF's
+  KHR_materials_specular): a pure diffuser, as a lighting calculation's surfaces of a given reflectance
+  are (the test rooms above). A glTF colour is a diffuse base with the gloss on top, so a 0.35 floor
+  reflects about 0.39 in all.
+
+**Against the GPU still.** `apps/worker/test/gpu-parity.test.ts` holds the CPU still to stored GPU stills
+of the Courtyard House (traced on an M4 Pro by the editor's own still modules, read before the meter):
+the mean luminance of each region of a 4 × 3 grid, in cd/m², within 0.6 of a stop, and their mean within
+0.3 — the kitchen, great room and primary bath under an overcast sky, and the house outside in the sun.
+A room by a clear day's sun, or by its lamps, is not compared: there the GPU still (three-gpu-pathtracer
+0.0.26) lets no sun through glass, lights the room with its lit lenses on top of their lamps, and sees
+through single-sided faces from behind — the CPU still keeps its own calibration.
+
 ## Exposure
 
 `EXPOSURE_PER_NIT` is what the tone curve is given per cd/m² of luminance; a surface of reflectance ρ

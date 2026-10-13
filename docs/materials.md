@@ -92,7 +92,7 @@ brass, pavers, brick and concrete in the landscape as theirs.
 |---|---|---|---|---|
 | Editor (three.js `MeshStandardMaterial`) | yes | yes | yes, metalness held to 0.5 (no reflections traced; a probe lights it) | yes, on the probe's light |
 | Raster render | yes, mip-mapped | lit by the key light or the sun | — | yes |
-| Path tracer | yes | lights every hit | the sun's glint by roughness (Blinn-Phong, Schlick); metals keep 60% of their colour as diffuse | the light a bounce brings, and half the sun's and lamps' |
+| Path tracer | yes | lights every hit | GGX gloss and metal, as the GPU still's (FLR-T-13.14): reflections traced, a metal's in its colour, no diffuse | the light a bounce brings, and half the sun's and lamps' |
 | glTF, USDZ, GPU still | yes | yes, with tangents | yes | yes |
 
 In the editor a surface's ORM map is read through one texture unit (roughness, metalness and
@@ -100,8 +100,9 @@ occlusion from the one image), and as many lamps cast shadows as a 16-unit GPU h
 a surface's maps and the sun's shadow (`shadowBudget`, FLR-T-13.17): over it a shader fails to link
 and three.js draws nothing with it — with "All on", every textured floor and wall vanished.
 
-The tracer's glint is a stand-in: GGX, Fresnel on every bounce and traced reflections are
-FLR-T-13.14's, which replaces `glint` and the metals' diffuse share. Library glass is drawn
+The tracer's surfaces are glTF's metallic-roughness model as the GPU still traces it — GGX, Smith,
+Schlick, reflections traced and sampled where they reflect (lighting.md, "Gloss, metal and glass").
+Library glass is drawn
 see-through where a view can (the glTF's transmission, the tracer's and the raster's thin glass) — a
 view's reading of the item, since Core 18.1 has no transmission.
 

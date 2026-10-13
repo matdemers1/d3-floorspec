@@ -23,11 +23,12 @@ import { EXPOSURE_PER_NIT, type Lighting } from '@floorspec/mesh';
 import { exposureOf, toneMap, type ExposureBand, type PtLamp, type PtMaterial, type PtScene, type Sun } from './trace.js';
 import { traceParallel } from './threads.js';
 import { resolveSky, skySummary, type ResolvedSky, type SkySummary } from './sky.js';
-import { skyExposure, type SkyPreset } from '@floorspec/mesh/sky';
+import { GLASS_IOR, skyExposure, type SkyPreset } from '@floorspec/mesh/sky';
 
 export { trace, toneMap, meter, exposureOf, skyRadiance, type ExposureBand, type PtLamp, type PtScene, type PtMaterial, type Sun, type TraceOptions } from './trace.js';
 export { Bvh, type Hit } from './bvh.js';
 export { Rng, hash32 } from './rng.js';
+export * as brdf from './brdf.js';
 export { decodeTexture, imageSize, sample, type Texture } from './textures.js';
 export { denoise, type Features } from './denoise.js';
 export { traceParallel, stillThreads, canThread } from './threads.js';
@@ -58,6 +59,11 @@ export interface StillOptions {
   readonly budgetMs?: number;
   /** Smooth the noise with the edge-aware filter (denoise.ts). Default true. */
   readonly denoise?: boolean;
+  /**
+   * Also give back the picture before it is exposed: linear RGB, cd/m², rows top to bottom
+   * (`StillResult.radiance`) — what a GPU still is compared with (FLR-T-13.14, FLR-ADR-040).
+   */
+  readonly radiance?: boolean;
   /**
    * The luminaires (FLR-T-12.22): `on`, each lamp lights its room and its lens glows; `off`, dark
    * lenses and no lamps. Either way the still is metered within its `time`'s band (`EXPOSURE`), so
@@ -96,6 +102,8 @@ export interface StillResult {
   readonly lit?: { readonly lights: Lights; readonly scene?: string; readonly time: TimeOfDay; readonly lamps: number; readonly exposure?: number };
   /** The sky it was seen under (FLR-T-13.4, 13.9): the preset, the sun's place and why, and the site's place, assumed or the document's. */
   readonly sky?: SkySummary;
+  /** With `radiance`: the picture before it was exposed, linear RGB in cd/m², three floats a pixel. */
+  readonly radiance?: Float32Array;
   readonly ms: number;
 }
 
@@ -188,6 +196,8 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
       // Under a base colour map the texel is the colour (Core 18.1), not the colour times it.
       rgb: t === undefined ? [m.baseColor[0], m.baseColor[1], m.baseColor[2]] : [1, 1, 1],
       glass: m.blend,
+      // Glazing's index, as the glTF export writes it (KHR_materials_ior) and the GPU still traces it.
+      ...(m.blend ? { ior: GLASS_IOR } : {}),
       ...(t === undefined ? {} : { texture: t }),
       // FLR-T-13.6: roughness and metalness (Core 18.1: a map's channel times a declared factor), and the surface's relief.
       ...(maps.orm === undefined ? { roughness: m.roughness, metallic: m.metallic } : { orm: maps.orm, roughness: (m.declared.roughness ?? 1000) / 1000, metallic: (m.declared.metallic ?? 1000) / 1000 }),
@@ -388,6 +398,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     maps: { used: maps.used, missing: maps.missing },
     ...(options.lights === undefined ? {} : { lit: { lights: options.lights, ...(options.scene === undefined ? {} : { scene: options.scene }), time, lamps: pt.lamps?.length ?? 0, ...(exposed === undefined ? {} : { exposure: Number((exposed / LUX_PER_UNIT).toPrecision(3)) }) } }),
     ...(sky === undefined ? {} : { sky: skySummary(sky, exposed === undefined ? undefined : Number((exposed / LUX_PER_UNIT).toPrecision(3))) }),
+    ...(options.radiance === true ? { radiance: hdr.map((v) => v * LUX_PER_UNIT) } : {}),
     ms: Date.now() - started,
   };
 }

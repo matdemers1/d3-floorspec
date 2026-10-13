@@ -41,7 +41,10 @@ function ptScene(positions: number[], materials: Rgb[], materialOf: (tri: number
     normals,
     material: Int32Array.from({ length: count }, (_, t) => materialOf(t)),
     uvs: new Float32Array(6 * count).fill(NaN),
-    materials: materials.map((rgb) => ({ rgb, glass: false })),
+    // Surfaces of a given reflectance, as a lighting calculation's are: pure diffusers (specular 0).
+    // A glTF material's colour is its diffuse base, its 4% gloss on top (FLR-T-13.14) — a "0.35"
+    // floor would reflect about 0.39 in all, and a closed room compounds it.
+    materials: materials.map((rgb) => ({ rgb, glass: false, specular: 0 })),
     ...extra,
   };
 }
