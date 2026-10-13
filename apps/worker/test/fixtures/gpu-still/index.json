@@ -1,0 +1,16 @@
+{
+  "about": "GPU still reference renders of the Courtyard House (FLR-T-13.14, FLR-ADR-040): the editor's GPU still — its scene as apps/web/src/editor/three/still/gpu/scene.ts builds it from the worker's glTF export (prepareHouse, stillScene, perspectiveOf, roomCamera/presetCamera) and three-gpu-pathtracer's WebGPUPathTracer set as gpu/tracer.ts sets it (6 bounces, multiple importance sampling) — read back before the meter, the tone curve and the denoiser, as linear RGB in cd/m², box-filtered from 320 × 240 to 80 × 60. Little-endian float32, three a pixel, rows top to bottom.",
+  "document": "courtyard-house.json",
+  "version": "65054bb12181ba7e887ec5f462ca2dbf9cd531918c67703efed23c03f5bfe065",
+  "device": "Apple M4 Pro (apple metal-3), headless Chromium WebGPU",
+  "libraries": { "three": "0.186.1", "three-gpu-pathtracer": "0.0.26" },
+  "rendered": "2026-10-12",
+  "width": 80,
+  "height": 60,
+  "views": [
+    { "name": "kitchen, overcast", "file": "kitchen-overcast.rgb32", "room": "R8", "sky": "overcast", "at": "2026-10-12T15:00-04:00", "samples": 2048 },
+    { "name": "great room, overcast", "file": "great-room-overcast.rgb32", "room": "R7", "sky": "overcast", "at": "2026-10-12T15:00-04:00", "samples": 2048 },
+    { "name": "primary bath, overcast", "file": "primary-bath-overcast.rgb32", "room": "R19", "sky": "overcast", "at": "2026-10-12T15:00-04:00", "samples": 2048 },
+    { "name": "south-west, clear day", "file": "sw-clear.rgb32", "camera": "sw", "sky": "clear", "at": "2026-10-12T15:00-04:00", "samples": 1024, "crop": [0.15, 0.28, 0.78, 0.92] }
+  ]
+}
