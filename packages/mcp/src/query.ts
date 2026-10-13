@@ -12,15 +12,13 @@ import { length, squareFeet } from './units.js';
 export const Relationship = z.enum(['boundary', 'openings', 'adjacent', 'hosted', 'sides']);
 
 export const QueryInput = {
-  ids: z.array(z.string().min(1).max(64)).max(200).optional().describe('Exactly these element IDs.'),
-  kind: Collection.optional().describe('Only elements of this collection.'),
-  level: z.string().min(1).max(64).optional().describe('Only elements on this level.'),
-  room: z.string().min(1).max(200).optional().describe('A room ID or name; with relationship, what relates to it.'),
-  wall: z.string().min(1).max(64).optional().describe('A wall ID; with relationship, what relates to it.'),
-  relationship: Relationship.optional().describe(
-    'With room: "boundary" (default: its walls, separators), "openings" (in them), "adjacent" (rooms across them). With wall: "hosted" (default: its openings), "sides" (rooms either side).',
-  ),
-  limit: z.int().min(1).max(500).optional().describe('At most this many elements (default 100).'),
+  ids: z.array(z.string().min(1).max(64)).max(200).optional(),
+  kind: Collection.optional(),
+  level: z.string().min(1).max(64).optional(),
+  room: z.string().min(1).max(200).optional().describe('ID or name.'),
+  wall: z.string().min(1).max(64).optional().describe('ID.'),
+  relationship: Relationship.optional().describe('What relates to room: boundary (default; its walls), openings, adjacent (rooms); to wall: hosted (default; openings), sides (rooms).'),
+  limit: z.int().min(1).max(500).optional().describe('Default 100.'),
 };
 
 export type QueryArgs = { [K in keyof typeof QueryInput]?: z.infer<(typeof QueryInput)[K]> };

@@ -1,4 +1,5 @@
 import type { Diagnostic } from './client.js';
+import { libraryTypes } from './library.js';
 import { ROOM_FUNCTIONS_TEXT } from './vocabulary.js';
 
 /**
@@ -57,6 +58,13 @@ export const ARC_FIT_HINT =
 export const ARC_ROUTE_HINT =
   'An arc wall is never split where another wall meets it (FS-OPS-013): add a junction where they meet first, and draw the arc to it — or draw the other wall to a junction off the arc.';
 
+/** The US starter library's door and window type IDs: embedded ahead of a batch that names one. */
+const LIBRARY_TYPE_IDS = new Set([...libraryTypes().doorType, ...libraryTypes().windowType]);
+
+/** The hint for a library type embedded into a plan older than Floorspec 0.3, which lacks its members. */
+export const LIBRARY_03_HINT =
+  'Library door and window types carry Floorspec 0.3 members (operation, clearOpening, clearances), which this older plan does not have. Upgrade it first, in the same batch: {"op":"setProperty","id":"$document","path":"/floorspec","value":"0.4"} — it moves nothing — or fill the plan\'s own nearest type and set width and height on the opening.';
+
 /** The hints for the invariants of tapered treads (Core 0.4, 17.7: FS-INV-905, FS-INV-906). */
 export const NEWEL_HINT =
   "A winder's newel reaches its walkline (FS-INV-905): make the newel smaller — about a fifth of the stair's width or less — or leave it out; a half turn's gap may be no wider than the stair.";
@@ -96,6 +104,9 @@ export function hintsFor(diagnostics: readonly Diagnostic[], batch?: readonly { 
       // An arc on a wall or a separator of a plan earlier than 0.4 is not a member it has.
       if (arcs04 && /^\/(walls|separators)\/[^/]+$/.test(typeof d.location?.['pointer'] === 'string' ? d.location['pointer'] : '') && /additional properties/.test(message)) hints.add(ARC_04_HINT);
       if (OPENING_OFFSET.test(typeof d.location?.['pointer'] === 'string' ? d.location['pointer'] : '')) hints.add(OPENING_FIT_HINT);
+      // A library type embedded ahead of the batch, refused by a plan older than 0.3 (FLR-T-12.41's proxy run).
+      const type = /^\/types\/([^/]+)(?:\/|$)/.exec(typeof d.location?.['pointer'] === 'string' ? d.location['pointer'] : '')?.[1];
+      if (type !== undefined && LIBRARY_TYPE_IDS.has(type)) hints.add(LIBRARY_03_HINT);
       if (FALLBACK_BOX.test(message)) hints.add('A placed element needs element.fallback.box: {"min":[x,y,z],"max":[x,y,z]} in base units around its host point — an outlet is about 1" × 3" × 4".');
       const opening = OPENING_SCHEMA.exec(message);
       const member = opening?.[1];
