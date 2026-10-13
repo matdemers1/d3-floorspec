@@ -40,6 +40,12 @@ export const LENS_OVER_WHITE = 48;
 /** Frames per second the view aims for while moving, and the fewest drawn pixels it will go to. */
 export const TARGET_FPS = 40;
 export const MIN_SCALE = 0.4;
+/**
+ * Pixels a moving frame starts at: on a laptop's Retina display the drawing buffer is 5–6 million
+ * pixels, and every pass is paid per pixel. Moving frames start at about two million and adapt from
+ * there; a still frame is always drawn at the full resolution.
+ */
+export const MOVING_PIXELS = 2.2e6;
 /** Milliseconds after the last movement before the full-resolution, refining frames begin. */
 export const SETTLE_MS = 140;
 
@@ -100,7 +106,7 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
     dirty: true,
     lastMove: -Infinity,
     k: 0,
-    scale: 1,
+    scale: 0,
     frames: [],
     camera: new THREE.Matrix4(),
     projection: new THREE.Matrix4(),
@@ -160,6 +166,10 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
     const s = state.current;
     const camera = three.camera as THREE.PerspectiveCamera;
     const now = performance.now();
+    if (s.scale === 0) {
+      const b = gl.getDrawingBufferSize(new THREE.Vector2());
+      s.scale = Math.max(MIN_SCALE, Math.min(1, Math.round(Math.sqrt(MOVING_PIXELS / Math.max(1, b.x * b.y)) * 20) / 20));
+    }
     // Under automation: a pass shown on its own, or a fixed resolution while moving.
     if (navigator.webdriver) {
       const t = window.__floorspecQualityTest;
