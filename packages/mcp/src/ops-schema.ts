@@ -76,7 +76,7 @@ export const COLLECTIONS = [
 ] as const;
 export const Collection = shared(z.enum(COLLECTIONS), 'Collection');
 /** Core 4.1's room functions, said once for addRoom and addProgramItem. */
-const RoomFunction = shared(z.string().max(64), 'Function', `One of ${ROOM_FUNCTIONS.join(', ')}; or an extension term.`);
+const RoomFunction = shared(z.string().max(64), 'Function', `${ROOM_FUNCTIONS.join('|')}, or an extension term.`);
 /** A program item: its ID or name, or `item <item>`, `brief of <room>`. */
 const Item = shared(z.string().min(1).max(200), 'Item', 'A program item: its ID or name, "item Kitchen", or "brief of R2".');
 const AdjacencyKind = shared(z.enum(['required', 'preferred', 'forbidden']), 'AdjacencyKind');
@@ -133,10 +133,10 @@ const wallMembers = {
 
 export const AddElement = z.strictObject({
   op: z.literal('addElement'),
-  collection: describe(z.string().min(1).max(64), 'A Core collection, "items" (the program), or with extension one of its collections.'),
+  collection: describe(z.string().min(1).max(64), 'A Core collection, "items" (the program), or the extension\'s.'),
   extension: Extension.optional(),
   id: Id.optional(),
-  element: describe(Obj, 'The element, exactly as Floorspec Core defines it for the collection.'),
+  element: describe(Obj, 'As Floorspec Core defines it.'),
 });
 
 export const AddJunction = z.strictObject({
@@ -177,7 +177,7 @@ export const SetProperty = z.strictObject({
   id: Target,
   path: Pointer,
   value: Json,
-}).describe('value is Core JSON as stored, never resolved: a length is integer base units (1 ft = 390144), not "9\'". Core 0.3 paths: door/window type /operation, /clearOpening {width,height,area?} (area: windows; an opening may override it); room /floor {offset,thickness}, /ceiling {kind:flat|tray|vaulted,...}; level /ceilingHeight; slab /purpose.');
+}).describe('value is Core JSON as stored, never resolved: lengths in base units (1 ft = 390144), not "9\'". Paths: the design-partner prompt.');
 
 export const UnsetProperty = z.strictObject({
   op: z.literal('unsetProperty'),
@@ -197,7 +197,7 @@ export const SetAdjacency = z.strictObject({
   b: Item,
   kind: AdjacencyKind,
   weight: z.number().optional(),
-}).describe('Adds, or replaces, the line between two program items.');
+}).describe('Adds or replaces the line between two items.');
 
 export const RemoveAdjacency = z.strictObject({
   op: z.literal('removeAdjacency'),
@@ -258,7 +258,7 @@ export const AddOpening = z.strictObject({
   hinge: z.string().max(32).optional(),
   swing: z.string().max(32).optional(),
   ...elementMembers,
-}).describe('at is where it begins, not its centre. No fill: an empty cased opening (give width, height). A door/window of another size: fill the nearest type, override width/height.');
+}).describe('No fill: a cased opening (give width, height). An odd-size door/window: fill the nearest type, set width/height.');
 
 export const MoveOpening = z.strictObject({
   op: z.literal('moveOpening'),
@@ -333,7 +333,7 @@ export const PlaceElement = z.strictObject({
   collection: ExtCollection,
   host: Host,
   element: describe(Obj, 'Its members besides host: fallback.box, the extension\'s own.'),
-}).describe('Adds an outlet, fixture or piece on a host. FS_furniture: element {"catalogue":"sofa-2100"} fills in a library item (a wrong name lists them).');
+}).describe('A device, fixture or piece on a host. element {"catalogue":"sofa-2100"} fills in a library item.');
 
 export const MoveElement = z.strictObject({
   op: z.literal('moveElement'),
@@ -364,13 +364,17 @@ export const OP_BY_NAME_ONLY = {
   type: 'object',
   properties: { op: { enum: OP_NAMES } },
   required: ['op'],
-  description: "An operation: members exactly as floorspec_apply's batch items ($defs/Op there).",
+  description: "Members exactly as in floorspec_apply's batch.",
 };
 
-export const Batch = z.array(OpUnion).min(1).max(200).describe('Ops applied in order; all commit, or none.');
+/** In order; the tool descriptions say that it commits whole or not at all. */
+export const Batch = z.array(OpUnion).min(1).max(200);
 
 export const Lock = shared(z.union([
   z.strictObject({ element: z.string().min(1) }),
   z.strictObject({ length: z.string().min(1) }),
   z.strictObject({ distance: z.tuple([z.string().min(1), z.string().min(1)]) }),
 ]), 'Lock', 'Ops 6: an element, a wall length, or two parallel walls\' distance.');
+
+/** A lock as `floorspec_propose` advertises it: spelled out once, on `floorspec_apply`, and validated the same. */
+export const LOCK_BY_REFERENCE = { type: 'object', description: "As floorspec_apply's locks." };
