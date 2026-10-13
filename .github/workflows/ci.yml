@@ -222,6 +222,18 @@ jobs:
           PGPASSWORD=floorspec psql -h 127.0.0.1 -U floorspec -d floorspec -c 'CREATE DATABASE floorspec_test;'
           pnpm exec prisma migrate deploy
       - run: pnpm test:integration
+      # The agent eval's seeds and harness, with no model and no key (FLR-T-12.42). The weekly eval
+      # needs ANTHROPIC_API_KEY, so nothing else seeds through the API on a pull request — and a seed
+      # once drifted for days (FLR-T-11.3 moved new projects to Core 0.4; tasks 027–035 stopped).
+      # Every seed is applied through the built API exactly as a task is seeded and must land at its
+      # hash in evals/agent/seed-hashes.json; then every task's scripted reference solution runs
+      # through the MCP shim, an agent token and a changeset, and every one must pass.
+      - name: Agent eval — every seed lands at its recorded hash, the reference harness passes every task
+        env:
+          EVAL_DATABASE_URL: postgresql://floorspec:floorspec@127.0.0.1:5432/floorspec_eval_test
+        run: |
+          pnpm turbo run build --filter='@d3-floorspec/server...' --filter='@d3-floorspec/agent-eval^...'
+          pnpm --filter @d3-floorspec/agent-eval eval --agent reference --concurrency 4 --fail-under 1 --out "$RUNNER_TEMP/agent-eval-reference"
 
   # The editor end to end (FLR-T-3.7, FLR-T-3.9), in a browser, as its own gate. Three suites, each
   # booting the API on a fresh database of its own — the config drops and creates each one, so the

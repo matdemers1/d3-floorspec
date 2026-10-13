@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { contentHash, evaluate } from '@floorspec/engine';
 import { apply } from '@floorspec/ops';
@@ -18,9 +18,16 @@ export const SEEDS_DIR = join(EVAL_ROOT, 'seeds');
 
 export type Doc = Record<string, unknown>;
 
-/** The document the server creates a project with: Core 0.3, as apps/server's emptyDocument. */
+/**
+ * The document the server creates a project with: Core 0.4, as apps/server's emptyDocument
+ * (`FLOORSPEC_VERSION` in apps/server/src/model/document.ts). An Ops seed writes no `/floorspec`
+ * of its own, so it lands at whatever version the server starts a project at — this must say the
+ * same, and test/seeds.test.ts holds it to the server's. It went stale once: FLR-T-11.3 (011d44fb)
+ * moved new projects to Core 0.4 and left this at 0.3, and two-storey-colonial.ops stopped landing
+ * at its hash (FLR-T-12.42).
+ */
 export function emptyDocument(name: string): Doc {
-  return { floorspec: '0.3', project: { name } };
+  return { floorspec: '0.4', project: { name } };
 }
 
 /** Apply batches to a document with the reference applier; throws with the diagnostics on a rejection. */
@@ -91,4 +98,43 @@ export function documentToBatch(doc: Doc): object[] {
 
 export function hashOf(doc: object): string {
   return contentHash(doc);
+}
+
+/**
+ * Every seed's recorded hash (seed-hashes.json): the model each task starts from, as runs were
+ * scored against it. The harness refuses to run a task whose seed no longer lands there, and CI
+ * (the integration job) seeds every one through the API on each pull request — so a change to the
+ * engine, the applier or the server's empty document that moves a seed fails the PR that makes it.
+ * When the move is intended, re-record the hash here (`pnpm --filter @d3-floorspec/agent-eval
+ * seeds --write`) and note why in the README's run log.
+ */
+export const SEED_HASHES_FILE = join(EVAL_ROOT, 'seed-hashes.json');
+
+export function recordedSeedHashes(): Readonly<Record<string, string>> {
+  return JSON.parse(readFileSync(SEED_HASHES_FILE, 'utf8')) as Record<string, string>;
+}
+
+/** The seed files, by name (without `.json`). */
+export function seedNames(): string[] {
+  return readdirSync(SEEDS_DIR)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.replace(/\.json$/, ''))
+    .sort();
+}
+
+/**
+ * The hash a project seeded with this seed must land at. A named seed must compute to its recorded
+ * hash; an inline seed (a test's) has none recorded, so its computed hash is the expectation.
+ */
+export function expectedSeedHash(seed: Seed, record: Readonly<Record<string, string>> = recordedSeedHashes()): string {
+  const computed = hashOf(seedDocument(seed));
+  if (typeof seed !== 'string') return computed;
+  const recorded = record[seed];
+  if (recorded === undefined) throw new Error(`seed ${seed} has no recorded hash in seed-hashes.json`);
+  if (recorded !== computed) {
+    throw new Error(
+      `seed ${seed} now computes to ${computed}, but seed-hashes.json records ${recorded}: an engine, applier or empty-document change moved it. If that is intended, re-record it (seeds --write) and check the tasks still hold.`,
+    );
+  }
+  return recorded;
 }

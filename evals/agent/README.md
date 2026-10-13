@@ -18,8 +18,14 @@ EVAL_DATABASE_URL=postgresql://floorspec:floorspec@localhost:55433/floorspec_eva
 # shim, token and changeset path. Its pass rate measures the harness, never Claude.
 pnpm --filter @d3-floorspec/agent-eval eval --agent reference
 
-pnpm --filter @d3-floorspec/agent-eval test   # scorer unit tests + the task self-check
+pnpm --filter @d3-floorspec/agent-eval test   # scorer unit tests + the task self-check + seed hashes
+pnpm --filter @d3-floorspec/agent-eval seeds  # each seed's hash against seed-hashes.json (--write re-records)
 ```
+
+CI runs the reference harness on every pull request, in the `integration` job, with no model and no
+key (`--agent reference --fail-under 1`): every seed seeded through the built API must land at its
+recorded hash, and every task's reference must pass. The Claude run itself stays weekly
+(`.github/workflows/agent-eval.yml`).
 
 Claude needs its own credentials: `ANTHROPIC_API_KEY` (then the run uses `--bare`, so no hooks,
 plugins, memory or CLAUDE.md reach it), or a `claude auth login`. A Claude Code session started by
@@ -77,15 +83,18 @@ read, `evals/agent/tasks`, `seeds` or `src`.
 1. The built API (`apps/server/dist`) is started on a free loopback port against a fresh
    `*_test` database; the eval operator (`EVAL_OPERATOR` in `src/api.ts`, test values for the
    throwaway database) completes first-run setup.
-2. Per task and run: a project, the seed applied to main as Floorspec Ops (a document seed is sent
+2. Every seed the selected tasks use is held to its hash in `seed-hashes.json` — as the reference
+   applier computes it, then seeded through the API once — and a seed that has moved stops the run
+   (exit 1, `SEED-DRIFT.txt`) before any task starts.
+3. Per task and run: a project, the seed applied to main as Floorspec Ops (a document seed is sent
    as `addElement` operations; its hash is checked), and an **agent** token — so every edit Claude
    makes lands in a pending changeset (FLR-ADR-016).
-3. `claude -p "<prompt>" --output-format stream-json` with one MCP server, the stdio shim
+4. `claude -p "<prompt>" --output-format stream-json` with one MCP server, the stdio shim
    (`packages/mcp-stdio`) pointed at the API with that token; `--tools ""` (no Bash, Edit, Web),
    only the ten `mcp__floorspec__*` tools allowed, `--permission-mode dontAsk`, the plugin's
    `floorspec-design-partner` skill appended to the system prompt, an empty working directory, and
    a per-task timeout.
-4. The model scored is the agent's newest pending changeset with edits in it — or main when it made
+5. The model scored is the agent's newest pending changeset with edits in it — or main when it made
    none (a read-only question, or a request it rightly asked about). Main moving at all fails the
    task.
 
@@ -108,6 +117,13 @@ assertion is changed only with a written reason that it was **wrong** — never 
 Seeds: `three-room-house` (the conformance house), `two-bedroom-ranch`, `l-shaped-house` (from
 `packages/mcp/test/fixtures`), and `two-storey-colonial` (two levels, ten rooms, written for the
 eval as Ops batches).
+
+Each seed's hash is recorded in `seed-hashes.json`. A document seed declares its own Core version,
+so its hash is fixed; an Ops seed writes no `/floorspec`, so it lands at the version the server
+starts a project at (`FLOORSPEC_VERSION` in `apps/server/src/model/document.ts`, which
+`emptyDocument` in `src/seeds.ts` must match — `test/seeds.test.ts` holds them together). A change
+that moves a seed fails CI; when the move is intended, re-record with `seeds --write`, run the
+reference harness, and add a line to the run log below saying why.
 
 | ID | Category | Seed | Prompt |
 |---|---|---|---|
@@ -162,6 +178,7 @@ Every run, and every tool fix with the run that motivated it, is recorded here.
 | 2026-10-04 | Harness self-check after the three tool fixes below (303271e) | 36/36 | `results/2026-10-05T00-15-07-442Z-reference/` |
 | 2026-10-04 | Proxy path self-check: scripted fs-mcp calls for 024 and 010 (pass), and a deliberately off-centre door for 003 (fails as it should) | 2/3 | `results/proxy-selfcheck-2026-10-04/` — not Claude |
 | 2026-10-04 | Claude, `--tasks 001` | **not run** | `claude -p` could not authenticate from the build environment (a desktop-app session; no `ANTHROPIC_API_KEY`, CLI not logged in). No pass rate exists yet. |
+| 2026-10-12 | Harness self-check, `--agent reference`, after FLR-T-12.42 | 36/36 | `two-storey-colonial.ops` re-recorded `ef795199…` → `089ed5cb…`: FLR-T-11.3 (011d44fb) started new projects at Core 0.4 but left the harness's empty document at 0.3, so the Ops seed (no `/floorspec` of its own) landed at a different hash on the server and 027–035 stopped. Intended — the seed now starts at 0.4, as a real project does; the three document seeds are unchanged. Seeds and the reference harness now run on every PR |
 
 ### Tool fixes
 
