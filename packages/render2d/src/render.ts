@@ -9,6 +9,7 @@
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
 import { evaluate, type Evaluation } from '@floorspec/engine';
+import { DEMOLISH_DASH, EXISTING_OPACITY, RENOVATION_FILTER_LABELS, RENOVATION_INK, RENOVATION_STATUS_LABELS, filteredDocument, renovationStyles, type RenovationFilter, type RenovationStyle } from './renovation.js';
 import { DEFAULT_READER, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneFallback, type SceneOpening, type SceneRoom, type SceneStair, type SceneWall } from './scene.js';
 import { base64, el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
 import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
@@ -94,6 +95,13 @@ export interface RenderOptions {
   readonly style?: PlanStyle;
   /** A style's details turned off: its shadows, floor patterns, furniture colours, pills or landscape. */
   readonly details?: Readonly<Partial<StyleDetails>>;
+  /**
+   * A renovation filter (FLR-T-18.13, FS_renovation 3.1) for a document that uses FS_renovation:
+   * Existing and Demolition draw the house as it stands, Proposed as it will be, Combined
+   * everything — existing work in grey, demolished work dashed, new work in solid poché, with a
+   * legend. Default: none, the document as it is. A document without FS_renovation draws as it is.
+   */
+  readonly renovation?: RenovationFilter;
 }
 
 /** How faint a ghosted layer is drawn: grey, at this opacity (FLR-T-18.3). */
@@ -446,7 +454,16 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
  * design it chose (`evaluate(document, { ...reader, design })`) — as a standalone SVG string,
  * without validating it again. Throws InvalidDocumentError for an evaluation that is not valid.
  */
-export function renderEvaluation(evaluation: Evaluation, options: EvaluationRenderOptions = {}): string {
+export function renderEvaluation(given: Evaluation, options: EvaluationRenderOptions = {}): string {
+  // FLR-T-18.13: a renovation filter draws a state of the house, each element in its status's style.
+  const shown = given.view ?? given.document;
+  const reno = options.renovation === undefined || shown === undefined ? null : renovationStyles(shown, options.renovation);
+  const filtered = reno === null || options.renovation === undefined || shown === undefined ? shown : filteredDocument(shown, options.renovation);
+  // A state is checked as FS_renovation 2.4 checks it: Core's invariants, without known extensions — what another
+  // extension's records say of an element the state leaves out (a circuit's demolished outlet) is not this drawing's.
+  const evaluation = filtered === shown || filtered === undefined ? given : evaluate(filtered, { ...(options.reader ?? DEFAULT_READER), knownExtensions: [] });
+  const renoOf = (id: string): RenovationStyle => reno?.get(id) ?? 'plain';
+  const legendFilter = reno !== null && options.renovation !== undefined && options.renovation !== 'existing' ? options.renovation : undefined;
   const scene = sceneOf(evaluation, options.level);
   // FLR-T-18.5: a style's theme is a palette too, so everything drawn from the palette follows it.
   const sty: PlanTheme | null = options.style === undefined ? null : planTheme(options.style, options.theme ?? 'light');
@@ -513,7 +530,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   const s = scale / BU_PER_FOOT;
   // The margin dimensions take is kept when a mode hides them, so every trade's plan has one frame.
   const dimsRoom = options.dimensions ?? (sty === null || sty.linework);
-  const legendRows = byType ? scene.wallTypes.size + 1 : 0;
+  const legendRows = (byType ? scene.wallTypes.size + 1 : 0) + (legendFilter === undefined ? 0 : 4);
   const margin = { top: dimsRoom ? 64 : 32, left: dimsRoom ? 64 : 32, right: 32, bottom: 64 + (legendRows === 0 ? 0 : 18 * legendRows + 12) };
   const W = Math.ceil((ext.maxX - ext.minX) * s + margin.left + margin.right);
   const H = Math.ceil((ext.maxY - ext.minY) * s + margin.top + margin.bottom);
@@ -522,7 +539,15 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   const f: Frame = { s, X, Y, P: (p) => [X(p[0]), Y(p[1])] };
   const P = (ring: readonly Pt[]): XY[] => ring.map(f.P);
 
-  const title = `${scene.levelName ?? scene.levelId}${scene.projectName ? ` · ${scene.projectName}` : ''}`;
+  const title = `${scene.levelName ?? scene.levelId}${scene.projectName ? ` · ${scene.projectName}` : ''}${reno !== null && options.renovation !== undefined ? ` · ${RENOVATION_FILTER_LABELS[options.renovation]} plan` : ''}`;
+  const rink = RENOVATION_INK[options.theme ?? 'light'];
+  // A renovated element's group: grey for existing work beside what changes, dashed in red for what goes.
+  const renoWrap = (id: string, svg: string): string => {
+    const r = renoOf(id);
+    if (r === 'existing') return el('g', { 'data-renovation': 'existing', opacity: EXISTING_OPACITY }, svg);
+    if (r === 'demolished' || r === 'new') return el('g', { 'data-renovation': r }, svg);
+    return svg;
+  };
   const parts: string[] = [];
   parts.push(el('title', {}, esc(title)));
   parts.push(el('rect', { width: W, height: H, fill: pal.paper }));
@@ -547,9 +572,12 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   // A layer's group as its state says: drawn, drawn as a grey ghost, or left out (FLR-T-18.3).
   const ghostly = PLAN_GHOSTS.some((l) => st[l] === 'ghost');
   if (ghostly) parts.push(el('defs', {}, GHOST_FILTER));
+  // FLR-T-18.13: beside what a remodel changes, the grounds, stairs and roof are existing work too.
+  const SUBDUED: ReadonlySet<PlanLayer> = new Set(['landscape', 'roof']);
   const put = (layer: PlanLayer, svg: string): void => {
     const state = st[layer];
-    if (state === 'on') parts.push(svg);
+    if (state === 'on' && legendFilter !== undefined && SUBDUED.has(layer)) parts.push(el('g', { 'data-renovation': 'existing', opacity: EXISTING_OPACITY }, svg));
+    else if (state === 'on') parts.push(svg);
     else if (state === 'ghost') parts.push(ghostGroup(layer, svg));
   };
 
@@ -623,6 +651,15 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     for (const sl of scene.slabs.values()) {
       const d = ringsPath([P(sl.outline)]);
       const a = hi.has(sl.id);
+      const rs = renoOf(sl.id);
+      if (rs === 'demolished' || rs === 'new') {
+        slabs += el('path', { 'data-id': sl.id, 'data-renovation': rs, d, fill: rs === 'new' ? rink.new : 'none', 'fill-opacity': rs === 'new' ? 0.12 : undefined, stroke: rs === 'new' ? rink.new : rink.demolish, 'stroke-width': rs === 'new' ? 1.75 : 1.25, ...(rs === 'demolished' ? { 'stroke-dasharray': DEMOLISH_DASH } : {}) });
+        continue;
+      }
+      if (rs === 'existing') {
+        slabs += renoWrap(sl.id, el('path', { 'data-id': sl.id, d, fill: pal.unanchored, stroke: pal.faint, 'stroke-width': 1 }) + el('path', { d, fill: 'url(#fs-hatch)' }));
+        continue;
+      }
       if (sty !== null) {
         // A colour plan's patio in its pavers, a drive in its concrete; a technical one's hatched.
         const fill = a ? pal.accent : sty.colour ? (sl.material === undefined ? pal.paving : (floorFills.get(sl.material.id) ?? pal.paving)) : sty.paper;
@@ -644,6 +681,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     floors += el('path', { 'data-id': r.id, ...(sty !== null && r.floor !== undefined ? { 'data-floor': r.floor.id } : {}), d: ringsPath([P(r.outer), ...r.holes.map(P)]), fill, 'fill-rule': 'evenodd' });
     const grid = floorFills.get(`grid:${r.id}`);
     if (grid !== undefined) floors += el('path', { 'data-grid': r.id, d: ringsPath([P(r.outer), ...r.holes.map(P)]), fill: grid, 'fill-rule': 'evenodd' });
+    if (renoOf(r.id) === 'new') floors += el('path', { 'data-renovation': 'new', d: ringsPath([P(r.outer), ...r.holes.map(P)]), fill: rink.new, 'fill-opacity': 0.05, 'fill-rule': 'evenodd' });
     // Added and highlighted rooms are tinted; a room that only moved shows its old outline instead.
     if (hi.has(r.id) || diff?.rooms.changes.get(r.id) === 'added')
       floors += el('path', { d: ringsPath([P(r.outer), ...r.holes.map(P)]), fill: pal.accent, 'fill-opacity': 0.16, 'fill-rule': 'evenodd' });
@@ -737,10 +775,13 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   let seps = '';
   for (const sp of scene.separators.values()) {
     const acc = accented(sp.id, diff?.separators);
+    const rs = renoOf(sp.id);
     seps += el('path', {
       'data-id': sp.id,
+      ...(rs === 'plain' ? {} : { 'data-renovation': rs }),
+      opacity: rs === 'existing' ? EXISTING_OPACITY : undefined,
       d: polylinePath(sp.line.map(f.P)),
-      stroke: acc ? pal.accent : pal.separator,
+      stroke: acc ? pal.accent : rs === 'demolished' ? rink.demolish : rs === 'new' ? rink.new : pal.separator,
       'stroke-width': acc ? 2 : 1.25,
       'stroke-dasharray': '6 4',
       fill: 'none',
@@ -753,18 +794,38 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     ...[...scene.walls.values()].map((w) => ({ id: w.id, ring: w.outline, acc: accented(w.id, diff?.walls) })),
     ...[...scene.fills].map(([id, ring]) => ({ id, ring, acc: accented(id, diff?.fills) })),
   ];
-  if (sty !== null) put('walls', styledWalls(scene, bodies, sty, byType, P, details.shadows));
-  else {
+  const drawWalls = (subset: readonly WallBody[], id: string): string => {
+    if (subset.length === 0) return '';
+    if (sty !== null) return styledWalls(scene, subset, sty, byType, P, details.shadows, id);
     const outlineLayer = el(
       'path',
-      { d: ringsPath(bodies.map((b) => P(b.ring))), fill: pal.poche, stroke: pal.poche, 'stroke-width': 2 * OUTLINE, 'stroke-linejoin': 'round' },
+      { d: ringsPath(subset.map((b) => P(b.ring))), fill: pal.poche, stroke: pal.poche, 'stroke-width': 2 * OUTLINE, 'stroke-linejoin': 'round' },
     );
-    const plain = bodies.filter((b) => !b.acc);
-    const acc = bodies.filter((b) => b.acc);
+    const plain = subset.filter((b) => !b.acc);
+    const acc = subset.filter((b) => b.acc);
     let fillLayer = el('path', { d: ringsPath(plain.map((b) => P(b.ring))), fill: pal.poche, stroke: pal.poche, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
     for (const b of acc)
       fillLayer += el('path', { 'data-id': b.id, d: ringsPath([P(b.ring)]), fill: pal.accent, stroke: pal.accent, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
-    put('walls', el('g', { id: 'walls', mask: 'url(#fs-cuts)' }, outlineLayer + fillLayer));
+    return el('g', { id, mask: 'url(#fs-cuts)' }, outlineLayer + fillLayer);
+  };
+  if (reno === null) put('walls', drawWalls(bodies, 'walls'));
+  else {
+    // FLR-T-18.13: existing work (and the junctions' fills) subdued, new work in solid poché, demolished work dashed.
+    const of = (r: RenovationStyle): WallBody[] => bodies.filter((b) => (scene.walls.has(b.id) ? renoOf(b.id) : reno.size > 0 && legendFilter !== undefined ? 'existing' : 'plain') === r);
+    let g = drawWalls(of('plain'), 'walls-plain');
+    const existing = drawWalls(of('existing'), 'walls-existing');
+    if (existing !== '') g += el('g', { 'data-renovation': 'existing', opacity: EXISTING_OPACITY }, existing);
+    const fresh = of('new');
+    if (fresh.length)
+      g += el(
+        'g',
+        { id: 'walls-new', 'data-renovation': 'new', mask: 'url(#fs-cuts)' },
+        el('path', { d: ringsPath(fresh.map((b) => P(b.ring))), fill: rink.new, stroke: rink.new, 'stroke-width': 2 * OUTLINE, 'stroke-linejoin': 'round' }),
+      );
+    let demo = '';
+    for (const b of of('demolished')) demo += el('path', { 'data-id': b.id, d: ringsPath([P(b.ring)]), fill: pal.paper, 'fill-opacity': 0.6, stroke: rink.demolish, 'stroke-width': 1.25, 'stroke-dasharray': DEMOLISH_DASH, 'stroke-linejoin': 'round' });
+    if (demo !== '') g += el('g', { id: 'walls-demolished', 'data-renovation': 'demolished', mask: 'url(#fs-cuts)' }, demo);
+    put('walls', el('g', { id: 'walls' }, g));
   }
 
   // ── openings ──
@@ -776,12 +837,16 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   for (const o of scene.openings.values()) {
     const w = scene.walls.get(o.wall)!;
     const a = accented(o.id, diff?.openings);
-    ops += el(
-      'g',
-      { 'data-id': o.id },
-      jambs(o, w, f, accented(o.wall, diff?.walls) ? pal.accent : sty === null ? pal.poche : sty.wallEdge) +
-        openingSymbol(o, w, f, a ? { stroke: pal.accent, window: pal.accent, inWall: pal.accent } : (doorLook ?? { stroke: pal.faint, window: pal.window, inWall: pal.room })),
-    );
+    const rs = renoOf(o.id);
+    const look: SymbolStyle = a
+      ? { stroke: pal.accent, window: pal.accent, inWall: pal.accent }
+      : rs === 'demolished'
+        ? { stroke: rink.demolish, window: rink.demolish, inWall: rink.demolish, swing: rink.demolish, dash: DEMOLISH_DASH }
+        : rs === 'new'
+          ? { ...(doorLook ?? { inWall: pal.room }), window: rink.new, stroke: rink.new, swing: rink.new, scale: Math.max(doorLook?.scale ?? 1, 1.25) }
+          : (doorLook ?? { stroke: pal.faint, window: pal.window, inWall: pal.room });
+    const jamb = rs === 'demolished' ? rink.demolish : rs === 'new' ? rink.new : accented(o.wall, diff?.walls) ? pal.accent : sty === null ? pal.poche : sty.wallEdge;
+    ops += renoWrap(o.id, el('g', { 'data-id': o.id }, jambs(o, w, f, jamb) + openingSymbol(o, w, f, look)));
   }
   put('openings', el('g', { id: 'openings' }, ops));
 
@@ -796,6 +861,14 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     let inked = false;
     // The ink filters of a colour plan's symbol images, by tone: white to the item's colour, black to its ink.
     const toned = new Map<string, string>();
+    // FLR-T-18.13: a demolished item faded under a dashed red outline; a new one outlined in the new ink.
+    const renoFallback = (id: string, drawn: string): string => {
+      const r = renoOf(id);
+      const fb = scene.fallbacks.get(id)!;
+      if (r === 'demolished') return el('g', { 'data-renovation': 'demolished' }, el('g', { opacity: 0.35 }, drawn) + el('path', { d: ringsPath([P(fb.footprint)]), fill: 'none', stroke: rink.demolish, 'stroke-width': 1.25, 'stroke-dasharray': DEMOLISH_DASH }));
+      if (r === 'new') return el('g', { 'data-renovation': 'new' }, drawn + el('path', { d: ringsPath([P(fb.footprint)]), fill: 'none', stroke: rink.new, 'stroke-width': 1.5 }));
+      return renoWrap(id, drawn);
+    };
     for (const fb of scene.fallbacks.values()) {
       if (fb.landscape !== undefined) continue;
       const layer = layerOfElement(fb.extension, fb.collection);
@@ -821,6 +894,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
             : sty !== null && sty.linework && !a
               ? el('path', { ...box, fill: 'none', stroke: pal.faint, 'stroke-width': sty.weights.furniture })
               : el('path', { ...box, fill: a ? pal.accent : pal.faint, 'fill-opacity': a ? 0.35 : sty !== null && sty.colour ? 0.08 : 0.12, stroke: a ? pal.accent : pal.faint, 'stroke-width': 1, ...(sty !== null && sty.colour && !a ? { 'stroke-opacity': 0.35 } : {}) });
+        drawn = renoFallback(fb.id, drawn);
         if (state === 'ghost' && layer !== null) ghosted.set(layer, (ghosted.get(layer) ?? '') + drawn);
         else if (sty !== null && isRug(fb.catalogue)) rugs += drawn;
         else fbs += drawn;
@@ -837,7 +911,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
         const ink = (k: SymbolStroke): string => (a ? pal.accent : tone !== null ? (k === 'detail' ? mix(tone.ink, tone.fill, 0.3) : tone.ink) : k === 'detail' ? pal.faint : pal.muted);
         g += partsSvg(outline, f, ink, sty === null ? {} : { scale: sty.colour ? 0.85 : sty.weights.furniture });
       }
-      drawn = el('g', { 'data-symbol': fb.id }, g);
+      drawn = renoFallback(fb.id, el('g', { 'data-symbol': fb.id }, g));
       if (state === 'ghost' && layer !== null) ghosted.set(layer, (ghosted.get(layer) ?? '') + drawn);
       else fbs += drawn;
     }
@@ -941,11 +1015,19 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     // A style's label: name and area, on a pill in a colour plan, in spaced capitals in a technical one.
     const deco: LabelDeco = sty === null ? {} : sty.pill !== null && details.pills && sty.colour ? { pill: sty.pill } : { halo: sty.colour ? sty.room : sty.paper };
     const nameInk = sty === null ? pal.text : deco.pill !== undefined ? inkOn(deco.pill.fill, sty) : sty.text;
+    // FLR-T-18.13: a new room, and one to be demolished, say so under their area.
+    const renoLine = (id: string): LabelLine[] => {
+      const r = renoOf(id);
+      if (r === 'new') return [{ text: 'NEW', size: 9, mono: false, weight: 700, color: rink.new, spacing: 0.8 }];
+      if (r === 'demolished') return [{ text: 'TO DEMOLISH', size: 9, mono: false, weight: 700, color: rink.demolish, spacing: 0.8 }];
+      return [];
+    };
     for (const r of scene.rooms.values()) {
       if (sty !== null) {
         const styled: LabelLine[] = [
           { text: sty.caps ? roomTitle(r).toUpperCase() : roomTitle(r), size: sty.caps ? 12 : 15, mono: false, weight: 600, color: nameInk, ...(sty.caps ? { spacing: 0.7 } : {}) },
           { text: `${wholeSquareFeet(r.area)} ft²`, size: 11, mono: true, color: deco.pill !== undefined ? (nameInk === sty.text ? pal.muted : sty.paper) : pal.muted },
+          ...renoLine(r.id),
           ...(accented(r.id, diff?.rooms) ? [{ text: r.id, size: 9, mono: true, weight: 600, color: pal.accentInk, spacing: 0.6, pill: pal.accent }] : []),
         ];
         labels += placeLabel(r.id, styled, r.outer, r.holes, swings, f, deco);
@@ -956,6 +1038,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
         { text: roomTitle(r), size: 13, mono: false, weight: 500, color: pal.text },
         { text: `${squareFeet(r.area)} ft²`, size: 11, mono: true, color: pal.muted },
         { text: `${feetInches(rb.maxX - rb.minX)} × ${feetInches(rb.maxY - rb.minY)}`, size: 10, mono: true, color: pal.faint },
+        ...renoLine(r.id),
         ...(r.ceiling?.kind === 'tray' || r.ceiling?.kind === 'vaulted' ? [{ text: r.ceiling.kind === 'tray' ? 'Tray ceiling' : 'Vaulted ceiling', size: 9, mono: false, color: pal.faint }] : []),
         accented(r.id, diff?.rooms)
           ? { text: r.id, size: 9, mono: true, weight: 600, color: pal.accentInk, spacing: 0.6, pill: pal.accent }
@@ -982,6 +1065,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
 
   // ── Construction's legend: each wall type in its colour, and the doors' amber ──
   if (byType) parts.push(wallLegend(scene, sty, margin.left, H - 64 - 18 * legendRows));
+  if (legendFilter !== undefined) parts.push(renovationLegend(legendFilter, margin.left + (byType ? 220 : 0), H - 64 - 18 * 4, pal, rink));
 
   // ── title and north arrow ──
   parts.push(
@@ -1039,7 +1123,7 @@ interface WallBody {
  * the paper and interior walls solid, or, in Construction mode, each wall type in its own colour. A
  * junction's fill is drawn as an exterior wall meeting it is, else as an interior one.
  */
-function styledWalls(scene: Scene, bodies: readonly WallBody[], t: PlanTheme, byType: boolean, P: (ring: readonly Pt[]) => XY[], shadows: boolean): string {
+function styledWalls(scene: Scene, bodies: readonly WallBody[], t: PlanTheme, byType: boolean, P: (ring: readonly Pt[]) => XY[], shadows: boolean, id = 'walls'): string {
   const atJunction = new Map<string, SceneWall>();
   for (const w of scene.walls.values())
     for (const j of w.ends) {
@@ -1070,7 +1154,7 @@ function styledWalls(scene: Scene, bodies: readonly WallBody[], t: PlanTheme, by
     if (g.hatch) out += el('path', { d, fill: 'url(#fs-wall-hatch)' });
   }
   for (const b of bodies.filter((x) => x.acc)) out += el('path', { 'data-id': b.id, d: ringsPath([P(b.ring)]), fill: t.accent, stroke: t.accent, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
-  const g = el('g', { id: 'walls', mask: 'url(#fs-cuts)' }, out);
+  const g = el('g', { id, mask: 'url(#fs-cuts)' }, out);
   return t.shadow !== null && shadows ? el('g', { 'data-shadow': 'walls', filter: 'url(#fs-shadow)' }, g) : g;
 }
 
@@ -1086,6 +1170,25 @@ function wallLegend(scene: Scene, t: PlanTheme, x: number, y: number): string {
   for (const ty of scene.wallTypes.values()) swatch(wallTypeColour(ty.definition, scene.materials, ty.cls, t), ty.name, ty.id);
   swatch(CONSTRUCTION_DOOR[t.theme], 'Door leaves and swings');
   return el('g', { id: 'wall-legend' }, g);
+}
+
+/** The renovation legend (FLR-T-18.13): what the filter shows of existing, demolished and new work. */
+function renovationLegend(filter: RenovationFilter, x: number, y: number, pal: Palette, ink: { readonly demolish: string; readonly new: string }): string {
+  let g = el('text', { x, y: y + 9, 'font-size': 9, 'font-weight': 600, 'letter-spacing': 0.8, fill: pal.muted }, esc(`${RENOVATION_FILTER_LABELS[filter].toUpperCase()} PLAN`));
+  const rows: [string, string][] = [['existing', RENOVATION_STATUS_LABELS.existing]];
+  if (filter !== 'proposed') rows.push(['demolished', RENOVATION_STATUS_LABELS.demolish]);
+  if (filter !== 'demolition') rows.push(['new', RENOVATION_STATUS_LABELS.new]);
+  rows.forEach(([kind, label], i) => {
+    const yy = y + (i + 1) * 18;
+    const swatch =
+      kind === 'existing'
+        ? el('rect', { x, y: yy, width: 18, height: 6, fill: pal.poche, opacity: EXISTING_OPACITY })
+        : kind === 'new'
+          ? el('rect', { x, y: yy, width: 18, height: 6, fill: ink.new })
+          : el('rect', { x, y: yy, width: 18, height: 6, fill: 'none', stroke: ink.demolish, 'stroke-width': 1.25, 'stroke-dasharray': DEMOLISH_DASH });
+    g += el('g', { 'data-legend': kind }, swatch + el('text', { x: x + 26, y: yy + 6.5, 'font-size': 10, fill: pal.text }, esc(label)));
+  });
+  return el('g', { id: 'renovation-legend' }, g);
 }
 
 /** The building systems: in their own mode their devices are drawn solid (FLR-T-18.3). */

@@ -1,0 +1,44 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "4b5c11ea0aa286e43786e2197127111978f98b645aacbf23e1d4390ea189c913",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "W10",
+      "path": "/extensions/FS_renovation/status",
+      "value": "demolish"
+    },
+    {
+      "op": "setProperty",
+      "id": "O3",
+      "path": "/extensions/FS_renovation/status",
+      "value": "demolish"
+    },
+    {
+      "op": "setProperty",
+      "id": "R2",
+      "path": "/extensions/FS_renovation/status",
+      "value": "demolish"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "O3",
+      "path": "/extensions"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "R2",
+      "path": "/extensions"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "W10",
+      "path": "/extensions"
+    }
+  ]
+}

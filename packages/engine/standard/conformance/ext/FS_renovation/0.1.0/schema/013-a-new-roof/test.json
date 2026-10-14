@@ -1,0 +1,7 @@
+{
+  "description": "The remodel as a Core 0.3 document with a new roof over the house (Core 16): a roof may carry a status. Valid, and the roof is counted with the new work.",
+  "covers": [
+    "FS-RENO-1.3.2",
+    "FS-RENO-5.1.1"
+  ]
+}

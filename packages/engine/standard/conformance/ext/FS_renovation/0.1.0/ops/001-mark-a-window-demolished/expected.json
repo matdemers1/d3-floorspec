@@ -1,0 +1,22 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "b9dfa07b01058a60d78dfde52640ce70a1784698c782176f8fdd709d8697cd05",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "O2",
+      "path": "/extensions/FS_renovation/status",
+      "value": "demolish"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "unsetProperty",
+      "id": "O2",
+      "path": "/extensions"
+    }
+  ]
+}

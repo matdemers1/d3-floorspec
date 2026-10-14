@@ -1,0 +1,6 @@
+{
+  "description": "A second level L2 with no walls: the states have the rooms of every level, and L2 has none. Derived as without it.",
+  "covers": [
+    "FS-RENO-5.1.1"
+  ]
+}

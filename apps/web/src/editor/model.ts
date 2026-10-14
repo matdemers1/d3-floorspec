@@ -271,7 +271,7 @@ export function optionSetsOf(document: FloorspecDocument): OptionSetView[] {
  * Read a version: check, derive and index it — in `wanted`, a design (Core 0.3, 19.6): every set it
  * names takes that option, every other its primary; a choice that is not the document's is dropped.
  */
-export function readModel(hash: string, text: string | object, wanted: Design = {}): EditorModel {
+export function readModel(hash: string, text: string | object, wanted: Design = {}, reader: { knownExtensions?: readonly unknown[] } = {}): EditorModel {
   const document = (typeof text === 'string' ? JSON.parse(text) : text) as FloorspecDocument;
   const optionSets = optionSetsOf(document);
   const design: Design = {};
@@ -281,7 +281,7 @@ export function readModel(hash: string, text: string | object, wanted: Design = 
   }
   // The reader implements the official extensions (FS_electrical …): their derived values — circuits,
   // loads, panel spaces — are what the systems panels and schedules read (FLR-T-5.7, 5.8).
-  const result = check(document, { ...OFFICIAL_READER, ...(optionSets.length > 0 && { design }) });
+  const result = check(document, { ...OFFICIAL_READER, ...reader, ...(optionSets.length > 0 && { design }) });
   const index = new Map<string, Place>();
   for (const c of COLLECTIONS) for (const [id] of entriesOf((document as unknown as Json)[c])) index.set(id, c);
   for (const [id] of entriesOf(document.program?.items)) index.set(id, 'items');

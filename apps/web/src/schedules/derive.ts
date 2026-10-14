@@ -36,7 +36,7 @@ export interface ScheduleRow {
 }
 
 export interface Schedule {
-  id: 'rooms' | 'doors' | 'windows' | 'fixtures' | 'receptacles' | 'stairs';
+  id: 'rooms' | 'doors' | 'windows' | 'fixtures' | 'receptacles' | 'stairs' | 'renovation-areas' | 'renovation-quantities';
   label: string;
   columns: ScheduleColumn[];
   rows: ScheduleRow[];
@@ -384,10 +384,119 @@ export function stairsSchedule(model: EditorModel, units: UnitSystem): Schedule 
   };
 }
 
-/** Every schedule, in the board's order; stairs only when the plan has any. */
+// ─── FLR-T-18.13: a remodel's area report and take-off (FS_renovation 5.3, 5.4) ─────────────────
+
+interface DerivedRenovation {
+  quantities: Record<'existing' | 'demolish' | 'new', { walls: number; wallLength: number; separators: number; openings: number; rooms: number; slabs: number; slabArea: string; roofs: number; stairs: number; elements: number }>;
+  states: Record<'existing' | 'proposed', { rooms: Record<string, string>; area: string }>;
+}
+
+/** A net area as Core writes it (an integer, or one ending in .5) as twice the area. */
+const twice = (s: string): bigint => (s.endsWith('.5') ? BigInt(s.slice(0, -2)) * 2n + 1n : BigInt(s) * 2n);
+
+function renovationOf(model: EditorModel): DerivedRenovation | undefined {
+  const ext = (model.derived as { extensions?: Record<string, unknown> } | null)?.extensions;
+  return ext?.['FS_renovation'] as DerivedRenovation | undefined;
+}
+
+/** The rooms before and after: each room's net area as it stands and when the work is done, and the change. */
+export function renovationAreasSchedule(model: EditorModel, units: UnitSystem): Schedule | null {
+  const x = renovationOf(model);
+  if (x === undefined) return null;
+  const before = x.states.existing.rooms;
+  const after = x.states.proposed.rooms;
+  const ids = [...new Set([...Object.keys(before), ...Object.keys(after)])].sort(compareIds);
+  const area = (a: string | undefined): Cell => (a === undefined ? none : { text: formatArea(twice(a), units), value: Number(twice(a)) });
+  const rows: ScheduleRow[] = ids.map((id) => {
+    const b = before[id];
+    const a = after[id];
+    const change = b !== undefined && a !== undefined ? twice(a) - twice(b) : null;
+    return {
+      key: id,
+      cells: {
+        name: text(labelOf(model, id)),
+        status: text(b === undefined ? 'New' : a === undefined ? 'To demolish' : 'Existing'),
+        existing: area(b),
+        proposed: area(a),
+        change: change === null ? none : { text: change === 0n ? '—' : `${change > 0n ? '+' : '−'}${formatArea(change < 0n ? -change : change, units)}`, value: Number(change) },
+      },
+    };
+  });
+  rows.push({
+    key: '~total',
+    cells: {
+      name: text('Total net area'),
+      status: none,
+      existing: area(x.states.existing.area),
+      proposed: area(x.states.proposed.area),
+      change: (() => {
+        const d = twice(x.states.proposed.area) - twice(x.states.existing.area);
+        return { text: d === 0n ? '—' : `${d > 0n ? '+' : '−'}${formatArea(d < 0n ? -d : d, units)}`, value: Number(d) };
+      })(),
+    },
+  });
+  return {
+    id: 'renovation-areas',
+    label: 'Remodel areas',
+    columns: [
+      { key: 'name', header: 'Room' },
+      { key: 'status', header: 'Status' },
+      { key: 'existing', header: 'Existing', numeric: true },
+      { key: 'proposed', header: 'Proposed', numeric: true },
+      { key: 'change', header: 'Change', numeric: true },
+    ],
+    rows,
+    footnote: 'Net areas (Core 6.4) of the house as it stands and when the work is done, as FS_renovation 0.1.0 derives them (5.4): each state is the plan without its new work, or without what is to be demolished.',
+  };
+}
+
+/** The take-off by status: how much is existing, how much comes down, how much is new. */
+export function renovationQuantitiesSchedule(model: EditorModel, units: UnitSystem): Schedule | null {
+  const x = renovationOf(model);
+  if (x === undefined) return null;
+  const q = x.quantities;
+  const count = (k: 'walls' | 'separators' | 'openings' | 'rooms' | 'slabs' | 'roofs' | 'stairs' | 'elements') => (s: 'existing' | 'demolish' | 'new'): Cell => text(String(q[s][k]), q[s][k]);
+  const lines: [string, string, (s: 'existing' | 'demolish' | 'new') => Cell][] = [
+    ['walls', 'Walls', count('walls')],
+    ['wallLength', 'Wall length', (s) => ({ text: formatLen(q[s].wallLength, units), value: q[s].wallLength })],
+    ['openings', 'Doors and windows', count('openings')],
+    ['rooms', 'Rooms', count('rooms')],
+    ['separators', 'Room separators', count('separators')],
+    ['slabs', 'Slabs and decks', count('slabs')],
+    ['slabArea', 'Slab and deck area', (s) => ({ text: formatArea(twice(q[s].slabArea), units), value: Number(twice(q[s].slabArea)) })],
+    ['roofs', 'Roofs', count('roofs')],
+    ['stairs', 'Stairs', count('stairs')],
+    ['elements', 'Fixtures, furniture and equipment', count('elements')],
+  ];
+  return {
+    id: 'renovation-quantities',
+    label: 'Remodel quantities',
+    columns: [
+      { key: 'what', header: 'Quantity' },
+      { key: 'existing', header: 'Existing to remain', numeric: true },
+      { key: 'demolish', header: 'To demolish', numeric: true },
+      { key: 'new', header: 'New', numeric: true },
+    ],
+    rows: lines.map(([key, label, cell]) => ({ key, cells: { what: text(label), existing: cell('existing'), demolish: cell('demolish'), new: cell('new') } })),
+    footnote: 'Counted and measured by status, as FS_renovation 0.1.0 derives them (5.3): a wall\'s length is its location line\'s, rounded once; a slab\'s area its boundary\'s. What a quantity of studs or drywall is, is an estimate\'s to say.',
+  };
+}
+
+/** Every schedule, in the board's order; stairs only when the plan has any; a remodel's two when it is one. */
 export function schedules(model: EditorModel, units: UnitSystem): Schedule[] {
   const stairs = stairsSchedule(model, units);
-  return [roomsSchedule(model, units), doorsSchedule(model, units), windowsSchedule(model, units), receptaclesSchedule(model, units), fixturesSchedule(model), ...(stairs.rows.length ? [stairs] : [])];
+  const areas = renovationAreasSchedule(model, units);
+  const quantities = renovationQuantitiesSchedule(model, units);
+  return [
+    roomsSchedule(model, units),
+    doorsSchedule(model, units),
+    windowsSchedule(model, units),
+    receptaclesSchedule(model, units),
+    fixturesSchedule(model),
+    ...(stairs.rows.length ? [stairs] : []),
+    ...(areas === null ? [] : [areas]),
+    ...(quantities === null ? [] : [quantities]),
+  ];
 }
 
 /** A schedule as CSV (RFC 4180): its columns, and each row's text. */

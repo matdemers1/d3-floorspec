@@ -1,0 +1,6 @@
+{
+  "description": "`elements` gives the wall W1 a status: a core element's status is on the element.",
+  "covers": [
+    "FS-RENO-1.3.4"
+  ]
+}

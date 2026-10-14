@@ -1,0 +1,18 @@
+{
+  "name": "FS_renovation",
+  "version": "0.1.0",
+  "status": "draft",
+  "schema": "https://d3cloud.io/floorspec/schema/ext/FS_renovation/0.1.0/renovation.schema.json",
+  "title": "Renovation: existing, demolish and new",
+  "requires": {},
+  "kinds": {},
+  "terms": {
+    "roomFunctions": []
+  },
+  "implementations": [
+    {
+      "name": "D3 Floorspec (@floorspec/engine)",
+      "url": "https://github.com/matdemers1/d3-floorspec"
+    }
+  ]
+}

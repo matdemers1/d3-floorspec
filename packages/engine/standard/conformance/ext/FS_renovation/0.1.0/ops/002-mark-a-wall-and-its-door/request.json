@@ -1,0 +1,22 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "W10",
+      "path": "/extensions/FS_renovation/status",
+      "value": "demolish"
+    },
+    {
+      "op": "setProperty",
+      "id": "O3",
+      "path": "/extensions/FS_renovation/status",
+      "value": "demolish"
+    },
+    {
+      "op": "setProperty",
+      "id": "R2",
+      "path": "/extensions/FS_renovation/status",
+      "value": "demolish"
+    }
+  ]
+}

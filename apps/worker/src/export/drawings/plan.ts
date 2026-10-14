@@ -97,7 +97,7 @@ export interface LevelPlan {
   readonly trueNorth: number;
   readonly scene: Scene;
   /** Wall and junction pieces, counter-clockwise: the poché. */
-  readonly pieces: readonly { readonly ring: readonly Pt[]; readonly exterior: boolean }[];
+  readonly pieces: readonly { readonly ring: readonly Pt[]; readonly exterior: boolean; /** The wall's ID; none for a junction's fill. */ readonly id?: string }[];
   /** The quadrilateral each opening cuts through its wall. */
   readonly cuts: readonly (readonly XY[])[];
   /** The wall outline, before openings: the union's boundary, material on the left. */
@@ -380,7 +380,7 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>, context
   for (const w of scene.walls.values()) if (exteriorWall.get(w.id) === true) for (const v of w.outline) exteriorVertex.add(key(v));
 
   const pieces = [
-    ...[...scene.walls.values()].filter((w) => w.outline.length >= 3).map((w) => ({ ring: ccw(w.outline), exterior: exteriorWall.get(w.id) ?? true })),
+    ...[...scene.walls.values()].filter((w) => w.outline.length >= 3).map((w) => ({ id: w.id, ring: ccw(w.outline), exterior: exteriorWall.get(w.id) ?? true })),
     ...[...scene.fills.values()].filter((r) => r.length >= 3).map((r) => ({ ring: ccw(r), exterior: r.some((v) => exteriorVertex.has(key(v))) })),
   ];
   const outline = unionOutline(pieces);

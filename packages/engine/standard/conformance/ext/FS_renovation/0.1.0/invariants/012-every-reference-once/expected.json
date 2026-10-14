@@ -1,0 +1,20 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-RENO-INV-002",
+      "severity": "error",
+      "elements": ["O3", "W10"]
+    },
+    {
+      "code": "FS-RENO-INV-002",
+      "severity": "error",
+      "elements": ["O4", "W8"]
+    },
+    {
+      "code": "FS-RENO-INV-002",
+      "severity": "error",
+      "elements": ["O5", "W12"]
+    }
+  ]
+}

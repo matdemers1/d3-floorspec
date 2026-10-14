@@ -1,0 +1,114 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "a22a6b68ec18171f0856d477c78b5246fcd783702cc4dec2e61c8c40e932862a",
+  "created": [],
+  "removed": ["X1"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "X1"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extensions/FS_renovation/elements/X1"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "casework",
+      "id": "X1",
+      "element": {
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [768000, 1152000, 1152000],
+            "min": [0, -1152000, 0]
+          }
+        },
+        "host": {
+          "height": 0,
+          "mode": "wallFace",
+          "offset": 1170432,
+          "side": "left",
+          "wall": "W8"
+        },
+        "name": "Old counter"
+      },
+      "extension": "FS_furniture"
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions",
+      "value": {
+        "FS_furniture": {
+          "collections": {
+            "appliances": {
+              "X3": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [896000, 576000, 2304000],
+                    "min": [0, -576000, 0]
+                  }
+                },
+                "host": {
+                  "height": 0,
+                  "mode": "wallFace",
+                  "offset": 1170432,
+                  "side": "left",
+                  "wall": "W9"
+                },
+                "name": "Refrigerator"
+              }
+            },
+            "casework": {
+              "X1": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [768000, 1152000, 1152000],
+                    "min": [0, -1152000, 0]
+                  }
+                },
+                "host": {
+                  "height": 0,
+                  "mode": "wallFace",
+                  "offset": 1170432,
+                  "side": "left",
+                  "wall": "W8"
+                },
+                "name": "Old counter"
+              },
+              "X2": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [640000, 1280000, 1152000],
+                    "min": [-640000, -1280000, 0]
+                  }
+                },
+                "host": {
+                  "position": [2340864, 2340864],
+                  "mode": "surface",
+                  "room": "R1",
+                  "surface": "floor"
+                },
+                "name": "Island"
+              }
+            }
+          }
+        },
+        "FS_renovation": {
+          "elements": {
+            "X1": "demolish",
+            "X2": "new"
+          }
+        }
+      }
+    }
+  ]
+}

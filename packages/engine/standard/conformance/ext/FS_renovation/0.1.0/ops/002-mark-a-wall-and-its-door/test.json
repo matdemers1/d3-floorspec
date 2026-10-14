@@ -1,0 +1,10 @@
+{
+  "description": "W10 and the Bath's door O3 are marked \"demolish\" in one batch, and the Bath R2 with them: it commits, and the Bath is no room of the proposed state.",
+  "covers": [
+    "FS-RENO-1.2.1",
+    "FS-RENO-2.3.1",
+    "FS-RENO-2.4.2",
+    "FS-RENO-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

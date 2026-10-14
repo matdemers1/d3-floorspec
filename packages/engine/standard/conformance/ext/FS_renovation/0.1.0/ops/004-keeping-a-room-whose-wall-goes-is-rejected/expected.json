@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-RENO-INV-004",
+      "severity": "error",
+      "elements": ["R1", "R3"]
+    }
+  ]
+}

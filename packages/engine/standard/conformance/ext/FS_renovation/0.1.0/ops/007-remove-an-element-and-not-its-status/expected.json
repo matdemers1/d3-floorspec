@@ -1,0 +1,38 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "c025a3acab79d57df31744ac23b9f0ed589db1bd08116642bbdf7388dd7c7ed1",
+  "created": [],
+  "removed": ["X1"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "X1"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "casework",
+      "id": "X1",
+      "element": {
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [768000, 1152000, 1152000],
+            "min": [0, -1152000, 0]
+          }
+        },
+        "host": {
+          "height": 0,
+          "mode": "wallFace",
+          "offset": 1170432,
+          "side": "left",
+          "wall": "W8"
+        },
+        "name": "Old counter"
+      },
+      "extension": "FS_furniture"
+    }
+  ]
+}

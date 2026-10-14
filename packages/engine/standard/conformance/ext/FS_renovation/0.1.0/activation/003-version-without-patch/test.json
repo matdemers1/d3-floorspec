@@ -1,0 +1,7 @@
+{
+  "description": "\"0.1\" equals 0.1.0 (Core 12.3), so FS_renovation is evaluated: W8's data breaks the schema, FS-RENO-SCH-001.",
+  "covers": [
+    "FS-RENO-1.2.1",
+    "FS-RENO-1.3.2"
+  ]
+}
