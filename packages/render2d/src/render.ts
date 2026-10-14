@@ -944,8 +944,8 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     for (const r of scene.rooms.values()) {
       if (sty !== null) {
         const styled: LabelLine[] = [
-          { text: sty.caps ? roomTitle(r).toUpperCase() : roomTitle(r), size: sty.caps ? 11 : 13, mono: false, weight: 600, color: nameInk, ...(sty.caps ? { spacing: 0.7 } : {}) },
-          { text: `${wholeSquareFeet(r.area)} ft²`, size: 10, mono: true, color: deco.pill !== undefined ? (nameInk === sty.text ? pal.muted : sty.paper) : pal.muted },
+          { text: sty.caps ? roomTitle(r).toUpperCase() : roomTitle(r), size: sty.caps ? 12 : 15, mono: false, weight: 600, color: nameInk, ...(sty.caps ? { spacing: 0.7 } : {}) },
+          { text: `${wholeSquareFeet(r.area)} ft²`, size: 11, mono: true, color: deco.pill !== undefined ? (nameInk === sty.text ? pal.muted : sty.paper) : pal.muted },
           ...(accented(r.id, diff?.rooms) ? [{ text: r.id, size: 9, mono: true, weight: 600, color: pal.accentInk, spacing: 0.6, pill: pal.accent }] : []),
         ];
         labels += placeLabel(r.id, styled, r.outer, r.holes, swings, f, deco);
