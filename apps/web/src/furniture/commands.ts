@@ -3,10 +3,13 @@ import type { EditorStore } from '../editor/store';
 import { labelOf } from '../editor/model';
 import { furnitureOf } from './state';
 import { EXTENSION, turnFurniture } from './ops';
+import { openLibrary } from '../placing/state';
 
 /**
  * The furniture's commands (FLR-T-8.3), in the editor's one registry (editor/commands.ts): I opens
- * the library (F is full screen since FLR-T-18.2), and `[` and `]` turn the selected item a quarter left or right — with Shift, by 15°.
+ * the library drawer to add from (FLR-T-18.7; F is full screen since FLR-T-18.2), the library's
+ * details and glTF upload are in the palette, and `[` and `]` turn the selected item a quarter left
+ * or right — with Shift, by 15°.
  */
 
 const editable = (store: EditorStore) => {
@@ -36,11 +39,21 @@ function turn(store: EditorStore, degrees: number): void {
 export const FURNITURE_COMMANDS: readonly Command[] = [
   {
     id: 'tool.furniture',
-    label: 'Place furniture and appliances',
+    label: 'Insert from the library',
     group: 'Tools',
-    keywords: 'furniture appliance fridge refrigerator sofa bed cabinet library glTF',
+    keywords: 'furniture appliance fridge refrigerator sofa bed cabinet door window plant device library add place drag',
     keys: ['i'],
     hint: 'I',
+    enabled: (store) => store.get().model !== null,
+    run: (store) => {
+      openLibrary(store);
+    },
+  },
+  {
+    id: 'furniture.details',
+    label: 'Furniture and appliances in detail, or upload a glTF',
+    group: 'Tools',
+    keywords: 'furniture appliance library glTF upload model clearance envelope details',
     enabled: (store) => editable(store) && store.get().level !== null,
     run: (store) => {
       furnitureOf(store).set({ open: true, uploading: false });

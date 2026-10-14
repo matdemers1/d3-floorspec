@@ -40,6 +40,7 @@ import { arrangeOf } from './arrange/state';
 import { isCovering, marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
 import { transformBatch, translation } from './arrange/transform';
 import { deleteSelection, moveSelection } from './arrange/actions';
+import { moveGhost, placeHere } from '../placing/state';
 
 /**
  * Pointer and keyboard input on the plan (FLR-T-3.3). Pointer events throughout, so a mouse, a
@@ -371,6 +372,10 @@ export class ToolController {
       case 'device':
         this.deviceDown();
         return;
+      case 'place':
+        // FLR-T-18.7: the library's item where its ghost shows; the tool stays on for the next.
+        void placeHere(this.store);
+        return;
     }
   }
 
@@ -396,6 +401,9 @@ export class ToolController {
       }
       case 'device':
         this.deviceHover(p);
+        return;
+      case 'place':
+        moveGhost(this.store, this.world(p), this.tol(p.type), p.alt);
         return;
       case 'stair': {
         const draft = s.draft?.tool === 'stair' ? s.draft : { tool: 'stair' as const, foot: null, cursor: null };

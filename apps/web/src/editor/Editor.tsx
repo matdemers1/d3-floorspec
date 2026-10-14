@@ -1,11 +1,13 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, SquareSlash, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
 import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
 import { MaterialsModal } from './Materials';
 import { FurnitureLibrary } from '../furniture/Browser';
-import { furnitureOf, useFurniture } from '../furniture/state';
+import { LeftPanel } from '../placing/LibraryPanel';
+import { openLibrary, openQuickAdd, usePlacing } from '../placing/state';
+import { placingKey } from '../placing/commands';
 import { navigate, takeParam } from '../lib/router';
 import { EditorStore, useEditor, type ToolId } from './store';
 import { ToolController } from './tools';
@@ -150,7 +152,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
       </Drawer>
       <Drawer store={store} side="left">
         <ToolRail store={store} tools={tools} />
-        <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : left === 'history' ? <HistoryPanel store={store} you={you} /> : <ProjectTree store={store} />}</aside>
+        <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : left === 'history' ? <HistoryPanel store={store} you={you} /> : <LeftPanel store={store} tree={<ProjectTree store={store} />} />}</aside>
       </Drawer>
       <main className="fs-editor__canvas" aria-label={viewMode === '3d' || walking ? '3D view' : viewMode === 'split' ? 'Plan and 3D view' : 'Plan'}>
         {status === 'loading' ? (
@@ -303,6 +305,12 @@ function ToolHint({ store }: { store: EditorStore }) {
         <span>Point at a wall, a floor or a ceiling</span> <span className="fs-hint__faint">· type an offset</span> <kbd>Enter</kbd>
       </>
     ),
+    place: (
+      <>
+        <span>Click to place, again and again</span> <kbd>R</kbd> <span className="fs-hint__faint">turn</span> <kbd>Enter</kbd> <span className="fs-hint__faint">place</span> <kbd>Esc</kbd>{' '}
+        <span className="fs-hint__faint">done</span>
+      </>
+    ),
   };
   const hint = hints[tool];
   if (hint === undefined) {
@@ -453,14 +461,14 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
   const level = useEditor(store, (s) => s.level);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const canDraw = level !== null && readOnly === null;
-  const furnitureOpen = useFurniture(store, (f) => f.open);
+  const libraryOpen = usePlacing(store, (p) => p.panel);
   // A trade mode offers its own tools (FLR-T-18.3); without one, every tool.
   const rail = useModes(store, () => modesOf(store).rail());
   if (rail !== null) {
     return (
       <nav className="fs-rail" aria-label="Tools">
         {rail.map((item) => (
-          <RailButton key={'tool' in item ? item.tool : 'device' in item ? item.device : 'library'} store={store} tools={tools} item={item} canDraw={canDraw} />
+          <RailButton key={'tool' in item ? item.tool : 'device' in item ? item.device : 'library' in item ? 'library' : 'quick'} store={store} tools={tools} item={item} canDraw={canDraw} />
         ))}
         <span className="fs-spacer" />
         <span className="fs-rail__pin">
@@ -506,8 +514,12 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
           </Tooltip>
         );
       })}
-      <Tooltip content="Furniture and appliances (I)" side="right">
-        <IconButton label="Furniture and appliances" icon={<SofaIcon />} pressed={furnitureOpen} disabled={!canDraw} onClick={() => { furnitureOf(store).set({ open: true, uploading: false }); }} />
+      {/* FLR-T-18.7: the library drawer — furniture, fixtures, devices, doors, windows, plants — and quick add. */}
+      <Tooltip content="Insert from the library (I)" side="right">
+        <IconButton label="Insert from the library" icon={<SofaIcon />} pressed={libraryOpen} disabled={!canDraw} onClick={() => { openLibrary(store); }} />
+      </Tooltip>
+      <Tooltip content="Quick add at the pointer (/)" side="right">
+        <IconButton label="Quick add" icon={<SquareSlash />} disabled={!canDraw} onClick={() => { openQuickAdd(store); }} />
       </Tooltip>
       <span className="fs-rail__rule" />
       <Tooltip content="Measure — arrives with dimensions in P4" side="right">
@@ -526,11 +538,19 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
 function RailButton({ store, tools, item, canDraw }: { store: EditorStore; tools: ToolController; item: RailItem; canDraw: boolean }) {
   const tool = useEditor(store, (s) => s.tool);
   const device = useEditor(store, (s) => s.draw.device);
-  const furnitureOpen = useFurniture(store, (f) => f.open);
+  const libraryOpen = usePlacing(store, (p) => p.panel);
   if ('library' in item) {
     return (
       <Tooltip content="Insert from the library (I)" side="right">
-        <IconButton label="Furniture and appliances" icon={<SofaIcon />} pressed={furnitureOpen} disabled={!canDraw} onClick={() => { furnitureOf(store).set({ open: true, uploading: false }); }} />
+        <IconButton label="Insert from the library" icon={<SofaIcon />} pressed={libraryOpen} disabled={!canDraw} onClick={() => { openLibrary(store); }} />
+      </Tooltip>
+    );
+  }
+  // FLR-T-18.7: Decorator's quick add, at the pointer.
+  if ('quick' in item) {
+    return (
+      <Tooltip content="Quick add at the pointer (/)" side="right">
+        <IconButton label="Quick add" icon={<SquareSlash />} disabled={!canDraw} onClick={() => { openQuickAdd(store); }} />
       </Tooltip>
     );
   }
@@ -703,6 +723,11 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
       if (typing || store.get().prompt !== null || document.querySelector('[role="dialog"]') !== null) return;
       if (e.key === ' ' && !e.repeat) {
         tools.space = true;
+        e.preventDefault();
+        return;
+      }
+      // FLR-T-18.7: while placing, R and [ ] turn the ghost, the arrows move it and Enter places it.
+      if (placingKey(store, e, mac)) {
         e.preventDefault();
         return;
       }
