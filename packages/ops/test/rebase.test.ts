@@ -15,7 +15,7 @@ const square = doc({
 
 type Doc = Record<string, unknown>;
 function step(d: Doc, batch: readonly Record<string, unknown>[], retired: string[] = []): Doc {
-  const r = apply(d, { batch: batch as Operation[], context: { retired } });
+  const r = apply(d, { batch: batch as unknown as Operation[], context: { retired } });
   if (r.status !== 'committed') throw new Error(r.diagnostics.map((x) => `${x.code} ${x.message}`).join('; '));
   return JSON.parse(r.document) as Doc;
 }
