@@ -37,7 +37,8 @@
   color: var(--color-fg);
   font-family: var(--font-mono);
   font-size: var(--text-12);
-  line-height: 18px;
+  /* 24 px high with its border: a pointer target of WCAG 2.5.8's size (FLR-T-18.16). */
+  line-height: 20px;
   white-space: nowrap;
   cursor: text;
   pointer-events: auto;

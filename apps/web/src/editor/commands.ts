@@ -18,6 +18,8 @@ import { ANNOTATE_COMMANDS, removeSelectedAnnotation } from './annotate/commands
 import { annotateOf } from './annotate/state';
 import { PLACING_COMMANDS } from '../placing/commands';
 import { PHRASE_COMMANDS } from '../phrases/commands';
+import { openElementList } from './ElementList';
+import { openShortcuts } from './ShortcutSheet';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -94,8 +96,8 @@ export const COMMANDS: readonly Command[] = [
     label: 'Flip the arc being drawn',
     group: 'Tools',
     keywords: 'arc bulge flip curve',
-    // Shift+F is read by the editor's key handler itself: a registry key of a letter has no Shift (keyOf).
-    hint: 'Shift+F',
+    // ⇧F is read by the editor's key handler itself: a registry key of a letter has no Shift (keyOf).
+    hint: '⇧F',
     enabled: (store) => {
       const d = store.get().draft;
       return d?.tool === 'arc' && d.start !== null && d.end !== null;
@@ -446,6 +448,31 @@ export const COMMANDS: readonly Command[] = [
     hint: '⌘K',
     run: (store) => {
       store.set({ palette: !store.get().palette });
+    },
+  },
+  // FLR-T-18.16: ? opens the shortcut sheet — this registry's keys, by group — and ⌥L the list of
+  // the elements on the plan, the canvas's mirror for a screen reader and the keyboard.
+  {
+    id: 'help.shortcuts',
+    label: 'Keyboard shortcuts',
+    group: 'View',
+    keywords: 'keys keyboard help shortcuts cheat sheet hotkeys',
+    keys: ['Shift+?', '?'],
+    hint: '?',
+    run: (store) => {
+      openShortcuts(store);
+    },
+  },
+  {
+    id: 'view.elements',
+    label: 'Go to the list of elements on the plan',
+    group: 'View',
+    keywords: 'element list screen reader accessible select pick listbox outline',
+    codes: ['Alt+KeyL'],
+    hint: '⌥L',
+    enabled: (store) => store.get().model !== null && store.get().level !== null,
+    run: (store) => {
+      openElementList(store);
     },
   },
   // Full screen and the edge drawers (FLR-T-18.2). The drawers' keys are read by the editor's key

@@ -47,6 +47,7 @@ import { prettyLen, type UnitSystem } from './units';
 import { AnnotationSummary } from './annotate/Summary';
 import { dist } from './geometry';
 import { ExportDialog, type ModeChoice } from '../exports/ExportDialog';
+import { keyHint } from './shortcuts';
 
 /**
  * The trade modes in the page (FLR-T-18.3), after the board's "18.3" frames: the switcher in the top
@@ -104,7 +105,8 @@ export const DEVICE_ICONS: Readonly<Record<string, ReactNode>> = {
   headEnd: <Server />,
 };
 
-const keyOf = (id: ModeId): string => `⌥${String(MODE_IDS.indexOf(id) + 1)}`;
+/** A mode's keys, from the command registry (⌥1–⌥7): written once, in modes.ts's MODE_COMMANDS. */
+const keyOf = (id: ModeId): string => keyHint(`mode.${id}`) ?? '';
 
 // ─── The switcher ────────────────────────────────────────────────────────────────────────────
 

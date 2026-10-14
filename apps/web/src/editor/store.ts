@@ -315,12 +315,16 @@ export interface EditorState {
   side: 'inspector' | 'review' | 'options';
   /** The left column: the project tree, or the history (FLR-T-3.6). */
   left: 'tree' | 'history';
+  /** FLR-T-18.16: the left drawer's tab beside the library: the project tree, or the elements on the plan. */
+  leftTab: 'tree' | 'elements';
   log: HistoryEntry[] | null;
   tokenNames: ReadonlyMap<string, string>;
   compare: Compare | null;
   /** The arrow keys' step, base units; null for the units' default (1" or 10 mm). */
   nudge: number | null;
   palette: boolean;
+  /** FLR-T-18.16: the keyboard shortcut sheet (?) is open. */
+  shortcuts: boolean;
   /** The element being renamed in the tree (F2). */
   renaming: string | null;
   /** Picking on the plan what a switch controls (FLR-T-5.7): clicks toggle devices in its `controls`. */
@@ -375,11 +379,13 @@ const initial: EditorState = {
   review: null,
   side: 'inspector',
   left: 'tree',
+  leftTab: 'tree',
   log: null,
   tokenNames: new Map(),
   compare: null,
   nudge: readNudge(),
   palette: false,
+  shortcuts: false,
   renaming: null,
   picking: null,
   design: {},

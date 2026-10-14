@@ -5,6 +5,7 @@ import { useEditor, type EditorStore } from './store';
 import { useThreeState } from './three/mode';
 import { zoomPercent } from './viewport';
 import { HudMode } from './ModeSwitcher';
+import { keyHint, withKeys } from './shortcuts';
 import {
   DRAWER_HINTS,
   DRAWER_KEYS,
@@ -137,7 +138,7 @@ export function DrawerHead({ store, side, title }: { store: EditorStore; side: '
 export function FullScreenButton({ store }: { store: EditorStore }) {
   const full = useDrawers(store, (s) => s.full);
   return (
-    <Tooltip content={full ? 'Exit full screen (F or Esc)' : 'Full screen (F)'}>
+    <Tooltip content={full ? `Exit full screen (${keyHint('view.fullscreen') ?? 'F'} or Esc)` : withKeys('Full screen', 'view.fullscreen')}>
       <IconButton
         label={full ? 'Exit full screen' : 'Full screen'}
         icon={full ? <Minimize /> : <Maximize />}

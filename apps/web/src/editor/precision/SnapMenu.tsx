@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Checkbox, Select, Switch } from '@d3cloud/ui';
 import { Check, ChevronDown, Magnet } from 'lucide-react';
 import type { EditorStore } from '../store';
+import { withKeys } from '../shortcuts';
 import { useEditor } from '../store';
 import { useModes, modesOf } from '../modes';
 import { prettyLen } from '../units';
@@ -43,6 +44,8 @@ export function SnapStatus({ store }: { store: EditorStore }) {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={`Snap: ${summary}. Change the snapping`}
+        aria-keyshortcuts="Shift+S"
+        title={withKeys('Change the snapping', 'snap.menu')}
         data-off={snap.on ? undefined : 'true'}
         onClick={() => { precisionOf(store).set({ menu: !open }); }}
       >

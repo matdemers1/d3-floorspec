@@ -334,6 +334,54 @@ export function dragResize(d: DeviceView, handle: Handle, world: Point, opts: { 
   return { anchor, size };
 }
 
+// ─── From the keyboard (FLR-T-18.16) ─────────────────────────────────────────────────────────
+
+/** An extent kept within its rule's limits and no smaller than the smallest a handle makes. */
+function within(rule: SizeRule, axis: Axis, value: number): number {
+  const lim = rule.limits[axis];
+  let v = value;
+  if (lim?.min !== undefined) v = Math.max(v, lim.min);
+  if (lim?.max !== undefined) v = Math.min(v, lim.max);
+  return Math.max(SMALLEST, Math.round(v));
+}
+
+/**
+ * A focused handle moved from the keyboard (the board's handle rules, frame 18.4: "arrows nudge the
+ * focused handle by the snap step, ⇧ × 4"): out (`dir` 1) or in (−1) by the item's size step — 3″
+ * for cabinets, ½″ for anything — onto that step, held at the opposite side as a drag of it is. A
+ * corner moves both its axes. Null when it cannot move that way (at a limit, or no such handle).
+ */
+export function keyResize(d: DeviceView, side: HandleSide, dir: 1 | -1, coarse: boolean): ResizeDrag | null {
+  const b = boxOf(d.element);
+  const handle = handlesOf(d).find((h) => h.side === side);
+  if (b === null || handle === undefined) return null;
+  const rule = ruleFor(d);
+  const old = sizeOf(b);
+  const step = rule.step * (coarse ? 4 : 1);
+  const size: Partial<Size> = {};
+  for (const a of handle.axes) {
+    // Onto the step's grid: from 70⅞″, one 3″ step out is 72″, not 73⅞″.
+    const onGrid = dir > 0 ? Math.floor(old[a] / rule.step) * rule.step + step : Math.ceil(old[a] / rule.step) * rule.step - step;
+    size[a] = within(rule, a, onGrid);
+  }
+  if (handle.axes.every((a) => size[a] === old[a])) return null;
+  return { anchor: handle.anchor, size };
+}
+
+/**
+ * The rotate handle from the keyboard: 15° a press (⇧: 1°), clockwise for `dir` 1, from the item's
+ * facing onto that step. Null for an item that does not turn freely.
+ */
+export function keyRotate(d: DeviceView, dir: 1 | -1, fine: boolean): number | null {
+  if (!turnsFreely(d) || boxOf(d.element) === null) return null;
+  const now = typeof d.host?.['rotation'] === 'number' ? d.host['rotation'] : 0;
+  const step = (fine ? 1 : 15) * 1_000_000;
+  // Clockwise is a smaller facing (Core 13.1's angles run counter-clockwise).
+  const k = Math.round(now / step);
+  const onGrid = k * step === now ? k - dir : dir > 0 ? Math.floor(now / step) : Math.ceil(now / step);
+  return normalRotation(onGrid * step);
+}
+
 /** A whole-degree angle, in microdegrees, in (−180°, 180°]. */
 export function normalRotation(micro: number): number {
   const n = ((Math.round(micro) % 360_000_000) + 540_000_000) % 360_000_000 - 180_000_000;

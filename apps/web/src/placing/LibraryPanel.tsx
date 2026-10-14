@@ -276,21 +276,27 @@ export function LibraryPanel({ store }: { store: EditorStore }) {
  * The left drawer's panel (FLR-T-18.7): the project tree and the library, as tabs. The history
  * (FLR-T-3.6) takes the panel's place while it is open, as before.
  */
-export function LeftPanel({ store, tree }: { store: EditorStore; tree: ReactNode }) {
+export function LeftPanel({ store, tree, elements }: { store: EditorStore; tree: ReactNode; elements?: ReactNode }) {
   const panel = usePlacing(store, (s) => s.panel);
+  // FLR-T-18.16: beside the tree, the elements on the plan as a list (the canvas's mirror).
+  const tab = useEditor(store, (s) => s.leftTab);
   return (
     <div className="fs-left">
       <Tabs
         aria-label="Left drawer"
         className="fs-left__tabs"
-        items={[{ value: 'tree', label: 'Tree' }, { value: 'library', label: 'Library' }]}
-        value={panel ? 'library' : 'tree'}
+        items={[{ value: 'tree', label: 'Tree' }, ...(elements === undefined ? [] : [{ value: 'elements', label: 'Elements' }]), { value: 'library', label: 'Library' }]}
+        value={panel ? 'library' : elements === undefined ? 'tree' : tab}
         onValueChange={(v) => {
           if (v === 'library') openLibrary(store, { focus: false });
-          else closeLibrary(store);
+          else {
+            closeLibrary(store);
+            store.set({ leftTab: v === 'elements' ? 'elements' : 'tree' });
+          }
         }}
       >
         <TabPanel value="tree">{tree}</TabPanel>
+        {elements === undefined ? null : <TabPanel value="elements">{elements}</TabPanel>}
         <TabPanel value="library">
           <LibraryPanel store={store} />
         </TabPanel>

@@ -7,18 +7,22 @@
  * (chart) tokens, and seven trades need seven colours that stay apart for colour-blind people. They
  * are the board's, after Okabe and Ito's palette — orange, reddish purple, yellow, sky blue,
  * vermillion, blue and bluish green — darkened in the light theme so each holds 3:1 on its
- * surface. They are always paired with the mode's icon and name: colour is never the only cue. When
+ * surface. They are always paired with the mode's icon and name: colour is never the only cue.
+ * FLR-T-18.16 tuned them (within 20° of hue of Okabe-Ito's) so every pair stays apart — CIEDE2000
+ * at least 7.5 — under protanopia, deuteranopia and tritanopia as well as normal vision, in both
+ * themes (test/colourblind.test.ts reads this file): darkened as first chosen, orange and yellow
+ * fell together for a red-blind eye (ΔE 1.8), and sky blue and blue for every eye (ΔE 5.9). When
  * the design system gains categorical tokens, these move to them (the owner was asked whether to add
  * tokens or record an ADR).
  */
 :root {
-  --fs-mode-construction: #a86b00; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
-  --fs-mode-decorator: #a8457f; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
-  --fs-mode-electrical: #7a6f00; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
-  --fs-mode-plumbing: #1f74a8; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
-  --fs-mode-mechanical: #b84f00; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
-  --fs-mode-lowvoltage: #0064a0; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
-  --fs-mode-landscape: #007a5a; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
+  --fs-mode-construction: #a87301; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
+  --fs-mode-decorator: #a6487b; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
+  --fs-mode-electrical: #5e7139; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
+  --fs-mode-plumbing: #3082b7; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
+  --fs-mode-mechanical: #ac4004; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
+  --fs-mode-lowvoltage: #1b62a4; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
+  --fs-mode-landscape: #0f7d5d; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
   /* A ghosted layer: grey, at this opacity, and never picked. */
   --fs-ghost-opacity: 0.3;
 }
@@ -28,7 +32,7 @@
   --fs-mode-electrical: #f0e442; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
   --fs-mode-plumbing: #56b4e9; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
   --fs-mode-mechanical: #d55e00; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
-  --fs-mode-lowvoltage: #6e9bff; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
+  --fs-mode-lowvoltage: #608cee; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
   --fs-mode-landscape: #009e73; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
 }
 

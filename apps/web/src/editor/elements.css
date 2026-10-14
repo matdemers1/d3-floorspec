@@ -1,0 +1,225 @@
+/*
+ * FLR-T-18.16: the element list (the left drawer's Elements tab) and the shortcut sheet (?), on the
+ * tree's rows and the design system's tokens.
+ */
+
+.fs-elements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-8);
+}
+.fs-elements .fs-overline {
+  margin: 0;
+}
+.fs-elements__lede,
+.fs-elements__empty {
+  margin: 0;
+  padding: 0 var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-elements__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-4) 0;
+  border-radius: var(--radius-sm);
+}
+.fs-elements__list:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-elements__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.fs-elements__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-8);
+  color: var(--color-fg-faint);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.fs-elements__count {
+  font-family: var(--font-mono);
+}
+.fs-elements__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 28px;
+  padding: 5px var(--space-8);
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+  cursor: pointer;
+  user-select: none;
+}
+.fs-elements__option:hover {
+  background: var(--color-surface-hover);
+}
+.fs-elements__option.is-selected {
+  background: var(--color-accent-muted);
+  color: var(--color-fg);
+}
+/* The active option: where the keys act, ringed while the list has the focus. */
+.fs-elements__list:focus-visible .fs-elements__option.is-active {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: -2px;
+}
+.fs-elements__option.is-ghost {
+  cursor: default;
+}
+.fs-elements__label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.fs-elements__meta {
+  margin-inline-start: auto;
+  padding-inline-start: var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+  white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  .fs-elements__option {
+    min-height: 40px;
+  }
+}
+
+/* The plan's way to the list: hidden until it has the focus (a skip link), then a chip at the top left. */
+.fs-skip-elements {
+  position: absolute;
+  top: var(--space-8);
+  left: var(--space-8);
+  z-index: 6;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-13);
+  box-shadow: var(--shadow-float);
+  cursor: pointer;
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.fs-skip-elements:focus-visible {
+  clip-path: none;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ── The shortcut sheet: wider than a large modal, two columns of groups; the modal scrolls ── */
+.d3-modal.fs-keys-modal {
+  width: min(880px, calc(100vw - var(--space-32)));
+}
+.fs-keys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+.fs-keys__groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  gap: var(--space-16) var(--space-24);
+}
+.fs-keys__group h3 {
+  margin: 0 0 var(--space-6);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  font-weight: var(--weight-semibold);
+}
+.fs-keys__rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-keys__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-12);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-keys__label {
+  flex: 1;
+  min-width: 0;
+}
+.fs-keys__keys {
+  flex: none;
+}
+.fs-keys__keys kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 20px;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-xs);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: inherit;
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+.fs-keys__empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+}
+.fs-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── The handles for the keyboard (KeyHandles.tsx): the 24 px hit area over each handle on the plan,
+   drawn in its SVG, invisible but for its focus ring; the pointer goes through to the plan. ── */
+.fs-keyhandle {
+  fill: transparent;
+  stroke: none;
+  pointer-events: none;
+  outline: none;
+}
+.fs-keyhandle:focus-visible {
+  fill: var(--color-accent-muted);
+  fill-opacity: 0.55;
+  stroke: var(--color-focus);
+  stroke-width: 2px;
+}
+.fs-keyhandles__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

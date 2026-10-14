@@ -52,6 +52,9 @@ export const PRECISION_COMMANDS: readonly Command[] = [
     label: 'Snap settings…',
     group: 'View',
     keywords: 'snap snapping grid step angle junction midpoint guides items',
+    // FLR-T-18.16: the board's key for the status bar's snap menu (frame 18.3, "Snap menu trigger (⇧S)").
+    codes: ['Shift+KeyS'],
+    hint: '⇧S',
     run: (store) => {
       precisionOf(store).set({ menu: true });
     },
