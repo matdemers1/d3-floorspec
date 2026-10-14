@@ -14,6 +14,7 @@ import { ProjectTree } from './Tree';
 import { Inspector } from './Inspector';
 import { RejectionBanner } from './Diagnostics';
 import { COMMANDS, commandById, commandFor, keyOf } from './commands';
+import { arrangeKey, useClipboard } from './arrange/commands';
 import { cycleFocus, drawersOf, escapeDrawer, setFullScreen, summonDrawer } from './drawers';
 import { Drawer, DrawerHead, Edges, FullScreenButton, PinButton, useChrome } from './EdgeDrawers';
 import { confirmPrompt, newLevel, switchUnits } from './actions';
@@ -113,6 +114,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   }, [notice, toast, store]);
 
   useKeyboard(store, tools);
+  useClipboard(store);
 
   const rightLabel = comments ? 'Comments' : right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : right === 'options' || right === 'optionCompare' ? 'Design options' : 'Inspector';
 
@@ -672,6 +674,11 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
         // With nothing left to escape, Esc leaves full screen.
         else if (quiet && drawersOf(store).get().full) setFullScreen(store, false);
         else tools.escape();
+        return;
+      }
+      // FLR-T-18.8: ⌥A array, ⌥⇧H/⌥⇧V distribute, ⇧H/⇧V mirror, the arrows moving several at once.
+      if (arrangeKey(store, e, mac)) {
+        e.preventDefault();
         return;
       }
       // Arrows: aim the next wall while drawing; nudge the selection; otherwise pan.

@@ -1,4 +1,3 @@
-import type { Operation } from '@floorspec/ops';
 import type { EditorState, EditorStore } from '../store';
 import { kindOf, labelOf, readModel, sortedLevels, type EditorModel, type Kind, type LevelView, type Point } from '../model';
 import { roomsBeside } from '../geometry';
@@ -43,7 +42,7 @@ export function nounOf(model: EditorModel, id: string): string {
     const name = typeof d?.element['name'] === 'string' ? d.element['name'] : d?.kindLabel;
     return (name ?? 'item').toLowerCase();
   }
-  if (kind === 'opening') return labelOf(model, id).startsWith('Door') || /door/i.test(String((model.document.openings?.[id] as { fill?: string } | undefined)?.fill ?? '')) ? 'door' : 'window';
+  if (kind === 'opening') return labelOf(model, id).startsWith('Door') || /door/i.test((model.document.openings?.[id] as { fill?: string } | undefined)?.fill ?? '') ? 'door' : 'window';
   return kind ?? 'element';
 }
 
@@ -226,7 +225,7 @@ export function removeBatch(model: EditorModel, ids: readonly string[]): Batch {
   for (const kind of ['slab', 'roof', 'stair'] as const) for (const id of of(kind)) ops.push(...removeOps(id, 'other'));
   // A junction last: a wall removed above may already have taken it.
   for (const id of of('junction')) if (!model.levels.some((l) => l.walls.some((w) => walls.has(w.id) && (w.start === id || w.end === id)))) ops.push(...removeOps(id, 'junction'));
-  return ops as Operation[];
+  return ops;
 }
 
 // ─── Selecting ──────────────────────────────────────────────────────────────────────────────
@@ -248,9 +247,9 @@ export function similarKey(model: EditorModel, id: string, how: Similar): string
     const fixture = element?.['fixture'] ?? element?.['kind'] ?? element?.['appliance'];
     return typeof fixture === 'string' ? `${kindKey}#${fixture}` : kindKey;
   }
-  if (kind === 'opening') return `opening#${String((model.document.openings?.[id] as { fill?: string } | undefined)?.fill ?? '')}`;
-  if (kind === 'wall') return `wall#${String((model.document.walls?.[id] as { type?: string } | undefined)?.type ?? '')}`;
-  if (kind === 'room') return `room#${String((model.document.rooms?.[id] as { function?: string } | undefined)?.function ?? '')}`;
+  if (kind === 'opening') return `opening#${(model.document.openings?.[id] as { fill?: string } | undefined)?.fill ?? ''}`;
+  if (kind === 'wall') return `wall#${(model.document.walls?.[id] as { type?: string } | undefined)?.type ?? ''}`;
+  if (kind === 'room') return `room#${(model.document.rooms?.[id] as { function?: string } | undefined)?.function ?? ''}`;
   return kindKey;
 }
 
@@ -414,12 +413,12 @@ async function carryAssets(clip: Clip, from: string, to: string, target: EditorM
   for (const dep of clip.dependencies) {
     if (dep.collection !== 'assets' || target.index.has(dep.id)) continue;
     const sha = dep.element['sha256'];
-    const media = String(dep.element['mediaType'] ?? '');
+    const media = typeof dep.element['mediaType'] === 'string' ? dep.element['mediaType'] : '';
     if (typeof sha !== 'string') continue;
     try {
       const res = await fetch(assetUrl(from, sha), { credentials: 'same-origin' });
       if (!res.ok) continue;
-      await uploadAsset(to, await res.blob(), String(dep.element['name'] ?? sha), media.startsWith('model/') ? 'model' : 'symbol');
+      await uploadAsset(to, await res.blob(), typeof dep.element['name'] === 'string' ? dep.element['name'] : sha, media.startsWith('model/') ? 'model' : 'symbol');
     } catch {
       // The element still pastes; its model or symbol falls back to its box.
     }

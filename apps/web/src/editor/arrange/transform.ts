@@ -1,4 +1,3 @@
-import type { Operation } from '@floorspec/ops';
 import { kindOf, type EditorModel, type LevelView, type Point, type WallView } from '../model';
 import { dist, faceAt, project } from '../geometry';
 import { moveDevice, type HostRef } from '../systems/ops';
@@ -219,7 +218,7 @@ export function transformBatch(model: EditorModel, level: LevelView, ids: readon
       skipped.push({ id, why: 'it is not drawn on the plan' });
     }
   }
-  return { batch: ops as Operation[], moved, skipped };
+  return { batch: ops, moved, skipped };
 }
 
 /**
@@ -347,7 +346,7 @@ function eachBy(model: EditorModel, level: LevelView, ids: readonly string[], by
     // A junction is moved once: a second element that shares it keeps where the first put it.
     const ops = one.batch.filter((op) => {
       if (op.op !== 'moveJunction') return true;
-      const j = String(op.id);
+      const j = op.id;
       if (done.has(j)) return false;
       done.add(j);
       return true;

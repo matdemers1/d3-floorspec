@@ -11,6 +11,7 @@ import { threeOf } from './three/mode';
 import { FURNITURE_COMMANDS } from '../furniture/commands';
 import { stageRooms } from './systems/Staging';
 import { DRAWER_HINTS, drawersOf, setFullScreen, summonDrawer } from './drawers';
+import { ARRANGE_COMMANDS } from './arrange/commands';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -530,6 +531,8 @@ export const COMMANDS: readonly Command[] = [
       switchUnits(store, 'imperial');
     },
   },
+  // Multi-select and arrange (FLR-T-18.8): duplicate, select all and similar, align, distribute, mirror, array.
+  ...ARRANGE_COMMANDS,
   // Furniture (FLR-T-8.3): I opens the library; [ and ] turn the selected item.
   ...FURNITURE_COMMANDS,
 ];

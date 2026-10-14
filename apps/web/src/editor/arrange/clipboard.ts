@@ -115,7 +115,7 @@ export function copyClip(model: EditorModel, level: LevelView, ids: readonly str
     for (let n = 2; pieceIds.has(id) || wanted.has(id); n++) id = `${piece.wall.id}.${String(n)}`;
     pieceIds.add(id);
     const element = clone(e);
-    for (const k of OWN.wall) delete element[k];
+    for (const k of OWN.wall) Reflect.deleteProperty(element, k);
     const refs: Path[] = [];
     refsIn(model, element, [], refs, () => false);
     const length = dist(piece.a, piece.b);
@@ -163,7 +163,7 @@ export function copyClip(model: EditorModel, level: LevelView, ids: readonly str
       if (d !== undefined && where !== undefined) item = { id, kind: 'device', element: clone(d.element), extension: where.extension, collection: where.collection, ...(d.placement === null ? {} : { point: d.placement.point }) };
     }
     if (item === null) continue;
-    for (const k of OWN[item.kind]) if (k === 'option') delete item.element[k];
+    Reflect.deleteProperty(item.element, 'option');
     const own = OWN[item.kind];
     const refs: Path[] = [];
     refsIn(model, item.element, [], refs, (p) => p.length === 1 && own.includes(String(p[0])) || (item.kind === 'device' && p[0] === 'fallback' && p[1] === 'level'));
@@ -271,8 +271,8 @@ export function pasteBatch(model: EditorModel, level: LevelView, clip: Clip, o: 
   // What the target lacks first: the draft a roof, a stair or an arc needs, extensions declared, dependencies added.
   const kinds = new Set(clip.items.map((i) => i.kind));
   const needs = clip.items.some((i) => i.kind === 'wall' && i.element['arc'] !== undefined) || (!o.sameProject && clip.core === '0.4') ? '0.4' : kinds.has('roof') || kinds.has('stair') || (!o.sameProject && clip.core === '0.3') ? '0.3' : null;
-  if (needs !== null) ops.push(...(upgradeAtLeast(doc, needs) as Operation[]));
-  for (const ext of new Set(clip.items.map((i) => i.extension).filter((e): e is string => e !== undefined))) ops.push(...(declarationOps(doc, ext) as Operation[]));
+  if (needs !== null) ops.push(...(upgradeAtLeast(doc, needs)));
+  for (const ext of new Set(clip.items.map((i) => i.extension).filter((e): e is string => e !== undefined))) ops.push(...(declarationOps(doc, ext)));
   for (const dep of clip.dependencies) if (!model.index.has(dep.id)) ops.push({ op: 'addElement', collection: dep.collection, id: dep.id, element: clone(dep.element) });
 
   const byKind = (k: ClipKind) => clip.items.filter((i) => i.kind === k);
@@ -300,9 +300,9 @@ export function pasteBatch(model: EditorModel, level: LevelView, clip: Clip, o: 
         const parent = getAt(element, path.slice(0, -1));
         const key = path[path.length - 1] as string | number;
         if (Array.isArray(parent) && typeof key === 'number') parent.splice(key, 1);
-        else if (isObject(parent)) delete parent[key as string];
+        else if (isObject(parent)) Reflect.deleteProperty(parent, key);
       }
-      for (const k of OWN[item.kind]) delete element[k];
+      for (const k of OWN[item.kind]) Reflect.deleteProperty(element, k);
       return element;
     };
     /** setProperty for every member a composite does not take. */
@@ -412,7 +412,7 @@ export function pasteBatch(model: EditorModel, level: LevelView, clip: Clip, o: 
             box['max'] = [Math.round((max[0] ?? 0) + offset[0]), Math.round((max[1] ?? 0) + offset[1]), max[2] ?? 0];
           }
         }
-        ops.push({ op: 'addElement', collection: item.collection as string, extension: item.extension as string, id, element } as Operation);
+        ops.push({ op: 'addElement', collection: item.collection as string, extension: item.extension as string, id, element });
         ids.push(id);
         continue;
       }
@@ -432,7 +432,7 @@ export function pasteBatch(model: EditorModel, level: LevelView, clip: Clip, o: 
     const c = recordsOf(doc, 'FS_electrical', 'circuits').find(([x]) => x === cid)?.[1];
     if (c === undefined) continue;
     const loads = Array.isArray(c['loads']) ? (c['loads'] as string[]) : [];
-    ops.push(...(setRecordMember('FS_electrical', 'circuits', cid, 'loads', [...loads, ...added]) as Operation[]));
+    ops.push(...(setRecordMember('FS_electrical', 'circuits', cid, 'loads', [...loads, ...added])));
   }
   return { batch: ops, ids, skipped };
 }
