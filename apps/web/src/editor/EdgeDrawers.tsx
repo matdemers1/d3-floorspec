@@ -15,7 +15,9 @@ import {
   setFullScreen,
   sideOf,
   useDrawers,
+  within,
   zoneAt,
+  type Box as ScreenBox,
   type DrawerNotice,
   type DrawerState,
   type Side,
@@ -173,13 +175,29 @@ export function Edges({ store }: { store: EditorStore }) {
       const s = drawers.get()[side];
       return s === 'hidden' || s === 'peeking';
     };
+    // A floating drawer's box as drawn now (its slide included).
+    const boxOf = (side: Side): ScreenBox | null => document.querySelector(`[data-drawer="${side}"]`)?.getBoundingClientRect() ?? null;
+    // Where a mouse or pen last was, for the walk-away's last look (FLR-T-18.17).
+    let last: { x: number; y: number } | null = null;
+    drawers.setProbe((side) => {
+      const el = document.querySelector(`[data-drawer="${side}"]`);
+      if (last === null || el === null) return 'off';
+      if (within(el.getBoundingClientRect(), last.x, last.y)) return 'on';
+      // Still sliding in: where it will rest is not known yet.
+      const sliding = el.getAnimations().some((a) => a.playState === 'running' && a instanceof CSSTransition && a.transitionProperty === 'transform');
+      return sliding && drawers.get()[side] === 'peeking' ? 'moving' : 'off';
+    });
     // Hover: the pointer's place over the canvas area (or a grip) decides the hot zone.
     const onMove = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return;
+      last = { x: e.clientX, y: e.clientY };
       const target = e.target instanceof Element ? e.target : null;
+      const surface = (target?.closest('.fs-editor__canvas, .fs-grip') ?? null) !== null;
+      // Measured, not only heard: a peek the pointer has reached opens though its pointerenter was lost.
+      drawers.pointerAt(e.clientX, e.clientY, boxOf, surface);
       // Over the canvas or a grip, every edge counts; over a floating drawer, only its own edge.
       const own = target?.closest<HTMLElement>('.fs-drawer:not([data-state="pinned"])')?.dataset['drawer'] ?? null;
-      const over = own !== null || (target?.closest('.fs-editor__canvas, .fs-grip') ?? null) !== null;
+      const over = own !== null || surface;
       const rect = area();
       if (!over || rect === null) {
         drawers.pointerZone(null);
@@ -192,6 +210,7 @@ export function Edges({ store }: { store: EditorStore }) {
     let swipe: { side: Side; x: number; y: number; id: number } | null = null;
     const onDown = (e: PointerEvent) => {
       lastPointer.current = e.pointerType;
+      if (e.pointerType === 'touch') last = null;
       const target = e.target instanceof Element ? e.target : null;
       if (e.pointerType !== 'mouse') {
         const rect = area();
@@ -235,6 +254,7 @@ export function Edges({ store }: { store: EditorStore }) {
     document.addEventListener('focusin', onFocus);
     document.addEventListener('focusout', onFocus);
     return () => {
+      drawers.setProbe(null);
       window.removeEventListener('pointermove', onMove);
       root?.removeEventListener('pointerdown', onDown, { capture: true });
       window.removeEventListener('pointermove', onSwipe);

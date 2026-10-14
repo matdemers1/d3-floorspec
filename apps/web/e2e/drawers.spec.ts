@@ -115,6 +115,24 @@ test('full screen with edge drawers: hot zones, pins, keys, touch, reduced motio
   expect(await stateOf(page, 'left')).toBe('open');
   await expect.poll(() => stateOf(page, 'left')).toBe('hidden');
 
+  // FLR-T-18.17: a peek that missed the pointer coming onto it still opens. Here its pointerleave
+  // is heard and the pointerenter back is lost — as on CI, where the 3D view replaced what was under
+  // the resting pointer while the peek slid in — so the move further onto it crosses no boundary of
+  // the drawer's, and only measuring the move against the drawer's box sees it there.
+  await page.mouse.move(12, 760);
+  await expect.poll(() => stateOf(page, 'left')).toBe('peeking');
+  await still(page);
+  await page.mouse.move(14, 760);
+  await page.evaluate(() => {
+    const under = document.elementFromPoint(14, 760);
+    if (under === null || under.closest('[data-drawer="left"]') === null) throw new Error('the peek is not under the pointer');
+    under.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, pointerType: 'mouse', pointerId: 1, isPrimary: true, clientX: 14, clientY: 760, relatedTarget: document.querySelector('.fs-editor__canvas') }));
+  });
+  await page.mouse.move(30, 760);
+  await expect.poll(() => stateOf(page, 'left')).toBe('open');
+  await page.mouse.move(800, 450);
+  await expect.poll(() => stateOf(page, 'left')).toBe('hidden');
+
   // ── Pinned: docked flush, and the plan reflows beside it.
   await page.mouse.move(6, 760);
   await expect.poll(() => stateOf(page, 'left')).toBe('peeking');
