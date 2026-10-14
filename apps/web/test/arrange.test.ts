@@ -9,6 +9,7 @@ import { alignBatch, distributeBatch, middleOf, mirror, quarterTurn, transformBa
 import { marqueeHits, rectOf, selectableShapes } from '../src/editor/arrange/shapes';
 import { copyClip, pasteBatch, readClip } from '../src/editor/arrange/clipboard';
 import { wallsOfRoom } from '../src/editor/arrange/rooms';
+import { arrayBatch, defaultSpec, planArray } from '../src/editor/arrange/array';
 
 /**
  * FLR-T-18.8: arranging many elements of the Courtyard House at once, through the real applier as
@@ -174,5 +175,50 @@ describe('copy, paste, duplicate and array', () => {
     const clip = copyClip(house(), L1(house()), ['GR-CW0'], 'p')!;
     expect(readClip(JSON.stringify(clip))).toEqual(clip);
     expect(readClip('hello')).toBeNull();
+  });
+});
+
+describe('array and copy along a wall', () => {
+  it('lays recessed lights along the wall nearest them, every 6 ft, on the original circuit', () => {
+    const m = house();
+    const level = L1(m);
+    const spec = defaultSpec(level, ['L-GR-R1'], false);
+    expect(spec.mode).toBe('wall');
+    expect(planArray(level, ['L-GR-R1'], spec)!.offsets).toHaveLength(3);
+    // The great room is 20 ft across: three in the row fit, a fourth would land outside it and stays out.
+    expect(arrayBatch(m, level, ['L-GR-R1'], spec, { attempt: 0, project: 'p' }).ids).toHaveLength(2);
+    const three = { ...spec, count: 3 };
+    const plan = planArray(level, ['L-GR-R1'], three)!;
+    expect(Math.round(Math.hypot(...(plan.offsets[0] as [number, number])))).toBe(6 * 390_144);
+    const out = arrayBatch(m, level, ['L-GR-R1'], three, { attempt: 0, project: 'p' });
+    expect(out.ids).toEqual(['L-GR-R1-2', 'L-GR-R1-3']);
+    const doc = commit(HOUSE, out.batch);
+    expect(readModel('a', doc).valid).toBe(true);
+  });
+
+  it('sets the row a distance off the wall and fits it between the room’s ends', () => {
+    const m = house();
+    const level = L1(m);
+    const spec = { ...defaultSpec(level, ['L-GR-R1'], false), offset: 2 * 390_144, fit: true, count: 4 };
+    const plan = planArray(level, ['L-GR-R1'], spec)!;
+    const ref = plan.wall!;
+    const [a, b] = ref.span;
+    expect(plan.spacing).toBe(Math.round((b - a) / 4));
+    commit(HOUSE, arrayBatch(m, level, ['L-GR-R1'], spec, { attempt: 0, project: 'p' }).batch);
+  });
+
+  it('runs outlets along their own wall, and a line and a grid of chairs', () => {
+    const m = house();
+    const level = L1(m);
+    const outlet = level.devices.find((d) => d.collection === 'receptacles' && d.host?.['mode'] === 'wallFace' && Number(d.host['offset']) < 600_000)!;
+    const spec = { ...defaultSpec(level, [outlet.id], false), count: 2, spacing: 390_144 };
+    const r = arrayBatch(m, level, [outlet.id], spec, { attempt: 0, project: 'p' });
+    const doc = commit(HOUSE, r.batch);
+    expect(host(doc, r.ids[0]!)['wall']).toBe(outlet.host!['wall']);
+    expect(Number(host(doc, r.ids[0]!)['offset']) - Number(outlet.host!['offset'])).toBe(390_144);
+    const line = arrayBatch(m, level, ['GR-CW0'], { ...spec, mode: 'line', count: 3, direction: 270, spacing: 640_000 }, { attempt: 0, project: 'p' });
+    expect(line.ids).toHaveLength(2);
+    const grid = arrayBatch(m, level, ['BT-CHAIR1'], { ...spec, mode: 'grid', count: 2, rows: 2, spacing: 1_200_000 }, { attempt: 0, project: 'p' });
+    expect(grid.ids).toHaveLength(3);
   });
 });
