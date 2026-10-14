@@ -39,8 +39,8 @@ import type { ImportReport } from '../exports/ifcImport';
 /** The forms the stair tool draws (Core 17.2). */
 export type StairForm = 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral';
 
-/** `hand` drags the plan (FLR-T-18.6). */
-export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'device';
+/** `hand` drags the plan (FLR-T-18.6); `measure` measures it, point to point, chained, an area (FLR-T-18.9). */
+export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'device' | 'measure';
 
 /**
  * The tools that draw a chain of points: walls and separators (a polyline), and the outlines of a

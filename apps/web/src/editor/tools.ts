@@ -3,7 +3,9 @@ import { sagittaFromRadius, sagittaToward } from './arcs';
 import { direction } from '@floorspec/engine';
 import type { LevelView, Point } from './model';
 import { dist, hitTest, faceAt, leftNormal, project, roomsBeside } from './geometry';
-import { pointAtLength, snapOpeningOn, snapPoint, type Snap } from './snap';
+import { alignMove, alignOpening, pointAtLength, snapOpeningOn, type Snap } from './snap';
+import { namer, precisionOf, snapAt, snapGridOf, snapSettingsOf } from './precision/state';
+import { measureBack, measureClick, measureEnd, measureMove } from './precision/measure';
 import { panBy, toWorld, zoomAt } from './viewport';
 import { navOf, WheelDetector, wheelAction, zoomBy, type WheelSample } from './panzoom';
 import {
@@ -23,7 +25,7 @@ import {
   typeChoices,
   type ChainVertex,
 } from './ops';
-import { gridStep, lengthText, parseLen, parseSegment } from './units';
+import { lengthText, parseLen, parseSegment } from './units';
 import { interiorPoint } from './geometry';
 import type { FaceView } from './model';
 import { kindOf, labelOf } from './model';
@@ -37,7 +39,7 @@ import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
 import type { DeviceView } from './systems/view';
 import { boxOf, dragResize, dragRotate, handlesOf, isResizable, resizeBatch, rotateHandleOf, ruleFor, sizeOf, turnBatch, type HandleSide } from '../furniture/resize';
 import { arrangeOf } from './arrange/state';
-import { isCovering, marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
+import { boundsOfIds, isCovering, marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
 import { transformBatch, translation } from './arrange/transform';
 import { deleteSelection, moveSelection } from './arrange/actions';
 
@@ -269,6 +271,7 @@ export class ToolController {
 
   private cancelGesture(): void {
     this.dragStart = null;
+    if (precisionOf(this.store).get().guides !== null) precisionOf(this.store).set({ guides: null });
     this.press = null;
     const arrange = arrangeOf(this.store);
     if (arrange.get().marquee !== null || arrange.get().dragging !== null) arrange.set({ marquee: null, dragging: null });
@@ -326,29 +329,39 @@ export class ToolController {
     return null;
   }
 
-  private snapFor(p: PointerInfo, from: Point | undefined, extra: readonly Point[] = []): Snap {
+  /**
+   * Snap the pointer with the person's settings (FLR-T-18.9, precision/state.ts): the chain drawn so
+   * far counts as junctions; ⌥ or ⌘ held ignores every snap but the grid.
+   */
+  private snapFor(p: PointerInfo, from: Point | undefined, extra: readonly Point[] = [], faces = false): Snap {
     const level = this.level;
-    const units = this.store.units;
     const withExtra: LevelView | undefined =
       level === undefined
         ? undefined
         : { ...level, junctions: [...level.junctions, ...extra.map((position, i) => ({ id: `~${String(i)}`, position, edges: 0 }))] };
-    return snapPoint(withExtra, this.world(p), {
+    return snapAt(this.store, withExtra, this.world(p), {
       from,
       tol: this.tol(p.type),
-      grid: gridStep(units),
       lock45: p.shift,
-      free: p.alt,
+      free: p.alt || p.meta === true,
+      faces,
     });
   }
 
   private toolDown(p: PointerInfo): void {
     const s = this.store.get();
-    if (!this.editable && s.tool !== 'select') return;
+    // Measuring edits nothing: it works on a model that cannot be changed too.
+    if (!this.editable && s.tool !== 'select' && s.tool !== 'measure') return;
     switch (s.tool) {
       case 'select':
         this.selectDown(p);
         return;
+      case 'measure': {
+        const last = precisionOf(this.store).get().measure;
+        const from = last.closed || last.done === true ? undefined : last.points[last.points.length - 1]?.point;
+        measureClick(this.store, this.snapFor(p, from, last.points.map((m) => m.point), true), p.detail);
+        return;
+      }
       case 'wall':
       case 'separator':
       case 'slab':
@@ -397,6 +410,12 @@ export class ToolController {
       case 'device':
         this.deviceHover(p);
         return;
+      case 'measure': {
+        const m = precisionOf(this.store).get().measure;
+        const from = m.closed || m.done === true ? undefined : m.points[m.points.length - 1]?.point;
+        measureMove(this.store, this.snapFor(p, from, m.closed || m.done === true ? [] : m.points.map((x) => x.point), true));
+        return;
+      }
       case 'stair': {
         const draft = s.draft?.tool === 'stair' ? s.draft : { tool: 'stair' as const, foot: null, cursor: null };
         this.store.set({ draft: { ...draft, cursor: this.snapFor(p, draft.foot ?? undefined).point } });
@@ -530,14 +549,34 @@ export class ToolController {
     const s = this.store.get();
     if (start === null || level === undefined) return;
     const typed = s.draft?.tool === 'select' ? s.draft.typed : '';
-    const grid = gridStep(this.store.units);
+    const grid = snapGridOf(this.store);
+    // FLR-T-18.9: ⌘ (or ⌥) held while dragging ignores the snaps; smart guides line things up.
+    const free = p.alt || p.meta === true;
+    const settings = snapSettingsOf(this.store);
+    const precision = precisionOf(this.store);
+    const guide = (g: { guides: [Point, Point][]; label?: string } | null) => {
+      const lines = g?.guides ?? [];
+      if (lines.length === 0) {
+        if (precision.get().guides !== null) precision.set({ guides: null });
+        return;
+      }
+      precision.set({ guides: { lines, ...(g?.label === undefined ? {} : { label: g.label, at: (lines[0] as [Point, Point])[1] }) } });
+    };
     if (start.kind === 'group') {
       // FLR-T-18.8: the whole selection, by the grid (⌥ free, ⇧ along one axis), drawn as a ghost until let go.
       const world = this.world(p);
       let d: Point = [world[0] - start.world[0], world[1] - start.world[1]];
       if (p.shift) d = Math.abs(d[0]) >= Math.abs(d[1]) ? [d[0], 0] : [0, d[1]];
-      if (!p.alt) d = [Math.round(d[0] / grid) * grid, Math.round(d[1] / grid) * grid];
+      if (!free) d = [Math.round(d[0] / grid) * grid, Math.round(d[1] / grid) * grid];
       d = [Math.round(d[0]), Math.round(d[1])];
+      // Smart guides: the selection's box lines up with what is around it (not along a locked axis).
+      const box = free ? null : boundsOfIds(level, s.selected);
+      if (box !== null) {
+        const moving = new Set(s.selected);
+        const aligned = alignMove(level, box, d, { tol: this.tol(p.type), settings, excludeItems: moving, excludeWalls: moving, name: namer(this.store) });
+        d = p.shift ? [d[0] === 0 ? 0 : aligned.d[0], d[1] === 0 ? 0 : aligned.d[1]] : aligned.d;
+        guide(aligned);
+      } else guide(null);
       if (s.hover !== null) this.store.set({ hover: null });
       arrangeOf(this.store).set({ dragging: d });
       const model = s.model;
@@ -546,7 +585,7 @@ export class ToolController {
     }
     if (start.kind === 'junction') {
       const walls = new Set([...level.walls, ...level.separators].filter((w) => w.start === start.target || w.end === start.target).map((w) => w.id));
-      const snap = snapPoint(level, this.world(p), { tol: this.tol(p.type), grid, exclude: new Set([start.target]), excludeWalls: walls, lock45: p.shift, free: p.alt });
+      const snap = snapAt(this.store, level, this.world(p), { tol: this.tol(p.type), exclude: new Set([start.target]), excludeWalls: walls, lock45: p.shift, free });
       this.store.set({ draft: { tool: 'select', drag: { kind: 'junction', id: start.target, to: snap.point, snap }, typed } });
       this.store.preview(moveJunction(start.target, snap.point));
       return;
@@ -574,7 +613,16 @@ export class ToolController {
     if (start.kind === 'device') {
       const device = level.devices.find((d) => d.id === start.target);
       if (device === undefined) return;
-      const hover = dragHost(level, device, this.world(p), { grid, tol: this.tol(p.type) });
+      // Smart guides: the item's box, centred where the pointer is, lines up with walls and other items.
+      let at = this.world(p);
+      const box = boundsOfIds(level, [device.id]);
+      if (box !== null && !free) {
+        const c: Point = [(box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2];
+        const aligned = alignMove(level, box, [at[0] - c[0], at[1] - c[1]], { tol: this.tol(p.type), settings, excludeItems: new Set([device.id]), name: namer(this.store) });
+        if (aligned.guides.length > 0) at = [c[0] + aligned.d[0], c[1] + aligned.d[1]];
+        guide(aligned);
+      }
+      const hover = dragHost(level, device, at, { grid, tol: this.tol(p.type) });
       if (hover === null || hover.problem !== undefined) {
         this.store.set({ draft: { tool: 'select', drag: null, typed } });
         this.store.preview(null);
@@ -590,7 +638,23 @@ export class ToolController {
       const n = leftNormal(wall.a, wall.b);
       const world = this.world(p);
       const raw = (world[0] - start.world[0]) * n[0] + (world[1] - start.world[1]) * n[1];
-      const by = Math.round(raw / grid) * grid;
+      let by = Math.round(raw / grid) * grid;
+      // Smart guides: an axis-aligned wall lines its location line up with a parallel one's.
+      const k: 0 | 1 | null = wall.a[1] === wall.b[1] ? 1 : wall.a[0] === wall.b[0] ? 0 : null;
+      if (k !== null && !free && settings.on && settings.guides) {
+        const now = wall.a[k] + n[k] * raw;
+        let best: { at: number; other: (typeof level.walls)[number] } | null = null;
+        for (const other of level.walls) {
+          if (other.id === wall.id || other.line.length > 2 || other.a[k] !== other.b[k]) continue;
+          if (Math.abs(other.a[k] - now) <= this.tol(p.type) && (best === null || Math.abs(other.a[k] - now) < Math.abs(best.at - now))) best = { at: other.a[k], other };
+        }
+        if (best !== null) {
+          by = Math.round((best.at - wall.a[k]) * n[k]);
+          const mid: Point = k === 1 ? [(wall.a[0] + wall.b[0]) / 2, best.at] : [best.at, (wall.a[1] + wall.b[1]) / 2];
+          const to: Point = [(best.other.a[0] + best.other.b[0]) / 2, (best.other.a[1] + best.other.b[1]) / 2];
+          guide({ guides: [[mid, to]], label: `In line with ${namer(this.store)(best.other.id)}` });
+        } else guide(null);
+      }
       this.store.set({ draft: { tool: 'select', drag: { kind: 'wall', id: wall.id, by }, typed } });
       this.store.preview(by === 0 ? null : moveWall(wall.id, by));
       return;
@@ -599,11 +663,16 @@ export class ToolController {
     const wall = opening === undefined ? undefined : level.walls.find((w) => w.id === opening.wall);
     if (opening === undefined || wall === undefined) return;
     const snap = snapOpeningOn(wall, opening.width, this.world(p), { tol: this.tol(p.type), grid });
+    // Smart guides: its centre or an edge in line with another opening's centre, a junction, an item.
+    const aligned = snap.centered || free ? null : alignOpening(level, wall, { id: opening.id, offset: snap.offset, width: opening.width }, { tol: this.tol(p.type), settings, name: namer(this.store) });
+    if (aligned !== null) snap.offset = aligned.offset;
+    guide(aligned);
     this.store.set({ draft: { tool: 'select', drag: { kind: 'opening', id: opening.id, offset: snap.offset, centered: snap.centered }, typed } });
     this.store.preview(moveOpening(opening.id, snap.centered ? 'centered' : snap.offset));
   }
 
   private selectUp(p: PointerInfo, moved: boolean): void {
+    if (precisionOf(this.store).get().guides !== null) precisionOf(this.store).set({ guides: null });
     const start = this.dragStart;
     this.dragStart = null;
     const press = this.press;
@@ -860,7 +929,7 @@ export class ToolController {
     }
     const fill = this.store.chosenType(typeChoices(s.model.document, tool === 'door' ? 'doorType' : 'windowType'), tool === 'door' ? s.draw.doorType : s.draw.windowType);
     const width = Number(fill?.element['width'] ?? 0);
-    const snap = snapOpeningOn(wall, width, this.world(p), { tol: this.tol(p.type), grid: gridStep(this.store.units) });
+    const snap = snapOpeningOn(wall, width, this.world(p), { tol: this.tol(p.type), grid: snapGridOf(this.store) });
     this.store.set({ draft: { tool, hover: { wall: wall.id, offset: snap.offset, centered: snap.centered, width, side: snap.side, nearer: snap.nearer, fits: snap.fits }, typed } });
   }
 
@@ -912,6 +981,7 @@ export class ToolController {
 
   /** Typed lengths while drawing or dragging. Returns true when the key was taken. */
   typeKey(key: string): boolean {
+    if (key === 'Backspace' && this.store.get().tool === 'measure') return measureBack(this.store);
     const s = this.store.get();
     // Drawing from the keyboard: the wall tool takes a typed start point before any click.
     const draft =
@@ -942,6 +1012,7 @@ export class ToolController {
 
   /** Enter: place the typed length, or finish a chain. */
   enter(): boolean {
+    if (this.store.get().tool === 'measure') return measureEnd(this.store);
     const s = this.store.get();
     const draft = s.draft;
     const units = this.store.units;
@@ -1104,6 +1175,11 @@ export class ToolController {
       this.store.set({ picking: null });
       return;
     }
+    // The measure tool: Esc clears the measurement, then puts the tape down.
+    if (s.tool === 'measure' && precisionOf(this.store).get().measure.points.length > 0) {
+      precisionOf(this.store).clearMeasure();
+      return;
+    }
     if (s.tool !== 'select') {
       this.store.setTool('select');
       return;
@@ -1155,7 +1231,7 @@ export class ToolController {
     const s = this.store.get();
     if (level === undefined || kind === undefined) return;
     const typed = s.draft?.tool === 'device' ? s.draft.typed : '';
-    const hover = hoverFor(level, kind.mount, this.world(p), { grid: gridStep(this.store.units), tol: this.tol(p.type), height: this.deviceHeight(kind) });
+    const hover = hoverFor(level, kind.mount, this.world(p), { grid: snapGridOf(this.store), tol: this.tol(p.type), height: this.deviceHeight(kind) });
     this.store.set({ draft: { tool: 'device', hover, typed } });
   }
 
@@ -1164,7 +1240,7 @@ export class ToolController {
     const wall = this.level?.walls.find((w) => w.id === wallId);
     const kind = this.deviceKind;
     if (wall === undefined || kind === undefined || this.level === undefined) return;
-    const hover = centredOn(this.level, wall, kind, this.deviceHeight(kind), gridStep(this.store.units));
+    const hover = centredOn(this.level, wall, kind, this.deviceHeight(kind), snapGridOf(this.store));
     if (hover !== null) this.store.set({ draft: { tool: 'device', hover, typed: '' } });
   }
 
