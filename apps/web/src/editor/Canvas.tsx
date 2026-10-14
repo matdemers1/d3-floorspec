@@ -35,6 +35,7 @@ import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
 import { QuickAdd } from '../placing/QuickAdd';
 import { PhraseAnnouncer, PhraseBar, PhraseLayer } from '../phrases/PhraseBar';
 import { RoomDragGhost, RoomHandles, WandOverlay, WandPrompt } from './rooms/RoomLayer';
+import { KeyHandles, KeyHandlesLive } from './KeyHandles';
 import { AnnotationLayer } from './annotate/Layer';
 import { AnnotationDraftLayer, AnnotationHtml } from './annotate/Overlay';
 import { ReferenceLayer, UnderlayCapture, UnderlayHtml, UnderlayImage } from './underlay/Layer';
@@ -228,6 +229,8 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <Findings store={store} view={view} level={level} />
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
               {comparing ? null : <ArrangeLayer store={store} view={view} level={level} />}
+              {/* FLR-T-18.16: the selection's handles as focusable sliders over the pictures — Tab, the arrows, Enter. */}
+              {comparing ? null : <KeyHandles store={store} view={view} level={level} />}
               {/* FLR-T-18.11: dimensions, tags and notes — render2d's one layout, the PDF's and the plan render's. */}
               <AnnotationLayer store={store} view={view} level={level} model={model} layers={layers} units={units} caps={look.theme.caps} />
               {layers.rooms ? <StyledRoomLabels view={view} level={level} document={model.document} units={units} look={look} reno={renoStyles} /> : null}
@@ -246,6 +249,8 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
         </svg>
       ) : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
+      {/* FLR-T-18.16: what a handle moved from the keyboard made, said. */}
+      <KeyHandlesLive store={store} />
       {view !== null && model !== null && level !== undefined && !comparing ? <PrecisionHtml store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <AnnotationHtml store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
       {/* FLR-T-18.7: the ghost's distances and its sentence, and the quick-add bar at the pointer. */}

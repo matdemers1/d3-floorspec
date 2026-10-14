@@ -25,6 +25,10 @@ import { connectLive } from './live';
 import { ProposalPanel } from './Proposal';
 import { ComparePanel, HistoryPanel } from './HistoryPanel';
 import { Palette } from './Palette';
+import { ShortcutSheet } from './ShortcutSheet';
+import { ElementList, openElementList } from './ElementList';
+import { focusHandles } from './KeyHandles';
+import { withKeys } from './shortcuts';
 import { isArrow, nudge, nudgeable } from './nudge';
 import { roomKey } from './rooms/keys';
 import { endCompare, toggleHistory } from './history';
@@ -159,7 +163,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
       </Drawer>
       <Drawer store={store} side="left">
         <ToolRail store={store} tools={tools} />
-        <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : left === 'history' ? <HistoryPanel store={store} you={you} /> : <LeftPanel store={store} tree={<ProjectTree store={store} />} />}</aside>
+        <aside className="fs-editor__tree">{status === 'loading' ? <TreeSkeleton /> : left === 'history' ? <HistoryPanel store={store} you={you} /> : <LeftPanel store={store} tree={<ProjectTree store={store} />} elements={<ElementList store={store} />} />}</aside>
       </Drawer>
       <main className="fs-editor__canvas" aria-label={viewMode === '3d' || walking ? '3D view' : viewMode === 'split' ? 'Plan and 3D view' : 'Plan'}>
         {status === 'loading' ? (
@@ -206,6 +210,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
       <PromptModal store={store} />
       <SaveModeDialog store={store} />
       {status === 'ready' ? <Palette store={store} tools={tools} /> : null}
+      <ShortcutSheet store={store} />
       <Edges store={store} />
     </div>
   );
@@ -232,6 +237,12 @@ function CanvasArea({ store, tools }: { store: EditorStore; tools: ToolControlle
   const blank = view !== undefined && view.walls.length === 0 && view.separators.length === 0;
   return (
     <>
+      {/* FLR-T-18.16: the plan's way to its mirror, the element list — shown when it has the focus. */}
+      {model !== null && level !== null ? (
+        <button type="button" className="fs-skip-elements" aria-keyshortcuts="Alt+L" onClick={() => { openElementList(store); }}>
+          {withKeys('Go to the list of elements on the plan', 'view.elements')}
+        </button>
+      ) : null}
       <Views
         store={store}
         plan={
@@ -413,16 +424,16 @@ function TopBar({ store, tools, you }: { store: EditorStore; tools: ToolControll
           </span>
         </button>
       ) : null}
-      <Tooltip content={`History (${commandById('history.toggle')?.hint ?? ''})`}>
+      <Tooltip content={withKeys('History', 'history.toggle')}>
         <IconButton label={left === 'history' ? 'Hide the history' : 'Show the history'} pressed={left === 'history'} icon={<HistoryIcon />} onClick={() => { toggleHistory(store); }} />
       </Tooltip>
-      <Tooltip content="Commands (⌘K)">
+      <Tooltip content={withKeys('Commands', 'view.palette')}>
         <IconButton label="Command palette" icon={<CommandIcon />} onClick={() => { store.set({ palette: true }); }} />
       </Tooltip>
-      <Tooltip content="Undo (⌘Z)">
+      <Tooltip content={withKeys('Undo', 'edit.undo')}>
         <IconButton label="Undo" icon={<Undo2 />} disabled={!editable || history.undo === null} onClick={() => void store.undo('undo')} />
       </Tooltip>
-      <Tooltip content="Redo (⇧⌘Z)">
+      <Tooltip content={withKeys('Redo', 'edit.redo')}>
         <IconButton label="Redo" icon={<Redo2 />} disabled={!editable || history.redo === null} onClick={() => void store.undo('redo')} />
       </Tooltip>
       <CommentsButton store={store} />
@@ -534,10 +545,10 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
         );
       })}
       {/* FLR-T-18.7: the library drawer — furniture, fixtures, devices, doors, windows, plants — and quick add. */}
-      <Tooltip content="Insert from the library (I)" side="right">
+      <Tooltip content={withKeys('Insert from the library', 'tool.furniture')} side="right">
         <IconButton label="Insert from the library" icon={<SofaIcon />} pressed={libraryOpen} disabled={!canDraw} onClick={() => { openLibrary(store); }} />
       </Tooltip>
-      <Tooltip content="Quick add at the pointer (/)" side="right">
+      <Tooltip content={withKeys('Quick add at the pointer', 'library.quickAdd')} side="right">
         <IconButton label="Quick add" icon={<SquareSlash />} disabled={!canDraw} onClick={() => { openQuickAdd(store); }} />
       </Tooltip>
       <span className="fs-rail__rule" />
@@ -586,7 +597,7 @@ function RailButton({ store, tools, item, canDraw }: { store: EditorStore; tools
   const libraryOpen = usePlacing(store, (p) => p.panel);
   if ('library' in item) {
     return (
-      <Tooltip content="Insert from the library (I)" side="right">
+      <Tooltip content={withKeys('Insert from the library', 'tool.furniture')} side="right">
         <IconButton label="Insert from the library" icon={<SofaIcon />} pressed={libraryOpen} disabled={!canDraw} onClick={() => { openLibrary(store); }} />
       </Tooltip>
     );
@@ -594,7 +605,7 @@ function RailButton({ store, tools, item, canDraw }: { store: EditorStore; tools
   // FLR-T-18.7: Decorator's quick add, at the pointer.
   if ('quick' in item) {
     return (
-      <Tooltip content="Quick add at the pointer (/)" side="right">
+      <Tooltip content={withKeys('Quick add at the pointer', 'library.quickAdd')} side="right">
         <IconButton label="Quick add" icon={<SquareSlash />} disabled={!canDraw} onClick={() => { openQuickAdd(store); }} />
       </Tooltip>
     );
@@ -795,6 +806,11 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
       }
       // Tab (⇧Tab back) with the magic wand's prompt up: the next space the click could mean (FLR-T-18.10).
       if (e.key === 'Tab' && !mod && !e.altKey && tools.cycleWand(e.shiftKey)) {
+        e.preventDefault();
+        return;
+      }
+      // FLR-T-18.16: Tab (⇧Tab) from the plan to the selection's handles — the board's handle rules.
+      if (e.key === 'Tab' && !mod && !e.altKey && target !== null && target.classList.contains('fs-editor') && focusHandles(e.shiftKey)) {
         e.preventDefault();
         return;
       }
