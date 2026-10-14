@@ -130,6 +130,30 @@ export async function postUndo(projectId: string, head: string, mode: 'undo' | '
   }
 }
 
+/** FLR-T-18.14: return main to the version after op `seq`, as one new op (the scrubber's Restore). */
+export async function postRestore(projectId: string, head: string, seq: number): Promise<ApplyAnswer> {
+  try {
+    return await answer(await fetch(`/api/projects/${projectId}/restore`, writeInit(head, { seq })));
+  } catch {
+    return { status: 'failed', message: 'The server did not answer. Nothing was changed.' };
+  }
+}
+
+/** FLR-T-18.14: open a changeset at the version after op `seq` (the scrubber's Branch); main does not move. */
+export async function postBranch(projectId: string, seq: number): Promise<{ status: 'opened'; id: string; name: string } | { status: 'failed'; message: string }> {
+  try {
+    const res = await fetch(`/api/projects/${projectId}/branch`, { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ seq }) });
+    const body = await json(res);
+    if (res.status === 201) {
+      const cs = body['changeset'] as { id: string; name: string };
+      return { status: 'opened', id: cs.id, name: cs.name };
+    }
+    return { status: 'failed', message: messageOf(body, res.status) };
+  } catch {
+    return { status: 'failed', message: 'The server did not answer. Nothing was changed.' };
+  }
+}
+
 // ─── History (FLR-T-3.6) ─────────────────────────────────────────────────────────────────────
 
 export interface HistoryEntry {

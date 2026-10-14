@@ -162,6 +162,20 @@ const EXERCISES: Record<string, Exercise> = {
     await operator.post(`/api/projects/${id}/undo`);
     return { reply: await operator.post(`/api/projects/${id}/redo`), action: 'ops.redo' };
   },
+  'POST /api/projects/:projectId/restore': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    const { op } = (await operator.post(`/api/projects/${id}/ops`, { batch: ROOM })).body as { op: { seq: number } };
+    await operator.post(`/api/projects/${id}/ops`, { batch: [{ op: 'addElement', collection: 'buildings', element: {} }] });
+    return { reply: await operator.post(`/api/projects/${id}/restore`, { seq: op.seq }), action: 'ops.restore' };
+  },
+  'POST /api/projects/:projectId/branch': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    const { op } = (await operator.post(`/api/projects/${id}/ops`, { batch: ROOM })).body as { op: { seq: number } };
+    await operator.post(`/api/projects/${id}/ops`, { batch: [{ op: 'addElement', collection: 'buildings', element: {} }] });
+    return { reply: await operator.post(`/api/projects/${id}/branch`, { seq: op.seq }), action: 'changeset.branch' };
+  },
   'POST /api/projects/:projectId/changesets': async ({ running }) => {
     const operator = await setupOperator(running);
     const { id } = await createProjectAs(operator);

@@ -72,7 +72,7 @@ export interface Entry {
   placement: Placement;
   box: FrameBox;
   /** Clearance envelopes in the frame (FS_furniture 4.2), drawn with the ghost. */
-  clearances: readonly { name: string; min: readonly number[]; max: readonly number[] }[];
+  clearances: readonly { name: string; min: readonly number[]; max: readonly number[]; purpose?: string }[];
   /** A wall mount's height above the wall's base, base units. */
   height: number;
   /** The plan symbol's URL, for a library item that has one. */
@@ -123,7 +123,7 @@ function furnitureEntry(item: LibraryItem): Entry {
     groups,
     placement,
     box: box3(item.box),
-    clearances: Object.entries(item.clearances).map(([name, e]) => ({ name, min: e.min, max: e.max })),
+    clearances: Object.entries(item.clearances).map(([name, e]) => ({ name, min: e.min, max: e.max, purpose: e.purpose })),
     height: item.mounting === 'floor' ? 0 : mountHeight(item.category),
     symbol: item.symbol.url === '' ? null : item.symbol.url,
     hay: `${item.name} ${categoryLabel(item.category)} ${item.category} ${item.kind} ${item.id} furniture`,

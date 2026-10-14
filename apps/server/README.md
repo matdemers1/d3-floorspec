@@ -15,6 +15,8 @@ transaction under a row lock on the project. `context.retired` comes from `retir
 |---|---|
 | `POST /api/projects/:id/ops` | `{ batch, context?: { locks }, changeset? }` → 201 committed; 422 problem+json with the applier's diagnostics; 412 on a stale `If-Match` |
 | `POST /api/projects/:id/undo`, `/redo` | appends the stored inverse of the newest edit still in effect (undo), or of the newest undo (redo) |
+| `POST /api/projects/:id/restore` `{ seq }` | returns main to the version after op `seq` as one new op — the stored inverses of every later op, newest first — refused unless the result is exactly that version |
+| `POST /api/projects/:id/branch` `{ seq, name? }` | opens a changeset ("From v<seq>") whose first op returns it to that version; main does not move |
 | `GET /api/projects/:id/versions/:hash` | canonical bytes of a version this project reached |
 | `GET /api/projects/:id/history` | main's ops, newest first, with what undo and redo would invert next |
 
