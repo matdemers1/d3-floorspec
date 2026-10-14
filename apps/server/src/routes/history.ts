@@ -14,6 +14,7 @@ import {
   authorOf,
   changesetHead,
   lockProject,
+  restoreBatch,
   undoCandidates,
   undoTarget,
   type ApplyOutcome,
@@ -46,6 +47,20 @@ export const ApplyBody = z.strictObject({
 });
 
 const UndoBody = z.strictObject({}).optional();
+
+/** FLR-T-18.14: a version of main, by the seq of the op that made it. */
+const RestoreBody = z.strictObject({ seq: z.number().int().min(1) });
+const BranchBody = z.strictObject({ seq: z.number().int().min(1), name: z.string().trim().min(1).max(120).optional() });
+
+/** A restore that did not arrive exactly at the version asked for writes nothing. */
+function inexact(seq: number, target: string, got: string): ProblemError {
+  return new ProblemError({
+    status: 409,
+    type: 'restore-inexact',
+    title: 'the restore did not arrive at that version, so nothing changed',
+    detail: `v${String(seq)} is ${target}; taking back the ops after it gave ${got}.`,
+  });
+}
 
 /**
  * The 422 a rejected batch answers with: the applier's diagnostics, fix operations and all. Thrown,
@@ -192,6 +207,95 @@ export function historyRoutes(db: Db, applier: Applier): Routes {
       { token: 'write' },
     );
   }
+
+  /**
+   * FLR-T-18.14: restore main to an earlier version — the history scrubber's Restore. One new op on
+   * main: the stored inverses of every op after that version, newest first (`restoreBatch`). History
+   * is appended to, never rewound; undo takes the restore back like any edit. Refused, writing
+   * nothing, unless the result is exactly that version.
+   */
+  routes.mutate(
+    'POST',
+    '/:projectId/restore',
+    async (req, tx): Promise<MutationResult> => {
+      const project = req.project;
+      if (project === undefined) throw new HttpError(404, 'project not found');
+      const body = parse(RestoreBody, req.body);
+      await lockProject(tx, project.id);
+      const { batch, target, undone } = await restoreBatch(tx, project.id, body.seq);
+      const outcome = await applyToHead(tx, applier, {
+        projectId: project.id,
+        head: MAIN,
+        batch,
+        author: authorOf(req),
+        kind: 'apply',
+        ifMatch: ifMatchOf(req),
+        // The inverses bring removed elements back under their own IDs (Ops 1.6), as undo does.
+        retiredExcept: { ids: idsNamedByAdds(batch) },
+      });
+      if (outcome.status === 'rejected') throw rejection(outcome.result, MAIN);
+      if (outcome.result.hash !== target) throw inexact(body.seq, target, outcome.result.hash);
+      const view = committedView(outcome);
+      return {
+        reply: (res) => {
+          res.setHeader('ETag', `"${view.hash}"`);
+          res.status(201).json({ ...view, restored: body.seq });
+        },
+        events: [headEvent(project.id, outcome.op)],
+        audit: {
+          action: 'ops.restore',
+          targetType: 'project',
+          targetId: project.id,
+          detail: { seq: outcome.op.seq, to: body.seq, undone, before: outcome.before, after: view.hash },
+        },
+      };
+    },
+    { token: 'write' },
+  );
+
+  /**
+   * FLR-T-18.14: branch from an earlier version — the scrubber's Branch. A changeset opened from main
+   * (named, or "From v<seq>") whose first op returns it to that version; main does not move. Accepting
+   * it is a person's decision, as for any changeset (FLR-ADR-016).
+   */
+  routes.mutate(
+    'POST',
+    '/:projectId/branch',
+    async (req, tx): Promise<MutationResult> => {
+      const project = req.project;
+      if (project === undefined) throw new HttpError(404, 'project not found');
+      const body = parse(BranchBody, req.body);
+      const author = authorOf(req);
+      await lockProject(tx, project.id);
+      const { batch, target } = await restoreBatch(tx, project.id, body.seq);
+      const { changeset, opened } = await openChangeset(tx, project.id, body.name ?? `From v${String(body.seq)}`, author);
+      if (!opened) throw new HttpError(409, `a pending changeset is already called “${changeset.name}”`);
+      const head = changesetHead(changeset.id);
+      const outcome = await applyToHead(tx, applier, {
+        projectId: project.id,
+        head,
+        batch,
+        author,
+        kind: 'apply',
+        changesetId: changeset.id,
+        retiredExcept: { ids: idsNamedByAdds(batch) },
+      });
+      if (outcome.status === 'rejected') throw rejection(outcome.result, head);
+      if (outcome.result.hash !== target) throw inexact(body.seq, target, outcome.result.hash);
+      const view = committedView(outcome);
+      return {
+        reply: (res) => res.status(201).json({ ...view, from: body.seq, changeset: changesetView(changeset, { head: view.hash }) }),
+        events: [changesetEvent(changeset, 'opened', { hash: view.hash, ops: await countChangesetOps(tx, changeset) })],
+        audit: {
+          action: 'changeset.branch',
+          targetType: 'changeset',
+          targetId: changeset.id,
+          detail: { project: project.id, name: changeset.name, from: body.seq, seq: outcome.op.seq, after: view.hash },
+        },
+      };
+    },
+    { token: 'propose' },
+  );
 
   /**
    * One version of the model, as canonical bytes — any version this project has been at, on main

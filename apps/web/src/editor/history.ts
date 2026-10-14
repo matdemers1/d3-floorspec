@@ -1,4 +1,4 @@
-import { fetchHistoryLog, fetchTokenNames, fetchVersion, type HistoryEntry } from './api';
+import { fetchHistoryLog, fetchTokenNames, fetchVersion, postBranch, type HistoryEntry } from './api';
 import { readModel, type EditorModel } from './model';
 import type { EditorStore } from './store';
 
@@ -42,6 +42,68 @@ export function openHistory(store: EditorStore): void {
 
 export function closeHistory(store: EditorStore): void {
   store.set({ left: 'tree', compare: null });
+}
+
+// ─── The scrubber (FLR-T-18.14) ──────────────────────────────────────────────────────────────
+
+/**
+ * Scrub to the version after `entry`: the plan drawn as it was then, what was added since green and
+ * what was removed since red, against main now. `null` is now: the comparison ends.
+ */
+export async function scrubTo(store: EditorStore, entry: HistoryEntry | null): Promise<void> {
+  const now = store.get().model;
+  if (entry === null || now === null || entry.after === now.hash) {
+    if (store.get().compare?.scrub === true) endCompare(store);
+    return;
+  }
+  const from = entry.after;
+  store.preview(null);
+  store.set((s) => ({
+    compare: { from, to: now.hash, fromModel: s.compare?.scrub === true && s.compare.from === from ? s.compare.fromModel : null, toModel: now, loading: true, error: null, scrub: true },
+    tool: 'select',
+    draft: null,
+    hover: null,
+  }));
+  try {
+    const a = await versionModel(store.projectId, from);
+    const c = store.get().compare;
+    if (c?.from !== from || c.scrub !== true) return;
+    store.set((s) => ({
+      compare: { from, to: now.hash, fromModel: a, toModel: now, loading: false, error: null, scrub: true },
+      level: a.levels.some((l) => l.id === s.level) ? s.level : (a.levels[0]?.id ?? s.level),
+    }));
+  } catch {
+    store.set((s) => ({ compare: s.compare === null ? null : { ...s.compare, loading: false, error: 'That version did not load.' } }));
+  }
+}
+
+/** Restore the version scrubbed to: one new op on main (the server's restore); the scrubber goes back to now. */
+export async function restoreTo(store: EditorStore, seq: number): Promise<boolean> {
+  endCompare(store);
+  const ok = await store.restore(seq);
+  if (ok) {
+    store.set({ notice: { tone: 'info', text: `Restored v${String(seq)} as a new version — undo takes it back.` } });
+    void refreshLog(store);
+  }
+  return ok;
+}
+
+/** Branch from the version scrubbed to: a changeset at that version, to review and accept or reject; main stays. */
+export async function branchFrom(store: EditorStore, seq: number): Promise<string | null> {
+  const answer = await postBranch(store.projectId, seq);
+  if (answer.status === 'failed') {
+    store.set({ notice: { tone: 'danger', text: answer.message.charAt(0).toUpperCase() + answer.message.slice(1) } });
+    return null;
+  }
+  store.set({ notice: { tone: 'info', text: `Branched “${answer.name}” — a changeset at v${String(seq)}, in Proposals. Main is unchanged.` } });
+  return answer.id;
+}
+
+/** "Restored v52": an edit that brought main back to a version it had been at, by the hash it arrived at. */
+export function restoredFrom(entry: HistoryEntry, log: readonly HistoryEntry[]): number | null {
+  if (entry.kind !== 'apply') return null;
+  const earlier = log.find((e) => e.seq < entry.seq && e.after === entry.after);
+  return earlier === undefined ? null : earlier.seq;
 }
 
 export function toggleHistory(store: EditorStore): void {
