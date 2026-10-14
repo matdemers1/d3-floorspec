@@ -205,6 +205,11 @@
   background: var(--color-bg);
   overflow: hidden;
 }
+/* A preview is the plan's shapes alone: text and stair arrows, drawn at a reading size, would cover it. */
+.fs-mode-thumb text,
+.fs-mode-thumb .fs-plan2__stairs {
+  display: none;
+}
 .fs-mode-row[data-current='true'] .fs-mode-thumb {
   border-color: var(--color-accent);
   outline: 1px solid var(--color-accent);
