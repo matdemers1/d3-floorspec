@@ -40,6 +40,7 @@ import type { ToolController } from './tools';
 import type { EditorModel, LevelView } from './model';
 import { AirIcon, DropIcon, EyeIcon, PlugIcon, SofaIcon } from './icons';
 import { LAYER_LABELS, MODE_IDS, MODES, PLAN_LAYERS, modesOf, useModes, type LayerState, type LayerStates, type ModeId, type PlanLayer } from './modes';
+import { TraceLayers } from './underlay/Panel';
 import { Plan } from './Canvas';
 import { layerOfElement as layerOf } from '@floorspec/render2d';
 import { prettyLen, type UnitSystem } from './units';
@@ -368,6 +369,8 @@ export function ModeLayers({ store }: { store: EditorStore }) {
           </li>
         ))}
       </ul>
+      {/* FLR-T-18.12: the level's underlay and the reference level, in the same drawer. */}
+      <TraceLayers store={store} />
       <div className="fs-layers__chips">
         <button
           type="button"

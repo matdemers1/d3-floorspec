@@ -63,3 +63,9 @@ minimumReleaseAgeExclude:
 # patch is redone or dropped — it never applies silently to a version it was not written for.
 patchedDependencies:
   three-gpu-pathtracer@0.0.26: patches/three-gpu-pathtracer@0.0.26.patch
+
+# pdf.js (FLR-T-18.12: a plan PDF rasterised in the browser as an underlay) names a native canvas for
+# Node as an optional dependency. Nothing here renders a PDF outside the browser, so it is not
+# installed: no native binary, and one less package under the release-age and trust policies.
+ignoredOptionalDependencies:
+  - '@napi-rs/canvas'
