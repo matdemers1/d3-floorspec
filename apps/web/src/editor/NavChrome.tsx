@@ -352,7 +352,10 @@ function Minimap({ store, view }: { store: EditorStore; view: Viewport }) {
   const r = visibleRegion(view);
   const a = toScreen(mini, [r.minX, r.maxY]);
   const b = toScreen(mini, [r.maxX, r.minY]);
-  const rect = { x: a[0], y: a[1], w: b[0] - a[0], h: b[1] - a[1] };
+  // Kept inside the minimap (by a pixel), so its edge shows even when the view takes in more than the level.
+  const x0 = Math.max(1, Math.min(MINI_W - 3, a[0]));
+  const y0 = Math.max(1, Math.min(height - 3, a[1]));
+  const rect = { x: x0, y: y0, w: Math.max(2, Math.min(MINI_W - 1, b[0]) - x0), h: Math.max(2, Math.min(height - 1, b[1]) - y0) };
 
   /** Centre the view on a point of the minimap (its own pixels). */
   const centreAt = (x: number, y: number, animate: boolean) => {
@@ -436,7 +439,7 @@ function Minimap({ store, view }: { store: EditorStore; view: Viewport }) {
           onKeyDown={onKey}
         >
           {drawn}
-          <rect className="fs-minimap__view" data-testid="minimap-viewport" x={rect.x} y={rect.y} width={Math.max(2, rect.w)} height={Math.max(2, rect.h)} />
+          <rect className="fs-minimap__view" data-testid="minimap-viewport" x={rect.x} y={rect.y} width={rect.w} height={rect.h} />
         </svg>
       )}
     </section>

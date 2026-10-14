@@ -270,10 +270,12 @@ test('pan and zoom: keys, animation, the editable zoom, the wheel, the hand, dou
   expect(moved.y).toBeLessThan(before.y - 10);
   // A press elsewhere on it brings the view there.
   const mini = (await minimap.locator('svg[aria-roledescription="minimap"]').boundingBox())!;
-  await page.mouse.click(mini.x + 12, mini.y + mini.height - 12);
+  const spot = { x: mini.x + mini.width * 0.7, y: mini.y + mini.height * 0.55 };
+  await page.mouse.click(spot.x, spot.y);
   await still(page);
   const r2 = (await rect.boundingBox())!;
-  expect(Math.abs(r2.x + r2.width / 2 - (mini.x + 12))).toBeLessThan(4);
+  expect(Math.abs(r2.x + r2.width / 2 - spot.x)).toBeLessThan(4);
+  expect(Math.abs(r2.y + r2.height / 2 - spot.y)).toBeLessThan(4);
   // The keyboard pans it too.
   await minimap.locator('svg[aria-roledescription="minimap"]').focus();
   await page.keyboard.press('ArrowRight');

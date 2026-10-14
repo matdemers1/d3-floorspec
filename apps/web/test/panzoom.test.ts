@@ -10,6 +10,7 @@ import { BASE_PER_FOOT } from '../src/editor/units';
 import {
   between,
   elementBounds,
+  frameOn,
   goTo,
   navOf,
   openView,
@@ -221,6 +222,16 @@ describe('moving the view', () => {
     const shown = visibleRegion(store.get().view!);
     expect(shown.minX).toBeLessThanOrEqual(wall.minX);
     expect(shown.maxX).toBeGreaterThanOrEqual(wall.maxX);
+  });
+
+  it('frames a finding’s shapes, onto their level when it is another', () => {
+    const { model, L1, L2 } = twoLevels();
+    const store = storeOn(model, L1);
+    const shapes = { minX: 200 * FT, minY: 200 * FT, maxX: 205 * FT, maxY: 204 * FT };
+    frameOn(store, L2, shapes, 140);
+    expect(store.get().level).toBe(L2);
+    expect(navOf(store).claim(L2)).toBe(true);
+    expect(store.get().view).toEqual(fit(shapes, 800, 600, 140));
   });
 
   it('saves a view by name and goes back to it — its level, zoom and region', () => {
