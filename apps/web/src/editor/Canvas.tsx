@@ -32,6 +32,7 @@ import { usePrecision } from './precision/state';
 import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
 import { QuickAdd } from '../placing/QuickAdd';
 import { RoomDragGhost, RoomHandles, WandOverlay, WandPrompt } from './rooms/RoomLayer';
+import { ReferenceLayer, UnderlayCapture, UnderlayHtml, UnderlayImage } from './underlay/Layer';
 import { HaloHtml, HaloLayer, useHalos } from './halos/HaloLayer';
 import { HistoryScrubber } from './HistoryScrubber';
 
@@ -204,10 +205,13 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
           {paint !== null ? <PlanStyleDefs paint={paint} /> : null}
           {model !== null && level !== undefined ? (
             <>
-              <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} />
+              {/* FLR-T-18.12: the level's underlay, over the floors and under the walls. */}
+              <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} underlay={<UnderlayImage store={store} view={view} level={level.id} />} />
               {layers.dimensions ? <Dimensions view={view} level={level} units={units} /> : null}
               <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} look={look} />
               <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} look={look} />
+              {/* FLR-T-18.12: the level below or above, in the reference colour: snapped to, never picked. */}
+              <ReferenceLayer store={store} view={view} level={level.id} layers={layers} />
               {electricalTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={model} units={units} /> : null}
               <DiffLayer store={store} view={view} levelId={level.id} />
               <RuleFindingsLayer store={store} view={view} level={level} />
@@ -221,6 +225,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={model} />}
               {comparing ? null : <PlacingLayer store={store} view={view} level={level} />}
               {comparing ? null : <RidgePick store={store} view={view} />}
+              {comparing ? null : <UnderlayCapture store={store} view={view} level={level} />}
             </>
           ) : null}
         </svg>
@@ -232,6 +237,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       {view !== null && level !== undefined && !comparing ? <QuickAdd store={store} view={view} level={level} /> : null}
       {view !== null && level !== undefined && !comparing ? <WandPrompt store={store} tools={tools} view={view} level={level} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={model} units={units} picking={tools.pickLevel} /> : null}
+      {view !== null && level !== undefined && !comparing ? <UnderlayHtml store={store} view={view} level={level} units={units} /> : null}
       {view !== null && model !== null ? <HaloHtml view={view} halos={halos} model={model} units={units} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
       {paint !== null && layers.walls ? <WallTypeLegend paint={paint} /> : null}
@@ -289,7 +295,7 @@ function wallMid(wall: WallView): Point {
 
 const polyPts = (view: Viewport, line: readonly Point[]): string => line.map((p) => S(view, p).map((n) => n.toFixed(1)).join(',')).join(' ');
 
-export function Plan({ view, level, document, layers, units, ghost = false, labels = true, paint = null }: { view: Viewport; level: LevelView; document: FloorspecDocument; layers: Layers; units: UnitSystem; ghost?: boolean; labels?: boolean; paint?: LevelPaint | null }) {
+export function Plan({ view, level, document, layers, units, ghost = false, labels = true, paint = null, underlay = null }: { view: Viewport; level: LevelView; document: FloorspecDocument; layers: Layers; units: UnitSystem; ghost?: boolean; labels?: boolean; paint?: LevelPaint | null; underlay?: ReactNode }) {
   const walls = new Map(level.walls.map((w) => [w.id, w]));
   return (
     <g className={ghost ? 'fs-plan2 fs-plan2--ghost' : 'fs-plan2'} aria-hidden="true">
@@ -326,6 +332,7 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
           )}
         </g>
       ) : null}
+      {underlay}
       <g className="fs-plan2__separators">
         {level.separators.map((s) => (
           <polyline key={s.id} points={polyPts(view, s.line)} fill="none" />
