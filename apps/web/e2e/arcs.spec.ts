@@ -121,9 +121,14 @@ test('an arc wall drawn by keyboard, the curved room it closes and its area, and
   await page.keyboard.press('Escape');
   await palette(page, 'name a room in');
   await expect.poll(async () => count((await modelOf(page, project)).rooms)).toBe(1);
+  // The server has the room as soon as the batch commits; the editor selects it and focuses its name only
+  // once it has read the new version back. Typed before that, "Living" lands on the plan as shortcuts —
+  // L the low-voltage tool, i the library — so wait for the field, as keyboard.spec does.
+  await expect(inspector.getByRole('textbox', { name: 'Name', exact: true })).toBeFocused();
   await page.keyboard.press('ControlOrMeta+a');
   await page.keyboard.type('Living');
   await page.keyboard.press('Enter');
+  await expect(inspector.getByRole('heading', { name: 'Living' })).toBeVisible();
   await settled(page);
   const finished = await modelOf(page, project);
   const derived = check(finished).derived!;
