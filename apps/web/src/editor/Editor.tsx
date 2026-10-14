@@ -1,7 +1,7 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
 import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
 import { MaterialsModal } from './Materials';
 import { FurnitureLibrary } from '../furniture/Browser';
@@ -13,7 +13,7 @@ import { PlanCanvas } from './Canvas';
 import { ProjectTree } from './Tree';
 import { Inspector } from './Inspector';
 import { RejectionBanner } from './Diagnostics';
-import { COMMANDS, commandById, commandFor, keyOf } from './commands';
+import { COMMANDS, codeOf, commandById, commandFor, commandForCode, keyOf } from './commands';
 import { cycleFocus, drawersOf, escapeDrawer, setFullScreen, summonDrawer } from './drawers';
 import { Drawer, DrawerHead, Edges, FullScreenButton, PinButton, useChrome } from './EdgeDrawers';
 import { confirmPrompt, newLevel, switchUnits } from './actions';
@@ -286,6 +286,11 @@ function ToolHint({ store }: { store: EditorStore }) {
       </>
     ),
     room: <span>Click inside a closed space to name it</span>,
+    hand: (
+      <>
+        <span>Drag to pan</span> <span className="fs-hint__faint">· double-click to zoom in,</span> <kbd>⌥</kbd> <span className="fs-hint__faint">out</span> <kbd>V</kbd> <span className="fs-hint__faint">select</span>
+      </>
+    ),
     device: (
       <>
         <span>Point at a wall, a floor or a ceiling</span> <span className="fs-hint__faint">· type an offset</span> <kbd>Enter</kbd>
@@ -377,7 +382,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
           </span>
         </button>
       ) : null}
-      <Tooltip content="History (H)">
+      <Tooltip content={`History (${commandById('history.toggle')?.hint ?? ''})`}>
         <IconButton label={left === 'history' ? 'Hide the history' : 'Show the history'} pressed={left === 'history'} icon={<HistoryIcon />} onClick={() => { toggleHistory(store); }} />
       </Tooltip>
       <Tooltip content="Commands (⌘K)">
@@ -406,6 +411,8 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
 
 const RAIL: { tool?: ToolId; label: string; icon: ReactNode; later?: string }[] = [
   { tool: 'select', label: 'Select', icon: <SelectIcon /> },
+  // FLR-T-18.6: the hand, under Select as in the board's rail.
+  { tool: 'hand', label: 'Hand', icon: <Hand /> },
   { tool: 'wall', label: 'Draw walls', icon: <WallIcon /> },
   { tool: 'arc', label: 'Draw arc walls', icon: <ArcWallIcon /> },
   { tool: 'door', label: 'Place a door', icon: <DoorIcon /> },
@@ -449,7 +456,7 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
               label={t.label}
               icon={t.icon}
               pressed={t.tool !== undefined && tool === t.tool}
-              disabled={t.tool === undefined || (t.tool !== 'select' && !canDraw)}
+              disabled={t.tool === undefined || (t.tool !== 'select' && t.tool !== 'hand' && !canDraw)}
               className={t.later !== undefined ? 'fs-rail__later' : undefined}
               onClick={() => {
                 if (t.tool !== undefined) tools.setTool(t.tool);
@@ -689,7 +696,8 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
         e.preventDefault();
         return;
       }
-      const command = commandFor(keyOf(e, mac));
+      // A key a modifier changes the character of (⇧1, ⌥H, ⇧N) is read by its place first (FLR-T-18.6).
+      const command = commandForCode(codeOf(e, mac)) ?? commandFor(keyOf(e, mac));
       if (command === undefined) return;
       if (command.enabled !== undefined && !command.enabled(store)) return;
       e.preventDefault();
