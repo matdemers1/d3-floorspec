@@ -465,7 +465,11 @@ function ExportPlan({ store, label }: { store: EditorStore; label: string }) {
 /** Counts by name, most first. */
 function tally(names: readonly string[]): [string, number][] {
   const m = new Map<string, number>();
-  for (const n of names) m.set(n, (m.get(n) ?? 0) + 1);
+  for (const raw of names) {
+    // A kind the catalogue does not name is its collection's: "plants" reads "Plants".
+    const n = raw.charAt(0).toUpperCase() + raw.slice(1);
+    m.set(n, (m.get(n) ?? 0) + 1);
+  }
   return [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 }
 
