@@ -20,7 +20,7 @@ import { annotateOf, useAnnotate } from './state';
 const S = (v: Viewport, p: readonly [number, number]) => toScreen(v, [p[0], p[1]]);
 const f1 = (n: number): string => n.toFixed(1);
 
-/** Below this many pixels to the foot, rooms' strings and tags would only crowd the plan. */
+/** Below this many pixels to the foot, rooms' strings, tags and the openings strings would only crowd the plan. */
 const FINE = 9;
 
 export function AnnotationLayer({ store, view, level, model, layers, units, caps }: { store: EditorStore; view: Viewport; level: LevelView; model: EditorModel; layers: Layers; units: UnitSystem; caps: boolean }) {
@@ -33,7 +33,8 @@ export function AnnotationLayer({ store, view, level, model, layers, units, caps
   const prims = useMemo(() => {
     const strings: DimString[] = [];
     if (layers.dimensions) {
-      if (show.exterior) strings.push(...exteriorOf(level, model.document));
+      // Zoomed out, the jogs and the overall size; the openings located (and recessed faces') once there is room to read them.
+      if (show.exterior) strings.push(...exteriorOf(level, model.document).filter((s) => fine || s.kind !== 'openings'));
       if (show.rooms && fine) strings.push(...roomStrings(annoSourceOfLevel(level, model.document), view.s, (r) => labelClear(r, caps), SCREEN_METRICS.text + 6));
       if (show.notes) for (const c of resolved.dimensions) {
         const s = customString(c);

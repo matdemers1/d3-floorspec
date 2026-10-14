@@ -160,35 +160,30 @@ export function AnnotationSummary({ store, model, level, units }: { store: Edito
       <div className="fs-mode-summary__group fs-schedule-panel">
         <button type="button" className="fs-schedule-panel__toggle" aria-expanded={open} onClick={() => { setOpen(!open); }}>
           {open ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
-          <span className="fs-mode-summary__title">Door and window schedule</span>
+          <span className="fs-mode-summary__title">Door and window schedule · whole house</span>
           <span className="fs-schedule-panel__count">{groups.reduce((s, g) => s + g.count, 0)}</span>
         </button>
         {open ? (
           groups.length === 0 ? (
             <p className="fs-note">No doors or windows yet.</p>
           ) : (
-            <table className="fs-schedule-panel__table" aria-label="Door and window schedule">
-              <thead>
-                <tr>
-                  <th scope="col">Tags</th>
-                  <th scope="col">Type</th>
-                  <th scope="col">Size</th>
-                  <th scope="col">Operation</th>
-                  <th scope="col" className="fs-num">Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {groups.map((g) => (
-                  <tr key={`${g.kind}|${g.type}|${g.size}|${g.operation}`}>
-                    <td className="fs-schedule-panel__tags">{markRuns(g.marks)}</td>
-                    <td>{g.type}</td>
-                    <td className="fs-mono">{g.size}</td>
-                    <td>{g.operation}</td>
-                    <td className="fs-num">{g.count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ul className="fs-schedule-panel__list" aria-label="Door and window schedule">
+              {groups.map((g) => (
+                <li key={`${g.kind}|${g.type}|${g.size}|${g.operation}`} className="fs-schedule-panel__row">
+                  <div className="fs-schedule-panel__line">
+                    <span className="fs-schedule-panel__tags">{markRuns(g.marks)}</span>
+                    <span className="fs-schedule-panel__count" aria-label={`${String(g.count)} of this type`}>
+                      ×{g.count}
+                    </span>
+                  </div>
+                  <div className="fs-schedule-panel__type">{g.type}</div>
+                  <div className="fs-schedule-panel__meta">
+                    <span className="fs-mono">{g.size}</span>
+                    {g.operation === '—' ? null : <span>{g.operation}</span>}
+                  </div>
+                </li>
+              ))}
+            </ul>
           )
         ) : null}
       </div>

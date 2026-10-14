@@ -146,37 +146,41 @@
   font-family: var(--font-mono);
   font-size: var(--text-12);
 }
-.fs-schedule-panel__table {
-  width: 100%;
-  margin-top: var(--space-6);
-  border-collapse: collapse;
+.fs-schedule-panel__list {
+  display: grid;
+  gap: 0;
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
   font-size: var(--text-12);
 }
-.fs-schedule-panel__table th {
-  padding: var(--space-2) var(--space-4) var(--space-2) 0;
+.fs-schedule-panel__row {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-6) 0;
   border-bottom: 1px solid var(--color-border);
-  color: var(--color-fg-muted);
-  font-weight: var(--weight-medium);
-  text-align: left;
 }
-.fs-schedule-panel__table td {
-  padding: var(--space-4) var(--space-4) var(--space-4) 0;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-fg);
-  vertical-align: top;
-}
-.fs-schedule-panel__table .fs-num {
-  text-align: right;
-  padding-right: 0;
-  font-family: var(--font-mono);
-}
-.fs-schedule-panel__table .fs-mono {
-  font-family: var(--font-mono);
-  white-space: nowrap;
+.fs-schedule-panel__line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-6);
 }
 .fs-schedule-panel__tags {
+  color: var(--color-fg);
   font-family: var(--font-mono);
   font-weight: var(--weight-medium);
+}
+.fs-schedule-panel__type {
+  color: var(--color-fg);
+}
+.fs-schedule-panel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-8);
+  color: var(--color-fg-muted);
+}
+.fs-schedule-panel__meta .fs-mono {
+  font-family: var(--font-mono);
 }
 
 /* A selected annotation's card, beside it on the plan. */
@@ -243,7 +247,7 @@
 /* The tool's hint, under the top of the plan. */
 .fs-anno-hint {
   position: absolute;
-  top: var(--space-12);
+  bottom: 72px;
   left: 50%;
   z-index: 5;
   max-width: min(560px, calc(100% - 32px));

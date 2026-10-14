@@ -26,6 +26,8 @@ const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 /** The den's south-west and south-east corners, on the ground floor (J16, J8). */
 const DEN_SW: [number, number] = [17_946_624, 0];
 const DEN_SE: [number, number] = [24_188_928, 0];
+/** The centre of the den's west window on its south wall (W7): 3'-8 3/4" from its south-west corner. */
+const DEN_WINDOW: [number, number] = [17_946_624 + 1_454_912, 0];
 
 type Doc = {
   junctions: Record<string, { level: string; position: [number, number] }>;
@@ -130,9 +132,9 @@ test('dimensions and annotation: clean exterior strings, room strings and tags, 
   await expect(page.locator('.fs-annotation [data-anno="room:R6:h"]')).toHaveCount(1);
   await expect(page.locator('.fs-annotation .fs-anno__tagtext').first()).toHaveText(/^[DW]\d+$/);
   await summary.getByRole('button', { name: /Door and window schedule/ }).click();
-  const schedule = summary.getByRole('table', { name: 'Door and window schedule' });
-  await expect(schedule.locator('tbody tr').first()).toBeVisible();
-  const counted = (await schedule.locator('tbody td.fs-num').allTextContents()).reduce((s, n) => s + Number(n), 0);
+  const schedule = summary.getByRole('list', { name: 'Door and window schedule' });
+  await expect(schedule.getByRole('listitem').first()).toBeVisible();
+  const counted = (await schedule.locator('.fs-schedule-panel__count').allTextContents()).reduce((s, n) => s + Number(n.replace('×', '')), 0);
   const typed = HOUSE as { openings: Record<string, { fill?: string }>; types: Record<string, { kind: string }> };
   expect(counted).toBe(Object.values(typed.openings).filter((o) => ['doorType', 'windowType'].includes(typed.types[o.fill ?? '']?.kind ?? '')).length);
   await shoot(page, 'construction');
@@ -142,20 +144,19 @@ test('dimensions and annotation: clean exterior strings, room strings and tags, 
   await summary.getByRole('switch', { name: 'Room dimensions' }).click();
   await expect(page.locator('.fs-annotation [data-anno="room:R6:h"]')).toHaveCount(1);
 
-  // ── The dimension tool: the den's south wall, junction to junction, placed inside the den.
+  // ── The dimension tool: the den's south wall, corner to window to corner, placed inside the den.
   let at = await cameraOf(page);
   await page.keyboard.press('Shift+KeyD');
-  await expect(page.getByRole('button', { name: 'Dimension' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Dimension', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.fs-anno-hint')).toContainText('click a junction');
-  const sw = at(DEN_SW);
-  const se = at(DEN_SE);
-  await page.mouse.move(sw.x, sw.y);
-  await page.mouse.click(sw.x, sw.y);
-  await page.mouse.move(se.x, se.y);
-  await page.mouse.click(se.x, se.y);
+  for (const p of [DEN_SW, DEN_WINDOW, DEN_SE]) {
+    const q = at(p);
+    await page.mouse.move(q.x, q.y);
+    await page.mouse.click(q.x, q.y);
+  }
   const inside = at([21_000_000, 2_000_000]);
   await page.mouse.move(inside.x, inside.y);
-  await expect(page.locator('.fs-anno-draft .fs-anno-draft__text').first()).toHaveText(`16'-0"`);
+  await expect(page.locator('.fs-anno-draft .fs-anno-draft__text')).toHaveText([`3'-8 3/4"`, `12'-3 1/4"`]);
   await page.mouse.click(inside.x, inside.y);
   await settled(page);
   let doc = await docOf(page, project);
@@ -164,34 +165,31 @@ test('dimensions and annotation: clean exterior strings, room strings and tags, 
   expect(dm1).toBeDefined();
   expect(dm1!.level).toBe('L1');
   expect(dm1!.direction).toEqual([1, 0]);
-  expect(dm1!.anchors).toEqual([{ junction: 'J16' }, { junction: 'J8' }]);
+  expect(dm1!.anchors).toEqual([{ junction: 'J16' }, { opening: 'O37' }, { junction: 'J8' }]);
   expect((await lastOps(page, project)).some((o) => o.op === 'setProperty' && o.path === '/extensions/FS_annotation/dimensions/DM1')).toBe(true);
-  await expect(page.locator('.fs-annotation [data-anno="DM1"] .fs-dim__text')).toHaveText(`16'-0"`);
+  const dm1Text = page.locator('.fs-annotation [data-anno="DM1"] .fs-dim__text');
+  await expect(dm1Text).toHaveText([`3'-8 3/4"`, `12'-3 1/4"`]);
   const card = page.getByTestId('annotation-card');
   await expect(card).toContainText('Dimension DM1');
-  await expect(card).toContainText(`16'-0"`);
+  await expect(card).toContainText(`3'-8 3/4" · 12'-3 1/4"`);
   await shoot(page, 'dimension-tool');
   await axe(page, '[data-testid="annotation-card"]');
 
-  // ── It stays with its walls: the den's east wall (W28) a foot further east, and the string reads 17'-0".
-  const moved = await page.request.post(`/api/projects/${project}/ops`, { data: { batch: [{ op: 'moveWall', wall: 'W28', by: FT, toward: 'J1' }] } });
-  if (moved.status() !== 201) {
-    // `toward` is the side it moves from; the other way round if the engine reads it so.
-    const back = await page.request.post(`/api/projects/${project}/ops`, { data: { batch: [{ op: 'moveWall', wall: 'W28', by: -FT }] } });
-    expect(back.status(), await back.text()).toBe(201);
-  }
+  // ── It stays with what it measures: the window a foot along its wall, and the string follows it.
+  const moved = await page.request.post(`/api/projects/${project}/ops`, { data: { batch: [{ op: 'moveOpening', opening: 'O37', by: FT }] } });
+  expect(moved.status(), await moved.text()).toBe(201);
   await page.reload();
   await settled(page);
-  doc = await docOf(page, project);
-  const width = Math.abs(doc.junctions['J8']!.position[0] - doc.junctions['J16']!.position[0]);
-  expect(width).not.toBe(16 * FT);
-  const expected = width === 17 * FT ? `17'-0"` : `15'-0"`;
-  await expect(page.locator('.fs-annotation [data-anno="DM1"] .fs-dim__text')).toHaveText(expected);
+  await expect(dm1Text).toHaveCount(2);
+  const after = (await dm1Text.allTextContents()).map((t) => lengthOf(t.trim())!);
+  expect(after).toHaveLength(2);
+  expect(Math.abs(after[0]! - (3 * FT + 8.75 * IN))).toBeCloseTo(FT, -1);
+  expect(after[0]! + after[1]!).toBeCloseTo(16 * FT, -1);
 
   // ── The note tool: a leader from the den's middle, the text where it is let go.
   at = await cameraOf(page);
   await page.keyboard.press('Shift+KeyT');
-  await expect(page.getByRole('button', { name: 'Note' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Note', exact: true })).toHaveAttribute('aria-pressed', 'true');
   const tip = at([21_000_000, 4_500_000]);
   const text = at([22_500_000, 6_500_000]);
   await page.mouse.move(tip.x, tip.y);
