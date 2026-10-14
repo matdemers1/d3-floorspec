@@ -5,7 +5,9 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     projects: [
-      { test: { name: 'unit', include: ['test/unit/**/*.test.ts'] } },
+      // CI runs every package's tests at once on a two-core runner: vitest's 5 s default is too tight
+      // there (FLR-T-12.45).
+      { test: { name: 'unit', include: ['test/unit/**/*.test.ts'], testTimeout: 30_000, hookTimeout: 30_000 } },
       {
         test: {
           name: 'integration',
