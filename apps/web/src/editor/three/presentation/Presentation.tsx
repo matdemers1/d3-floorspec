@@ -229,13 +229,21 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
       s.lastMove = now;
       s.k = 0;
       s.dirty = false;
-      const fps = s.frames.length >= 6 ? (1000 * (s.frames.length - 1)) / ((s.frames[s.frames.length - 1] ?? now) - (s.frames[0] ?? now)) : null;
+      // Over six frames; or three, when they are far too slow to wait for six — the first turn in a room
+      // must not spend seconds finding its resolution.
+      const span = (s.frames[s.frames.length - 1] ?? now) - (s.frames[0] ?? now);
+      const measured = s.frames.length >= 3 ? (1000 * (s.frames.length - 1)) / Math.max(1, span) : null;
+      const fps = measured !== null && (s.frames.length >= 6 || measured < TARGET_FPS * 0.5) ? measured : null;
       if (fps !== null) {
         s.stats.fps = Math.round(fps);
         const fixed = navigator.webdriver && window.__floorspecQualityTest?.scale !== undefined;
         if (fixed) {
           // A test holds the resolution.
-        } else if (fps < TARGET_FPS * 0.9 && s.scale > MIN_SCALE) s.scale = Math.max(MIN_SCALE, Math.round(s.scale * 0.8 * 100) / 100);
+        } else if (fps < TARGET_FPS * 0.9 && s.scale > MIN_SCALE) {
+          // A frame's cost goes with its pixels, the square of the scale: a step as far as the shortfall asks, between 0.5 and 0.8.
+          const step = Math.min(0.8, Math.max(0.5, Math.sqrt(fps / TARGET_FPS)));
+          s.scale = Math.max(MIN_SCALE, Math.round(s.scale * step * 100) / 100);
+        }
         else if (fps > TARGET_FPS * 1.6 && s.scale < 1) s.scale = Math.min(1, Math.round((s.scale / 0.8) * 100) / 100);
         s.frames = s.frames.slice(-3);
       }

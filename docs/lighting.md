@@ -243,7 +243,8 @@ outline — and the sky's dome keep the alpha under them. There is no second, ge
 swapping every mesh's material.
 
 **Frame rate.** Moving, it measures itself and draws at a lower resolution (down to 40% of each side) when the
-GPU cannot hold 40 fps; a moment after the camera stops it draws at full resolution and refines.
+GPU cannot hold 40 fps — its buffers resized in place as it steps down, the passes kept, so the first turn in
+a room is not a string of stalls while each step's passes are made anew; a moment after the camera stops it draws at full resolution and refines.
 Every program the scene needs is compiled off the frame (KHR_parallel_shader_compile where there is
 one), and the whole scene is drawn once, unculled, to have the driver build its pipelines — once what
 every material compiles to has stayed the same for 600 ms with the camera still, not on each of a
