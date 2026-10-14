@@ -114,9 +114,12 @@ export function HistoryScrubber({ store }: { store: EditorStore }) {
       </div>
       <div className="fs-scrubber__scale">
         <span>{first === undefined ? '' : `v${String(first.seq)} · ${day(first.at)}`}</span>
-        <span className="fs-scrubber__here" style={{ left: `${String(percent)}%` }}>
-          v{entry.seq}
-        </span>
+        {/* At either end the end's own label says it. */}
+        {now || index === 0 ? null : (
+          <span className="fs-scrubber__here" style={{ left: `${String(percent)}%` }}>
+            v{entry.seq}
+          </span>
+        )}
         <span>{`v${String(versions[last]?.seq ?? '')} · now`}</span>
       </div>
       <div className="fs-scrubber__foot">
