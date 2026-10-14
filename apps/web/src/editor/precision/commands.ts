@@ -78,18 +78,25 @@ export const PRECISION_COMMANDS: readonly Command[] = [
   },
 ];
 
-/** ⌥ held anywhere over the editor: hovering shows distances. Let go, or the window loses focus, and they go. */
+/**
+ * ⌥ held anywhere over the editor: hovering shows distances. ⇧, ⌘ or Ctrl held: the temporary
+ * dimensions' numbers let a click through to what is under them (a ⇧-click adding it). Let go, or
+ * the window loses focus, and both end.
+ */
 export function useAltHover(store: EditorStore): void {
   useEffect(() => {
     const p = precisionOf(store);
+    const through = (e: KeyboardEvent) => e.shiftKey || e.metaKey || e.ctrlKey;
     const down = (e: KeyboardEvent) => {
       if (e.key === 'Alt' && !p.get().alt) p.set({ alt: true });
+      if (through(e) !== p.get().through) p.set({ through: through(e) });
     };
     const up = (e: KeyboardEvent) => {
       if (e.key === 'Alt' && p.get().alt) p.set({ alt: false });
+      if (through(e) !== p.get().through) p.set({ through: through(e) });
     };
     const blur = () => {
-      if (p.get().alt) p.set({ alt: false });
+      if (p.get().alt || p.get().through) p.set({ alt: false, through: false });
     };
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);

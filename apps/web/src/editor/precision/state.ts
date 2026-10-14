@@ -57,6 +57,8 @@ export interface PrecisionState {
   editing: string | null;
   /** ⌥ is held: hovering an item shows its distances to its neighbours. */
   alt: boolean;
+  /** ⇧, ⌘ or Ctrl is held: a click is a selection's (⇧-click, ⌘-click), so the numbers let it through to the plan. */
+  through: boolean;
   /** Smart guides of the drag in progress. */
   guides: DragGuides | null;
   measure: Measure;
@@ -141,7 +143,7 @@ export class PrecisionStore {
     const modes = modesOf(editor);
     this.modeKey = modes.get().mode ?? 'none';
     this.units = editor.units;
-    this.state = { snap: this.settingsFor(this.modeKey), menu: false, ref: 'face', editing: null, alt: false, guides: null, measure: EMPTY_MEASURE };
+    this.state = { snap: this.settingsFor(this.modeKey), menu: false, ref: 'face', editing: null, alt: false, through: false, guides: null, measure: EMPTY_MEASURE };
     // The mode changed: its own snapping comes with it.
     modes.subscribe(() => {
       const key = modes.get().mode ?? 'none';

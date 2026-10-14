@@ -49,6 +49,9 @@
   outline: 2px solid var(--color-focus);
   outline-offset: 1px;
 }
+.fs-tempdims[data-through='true'] .fs-tempdim__value {
+  pointer-events: none;
+}
 .fs-tempdim__value--static {
   cursor: default;
   pointer-events: none;

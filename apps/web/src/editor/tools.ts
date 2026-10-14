@@ -193,6 +193,8 @@ export class ToolController {
     // FLR-T-18.9: ⌥ held over an element shows its distances — the pointer knows, even if the key went down elsewhere.
     const precision = precisionOf(this.store);
     if (precision.get().alt !== p.alt) precision.set({ alt: p.alt });
+    const through = p.shift || p.meta === true;
+    if (precision.get().through !== through) precision.set({ through });
     this.toolMove(p, tracked !== undefined && this.mode === 'tool' && tracked.moved);
   }
 

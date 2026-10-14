@@ -39,8 +39,10 @@ export interface TempDim {
   a: Point;
   b: Point;
   value: number;
-  /** Where to draw it off the element: a direction and a distance, plan units, plus pixels. */
-  shift: { dir: Point; world: number; px: number } | null;
+  /** Where to draw it off the element: a direction and a distance, plan units, plus pixels; `bare`, without extension lines. */
+  shift: { dir: Point; world: number; px: number; bare?: boolean } | null;
+  /** An item's half-size across the line, plan units: a short dimension's number goes beside it, clear of its handles. */
+  across?: number;
   /** The batch that makes it `value` long, or why it cannot be. Absent: shown, not editable. */
   apply?: (value: number) => { label: string; batch: Batch } | { error: string };
 }
@@ -256,6 +258,10 @@ function roomDims(model: EditorModel, level: LevelView, id: string, ref: DimRef)
   const c0 = centroid(face.outer);
   const c = inFace(c0, face) ? c0 : room.anchor;
   const out: TempDim[] = [];
+  // Drawn outside the room as a dimension string — past its north wall, and its east — so its
+  // numbers never sit on the furniture in the middle of it.
+  const north = castWalls(level, c, [0, 1], new Set());
+  const east = castWalls(level, c, [1, 0], new Set());
   for (const [axis, plus, minus, label] of [
     ['x', [1, 0], [-1, 0], 'Width'],
     ['y', [0, 1], [0, -1], 'Depth'],
@@ -278,8 +284,7 @@ function roomDims(model: EditorModel, level: LevelView, id: string, ref: DimRef)
       a: at(c, minus, vm),
       b: at(c, plus, vp),
       value,
-      // Clear of the room's name at its middle: the width below it, the depth to its right.
-      shift: axis === 'x' ? { dir: [0, -1], world: 0, px: 30 } : { dir: [1, 0], world: 0, px: 56 },
+      shift: axis === 'x' ? { dir: [0, 1], world: north?.far ?? 0, px: 18, bare: true } : { dir: [1, 0], world: east?.far ?? 0, px: 18, bare: true },
       ...(Math.abs(nk) < 0.99
         ? {}
         : {
@@ -331,6 +336,7 @@ function itemDims(model: EditorModel, level: LevelView, device: DeviceView, ref:
       b: at(o, axis.d, value),
       value,
       shift: null,
+      across: axis.d[0] !== 0 ? (box.maxY - box.minY) / 2 : (box.maxX - box.minX) / 2,
       apply: (v) => {
         const by = value - v;
         const d: Point = [Math.round(axis.d[0] * by), Math.round(axis.d[1] * by)];

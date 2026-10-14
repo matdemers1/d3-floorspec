@@ -60,7 +60,7 @@ function DimLine({ view, d, className }: { view: Viewport; d: TempDim; className
   const len = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1;
   const n: Point = [-(B[1] - A[1]) / len, (B[0] - A[0]) / len];
   const tick = (P: Point) => <line x1={P[0] - n[0] * 5} y1={P[1] - n[1] * 5} x2={P[0] + n[0] * 5} y2={P[1] + n[1] * 5} />;
-  const ext = d.shift === null ? null : [S(view, d.a), S(view, d.b)];
+  const ext = d.shift === null || d.shift.bare === true ? null : [S(view, d.a), S(view, d.b)];
   return (
     <g className={className} data-dim={d.key}>
       {ext !== null ? (
@@ -196,15 +196,43 @@ function SnapTag({ store, view }: { store: EditorStore; view: Viewport }) {
   );
 }
 
+/**
+ * Where a dimension's number goes: the middle of its line when the line is long enough to hold it
+ * well clear of the element — whose handles (FLR-T-18.4: the edges', and the rotate handle 28px out)
+ * must stay where a press finds them. A short one's goes beside the line, past the item's side
+ * (clear of its corner handles), or past the neighbour's end for a wall or an opening, as Revit
+ * puts a short one's.
+ */
+function chipAt(view: Viewport, d: TempDim): Point {
+  const { a, b } = endsOf(view, d);
+  const A = S(view, a);
+  const B = S(view, b);
+  const L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+  if (L === 0) return A;
+  const u: Point = [(B[0] - A[0]) / L, (B[1] - A[1]) / L];
+  const along = Math.abs(u[0]) > Math.abs(u[1]) ? 40 : 11;
+  const clear = 40;
+  if (L >= 2 * (along + clear)) return [A[0] + u[0] * (L / 2), A[1] + u[1] * (L / 2)];
+  if (d.across !== undefined) {
+    // Beside the line: the screen's perpendicular, out past the item's side and its corner handles.
+    const v: Point = [-u[1], u[0]];
+    const acrossHalf = Math.abs(v[0]) > Math.abs(v[1]) ? 40 : 11;
+    const k = d.across * view.s + acrossHalf + 14;
+    return [A[0] + u[0] * (L / 2) + v[0] * k, A[1] + u[1] * (L / 2) + v[1] * k];
+  }
+  const t = Math.max(L + 6, clear) + along;
+  return [A[0] + u[0] * t, A[1] + u[1] * t];
+}
+
 function TempDims({ store, view, id, dims, units, editable }: { store: EditorStore; view: Viewport; id: string; dims: TempDim[]; units: UnitSystem; editable: boolean }) {
   const editing = usePrecision(store, (p) => p.editing);
   const ref = usePrecision(store, (p) => p.ref);
+  const through = usePrecision(store, (p) => p.through);
   const p = precisionOf(store);
   return (
-    <div className="fs-tempdims" role="group" aria-label={`Temporary dimensions of ${labelOf(store.get().model as EditorModel, id)}`}>
+    <div className="fs-tempdims" data-through={through ? 'true' : undefined} role="group" aria-label={`Temporary dimensions of ${labelOf(store.get().model as EditorModel, id)}`}>
       {dims.map((d) => {
-        const { a, b } = endsOf(view, d);
-        const m = S(view, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+        const m = chipAt(view, d);
         const text = prettyLen(Math.round(d.value), units);
         if (d.key === editing && editable && d.apply !== undefined) {
           return <DimField key={d.key} store={store} id={id} dim={d} units={units} at={m} refNow={ref} />;
