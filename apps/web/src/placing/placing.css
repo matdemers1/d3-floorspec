@@ -1,0 +1,480 @@
+/* Adding things (FLR-T-18.7; the board's "18.7 · Library drawer" and "18.7 · Quick add"). Tokens only. */
+
+/* ─── The left drawer's tabs: the tree and the library ─────────────────────────────────────── */
+
+.fs-left {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.fs-left__tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.fs-left__tabs [role='tablist'] {
+  margin: var(--space-8) var(--space-8) 0;
+}
+.fs-left__tabs [role='tabpanel'] {
+  margin-top: var(--space-4);
+}
+
+/* ─── The library ────────────────────────────────────────────────────────────────────────────── */
+
+.fs-lib {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-8);
+}
+.fs-lib__search {
+  inline-size: 100%;
+}
+.fs-lib__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-6);
+}
+.fs-lib-chip {
+  padding: var(--space-2) var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-fg-muted);
+  font: inherit;
+  font-size: var(--text-12);
+  cursor: pointer;
+}
+.fs-lib-chip:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-fg);
+}
+.fs-lib-chip[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-muted);
+  color: var(--color-fg);
+}
+.fs-lib-chip:focus-visible,
+.fs-lib-card:focus-visible,
+.fs-lib-card__star:focus-visible,
+.fs-lib-tile:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-lib__overline {
+  margin: 0 0 var(--space-4);
+  color: var(--color-fg-faint);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.fs-lib__row,
+.fs-lib__list {
+  margin: 0;
+}
+.fs-lib-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-lib-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 48px;
+  block-size: 40px;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-sunken);
+  color: var(--color-fg-muted);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+.fs-lib-tile:hover {
+  border-color: var(--color-accent);
+}
+.fs-lib-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-lib-cards__item {
+  position: relative;
+}
+.fs-lib-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  inline-size: 100%;
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  color: var(--color-fg);
+  font: inherit;
+  text-align: start;
+  cursor: grab;
+  /* A finger's sideways drag drags the card; up and down scrolls the cards. */
+  touch-action: pan-y;
+  user-select: none;
+}
+.fs-lib-card:hover {
+  background: var(--color-surface-hover);
+}
+.fs-lib-card[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+.fs-lib-card__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 56px;
+  margin-bottom: var(--space-4);
+}
+.fs-lib-card__img {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  /* A plan symbol is drawn front down: a sofa reads with its back up, as on the plan. */
+  object-fit: contain;
+}
+.fs-lib-card__icon {
+  display: inline-flex;
+  color: var(--color-fg-muted);
+}
+.fs-lib-card__icon svg {
+  width: var(--icon-24, 24px);
+  height: var(--icon-24, 24px);
+}
+.fs-lib-tile .fs-lib-card__img {
+  max-block-size: 28px;
+}
+.fs-lib-tile .fs-lib-card__icon svg {
+  width: 18px;
+  height: 18px;
+}
+.fs-lib-card__name {
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+  line-height: 1.3;
+  /* Room for the star at the corner. */
+  padding-inline-end: var(--space-16);
+}
+.fs-lib-card__size {
+  color: var(--color-fg-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+.fs-lib-card__star {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  display: inline-flex;
+  padding: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-fg-faint);
+  cursor: pointer;
+}
+.fs-lib-card__star svg {
+  width: 14px;
+  height: 14px;
+}
+.fs-lib-card__star:hover {
+  color: var(--color-fg);
+}
+.fs-lib-card__star[aria-pressed='true'] {
+  color: var(--color-warning);
+}
+.fs-lib-card__star[aria-pressed='true'] svg {
+  fill: currentColor;
+}
+.fs-lib__none {
+  margin: 0;
+}
+.fs-lib__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.fs-lib__help {
+  margin: 0;
+  color: var(--color-fg-faint);
+  font-size: var(--text-11);
+}
+.fs-lib-drag {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-size: var(--text-12);
+  pointer-events: none;
+  transform: translate(12px, 12px);
+}
+.fs-lib-drag .fs-lib-card__img {
+  max-block-size: 24px;
+}
+
+/* ─── The ghost ─────────────────────────────────────────────────────────────────────────────── */
+
+.fs-ghost {
+  pointer-events: none;
+}
+.fs-ghost__fill {
+  fill: var(--color-accent);
+  fill-opacity: 0.16;
+}
+.fs-ghost__symbol {
+  opacity: 0.85;
+}
+.fs-ghost__outline,
+.fs-ghost__opening {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+.fs-ghost__opening {
+  fill: var(--color-accent);
+  fill-opacity: 0.22;
+}
+.fs-ghost__leaf,
+.fs-ghost__swing {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.25;
+}
+.fs-ghost__swing {
+  stroke-dasharray: 4 3;
+}
+.fs-ghost__canopy {
+  fill: var(--color-success);
+  fill-opacity: 0.18;
+  stroke: var(--color-success);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+.fs-ghost__trunk {
+  fill: var(--color-success);
+}
+.fs-ghost__envelope {
+  fill: var(--color-success);
+  fill-opacity: 0.1;
+  stroke: var(--color-success);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.fs-ghost__guide {
+  stroke: var(--color-accent);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.fs-ghost__gap {
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+}
+.fs-ghost[data-blocked='true'] .fs-ghost__outline,
+.fs-ghost[data-blocked='true'] .fs-ghost__opening {
+  stroke: var(--color-warning);
+}
+.fs-ghost[data-blocked='true'] .fs-ghost__fill,
+.fs-ghost[data-blocked='true'] .fs-ghost__envelope {
+  fill: var(--color-warning);
+  stroke: var(--color-warning);
+}
+.fs-ghost-gap {
+  position: absolute;
+  padding: 1px var(--space-6);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+.fs-ghost-hint {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+  font-size: var(--text-12);
+  pointer-events: none;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.fs-ghost-hint kbd,
+.fs-quick kbd {
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+.fs-ghost-hint__faint {
+  color: var(--color-fg-faint);
+}
+.fs-ghost-hint__dot {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+.fs-ghost-hint__dot--blocked {
+  background: var(--color-warning);
+}
+
+/* ─── Quick add ─────────────────────────────────────────────────────────────────────────────── */
+
+.fs-quick {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  inline-size: min(440px, calc(100% - var(--space-16)));
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+.fs-quick__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-bottom: 1px solid var(--color-border);
+}
+.fs-quick__input {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-14);
+  outline: none;
+}
+.fs-quick__input::placeholder {
+  color: var(--color-fg-faint);
+}
+.fs-quick:focus-within {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: 1px;
+}
+.fs-quick__where {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  white-space: nowrap;
+}
+.fs-quick__results {
+  margin: 0;
+  padding: var(--space-4);
+  list-style: none;
+}
+.fs-quick__result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fs-quick__result[aria-selected='true'] {
+  background: var(--color-accent-muted);
+}
+.fs-quick__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  flex: none;
+}
+.fs-quick__thumb .fs-lib-card__img {
+  max-block-size: 28px;
+}
+.fs-quick__thumb .fs-lib-card__icon svg {
+  width: 16px;
+  height: 16px;
+}
+.fs-quick__text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+.fs-quick__name {
+  font-size: var(--text-13);
+}
+.fs-quick__sub {
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+}
+.fs-quick__none {
+  padding: var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-quick__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-6);
+  padding: var(--space-6) var(--space-12);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+}
+.fs-quick__foot span {
+  margin-inline-end: var(--space-6);
+}
+/* The chosen tab reads in the foreground colour: the accent on the glide's muted accent is too faint in the dark theme. */
+.fs-left__tabs [role='tab'][aria-selected='true'] {
+  color: var(--color-fg);
+  font-weight: var(--weight-semibold);
+}
+
+/* ─── The inspector while placing ───────────────────────────────────────────────────────────── */
+
+.fs-place__thumb .fs-lib-card__img {
+  max-inline-size: 28px;
+  max-block-size: 28px;
+}
+.fs-place__where {
+  margin: 0 0 var(--space-12);
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+}
+.fs-place__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-bottom: var(--space-16);
+}
