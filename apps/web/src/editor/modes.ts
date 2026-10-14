@@ -41,6 +41,9 @@ export interface ModesState {
   saving: boolean;
 }
 
+/** No mode: the layers as the editor has always opened — every one on but the roof's, which is asked for. */
+export const NO_MODE: LayerStates = { ...ALL_ON, roof: 'off' };
+
 /** Where the mode is kept: one record per project. */
 export const modeKey = (projectId: string): string => `floorspec.mode.${projectId}`;
 
@@ -146,9 +149,9 @@ export class ModesStore {
 
   /** What a mode sets: a person's own mode's layers, their preset for a trade, or the trade's own. */
   presetOf(mode: string | null): LayerStates {
-    if (mode === null) return ALL_ON;
+    if (mode === null) return NO_MODE;
     if (isModeId(mode)) return this.state.presets[mode] ?? MODES[mode].layers;
-    return this.state.custom.find((c) => c.id === mode)?.layers ?? ALL_ON;
+    return this.state.custom.find((c) => c.id === mode)?.layers ?? NO_MODE;
   }
 
   /** The trade a mode is, or borrows its tools and colour from. */
