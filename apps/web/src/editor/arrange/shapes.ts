@@ -16,9 +16,9 @@ export interface Shape {
   /** A ring (a wall's outline, a room's face) rather than a polyline (a separator) or a point. */
   closed: boolean;
   /**
-   * A room, a slab or a roof: an area the marquee is usually drawn inside of. Taken only when it
-   * lies wholly inside the marquee, even by a crossing, so catching three chairs never also catches
-   * the great room they stand in.
+   * A room, a slab, a roof or a floor covering: an area the marquee is usually drawn inside of.
+   * Taken only when it lies wholly inside the marquee, even by a crossing, so catching three chairs
+   * never also catches the great room they stand in, or the rug under them.
    */
   area: boolean;
 }
@@ -39,12 +39,23 @@ const box = (min: readonly number[], max: readonly number[]): Point[] => [
   [min[0] ?? 0, max[1] ?? 0],
 ];
 
+/**
+ * A floor covering — a rug, a lawn, a planting bed — lies under what stands on it, so like a room it
+ * is caught only when wholly inside a marquee: a crossing over the dining chairs is not a crossing
+ * over the rug beneath the table.
+ */
+export function isCovering(element: Record<string, unknown>): boolean {
+  const catalogue = typeof element['catalogue'] === 'string' ? element['catalogue'] : '';
+  const category = typeof element['category'] === 'string' ? element['category'] : '';
+  return /^(rug|mat)-/.test(catalogue) || category === 'rug' || Array.isArray(element['boundary']);
+}
+
 /** One element's shape on a level, or undefined when it is not drawn there. */
 export function shapeOf(level: LevelView, id: string): Shape | undefined {
   const wall = level.walls.find((w) => w.id === id);
   if (wall !== undefined) return { id, points: wall.ring, closed: true, area: false };
   const device = level.devices.find((d) => d.id === id);
-  if (device !== undefined) return { id, points: device.footprint.length > 0 ? device.footprint : [anchorOf(device)], closed: device.footprint.length > 2, area: false };
+  if (device !== undefined) return { id, points: device.footprint.length > 0 ? device.footprint : [anchorOf(device)], closed: device.footprint.length > 2, area: isCovering(device.element) };
   const opening = level.openings.find((o) => o.id === id);
   if (opening !== undefined) return { id, points: [opening.start, opening.end], closed: false, area: false };
   const separator = level.separators.find((s) => s.id === id);

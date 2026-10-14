@@ -243,7 +243,11 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
       </g>
       <LandscapeShapes view={view} devices={shown} selection={selection} />
       {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx); FS_landscape its plants, beds, lawns and lines (above). */}
-      {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape').map((d) => <DeviceShape key={d.id} view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}`} />)}
+      {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape').map((d) => (
+        <g key={d.id} data-device={d.id}>
+          <DeviceShape view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}`} />
+        </g>
+      ))}
       {layers.electrical ? <PanelCallouts view={view} level={level} /> : null}
     </g>
   );

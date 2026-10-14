@@ -35,7 +35,7 @@ import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
 import type { DeviceView } from './systems/view';
 import { boxOf, dragResize, dragRotate, handlesOf, isResizable, resizeBatch, rotateHandleOf, ruleFor, sizeOf, turnBatch, type HandleSide } from '../furniture/resize';
 import { arrangeOf } from './arrange/state';
-import { marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
+import { isCovering, marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
 import { transformBatch, translation } from './arrange/transform';
 import { deleteSelection, moveSelection } from './arrange/actions';
 
@@ -417,7 +417,12 @@ export class ToolController {
       this.press = { world, how: p.meta === true ? 'toggle' : 'add', hit: under?.id ?? null };
       return;
     }
-    const grab = this.editable ? this.grabTarget(p) : null;
+    let grab = this.editable ? this.grabTarget(p) : null;
+    // A rug or a bed not yet selected is the floor a marquee starts from, like a room; selected, it drags.
+    if (grab?.kind === 'device' && !this.store.get().selected.includes(grab.id)) {
+      const element = level.devices.find((d) => d.id === grab?.id)?.element;
+      if (element !== undefined && isCovering(element)) grab = null;
+    }
     // A press on one of several selected: the whole selection drags (a click alone selects just that one).
     const selected = this.store.get().selected;
     const member = grab?.kind === 'resize' || grab?.kind === 'rotate' ? null : (grab?.id ?? under?.id ?? null);
@@ -444,6 +449,7 @@ export class ToolController {
     const press = this.press;
     if (press === null) return;
     const to = this.world(p);
+    if (this.store.get().hover !== null) this.store.set({ hover: null });
     arrangeOf(this.store).set({ marquee: { from: press.world, to, crossing: to[0] < press.world[0], how: press.how } });
   }
 
@@ -480,6 +486,7 @@ export class ToolController {
       if (p.shift) d = Math.abs(d[0]) >= Math.abs(d[1]) ? [d[0], 0] : [0, d[1]];
       if (!p.alt) d = [Math.round(d[0] / grid) * grid, Math.round(d[1] / grid) * grid];
       d = [Math.round(d[0]), Math.round(d[1])];
+      if (s.hover !== null) this.store.set({ hover: null });
       arrangeOf(this.store).set({ dragging: d });
       const model = s.model;
       this.store.preview(model === null || (d[0] === 0 && d[1] === 0) ? null : transformBatch(model, level, s.selected, translation(d)).batch);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Button, Checkbox, IconButton, Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger, SegmentedControl, Tooltip } from '@d3cloud/ui';
 import {
   AlignCenterVertical,
@@ -19,6 +19,7 @@ import type { EditorModel, LevelView, Point } from '../model';
 import { toScreen } from '../viewport';
 import { formatLen, parseLen, type UnitSystem } from '../units';
 import { circuitsOf } from '../systems/view';
+import { asGlyph, glyphCentre, GLYPH_R } from '../systems/hit';
 import { boundsOfIds, rectOf, shapeOf } from './shapes';
 import { arrangeOf, useArrange } from './state';
 import { arrayBatch, defaultSpec, planArray, type ArrayMode, type ArraySpec } from './array';
@@ -76,10 +77,19 @@ export function ArrangeLayer({ store, view, level }: { store: EditorStore; view:
   }
   if (plan !== null) {
     const shapes = ids.map((id) => shapeOf(level, id)).filter((s) => s !== undefined);
+    // A device drawn as a glyph (a light, an outlet) is ghosted as its glyph, so a copy reads at any zoom.
+    const ghost = (key: string, id: string, points: readonly Point[], d: Point, testid?: string) => {
+      const device = level.devices.find((x) => x.id === id);
+      if (device !== undefined && asGlyph(device, view.s)) {
+        const c = S(view, [glyphCentre(device, view.s)[0] + d[0], glyphCentre(device, view.s)[1] + d[1]]);
+        return <circle key={key} className="fs-arrange__copy" data-testid={testid} cx={c[0]} cy={c[1]} r={GLYPH_R + 2} />;
+      }
+      return <polygon key={key} className="fs-arrange__copy" data-testid={testid} points={pts(view, points, d)} />;
+    };
     plan.offsets.forEach((d, i) => {
-      for (const s of shapes) out.push(<polygon key={`a${String(i)}${s.id}`} className="fs-arrange__copy" data-testid="array-ghost" points={pts(view, s.points, d)} />);
+      for (const s of shapes) out.push(ghost(`a${String(i)}${s.id}`, s.id, s.points, d, 'array-ghost'));
     });
-    if (plan.move[0] !== 0 || plan.move[1] !== 0) for (const s of shapes) out.push(<polygon key={`m${s.id}`} className="fs-arrange__copy" points={pts(view, s.points, plan.move)} />);
+    if (plan.move[0] !== 0 || plan.move[1] !== 0) for (const s of shapes) out.push(ghost(`m${s.id}`, s.id, s.points, plan.move));
     if (plan.wall !== null) {
       const w = plan.wall.wall;
       const a = S(view, w.a);
@@ -126,6 +136,13 @@ function wantsToolbar(level: LevelView, ids: readonly string[]): boolean {
 }
 
 function SelectionToolbar({ store, view, level, model }: { store: EditorStore; view: Viewport; level: LevelView; model: EditorModel }) {
+  const bar = useRef<HTMLDivElement>(null);
+  // Its width as laid out, so it is kept on the canvas however wide its count's label is.
+  const [width, setWidth] = useState(520);
+  useLayoutEffect(() => {
+    const w = bar.current?.offsetWidth;
+    if (w !== undefined && w > 0 && Math.abs(w - width) > 1) setWidth(w);
+  });
   const selected = useEditor(store, (s) => s.selected);
   const tool = useEditor(store, (s) => s.tool);
   const busy = useEditor(store, (s) => s.draft?.tool === 'select' && s.draft.drag !== null);
@@ -136,11 +153,11 @@ function SelectionToolbar({ store, view, level, model }: { store: EditorStore; v
   const array = useArrange(store, (a) => a.array !== null);
   const ids = selected.filter((id) => shapeOf(level, id) !== undefined);
   const b = boundsOfIds(level, ids);
-  if (tool !== 'select' || comparing || busy || marquee || dragging || b === null || !wantsToolbar(level, ids)) return null;
+  // The array popover stands in for it while it is open.
+  if (tool !== 'select' || comparing || busy || marquee || dragging || array || b === null || !wantsToolbar(level, ids)) return null;
   const top = S(view, [b.minX, b.maxY])[1];
   const bottom = S(view, [b.minX, b.minY])[1];
   const mid = S(view, [(b.minX + b.maxX) / 2, b.maxY])[0];
-  const width = 480;
   const left = Math.max(8, Math.min(view.w - width - 8, mid - width / 2));
   const above = top - 56;
   const y = above >= 8 ? above : Math.min(view.h - 52, bottom + 16);
@@ -148,7 +165,7 @@ function SelectionToolbar({ store, view, level, model }: { store: EditorStore; v
   const off = !canEdit;
   const tip = (content: string, child: ReactNode) => <Tooltip content={content}>{child}</Tooltip>;
   return (
-    <div className="fs-seltool" role="toolbar" aria-label={`Arrange ${describeMany(model, ids)}`} style={{ left, top: y }} data-testid="selection-toolbar" onPointerDown={(e) => { e.stopPropagation(); }}>
+    <div ref={bar} className="fs-seltool" role="toolbar" aria-label={`Arrange ${describeMany(model, ids)}`} style={{ left, top: y }} data-testid="selection-toolbar" onPointerDown={(e) => { e.stopPropagation(); }}>
       <Menu>
         <MenuTrigger>
           <Button variant="ghost" size="sm" className="fs-seltool__count" aria-label={`${shortCount(model, ids)} selected: select more like them`}>

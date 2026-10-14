@@ -50,8 +50,18 @@ export function MultiInspector({ store }: { store: EditorStore }) {
   const catalogue = allDevices ? common(devices.map((d) => d.element['catalogue'])) : undefined;
   const rooms = level === undefined ? [] : devices.map((d) => faceAt(level, anchorOf(d))?.room ?? null);
   const room = allDevices ? common(rooms) : undefined;
+  const category = allDevices ? common(devices.map((d) => d.element['category'])) : undefined;
+  const collection = allDevices ? common(devices.map((d) => `${d.extension}/${d.collection}`)) : undefined;
   const traits = [
-    typeof catalogue === 'string' ? `Same catalogue item · ${catalogue}` : allDevices && common(devices.map((d) => `${d.extension}/${d.collection}`)) !== undefined ? `All ${devices[0]?.kindLabel.toLowerCase() ?? 'items'}` : kinds.size === 1 ? 'All the same kind' : 'Mixed kinds',
+    typeof catalogue === 'string'
+      ? `Same catalogue item · ${catalogue}`
+      : typeof category === 'string'
+        ? `Same category · ${category}`
+        : collection !== undefined
+          ? `All ${collection.split('/')[1] ?? 'items'}`
+          : kinds.size === 1
+            ? 'All the same kind'
+            : 'Mixed kinds',
     typeof room === 'string' ? labelOf(model, room) : null,
     level === undefined ? null : labelOf(model, level.id),
   ].filter((x): x is string => x !== null);

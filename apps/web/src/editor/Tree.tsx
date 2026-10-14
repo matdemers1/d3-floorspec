@@ -44,6 +44,8 @@ export function idShown(label: string, id: string): boolean {
 export function ProjectTree({ store }: { store: EditorStore }) {
   const model = useEditor(store, (s) => s.model);
   const selection = useEditor(store, (s) => s.selection);
+  // FLR-T-18.8: every selected element's row is marked; ⇧- or ⌘-click a row to add or take it out.
+  const many = useEditor(store, (s) => s.selected);
   const levelId = useEditor(store, (s) => s.level);
   const layers = useEditor(store, (s) => s.layers);
   const readOnly = useEditor(store, (s) => s.readOnly);
@@ -214,10 +216,10 @@ export function ProjectTree({ store }: { store: EditorStore }) {
         <span className="fs-spacer" />
         <IconButton size="sm" label="Add a level" icon={<Plus />} disabled={readOnly !== null} onClick={() => { newLevel(store); }} />
       </div>
-      <div role="tree" aria-label={`${name} elements`} className="fs-tree__rows">
+      <div role="tree" aria-label={`${name} elements`} aria-multiselectable="true" className="fs-tree__rows">
         {rows.map((o, index) => {
           const expandable = o.group === true;
-          const selected = o.id !== undefined && o.id === selection;
+          const selected = o.id !== undefined && (o.id === selection || many.includes(o.id));
           const editing = o.id !== undefined && o.id === renaming;
           return (
             <div
@@ -234,9 +236,10 @@ export function ProjectTree({ store }: { store: EditorStore }) {
               className={['fs-tree__row', selected ? 'is-selected' : '', o.strong === true ? 'is-strong' : ''].join(' ')}
               style={{ paddingInlineStart: 8 + o.depth * 14 }}
               onFocus={() => { if (focusKey !== o.key) setFocusKey(o.key); }}
-              onClick={() => {
+              onClick={(e) => {
                 setFocusKey(o.key);
-                if (o.id !== undefined) store.select(o.id);
+                if (o.id !== undefined && (e.shiftKey || e.metaKey || e.ctrlKey)) store.toggleSelected(o.id);
+                else if (o.id !== undefined) store.select(o.id);
                 else if (expandable) toggle(o.key);
               }}
               onKeyDown={(e) => { if (!editing) onKeyDown(e, o, index); }}
