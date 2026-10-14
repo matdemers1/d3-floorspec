@@ -115,7 +115,8 @@ describe('the ghost (FLR-T-18.7)', () => {
     const dx = (chair.box.max[0] - chair.box.min[0]) / 2;
     const p: Point = [den.minX + dx + 50 * MM, (den.minY + den.maxY) / 2];
     const g = ghostOf(BARE, chair, p, opts())!;
-    expect(Math.min(...g.footprint.map((q) => q[0]))).toBeCloseTo(den.minX, -1);
+    // 10 mm off the face, as a backed item's back is.
+    expect(Math.min(...g.footprint.map((q) => q[0]))).toBeCloseTo(den.minX + 12_800, -1);
     expect(g.guides.length).toBeGreaterThan(0);
     expect(g.host?.mode).toBe('surface');
   });
@@ -139,6 +140,14 @@ describe('the ghost (FLR-T-18.7)', () => {
     const at: Point = [den.maxX + 70 * MM, den.minY + 1_000 * MM];
     const seen = [0, 90, 180, 270].map((r) => ghostOf(L1, door, at, opts({ rotation: r, turned: true }))!.opening!);
     expect(new Set(seen.map((s) => `${s.nearer}/${s.side}`)).size).toBe(4);
+  });
+
+  it('keeps to the snap menu: everything off, a sofa near a wall does not back onto it; walls off, neither', () => {
+    const p: Point = [(den.minX + den.maxX) / 2, den.minY + 700 * MM];
+    const all = { on: true, walls: true, items: true, guides: true, grid: true };
+    expect(ghostOf(L1, sofa, p, opts({ snaps: all }))!.label).toContain('south wall');
+    expect((ghostOf(L1, sofa, p, opts({ snaps: { ...all, on: false } }))!.host as { rotation?: number }).rotation).toBe(0);
+    expect(ghostOf(L1, sofa, p, opts({ snaps: { ...all, walls: false } }))!.label).not.toContain('wall');
   });
 
   it('puts a tree free on the level, wherever it is', () => {

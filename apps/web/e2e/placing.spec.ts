@@ -227,6 +227,8 @@ test('adding things: drag a sofa and a window in, click-to-place with turns, qui
   await drawer.getByRole('button', { name: 'Add Three-seat sofa to favourites' }).click();
   await expect(drawer.getByRole('region', { name: 'Favourites' }).getByRole('button', { name: /Three-seat sofa/ })).toBeVisible();
   await expect(drawer.getByRole('region', { name: 'Recent' }).getByRole('button', { name: /Armchair/ })).toBeVisible();
+  await page.getByRole('group', { name: 'Categories' }).getByRole('button', { name: 'Seating' }).click();
+  await drawer.evaluate((el) => { el.closest('.fs-editor__tree')?.scrollTo(0, 0); });
   await shoot(page, 'drawer');
 
   // ── A finger: tap a card, tap the plan.

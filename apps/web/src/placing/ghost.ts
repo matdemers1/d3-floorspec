@@ -34,6 +34,12 @@ export interface GhostOptions {
   turned: boolean;
   /** ⌥: no snapping but the grid. */
   free?: boolean;
+  /**
+   * Which snaps are on — the snap menu's toggles (FLR-T-18.9's SnapSettings, read structurally):
+   * all off, it snaps to nothing but the grid; walls off, nothing backs onto a wall; items off,
+   * nothing lines up with an item; the grid off, nothing rounds to it. Absent, all on.
+   */
+  snaps?: { on: boolean; walls: boolean; items: boolean; guides: boolean; grid: boolean } | undefined;
   /** The room names, for the sentence. */
   roomName?: (id: string) => string;
   wallName?: (id: string) => string;
@@ -192,7 +198,7 @@ function backed(level: LevelView, entry: Entry, p: Point, room: RoomView, o: Gho
     candidates.push({ s: half, how: 'in the corner of' });
     candidates.push({ s: face.L - half, how: 'in the corner of' });
     // Items against the same face: abut either side, or line up their middles.
-    for (const x of others(level)) {
+    for (const x of o.snaps?.items === false ? [] : others(level)) {
       const near = x.ring.some((q) => {
         const off = dot(sub(q, face.a), n);
         return off > -MM && off < depth + NEAR / 3;
@@ -245,10 +251,10 @@ interface Line {
   kind: 'face' | 'item';
 }
 
-function linesOf(level: LevelView, room: RoomView | undefined): Line[] {
+function linesOf(level: LevelView, room: RoomView | undefined, snaps: GhostOptions['snaps']): Line[] {
   const out: Line[] = [];
-  if (room !== undefined) for (const f of facesOf(room)) out.push({ p: f.a, d: scale(sub(f.b, f.a), 1 / f.L), lo: 0, hi: f.L, kind: 'face' });
-  for (const x of others(level)) {
+  if (room !== undefined && snaps?.walls !== false) for (const f of facesOf(room)) out.push({ p: f.a, d: scale(sub(f.b, f.a), 1 / f.L), lo: 0, hi: f.L, kind: 'face' });
+  for (const x of snaps?.items === false ? [] : others(level)) {
     const r = x.ring;
     for (let i = 0; i < r.length; i++) {
       const a = r[i] as Point;
@@ -268,15 +274,15 @@ function free(level: LevelView, entry: Entry, p: Point, o: GhostOptions, onLevel
   const dx = (b.max[0] - b.min[0]) / 2;
   const dy = (b.max[1] - b.min[1]) / 2;
   // The shared snap engine first: the grid and alignment with junctions, unless ⌥.
-  const base = snapPoint(level, p, { tol: o.tol, grid: o.grid, free: o.free === true }).point;
+  const base: Point = o.snaps?.grid === false ? p : snapPoint(level, p, { tol: o.tol, grid: o.grid, free: o.free === true }).point;
   let centre: Point = base;
   const guides: [Point, Point][] = [];
   const flush: string[] = [];
   if (o.free !== true) {
     // Each axis of the item's frame by itself: a side flush to a face or to an item's side, or its
     // middle lined up with an item's middle.
-    const lines = linesOf(level, room);
-    const middles = others(level).map((x) => x.ring.reduce<Point>((s, q) => [s[0] + q[0] / x.ring.length, s[1] + q[1] / x.ring.length], [0, 0]));
+    const lines = linesOf(level, room, o.snaps);
+    const middles = (o.snaps?.items === false || o.snaps?.guides === false ? [] : others(level)).map((x) => x.ring.reduce<Point>((s, q) => [s[0] + q[0] / x.ring.length, s[1] + q[1] / x.ring.length], [0, 0]));
     for (const [axis, half] of [[u, dx], [v, dy]] as const) {
       const across = axis === u ? v : u;
       const extentAcross = axis === u ? dy : dx;
@@ -294,8 +300,11 @@ function free(level: LevelView, entry: Entry, p: Point, o: GhostOptions, onLevel
         // The nearest point of the line to the item's middle, for the guide.
         const along = Math.max(line.lo, Math.min(line.hi, dot(sub(p, line.p), line.d)));
         const to = add(line.p, scale(line.d, along));
-        consider(k - half, 1, to, line.kind);
-        consider(k + half, -1, to, line.kind);
+        // A face is met 10 mm short, as a backed item's back is, so the host's point is strictly
+        // inside the room (Core 13.3.4); an item's side is met exactly.
+        const inset = line.kind === 'face' ? BACK_GAP : 0;
+        consider(k - half - inset, 1, to, line.kind);
+        consider(k + half + inset, -1, to, line.kind);
       }
       for (const m of middles) {
         const off = dot(sub(m, p), across);
@@ -452,7 +461,9 @@ function opening(level: LevelView, entry: Entry, p: Point, o: GhostOptions): Gho
 // ─── The ghost ─────────────────────────────────────────────────────────────────────────────────
 
 /** The ghost of an entry at a point on a level, or null when it has nowhere to go there. */
-export function ghostOf(level: LevelView, entry: Entry, p: Point, o: GhostOptions): Ghost | null {
+export function ghostOf(level: LevelView, entry: Entry, p: Point, options: GhostOptions): Ghost | null {
+  // The snap menu's master switch off is ⌥ held for good.
+  const o: GhostOptions = options.snaps !== undefined && !options.snaps.on ? { ...options, free: true } : options;
   switch (entry.placement) {
     case 'opening':
       return opening(level, entry, p, o);
@@ -463,7 +474,7 @@ export function ghostOf(level: LevelView, entry: Entry, p: Point, o: GhostOption
       return free(level, entry, p, o, true);
     case 'backed': {
       const room = roomOf(level, p);
-      if (room !== undefined && o.free !== true) {
+      if (room !== undefined && o.free !== true && o.snaps?.walls !== false) {
         const g = backed(level, entry, p, room, o);
         if (g !== null) return g;
       }

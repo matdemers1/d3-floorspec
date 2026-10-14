@@ -240,7 +240,15 @@ export function LibraryPanel({ store }: { store: EditorStore }) {
       </section>
       {!readOnly ? (
         <div className="fs-lib__foot">
-          <Button size="sm" variant="ghost" onClick={() => { furnitureOf(store).set({ open: true, uploading: false }); }}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              // The furniture library in detail, on the item last placed or chosen when it is one of its own.
+              const last = byKey.get(p.get().active ?? recent[0] ?? '');
+              furnitureOf(store).set({ open: true, uploading: false, ...(last?.source.kind === 'furniture' ? { chosen: last.source.item.id, kind: 'all', query: '' } : {}) });
+            }}
+          >
             Details…
           </Button>
           <Button size="sm" variant="ghost" icon={<Upload />} onClick={() => { furnitureOf(store).set({ open: true, uploading: true }); }}>
