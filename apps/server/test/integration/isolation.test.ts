@@ -30,6 +30,9 @@ const CALLS: Record<string, Call> = {
   'POST /api/projects/:projectId/ops': { body: { batch: ROOM }, ownerStatus: 201 },
   'POST /api/projects/:projectId/undo': { body: {}, ownerStatus: 201 },
   'POST /api/projects/:projectId/redo': { body: {}, ownerStatus: 201 },
+  // FLR-T-18.14: back to the room's batch (create 1, the changeset's batch 2, the room 3, undo 4, redo 5) — the same model.
+  'POST /api/projects/:projectId/restore': { body: { seq: 3 }, ownerStatus: 201 },
+  'POST /api/projects/:projectId/branch': { body: { seq: 3, name: 'From the room' }, ownerStatus: 201 },
   'GET /api/projects/:projectId/validate': { ownerStatus: 200 },
   'GET /api/projects/:projectId/findings': { ownerStatus: 200 },
   'GET /api/projects/:projectId/profile': { ownerStatus: 200 },

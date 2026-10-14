@@ -66,8 +66,11 @@ import { defineConfig, devices } from '@playwright/test';
  *                   lens, two-point off, exposure, a view saved, renamed and deleted as Ops — and a shot list.
  *   - `dimensions` — FLR-T-18.11: on the Courtyard House, exterior strings with no span under 6", room strings
  *                   and tags in Construction, the area summary, the show toggles and the schedule, the dimension
- *                   tool (⇧D) and its string following a moved wall, a note with a leader (⇧T), picked and
+ *                   tool (⇧D) and its string following a moved window, a note with a leader (⇧T), picked and
  *                   deleted, and the measure tool's "Keep as a dimension"; axe in both themes.
+ *   - `feedback`  — FLR-T-18.14: live feedback on the Courtyard House — the island dragged towards the counter, its
+ *                   working space's halo clear, then red with the card naming the counter, fps measured; the
+ *                   history scrubber scrubbed back one version, restored as one new op, and branched; axe.
  *   - `precision` — FLR-T-18.9: on the Courtyard House, a door's temporary dimension typed (Tab: face, centre,
  *                   other face) as one moveOpening and one undo, the inspector's Position, the snap menu,
  *                   a measure chain closed on the kitchen's work triangle, ⌥ distances; axe in both themes.
@@ -78,7 +81,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_dimensions_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_dimensions_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; feedback, +46; dimensions, +41).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -173,6 +176,8 @@ const SUITES: Suite[] = [
   { name: 'styles', spec: 'styles.spec.ts', port: PORT + 37, database: databaseFor('styles'), setupToken: true },
   // FLR-T-18.11: dimensions and annotation — auto strings, the dimension tool, tags and the schedule, areas, notes, axe.
   { name: 'dimensions', spec: 'dimensions.spec.ts', port: PORT + 41, database: databaseFor('dimensions'), setupToken: true },
+  // FLR-T-18.14: live feedback — clearance halos while dragging the island, fps, the history scrubber back one version, restore, branch, axe.
+  { name: 'feedback', spec: 'feedback.spec.ts', port: PORT + 46, database: databaseFor('feedback'), setupToken: true },
 ];
 
 /**
