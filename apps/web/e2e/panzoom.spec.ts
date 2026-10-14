@@ -256,7 +256,17 @@ test('pan and zoom: keys, animation, the editable zoom, the wheel, the hand, dou
   await expect(minimap).toBeVisible();
   await expect(bar.getByRole('button', { name: 'Minimap' })).toHaveAttribute('aria-pressed', 'true');
   const rect = page.getByTestId('minimap-viewport');
+  // A press on it just outside the rectangle brings the view there, the middle of the minimap's height.
+  await still(page);
+  const r = (await rect.boundingBox())!;
+  const mini = (await minimap.locator('svg[aria-roledescription="minimap"]').boundingBox())!;
+  const spot = { x: r.x - 4, y: mini.y + mini.height / 2 };
+  await page.mouse.click(spot.x, spot.y);
+  await still(page);
   const r0 = (await rect.boundingBox())!;
+  expect(Math.abs(r0.x + r0.width / 2 - spot.x)).toBeLessThan(3);
+  expect(Math.abs(r0.y + r0.height / 2 - spot.y)).toBeLessThan(3);
+  // Its rectangle dragged drags the plan the other way.
   before = await labelAt(page, 'Great room');
   await page.mouse.move(r0.x + r0.width / 2, r0.y + r0.height / 2);
   await page.mouse.down();
@@ -268,14 +278,7 @@ test('pan and zoom: keys, animation, the editable zoom, the wheel, the hand, dou
   const moved = await labelAt(page, 'Great room');
   expect(moved.x).toBeLessThan(before.x - 20);
   expect(moved.y).toBeLessThan(before.y - 10);
-  // A press elsewhere on it brings the view there.
-  const mini = (await minimap.locator('svg[aria-roledescription="minimap"]').boundingBox())!;
-  const spot = { x: mini.x + mini.width * 0.7, y: mini.y + mini.height * 0.55 };
-  await page.mouse.click(spot.x, spot.y);
-  await still(page);
-  const r2 = (await rect.boundingBox())!;
-  expect(Math.abs(r2.x + r2.width / 2 - spot.x)).toBeLessThan(4);
-  expect(Math.abs(r2.y + r2.height / 2 - spot.y)).toBeLessThan(4);
+  const r2 = r1;
   // The keyboard pans it too.
   await minimap.locator('svg[aria-roledescription="minimap"]').focus();
   await page.keyboard.press('ArrowRight');
@@ -356,8 +359,8 @@ test('pan and zoom: keys, animation, the editable zoom, the wheel, the hand, dou
   await panel.getByRole('button', { name: /bedroom/i }).first().click();
   await expect(page.getByRole('application', { name: 'Plan of Upper floor' })).toBeVisible();
   await expect.poll(() => selectedInView(page)).toBe(true);
-  // The "Claude is proposing" toast sits over the bar for a while: audit once it has gone.
-  await expect(page.locator('.d3-toast')).toHaveCount(0, { timeout: 15_000 });
+  // The "Claude is proposing" toast rises clear of the zoom bar: nothing of the bar is covered.
+  await expect(page.locator('.d3-toast')).toBeVisible();
   await audit(page, 'proposal-go-to');
   await agent.dispose();
 });

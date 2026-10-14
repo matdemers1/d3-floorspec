@@ -1768,6 +1768,12 @@ path.fs-hl--danger {
   display: none;
 }
 
+/* FLR-T-18.6: in the editor a toast rises clear of the status bar and the zoom bar in the plan's
+   bottom-right corner, rather than sitting over its buttons. */
+body:has(.fs-editor) .d3-toast-region {
+  bottom: 88px;
+}
+
 /* FLR-T-18.6: the hand. */
 .fs-canvas[data-tool='hand'] .fs-canvas__svg {
   cursor: grab;
