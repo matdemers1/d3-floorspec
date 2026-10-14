@@ -345,3 +345,31 @@ describe('the GPU still’s cameras and light (FLR-T-13.13)', () => {
   });
 
 });
+
+describe('a saved view’s camera on the GPU (FLR-T-13.10)', () => {
+  it('shifts the lens by a view offset and is a 36 mm thin lens at its f-number', async () => {
+    const { readView, viewCamera } = await import('@floorspec/mesh');
+    const { savedViewCamera } = await import('../src/editor/three/still/gpu/cameras');
+    const M = UNITS_PER_METRE;
+    const view = readView('SV1', { name: 'Hero', eye: [0, -20 * M, 1.6 * M], target: [0, 0, 4.6 * M], focalLength: 24, twoPoint: true, aperture: 'f/4', focus: 18 * M })!;
+    const cam = viewCamera(view);
+    const still = savedViewCamera(cam, 24, 4);
+    // In the export's frame: level, looking north (−Z), the eye at 1.6 m.
+    expect(still.eye).toEqual([0, 1.6, 20]);
+    expect(still.target[1]).toBeCloseTo(1.6, 12);
+    const camera = perspectiveOf(still, 1.5) as PerspectiveCamera & { fStop: number; focusDistance: number };
+    expect(camera.fStop).toBe(4);
+    expect(camera.focusDistance).toBeCloseTo(18, 9);
+    // three.js's focal length on a 36 mm film gauge is the lens's: its aperture is 24 / 4 mm across.
+    expect(camera.getFocalLength()).toBeCloseTo(24, 9);
+    // The target, 3 m up 20 m away, projects onto the middle of the picture.
+    camera.updateMatrixWorld(true);
+    const p = new Vector3(0, 4.6, 0).project(camera);
+    expect(p.x).toBeCloseTo(0, 9);
+    expect(p.y).toBeCloseTo(0, 9);
+    // Without a lens, a plain perspective camera, unshifted when it is not two-point.
+    const plain = perspectiveOf(savedViewCamera(viewCamera({ ...view, twoPoint: false, aperture: undefined } as never), 24, null), 1.5);
+    expect('fStop' in plain).toBe(false);
+    expect(plain.view === null || !plain.view.enabled).toBe(true);
+  });
+});

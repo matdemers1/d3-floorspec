@@ -1,0 +1,17 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_views/views/SV2",
+      "value": {
+        "name": "Kitchen island",
+        "eye": [4224000, 4224000, 1920000],
+        "target": [2341120, 2341120, 1216000],
+        "twoPoint": true,
+        "sky": "dusk",
+        "scene": "LS1"
+      }
+    }
+  ]
+}

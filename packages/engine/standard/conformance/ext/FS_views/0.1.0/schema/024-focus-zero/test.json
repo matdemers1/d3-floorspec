@@ -1,0 +1,6 @@
+{
+  "description": "A focus of 0: the distance in focus is a positive length.",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

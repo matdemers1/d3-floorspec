@@ -1,0 +1,6 @@
+{
+  "description": "A view SV5 \"Porch\" of only a name, an eye and a target: no level and no scene, so both null, and its lights off.",
+  "covers": [
+    "FS-VIEW-6.1.1"
+  ]
+}

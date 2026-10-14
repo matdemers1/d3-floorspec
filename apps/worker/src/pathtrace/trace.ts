@@ -221,6 +221,8 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   const tanY = Math.tan((camera.fovY * Math.PI) / 360);
   const tanX = tanY * (W / H);
   const [ex, ey, ez] = camera.eye;
+  const shift = camera.shift ?? 0;
+  const lens = camera.lens !== undefined && camera.lens.radius > 0 && camera.lens.focus > 0 ? camera.lens : undefined;
 
   // The sun's disc: a frame around its direction, to sample points on it.
   const [sx, sy, sz] = sun.dir;
@@ -511,17 +513,35 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
         const pixel = py * W + px;
         rng.reseed(seed, pass, pixel);
         const fx = ((px + rng.next()) / W) * 2 - 1;
-        const fy = 1 - ((py + rng.next()) / H) * 2;
+        // A shift lens (FLR-T-13.10): the picture's middle `shift` half-heights up.
+        const fy = 1 - ((py + rng.next()) / H) * 2 + shift;
         let dx = right[0] * fx * tanX + up[0] * fy * tanY - back[0];
         let dy = right[1] * fx * tanX + up[1] * fy * tanY - back[1];
         let dz = right[2] * fx * tanX + up[2] * fy * tanY - back[2];
+        let ox = ex;
+        let oy = ey;
+        let oz = ez;
+        if (lens !== undefined) {
+          // A thin lens (FLR-T-13.10): from a point on its disc toward where this ray meets the plane in
+          // focus — `focus` along the line of sight, which the unnormalised ray advances by one a unit.
+          const fpx = ex + dx * lens.focus;
+          const fpy = ey + dy * lens.focus;
+          const fpz = ez + dz * lens.focus;
+          const rr = lens.radius * Math.sqrt(rng.next());
+          const th = 2 * Math.PI * rng.next();
+          const lx = rr * Math.cos(th);
+          const ly = rr * Math.sin(th);
+          ox = ex + right[0] * lx + up[0] * ly;
+          oy = ey + right[1] * lx + up[1] * ly;
+          oz = ez + right[2] * lx + up[2] * ly;
+          dx = fpx - ox;
+          dy = fpy - oy;
+          dz = fpz - oz;
+        }
         const dl = Math.hypot(dx, dy, dz);
         dx /= dl;
         dy /= dl;
         dz /= dl;
-        let ox = ex;
-        let oy = ey;
-        let oz = ez;
         let tMin = camera.near;
         let r = 0;
         let g = 0;

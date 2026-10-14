@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DRAWER_TIMING, DrawerMachine, DrawersStore, HOT_ZONE, SWIPE, zoneAt, type DrawerState, type PinStorage } from '../src/editor/drawers';
+import { DRAWER_TIMING, DrawerMachine, DrawersStore, HOT_ZONE, SWIPE, zoneAt, type DrawerState, type Measure, type PinStorage } from '../src/editor/drawers';
 import { COMMANDS, commandFor } from '../src/editor/commands';
 
 /**
@@ -74,6 +74,53 @@ describe('a drawer', () => {
     m.zoneEnter();
     vi.advanceTimersByTime(DRAWER_TIMING.peek);
     m.zoneLeave();
+    vi.advanceTimersByTime(DRAWER_TIMING.leave);
+    expect(m.state).toBe('hidden');
+  });
+
+  // FLR-T-18.17: in the 3D view on CI the peek's pointerenter never came — the 3D view finished
+  // loading under the resting pointer as the peek slid in — so the move onto the peek only left the
+  // hot zone, and the drawer went 300 ms later with the pointer on it.
+  it('opens when the pointer is measured on the peek, though the drawer never heard it enter', () => {
+    const { m, seen } = machine();
+    m.zoneEnter();
+    vi.advanceTimersByTime(DRAWER_TIMING.peek);
+    // The move onto the peek, measured before the hot zone hears it left.
+    m.measured(true, false);
+    m.zoneLeave();
+    expect(m.state).toBe('open');
+    // Off it over the plan, measured: it leaves as if its pointerleave had come.
+    m.measured(false, true);
+    vi.advanceTimersByTime(DRAWER_TIMING.leave);
+    expect(m.state).toBe('hidden');
+    expect(seen).toEqual(['peeking', 'open', 'hidden']);
+  });
+
+  it('off it over a menu or tooltip of its own, the measure leaves it to its own events', () => {
+    const { m } = machine();
+    m.open();
+    m.enter();
+    m.measured(false, false);
+    vi.advanceTimersByTime(1000);
+    expect(m.state).toBe('open');
+  });
+
+  it('looks once more when the walk-away runs out: on it, a peek opens; still sliding in, it waits', () => {
+    const { m } = machine();
+    let at: Measure = 'moving';
+    m.probe = () => at;
+    m.zoneEnter();
+    vi.advanceTimersByTime(DRAWER_TIMING.peek);
+    // The pointer moves on before the peek has slid under it (a long frame), and nothing is heard.
+    m.zoneLeave();
+    vi.advanceTimersByTime(DRAWER_TIMING.leave);
+    expect(m.state).toBe('peeking');
+    at = 'on';
+    vi.advanceTimersByTime(DRAWER_TIMING.leave);
+    expect(m.state).toBe('open');
+    // From then on it is an open drawer the pointer is on: off it, it goes.
+    at = 'off';
+    m.leave();
     vi.advanceTimersByTime(DRAWER_TIMING.leave);
     expect(m.state).toBe('hidden');
   });
@@ -214,6 +261,21 @@ describe('the editor’s drawers', () => {
     d.pointerZone('top');
     vi.advanceTimersByTime(DRAWER_TIMING.peek);
     expect(d.get().top).toBe('peeking');
+    vi.advanceTimersByTime(DRAWER_TIMING.leave);
+    expect(d.get().left).toBe('hidden');
+  });
+
+  it('measure a pointermove against each floating drawer’s box before the hot zone hears it', () => {
+    const d = new DrawersStore('p1', undefined, new MemoryStorage());
+    d.setFull(true);
+    const boxes = { left: { left: 8, top: 8, right: 62, bottom: 892 }, top: null, right: null };
+    d.pointerZone('left');
+    vi.advanceTimersByTime(DRAWER_TIMING.peek);
+    expect(d.get().left).toBe('peeking');
+    d.pointerAt(30, 760, (side) => boxes[side], false);
+    d.pointerZone(null);
+    expect(d.get().left).toBe('open');
+    d.pointerAt(800, 450, (side) => boxes[side], true);
     vi.advanceTimersByTime(DRAWER_TIMING.leave);
     expect(d.get().left).toBe('hidden');
   });

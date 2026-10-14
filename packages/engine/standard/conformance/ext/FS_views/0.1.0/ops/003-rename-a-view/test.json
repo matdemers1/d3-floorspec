@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_views/views/SV1/name: the hero shot is now \"Front of house\". It commits.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-2.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

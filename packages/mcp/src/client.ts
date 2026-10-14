@@ -243,6 +243,8 @@ export interface RenderOptions {
   readonly lights?: 'on' | 'off';
   /** 3D (FLR-T-13.12): a lighting scene by name — "All on", "Off" or one of the project's — path-traced. */
   readonly scene?: string;
+  /** 3D (FLR-T-13.10): a saved view (FS_views) by name or ID — path-traced as the photograph it describes. */
+  readonly savedView?: string;
   /** 3D (FLR-T-13.8): the doors closed (default) or open. */
   readonly doors?: 'open' | 'closed';
   /** 3D (FLR-T-13.4): the sky it is seen under. */
@@ -407,6 +409,7 @@ export class HttpFloorspecClient implements FloorspecClient {
     if (options.sky !== undefined) params.set('sky', options.sky);
     if (options.at !== undefined) params.set('at', options.at);
     if (options.mode !== undefined) params.set('mode', options.mode);
+    if (options.savedView !== undefined) params.set('savedView', options.savedView);
     const res = await this.send('GET', this.project(projectId, `/render?${params.toString()}`), undefined, { accept: 'image/png' });
     return new Uint8Array(await res.arrayBuffer());
   }

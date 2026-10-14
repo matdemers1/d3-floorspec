@@ -1,0 +1,6 @@
+{
+  "description": "An `at` with an offset of -0400: the offset is written ±HH:MM.",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-VIEW-INV-007",
+      "severity": "error",
+      "elements": ["SV1"]
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { UNITS_PER_METRE } from '@floorspec/mesh';
+import { UNITS_PER_METRE, type ViewCamera } from '@floorspec/mesh';
 import { eyeOf, PRESETS, type Orbit, type PresetId } from '../../camera';
 import type { Vec3 } from './sky';
 
@@ -19,6 +19,10 @@ export interface StillCamera {
   readonly near: number;
   /** What it is, in words: "SW iso", "Kitchen (R3) from its doorway D2". */
   readonly label: string;
+  /** A shift lens (FLR-T-13.10): the picture's middle moved up by this many half-heights. */
+  readonly shift?: number;
+  /** A thin lens (FLR-T-13.10): its focal length (mm, on a 36 mm long side), f-number and the distance in focus (m). */
+  readonly lens?: { readonly focalLength: number; readonly fNumber: number; readonly focus: number };
 }
 
 /** Floorspec plan (x, y) and height z, metres, to the export's frame. */
@@ -60,3 +64,20 @@ export function presetCamera(preset: PresetId, box: { min: Vec3; max: Vec3 }, as
   return { eye, target, up: preset === 'top' ? yUp(0, 1, 0) : [0, 1, 0], fovY, near: Math.max(0.05, distance - radius * 1.5), label: a.label };
 }
 
+
+/**
+ * A saved view's camera (FLR-T-13.10, @floorspec/mesh `viewCamera`, metres in the document's frame)
+ * in the export's frame: level and shifted under two-point perspective, with its thin lens.
+ */
+export function savedViewCamera(view: ViewCamera, focalLength: number, fNumber: number | null): StillCamera {
+  return {
+    eye: yUp(...view.eye),
+    target: yUp(...view.look),
+    up: [0, 1, 0],
+    fovY: view.fovY,
+    near: 0.05,
+    label: view.label,
+    ...(view.shift === 0 ? {} : { shift: view.shift }),
+    ...(view.lens === null || fNumber === null ? {} : { lens: { focalLength, fNumber, focus: view.lens.focus } }),
+  };
+}

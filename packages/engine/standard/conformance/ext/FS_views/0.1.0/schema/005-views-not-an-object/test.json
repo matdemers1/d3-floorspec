@@ -1,0 +1,6 @@
+{
+  "description": "FS_views's `views` is a list of views, not an object of them.",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

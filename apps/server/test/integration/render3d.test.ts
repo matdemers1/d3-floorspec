@@ -6,7 +6,7 @@ import { MAX_PENDING_RENDERS } from '../../src/routes/checks.js';
 import { reset, setupOperator, start, testDb, TEST_ENV, type Browser, type Running } from './helpers.js';
 
 const cookieOf = (b: Browser): string => [...b.cookies].map(([k, v]) => `${k}=${v}`).join('; ');
-import { KITCHEN_AS_WRITTEN, projectWithDocument, REQUIRES_ELECTRICAL } from './drawings-support.js';
+import { KITCHEN_AS_WRITTEN, projectWithDocument, REQUIRES_ELECTRICAL, WITH_VIEWS } from './drawings-support.js';
 
 /**
  * FLR-T-8.5 end to end: `GET /render?view=3d` queues a `render.3d` job on the Postgres job queue,
@@ -129,6 +129,25 @@ describe('3D render-back', () => {
     expect(unknown.text).toMatch(/no lighting scene .*Dinner.*All on.*Evening.*Off/);
     expect((await operator.get(`/api/projects/${id}/render?view=3d&scene=Evening&lights=off`)).status).toBe(400);
   });
+
+  it('renders a saved view by name, path-traced in its own frame (FLR-T-13.10)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, WITH_VIEWS, 'Ranch with views');
+    const r = await fetch(`${running.url}/api/projects/${id}/render?view=3d&savedView=front&width=96`, { headers: { cookie: cookieOf(operator) } });
+    expect(r.status, await r.clone().text()).toBe(200);
+    // 3:2: 96 along the long side.
+    expect(pngSize(new Uint8Array(await r.arrayBuffer()))).toEqual({ width: 96, height: 64 });
+    const job = (await db.job.findMany({ where: { projectId: id } })).at(-1);
+    expect(job?.params).toMatchObject({ view: 'SV1', width: 96 });
+    expect(job?.result).toMatchObject({ view: { id: 'SV1', name: 'Front' }, camera: 'Front', width: 96, height: 64 });
+    // A view the model does not have, named with those it has; options a saved view sets itself; too wide.
+    const unknown = await operator.get(`/api/projects/${id}/render?view=3d&savedView=Garden`);
+    expect(unknown.status).toBe(400);
+    expect(unknown.text).toMatch(/no saved view .*Garden.*Front.*Living room/);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&savedView=Front&camera=sw`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&savedView=Front&sky=night`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&savedView=Front&width=2000`)).status).toBe(400);
+  }, 120_000);
 
   it('draws the house under a sky, its sun placed by a date and time at the site (FLR-T-13.4, 13.9)', async () => {
     const operator = await setupOperator(running);

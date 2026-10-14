@@ -1,0 +1,7 @@
+{
+  "description": "FS_lighting's `scenes` is a list of scenes: a `scenes` that is not an object holds no scene (1.3), and a view keyed LS1 is then no scene's either.",
+  "covers": [
+    "FS-VIEW-1.3.2",
+    "FS-VIEW-3.3.1"
+  ]
+}

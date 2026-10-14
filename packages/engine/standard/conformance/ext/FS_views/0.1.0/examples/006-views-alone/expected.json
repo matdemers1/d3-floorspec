@@ -1,0 +1,166 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "9105cad1fb96b4c6acc7f379f7f40dd29791c7a16a53357df9471f3722975d17",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [64000, 64000],
+        "endRight": [64000, 4617728],
+        "endLeft": [-64000, 4745728],
+        "startLeft": [-64000, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W10": {
+        "startRight": [4745728, 2276864],
+        "endRight": [7738880, 2276864],
+        "endLeft": [7738880, 2404864],
+        "startLeft": [4745728, 2404864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [64000, 4617728],
+        "endRight": [4617728, 4617728],
+        "endLeft": [4681728, 4745728],
+        "startLeft": [-64000, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4745728, 4617728],
+        "endRight": [7738880, 4617728],
+        "endLeft": [7866880, 4745728],
+        "startLeft": [4681728, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [7738880, 4617728],
+        "endRight": [7738880, 2404864],
+        "endLeft": [7866880, 2340864],
+        "startLeft": [7866880, 4745728],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [7738880, 2276864],
+        "endRight": [7738880, 64000],
+        "endLeft": [7866880, -64000],
+        "startLeft": [7866880, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W6": {
+        "startRight": [7738880, 64000],
+        "endRight": [4745728, 64000],
+        "endLeft": [4681728, -64000],
+        "startLeft": [7866880, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W7": {
+        "startRight": [4617728, 64000],
+        "endRight": [64000, 64000],
+        "endLeft": [-64000, -64000],
+        "startLeft": [4681728, -64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W8": {
+        "startRight": [4745728, 64000],
+        "endRight": [4745728, 2276864],
+        "endLeft": [4617728, 2340864],
+        "startLeft": [4617728, 64000],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W9": {
+        "startRight": [4745728, 2404864],
+        "endRight": [4745728, 4617728],
+        "endLeft": [4617728, 4617728],
+        "startLeft": [4617728, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J3": [[4617728, 4617728], [4745728, 4617728], [4681728, 4745728]],
+      "J6": [[4617728, 64000], [4681728, -64000], [4745728, 64000]],
+      "J7": [[4617728, 2340864], [4745728, 2276864], [4745728, 2404864]],
+      "J8": [[7738880, 2276864], [7866880, 2340864], [7738880, 2404864]]
+    },
+    "rooms": {
+      "R1": {
+        "outer": [[64000, 64000], [4617728, 64000], [4617728, 2340864], [4617728, 4617728], [64000, 4617728]],
+        "holes": [],
+        "area": "20736438697984"
+      },
+      "R2": {
+        "outer": [[4745728, 2404864], [7738880, 2404864], [7738880, 4617728], [4745728, 4617728]],
+        "holes": [],
+        "area": "6623438307328"
+      },
+      "R3": {
+        "outer": [[4745728, 64000], [7738880, 64000], [7738880, 2276864], [4745728, 2276864]],
+        "holes": [],
+        "area": "6623438307328"
+      }
+    },
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": false,
+        "reachable": false
+      },
+      "R2": {
+        "entry": false,
+        "reachable": false
+      },
+      "R3": {
+        "entry": false,
+        "reachable": false
+      }
+    },
+    "extensions": {
+      "FS_views": {
+        "views": {
+          "SV1": {
+            "level": null,
+            "lights": "off",
+            "name": "Hero exterior",
+            "scene": null
+          },
+          "SV2": {
+            "level": null,
+            "lights": "on",
+            "name": "Kitchen island",
+            "scene": null
+          },
+          "SV3": {
+            "level": null,
+            "lights": "off",
+            "name": "Dusk from the garden",
+            "scene": null
+          },
+          "SV4": {
+            "level": "L1",
+            "lights": "off",
+            "name": "Cutaway",
+            "scene": null
+          }
+        }
+      }
+    }
+  }
+}

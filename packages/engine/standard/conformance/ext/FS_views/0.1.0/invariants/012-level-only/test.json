@@ -1,0 +1,7 @@
+{
+  "description": "The cutaway shows L1 only: valid, and its level derived.",
+  "covers": [
+    "FS-VIEW-3.1.1",
+    "FS-VIEW-6.1.1"
+  ]
+}

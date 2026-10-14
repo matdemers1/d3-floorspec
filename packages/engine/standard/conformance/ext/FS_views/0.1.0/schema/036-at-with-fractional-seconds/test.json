@@ -1,0 +1,6 @@
+{
+  "description": "An `at` with fractional seconds, \"17:30:00.5\": whole seconds only.",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}
