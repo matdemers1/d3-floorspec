@@ -12,7 +12,7 @@ import { firstRunSetup, historyOf, password, settled } from './support.js';
  * catches them and not the table (AutoCAD's convention); the selection toolbar and the inspector say
  * "3 dining chairs". ⌘D duplicates them as one batch — three new chairs, one history entry — and
  * one undo takes all three back. A window marquee (dragged rightwards) catches only what is wholly
- * inside it; ⇧-click takes one out. A recessed light is arrayed with ⌥A: the popover previews the
+ * inside it; ⇧-click takes one out; ⌘C and ⌘V on the upper floor paste the rest there. A recessed light is arrayed with ⌥A: the popover previews the
  * copies as ghosts, and "Add" writes them on the light's ceiling as one batch, kept on its circuit;
  * undo is one step. Axe passes on the toolbar, the popover and the inspector in both themes.
  * Screenshots land in test-results/arrange-*.png.
@@ -134,6 +134,20 @@ test('multi-select and arrange: a crossing marquee, duplicate as one undo, a win
   await page.mouse.click(ce1.x + ce1.width * 0.8, ce1.y + ce1.height / 2);
   await page.keyboard.up('Shift');
   await expect(inspector.getByRole('heading', { name: '2 dining chairs' })).toBeVisible();
+
+  // ── ⌘C, then ⌘V on the upper floor: the two chairs pasted there in place, as one batch.
+  await page.keyboard.press('ControlOrMeta+c');
+  await page.keyboard.press('PageUp');
+  await expect(page.getByRole('combobox', { name: 'Level' })).toContainText('Upper floor');
+  await page.keyboard.press('ControlOrMeta+v');
+  type Piece = { host: Host; fallback?: { level?: string } };
+  await expect.poll(async () => {
+    const all = pieces(await docOf(page, project)) as Record<string, Piece>;
+    return ['GR-CE0-2', 'GR-CE2-2'].map((id) => all[id]?.fallback?.level ?? null);
+  }).toEqual(['L2', 'L2']);
+  await settled(page);
+  await shoot(page, 'pasted-upper-floor');
+  await page.keyboard.press('PageDown');
   await page.keyboard.press('Escape');
 
   // ── ⌥A on a recessed light in the great room: the array popover, the copies as ghosts, one batch.

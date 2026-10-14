@@ -10,6 +10,8 @@ import { marqueeHits, rectOf, selectableShapes } from '../src/editor/arrange/sha
 import { copyClip, pasteBatch, readClip } from '../src/editor/arrange/clipboard';
 import { wallsOfRoom } from '../src/editor/arrange/rooms';
 import { arrayBatch, defaultSpec, planArray } from '../src/editor/arrange/array';
+import { describeMany, removeBatch, selectSimilar } from '../src/editor/arrange/actions';
+import { EditorStore } from '../src/editor/store';
 
 /**
  * FLR-T-18.8: arranging many elements of the Courtyard House at once, through the real applier as
@@ -220,5 +222,44 @@ describe('array and copy along a wall', () => {
     expect(line.ids).toHaveLength(2);
     const grid = arrayBatch(m, level, ['BT-CHAIR1'], { ...spec, mode: 'grid', count: 2, rows: 2, spacing: 1_200_000 }, { attempt: 0, project: 'p' });
     expect(grid.ids).toHaveLength(3);
+  });
+});
+
+describe('selecting similar, removing many, and the words for them', () => {
+  const storeOn = () => {
+    const store = new EditorStore('p');
+    const model = house();
+    store.set({ model, level: 'L1', status: 'ready' });
+    return store;
+  };
+
+  it('select similar: the same catalogue item, then every one of the kind, then everything', () => {
+    const store = storeOn();
+    store.select('GR-CW0');
+    expect(selectSimilar(store, 'item')).toBe(12); // the courtyard's six dining chairs and the great room's six
+    expect(store.get().selected).toEqual(expect.arrayContaining(['GR-CW0', 'GR-CE2', 'CY-CW1']));
+    expect(store.get().selection).toBe('GR-CW0');
+    expect(describeMany(store.get().model!, store.get().selected)).toBe('12 dining chairs');
+    store.select('L-GR-R1');
+    const lights = selectSimilar(store, 'kind');
+    expect(lights).toBeGreaterThan(5);
+    expect(store.get().selected.every((id) => store.get().model!.ext.get(id)?.collection === 'lights')).toBe(true);
+    expect(selectSimilar(store, 'level')).toBeGreaterThan(lights);
+  });
+
+  it('removes chairs and a light on a circuit, with its luminaire record and its place in scenes, as one batch', () => {
+    const m = house();
+    const batch = removeBatch(m, ['GR-CW0', 'GR-CW1', 'L-GR-R1']);
+    const doc = commit(HOUSE, batch);
+    const after = readModel('r', doc);
+    expect(after.index.has('GR-CW0')).toBe(false);
+    expect(after.index.has('L-GR-R1')).toBe(false);
+    expect(JSON.stringify(JSON.parse(doc).extensions)).not.toContain('L-GR-R1');
+  });
+
+  it('a copied light gets its luminaire record', () => {
+    const r = pasteBatch(house(), L1(house()), copyClip(house(), L1(house()), ['L-GR-R1'], 'p')!, { offsets: [[390_144, 0]], attempt: 0, sameProject: true });
+    const doc = JSON.parse(commit(HOUSE, r.batch)) as { extensions: { FS_lighting: { luminaires: Record<string, unknown> } } };
+    expect(doc.extensions.FS_lighting.luminaires['L-GR-R1-2']).toEqual(doc.extensions.FS_lighting.luminaires['L-GR-R1']);
   });
 });

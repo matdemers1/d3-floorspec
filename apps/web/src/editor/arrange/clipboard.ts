@@ -68,6 +68,8 @@ export interface Clip {
   dependencies: { id: string; collection: 'types' | 'materials' | 'assets'; element: Json }[];
   /** The circuits each copied device is a load of: a paste in the same project keeps them on it. */
   circuits: Record<string, string[]>;
+  /** A copied light's FS_lighting luminaire record (its colour temperature, dimming): its copy gets one too. */
+  luminaires?: Record<string, Json>;
 }
 
 /** Members a paste writes itself, not copied as they were. */
@@ -195,9 +197,16 @@ export function copyClip(model: EditorModel, level: LevelView, ids: readonly str
     const loads = Array.isArray(c['loads']) ? (c['loads'] as unknown[]).map(String) : [];
     for (const item of items) if (item.kind === 'device' && loads.includes(item.id)) (circuits[item.id] ??= []).push(cid);
   }
+  const lighting = (model.document.extensions as Json | undefined)?.['FS_lighting'];
+  const records = isObject(lighting) && isObject(lighting['luminaires']) ? lighting['luminaires'] : {};
+  const luminaires: Record<string, Json> = {};
+  for (const item of items) {
+    const record = records[item.id];
+    if (item.kind === 'device' && isObject(record)) luminaires[item.id] = clone(record);
+  }
   const b = boundsOfIds(level, items.map((i) => i.id));
   const levelName = (model.document.levels?.[level.id] as { name?: string } | undefined)?.name ?? level.id;
-  return { floorspec: 'elements', version: 1, project, level: level.id, levelName, core: model.document.floorspec, middle: b === null ? [0, 0] : [(b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2], items, dependencies, circuits };
+  return { floorspec: 'elements', version: 1, project, level: level.id, levelName, core: model.document.floorspec, middle: b === null ? [0, 0] : [(b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2], items, dependencies, circuits, ...(Object.keys(luminaires).length > 0 ? { luminaires } : {}) };
 }
 
 /** A clip read back from the clipboard's text, or null when the text is not one. */
@@ -424,6 +433,9 @@ export function pasteBatch(model: EditorModel, level: LevelView, clip: Clip, o: 
       }
       ops.push({ op: 'placeElement', extension: item.extension, collection: item.collection, id, host: placed, element } as unknown as Operation);
       ids.push(id);
+      // Its luminaire record, where the document reads FS_lighting.
+      const record = clip.luminaires?.[item.id];
+      if (record !== undefined && Object.hasOwn((doc as { extensionsUsed?: Record<string, unknown> }).extensionsUsed ?? {}, 'FS_lighting')) ops.push({ op: 'setProperty', id: '$document', path: `/extensions/FS_lighting/luminaires/${id}`, value: clone(record) });
       if (o.sameProject && o.keepCircuits !== false) for (const cid of clip.circuits[item.id] ?? []) circuitLoads.set(cid, [...(circuitLoads.get(cid) ?? []), id]);
     }
   }
