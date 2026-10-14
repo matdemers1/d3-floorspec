@@ -196,8 +196,7 @@ export class PrecisionStore {
 
   /** The mode's snapping back to its defaults. */
   resetSnap(): void {
-    const { [this.modeKey]: _dropped, ...rest } = this.saved;
-    this.saved = rest;
+    this.saved = Object.fromEntries(Object.entries(this.saved).filter(([k]) => k !== this.modeKey));
     this.set({ snap: this.settingsFor(this.modeKey) });
     try {
       localStorage.setItem(snapKey(this.editor.projectId), JSON.stringify(this.saved));

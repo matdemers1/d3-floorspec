@@ -1,5 +1,5 @@
 import type { EditorStore } from '../store';
-import type { EditorModel, LevelView, Point } from '../model';
+import type { EditorModel, LevelView } from '../model';
 import { labelOf } from '../model';
 import { dist } from '../geometry';
 import type { Snap } from '../snap';

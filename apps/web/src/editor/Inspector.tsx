@@ -22,6 +22,7 @@ import {
   type BatchBuilder,
   type TypeChoice,
 } from './ops';
+import { PositionSection } from './precision/PositionSection';
 import { requestRemove, switchUnits } from './actions';
 import { MaterialSurface } from './Materials';
 import { OptionMembership } from './Options';
@@ -126,6 +127,8 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
     <div className="fs-inspector__body">
       <Header ctx={ctx} kind={kind} />
       {body}
+      {/* FLR-T-18.9: the temporary dimensions, as fields — the keyboard's way to them. */}
+      <PositionSection store={store} />
       <OptionMembership store={store} model={model} id={selection} element={element} readOnly={ctx.readOnly} />
       <ThreeSection store={store} id={selection} kind={kind} />
       {!ctx.readOnly ? (

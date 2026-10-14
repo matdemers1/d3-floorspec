@@ -190,6 +190,9 @@ export class ToolController {
       if (this.mode === 'touch-pending') return;
     }
     this.store.set({ cursor: this.world(p) });
+    // FLR-T-18.9: ⌥ held over an element shows its distances — the pointer knows, even if the key went down elsewhere.
+    const precision = precisionOf(this.store);
+    if (precision.get().alt !== p.alt) precision.set({ alt: p.alt });
     this.toolMove(p, tracked !== undefined && this.mode === 'tool' && tracked.moved);
   }
 

@@ -25,6 +25,7 @@ import { RoofEdgeTags, RoofLayer, roofStairOutline, StairDraft, StairsLayer } fr
 import { DOOR_CLASS, doorParts, SymbolParts } from './plansymbols';
 import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
+import { PrecisionHtml, PrecisionLayer } from './precision/Overlay';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -197,12 +198,14 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               {layers.rooms ? <RoomLabels view={view} level={level} document={model.document} units={units} /> : null}
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
+              {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={model} />}
               {comparing ? null : <RidgePick store={store} view={view} />}
             </>
           ) : null}
         </svg>
       ) : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={model} units={units} /> : null}
+      {view !== null && model !== null && level !== undefined && !comparing ? <PrecisionHtml store={store} view={view} level={level} model={model} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={model} units={units} picking={tools.pickLevel} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
       <DiffLegend store={store} />
@@ -798,8 +801,11 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
 
 function SnapMarker({ view, snap }: { view: Viewport; snap: { point: Point; kind: string } }) {
   const p = S(view, snap.point);
-  if (snap.kind === 'junction') return <circle className="fs-draw__snap" cx={p[0]} cy={p[1]} r={7} />;
-  if (snap.kind === 'wall') return <path className="fs-draw__snap" d={`M${String(p[0] - 7)},${String(p[1])}L${String(p[0])},${String(p[1] - 7)}L${String(p[0] + 7)},${String(p[1])}L${String(p[0])},${String(p[1] + 7)}Z`} />;
+  if (snap.kind === 'junction' || snap.kind === 'ghost') return <circle className="fs-draw__snap" cx={p[0]} cy={p[1]} r={7} />;
+  // FLR-T-18.9: a midpoint is a triangle, an item's point a square — as SketchUp marks its inferences.
+  if (snap.kind === 'midpoint') return <path className="fs-draw__snap" d={`M${String(p[0])},${String(p[1] - 8)}L${String(p[0] + 7)},${String(p[1] + 5)}L${String(p[0] - 7)},${String(p[1] + 5)}Z`} />;
+  if (snap.kind === 'item') return <rect className="fs-draw__snap" x={p[0] - 6} y={p[1] - 6} width={12} height={12} />;
+  if (snap.kind === 'wall' || snap.kind === 'face') return <path className="fs-draw__snap" d={`M${String(p[0] - 7)},${String(p[1])}L${String(p[0])},${String(p[1] - 7)}L${String(p[0] + 7)},${String(p[1])}L${String(p[0])},${String(p[1] + 7)}Z`} />;
   return (
     <g className="fs-draw__cross">
       <line x1={p[0] - 8} y1={p[1]} x2={p[0] + 8} y2={p[1]} />
