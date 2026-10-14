@@ -27,6 +27,7 @@ import {
   composeRoofSheet,
   composeScheduleSheet,
   DEFAULT_PAGE,
+  depthsOf,
   layoutSet,
   PAGES,
   ROOF_PLAN_TITLE,
@@ -244,11 +245,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
   frame ??= { minX: 0, minY: 0, maxX: 3_901_440, maxY: 3_901_440 };
   const rows = new Map(p.chosen.map((plan) => [plan.levelId, scheduleRows(p.doc, plan, p.units)]));
   const maxRows = Math.max(0, ...[...rows.values()].map((r) => r.length));
-  const allDims = [...p.dims.values()].flat();
-  const layout = layoutSet(page, frame, allDims, p.units, maxRows);
   const name = p.doc.project.name;
-  const model = await buildModel(p.ev);
-  const views = viewsOf(model, p.doc, options.viewDpi ?? 300);
   const pdf = openPdf(
     {
       title: `${name} — floor plans`,
@@ -258,6 +255,9 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
     },
     options.fontDir,
   );
+  const layout = layoutSet(page, frame, depthsOf([...p.dims.values()], pdf.measure, p.units), p.units, maxRows);
+  const model = await buildModel(p.ev);
+  const views = viewsOf(model, p.doc, options.viewDpi ?? 300);
   // A trade's view (FLR-T-18.3): its layers drawn, the rest screened or left out; a roof plan only when roofs are shown.
   const states = statesOf(options);
   const planName = modePlanName(options);

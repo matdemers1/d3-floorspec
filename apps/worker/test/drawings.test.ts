@@ -151,22 +151,24 @@ describe('plan geometry', () => {
     const north = dims.filter((d) => d.side === 'N');
     expect(north.map((d) => d.kind)).toEqual(['openings', 'overall']);
     const overall = north.find((d) => d.kind === 'overall')!;
-    expect(overall.points).toEqual([plan.body!.minX, plan.body!.maxX]);
+    const at = (d: (typeof dims)[number]): number[] => d.stops.map((s) => s.along);
+    expect(at(overall)).toEqual([plan.body!.minX, plan.body!.maxX]);
     // The overall string is the openings string's ends, and its pieces add up exactly.
     const openings = north.find((d) => d.kind === 'openings')!;
-    expect(openings.points[0]).toBe(overall.points[0]);
-    expect(openings.points.at(-1)).toBe(overall.points[1]);
-    for (const d of dims) for (const p of d.points) expect(Number.isInteger(p)).toBe(true);
+    expect(at(openings)[0]).toBe(at(overall)[0]);
+    expect(at(openings).at(-1)).toBe(at(overall)[1]);
+    for (const d of dims) for (const p of at(d)) expect(Number.isInteger(p)).toBe(true);
+    for (const d of dims) expect(d.lengths.reduce((a, b) => a + b, 0)).toBe(at(d).at(-1)! - at(d)[0]!);
     // 44'-2 3/8": the ranch's outside, 44' between junctions plus half of two 2×6 walls' outer layers.
-    expect(lengthText(overall.points[1]! - overall.points[0]!, 'imperial')).toBe(`44'-2 3/8"`);
+    expect(lengthText(overall.lengths[0]!, 'imperial')).toBe(`44'-2 3/8"`);
   });
 
   it('dimensions the jogs of an L-shaped house', () => {
     const plan = levelPlan(L_SHAPED, 'MAIN');
     const kinds = dimensionStrings(plan).map((d) => `${d.side}:${d.kind}`);
-    expect(kinds).toContain('N:segments');
-    expect(kinds).toContain('E:segments');
-    expect(kinds).not.toContain('S:segments');
+    expect(kinds).toContain('N:jogs');
+    expect(kinds).toContain('E:jogs');
+    expect(kinds).not.toContain('S:jogs');
   });
 });
 
@@ -201,7 +203,7 @@ describe('PDF sheets', () => {
     expect(t).toContain('v42 · 3c9e1f0a71fe');
     // The version's own date, never the day the export ran.
     expect(t).toContain('2026-10-04');
-    expect(t).toContain('3/16" = 1\'-0"');
+    expect(t).toContain('1/4" = 1\'-0"');
     expect(t).toContain('A-101');
     expect(t).toContain(`44'-2 3/8"`);
     expect(t).toContain('FAMILY ROOM');

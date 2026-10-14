@@ -25,7 +25,8 @@
  * nothing reads a clock.
  */
 import type { SymbolPart, SymbolStroke } from '@floorspec/render2d';
-import type { DimString } from './dimensions.js';
+import { approxMeasure, layoutAnnotations, PDF_METRICS } from '@floorspec/render2d';
+import { customStrings, NO_NOTES, type DimString, type PlanNotes } from './dimensions.js';
 import { LAYER_DEFS, LAYERS } from './layers.js';
 import type { Box, LevelPlan, XY } from './plan.js';
 import { planTitle, ROOF_PLAN_TITLE } from './sheet.js';
@@ -155,7 +156,8 @@ function circleE(e: Entities, layer: string, c: XY, r: number): void {
 }
 
 /** TEXT, centred on its point (horizontal centre, vertical middle), rotated `angle` degrees CCW. */
-function textE(e: Entities, layer: string, at: XY, height: number, s: string, angle = 0): void {
+/** Text at a point: its middle (the default), its baseline's centre, or its baseline's start. */
+function textE(e: Entities, layer: string, at: XY, height: number, s: string, angle = 0, align: 'middle' | 'centre' | 'left' = 'middle'): void {
   common(e, 'TEXT', layer, 'AcDbText');
   e.w.pair(10, mm(at[0]));
   e.w.pair(20, mm(at[1]));
@@ -164,12 +166,12 @@ function textE(e: Entities, layer: string, at: XY, height: number, s: string, an
   e.w.pair(1, dxfText(s));
   if (angle !== 0) e.w.pair(50, deg(angle));
   e.w.pair(7, 'Standard');
-  e.w.pair(72, 1);
+  e.w.pair(72, align === 'left' ? 0 : 1);
   e.w.pair(11, mm(at[0]));
   e.w.pair(21, mm(at[1]));
   e.w.pair(31, '0.0');
   e.w.pair(100, 'AcDbText');
-  e.w.pair(73, 2);
+  e.w.pair(73, align === 'middle' ? 2 : 0);
 }
 
 /** A filled triangle or quadrilateral (SOLID: its third and fourth corners are given crosswise). */
@@ -287,7 +289,7 @@ function partEntities(e: Entities, parts: readonly SymbolPart[], layer: (stroke:
   }
 }
 
-function entities(e: Entities, plan: LevelPlan, dims: readonly DimString[], meta: DxfMeta): void {
+function entities(e: Entities, plan: LevelPlan, dims: readonly DimString[], meta: DxfMeta, notes: PlanNotes): void {
   const ratio = annotationRatio(meta.units);
   const P = (pt: number): number => paper(pt, ratio);
   for (const s of plan.slabs) polyE(e, LAYERS.floor, s.outline, true);
@@ -326,34 +328,18 @@ function entities(e: Entities, plan: LevelPlan, dims: readonly DimString[], meta
     textE(e, t.kind === 'door' ? LAYERS.doorTag : LAYERS.glazingTag, c, P(5), t.mark);
   }
 
-  // Dimension strings: lines, ticks and text, the same strings the PDF prints.
+  // Dimension strings, the person's notes: render2d's one layout (FLR-T-18.11), the same the PDF prints,
+  // laid out at the annotation scale and turned back into the model's coordinates.
   const ext = plan.extent;
   const body = plan.body;
   if (ext !== undefined && body !== undefined) {
-    for (const d of dims) {
-      const horizontal = d.side === 'N' || d.side === 'S';
-      const off = P(22 + d.tier * 15);
-      const out = d.side === 'N' || d.side === 'E' ? 1 : -1;
-      const edge = d.side === 'N' ? ext.maxY + off : d.side === 'S' ? ext.minY - off : d.side === 'E' ? ext.maxX + off : ext.minX - off;
-      const face = d.side === 'N' ? body.maxY : d.side === 'S' ? body.minY : d.side === 'E' ? body.maxX : body.minX;
-      const at = (v: number): XY => (horizontal ? [v, edge] : [edge, v]);
-      const first = d.points[0]!;
-      const last = d.points[d.points.length - 1]!;
-      const over = P(4);
-      lineE(e, LAYERS.dims, at(first - over), at(last + over));
-      const tick = P(2.6);
-      d.points.forEach((v, i) => {
-        const p = at(v);
-        const gap = (d.reach[i] ?? face) + out * P(4);
-        lineE(e, LAYERS.dims, horizontal ? [v, gap] : [gap, v], horizontal ? [v, edge + out * P(3)] : [edge + out * P(3), v]);
-        lineE(e, LAYERS.dims, [p[0] - tick, p[1] - tick], [p[0] + tick, p[1] + tick]);
-        const next = d.points[i + 1];
-        if (next === undefined) return;
-        const mid = Math.round((v + next) / 2);
-        const lift = P(2) + P(3);
-        const tp: XY = horizontal ? [mid, edge + (d.side === 'N' ? lift : -lift)] : [edge + (d.side === 'E' ? lift : -lift), mid];
-        textE(e, LAYERS.dims, tp, P(6), lengthText(next - v, meta.units), horizontal ? 0 : 90);
-      });
+    const k = 1 / P(1);
+    const { prims } = layoutAnnotations({ strings: [...dims, ...customStrings(notes)], notes: notes.notes }, { P: (p) => [p[0] * k, -p[1] * k], k }, PDF_METRICS, approxMeasure, (v) => lengthText(v, meta.units));
+    const M = (p: XY): XY => r([p[0] / k, -p[1] / k]);
+    for (const p of prims) {
+      if (p.t === 'line') lineE(e, p.group === 'note' ? LAYERS.note : LAYERS.dims, M(p.a), M(p.b));
+      else if (p.t === 'arrow') solidE(e, LAYERS.note, [M(p.pts[0]), M(p.pts[1]), M(p.pts[2])]);
+      else if (p.t === 'text') textE(e, p.group === 'note' ? LAYERS.note : LAYERS.dims, M([p.x, p.y]), P(p.size), p.text, -p.rotate, p.anchor === 'start' ? 'left' : 'centre');
     }
 
     // The note, under the plan; the north arrow beside it.
@@ -422,9 +408,9 @@ export function roofDxf(roofs: readonly PlanRoof[], trueNorth: number, meta: Dxf
 }
 
 /** One level's plan as a DXF file (ASCII, CRLF line ends). */
-export function levelDxf(plan: LevelPlan, dims: readonly DimString[], meta: DxfMeta): string {
+export function levelDxf(plan: LevelPlan, dims: readonly DimString[], meta: DxfMeta, notes: PlanNotes = NO_NOTES): string {
   return dxfDocument(plan.extent ?? { minX: 0, minY: 0, maxX: 0, maxY: 0 }, meta.units, (e) => {
-    entities(e, plan, dims, meta);
+    entities(e, plan, dims, meta, notes);
   });
 }
 

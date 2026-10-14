@@ -10,7 +10,26 @@
  * glazing are placed relative to the derived opening points the same way the plan renderer does.
  */
 import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, type Derived, type FloorspecDocument } from '@floorspec/engine';
-import { doorSymbol, fixtureSymbol, sceneOf, labelPoint, standsInRoom, type ReaderOptions, type Pt, type Scene, type SceneOpening, type SceneWall, type SymbolPart } from '@floorspec/render2d';
+import {
+  annoSourceOf,
+  doorSymbol,
+  fixtureSymbol,
+  insideRings,
+  labelPoint,
+  mergeCollinear,
+  openingMarks as marksOf,
+  sceneOf,
+  standsInRoom,
+  tagsOf,
+  unionOutline,
+  type OutlineEdge,
+  type ReaderOptions,
+  type Pt,
+  type Scene,
+  type SceneOpening,
+  type SceneWall,
+  type SymbolPart,
+} from '@floorspec/render2d';
 import type { DoorOperation } from '@floorspec/engine';
 import { layerForDevice, LAYERS } from './layers.js';
 import { arrivingStairs, planRoof, planStair, type PlanRoof, type PlanStair } from './symbols.js';
@@ -30,12 +49,7 @@ export interface Segment {
   readonly layer: string;
 }
 
-/** A directed outline edge with the wall material on its left (counter-clockwise pieces). */
-export interface OutlineEdge {
-  readonly a: Pt;
-  readonly b: Pt;
-  readonly exterior: boolean;
-}
+export { insideRings, mergeCollinear, unionOutline, type OutlineEdge };
 
 export interface PlanDoor {
   readonly id: string;
@@ -178,108 +192,6 @@ export function axes(a: XY, b: XY): { u: XY; n: XY; len: number } {
 const add = (p: XY, v: XY, k: number): XY => [p[0] + v[0] * k, p[1] + v[1] * k];
 const key = (p: XY): string => `${p[0]},${p[1]}`;
 
-export function insideRings(x: number, y: number, rings: readonly (readonly XY[])[]): boolean {
-  let inside = false;
-  for (const r of rings)
-    for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
-      const [xi, yi] = r[i]!;
-      const [xj, yj] = r[j]!;
-      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
-    }
-  return inside;
-}
-
-/**
- * The boundary of a union of counter-clockwise integer polygons that meet edge to edge: every edge
- * is split at any piece vertex lying on it (exactly, in BigInt), and an edge whose reverse is also
- * present is interior and cancels. What is left is the outline, material on its left.
- */
-export function unionOutline(pieces: readonly { readonly ring: readonly Pt[]; readonly exterior: boolean }[]): OutlineEdge[] {
-  const vertices = new Map<string, Pt>();
-  for (const p of pieces) for (const v of p.ring) vertices.set(key(v), v);
-  const verts = [...vertices.values()];
-  const edges = new Map<string, OutlineEdge>();
-  const push = (a: Pt, b: Pt, exterior: boolean): void => {
-    if (a[0] === b[0] && a[1] === b[1]) return;
-    const k = `${key(a)}>${key(b)}`;
-    const r = `${key(b)}>${key(a)}`;
-    if (edges.has(r)) {
-      // An edge two pieces share: interior. The exterior flag of a cancelled edge is irrelevant.
-      edges.delete(r);
-      return;
-    }
-    const prior = edges.get(k);
-    edges.set(k, { a, b, exterior: exterior || (prior?.exterior ?? false) });
-  };
-  for (const p of pieces) {
-    const ring = p.ring;
-    for (let i = 0; i < ring.length; i++) {
-      const a = ring[i]!;
-      const b = ring[(i + 1) % ring.length]!;
-      const ax = BigInt(a[0]);
-      const ay = BigInt(a[1]);
-      const dx = BigInt(b[0]) - ax;
-      const dy = BigInt(b[1]) - ay;
-      const len2 = dx * dx + dy * dy;
-      if (len2 === 0n) continue;
-      const on: { t: bigint; v: Pt }[] = [];
-      for (const v of verts) {
-        const vx = BigInt(v[0]) - ax;
-        const vy = BigInt(v[1]) - ay;
-        if (vx * dy - vy * dx !== 0n) continue;
-        const t = vx * dx + vy * dy;
-        if (t > 0n && t < len2) on.push({ t, v });
-      }
-      on.sort((p1, p2) => (p1.t < p2.t ? -1 : p1.t > p2.t ? 1 : 0));
-      let from = a;
-      for (const { v } of on) {
-        push(from, v, p.exterior);
-        from = v;
-      }
-      push(from, b, p.exterior);
-    }
-  }
-  return [...edges.values()];
-}
-
-/**
- * The outline with collinear runs joined: a straight face split by junctions along it becomes one
- * edge. Exact (BigInt cross products on the engine's integers).
- */
-export function mergeCollinear(outline: readonly OutlineEdge[]): OutlineEdge[] {
-  const k = (p: XY): string => `${p[0]},${p[1]}`;
-  const from = new Map<string, OutlineEdge>();
-  const into = new Map<string, OutlineEdge>();
-  for (const e of outline) {
-    from.set(k(e.a), e);
-    into.set(k(e.b), e);
-  }
-  const straight = (p: OutlineEdge, q: OutlineEdge): boolean =>
-    (BigInt(p.b[0]) - BigInt(p.a[0])) * (BigInt(q.b[1]) - BigInt(q.a[1])) - (BigInt(p.b[1]) - BigInt(p.a[1])) * (BigInt(q.b[0]) - BigInt(q.a[0])) === 0n &&
-    (p.b[0] - p.a[0]) * (q.b[0] - q.a[0]) + (p.b[1] - p.a[1]) * (q.b[1] - q.a[1]) > 0;
-  const out: OutlineEdge[] = [];
-  const used = new Set<OutlineEdge>();
-  for (const e of outline) {
-    if (used.has(e)) continue;
-    const prev = into.get(k(e.a));
-    if (prev !== undefined && prev !== e && straight(prev, e) && !used.has(prev)) continue; // not a run's first edge
-    let last = e;
-    let exterior = e.exterior;
-    used.add(e);
-    for (;;) {
-      const next = from.get(k(last.b));
-      if (next === undefined || used.has(next) || !straight(last, next)) break;
-      used.add(next);
-      exterior ||= next.exterior;
-      last = next;
-    }
-    out.push({ a: e.a, b: last.b, exterior });
-  }
-  // A loop that is one straight run all the way round cannot happen; anything left over is kept.
-  for (const e of outline) if (!used.has(e)) out.push(e);
-  return out;
-}
-
 interface Interval {
   t0: number;
   t1: number;
@@ -321,21 +233,11 @@ const rounded = (parts: readonly SymbolPart[]): SymbolPart[] =>
 
 /**
  * Number the doors and windows of a whole document: D1…, W1… in reading order — level by
- * elevation (then ID), then top to bottom, left to right by the opening's midpoint, then ID.
+ * elevation (then ID), then top to bottom, left to right by the opening's midpoint, then ID
+ * (render2d's `openingMarks`, which the editor numbers by too).
  */
 export function openingMarks(scenes: readonly Scene[]): Map<string, string> {
-  const marks = new Map<string, string>();
-  for (const kind of ['door', 'window'] as const) {
-    let n = 0;
-    for (const scene of scenes) {
-      const list = [...scene.openings.values()]
-        .filter((o) => o.kind === kind)
-        .map((o) => ({ id: o.id, x: (o.start[0] + o.end[0]) / 2, y: (o.start[1] + o.end[1]) / 2 }))
-        .sort((a, b) => (a.y !== b.y ? b.y - a.y : a.x !== b.x ? a.x - b.x : a.id < b.id ? -1 : 1));
-      for (const o of list) marks.set(o.id, `${kind === 'door' ? 'D' : 'W'}${String(++n)}`);
-    }
-  }
-  return marks;
+  return marksOf(scenes.map((s) => ({ openings: [...s.openings.values()] })));
 }
 
 /**
@@ -441,7 +343,6 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>, context
   // ── doors, windows and their tags ──
   const doors: PlanDoor[] = [];
   const windows: PlanWindow[] = [];
-  const tags: PlanTag[] = [];
   for (const o of scene.openings.values()) {
     const w = scene.walls.get(o.wall)!;
     const { n, len } = axes(o.start, o.end);
@@ -449,25 +350,18 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>, context
     const mark = marks.get(o.id);
     const mid: XY = [(o.start[0] + o.end[0]) / 2, (o.start[1] + o.end[1]) / 2];
     if (o.kind === 'door') {
-      const left = o.swing === 'left';
-      const dir: XY = left ? n : [-n[0], -n[1]];
       const sym = doorSymbol(o, w);
       doors.push({ id: o.id, mark, operation: sym.operation, parts: rounded(sym.parts) });
-      // The tag goes on the side the door does not swing to.
-      const side: XY = [-dir[0], -dir[1]];
-      if (mark !== undefined) tags.push({ kind: 'door', id: o.id, mark, base: add(mid, side, left ? w.b : w.a), normal: side });
     } else if (o.kind === 'window') {
       const T = w.a + w.b;
       const m = (w.a - w.b) / 2;
       const g = T / 7;
       const lines = [w.a, -w.b, m + g, m - g].map((k) => [round(add(o.start, n, k)), round(add(o.end, n, k))] as const);
       windows.push({ id: o.id, mark, lines });
-      // Outside the building, when one side is: a window tag reads from the street.
-      const outsideLeft = !inside(add(mid, n, w.a + INCHES_3));
-      const side: XY = outsideLeft ? n : [-n[0], -n[1]];
-      if (mark !== undefined) tags.push({ kind: 'window', id: o.id, mark, base: add(mid, side, outsideLeft ? w.a : w.b), normal: side });
     }
   }
+  // Tags: a door's on the side it does not swing to, a window's outside (render2d's `tagsOf`, as the editor places them).
+  const tags: PlanTag[] = tagsOf(annoSourceOf(scene), marks);
 
   // ── stairs and roofs (FLR-T-9.7) ──
   const stairs: PlanStair[] = [...scene.stairs].map(([id, st]) => planStair(id, st.derived, st.form, 'up', { column: st.column, newel: st.newel }));
