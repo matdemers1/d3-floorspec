@@ -22,6 +22,7 @@ import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
 import { StillButton } from './still/StillDialog';
 import { orbitCamera } from './still/gpu/cameras';
 import { SunRig } from './sun/SunRig';
+import { CameraButton, CameraChip, CameraPanel, Framing, type CameraRig } from './shot/CameraPanel';
 import { FixtureLights } from './FixtureLights';
 import { glow } from './highlight';
 import { softwareWebGL } from './software';
@@ -185,6 +186,9 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const night = useSunNight(store, model);
   // The GPU still's "view you are looking at" (FLR-T-13.13): the orbit now, in the glTF export's frame.
   const currentView = useCallback(() => (ctl.orbit === null || originRef.current === null ? null : orbitCamera(ctl.orbit, originRef.current, FOV)), [ctl]);
+  // FLR-T-13.10: where the camera is, for saving a view, and going to a saved one.
+  const rig = useMemo<CameraRig>(() => ({ current: () => (ctl.orbit === null || originRef.current === null ? null : { orbit: ctl.orbit, origin: originRef.current }), goTo: (o) => { ctl.setOrbit(o); } }), [ctl]);
+  const size = useSize(host);
 
   const ready = state.status === 'ready' ? state : null;
   const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);
@@ -574,6 +578,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           {flipped}
         </div>
       ) : null}
+      {ready !== null && !walking ? <Framing store={store} model={ready.model} width={size.width} height={size.height} /> : null}
       {ready !== null && !walking && selectedLabel !== null ? (
         <div className="fs-three__label" ref={label} aria-hidden="true">
           {selectedLabel}
@@ -587,11 +592,13 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} only={levels === 'only'} roof={roof} current={currentView} />
           <SunPanel store={store} model={ready.model} />
           <LightingPanel store={store} model={ready.model} />
+          <CameraPanel store={store} model={ready.model} rig={rig} />
           <SunChip store={store} />
           <div className="fs-three__chips-left">
             <QualityControl three={three} quality={quality} />
             <StatsChip quality={quality} stats={stats} parts={visible.length} triangles={triangles} />
             <LightingChip store={store} model={ready.model} />
+            <CameraChip store={store} model={ready.model} />
           </div>
         </>
       ) : null}
@@ -607,6 +614,24 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       {ready !== null && walking ? <WalkOverlay store={store} three={three} ctl={ctl} world={ready.world} model={ready.model} mesh={ready.mesh} /> : null}
     </div>
   );
+}
+
+/** An element's size, CSS pixels, as it changes: the frame the framing guides are drawn in (FLR-T-13.10). */
+function useSize(el: { current: HTMLElement | null }): { width: number; height: number } {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const node = el.current;
+    if (node === null) return;
+    const measure = () => {
+      const r = node.getBoundingClientRect();
+      setSize((s) => (s.width === r.width && s.height === r.height ? s : { width: r.width, height: r.height }));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(node);
+    return () => { ro.disconnect(); };
+  }, [el]);
+  return size;
 }
 
 /** Stand at a requested point: on the floor of its level, facing the given way or into the house. */
@@ -894,6 +919,7 @@ function Toolbar({ store, three, ctl, mesh, levels, roof, lights }: { store: Edi
         <IconButton label="Lights" icon={<Lightbulb />} size="sm" pressed={lights} onClick={() => { three.toggleLights(); }} />
       </Tooltip>
       <LightingButton store={store} />
+      <CameraButton store={store} />
       <Tooltip content={!whole ? 'Cut away, this level’s roof is off — show the whole house to see it' : roof ? 'Hide the roofs' : 'Show the roofs'}>
         <IconButton label="Roof" icon={<House />} size="sm" pressed={roof && whole} disabled={!whole} onClick={() => { three.set({ roof: !roof }); }} />
       </Tooltip>

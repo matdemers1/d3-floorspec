@@ -79,7 +79,7 @@ export function SunButton({ store }: { store: EditorStore }) {
   const open = useSunState(store, (s) => s.open);
   return (
     <Tooltip content={open ? 'Close the sky and sun' : 'Sky and sun: the sky, and the sun by date and time'}>
-      <IconButton label="Sky and sun" icon={<Sun />} size="sm" pressed={open} onClick={() => { if (!open) threeOf(store).set({ lightingOpen: false }); sunOf(store).toggle(); }} />
+      <IconButton label="Sky and sun" icon={<Sun />} size="sm" pressed={open} onClick={() => { if (!open) threeOf(store).set({ lightingOpen: false, cameraOpen: false }); sunOf(store).toggle(); }} />
     </Tooltip>
   );
 }
@@ -93,7 +93,7 @@ export function SunChip({ store }: { store: EditorStore }) {
   if (sky === 'studio' || open) return null;
   const summary = skySummary(sky, clock);
   return (
-    <button type="button" className="fs-three__chip fs-sun__chip" onClick={() => { threeOf(store).set({ lightingOpen: false }); sunOf(store).set({ open: true }); }} aria-label={`${summary}. Open the sky and sun`}>
+    <button type="button" className="fs-three__chip fs-sun__chip" onClick={() => { threeOf(store).set({ lightingOpen: false, cameraOpen: false }); sunOf(store).set({ open: true }); }} aria-label={`${summary}. Open the sky and sun`}>
       {sky === 'night' || sky === 'dusk' ? <SunDim aria-hidden="true" /> : <Sun aria-hidden="true" />}
       {summary}
     </button>

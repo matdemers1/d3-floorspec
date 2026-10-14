@@ -6,7 +6,7 @@ import { api, ApiError } from '../lib/api';
  * attachment` — so the page stays put and the browser names it.
  */
 
-export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz' | 'still';
+export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz' | 'still' | 'shots';
 
 /**
  * A still's sizes and qualities, as the worker offers them (apps/worker/src/pathtrace/presets.ts) —
@@ -31,6 +31,21 @@ export interface StillRequest {
   /** The sky it is seen under (FLR-T-13.4). */
   sky?: 'clear' | 'overcast' | 'dusk' | 'night' | 'studio';
 }
+/**
+ * A shot list's sizes and qualities on the server (FLR-T-13.10, apps/worker/src/pathtrace/presets.ts
+ * `SHOT_SIZES`): the long side, pixels — each view's frame sets the other.
+ */
+export const SHOT_SIZES = { small: 960, medium: 1440, large: 1920 } as const;
+export type ShotSize = keyof typeof SHOT_SIZES;
+export const shotWithinBudget = (size: ShotSize, quality: StillQuality): boolean => SHOT_SIZES[size] * SHOT_SIZES[size] * QUALITIES[quality] <= MAX_WORK;
+
+/** A shot list's options (FLR-T-13.10): which saved views (default every one), how big and how clean. */
+export interface ShotsRequest {
+  views?: string[];
+  size: ShotSize;
+  quality: StillQuality;
+}
+
 export type PageName = 'tabloid' | 'arch-c' | 'arch-d' | 'letter' | 'a4' | 'a3';
 
 export interface ExportJob {
@@ -61,8 +76,10 @@ export interface ExportJob {
         samples?: number | null;
       })
     | null;
-  /** While a still renders: the passes done and in all. */
-  progress?: { pass: number; passes: number } | null;
+  /** A shot list's options (FLR-T-13.10); null for any other export. */
+  shots?: { views: string[] | null; size: ShotSize; quality: StillQuality } | null;
+  /** While a still renders: the passes done and in all; a shot list adds the shot it is on, and how many. */
+  progress?: { pass: number; passes: number; shot?: number; shots?: number } | null;
   error: string | null;
   result: {
     name: string;
@@ -79,6 +96,8 @@ export interface ExportJob {
     camera?: string;
     sun?: { azimuth: number; altitude: number; source: 'yours' | 'default' };
     ms?: number;
+    /** A shot list's: each still in its ZIP. */
+    shots?: { file: string; view: string; name: string; width: number; height: number; samples: number; ms: number }[];
   } | null;
   createdAt: string;
   finishedAt: string | null;
@@ -102,6 +121,8 @@ export interface ExportRequest {
   design?: Record<string, string>;
   /** A still's options (FLR-T-12.6). */
   still?: StillRequest;
+  /** A shot list's (FLR-T-13.10). */
+  shots?: ShotsRequest;
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8). */
   doors?: 'open' | 'closed';
   /** glTF and USDZ (FLR-T-13.12): the lights on, each at an output and colour temperature; default every one at full. */
@@ -193,11 +214,12 @@ export function describeJob(job: ExportJob, sets: readonly DesignSet[] = []): st
 }
 
 function describeStatus(job: ExportJob): string {
-  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ', still: 'Still' }[job.kind];
+  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ', still: 'Still', shots: 'Shot list' }[job.kind];
   switch (job.status) {
     case 'queued':
-      return job.kind === 'ifc' ? `${what} waiting to be written` : job.kind === 'still' ? 'Still waiting to be rendered' : `${what} waiting to be drawn`;
+      return job.kind === 'ifc' ? `${what} waiting to be written` : job.kind === 'still' || job.kind === 'shots' ? `${what} waiting to be rendered` : `${what} waiting to be drawn`;
     case 'running':
+      if (job.kind === 'shots') return job.progress?.shot !== undefined ? `Rendering the shot list… shot ${String(job.progress.shot)} of ${String(job.progress.shots ?? 0)}` : 'Rendering the shot list…';
       if (job.kind === 'still') return job.progress ? `Rendering the still… pass ${String(job.progress.pass)} of ${String(job.progress.passes)}` : 'Rendering the still…';
       return job.kind === 'ifc' ? `Writing the ${what}…` : `Drawing the ${what}…`;
     case 'failed':
@@ -206,6 +228,7 @@ function describeStatus(job: ExportJob): string {
       const r = job.result;
       if (r?.sheets !== undefined) return `${r.name} · ${String(r.sheets.length)} ${r.sheets.length === 1 ? 'sheet' : 'sheets'}`;
       if (r?.files !== undefined) return `${r.name} · ${String(r.files.length)} ${r.files.length === 1 ? 'file' : 'files'}`;
+      if (r?.shots !== undefined) return `${r.name} · ${String(r.shots.length)} ${r.shots.length === 1 ? 'shot' : 'shots'}`;
       if (r?.elements !== undefined) return `${r.name} · ${String(r.elements)} ${r.elements === 1 ? 'element' : 'elements'}`;
       return r?.name ?? what;
     }

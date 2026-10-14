@@ -1,0 +1,274 @@
+/* A camera for photographs (FLR-T-13.10): the board's "30 · Editor — 3D camera". Tokens only. */
+
+/* ─── The panel ─────────────────────────────────────────────────────────────────────────────── */
+.fs-sun.fs-camera {
+  width: 336px;
+  overflow: hidden;
+  padding: 0;
+  gap: 0;
+}
+.fs-camera > .fs-sun__head {
+  padding: var(--space-12) var(--space-16) var(--space-8);
+}
+.fs-camera__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-16) var(--space-16);
+  scrollbar-width: thin;
+}
+.fs-camera__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-top: 1px solid var(--color-border);
+}
+.fs-camera__rule {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+.fs-camera__view[data-checked='true'] {
+  background: var(--color-accent-muted);
+}
+.fs-camera__radio {
+  min-height: 44px;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+.fs-camera__view-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+.fs-camera__view-text .fs-lighting__name {
+  font-weight: 500;
+}
+.fs-camera__meta {
+  overflow: hidden;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-camera__range {
+  display: flex;
+  justify-content: space-between;
+  margin-top: calc(-1 * var(--space-8));
+  color: var(--color-fg-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+.fs-camera__presets {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-4);
+}
+.fs-camera__preset[data-current='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-muted);
+}
+.fs-camera__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+.fs-camera__field > :last-child {
+  width: 112px;
+}
+
+/* ─── The chip ──────────────────────────────────────────────────────────────────────────────── */
+.fs-camera__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.fs-three__chips-left .fs-camera__chip > .fs-three__chip {
+  position: static;
+  cursor: pointer;
+}
+.fs-camera__chip[data-open='true'] > .fs-three__chip {
+  border-color: var(--color-accent);
+}
+.fs-camera__chip-open:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-fg);
+}
+.fs-camera__chip-open:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ─── The framing guides over the view ──────────────────────────────────────────────────────── */
+.fs-camera__framing {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.fs-camera__scrim {
+  position: absolute;
+  background: var(--color-bg-sunken);
+  opacity: 0.55;
+}
+.fs-camera__frame {
+  position: absolute;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-fg) 50%, transparent);
+}
+.fs-camera__third {
+  position: absolute;
+  background: color-mix(in srgb, var(--color-fg) 35%, transparent);
+}
+.fs-camera__cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  background:
+    linear-gradient(color-mix(in srgb, var(--color-fg) 60%, transparent), color-mix(in srgb, var(--color-fg) 60%, transparent)) center / 1px 100% no-repeat,
+    linear-gradient(color-mix(in srgb, var(--color-fg) 60%, transparent), color-mix(in srgb, var(--color-fg) 60%, transparent)) center / 100% 1px no-repeat;
+}
+.fs-three__chip.fs-camera__caption {
+  left: var(--space-12);
+  bottom: var(--space-12);
+  max-width: calc(100% - 2 * var(--space-12));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── The shot list (the board's "31 · Shot list") ──────────────────────────────────────────── */
+.fs-shots__list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.fs-shots__head,
+.fs-shots__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 40px;
+  padding: 0 var(--space-12);
+}
+.fs-shots__head {
+  border-bottom: 1px solid var(--color-border);
+}
+.fs-shots__item + .fs-shots__item {
+  border-top: 1px solid var(--color-border);
+}
+.fs-shots__count,
+.fs-shots__meta,
+.fs-shots__size {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-shots__count {
+  margin-left: auto;
+}
+.fs-shots__item .fs-shots__meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-shots__size {
+  font-family: var(--font-mono);
+}
+.fs-shots__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-shots__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+.fs-shots__thumb {
+  flex: none;
+  width: 48px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--color-fill-quiet);
+  object-fit: cover;
+}
+.fs-shots__label {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+.fs-shots__name {
+  font-size: var(--text-13);
+  font-weight: 500;
+}
+.fs-shots__state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-shots__row[data-status='done'] .fs-shots__state {
+  color: var(--color-success);
+}
+.fs-shots__row[data-status='failed'] .fs-shots__state {
+  color: var(--color-danger);
+}
+.fs-shots__bar {
+  width: 120px;
+  height: 6px;
+  accent-color: var(--color-accent);
+}
+.fs-shots__canvas {
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-sunken);
+}
+.fs-shots__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}
+.fs-shots__still {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+}
+.fs-shots__still img,
+.fs-shots__missing {
+  display: block;
+  height: 150px;
+  width: auto;
+  border-radius: var(--radius-md);
+  background: var(--color-fill-quiet);
+}
+.fs-shots__missing {
+  display: grid;
+  place-items: center;
+  padding: var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-shots__still figcaption {
+  display: flex;
+  flex-direction: column;
+}
