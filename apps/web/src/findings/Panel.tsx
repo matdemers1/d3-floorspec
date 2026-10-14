@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { Button, EmptyState, IconButton, Link, SegmentedControl, Spinner } from '@d3cloud/ui';
 import { ClipboardList, Crosshair, X } from 'lucide-react';
 import { useEditor, type EditorStore } from '../editor/store';
-import { fit } from '../editor/viewport';
+import { frameOn, goTo } from '../editor/panzoom';
 import { boundsOfOverlay, overlayOf } from './geometry';
 import { counts, findingKey, SEVERITIES, stateOf } from './model';
 import { FindingCard, FindingsNotice } from './parts';
@@ -109,7 +109,7 @@ export function FindingsPanel({ store }: { store: EditorStore }) {
                   headingLevel={3}
                   onElement={(id) => {
                     source.set({ focus: key });
-                    if (model?.index.has(id) === true) store.select(id, { keepSide: true });
+                    if (model?.index.has(id) === true) goTo(store, id, { keepSide: true });
                   }}
                   actions={
                     <Button size="sm" variant={state.focus === key ? 'primary' : 'secondary'} icon={<Crosshair />} disabled={stale} onClick={() => {
@@ -156,13 +156,6 @@ export function zoomTo(store: EditorStore, f: Finding): void {
   const level = s.model.levels.find((l) => l.id === f.location.level) ?? null;
   const bounds = boundsOfOverlay(overlayOf(f, level));
   if (bounds === null) return;
-  const frame = () => {
-    const view = store.get().view;
-    if (view !== null) store.set({ view: fit(bounds, view.w, view.h, 140) });
-  };
-  if (s.level !== f.location.level && level !== null) {
-    // The canvas frames a level it switches to; frame the finding after it has.
-    store.setLevel(f.location.level);
-    window.setTimeout(frame, 60);
-  } else frame();
+  // On its level, animated (FLR-T-18.6); arriving on another level, at once.
+  frameOn(store, level === null ? null : f.location.level, bounds, 140);
 }

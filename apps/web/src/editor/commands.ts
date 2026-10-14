@@ -1,7 +1,7 @@
 import type { EditorStore, ToolId } from './store';
 import type { ToolController } from './tools';
 import { newLevel, roofOverLevel, switchUnits } from './actions';
-import { fit, zoomAt } from './viewport';
+import { navOf, zoomBy, zoomToFit, zoomToPercent, zoomToSelection, saveViewSoon } from './panzoom';
 import { kindOf } from './model';
 import { accept, openReview, reject } from './review';
 import { compareOp, refreshLog, toggleHistory } from './history';
@@ -28,6 +28,12 @@ export interface Command {
   keywords?: string;
   /** Keys as KeyboardEvent.key, with `Mod+` for ⌘ on macOS and Ctrl elsewhere, `Shift+` for shift. */
   keys?: readonly string[];
+  /**
+   * Keys by their place on the keyboard (KeyboardEvent.code), for a key whose character a modifier
+   * changes: `Shift+Digit1` (⇧1 types "!"), `Alt+KeyH` (⌥H types "˙" on a Mac), `Shift+KeyN` (a
+   * letter's registry key has no Shift). Spelled as codeOf spells them.
+   */
+  codes?: readonly string[];
   /** A key hint for a tooltip: "W", "⌘Z". */
   hint?: string;
   enabled?: (store: EditorStore) => boolean;
@@ -54,7 +60,7 @@ const tool = (id: ToolId, label: string, key: string): Command => ({
   group: 'Tools',
   keys: [key.toLowerCase()],
   hint: key,
-  enabled: id === 'select' ? () => true : hasLevel,
+  enabled: id === 'select' || id === 'hand' ? () => true : hasLevel,
   run: (_store, tools) => {
     tools.setTool(id);
   },
@@ -93,6 +99,8 @@ export const COMMANDS: readonly Command[] = [
     },
   },
   tool('select', 'Select', 'V'),
+  // FLR-T-18.6: the hand drags the plan; H, as in Figma (the P18 read-me moved the history to ⌥H).
+  tool('hand', 'Hand — drag to pan', 'H'),
   tool('wall', 'Draw walls', 'W'),
   tool('arc', 'Draw arc walls', 'A'),
   tool('door', 'Place a door', 'D'),
@@ -265,15 +273,40 @@ export const COMMANDS: readonly Command[] = [
       tools.remove();
     },
   },
+  // Pan and zoom (FLR-T-18.6), Figma's keys: ⇧1 fit, ⇧2 the selection, ⇧0 100%; animated.
   {
     id: 'view.fit',
     label: 'Zoom to fit',
     group: 'View',
-    keys: ['0', 'Shift+!'],
-    hint: '0',
+    keywords: 'whole level all frame',
+    keys: ['0'],
+    codes: ['Shift+Digit1'],
+    hint: '⇧1',
     run: (store) => {
-      const { view } = store.get();
-      if (view !== null) store.set({ view: fit(store.levelView?.bounds ?? null, view.w, view.h) });
+      zoomToFit(store);
+    },
+  },
+  {
+    id: 'view.zoomSelection',
+    label: 'Zoom to selection',
+    group: 'View',
+    keywords: 'frame selected element focus',
+    codes: ['Shift+Digit2'],
+    hint: '⇧2',
+    enabled: (store) => store.get().selection !== null,
+    run: (store) => {
+      zoomToSelection(store);
+    },
+  },
+  {
+    id: 'view.zoom100',
+    label: 'Zoom to 100%',
+    group: 'View',
+    keywords: 'actual size reset one hundred percent',
+    codes: ['Shift+Digit0'],
+    hint: '⇧0',
+    run: (store) => {
+      zoomToPercent(store, 100);
     },
   },
   {
@@ -283,8 +316,7 @@ export const COMMANDS: readonly Command[] = [
     keys: ['=', '+', 'Shift++'],
     hint: '+',
     run: (store) => {
-      const { view } = store.get();
-      if (view !== null) store.set({ view: zoomAt(view, 1.25, [view.w / 2, view.h / 2]) });
+      zoomBy(store, 1.25);
     },
   },
   {
@@ -294,8 +326,43 @@ export const COMMANDS: readonly Command[] = [
     keys: ['-', '_', 'Shift+_'],
     hint: '−',
     run: (store) => {
-      const { view } = store.get();
-      if (view !== null) store.set({ view: zoomAt(view, 0.8, [view.w / 2, view.h / 2]) });
+      zoomBy(store, 0.8);
+    },
+  },
+  {
+    id: 'view.minimap',
+    label: 'Show the minimap',
+    group: 'View',
+    keywords: 'overview navigator map whole plan',
+    codes: ['Shift+KeyN'],
+    hint: '⇧N',
+    run: (store) => {
+      const nav = navOf(store);
+      nav.setMinimap(!nav.get().minimap);
+    },
+  },
+  {
+    id: 'view.savedViews',
+    label: 'Show the saved views',
+    group: 'View',
+    keywords: 'bookmarks named views camera',
+    codes: ['Shift+KeyV'],
+    hint: '⇧V',
+    run: (store) => {
+      const nav = navOf(store);
+      nav.setViews(!nav.get().views);
+    },
+  },
+  {
+    id: 'view.saveView',
+    label: 'Save this view',
+    group: 'View',
+    keywords: 'bookmark name view camera',
+    codes: ['Mod+Shift+KeyS'],
+    hint: '⇧⌘S',
+    enabled: (store) => store.get().view !== null && store.get().level !== null,
+    run: (store) => {
+      saveViewSoon(store);
     },
   },
   {
@@ -443,8 +510,9 @@ export const COMMANDS: readonly Command[] = [
     id: 'history.toggle',
     label: 'Show the history',
     group: 'History',
-    keys: ['h'],
-    hint: 'H',
+    // ⌥H since FLR-T-18.6 (the P18 read-me): H is the hand, as in Figma.
+    codes: ['Alt+KeyH'],
+    hint: '⌥H',
     keywords: 'versions log undo',
     run: (store) => {
       toggleHistory(store);
@@ -555,6 +623,16 @@ export function keyOf(e: Pick<KeyboardEvent, 'key' | 'metaKey' | 'ctrlKey' | 'sh
 
 export function commandFor(key: string): Command | undefined {
   return COMMANDS.find((c) => c.keys?.includes(key) === true);
+}
+
+/** The key a KeyboardEvent names by its place on the keyboard, in the registry's `codes` spelling. */
+export function codeOf(e: Pick<KeyboardEvent, 'code' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>, mac: boolean): string {
+  const mod = mac ? e.metaKey : e.ctrlKey;
+  return `${mod ? 'Mod+' : ''}${e.altKey ? 'Alt+' : ''}${e.shiftKey ? 'Shift+' : ''}${e.code}`;
+}
+
+export function commandForCode(code: string): Command | undefined {
+  return COMMANDS.find((c) => c.codes?.includes(code) === true);
 }
 
 export const commandById = (id: string): Command | undefined => COMMANDS.find((c) => c.id === id);

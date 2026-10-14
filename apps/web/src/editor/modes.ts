@@ -80,14 +80,16 @@ const drawn = (layers: Layers, l: PlanLayer): boolean => layers[l] !== false;
 export type RailItem = { tool: ToolId } | { device: string } | { library: true };
 
 const SELECT: RailItem = { tool: 'select' };
+/** The hand (FLR-T-18.6), under Select in every rail. */
+const HAND: RailItem = { tool: 'hand' };
 export const RAILS: Readonly<Record<ModeId, readonly RailItem[]>> = {
-  construction: [SELECT, { tool: 'wall' }, { tool: 'arc' }, { tool: 'door' }, { tool: 'window' }, { tool: 'room' }, { tool: 'separator' }, { tool: 'slab' }, { tool: 'stair' }, { tool: 'roof' }],
-  decorator: [SELECT, { library: true }, { tool: 'room' }],
-  electrical: [SELECT, { device: 'receptacle' }, { device: 'switch' }, { device: 'light' }, { device: 'alarm' }, { device: 'panel' }, { device: 'evCharger' }],
-  plumbing: [SELECT, { device: 'toilet' }, { device: 'lavatory' }, { device: 'kitchenSink' }, { device: 'shower' }, { device: 'bathtub' }, { device: 'floorDrain' }, { device: 'waterHeater' }],
-  mechanical: [SELECT, { device: 'furnace' }, { device: 'airHandler' }, { device: 'supply' }, { device: 'return' }, { device: 'exhaustFan' }, { device: 'gasRange' }],
-  lowvoltage: [SELECT, { device: 'dataOutlet' }, { device: 'coaxOutlet' }, { device: 'headEnd' }],
-  landscape: [SELECT, { tool: 'slab' }, { library: true }],
+  construction: [SELECT, HAND, { tool: 'wall' }, { tool: 'arc' }, { tool: 'door' }, { tool: 'window' }, { tool: 'room' }, { tool: 'separator' }, { tool: 'slab' }, { tool: 'stair' }, { tool: 'roof' }],
+  decorator: [SELECT, HAND, { library: true }, { tool: 'room' }],
+  electrical: [SELECT, HAND, { device: 'receptacle' }, { device: 'switch' }, { device: 'light' }, { device: 'alarm' }, { device: 'panel' }, { device: 'evCharger' }],
+  plumbing: [SELECT, HAND, { device: 'toilet' }, { device: 'lavatory' }, { device: 'kitchenSink' }, { device: 'shower' }, { device: 'bathtub' }, { device: 'floorDrain' }, { device: 'waterHeater' }],
+  mechanical: [SELECT, HAND, { device: 'furnace' }, { device: 'airHandler' }, { device: 'supply' }, { device: 'return' }, { device: 'exhaustFan' }, { device: 'gasRange' }],
+  lowvoltage: [SELECT, HAND, { device: 'dataOutlet' }, { device: 'coaxOutlet' }, { device: 'headEnd' }],
+  landscape: [SELECT, HAND, { tool: 'slab' }, { library: true }],
 };
 
 export class ModesStore {
@@ -152,6 +154,11 @@ export class ModesStore {
     if (mode === null) return NO_MODE;
     if (isModeId(mode)) return this.state.presets[mode] ?? MODES[mode].layers;
     return this.state.custom.find((c) => c.id === mode)?.layers ?? NO_MODE;
+  }
+
+  /** Whether a mode is one of the trades or one of this project's own. */
+  knows(mode: string): boolean {
+    return isModeId(mode) || this.state.custom.some((c) => c.id === mode);
   }
 
   /** The trade a mode is, or borrows its tools and colour from. */
@@ -328,13 +335,6 @@ export const ghostsOf = (store: EditorStore): readonly PlanLayer[] => modesOf(st
 
 // ─── Keys and the command palette ────────────────────────────────────────────────────────────
 
-/** ⌥1–⌥7: a mode from anywhere but a field. Read by the key's place, since ⌥ changes the character it types. */
-export function modeForKey(e: Pick<KeyboardEvent, 'altKey' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'code'>): ModeId | null {
-  if (!e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return null;
-  const n = /^Digit([1-7])$/.exec(e.code)?.[1];
-  return n === undefined ? null : (MODE_IDS[Number(n) - 1] ?? null);
-}
-
 export const MODE_COMMANDS: readonly Command[] = [
   ...MODE_IDS.map(
     (id, i): Command => ({
@@ -343,6 +343,8 @@ export const MODE_COMMANDS: readonly Command[] = [
       group: 'View',
       keywords: `mode trade view preset layers ${MODES[id].summary.toLowerCase()} ${MODES[id].plan.toLowerCase()}`,
       hint: `⌥${String(i + 1)}`,
+      // ⌥1–⌥7 by the key's place (FLR-T-18.6's codes): ⌥ changes the character a digit types.
+      codes: [`Alt+Digit${String(i + 1)}`],
       run: (store, tools) => {
         modesOf(store).setMode(id, tools);
       },

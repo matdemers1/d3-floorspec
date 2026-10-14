@@ -8,6 +8,7 @@ import { formatArea, formatLen } from './units';
 import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon, SlabIcon, StairIcon } from './icons';
 import { newLevel } from './actions';
 import { ModeLayers } from './ModeSwitcher';
+import { goTo } from './panzoom';
 import { SYSTEMS } from './systems/catalog';
 import { SystemIcon } from './systems/Panels';
 
@@ -185,7 +186,7 @@ export function ProjectTree({ store }: { store: EditorStore }) {
       case ' ':
         if (row.id !== undefined) {
           if (e.key === 'Enter' && row.id === selection && readOnly === null) store.set({ renaming: row.id });
-          else store.select(row.id);
+          else goTo(store, row.id);
         } else if (row.group === true) toggle(row.key);
         break;
       case 'Escape':
@@ -236,7 +237,7 @@ export function ProjectTree({ store }: { store: EditorStore }) {
               onFocus={() => { if (focusKey !== o.key) setFocusKey(o.key); }}
               onClick={() => {
                 setFocusKey(o.key);
-                if (o.id !== undefined) store.select(o.id);
+                if (o.id !== undefined) goTo(store, o.id);
                 else if (expandable) toggle(o.key);
               }}
               onKeyDown={(e) => { if (!editing) onKeyDown(e, o, index); }}

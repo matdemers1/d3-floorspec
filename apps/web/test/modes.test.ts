@@ -3,9 +3,12 @@ import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditorStore } from '../src/editor/store';
 import { readModel } from '../src/editor/model';
-import { MODE_COMMANDS, MODES, ModesStore, modeForKey, modeKey, pickable } from '../src/editor/modes';
-import { COMMANDS } from '../src/editor/commands';
+import { MODE_COMMANDS, MODES, ModesStore, modeKey, pickable } from '../src/editor/modes';
+import { COMMANDS, codeOf, commandForCode } from '../src/editor/commands';
 import { visible } from '../src/editor/systems/hit';
+import { openView, saveView } from '../src/editor/panzoom';
+import { fit } from '../src/editor/viewport';
+import { modesOf } from '../src/editor/modes';
 
 /**
  * FLR-T-18.3: the editor's trade modes. A mode sets the layers and the ghosts in one step; a layer
@@ -19,6 +22,7 @@ let kept: Map<string, string>;
 beforeEach(() => {
   kept = new Map();
   vi.stubGlobal('cancelAnimationFrame', () => undefined);
+  vi.stubGlobal('requestAnimationFrame', () => 0);
   vi.stubGlobal('localStorage', { getItem: (k: string) => kept.get(k) ?? null, setItem: (k: string, v: string) => { kept.set(k, v); }, removeItem: (k: string) => { kept.delete(k); } });
 });
 afterEach(() => {
@@ -135,11 +139,29 @@ describe('trade modes (FLR-T-18.3)', () => {
     if (plant !== undefined) expect(visible(plant, { ...all, landscape: false })).toBe(false);
   });
 
+  it('a saved view keeps its mode and brings it back (FLR-T-18.6)', () => {
+    const store = editor('views');
+    store.set({ view: fit(store.levelView?.bounds ?? null, 800, 600) });
+    const modes = modesOf(store);
+    modes.setMode('electrical');
+    const saved = saveView(store, 'Wiring', modes.get().mode)!;
+    expect(saved.mode).toBe('electrical');
+    modes.setMode('decorator');
+    expect(openView(store, saved)).toBe(true);
+    expect(modes.get().mode).toBe('electrical');
+    // A mode no longer there leaves the mode as it is.
+    modes.setMode('decorator');
+    openView(store, { ...saved, mode: 'custom:gone' });
+    expect(modes.get().mode).toBe('decorator');
+  });
+
   it('⌥1–⌥7 by the key’s place, and every mode in the palette', () => {
-    expect(modeForKey({ altKey: true, metaKey: false, ctrlKey: false, shiftKey: false, code: 'Digit3' })).toBe('electrical');
-    expect(modeForKey({ altKey: true, metaKey: false, ctrlKey: false, shiftKey: false, code: 'Digit8' })).toBeNull();
-    expect(modeForKey({ altKey: false, metaKey: false, ctrlKey: false, shiftKey: false, code: 'Digit1' })).toBeNull();
-    expect(modeForKey({ altKey: true, metaKey: true, ctrlKey: false, shiftKey: false, code: 'Digit1' })).toBeNull();
+    const key = (code: string, mods: Partial<Record<'altKey' | 'metaKey' | 'shiftKey', boolean>> = {}) => commandForCode(codeOf({ altKey: false, metaKey: false, ctrlKey: false, shiftKey: false, code, ...mods }, true))?.id;
+    expect(key('Digit3', { altKey: true })).toBe('mode.electrical');
+    expect(key('Digit7', { altKey: true })).toBe('mode.landscape');
+    expect(key('Digit8', { altKey: true })).toBeUndefined();
+    expect(key('Digit1', { altKey: true, metaKey: true })).toBeUndefined();
+    expect(key('Digit1', { altKey: true, shiftKey: true })).toBeUndefined();
     for (const c of MODE_COMMANDS) expect(COMMANDS).toContain(c);
     expect(COMMANDS.find((c) => c.id === 'mode.landscape')?.hint).toBe('⌥7');
   });
