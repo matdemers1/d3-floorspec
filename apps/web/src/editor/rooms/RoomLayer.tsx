@@ -91,10 +91,12 @@ export function RoomDragGhost({ store, view, level, units }: { store: EditorStor
     const bits = [dx !== 0 ? `${prettyLen(Math.abs(dx), units)} ${dx > 0 ? 'E' : 'W'}` : null, dy !== 0 ? `${prettyLen(Math.abs(dy), units)} ${dy > 0 ? 'N' : 'S'}` : null].filter((b) => b !== null);
     text = bits.length === 0 ? 'Move' : `Move ${bits.join(' · ')}`;
   }
-  parts.push(<Tag key="dim" at={c} text={text} testId="room-dimension-tag" />);
+  // Below the room's name and area, which are drawn at its middle.
+  parts.push(<Tag key="dim" at={[c[0], c[1] + 34]} text={text} testId="room-dimension-tag" />);
   const problem = preview?.model === null ? preview.diagnostics[0]?.message : undefined;
-  if (problem !== undefined) parts.push(<Tag key="bad" at={[c[0], c[1] + 26]} text={problem.length > 70 ? `${problem.slice(0, 69)}…` : problem} tone="bad" />);
-  else if (drag.kind === 'roomSide') parts.push(<Tag key="hint" at={[c[0], c[1] + 26]} text={`${drag.side} side · walls follow · ⇧ free`} tone="hint" />);
+  if (problem !== undefined) parts.push(<Tag key="bad" at={[c[0], c[1] + 60]} text={problem.length > 70 ? `${problem.slice(0, 69)}…` : problem} tone="bad" />);
+  else if (drag.kind === 'roomSide') parts.push(<Tag key="hint" at={[c[0], c[1] + 60]} text={`${drag.side} side · walls follow · ⇧ free`} tone="hint" />);
+  else parts.push(<Tag key="hint" at={[c[0], c[1] + 60]} text="walls stretch · ⇧ one axis · ⌥ free" tone="hint" />);
   return (
     <g className="fs-room-drag" aria-hidden="true" data-testid="room-drag" data-kind={drag.kind} data-side={drag.kind === 'roomSide' ? WORD[drag.side] : undefined}>
       {parts}

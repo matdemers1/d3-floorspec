@@ -1030,7 +1030,8 @@ export class ToolController {
   private wandKey(key: string): boolean {
     const d = this.store.get().draft;
     if (d?.tool !== 'wand' || d.pick === null || key.length !== 1 || !/\S/.test(key)) return false;
-    this.setWand({ name: key, focusName: true });
+    // Keys typed before the field has taken focus add to what the first one started.
+    this.setWand({ name: d.pick.focusName ? d.pick.name + key : key, focusName: true });
     return true;
   }
 
