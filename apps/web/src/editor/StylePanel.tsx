@@ -151,7 +151,7 @@ export function PlanStyleMenu({ store }: { store: EditorStore }) {
             requestAnimationFrame(() => document.getElementById('fs-plan-style')?.scrollIntoView({ block: 'start' }));
           }}
         >
-          Details, export and a still…
+          Details, exports and a still…
         </MenuItem>
       </MenuContent>
     </Menu>
@@ -218,7 +218,7 @@ export function PlanStyleSection({ store }: { store: EditorStore }) {
   );
 }
 
-/** "Export a still (PNG)": the level's plan in this style and the page's theme, from the plan render. */
+/** "Download a still (PNG)": the level's plan in this style and the page's theme, from the plan render. */
 function StillButton({ store, style }: { store: EditorStore; style: PlanStyle }) {
   const theme = useDocumentTheme();
   const level = useEditor(store, (s) => s.level);
@@ -247,7 +247,7 @@ function StillButton({ store, style }: { store: EditorStore; style: PlanStyle })
           .finally(() => { setBusy(false); });
       }}
     >
-      {busy ? 'Exporting…' : 'Export a still (PNG)'}
+      {busy ? 'Rendering…' : 'Download a still (PNG)'}
     </Button>
   );
 }

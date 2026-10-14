@@ -64,8 +64,9 @@
 .fs-canvas[data-plan-style] .fs-plan2__labels--styled {
   stroke: var(--fsx-halo);
 }
+/* On a pill the halo is the pill's own colour: invisible, and it keeps the name readable wherever it falls. */
 .fs-canvas[data-plan-style] .fs-plan2__labels--styled[data-pills='on'] text {
-  stroke: none;
+  stroke: var(--fsx-pill);
 }
 .fs-plan2__pill {
   fill: var(--fsx-pill);

@@ -21,6 +21,8 @@ export {
   defaultStyle,
   planTheme,
   materialTone,
+  legibleUnder,
+  TEXT_CONTRAST,
   inkOn,
   mix,
   shade,

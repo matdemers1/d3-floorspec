@@ -67,7 +67,7 @@ test('plan styles: Colour by default, the menu, Construction’s Technical and l
   // ── Colour by default: the great room in white oak at true scale, the kitchen in terrazzo, names on pills.
   await expect(canvas).toHaveAttribute('data-plan-style', 'colour');
   await expect(page.getByRole('button', { name: 'Plan style: Colour' })).toBeVisible();
-  await expect(canvas.locator('path[data-floor="white-oak-floor"]').first()).toHaveAttribute('style', /url\("?#fsx-floor-white-oak-floor"?\)/);
+  await expect(canvas.locator('path[data-floor="white-oak-floor"]').first()).toHaveCSS('fill', /url\("?#fsx-floor-white-oak-floor"?\)/);
   await expect(canvas.locator('pattern#fsx-floor-terrazzo')).toHaveCount(1);
   await expect(canvas.locator('.fs-plan2__pill').first()).toBeVisible();
   await expect(canvas.locator('[data-wall-class="exterior"]').first()).toBeAttached();
@@ -124,7 +124,7 @@ test('plan styles: Colour by default, the menu, Construction’s Technical and l
   await expect(section.getByRole('radio', { name: /^Colour/ })).toHaveAttribute('aria-checked', 'true');
   await section.getByRole('switch', { name: 'Floor patterns to scale' }).click();
   await expect(canvas.locator('pattern[id^="fsx-floor-"]')).toHaveCount(0);
-  await expect(canvas.locator('path[data-floor="white-oak-floor"]').first()).toHaveAttribute('style', /fill: rgb\(185, 162, 131\)/);
+  await expect(canvas.locator('path[data-floor="white-oak-floor"]').first()).toHaveCSS('fill', 'rgb(185, 162, 131)');
   await section.getByRole('switch', { name: 'Floor patterns to scale' }).click();
   await shoot(page, 'section', '#fs-plan-style');
   await section.getByRole('radio', { name: 'PDF export only' }).click();
@@ -133,7 +133,7 @@ test('plan styles: Colour by default, the menu, Construction’s Technical and l
   await expect(section.getByRole('radio', { name: /^Presentation/ })).toHaveAttribute('aria-checked', 'true');
 
   // ── A still of the plan, from the plan render in this style.
-  const [file] = await Promise.all([page.waitForEvent('download', { timeout: 60_000 }), section.getByRole('button', { name: 'Export a still (PNG)' }).click()]);
+  const [file] = await Promise.all([page.waitForEvent('download', { timeout: 60_000 }), section.getByRole('button', { name: 'Download a still (PNG)' }).click()]);
   expect(file.suggestedFilename()).toMatch(/-presentation-plan\.png$/);
 
   // ── The plan render takes a style (floorspec_render's `style`); Construction draws Technical unless told.

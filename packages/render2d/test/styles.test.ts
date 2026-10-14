@@ -12,6 +12,7 @@ import {
   floorFinishOf,
   floorPatternSvg,
   isPlanStyle,
+  legibleUnder,
   materialTone,
   mix,
   planTheme,
@@ -64,8 +65,17 @@ describe('plan styles (FLR-T-18.5)', { timeout: 60_000 }, () => {
   it('a dark colour plan pulls each material colour 38 % toward the canvas', () => {
     const dark = planTheme('colour', 'dark');
     expect(DARK_PULL).toBe(0.38);
-    expect(materialTone('#b9a283', dark)).toBe(mix('#b9a283', dark.paper, 0.38));
+    expect(materialTone('#b9a283', dark)).toBe(legibleUnder(mix('#b9a283', dark.paper, 0.38), dark.text));
     expect(materialTone('#b9a283', planTheme('colour', 'light'))).toBe('#b9a283');
+  });
+
+  it('every floor keeps the plan’s text at 4.5:1: a pale stone in the dark, a dark wood in the light', () => {
+    for (const style of ['colour', 'presentation'] as const)
+      for (const theme of ['light', 'dark'] as const) {
+        const t = planTheme(style, theme);
+        for (const c of ['#dfe1dd', '#f4f1ea', '#b9a283', '#8a6440', '#5f666a', '#2f3e55', '#9c5a3c', '#ffffff', '#000000']) expect(contrast(t.text, materialTone(c, t)), `${style} ${theme} ${c}`).toBeGreaterThanOrEqual(4.5);
+        for (const c of [t.floorPlain, t.room, t.tread]) expect(contrast(t.text, c), `${style} ${theme} plain`).toBeGreaterThanOrEqual(4.5);
+      }
   });
 
   it('wall types are outside or inside by their layers', () => {

@@ -290,8 +290,8 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
           {level.faces.map((f, i) =>
             paint !== null && f.room !== null ? (
               // FLR-T-18.5: a room in its floor finish — its colour and pattern at true scale — or a wet room gridded.
-              <g key={f.room}>
-                <path data-floor={f.floor} style={{ fill: paint.floor(f.floor) }} d={pathOf(view, [f.outer, ...f.holes])} fillRule="evenodd" />
+              <g key={f.room} style={{ fill: paint.floor(f.floor) }}>
+                <path data-floor={f.floor} d={pathOf(view, [f.outer, ...f.holes])} fillRule="evenodd" />
                 {paint.grid(f.room) === undefined ? null : <path data-grid={f.room} fill={paint.grid(f.room)} d={pathOf(view, [f.outer, ...f.holes])} fillRule="evenodd" />}
               </g>
             ) : (

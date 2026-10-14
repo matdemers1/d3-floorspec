@@ -1000,7 +1000,6 @@ function ProjectPanel({ store, model, units, readOnly }: { store: EditorStore; m
         </div>
       </div>
       <ModeSummary store={store} model={model} units={units} />
-      <PlanStyleSection store={store} />
       <Section title="Project">
         <TextField label="Name" value={project.name} disabled={readOnly} onCommit={(v) => {
           if (v !== '') edit('Rename the project', setProperty('$project', '/name', v));
@@ -1022,6 +1021,7 @@ function ProjectPanel({ store, model, units, readOnly }: { store: EditorStore; m
           <CoreUpgradeNotice store={store} model={model} since="0.4" what="A winder's newel and a stair's design headroom" />
         ) : null}
       </Section>
+      <PlanStyleSection store={store} />
       <SiteSection store={store} model={model} readOnly={readOnly} />
       <SystemsSummary store={store} model={model} units={units} />
       <Section title="Findings">

@@ -151,20 +151,40 @@ const TWO_FT = 2 * 390_144;
 const LIGHT = PALETTES.light;
 const DARK = PALETTES.dark;
 
+/** The contrast the plan's text keeps over every floor a style draws (WCAG AA, normal text). */
+export const TEXT_CONTRAST = 4.5;
+
+/**
+ * A floor's tone moved just far enough that the plan's text reads on it at 4.5:1: toward black under
+ * light text (the dark theme), toward white under dark text (the light theme). Most finishes do not
+ * move; a pale stone in the dark theme or a dark wood in the light one does, so a room's name, a
+ * device's tag or a stair's UP never sinks into its floor.
+ */
+export function legibleUnder(tone: string, text: string): string {
+  if (contrast(text, tone) >= TEXT_CONTRAST) return tone;
+  const toward = luminance(text) > 0.5 ? '#000000' : '#ffffff';
+  for (let k = 1; k <= 50; k++) {
+    const c = mix(tone, toward, k / 50);
+    if (contrast(text, c) >= TEXT_CONTRAST) return c;
+  }
+  return toward;
+}
+
 function colourTheme(style: 'colour' | 'presentation', theme: ThemeName): PlanTheme {
   const dark = theme === 'dark';
   const base = dark ? DARK : LIGHT;
   const pres = style === 'presentation';
   const walls = dark ? (pres ? '#2c2f37' : '#e9e6df') : pres ? '#3b3e45' : '#2a2c33';
-  const t = (c: string): string => (dark ? mix(c, base.paper, DARK_PULL) : c);
+  const t = (c: string): string => legibleUnder(dark ? mix(c, base.paper, DARK_PULL) : c, base.text);
   return {
     ...base,
     style,
     theme,
     colour: true,
     linework: false,
-    room: t('#f4f1ea'),
-    floorPlain: t('#f4f1ea'),
+    // A room with no finish: the warm white of a colour plan, or in the dark theme the card's own dark.
+    room: dark ? '#262931' : t('#f4f1ea'),
+    floorPlain: dark ? '#262931' : t('#f4f1ea'),
     poche: walls,
     wallExterior: walls,
     wallInterior: walls,
@@ -175,7 +195,7 @@ function colourTheme(style: 'colour' | 'presentation', theme: ThemeName): PlanTh
     threshold: t('#e7dcc8'),
     door: dark ? '#c9ccd6' : '#5b5f6b',
     swing: dark ? '#999ead' : '#8a8e9a',
-    tread: t('#f7f6f2'),
+    tread: dark ? '#30333b' : t('#f7f6f2'),
     unanchored: dark ? '#191b22' : '#e4e6ec',
     pill: dark ? { fill: '#1e212a', opacity: 0.9, stroke: '#3a3e4a' } : { fill: '#ffffff', opacity: 0.92, stroke: '#d6d9e1' },
     caps: false,
@@ -251,9 +271,9 @@ export function planTheme(style: PlanStyle, theme: ThemeName = 'light'): PlanThe
   return style === 'colour' || style === 'presentation' ? colourTheme(style, theme) : lineTheme(style, theme);
 }
 
-/** A material's colour as a style draws it: pulled toward the canvas in a dark colour plan. */
+/** A material's colour as a style draws it: pulled toward the canvas in a dark colour plan, and kept legible under the plan's text. */
 export function materialTone(color: string, t: PlanTheme): string {
-  return t.theme === 'dark' ? mix(color, t.paper, DARK_PULL) : color;
+  return legibleUnder(t.theme === 'dark' ? mix(color, t.paper, DARK_PULL) : color, t.text);
 }
 
 /** The text drawn on a pill or straight on the floor: whichever of the plan's text and paper reads better. */
