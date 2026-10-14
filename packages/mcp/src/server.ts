@@ -843,7 +843,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         z.strictObject({
           project: ProjectHandle,
           changeset: PendingChangeset,
-          view: z.enum(['plan', '3d']).optional().describe('Default plan.'),
+          view: z.string().min(1).max(200).optional().describe('plan (default), 3d, or a saved view\'s name: that photograph, path-traced.'),
           camera: z.string().optional().describe('3D: sw (default), se, ne, nw, top, or a room to stand in.'),
           level: z.string().min(1).max(64).optional().describe('Default the lowest. 3D: cut away above it; "all" for none.'),
           highlight: z.array(z.string().min(1).max(64)).optional().describe('IDs drawn in the accent colour.'),
@@ -860,8 +860,13 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
       try {
         const project = await resolveProject(client, args.project);
         const changeset = await changesetId(client, project.id, args.changeset);
+        // One property for both (FLR-T-13.10): plan, 3d, or a saved view (FS_views) by name.
+        const named = args.view !== undefined && args.view !== 'plan' && args.view !== '3d' ? args.view : undefined;
+        if (named !== undefined && [args.camera, args.level, args.highlight, args.scene, args.sky, args.at].some((a) => a !== undefined))
+          throw new ToolError(`A saved view sets its own camera, cutaway, sky, time and lights: render "${named}" with width, doors or changeset only.`);
         const png = await client.render(project.id, {
-          view: args.view ?? 'plan',
+          view: named === undefined ? ((args.view as 'plan' | '3d' | undefined) ?? 'plan') : '3d',
+          ...(named === undefined ? {} : { savedView: named }),
           // One property for both, to fit the listing's budget: a named view, else a room.
           ...(args.camera === undefined ? {} : CAMERAS.includes(args.camera) ? { camera: args.camera as Camera } : { room: args.camera }),
           ...(args.level === undefined ? {} : { level: args.level }),

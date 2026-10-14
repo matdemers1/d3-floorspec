@@ -8,7 +8,7 @@ import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSourc
 import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
 import { normalizeOn, type Lighting } from '@floorspec/mesh';
 import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type ShotSize, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
-import { renderSavedView, renderShots } from '../pathtrace/views.js';
+import { renderSavedView, renderShots, type Shot } from '../pathtrace/views.js';
 import { storeZip } from '../export/gltf/zip.js';
 
 export interface JobRow {
@@ -205,6 +205,34 @@ export function shotsParams(raw: unknown): ShotsParams {
   return { ...(views === undefined ? {} : { views }), size, quality, ...(design === undefined ? {} : { design }) };
 }
 
+/**
+ * A shot list's ZIP (FLR-T-13.10): each still a PNG named for its place and its view —
+ * `01-hero-exterior.png` — and what each shot was, for the job's summary.
+ */
+export function shotsZip(shots: readonly Shot[]): { bytes: Uint8Array; shots: Record<string, unknown>[] } {
+  const names = new Set<string>();
+  const files = shots.map(({ view, still }, i) => {
+    let name = `${String(i + 1).padStart(2, '0')}-${slug(view.name)}.png`;
+    while (names.has(name)) name = name.replace(/\.png$/, '-2.png');
+    names.add(name);
+    return { name, view, still };
+  });
+  return {
+    bytes: storeZip(files.map((f) => ({ name: f.name, bytes: f.still.png }))),
+    shots: files.map((f) => ({
+      file: f.name,
+      view: f.view.id,
+      name: f.view.name,
+      width: f.still.width,
+      height: f.still.height,
+      samples: f.still.samples,
+      ...(f.still.lit?.exposure === undefined ? {} : { exposure: f.still.lit.exposure }),
+      ...(f.still.sky === undefined ? {} : { sky: f.still.sky }),
+      ms: f.still.ms,
+    })),
+  };
+}
+
 /** A file name's safe form: "Courtyard at dusk" → "courtyard-at-dusk". */
 const slug = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'view';
 
@@ -327,34 +355,12 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
         ...(images === undefined ? {} : { images }),
         ...(job.progress === undefined ? {} : { onShot: (shot: number, of: number, pass: number, passes: number) => job.progress?.({ shot: shot + 1, shots: of, pass, passes }) }),
       });
-      const names = new Set<string>();
-      const files = shots.map(({ view, still }, i) => {
-        let name = `${String(i + 1).padStart(2, '0')}-${slug(view.name)}.png`;
-        while (names.has(name)) name = name.replace(/\.png$/, '-2.png');
-        names.add(name);
-        return { name, view, still };
-      });
+      const zip = shotsZip(shots);
       return {
         name: `shots-${job.versionHash.slice(0, 8)}.zip`,
         contentType: 'application/zip',
-        bytes: storeZip(files.map((f) => ({ name: f.name, bytes: f.still.png }))),
-        summary: {
-          label: 'Shot list — every saved view, path-traced',
-          size: p.size,
-          quality: p.quality,
-          shots: files.map((f) => ({
-            file: f.name,
-            view: f.view.id,
-            name: f.view.name,
-            width: f.still.width,
-            height: f.still.height,
-            samples: f.still.samples,
-            ...(f.still.lit?.exposure === undefined ? {} : { exposure: f.still.lit.exposure }),
-            ...(f.still.sky === undefined ? {} : { sky: f.still.sky }),
-            ms: f.still.ms,
-          })),
-          design: shots[0]?.still.design ?? null,
-        },
+        bytes: zip.bytes,
+        summary: { label: 'Shot list — every saved view, path-traced', size: p.size, quality: p.quality, shots: zip.shots, design: shots[0]?.still.design ?? null },
       };
     },
     /**

@@ -11,6 +11,7 @@
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
 import { landings } from '../stairwell.js';
+import { describeLens, savedViewsOf } from '@floorspec/mesh';
 import { analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
@@ -329,7 +330,29 @@ export interface DocumentSummary {
   readonly options?: readonly OptionSetSummary[];
   /** FS_lighting's named lighting scenes (FLR-T-13.12), in ID order; absent when there are none. */
   readonly scenes?: readonly LightSceneSummary[];
+  /** FS_views' saved views (FLR-T-13.10), in ID order; absent when there are none. */
+  readonly views?: readonly SavedViewSummary[];
   readonly diagnostics: readonly DiagnosticSummary[];
+}
+
+/** A saved view (FS_views 2.1), as an agent reads it: its name, its lens in words and what it shows. */
+export interface SavedViewSummary {
+  readonly id: string;
+  readonly name: string;
+  /** "24 mm · 3:2 · two-point · f/8 · +0.3 EV". */
+  readonly lens: string;
+  readonly level?: string;
+  readonly sky: string;
+  readonly at?: string;
+  /** "off", "on" (every light), or the FS_lighting scene's ID. */
+  readonly lights: string;
+}
+
+/** FS_views' saved views, when the document has some. */
+export function viewSummaries(doc: FloorspecDocument): SavedViewSummary[] | undefined {
+  const views = savedViewsOf(doc);
+  if (views.length === 0) return undefined;
+  return views.map((v) => ({ id: v.id, name: v.name, lens: describeLens(v), ...(v.level === undefined ? {} : { level: v.levels === 'only' ? `${v.level} alone` : v.level }), sky: v.sky, ...(v.at === undefined ? {} : { at: v.at }), lights: v.scene ?? v.lights }));
 }
 
 /** A lighting scene (FS_lighting 3.1): what it turns on, at what output and colour temperature; every other light is off. */
@@ -1043,7 +1066,8 @@ export function describeJson(document: string | Uint8Array | object, options: De
   const area = ev.valid && options.room === undefined ? z765(doc).buildings.map((b) => ({ building: b.building, aboveGradeSqFt: b.aboveGradeSqFt, belowGradeSqFt: b.belowGradeSqFt })) : undefined;
   const site = siteSummary(doc);
   const scenes = options.room === undefined && options.level === undefined ? sceneSummaries(doc) : undefined;
-  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), diagnostics: diags };
+  const views = options.room === undefined && options.level === undefined ? viewSummaries(doc) : undefined;
+  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), diagnostics: diags };
 }
 
 const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'] as const;

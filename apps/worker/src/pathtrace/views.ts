@@ -92,6 +92,9 @@ export interface ShotListOptions extends ViewRenderOptions {
   readonly views?: readonly string[];
   readonly size?: ShotSize;
   readonly quality?: Quality;
+  /** Override the long side, pixels, and the samples a pixel (tests). */
+  readonly long?: number;
+  readonly samples?: number;
   /** Called as each shot starts and as its passes go. */
   readonly onShot?: (shot: number, shots: number, pass: number, passes: number) => void | Promise<void>;
 }
@@ -125,8 +128,9 @@ export async function renderShots(document: object, options: ShotListOptions = {
       scene = await sceneFor(document, view, options);
       built.set(key, scene);
     }
-    await options.onShot?.(i, views.length, 0, QUALITIES[quality]);
-    const still = await shoot(document, scene, view, SHOT_SIZES[size], QUALITIES[quality], BUDGET_MS, {
+    const samples = options.samples ?? QUALITIES[quality];
+    await options.onShot?.(i, views.length, 0, samples);
+    const still = await shoot(document, scene, view, options.long ?? SHOT_SIZES[size], samples, BUDGET_MS, {
       ...options,
       onPass: (done, total) => options.onShot?.(i, views.length, done, total),
     });

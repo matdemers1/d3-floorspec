@@ -4,7 +4,7 @@
  * are on — and the one camera every view makes of one: the editor's 3D view, the headless render, the
  * worker's path tracer and the GPU still.
  *
- * A view is kept in the document (`extensions.FS_views.views`, FLR-ADR-044): the owner keeps it, and an
+ * A view is kept in the document (`extensions.FS_views.views`, FLR-ADR-046): the owner keeps it, and an
  * agent renders it by name (`floorspec_render` with `view`). Its eye and target are exact lengths;
  * everything here turns them into metres once, at the end.
  *
