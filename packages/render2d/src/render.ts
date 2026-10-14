@@ -1255,7 +1255,7 @@ function annoSvg(prims: readonly AnnoPrim[], pal: Palette): string {
           ? undefined
           : [0, 1, 2, 3, 4, 5].map((i) => [p.cx + p.r * [1, 0.5, -0.5, -1, -0.5, 0.5][i]!, p.cy + p.r * [0, 0.866, 0.866, 0, -0.866, -0.866][i]!] as const).map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${num(x)} ${num(y)}`).join('') + 'Z';
       rest += d === undefined ? el('circle', { 'data-tag': p.owner, cx: p.cx, cy: p.cy, r: p.r, fill: pal.paper, stroke: pal.text, 'stroke-width': 0.75 }) : el('path', { 'data-tag': p.owner, d, fill: pal.paper, stroke: pal.text, 'stroke-width': 0.75 });
-    } else if (p.t === 'text') {
+    } else {
       const transform = p.rotate === 0 ? undefined : `rotate(${num(p.rotate)} ${num(p.x)} ${num(p.y)})`;
       rest += el(
         'text',

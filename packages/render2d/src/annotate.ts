@@ -452,7 +452,7 @@ export function customString(d: CustomDimension): DimString | null {
   if (len === 0) return null;
   let u: XY = [d.direction[0] / len, d.direction[1] / len];
   // Reading direction: rightwards, or upwards when it is nearer vertical.
-  if (Math.abs(u[0]) >= Math.abs(u[1]) ? u[0] < 0 : u[1] < 0) u = [-u[0], -u[1]];
+  if (Math.abs(u[0]) >= Math.abs(u[1]) ? u[0] < 0 : u[1] < 0) u = [0 - u[0] + 0, 0 - u[1] + 0];
   const origin = d.anchors[0]!.onLine;
   const along = (p: XY): number => (p[0] - origin[0]) * u[0] + (p[1] - origin[1]) * u[1];
   const stops = d.anchors.map((a) => ({ along: along(a.onLine), feature: a.feature }));

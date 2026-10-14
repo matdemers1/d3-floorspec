@@ -12,7 +12,8 @@ renderPlan(doc, {
   scale: 24,                  // SVG pixels per foot
   highlight: ['WI1', 'KIT'],  // drawn in the Floorspec accent (#b5d84a)
   ghost: { before: mainDoc }, // changeset ghosting: added/moved in the accent, removed/old dashed
-  dimensions: true,           // overall exterior dimensions, ft-in
+  dimensions: true,           // exterior dimension strings, ft-in (FLR-T-18.11)
+  annotation: { rooms: true, tags: true, custom, notes }, // room strings, door/window tags, FS_annotation
   labels: true,               // room name (or function), net ft², ft-in size, ID
   roof: false,                // the roof layer: eave outline dashed, ridges, hips, valleys, gable ends
   symbols: bytesBySha256,     // fallback symbol bytes (Core 12.6): Map<sha256, Uint8Array> or (sha256) => bytes
@@ -64,6 +65,20 @@ renderPlan(doc, { reader: { extensions: ['FS_electrical'], knownExtensions } });
 - Styling follows the Floorspec (FLR) Figma board's plan canvas: rooms on `surface-card`, poché in
   `fg`, separators dashed in `border-float`, doors in `fg-faint` with a dashed quarter swing,
   windows in `info`, dimensions in JetBrains Mono.
+
+- **Dimensions and annotation (FLR-T-18.11, FLR-ADR-047)** are one layout, `annotate.ts`, that this
+  renderer, the worker's PDF and DXF and the editor's canvas all draw. `exteriorStrings` reads each
+  side off the building's outer boundary (`outline.ts`: the union of the wall and junction pieces):
+  the openings located, the major jogs and the overall size, nearest first — corners where the
+  boundary turns 20° or more or an arc wall ends, an arc's furthest point on the side it bulges to,
+  points under 6" apart merged, a recessed face's openings on a string of their own just off it.
+  `roomStrings` runs one across and one up each room of 8 ft or more, beside its label; `customString`
+  draws a person's FS_annotation string as the engine resolves it; `tagsOf` places door and window
+  tags with `openingMarks`' D1…/W1…. `layoutAnnotations` puts it all on paper — lines, ticks,
+  extension lines, lengths, tags, notes with leaders — in the medium's metrics (`PDF_METRICS`,
+  `SCREEN_METRICS`): exterior strings stacked outward, a length too long for its span on a row of its
+  own with a leader, the strings beyond it moved out by that row, and the depth each side reaches
+  returned for the margins. `scaleBarOf` is the graphic scale every drawing prints.
 
 PNG output lives in the worker (`apps/worker/src/render`): `renderPlanPng(doc, { width, ...opts })`
 rasterises with resvg and the bundled Inter / JetBrains Mono, never the host's fonts.
