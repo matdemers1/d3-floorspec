@@ -6,6 +6,7 @@
  *
  * Everything is in the scene's frame: metres, +Y up, Floorspec (x, y, z) at (x, z, −y).
  */
+import type { ViewCamera } from '@floorspec/mesh';
 import type { SceneDoor, SceneObstacle, SceneRoom, Vec3 } from '../export/gltf/scene.js';
 
 export const PRESETS = ['sw', 'se', 'ne', 'nw', 'top'] as const;
@@ -20,6 +21,13 @@ export interface Camera {
   readonly near: number;
   /** What the camera is, in words: "SW iso", "Kitchen (R3) from its doorway D2". */
   readonly label: string;
+  /**
+   * A shift lens (FLR-T-13.10): the picture's middle moved up by this many half-heights — two-point
+   * perspective, the camera held level. Default 0.
+   */
+  readonly shift?: number;
+  /** A thin lens (FLR-T-13.10): its radius and the distance in focus along the line of sight, metres. Absent: a pinhole, all sharp. */
+  readonly lens?: { readonly radius: number; readonly focus: number };
 }
 
 const DEG = Math.PI / 180;
@@ -249,4 +257,22 @@ function farCorner(room: SceneRoom, c: Pt, corner: { p: Pt; far: number }): Spot
     if (inside(at, room.outer)) break;
   }
   return { at, from: ' from its far corner' };
+}
+
+/**
+ * A saved view's camera (FLR-T-13.10, @floorspec/mesh `viewCamera`, the document's frame in metres)
+ * in the scene's frame: it looks along the view's line of sight — level under two-point perspective,
+ * its lens shifted — with the view's thin lens when it has one.
+ */
+export function savedCamera(view: ViewCamera): Camera {
+  return {
+    eye: yUp(...view.eye),
+    target: yUp(...view.look),
+    up: [0, 1, 0],
+    fovY: view.fovY,
+    near: 0.05,
+    label: view.label,
+    ...(view.shift === 0 ? {} : { shift: view.shift }),
+    ...(view.lens === null ? {} : { lens: view.lens }),
+  };
 }

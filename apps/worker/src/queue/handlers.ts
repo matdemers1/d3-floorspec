@@ -7,7 +7,9 @@ import { exportIfc } from '../export/ifc/index.js';
 import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
 import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
 import { normalizeOn, type Lighting } from '@floorspec/mesh';
-import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
+import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type ShotSize, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
+import { renderSavedView, renderShots } from '../pathtrace/views.js';
+import { storeZip } from '../export/gltf/zip.js';
 
 export interface JobRow {
   readonly id: string;
@@ -102,6 +104,8 @@ export interface Render3dParams {
   /** FLR-T-13.12: the lighting scene, by name (the api resolved it), and what it turns on. */
   readonly scene?: string;
   readonly lighting?: Lighting;
+  /** FLR-T-13.10: a saved view (FS_views), by its ID or name — path-traced as the photograph it describes. */
+  readonly view?: string;
 }
 
 /** A job's sky and date and time, when they are one of the presets and a date and time. */
@@ -125,7 +129,9 @@ export function render3dParams(raw: unknown): Render3dParams {
   const doors = p['doors'] === 'open' || p['doors'] === 'closed' ? p['doors'] : undefined;
   const scene = str('scene');
   const lighting = lightingOf(p['lighting']);
+  const view = str('view');
   return {
+    ...(view === undefined ? {} : { view }),
     ...(scene === undefined ? {} : { scene }),
     ...(lighting === undefined ? {} : { lighting }),
     ...(camera === undefined ? {} : { camera }),
@@ -179,6 +185,28 @@ export function stillParams(raw: unknown): StillParams {
     ...skyParams(p),
   };
 }
+
+/** The parameters of a shot list (FLR-T-13.10), as the api writes them. */
+export interface ShotsParams {
+  /** The saved views to render, by ID; default every one. */
+  readonly views?: readonly string[];
+  readonly size: ShotSize;
+  readonly quality: Quality;
+  readonly design?: Record<string, string>;
+}
+
+export function shotsParams(raw: unknown): ShotsParams {
+  const p = (raw ?? {}) as Record<string, unknown>;
+  const views = Array.isArray(p['views']) && p['views'].every((v) => typeof v === 'string') ? (p['views']) : undefined;
+  const size = typeof p['size'] === 'string' && Object.hasOwn(SHOT_SIZES, p['size']) ? (p['size'] as ShotSize) : 'medium';
+  const quality = typeof p['quality'] === 'string' && Object.hasOwn(QUALITIES, p['quality']) ? (p['quality'] as Quality) : 'standard';
+  if (!shotWithinBudget(size, quality)) throw new RangeError(`a ${size} shot at ${quality} quality is more work than a still may take`);
+  const design = designOf(p['design']);
+  return { ...(views === undefined ? {} : { views }), size, quality, ...(design === undefined ? {} : { design }) };
+}
+
+/** A file name's safe form: "Courtyard at dusk" → "courtyard-at-dusk". */
+const slug = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'view';
 
 /** Only the images the job's project claimed (FLR-T-8.2). */
 function claimedOnly(job: JobRow, source: ImageSource | undefined): ImageSource | undefined {
@@ -285,12 +313,67 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
       };
     },
     /**
+     * FLR-T-13.10: a shot list — every saved view (FS_views), or those named, path-traced as a still,
+     * one after another — as one ZIP of PNGs, each named for its view. Reports the shot and the pass.
+     */
+    'export.shots': async (document, job) => {
+      const p = shotsParams(job.params);
+      const images = claimedOnly(job, store.images);
+      const shots = await renderShots(document, {
+        ...(p.views === undefined ? {} : { views: p.views }),
+        size: p.size,
+        quality: p.quality,
+        ...(p.design === undefined ? {} : { design: p.design }),
+        ...(images === undefined ? {} : { images }),
+        ...(job.progress === undefined ? {} : { onShot: (shot: number, of: number, pass: number, passes: number) => job.progress?.({ shot: shot + 1, shots: of, pass, passes }) }),
+      });
+      const names = new Set<string>();
+      const files = shots.map(({ view, still }, i) => {
+        let name = `${String(i + 1).padStart(2, '0')}-${slug(view.name)}.png`;
+        while (names.has(name)) name = name.replace(/\.png$/, '-2.png');
+        names.add(name);
+        return { name, view, still };
+      });
+      return {
+        name: `shots-${job.versionHash.slice(0, 8)}.zip`,
+        contentType: 'application/zip',
+        bytes: storeZip(files.map((f) => ({ name: f.name, bytes: f.still.png }))),
+        summary: {
+          label: 'Shot list — every saved view, path-traced',
+          size: p.size,
+          quality: p.quality,
+          shots: files.map((f) => ({
+            file: f.name,
+            view: f.view.id,
+            name: f.view.name,
+            width: f.still.width,
+            height: f.still.height,
+            samples: f.still.samples,
+            ...(f.still.lit?.exposure === undefined ? {} : { exposure: f.still.lit.exposure }),
+            ...(f.still.sky === undefined ? {} : { sky: f.still.sky }),
+            ms: f.still.ms,
+          })),
+          design: shots[0]?.still.design ?? null,
+        },
+      };
+    },
+    /**
      * FLR-T-8.5: a PNG of the 3D model from a named view or a room; the api waits for it. With
      * `lights` (FLR-T-12.22), path-traced with the luminaires on or off instead of rasterized.
      */
     'render.3d': async (document, job) => {
       const p = render3dParams(job.params);
       const images = claimedOnly(job, store.images);
+      // FLR-T-13.10: a saved view, as the photograph it describes.
+      if (p.view !== undefined) {
+        const shot = await renderSavedView(document, p.view, {
+          ...(p.width === undefined ? {} : { width: p.width }),
+          ...(p.design === undefined ? {} : { design: p.design }),
+          ...(p.doors === undefined ? {} : { doors: p.doors }),
+          ...(images === undefined ? {} : { images }),
+        });
+        return { name: `render-${slug(shot.view.name)}-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: shot.png, summary: { width: shot.width, height: shot.height, camera: shot.camera, view: { id: shot.view.id, name: shot.view.name }, design: shot.design, ...(shot.lit === undefined ? {} : { lit: shot.lit }), ...(shot.sky === undefined ? {} : { sky: shot.sky }), ms: shot.ms } };
+      }
       if (p.lights !== undefined) {
         const lit = await renderLit(document, {
           lights: p.lights,

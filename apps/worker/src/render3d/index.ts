@@ -186,9 +186,11 @@ function ground(bounds: { min: Vec3; max: Vec3 }): Tri[] {
 }
 
 /** The scene's triangles as drawn: cut away above `level`, highlighted, with a ground under them. */
-export function sceneTriangles(scene: Scene, options: { level?: string; highlight?: readonly string[]; ground?: boolean; maps?: ReadonlyMap<number, RasterMaps> } = {}): Tri[] {
+export function sceneTriangles(scene: Scene, options: { level?: string; only?: boolean; highlight?: readonly string[]; ground?: boolean; maps?: ReadonlyMap<number, RasterMaps> } = {}): Tri[] {
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
   const cut = cutOf(scene, options.level);
+  // One level alone (FLR-T-13.2): none below the cut either.
+  const alone = options.only === true && cut !== undefined;
   const lit = new Set(options.highlight ?? []);
   const tris: Tri[] = [];
   const min: Vec3 = [Infinity, Infinity, Infinity];
@@ -198,6 +200,7 @@ export function sceneTriangles(scene: Scene, options: { level?: string; highligh
   for (const level of scene.levels) {
     const at = order.get(level.id)!;
     if (cut !== undefined && at > cut) continue;
+    if (alone && at < cut) continue;
     for (const node of level.nodes) {
       // An appliance lights for the elements it stands for too (FLR-T-12.34): they have no node of their own.
       const on = lit.has(node.id) || (node.standsFor ?? []).some((id) => lit.has(id));
@@ -270,8 +273,19 @@ export function rasterSky(sky: ResolvedSky, groundY: number): RasterSky {
 }
 
 /** Render a scene: from a named view, or from inside a room. */
-export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design' | 'sky' | 'at'> & { readonly skyLight?: ResolvedSky } = {}): Render3dResult {
-  const { width, height } = sizeOf(options.width);
+export function renderScene(
+  scene: Scene,
+  options: Omit<Render3dOptions, 'design' | 'sky' | 'at'> & {
+    readonly skyLight?: ResolvedSky;
+    /** A camera given whole (FLR-T-13.10, a saved view's), in place of `camera` and `room`; and the picture's size. */
+    readonly shot?: { readonly camera: Camera; readonly width: number; readonly height: number };
+    /** `level` alone, without the levels below it. */
+    readonly only?: boolean;
+    /** Exposure compensation: a factor on the exposure. */
+    readonly exposureScale?: number;
+  } = {},
+): Render3dResult {
+  const { width, height } = options.shot === undefined ? sizeOf(options.width) : { width: options.shot.width, height: options.shot.height };
   cutOf(scene, options.level);
   // FLR-T-13.6: each material's base colour map, the store's or the library's, as a mip chain.
   const decoded = texturesOf(scene, withLibrary(options.images));
@@ -295,7 +309,10 @@ export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design
   }
   let camera: Camera;
   let tris: Tri[];
-  if (options.room !== undefined) {
+  if (options.shot !== undefined) {
+    camera = options.shot.camera;
+    tris = sceneTriangles(scene, { ...(options.level === undefined ? {} : { level: options.level, ...(options.only === true ? { only: true } : {}) }), ...(options.highlight === undefined ? {} : { highlight: options.highlight }), ground: options.skyLight === undefined, maps });
+  } else if (options.room !== undefined) {
     const room = findRoom(scene.rooms, options.room);
     if (room === undefined) {
       const known = scene.rooms.map((r) => (r.name === undefined ? r.id : `${r.id} (${r.name})`));
@@ -315,7 +332,7 @@ export function renderScene(scene: Scene, options: Omit<Render3dOptions, 'design
   }
   const all = boundsOf(sceneTriangles(scene, { ground: false }));
   const lighting = options.skyLight === undefined ? undefined : rasterSky(options.skyLight, all.min[1] - 0.003);
-  const rgb = rasterize(drawList(tris, chains), camera, { width, height, supersample: 2, ...(lighting === undefined ? {} : { lighting }) });
+  const rgb = rasterize(drawList(tris, chains), camera, { width, height, supersample: 2, ...(lighting === undefined ? {} : { lighting }), ...(options.exposureScale === undefined ? {} : { exposureScale: options.exposureScale }) });
   return { png: encodePng(rgb, width, height), width, height, camera: camera.label, design: scene.design, ...(options.skyLight === undefined || lighting === undefined ? {} : { sky: skySummary(options.skyLight, Number(lighting.exposure.toPrecision(3))) }) };
 }
 

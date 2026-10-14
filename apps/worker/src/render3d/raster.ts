@@ -70,6 +70,8 @@ export interface RasterOptions {
    * editor's view is and tone-mapped with the path tracer's filmic curve.
    */
   readonly lighting?: RasterSky;
+  /** Exposure compensation (FLR-T-13.10): the light is multiplied by this before the tone curve. Default 1. */
+  readonly exposureScale?: number;
 }
 
 export interface RasterSky {
@@ -244,6 +246,10 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
   const H = options.height * ss;
   const aspect = options.width / options.height;
   const f = 1 / Math.tan((camera.fovY * Math.PI) / 360);
+  // A shift lens (FLR-T-13.10, two-point perspective): the picture's middle moved up by this many half-heights.
+  const shift = camera.shift ?? 0;
+  // Exposure compensation (FLR-T-13.10): a factor on the light before the tone curve.
+  const gain = options.exposureScale ?? 1;
 
   // The camera's basis: it looks along −back.
   const back = norm(sub(camera.eye, camera.target));
@@ -266,7 +272,7 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
   const worldAt = (x: number, y: number, inv: number): Vec3 => {
     const w = 1 / inv;
     const vx = (((x + 0.5) / W) * 2 - 1) * (aspect / f) * w;
-    const vy = (1 - ((y + 0.5) / H) * 2) * (1 / f) * w;
+    const vy = (1 - ((y + 0.5) / H) * 2 + shift) * (1 / f) * w;
     return [camera.eye[0] + right[0] * vx + up[0] * vy - back[0] * w, camera.eye[1] + right[1] * vx + up[1] * vy - back[1] * w, camera.eye[2] + right[2] * vx + up[2] * vy - back[2] * w];
   };
 
@@ -302,7 +308,7 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
     for (let y = 0; y < H; y++)
       for (let x = 0; x < W; x++) {
         const vx = (((x + 0.5) / W) * 2 - 1) * (aspect / f);
-        const vy = (1 - ((y + 0.5) / H) * 2) * (1 / f);
+        const vy = (1 - ((y + 0.5) / H) * 2 + shift) * (1 / f);
         const wx = right[0] * vx + up[0] * vy - back[0];
         const wy = right[1] * vx + up[1] * vy - back[1];
         const wz = right[2] * vx + up[2] * vy - back[2];
@@ -422,7 +428,7 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
     if (clipped.length < 3) return;
     const screen = clipped.map((v) => {
       const w = -v[2];
-      return [((v[0] * f) / aspect / w) * 0.5 * W + 0.5 * W, 0.5 * H - ((v[1] * f) / w) * 0.5 * H, 1 / w] as const;
+      return [((v[0] * f) / aspect / w) * 0.5 * W + 0.5 * W, 0.5 * H - ((v[1] * f) / w - shift) * 0.5 * H, 1 / w] as const;
     });
     // The map's level of detail: texels a subpixel covers, from the whole polygon's areas on screen and in the map.
     let lod = 0;
@@ -639,10 +645,10 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
 
   // What was drawn is tone-mapped; the sky (or the paper) behind it keeps its colour. Under a sky,
   // everything — sky and ground included — through the path tracer's filmic curve.
-  if (sky !== undefined) for (let i = 0; i < 3 * W * H; i++) color[i] = aces(color[i]!);
+  if (sky !== undefined) for (let i = 0; i < 3 * W * H; i++) color[i] = aces(color[i]! * gain);
   else for (let i = 0; i < W * H; i++) {
     if (key[i] === -1) continue;
-    const [tr, tg, tb] = tone(color[3 * i]!, color[3 * i + 1]!, color[3 * i + 2]!);
+    const [tr, tg, tb] = tone(color[3 * i]! * gain, color[3 * i + 1]! * gain, color[3 * i + 2]! * gain);
     color[3 * i] = tr;
     color[3 * i + 1] = tg;
     color[3 * i + 2] = tb;
