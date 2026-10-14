@@ -677,7 +677,11 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       const outline = image === null ? fixtureSymbol(fb) : null;
       const box = { 'data-id': fb.id, 'data-kind': `${fb.extension}:${fb.collection}`, d: ringsPath([P(fb.footprint)]) };
       if (image === null && outline === null) {
-        drawn = el('path', { ...box, fill: a ? pal.accent : pal.faint, 'fill-opacity': a ? 0.35 : 0.12, stroke: a ? pal.accent : pal.faint, 'stroke-width': 1 });
+        // In a trade's view its own devices are what the drawing is of: drawn solid, in the plan's ink.
+        const featured = moded && state === 'on' && layer !== null && TRADES.has(layer) && !a;
+        drawn = featured
+          ? el('path', { ...box, fill: pal.room, stroke: pal.text, 'stroke-width': 1.5 })
+          : el('path', { ...box, fill: a ? pal.accent : pal.faint, 'fill-opacity': a ? 0.35 : 0.12, stroke: a ? pal.accent : pal.faint, 'stroke-width': 1 });
         if (state === 'ghost' && layer !== null) ghosted.set(layer, (ghosted.get(layer) ?? '') + drawn);
         else fbs += drawn;
         continue;
@@ -825,6 +829,9 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${SANS}">${parts.join('')}</svg>\n`;
 }
+
+/** The building systems: in their own mode their devices are drawn solid (FLR-T-18.3). */
+const TRADES: ReadonlySet<PlanLayer> = new Set(['electrical', 'plumbing', 'mechanical', 'lowvoltage']);
 
 /** The layers whose ghosts the filter greys. */
 const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'];
