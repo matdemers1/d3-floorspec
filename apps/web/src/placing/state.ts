@@ -272,7 +272,7 @@ export function nudgeGhost(store: EditorStore, dx: number, dy: number): boolean 
   if (st.active === null) return false;
   const at = st.ghost?.at ?? keyboardPoint(store);
   if (at === null) return false;
-  moveGhost(store, [at[0] + dx, at[1] + dy], st.tol === 0 ? defaultTol(store) : st.tol, true);
+  moveGhost(store, [at[0] + dx, at[1] + dy], st.tol === 0 ? defaultTol(store) : st.tol, st.free);
   return true;
 }
 

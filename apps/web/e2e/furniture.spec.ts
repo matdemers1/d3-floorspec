@@ -117,6 +117,8 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   // ── On the plan: the symbol over its footprint, and the door's clearance showing.
   const item = page.locator(`[data-furniture="${fridge!.id}"]`);
   await expect(item.locator('image')).toHaveAttribute('href', `/api/projects/${project}/assets/${model.assets![fridge!.fallback.symbol]!.sha256}`);
+  // The layers are in the tree's tab of the left drawer, beside the library's (FLR-T-18.7).
+  await page.getByRole('tab', { name: 'Tree' }).click();
   await expect(page.getByRole('button', { name: 'Clearances', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.fs-clearances polygon')).toHaveCount(1);
   await expect(page.locator('.fs-clearance--blocked')).toHaveCount(0);
@@ -131,6 +133,8 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
 
   // The arrow keys move it, and Undo puts it back.
   const hostBefore = JSON.stringify((furniture(await modelOf(page, project))[0] as unknown as { host: unknown }).host);
+  // From the plan: on the drawer's tabs the arrows would move between them.
+  await page.locator('.fs-editor').focus();
   await page.keyboard.press('ArrowLeft');
   await expect.poll(async () => JSON.stringify((furniture(await modelOf(page, project))[0] as unknown as { host: unknown }).host)).not.toBe(hostBefore);
   // The server has the move before the editor hears back; Undo waits for the edit to finish.
