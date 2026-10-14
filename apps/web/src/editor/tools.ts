@@ -5,6 +5,7 @@ import type { LevelView, Point } from './model';
 import { dist, hitTest, faceAt, leftNormal, project, roomsBeside } from './geometry';
 import { pointAtLength, snapOpeningOn, snapPoint, type Snap } from './snap';
 import { panBy, toWorld, zoomAt } from './viewport';
+import { navOf, WheelDetector, wheelAction, zoomBy, type WheelSample } from './panzoom';
 import {
   addOpening,
   addRoof,
@@ -76,8 +77,20 @@ export class ToolController {
   private pinch: { d: number; mid: Point } | null = null;
   private dragStart: { world: Point; target: string; kind: 'junction' | 'wall' | 'opening' | 'device' | 'resize' | 'rotate'; side?: HandleSide } | null = null;
   space = false;
+  private readonly wheels = new WheelDetector();
+  /** The last press, to tell a double click (or a double tap) on the plan. */
+  private lastPress: { x: number; y: number; at: number } | null = null;
 
   constructor(private readonly store: EditorStore) {}
+
+  /** Whether this press is the second of a double click: close in time and place to the last. */
+  private double(p: PointerInfo): boolean {
+    const now = performance.now();
+    const last = this.lastPress;
+    const near = last !== null && now - last.at < 400 && Math.hypot(p.x - last.x, p.y - last.y) <= (p.type === 'touch' ? 24 : 6);
+    this.lastPress = near ? null : { x: p.x, y: p.y, at: now };
+    return near;
+  }
 
   private get level(): LevelView | undefined {
     return this.store.levelView;
@@ -114,6 +127,12 @@ export class ToolController {
       return;
     }
     if (p.button !== 0) return;
+    // FLR-T-18.6: the hand tool drags the plan; a double click with it zooms in (⌥ out).
+    if (this.store.get().tool === 'hand') {
+      if (this.double(p)) zoomBy(this.store, p.alt ? 0.5 : 2, [p.x, p.y]);
+      this.mode = 'pan';
+      return;
+    }
     if (p.type === 'touch') {
       // A finger: decide on the first move whether this is a pan or a tap. Over a draggable
       // element in the select tool, it is a drag.
@@ -185,11 +204,32 @@ export class ToolController {
     if (this.mode === 'idle') this.store.set({ hover: null, cursor: null });
   }
 
-  wheel(e: { x: number; y: number; dx: number; dy: number; zoom: boolean }): void {
+  /**
+   * A wheel or a trackpad over the plan (FLR-T-18.6): zoom or pan by the setting in the zoom menu
+   * and the device it came from. A mouse's notches zoom smoothly (animated, adding up); a pinch and
+   * a trackpad's scroll follow the fingers at once.
+   */
+  wheel(e: { x: number; y: number; sample: WheelSample }): void {
     const view = this.store.get().view;
     if (view === null) return;
-    if (e.zoom) this.store.set({ view: zoomAt(view, Math.exp(-e.dy * 0.0025), [e.x, e.y]) });
-    else this.store.set({ view: panBy(view, -e.dx, -e.dy) });
+    const nav = navOf(this.store);
+    const { sample } = e;
+    const lines = sample.deltaMode === 1 ? 20 : sample.deltaMode === 2 ? view.h : 1;
+    const dx = sample.deltaX * lines;
+    const dy = sample.deltaY * lines;
+    const device = this.wheels.classify(sample, performance.now());
+    if (wheelAction(nav.get().wheel, sample, device) === 'zoom') {
+      if (device === 'mouse') zoomBy(this.store, Math.exp(-Math.max(-150, Math.min(150, dy)) * 0.0025), [e.x, e.y]);
+      else {
+        nav.stop();
+        this.store.set({ view: zoomAt(view, Math.exp(-dy * 0.01), [e.x, e.y]) });
+      }
+      return;
+    }
+    nav.stop();
+    // ⇧ with a plain wheel scrolls sideways (a browser that has not already turned it into deltaX).
+    if (sample.shiftKey && dx === 0) this.store.set({ view: panBy(view, -dy, 0) });
+    else this.store.set({ view: panBy(view, -dx, -dy) });
   }
 
   private pinchOf(): { d: number; mid: Point } | null {
@@ -397,9 +437,13 @@ export class ToolController {
       return;
     }
     this.dragStart = null;
-    const hit = this.deviceUnder(p) ?? hitTest(level, world, this.tol(p.type), { roofs: this.store.get().layers.roof });
+    const device = this.deviceUnder(p);
+    const hit = device ?? hitTest(level, world, this.tol(p.type), { roofs: this.store.get().layers.roof });
     if (hit !== null) flipFromPlan(this.store, hit.id);
     this.store.select(hit?.id ?? null);
+    // FLR-T-18.6: a double click on empty space — nothing, or only a room's floor or a slab — zooms in (⌥ out).
+    const empty = device === null && (hit === null || ('kind' in hit && (hit.kind === 'room' || hit.kind === 'slab')));
+    if (this.double(p) && empty) zoomBy(this.store, p.alt ? 0.5 : 2, [p.x, p.y]);
   }
 
   private selectDrag(p: PointerInfo): void {
