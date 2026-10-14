@@ -55,6 +55,7 @@ import { SiteSection } from './three/sun/SiteFields';
 import { FurnitureBody } from '../furniture/Inspector';
 import { StagingSection } from './systems/Staging';
 import { ModeSummary } from './ModeSwitcher';
+import { PlanStyleSection } from './StylePanel';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -998,6 +999,7 @@ function ProjectPanel({ store, model, units, readOnly }: { store: EditorStore; m
         </div>
       </div>
       <ModeSummary store={store} model={model} units={units} />
+      <PlanStyleSection store={store} />
       <Section title="Project">
         <TextField label="Name" value={project.name} disabled={readOnly} onCommit={(v) => {
           if (v !== '') edit('Rename the project', setProperty('$project', '/name', v));

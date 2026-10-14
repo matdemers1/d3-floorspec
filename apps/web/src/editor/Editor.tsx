@@ -31,6 +31,8 @@ import { formatLen, gridStepLabel } from './units';
 import { kindById, type SystemId } from './systems/catalog';
 import { ExportButton } from '../exports/ExportButton';
 import { Views, ViewSwitch } from './three/Views';
+import { PlanStyleMenu } from './StylePanel';
+import { useExportStyle } from './planStyle';
 import { DEVICE_ICONS, ModeStatus, ModeSwitcher, SaveModeDialog, useModeChoices } from './ModeSwitcher';
 import { modesOf, useModes, type RailItem } from './modes';
 import { useThreeState } from './three/mode';
@@ -341,6 +343,7 @@ function TopBar({ store, tools, you }: { store: EditorStore; tools: ToolControll
   const editable = readOnly === null && pending === null && !comparing;
   const proposer = proposals[0] === undefined ? null : proposerOf(proposals[0].createdBy);
   const modeChoices = useModeChoices(store);
+  const exportStyle = useExportStyle(store);
   return (
     <header className="fs-topbar">
       <IconButton label="Back to the project" icon={<ArrowLeft />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}`); }} />
@@ -362,6 +365,7 @@ function TopBar({ store, tools, you }: { store: EditorStore; tools: ToolControll
       <OptionsChip store={store} />
       <span className="fs-spacer" />
       <ViewSwitch store={store} />
+      <PlanStyleMenu store={store} />
       <Tooltip content="Rooms, doors, windows, receptacles and fixtures, live">
         <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<TableIcon />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}/schedules`); }}>
           Schedules
@@ -406,7 +410,7 @@ function TopBar({ store, tools, you }: { store: EditorStore; tools: ToolControll
       <CommentsButton store={store} />
       <Avatar className="fs-topbar__avatar" name={you} size="sm" />
       {project !== null ? <ShareButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} /> : null}
-      {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} optionSets={model?.optionSets} modes={modeChoices} /> : null}
+      {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} optionSets={model?.optionSets} modes={modeChoices} planStyle={exportStyle} /> : null}
       <span className="fs-topbar__rule" />
       <span className="fs-topbar__pin">
         <PinButton store={store} side="top" />

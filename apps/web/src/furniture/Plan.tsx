@@ -9,6 +9,7 @@ import { overlaps } from './placement';
 import { visible } from '../editor/systems/hit';
 import { LIBRARY } from './library';
 import { FIXTURE_CLASS, fixtureParts, SymbolParts } from '../editor/plansymbols';
+import { furnitureVars, type PlanLook } from '../editor/planStyle';
 
 /**
  * Furniture on the plan (FLR-T-8.3, FLR-T-12.27): each FS_furniture element drawn with its plan symbol
@@ -105,7 +106,7 @@ export function symbolSources(projectId: string, sha256: string | null): string[
  * render2d (FLR-T-12.27) — a bed and its pillows, a sofa's back and arms, a counter line — else its
  * box. An image that does not load falls through to the next source, then to the outline.
  */
-export function FurnitureItem({ view, d, symbol, blocked: isBlocked, projectId }: { view: Viewport; d: DeviceView; symbol: string | null; blocked: boolean; projectId: string }) {
+export function FurnitureItem({ view, d, symbol, blocked: isBlocked, projectId, look = null }: { view: Viewport; d: DeviceView; symbol: string | null; blocked: boolean; projectId: string; look?: PlanLook | null }) {
   const sources = symbolSources(projectId, symbol);
   const [failed, setFailed] = useState<{ sha: string | null; count: number }>({ sha: symbol, count: 0 });
   const tried = failed.sha === symbol ? failed.count : 0;
@@ -114,7 +115,7 @@ export function FurnitureItem({ view, d, symbol, blocked: isBlocked, projectId }
   const outline = href === undefined || placed === null ? fixtureParts(d) : null;
   const ring = pts(view, d.footprint);
   return (
-    <g className={isBlocked ? 'fs-furn-item fs-furn-item--blocked' : 'fs-furn-item'} data-furniture={d.id} data-layer={d.collection === 'casework' || d.collection === 'appliances' ? 'casework' : 'furniture'} data-drawn={href !== undefined && placed !== null ? 'symbol' : outline !== null ? 'outline' : 'box'}>
+    <g className={isBlocked ? 'fs-furn-item fs-furn-item--blocked' : 'fs-furn-item'} style={furnitureVars(d, look)} data-furniture={d.id} data-layer={d.collection === 'casework' || d.collection === 'appliances' ? 'casework' : 'furniture'} data-drawn={href !== undefined && placed !== null ? 'symbol' : outline !== null ? 'outline' : 'box'}>
       <polygon className="fs-furn-item__fill" points={ring} />
       {href !== undefined && placed !== null ? (
         <image
@@ -137,7 +138,7 @@ export function FurnitureItem({ view, d, symbol, blocked: isBlocked, projectId }
   );
 }
 
-export function FurnitureLayer({ view, level, model, layers, projectId }: { view: Viewport; level: LevelView; model: EditorModel; layers: Layers; projectId: string }) {
+export function FurnitureLayer({ view, level, model, layers, projectId, look = null }: { view: Viewport; level: LevelView; model: EditorModel; layers: Layers; projectId: string; look?: PlanLook | null }) {
   if (layers.coreOnly) return null;
   // The furniture and the casework are each a layer (FLR-T-8.3, FLR-T-18.3).
   const items = furnitureOn(level).filter((d) => visible(d, layers));
@@ -147,7 +148,7 @@ export function FurnitureLayer({ view, level, model, layers, projectId }: { view
   return (
     <g className="fs-furn-layer" aria-hidden="true">
       {items.map((d) => (
-        <FurnitureItem key={d.id} view={view} d={d} symbol={filesOf(model.document, d.element).symbol?.sha256 ?? null} blocked={warn.has(d.id)} projectId={projectId} />
+        <FurnitureItem key={d.id} view={view} d={d} symbol={filesOf(model.document, d.element).symbol?.sha256 ?? null} blocked={warn.has(d.id)} projectId={projectId} look={look} />
       ))}
       {layers.clearances
         ? level.devices
