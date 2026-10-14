@@ -49,6 +49,22 @@ export const DRAWER_HINTS: Record<Side, string> = { left: '⌘\\', top: '⌘⌥\
 /** The same keys one by one, for <kbd>s. */
 export const DRAWER_KEYS: Record<Side, readonly string[]> = { left: ['⌘', '\\'], top: ['⌘', '⌥', '\\'], right: ['⌘', '⇧', '\\'] };
 
+/** A box on the screen, in client pixels. */
+export interface Box {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+export const within = (box: Box, x: number, y: number): boolean => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+
+/**
+ * Where the pointer is against a drawer, measured rather than heard: on its box, off it, or not yet
+ * known because the drawer is still sliding.
+ */
+export type Measure = 'on' | 'off' | 'moving';
+
 export interface Clock {
   setTimeout(fn: () => void, ms: number): unknown;
   clearTimeout(id: unknown): void;
@@ -71,6 +87,11 @@ export class DrawerMachine {
   private held = false;
   private timer: unknown = null;
   private pending: 'peek' | 'leave' | null = null;
+  /**
+   * Where the pointer is, measured, asked when the 300 ms walk-away runs out (FLR-T-18.17): the
+   * pointer may have reached the drawer without the drawer hearing it (see `measured`).
+   */
+  probe: (() => Measure) | null = null;
 
   constructor(
     private readonly onChange: (state: DrawerState) => void,
@@ -109,12 +130,21 @@ export class DrawerMachine {
     }, ms);
   }
 
-  /** Start the 300 ms walk-away, unless something holds the drawer or the pointer is on it. */
+  /**
+   * Start the 300 ms walk-away, unless something holds the drawer or the pointer is on it. When it
+   * runs out the pointer's place is measured once more: on the drawer, it was never off it (it
+   * opens, if a peek); with the drawer still sliding in, it waits another 300 ms.
+   */
   private leaveSoon(): void {
     if (this.held || this.over) return;
     if (this.current !== 'open' && this.current !== 'peeking') return;
     if (this.pending === 'leave') return;
-    this.after('leave', DRAWER_TIMING.leave, () => { this.go('hidden'); });
+    this.after('leave', DRAWER_TIMING.leave, () => {
+      const at = this.probe?.() ?? 'off';
+      if (at === 'on') this.enter();
+      else if (at === 'moving') this.leaveSoon();
+      else this.go('hidden');
+    });
   }
 
   /** The pointer came into the hot zone. */
@@ -152,6 +182,24 @@ export class DrawerMachine {
     this.over = false;
     if (this.inZone && this.current === 'peeking') return;
     this.leaveSoon();
+  }
+
+  /** The pointer is over the drawer, as far as the drawer has heard. */
+  get hovered(): boolean {
+    return this.over;
+  }
+
+  /**
+   * A pointermove measured against the drawer's box (FLR-T-18.17). The drawer's own pointerenter
+   * and pointerleave are boundary events, and the browser can skip them: content swapped under a
+   * resting pointer, or a drawer sliding in under it during a long frame, leaves its hover state
+   * behind, and the move onto the peek then crosses no boundary. On the box counts as entering;
+   * off it with the pointer over the plan (`surface`) counts as leaving — off it over something
+   * else, a menu or tooltip from the drawer, is left to the drawer's own events.
+   */
+  measured(on: boolean, surface: boolean): void {
+    if (on) this.enter();
+    else if (this.over && surface) this.leave();
   }
 
   /** A field in the drawer took focus or a menu from it opened (true), or that ended (false). */
@@ -390,6 +438,24 @@ export class DrawersStore {
   /** Close every floating drawer nothing holds (a click on the plan). */
   closeFloating(): void {
     for (const side of SIDES) this.machines[side].dismiss();
+  }
+
+  /**
+   * A pointermove at (x, y), measured against each floating drawer's box — before the hot zone, so
+   * a pointer that has reached a peek opens it on leaving the zone (DrawerMachine.measured).
+   */
+  pointerAt(x: number, y: number, boxOf: (side: Side) => Box | null, surface: boolean): void {
+    for (const side of SIDES) {
+      const state = this.state[side];
+      if (state !== 'peeking' && state !== 'open') continue;
+      const box = boxOf(side);
+      if (box !== null) this.machines[side].measured(within(box, x, y), surface);
+    }
+  }
+
+  /** How each drawer measures the pointer when its walk-away runs out (null: it does not). */
+  setProbe(probe: ((side: Side) => Measure) | null): void {
+    for (const side of SIDES) this.machines[side].probe = probe === null ? null : () => probe(side);
   }
 
   /** The pointer is in this hot zone (or none): its machine hears it, the others hear it left. */
