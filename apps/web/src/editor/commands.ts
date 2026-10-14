@@ -13,6 +13,7 @@ import { MODE_COMMANDS } from './modes';
 import { stageRooms } from './systems/Staging';
 import { DRAWER_HINTS, drawersOf, setFullScreen, summonDrawer } from './drawers';
 import { ARRANGE_COMMANDS } from './arrange/commands';
+import { PRECISION_COMMANDS } from './precision/commands';
 import { PLACING_COMMANDS } from '../placing/commands';
 
 /**
@@ -610,6 +611,8 @@ export const COMMANDS: readonly Command[] = [
   ...PLACING_COMMANDS,
   // FLR-T-18.3: the trade modes, ⌥1–⌥7 (read by the editor's key handler, by the key's place).
   ...MODE_COMMANDS,
+  // FLR-T-18.9: the measure tool (⇧M), the snapping, and typing into a temporary dimension.
+  ...PRECISION_COMMANDS,
 ];
 
 /** The level `dir` steps above (1) or below (-1) the current one, by elevation. */

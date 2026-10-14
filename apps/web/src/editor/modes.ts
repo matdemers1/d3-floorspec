@@ -206,7 +206,8 @@ export class ModesStore {
     // A tool the new rail does not offer is put down.
     const rail = this.rail(mode);
     const { tool, draw } = this.editor.get();
-    if (rail !== null && tool !== 'select') {
+    // The measure tool is in every rail (FLR-T-18.9): it changes nothing, so no mode puts it down.
+    if (rail !== null && tool !== 'select' && tool !== 'measure') {
       const offered = rail.some((r) => ('tool' in r && r.tool === tool) || ('device' in r && tool === 'device' && r.device === draw.device));
       if (!offered) {
         if (tools !== undefined) tools.setTool('select');

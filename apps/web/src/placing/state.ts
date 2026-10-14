@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { EditorStore, ToolId } from '../editor/store';
 import type { Point } from '../editor/model';
 import { labelOf } from '../editor/model';
-import { gridStep } from '../editor/units';
+import { gridStepOf, snapSettingsOf } from '../editor/precision/state';
 import { toWorld } from '../editor/viewport';
 import { drawersOf } from '../editor/drawers';
 import { modesOf } from '../editor/modes';
@@ -197,7 +197,9 @@ export function computeGhost(store: EditorStore, entry: Entry, at: Point, tol: n
   const p = placingOf(store).get();
   return ghostOf(level, entry, at, {
     tol,
-    grid: gridStep(store.units),
+    // FLR-T-18.9: the snap menu's grid and toggles.
+    grid: gridStepOf(store),
+    snaps: snapSettingsOf(store),
     rotation: p.rotation,
     turned: p.turned,
     free,

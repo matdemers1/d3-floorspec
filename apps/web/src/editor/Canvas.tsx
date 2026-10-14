@@ -27,6 +27,8 @@ import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
 import { levelPaint, planLook, useCurrentStyle, useDocumentTheme, usePlanStyles, type LevelPaint } from './planStyle';
 import { lookStyle, PlanStyleDefs, StyledRoomLabels, StyledWalls, WallTypeLegend } from './StylePanel';
+import { PrecisionHtml, PrecisionLayer } from './precision/Overlay';
+import { usePrecision } from './precision/state';
 import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
 import { QuickAdd } from '../placing/QuickAdd';
 import { RoomDragGhost, RoomHandles, WandOverlay, WandPrompt } from './rooms/RoomLayer';
@@ -209,6 +211,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               {layers.rooms ? <StyledRoomLabels view={view} level={level} document={model.document} units={units} look={look} /> : null}
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
+              {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={model} />}
               {comparing ? null : <PlacingLayer store={store} view={view} level={level} />}
               {comparing ? null : <RidgePick store={store} view={view} />}
             </>
@@ -216,6 +219,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
         </svg>
       ) : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={model} units={units} /> : null}
+      {view !== null && model !== null && level !== undefined && !comparing ? <PrecisionHtml store={store} view={view} level={level} model={model} units={units} /> : null}
       {/* FLR-T-18.7: the ghost's distances and its sentence, and the quick-add bar at the pointer. */}
       {view !== null && level !== undefined && !comparing ? <PlacingLabels store={store} view={view} units={units} /> : null}
       {view !== null && level !== undefined && !comparing ? <QuickAdd store={store} view={view} level={level} /> : null}
@@ -834,8 +838,11 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
 
 function SnapMarker({ view, snap }: { view: Viewport; snap: { point: Point; kind: string } }) {
   const p = S(view, snap.point);
-  if (snap.kind === 'junction') return <circle className="fs-draw__snap" cx={p[0]} cy={p[1]} r={7} />;
-  if (snap.kind === 'wall') return <path className="fs-draw__snap" d={`M${String(p[0] - 7)},${String(p[1])}L${String(p[0])},${String(p[1] - 7)}L${String(p[0] + 7)},${String(p[1])}L${String(p[0])},${String(p[1] + 7)}Z`} />;
+  if (snap.kind === 'junction' || snap.kind === 'ghost') return <circle className="fs-draw__snap" cx={p[0]} cy={p[1]} r={7} />;
+  // FLR-T-18.9: a midpoint is a triangle, an item's point a square — as SketchUp marks its inferences.
+  if (snap.kind === 'midpoint') return <path className="fs-draw__snap" d={`M${String(p[0])},${String(p[1] - 8)}L${String(p[0] + 7)},${String(p[1] + 5)}L${String(p[0] - 7)},${String(p[1] + 5)}Z`} />;
+  if (snap.kind === 'item') return <rect className="fs-draw__snap" x={p[0] - 6} y={p[1] - 6} width={12} height={12} />;
+  if (snap.kind === 'wall' || snap.kind === 'face') return <path className="fs-draw__snap" d={`M${String(p[0] - 7)},${String(p[1])}L${String(p[0])},${String(p[1] - 7)}L${String(p[0] + 7)},${String(p[1])}L${String(p[0])},${String(p[1] + 7)}Z`} />;
   return (
     <g className="fs-draw__cross">
       <line x1={p[0] - 8} y1={p[1]} x2={p[0] + 8} y2={p[1]} />
@@ -851,6 +858,8 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
   const selection = useEditor(store, (s) => s.selection);
   const hover = useEditor(store, (s) => s.hover);
   const tool = useEditor(store, (s) => s.tool);
+  // FLR-T-18.9: ⌥ held shows distances where the hover's tooltip would be.
+  const alt = usePrecision(store, (p) => p.alt);
   const out: ReactNode[] = [];
 
   if (isChainDraft(draft) && draft.cursor !== null && draft.chain.length > 0) {
@@ -978,7 +987,7 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
       </div>,
     );
   }
-  if (hover !== null && hover !== selection && tool === 'select' && draft === null) {
+  if (hover !== null && hover !== selection && tool === 'select' && draft === null && !alt) {
     const anchor = hoverAnchor(level, hover);
     if (anchor !== null) {
       const p = S(view, anchor);

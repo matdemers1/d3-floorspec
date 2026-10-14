@@ -64,6 +64,9 @@ import { defineConfig, devices } from '@playwright/test';
  *                   Construction's Technical and wall-type legend, details, exports only, a still, the render, axe.
  *   - `camera`    — FLR-T-13.10: the Camera panel — a saved view gone to, its lens and lens shift, a preset
  *                   lens, two-point off, exposure, a view saved, renamed and deleted as Ops — and a shot list.
+ *   - `precision` — FLR-T-18.9: on the Courtyard House, a door's temporary dimension typed (Tab: face, centre,
+ *                   other face) as one moveOpening and one undo, the inspector's Position, the snap menu,
+ *                   a measure chain closed on the kitchen's work triangle, ⌥ distances; axe in both themes.
  *
  * Run with:
  *
@@ -71,7 +74,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_styles_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; styles, +37).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -160,6 +163,8 @@ const SUITES: Suite[] = [
   { name: 'modes', spec: 'modes.spec.ts', port: PORT + 26, database: databaseFor('modes'), setupToken: true },
   // FLR-T-18.7: adding things — a sofa and a window dragged in, click-to-place, R, quick add, keyboard, touch, axe.
   { name: 'placing', spec: 'placing.spec.ts', port: PORT + 33, database: databaseFor('placing'), setupToken: true },
+  // FLR-T-18.9: precision — a temporary dimension typed, Tab's references, the snap menu, a measure chain, ⌥ distances, axe.
+  { name: 'precision', spec: 'precision.spec.ts', port: PORT + 34, database: databaseFor('precision'), setupToken: true },
   // FLR-T-18.5: plan styles — Colour by default, the menu, Construction's Technical and legend, details, a still, the render, axe.
   { name: 'styles', spec: 'styles.spec.ts', port: PORT + 37, database: databaseFor('styles'), setupToken: true },
 ];
