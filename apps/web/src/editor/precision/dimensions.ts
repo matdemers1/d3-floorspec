@@ -88,9 +88,11 @@ function rayOnLine(o: Point, d: Point, q: Point, w: Point): number | null {
  * mitred or filled corner never confuses which face is near. Walls along the ray are passed by;
  * `parallelTo` keeps only walls parallel to that direction (a wall's neighbours across).
  */
-export function castWalls(level: LevelView, o: Point, d: Point, exclude: ReadonlySet<string>, parallelTo?: Point): Hit | null {
+export function castWalls(level: LevelView, o: Point, d: Point, exclude: ReadonlySet<string>, parallelTo?: Point, separators = false): Hit | null {
   let best: Hit | null = null;
-  for (const w of level.walls) {
+  // A room separator (Core 6.2) bounds a room as a wall does, with no thickness.
+  const seps = separators ? level.separators.filter((x) => x.line.length <= 2).map((x) => ({ id: x.id, a: x.a, b: x.b, line: x.line, left: 0, right: 0, thickness: 0 })) : [];
+  for (const w of [...level.walls, ...seps]) {
     if (exclude.has(w.id) || w.line.length > 2) continue;
     const L = dist(w.a, w.b);
     if (L === 0) continue;
@@ -261,14 +263,14 @@ function roomDims(model: EditorModel, level: LevelView, id: string, ref: DimRef)
   const out: TempDim[] = [];
   // Drawn outside the room as a dimension string — past its north wall, and its east — so its
   // numbers never sit on the furniture in the middle of it.
-  const north = castWalls(level, c, [0, 1], new Set());
-  const east = castWalls(level, c, [1, 0], new Set());
+  const north = castWalls(level, c, [0, 1], new Set(), undefined, true);
+  const east = castWalls(level, c, [1, 0], new Set(), undefined, true);
   for (const [axis, plus, minus, label] of [
     ['x', [1, 0], [-1, 0], 'Width'],
     ['y', [0, 1], [0, -1], 'Depth'],
   ] as const) {
-    const hp = castWalls(level, c, plus, new Set());
-    const hm = castWalls(level, c, minus, new Set());
+    const hp = castWalls(level, c, plus, new Set(), undefined, true);
+    const hm = castWalls(level, c, minus, new Set(), undefined, true);
     if (hp === null || hm === null) continue;
     const vp = pick(hp, ref);
     const vm = pick(hm, ref);

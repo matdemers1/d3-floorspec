@@ -201,6 +201,9 @@ describe('temporary dimensions on the Courtyard House', () => {
   });
 
   it('a room: its clear width and depth; typed, its east wall moves', () => {
+    // The kitchen opens to the great room across a separator: its depth stops there, not at the next wall.
+    const kitchen = temporaryDimensions(model, L1, 'R8', 'face').find((d) => d.key === 'room:y')!;
+    expect(kitchen.value).toBeLessThan(25 * FT);
     // The guest bedroom's west side is a bay (an arc wall): its depth only.
     expect(temporaryDimensions(model, L1, 'R1', 'face').map((d) => d.label)).toEqual(['Depth']);
     // Some walls cannot move without breaking a corner the server refuses (FS-INV-110): the first that can.
