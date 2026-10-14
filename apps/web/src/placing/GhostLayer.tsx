@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { LevelView, Point, Ring } from '../editor/model';
 import './placing.css';
 import type { EditorStore, Viewport } from '../editor/store';
@@ -98,6 +99,22 @@ function Body({ view, ghost, entry, level }: { view: Viewport; ghost: Ghost; ent
 /** The ghost in the plan's <svg>: its envelopes, its body, its outline and its guides. */
 export function PlacingLayer({ store, view, level }: { store: EditorStore; view: Viewport; level: LevelView }) {
   const shown = useGhost(store);
+  // For the end-to-end suite, as the 3D view's __floorspec3d: where a plan point is on the screen,
+  // and a room's outline on this level, so a test can aim a drag at a wall.
+  useEffect(() => {
+    const hook = {
+      screenPoint: (x: number, y: number): { x: number; y: number } | null => {
+        const svg = document.querySelector('.fs-canvas__svg');
+        const v = store.get().view;
+        if (svg === null || v === null) return null;
+        const r = svg.getBoundingClientRect();
+        const [sx, sy] = toScreen(v, [x, y]);
+        return { x: r.left + sx, y: r.top + sy };
+      },
+      room: (id: string): Ring | null => store.levelView?.rooms.find((r) => r.id === id)?.outer ?? null,
+    };
+    (window as unknown as { __floorspecPlacing?: typeof hook }).__floorspecPlacing = hook;
+  }, [store, level.id]);
   if (shown === null) return null;
   const { ghost, entry } = shown;
   return (
@@ -151,6 +168,12 @@ export function PlacingLabels({ store, view, units }: { store: EditorStore; view
               <kbd>[</kbd>
               <kbd>]</kbd>
               <span className="fs-ghost-hint__faint">rotate</span>
+            </>
+          ) : null}
+          {tool === 'place' ? (
+            <>
+              <kbd>Esc</kbd>
+              <span className="fs-ghost-hint__faint">done</span>
             </>
           ) : null}
         </div>

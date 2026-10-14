@@ -176,7 +176,11 @@ export function LibraryPanel({ store }: { store: EditorStore }) {
   const drag = useCardDrag(store);
   const search = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (focusSearch > 0) search.current?.focus();
+    // Focused with what it holds selected, so typing searches afresh.
+    if (focusSearch > 0) {
+      search.current?.focus();
+      search.current?.select();
+    }
   }, [focusSearch]);
   const document = model?.document;
   const all = useMemo(() => entriesFor(document), [document]);

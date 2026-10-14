@@ -327,7 +327,8 @@ export function dragMove(store: EditorStore, x: number, y: number, touch: boolea
     if (p.get().ghost !== null) p.set({ ghost: null });
     return;
   }
-  store.set({ cursor: at });
+  // The plan under a dragged card is not being pointed at: no hover there.
+  store.set({ cursor: at, hover: null });
   moveGhost(store, at, (touch ? 22 : 8) / view.s, false);
 }
 

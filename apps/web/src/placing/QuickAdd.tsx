@@ -76,8 +76,9 @@ export function QuickAdd({ store, view, level }: { store: EditorStore; view: Vie
   };
   const place = (entry: Entry | undefined, repeat: boolean) => {
     if (entry === undefined) return;
-    window.document.querySelector<HTMLElement>('.fs-editor')?.focus({ preventScroll: true });
+    // Placed first: the focus leaving the bar closes it.
     void quickPlace(store, entry, repeat);
+    window.document.querySelector<HTMLElement>('.fs-editor')?.focus({ preventScroll: true });
   };
   return (
     <div className="fs-quick" style={{ left, top }} role="dialog" aria-label="Quick add" data-testid="quick-add">

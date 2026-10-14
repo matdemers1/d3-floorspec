@@ -428,7 +428,10 @@ function opening(level: LevelView, entry: Entry, p: Point, o: GhostOptions): Gho
   }
   const room = roomOf(level, add(scale(add(p0, p1), 0.5), scale(n, (side === 'left' ? 1 : -1) * (wall.thickness / 2 + 100 * MM))));
   const roomName = room === undefined ? null : (o.roomName?.(room.id) ?? room.name);
-  const label = `On ${o.wallName?.(wall.id) ?? wall.id}${roomName === null ? '' : ` · ${roomName}`}${snap.centered ? ' · centred' : ''}`;
+  const label = `In ${o.wallName?.(wall.id) ?? wall.id}${roomName === null ? '' : ` · ${roomName}`}${snap.centered ? ' · centred' : ''}`;
+  // Another opening in the way (Core 7.3: openings in one wall do not overlap).
+  const clash = level.openings.find((x) => x.wall === wall.id && x.offset < snap.offset + width && snap.offset < x.offset + x.width);
+  const problem = !snap.fits ? 'That wall is shorter than the opening. Pick a narrower type, or a longer wall.' : clash !== undefined ? `It would overlap ${o.wallName?.(clash.id) ?? clash.id}: slide it along the wall.` : undefined;
   const g: Ghost = {
     at: p,
     origin: p0,
@@ -440,8 +443,8 @@ function opening(level: LevelView, entry: Entry, p: Point, o: GhostOptions): Gho
     guides: snap.centered && straight ? [[add(wall.a, scale(t, L / 2)), add(add(wall.a, scale(t, L / 2)), scale(n, (side === 'left' ? 1 : -1) * 600 * MM))]] : [],
     gaps,
     label,
-    blocked: !snap.fits,
-    ...(snap.fits ? {} : { problem: 'That wall is shorter than the opening. Pick a narrower type, or a longer wall.' }),
+    blocked: problem !== undefined,
+    ...(problem === undefined ? {} : { problem }),
   };
   return g;
 }

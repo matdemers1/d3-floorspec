@@ -13,12 +13,11 @@
   flex: 1 1 auto;
   min-height: 0;
 }
-.fs-left__tabs > [role='tablist'] {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: var(--space-6) var(--space-8) 0;
-  background: var(--color-surface);
+.fs-left__tabs [role='tablist'] {
+  margin: var(--space-8) var(--space-8) 0;
+}
+.fs-left__tabs [role='tabpanel'] {
+  margin-top: var(--space-4);
 }
 
 /* ─── The library ────────────────────────────────────────────────────────────────────────────── */
@@ -455,4 +454,27 @@
 }
 .fs-quick__foot span {
   margin-inline-end: var(--space-6);
+}
+/* The chosen tab reads in the foreground colour: the accent on the glide's muted accent is too faint in the dark theme. */
+.fs-left__tabs [role='tab'][aria-selected='true'] {
+  color: var(--color-fg);
+  font-weight: var(--weight-semibold);
+}
+
+/* ─── The inspector while placing ───────────────────────────────────────────────────────────── */
+
+.fs-place__thumb .fs-lib-card__img {
+  max-inline-size: 28px;
+  max-block-size: 28px;
+}
+.fs-place__where {
+  margin: 0 0 var(--space-12);
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+}
+.fs-place__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-bottom: var(--space-16);
 }

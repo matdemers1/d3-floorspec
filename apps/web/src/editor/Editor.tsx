@@ -305,14 +305,11 @@ function ToolHint({ store }: { store: EditorStore }) {
         <span>Point at a wall, a floor or a ceiling</span> <span className="fs-hint__faint">· type an offset</span> <kbd>Enter</kbd>
       </>
     ),
-    place: (
-      <>
-        <span>Click to place, again and again</span> <kbd>R</kbd> <span className="fs-hint__faint">turn</span> <kbd>Enter</kbd> <span className="fs-hint__faint">place</span> <kbd>Esc</kbd>{' '}
-        <span className="fs-hint__faint">done</span>
-      </>
-    ),
+    // FLR-T-18.7: the place tool's keys are in the hint by its ghost (placing/GhostLayer.tsx).
+    place: null,
   };
   const hint = hints[tool];
+  if (hint === null) return null;
   if (hint === undefined) {
     return (
       <div className="fs-hint fs-hint--touch" aria-hidden="true">
