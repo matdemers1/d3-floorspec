@@ -1,0 +1,10 @@
+{
+  "description": "Kitchen window options A and B as Core 0.3 design options (Core 19), the window string measuring A's window O1: FS_annotation is evaluated in each checked design, so in B's design, without O1, the string is not resolved, reported with `design` (Core 19.5.2), and so is the note about O1; A's, the primary, derives its lengths.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.1",
+    "FS-ANNO-3.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

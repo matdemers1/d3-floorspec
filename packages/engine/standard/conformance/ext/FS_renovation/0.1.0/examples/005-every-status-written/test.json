@@ -1,0 +1,7 @@
+{
+  "description": "Every element that may have a status says \"existing\" when it is: the same remodel, the same derived values. An absent status and \"existing\" are one status.",
+  "covers": [
+    "FS-RENO-1.3.2",
+    "FS-RENO-5.1.1"
+  ]
+}

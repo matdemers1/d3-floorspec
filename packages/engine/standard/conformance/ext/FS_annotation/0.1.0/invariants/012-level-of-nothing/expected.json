@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-ANNO-INV-002",
+      "severity": "error",
+      "elements": ["DM1"]
+    }
+  ]
+}

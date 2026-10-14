@@ -1,0 +1,10 @@
+{
+  "description": "An island as a Core 0.3 design option (Core 19): option A, the primary, has none, and B has the new island X2, whose status is in `elements`. In the primary design X2 is not in the view, and its member of `elements` names nothing there, and is ignored: valid, and X2 is in no status.",
+  "covers": [
+    "FS-RENO-1.2.1",
+    "FS-RENO-1.2.4",
+    "FS-RENO-1.3.4",
+    "FS-RENO-5.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "A second level L2, and the overall string drawn on it: its anchors are walls and a junction of L1, another level, so it is not resolved.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.1",
+    "FS-ANNO-6.1.1"
+  ]
+}

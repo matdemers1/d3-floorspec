@@ -1,0 +1,6 @@
+{
+  "description": "X1's status in `elements` is \"removed\".",
+  "covers": [
+    "FS-RENO-1.3.1"
+  ]
+}

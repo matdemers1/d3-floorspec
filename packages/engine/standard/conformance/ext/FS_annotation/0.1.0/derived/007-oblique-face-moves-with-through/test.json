@@ -1,0 +1,6 @@
+{
+  "description": "The Kitchen's north-west corner cut off by a wall W11, 2' east for every 3' north, and two strings along [1, 0] from J9, at its foot, to its location line: drawn 6\" above J9 the line is 4\" east of it, and drawn 1' 6\" above, 1' east. Where a string crosses an oblique wall's line depends on where it is drawn; where it measures a junction does not.",
+  "covers": [
+    "FS-ANNO-6.1.1"
+  ]
+}

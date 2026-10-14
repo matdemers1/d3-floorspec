@@ -1,0 +1,7 @@
+{
+  "description": "Every form the schema allows at its bounds - a string of 64 anchors, the last a point; a string of two anchors, a point and a location line; a name of 200 characters; a note of 500 characters with line feeds and no leader, and a note without `about`; `extras` on a string and a note. Valid.",
+  "covers": [
+    "FS-ANNO-1.3.1",
+    "FS-ANNO-6.1.1"
+  ]
+}

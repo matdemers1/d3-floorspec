@@ -1,0 +1,7 @@
+{
+  "description": "FS_views's data breaks FS_views's own rules - the island view looks at its own eye, and the cutaway is named \"Hero exterior\" - but this implementation does not implement FS_views: it reports nothing of FS_views, and reads its views as data. Valid.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.3.2"
+  ]
+}

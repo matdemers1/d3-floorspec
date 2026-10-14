@@ -1,0 +1,7 @@
+{
+  "description": "The house read with every official entry known but FS_furniture's - whose kinds ask for a model and a symbol the remodel's casework does not carry - by an implementation of FS_renovation alone: only FS_renovation is evaluated and derived.",
+  "covers": [
+    "FS-RENO-1.2.1",
+    "FS-RENO-1.2.4"
+  ]
+}

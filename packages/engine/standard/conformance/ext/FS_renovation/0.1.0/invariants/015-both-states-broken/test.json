@@ -1,0 +1,8 @@
+{
+  "description": "R3 stays and R4 stands today: each state breaks Core, and each is reported.",
+  "covers": [
+    "FS-RENO-2.4.1",
+    "FS-RENO-2.4.2",
+    "FS-RENO-1.2.3"
+  ]
+}

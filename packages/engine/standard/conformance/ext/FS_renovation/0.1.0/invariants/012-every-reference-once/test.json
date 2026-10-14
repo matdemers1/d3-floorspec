@@ -1,0 +1,7 @@
+{
+  "description": "Three references across states at once: each reported once, naming both elements.",
+  "covers": [
+    "FS-RENO-1.2.3",
+    "FS-RENO-2.3.1"
+  ]
+}

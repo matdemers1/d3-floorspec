@@ -1,0 +1,6 @@
+{
+  "description": "The Kitchen's north-west corner cut off by a wall W11, 2' east for every 3' north, with a 2' window O2 in it, and a string along [1, -1] across the corner, through the middle of W11, from its outside face to O2's centre, its inside face and J3: every position irrational - sqrt(13) from the wall, sqrt(2) from the direction - and each length rounded once, as an independent computation in 60-digit decimals finds.",
+  "covers": [
+    "FS-ANNO-6.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The overall string's junction anchor names W8, a wall: an anchor names a feature of its own kind.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.1"
+  ]
+}

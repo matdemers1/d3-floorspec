@@ -1,0 +1,8 @@
+{
+  "description": "unsetProperty of $document /extensions/FS_annotation/dimensions/DM3 removes the Kitchen's clear width. It commits.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

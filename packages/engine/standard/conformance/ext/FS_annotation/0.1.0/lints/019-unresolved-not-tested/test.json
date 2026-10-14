@@ -1,0 +1,7 @@
+{
+  "description": "The overall string measures to J9, which the house does not have, and to J6 twice: it is not resolved, so it has no positions to compare - FS-ANNO-LINT-001 alone.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.3.1"
+  ]
+}

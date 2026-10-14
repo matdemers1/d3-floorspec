@@ -1,0 +1,6 @@
+{
+  "description": "A string along [1, 2] through four points a base unit apart east-west, each 1/sqrt(5) of a unit from the next along it: each segment is 0, and the total, 3/sqrt(5), is 1 - measured, not added up.",
+  "covers": [
+    "FS-ANNO-6.1.1"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "The house without FS_lighting and FS_views - neither their declarations nor their data: FS_annotation requires no other extension, so the annotation is valid as it is, and measures the same.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.3.1",
+    "FS-ANNO-1.3.2",
+    "FS-ANNO-6.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The overall string measures to J6 twice in a row: a segment of no length.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.3.1"
+  ]
+}

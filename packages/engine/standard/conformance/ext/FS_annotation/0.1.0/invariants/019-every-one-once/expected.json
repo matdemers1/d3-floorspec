@@ -1,0 +1,25 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-ANNO-INV-001",
+      "severity": "error",
+      "elements": ["DM3"]
+    },
+    {
+      "code": "FS-ANNO-INV-001",
+      "severity": "error",
+      "elements": ["X1"]
+    },
+    {
+      "code": "FS-ANNO-INV-002",
+      "severity": "error",
+      "elements": ["NT1"]
+    },
+    {
+      "code": "FS-ANNO-INV-003",
+      "severity": "error",
+      "elements": ["DM4"]
+    }
+  ]
+}

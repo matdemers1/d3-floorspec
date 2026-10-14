@@ -1,0 +1,6 @@
+{
+  "description": "R4's data has a phase as well as its status.",
+  "covers": [
+    "FS-RENO-1.3.2"
+  ]
+}

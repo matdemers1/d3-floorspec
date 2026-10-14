@@ -1,0 +1,7 @@
+{
+  "description": "The same arc wall W3, measured to its location line by a string along its chord's normal: an arc wall's lines are curves, whichever is named.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.2"
+  ]
+}

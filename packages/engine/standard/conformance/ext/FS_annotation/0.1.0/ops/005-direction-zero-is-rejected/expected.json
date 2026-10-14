@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-ANNO-INV-003",
+      "severity": "error",
+      "elements": ["DM3"]
+    }
+  ]
+}

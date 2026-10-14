@@ -1,0 +1,7 @@
+{
+  "description": "FS_annotation used with empty top-level data: valid, and no dimension string or note derived.",
+  "covers": [
+    "FS-ANNO-1.3.1",
+    "FS-ANNO-6.1.1"
+  ]
+}

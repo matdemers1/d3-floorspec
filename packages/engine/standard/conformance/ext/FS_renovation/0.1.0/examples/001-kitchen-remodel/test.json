@@ -1,0 +1,14 @@
+{
+  "description": "The kitchen remodel, read by an implementation of FS_renovation that knows it: the wall between the Kitchen and the Utility room is to come down with its door, the Utility room and an old counter; a new wall and door make a Laundry of the Utility room's east half, a new window lights the Kitchen's new floor, an island is new, and so is a deck. It is valid - the combined document, and each state's view - reports nothing, and derives the IDs of each status, the quantities of each - walls, wall length, openings, rooms, slabs and slab area, extension elements - and the rooms of each state with their net areas: the Kitchen 12' x 12' as it stands and with the Utility room's west half when the work is done.",
+  "covers": [
+    "FS-RENO-1.2.1",
+    "FS-RENO-1.2.3",
+    "FS-RENO-1.2.4",
+    "FS-RENO-1.3.1",
+    "FS-RENO-1.3.2",
+    "FS-RENO-2.3.1",
+    "FS-RENO-2.4.1",
+    "FS-RENO-2.4.2",
+    "FS-RENO-5.1.1"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_annotation/dimensions/DM1/through",
+      "value": [0, -2316288]
+    }
+  ]
+}

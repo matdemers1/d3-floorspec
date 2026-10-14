@@ -1,0 +1,7 @@
+{
+  "description": "removeElement X1 alone: its member of `elements` names nothing, and is ignored (1.3). It commits.",
+  "covers": [
+    "FS-RENO-1.3.4",
+    "FS-OPS-2.3.1"
+  ]
+}

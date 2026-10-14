@@ -1,0 +1,9 @@
+{
+  "description": "The remodel declaring Core \"0.3\", a draft FS_renovation 0.1.0 lists (1.1): FS_renovation is evaluated, reports nothing, and derives exactly what it derives for the house declaring \"0.2\".",
+  "covers": [
+    "FS-RENO-1.2.1",
+    "FS-RENO-1.2.3",
+    "FS-RENO-1.2.4",
+    "FS-RENO-5.1.1"
+  ]
+}

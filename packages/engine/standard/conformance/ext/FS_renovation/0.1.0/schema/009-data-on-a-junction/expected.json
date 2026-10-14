@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-RENO-SCH-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

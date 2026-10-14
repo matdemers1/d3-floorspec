@@ -1,0 +1,22 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "45a090f5a7cf3912826249348737f5246fbf11476ce3db33b748f1b9cceedef3",
+  "derived": {
+    "walls": {},
+    "junctionFills": {},
+    "rooms": {},
+    "unanchored": [],
+    "openings": {},
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {},
+    "extensions": {}
+  }
+}

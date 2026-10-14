@@ -1,0 +1,8 @@
+{
+  "description": "The house read with FS_lighting's and FS_views's entries known as well as FS_annotation's, by an implementation of FS_annotation alone: FS_lighting and FS_views are checked only as Core 12 checks a known extension, and FS_annotation is evaluated and derived exactly as with its own entry alone.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.2.4",
+    "FS-ANNO-6.1.1"
+  ]
+}

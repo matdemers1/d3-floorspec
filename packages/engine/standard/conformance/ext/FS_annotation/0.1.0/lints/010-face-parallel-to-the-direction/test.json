@@ -1,0 +1,8 @@
+{
+  "description": "The window's string measures east-west to the inside face of the north wall W2, which runs east-west too: the face never crosses the dimension line.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.2",
+    "FS-ANNO-6.1.1"
+  ]
+}

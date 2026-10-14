@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "O2",
+      "path": "/extensions/FS_renovation/status",
+      "value": "demolish"
+    }
+  ]
+}

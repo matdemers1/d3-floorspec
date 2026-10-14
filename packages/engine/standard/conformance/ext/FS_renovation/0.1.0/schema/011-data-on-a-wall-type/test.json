@@ -1,0 +1,6 @@
+{
+  "description": "The wall type INT carries a status: a type is a library entry, not part of the house.",
+  "covers": [
+    "FS-RENO-1.3.3"
+  ]
+}

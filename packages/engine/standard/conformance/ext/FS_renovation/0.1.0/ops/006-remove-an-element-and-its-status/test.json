@@ -1,0 +1,8 @@
+{
+  "description": "removeElement X1 and unsetProperty of its member of `elements`, in one batch, as 6.1.2 says: it commits, and X1 is in no status.",
+  "covers": [
+    "FS-RENO-1.3.4",
+    "FS-RENO-6.1.2",
+    "FS-OPS-2.3.1"
+  ]
+}

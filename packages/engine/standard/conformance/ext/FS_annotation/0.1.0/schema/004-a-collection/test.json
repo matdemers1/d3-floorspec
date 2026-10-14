@@ -1,0 +1,7 @@
+{
+  "description": "A collection `labels` in FS_annotation's data: its registry entry names no kind, so Core 12.4.1 reports it (FS-INV-604), and FS_annotation is not evaluated.",
+  "covers": [
+    "FS-ANNO-1.2.2",
+    "FS-CORE-12.4.1"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "The house declaring FS_annotation with no data of it yet: setProperty of $document /extensions/FS_annotation/notes/NT1 creates FS_annotation's data, and its `notes`, on the way (Ops 2.3) - the window's note. It commits, valid under FS_annotation.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.3.1",
+    "FS-ANNO-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

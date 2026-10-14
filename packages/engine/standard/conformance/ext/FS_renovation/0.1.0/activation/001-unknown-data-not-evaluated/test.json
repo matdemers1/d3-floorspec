@@ -1,0 +1,6 @@
+{
+  "description": "W8's FS_renovation data does not match the schema, but no extension is known: nothing of it is evaluated, and the document is valid.",
+  "covers": [
+    "FS-RENO-1.2.1"
+  ]
+}

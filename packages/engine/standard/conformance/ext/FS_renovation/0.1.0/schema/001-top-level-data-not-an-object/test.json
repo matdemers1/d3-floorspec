@@ -1,0 +1,6 @@
+{
+  "description": "FS_renovation's top-level data is an array: Core allows any JSON there, FS_renovation's schema does not.",
+  "covers": [
+    "FS-RENO-1.3.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A Core invariant breaks - the porch light's switch 13' along the 12' wall W2, FS-INV-501 - and so does FS_annotation's schema: Core's error is reported, and FS_annotation is not evaluated.",
+  "covers": [
+    "FS-ANNO-1.2.2"
+  ]
+}

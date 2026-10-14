@@ -2,6 +2,24 @@
 // The official extensions' registry entries (registry/<NAME>/extension.json), as data.
 export const OFFICIAL_ENTRIES = [
   {
+    "name": "FS_annotation",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_annotation/0.1.0/annotation.schema.json",
+    "title": "Annotation: dimension strings and notes",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
     "name": "FS_electrical",
     "version": "0.1.0",
     "status": "releaseCandidate",
@@ -245,6 +263,24 @@ export const OFFICIAL_ENTRIES = [
     ]
   },
   {
+    "name": "FS_renovation",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_renovation/0.1.0/renovation.schema.json",
+    "title": "Renovation: existing, demolish and new",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
     "name": "FS_structural",
     "version": "0.1.0",
     "status": "draft",
@@ -284,6 +320,226 @@ export const OFFICIAL_ENTRIES = [
 
 // Each one's schema, by name: what an editor reads to know a kind's members, their types and defaults.
 export const OFFICIAL_SCHEMAS = {
+  "FS_annotation": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_annotation/0.1.0/annotation.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_annotation 0.1.0, registry/FS_annotation/spec.md. Applied to the extension's top-level data, extensions.FS_annotation, by a validator that implements FS_annotation and knows it (spec.md 1.2). FS_annotation adds no kind of element and requires no other extension: its data is the house's drawing annotation (dimensions and notes, records in the document's one space of IDs). What an ID names, a level that does not exist and a direction of [0, 0] are checked by the invariants (spec.md 1.3 and 2.1); anchors that name nothing, or cannot be measured, by the lints (spec.md 2.2 and 2.3).",
+    "title": "FS_annotation 0.1.0",
+    "description": "Drawing annotation of a house: dimension strings associated with the junctions, wall faces and openings they measure, and notes with leaders, that every exporter and agent reads.",
+    "type": "object",
+    "properties": {
+      "dimensions": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "#/$defs/id"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/dimension"
+        },
+        "description": "2.1: the dimension strings: an ID -> record map; the IDs share the document's one space of IDs."
+      },
+      "notes": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "#/$defs/id"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/note"
+        },
+        "description": "3.1: the notes: an ID -> record map; the IDs share the document's one space of IDs."
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+        "description": "Core 3.1.1: an ID."
+      },
+      "length": {
+        "description": "Core 2.1: a length, an integer number of base units of 1/1280 mm.",
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+      },
+      "point": {
+        "description": "1.4: a point of the plan, [x, y]: plan coordinates (Core 2.3), each a length.",
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/length"
+        },
+        "minItems": 2,
+        "maxItems": 2
+      },
+      "dimension": {
+        "title": "Dimension string",
+        "description": "2.1: a dimension string.",
+        "type": "object",
+        "required": [
+          "level",
+          "direction",
+          "through",
+          "anchors"
+        ],
+        "properties": {
+          "level": {
+            "description": "1.3: the level it is drawn on (FS-ANNO-1.3.3: a level of the document).",
+            "$ref": "#/$defs/id"
+          },
+          "direction": {
+            "description": "2.1: the direction its lengths are measured along, [dx, dy], two lengths (FS-ANNO-2.1.1: never [0, 0]).",
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/length"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "through": {
+            "description": "2.1: a point its dimension line passes through: where it is drawn.",
+            "$ref": "#/$defs/point"
+          },
+          "anchors": {
+            "description": "2.2: the features it measures between, in the order it is drawn.",
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/anchor"
+            },
+            "minItems": 2,
+            "maxItems": 64
+          },
+          "name": {
+            "description": "What it is called, 1-200 characters: \"Overall, south\".",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "extras": {
+            "description": "As Core 1.7: data no specification defines.",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "anchor": {
+        "title": "Anchor",
+        "description": "2.2: one feature a dimension string measures from or to: exactly one of a junction, a wall's line, an opening's centre and a point.",
+        "oneOf": [
+          {
+            "$ref": "#/$defs/junctionAnchor"
+          },
+          {
+            "$ref": "#/$defs/wallAnchor"
+          },
+          {
+            "$ref": "#/$defs/openingAnchor"
+          },
+          {
+            "$ref": "#/$defs/pointAnchor"
+          }
+        ]
+      },
+      "junctionAnchor": {
+        "description": "2.2: a junction's position.",
+        "type": "object",
+        "required": [
+          "junction"
+        ],
+        "properties": {
+          "junction": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "additionalProperties": false
+      },
+      "wallAnchor": {
+        "description": "2.2: a straight wall's left or right face line, or its location line (Core 5.4, 5.5).",
+        "type": "object",
+        "required": [
+          "wall",
+          "face"
+        ],
+        "properties": {
+          "wall": {
+            "$ref": "#/$defs/id"
+          },
+          "face": {
+            "enum": [
+              "left",
+              "right",
+              "location"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "openingAnchor": {
+        "description": "2.2: an opening's centre: the midpoint of its start and end points (Core 7.4, 21.6).",
+        "type": "object",
+        "required": [
+          "opening"
+        ],
+        "properties": {
+          "opening": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "additionalProperties": false
+      },
+      "pointAnchor": {
+        "description": "2.2: a point of the plan, associated with nothing.",
+        "type": "object",
+        "required": [
+          "point"
+        ],
+        "properties": {
+          "point": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "additionalProperties": false
+      },
+      "note": {
+        "title": "Note",
+        "description": "3.1: a note.",
+        "type": "object",
+        "required": [
+          "level",
+          "text",
+          "at"
+        ],
+        "properties": {
+          "level": {
+            "description": "1.3: the level it is drawn on (FS-ANNO-1.3.3: a level of the document).",
+            "$ref": "#/$defs/id"
+          },
+          "text": {
+            "description": "3.1: what it says, 1-500 characters; a line feed starts a new line.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "at": {
+            "description": "3.1: where its text is drawn: the start of the baseline of its first line.",
+            "$ref": "#/$defs/point"
+          },
+          "leader": {
+            "description": "3.1: the point its leader's arrow points at; absent, no leader.",
+            "$ref": "#/$defs/point"
+          },
+          "about": {
+            "description": "3.1: what it is about: an element, an extension element, a program item, a scene, a view or a dimension string (FS-ANNO-3.1.1).",
+            "$ref": "#/$defs/id"
+          },
+          "extras": {
+            "description": "As Core 1.7: data no specification defines.",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
   "FS_electrical": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://d3cloud.io/floorspec/schema/ext/FS_electrical/0.1.0/electrical.schema.json",
@@ -2653,6 +2909,82 @@ export const OFFICIAL_SCHEMAS = {
           "extras": {
             "description": "As Core 1.7: data no specification defines.",
             "type": "object"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "FS_renovation": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_renovation/0.1.0/renovation.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007, FLR-ADR-048): FS_renovation 0.1.0, registry/FS_renovation/spec.md. The root applies to the extension's top-level data, extensions.FS_renovation: the statuses of extension elements, by ID. FS_renovation's data on a core element (its own extensions.FS_renovation) is checked as the object { C: data } against #/$defs/coreElements, which names the seven collections it is defined for - walls, separators, openings, rooms, slabs, roofs and stairs - and no other (spec.md 1.3).",
+    "title": "FS_renovation 0.1.0",
+    "description": "A renovation status - existing, demolish or new - for each element of a remodel.",
+    "type": "object",
+    "properties": {
+      "elements": {
+        "description": "1.3: the status of extension elements, by ID. An extension element has no extensions member of its own (Core 12.5).",
+        "type": "object",
+        "propertyNames": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/status"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "coreElements": {
+        "title": "Data on core elements",
+        "description": "1.3: an element's collection mapped to its FS_renovation data. Only walls, separators, openings, rooms, slabs, roofs and stairs carry FS_renovation data.",
+        "type": "object",
+        "properties": {
+          "walls": {
+            "$ref": "#/$defs/element"
+          },
+          "separators": {
+            "$ref": "#/$defs/element"
+          },
+          "openings": {
+            "$ref": "#/$defs/element"
+          },
+          "rooms": {
+            "$ref": "#/$defs/element"
+          },
+          "slabs": {
+            "$ref": "#/$defs/element"
+          },
+          "roofs": {
+            "$ref": "#/$defs/element"
+          },
+          "stairs": {
+            "$ref": "#/$defs/element"
+          }
+        },
+        "additionalProperties": false
+      },
+      "status": {
+        "title": "Renovation status",
+        "description": "2.1: existing - it stands today and stays (the default); demolish - it stands today and is to be removed; new - it is to be built.",
+        "type": "string",
+        "enum": [
+          "existing",
+          "demolish",
+          "new"
+        ]
+      },
+      "element": {
+        "title": "Data on a core element",
+        "description": "1.3: the extensions.FS_renovation of a wall, separator, opening, room, slab, roof or stair.",
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "$ref": "#/$defs/status"
           }
         },
         "additionalProperties": false

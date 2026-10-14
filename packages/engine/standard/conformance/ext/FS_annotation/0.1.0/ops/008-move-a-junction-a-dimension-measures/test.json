@@ -1,0 +1,8 @@
+{
+  "description": "moveJunction J6 to (13', 0): the walls that meet there move with it, and so do the strings that measure them - the overall string is 13' and 50 mm, then 7' and 50 mm. It commits.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-6.1.1",
+    "FS-OPS-2.4.1"
+  ]
+}

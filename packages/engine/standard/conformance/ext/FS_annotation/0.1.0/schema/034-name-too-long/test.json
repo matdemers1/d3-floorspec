@@ -1,0 +1,6 @@
+{
+  "description": "A dimension string's name is 1 to 200 characters.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A string DM10 and a note NT10: annotations are in ID order by code unit, DM1, DM10, DM2.",
+  "covers": [
+    "FS-ANNO-6.1.1"
+  ]
+}

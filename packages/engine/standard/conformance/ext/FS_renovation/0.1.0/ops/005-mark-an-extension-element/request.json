@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_renovation/elements/X3",
+      "value": "demolish"
+    }
+  ]
+}

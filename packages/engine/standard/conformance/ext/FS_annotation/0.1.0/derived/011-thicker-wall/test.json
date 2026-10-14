@@ -1,0 +1,6 @@
+{
+  "description": "The west wall W1 200 mm thick, still centred: its outside face moves 50 mm west and its inside face 50 mm east, and every string that measures to them changes with it.",
+  "covers": [
+    "FS-ANNO-6.1.1"
+  ]
+}

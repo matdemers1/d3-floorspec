@@ -1,0 +1,6 @@
+{
+  "description": "A note's `extras` is an object (Core 1.7).",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

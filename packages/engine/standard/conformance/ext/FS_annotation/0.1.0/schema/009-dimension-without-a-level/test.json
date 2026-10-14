@@ -1,0 +1,6 @@
+{
+  "description": "A dimension string is always drawn on a level.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_annotation/dimensions/DM5",
+      "value": {
+        "level": "L1",
+        "direction": [0, 1],
+        "through": [8193024, 0],
+        "anchors": [
+          {
+            "wall": "W6",
+            "face": "left"
+          },
+          {
+            "junction": "J8"
+          },
+          {
+            "wall": "W3",
+            "face": "left"
+          }
+        ],
+        "name": "Overall, east"
+      }
+    }
+  ]
+}

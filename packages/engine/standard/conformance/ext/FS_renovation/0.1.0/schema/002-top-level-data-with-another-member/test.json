@@ -1,0 +1,6 @@
+{
+  "description": "FS_renovation 0.1 gives its top-level data one member, `elements`.",
+  "covers": [
+    "FS-RENO-1.3.1"
+  ]
+}

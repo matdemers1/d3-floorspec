@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_annotation/dimensions/DM1/through: the overall string is drawn 2' further south. It commits, and measures exactly what it did.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

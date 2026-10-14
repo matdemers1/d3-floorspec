@@ -1,0 +1,6 @@
+{
+  "description": "A dimension string's anchors are an array, not an object of them.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

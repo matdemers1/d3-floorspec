@@ -1,0 +1,17 @@
+{
+  "description": "The Phase 13 lit house with a kitchen window and its owner's annotation, read by an implementation of FS_annotation that knows it: an overall string along the south side, from the west wall's outside face through the corner J6 to the east wall's outside face; a string locating the kitchen window by its centre; the Kitchen's clear width between two wall faces; a north-south string of clear dimensions through the Utility and Living rooms, the wall between them included; and two notes with leaders, about the window and about the panel. FS_lighting and FS_views are unknown to it, their scenes and views read as data. It is valid, reports nothing, and derives every length exactly - 20' and 100 mm south, 12' less 100 mm across the Kitchen - and each note's level and what it is about.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-1.2.4",
+    "FS-ANNO-1.3.1",
+    "FS-ANNO-1.3.2",
+    "FS-ANNO-1.3.3",
+    "FS-ANNO-2.1.1",
+    "FS-ANNO-2.2.1",
+    "FS-ANNO-2.2.2",
+    "FS-ANNO-2.3.1",
+    "FS-ANNO-3.1.1",
+    "FS-ANNO-6.1.1"
+  ]
+}

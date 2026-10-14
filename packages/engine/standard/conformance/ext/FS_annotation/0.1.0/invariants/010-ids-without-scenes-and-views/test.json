@@ -1,0 +1,6 @@
+{
+  "description": "The house without FS_lighting and FS_views, a string keyed by LS1 and a note by SV2: there are no scenes and no views, so neither is anyone's ID. Valid.",
+  "covers": [
+    "FS-ANNO-1.3.2"
+  ]
+}

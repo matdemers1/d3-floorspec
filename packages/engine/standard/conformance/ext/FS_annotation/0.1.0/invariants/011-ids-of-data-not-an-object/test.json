@@ -1,0 +1,6 @@
+{
+  "description": "FS_views's data is a string and FS_lighting's `scenes` a list, which no implementation of FS_annotation checks: they hold no view and no scene, so a string keyed SV1 and a note keyed LS1 take no one's ID. Valid.",
+  "covers": [
+    "FS-ANNO-1.3.2"
+  ]
+}

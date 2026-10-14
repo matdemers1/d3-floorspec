@@ -1,0 +1,9 @@
+{
+  "description": "The same options, and a string keyed by O2, the ID of B's window: in B's design it takes an element's ID, reported with `design`; in A's, without O2, it does not.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-1.3.2",
+    "FS-CORE-19.3.1"
+  ]
+}

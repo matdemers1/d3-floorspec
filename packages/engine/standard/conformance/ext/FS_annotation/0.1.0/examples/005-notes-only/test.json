@@ -1,0 +1,7 @@
+{
+  "description": "FS_annotation's data with notes and no `dimensions`: valid, and no dimension string derived.",
+  "covers": [
+    "FS-ANNO-1.3.1",
+    "FS-ANNO-6.1.1"
+  ]
+}

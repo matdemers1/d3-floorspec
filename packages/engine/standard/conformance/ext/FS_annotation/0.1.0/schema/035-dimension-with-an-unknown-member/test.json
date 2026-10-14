@@ -1,0 +1,6 @@
+{
+  "description": "A dimension string has a member a string does not define: `lengths`, which are derived, never stored.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

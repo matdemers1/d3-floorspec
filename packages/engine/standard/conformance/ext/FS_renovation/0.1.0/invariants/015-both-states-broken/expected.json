@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-RENO-INV-003",
+      "severity": "error",
+      "elements": ["R3", "R4"]
+    },
+    {
+      "code": "FS-RENO-INV-004",
+      "severity": "error",
+      "elements": ["R1", "R3"]
+    }
+  ]
+}
