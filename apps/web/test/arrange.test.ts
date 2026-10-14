@@ -254,7 +254,7 @@ describe('selecting similar, removing many, and the words for them', () => {
     const after = readModel('r', doc);
     expect(after.index.has('GR-CW0')).toBe(false);
     expect(after.index.has('L-GR-R1')).toBe(false);
-    expect(JSON.stringify(JSON.parse(doc).extensions)).not.toContain('L-GR-R1');
+    expect(JSON.stringify((JSON.parse(doc) as { extensions: unknown }).extensions)).not.toContain('L-GR-R1');
   });
 
   it('a copied light gets its luminaire record', () => {
