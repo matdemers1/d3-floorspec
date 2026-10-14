@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Checkbox, Select, Switch } from '@d3cloud/ui';
 import { Check, ChevronDown, Magnet } from 'lucide-react';
 import type { EditorStore } from '../store';
@@ -72,6 +73,17 @@ function SnapMenu({ store, trigger, onClose }: { store: EditorStore; trigger: Re
   const p = precisionOf(store);
   const set = (patch: Partial<SnapSettings>) => { p.setSnap(patch); };
   const step = gridStepOf(store);
+  // Above its trigger: fixed, in the editor, since the status bar clips what overflows it.
+  const [at, setAt] = useState<{ left: number; bottom: number } | null>(null);
+  useLayoutEffect(() => {
+    const place = () => {
+      const r = trigger.current?.getBoundingClientRect();
+      if (r !== undefined) setAt({ left: Math.max(8, r.left), bottom: window.innerHeight - r.top + 8 });
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => { window.removeEventListener('resize', place); };
+  }, [trigger]);
 
   useEffect(() => {
     panel.current?.querySelector<HTMLElement>('button[role="switch"]')?.focus();
@@ -99,8 +111,9 @@ function SnapMenu({ store, trigger, onClose }: { store: EditorStore; trigger: Re
   const steps = gridSteps(units);
   const stepOptions = (steps.includes(step) ? steps : [...steps, step].sort((a, b) => a - b)).map((s) => ({ value: String(s), label: prettyLen(s, units) }));
   const modeName = modesOf(store).nameOf(mode);
-  return (
-    <div ref={panel} className="fs-snapmenu" role="dialog" aria-label="Snapping" onKeyDown={onKey}>
+  const host = trigger.current?.closest('.fs-editor') ?? document.body;
+  return createPortal(
+    <div ref={panel} className="fs-snapmenu" role="dialog" aria-label="Snapping" onKeyDown={onKey} style={at === null ? { visibility: 'hidden' } : { left: at.left, bottom: at.bottom }}>
       <div className="fs-snapmenu__head">
         <Magnet aria-hidden="true" />
         <span id={`${id}-title`}>Snap</span>
@@ -149,6 +162,7 @@ function SnapMenu({ store, trigger, onClose }: { store: EditorStore; trigger: Re
           </button>
         )}
       </p>
-    </div>
+    </div>,
+    host,
   );
 }

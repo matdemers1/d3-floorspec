@@ -104,7 +104,8 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   const units = useEditor(store, () => store.units);
   if (model === null) return null;
   if (tool === 'device' && readOnly === null) return <DevicePanel store={store} tools={tools} model={model} />;
-  if (tool !== 'select' && readOnly === null) return <DrawPanel store={store} model={model} />;
+  // The measure tool (FLR-T-18.9) draws nothing: the inspector stays on the selection.
+  if (tool !== 'select' && tool !== 'measure' && readOnly === null) return <DrawPanel store={store} model={model} />;
   // FLR-T-18.8: several selected — the fields they share.
   if (many) return <MultiInspector store={store} />;
   const element = selection === null ? undefined : elementOf(model, selection);

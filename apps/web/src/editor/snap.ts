@@ -259,7 +259,9 @@ export function snapTargets(level: LevelView, o: Pick<SnapOptions, 'settings' | 
     }
   }
   if (s.items) {
-    for (const d of level.devices) {
+    // The smaller first: a cooktop set into an island is what a point on both means.
+    const area = (r: Ring) => { const xs = r.map((p) => p[0]); const ys = r.map((p) => p[1]); return r.length < 3 ? 0 : (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys)); };
+    for (const d of [...level.devices].sort((x, y) => area(x.footprint) - area(y.footprint))) {
       if (o.excludeItems?.has(d.id) === true) continue;
       const { points, centre } = itemPoints(d);
       for (const p of points) out.push({ point: roundPoint(p), kind: 'item', ref: d.id, label: name(d.id) });
@@ -317,7 +319,7 @@ export function snapPoint(level: LevelView | undefined, raw: Point, o: SnapOptio
   let targetD = o.tol;
   for (const t of targets) {
     const d = dist(raw, t.point);
-    if (d <= targetD) [target, targetD] = [t, d];
+    if (d < targetD || (target === null && d <= targetD)) [target, targetD] = [t, d];
   }
   if (target !== null) return { point: target.point, kind: target.kind, ...(target.ref === undefined ? {} : { ref: target.ref }), guides, label: target.label, ...angleOf(o.from, target.point) };
 

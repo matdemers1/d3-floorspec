@@ -89,7 +89,8 @@ export function triangleKind(model: EditorModel, level: LevelView | undefined, r
 function pointOf(store: EditorStore, snap: Snap): MeasurePoint {
   const model = store.get().model;
   if (snap.ref === undefined || snap.ref.startsWith('~') || model === null) return { point: snap.point };
-  return { point: snap.point, ref: snap.ref, label: labelOf(model, snap.ref) };
+  // Its name without the size: "Cooktop", not "Cooktop, 760 mm" — the panel is narrow.
+  return { point: snap.point, ref: snap.ref, label: labelOf(model, snap.ref).split(', ')[0] ?? snap.ref };
 }
 
 /** The pointer moved with the measure tool: where the next point would go. */

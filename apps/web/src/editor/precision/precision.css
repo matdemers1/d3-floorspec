@@ -55,7 +55,8 @@
 }
 .fs-tempdim__edit {
   position: absolute;
-  transform: translate(-50%, -50%);
+  /* The field centred where its number was; the Tab hint to its right. */
+  transform: translate(-48px, -50%);
   display: flex;
   align-items: center;
   gap: var(--space-8);
@@ -63,7 +64,7 @@
   z-index: 3;
 }
 .fs-tempdim__input {
-  width: 9ch;
+  width: 96px;
   height: 24px;
   padding: 0 var(--space-6);
   border: 1.5px solid var(--color-accent);
@@ -140,7 +141,7 @@
 }
 .fs-althint {
   position: absolute;
-  bottom: var(--space-24);
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -316,9 +317,7 @@
   color: var(--color-fg-faint);
 }
 .fs-snapmenu {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + var(--space-8));
+  position: fixed;
   width: 280px;
   padding: var(--space-12);
   border: 1px solid var(--color-border-float);
@@ -328,7 +327,7 @@
   color: var(--color-fg);
   font-family: var(--font-sans);
   font-size: var(--text-13);
-  z-index: 20;
+  z-index: 30;
 }
 .fs-snapmenu__head {
   display: flex;

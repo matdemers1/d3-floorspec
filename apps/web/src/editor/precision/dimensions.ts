@@ -278,7 +278,8 @@ function roomDims(model: EditorModel, level: LevelView, id: string, ref: DimRef)
       a: at(c, minus, vm),
       b: at(c, plus, vp),
       value,
-      shift: null,
+      // Clear of the room's name at its middle: the width below it, the depth to its right.
+      shift: axis === 'x' ? { dir: [0, -1], world: 0, px: 30 } : { dir: [1, 0], world: 0, px: 56 },
       ...(Math.abs(nk) < 0.99
         ? {}
         : {

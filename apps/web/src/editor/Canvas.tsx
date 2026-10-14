@@ -26,6 +26,7 @@ import { DOOR_CLASS, doorParts, SymbolParts } from './plansymbols';
 import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
 import { PrecisionHtml, PrecisionLayer } from './precision/Overlay';
+import { usePrecision } from './precision/state';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -821,6 +822,8 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
   const selection = useEditor(store, (s) => s.selection);
   const hover = useEditor(store, (s) => s.hover);
   const tool = useEditor(store, (s) => s.tool);
+  // FLR-T-18.9: ⌥ held shows distances where the hover's tooltip would be.
+  const alt = usePrecision(store, (p) => p.alt);
   const out: ReactNode[] = [];
 
   if (isChainDraft(draft) && draft.cursor !== null && draft.chain.length > 0) {
@@ -948,7 +951,7 @@ function HtmlOverlays({ store, view, level, model, units }: { store: EditorStore
       </div>,
     );
   }
-  if (hover !== null && hover !== selection && tool === 'select' && draft === null) {
+  if (hover !== null && hover !== selection && tool === 'select' && draft === null && !alt) {
     const anchor = hoverAnchor(level, hover);
     if (anchor !== null) {
       const p = S(view, anchor);
