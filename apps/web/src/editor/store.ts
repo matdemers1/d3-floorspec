@@ -484,7 +484,9 @@ export class EditorStore {
       case 'committed': {
         await this.adopt(answer.hash);
         const selected = options.select?.(answer.created);
-        const many = options.selectMany?.(answer.created).filter((id) => this.state.model?.index.has(id) === true);
+        // What the batch made (the server's word for it — the model read back may already be a newer
+        // one, or an older one if a live event's read won the race) and what was there before it.
+        const many = options.selectMany?.(answer.created).filter((id) => answer.created.includes(id) || this.state.model?.index.has(id) === true);
         this.set({
           rejection: null,
           ...(selected === undefined ? {} : { selection: selected }),
