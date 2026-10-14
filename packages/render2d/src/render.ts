@@ -8,7 +8,7 @@
  */
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
-import { evaluate, type Evaluation } from '@floorspec/engine';
+import { deriveFrom, evaluate, resolveAnnotations, type Evaluation } from '@floorspec/engine';
 import { DEFAULT_READER, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneFallback, type SceneOpening, type SceneRoom, type SceneStair, type SceneWall } from './scene.js';
 import { base64, el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
 import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
@@ -463,7 +463,9 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
  * without validating it again. Throws InvalidDocumentError for an evaluation that is not valid.
  */
 export function renderEvaluation(evaluation: Evaluation, options: EvaluationRenderOptions = {}): string {
-  const scene = sceneOf(evaluation, options.level);
+  // Derived once: the scene, and the person's own strings and notes (FS_annotation) when not given.
+  const derived = evaluation.valid && evaluation.view !== undefined && evaluation.analysis !== undefined ? deriveFrom(evaluation.view, evaluation.analysis) : undefined;
+  const scene = sceneOf(evaluation, options.level, derived);
   // FLR-T-18.5: a style's theme is a palette too, so everything drawn from the palette follows it.
   const sty: PlanTheme | null = options.style === undefined ? null : planTheme(options.style, options.theme ?? 'light');
   const details: StyleDetails = { ...ALL_DETAILS, ...options.details };
@@ -529,7 +531,9 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   const s = scale / BU_PER_FOOT;
   // The margin dimensions take is kept when a mode hides them, so every trade's plan has one frame (FLR-T-18.11: as deep as the strings).
   const dimsRoom = options.dimensions ?? (sty === null || sty.linework);
-  const anno = options.annotation ?? {};
+  const given = options.annotation ?? {};
+  const own = given.custom === undefined && given.notes === undefined && evaluation.view !== undefined ? resolveAnnotations(evaluation.view, derived, scene.levelId) : null;
+  const anno = own === null ? given : { ...given, custom: own.dimensions, notes: own.notes };
   const fmt = archLength;
   const annoSrc = annoSourceOf(scene);
   const exterior: DimString[] = dimsRoom && body !== undefined ? exteriorStrings(annoSrc, ext) : [];

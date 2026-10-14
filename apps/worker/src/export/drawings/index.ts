@@ -14,11 +14,11 @@
  * version's facts (hash, number, time): the same inputs give the same bytes, and nothing reads the
  * clock.
  */
-import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, openingDimensions, z765, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
+import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, openingDimensions, resolveAnnotations, z765, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
 import { sceneOf, type ReaderOptions, type Scene } from '@floorspec/render2d';
 import { buildSceneFrom as buildModel, type Scene as ModelScene } from '../gltf/scene.js';
 import { MAX_WIDTH, renderView } from '../../render3d/index.js';
-import { dimensionStrings, type DimString } from './dimensions.js';
+import { dimensionStrings, NO_NOTES, type DimString, type PlanNotes } from './dimensions.js';
 import { levelDxf, roofDxf } from './dxf.js';
 import { openPdf } from './pdf.js';
 import { openingMarks, planOf, union, type Box, type LevelPlan, type Segment } from './plan.js';
@@ -112,6 +112,8 @@ interface Prepared {
   readonly all: readonly LevelPlan[];
   readonly chosen: readonly LevelPlan[];
   readonly dims: ReadonlyMap<string, readonly DimString[]>;
+  /** The person's own strings and notes on each drawn level (FS_annotation, FLR-T-18.11), resolved from the model as it is. */
+  readonly notes: ReadonlyMap<string, PlanNotes>;
   readonly derived: ReturnType<typeof deriveFrom>;
   /** The roofs on the drawn levels: the roof plan, when there are any. */
   readonly roofs: readonly PlanRoof[];
@@ -163,9 +165,15 @@ function prepare(document: object, options: DrawingOptions): Prepared {
   const all = scenes.map((s) => planOf(s, marks, { doc, derived }));
   const chosen = all.filter((p) => wanted.includes(p.levelId));
   const dims = new Map(chosen.map((p) => [p.levelId, dimensionStrings(p)]));
+  const notes = new Map(
+    chosen.map((p): [string, PlanNotes] => {
+      const r = resolveAnnotations(doc, derived, p.levelId);
+      return [p.levelId, { custom: r.dimensions.map((d) => ({ id: d.id, direction: d.direction, anchors: d.anchors, lengths: d.lengths })), notes: r.notes.map((n) => ({ id: n.id, text: n.text, at: n.at, leader: n.leader })) }];
+    }),
+  );
   const roofs = chosen.flatMap((p) => p.roofs);
   const wallsBelow = chosen.filter((p) => p.roofs.length > 0).flatMap((p) => p.wallLines.filter((l) => l.layer === 'A-WALL-EXTR'));
-  return { ev, doc, units: unitsOf(doc), all, chosen, dims, derived, roofs, wallsBelow, design: design === null ? null : { ...design }, designText: design === null ? undefined : designWords(ev.document, design) };
+  return { ev, doc, units: unitsOf(doc), all, chosen, dims, notes, derived, roofs, wallsBelow, design: design === null ? null : { ...design }, designText: design === null ? undefined : designWords(ev.document, design) };
 }
 
 /**
@@ -332,6 +340,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
       { ...common, levelName: plan.levelName, sheetNumber: `A-${String(101 + i)}`, sheetIndex: i, viewCaption: `Cut above ${plan.levelName}`, ...(areas.has(plan.levelId) ? { areas: areas.get(plan.levelId)! } : {}) },
       pdf.measure,
       ghost,
+      states === null || states.dimensions === 'on' ? (p.notes.get(plan.levelId) ?? NO_NOTES) : NO_NOTES,
     );
   });
   if (roofSheet === 1) {
@@ -378,7 +387,14 @@ export function exportDxf(document: object, options: DrawingOptions): DxfResult 
   const files: DrawingFile[] = p.chosen.map((plan) => ({
     name: `${slug(name)}-${v}-${slug(plan.levelName)}${suffix}.dxf`,
     contentType: 'image/vnd.dxf',
-    bytes: enc.encode(levelDxf(shownPlan(plan, states), states === null || states.dimensions !== 'off' ? (p.dims.get(plan.levelId) ?? []) : [], meta(plan.levelName))),
+    bytes: enc.encode(
+      levelDxf(
+        shownPlan(plan, states),
+        states === null || states.dimensions !== 'off' ? (p.dims.get(plan.levelId) ?? []) : [],
+        meta(plan.levelName),
+        states === null || states.dimensions !== 'off' ? (p.notes.get(plan.levelId) ?? NO_NOTES) : NO_NOTES,
+      ),
+    ),
   }));
   if (p.roofs.length > 0 && (states === null || states.roof !== 'off'))
     files.push({ name: `${slug(name)}-${v}-roof-plan.dxf`, contentType: 'image/vnd.dxf', bytes: enc.encode(roofDxf(p.roofs, p.all[0]!.trueNorth, meta(ROOF_PLAN_TITLE))) });

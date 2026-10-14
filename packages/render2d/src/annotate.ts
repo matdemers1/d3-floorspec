@@ -749,7 +749,7 @@ export function layoutAnnotations(input: AnnoInput, frame: AnnoFrame, m: AnnoMet
     }
   }
   for (const s of input.strings) if (s.local === true) drawString(s, frame, m, measure, format, m.first * 0.7, prims);
-  for (const s of input.strings) if (s.group !== 'exterior') drawString(s, frame, m, measure, format, 0, prims);
+  for (const s of input.strings) if (s.group === 'custom') drawString(s, frame, m, measure, format, 0, prims);
   for (const t of input.tags ?? []) {
     const b = frame.P(t.base);
     const r = t.kind === 'door' ? m.tagR * 0.95 : m.tagR;
@@ -760,8 +760,40 @@ export function layoutAnnotations(input: AnnoInput, frame: AnnoFrame, m: AnnoMet
     prims.push({ t: 'text', role: 'tag', x: cx, y: cy + size * CAP * 0.5, text: t.mark, size, font: 'sans-medium', anchor: 'middle', rotate: 0, owner: t.id, group: 'tag' });
   }
   for (const n of input.notes ?? []) notePrims(n, frame, m, measure, prims);
+  // Room strings last, and only where their lengths meet no other text: the person's own strings,
+  // notes and tags win, and a room string that would print over one is left out.
+  const placed = prims.filter((p): p is Extract<AnnoPrim, { t: 'text' }> => p.t === 'text').map((t) => textBox(t, measure));
+  for (const s of input.strings) {
+    if (s.group !== 'interior') continue;
+    const mine: AnnoPrim[] = [];
+    drawString(s, frame, m, measure, format, 0, mine);
+    const boxes = mine.filter((p): p is Extract<AnnoPrim, { t: 'text' }> => p.t === 'text').map((t) => textBox(t, measure));
+    if (boxes.some((b) => placed.some((q) => overlaps(b, q)))) continue;
+    prims.push(...mine);
+    placed.push(...boxes);
+  }
   return { prims, depth };
 }
+
+interface Box {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+}
+
+/** The paper box a text covers (level or turned a quarter), a little padded. */
+function textBox(t: Extract<AnnoPrim, { t: 'text' }>, measure: Measure): Box {
+  const w = measure(t.text, t.font, t.size);
+  const h = t.size * CAP;
+  const x0 = t.anchor === 'middle' ? -w / 2 : t.anchor === 'end' ? -w : 0;
+  const pad = 1.5;
+  if (Math.abs(t.rotate) < 45) return { x0: t.x + x0 - pad, x1: t.x + x0 + w + pad, y0: t.y - h - pad, y1: t.y + pad };
+  // Turned a quarter: the text runs up (or down) the page.
+  return { x0: t.x - h - pad, x1: t.x + pad, y0: t.y - x0 - w - pad, y1: t.y - x0 + pad };
+}
+
+const overlaps = (a: Box, b: Box): boolean => Math.min(a.x1, b.x1) > Math.max(a.x0, b.x0) && Math.min(a.y1, b.y1) > Math.max(a.y0, b.y0);
 
 /** A note: its lines from `at` down, and a leader from the nearer end of its first line to the point, with an arrowhead. */
 function notePrims(n: Note, frame: AnnoFrame, m: AnnoMetrics, measure: Measure, out: AnnoPrim[]): void {
@@ -776,12 +808,19 @@ function notePrims(n: Note, frame: AnnoFrame, m: AnnoMetrics, measure: Measure, 
   if (n.leader === null) return;
   const tip = frame.P(n.leader);
   const midY = y - (m.note * CAP) / 2;
-  const left: XY = [x - m.gap, midY];
-  const right: XY = [x + w + m.gap, midY];
-  const from = Math.abs(tip[0] - left[0]) <= Math.abs(tip[0] - right[0]) && tip[0] < x + w / 2 ? left : right;
-  // A short shoulder level with the text, then the leader to the point.
-  const shoulder: XY = [from[0] + (from === left ? -m.arrow : m.arrow), from[1]];
-  out.push({ t: 'line', role: 'leader', a: from, b: shoulder, owner: n.id, group: 'note' });
+  const top = y - m.note * CAP - m.gap;
+  const bottom = y + (lines.length - 1) * lh + m.note * 0.3 + m.gap;
+  let shoulder: XY;
+  if (tip[0] >= x && tip[0] <= x + w && (tip[1] > bottom || tip[1] < top)) {
+    // Straight above or below the text: from its edge, at the point nearest the tip.
+    shoulder = [tip[0], tip[1] > bottom ? bottom : top];
+  } else {
+    // Beside it: a short shoulder level with its first line, from the side the tip is on.
+    const left = tip[0] < x + w / 2;
+    const from: XY = left ? [x - m.gap, midY] : [x + w + m.gap, midY];
+    shoulder = [from[0] + (left ? -m.arrow : m.arrow), from[1]];
+    out.push({ t: 'line', role: 'leader', a: from, b: shoulder, owner: n.id, group: 'note' });
+  }
   out.push({ t: 'line', role: 'leader', a: shoulder, b: tip, owner: n.id, group: 'note' });
   const dx = tip[0] - shoulder[0];
   const dy = tip[1] - shoulder[1];

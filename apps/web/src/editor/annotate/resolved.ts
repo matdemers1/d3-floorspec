@@ -1,5 +1,4 @@
-// STUB until the engine lands
-const resolveAnnotations = (_d: unknown, _x: unknown, _l: string): { dimensions: { id: string; direction: [number, number]; anchors: { feature: [number, number]; onLine: [number, number] }[]; lengths: number[] }[]; notes: { id: string; text: string; at: [number, number]; leader: [number, number] | null }[]; unresolved: string[] } => ({ dimensions: [], notes: [], unresolved: [] });
+import { resolveAnnotations } from '@floorspec/engine';
 import type { CustomDimension, Note } from '@floorspec/render2d';
 import type { EditorModel } from '../model';
 import { annotationIds } from './state';

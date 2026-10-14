@@ -15,7 +15,7 @@ type Json = Record<string, unknown>;
 const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** The anchor as FS_annotation writes it. */
-export type Anchor = { junction: string } | { wall: string; face: 'left' | 'right' | 'axis' } | { opening: string } | { point: [number, number] };
+export type Anchor = { junction: string } | { wall: string; face: 'left' | 'right' | 'location' } | { opening: string } | { point: [number, number] };
 
 export interface DimensionRecord {
   level: string;

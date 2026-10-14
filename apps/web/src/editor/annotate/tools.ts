@@ -31,7 +31,7 @@ export function anchorAt(level: LevelView, world: Point, tol: number, snap: Snap
     const w = level.walls.find((x) => x.id === snap.ref);
     if (w !== undefined && w.arc === undefined) {
       const along = sub(w.b, w.a);
-      const face = snap.kind === 'wall' ? 'axis' : cross(along, sub(snap.point, w.a)) > 0 ? 'left' : 'right';
+      const face = snap.kind === 'wall' ? 'location' : cross(along, sub(snap.point, w.a)) > 0 ? 'left' : 'right';
       return { kind: 'wall', id: w.id, face, point: snap.point, along };
     }
   }

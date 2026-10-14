@@ -24,7 +24,7 @@ export function anchorWords(a: DraftAnchor): string {
     case 'junction':
       return `Junction ${a.id}`;
     case 'wall':
-      return a.face === 'axis' ? `Centre line of ${a.id}` : `${a.face === 'left' ? 'Left' : 'Right'} face of ${a.id}`;
+      return a.face === 'location' ? `Location line of ${a.id}` : `${a.face === 'left' ? 'Left' : 'Right'} face of ${a.id}`;
     case 'opening':
       return `Centre of ${a.id}`;
     case 'point':

@@ -40,7 +40,7 @@ export function showDefaults(mode: string | null): ShowSettings {
 /** An anchor of a string being drawn: what it will be measured to, and where it is on the plan. */
 export type DraftAnchor =
   | { readonly kind: 'junction'; readonly id: string; readonly point: Point }
-  | { readonly kind: 'wall'; readonly id: string; readonly face: 'left' | 'right' | 'axis'; readonly point: Point; readonly along: Point }
+  | { readonly kind: 'wall'; readonly id: string; readonly face: 'left' | 'right' | 'location'; readonly point: Point; readonly along: Point }
   | { readonly kind: 'opening'; readonly id: string; readonly point: Point }
   | { readonly kind: 'point'; readonly point: Point };
 
