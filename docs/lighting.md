@@ -244,7 +244,10 @@ swapping every mesh's material.
 
 **Frame rate.** Moving, it measures itself and draws at a lower resolution (down to 40% of each side) when the
 GPU cannot hold 40 fps — its buffers resized in place as it steps down, the passes kept, so the first turn in
-a room is not a string of stalls while each step's passes are made anew; a moment after the camera stops it draws at full resolution and refines.
+a room is not a string of stalls while each step's passes are made anew. Each change still makes the buffers'
+memory again, so within a movement the resolution only steps down (as far as the shortfall asks), and a
+movement that held well over 40 fps lets the next one start a step finer. A moment after the camera stops
+it draws at full resolution and refines.
 Every program the scene needs is compiled off the frame (KHR_parallel_shader_compile where there is
 one), and the whole scene is drawn once, unculled, to have the driver build its pipelines — once what
 every material compiles to has stayed the same for 600 ms with the camera still, not on each of a

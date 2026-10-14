@@ -81,6 +81,8 @@ interface State {
   k: number;
   scale: number;
   frames: number[];
+  /** The last movement held well over the target: the next may draw a step finer. */
+  headroom: boolean;
   camera: THREE.Matrix4;
   projection: THREE.Matrix4;
   settle: ReturnType<typeof setTimeout> | 0;
@@ -123,6 +125,7 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
     k: 0,
     scale: 0,
     frames: [],
+    headroom: false,
     camera: new THREE.Matrix4(),
     projection: new THREE.Matrix4(),
     settle: 0,
@@ -222,30 +225,36 @@ export default function Presentation({ stats, model, mesh }: { stats?: StatsStor
 
     if (moved) {
       // Moving: as fast as the GPU allows, at the resolution it can keep up with.
+      // The resolution changes as little as it can: each change makes the buffers' memory again, a
+      // stall of its own. Within a movement it only steps down; a movement that had room to spare
+      // lets the next one start a step up. A frame that paid for a change is not measured.
       // Frames of one movement: a slow GPU's frames are far apart, and must still count as one.
-      if (now - s.lastMove < 1000) s.frames.push(now);
-      else s.frames = [now];
+      const fixed = navigator.webdriver && window.__floorspecQualityTest?.scale !== undefined;
+      if (now - s.lastMove >= 1000) {
+        s.frames = [now];
+        if (s.headroom && s.scale < 1 && !fixed) {
+          s.scale = Math.min(1, Math.round((s.scale / 0.8) * 100) / 100);
+          s.frames = [];
+        }
+        s.headroom = false;
+      } else s.frames.push(now);
       if (s.frames.length > 30) s.frames.shift();
       s.lastMove = now;
       s.k = 0;
       s.dirty = false;
-      // Over six frames; or three, when they are far too slow to wait for six — the first turn in a room
-      // must not spend seconds finding its resolution.
-      const span = (s.frames[s.frames.length - 1] ?? now) - (s.frames[0] ?? now);
-      const measured = s.frames.length >= 3 ? (1000 * (s.frames.length - 1)) / Math.max(1, span) : null;
-      const fps = measured !== null && (s.frames.length >= 6 || measured < TARGET_FPS * 0.5) ? measured : null;
-      if (fps !== null) {
-        s.stats.fps = Math.round(fps);
-        const fixed = navigator.webdriver && window.__floorspecQualityTest?.scale !== undefined;
-        if (fixed) {
-          // A test holds the resolution.
-        } else if (fps < TARGET_FPS * 0.9 && s.scale > MIN_SCALE) {
+      // Over six frames — or three, when they are far too slow to wait for six: the first turn in a
+      // room must not spend seconds finding its resolution.
+      const n = s.frames.length;
+      const fps = n >= 3 ? (1000 * (n - 1)) / Math.max(1, (s.frames[n - 1] ?? now) - (s.frames[0] ?? now)) : null;
+      if (fps !== null && n >= 6) s.stats.fps = Math.round(fps);
+      if (fps !== null && !fixed) {
+        if (fps < TARGET_FPS * 0.9 && s.scale > MIN_SCALE && (n >= 6 || fps < TARGET_FPS * 0.5)) {
           // A frame's cost goes with its pixels, the square of the scale: a step as far as the shortfall asks, between 0.5 and 0.8.
           const step = Math.min(0.8, Math.max(0.5, Math.sqrt(fps / TARGET_FPS)));
           s.scale = Math.max(MIN_SCALE, Math.round(s.scale * step * 100) / 100);
-        }
-        else if (fps > TARGET_FPS * 1.6 && s.scale < 1) s.scale = Math.min(1, Math.round((s.scale / 0.8) * 100) / 100);
-        s.frames = s.frames.slice(-3);
+          s.frames = [];
+          s.headroom = false;
+        } else if (n >= 15) s.headroom = fps > TARGET_FPS * 1.6;
       }
       pipeline.render(scene, camera, { scale: s.scale, env: s.env?.texture ?? null, envIntensity: 1, indoor, accumulate: null });
       s.stats.refined = 0;
