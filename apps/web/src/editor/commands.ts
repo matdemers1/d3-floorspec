@@ -107,6 +107,7 @@ export const COMMANDS: readonly Command[] = [
   tool('door', 'Place a door', 'D'),
   tool('window', 'Place a window', 'N'),
   tool('room', 'Name a room', 'R'),
+  tool('wand', 'Make a room with the magic wand', 'Y'),
   tool('separator', 'Draw a room separator', 'S'),
   tool('slab', 'Draw a slab', 'B'),
   tool('roof', 'Draw a roof', 'O'),
