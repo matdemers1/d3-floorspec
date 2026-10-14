@@ -258,8 +258,8 @@ export function exportRoutes(db: Db): Routes {
           const known = Object.entries(view.rooms ?? {}).some(([rid, r]) => rid.toLowerCase() === key || r?.name?.toLowerCase() === key);
           if (!known) throw new HttpError(400, `the model has no room ${still.room}`);
         }
-        const rendering = await tx.job.count({ where: { projectId: project.id, kind: 'export.still', status: { in: ['queued', 'running'] } } });
-        if (rendering > 0) throw new HttpError(429, 'a still is already rendering for this project; wait for it to finish');
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.still', 'export.shots'] }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a still or a shot list is already rendering for this project; wait for it to finish');
       }
       const shots = body.kind === 'shots' ? ShotsBody.parse(body.shots ?? {}) : undefined;
       if (shots !== undefined) {

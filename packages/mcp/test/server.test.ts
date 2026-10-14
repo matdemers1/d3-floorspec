@@ -519,6 +519,12 @@ describe('the MCP server', () => {
     await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'R17', sky: 'clear', at: '2026-06-21T19:30-04:00', scene: 'Off' } });
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', room: 'R17', sky: 'clear', at: '2026-06-21T19:30-04:00', scene: 'Off' });
     expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', sky: 'sunny' } })).isError).toBe(true);
+    // FLR-T-13.10: a saved view by name in `view`, passed through for the api to resolve; it sets its own camera and sky.
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: 'Hero exterior', width: 640 } });
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', savedView: 'Hero exterior', width: 640 });
+    const both = await mcp.callTool({ name: 'floorspec_render', arguments: { view: 'Hero exterior', camera: 'sw' } });
+    expect(both.isError).toBe(true);
+    expect(JSON.stringify(both.content)).toMatch(/sets its own camera/);
     const missing = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Attic' } });
     expect(missing.isError).toBe(true);
     expect(texts(missing)).toContain('this 3D view cannot be drawn');

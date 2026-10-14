@@ -54,3 +54,25 @@ export const REQUIRES_ELECTRICAL = {
     },
   },
 } as Prisma.InputJsonObject;
+
+/**
+ * The ranch with two saved views (FS_views 0.1.0, FLR-T-13.10): "Front", from the south-west across
+ * the lawn, and "Living room", a 16:9 view of it from its doorway.
+ */
+export const WITH_VIEWS = (() => {
+  const M = 1_280_000;
+  const base = REQUIRES_ELECTRICAL as unknown as { extensionsUsed: Record<string, string>; extensions: Record<string, unknown> };
+  return {
+    ...base,
+    extensionsUsed: { ...base.extensionsUsed, FS_views: '0.1.0' },
+    extensions: {
+      ...base.extensions,
+      FS_views: {
+        views: {
+          SV1: { name: 'Front', eye: [-10 * M, -10 * M, 1.6 * M], target: [4_681_728, 3_121_152, 1.5 * M], focalLength: 24, twoPoint: true, at: '2026-06-21T17:00' },
+          SV2: { name: 'Living room', eye: [8 * M, 6 * M, 1.5 * M], target: [4_681_728, 3_121_152, 1.2 * M], aspect: '16:9', sky: 'overcast' },
+        },
+      },
+    },
+  } as unknown as Prisma.InputJsonObject;
+})();

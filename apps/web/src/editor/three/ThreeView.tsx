@@ -1170,6 +1170,8 @@ function MiniMap({ level, mesh, x, y, yaw, where }: { level: LevelView; mesh: Ho
 
 interface Hook {
   ready: boolean;
+  /** FLR-T-13.10: the three.js camera's vertical field of view, degrees, its lens shift (half-heights) and the exposure it is drawn at. */
+  camera: { fov: number; shift: number; toneExposure: number } | null;
   parts: number;
   /** The mesh's parts by kind (packages/mesh's PartKind): how many of each are drawn. */
   kinds: Record<string, number>;
@@ -1218,6 +1220,14 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
       },
       get parts() {
         return ready?.mesh.parts.length ?? 0;
+      },
+      get camera() {
+        const canvas = el.current?.querySelector('canvas');
+        const at = canvas === null || canvas === undefined ? undefined : sceneOf.get(canvas);
+        const cam = at?.camera;
+        if (at === undefined || !(cam instanceof THREE.PerspectiveCamera)) return null;
+        const v = cam.view;
+        return { fov: cam.fov, shift: v === null || !v.enabled ? 0 : (-2 * v.offsetY) / v.fullHeight, toneExposure: at.gl.toneMappingExposure };
       },
       get kinds() {
         const k: Record<string, number> = {};
