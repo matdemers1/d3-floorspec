@@ -174,6 +174,25 @@ describe('drawing exports', () => {
     expect(text.endsWith('  0\r\nEOF\r\n')).toBe(true);
   });
 
+  it('draws a trade’s view: an electrical plan as a PDF and a DXF, and refuses a mode for anything else (FLR-T-18.3)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    const pdf = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', levels: ['MAIN'], mode: 'electrical' }));
+    const dxf = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf', levels: ['MAIN'], mode: 'electrical', layers: { walls: 'off' } }));
+    expect(pdf).toMatchObject({ mode: 'electrical' });
+    await drain.runOnce();
+    const drawn = view(await operator.get(`/api/projects/${id}/exports/${pdf.id}`));
+    expect(drawn.status, drawn.error ?? '').toBe('done');
+    expect(drawn.result?.name).toMatch(/-electrical-plans\.pdf$/);
+    expect(drawn.result?.sheets?.[0]?.title).toMatch(/electrical plan$/);
+    const file = view(await operator.get(`/api/projects/${id}/exports/${dxf.id}`));
+    const text = new TextDecoder().decode((await download(operator, `${running.url}${file.download ?? ''}`)).bytes);
+    expect(text).toContain('ELECTRICAL PLAN');
+    expect(text).not.toMatch(/\r\n {2}8\r\nA-WALL-EXTR\r\n {2}10/);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf', mode: 'electrical' })).status).toBe(400);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', mode: 'kitchen' })).status).toBe(400);
+  });
+
   it('queues glTF and USDZ of the 3D model, and serves a .glb and an aligned .usdz (FLR-T-9.2)', async () => {
     const operator = await setupOperator(running);
     const { id, hash } = await projectWithDocument(db, operator);

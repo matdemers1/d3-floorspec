@@ -38,6 +38,7 @@ import {
 import type { PlanRoof } from './symbols.js';
 import { lengthText, unitsOf, type UnitSystem } from './units.js';
 import { storedZip } from './zip.js';
+import { modePlanName, shownPlan, splitPlan, statesOf, type DrawingMode } from './modes.js';
 
 export { PAGES, DEFAULT_PAGE, type PageName, type Sheet } from './sheet.js';
 export { LAYER_DEFS, LAYERS, isNcsName, layerForDevice } from './layers.js';
@@ -46,6 +47,7 @@ export { dimensionStrings, type DimString } from './dimensions.js';
 export { openingMarks, planOf, levelPlan, type LevelPlan } from './plan.js';
 export { sheetToSvg } from './svg.js';
 export { NOT_FOR_CONSTRUCTION, NOT_A_PLAN_REVIEW, ROOF_PLAN_TITLE } from './sheet.js';
+export { splitPlan, shownPlan, statesOf, modePlanName, type DrawingMode } from './modes.js';
 export { breakLine, pitchText, planRoof, planStair, type PlanRoof, type PlanStair, type RoofSlope } from './symbols.js';
 
 /** The version a drawing is made from: what its title block says and what its dates are. */
@@ -58,7 +60,7 @@ export interface VersionFacts {
   readonly at: Date;
 }
 
-export interface DrawingOptions {
+export interface DrawingOptions extends DrawingMode {
   readonly version: VersionFacts;
   /** Level IDs to draw; default every level, lowest first. */
   readonly levels?: readonly string[];
@@ -76,6 +78,8 @@ export interface DrawingOptions {
    * official extension is drawn.
    */
   readonly reader?: ReaderOptions;
+  // FLR-T-18.3 (DrawingMode): `mode`, a trade's view — an electrical plan, a furniture plan — and
+  // `layers`, a person's own states over it. The other trades are screened under it or left out.
 }
 
 export interface DrawingFile {
@@ -251,7 +255,10 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
     },
     options.fontDir,
   );
-  const roofSheet = p.roofs.length > 0 ? 1 : 0;
+  // A trade's view (FLR-T-18.3): its layers drawn, the rest screened or left out; a roof plan only when roofs are shown.
+  const states = statesOf(options);
+  const planName = modePlanName(options);
+  const roofSheet = p.roofs.length > 0 && (states === null || states.roof !== 'off') ? 1 : 0;
   const extra = layout.schedule === 'sheet' ? 1 : 0;
   const count = p.chosen.length + roofSheet + extra;
   const common = {
@@ -261,19 +268,22 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
     units: p.units,
     sheetCount: count,
     ...(p.designText === undefined ? {} : { design: p.designText }),
+    ...(planName === undefined ? {} : { planName }),
   };
   const top = p.all[p.all.length - 1]!;
-  const sheets: Sheet[] = p.chosen.map((plan, i) =>
-    composePlanSheet(
+  const sheets: Sheet[] = p.chosen.map((plan, i) => {
+    const { on, ghost } = splitPlan(plan, states);
+    return composePlanSheet(
       layout,
-      plan,
-      p.dims.get(plan.levelId) ?? [],
+      on,
+      states === null || states.dimensions === 'on' ? (p.dims.get(plan.levelId) ?? []) : [],
       views(plan.levelId),
-      rows.get(plan.levelId) ?? [],
+      states === null || states.openings !== 'off' ? (rows.get(plan.levelId) ?? []) : [],
       { ...common, levelName: plan.levelName, sheetNumber: `A-${String(101 + i)}`, sheetIndex: i, viewCaption: `Cut above ${plan.levelName}` },
       pdf.measure,
-    ),
-  );
+      ghost,
+    );
+  });
   if (roofSheet === 1) {
     const i = p.chosen.length;
     sheets.push(
@@ -293,7 +303,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
   }
   const bytes = await pdf.write(sheets);
   const v = options.version.seq === undefined || options.version.seq === null ? options.version.hash.slice(0, 8) : `v${String(options.version.seq)}`;
-  return { name: `${slug(name)}-${v}-plans.pdf`, contentType: 'application/pdf', bytes, sheets, design: p.design };
+  return { name: `${slug(name)}-${v}-${planName === undefined ? 'plans' : slug(`${planName}s`)}.pdf`, contentType: 'application/pdf', bytes, sheets, design: p.design };
 }
 
 /** The DXF drawings: one file per level; a ZIP of them when there are several. */
@@ -301,6 +311,10 @@ export function exportDxf(document: object, options: DrawingOptions): DxfResult 
   const p = prepare(document, options);
   const name = p.doc.project.name;
   const enc = new TextEncoder();
+  // A trade's view (FLR-T-18.3): what is off is left out; a ghost stays on its own NCS layer, for CAD to screen.
+  const states = statesOf(options);
+  const planName = modePlanName(options);
+  const suffix = planName === undefined ? '' : `-${slug(planName)}`;
   const v = options.version.seq === undefined || options.version.seq === null ? options.version.hash.slice(0, 8) : `v${String(options.version.seq)}`;
   const meta = (levelName: string) => ({
     projectName: name,
@@ -309,13 +323,14 @@ export function exportDxf(document: object, options: DrawingOptions): DxfResult 
     date: isoDate(options.version.at),
     units: p.units,
     ...(p.designText === undefined ? {} : { design: p.designText }),
+    ...(planName === undefined ? {} : { planName }),
   });
   const files: DrawingFile[] = p.chosen.map((plan) => ({
-    name: `${slug(name)}-${v}-${slug(plan.levelName)}.dxf`,
+    name: `${slug(name)}-${v}-${slug(plan.levelName)}${suffix}.dxf`,
     contentType: 'image/vnd.dxf',
-    bytes: enc.encode(levelDxf(plan, p.dims.get(plan.levelId) ?? [], meta(plan.levelName))),
+    bytes: enc.encode(levelDxf(shownPlan(plan, states), states === null || states.dimensions !== 'off' ? (p.dims.get(plan.levelId) ?? []) : [], meta(plan.levelName))),
   }));
-  if (p.roofs.length > 0)
+  if (p.roofs.length > 0 && (states === null || states.roof !== 'off'))
     files.push({ name: `${slug(name)}-${v}-roof-plan.dxf`, contentType: 'image/vnd.dxf', bytes: enc.encode(roofDxf(p.roofs, p.all[0]!.trueNorth, meta(ROOF_PLAN_TITLE))) });
   // Two levels with the same name would collide in the archive: the later one gets its ID too.
   const seen = new Set<string>();
@@ -327,7 +342,7 @@ export function exportDxf(document: object, options: DrawingOptions): DxfResult 
   });
   if (unique.length === 1) return { ...unique[0]!, files: unique, design: p.design };
   return {
-    name: `${slug(name)}-${v}-dxf.zip`,
+    name: `${slug(name)}-${v}${suffix}-dxf.zip`,
     contentType: 'application/zip',
     bytes: storedZip(unique.map((f) => ({ name: f.name, bytes: f.bytes })), options.version.at),
     files: unique,
