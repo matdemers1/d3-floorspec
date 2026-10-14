@@ -88,3 +88,14 @@
   font-size: var(--text-xs, 12px);
   color: var(--color-fg-muted);
 }
+.fs-canvas .fs-plan2__reno {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.fs-canvas .fs-plan2__reno[data-renovation='demolished'] {
+  fill: var(--fs-reno-demolish);
+}
+.fs-canvas .fs-plan2__reno[data-renovation='new'] {
+  fill: var(--fs-reno-new);
+}

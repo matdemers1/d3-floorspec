@@ -222,7 +222,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <Findings store={store} view={view} level={level} />
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
               {comparing ? null : <ArrangeLayer store={store} view={view} level={level} />}
-              {layers.rooms ? <StyledRoomLabels view={view} level={level} document={model.document} units={units} look={look} /> : null}
+              {layers.rooms ? <StyledRoomLabels view={view} level={level} document={model.document} units={units} look={look} reno={renoStyles} /> : null}
               <HaloLayer view={view} halos={halos} />
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={fullModel ?? model} />}

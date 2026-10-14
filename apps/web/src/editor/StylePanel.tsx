@@ -72,7 +72,7 @@ export function StyledWalls({ view, level, paint, reno = null }: { view: Viewpor
 }
 
 /** Room names in a style: on pills in a colour plan, in spaced capitals in a technical one. */
-export function StyledRoomLabels({ view, level, document, units, look }: { view: Viewport; level: LevelView; document: FloorspecDocument; units: UnitSystem; look: PlanLook }) {
+export function StyledRoomLabels({ view, level, document, units, look, reno = null }: { view: Viewport; level: LevelView; document: FloorspecDocument; units: UnitSystem; look: PlanLook; reno?: ReadonlyMap<string, RenovationStyle> | null }) {
   const caps = look.theme.caps;
   const pills = look.theme.colour && look.details.pills;
   return (
@@ -89,8 +89,10 @@ export function StyledRoomLabels({ view, level, document, units, look }: { view:
         const name = caps ? raw.toUpperCase() : raw;
         const area = formatArea(room.area2, units);
         const small = width < 90;
+        // FLR-T-18.13: a new room, and one to be demolished, say so under their area.
+        const status = small ? undefined : reno?.get(room.id) === 'new' ? 'NEW' : reno?.get(room.id) === 'demolished' ? 'TO DEMOLISH' : undefined;
         const w = Math.max(name.length * (caps ? 7.4 : 6.9), small ? 0 : area.length * 6.1) + 16;
-        const h = small ? 20 : 34;
+        const h = small ? 20 : status === undefined ? 34 : 46;
         return (
           <g key={room.id} data-room-label={room.id}>
             {pills ? <rect className="fs-plan2__pill" x={x - w / 2} y={y - h / 2} width={w} height={h} rx={6} /> : null}
@@ -99,6 +101,11 @@ export function StyledRoomLabels({ view, level, document, units, look }: { view:
               {small ? null : (
                 <tspan className="fs-plan2__area" x={x} dy="15">
                   {area}
+                </tspan>
+              )}
+              {status === undefined ? null : (
+                <tspan className="fs-plan2__reno" data-renovation={status === 'NEW' ? 'new' : 'demolished'} x={x} dy="12">
+                  {status}
                 </tspan>
               )}
             </text>
