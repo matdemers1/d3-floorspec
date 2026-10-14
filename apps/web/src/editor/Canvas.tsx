@@ -27,6 +27,7 @@ import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
 import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
 import { QuickAdd } from '../placing/QuickAdd';
+import { RoomDragGhost, RoomHandles, WandOverlay, WandPrompt } from './rooms/RoomLayer';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -209,6 +210,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       {/* FLR-T-18.7: the ghost's distances and its sentence, and the quick-add bar at the pointer. */}
       {view !== null && level !== undefined && !comparing ? <PlacingLabels store={store} view={view} units={units} /> : null}
       {view !== null && level !== undefined && !comparing ? <QuickAdd store={store} view={view} level={level} /> : null}
+      {view !== null && level !== undefined && !comparing ? <WandPrompt store={store} tools={tools} view={view} level={level} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={model} units={units} picking={tools.pickLevel} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
       <DiffLegend store={store} />
@@ -547,6 +549,8 @@ function Selection({ store, view, level, coarse }: { store: EditorStore; view: V
       })}
       {bulge !== undefined ? <circle className="fs-handle fs-handle--bulge" data-testid="arc-bulge-handle" cx={S(view, bulge)[0]} cy={S(view, bulge)[1]} r={size} /> : null}
       {resizable !== undefined && tool === 'select' && !dragging ? <ResizeHandles view={view} device={resizable} coarse={coarse} /> : null}
+      {/* FLR-T-18.10: a selected room's edge handles (resizeRoom). */}
+      {!many && selection !== null && tool === 'select' && !dragging && level.rooms.some((r) => r.id === selection) ? <RoomHandles view={view} level={level} room={selection} coarse={coarse} /> : null}
     </g>
   );
 }
@@ -651,6 +655,9 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
   const draw = useEditor(store, (s) => s.draw);
   const previewed = useEditor(store, (s) => s.preview?.model ?? null);
   if (draft === null) return null;
+  // FLR-T-18.10: the wand's spaces, and a room dragged by an edge or its floor.
+  if (draft.tool === 'wand') return <WandOverlay store={store} view={view} level={level} />;
+  if ('drag' in draft && (draft.drag?.kind === 'roomSide' || draft.drag?.kind === 'room')) return <RoomDragGhost store={store} view={view} level={level} units={store.units} />;
   if (draft.tool === 'stair') return <StairDraft view={view} foot={draft.foot} cursor={draft.cursor} />;
   if (draft.tool === 'slab' || draft.tool === 'roof') {
     const chain = draft.chain.map((v) => v.point);

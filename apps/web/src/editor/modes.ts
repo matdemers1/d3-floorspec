@@ -83,7 +83,7 @@ const SELECT: RailItem = { tool: 'select' };
 /** The hand (FLR-T-18.6), under Select in every rail. */
 const HAND: RailItem = { tool: 'hand' };
 export const RAILS: Readonly<Record<ModeId, readonly RailItem[]>> = {
-  construction: [SELECT, HAND, { tool: 'wall' }, { tool: 'arc' }, { tool: 'door' }, { tool: 'window' }, { tool: 'room' }, { tool: 'separator' }, { tool: 'slab' }, { tool: 'stair' }, { tool: 'roof' }],
+  construction: [SELECT, HAND, { tool: 'wall' }, { tool: 'arc' }, { tool: 'door' }, { tool: 'window' }, { tool: 'room' }, { tool: 'wand' }, { tool: 'separator' }, { tool: 'slab' }, { tool: 'stair' }, { tool: 'roof' }],
   decorator: [SELECT, HAND, { library: true }, { quick: true }, { tool: 'room' }],
   electrical: [SELECT, HAND, { device: 'receptacle' }, { device: 'switch' }, { device: 'light' }, { device: 'alarm' }, { device: 'panel' }, { device: 'evCharger' }],
   plumbing: [SELECT, HAND, { device: 'toilet' }, { device: 'lavatory' }, { device: 'kitchenSink' }, { device: 'shower' }, { device: 'bathtub' }, { device: 'floorDrain' }, { device: 'waterHeater' }],

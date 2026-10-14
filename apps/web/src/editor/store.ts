@@ -24,6 +24,7 @@ import { NO_OPTIONS, type ReceptacleOptions } from './systems/catalog';
 import type { DeviceHover } from './systems/placement';
 import type { ResizeAnchor } from '@floorspec/ops';
 import type { HandleSide, Size } from '../furniture/resize';
+import type { Side as RoomSideName } from './rooms/edit';
 import type { ImportReport } from '../exports/ifcImport';
 
 /**
@@ -39,8 +40,11 @@ import type { ImportReport } from '../exports/ifcImport';
 /** The forms the stair tool draws (Core 17.2). */
 export type StairForm = 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral';
 
-/** `hand` drags the plan (FLR-T-18.6); `place` places the library's item under the pointer, click after click (FLR-T-18.7). */
-export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'device' | 'place';
+/**
+ * `hand` drags the plan (FLR-T-18.6); `wand` makes a room of the space clicked (FLR-T-18.10); `place`
+ * places the library's item under the pointer, click after click (FLR-T-18.7).
+ */
+export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'wand' | 'device' | 'place';
 
 /**
  * The tools that draw a chain of points: walls and separators (a polyline), and the outlines of a
@@ -95,6 +99,7 @@ export type Draft =
       typed: string;
     }
   | { tool: 'room'; hover: { point: Point; free: boolean } | null }
+  | WandDraft
   /** The stair tool (Core 0.3, 17): its foot clicked, then the direction it rises in. */
   | { tool: 'stair'; foot: Point | null; cursor: Point | null }
   | { tool: 'device'; hover: DeviceHover | null; typed: string }
@@ -109,9 +114,34 @@ export type Draft =
         | { kind: 'resize'; id: string; side: HandleSide; anchor: ResizeAnchor; size: Partial<Size>; hint: string }
         /** FLR-T-18.4: the rotate handle dragged — the facing, and the position that keeps the item's middle. */
         | { kind: 'rotate'; id: string; rotation: number }
+        /** FLR-T-18.10: a room's edge handle dragged — the resizeRoom it would be. */
+        | { kind: 'roomSide'; id: string; side: RoomSideName; by: number }
+        /** FLR-T-18.10: a selected room dragged by its floor — the moveRoom it would be. */
+        | { kind: 'room'; id: string; by: Point }
         | null;
       typed: string;
     };
+
+/**
+ * The magic wand (FLR-T-18.10): the face under the pointer, and once clicked the faces the click could
+ * mean (Tab cycles them), with the name and the function the room will be made with — each candidate
+ * kept as the point addRoom would anchor it at, so a model read back in between still finds its face.
+ */
+export interface WandDraft {
+  tool: 'wand';
+  hover: Point | null;
+  pick: {
+    candidates: { at: Point; how: 'here' | 'around' | 'inside' | 'beside' }[];
+    index: number;
+    name: string;
+    /** A room function (Core 6.3), or 'unspecified'. */
+    fn: string;
+    /** The function was chosen, not guessed from the name. */
+    fnChosen: boolean;
+    /** The name field should take focus (a key typed on the plan starts the name). */
+    focusName: boolean;
+  } | null;
+}
 
 export interface Viewport {
   /** World point at the centre of the canvas, base units. */
