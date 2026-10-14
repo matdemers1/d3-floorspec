@@ -23,6 +23,7 @@ import { anchorOf, circuitsOf } from './systems/view';
 import { RuleFindingLabels, RuleFindingsLayer } from '../findings/Overlay';
 import { RoofEdgeTags, RoofLayer, roofStairOutline, StairDraft, StairsLayer } from './RoofStairLayer';
 import { DOOR_CLASS, doorParts, SymbolParts } from './plansymbols';
+import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
 
 /**
@@ -136,6 +137,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       button: e.button,
       shift: e.shiftKey,
       alt: e.altKey,
+      meta: /Mac|iPhone|iPad/.test(navigator.platform) ? e.metaKey : e.ctrlKey,
       detail: e.detail,
     };
   };
@@ -191,6 +193,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <RuleFindingsLayer store={store} view={view} level={level} />
               <Findings store={store} view={view} level={level} />
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
+              {comparing ? null : <ArrangeLayer store={store} view={view} level={level} />}
               {layers.rooms ? <RoomLabels view={view} level={level} document={model.document} units={units} /> : null}
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
@@ -200,6 +203,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
         </svg>
       ) : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={model} units={units} /> : null}
+      {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={model} units={units} picking={tools.pickLevel} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
       <DiffLegend store={store} />
       {layers.coreOnly ? (
@@ -503,7 +507,8 @@ function Selection({ store, view, level, coarse }: { store: EditorStore; view: V
   const selection = useEditor(store, (s) => s.selection);
   const hover = useEditor(store, (s) => s.hover);
   const tool = useEditor(store, (s) => s.tool);
-  const wall = selection === null ? undefined : (level.walls.find((w) => w.id === selection) ?? level.separators.find((sp) => sp.id === selection));
+  const single = useEditor(store, (s) => s.selected.length <= 1);
+  const wall = selection === null || !single ? undefined : (level.walls.find((w) => w.id === selection) ?? level.separators.find((sp) => sp.id === selection));
   const handles: Point[] = wall === undefined ? [] : [wall.a, wall.b];
   // An arc wall's bulge, at the middle of its polyline (Core 0.4, 21).
   const arcWall = selection === null ? undefined : level.walls.find((w) => w.id === selection && w.arc !== undefined);
@@ -515,11 +520,15 @@ function Selection({ store, view, level, coarse }: { store: EditorStore; view: V
   const roof = useEditor(store, (s) => (selection === null ? undefined : (s.model?.document.roofs?.[selection] as { pitch?: unknown; edges?: Record<string, { pitch?: unknown }> } | undefined)));
   const sloped = roof !== undefined && (roof.pitch !== undefined || Object.values(roof.edges ?? {}).some((e) => e.pitch !== undefined));
   // FLR-T-18.4: an item that resizes shows its eight handles and, standing on a floor, a rotate handle.
-  const resizable = resizableOn(level, selection);
+  // FLR-T-18.8: with several selected, each is outlined and the group shows one bounds box (arrange/Overlay) — no single item's handles.
+  const selected = useEditor(store, (s) => s.selected);
+  const many = selected.length > 1;
+  const resizable = many ? undefined : resizableOn(level, selection);
   const dragging = useEditor(store, (s) => s.draft?.tool === 'select' && s.draft.drag !== null);
   return (
     <g className="fs-selection" aria-hidden="true">
-      {hover !== null && hover !== selection && tool === 'select' ? <Outline view={view} level={level} id={hover} className="fs-hl fs-hl--hover" /> : null}
+      {hover !== null && !selected.includes(hover) && tool === 'select' ? <Outline view={view} level={level} id={hover} className="fs-hl fs-hl--hover" /> : null}
+      {many ? selected.filter((id) => id !== selection).map((id) => <Outline key={id} view={view} level={level} id={id} className="fs-hl fs-hl--selected" />) : null}
       {selection !== null ? <Outline view={view} level={level} id={selection} className="fs-hl fs-hl--selected" /> : null}
       {selection !== null && sloped ? <RoofEdgeTags view={view} level={level} id={selection} /> : null}
       {handles.map((h, i) => {

@@ -217,7 +217,17 @@ export interface EditorState {
   model: EditorModel | null;
   history: History;
   level: string | null;
+  /**
+   * The primary selection: the element the inspector, the handles and every single-element action
+   * read — the last one picked. Null exactly when `selected` is empty.
+   */
   selection: string | null;
+  /**
+   * FLR-T-18.8: everything selected, in the order it was picked, the primary (`selection`) last.
+   * The store keeps the two in step: a patch that sets only `selection` makes it the whole
+   * selection, and one that sets only `selected` makes its last element the primary.
+   */
+  selected: readonly string[];
   hover: string | null;
   tool: ToolId;
   draft: Draft | null;
@@ -281,6 +291,7 @@ const initial: EditorState = {
   history: { head: null, undo: null, redo: null, seq: null },
   level: null,
   selection: null,
+  selected: [],
   hover: null,
   tool: 'select',
   draft: null,
@@ -331,6 +342,8 @@ function readNudge(): number | null {
 export interface ApplyOptions {
   /** Pick the element to select from the IDs the batch created. */
   select?: (created: string[]) => string | null | undefined;
+  /** FLR-T-18.8: pick several to select (a paste, a duplicate, an array); the last is the primary. */
+  selectMany?: (created: string[]) => string[];
   /** A field to focus after the selection changes. */
   focus?: string;
 }
@@ -356,7 +369,7 @@ export class EditorStore {
 
   set(patch: Partial<EditorState> | ((s: EditorState) => Partial<EditorState>)): void {
     const next = typeof patch === 'function' ? patch(this.state) : patch;
-    this.state = { ...this.state, ...next };
+    this.state = { ...this.state, ...next, ...selectionPatch(this.state, next) };
     for (const l of this.listeners) l();
   }
 
@@ -419,7 +432,7 @@ export class EditorStore {
       model,
       history,
       level: this.pickLevel(model, s.level),
-      selection: s.selection !== null && model.index.has(s.selection) ? s.selection : null,
+      ...survivors(s, model),
       hover: null,
       preview: null,
       readOnly: model.valid ? null : s.readOnly,
@@ -475,9 +488,13 @@ export class EditorStore {
       case 'committed': {
         await this.adopt(answer.hash);
         const selected = options.select?.(answer.created);
+        // What the batch made (the server's word for it — the model read back may already be a newer
+        // one, or an older one if a live event's read won the race) and what was there before it.
+        const many = options.selectMany?.(answer.created).filter((id) => answer.created.includes(id) || this.state.model?.index.has(id) === true);
         this.set({
           rejection: null,
           ...(selected === undefined ? {} : { selection: selected }),
+          ...(many === undefined ? {} : { selected: many }),
           ...(selected !== undefined && selected !== null ? { level: levelOfElement(this.state.model as EditorModel, selected) ?? this.state.level } : {}),
           ...(options.focus === undefined ? {} : { focus: options.focus }),
         });
@@ -591,7 +608,26 @@ export class EditorStore {
     }
     const model = this.state.model;
     const level = model === null ? undefined : levelOfElement(model, id);
-    this.set({ selection: id, ...(level === undefined ? {} : { level }), ...(options.keepSide === true ? {} : { side: 'inspector' as const }) });
+    this.set({ selection: id, selected: [id], ...(level === undefined ? {} : { level }), ...(options.keepSide === true ? {} : { side: 'inspector' as const }) });
+  }
+
+  /**
+   * FLR-T-18.8: select several elements at once — a marquee, "select similar", what a paste made.
+   * The last is the primary. With `add`, they join the selection rather than replacing it.
+   */
+  selectMany(ids: readonly string[], options: { add?: boolean; primary?: string } = {}): void {
+    const base = options.add === true ? this.state.selected.filter((id) => !ids.includes(id)) : [];
+    const all = [...base, ...ids];
+    const primary = options.primary !== undefined && all.includes(options.primary) ? options.primary : all[all.length - 1];
+    const ordered = primary === undefined ? all : [...all.filter((id) => id !== primary), primary];
+    this.set({ selected: ordered, ...(ordered.length > 0 ? { side: 'inspector' as const } : {}) });
+  }
+
+  /** FLR-T-18.8: ⇧- or ⌘-click — add an element to the selection, or take it out if it is in it. */
+  toggleSelected(id: string): void {
+    const { selected } = this.state;
+    if (selected.includes(id)) this.set({ selected: selected.filter((x) => x !== id) });
+    else this.selectMany([id], { add: true });
   }
 
   setTool(tool: ToolId): void {
@@ -663,6 +699,34 @@ export class EditorStore {
   chosenType(choices: TypeChoice[], id: string | null): TypeChoice | undefined {
     return choices.find((c) => c.id === id) ?? choices[0];
   }
+}
+
+/**
+ * FLR-T-18.8: keep `selection` (the primary) and `selected` (all of it) in step. A patch that names
+ * only one of them sets the other from it; one that names both is trusted, its primary put last.
+ */
+function selectionPatch(state: EditorState, next: Partial<EditorState>): Partial<EditorState> {
+  const hasPrimary = Object.hasOwn(next, 'selection');
+  const hasAll = Object.hasOwn(next, 'selected');
+  if (!hasPrimary && !hasAll) return {};
+  if (hasPrimary && !hasAll) {
+    const id = next.selection ?? null;
+    // The primary moved within the selection (a click on one of several): the rest stay selected.
+    if (id !== null && state.selected.length > 1 && state.selected.includes(id) && state.selection === id) return { selected: state.selected };
+    return { selected: id === null ? [] : [id] };
+  }
+  const all = [...new Set(next.selected ?? [])];
+  if (!hasPrimary) return { selected: all, selection: all[all.length - 1] ?? null };
+  const primary = next.selection ?? null;
+  if (primary === null) return { selected: [], selection: null };
+  return { selected: [...all.filter((id) => id !== primary), primary], selection: primary };
+}
+
+/** What survives of the selection in a newly read model: the elements that still exist. */
+function survivors(s: EditorState, model: EditorModel): Pick<EditorState, 'selection' | 'selected'> {
+  const selected = s.selected.filter((id) => model.index.has(id));
+  const selection = s.selection !== null && model.index.has(s.selection) ? s.selection : (selected[selected.length - 1] ?? null);
+  return { selected: selection === null ? [] : [...selected.filter((id) => id !== selection), selection], selection };
 }
 
 const withFix = (label: string) => (label.endsWith(' (with fix)') ? label : `${label} (with fix)`);

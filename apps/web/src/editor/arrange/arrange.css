@@ -1,0 +1,187 @@
+/* FLR-T-18.8: multi-select and arrange — every colour a design token, so both themes work. */
+
+/* The selection's one bounds box. */
+.fs-arrange__bounds {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+/* The group while it is dragged, and the array's copies before anything is written. */
+.fs-arrange__ghost,
+.fs-arrange__copy {
+  fill: var(--color-accent-muted);
+  fill-opacity: 0.5;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  pointer-events: none;
+}
+.fs-arrange__wall {
+  stroke: var(--color-accent);
+  stroke-width: 3;
+  stroke-opacity: 0.7;
+  pointer-events: none;
+}
+
+/* The marquee: a window is solid accent; a crossing is dashed green (AutoCAD's convention). */
+.fs-marquee {
+  fill: var(--color-accent);
+  fill-opacity: 0.08;
+  stroke: var(--color-accent);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.fs-marquee--crossing {
+  fill: var(--color-success);
+  stroke: var(--color-success);
+  stroke-dasharray: 4 3;
+}
+
+.fs-marquee-legend {
+  position: absolute;
+  left: var(--space-12);
+  bottom: 64px;
+  z-index: 5;
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  pointer-events: none;
+}
+.fs-marquee-legend > span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-marquee-legend__on {
+  color: var(--color-fg);
+  font-weight: var(--weight-medium);
+}
+.fs-marquee-legend__swatch {
+  display: inline-block;
+  width: 18px;
+  height: 10px;
+  border: 1px solid var(--color-accent);
+}
+.fs-marquee-legend__swatch--crossing {
+  border: 1px dashed var(--color-success);
+}
+.fs-marquee-legend__keys {
+  color: var(--color-fg-faint);
+}
+
+/* The contextual toolbar beside the selection: it floats over the plan, in full screen too. */
+.fs-seltool {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  /* The surface, not the raised one: the danger tone of Delete keeps its contrast on it in both themes. */
+  background: var(--color-surface);
+  box-shadow: var(--shadow-float);
+}
+.fs-seltool__sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--space-2);
+  background: var(--color-border);
+}
+.fs-seltool__count {
+  white-space: nowrap;
+}
+
+/* The array popover. */
+.fs-arraypop {
+  position: absolute;
+  left: var(--space-16);
+  bottom: 72px;
+  z-index: 7;
+  display: grid;
+  gap: var(--space-12);
+  width: 264px;
+  padding: var(--space-16);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+}
+.fs-arraypop__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-arraypop__title {
+  flex: 1 1 0;
+  margin: 0;
+  font-size: var(--text-14);
+  font-weight: var(--weight-semibold);
+}
+.fs-arraypop__row {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-13);
+}
+.fs-arraypop__input {
+  height: 32px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--color-border-field);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-sunken);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-13);
+}
+.fs-arraypop__input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.fs-arraypop__input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+.fs-arraypop__input:disabled {
+  color: var(--color-fg-faint);
+}
+.fs-arraypop__actions {
+  display: flex;
+  gap: var(--space-8);
+}
+.fs-arrange__tag {
+  position: absolute;
+  z-index: 5;
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  pointer-events: none;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* The inspector across a selection. */
+.fs-multi__note {
+  margin: 0;
+  color: var(--color-fg-faint);
+  font-size: var(--text-12);
+}
+.fs-multi__copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}

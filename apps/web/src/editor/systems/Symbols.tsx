@@ -256,7 +256,11 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
       {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape').map((d) => {
         // FLR-T-18.3: a load carries its circuit's tone, which the Electrical mode draws it in (modes.css).
         const tone = tones.get(d.id);
-        return <DeviceShape key={d.id} view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}${tone === undefined ? '' : ` fs-sym--tone-${String(tone)}`}`} />;
+        return (
+          <g key={d.id} data-device={d.id}>
+            <DeviceShape view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}${tone === undefined ? '' : ` fs-sym--tone-${String(tone)}`}`} />
+          </g>
+        );
       })}
       {layers.electrical ? <PanelCallouts view={view} level={level} /> : null}
     </g>

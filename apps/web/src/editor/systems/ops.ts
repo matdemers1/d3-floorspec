@@ -261,6 +261,19 @@ export function referenceCleanup(document: FloorspecDocument, ids: ReadonlySet<s
       ops.push(...setRecordMember('FS_electrical', 'circuits', cid, 'loads', rest.length === 0 ? undefined : rest));
     }
   }
+  // FS_lighting keeps a luminaire record per light and names lights in its scenes (FLR-T-13.12): a light
+  // that goes takes its record and its place in every scene with it, or the applier refuses the batch.
+  const lighting = (document.extensions as Json | undefined)?.['FS_lighting'];
+  if (isObject(lighting)) {
+    const luminaires = lighting['luminaires'];
+    if (isObject(luminaires)) for (const id of Object.keys(luminaires).sort(compareIds)) if (gone.has(id)) ops.push({ op: 'unsetProperty', id: '$document', path: `/extensions/FS_lighting/luminaires/${id}` });
+    const scenes = lighting['scenes'];
+    if (isObject(scenes))
+      for (const [sid, scene] of Object.entries(scenes).sort(([a], [b]) => compareIds(a, b))) {
+        const on = isObject(scene) ? scene['on'] : undefined;
+        if (isObject(on)) for (const id of Object.keys(on).sort(compareIds)) if (gone.has(id)) ops.push({ op: 'unsetProperty', id: '$document', path: `/extensions/FS_lighting/scenes/${sid}/on/${id}` });
+      }
+  }
   for (const [extension, data] of Object.entries((document.extensions ?? {}) as Json)) {
     const collections = isObject(data) ? data['collections'] : undefined;
     if (!isObject(collections)) continue;

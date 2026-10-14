@@ -351,9 +351,10 @@ export function elementBounds(level: LevelView, id: string): Bounds | null {
 
 /** The selected elements, as IDs. */
 export function selectedIds(store: EditorStore): string[] {
-  const selection = store.get().selection as string | readonly string[] | null;
-  if (selection === null) return [];
-  return typeof selection === 'string' ? [selection] : [...selection];
+  // FLR-T-18.8: everything selected, the primary among it.
+  const { selection, selected } = store.get();
+  if (selected.length > 0) return [...selected];
+  return selection === null ? [] : [selection];
 }
 
 const union = (all: (Bounds | null)[]): Bounds | null => {

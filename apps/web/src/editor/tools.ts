@@ -36,6 +36,10 @@ import { moveDevice, placeDevice, setMember } from './systems/ops';
 import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
 import type { DeviceView } from './systems/view';
 import { boxOf, dragResize, dragRotate, handlesOf, isResizable, resizeBatch, rotateHandleOf, ruleFor, sizeOf, turnBatch, type HandleSide } from '../furniture/resize';
+import { arrangeOf } from './arrange/state';
+import { isCovering, marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
+import { transformBatch, translation } from './arrange/transform';
+import { deleteSelection, moveSelection } from './arrange/actions';
 
 /**
  * Pointer and keyboard input on the plan (FLR-T-3.3). Pointer events throughout, so a mouse, a
@@ -53,6 +57,8 @@ export interface PointerInfo {
   button: number;
   shift: boolean;
   alt: boolean;
+  /** FLR-T-18.8: ⌘ on macOS, Ctrl elsewhere — toggles what a click or a marquee picks. Absent: up. */
+  meta?: boolean;
   /** Click count, for a double click. */
   detail: number;
 }
@@ -76,7 +82,12 @@ export class ToolController {
   private readonly pointers = new Map<number, Tracked>();
   private mode: Mode = 'idle';
   private pinch: { d: number; mid: Point } | null = null;
-  private dragStart: { world: Point; target: string; kind: 'junction' | 'wall' | 'opening' | 'device' | 'resize' | 'rotate'; side?: HandleSide } | null = null;
+  private dragStart: { world: Point; target: string; kind: 'junction' | 'wall' | 'opening' | 'device' | 'resize' | 'rotate' | 'group'; side?: HandleSide } | null = null;
+  /**
+   * FLR-T-18.8: a press on the plan that is not on something to drag — a marquee if it moves, a
+   * click if it does not; and with ⇧ or ⌘ held, the element under it, toggled on release.
+   */
+  private press: { world: Point; how: 'replace' | 'add' | 'toggle'; hit: string | null } | null = null;
   space = false;
   private readonly wheels = new WheelDetector();
   /** The last press, to tell a double click (or a double tap) on the plan. */
@@ -98,7 +109,7 @@ export class ToolController {
   }
 
   /** The level as a click picks from it: a mode's ghosts are not selectable (FLR-T-18.3). */
-  private get pickLevel(): LevelView | undefined {
+  get pickLevel(): LevelView | undefined {
     const level = this.level;
     return level === undefined ? undefined : pickable(level, ghostsOf(this.store));
   }
@@ -258,6 +269,9 @@ export class ToolController {
 
   private cancelGesture(): void {
     this.dragStart = null;
+    this.press = null;
+    const arrange = arrangeOf(this.store);
+    if (arrange.get().marquee !== null || arrange.get().dragging !== null) arrange.set({ marquee: null, dragging: null });
     const draft = this.store.get().draft;
     if (draft?.tool === 'select' && draft.drag !== null) {
       this.store.set({ draft: { ...draft, drag: null } });
@@ -282,7 +296,7 @@ export class ToolController {
   private handleUnder(p: PointerInfo): { kind: 'resize'; id: string; side: HandleSide } | { kind: 'rotate'; id: string } | null {
     const level = this.level;
     const s = this.store.get();
-    if (level === undefined || s.view === null || s.selection === null) return null;
+    if (level === undefined || s.view === null || s.selection === null || s.selected.length > 1) return null;
     const device = level.devices.find((d) => d.id === s.selection);
     if (device === undefined || !isResizable(device)) return null;
     const world = this.world(p);
@@ -370,6 +384,10 @@ export class ToolController {
           this.selectDrag(p);
           return;
         }
+        if (dragging && this.press !== null && p.type !== 'touch') {
+          this.marqueeDrag(p);
+          return;
+        }
         if (this.mode === 'idle' || this.mode === 'tool') {
           const id = this.deviceUnder(p)?.id ?? hitTest(this.pickLevel ?? level, this.world(p), this.tol(p.type), { roofs: s.layers.roof })?.id ?? null;
           if (id !== s.hover) this.store.set({ hover: id });
@@ -438,19 +456,72 @@ export class ToolController {
       this.dragStart = null;
       return;
     }
-    const grab = this.editable ? this.grabTarget(p) : null;
+    const under = this.deviceUnder(p) ?? hitTest(this.pickLevel ?? level, world, this.tol(p.type), { roofs: this.store.get().layers.roof });
+    const modifier = p.shift || p.meta === true;
+    // FLR-T-18.8: ⇧- or ⌘-click toggles what is under the pointer; dragged, it is a marquee that adds (⇧) or toggles (⌘).
+    if (modifier && p.type !== 'touch') {
+      this.dragStart = null;
+      this.press = { world, how: p.meta === true ? 'toggle' : 'add', hit: under?.id ?? null };
+      return;
+    }
+    let grab = this.editable ? this.grabTarget(p) : null;
+    // A rug or a bed not yet selected is the floor a marquee starts from, like a room; selected, it drags.
+    if (grab?.kind === 'device' && !this.store.get().selected.includes(grab.id)) {
+      const element = level.devices.find((d) => d.id === grab?.id)?.element;
+      if (element !== undefined && isCovering(element)) grab = null;
+    }
+    // A press on one of several selected: the whole selection drags (a click alone selects just that one).
+    const selected = this.store.get().selected;
+    const member = grab?.kind === 'resize' || grab?.kind === 'rotate' ? null : (grab?.id ?? under?.id ?? null);
+    if (this.editable && selected.length > 1 && member !== null && selected.includes(member)) {
+      this.dragStart = { world, target: member, kind: 'group' };
+      return;
+    }
     if (grab !== null) {
       this.dragStart = { world, target: grab.id, kind: grab.kind, ...(grab.side === undefined ? {} : { side: grab.side }) };
       return;
     }
     this.dragStart = null;
-    const device = this.deviceUnder(p);
-    const hit = device ?? hitTest(this.pickLevel ?? level, world, this.tol(p.type), { roofs: this.store.get().layers.roof });
-    if (hit !== null) flipFromPlan(this.store, hit.id);
-    this.store.select(hit?.id ?? null);
     // FLR-T-18.6: a double click on empty space — nothing, or only a room's floor or a slab — zooms in (⌥ out).
-    const empty = device === null && (hit === null || ('kind' in hit && (hit.kind === 'room' || hit.kind === 'slab')));
+    const device = this.deviceUnder(p);
+    const empty = device === null && (under === null || ('kind' in under && (under.kind === 'room' || under.kind === 'slab')));
     if (this.double(p) && empty) zoomBy(this.store, p.alt ? 0.5 : 2, [p.x, p.y]);
+    // Anything else: a click selects on release; a drag from here is a marquee (not for a finger, which pans).
+    if (p.type !== 'touch') {
+      this.press = { world, how: 'replace', hit: under?.id ?? null };
+      return;
+    }
+    if (under !== null) flipFromPlan(this.store, under.id);
+    this.store.select(under?.id ?? null);
+  }
+
+  /** FLR-T-18.8: the marquee follows the pointer — to the right a window, to the left a crossing. */
+  private marqueeDrag(p: PointerInfo): void {
+    const press = this.press;
+    if (press === null) return;
+    const to = this.world(p);
+    if (this.store.get().hover !== null) this.store.set({ hover: null });
+    arrangeOf(this.store).set({ marquee: { from: press.world, to, crossing: to[0] < press.world[0], how: press.how } });
+  }
+
+  /** The marquee let go: what it caught replaces, joins or toggles in the selection. */
+  private marqueeUp(): void {
+    const arrange = arrangeOf(this.store);
+    const m = arrange.get().marquee;
+    arrange.set({ marquee: null });
+    const level = this.level;
+    if (m === null || level === undefined) return;
+    // A mode's ghosted layers are not picked by a marquee either (FLR-T-18.3).
+    const hits = marqueeHits(selectableShapes(this.pickLevel ?? level, this.store.get().layers), rectOf(m.from, m.to), m.crossing);
+    if (m.how === 'replace') {
+      if (hits.length === 0) this.store.select(null);
+      else this.store.selectMany(hits);
+    } else if (m.how === 'add') this.store.selectMany(hits, { add: true });
+    else {
+      const now = this.store.get().selected;
+      const kept = now.filter((id) => !hits.includes(id));
+      this.store.selectMany([...kept, ...hits.filter((id) => !now.includes(id))]);
+    }
   }
 
   private selectDrag(p: PointerInfo): void {
@@ -460,6 +531,19 @@ export class ToolController {
     if (start === null || level === undefined) return;
     const typed = s.draft?.tool === 'select' ? s.draft.typed : '';
     const grid = gridStep(this.store.units);
+    if (start.kind === 'group') {
+      // FLR-T-18.8: the whole selection, by the grid (⌥ free, ⇧ along one axis), drawn as a ghost until let go.
+      const world = this.world(p);
+      let d: Point = [world[0] - start.world[0], world[1] - start.world[1]];
+      if (p.shift) d = Math.abs(d[0]) >= Math.abs(d[1]) ? [d[0], 0] : [0, d[1]];
+      if (!p.alt) d = [Math.round(d[0] / grid) * grid, Math.round(d[1] / grid) * grid];
+      d = [Math.round(d[0]), Math.round(d[1])];
+      if (s.hover !== null) this.store.set({ hover: null });
+      arrangeOf(this.store).set({ dragging: d });
+      const model = s.model;
+      this.store.preview(model === null || (d[0] === 0 && d[1] === 0) ? null : transformBatch(model, level, s.selected, translation(d)).batch);
+      return;
+    }
     if (start.kind === 'junction') {
       const walls = new Set([...level.walls, ...level.separators].filter((w) => w.start === start.target || w.end === start.target).map((w) => w.id));
       const snap = snapPoint(level, this.world(p), { tol: this.tol(p.type), grid, exclude: new Set([start.target]), excludeWalls: walls, lock45: p.shift, free: p.alt });
@@ -522,11 +606,33 @@ export class ToolController {
   private selectUp(p: PointerInfo, moved: boolean): void {
     const start = this.dragStart;
     this.dragStart = null;
+    const press = this.press;
+    this.press = null;
     const draft = this.store.get().draft;
     const drag = draft?.tool === 'select' ? draft.drag : null;
     this.store.preview(null);
     this.store.set({ draft: null });
+    if (press !== null) {
+      if (moved && arrangeOf(this.store).get().marquee !== null) this.marqueeUp();
+      else if (press.how !== 'replace') {
+        if (press.hit !== null) this.store.toggleSelected(press.hit);
+      } else {
+        if (press.hit !== null) flipFromPlan(this.store, press.hit);
+        this.store.select(press.hit);
+      }
+      arrangeOf(this.store).set({ marquee: null });
+      return;
+    }
     if (start === null) return;
+    if (start.kind === 'group') {
+      const by = arrangeOf(this.store).get().dragging;
+      arrangeOf(this.store).set({ dragging: null });
+      if (!moved || by === null) {
+        flipFromPlan(this.store, start.target);
+        this.store.select(start.target);
+      } else moveSelection(this.store, by);
+      return;
+    }
     if (!moved || drag === null) {
       // A click on a handle selects what it belongs to — and a switch's flips its lights (FLR-T-13.12).
       flipFromPlan(this.store, start.target);
@@ -1009,7 +1115,8 @@ export class ToolController {
   remove(): void {
     const s = this.store.get();
     if (s.selection === null || s.model === null || !this.editable) return;
-    requestRemove(this.store, s.selection);
+    if (s.selected.length > 1) deleteSelection(this.store);
+    else requestRemove(this.store, s.selection);
   }
 
   /** Switch tool, finishing a chain in progress first. */

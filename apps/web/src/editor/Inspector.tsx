@@ -28,6 +28,7 @@ import { OptionMembership } from './Options';
 import { WallFinishes } from './Finishes';
 import { ArcWallIcon, DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, SlabIcon, SofaIcon, StairIcon, WallIcon, WindowIcon } from './icons';
 import { sagittaFromRadius } from './arcs';
+import { MultiInspector } from './arrange/MultiInspector';
 import { RoofBody, RoofDrawSettings, StairBody, StairDrawSettings } from './RoofStairFields';
 import { FindingsList } from './Diagnostics';
 import { Layers as LayersIcon, Palette, House } from 'lucide-react';
@@ -94,6 +95,7 @@ interface Ctx {
 export function Inspector({ store, tools }: { store: EditorStore; tools: ToolController }) {
   const model = useEditor(store, (s) => s.model);
   const selection = useEditor(store, (s) => s.selection);
+  const many = useEditor(store, (s) => s.selected.length > 1);
   const tool = useEditor(store, (s) => s.tool);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const focus = useEditor(store, (s) => s.focus);
@@ -102,6 +104,8 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   if (model === null) return null;
   if (tool === 'device' && readOnly === null) return <DevicePanel store={store} tools={tools} model={model} />;
   if (tool !== 'select' && readOnly === null) return <DrawPanel store={store} model={model} />;
+  // FLR-T-18.8: several selected — the fields they share.
+  if (many) return <MultiInspector store={store} />;
   const element = selection === null ? undefined : elementOf(model, selection);
   const kind = selection === null ? null : kindOf(model, selection);
   if (selection === null || element === undefined || kind === null) return <ProjectPanel store={store} model={model} units={units} readOnly={readOnly !== null} />;
