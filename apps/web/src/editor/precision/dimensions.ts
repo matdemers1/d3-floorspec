@@ -5,6 +5,7 @@ import { moveOpening, moveWall, type Batch } from '../ops';
 import { transformBatch, translation } from '../arrange/transform';
 import { isCovering } from '../arrange/shapes';
 import type { DeviceView } from '../systems/view';
+import { resizeRoom, roomSides } from '../rooms/edit';
 import { BASE_PER_FOOT } from '../units';
 import type { DimRef } from './state';
 
@@ -276,6 +277,9 @@ function roomDims(model: EditorModel, level: LevelView, id: string, ref: DimRef)
     const moving = level.walls.find((w) => w.id === hp.id);
     const k = axis === 'x' ? 0 : 1;
     const nk = moving === undefined ? 0 : leftNormal(moving.a, moving.b)[k];
+    // FLR-T-18.10's resizeRoom (Ops 4.4) moves the east (north) side when it can — its walls follow as a room's do.
+    const side = axis === 'x' ? 'east' : 'north';
+    const resizable = roomSides(level, id).some((r) => r.side === side && r.ok);
     out.push({
       key: `room:${axis}`,
       label,
@@ -285,14 +289,15 @@ function roomDims(model: EditorModel, level: LevelView, id: string, ref: DimRef)
       b: at(c, plus, vp),
       value,
       shift: axis === 'x' ? { dir: [0, 1], world: north?.far ?? 0, px: 18, bare: true } : { dir: [1, 0], world: east?.far ?? 0, px: 18, bare: true },
-      ...(Math.abs(nk) < 0.99
+      ...(!resizable && Math.abs(nk) < 0.99
         ? {}
         : {
             apply: (v: number) => {
-              // The east (or north) wall moves: by along its normal, which points ±x (±y).
-              const by = Math.round((v - value) * Math.sign(nk));
-              if (by === 0) return { error: `${labelOf(model, id)} is already that ${axis === 'x' ? 'wide' : 'deep'}` };
-              return { label: `Make ${labelOf(model, id)} ${axis === 'x' ? 'wider or narrower' : 'deeper or shallower'}`, batch: moveWall(hp.id, by) };
+              const grow = Math.round(v - value);
+              if (grow === 0) return { error: `${labelOf(model, id)} is already that ${axis === 'x' ? 'wide' : 'deep'}` };
+              const label = `Make ${labelOf(model, id)} ${axis === 'x' ? (grow > 0 ? 'wider' : 'narrower') : grow > 0 ? 'deeper' : 'shallower'}`;
+              // The east (or north) side out by the difference; else its wall, by along its normal (±x, ±y).
+              return { label, batch: resizable ? resizeRoom(id, side, grow) : moveWall(hp.id, Math.round(grow * Math.sign(nk))) };
             },
           }),
     });

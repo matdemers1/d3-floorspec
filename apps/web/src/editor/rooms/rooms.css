@@ -1,0 +1,121 @@
+/* Rooms you can grab and the magic wand (FLR-T-18.10; the board's "Rooms get handles too" card on
+   frame 18.4). Tokens only, so both themes work. The handles are the furniture's (.fs-resize__handle),
+   as pills along the side: white with an accent rim, as the board's P18/Handle draws them. */
+
+.fs-room-handle {
+  fill: var(--color-surface);
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+
+/* The room a drag would make: dashed, over the ghost of its walls. */
+.fs-room__ghost {
+  fill: var(--color-accent);
+  fill-opacity: 0.1;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  pointer-events: none;
+}
+
+/* The board's P18/Dimension tag: accent, the size in mono. */
+.fs-room-tag rect {
+  fill: var(--color-accent);
+}
+.fs-room-tag text {
+  fill: var(--color-accent-contrast);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+}
+.fs-room-tag--hint rect {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-border);
+}
+.fs-room-tag--hint text {
+  fill: var(--color-fg-muted);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-regular);
+}
+.fs-room-tag--bad rect {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-danger);
+}
+.fs-room-tag--bad text {
+  fill: var(--color-danger);
+  font-family: var(--font-sans);
+}
+
+/* The wand: the space under the pointer, the chosen one, the others a click could mean. */
+.fs-wand__face {
+  fill: var(--color-accent);
+  fill-opacity: 0.12;
+  stroke: var(--color-accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+.fs-wand__face--taken {
+  fill: none;
+  stroke: var(--color-fg-faint);
+}
+.fs-wand__chosen {
+  fill: var(--color-accent);
+  fill-opacity: 0.22;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  pointer-events: none;
+}
+.fs-wand__other {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  stroke-opacity: 0.8;
+  pointer-events: none;
+}
+
+/* The wand's prompt, beside the chosen space. */
+.fs-wand {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  gap: var(--space-6);
+  width: 280px;
+  padding: var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+}
+.fs-wand__status {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-wand__status strong {
+  color: var(--color-fg);
+  font-weight: var(--weight-medium);
+}
+.fs-wand__label {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+}
+.fs-wand__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+.fs-wand__keys {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+}
+.fs-wand__keys kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
