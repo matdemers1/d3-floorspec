@@ -330,3 +330,25 @@ export async function undoCandidates(tx: Tx, projectId: string): Promise<UndoCan
     select: { id: true, seq: true, kind: true, undoOfId: true, inverse: true },
   });
 }
+
+// ─── Restore (FLR-T-18.14) ───────────────────────────────────────────────────
+
+/**
+ * The batch that returns main to the version after op `seq`: the stored inverse of every op on main
+ * after it, newest first, as one batch (Ops 1.6). Applied as a new op — history is appended to, never
+ * rewound — on main (restore) or into a changeset opened from main (branch). `target` is the version
+ * it must arrive at, so the caller can refuse a result that is not exactly that version.
+ */
+export async function restoreBatch(tx: Tx, projectId: string, seq: number): Promise<{ batch: Batch; target: string; undone: number[] }> {
+  const at = await tx.opLog.findFirst({ where: { projectId, head: MAIN, seq }, select: { seq: true, afterHash: true } });
+  if (at === null) throw new HttpError(404, `v${String(seq)} is not a version of main`);
+  const later = await tx.opLog.findMany({
+    where: { projectId, head: MAIN, seq: { gt: seq } },
+    orderBy: { seq: 'desc' },
+    select: { seq: true, inverse: true },
+  });
+  if (later.length === 0) throw new HttpError(409, `main is at v${String(seq)} already`);
+  const missing = later.find((op) => op.inverse === null);
+  if (missing !== undefined) throw new HttpError(409, `v${String(missing.seq)} cannot be taken back, so main cannot go back past it`);
+  return { batch: later.flatMap((op) => op.inverse as unknown as Batch), target: at.afterHash, undone: later.map((op) => op.seq) };
+}
