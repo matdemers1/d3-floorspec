@@ -6,6 +6,7 @@ import { labelOf, sortedLevels } from '../model';
 import { modesOf } from '../modes';
 import { BASE_PER_FOOT, BASE_PER_INCH, BASE_PER_MM, gridStep, prettyLen, type UnitSystem } from '../units';
 import { SNAP_DEFAULTS, snapPoint, type Snap, type SnapOptions, type SnapSettings } from '../snap';
+import { referencePoints } from '../underlay/state';
 
 /**
  * Precision without effort (FLR-T-18.9), beside the editor's store as the arrange and mode state are:
@@ -279,11 +280,12 @@ export function namer(store: EditorStore): (id: string) => string {
 /**
  * Snap a plan point with the person's settings: the one entry point for every tool (drawing,
  * dragging, placing — FLR-T-18.7 — and measuring). `options` are snapPoint's, without the settings,
- * the grid, the ghosts and the names, which come from the editor.
+ * the grid, the ghosts, the reference level's points and the names, which come from the editor.
  */
-export function snapAt(store: EditorStore, level: LevelView | undefined, raw: Point, options: Omit<SnapOptions, 'settings' | 'grid' | 'ghosts' | 'name'>): Snap {
+export function snapAt(store: EditorStore, level: LevelView | undefined, raw: Point, options: Omit<SnapOptions, 'settings' | 'grid' | 'ghosts' | 'reference' | 'name'>): Snap {
   const settings = snapSettingsOf(store);
-  return snapPoint(level, raw, { ...options, settings, grid: gridStepOf(store), ghosts: settings.ghosts ? ghostPoints(store) : [], name: namer(store) });
+  // FLR-T-18.12: the reference level drawn under this one is snapped to while it is shown.
+  return snapPoint(level, raw, { ...options, settings, grid: gridStepOf(store), ghosts: settings.ghosts ? ghostPoints(store) : [], reference: referencePoints(store), name: namer(store) });
 }
 
 /** The status bar's words for the snapping: "junctions, walls, grid 6"". */

@@ -27,6 +27,7 @@
     "@react-three/fiber": "9.8.1",
     "lucide-react": "^1.44.0",
     "oidn-web": "0.4.0",
+    "pdfjs-dist": "6.4.299",
     "qrcode-generator": "2.0.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

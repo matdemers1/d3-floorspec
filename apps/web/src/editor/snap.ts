@@ -95,6 +95,12 @@ export interface SnapOptions {
   faces?: boolean;
   /** Points of other levels (the ghosts), snapped to when `settings.ghosts` is on. */
   ghosts?: readonly Point[];
+  /**
+   * FLR-T-18.12: the points of the reference level drawn under this one (its junctions and wall
+   * corners), each with its words — snapped to while the reference is shown, whatever `ghosts` says:
+   * a level drawn to line things up with is a level to snap to.
+   */
+  reference?: readonly { point: Point; label: string }[];
   /** Items not to snap to: those being moved. */
   excludeItems?: ReadonlySet<string>;
   /** An element's name, for the snap's label; absent, its ID. */
@@ -248,10 +254,10 @@ export function itemPoints(device: { footprint: Ring; placement: { point: Point 
 const targetCache = new WeakMap<object, { key: string; devices: unknown; targets: SnapTarget[] }>();
 
 /** The midpoints, item points and ghosts the settings snap to — kept per level while nothing is excluded, as the pointer moves. */
-export function snapTargets(level: LevelView, o: Pick<SnapOptions, 'settings' | 'ghosts' | 'excludeItems' | 'excludeWalls' | 'name'>): SnapTarget[] {
+export function snapTargets(level: LevelView, o: Pick<SnapOptions, 'settings' | 'ghosts' | 'reference' | 'excludeItems' | 'excludeWalls' | 'name'>): SnapTarget[] {
   const s = o.settings ?? SNAP_DEFAULTS;
   const cacheable = (o.excludeItems?.size ?? 0) === 0 && (o.excludeWalls?.size ?? 0) === 0;
-  const key = `${String(s.midpoints)}${String(s.items)}${String(s.ghosts)}:${(o.ghosts ?? []).map((p) => `${String(p[0])},${String(p[1])}`).join(';')}`;
+  const key = `${String(s.midpoints)}${String(s.items)}${String(s.ghosts)}:${(o.ghosts ?? []).map((p) => `${String(p[0])},${String(p[1])}`).join(';')}|${(o.reference ?? []).map((r) => `${String(r.point[0])},${String(r.point[1])}`).join(';')}`;
   if (cacheable) {
     const hit = targetCache.get(level.walls);
     if (hit?.key === key && hit.devices === level.devices) return hit.targets;
@@ -261,7 +267,7 @@ export function snapTargets(level: LevelView, o: Pick<SnapOptions, 'settings' | 
   return targets;
 }
 
-function collectTargets(level: LevelView, s: SnapSettings, o: Pick<SnapOptions, 'ghosts' | 'excludeItems' | 'excludeWalls' | 'name'>): SnapTarget[] {
+function collectTargets(level: LevelView, s: SnapSettings, o: Pick<SnapOptions, 'ghosts' | 'reference' | 'excludeItems' | 'excludeWalls' | 'name'>): SnapTarget[] {
   const name = o.name ?? ((id: string) => id);
   const out: SnapTarget[] = [];
   if (s.midpoints) {
@@ -284,6 +290,7 @@ function collectTargets(level: LevelView, s: SnapSettings, o: Pick<SnapOptions, 
     }
   }
   if (s.ghosts) for (const p of o.ghosts ?? []) out.push({ point: roundPoint(p), kind: 'ghost', label: 'On the level below' });
+  for (const r of o.reference ?? []) out.push({ point: roundPoint(r.point), kind: 'ghost', label: r.label });
   return out;
 }
 

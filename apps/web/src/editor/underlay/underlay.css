@@ -1,0 +1,208 @@
+/* FLR-T-18.12: trace and reference — the underlay, the reference level, and setting the scale. */
+
+/* ── The underlay: an image on the plan, never picked ── */
+.fs-underlay {
+  pointer-events: none;
+}
+.fs-underlay[data-state='ghost'] image {
+  filter: grayscale(1);
+}
+
+/* ── The reference level: the level below or above in its ghost colour, outlined, never picked ── */
+.fs-reference {
+  --fs-reference: var(--color-info);
+  pointer-events: none;
+  opacity: 0.75;
+}
+.fs-reference__walls polygon {
+  fill: color-mix(in srgb, var(--fs-reference) 14%, transparent);
+  stroke: var(--fs-reference);
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+}
+.fs-reference__walls .fs-reference__fill {
+  stroke: none;
+}
+.fs-reference__openings line {
+  stroke: var(--fs-reference);
+  stroke-width: 3;
+  stroke-linecap: butt;
+  opacity: 0.6;
+}
+.fs-reference__stairs :is(polygon, polyline, path, line) {
+  fill: none;
+  stroke: var(--fs-reference);
+}
+.fs-reference__stairs text {
+  display: none;
+}
+
+/* ── Setting the scale and moving: the sheet that takes the clicks, and its marks ── */
+.fs-underlay-capture__sheet {
+  fill: transparent;
+  cursor: crosshair;
+}
+.fs-underlay-capture__mark circle {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+}
+.fs-underlay-capture__mark line,
+.fs-underlay-capture__span {
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+.fs-underlay-capture__span {
+  stroke-dasharray: 6 4;
+}
+
+.fs-underlay-prompt {
+  position: absolute;
+  /* Below the canvas's own top banner (an empty level's "Nothing drawn", the drawing hints). */
+  top: 72px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: calc(100% - 32px);
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-12);
+  transform: translateX(-50%);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  z-index: 20;
+}
+.fs-underlay-length {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 264px;
+  padding: var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  z-index: 21;
+}
+.fs-underlay-length__title {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
+.fs-underlay-length__label {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-underlay-length__hint {
+  min-height: 1.4em;
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-underlay-length input[aria-invalid='true'] ~ .fs-underlay-length__hint,
+.fs-underlay-length:has(input[aria-invalid='true']) .fs-underlay-length__hint {
+  color: var(--color-danger);
+}
+.fs-underlay-length__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-6);
+}
+
+/* ── The Layers drawer: trace and reference ── */
+.fs-trace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: var(--space-8) 0 0;
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--color-border);
+}
+.fs-trace__title {
+  padding: 0 var(--space-8);
+}
+.fs-layers__empty {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-trace__note,
+.fs-trace__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-6);
+  margin: 0;
+  padding: 0 var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-trace__note {
+  flex-wrap: nowrap;
+}
+.fs-trace__swatch {
+  flex: none;
+  width: 14px;
+  height: 0;
+  border-top: 2px dashed var(--color-info);
+}
+.fs-trace__file {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-fg);
+  font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-trace__import,
+.fs-trace__controls,
+.fs-trace__pages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: 0 var(--space-8);
+}
+.fs-trace__import .fs-note {
+  margin: 0;
+}
+.fs-trace__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+}
+.fs-trace__page {
+  min-width: 112px;
+}
+.fs-trace__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.fs-trace__number {
+  width: 96px;
+}
+.fs-trace__slider-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fs-trace__value {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+.fs-trace__slider {
+  margin: 0;
+}
+.fs-trace__error {
+  margin: 0;
+  padding: 0 var(--space-8);
+  color: var(--color-danger);
+  font-size: var(--text-12);
+}
