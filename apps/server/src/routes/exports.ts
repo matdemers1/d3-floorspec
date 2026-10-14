@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { evaluate, OFFICIAL_READER } from '@floorspec/engine';
+import { LAYER_STATES, MODE_IDS, PLAN_LAYERS } from '@floorspec/render2d';
 import { MAX_SHOTS, QUALITIES, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, withinBudget, type Quality, type ShotSize, type Size } from '@d3-floorspec/worker/stills';
 import { savedViewsOf } from '@floorspec/mesh';
 import type { Request } from 'express';
@@ -75,6 +76,9 @@ const ExportBody = z.strictObject({
   design: z.record(z.string().regex(ID), z.string().regex(ID)).optional(),
   /** A still: what to render (FLR-T-12.6). */
   still: StillBody.optional(),
+  /** PDF and DXF (FLR-T-18.3): a trade's view — an electrical plan, a furniture plan — and a person's own layer states over it. */
+  mode: z.enum(MODE_IDS).optional(),
+  layers: z.partialRecord(z.enum(PLAN_LAYERS), z.enum(LAYER_STATES)).optional(),
   /** A shot list: which saved views, how big and how clean (FLR-T-13.10). */
   shots: ShotsBody.optional(),
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8) — the editor's GPU still asks for either (FLR-T-13.13). */
@@ -103,6 +107,8 @@ type Params = {
   readonly versionSeq?: number | null;
   readonly versionAt?: string;
   readonly design?: Record<string, string>;
+  readonly mode?: string;
+  readonly layers?: Record<string, string>;
   readonly doors?: 'open' | 'closed';
   readonly lighting?: { on: Record<string, { output?: number; cct?: number }> };
   readonly camera?: string;
@@ -165,6 +171,7 @@ export function exportView(projectId: string, job: Job) {
     levels: p.levels ?? null,
     page: job.kind === 'export.pdf' ? (p.page ?? 'tabloid') : null,
     design: p.design ?? null,
+    mode: p.mode ?? null,
     still:
       job.kind === 'export.still'
         ? {
@@ -246,6 +253,7 @@ export function exportRoutes(db: Db): Routes {
       if (body.shots !== undefined && body.kind !== 'shots') throw new HttpError(400, 'only a shot list takes shots options');
       if (body.doors !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes doors');
       if (body.lighting !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes a lighting');
+      if ((body.mode !== undefined || body.layers !== undefined) && body.kind !== 'pdf' && body.kind !== 'dxf') throw new HttpError(400, 'a mode is a view of the plan: only a PDF or DXF drawing takes one');
       const still = body.kind === 'still' ? StillBody.parse(body.still ?? {}) : undefined;
       if (still !== undefined) {
         if (body.levels !== undefined || body.page !== undefined) throw new HttpError(400, 'a still takes a view, a size and a quality, not levels or a page');
@@ -284,6 +292,8 @@ export function exportRoutes(db: Db): Routes {
         ...(body.levels === undefined ? {} : { levels: [...new Set(body.levels)] }),
         ...(body.kind === 'pdf' ? { page: body.page ?? 'tabloid' } : {}),
         ...(body.design === undefined ? {} : { design: body.design }),
+        ...(body.mode === undefined ? {} : { mode: body.mode }),
+        ...(body.layers === undefined ? {} : { layers: { ...body.layers } }),
         ...(body.doors === undefined ? {} : { doors: body.doors }),
         ...(body.lighting === undefined ? {} : { lighting: { on: Object.fromEntries(Object.entries(body.lighting.on).map(([id, s]) => [id, { ...(s.output === undefined ? {} : { output: s.output }), ...(s.cct === undefined ? {} : { cct: s.cct }) }])) } }),
         ...(shots === undefined ? {} : { ...(shots.views === undefined ? {} : { views: [...new Set(shots.views)] }), size: shots.size, quality: shots.quality }),
@@ -313,7 +323,7 @@ export function exportRoutes(db: Db): Routes {
       });
       return {
         reply: (res) => res.status(202).location(`/api/projects/${project.id}/exports/${job.id}`).json({ export: exportView(project.id, job) }),
-        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }), ...(shots === undefined ? {} : { shots: { views: params.views ?? null, size: params.size, quality: params.quality } }) } },
+        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.mode === undefined ? {} : { mode: params.mode }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }), ...(shots === undefined ? {} : { shots: { views: params.views ?? null, size: params.size, quality: params.quality } }) } },
       };
     },
     { token: 'read' },

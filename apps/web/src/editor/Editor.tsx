@@ -30,6 +30,8 @@ import { formatLen, gridStepLabel } from './units';
 import { kindById, type SystemId } from './systems/catalog';
 import { ExportButton } from '../exports/ExportButton';
 import { Views, ViewSwitch } from './three/Views';
+import { DEVICE_ICONS, ModeStatus, ModeSwitcher, SaveModeDialog, useModeChoices } from './ModeSwitcher';
+import { modesOf, useModes, type RailItem } from './modes';
 import { useThreeState } from './three/mode';
 import { FindingsPanel, openAtFinding } from '../findings/Panel';
 import { findingsSource, useFindings } from '../findings/source';
@@ -69,6 +71,8 @@ export default function Editor({ id, you }: { id: string; you: string }) {
     // `?finding=<key>` or `?findings=open`: open with the findings panel, focused on that finding (FLR-T-6.9).
     const finding = takeParam('finding');
     if (finding !== null || takeParam('findings') !== null) openAtFinding(created, findingsSource(id), finding);
+    // The mode this project was left in (FLR-T-18.3), its layers applied before the plan first draws.
+    modesOf(created);
     return created;
   }, [id]);
   const tools = useMemo(() => new ToolController(store), [store]);
@@ -140,7 +144,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   return (
     <div className="fs-editor" tabIndex={-1} {...chrome} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle && !comments ? 'idle' : 'active'} data-walk={walking ? 'on' : undefined}>
       <Drawer store={store} side="top">
-        <TopBar store={store} you={you} />
+        <TopBar store={store} tools={tools} you={you} />
       </Drawer>
       <Drawer store={store} side="left">
         <ToolRail store={store} tools={tools} />
@@ -189,6 +193,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
       <FurnitureLibrary store={store} />
       <StatusBar store={store} />
       <PromptModal store={store} />
+      <SaveModeDialog store={store} />
       {status === 'ready' ? <Palette store={store} tools={tools} /> : null}
       <Edges store={store} />
     </div>
@@ -314,7 +319,7 @@ function ToolHint({ store }: { store: EditorStore }) {
 
 // ─── Top bar ─────────────────────────────────────────────────────────────────────────────────
 
-function TopBar({ store, you }: { store: EditorStore; you: string }) {
+function TopBar({ store, tools, you }: { store: EditorStore; tools: ToolController; you: string }) {
   const project = useEditor(store, (s) => s.project);
   const model = useEditor(store, (s) => s.model);
   const level = useEditor(store, (s) => s.level);
@@ -333,6 +338,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
     .join(' · ');
   const editable = readOnly === null && pending === null && !comparing;
   const proposer = proposals[0] === undefined ? null : proposerOf(proposals[0].createdBy);
+  const modeChoices = useModeChoices(store);
   return (
     <header className="fs-topbar">
       <IconButton label="Back to the project" icon={<ArrowLeft />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}`); }} />
@@ -341,6 +347,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
         <h1>{model?.document.project.name ?? project?.name ?? 'Loading…'}</h1>
         <p aria-live="polite">{subtitle}</p>
       </div>
+      <ModeSwitcher store={store} tools={tools} />
       {levels.length > 0 ? (
         <Select
           className="fs-topbar__level"
@@ -397,7 +404,7 @@ function TopBar({ store, you }: { store: EditorStore; you: string }) {
       <CommentsButton store={store} />
       <Avatar className="fs-topbar__avatar" name={you} size="sm" />
       {project !== null ? <ShareButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} /> : null}
-      {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} optionSets={model?.optionSets} /> : null}
+      {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} optionSets={model?.optionSets} modes={modeChoices} /> : null}
       <span className="fs-topbar__rule" />
       <span className="fs-topbar__pin">
         <PinButton store={store} side="top" />
@@ -445,6 +452,21 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
   const readOnly = useEditor(store, (s) => s.readOnly);
   const canDraw = level !== null && readOnly === null;
   const furnitureOpen = useFurniture(store, (f) => f.open);
+  // A trade mode offers its own tools (FLR-T-18.3); without one, every tool.
+  const rail = useModes(store, () => modesOf(store).rail());
+  if (rail !== null) {
+    return (
+      <nav className="fs-rail" aria-label="Tools">
+        {rail.map((item) => (
+          <RailButton key={'tool' in item ? item.tool : 'device' in item ? item.device : 'library'} store={store} tools={tools} item={item} canDraw={canDraw} />
+        ))}
+        <span className="fs-spacer" />
+        <span className="fs-rail__pin">
+          <PinButton store={store} side="left" />
+        </span>
+      </nav>
+    );
+  }
   return (
     <nav className="fs-rail" aria-label="Tools">
       {RAIL.map((t) => {
@@ -498,6 +520,38 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
   );
 }
 
+/** One tool of a trade mode's rail (FLR-T-18.3): a drawing tool, a device kind, or the furniture library. */
+function RailButton({ store, tools, item, canDraw }: { store: EditorStore; tools: ToolController; item: RailItem; canDraw: boolean }) {
+  const tool = useEditor(store, (s) => s.tool);
+  const device = useEditor(store, (s) => s.draw.device);
+  const furnitureOpen = useFurniture(store, (f) => f.open);
+  if ('library' in item) {
+    return (
+      <Tooltip content="Insert from the library (I)" side="right">
+        <IconButton label="Furniture and appliances" icon={<SofaIcon />} pressed={furnitureOpen} disabled={!canDraw} onClick={() => { furnitureOf(store).set({ open: true, uploading: false }); }} />
+      </Tooltip>
+    );
+  }
+  if ('device' in item) {
+    const kind = kindById(item.device);
+    const label = kind?.label ?? item.device;
+    const command = kind === undefined ? undefined : commandById(`tool.${kind.system}`);
+    return (
+      <Tooltip content={`${label}${command?.hint === undefined ? '' : ` (${command.hint})`}`} side="right">
+        <IconButton label={`Place a ${label.toLowerCase()}`} icon={DEVICE_ICONS[item.device] ?? <PlugIcon />} pressed={tool === 'device' && device === item.device} disabled={!canDraw} onClick={() => { tools.useDevice(item.device); }} />
+      </Tooltip>
+    );
+  }
+  const t = RAIL.find((r) => r.tool === item.tool);
+  if (t === undefined) return null;
+  const command = commandById(`tool.${item.tool}`);
+  return (
+    <Tooltip content={`${t.label} (${command?.hint ?? ''})`} side="right">
+      <IconButton label={t.label} icon={t.icon} pressed={tool === item.tool} disabled={item.tool !== 'select' && item.tool !== 'hand' && !canDraw} onClick={() => { tools.setTool(item.tool); }} />
+    </Tooltip>
+  );
+}
+
 // ─── Status bar ──────────────────────────────────────────────────────────────────────────────
 
 function StatusBar({ store }: { store: EditorStore }) {
@@ -529,6 +583,7 @@ function StatusBar({ store }: { store: EditorStore }) {
         {units === 'metric' ? 'mm' : 'ft-in'}
       </button>
       <span className="fs-spacer" />
+      <ModeStatus store={store} />
       {model !== null ? (
         <button
           type="button"

@@ -58,6 +58,8 @@ const ProjectHandle = z.string().min(1).max(64).optional();
 const ChangesetHandle = z.string().min(1).max(120);
 /** A changeset to read: by name or ID, exactly as floorspec_apply takes one; without one, main. */
 const PendingChangeset = ChangesetHandle.optional().describe('Pending, by name or ID; else main.');
+/** FLR-T-18.3: the trade modes a plan is drawn in (@floorspec/render2d's MODE_IDS). */
+const MODES = ['construction', 'decorator', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface ServerOptions {
@@ -852,6 +854,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           doors: z.enum(['closed', 'open']).optional(),
           sky: z.enum(['clear', 'overcast', 'dusk', 'night', 'studio']).optional().describe('3D: under a sky, on a lawn.'),
           at: z.string().max(32).optional().describe('3D: site date-time placing the sun, as 2026-06-21T19:30-04:00.'),
+          mode: z.enum(MODES).optional().describe('Plan: a trade\'s view.'),
         }),
       ),
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -862,7 +865,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         const changeset = await changesetId(client, project.id, args.changeset);
         // One property for both (FLR-T-13.10): plan, 3d, or a saved view (FS_views) by name.
         const named = args.view !== undefined && args.view !== 'plan' && args.view !== '3d' ? args.view : undefined;
-        if (named !== undefined && [args.camera, args.level, args.highlight, args.scene, args.sky, args.at].some((a) => a !== undefined))
+        if (named !== undefined && [args.camera, args.level, args.highlight, args.scene, args.sky, args.at, args.mode].some((a) => a !== undefined))
           throw new ToolError(`A saved view sets its own camera, cutaway, sky, time and lights: render "${named}" with width, doors or changeset only.`);
         const png = await client.render(project.id, {
           view: named === undefined ? ((args.view as 'plan' | '3d' | undefined) ?? 'plan') : '3d',
@@ -877,6 +880,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           ...(args.doors === undefined ? {} : { doors: args.doors }),
           ...(args.sky === undefined ? {} : { sky: args.sky }),
           ...(args.at === undefined ? {} : { at: args.at }),
+          ...(args.mode === undefined ? {} : { mode: args.mode }),
         });
         return { content: [{ type: 'image', data: Buffer.from(png).toString('base64'), mimeType: 'image/png' }] };
       } catch (error) {

@@ -15,6 +15,7 @@ import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
 import { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type SymbolPart, type SymbolStroke } from './plansymbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
 import { landscapeLayers, type SceneLandscape } from './landscape.js';
+import { ALL_ON, layerOfElement, layerStates, type LayerState, type ModeId, type PlanLayer } from './modes.js';
 
 export interface RenderOptions {
   /** The level to draw. Default: the lowest by elevation, then by ID. */
@@ -56,7 +57,18 @@ export interface RenderOptions {
    * (FLR-T-12.24), or as its box. The renderer reads no file and fetches nothing.
    */
   readonly symbols?: SymbolBytes;
+  /**
+   * A trade's view (FLR-T-18.3): the mode's preset of layer states — each layer drawn, drawn as a
+   * grey ghost at reduced contrast, or left out. With a mode, the roof layer follows it unless
+   * `roof` says otherwise. Default: every layer drawn, as without modes.
+   */
+  readonly mode?: ModeId;
+  /** Layer states over the mode's (or over every layer on, without one): a person's own preset. */
+  readonly layers?: Readonly<Partial<Record<PlanLayer, LayerState>>>;
 }
+
+/** How faint a ghosted layer is drawn: grey, at this opacity (FLR-T-18.3). */
+export const GHOST_OPACITY = 0.32;
 
 /** Where a fallback symbol's bytes come from: by SHA-256. */
 export type SymbolBytes = ReadonlyMap<string, Uint8Array> | ((sha256: string) => Uint8Array | undefined);
@@ -394,8 +406,11 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   const pal = PALETTES[options.theme ?? 'light'];
   const scale = options.scale ?? DEFAULT_SCALE;
   if (!(scale > 0) || !Number.isFinite(scale)) throw new RangeError('scale must be a positive number of pixels per foot');
-  const showDims = options.dimensions ?? true;
-  const showLabels = options.labels ?? true;
+  // FLR-T-18.3: the mode's layer states; without a mode or layers, every layer is drawn as it always was.
+  const moded = options.mode !== undefined || options.layers !== undefined;
+  const st = moded ? layerStates(options.mode, options.layers) : ALL_ON;
+  const showDims = (options.dimensions ?? true) && st.dimensions !== 'off';
+  const showLabels = (options.labels ?? true) && st.rooms !== 'off';
 
   let before: Scene | undefined;
   let diff: SceneDiff | undefined;
@@ -427,7 +442,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   for (const u of scene.unanchored) all = grow(all, u.outer);
   for (const sl of scene.slabs.values()) all = grow(all, sl.outline);
   for (const st of scene.stairs.values()) all = grow(all, [[st.derived.box.min[0], st.derived.box.min[1]], [st.derived.box.max[0], st.derived.box.max[1]]]);
-  const showRoof = options.roof ?? false;
+  const showRoof = (options.roof ?? (moded && st.roof !== 'off')) && st.roof !== 'off';
   if (showRoof) for (const rf of scene.roofs.values()) all = grow(all, rf.outline);
   for (const fb of scene.fallbacks.values()) all = grow(all, fb.footprint);
   const showClearances = options.clearances ?? false;
@@ -445,7 +460,9 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   const ext: Box = all ?? { minX: 0, minY: 0, maxX: BU_PER_FOOT * 10, maxY: BU_PER_FOOT * 10 };
 
   const s = scale / BU_PER_FOOT;
-  const margin = { top: showDims ? 64 : 32, left: showDims ? 64 : 32, right: 32, bottom: 64 };
+  // The margin dimensions take is kept when a mode hides them, so every trade's plan has one frame.
+  const dimsRoom = options.dimensions ?? true;
+  const margin = { top: dimsRoom ? 64 : 32, left: dimsRoom ? 64 : 32, right: 32, bottom: 64 };
   const W = Math.ceil((ext.maxX - ext.minX) * s + margin.left + margin.right);
   const H = Math.ceil((ext.maxY - ext.minY) * s + margin.top + margin.bottom);
   const X = (x: number): number => margin.left + (x - ext.minX) * s;
@@ -457,6 +474,14 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   const parts: string[] = [];
   parts.push(el('title', {}, esc(title)));
   parts.push(el('rect', { width: W, height: H, fill: pal.paper }));
+  // A layer's group as its state says: drawn, drawn as a grey ghost, or left out (FLR-T-18.3).
+  const ghostly = PLAN_GHOSTS.some((l) => st[l] === 'ghost');
+  if (ghostly) parts.push(el('defs', {}, GHOST_FILTER));
+  const put = (layer: PlanLayer, svg: string): void => {
+    const state = st[layer];
+    if (state === 'on') parts.push(svg);
+    else if (state === 'ghost') parts.push(ghostGroup(layer, svg));
+  };
 
   // ── defs: the opening cuts, and the hatch for unanchored faces ──
   const cut = OUTLINE / s + 0.75 / s;
@@ -481,7 +506,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     pal,
     (id) => hi.has(id),
   );
-  if (landscape.lawns !== '') parts.push(el('g', { id: 'lawns' }, landscape.lawns));
+  if (landscape.lawns !== '') put('landscape', el('g', { id: 'lawns' }, landscape.lawns));
 
   // ── slabs (Core 6.7): authored floors outside the rooms, drawn first and hatched ──
   if (scene.slabs.size) {
@@ -493,7 +518,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
         el('path', { 'data-id': sl.id, ...(sl.purpose === undefined ? {} : { 'data-purpose': sl.purpose }), d, fill: a ? pal.accent : pal.unanchored, 'fill-opacity': a ? 0.35 : 1, stroke: pal.faint, 'stroke-width': 1 }) +
         el('path', { d, fill: 'url(#fs-hatch)' });
     }
-    parts.push(el('g', { id: 'slabs' }, slabs));
+    put('rooms', el('g', { id: 'slabs' }, slabs));
   }
 
   // ── floors ──
@@ -511,8 +536,8 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     const d = ringsPath([P(u.outer), ...u.holes.map(P)]);
     floors += el('path', { d, fill: pal.unanchored, 'fill-rule': 'evenodd' }) + el('path', { d, fill: 'url(#fs-hatch)', 'fill-rule': 'evenodd' });
   }
-  parts.push(el('g', { id: 'floors' }, floors));
-  if (landscape.ground !== '') parts.push(el('g', { id: 'landscape' }, landscape.ground));
+  put('rooms', el('g', { id: 'floors' }, floors));
+  if (landscape.ground !== '') put('landscape', el('g', { id: 'landscape' }, landscape.ground));
 
   // ── ceilings that are not flat (Core 0.3, 15.3, 15.4): a tray's centre dashed, a vault's ridge dash-dotted ──
   let ceilings = '';
@@ -523,7 +548,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     if (c?.kind === 'vaulted' && c.ridge !== undefined)
       ceilings += el('path', { 'data-id': `${r.id}:ridge`, d: linePath(f.P(c.ridge[0]), f.P(c.ridge[1])), stroke: pal.faint, 'stroke-width': 1.25, 'stroke-dasharray': '8 3 2 3', fill: 'none' });
   }
-  if (ceilings !== '') parts.push(el('g', { id: 'ceilings' }, ceilings));
+  if (ceilings !== '') put('rooms', el('g', { id: 'ceilings' }, ceilings));
 
   // ── stairs (Core 0.3 and 0.4, 17): treads, landings and winders (tinted), a spiral's circle and
   // column, a winder's newel, the cut line, where the floor above must be open from, and the UP arrow ──
@@ -564,7 +589,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       g += el('text', { 'data-up': id, x: up[0], y: up[1] + 3, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 600, fill: ink }, 'UP');
       stairs += el('g', { 'data-id': id, 'data-form': st.form }, g);
     }
-    parts.push(el('g', { id: 'stairs' }, stairs));
+    put('roof', el('g', { id: 'stairs' }, stairs));
   }
 
   // ── stairs from the level below: the steps seen through the floor's well, and the DN arrow from
@@ -586,7 +611,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       g += el('text', { 'data-dn': id, x: hx + ((hx - nx) / len) * 12, y: hy + ((hy - ny) / len) * 12 + 3, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 600, fill: ink }, 'DN');
       below += el('g', { 'data-id': id, 'data-below': 'true', 'data-form': st.form }, g);
     }
-    parts.push(el('g', { id: 'stairs-below' }, below));
+    put('roof', el('g', { id: 'stairs-below' }, below));
   }
 
   // ── separators ──
@@ -602,7 +627,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       fill: 'none',
     });
   }
-  parts.push(el('g', { id: 'separators' }, seps));
+  put('walls', el('g', { id: 'separators' }, seps));
 
   // ── walls: one solid poché — an outline layer under a fill layer, so pieces join without seams ──
   const bodies: { id: string; ring: readonly Pt[]; acc: boolean }[] = [
@@ -618,7 +643,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   let fillLayer = el('path', { d: ringsPath(plain.map((b) => P(b.ring))), fill: pal.poche, stroke: pal.poche, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
   for (const b of acc)
     fillLayer += el('path', { 'data-id': b.id, d: ringsPath([P(b.ring)]), fill: pal.accent, stroke: pal.accent, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
-  parts.push(el('g', { id: 'walls', mask: 'url(#fs-cuts)' }, outlineLayer + fillLayer));
+  put('walls', el('g', { id: 'walls', mask: 'url(#fs-cuts)' }, outlineLayer + fillLayer));
 
   // ── openings ──
   let ops = '';
@@ -632,21 +657,33 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
         openingSymbol(o, w, f, a ? { stroke: pal.accent, window: pal.accent, inWall: pal.accent } : { stroke: pal.faint, window: pal.window, inWall: pal.room }),
     );
   }
-  parts.push(el('g', { id: 'openings' }, ops));
+  put('openings', el('g', { id: 'openings' }, ops));
 
   // ── extension elements: their symbols (Core 12.6) when the caller gave their bytes, else their
   // kind's outline — a bed, a sofa, a toilet, a tub (FLR-T-12.24) — else their fallback boxes ──
   if (scene.fallbacks.size) {
     let fbs = '';
+    // FLR-T-18.3: each element by its trade's layer — drawn, ghosted, or left out.
+    const ghosted = new Map<PlanLayer, string>();
     let inked = false;
     for (const fb of scene.fallbacks.values()) {
       if (fb.landscape !== undefined) continue;
+      const layer = layerOfElement(fb.extension, fb.collection);
+      const state = layer === null ? 'on' : st[layer];
+      if (state === 'off') continue;
+      let drawn: string;
       const a = hi.has(fb.id);
       const image = symbolImage(fb, options.symbols, f);
       const outline = image === null ? fixtureSymbol(fb) : null;
       const box = { 'data-id': fb.id, 'data-kind': `${fb.extension}:${fb.collection}`, d: ringsPath([P(fb.footprint)]) };
       if (image === null && outline === null) {
-        fbs += el('path', { ...box, fill: a ? pal.accent : pal.faint, 'fill-opacity': a ? 0.35 : 0.12, stroke: a ? pal.accent : pal.faint, 'stroke-width': 1 });
+        // In a trade's view its own devices are what the drawing is of: drawn solid, in the plan's ink.
+        const featured = moded && state === 'on' && layer !== null && TRADES.has(layer) && !a;
+        drawn = featured
+          ? el('path', { ...box, fill: pal.room, stroke: pal.text, 'stroke-width': 1.5 })
+          : el('path', { ...box, fill: a ? pal.accent : pal.faint, 'fill-opacity': a ? 0.35 : 0.12, stroke: a ? pal.accent : pal.faint, 'stroke-width': 1 });
+        if (state === 'ghost' && layer !== null) ghosted.set(layer, (ghosted.get(layer) ?? '') + drawn);
+        else fbs += drawn;
         continue;
       }
       // The item stands on the floor: its box in the room's colour (tinted when highlighted), its symbol over it.
@@ -655,12 +692,15 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
         inked = true;
         g += image;
       } else if (outline !== null) g += partsSvg(outline, f, (k) => (a ? pal.accent : k === 'detail' ? pal.faint : pal.muted));
-      fbs += el('g', { 'data-symbol': fb.id }, g);
+      drawn = el('g', { 'data-symbol': fb.id }, g);
+      if (state === 'ghost' && layer !== null) ghosted.set(layer, (ghosted.get(layer) ?? '') + drawn);
+      else fbs += drawn;
     }
     if (inked) parts.push(el('defs', {}, inkFilter(pal)));
+    for (const [layer, svg] of ghosted) parts.push(ghostGroup(layer, el('g', { id: `fallbacks-${layer}` }, svg)));
     parts.push(el('g', { id: 'fallbacks' }, fbs));
   }
-  if (landscape.plants !== '') parts.push(el('g', { id: 'plants' }, landscape.plants));
+  if (landscape.plants !== '') put('landscape', el('g', { id: 'plants' }, landscape.plants));
 
   // ── clearance envelopes (Core 0.2, 13.5), when asked for ──
   if (showClearances && scene.clearances.length) {
@@ -702,7 +742,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       for (const [a, b] of sym.gables) g += el('path', { 'data-gable': id, d: linePath(f.P(a), f.P(b)), stroke: ink, 'stroke-width': 2.5, fill: 'none' });
       roofs += el('g', { 'data-id': id, 'data-kind': rf.kind }, g);
     }
-    parts.push(el('g', { id: 'roofs' }, roofs));
+    put('roof', el('g', { id: 'roofs' }, roofs));
   }
 
   // ── ghosts: what the changeset removed, and where moved elements were ──
@@ -772,12 +812,12 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       ];
       labels += placeLabel(`unanchored-${i + 1}`, lines, u.outer, u.holes, swings, f);
     });
-    parts.push(el('g', { id: 'labels', 'font-family': SANS }, labels));
+    put('rooms', el('g', { id: 'labels', 'font-family': SANS }, labels));
   }
 
   // ── overall exterior dimensions ──
   if (showDims && body) {
-    parts.push(el('g', { id: 'dimensions', stroke: pal.muted, 'font-family': MONO, 'font-size': 11 }, dimensions(body, f, pal)));
+    put('dimensions', el('g', { id: 'dimensions', stroke: pal.muted, 'font-family': MONO, 'font-size': 11 }, dimensions(body, f, pal)));
   }
 
   // ── title and north arrow ──
@@ -788,6 +828,19 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   parts.push(northArrow(W - 30, H - 32, scene.trueNorth, pal));
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${SANS}">${parts.join('')}</svg>\n`;
+}
+
+/** The building systems: in their own mode their devices are drawn solid (FLR-T-18.3). */
+const TRADES: ReadonlySet<PlanLayer> = new Set(['electrical', 'plumbing', 'mechanical', 'lowvoltage']);
+
+/** The layers whose ghosts the filter greys. */
+const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'];
+
+/** A ghost is grey: every colour desaturated, then faded (FLR-T-18.3). */
+const GHOST_FILTER = el('filter', { id: 'fs-ghost', 'color-interpolation-filters': 'sRGB' }, el('feColorMatrix', { type: 'saturate', values: 0 }));
+
+function ghostGroup(layer: PlanLayer, svg: string): string {
+  return el('g', { 'data-ghost': layer, opacity: GHOST_OPACITY, filter: 'url(#fs-ghost)' }, svg);
 }
 
 /** A winder's tint: the accent, faint enough that its tread lines read through it. */

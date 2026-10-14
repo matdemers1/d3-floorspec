@@ -70,6 +70,9 @@ importers:
       '@floorspec/package':
         specifier: workspace:*
         version: link:../../packages/package
+      '@floorspec/render2d':
+        specifier: workspace:*
+        version: link:../../packages/render2d
       '@floorspec/rules-engine':
         specifier: workspace:*
         version: link:../../packages/rules-engine

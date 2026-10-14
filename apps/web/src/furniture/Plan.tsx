@@ -6,6 +6,7 @@ import { facingVector, type DeviceView } from '../editor/systems/view';
 import { assetHref } from './api';
 import { filesOf, furnitureOn } from './view';
 import { overlaps } from './placement';
+import { visible } from '../editor/systems/hit';
 import { LIBRARY } from './library';
 import { FIXTURE_CLASS, fixtureParts, SymbolParts } from '../editor/plansymbols';
 
@@ -113,7 +114,7 @@ export function FurnitureItem({ view, d, symbol, blocked: isBlocked, projectId }
   const outline = href === undefined || placed === null ? fixtureParts(d) : null;
   const ring = pts(view, d.footprint);
   return (
-    <g className={isBlocked ? 'fs-furn-item fs-furn-item--blocked' : 'fs-furn-item'} data-furniture={d.id} data-drawn={href !== undefined && placed !== null ? 'symbol' : outline !== null ? 'outline' : 'box'}>
+    <g className={isBlocked ? 'fs-furn-item fs-furn-item--blocked' : 'fs-furn-item'} data-furniture={d.id} data-layer={d.collection === 'casework' || d.collection === 'appliances' ? 'casework' : 'furniture'} data-drawn={href !== undefined && placed !== null ? 'symbol' : outline !== null ? 'outline' : 'box'}>
       <polygon className="fs-furn-item__fill" points={ring} />
       {href !== undefined && placed !== null ? (
         <image
@@ -137,8 +138,9 @@ export function FurnitureItem({ view, d, symbol, blocked: isBlocked, projectId }
 }
 
 export function FurnitureLayer({ view, level, model, layers, projectId }: { view: Viewport; level: LevelView; model: EditorModel; layers: Layers; projectId: string }) {
-  if (layers.coreOnly || layers.furniture === false) return null;
-  const items = furnitureOn(level);
+  if (layers.coreOnly) return null;
+  // The furniture and the casework are each a layer (FLR-T-8.3, FLR-T-18.3).
+  const items = furnitureOn(level).filter((d) => visible(d, layers));
   if (items.length === 0) return null;
   const warn = blocked(model);
   const owners = blockedOwners(model);

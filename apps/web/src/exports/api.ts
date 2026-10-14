@@ -127,6 +127,9 @@ export interface ExportRequest {
   doors?: 'open' | 'closed';
   /** glTF and USDZ (FLR-T-13.12): the lights on, each at an output and colour temperature; default every one at full. */
   lighting?: { on: Record<string, { output?: number; cct?: number }> };
+  /** PDF and DXF (FLR-T-18.3): a trade's view — an electrical plan — and a person's own layer states over it. */
+  mode?: string;
+  layers?: Record<string, 'on' | 'ghost' | 'off'>;
 }
 
 /** The kinds made in one design: every export but the IFC model, which is of the primary. */

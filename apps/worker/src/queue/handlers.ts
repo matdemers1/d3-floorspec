@@ -7,6 +7,7 @@ import { exportIfc } from '../export/ifc/index.js';
 import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
 import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
 import { normalizeOn, type Lighting } from '@floorspec/mesh';
+import { isLayerState, isModeId, PLAN_LAYERS, type LayerState, type ModeId, type PlanLayer } from '@floorspec/render2d';
 import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type ShotSize, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
 import { renderSavedView, renderShots, type Shot } from '../pathtrace/views.js';
 import { storeZip } from '../export/gltf/zip.js';
@@ -53,6 +54,20 @@ export interface ExportParams {
   readonly doors?: 'open' | 'closed';
   /** A 3D model's lights (FLR-T-13.12): those on, at their output and colour temperature; default every one at full. */
   readonly lighting?: Lighting;
+  /** A drawing in a trade's view (FLR-T-18.3), and a person's own layer states over it. */
+  readonly mode?: ModeId;
+  readonly layers?: Partial<Record<PlanLayer, LayerState>>;
+}
+
+/** Layer states from a job row (FLR-T-18.3): known layers with known states, or nothing. */
+function layersOf(raw: unknown): Partial<Record<PlanLayer, LayerState>> | undefined {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
+  const out: Partial<Record<PlanLayer, LayerState>> = {};
+  for (const l of PLAN_LAYERS) {
+    const v = (raw as Record<string, unknown>)[l];
+    if (isLayerState(v)) out[l] = v;
+  }
+  return Object.keys(out).length === 0 ? undefined : out;
 }
 
 /** A lighting from a job row (FLR-T-13.12): `{ on: { id: { output, cct } } }`, made well-formed, or nothing. */
@@ -82,7 +97,19 @@ export function exportParams(raw: unknown): ExportParams {
   const design = designOf(p['design']);
   const doors = p['doors'] === 'open' || p['doors'] === 'closed' ? p['doors'] : undefined;
   const lighting = lightingOf(p['lighting']);
-  return { ...(levels === undefined ? {} : { levels }), ...(page === undefined ? {} : { page }), versionSeq: seq, versionAt: at, ...(design === undefined ? {} : { design }), ...(doors === undefined ? {} : { doors }), ...(lighting === undefined ? {} : { lighting }) };
+  const mode = isModeId(p['mode']) ? p['mode'] : undefined;
+  const layers = layersOf(p['layers']);
+  return {
+    ...(levels === undefined ? {} : { levels }),
+    ...(page === undefined ? {} : { page }),
+    versionSeq: seq,
+    versionAt: at,
+    ...(design === undefined ? {} : { design }),
+    ...(doors === undefined ? {} : { doors }),
+    ...(lighting === undefined ? {} : { lighting }),
+    ...(mode === undefined ? {} : { mode }),
+    ...(layers === undefined ? {} : { layers }),
+  };
 }
 
 /** The parameters of a 3D render job (FLR-T-8.5), as the api writes them. */
@@ -270,6 +297,8 @@ function options(job: JobRow) {
     ...(p.levels === undefined ? {} : { levels: p.levels }),
     ...(p.page === undefined ? {} : { page: p.page }),
     ...(p.design === undefined ? {} : { design: p.design }),
+    ...(p.mode === undefined ? {} : { mode: p.mode }),
+    ...(p.layers === undefined ? {} : { layers: p.layers }),
   };
 }
 

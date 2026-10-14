@@ -9,6 +9,7 @@ import { kindById, kindsOf, type SystemId } from './systems/catalog';
 import { navigate } from '../lib/router';
 import { threeOf } from './three/mode';
 import { FURNITURE_COMMANDS } from '../furniture/commands';
+import { MODE_COMMANDS } from './modes';
 import { stageRooms } from './systems/Staging';
 import { DRAWER_HINTS, drawersOf, setFullScreen, summonDrawer } from './drawers';
 
@@ -600,6 +601,8 @@ export const COMMANDS: readonly Command[] = [
   },
   // Furniture (FLR-T-8.3): I opens the library; [ and ] turn the selected item.
   ...FURNITURE_COMMANDS,
+  // FLR-T-18.3: the trade modes, ⌥1–⌥7 (read by the editor's key handler, by the key's place).
+  ...MODE_COMMANDS,
 ];
 
 /** The level `dir` steps above (1) or below (-1) the current one, by elevation. */

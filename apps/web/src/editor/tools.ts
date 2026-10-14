@@ -30,6 +30,7 @@ import { kindOf, labelOf } from './model';
 import { requestRemove } from './actions';
 import { flipFromPlan } from './three/lighting/lighting';
 import { deviceAt } from './systems/hit';
+import { ghostsOf, pickable } from './modes';
 import { centredOn, dragHost, hoverFor, type DeviceHover } from './systems/placement';
 import { moveDevice, placeDevice, setMember } from './systems/ops';
 import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
@@ -94,6 +95,12 @@ export class ToolController {
 
   private get level(): LevelView | undefined {
     return this.store.levelView;
+  }
+
+  /** The level as a click picks from it: a mode's ghosts are not selectable (FLR-T-18.3). */
+  private get pickLevel(): LevelView | undefined {
+    const level = this.level;
+    return level === undefined ? undefined : pickable(level, ghostsOf(this.store));
   }
 
   private world(p: PointerInfo): Point {
@@ -262,7 +269,7 @@ export class ToolController {
 
   /** The device under the pointer, when its layer is shown. */
   private deviceUnder(p: PointerInfo): DeviceView | null {
-    const level = this.level;
+    const level = this.pickLevel;
     const view = this.store.get().view;
     if (level === undefined || view === null) return null;
     return deviceAt(level, this.world(p), this.tol(p.type), view.s, this.store.get().layers);
@@ -297,7 +304,7 @@ export class ToolController {
     if (handle !== null) return handle;
     const device = this.deviceUnder(p);
     if (device !== null && (p.type !== 'touch' || this.store.get().selection === device.id)) return { kind: 'device', id: device.id };
-    const hit = hitTest(level, this.world(p), this.tol(p.type));
+    const hit = hitTest(this.pickLevel ?? level, this.world(p), this.tol(p.type));
     if (hit === null) return null;
     if (hit.kind === 'junction') return hit;
     // A finger drags a wall or an opening only once it is selected; otherwise it pans.
@@ -364,7 +371,7 @@ export class ToolController {
           return;
         }
         if (this.mode === 'idle' || this.mode === 'tool') {
-          const id = this.deviceUnder(p)?.id ?? hitTest(level, this.world(p), this.tol(p.type), { roofs: s.layers.roof })?.id ?? null;
+          const id = this.deviceUnder(p)?.id ?? hitTest(this.pickLevel ?? level, this.world(p), this.tol(p.type), { roofs: s.layers.roof })?.id ?? null;
           if (id !== s.hover) this.store.set({ hover: id });
         }
         return;
@@ -438,7 +445,7 @@ export class ToolController {
     }
     this.dragStart = null;
     const device = this.deviceUnder(p);
-    const hit = device ?? hitTest(level, world, this.tol(p.type), { roofs: this.store.get().layers.roof });
+    const hit = device ?? hitTest(this.pickLevel ?? level, world, this.tol(p.type), { roofs: this.store.get().layers.roof });
     if (hit !== null) flipFromPlan(this.store, hit.id);
     this.store.select(hit?.id ?? null);
     // FLR-T-18.6: a double click on empty space — nothing, or only a room's floor or a slab — zooms in (⌥ out).
