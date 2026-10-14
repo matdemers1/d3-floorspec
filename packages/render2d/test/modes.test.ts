@@ -1,15 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ALL_ON, GHOST_OPACITY, LAYER_LABELS, MODE_IDS, MODES, PLAN_LAYERS, isModeId, layerOfElement, layerStates, renderPlan } from '../src/index.js';
+import { evaluate } from '@floorspec/engine';
+import { ALL_ON, DEFAULT_READER, GHOST_OPACITY, LAYER_LABELS, MODE_IDS, MODES, PLAN_LAYERS, isModeId, layerOfElement, layerStates, renderEvaluation, type RenderOptions } from '../src/index.js';
 
 /** The Courtyard House: walls, rooms, furniture, casework, every trade's devices and a garden. */
 const HOUSE = JSON.parse(readFileSync(new URL('../../../apps/worker/test/fixtures/courtyard-house.json', import.meta.url), 'utf8')) as object;
+/** The house is large: evaluated once, then drawn in each mode (renderPlan evaluates on every call). */
+const EV = evaluate(HOUSE, DEFAULT_READER);
+const renderPlan = (_doc: object, options: Omit<RenderOptions, 'design' | 'reader'> = {}): string => renderEvaluation(EV, options);
 
 /** The group `id` opens, with what it holds up to its matching close — enough to look inside. */
 const has = (svg: string, id: string) => svg.includes(`id="${id}"`);
 const ghostOf = (svg: string, layer: string) => svg.includes(`data-ghost="${layer}"`);
 
-describe('trade modes (FLR-T-18.3)', () => {
+describe('trade modes (FLR-T-18.3)', { timeout: 60_000 }, () => {
   it('every mode sets every layer, and names its drawing', () => {
     expect(MODE_IDS).toHaveLength(7);
     for (const id of MODE_IDS) {

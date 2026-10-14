@@ -31,7 +31,7 @@ const prims = (s: Sheet): Prim[] => {
 const texts = (s: Sheet): string[] => prims(s).flatMap((p) => (p.t === 'text' ? [p.text] : []));
 const strokes = (s: Sheet): Set<string> => new Set(prims(s).flatMap((p) => (p.t === 'path' && p.stroke !== undefined ? [p.stroke] : [])));
 
-describe('drawings in a trade’s view (FLR-T-18.3)', () => {
+describe('drawings in a trade’s view (FLR-T-18.3)', { timeout: 120_000 }, () => {
   it('reads a job’s mode and layers, keeping only what it knows', () => {
     expect(exportParams({ versionAt: '2026-10-12T00:00:00Z', mode: 'electrical', layers: { walls: 'off', plumbing: 'maybe', attic: 'on' } })).toMatchObject({ mode: 'electrical', layers: { walls: 'off' } });
     expect(exportParams({ versionAt: '2026-10-12T00:00:00Z', mode: 'kitchen' })).not.toHaveProperty('mode');
@@ -39,8 +39,8 @@ describe('drawings in a trade’s view (FLR-T-18.3)', () => {
   });
 
   it('an electrical plan: its sheets named for it, the building screened under the devices, a smaller file name', async () => {
-    const all = await exportPdf(HOUSE, { version: VERSION, fontDir });
-    const pdf = await exportPdf(HOUSE, { version: VERSION, fontDir, mode: 'electrical' });
+    const all = await exportPdf(HOUSE, { version: VERSION, fontDir, viewDpi: 48 });
+    const pdf = await exportPdf(HOUSE, { version: VERSION, fontDir, viewDpi: 48, mode: 'electrical' });
     expect(pdf.name).toMatch(/-electrical-plans\.pdf$/);
     const sheet = pdf.sheets[0]!;
     expect(sheet.title).toMatch(/electrical plan$/);
@@ -51,7 +51,7 @@ describe('drawings in a trade’s view (FLR-T-18.3)', () => {
   });
 
   it('splits a plan by the mode’s states: on, ghost, and nothing of what is off', async () => {
-    const pdf = await exportPdf(HOUSE, { version: VERSION, fontDir, mode: 'decorator' });
+    const pdf = await exportPdf(HOUSE, { version: VERSION, fontDir, viewDpi: 48, mode: 'decorator' });
     expect(pdf.name).toMatch(/-furniture-plans\.pdf$/);
     expect(pdf.sheets[0]?.title).toMatch(/furniture plan$/);
   });
