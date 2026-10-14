@@ -2,6 +2,8 @@ import { useSyncExternalStore } from 'react';
 import type { EditorStore } from '../store';
 import type { Point } from '../model';
 import { modesOf } from '../modes';
+import { precisionOf } from '../precision/state';
+import { keepAsDimension } from './tools';
 
 /**
  * Dimensions and annotation in the editor (FLR-T-18.11, FLR-ADR-047), beside the editor's store as the
@@ -106,6 +108,10 @@ export class AnnotateStore {
     const modes = modesOf(editor);
     this.modeKey = modes.get().mode ?? 'none';
     this.state = { show: this.showFor(this.modeKey), selected: null, editing: null, dimension: EMPTY_DIMENSION, note: null };
+    // FLR-T-18.9's measure panel offers "Keep as a dimension" once this registers.
+    precisionOf(editor).keepAsDimension = (store, points, closed) => {
+      void keepAsDimension(store, points, closed);
+    };
     modes.subscribe(() => {
       const key = modes.get().mode ?? 'none';
       if (key === this.modeKey) return;

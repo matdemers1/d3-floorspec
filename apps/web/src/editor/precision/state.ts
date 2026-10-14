@@ -136,7 +136,7 @@ export class PrecisionStore {
   private units: UnitSystem;
 
   /** FLR-T-18.11 keeps a measurement as a dimension: it registers here, and the measure panel offers it. */
-  keepAsDimension: ((store: EditorStore, points: readonly Point[]) => void) | null = null;
+  keepAsDimension: ((store: EditorStore, points: readonly MeasurePoint[], closed: boolean) => void) | null = null;
 
   constructor(private readonly editor: EditorStore) {
     this.saved = readSaved(editor.projectId);

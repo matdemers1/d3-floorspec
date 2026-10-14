@@ -14,6 +14,8 @@ import { stageRooms } from './systems/Staging';
 import { DRAWER_HINTS, drawersOf, setFullScreen, summonDrawer } from './drawers';
 import { ARRANGE_COMMANDS } from './arrange/commands';
 import { PRECISION_COMMANDS } from './precision/commands';
+import { ANNOTATE_COMMANDS, removeSelectedAnnotation } from './annotate/commands';
+import { annotateOf } from './annotate/state';
 import { PLACING_COMMANDS } from '../placing/commands';
 
 /**
@@ -272,8 +274,10 @@ export const COMMANDS: readonly Command[] = [
     group: 'Edit',
     keys: ['Delete', 'Backspace'],
     hint: '⌫',
-    enabled: (store) => editable(store) && store.get().selection !== null,
-    run: (_store, tools) => {
+    enabled: (store) => editable(store) && (store.get().selection !== null || annotateOf(store).get().selected !== null),
+    run: (store, tools) => {
+      // FLR-T-18.11: an annotation selected on the plan goes first.
+      if (removeSelectedAnnotation(store)) return;
       tools.remove();
     },
   },
@@ -613,6 +617,8 @@ export const COMMANDS: readonly Command[] = [
   ...MODE_COMMANDS,
   // FLR-T-18.9: the measure tool (⇧M), the snapping, and typing into a temporary dimension.
   ...PRECISION_COMMANDS,
+  // FLR-T-18.11: the dimension and note tools (⇧D, ⇧T), and what the plan shows of the annotation.
+  ...ANNOTATE_COMMANDS,
 ];
 
 /** The level `dir` steps above (1) or below (-1) the current one, by elevation. */

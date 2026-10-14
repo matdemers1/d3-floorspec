@@ -207,7 +207,8 @@ export class ModesStore {
     const rail = this.rail(mode);
     const { tool, draw } = this.editor.get();
     // The measure tool is in every rail (FLR-T-18.9): it changes nothing, so no mode puts it down.
-    if (rail !== null && tool !== 'select' && tool !== 'measure') {
+    // So are dimensions and notes (FLR-T-18.11): annotation is drawn over every trade's plan.
+    if (rail !== null && tool !== 'select' && tool !== 'measure' && tool !== 'dimension' && tool !== 'note') {
       const offered = rail.some((r) => ('tool' in r && r.tool === tool) || ('device' in r && tool === 'device' && r.device === draw.device));
       if (!offered) {
         if (tools !== undefined) tools.setTool('select');
