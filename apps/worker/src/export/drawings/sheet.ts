@@ -13,6 +13,8 @@
  * The 3D view is a picture of the mesh (render3d over @floorspec/mesh), asked for at the panel's
  * size once the strip is laid out, and embedded as a PNG at 300 dpi.
  */
+import { DEMOLISH_INK, type Demolished } from './renovation.js';
+import type { RenovationFilter } from '@floorspec/render2d';
 import { num, type SymbolPart, type SymbolStroke } from '@floorspec/render2d';
 import type { DimString, Side } from './dimensions.js';
 import type { Box, LevelPlan, Segment, XY } from './plan.js';
@@ -267,6 +269,8 @@ export interface SheetMeta {
   readonly planName?: string;
   /** The plan's style (FLR-T-18.5): Colour, Presentation, Technical or Blueprint. Default: the construction drawing. */
   readonly style?: PlanStyle;
+  /** A remodel's renovation plan (FLR-T-18.13): its legend says what is existing, demolished and new. */
+  readonly renovation?: RenovationFilter;
 }
 
 interface Ctx {
@@ -294,6 +298,7 @@ export function composePlanSheet(
   meta: SheetMeta,
   measure: Measure,
   ghost: LevelPlan | null = null,
+  demolished: Demolished | null = null,
 ): Sheet {
   const { page, k, frame, origin } = layout;
   const P = (p: XY): XY => [origin[0] + (p[0] - frame.minX) * k, origin[1] + (frame.maxY - p[1]) * k];
@@ -317,6 +322,7 @@ export function composePlanSheet(
   }
   const drawn = out.length;
   drawPlan(c, plan, meta.style);
+  if (demolished !== null) drawDemolished(c, demolished);
   drawStairs(c, plan.stairs);
   drawOverheadRoofs(c, plan.roofs);
   drawDimensions(c, plan, dims, meta.units);
@@ -328,6 +334,7 @@ export function composePlanSheet(
   drawBorder(c, layout);
   const extra: LegendItem[] = [];
   if (plan.stairs.length > 0) extra.push(...stairLegend(c, plan.stairs));
+  if (meta.renovation !== undefined && meta.renovation !== 'existing') extra.push(...renovationLegend(c, meta.renovation));
   if (plan.roofs.length > 0) extra.push({ label: 'Roof eave above (see roof plan)', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: GREY, width: 0.5, dash: [5, 2.5] }) });
   const rooms = plan.rooms.length > 0 || ghost === null ? plan.rooms : ghost.rooms;
   drawStrip(c, layout, view, meta, title, rooms.map((r) => [r.title, areaText(r.area, meta.units)]), [...planLegend(c), ...extra]);
@@ -492,6 +499,33 @@ function drawPlan(c: Ctx, plan: LevelPlan, style?: PlanStyle): void {
   for (const dr of plan.doors) drawParts(c, dr.parts);
 }
 
+/** FLR-T-18.13: what is to be demolished, over the plan — dashed in red, with no poché. */
+function drawDemolished(c: Ctx, d: Demolished): void {
+  const { out, P } = c;
+  const dashed = { stroke: DEMOLISH_INK, dash: [3, 1.8] as readonly number[] };
+  for (const s of d.slabs) out.push({ t: 'path', d: ring(s.outline.map(P)), ...dashed, width: 0.4 });
+  if (d.rings.length > 0) {
+    const body = d.rings.map((r) => ring(r.map(P))).join('');
+    out.push({ t: 'path', d: body, fill: WHITE });
+    out.push({ t: 'path', d: body, ...dashed, width: 0.6, join: 'round' });
+  }
+  for (const w of d.windows) out.push({ t: 'path', d: w.lines.map((l) => line(P(l[0]), P(l[1]))).join(''), ...dashed, width: 0.35 });
+  for (const dr of d.doors) drawParts(c, dr.parts, DEMOLISH_INK, dashed.dash);
+  for (const dv of d.devices) {
+    if (dv.symbol === null) out.push({ t: 'path', d: ring(dv.footprint.map(P)), ...dashed, width: 0.35 });
+    else drawParts(c, dv.symbol, DEMOLISH_INK, dashed.dash);
+  }
+}
+
+/** FLR-T-18.13: the renovation plan's legend rows. */
+function renovationLegend(c: Ctx, filter: RenovationFilter): LegendItem[] {
+  const { out } = c;
+  const items: LegendItem[] = [{ label: 'Existing to remain', draw: (cx, cy) => out.push({ t: 'path', d: rect(cx, cy - 3, 22, 6), fill: '#efefef', stroke: '#a3a3a3', width: 0.6 }) }];
+  if (filter !== 'proposed') items.push({ label: 'To be demolished', draw: (cx, cy) => out.push({ t: 'path', d: rect(cx, cy - 3, 22, 6), stroke: DEMOLISH_INK, width: 0.6, dash: [3, 1.8] }) });
+  if (filter !== 'demolition') items.push({ label: 'New construction', draw: (cx, cy) => out.push({ t: 'path', d: rect(cx, cy - 3, 22, 6), fill: POCHE, stroke: INK, width: 0.6 }) });
+  return items;
+}
+
 /** How each kind of symbol line is drawn on a sheet. */
 const SHEET_STROKES: Readonly<Record<SymbolStroke, { readonly color: string; readonly width: number; readonly dash?: readonly number[] }>> = {
   leaf: { color: INK, width: 0.7 },
@@ -503,11 +537,12 @@ const SHEET_STROKES: Readonly<Record<SymbolStroke, { readonly color: string; rea
 };
 
 /** Symbol parts (render2d's door and fixture symbols) on the sheet. */
-function drawParts(c: Ctx, parts: readonly SymbolPart[], tone?: string): void {
+function drawParts(c: Ctx, parts: readonly SymbolPart[], tone?: string, dash?: readonly number[]): void {
   const { out, P } = c;
   for (const part of parts) {
     const look = SHEET_STROKES[part.stroke];
-    const style = { stroke: tone !== undefined && look.color !== WHITE ? tone : look.color, width: look.width, ...(look.dash === undefined ? {} : { dash: look.dash }) };
+    const d = dash ?? look.dash;
+    const style = { stroke: tone !== undefined && look.color !== WHITE ? tone : look.color, width: look.width, ...(d === undefined ? {} : { dash: d }) };
     if (part.kind === 'arc') {
       const h = P(part.centre);
       const l = P(part.from);

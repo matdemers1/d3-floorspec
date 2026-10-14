@@ -380,6 +380,12 @@ export interface ApplyOptions {
 }
 
 export class EditorStore {
+  /**
+   * What every batch passes through before it is sent: a view's rule for what it draws — FLR-T-18.13's
+   * renovation plans mark what is drawn in the Proposed and Combined plans as new.
+   */
+  readonly batchFilters: ((batch: Batch) => Batch)[] = [];
+
   private state: EditorState = initial;
   private readonly listeners = new Set<() => void>();
   private queue: Promise<unknown> = Promise.resolve();
@@ -496,7 +502,8 @@ export class EditorStore {
       this.set({ pending: label, notice: null });
       try {
         for (let attempt = 0; attempt < 5; attempt++) {
-          const sent = typeof batch === 'function' ? batch(attempt) : batch;
+          const built = typeof batch === 'function' ? batch(attempt) : batch;
+          const sent = this.batchFilters.reduce((b, f) => f(b), built);
           if (sent.length === 0) return false;
           const option = this.state.editOption;
           const answer = await postBatch(this.projectId, this.state.model?.hash ?? model.hash, sent, option === null ? undefined : option);

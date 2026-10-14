@@ -46,6 +46,12 @@ export const LAYERS = {
   roofRidge: 'A-ROOF-RIDG',
   roofValley: 'A-ROOF-VLLY',
   roofTag: 'A-ROOF-IDEN',
+  // FLR-T-18.13: a remodel's status layers (NCS status minors).
+  wallDemolish: 'A-WALL-DEMO',
+  wallNew: 'A-WALL-NEWW',
+  doorDemolish: 'A-DOOR-DEMO',
+  furnitureDemolish: 'I-FURN-DEMO',
+  floorDemolish: 'A-FLOR-DEMO',
 } as const;
 
 const DEFS: readonly LayerDef[] = [
@@ -88,6 +94,11 @@ const DEFS: readonly LayerDef[] = [
   { name: 'T-COMM-DEVC', color: 30, weight: 18, linetype: 'CONTINUOUS', description: 'Low-voltage outlets and devices' },
   { name: 'I-FURN', color: 8, weight: 13, linetype: 'CONTINUOUS', description: 'Furniture' },
   { name: 'S-EQPM', color: 8, weight: 18, linetype: 'CONTINUOUS', description: 'Structural elements' },
+  { name: LAYERS.wallDemolish, color: 1, weight: 35, linetype: 'DASHED', description: 'Walls to be demolished (renovation)' },
+  { name: LAYERS.wallNew, color: 7, weight: 50, linetype: 'CONTINUOUS', description: 'New walls (renovation)' },
+  { name: LAYERS.doorDemolish, color: 1, weight: 25, linetype: 'DASHED', description: 'Doors and windows to be demolished (renovation)' },
+  { name: LAYERS.furnitureDemolish, color: 1, weight: 18, linetype: 'DASHED', description: 'Fixtures, casework and equipment to be removed (renovation)' },
+  { name: LAYERS.floorDemolish, color: 1, weight: 18, linetype: 'DASHED', description: 'Slabs and decks to be demolished (renovation)' },
 ];
 
 /** Every layer the drawings may use, in the order the DXF declares them. */

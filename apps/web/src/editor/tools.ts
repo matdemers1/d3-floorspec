@@ -33,6 +33,7 @@ import { requestRemove } from './actions';
 import { flipFromPlan } from './three/lighting/lighting';
 import { deviceAt } from './systems/hit';
 import { ghostsOf, pickable } from './modes';
+import { pickableUnder, storeStyles } from './renovation';
 import { centredOn, dragHost, hoverFor, type DeviceHover } from './systems/placement';
 import { moveDevice, placeDevice, setMember } from './systems/ops';
 import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
@@ -117,7 +118,8 @@ export class ToolController {
   /** The level as a click picks from it: a mode's ghosts are not selectable (FLR-T-18.3). */
   get pickLevel(): LevelView | undefined {
     const level = this.level;
-    return level === undefined ? undefined : pickable(level, ghostsOf(this.store));
+    // FLR-T-18.13: and what the renovation plan hides is not there to pick.
+    return level === undefined ? undefined : pickableUnder(pickable(level, ghostsOf(this.store)), storeStyles(this.store));
   }
 
   private world(p: PointerInfo): Point {

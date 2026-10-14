@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { RenovationCss, RenovationLegend, filteredModel, renoWallClass, useRenovationFilter, useRenovationStyles } from './renovation';
+import type { RenovationStyle } from '@floorspec/render2d';
 import type { Diagnostic, FloorspecDocument } from '@floorspec/engine';
 import { ArrowUp } from 'lucide-react';
 import { isChainDraft, useEditor, type EditorStore, type Layers, type Viewport } from './store';
@@ -51,7 +53,11 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
   const host = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
   // While two versions are compared, the canvas shows the newer of them, read-only (FLR-T-3.6).
-  const model = useEditor(store, (s) => (s.compare === null ? s.model : (s.compare.toModel ?? s.model)));
+  const fullModel = useEditor(store, (s) => (s.compare === null ? s.model : (s.compare.toModel ?? s.model)));
+  // FLR-T-18.13: a remodel is drawn in its renovation plan — the state the filter shows, each element in its status's style.
+  const renoFilter = useRenovationFilter(store, fullModel);
+  const renoStyles = useRenovationStyles(fullModel, renoFilter);
+  const model = useMemo(() => (fullModel === null ? null : filteredModel(fullModel, renoFilter)), [fullModel, renoFilter]);
   const comparing = useEditor(store, (s) => s.compare !== null);
   const levelId = useEditor(store, (s) => s.level);
   const view = useEditor(store, (s) => s.view);
@@ -166,9 +172,10 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
   const details = usePlanStyles(store, (s) => s.details);
   const look = useMemo(() => planLook(planStyle, pageTheme, details, trade === 'construction'), [planStyle, pageTheme, details, trade]);
   const paint = useMemo(() => (view === null || level === undefined || model === null ? null : levelPaint(view, level, model, look)), [view, level, model, look]);
+  const renoShown = renoFilter !== null && renoFilter !== 'existing' ? renoFilter : undefined;
 
   return (
-    <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined} data-zooming={zooming ? 'on' : undefined} data-ghost={ghost} data-mode={trade} data-plan-style={look.style} data-plan-theme={pageTheme} style={lookStyle(look)}>
+    <div className="fs-canvas" ref={host} data-renovation-filter={renoFilter ?? undefined} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined} data-zooming={zooming ? 'on' : undefined} data-ghost={ghost} data-mode={trade} data-plan-style={look.style} data-plan-theme={pageTheme} style={lookStyle(look)}>
       {view !== null ? (
         <svg
           ref={svg}
@@ -196,13 +203,14 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
         >
           <Grid view={view} units={units} />
           {paint !== null ? <PlanStyleDefs paint={paint} /> : null}
+          <RenovationCss styles={renoStyles} />
           {model !== null && level !== undefined ? (
             <>
-              <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} />
+              <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} reno={renoStyles} />
               {layers.dimensions ? <Dimensions view={view} level={level} units={units} /> : null}
               <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} look={look} />
               <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} look={look} />
-              {electricalTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={model} units={units} /> : null}
+              {electricalTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
               <DiffLayer store={store} view={view} levelId={level.id} />
               <RuleFindingsLayer store={store} view={view} level={level} />
               <Findings store={store} view={view} level={level} />
@@ -210,24 +218,25 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               {comparing ? null : <ArrangeLayer store={store} view={view} level={level} />}
               {layers.rooms ? <StyledRoomLabels view={view} level={level} document={model.document} units={units} look={look} /> : null}
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
-              {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
-              {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={model} />}
+              {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={fullModel ?? model} />}
+              {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={fullModel ?? model} />}
               {comparing ? null : <PlacingLayer store={store} view={view} level={level} />}
               {comparing ? null : <RidgePick store={store} view={view} />}
             </>
           ) : null}
         </svg>
       ) : null}
-      {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={model} units={units} /> : null}
-      {view !== null && model !== null && level !== undefined && !comparing ? <PrecisionHtml store={store} view={view} level={level} model={model} units={units} /> : null}
+      {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
+      {view !== null && model !== null && level !== undefined && !comparing ? <PrecisionHtml store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
       {/* FLR-T-18.7: the ghost's distances and its sentence, and the quick-add bar at the pointer. */}
       {view !== null && level !== undefined && !comparing ? <PlacingLabels store={store} view={view} units={units} /> : null}
       {view !== null && level !== undefined && !comparing ? <QuickAdd store={store} view={view} level={level} /> : null}
       {view !== null && level !== undefined && !comparing ? <WandPrompt store={store} tools={tools} view={view} level={level} units={units} /> : null}
-      {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={model} units={units} picking={tools.pickLevel} /> : null}
+      {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={fullModel ?? model} units={units} picking={tools.pickLevel} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
       {paint !== null && layers.walls ? <WallTypeLegend paint={paint} /> : null}
       <DiffLegend store={store} />
+      {renoShown !== undefined ? <RenovationLegend filter={renoShown} /> : null}
       {layers.coreOnly ? (
         <div className="fs-core-note" role="status">
           Core-only view: each building-system element drawn as a reader without its extension draws it — its fallback box (Floorspec Core 12.6).
@@ -280,14 +289,14 @@ function wallMid(wall: WallView): Point {
 
 const polyPts = (view: Viewport, line: readonly Point[]): string => line.map((p) => S(view, p).map((n) => n.toFixed(1)).join(',')).join(' ');
 
-export function Plan({ view, level, document, layers, units, ghost = false, labels = true, paint = null }: { view: Viewport; level: LevelView; document: FloorspecDocument; layers: Layers; units: UnitSystem; ghost?: boolean; labels?: boolean; paint?: LevelPaint | null }) {
+export function Plan({ view, level, document, layers, units, ghost = false, labels = true, paint = null, reno = null }: { view: Viewport; level: LevelView; document: FloorspecDocument; layers: Layers; units: UnitSystem; ghost?: boolean; labels?: boolean; paint?: LevelPaint | null; reno?: ReadonlyMap<string, RenovationStyle> | null }) {
   const walls = new Map(level.walls.map((w) => [w.id, w]));
   return (
     <g className={ghost ? 'fs-plan2 fs-plan2--ghost' : 'fs-plan2'} aria-hidden="true">
       {level.slabs.length > 0 ? (
         <g className="fs-plan2__slabs">
           {level.slabs.map((s) => (
-            <g key={s.id}>
+            <g key={s.id} data-slab={s.id}>
               {/* FLR-T-18.5: a slab in its material (a colour plan), or hatched (a technical one). */}
               <polygon points={pts(view, s.outline)} style={paint === null ? undefined : { fill: paint.slab(s.id) }} />
               {paint?.look.theme.linework === true ? <polygon className="fs-plan2__slab-hatch" points={pts(view, s.outline)} fill="url(#fsx-slab-hatch)" /> : null}
@@ -300,7 +309,7 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
           {level.faces.map((f, i) =>
             paint !== null && f.room !== null ? (
               // FLR-T-18.5: a room in its floor finish — its colour and pattern at true scale — or a wet room gridded.
-              <g key={f.room} style={{ fill: paint.floor(f.floor) }}>
+              <g key={f.room} data-room-face={f.room} data-renovation={reno?.get(f.room) === 'new' ? 'new' : undefined} style={{ fill: paint.floor(f.floor) }}>
                 <path data-floor={f.floor} d={pathOf(view, [f.outer, ...f.holes])} fillRule="evenodd" />
                 {paint.grid(f.room) === undefined ? null : <path data-grid={f.room} fill={paint.grid(f.room)} d={pathOf(view, [f.outer, ...f.holes])} fillRule="evenodd" />}
               </g>
@@ -319,14 +328,14 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
       ) : null}
       <g className="fs-plan2__separators">
         {level.separators.map((s) => (
-          <polyline key={s.id} points={polyPts(view, s.line)} fill="none" />
+          <polyline key={s.id} data-separator={s.id} points={polyPts(view, s.line)} fill="none" />
         ))}
       </g>
-      {layers.walls && paint !== null ? <StyledWalls view={view} level={level} paint={paint} /> : null}
+      {layers.walls && paint !== null ? <StyledWalls view={view} level={level} paint={paint} reno={reno} /> : null}
       {layers.walls && paint === null ? (
         <g className="fs-plan2__walls">
-          {level.walls.map((w) => <polygon key={w.id} points={pts(view, w.ring)} />)}
-          {level.fills.map((f) => <polygon key={f.id} points={pts(view, f.ring)} />)}
+          {level.walls.map((w) => <polygon key={w.id} data-wall={w.id} className={renoWallClass(reno?.get(w.id))} points={pts(view, w.ring)} />)}
+          {level.fills.map((f) => <polygon key={f.id} className={renoWallClass(reno !== null && reno.size > 0 ? 'existing' : undefined)} points={pts(view, f.ring)} />)}
         </g>
       ) : null}
       {layers.openings ? (

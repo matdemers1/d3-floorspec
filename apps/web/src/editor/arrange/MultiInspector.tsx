@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { RenovationField } from '../renovation';
 import { Button, IconButton, Menu, MenuContent, MenuItem, MenuTrigger, Select, Switch } from '@d3cloud/ui';
 import { Layers, Trash2, X } from 'lucide-react';
 import { useEditor, type EditorStore } from '../store';
@@ -192,6 +193,7 @@ export function MultiInspector({ store }: { store: EditorStore }) {
       </div>
       <Section title={`Shared fields · ${String(ids.length)} items`}>
         {fields}
+        <RenovationField store={store} model={model} ids={ids} readOnly={!canEdit} />
         <p className="fs-multi__note">Edits apply to {ids.length === 2 ? 'both' : `all ${String(ids.length)}`} as one op. “Mixed” shows where they differ; typing replaces it for all.</p>
       </Section>
       {canEdit && level !== undefined ? <CopySection store={store} model={model} level={level} /> : null}

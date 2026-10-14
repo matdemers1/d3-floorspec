@@ -1,0 +1,90 @@
+/* FLR-T-18.13: renovation plans (FS_renovation 3.1) — existing work subdued, demolished work dashed in
+   red with no poché, new work in solid poché. The inks are render2d's RENOVATION_INK. */
+.fs-canvas {
+  --fs-reno-demolish: #c8372d;
+  --fs-reno-new: #101117;
+  --fs-reno-existing-opacity: 0.42;
+}
+.fs-canvas[data-plan-theme='dark'] {
+  --fs-reno-demolish: #ff7b72;
+  --fs-reno-new: #f0f2f7;
+}
+.fs-canvas .fs-reno-existing {
+  opacity: var(--fs-reno-existing-opacity);
+}
+.fs-canvas .fs-plan2__wall--new {
+  fill: var(--fs-reno-new);
+  stroke: var(--fs-reno-new);
+  stroke-width: 1.5;
+}
+.fs-canvas .fs-plan2__wall--demolished {
+  fill: var(--color-bg, transparent);
+  fill-opacity: 0.6;
+  stroke: var(--fs-reno-demolish);
+  stroke-width: 1.25;
+  stroke-dasharray: 5 3;
+}
+.fs-canvas [data-room-face][data-renovation='new'] path {
+  fill-opacity: 0.9;
+}
+.fs-reno-legend {
+  position: absolute;
+  left: var(--space-3, 12px);
+  bottom: var(--space-10, 40px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px) var(--space-3, 12px);
+  align-items: center;
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-surface-float, var(--color-surface-card));
+  border: 1px solid var(--color-border);
+  font-size: var(--text-xs, 12px);
+  color: var(--color-fg-muted);
+  pointer-events: none;
+}
+.fs-reno-legend__title {
+  font-weight: 600;
+  color: var(--color-fg);
+}
+.fs-reno-legend__row {
+  display: inline-flex;
+  gap: var(--space-1, 4px);
+  align-items: center;
+}
+.fs-reno-legend__swatch {
+  width: 18px;
+  height: 6px;
+  border-radius: 1px;
+}
+.fs-reno-legend__swatch--existing {
+  background: var(--color-fg);
+  opacity: 0.42;
+}
+.fs-reno-legend__swatch--new {
+  background: var(--fs-reno-new, var(--color-fg));
+}
+.fs-reno-legend__swatch--demolish {
+  border: 1.25px dashed var(--fs-reno-demolish, #c8372d);
+}
+.fs-reno-menu__label {
+  min-width: 5.5em;
+  text-align: left;
+}
+.fs-reno-menu__row {
+  display: flex;
+  flex-direction: column;
+}
+.fs-reno-menu__summary {
+  font-size: var(--text-xs, 12px);
+  color: var(--color-fg-muted);
+}
+.fs-reno-menu__blank {
+  display: inline-block;
+  width: 16px;
+}
+.fs-reno-note {
+  margin: var(--space-1, 4px) 0 0;
+  font-size: var(--text-xs, 12px);
+  color: var(--color-fg-muted);
+}

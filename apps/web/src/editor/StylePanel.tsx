@@ -3,6 +3,7 @@ import { useState, type CSSProperties } from 'react';
 import { Button, Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, SegmentedControl, Switch, useToast } from '@d3cloud/ui';
 import { Check, ChevronDown, Download, Palette as PaletteIcon } from 'lucide-react';
 import type { FloorspecDocument } from '@floorspec/engine';
+import type { RenovationStyle } from '@floorspec/render2d';
 import { useEditor, type EditorStore, type Viewport } from './store';
 import type { LevelView, Point, Ring } from './model';
 import { centroid, inFace } from './geometry';
@@ -32,9 +33,14 @@ export function PlanStyleDefs({ paint }: { paint: LevelPaint }) {
  * class of wall in its fill — Technical's exterior walls hatched over the paper — or, in
  * Construction mode, each wall type in its colour.
  */
-export function StyledWalls({ view, level, paint }: { view: Viewport; level: LevelView; paint: LevelPaint }) {
+export function StyledWalls({ view, level, paint, reno = null }: { view: Viewport; level: LevelView; paint: LevelPaint; reno?: ReadonlyMap<string, RenovationStyle> | null }) {
   const t = paint.look.theme;
-  const pieces = [...level.walls.map((w) => ({ id: w.id, ring: w.ring })), ...level.fills.map((f) => ({ id: f.id, ring: f.ring }))];
+  // FLR-T-18.13: in a renovation plan, demolished walls are dashed outlines and new walls solid poché, over the rest.
+  const statusOf = (id: string): RenovationStyle => reno?.get(id) ?? 'plain';
+  const changing = reno !== null && [...reno.values()].some((s) => s === 'existing');
+  const all0 = [...level.walls.map((w) => ({ id: w.id, ring: w.ring })), ...level.fills.map((f) => ({ id: f.id, ring: f.ring }))];
+  const special = all0.filter((p) => statusOf(p.id) === 'demolished' || statusOf(p.id) === 'new');
+  const pieces = all0.filter((p) => !special.includes(p));
   const groups = new Map<string, { fill: string; hatch: boolean; tag: Record<string, string>; d: string }>();
   for (const p of pieces) {
     const w = paint.wall(p.id);
@@ -44,8 +50,11 @@ export function StyledWalls({ view, level, paint }: { view: Viewport; level: Lev
     groups.set(key, g);
   }
   const all = pieces.map((p) => ringD(view, p.ring)).join('');
+  const demolished = special.filter((p) => statusOf(p.id) === 'demolished').map((p) => ringD(view, p.ring)).join('');
+  const fresh = special.filter((p) => statusOf(p.id) === 'new').map((p) => ringD(view, p.ring)).join('');
   return (
     <g className="fs-plan2__walls fs-plan2__walls--styled">
+      <g className={changing ? 'fs-reno-existing' : undefined}>
       <path className="fs-plan2__wall-edge" d={all} style={{ fill: t.wallEdge, stroke: t.wallEdge, strokeWidth: 2 * t.weights.wall }} strokeLinejoin="round" />
       {[...groups.values()]
         .sort((a, b) => Number(b.hatch) - Number(a.hatch))
@@ -55,6 +64,9 @@ export function StyledWalls({ view, level, paint }: { view: Viewport; level: Lev
             {g.hatch ? <path d={g.d} fill="url(#fsx-wall-hatch)" /> : null}
           </g>
         ))}
+      </g>
+      {fresh !== '' ? <path className="fs-plan2__wall--new" data-renovation="new" d={fresh} strokeLinejoin="round" /> : null}
+      {demolished !== '' ? <path className="fs-plan2__wall--demolished" data-renovation="demolished" d={demolished} strokeLinejoin="round" /> : null}
     </g>
   );
 }

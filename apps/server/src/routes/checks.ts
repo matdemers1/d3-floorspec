@@ -14,7 +14,7 @@ import { SHA256, type AssetStore } from '../assets/store.js';
 import { NO_PACKS, type InstalledPacks } from '../rules/packs.js';
 import { AT_PATTERN, SKIES, VIEW_MAX_WIDTH } from '@d3-floorspec/worker/stills';
 import { sceneNamed, scenesOf, savedViewNamed, savedViewsOf } from '@floorspec/mesh';
-import { MODE_IDS, PLAN_STYLES } from '@floorspec/render2d';
+import { MODE_IDS, PLAN_STYLES, RENOVATION_FILTERS } from '@floorspec/render2d';
 import { profileOfProject } from '../rules/profiles.js';
 
 const RenderQuery = z.object({
@@ -28,6 +28,8 @@ const RenderQuery = z.object({
   mode: z.enum(MODE_IDS).optional(),
   // FLR-T-18.5: the plan's style — colour, presentation, technical, blueprint. Construction mode draws Technical unless told.
   style: z.enum(PLAN_STYLES).optional(),
+  // FLR-T-18.13: a remodel's renovation plan — existing, demolition, proposed or combined.
+  renovation: z.enum(RENOVATION_FILTERS).optional(),
   // 3D (FLR-T-8.5): a named view, or a room to stand in; and the design.
   camera: z.enum(['sw', 'se', 'ne', 'nw', 'top']).optional(),
   room: z.string().min(1).max(128).optional(),
@@ -298,6 +300,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
       if (view === '3d') {
         if (options.data.mode !== undefined) throw new HttpError(400, 'a mode is a view of the plan: it is for view=plan');
         if (options.data.style !== undefined) throw new HttpError(400, 'a style is a way of drawing the plan: it is for view=plan');
+        if (options.data.renovation !== undefined) throw new HttpError(400, 'a renovation plan is a drawing of the plan: it is for view=plan');
         const png = await render3d(req, { hash, document }, options.data);
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('ETag', etag);
@@ -305,7 +308,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
         res.send(Buffer.from(png));
         return;
       }
-      const { level, highlight, width, theme, mode } = options.data;
+      const { level, highlight, width, theme, mode, renovation } = options.data;
       const style = options.data.style ?? (mode === 'construction' ? 'technical' : undefined);
       // "all" is the 3D render's whole house (FLR-T-12.23); a plan is one level — unless the model has a level called "all".
       if (level === 'all' && !(isObject(document) && isObject(document['levels']) && Object.hasOwn(document['levels'], 'all')))
@@ -321,6 +324,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(theme === undefined ? {} : { theme }),
           ...(mode === undefined ? {} : { mode }),
           ...(style === undefined ? {} : { style }),
+          ...(renovation === undefined ? {} : { renovation }),
           ...(symbols.size === 0 ? {} : { symbols }),
           ...(base === null ? {} : { ghost: { before: base as object } }),
         });

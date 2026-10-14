@@ -24,7 +24,8 @@
  * Deterministic: handles are allocated in a fixed order, entities are written in plan order, and
  * nothing reads a clock.
  */
-import type { SymbolPart, SymbolStroke } from '@floorspec/render2d';
+import type { Demolished } from './renovation.js';
+import type { Pt, SymbolPart, SymbolStroke } from '@floorspec/render2d';
 import type { DimString } from './dimensions.js';
 import { LAYER_DEFS, LAYERS } from './layers.js';
 import type { Box, LevelPlan, XY } from './plan.js';
@@ -422,9 +423,22 @@ export function roofDxf(roofs: readonly PlanRoof[], trueNorth: number, meta: Dxf
 }
 
 /** One level's plan as a DXF file (ASCII, CRLF line ends). */
-export function levelDxf(plan: LevelPlan, dims: readonly DimString[], meta: DxfMeta): string {
+export function levelDxf(plan: LevelPlan, dims: readonly DimString[], meta: DxfMeta, renovation: { demolished: Demolished | null; fresh: readonly (readonly Pt[])[] } | null = null): string {
   return dxfDocument(plan.extent ?? { minX: 0, minY: 0, maxX: 0, maxY: 0 }, meta.units, (e) => {
     entities(e, plan, dims, meta);
+    // FLR-T-18.13: a remodel's changes on their status layers — new walls' outlines, and what is demolished.
+    if (renovation === null) return;
+    for (const ring of renovation.fresh) polyE(e, LAYERS.wallNew, ring, true);
+    const d = renovation.demolished;
+    if (d === null) return;
+    for (const ring of d.rings) polyE(e, LAYERS.wallDemolish, ring, true);
+    for (const dr of d.doors) partEntities(e, dr.parts, () => LAYERS.doorDemolish);
+    for (const w of d.windows) for (const [a, b] of w.lines) lineE(e, LAYERS.doorDemolish, a, b);
+    for (const dv of d.devices) {
+      if (dv.symbol === null) polyE(e, LAYERS.furnitureDemolish, dv.footprint, true);
+      else partEntities(e, dv.symbol, () => LAYERS.furnitureDemolish);
+    }
+    for (const s of d.slabs) polyE(e, LAYERS.floorDemolish, s.outline, true);
   });
 }
 

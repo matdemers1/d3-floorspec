@@ -1,4 +1,6 @@
 import './three.css';
+import { filteredModel, useRenovationFilter, useRenovationStyles } from '../renovation';
+import type { RenovationStyle } from '@floorspec/render2d';
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -161,7 +163,12 @@ function metresBox(mesh: HouseMesh, box: { min: Vec3; max: Vec3 }): { min: Vec3;
 
 export default function ThreeView({ store, compact = false }: { store: EditorStore; compact?: boolean }) {
   const three = threeOf(store);
-  const model = useEditor(store, shownModel);
+  const fullModel = useEditor(store, shownModel);
+  // FLR-T-18.13: a remodel in 3D is its renovation plan's state — the house as it stands, or as it will be —
+  // with what is to be demolished ghosted in red in the Demolition and Combined plans.
+  const renoFilter = useRenovationFilter(store, fullModel);
+  const renoStyles = useRenovationStyles(fullModel, renoFilter);
+  const model = useMemo(() => (fullModel === null ? null : filteredModel(fullModel, renoFilter)), [fullModel, renoFilter]);
   const project = useEditor(store, (s) => s.model?.document.project.name ?? s.project?.name ?? 'the house');
   const selection = useEditor(store, (s) => s.selection);
   const levelId = useEditor(store, (s) => s.level);
@@ -533,7 +540,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <FixtureLights lights={lamps} />
         <Rig ctl={ctl} />
         <SceneBridge />
-        <Parts visible={partsShown} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
+        <Parts visible={partsShown} reno={renoStyles} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
         {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} /> : null}
         {!walking ? <LabelTracker built={visible} selection={selection} el={label} /> : null}
         {presenting ? (
@@ -680,6 +687,7 @@ function Rig({ ctl }: { ctl: ThreeController }) {
 
 function Parts({
   visible,
+  reno,
   selection,
   accent,
   textures,
@@ -692,6 +700,8 @@ function Parts({
   onLeave,
 }: {
   visible: Built[];
+  /** FLR-T-18.13: each element's renovation style; a demolished one is ghosted in red. */
+  reno: ReadonlyMap<string, RenovationStyle> | null;
   selection: string | null;
   accent: string;
   textures: TextureLibrary;
@@ -766,7 +776,11 @@ function Parts({
     }
     return m;
   };
+  const demolished = useMemo(() => new THREE.MeshLambertMaterial({ color: DEMOLISHED_3D, transparent: true, opacity: 0.38, depthWrite: false }), []);
+  useEffect(() => () => { demolished.dispose(); }, [demolished]);
+  const ghosted = (b: Built, on: boolean): boolean => !on && reno?.get(b.part.id) === 'demolished';
   const materialOf = (b: Built, on: boolean) => {
+    if (ghosted(b, on)) return demolished;
     if (b.look === 'glass') return on ? materials.glassOn : panes !== null ? (b.part.model !== undefined ? panes.model : panes.glass).transmit : b.part.model !== undefined ? materials.modelGlass : materials.glass;
     if (b.look === 'lens') return on ? materials.lensOn : lit ? lensOf(b.part.id) : materials.lensOff;
     if (b.look === 'pick') return on ? materials.pickOn : materials.pick;
@@ -776,7 +790,7 @@ function Parts({
   };
   /** Presentation: a textured slot in library glass gets the reflecting pass over its transmitting one. */
   const slotOf = (b: Built, m: MapRef | null, on: boolean): THREE.Material => {
-    if (m === null) return materialOf(b, on);
+    if (m === null || ghosted(b, on)) return materialOf(b, on);
     if (panes !== null && !on && (m.glass === true || b.look === 'glass')) return panes.glass.transmit;
     return textures.material(m, b.look, on);
   };
@@ -812,6 +826,9 @@ function Parts({
     </group>
   );
 }
+
+/** FLR-T-18.13: what is to be demolished, ghosted — render2d's demolition red. */
+const DEMOLISHED_3D = '#c8372d';
 
 /** A slot the reflecting pass leaves undrawn. */
 const HIDDEN = new THREE.MeshBasicMaterial({ visible: false });

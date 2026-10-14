@@ -1,4 +1,5 @@
 import './editor.css';
+import { RenovationMenu, useRenovationFilter } from './renovation';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
 import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, SquareSlash, Table as TableIcon, TriangleAlert, Undo2, WandSparkles, Waypoints } from 'lucide-react';
@@ -359,6 +360,7 @@ function TopBar({ store, tools, you }: { store: EditorStore; tools: ToolControll
   const proposer = proposals[0] === undefined ? null : proposerOf(proposals[0].createdBy);
   const modeChoices = useModeChoices(store);
   const exportStyle = useExportStyle(store);
+  const renoFilter = useRenovationFilter(store, model);
   return (
     <header className="fs-topbar">
       <IconButton label="Back to the project" icon={<ArrowLeft />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}`); }} />
@@ -381,6 +383,7 @@ function TopBar({ store, tools, you }: { store: EditorStore; tools: ToolControll
       <span className="fs-spacer" />
       <ViewSwitch store={store} />
       <PlanStyleMenu store={store} />
+      <RenovationMenu store={store} />
       <Tooltip content="Rooms, doors, windows, receptacles and fixtures, live">
         <Button className="fs-topbar__brief" size="sm" variant="ghost" icon={<TableIcon />} onClick={() => { navigate(project === null ? '/' : `/projects/${project.id}/schedules`); }}>
           Schedules
@@ -425,7 +428,7 @@ function TopBar({ store, tools, you }: { store: EditorStore; tools: ToolControll
       <CommentsButton store={store} />
       <Avatar className="fs-topbar__avatar" name={you} size="sm" />
       {project !== null ? <ShareButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} /> : null}
-      {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} optionSets={model?.optionSets} modes={modeChoices} planStyle={exportStyle} /> : null}
+      {project !== null ? <ExportButton projectId={project.id} projectName={model?.document.project.name ?? project.name} versionLabel={history.seq === null ? null : `v${String(history.seq)}`} levels={levels.map(({ id }) => ({ id, name: model === null ? id : labelOf(model, id) }))} optionSets={model?.optionSets} modes={modeChoices} planStyle={exportStyle} renovation={renoFilter ?? undefined} /> : null}
       <span className="fs-topbar__rule" />
       <span className="fs-topbar__pin">
         <PinButton store={store} side="top" />
