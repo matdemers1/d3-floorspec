@@ -192,7 +192,7 @@ export function MultiInspector({ store }: { store: EditorStore }) {
       </div>
       <Section title={`Shared fields · ${String(ids.length)} items`}>
         {fields}
-        <p className="fs-multi__note">Edits apply to all {ids.length === 2 ? 'both' : String(ids.length)} as one op. “Mixed” shows where they differ; typing replaces it for all.</p>
+        <p className="fs-multi__note">Edits apply to {ids.length === 2 ? 'both' : `all ${String(ids.length)}`} as one op. “Mixed” shows where they differ; typing replaces it for all.</p>
       </Section>
       {canEdit && level !== undefined ? <CopySection store={store} model={model} level={level} /> : null}
       {canEdit ? (

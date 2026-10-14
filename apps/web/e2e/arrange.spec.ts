@@ -126,6 +126,7 @@ test('multi-select and arrange: a crossing marquee, duplicate as one undo, a win
   await page.mouse.move(east.right + 10, east.bottom + 10, { steps: 6 });
   await expect(page.locator('.fs-marquee').first()).toBeVisible();
   await expect(page.locator('.fs-marquee--crossing')).toHaveCount(0);
+  await shoot(page, 'window-marquee');
   await page.mouse.up();
   await expect(inspector.getByRole('heading', { name: '3 dining chairs' })).toBeVisible();
   // ⇧-click takes one back out.
@@ -155,7 +156,7 @@ test('multi-select and arrange: a crossing marquee, duplicate as one undo, a win
   await page.waitForTimeout(200);
   const far = (await page.locator('[data-device="L-GR-R1"]').boundingBox())!;
   await page.mouse.move(far.x + far.width / 2, far.y + far.height / 2);
-  for (let i = 0; i < 3; i++) await page.mouse.wheel(0, -200);
+  for (let i = 0; i < 2; i++) await page.mouse.wheel(0, -200);
   await page.waitForTimeout(300);
   const light = (await page.locator('[data-device="L-GR-R1"]').boundingBox())!;
   await page.mouse.click(light.x + light.width / 2, light.y + light.height / 2);
