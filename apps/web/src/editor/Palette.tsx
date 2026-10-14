@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { CommandPalette, CommandPaletteHint, type CommandPaletteGroup, type CommandPaletteItem } from '@d3cloud/ui';
-import { ArrowRightLeft, Bookmark, Check, Focus, Hand, History, Layers, Map as MapIcon, Move, Ruler, Scan, Search, Sparkles, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowRightLeft, Bookmark, Check, Focus, Hand, History, Layers, Map as MapIcon, MessageSquareText, Move, Ruler, Scan, Search, Sparkles, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useEditor, type EditorStore } from './store';
 import type { ToolController } from './tools';
 import { COMMANDS, type Command } from './commands';
@@ -14,6 +14,8 @@ import { SystemIcon } from './systems/Panels';
 import { parsePlacement } from './systems/typed';
 import { placeDevice } from './systems/ops';
 import { goTo, navOf, openView } from './panzoom';
+import { parsePhrase, verbOf } from '../phrases/grammar';
+import { openPhrases } from '../phrases/state';
 
 /**
  * The command palette (FLR-T-3.7), ⌘K, the board's "07 · Editor — command palette": every command
@@ -98,6 +100,18 @@ export function Palette({ store, tools }: { store: EditorStore; tools: ToolContr
     });
     const out: CommandPaletteGroup[] = [];
     const pick = (c: Command) => matches(query, c.label, c.group, c.keywords, c.id);
+
+    // FLR-T-18.15: a phrase — "push the island 6 inches north" — first, handed to the phrase bar,
+    // which shows it on the plan before anything is applied.
+    const said = query.trim();
+    if (said !== '' && model !== null && state.readOnly === null && state.compare === null && state.level !== null) {
+      const parsed = parsePhrase(said, units);
+      if (parsed.ok) {
+        out.push({ id: 'say', label: 'Say it on the plan', items: [{ id: 'say.it', label: `Say it: “${said}”`, description: `${verbOf(parsed.intent)} · shown on the plan to accept or reject`, leading: <MessageSquareText />, onSelect: () => { openPhrases(store, said); } }] });
+      } else if (SAY_VERBS.test(said) && said.includes(' ')) {
+        out.push({ id: 'say', label: 'Say it on the plan', items: [{ id: 'say.it', label: `Say it: “${said}”`, description: parsed.reason, leading: <MessageSquareText />, disabled: true, onSelect: () => undefined }] });
+      }
+    }
 
     // Selection first: what can be done to what is selected.
     const sel = state.selection;
@@ -200,6 +214,9 @@ export function Palette({ store, tools }: { store: EditorStore; tools: ToolContr
     />
   );
 }
+
+/** The verbs a phrase starts with: a palette query starting with one is offered to the phrase bar. */
+const SAY_VERBS = /^(?:move|push|nudge|shift|slide|pull|add|put|insert|cut|place|make|resize|set|widen|narrow|lengthen|shorten|extend|rename|call|paint|use|change)\b/i;
 
 /** Items that open a second step in place rather than run. */
 const OPENS_STEP = new Set(['sel.moveWall', 'sel.moveJunction', 'set.nudge', 'draw.from', 'place.typed']);

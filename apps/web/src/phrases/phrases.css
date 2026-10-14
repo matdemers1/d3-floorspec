@@ -1,0 +1,131 @@
+/* Say it on the plan (FLR-T-18.15): the quick-add bar's shell (placing.css .fs-quick) with a phrase
+   in it, the changeset review's summary and actions under it, and the ghost on the plan. Tokens only. */
+
+.fs-phrase {
+  inline-size: min(480px, calc(100% - var(--space-16)));
+}
+.fs-phrase__icon {
+  flex: none;
+  inline-size: 16px;
+  block-size: 16px;
+  color: var(--color-accent);
+}
+.fs-phrase__result:empty {
+  display: none;
+}
+.fs-phrase__result {
+  padding: var(--space-8) var(--space-12) 0;
+}
+.fs-phrase__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-inline-start: 3px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.fs-phrase__summary {
+  margin: 0;
+  color: var(--color-fg);
+  font-size: var(--text-14);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-16);
+}
+.fs-phrase__note,
+.fs-phrase__hint {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-phrase__refused {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-12);
+}
+.fs-phrase__question,
+.fs-phrase__fail {
+  margin: 0;
+  padding-block-end: var(--space-4);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+}
+.fs-phrase__ops {
+  margin: var(--space-8) var(--space-12) 0;
+  max-block-size: 120px;
+  overflow: auto;
+}
+.fs-phrase__actions {
+  display: flex;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+}
+.fs-phrase__option[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.6;
+}
+.fs-phrase__examples {
+  padding: var(--space-4) var(--space-12) var(--space-8);
+}
+.fs-phrase__examples ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-phrase__try {
+  margin: 0 0 var(--space-4);
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+}
+.fs-phrase__example {
+  padding: var(--space-2) var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-12);
+  cursor: pointer;
+}
+.fs-phrase__example:hover {
+  background: var(--color-surface-hover);
+}
+.fs-phrase__example:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: 1px;
+}
+/* What was applied or rejected, for a screen reader once the bar has gone: present, never seen. */
+.fs-phrase__announce {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* On the plan. */
+.fs-phrase-layer {
+  pointer-events: none;
+}
+.fs-phrase-layer__lit {
+  fill: var(--color-accent);
+  fill-opacity: 0.08;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+.fs-phrase-layer__lit.is-hover {
+  fill-opacity: 0.28;
+  stroke-width: 3;
+}
+.fs-phrase-layer__ghost {
+  fill: var(--color-accent);
+  fill-opacity: 0.16;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
