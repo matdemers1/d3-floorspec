@@ -1,0 +1,8 @@
+{
+  "description": "The same house read with no known extensions: FS_renovation is not evaluated, so nothing of it is derived (`derived.extensions` is empty), and Core reads the combined document - W8 and W12 both standing, and the Utility room R3 and the Laundry R4 each a room (Core 1.6.9).",
+  "covers": [
+    "FS-RENO-1.2.1",
+    "FS-RENO-1.2.4",
+    "FS-CORE-1.6.9"
+  ]
+}

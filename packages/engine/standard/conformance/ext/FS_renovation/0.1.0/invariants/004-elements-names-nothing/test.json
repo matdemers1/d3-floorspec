@@ -1,0 +1,7 @@
+{
+  "description": "`elements` names X9, which is no element - one removed since: it means nothing, and is ignored (1.3). Valid, and derived as without it.",
+  "covers": [
+    "FS-RENO-1.3.4",
+    "FS-RENO-5.1.1"
+  ]
+}

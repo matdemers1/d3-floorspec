@@ -1,0 +1,6 @@
+{
+  "description": "J7 carries a status: a junction has none.",
+  "covers": [
+    "FS-RENO-1.3.3"
+  ]
+}

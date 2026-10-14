@@ -245,6 +245,24 @@ export const OFFICIAL_ENTRIES = [
     ]
   },
   {
+    "name": "FS_renovation",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_renovation/0.1.0/renovation.schema.json",
+    "title": "Renovation: existing, demolish and new",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
     "name": "FS_structural",
     "version": "0.1.0",
     "status": "draft",
@@ -2653,6 +2671,82 @@ export const OFFICIAL_SCHEMAS = {
           "extras": {
             "description": "As Core 1.7: data no specification defines.",
             "type": "object"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "FS_renovation": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_renovation/0.1.0/renovation.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007, FLR-ADR-048): FS_renovation 0.1.0, registry/FS_renovation/spec.md. The root applies to the extension's top-level data, extensions.FS_renovation: the statuses of extension elements, by ID. FS_renovation's data on a core element (its own extensions.FS_renovation) is checked as the object { C: data } against #/$defs/coreElements, which names the seven collections it is defined for - walls, separators, openings, rooms, slabs, roofs and stairs - and no other (spec.md 1.3).",
+    "title": "FS_renovation 0.1.0",
+    "description": "A renovation status - existing, demolish or new - for each element of a remodel.",
+    "type": "object",
+    "properties": {
+      "elements": {
+        "description": "1.3: the status of extension elements, by ID. An extension element has no extensions member of its own (Core 12.5).",
+        "type": "object",
+        "propertyNames": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/status"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "coreElements": {
+        "title": "Data on core elements",
+        "description": "1.3: an element's collection mapped to its FS_renovation data. Only walls, separators, openings, rooms, slabs, roofs and stairs carry FS_renovation data.",
+        "type": "object",
+        "properties": {
+          "walls": {
+            "$ref": "#/$defs/element"
+          },
+          "separators": {
+            "$ref": "#/$defs/element"
+          },
+          "openings": {
+            "$ref": "#/$defs/element"
+          },
+          "rooms": {
+            "$ref": "#/$defs/element"
+          },
+          "slabs": {
+            "$ref": "#/$defs/element"
+          },
+          "roofs": {
+            "$ref": "#/$defs/element"
+          },
+          "stairs": {
+            "$ref": "#/$defs/element"
+          }
+        },
+        "additionalProperties": false
+      },
+      "status": {
+        "title": "Renovation status",
+        "description": "2.1: existing - it stands today and stays (the default); demolish - it stands today and is to be removed; new - it is to be built.",
+        "type": "string",
+        "enum": [
+          "existing",
+          "demolish",
+          "new"
+        ]
+      },
+      "element": {
+        "title": "Data on a core element",
+        "description": "1.3: the extensions.FS_renovation of a wall, separator, opening, room, slab, roof or stair.",
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "$ref": "#/$defs/status"
           }
         },
         "additionalProperties": false

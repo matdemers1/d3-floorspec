@@ -1,0 +1,246 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "hash": "e8953ece2c14839009aa19645f5a53ea21acdd5e6cd3c471567d813a3586ab31",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [105664, 105664],
+        "endRight": [105664, 4576064],
+        "endLeft": [-105664, 4787392],
+        "startLeft": [-105664, -105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W10": {
+        "startRight": [4754880, 2267712],
+        "endRight": [6169152, 2267712],
+        "endLeft": [6242304, 2414016],
+        "startLeft": [4754880, 2414016],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W11": {
+        "startRight": [6169152, 105664],
+        "endRight": [4754880, 105664],
+        "endLeft": [4681728, -105664],
+        "startLeft": [6242304, -105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W12": {
+        "startRight": [6315456, 105664],
+        "endRight": [6315456, 2267712],
+        "endLeft": [6169152, 2267712],
+        "startLeft": [6169152, 105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W13": {
+        "startRight": [6315456, 2267712],
+        "endRight": [7697216, 2267712],
+        "endLeft": [7697216, 2414016],
+        "startLeft": [6242304, 2414016],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [105664, 4576064],
+        "endRight": [4608576, 4576064],
+        "endLeft": [4681728, 4787392],
+        "startLeft": [-105664, 4787392],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4754880, 4576064],
+        "endRight": [7697216, 4576064],
+        "endLeft": [7908544, 4787392],
+        "startLeft": [4681728, 4787392],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [7697216, 4576064],
+        "endRight": [7697216, 2414016],
+        "endLeft": [7908544, 2340864],
+        "startLeft": [7908544, 4787392],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [7697216, 2267712],
+        "endRight": [7697216, 105664],
+        "endLeft": [7908544, -105664],
+        "startLeft": [7908544, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W6": {
+        "startRight": [7697216, 105664],
+        "endRight": [6315456, 105664],
+        "endLeft": [6242304, -105664],
+        "startLeft": [7908544, -105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W7": {
+        "startRight": [4608576, 105664],
+        "endRight": [105664, 105664],
+        "endLeft": [-105664, -105664],
+        "startLeft": [4681728, -105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W8": {
+        "startRight": [4754880, 105664],
+        "endRight": [4754880, 2340864],
+        "endLeft": [4608576, 2340864],
+        "startLeft": [4608576, 105664],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W9": {
+        "startRight": [4754880, 2340864],
+        "endRight": [4754880, 4576064],
+        "endLeft": [4608576, 4576064],
+        "startLeft": [4608576, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J10": [[6169152, 2267712], [6315456, 2267712], [6242304, 2414016]],
+      "J3": [[4608576, 4576064], [4754880, 4576064], [4681728, 4787392]],
+      "J6": [[4608576, 105664], [4681728, -105664], [4754880, 105664]],
+      "J8": [[7697216, 2267712], [7908544, 2340864], [7697216, 2414016]],
+      "J9": [[6169152, 105664], [6242304, -105664], [6315456, 105664]]
+    },
+    "rooms": {
+      "R1": {
+        "outer": [[105664, 105664], [4608576, 105664], [4608576, 2340864], [4608576, 4576064], [105664, 4576064]],
+        "holes": [],
+        "area": "20129817804800"
+      },
+      "R2": {
+        "outer": [[4754880, 2414016], [6242304, 2414016], [7697216, 2414016], [7697216, 4576064], [4754880, 4576064]],
+        "holes": [],
+        "area": "6361471664128"
+      },
+      "R3": {
+        "outer": [[4754880, 105664], [6169152, 105664], [6169152, 2267712], [4754880, 2267712]],
+        "holes": [],
+        "area": "3057723949056"
+      },
+      "R4": {
+        "outer": [[6315456, 105664], [7697216, 105664], [7697216, 2267712], [6315456, 2267712]],
+        "holes": [],
+        "area": "2987431444480"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [3511296, 0],
+        "end": [2340864, 0],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "O2": {
+        "start": [1560576, 4681728],
+        "end": [3121152, 4681728],
+        "sillElevation": 1170432,
+        "headElevation": 2731008
+      },
+      "O3": {
+        "start": [5071872, 2340864],
+        "end": [6047232, 2340864],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "O4": {
+        "start": [4681728, 390144],
+        "end": [4681728, 1365504],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "O5": {
+        "start": [6242304, 390144],
+        "end": [6242304, 1365504],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "O6": {
+        "start": [5852160, 0],
+        "end": [5071872, 0],
+        "sillElevation": 1365504,
+        "headElevation": 2535936
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {
+      "X1": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "casework",
+        "footprint": [[3840576, 18432], [4608576, 18432], [4608576, 2322432], [3840576, 2322432]],
+        "bottom": 0,
+        "top": 1152000
+      },
+      "X2": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "casework",
+        "footprint": [[1700864, 1060864], [2980864, 1060864], [2980864, 3620864], [1700864, 3620864]],
+        "bottom": 0,
+        "top": 1152000
+      },
+      "X3": {
+        "level": "L1",
+        "extension": "FS_furniture",
+        "collection": "appliances",
+        "footprint": [[3712576, 2935296], [4608576, 2935296], [4608576, 4087296], [3712576, 4087296]],
+        "bottom": 0,
+        "top": 2304000
+      }
+    },
+    "placements": {
+      "X1": {
+        "point": [4608576, 1170432, 0],
+        "facing": 180000000
+      },
+      "X2": {
+        "point": [2340864, 2340864, 0],
+        "facing": 0
+      },
+      "X3": {
+        "point": [4608576, 3511296, 0],
+        "facing": 180000000
+      }
+    },
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      },
+      "R2": {
+        "entry": false,
+        "reachable": true
+      },
+      "R3": {
+        "entry": true,
+        "reachable": true
+      },
+      "R4": {
+        "entry": false,
+        "reachable": true
+      }
+    },
+    "extensions": {}
+  }
+}

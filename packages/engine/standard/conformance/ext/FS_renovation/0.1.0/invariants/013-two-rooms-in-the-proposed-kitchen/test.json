@@ -1,0 +1,6 @@
+{
+  "description": "The Utility room R3 is to stay while the wall between it and the Kitchen comes down: in the proposed state the Kitchen and the Utility room are one face with two anchors, which Core refuses (FS-INV-202).",
+  "covers": [
+    "FS-RENO-2.4.2"
+  ]
+}

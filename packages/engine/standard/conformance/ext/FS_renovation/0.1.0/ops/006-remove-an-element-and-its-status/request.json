@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "removeElement",
+      "id": "X1"
+    },
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extensions/FS_renovation/elements/X1"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "W10 comes down with the Bath's door and the Bath itself: the Bath joins the Kitchen in the proposed state, and is not a room of it. Valid.",
+  "covers": [
+    "FS-RENO-2.3.1",
+    "FS-RENO-2.4.2"
+  ]
+}

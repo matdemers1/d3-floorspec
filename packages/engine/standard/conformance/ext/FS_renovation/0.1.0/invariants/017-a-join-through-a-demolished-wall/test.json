@@ -1,0 +1,6 @@
+{
+  "description": "J7's join runs W8 and W9 through it, and W8 is to come down: the proposed state's view drops the join (2.2), so it names no missing wall. Valid.",
+  "covers": [
+    "FS-RENO-2.4.2"
+  ]
+}

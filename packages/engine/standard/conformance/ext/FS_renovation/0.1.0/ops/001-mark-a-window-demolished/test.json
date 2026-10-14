@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of O2 /extensions/FS_renovation/status, creating O2's extensions and its FS_renovation data on the way (Ops 2.3): the Kitchen window is to be filled in. It commits.",
+  "covers": [
+    "FS-RENO-1.2.1",
+    "FS-RENO-1.3.2",
+    "FS-OPS-2.3.1"
+  ]
+}

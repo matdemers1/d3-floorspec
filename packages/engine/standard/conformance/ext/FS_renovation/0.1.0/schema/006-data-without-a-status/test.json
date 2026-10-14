@@ -1,0 +1,6 @@
+{
+  "description": "O5's FS_renovation data is an empty object: the status is always present.",
+  "covers": [
+    "FS-RENO-1.3.2"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "unsetProperty of R3 /extensions/FS_renovation: the Utility room would stay while its wall to the Kitchen comes down, two rooms in one face of the proposed state; the batch is rejected with FS-RENO-INV-004.",
+  "covers": [
+    "FS-RENO-2.4.2",
+    "FS-RENO-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}
