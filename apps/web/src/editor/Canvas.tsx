@@ -33,6 +33,7 @@ import { PrecisionHtml, PrecisionLayer } from './precision/Overlay';
 import { usePrecision } from './precision/state';
 import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
 import { QuickAdd } from '../placing/QuickAdd';
+import { PhraseAnnouncer, PhraseBar, PhraseLayer } from '../phrases/PhraseBar';
 import { RoomDragGhost, RoomHandles, WandOverlay, WandPrompt } from './rooms/RoomLayer';
 import { AnnotationLayer } from './annotate/Layer';
 import { AnnotationDraftLayer, AnnotationHtml } from './annotate/Overlay';
@@ -236,6 +237,8 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={fullModel ?? model} />}
               {comparing ? null : <AnnotationDraftLayer store={store} view={view} units={units} />}
               {comparing ? null : <PlacingLayer store={store} view={view} level={level} />}
+              {/* FLR-T-18.15: what a phrase acts on, its candidates, and the items it moves where they would be. */}
+              {comparing ? null : <PhraseLayer store={store} view={view} level={level} />}
               {comparing ? null : <RidgePick store={store} view={view} />}
               {comparing ? null : <UnderlayCapture store={store} view={view} level={level} />}
             </>
@@ -248,6 +251,8 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       {/* FLR-T-18.7: the ghost's distances and its sentence, and the quick-add bar at the pointer. */}
       {view !== null && level !== undefined && !comparing ? <PlacingLabels store={store} view={view} units={units} /> : null}
       {view !== null && level !== undefined && !comparing ? <QuickAdd store={store} view={view} level={level} /> : null}
+      {view !== null && level !== undefined && !comparing ? <PhraseBar store={store} view={view} level={level} /> : null}
+      <PhraseAnnouncer store={store} />
       {view !== null && level !== undefined && !comparing ? <WandPrompt store={store} tools={tools} view={view} level={level} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={fullModel ?? model} units={units} picking={tools.pickLevel} /> : null}
       {view !== null && level !== undefined && !comparing ? <UnderlayHtml store={store} view={view} level={level} units={units} /> : null}

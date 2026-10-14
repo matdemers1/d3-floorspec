@@ -82,6 +82,9 @@ import { defineConfig, devices } from '@playwright/test';
  *   - `renovation` — FLR-T-18.13: renovation plans on a kitchen remodel of the Courtyard House — the Renovation
  *                   menu's Existing, Demolition, Proposed and Combined plans with their legend, two cabinets marked
  *                   "To demolish" as one batch and one undo, 3D, the plan render and the demolition PDF; axe.
+ *   - `phrases`   — FLR-T-18.15: say it on the plan, on the Courtyard House — "push the island 6 inches north" from
+ *                   the palette, ghosted with its cooktop and accepted as one op; a resize rejected with Esc; "add
+ *                   a 36-inch door to the pantry" asking which wall, each lit as it is highlighted; axe in both themes.
  *
  * Run with:
  *
@@ -89,7 +92,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -190,6 +193,8 @@ const SUITES: Suite[] = [
   { name: 'feedback', spec: 'feedback.spec.ts', port: PORT + 46, database: databaseFor('feedback'), setupToken: true },
   // FLR-T-18.13: renovation plans — Existing, Demolition, Proposed, Combined in plan and 3D, statuses from the inspector, the render, a PDF, axe.
   { name: 'renovation', spec: 'renovation.spec.ts', port: PORT + 43, database: databaseFor('renovation'), setupToken: true, gl: true },
+  // FLR-T-18.15: say it on the plan — a phrase from the palette and ⌘/ previewed as a ghost, accepted as one op, rejected, a wall asked about.
+  { name: 'phrases', spec: 'phrases.spec.ts', port: PORT + 47, database: databaseFor('phrases'), setupToken: true },
 ];
 
 /**
