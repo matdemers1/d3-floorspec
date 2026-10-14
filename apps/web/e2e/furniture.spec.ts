@@ -74,8 +74,9 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   const requested = new Set<string>();
   page.on('request', (r) => { const path = new URL(r.url()).pathname; if (path.includes('/assets/')) requested.add(path.split('/').pop()!); });
 
-  // ── The library, from the rail: cards by kind, a search, the chosen item in detail.
-  await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Furniture and appliances' }).click();
+  // ── The library, from the rail's library drawer (FLR-T-18.7) and its "Details…": cards by kind, a search, the chosen item in detail.
+  await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Insert from the library' }).click();
+  await page.locator('.fs-lib').getByRole('button', { name: 'Details…' }).click();
   const library = page.getByRole('dialog', { name: 'Furniture & appliances' });
   await expect(library).toBeVisible();
   // 25 of furniture, appliances and casework, and the decor of the library's 0.2.0 (FLR-T-13.11).
@@ -116,6 +117,8 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
   // ── On the plan: the symbol over its footprint, and the door's clearance showing.
   const item = page.locator(`[data-furniture="${fridge!.id}"]`);
   await expect(item.locator('image')).toHaveAttribute('href', `/api/projects/${project}/assets/${model.assets![fridge!.fallback.symbol]!.sha256}`);
+  // The layers are in the tree's tab of the left drawer, beside the library's (FLR-T-18.7).
+  await page.getByRole('tab', { name: 'Tree' }).click();
   await expect(page.getByRole('button', { name: 'Clearances', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.fs-clearances polygon')).toHaveCount(1);
   await expect(page.locator('.fs-clearance--blocked')).toHaveCount(0);
@@ -130,6 +133,8 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
 
   // The arrow keys move it, and Undo puts it back.
   const hostBefore = JSON.stringify((furniture(await modelOf(page, project))[0] as unknown as { host: unknown }).host);
+  // From the plan: on the drawer's tabs the arrows would move between them.
+  await page.locator('.fs-editor').focus();
   await page.keyboard.press('ArrowLeft');
   await expect.poll(async () => JSON.stringify((furniture(await modelOf(page, project))[0] as unknown as { host: unknown }).host)).not.toBe(hostBefore);
   // The server has the move before the editor hears back; Undo waits for the edit to finish.
@@ -140,6 +145,7 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
 
   // ── An island in front of the door: a note, never an error.
   await page.keyboard.press('i');
+  await page.locator('.fs-lib').getByRole('button', { name: 'Details…' }).click();
   await expect(library).toBeVisible();
   // The library keeps its kind and search between visits: back to every kind.
   await library.getByRole('radio', { name: /^All/ }).click();
@@ -193,7 +199,7 @@ test('the P8 furniture demo: place a fridge from the library, its door clearance
 
   // ── Upload your own: a model made facing +Z, turned to face +X; a symbol with a script in it.
   await page.keyboard.press('i');
-  await library.getByRole('button', { name: 'Upload glTF' }).click();
+  await page.locator('.fs-lib').getByRole('button', { name: 'Upload glTF' }).click();
   const upload = page.getByRole('dialog', { name: 'Upload a model' });
   await expect(upload).toBeVisible();
   await upload.getByLabel('Model file').setInputFiles(new URL('../../../packages/engine/standard/registry/FS_furniture/library/models/sofa-2100.glb', import.meta.url).pathname);

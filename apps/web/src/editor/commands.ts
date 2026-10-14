@@ -14,6 +14,7 @@ import { stageRooms } from './systems/Staging';
 import { DRAWER_HINTS, drawersOf, setFullScreen, summonDrawer } from './drawers';
 import { ARRANGE_COMMANDS } from './arrange/commands';
 import { PRECISION_COMMANDS } from './precision/commands';
+import { PLACING_COMMANDS } from '../placing/commands';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -606,6 +607,8 @@ export const COMMANDS: readonly Command[] = [
   ...ARRANGE_COMMANDS,
   // Furniture (FLR-T-8.3): I opens the library; [ and ] turn the selected item.
   ...FURNITURE_COMMANDS,
+  // Adding things (FLR-T-18.7): / opens the quick-add bar.
+  ...PLACING_COMMANDS,
   // FLR-T-18.3: the trade modes, ⌥1–⌥7 (read by the editor's key handler, by the key's place).
   ...MODE_COMMANDS,
   // FLR-T-18.9: the measure tool (⇧M), the snapping, and typing into a temporary dimension.

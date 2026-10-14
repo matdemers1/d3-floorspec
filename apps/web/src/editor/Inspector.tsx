@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { PlacingPanel } from '../placing/PlacingPanel';
 import { Button, IconButton, SegmentedControl, Select, Switch } from '@d3cloud/ui';
 import { Trash2, X } from 'lucide-react';
 import type { FloorspecDocument } from '@floorspec/engine';
@@ -104,6 +105,8 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   const units = useEditor(store, () => store.units);
   if (model === null) return null;
   if (tool === 'device' && readOnly === null) return <DevicePanel store={store} tools={tools} model={model} />;
+  // FLR-T-18.7: what is being placed, with buttons to turn it (a finger has no R key).
+  if (tool === 'place' && readOnly === null) return <PlacingPanel store={store} />;
   // The measure tool (FLR-T-18.9) draws nothing: the inspector stays on the selection.
   if (tool !== 'select' && tool !== 'measure' && readOnly === null) return <DrawPanel store={store} model={model} />;
   // FLR-T-18.8: several selected — the fields they share.

@@ -40,8 +40,12 @@ import type { ImportReport } from '../exports/ifcImport';
 /** The forms the stair tool draws (Core 17.2). */
 export type StairForm = 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral';
 
-/** `hand` drags the plan (FLR-T-18.6); `wand` makes a room of the space clicked (FLR-T-18.10); `measure` measures it, point to point, chained, an area (FLR-T-18.9). */
-export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'wand' | 'device' | 'measure';
+/**
+ * `hand` drags the plan (FLR-T-18.6); `wand` makes a room of the space clicked (FLR-T-18.10); `place`
+ * places the library's item under the pointer, click after click (FLR-T-18.7); `measure` measures the
+ * plan, point to point, chained, an area (FLR-T-18.9).
+ */
+export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'wand' | 'device' | 'place' | 'measure';
 
 /**
  * The tools that draw a chain of points: walls and separators (a polyline), and the outlines of a

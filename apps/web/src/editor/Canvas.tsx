@@ -27,6 +27,8 @@ import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
 import { PrecisionHtml, PrecisionLayer } from './precision/Overlay';
 import { usePrecision } from './precision/state';
+import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
+import { QuickAdd } from '../placing/QuickAdd';
 import { RoomDragGhost, RoomHandles, WandOverlay, WandPrompt } from './rooms/RoomLayer';
 
 /**
@@ -201,6 +203,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
               {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={model} />}
+              {comparing ? null : <PlacingLayer store={store} view={view} level={level} />}
               {comparing ? null : <RidgePick store={store} view={view} />}
             </>
           ) : null}
@@ -208,6 +211,9 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       ) : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={model} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <PrecisionHtml store={store} view={view} level={level} model={model} units={units} /> : null}
+      {/* FLR-T-18.7: the ghost's distances and its sentence, and the quick-add bar at the pointer. */}
+      {view !== null && level !== undefined && !comparing ? <PlacingLabels store={store} view={view} units={units} /> : null}
+      {view !== null && level !== undefined && !comparing ? <QuickAdd store={store} view={view} level={level} /> : null}
       {view !== null && level !== undefined && !comparing ? <WandPrompt store={store} tools={tools} view={view} level={level} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={model} units={units} picking={tools.pickLevel} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}

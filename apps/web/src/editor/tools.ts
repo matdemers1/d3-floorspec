@@ -43,6 +43,7 @@ import { cornersOf, wallsOfRoom } from './arrange/rooms';
 import { boundsOfIds, isCovering, marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
 import { transformBatch, translation } from './arrange/transform';
 import { deleteSelection, moveSelection } from './arrange/actions';
+import { moveGhost, placeHere } from '../placing/state';
 import { extentAcross, functionFromName, minRoom, moveRoom, resizeRoom, roomDrag, roomSides, sideDrag, wandCandidates, type Side } from './rooms/edit';
 import type { WandDraft } from './store';
 
@@ -409,6 +410,10 @@ export class ToolController {
       case 'device':
         this.deviceDown();
         return;
+      case 'place':
+        // FLR-T-18.7: the library's item where its ghost shows; the tool stays on for the next.
+        void placeHere(this.store);
+        return;
     }
   }
 
@@ -441,6 +446,9 @@ export class ToolController {
         measureMove(this.store, this.snapFor(p, from, m.closed || m.done === true ? [] : m.points.map((x) => x.point), true));
         return;
       }
+      case 'place':
+        moveGhost(this.store, this.world(p), this.tol(p.type), p.alt || p.meta === true);
+        return;
       case 'stair': {
         const draft = s.draft?.tool === 'stair' ? s.draft : { tool: 'stair' as const, foot: null, cursor: null };
         this.store.set({ draft: { ...draft, cursor: this.snapFor(p, draft.foot ?? undefined).point } });

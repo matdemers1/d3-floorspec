@@ -76,15 +76,15 @@ function read(projectId: string): Saved | null {
 /** The editor's layer for a plan layer: every plan layer is one of the editor's, by the same name. */
 const drawn = (layers: Layers, l: PlanLayer): boolean => layers[l] !== false;
 
-/** The tools a mode's rail offers (FLR-T-18.3): drawing tools, device kinds, the furniture library. */
-export type RailItem = { tool: ToolId } | { device: string } | { library: true };
+/** The tools a mode's rail offers (FLR-T-18.3): drawing tools, device kinds, the library, quick add (FLR-T-18.7). */
+export type RailItem = { tool: ToolId } | { device: string } | { library: true } | { quick: true };
 
 const SELECT: RailItem = { tool: 'select' };
 /** The hand (FLR-T-18.6), under Select in every rail. */
 const HAND: RailItem = { tool: 'hand' };
 export const RAILS: Readonly<Record<ModeId, readonly RailItem[]>> = {
   construction: [SELECT, HAND, { tool: 'wall' }, { tool: 'arc' }, { tool: 'door' }, { tool: 'window' }, { tool: 'room' }, { tool: 'wand' }, { tool: 'separator' }, { tool: 'slab' }, { tool: 'stair' }, { tool: 'roof' }],
-  decorator: [SELECT, HAND, { library: true }, { tool: 'room' }],
+  decorator: [SELECT, HAND, { library: true }, { quick: true }, { tool: 'room' }],
   electrical: [SELECT, HAND, { device: 'receptacle' }, { device: 'switch' }, { device: 'light' }, { device: 'alarm' }, { device: 'panel' }, { device: 'evCharger' }],
   plumbing: [SELECT, HAND, { device: 'toilet' }, { device: 'lavatory' }, { device: 'kitchenSink' }, { device: 'shower' }, { device: 'bathtub' }, { device: 'floorDrain' }, { device: 'waterHeater' }],
   mechanical: [SELECT, HAND, { device: 'furnace' }, { device: 'airHandler' }, { device: 'supply' }, { device: 'return' }, { device: 'exhaustFan' }, { device: 'gasRange' }],
