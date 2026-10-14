@@ -63,6 +63,8 @@ function shownModel(s: EditorState): EditorModel | null {
 interface Tokens {
   background: string;
   accent: string;
+  /** FLR-T-18.13: what is to be demolished, ghosted in it. */
+  danger: string;
 }
 
 /** The design system's colours, read where the view sits — so the canvas follows the theme. */
@@ -73,9 +75,10 @@ function useTokens(host: { current: HTMLElement | null }): Tokens {
     return {
       background: style.getPropertyValue('--color-bg-sunken').trim() || 'black',
       accent: style.getPropertyValue('--color-accent').trim() || 'slateblue',
+      danger: style.getPropertyValue('--color-danger').trim() || 'crimson',
     };
   }, [host]);
-  const [tokens, setTokens] = useState<Tokens>({ background: 'black', accent: 'slateblue' });
+  const [tokens, setTokens] = useState<Tokens>({ background: 'black', accent: 'slateblue', danger: 'crimson' });
   useEffect(() => {
     const update = () => { setTokens(read()); };
     update();
@@ -540,7 +543,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <FixtureLights lights={lamps} />
         <Rig ctl={ctl} />
         <SceneBridge />
-        <Parts visible={partsShown} reno={renoStyles} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
+        <Parts visible={partsShown} reno={renoStyles} danger={tokens.danger} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
         {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} /> : null}
         {!walking ? <LabelTracker built={visible} selection={selection} el={label} /> : null}
         {presenting ? (
@@ -688,6 +691,7 @@ function Rig({ ctl }: { ctl: ThreeController }) {
 function Parts({
   visible,
   reno,
+  danger,
   selection,
   accent,
   textures,
@@ -702,6 +706,7 @@ function Parts({
   visible: Built[];
   /** FLR-T-18.13: each element's renovation style; a demolished one is ghosted in red. */
   reno: ReadonlyMap<string, RenovationStyle> | null;
+  danger: string;
   selection: string | null;
   accent: string;
   textures: TextureLibrary;
@@ -776,8 +781,9 @@ function Parts({
     }
     return m;
   };
-  const demolished = useMemo(() => new THREE.MeshLambertMaterial({ color: DEMOLISHED_3D, transparent: true, opacity: 0.38, depthWrite: false }), []);
+  const demolished = useMemo(() => new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.38, depthWrite: false }), []);
   useEffect(() => () => { demolished.dispose(); }, [demolished]);
+  useEffect(() => { demolished.color.set(danger); }, [demolished, danger]);
   const ghosted = (b: Built, on: boolean): boolean => !on && reno?.get(b.part.id) === 'demolished';
   const materialOf = (b: Built, on: boolean) => {
     if (ghosted(b, on)) return demolished;
@@ -826,9 +832,6 @@ function Parts({
     </group>
   );
 }
-
-/** FLR-T-18.13: what is to be demolished, ghosted — render2d's demolition red. */
-const DEMOLISHED_3D = '#c8372d';
 
 /** A slot the reflecting pass leaves undrawn. */
 const HIDDEN = new THREE.MeshBasicMaterial({ visible: false });
