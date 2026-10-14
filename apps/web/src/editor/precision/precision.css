@@ -1,0 +1,385 @@
+/*
+ * Precision (FLR-T-18.9): temporary dimensions, ⌥ distances, smart guides, the snap menu and the
+ * measure tool. Every colour a design token but one: smart guides are the board's magenta, the
+ * convention Figma and SketchUp taught (an inference line is not the selection's accent), and
+ * @d3cloud/ui 1.5 has no such token. It is darkened in the light theme to hold 4.5:1 on the plan and
+ * on its label's text, and is never the only cue: a guide always carries words ("centre = Sink").
+ */
+:root {
+  --fs-guide: #b0127a; /* d3-allow: the smart-guide magenta of the board; @d3cloud/ui has no inference-line token (FLR-T-18.9) */
+  --fs-guide-contrast: #ffffff; /* d3-allow: text on the smart-guide magenta (FLR-T-18.9) */
+}
+[data-theme='dark'] {
+  --fs-guide: #ff6ac8; /* d3-allow: the smart-guide magenta of the board; @d3cloud/ui has no inference-line token (FLR-T-18.9) */
+  --fs-guide-contrast: #1a0a14; /* d3-allow: text on the smart-guide magenta (FLR-T-18.9) */
+}
+
+/* ── Temporary dimensions ── */
+.fs-tempdim line {
+  stroke: var(--color-accent);
+  stroke-width: 1;
+}
+.fs-tempdim--active line {
+  stroke-width: 1.5;
+}
+.fs-tempdim .fs-tempdim__ext,
+.fs-altdim .fs-tempdim__ext {
+  stroke-dasharray: 2 2;
+  opacity: 0.7;
+}
+.fs-tempdim__value {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 1px var(--space-6);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: text;
+  pointer-events: auto;
+}
+.fs-tempdim__value:hover {
+  background: var(--color-accent-muted);
+}
+.fs-tempdim__value:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.fs-tempdims[data-through='true'] .fs-tempdim__value {
+  pointer-events: none;
+}
+.fs-tempdim__value--static {
+  cursor: default;
+  pointer-events: none;
+}
+.fs-tempdim__edit {
+  position: absolute;
+  /* The field centred where its number was; the Tab hint to its right. */
+  transform: translate(-48px, -50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  pointer-events: auto;
+  z-index: 3;
+}
+.fs-tempdim__input {
+  width: 96px;
+  height: 24px;
+  padding: 0 var(--space-6);
+  border: 1.5px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+.fs-tempdim__input:focus {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.fs-tempdim__input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+.fs-tempdim__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-8);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  white-space: nowrap;
+}
+.fs-tempdim__tab kbd {
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-11);
+}
+.fs-tempdim__ref--on {
+  color: var(--color-fg);
+  font-weight: var(--weight-medium);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.fs-tempdim__error {
+  position: absolute;
+  top: calc(100% + var(--space-4));
+  left: 0;
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-danger);
+  font-size: var(--text-12);
+  white-space: nowrap;
+}
+
+/* ── ⌥ distances, and smart guides ── */
+.fs-altdim line {
+  stroke: var(--fs-guide);
+  stroke-width: 1;
+}
+.fs-altdim__value,
+.fs-measure__label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 1px var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--color-fg);
+  color: var(--color-bg);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  line-height: 18px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.fs-althint {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.fs-althint kbd {
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.fs-smartguide {
+  stroke: var(--fs-guide);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.fs-smartguide__dot {
+  fill: var(--fs-guide);
+}
+.fs-guidetag {
+  position: absolute;
+  padding: 1px var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--fs-guide);
+  color: var(--fs-guide-contrast);
+  font-size: var(--text-12);
+  line-height: 18px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ── The measure tool ── */
+.fs-measure__tape {
+  fill: none;
+  stroke: var(--color-warning);
+  stroke-width: 2;
+}
+.fs-measure__area {
+  fill: var(--color-warning-muted);
+  fill-opacity: 0.55;
+  stroke: none;
+}
+.fs-measure__point {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-warning);
+  stroke-width: 2;
+}
+.fs-measure__cursor line,
+.fs-measure__cursor circle {
+  fill: none;
+  stroke: var(--color-warning);
+  stroke-width: 1.5;
+}
+.fs-measurepanel {
+  position: absolute;
+  top: 72px;
+  right: var(--space-16);
+  width: 280px;
+  padding: var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  font-size: var(--text-12);
+  pointer-events: auto;
+  z-index: 2;
+}
+.fs-measurepanel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+.fs-measurepanel__head kbd {
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+  font-weight: var(--weight-regular);
+}
+.fs-measurepanel__hint {
+  margin: 0 0 var(--space-8);
+  color: var(--color-fg-muted);
+}
+.fs-measurepanel__rows {
+  margin: 0 0 var(--space-8);
+}
+.fs-measurepanel__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-2) 0;
+}
+.fs-measurepanel__row dt {
+  color: var(--color-fg-muted);
+}
+.fs-measurepanel__row dd {
+  margin: 0;
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+}
+.fs-measurepanel__row--total dt,
+.fs-measurepanel__row--total dd {
+  color: var(--color-fg);
+  font-weight: var(--weight-medium);
+}
+.fs-measurepanel__note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin: 0 0 var(--space-8);
+  padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius-sm);
+  background: var(--color-info-muted);
+  color: var(--color-fg);
+}
+.fs-measurepanel__note--warn {
+  background: var(--color-warning-muted);
+}
+.fs-measurepanel__note svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+  color: var(--color-warning);
+  flex: none;
+}
+.fs-measurepanel__actions {
+  display: flex;
+  gap: var(--space-8);
+}
+
+/* ── The status bar's snapping, and its menu ── */
+.fs-snapstatus {
+  position: relative;
+  display: inline-flex;
+}
+.fs-snapstatus__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.fs-snapstatus__button svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+  flex: none;
+}
+.fs-snapstatus__button:hover {
+  color: var(--color-fg);
+}
+.fs-snapstatus__button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+.fs-snapstatus__button[data-off='true'] {
+  color: var(--color-fg-faint);
+}
+.fs-snapmenu {
+  position: fixed;
+  width: 280px;
+  padding: var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-13);
+  z-index: 30;
+}
+.fs-snapmenu__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
+  font-weight: var(--weight-medium);
+}
+.fs-snapmenu__head > svg {
+  width: var(--icon-14);
+  height: var(--icon-14);
+}
+.fs-snapmenu__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.fs-snapmenu__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.fs-snapmenu__pick {
+  width: 92px;
+}
+.fs-snapmenu__foot {
+  margin: var(--space-8) 0 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-snapmenu__foot kbd {
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.fs-snapmenu__reset {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.fs-snapmenu__reset:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}

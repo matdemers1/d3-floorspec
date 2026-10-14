@@ -30,7 +30,9 @@ import { endCompare, toggleHistory } from './history';
 import { openReview } from './review';
 import { proposerOf } from './api';
 import { labelOf, sortedLevels } from './model';
-import { formatLen, gridStepLabel } from './units';
+import { formatLen } from './units';
+import { SnapStatus } from './precision/SnapMenu';
+import { useAltHover } from './precision/commands';
 import { kindById, type SystemId } from './systems/catalog';
 import { ExportButton } from '../exports/ExportButton';
 import { Views, ViewSwitch } from './three/Views';
@@ -122,6 +124,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
 
   useKeyboard(store, tools);
   useClipboard(store);
+  useAltHover(store);
 
   const rightLabel = comments ? 'Comments' : right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : right === 'options' || right === 'optionCompare' ? 'Design options' : 'Inspector';
 
@@ -296,6 +299,12 @@ function ToolHint({ store }: { store: EditorStore }) {
       </>
     ),
     room: <span>Click inside a closed space to name it</span>,
+    // FLR-T-18.9: the measure tool.
+    measure: (
+      <>
+        <span>Click point to point</span> <span className="fs-hint__faint">· the first again for an area</span> <kbd>Enter</kbd> <span className="fs-hint__faint">end</span> <kbd>Esc</kbd> <span className="fs-hint__faint">clear</span>
+      </>
+    ),
     hand: (
       <>
         <span>Drag to pan</span> <span className="fs-hint__faint">· double-click to zoom in,</span> <kbd>⌥</kbd> <span className="fs-hint__faint">out</span> <kbd>V</kbd> <span className="fs-hint__faint">select</span>
@@ -470,6 +479,8 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
         {rail.map((item) => (
           <RailButton key={'tool' in item ? item.tool : 'device' in item ? item.device : 'library' in item ? 'library' : 'quick'} store={store} tools={tools} item={item} canDraw={canDraw} />
         ))}
+        <span className="fs-rail__rule" />
+        <MeasureButton store={store} tools={tools} />
         <span className="fs-spacer" />
         <span className="fs-rail__pin">
           <PinButton store={store} side="left" />
@@ -522,15 +533,24 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
         <IconButton label="Quick add" icon={<SquareSlash />} disabled={!canDraw} onClick={() => { openQuickAdd(store); }} />
       </Tooltip>
       <span className="fs-rail__rule" />
-      <Tooltip content="Measure — arrives with dimensions in P4" side="right">
-        <IconButton label="Measure" icon={<MeasureIcon />} disabled className="fs-rail__later" />
-      </Tooltip>
+      <MeasureButton store={store} tools={tools} />
       <span className="fs-spacer" />
       {/* The left drawer's pin (FLR-T-18.2): on the rail, the one part of the drawer every state shows. */}
       <span className="fs-rail__pin">
         <PinButton store={store} side="left" />
       </span>
     </nav>
+  );
+}
+
+/** The measure tool (FLR-T-18.9, ⇧M): in every rail, a mode's included — measuring changes nothing. */
+function MeasureButton({ store, tools }: { store: EditorStore; tools: ToolController }) {
+  const on = useEditor(store, (s) => s.tool === 'measure');
+  const level = useEditor(store, (s) => s.level);
+  return (
+    <Tooltip content={`Measure (${commandById('tool.measure')?.hint ?? ''})`} side="right">
+      <IconButton label="Measure" icon={<MeasureIcon />} pressed={on} disabled={level === null} onClick={() => { tools.setTool(on ? 'select' : 'measure'); }} />
+    </Tooltip>
   );
 }
 
@@ -594,7 +614,8 @@ function StatusBar({ store }: { store: EditorStore }) {
   return (
     <footer className="fs-statusbar">
       <span className="fs-statusbar__mono fs-statusbar__cursor">{cursor === null ? 'Cursor —' : `Cursor ${formatLen(Math.round(cursor[0]), units)}, ${formatLen(Math.round(cursor[1]), units)}`}</span>
-      <span className="fs-statusbar__mono fs-statusbar__wide">Snap · junctions, walls + {gridStepLabel(units)}</span>
+      {/* FLR-T-18.9: what snaps, and the menu to change it. */}
+      <SnapStatus store={store} />
       <button
         type="button"
         className="fs-statusbar__mono fs-statusbar__units"

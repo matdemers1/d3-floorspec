@@ -23,6 +23,7 @@ import {
   type BatchBuilder,
   type TypeChoice,
 } from './ops';
+import { PositionSection } from './precision/PositionSection';
 import { requestRemove, switchUnits } from './actions';
 import { MaterialSurface } from './Materials';
 import { OptionMembership } from './Options';
@@ -106,7 +107,8 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   if (tool === 'device' && readOnly === null) return <DevicePanel store={store} tools={tools} model={model} />;
   // FLR-T-18.7: what is being placed, with buttons to turn it (a finger has no R key).
   if (tool === 'place' && readOnly === null) return <PlacingPanel store={store} />;
-  if (tool !== 'select' && readOnly === null) return <DrawPanel store={store} model={model} />;
+  // The measure tool (FLR-T-18.9) draws nothing: the inspector stays on the selection.
+  if (tool !== 'select' && tool !== 'measure' && readOnly === null) return <DrawPanel store={store} model={model} />;
   // FLR-T-18.8: several selected — the fields they share.
   if (many) return <MultiInspector store={store} />;
   const element = selection === null ? undefined : elementOf(model, selection);
@@ -129,6 +131,8 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
     <div className="fs-inspector__body">
       <Header ctx={ctx} kind={kind} />
       {body}
+      {/* FLR-T-18.9: the temporary dimensions, as fields — the keyboard's way to them. */}
+      <PositionSection store={store} />
       <OptionMembership store={store} model={model} id={selection} element={element} readOnly={ctx.readOnly} />
       <ThreeSection store={store} id={selection} kind={kind} />
       {!ctx.readOnly ? (
@@ -1294,7 +1298,7 @@ function KeyHints({ arc = false }: { arc?: boolean }) {
       <li><kbd>Enter</kbd> place the typed length, or finish</li>
       <li><kbd>Esc</kbd> finish the chain</li>
       <li><kbd>Shift</kbd> lock to 45°</li>
-      <li><kbd>Alt</kbd> no snapping</li>
+      <li><kbd>Alt</kbd> or <kbd>{/Mac|iPhone|iPad/.test(typeof navigator === 'undefined' ? '' : navigator.platform) ? '⌘' : 'Ctrl'}</kbd> no snapping</li>
     </ul>
   );
 }

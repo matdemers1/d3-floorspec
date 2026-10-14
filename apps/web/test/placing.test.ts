@@ -9,6 +9,7 @@ import { entriesFor, entryByKey, footprintText, matches, search, type Entry } fr
 import { compassOf, ghostOf, type GhostOptions } from '../src/placing/ghost';
 import { batchFor } from '../src/placing/place';
 import type { StoredFile } from '../src/furniture/ops';
+import { SNAP_DEFAULTS } from '../src/editor/snap';
 
 /**
  * Adding things (FLR-T-18.7): the one library, the ghost's snapping on the Courtyard House — a sofa
@@ -144,7 +145,7 @@ describe('the ghost (FLR-T-18.7)', () => {
 
   it('keeps to the snap menu: everything off, a sofa near a wall does not back onto it; walls off, neither', () => {
     const p: Point = [(den.minX + den.maxX) / 2, den.minY + 700 * MM];
-    const all = { on: true, walls: true, items: true, guides: true, grid: true };
+    const all = { ...SNAP_DEFAULTS };
     expect(ghostOf(L1, sofa, p, opts({ snaps: all }))!.label).toContain('south wall');
     expect((ghostOf(L1, sofa, p, opts({ snaps: { ...all, on: false } }))!.host as { rotation?: number }).rotation).toBe(0);
     expect(ghostOf(L1, sofa, p, opts({ snaps: { ...all, walls: false } }))!.label).not.toContain('wall');

@@ -1,6 +1,6 @@
 import type { LevelView, Point, Ring, RoomView, WallView } from '../editor/model';
 import { add, dist, dot, faceAt, leftNormal, project, scale, signedArea, sub } from '../editor/geometry';
-import { snapOpeningOn, snapPoint, unitAt } from '../editor/snap';
+import { alignOpening, snapOpeningOn, snapPoint, unitAt, type SnapSettings } from '../editor/snap';
 import { angleOf, hoverFor, BACK_GAP } from '../editor/systems/placement';
 import type { HostRef } from '../editor/systems/ops';
 import { footprintAt, overlaps } from '../furniture/placement';
@@ -39,7 +39,7 @@ export interface GhostOptions {
    * all off, it snaps to nothing but the grid; walls off, nothing backs onto a wall; items off,
    * nothing lines up with an item; the grid off, nothing rounds to it. Absent, all on.
    */
-  snaps?: { on: boolean; walls: boolean; items: boolean; guides: boolean; grid: boolean } | undefined;
+  snaps?: SnapSettings | undefined;
   /** The room names, for the sentence. */
   roomName?: (id: string) => string;
   wallName?: (id: string) => string;
@@ -274,7 +274,9 @@ function free(level: LevelView, entry: Entry, p: Point, o: GhostOptions, onLevel
   const dx = (b.max[0] - b.min[0]) / 2;
   const dy = (b.max[1] - b.min[1]) / 2;
   // The shared snap engine first: the grid and alignment with junctions, unless ⌥.
-  const base: Point = o.snaps?.grid === false ? p : snapPoint(level, p, { tol: o.tol, grid: o.grid, free: o.free === true }).point;
+  // FLR-T-18.9's engine with the person's settings — its grid and smart-guide alignment; the faces,
+  // items and walls this ghost snaps to itself below, so not those (an item's middle never lands on a wall's line).
+  const base: Point = o.snaps?.grid === false && !o.snaps.guides ? p : snapPoint(level, p, { tol: o.tol, grid: o.grid, free: o.free === true, ...(o.snaps === undefined ? {} : { settings: { ...o.snaps, junctions: false, walls: false, midpoints: false, items: false, ghosts: false } }) }).point;
   let centre: Point = base;
   const guides: [Point, Point][] = [];
   const flush: string[] = [];
@@ -419,6 +421,9 @@ function opening(level: LevelView, entry: Entry, p: Point, o: GhostOptions): Gho
   const wall = nearestWall(level, p, Math.max(o.tol * 2, 300 * MM));
   if (wall === null) return null;
   const snap = snapOpeningOn(wall, width, p, { tol: o.tol, grid: o.grid });
+  // FLR-T-18.9's smart guides: its centre or an edge in line with another opening, a junction or an item.
+  const aligned = snap.centered || o.free === true ? null : alignOpening(level, wall, { offset: snap.offset, width }, { tol: o.tol, settings: o.snaps, name: o.wallName });
+  if (aligned !== null) snap.offset = aligned.offset;
   const quarter = QUARTERS[(((Math.round(o.rotation / 90) % 4) + 4) % 4)] as [('start' | 'end'), ('left' | 'right')];
   const [nearer, side] = o.turned ? quarter : [snap.nearer, snap.side];
   const aim: OpeningAim = { wall: wall.id, offset: snap.offset, centered: snap.centered, width, side, nearer, fits: snap.fits };
@@ -449,7 +454,7 @@ function opening(level: LevelView, entry: Entry, p: Point, o: GhostOptions): Gho
     envelopes: [],
     host: null,
     opening: aim,
-    guides: snap.centered && straight ? [[add(wall.a, scale(t, L / 2)), add(add(wall.a, scale(t, L / 2)), scale(n, (side === 'left' ? 1 : -1) * 600 * MM))]] : [],
+    guides: snap.centered && straight ? [[add(wall.a, scale(t, L / 2)), add(add(wall.a, scale(t, L / 2)), scale(n, (side === 'left' ? 1 : -1) * 600 * MM))]] : (aligned?.guides ?? []),
     gaps,
     label,
     blocked: problem !== undefined,
