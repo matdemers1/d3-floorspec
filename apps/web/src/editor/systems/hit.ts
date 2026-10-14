@@ -1,3 +1,4 @@
+import { layerOfElement } from '@floorspec/render2d';
 import type { Layers } from '../store';
 import type { LevelView, Point } from '../model';
 import { add, dist, distanceToRing, inRing, scale } from '../geometry';
@@ -27,8 +28,12 @@ export function glyphCentre(d: DeviceView, s: number): Point {
 
 /** Whether a device's system is shown. Elements of another extension show with every layer. */
 export function visible(d: DeviceView, layers: Layers): boolean {
-  // FS_furniture has a layer of its own (FLR-T-8.3); other extensions' elements show with every layer.
-  if (d.system === null) return d.extension === 'FS_furniture' ? layers.furniture !== false : true;
+  // FS_furniture has a layer of its own (FLR-T-8.3), its casework another and FS_landscape its garden
+  // (FLR-T-18.3); other extensions' elements show with every layer.
+  if (d.system === null) {
+    const layer = layerOfElement(d.extension, d.collection);
+    return layer === null || layers[layer] !== false;
+  }
   return layers[d.system];
 }
 

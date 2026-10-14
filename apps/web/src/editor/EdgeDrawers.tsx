@@ -4,6 +4,7 @@ import { Box, Columns2, Map as MapIcon, Maximize, Minimize, Pin } from 'lucide-r
 import { useEditor, type EditorStore } from './store';
 import { useThreeState } from './three/mode';
 import { zoomPercent } from './viewport';
+import { HudMode } from './ModeSwitcher';
 import {
   DRAWER_HINTS,
   DRAWER_KEYS,
@@ -288,7 +289,7 @@ export function Edges({ store }: { store: EditorStore }) {
   );
 }
 
-/** Full screen's quiet HUD: the view, the level and the zoom. */
+/** Full screen's quiet HUD: the mode (FLR-T-18.3), the view, the level and the zoom. */
 function Hud({ store }: { store: EditorStore }) {
   const mode = useThreeState(store, (s) => s.mode);
   const level = useEditor(store, (s) => s.model?.levels.find((l) => l.id === s.level)?.name ?? null);
@@ -296,6 +297,7 @@ function Hud({ store }: { store: EditorStore }) {
   const icon = mode === '3d' ? <Box aria-hidden="true" /> : mode === 'split' ? <Columns2 aria-hidden="true" /> : <MapIcon aria-hidden="true" />;
   return (
     <div className="fs-hud" role="note" aria-label="View">
+      <HudMode store={store} />
       {icon}
       <span>{mode === '3d' ? `3D · ${level ?? 'no level'}` : (level ?? 'No level')}</span>
       {mode !== '3d' && zoom !== null ? (

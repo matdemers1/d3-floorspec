@@ -57,18 +57,35 @@ export interface ExportDialogProps {
   readonly initial?: Choice;
   /** The model's option sets (Core 0.3, 19.1), in ID order; none for a model without design options. */
   readonly optionSets?: readonly DesignSet[] | undefined;
+  /**
+   * The drawings a PDF or DXF can be (FLR-T-18.3): every layer, each trade's plan, a person's own
+   * modes; the one marked current is chosen first. None: the drawing of every layer, as before modes.
+   */
+  readonly modes?: readonly ModeChoice[] | undefined;
 }
+
+/** One drawing the dialog offers: what it is called, and what the request says. */
+export interface ModeChoice {
+  readonly value: string;
+  readonly label: string;
+  readonly request: { readonly mode?: string; readonly layers?: Readonly<Record<string, 'on' | 'ghost' | 'off'>> };
+  readonly current?: boolean;
+}
+
+const NO_MODES: readonly ModeChoice[] = [];
+const currentOf = (modes: readonly ModeChoice[]): string => modes.find((m) => m.current === true)?.value ?? 'none';
 
 const NO_SETS: readonly DesignSet[] = [];
 const primaryOf = (sets: readonly DesignSet[]): Record<string, string> => Object.fromEntries(sets.map((s) => [s.id, s.primary]));
 
-export function ExportDialog({ open, onOpenChange, projectId, projectName, versionLabel, levels, initial = 'pdf', optionSets = NO_SETS }: ExportDialogProps) {
+export function ExportDialog({ open, onOpenChange, projectId, projectName, versionLabel, levels, initial = 'pdf', optionSets = NO_SETS, modes = NO_MODES }: ExportDialogProps) {
   const toast = useToast();
   const [choice, setChoice] = useState<Choice>(initial);
   const [page, setPage] = useState<PageName>('tabloid');
   const [form, setForm] = useState<ModelForm>('package');
   const [level, setLevel] = useState<string>('all');
   const [design, setDesign] = useState<Record<string, string>>(() => primaryOf(optionSets));
+  const [drawing, setDrawing] = useState<string>(() => currentOf(modes));
   const [job, setJob] = useState<ExportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -83,7 +100,9 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
     } else {
       setChoice(initial);
       setDesign(primaryOf(optionSets));
+      setDrawing(currentOf(modes));
     }
+    // The drawing chosen when it opens is the mode then; the choices moving while it is open keep the pick.
   }, [open, initial, optionSets]);
 
   // A design names every set of the model, each with one of its options; anything else is the primary's.
@@ -96,7 +115,11 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
   const designed = optionSets.length > 0 && choice !== 'model' && takesDesign(choice);
 
   const chosenLevels = level === 'all' ? null : [level];
-  const subtitle = [versionLabel, chosenLevels === null ? levels.map((l) => l.name).join(' + ') : levels.find((l) => l.id === level)?.name, designed ? designLabel(chosenDesign, optionSets) : null].filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
+  // A drawing in a trade's view (FLR-T-18.3): PDF and DXF only.
+  const moded = modes.length > 0 && (choice === 'pdf' || choice === 'dxf');
+  const drawingChoice = modes.find((m) => m.value === drawing);
+  const drawingRequest = drawingChoice?.request ?? {};
+  const subtitle = [versionLabel, chosenLevels === null ? levels.map((l) => l.name).join(' + ') : levels.find((l) => l.id === level)?.name, designed ? designLabel(chosenDesign, optionSets) : null, moded && drawing !== 'none' ? (drawingChoice?.label ?? null) : null].filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
 
   async function run(): Promise<void> {
     if (choice === 'model') {
@@ -113,6 +136,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
         ...(chosenLevels === null || choice === 'ifc' ? {} : { levels: chosenLevels }),
         ...(choice === 'pdf' ? { page } : {}),
         ...(designed ? { design: chosenDesign } : {}),
+        ...(moded ? { ...(drawingRequest.mode === undefined ? {} : { mode: drawingRequest.mode }), ...(drawingRequest.layers === undefined ? {} : { layers: { ...drawingRequest.layers } }) } : {}),
       });
       setJob(queued);
       const finished = await untilFinished(projectId, queued, setJob, abort.current.signal);
@@ -232,6 +256,12 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
                 );
               })
             : null}
+          {moded ? (
+            <label className="fs-export-dialog__option">
+              <span>Drawing</span>
+              <Select aria-label="Drawing" size="sm" value={drawing} disabled={busy} onValueChange={setDrawing} options={modes.map((m) => ({ value: m.value, label: m.label }))} />
+            </label>
+          ) : null}
           {choice === 'pdf' ? (
             <label className="fs-export-dialog__option">
               <span>Paper</span>

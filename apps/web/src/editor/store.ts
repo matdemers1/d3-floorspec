@@ -141,6 +141,9 @@ export interface Layers {
   roof: boolean;
   /** FS_furniture's items (FLR-T-8.3); absent: shown. */
   furniture?: boolean;
+  /** FLR-T-18.3: FS_furniture's casework and appliances, and FS_landscape's garden; absent: shown. */
+  casework?: boolean;
+  landscape?: boolean;
 }
 
 export interface DrawSettings {
