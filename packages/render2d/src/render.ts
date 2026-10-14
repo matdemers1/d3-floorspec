@@ -15,6 +15,7 @@ import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
 import { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type SymbolPart, type SymbolStroke } from './plansymbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
 import { landscapeLayers, type SceneLandscape } from './landscape.js';
+import { annoSourceOf, approxMeasure, customString, exteriorStrings, layoutAnnotations, openingMarks, roomStrings, scaleBarOf, SCREEN_METRICS, tagsOf, type AnnoPrim, type CustomDimension, type DimString, type Note, type SideDepths } from './annotate.js';
 import { ALL_ON, layerOfElement, layerStates, type LayerState, type ModeId, type PlanLayer } from './modes.js';
 import {
   ALL_DETAILS,
@@ -60,8 +61,23 @@ export interface RenderOptions {
    * caller's evaluation of it (not validated again); this document is the after side.
    */
   readonly ghost?: { readonly before: string | Uint8Array | object } | { readonly evaluation: Evaluation };
-  /** Overall exterior dimensions. Default true. */
+  /**
+   * Exterior dimension strings (FLR-T-18.11): the openings located, the jogs and the overall size of
+   * each side. Default: drawn in the unstyled and the technical plans, not in a colour one.
+   */
   readonly dimensions?: boolean;
+  /**
+   * More annotation (FLR-T-18.11): each room's own strings across and up it, door and window tags
+   * (their marks numbered over the whole document), and the person's own strings and notes
+   * (FS_annotation, resolved by the caller — the engine's `resolveAnnotations`). Default: none of
+   * it but the person's own, which are drawn wherever dimensions are.
+   */
+  readonly annotation?: {
+    readonly rooms?: boolean;
+    readonly tags?: boolean | ReadonlyMap<string, string>;
+    readonly custom?: readonly CustomDimension[];
+    readonly notes?: readonly Note[];
+  };
   /** Room labels (name, area, dimensions, ID). Default true. */
   readonly labels?: boolean;
   /** Clearance envelopes (Core 0.2, 13.5) as dashed boxes. Default false. */
@@ -511,10 +527,20 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   const ext: Box = all ?? { minX: 0, minY: 0, maxX: BU_PER_FOOT * 10, maxY: BU_PER_FOOT * 10 };
 
   const s = scale / BU_PER_FOOT;
-  // The margin dimensions take is kept when a mode hides them, so every trade's plan has one frame.
+  // The margin dimensions take is kept when a mode hides them, so every trade's plan has one frame (FLR-T-18.11: as deep as the strings).
   const dimsRoom = options.dimensions ?? (sty === null || sty.linework);
+  const anno = options.annotation ?? {};
+  const fmt = archLength;
+  const annoSrc = annoSourceOf(scene);
+  const exterior: DimString[] = dimsRoom && body !== undefined ? exteriorStrings(annoSrc, ext) : [];
+  const depth: SideDepths = exterior.length === 0 ? { N: 0, S: 0, E: 0, W: 0 } : layoutAnnotations({ strings: exterior }, { P: (p) => [p[0] * s, -p[1] * s], k: s }, SCREEN_METRICS, approxMeasure, fmt).depth;
   const legendRows = byType ? scene.wallTypes.size + 1 : 0;
-  const margin = { top: dimsRoom ? 64 : 32, left: dimsRoom ? 64 : 32, right: 32, bottom: 64 + (legendRows === 0 ? 0 : 18 * legendRows + 12) };
+  const margin = {
+    top: dimsRoom ? Math.max(32, Math.ceil(depth.N) + 12) : 32,
+    left: dimsRoom ? Math.max(32, Math.ceil(depth.W) + 12) : 32,
+    right: dimsRoom ? Math.max(32, Math.ceil(depth.E) + 12) : 32,
+    bottom: (dimsRoom ? Math.max(64, Math.ceil(depth.S) + 64) : 64) + (legendRows === 0 ? 0 : 18 * legendRows + 12),
+  };
   const W = Math.ceil((ext.maxX - ext.minX) * s + margin.left + margin.right);
   const H = Math.ceil((ext.maxY - ext.minY) * s + margin.top + margin.bottom);
   const X = (x: number): number => margin.left + (x - ext.minX) * s;
@@ -975,9 +1001,35 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     put('rooms', el('g', { id: 'labels', 'font-family': SANS }, labels));
   }
 
-  // ── overall exterior dimensions ──
-  if (showDims && body) {
-    put('dimensions', el('g', { id: 'dimensions', stroke: pal.muted, 'font-family': MONO, 'font-size': 11 }, dimensions(body, f, pal)));
+  // ── dimensions, tags and notes (FLR-T-18.11): the one layout the editor and the PDF draw too ──
+  if (showDims || (anno.tags !== undefined && anno.tags !== false) || (anno.notes?.length ?? 0) > 0) {
+    const strings: DimString[] = [];
+    if (showDims) {
+      strings.push(...exterior);
+      if (anno.rooms === true) {
+        // Beside each label, where the labels below place it: clear of door swings and of what stands in the room.
+        const swings = [
+          ...[...scene.openings.values()].filter((o) => o.kind === 'door').map((o) => symbolReach(o, scene.walls.get(o.wall)!)),
+          ...[...scene.fallbacks.values()].filter(standsInRoom).map((fb) => fb.footprint),
+        ];
+        const at = new Map([...scene.rooms.values()].map((r) => {
+          const lp = labelPoint(r.outer, r.holes, swings);
+          return [r.id, { title: roomTitle(r), label: [lp.x, lp.y] as const }];
+        }));
+        strings.push(...roomStringsFor(annoSourceOf(scene, at), f, showLabels));
+      }
+      for (const c of anno.custom ?? []) {
+        const cs = customString(c);
+        if (cs !== null) strings.push(cs);
+      }
+    }
+    const marks = anno.tags instanceof Map ? anno.tags : anno.tags === true ? openingMarks([{ openings: [...scene.openings.values()] }]) : null;
+    const tags = marks === null || st.openings === 'off' ? [] : tagsOf(annoSrc, marks);
+    const { prims } = layoutAnnotations({ strings, tags, notes: showDims ? (anno.notes ?? []) : [] }, { P: f.P, k: s }, SCREEN_METRICS, approxMeasure, fmt);
+    const dimPrims = prims.filter((p) => !(p.t === 'tag' || (p.t === 'text' && p.role === 'tag')));
+    const tagPrims = prims.filter((p) => p.t === 'tag' || (p.t === 'text' && p.role === 'tag'));
+    if (dimPrims.length > 0) put('dimensions', el('g', { id: 'dimensions', stroke: pal.muted, 'font-family': MONO, 'font-size': 11 }, annoSvg(dimPrims, pal)));
+    if (tagPrims.length > 0) put('openings', el('g', { id: 'tags', 'font-family': SANS }, annoSvg(tagPrims, pal)));
   }
 
   // ── Construction's legend: each wall type in its colour, and the doors' amber ──
@@ -988,6 +1040,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     el('text', { x: margin.left, y: H - 24, 'font-size': 12, 'font-weight': 500, fill: pal.muted }, esc(title)) +
       el('text', { x: margin.left, y: H - 10, 'font-family': MONO, 'font-size': 10, fill: pal.faint }, esc(`${num(scale)} px = 1' 0"`)),
   );
+  parts.push(scaleBarSvg(s, W - 60, H - 30, pal));
   parts.push(northArrow(W - 30, H - 32, scene.trueNorth, pal));
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${SANS}">${parts.join('')}</svg>\n`;
@@ -1173,29 +1226,69 @@ function placeLabel(
   }
 }
 
-function dimensions(b: Box, f: Frame, pal: Palette): string {
-  const x0 = f.X(b.minX);
-  const x1 = f.X(b.maxX);
-  const yTop = f.Y(b.maxY);
-  const yBot = f.Y(b.minY);
-  const off = 30;
-  const tick = (x: number, y: number): string => linePath([x - 4, y + 4], [x + 4, y - 4]);
-  // North side: east–west overall.
-  const yd = yTop - off;
-  let d = linePath([x0, yTop - 8], [x0, yd - 6]) + linePath([x1, yTop - 8], [x1, yd - 6]) + linePath([x0 - 6, yd], [x1 + 6, yd]);
-  const ticks = tick(x0, yd) + tick(x1, yd);
-  // West side: north–south overall.
-  const xd = x0 - off;
-  d += linePath([x0 - 8, yTop], [xd - 6, yTop]) + linePath([x0 - 8, yBot], [xd - 6, yBot]) + linePath([xd, yTop - 6], [xd, yBot + 6]);
-  const vticks = tick(xd, yTop) + tick(xd, yBot);
-  const text =
-    el('text', { x: (x0 + x1) / 2, y: yd - 6, 'text-anchor': 'middle', stroke: 'none', fill: pal.muted }, esc(feetInches(b.maxX - b.minX))) +
-    el(
-      'text',
-      { transform: `translate(${num(xd - 6)} ${num((yTop + yBot) / 2)}) rotate(-90)`, 'text-anchor': 'middle', stroke: 'none', fill: pal.muted },
-      esc(feetInches(b.maxY - b.minY)),
-    );
-  return el('path', { d, 'stroke-width': 0.75, fill: 'none' }) + el('path', { d: ticks + vticks, 'stroke-width': 1.5, fill: 'none' }) + text;
+/** A length as a dimension string prints it: `36'-2 3/8"`, `8'-0"`, `0'-3/4"`. */
+export function archLength(v: number): string {
+  const t = feetInches(v);
+  const m = /^(-?\d+)' (?:(\d+)-)?(\d+\/\d+)?(\d+)?"$/.exec(t);
+  if (m === null) return t;
+  const [, ft, whole, frac, plain] = m;
+  if (frac !== undefined) return `${ft!}'-${whole ?? '0'} ${frac}"`;
+  return `${ft!}'-${plain ?? '0'}"`;
+}
+
+/** The room strings at this frame's scale, clear of labels of the size this renderer draws them. */
+function roomStringsFor(src: ReturnType<typeof annoSourceOf>, f: Frame, labelled: boolean): DimString[] {
+  return roomStrings(src, f.s, (r) => (labelled ? { halfW: Math.max(40, approxMeasure(r.title, 'sans', 13) / 2), halfH: 18 } : { halfW: 0, halfH: 0 }), SCREEN_METRICS.text + 6);
+}
+
+/** Annotation primitives as SVG, in the palette: lines muted, text in the plan's text colour, tags on the paper. */
+function annoSvg(prims: readonly AnnoPrim[], pal: Palette): string {
+  const widths: Record<string, number> = { dim: 0.75, ext: 0.5, tick: 1.5, leader: 0.75 };
+  const lines = new Map<string, string>();
+  let rest = '';
+  for (const p of prims) {
+    if (p.t === 'line') lines.set(p.role, (lines.get(p.role) ?? '') + linePath(p.a, p.b));
+    else if (p.t === 'arrow') rest += el('path', { d: `M${num(p.pts[0][0])} ${num(p.pts[0][1])}L${num(p.pts[1][0])} ${num(p.pts[1][1])}L${num(p.pts[2][0])} ${num(p.pts[2][1])}Z`, fill: pal.muted, stroke: 'none' });
+    else if (p.t === 'tag') {
+      const d =
+        p.kind === 'door'
+          ? undefined
+          : [0, 1, 2, 3, 4, 5].map((i) => [p.cx + p.r * [1, 0.5, -0.5, -1, -0.5, 0.5][i]!, p.cy + p.r * [0, 0.866, 0.866, 0, -0.866, -0.866][i]!] as const).map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${num(x)} ${num(y)}`).join('') + 'Z';
+      rest += d === undefined ? el('circle', { 'data-tag': p.owner, cx: p.cx, cy: p.cy, r: p.r, fill: pal.paper, stroke: pal.text, 'stroke-width': 0.75 }) : el('path', { 'data-tag': p.owner, d, fill: pal.paper, stroke: pal.text, 'stroke-width': 0.75 });
+    } else if (p.t === 'text') {
+      const transform = p.rotate === 0 ? undefined : `rotate(${num(p.rotate)} ${num(p.x)} ${num(p.y)})`;
+      rest += el(
+        'text',
+        {
+          x: p.x,
+          y: p.y,
+          'text-anchor': p.anchor,
+          stroke: 'none',
+          fill: p.role === 'tag' ? pal.text : pal.muted,
+          'font-size': p.size,
+          ...(p.font === 'mono' ? {} : { 'font-family': SANS }),
+          ...(p.font === 'sans-medium' ? { 'font-weight': 500 } : {}),
+          ...(transform === undefined ? {} : { transform }),
+        },
+        esc(p.text),
+      );
+    }
+  }
+  let out = '';
+  for (const [role, d] of lines) out += el('path', { 'data-role': role, d, 'stroke-width': widths[role] ?? 0.75, fill: 'none', ...(role === 'ext' ? { 'stroke-opacity': 0.8 } : {}) });
+  return out + rest;
+}
+
+/** A graphic scale (FLR-T-18.11): boxes at 0, ¼, ½ and the whole, ending at (x, y). */
+function scaleBarSvg(s: number, xEnd: number, y: number, pal: Palette): string {
+  const bar = scaleBarOf(s, false, 72);
+  const x0 = xEnd - bar.width - 40;
+  let g = '';
+  for (let i = 0; i < bar.ticks.length - 1; i++) g += el('rect', { x: x0 + bar.ticks[i]!, y: y - 4, width: bar.ticks[i + 1]! - bar.ticks[i]!, height: 4, fill: i % 2 === 0 ? pal.muted : pal.paper, stroke: pal.muted, 'stroke-width': 0.75 });
+  bar.labels.forEach((l, i) => {
+    if (l !== '') g += el('text', { x: x0 + bar.ticks[i]!, y: y + 11, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': 9, fill: pal.faint }, esc(l));
+  });
+  return el('g', { id: 'scale-bar' }, g);
 }
 
 /** A north arrow pointing at true north: project north is up, true north `trueNorth` µ° counter-clockwise from it. */
