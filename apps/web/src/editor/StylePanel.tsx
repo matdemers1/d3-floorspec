@@ -129,7 +129,7 @@ export function PlanStyleMenu({ store }: { store: EditorStore }) {
     <Menu>
       <MenuTrigger>
         <Button className="fs-style-menu__trigger" size="sm" variant="secondary" icon={<PaletteIcon />} aria-label={`Plan style: ${STYLES[current].label}`}>
-          {STYLES[current].label}
+          <span className="fs-style-menu__label">{STYLES[current].label}</span>
           <ChevronDown className="fs-style-menu__chevron" aria-hidden="true" />
         </Button>
       </MenuTrigger>

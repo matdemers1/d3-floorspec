@@ -100,6 +100,7 @@
 }
 .fs-canvas[data-plan-style] :is(.fs-dim__text, .fs-dim__overall) {
   fill: var(--fsx-muted);
+  stroke: var(--fsx-paper);
 }
 
 /* Furniture: in its colour (a colour plan), else on the paper in the style's ink. */
@@ -177,6 +178,12 @@
 /* The top bar's style dropdown. */
 .fs-style-menu__trigger {
   flex: none;
+}
+/* A crowded top bar keeps the style's icon and its menu; the button's name still says the style. */
+@media (max-width: 1599px) {
+  .fs-style-menu__label {
+    display: none;
+  }
 }
 .fs-style-menu__chevron {
   width: 14px;
