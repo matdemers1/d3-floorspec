@@ -56,9 +56,9 @@ async function centreOf(page: Page, selector: string): Promise<{ x: number; y: n
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-const positionOf = async (page: Page, project: string): Promise<number[]> => {
+const positionOf = async (page: Page, project: string, id = ISLAND): Promise<number[]> => {
   const doc = (await (await page.request.get(`/api/projects/${project}/model.json`)).json()) as { extensions: { FS_furniture: { collections: Record<string, Record<string, { host: { position: number[] } }>> } } };
-  return Object.values(doc.extensions.FS_furniture.collections).find((c) => ISLAND in c)![ISLAND]!.host.position;
+  return Object.values(doc.extensions.FS_furniture.collections).find((c) => id in c)![id]!.host.position;
 };
 
 const islandTone = (page: Page) => page.locator(`[data-testid="halos"] polygon[data-owner="${ISLAND}"]`).first().getAttribute('data-tone');
@@ -94,6 +94,7 @@ test('live feedback: clearance halos turn red as the island nears the counter, a
   const length = Math.hypot(toward.x, toward.y);
   const unit = { x: toward.x / length, y: toward.y / length };
   const before = await positionOf(page, project);
+  const cooktop = await positionOf(page, project, 'KIT-COOKTOP');
   const history = (await historyOf(page, project)).length;
 
   await page.mouse.move(from.x, from.y);
@@ -102,6 +103,16 @@ test('live feedback: clearance halos turn red as the island nears the counter, a
   // A short way first: the halos show, the island's working space clear.
   for (let k = 1; k <= 3; k++) await page.mouse.move(from.x + unit.x * 4 * k, from.y + unit.y * 4 * k);
   await expect(page.getByTestId('halos')).toBeVisible();
+  // FLR-T-18.18: grabbed off its middle, it does not jump there — it has moved as far as the pointer
+  // (to the grid and the guides), and its cooktop moves with it, still in its middle.
+  const dragged = page.locator(`[data-testid="halos"] .fs-halo-item[data-item="${ISLAND}"]`);
+  await expect(dragged).toHaveCount(1);
+  const now = (await dragged.boundingBox())!;
+  const shift = { x: now.x + now.width / 2 - centre.x, y: now.y + now.height / 2 - centre.y };
+  expect(Math.hypot(shift.x - unit.x * 12, shift.y - unit.y * 12)).toBeLessThan(10);
+  const top = (await page.locator(`[data-testid="halos"] .fs-halo-item[data-item="KIT-COOKTOP"]`).boundingBox())!;
+  expect(Math.abs(top.x + top.width / 2 - (now.x + now.width / 2))).toBeLessThan(Math.max(4, now.width / 4));
+  expect(Math.abs(top.y + top.height / 2 - (now.y + now.height / 2))).toBeLessThan(Math.max(4, now.height / 4));
   await expect.poll(() => islandTone(page)).toBe('clear');
   await expect(page.locator('.fs-halo-legend')).toContainText('Tight (within 10 %)');
   // Neighbours' halos too: the counter's door clearances.
@@ -136,9 +147,9 @@ test('live feedback: clearance halos turn red as the island nears the counter, a
   const updates = step - 4;
   console.log(`[feedback] drag: ${fps.fps.toFixed(1)} fps over ${String(updates)} pointer moves in ${String(Date.now() - t0)} ms; halos computed ${String(fps.haloFrames)} times, mean ${fps.haloMeanMs.toFixed(2)} ms, max ${fps.haloMaxMs.toFixed(2)} ms`);
   expect(red).toBe(true);
-  // Interactive: a halo frame costs a small part of a 60 fps frame (16.7 ms) — the drag's own rate is
-  // the batch preview's (apply and derive per frame), which the halos only read; it is reported, and
-  // held only to a floor a shared CI runner keeps.
+  // Interactive: a halo frame costs a small part of a 60 fps frame (16.7 ms). The drag's own rate is the
+  // preview's — rigid since FLR-T-18.18 (the moving set moved, no apply or derive per frame; 45+ fps on
+  // an M-series laptop) — reported, and held only to a floor a shared CI runner keeps.
   expect(fps.haloMeanMs).toBeLessThan(8);
   expect(fps.fps).toBeGreaterThan(5);
 
@@ -160,6 +171,8 @@ test('live feedback: clearance halos turn red as the island nears the counter, a
   await expect(page.getByTestId('halos')).toHaveCount(0);
   const moved = await positionOf(page, project);
   expect(moved).not.toEqual(before);
+  // The cooktop set into it went with it, by as much, in the same op (FLR-T-18.18).
+  expect(await positionOf(page, project, 'KIT-COOKTOP')).toEqual([cooktop[0]! + moved[0]! - before[0]!, cooktop[1]! + moved[1]! - before[1]!]);
   expect((await historyOf(page, project)).length - history).toBe(1);
   await shoot(page, 'island-placed');
 
@@ -178,7 +191,8 @@ test('live feedback: clearance halos turn red as the island nears the counter, a
   await slider.focus();
   await page.keyboard.press('ArrowLeft');
   await expect(slider).toHaveAttribute('aria-valuetext', new RegExp(`^v${String(previous.seq)}: `));
-  await expect(page.getByTestId('scrubber-counts')).toHaveText(`0 added · 0 removed · 1 moved since v${String(previous.seq)}`);
+  // The island, and what sits on it: its cooktop, the gas cooktop on its top, the fruit bowl.
+  await expect(page.getByTestId('scrubber-counts')).toHaveText(`0 added · 0 removed · 4 moved since v${String(previous.seq)}`);
   await expect(page.locator(`[data-testid="diffs"] .fs-diff--moved`).first()).toBeVisible();
   const panel = page.getByRole('group', { name: 'Changes since a version' });
   await expect(panel.getByRole('heading', { name: new RegExp(`^v${String(previous.seq)} → v${String(log[0]!.seq)}$`) })).toBeVisible();

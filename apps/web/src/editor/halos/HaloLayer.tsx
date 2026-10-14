@@ -46,7 +46,7 @@ export interface HaloView {
   /** The moving parts' extent in plan, for the card. */
   extent: Ring;
   /** The moving items' footprints where the frame has them, outlined over their halos. */
-  footprints: Ring[];
+  footprints: { id: string; ring: Ring }[];
   /** Names to speak of, by ID. */
   name: (id: string) => string;
 }
@@ -107,7 +107,7 @@ export function useHalos(store: EditorStore, level: LevelView | undefined, model
     const label = ghostEntry?.name;
     // "Kitchen island", not "Kitchen island, 1800 mm": the card names things, the dimension says how far.
     const name = (id: string) => (id === GHOST_ID ? (label ?? 'the item') : model.index.has(id) ? (labelOf(model, id).split(',')[0] ?? id) : id);
-    const footprints = moving.flatMap((m) => (m.footprint === null || m.id === GHOST_ID ? [] : [m.footprint]));
+    const footprints = moving.flatMap((m) => (m.footprint === null || m.id === GHOST_ID ? [] : [{ id: m.id, ring: m.footprint }]));
     return { halos, head, moving: ids2, extent, name, footprints };
   }, [dragged, selected, preview, ghost, entryKey, model, level, store]);
 }
@@ -134,8 +134,8 @@ export function HaloLayer({ view, halos }: { view: Viewport; halos: HaloView | n
           data-tone={h.tone}
         />
       ))}
-      {halos.footprints.map((r, i) => (
-        <polygon key={`f${String(i)}`} className="fs-halo-item" points={pts(view, r)} />
+      {halos.footprints.map((f) => (
+        <polygon key={`f-${f.id}`} className="fs-halo-item" points={pts(view, f.ring)} data-item={f.id} />
       ))}
       {A !== null && B !== null && a !== undefined && a.clear > 0 ? <line className={`fs-halo__dim fs-halo__dim--${head?.tone ?? 'clear'}`} x1={f1(A[0])} y1={f1(A[1])} x2={f1(B[0])} y2={f1(B[1])} /> : null}
     </g>
