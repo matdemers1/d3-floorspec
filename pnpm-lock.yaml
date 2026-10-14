@@ -170,6 +170,9 @@ importers:
       oidn-web:
         specifier: 0.4.0
         version: 0.4.0
+      pdfjs-dist:
+        specifier: 6.4.299
+        version: 6.4.299
       qrcode-generator:
         specifier: 2.0.4
         version: 2.0.4
@@ -2728,6 +2731,10 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
+  pdfjs-dist@6.4.299:
+    resolution: {integrity: sha512-AVl138zALtfaAPvADulE0PZThbYzCBS79nL4pOSL/6Sm/4AH5A21BD9VHt97OlCuzJuCpmeZtAtkinisF4Vb1g==}
+    engines: {node: '>=22.13.0 || >=24'}
+
   pdfkit@0.20.2:
     resolution: {integrity: sha512-Q/w03ICAQyXfHNfTsg1udp0ADerdBN0s7a6XSPL7J7Ro6ABnafoBOCDBstIO9U02mvzHEV8HrvFIw5iV5ejIRA==}
 
@@ -3375,6 +3382,9 @@ packages:
         optional: true
       use-sync-external-store:
         optional: true
+
+ignoredOptionalDependencies:
+  - '@napi-rs/canvas'
 
 snapshots:
 
@@ -5502,6 +5512,8 @@ snapshots:
   path-to-regexp@8.4.2: {}
 
   pathe@2.0.3: {}
+
+  pdfjs-dist@6.4.299: {}
 
   pdfkit@0.20.2:
     dependencies:
