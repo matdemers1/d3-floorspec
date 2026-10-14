@@ -59,7 +59,7 @@ describe('dimensions and annotation on the drawings (FLR-T-18.11)', { timeout: 1
 
   it('draws nothing of a person’s string the model no longer lets it measure', async () => {
     const orphan = structuredClone(ANNOTATED) as typeof ANNOTATED & { extensions: { FS_annotation: { dimensions: Record<string, { anchors: unknown[] }> } } };
-    orphan.extensions.FS_annotation.dimensions['DM1']!.anchors = [{ junction: 'J16' }, { junction: 'NOPE' }];
+    orphan.extensions.FS_annotation.dimensions['DM1'].anchors = [{ junction: 'J16' }, { junction: 'NOPE' }];
     const pdf = await exportPdf(orphan, { version: VERSION, fontDir, viewDpi: 48, levels: ['L1'] });
     expect(pdf.sheets.length).toBeGreaterThan(0);
   });
