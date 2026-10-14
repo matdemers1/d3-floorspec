@@ -1,8 +1,8 @@
-import { apply as applyLocally } from '@floorspec/ops';
+import { apply as applyLocally, restoreOnto, type Operation } from '@floorspec/ops';
 import { OFFICIAL_READER, type Diagnostic } from '@floorspec/engine';
-import { decideChangeset, fetchChangeset, fetchChangesetModel, fetchChangesets, HttpFailure, type ChangesetLogEntry } from './api';
+import { decideChangeset, fetchChangeset, fetchChangesetModel, fetchChangesets, fetchVersion, HttpFailure, type ChangesetDetail, type ChangesetLogEntry } from './api';
 import { readModel, type EditorModel } from './model';
-import type { EditorStore, Review } from './store';
+import type { EditorStore, ReplayBranch, Review } from './store';
 import { parseLayoutName } from '../program/candidates';
 
 /**
@@ -46,6 +46,8 @@ export async function openReview(store: EditorStore, id: string, options: { show
       closeReview(store);
       return;
     }
+    const branch = await branchOf(store.projectId, detail);
+    if (store.get().review?.id !== id) return;
     const proposed = readModel(head.hash, head.text);
     store.set((s) => ({
       review: s.review === null || s.review.id !== id
@@ -58,6 +60,7 @@ export async function openReview(store: EditorStore, id: string, options: { show
             base: detail.base,
             log: detail.log,
             report: detail.report ?? null,
+            branch,
             proposed,
             loading: false,
             failure: s.review.failure?.source === 'server' && s.review.failure.against === s.model?.hash ? s.review.failure : null,
@@ -77,17 +80,38 @@ export function closeReview(store: EditorStore): void {
   store.set({ review: null, side: 'inspector' });
 }
 
+/** A branch's base and the version its first op returns to (FLR-T-18.18); null for any other changeset. */
+async function branchOf(projectId: string, detail: ChangesetDetail): Promise<ReplayBranch | null> {
+  const first = detail.log[0];
+  if (detail.branchedFrom === undefined || detail.branchedFrom === null || first === undefined || first.beforeHash !== detail.base) return null;
+  try {
+    const [base, target] = await Promise.all([fetchVersion(projectId, detail.base), fetchVersion(projectId, first.afterHash)]);
+    return { base: JSON.parse(base) as Record<string, unknown>, target: JSON.parse(target) as Record<string, unknown> };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Replay the changeset's batches, as they were sent, onto main — what the server's accept would do.
- * Returns the result model, or the batch that failed and why.
+ * A branch's first op, its return to an earlier version, is made again against main (FLR-T-18.18:
+ * @floorspec/ops restoreOnto, as the server does). Returns the result model, or the batch that
+ * failed and why.
  */
-export function replay(main: EditorModel, log: readonly ChangesetLogEntry[]): { status: 'ok'; model: EditorModel; differs: number[] } | { status: 'failed'; index: number; diagnostics: Diagnostic[] } {
+export function replay(main: EditorModel, log: readonly ChangesetLogEntry[], branch: ReplayBranch | null = null): { status: 'ok'; model: EditorModel; differs: number[] } | { status: 'failed'; index: number; diagnostics: Diagnostic[] } {
   let document: string | object = main.document;
   let hash = main.hash;
   const differs: number[] = [];
   const created: string[] = [];
   for (const [index, entry] of log.entries()) {
-    const result = applyLocally(document, { batch: entry.ops, context: { retired: created } }, OFFICIAL_READER);
+    const again = index === 0 && branch !== null;
+    const batch = again ? (restoreOnto(branch.base, branch.target, (typeof document === 'string' ? JSON.parse(document) : document) as Record<string, unknown>) as unknown as Operation[]) : entry.ops;
+    if (again && batch.length === 0) {
+      differs.push(index);
+      continue;
+    }
+    // A branch's return brings elements back under their own IDs.
+    const result = applyLocally(document, { batch, context: { retired: created } }, OFFICIAL_READER);
     if (result.status === 'rejected') return { status: 'failed', index, diagnostics: result.diagnostics };
     if (JSON.stringify(result.resolved) !== JSON.stringify(entry.resolved)) differs.push(index);
     created.push(...result.created);
@@ -106,7 +130,7 @@ export function rebase(store: EditorStore): void {
     return;
   }
   if (review.rebased?.against === model.hash || review.failure?.against === model.hash) return;
-  const outcome = replay(model, review.log);
+  const outcome = replay(model, review.log, review.branch ?? null);
   if (outcome.status === 'ok') {
     store.set({ review: { ...review, rebased: { against: model.hash, model: outcome.model, differs: outcome.differs }, failure: null, confirming: false } });
   } else {

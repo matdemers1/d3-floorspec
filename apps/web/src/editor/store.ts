@@ -236,6 +236,17 @@ export interface Review {
   confirming: boolean;
   /** What an IFC import could not bring across, when the changeset is one (FLR-T-9.5). */
   report?: ImportReport | null;
+  /**
+   * FLR-T-18.18: a branch from an earlier version — main as it was opened on and the version its first
+   * op returns to — so a replay makes that return again against main, as the server's accept does.
+   */
+  branch?: ReplayBranch | null;
+}
+
+/** A branch's return: the two documents its first op is rebased between (review.ts `replay`). */
+export interface ReplayBranch {
+  base: Record<string, unknown>;
+  target: Record<string, unknown>;
 }
 
 /** Two versions compared on the canvas (FLR-T-3.6). */

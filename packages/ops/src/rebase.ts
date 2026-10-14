@@ -40,7 +40,7 @@ export function mergeThreeWay(base: unknown, target: unknown, main: unknown): un
     const out: JsonObject = {};
     for (const k of new Set([...Object.keys(main), ...Object.keys(target), ...Object.keys(base)])) {
       const v = mergeThreeWay(base[k], target[k], main[k]);
-      if (v !== undefined) out[k] = v as JsonObject[string];
+      if (v !== undefined) out[k] = v;
     }
     return out;
   }

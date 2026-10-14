@@ -39,7 +39,7 @@ describe('a return to a version, rebased', () => {
     // v1 the square; v2 the kitchen removed; branched from v1 at v2; main then undoes the removal (v3).
     const v1 = square;
     const v2 = step(v1, [{ op: 'removeElement', id: 'R1' }]);
-    const v3 = step(v2, [{ op: 'addElement', collection: 'rooms', id: 'R1', element: (square['rooms'] as Doc)['R1'] as Doc }]);
+    const v3 = step(v2, [{ op: 'addElement', collection: 'rooms', id: 'R1', element: (square['rooms'] as Doc)['R1'] }]);
     // As recorded, the branch's batch adds R1 again: refused on v3.
     const stale = apply(v3, { batch: [{ op: 'addElement', collection: 'rooms', id: 'R1', element: (square['rooms'] as Doc)['R1'] as Doc }] as Operation[] });
     expect(stale.status).toBe('rejected');

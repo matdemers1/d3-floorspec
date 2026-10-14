@@ -204,6 +204,8 @@ export interface ChangesetRow {
   createdBy: string | null;
   createdAt: string;
   fastForward: boolean | null;
+  /** FLR-T-18.18: the version of main a branch was opened at (its first op returns to it); null otherwise. */
+  branchedFrom?: number | null;
 }
 
 export interface ChangesetLogEntry {
