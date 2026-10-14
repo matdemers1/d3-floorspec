@@ -1,0 +1,6 @@
+{
+  "description": "A view has a member a view does not define: `fov`, an angle of view, which FS_views gives as a focal length.",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

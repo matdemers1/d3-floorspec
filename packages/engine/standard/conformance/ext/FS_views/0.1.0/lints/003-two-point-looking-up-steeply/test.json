@@ -1,0 +1,7 @@
+{
+  "description": "The hero shot looks up at the ridge from close to the south wall - 2 m across and 3 m up: steeper than 30 degrees.",
+  "covers": [
+    "FS-VIEW-1.2.3",
+    "FS-VIEW-2.3.1"
+  ]
+}

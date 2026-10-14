@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_views/views/SV4/name",
+      "value": "Hero exterior"
+    }
+  ]
+}

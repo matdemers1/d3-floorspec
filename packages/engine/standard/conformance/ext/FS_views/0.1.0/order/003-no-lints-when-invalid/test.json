@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too - the cutaway, looking steeply down, is made two-point: the document is invalid, so no lint is reported, FS_views's or Core's.",
+  "covers": [
+    "FS-VIEW-1.2.2",
+    "FS-VIEW-1.2.3"
+  ]
+}

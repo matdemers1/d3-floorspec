@@ -1,0 +1,9 @@
+{
+  "description": "The house with FS_views the only extension it uses - no lights, no lamp, no scenes - and the dusk view without a scene: valid, and the four views derived.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-1.2.4",
+    "FS-VIEW-1.3.1",
+    "FS-VIEW-6.1.1"
+  ]
+}

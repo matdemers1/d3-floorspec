@@ -1,0 +1,6 @@
+{
+  "description": "The hero shot on 29 February 2100: divisible by 100 and not by 400, so not a leap year.",
+  "covers": [
+    "FS-VIEW-3.2.1"
+  ]
+}

@@ -101,6 +101,7 @@ export * as furniture from './extensions/fs/furniture.js';
 export * as structural from './extensions/fs/structural.js';
 export * as landscape from './extensions/fs/landscape.js';
 export * as lighting from './extensions/fs/lighting.js';
+export * as views from './extensions/fs/views.js';
 export { extentsOk, footprintsOverlap, type Frame, type Footprint } from './derive/frames.js';
 export {
   extElements,

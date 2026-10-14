@@ -1,0 +1,20 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-VIEW-INV-006",
+      "severity": "error",
+      "elements": ["SV2", "SV3"]
+    },
+    {
+      "code": "FS-VIEW-INV-006",
+      "severity": "error",
+      "elements": ["SV2", "SV4"]
+    },
+    {
+      "code": "FS-VIEW-INV-006",
+      "severity": "error",
+      "elements": ["SV3", "SV4"]
+    }
+  ]
+}

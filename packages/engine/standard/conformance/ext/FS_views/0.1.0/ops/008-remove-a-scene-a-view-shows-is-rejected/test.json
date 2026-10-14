@@ -1,0 +1,8 @@
+{
+  "description": "unsetProperty of $document /extensions/FS_lighting/scenes/LS1 removes the Evening scene, which the dusk view shows: an applier that implements FS_views - and not FS_lighting - reads the scenes as data, so the result breaks 3.3.1, and the batch is rejected.",
+  "covers": [
+    "FS-VIEW-3.3.1",
+    "FS-VIEW-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

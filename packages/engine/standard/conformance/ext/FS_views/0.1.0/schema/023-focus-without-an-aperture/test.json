@@ -1,0 +1,6 @@
+{
+  "description": "The island view focused at 1.8 m with no aperture: a distance in focus means nothing to a pinhole, and the schema requires `aperture` with `focus` (2.1).",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

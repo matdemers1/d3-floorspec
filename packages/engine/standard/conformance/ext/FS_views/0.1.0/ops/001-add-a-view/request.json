@@ -1,0 +1,19 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_views/views/SV5",
+      "value": {
+        "name": "Living room",
+        "eye": [7552000, 4352000, 1920000],
+        "target": [5504000, 3072000, 1408000],
+        "focalLength": 16,
+        "twoPoint": true,
+        "aspect": "4:5",
+        "scene": "LS2",
+        "sky": "night"
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "The same options with the views as they are: every view is valid in every design. Valid, and the primary design derived.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-1.2.4",
+    "FS-VIEW-6.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

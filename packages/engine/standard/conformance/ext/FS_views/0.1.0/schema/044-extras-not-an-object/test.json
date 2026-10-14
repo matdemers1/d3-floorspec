@@ -1,0 +1,6 @@
+{
+  "description": "A view's `extras` is an object (Core 1.7).",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

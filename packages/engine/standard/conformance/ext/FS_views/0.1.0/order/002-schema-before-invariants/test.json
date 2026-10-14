@@ -1,0 +1,7 @@
+{
+  "description": "The data breaks the schema and an invariant: only FS-VIEW-SCH-001.",
+  "covers": [
+    "FS-VIEW-1.2.2",
+    "FS-VIEW-1.3.1"
+  ]
+}
