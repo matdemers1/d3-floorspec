@@ -31,7 +31,7 @@ import { sagittaFromRadius } from './arcs';
 import { MultiInspector } from './arrange/MultiInspector';
 import { RoofBody, RoofDrawSettings, StairBody, StairDrawSettings } from './RoofStairFields';
 import { FindingsList } from './Diagnostics';
-import { Layers as LayersIcon, Palette, House } from 'lucide-react';
+import { Layers as LayersIcon, Palette, House, WandSparkles } from 'lucide-react';
 import type { ToolController } from './tools';
 import { DeviceBody, DevicePanel, RecordBody, SystemIcon, SystemsSummary } from './systems/Panels';
 import { systemOfExtension } from './systems/catalog';
@@ -804,6 +804,7 @@ function RoomBody({ ctx, focusName }: { ctx: Ctx; focusName: boolean }) {
           />
         </Row>
         <BriefRow ctx={ctx} />
+        {readOnly ? null : <p className="fs-note">Drag an edge handle to resize the room — its walls follow — or drag its floor to move it. Keys: the arrows move it, ⌥ and an arrow push that side out, ⌥⇧ pull it in.</p>}
         <ReadOnlyField label="Net area" value={room === undefined ? '—' : formatArea(room.area2, units)} />
         <ReadOnlyField label="Anchor" value={`${formatLen(anchor[0], units)}, ${formatLen(anchor[1], units)}`} />
       </Section>
@@ -1230,6 +1231,30 @@ function DrawPanel({ store, model }: { store: EditorStore; model: EditorModel })
         <div className="fs-callout-card" role="note">
           <strong>Exact positions</strong>
           <p>Type a length while pointing at a wall — {units === 'metric' ? '900mm' : `3'`} — and press Enter to place it that far from the nearer end. A door swings to the side you point from, hinged at the nearer jamb.</p>
+        </div>
+      </div>
+    );
+  }
+  if (tool === 'wand') {
+    // FLR-T-18.10: the magic wand — its prompt is on the plan, beside the space it chose.
+    const picked = draft?.tool === 'wand' && draft.pick !== null;
+    return (
+      <div className="fs-inspector__body">
+        <div className="fs-inspector__head">
+          <span className="fs-inspector__icon"><WandSparkles aria-hidden="true" /></span>
+          <div className="fs-inspector__title">
+            <h2>Make a room</h2>
+            <p>{picked ? 'Name it, choose what it is for, and press Enter' : 'Click inside walls that close a space'}</p>
+          </div>
+        </div>
+        <ul className="fs-keys" aria-label="Keys">
+          <li><kbd>Tab</kbd> the next space the click could mean — one beside it, around it or inside it</li>
+          <li><kbd>Enter</kbd> make the room</li>
+          <li><kbd>Esc</kbd> choose again</li>
+        </ul>
+        <div className="fs-callout-card" role="note">
+          <strong>One click, one room</strong>
+          <p>The room is anchored in the space you chose (Floorspec Core 6.3) with one addRoom, so one undo takes it back. Only spaces without a room are offered.</p>
         </div>
       </div>
     );
