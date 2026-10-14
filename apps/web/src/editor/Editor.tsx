@@ -1,7 +1,7 @@
 import './editor.css';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, Table as TableIcon, TriangleAlert, Undo2, Waypoints } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, Table as TableIcon, TriangleAlert, Undo2, WandSparkles, Waypoints } from 'lucide-react';
 import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
 import { MaterialsModal } from './Materials';
 import { FurnitureLibrary } from '../furniture/Browser';
@@ -23,6 +23,7 @@ import { ProposalPanel } from './Proposal';
 import { ComparePanel, HistoryPanel } from './HistoryPanel';
 import { Palette } from './Palette';
 import { isArrow, nudge, nudgeable } from './nudge';
+import { roomKey } from './rooms/keys';
 import { endCompare, toggleHistory } from './history';
 import { openReview } from './review';
 import { proposerOf } from './api';
@@ -431,6 +432,8 @@ const RAIL: { tool?: ToolId; label: string; icon: ReactNode; later?: string }[] 
   { tool: 'door', label: 'Place a door', icon: <DoorIcon /> },
   { tool: 'window', label: 'Place a window', icon: <WindowIcon /> },
   { tool: 'room', label: 'Name a room', icon: <RoomAnchorIcon /> },
+  // FLR-T-18.10: one click inside walls makes the room, with its name and function.
+  { tool: 'wand', label: 'Make a room (magic wand)', icon: <WandSparkles /> },
   { tool: 'separator', label: 'Draw a room separator', icon: <SeparatorIcon /> },
   { tool: 'slab', label: 'Draw a slab', icon: <SlabIcon /> },
   { tool: 'stair', label: 'Place a stair', icon: <StairIcon /> },
@@ -726,6 +729,11 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
         e.preventDefault();
         return;
       }
+      // Tab (⇧Tab back) with the magic wand's prompt up: the next space the click could mean (FLR-T-18.10).
+      if (e.key === 'Tab' && !mod && !e.altKey && tools.cycleWand(e.shiftKey)) {
+        e.preventDefault();
+        return;
+      }
       if (e.key === 'Enter' && tools.enter()) {
         e.preventDefault();
         return;
@@ -740,6 +748,11 @@ function useKeyboard(store: EditorStore, tools: ToolController) {
         // With nothing left to escape, Esc leaves full screen.
         else if (quiet && drawersOf(store).get().full) setFullScreen(store, false);
         else tools.escape();
+        return;
+      }
+      // FLR-T-18.10: ⌥ and an arrow push a selected room's side out, ⌥⇧ pull it in.
+      if (roomKey(store, e)) {
+        e.preventDefault();
         return;
       }
       // FLR-T-18.8: ⌥A array, ⌥⇧H/⌥⇧V distribute, ⇧H/⇧V mirror, the arrows moving several at once.

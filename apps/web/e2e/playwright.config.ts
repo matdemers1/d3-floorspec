@@ -55,6 +55,9 @@ import { defineConfig, devices } from '@playwright/test';
  *                   the minimap, saved views, and the tree, the palette and a proposal moving the view.
  *   - `arrange`   — FLR-T-18.8: multi-select on the Courtyard House — a crossing and a window marquee, ⇧-click,
  *                   ⌘D duplicating three chairs as one undo, an array of recessed lights; axe in both themes.
+ *   - `rooms`     — FLR-T-18.10: rooms you can grab on the Courtyard House — the pantry's east edge dragged (resizeRoom,
+ *                   Ops 4.4) and undone, ⌥→/⌥⇧→ and ↑ from the keys, its floor dragged (moveRoom), and a room made
+ *                   with the magic wand, Tab cycling the spaces; axe in both themes.
  *   - `styles`    — FLR-T-18.5: plan styles on the Courtyard House — Colour by default, the style menu,
  *                   Construction's Technical and wall-type legend, details, exports only, a still, the render, axe.
  *   - `camera`    — FLR-T-13.10: the Camera panel — a saved view gone to, its lens and lens shift, a preset
@@ -66,7 +69,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_styles_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; styles, +31).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_styles_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; styles, +33).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -147,12 +150,14 @@ const SUITES: Suite[] = [
   { name: 'panzoom', spec: 'panzoom.spec.ts', port: PORT + 23, database: databaseFor('panzoom'), setupToken: true },
   // FLR-T-18.8: multi-select and arrange — marquees, ⇧-click, duplicate as one undo, an array of lights, axe.
   { name: 'arrange', spec: 'arrange.spec.ts', port: PORT + 27, database: databaseFor('arrange'), setupToken: true },
+  // FLR-T-18.10: rooms you can grab — an edge handle (resizeRoom), the keys, the floor dragged (moveRoom), the magic wand, axe.
+  { name: 'rooms', spec: 'rooms.spec.ts', port: PORT + 31, database: databaseFor('rooms'), setupToken: true },
   // FLR-T-13.10: a camera for photographs — saved views, the lens, two-point, exposure, the frame, a shot list.
   { name: 'camera', spec: 'camera.spec.ts', port: PORT + 24, database: databaseFor('camera'), setupToken: true, gl: true },
   // FLR-T-18.3: the trade modes — switcher, ghosts, keys, palette, menu, own modes, full screen, render, PDF, axe.
   { name: 'modes', spec: 'modes.spec.ts', port: PORT + 26, database: databaseFor('modes'), setupToken: true },
   // FLR-T-18.5: plan styles — Colour by default, the menu, Construction's Technical and legend, details, a still, the render, axe.
-  { name: 'styles', spec: 'styles.spec.ts', port: PORT + 31, database: databaseFor('styles'), setupToken: true },
+  { name: 'styles', spec: 'styles.spec.ts', port: PORT + 33, database: databaseFor('styles'), setupToken: true },
 ];
 
 /**

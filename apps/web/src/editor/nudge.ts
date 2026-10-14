@@ -2,6 +2,7 @@ import type { EditorStore } from './store';
 import { kindOf, labelOf, type LevelView, type Point } from './model';
 import { dot, leftNormal, sub, len } from './geometry';
 import { moveJunction, moveOpening, moveWall, type Batch } from './ops';
+import { moveRoom } from './rooms/edit';
 import { formatLen } from './units';
 import { nudgeDevice } from '../furniture/nudge';
 
@@ -56,6 +57,8 @@ export function nudgeBatch(level: LevelView, document: { openings?: Record<strin
     const offset = typeof stored === 'number' ? stored : opening.offset;
     return moveOpening(id, Math.max(0, offset + (k > 0 ? step : -step)));
   }
+  // A room (FLR-T-18.10): moveRoom, its walls, anchor and what stands in it with it (Ops 4.3).
+  if (level.rooms.some((r) => r.id === id)) return moveRoom(id, [d[0] * step, d[1] * step]);
   // An extension element — a piece of furniture, a device (FLR-T-8.3): its host's position, or along its wall.
   const device = level.devices.find((x) => x.id === id);
   if (device !== undefined) return nudgeDevice(level, device, d, step);
@@ -67,7 +70,7 @@ export function nudgeable(store: EditorStore): boolean {
   const { selection, model, readOnly, compare } = store.get();
   if (selection === null || model === null || readOnly !== null || compare !== null) return false;
   const kind = kindOf(model, selection);
-  return kind === 'junction' || kind === 'wall' || kind === 'separator' || kind === 'opening' || kind === 'extensionElement';
+  return kind === 'junction' || kind === 'wall' || kind === 'separator' || kind === 'opening' || kind === 'room' || kind === 'extensionElement';
 }
 
 /** Nudge the selection. Returns false when the arrow does not move it (a wall pushed along itself). */

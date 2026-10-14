@@ -23,7 +23,7 @@ import {
   typeChoices,
   type ChainVertex,
 } from './ops';
-import { gridStep, lengthText, parseLen, parseSegment } from './units';
+import { formatLen, gridStep, lengthText, parseLen, parseSegment } from './units';
 import { interiorPoint } from './geometry';
 import type { FaceView } from './model';
 import { kindOf, labelOf } from './model';
@@ -40,6 +40,8 @@ import { arrangeOf } from './arrange/state';
 import { isCovering, marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
 import { transformBatch, translation } from './arrange/transform';
 import { deleteSelection, moveSelection } from './arrange/actions';
+import { extentAcross, functionFromName, minRoom, moveRoom, resizeRoom, roomDrag, roomSides, sideDrag, wandCandidates, type Side } from './rooms/edit';
+import type { WandDraft } from './store';
 
 /**
  * Pointer and keyboard input on the plan (FLR-T-3.3). Pointer events throughout, so a mouse, a
@@ -82,7 +84,7 @@ export class ToolController {
   private readonly pointers = new Map<number, Tracked>();
   private mode: Mode = 'idle';
   private pinch: { d: number; mid: Point } | null = null;
-  private dragStart: { world: Point; target: string; kind: 'junction' | 'wall' | 'opening' | 'device' | 'resize' | 'rotate' | 'group'; side?: HandleSide } | null = null;
+  private dragStart: { world: Point; target: string; kind: 'junction' | 'wall' | 'opening' | 'device' | 'resize' | 'rotate' | 'group' | 'roomSide' | 'room'; side?: HandleSide; roomSide?: Side } | null = null;
   /**
    * FLR-T-18.8: a press on the plan that is not on something to drag — a marquee if it moves, a
    * click if it does not; and with ⇧ or ⌘ held, the element under it, toggled on release.
@@ -293,10 +295,21 @@ export class ToolController {
    * FLR-T-18.4: a handle of the selected item under the pointer — its rotate handle, or one of the
    * eight on its footprint — when the item is one the editor resizes.
    */
-  private handleUnder(p: PointerInfo): { kind: 'resize'; id: string; side: HandleSide } | { kind: 'rotate'; id: string } | null {
+  private handleUnder(p: PointerInfo): { kind: 'resize'; id: string; side: HandleSide } | { kind: 'rotate'; id: string } | { kind: 'roomSide'; id: string; roomSide: Side } | null {
     const level = this.level;
     const s = this.store.get();
     if (level === undefined || s.view === null || s.selection === null || s.selected.length > 1) return null;
+    // FLR-T-18.10: a selected room's edge handles, each moving one side (resizeRoom).
+    if (s.model?.index.get(s.selection) === 'rooms') {
+      const world = this.world(p);
+      const tol = (p.type === 'touch' ? 18 : 10) / s.view.s;
+      let best: { side: Side; d: number } | null = null;
+      for (const side of roomSides(level, s.selection)) {
+        const d = dist(side.at, world);
+        if (side.ok && d <= tol && (best === null || d < best.d)) best = { side: side.side, d };
+      }
+      return best === null ? null : { kind: 'roomSide', id: s.selection, roomSide: best.side };
+    }
     const device = level.devices.find((d) => d.id === s.selection);
     if (device === undefined || !isResizable(device)) return null;
     const world = this.world(p);
@@ -311,7 +324,7 @@ export class ToolController {
     return best === null ? null : { kind: 'resize', id: device.id, side: best.side };
   }
 
-  private grabTarget(p: PointerInfo): { kind: 'junction' | 'wall' | 'opening' | 'device' | 'resize' | 'rotate'; id: string; side?: HandleSide } | null {
+  private grabTarget(p: PointerInfo): { kind: 'junction' | 'wall' | 'opening' | 'device' | 'resize' | 'rotate' | 'roomSide' | 'room'; id: string; side?: HandleSide; roomSide?: Side } | null {
     const level = this.level;
     if (level === undefined) return null;
     const handle = this.handleUnder(p);
@@ -323,6 +336,9 @@ export class ToolController {
     if (hit.kind === 'junction') return hit;
     // A finger drags a wall or an opening only once it is selected; otherwise it pans.
     if ((hit.kind === 'wall' || hit.kind === 'opening') && (p.type !== 'touch' || this.store.get().selection === hit.id)) return { kind: hit.kind, id: hit.id };
+    // FLR-T-18.10: a room already selected, alone, drags by its floor (moveRoom) — as a selected rug does.
+    const s = this.store.get();
+    if (hit.kind === 'room' && s.selection === hit.id && s.selected.length <= 1) return { kind: 'room', id: hit.id };
     return null;
   }
 
@@ -367,6 +383,9 @@ export class ToolController {
         return;
       case 'room':
         this.roomDown(p);
+        return;
+      case 'wand':
+        this.wandDown(p);
         return;
       case 'device':
         this.deviceDown();
@@ -426,6 +445,11 @@ export class ToolController {
         this.store.set({ draft: { tool: 'room', hover: { point, free: face !== undefined && face.room === null } } });
         return;
       }
+      case 'wand': {
+        const d = this.wandDraft();
+        if (d.pick === null) this.store.set({ draft: { ...d, hover: this.world(p) } });
+        return;
+      }
     }
   }
 
@@ -472,13 +496,19 @@ export class ToolController {
     }
     // A press on one of several selected: the whole selection drags (a click alone selects just that one).
     const selected = this.store.get().selected;
-    const member = grab?.kind === 'resize' || grab?.kind === 'rotate' ? null : (grab?.id ?? under?.id ?? null);
+    const member = grab?.kind === 'resize' || grab?.kind === 'rotate' || grab?.kind === 'roomSide' ? null : (grab?.id ?? under?.id ?? null);
     if (this.editable && selected.length > 1 && member !== null && selected.includes(member)) {
       this.dragStart = { world, target: member, kind: 'group' };
       return;
     }
+    // A double click on a selected room is still a double click on empty floor: it zooms (FLR-T-18.6).
+    if (grab?.kind === 'room' && this.double(p)) {
+      zoomBy(this.store, p.alt ? 0.5 : 2, [p.x, p.y]);
+      this.dragStart = null;
+      return;
+    }
     if (grab !== null) {
-      this.dragStart = { world, target: grab.id, kind: grab.kind, ...(grab.side === undefined ? {} : { side: grab.side }) };
+      this.dragStart = { world, target: grab.id, kind: grab.kind, ...(grab.side === undefined ? {} : { side: grab.side }), ...(grab.roomSide === undefined ? {} : { roomSide: grab.roomSide }) };
       return;
     }
     this.dragStart = null;
@@ -542,6 +572,23 @@ export class ToolController {
       arrangeOf(this.store).set({ dragging: d });
       const model = s.model;
       this.store.preview(model === null || (d[0] === 0 && d[1] === 0) ? null : transformBatch(model, level, s.selected, translation(d)).batch);
+      return;
+    }
+    if (start.kind === 'roomSide' && start.roomSide !== undefined) {
+      // FLR-T-18.10: one side of the room moved out or in, its walls following as resizeRoom defines (Ops 4.4).
+      const side = start.roomSide;
+      const by = sideDrag(side, start.world, this.world(p), { grid, free: p.shift, extent: extentAcross(level, start.target, side), min: minRoom(this.store.units) });
+      if (s.hover !== null) this.store.set({ hover: null });
+      this.store.set({ draft: { tool: 'select', drag: { kind: 'roomSide', id: start.target, side, by }, typed } });
+      this.store.preview(by === 0 ? null : resizeRoom(start.target, side, by));
+      return;
+    }
+    if (start.kind === 'room') {
+      // FLR-T-18.10: the room by its floor — its corners, anchor, ridge and what stands in it (moveRoom, Ops 4.3).
+      const by = roomDrag(start.world, this.world(p), { grid, free: p.alt, axis: p.shift });
+      if (s.hover !== null) this.store.set({ hover: null });
+      this.store.set({ draft: { tool: 'select', drag: { kind: 'room', id: start.target, by }, typed } });
+      this.store.preview(by[0] === 0 && by[1] === 0 ? null : moveRoom(start.target, by));
       return;
     }
     if (start.kind === 'junction') {
@@ -641,6 +688,14 @@ export class ToolController {
     }
     const model = this.store.get().model;
     const name = model === null ? drag.id : labelOf(model, drag.id);
+    if (drag.kind === 'roomSide') {
+      if (drag.by !== 0) void this.store.apply(`Resize ${name} ${drag.side} ${formatLen(Math.abs(drag.by), this.store.units)} ${drag.by > 0 ? 'out' : 'in'}`, resizeRoom(drag.id, drag.side, drag.by), { select: () => drag.id });
+      return;
+    }
+    if (drag.kind === 'room') {
+      if (drag.by[0] !== 0 || drag.by[1] !== 0) void this.store.apply(`Move ${name}`, moveRoom(drag.id, drag.by), { select: () => drag.id });
+      return;
+    }
     if (drag.kind === 'junction') {
       const junction = this.level?.junctions.find((j) => j.id === drag.id);
       if (junction !== undefined && junction.position[0] === drag.to[0] && junction.position[1] === drag.to[1]) return;
@@ -908,6 +963,93 @@ export class ToolController {
       });
   }
 
+  // ── the magic wand (FLR-T-18.10) ──
+
+  wandDraft(): WandDraft {
+    const d = this.store.get().draft;
+    return d?.tool === 'wand' ? d : { tool: 'wand', hover: null, pick: null };
+  }
+
+  /**
+   * A click with the wand: the faces it could mean, the space under it first — Tab cycles them — and
+   * a prompt for the room's name and function. Nothing is written until Enter (or Make room).
+   */
+  private wandDown(p: PointerInfo): void {
+    const s = this.store.get();
+    const level = this.level;
+    if (s.model === null || level === undefined) return;
+    const point = this.world(p);
+    const found = wandCandidates(level, point);
+    const d = this.wandDraft();
+    if (found.length === 0) {
+      const face = faceAt(level, point);
+      const text =
+        face?.room !== null && face?.room !== undefined
+          ? `${labelOf(s.model, face.room)} is already a room, and no space beside it is without one. The wand makes rooms of spaces that have none.`
+          : 'Click inside walls that close a space: the wand makes a room of it.';
+      this.store.set({ draft: { ...d, pick: null }, notice: { tone: 'info', text } });
+      return;
+    }
+    // The space clicked is anchored where it was clicked; the others where the space's middle is.
+    const at: Point = [Math.round(point[0]), Math.round(point[1])];
+    const candidates = found.map((c) => ({ at: c.how === 'here' ? at : c.at, how: c.how }));
+    this.store.set({ draft: { ...d, hover: null, pick: { candidates, index: 0, name: nextRoomName(s.model.document), fn: 'unspecified', fnChosen: false, focusName: false } } });
+  }
+
+  /** Tab (⇧Tab back) with the wand's prompt up: the next space the click could mean. Returns true when taken. */
+  cycleWand(back: boolean): boolean {
+    const d = this.store.get().draft;
+    if (d?.tool !== 'wand' || d.pick === null) return false;
+    const n = d.pick.candidates.length;
+    if (n <= 1) {
+      this.store.set({ notice: { tone: 'info', text: 'There is no other space without a room here.' } });
+      return true;
+    }
+    this.store.set({ draft: { ...d, pick: { ...d.pick, index: (d.pick.index + (back ? n - 1 : 1)) % n } } });
+    return true;
+  }
+
+  /** The prompt's fields: the name (guessing the function from it until one is chosen) and the function. */
+  setWand(patch: { name?: string; fn?: string; focusName?: boolean }): void {
+    const d = this.store.get().draft;
+    if (d?.tool !== 'wand' || d.pick === null) return;
+    const pick = { ...d.pick };
+    if (patch.name !== undefined) {
+      pick.name = patch.name;
+      if (!pick.fnChosen) pick.fn = functionFromName(patch.name) ?? 'unspecified';
+    }
+    if (patch.fn !== undefined) {
+      pick.fn = patch.fn;
+      pick.fnChosen = true;
+    }
+    if (patch.focusName !== undefined) pick.focusName = patch.focusName;
+    this.store.set({ draft: { ...d, pick } });
+  }
+
+  /** A key typed on the plan with the prompt up starts the room's name there. */
+  private wandKey(key: string): boolean {
+    const d = this.store.get().draft;
+    if (d?.tool !== 'wand' || d.pick === null || key.length !== 1 || !/\S/.test(key)) return false;
+    // Keys typed before the field has taken focus add to what the first one started.
+    this.setWand({ name: d.pick.focusName ? d.pick.name + key : key, focusName: true });
+    return true;
+  }
+
+  /** Enter: the room made — one addRoom, anchored in the chosen space, with its name and function. One undo step. */
+  commitWand(): void {
+    const s = this.store.get();
+    const d = s.draft;
+    if (d?.tool !== 'wand' || d.pick === null || s.model === null || s.level === null || !this.editable) return;
+    const chosen = d.pick.candidates[d.pick.index];
+    if (chosen === undefined) return;
+    const name = d.pick.name.trim();
+    const fn = d.pick.fn;
+    this.store.set({ draft: { tool: 'wand', hover: null, pick: null } });
+    void this.store.apply(`Make a room${name === '' ? '' : ` — ${name}`}`, addRoom({ level: s.level, at: chosen.at, ...(name === '' ? {} : { name }), function: fn }), {
+      select: (created) => created.find((id) => /^R\d+$/.test(id)) ?? created[0] ?? null,
+    });
+  }
+
   // ─── Keyboard ────────────────────────────────────────────────────────────────────────────
 
   /** Typed lengths while drawing or dragging. Returns true when the key was taken. */
@@ -920,6 +1062,7 @@ export class ToolController {
         : s.draft === null && s.tool === 'arc' && this.editable
           ? this.arcDraft()
           : s.draft;
+    if (draft?.tool === 'wand') return this.wandKey(key);
     if (draft === null || draft.tool === 'room' || draft.tool === 'stair') return false;
     if (draft.tool === 'select' && draft.drag === null) return false;
     if ((draft.tool === 'door' || draft.tool === 'window') && draft.hover === null) return false;
@@ -945,6 +1088,10 @@ export class ToolController {
     const s = this.store.get();
     const draft = s.draft;
     const units = this.store.units;
+    if (s.tool === 'wand' && draft?.tool === 'wand' && draft.pick !== null) {
+      this.commitWand();
+      return true;
+    }
     if (s.tool === 'room' && this.editable) {
       const face = this.unnamedSpaces()[0];
       if (face === undefined) {
@@ -954,7 +1101,7 @@ export class ToolController {
       this.nameRoomIn(face);
       return true;
     }
-    if (draft === null || draft.tool === 'room' || draft.tool === 'stair') return false;
+    if (draft === null || draft.tool === 'room' || draft.tool === 'wand' || draft.tool === 'stair') return false;
     if (draft.tool === 'device') {
       if (draft.hover === null) return false;
       if (draft.typed.trim() === '') {
@@ -1077,6 +1224,10 @@ export class ToolController {
     const draft = s.draft;
     if (draft !== null && 'typed' in draft && draft.typed !== '') {
       this.store.set({ draft: { ...draft, typed: '' } });
+      return;
+    }
+    if (draft?.tool === 'wand' && draft.pick !== null) {
+      this.store.set({ draft: { ...draft, pick: null } });
       return;
     }
     if (draft?.tool === 'stair' && draft.foot !== null) {
