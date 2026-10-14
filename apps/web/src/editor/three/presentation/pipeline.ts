@@ -90,8 +90,8 @@ class Targets {
   readonly size: THREE.Vector2;
 
   constructor(
-    readonly width: number,
-    readonly height: number,
+    public width: number,
+    public height: number,
     scene: THREE.Scene,
     readonly camera: THREE.PerspectiveCamera,
   ) {
@@ -125,6 +125,25 @@ class Targets {
     this.smaa.setSize(width, height);
   }
 
+  /**
+   * Draw at another size: every buffer resized in place (the GPU's memory made again), the passes
+   * kept — GTAO's noise, SMAA's lookup images, bloom's materials are not made again for each step of
+   * the moving resolution, which the first turn in a room takes several of as it finds its speed.
+   */
+  resize(width: number, height: number): void {
+    if (width === this.width && height === this.height) return;
+    this.width = width;
+    this.height = height;
+    this.size.set(width, height);
+    this.hdr.setSize(width, height);
+    this.lit.setSize(width, height);
+    this.ldr.setSize(width, height);
+    this.accum.setSize(width, height);
+    this.gtao.setSize(Math.max(1, Math.round(width / 2)), Math.max(1, Math.round(height / 2)));
+    this.bloom.setSize(width, height);
+    this.smaa.setSize(width, height);
+  }
+
   dispose(): void {
     this.hdr.depthTexture?.dispose();
     this.hdr.dispose();
@@ -150,7 +169,10 @@ export interface FrameOptions {
 }
 
 export class PresentationPipeline {
-  private targets: Targets[] = [];
+  /** Standing still (the drawing buffer's size) and moving (the scaled one); the last drawn into. */
+  private still: Targets | null = null;
+  private moving: Targets | null = null;
+  private last: Targets | null = null;
   private readonly resolve = resolveMaterial();
   private readonly output = new OutputPass();
   private readonly quad = new FullScreenQuad(this.resolve);
@@ -163,24 +185,30 @@ export class PresentationPipeline {
   debugView = 0;
   /** Under automation: passes left out, to measure what each costs. */
   skip = new Set<string>();
-  /** Target sets made so far (each a reallocation). */
+  /** Target sets made or resized so far (each a reallocation). */
   created = 0;
   /** Last frame's drawn size. */
   drawn = new THREE.Vector2();
 
   constructor(private readonly renderer: THREE.WebGLRenderer) {}
 
-  private targetsFor(width: number, height: number, scene: THREE.Scene, camera: THREE.PerspectiveCamera): Targets {
-    const hit = this.targets.find((t) => t.width === width && t.height === height && t.camera === camera);
-    if (hit !== undefined) {
-      this.targets = [hit, ...this.targets.filter((t) => t !== hit)];
-      return hit;
+  /** The buffers for a frame: two sets at most — standing still, and moving — each resized in place when its size changes. */
+  private targetsFor(width: number, height: number, scene: THREE.Scene, camera: THREE.PerspectiveCamera, moving: boolean): Targets {
+    let t = moving ? this.moving : this.still;
+    if (t !== null && t.camera !== camera) {
+      t.dispose();
+      t = null;
     }
-    const t = new Targets(width, height, scene, camera);
-    this.created++;
-    this.targets.unshift(t);
-    // Two sizes at most: standing still, and moving.
-    for (const old of this.targets.splice(2)) old.dispose();
+    if (t === null) {
+      t = new Targets(width, height, scene, camera);
+      this.created++;
+    } else if (t.width !== width || t.height !== height) {
+      t.resize(width, height);
+      this.created++;
+    }
+    if (moving) this.moving = t;
+    else this.still = t;
+    this.last = t;
     return t;
   }
 
@@ -190,7 +218,7 @@ export class PresentationPipeline {
     const buffer = r.getDrawingBufferSize(new THREE.Vector2());
     const width = Math.max(1, Math.round(buffer.x * o.scale));
     const height = Math.max(1, Math.round(buffer.y * o.scale));
-    const t = this.targetsFor(width, height, scene, camera);
+    const t = this.targetsFor(width, height, scene, camera, o.scale < 1);
     this.drawn.set(width, height);
     const k = o.accumulate ?? 0;
     const jitter = o.accumulate !== null && k > 0;
@@ -270,7 +298,8 @@ export class PresentationPipeline {
   warm(scene: THREE.Scene, camera: THREE.PerspectiveCamera): void {
     const r = this.renderer;
     const buffer = r.getDrawingBufferSize(new THREE.Vector2());
-    const t = this.targetsFor(Math.max(1, buffer.x), Math.max(1, buffer.y), scene, camera);
+    const last = this.last;
+    const t = this.targetsFor(Math.max(1, buffer.x), Math.max(1, buffer.y), scene, camera, false);
     unbindTextures(r);
     const culled: THREE.Object3D[] = [];
     scene.traverse((o) => {
@@ -282,6 +311,8 @@ export class PresentationPipeline {
     this.drawScene(t, scene, camera);
     for (const o of culled) o.frustumCulled = true;
     r.setRenderTarget(null);
+    // What is shown again (present) is still the last frame drawn, not these buffers.
+    this.last = last ?? t;
   }
 
   /**
@@ -308,8 +339,8 @@ export class PresentationPipeline {
 
   /** Show the last accumulated picture again, without drawing the scene. */
   present(): boolean {
-    const t = this.targets[0];
-    if (t === undefined) return false;
+    const t = this.last;
+    if (t === null) return false;
     COPY_UNIFORMS.tDiffuse.value = t.accum.texture;
     COPY_UNIFORMS.opacity.value = 1;
     this.renderer.setRenderTarget(null);
@@ -318,8 +349,11 @@ export class PresentationPipeline {
   }
 
   dispose(): void {
-    for (const t of this.targets) t.dispose();
-    this.targets = [];
+    this.still?.dispose();
+    this.moving?.dispose();
+    this.still = null;
+    this.moving = null;
+    this.last = null;
     this.resolve.dispose();
     this.output.dispose();
     this.quad.dispose();
