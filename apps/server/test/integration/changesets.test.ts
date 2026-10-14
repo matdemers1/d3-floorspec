@@ -261,6 +261,63 @@ describe('changesets', () => {
     expect(merged.created).toEqual(['L4']);
   });
 
+  describe('a branch from an earlier version, accepted after main has moved (FLR-T-18.18)', () => {
+    const seqOf = async () => (await db.opLog.findFirstOrThrow({ where: { projectId: project.id, head: 'main', afterHash: base } })).seq;
+    const docOf = async () => (await operator.get(path('/model.json'))).body as { rooms: Record<string, { name?: string }>; levels: Record<string, { name?: string }>; buildings: Record<string, unknown> };
+
+    it('returns main to that version though main already brought back what the branch re-adds — its return made again against main', async () => {
+      const at = await seqOf();
+      expect((await operator.post(path('/ops'), { batch: [{ op: 'removeElement', id: 'R1' }] })).status).toBe(201);
+      const branched = await operator.post(path('/branch'), { seq: at });
+      expect(branched.status, branched.text).toBe(201);
+      const branch = (branched.body as { changeset: { id: string; branchedFrom: number } }).changeset;
+      expect(branch.branchedFrom).toBe(at);
+      // Main moves: the removal undone (R1 back under its own ID), R1 renamed, and the level renamed.
+      expect((await operator.post(path('/undo'))).status).toBe(201);
+      expect((await operator.post(path('/ops'), { batch: [{ op: 'setProperty', id: 'R1', path: '/name', value: 'Pantry' }, { op: 'setProperty', id: 'L1', path: '/name', value: 'Ground' }] })).status).toBe(201);
+      // As recorded, the branch's batch re-adds R1, which main already has: it would be refused (FS-OPS-005).
+      const recorded = await db.opLog.findFirstOrThrow({ where: { changesetId: branch.id } });
+      expect((recorded.ops as { op: string; id: string }[]).map((o) => `${o.op} ${o.id}`)).toEqual(['addElement R1']);
+
+      const accepted = await operator.post(path(`/changesets/${branch.id}/accept`));
+      expect(accepted.status, accepted.text).toBe(200);
+      expect(accepted.body).toMatchObject({ mode: 'replay' });
+      const doc = await docOf();
+      // R1 as it was at that version: going back to it was the choice, over main's rename since.
+      expect(doc.rooms['R1']?.name).toBe('Kitchen');
+      // Main's later edit to what going back did not touch is kept.
+      expect(doc.levels['L1']?.name).toBe('Ground');
+      const merged = await db.opLog.findFirstOrThrow({ where: { projectId: project.id, head: 'main', kind: 'merge', changesetId: branch.id } });
+      expect(merged.ops).toEqual([{ op: 'setProperty', id: 'R1', path: '/name', value: 'Kitchen' }]);
+    });
+
+    it('removes again what the version did not have, even when main has since removed it and added more', async () => {
+      const at = await seqOf();
+      const added = (await operator.post(path('/ops'), { batch: [{ op: 'addElement', collection: 'buildings', element: {} }] })).body as { created: string[] };
+      expect(added.created).toEqual(['B2']);
+      const branched = await operator.post(path('/branch'), { seq: at, name: 'Without B2' });
+      expect(branched.status, branched.text).toBe(201);
+      const id = (branched.body as { changeset: { id: string } }).changeset.id;
+      // Main: B2 undone, then another building added (B3).
+      expect((await operator.post(path('/undo'))).status).toBe(201);
+      expect((await operator.post(path('/ops'), { batch: [{ op: 'addElement', collection: 'buildings', element: {} }] })).status).toBe(201);
+      const accepted = await operator.post(path(`/changesets/${id}/accept`));
+      expect(accepted.status, accepted.text).toBe(200);
+      expect(Object.keys((await docOf()).buildings).sort()).toEqual(['B1', 'B3']);
+      // Main already was where going back takes it: nothing merged, nothing recorded.
+      expect(await db.opLog.count({ where: { projectId: project.id, head: 'main', kind: 'merge', changesetId: id } })).toBe(0);
+    });
+
+    it('still replays a changeset that is not a branch as it was sent', async () => {
+      const proposed = await propose('Rename', [{ op: 'setProperty', id: 'R1', path: '/name', value: 'Galley' }]);
+      expect((proposed.changeset as { branchedFrom?: number | null }).branchedFrom ?? null).toBeNull();
+      await operator.post(path('/ops'), { batch: [{ op: 'setProperty', id: 'L1', path: '/name', value: 'Ground' }] });
+      expect((await operator.post(path(`/changesets/${proposed.changeset.id}/accept`))).status).toBe(200);
+      const merged = await db.opLog.findFirstOrThrow({ where: { projectId: project.id, head: 'main', kind: 'merge' } });
+      expect(merged.ops).toEqual([{ op: 'setProperty', id: 'R1', path: '/name', value: 'Galley' }]);
+    });
+  });
+
   it('rejects by discarding the scratch head; main is untouched', async () => {
     const proposed = await propose('Rename', [{ op: 'setProperty', id: 'R1', path: '/name', value: 'Galley' }]);
     const rejected = await operator.post(path(`/changesets/${proposed.changeset.id}/reject`));

@@ -601,6 +601,8 @@ function Selection({ store, view, level, coarse }: { store: EditorStore; view: V
 /** The ghost layer: a batch's result, applied locally for preview, drawn over the plan. */
 function Ghost({ store, view, levelId, layers, units }: { store: EditorStore; view: Viewport; levelId: string; layers: Layers; units: UnitSystem }) {
   const preview = useEditor(store, (s) => s.preview);
+  // FLR-T-18.18: devices moved or turned change nothing this layer draws — the plan again would be drawn for nothing.
+  if (preview?.rigid !== undefined) return null;
   const level = preview?.model?.levels.find((l) => l.id === levelId);
   if (preview?.model === null || preview?.model === undefined || level === undefined) return null;
   return <Plan view={view} level={level} document={preview.model.document} layers={{ ...layers, rooms: false }} units={units} ghost />;
