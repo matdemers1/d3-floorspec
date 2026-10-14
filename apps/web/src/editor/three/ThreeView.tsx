@@ -189,6 +189,9 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // FLR-T-13.10: where the camera is, for saving a view, and going to a saved one.
   const rig = useMemo<CameraRig>(() => ({ current: () => (ctl.orbit === null || originRef.current === null ? null : { orbit: ctl.orbit, origin: originRef.current }), goTo: (o) => { ctl.setOrbit(o); } }), [ctl]);
   const size = useSize(host);
+  // The lens and frame changed (FLR-T-13.10): draw again, so the camera takes them up.
+  const shot = useThreeState(store, (s) => s.shot);
+  useEffect(() => { ctl.invalidate(); }, [shot, ctl]);
 
   const ready = state.status === 'ready' ? state : null;
   const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);

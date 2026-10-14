@@ -20,6 +20,9 @@
   padding: var(--space-4) var(--space-16) var(--space-16);
   scrollbar-width: thin;
 }
+.fs-camera__body > * {
+  flex-shrink: 0;
+}
 .fs-camera__foot {
   display: flex;
   align-items: center;
