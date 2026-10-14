@@ -671,7 +671,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       const layer = layerOfElement(fb.extension, fb.collection);
       const state = layer === null ? 'on' : st[layer];
       if (state === 'off') continue;
-      let drawn = '';
+      let drawn: string;
       const a = hi.has(fb.id);
       const image = symbolImage(fb, options.symbols, f);
       const outline = image === null ? fixtureSymbol(fb) : null;
