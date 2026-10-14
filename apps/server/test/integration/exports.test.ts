@@ -193,6 +193,18 @@ describe('drawing exports', () => {
     expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', mode: 'kitchen' })).status).toBe(400);
   });
 
+  it('draws a PDF in a plan style, and refuses a style for anything else (FLR-T-18.5)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    const pdf = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', levels: ['MAIN'], style: 'colour' }));
+    expect(pdf).toMatchObject({ style: 'colour' });
+    await drain.runOnce();
+    const drawn = view(await operator.get(`/api/projects/${id}/exports/${pdf.id}`));
+    expect(drawn.status, drawn.error ?? '').toBe('done');
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf', style: 'colour' })).status).toBe(400);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', style: 'sepia' })).status).toBe(400);
+  });
+
   it('queues glTF and USDZ of the 3D model, and serves a .glb and an aligned .usdz (FLR-T-9.2)', async () => {
     const operator = await setupOperator(running);
     const { id, hash } = await projectWithDocument(db, operator);

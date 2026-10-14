@@ -5,7 +5,7 @@ import type { DesignSet } from './api';
 import type { ModeChoice } from './ExportDialog';
 
 /** The editor top bar's Export (Figma 16 · Export): opens the Export dialog. */
-export function ExportButton(props: { projectId: string; projectName: string; versionLabel: string | null; levels: readonly { id: string; name: string }[]; optionSets?: readonly DesignSet[] | undefined; modes?: readonly ModeChoice[] | undefined }) {
+export function ExportButton(props: { projectId: string; projectName: string; versionLabel: string | null; levels: readonly { id: string; name: string }[]; optionSets?: readonly DesignSet[] | undefined; modes?: readonly ModeChoice[] | undefined; planStyle?: string | undefined }) {
   const [open, setOpen] = useState(false);
   return (
     <>

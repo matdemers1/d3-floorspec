@@ -1,0 +1,265 @@
+/*
+ * Plan styles on the canvas (FLR-T-18.5): every colour here is a custom property the canvas root
+ * sets from @floorspec/render2d's theme for the style and the page's theme (planStyle.ts), so the
+ * editor draws the plan the plan render and the PDF draw. Fills that vary per element — a floor's
+ * pattern, a wall's class or type, a piece of furniture's colour — are set on the element.
+ */
+
+.fs-canvas[data-plan-style] {
+  background: var(--fsx-paper);
+}
+.fs-canvas[data-plan-style] :is(.fs-grid__minor, .fs-grid__major) {
+  stroke: var(--fsx-grid);
+}
+/* A colour plan is a picture: the drafting grid steps back. */
+.fs-canvas:is([data-plan-style='colour'], [data-plan-style='presentation']) .fs-grid {
+  opacity: 0.45;
+}
+
+/* Floors, slabs and what is not a room. */
+.fs-canvas[data-plan-style] .fs-plan2__rooms {
+  fill: var(--fsx-room);
+}
+.fs-canvas[data-plan-style] .fs-plan2__face--free {
+  fill: var(--fsx-room);
+  fill-opacity: 0.45;
+}
+.fs-canvas[data-plan-style] .fs-plan2__slabs {
+  fill: var(--fsx-slab);
+  stroke: var(--fsx-hair);
+  stroke-width: 0.75;
+}
+.fs-canvas[data-plan-style] .fs-plan2__slab-hatch {
+  stroke: none;
+}
+
+/* Openings: a door's threshold, a window's glass and lines, leaves and swings in the style's ink. */
+.fs-canvas[data-plan-style] .fs-plan2__gap {
+  fill: var(--fsx-threshold);
+}
+.fs-canvas[data-plan-style] [data-opening]:not([data-operation]) .fs-plan2__gap {
+  fill: var(--fsx-glass);
+}
+.fs-canvas[data-plan-style] .fs-plan2__glass {
+  stroke: var(--fsx-window);
+}
+.fs-canvas[data-plan-style] .fs-plan2__leaf {
+  stroke: var(--fsx-door);
+  stroke-width: calc(var(--fsx-weight-door) * 1.2px);
+}
+.fs-canvas[data-plan-style] :is(.fs-plan2__swing, .fs-plan2__hidden) {
+  stroke: var(--fsx-swing);
+}
+.fs-canvas[data-plan-style] .fs-plan2__inwall {
+  stroke: var(--fsx-threshold);
+}
+.fs-canvas[data-plan-style] .fs-plan2__jamb {
+  stroke: var(--fsx-wall-edge);
+}
+.fs-canvas[data-plan-style] .fs-plan2__separators {
+  stroke: var(--fsx-faint);
+}
+
+/* Room names: on a pill in a colour plan, haloed in the paper in a technical one. */
+.fs-canvas[data-plan-style] .fs-plan2__labels--styled {
+  stroke: var(--fsx-halo);
+}
+/* On a pill the halo is the pill's own colour: invisible, and it keeps the name readable wherever it falls. */
+.fs-canvas[data-plan-style] .fs-plan2__labels--styled[data-pills='on'] text {
+  stroke: var(--fsx-pill);
+}
+.fs-plan2__pill {
+  fill: var(--fsx-pill);
+  fill-opacity: var(--fsx-pill-opacity);
+  stroke: var(--fsx-pill-stroke);
+  stroke-width: 0.75;
+}
+.fs-canvas[data-plan-style] .fs-plan2__labels--styled .fs-plan2__name {
+  fill: var(--fsx-text);
+  font-weight: var(--weight-semibold);
+}
+.fs-canvas[data-plan-style] .fs-plan2__labels--styled .fs-plan2__area {
+  fill: var(--fsx-muted);
+  font-size: var(--text-11);
+}
+.fs-canvas:is([data-plan-style='technical'], [data-plan-style='blueprint']) .fs-plan2__labels--styled .fs-plan2__name {
+  font-size: var(--text-11);
+  letter-spacing: 0.07em;
+}
+
+/* Stairs: treads drawn as boards over the floor. */
+.fs-canvas[data-plan-style] .fs-stair__step {
+  stroke: var(--fsx-muted);
+}
+.fs-canvas[data-plan-style] :is(.fs-stair__step:not(.fs-stair__step--above), .fs-stair__step--landing) {
+  fill: var(--fsx-tread);
+}
+
+/* Dimensions in the style's ink. */
+.fs-canvas[data-plan-style] :is(.fs-dim__line, .fs-dim__tick) {
+  stroke: var(--fsx-muted);
+}
+.fs-canvas[data-plan-style] :is(.fs-dim__text, .fs-dim__overall) {
+  fill: var(--fsx-muted);
+  stroke: var(--fsx-paper);
+}
+
+/* Furniture: in its colour (a colour plan), else on the paper in the style's ink. */
+.fs-canvas[data-plan-style] .fs-furn-item__fill {
+  fill: var(--fsx-furn-fill, var(--fsx-room));
+}
+.fs-canvas[data-plan-style] .fs-furn-item :is(.fs-fixture__outline, .fs-fixture__hidden) {
+  stroke: var(--fsx-furn-ink, var(--fsx-muted));
+  stroke-width: calc(var(--fsx-weight-furniture) * 1.4px);
+}
+.fs-canvas[data-plan-style] .fs-furn-item .fs-fixture__detail {
+  stroke: var(--fsx-furn-ink, var(--fsx-faint));
+  stroke-opacity: 0.7;
+}
+.fs-canvas[data-plan-style] .fs-furn-item__outline {
+  stroke: var(--fsx-furn-ink, var(--fsx-muted));
+}
+/* A symbol drawn black on white takes the item's colour: white multiplies to it, the lines stay dark. */
+.fs-canvas[data-plan-style] .fs-furn-item[style] .fs-furn__symbol {
+  filter: none;
+  mix-blend-mode: multiply;
+}
+
+/* Presentation's soft shadows under the walls and the furniture. */
+.fs-canvas[data-plan-style='presentation'] :is(.fs-plan2__walls, .fs-furn-layer) {
+  filter: var(--fsx-shadow);
+}
+/* Panning and zooming a large shadowed plan is smoother without them; they come back at rest. */
+.fs-canvas[data-plan-style='presentation'][data-zooming='on'] :is(.fs-plan2__walls, .fs-furn-layer) {
+  filter: none;
+}
+
+/* Construction mode's legend (FLR-T-18.3, 18.5): floating at the canvas's top left. */
+.fs-wall-legend {
+  position: absolute;
+  top: var(--space-12);
+  left: var(--space-12);
+  z-index: 2;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-size: var(--text-12);
+  pointer-events: none;
+}
+.fs-wall-legend__title {
+  margin: 0 0 var(--space-6);
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.fs-wall-legend ul {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-wall-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-wall-legend__swatch {
+  flex: none;
+  width: 18px;
+  height: 6px;
+  border-radius: 1px;
+  box-shadow: inset 0 0 0 0.5px var(--color-border);
+}
+
+/* The top bar's style dropdown. */
+.fs-style-menu__trigger {
+  flex: none;
+}
+/* A crowded top bar keeps the style's icon and its menu; the button's name still says the style. */
+@media (max-width: 1599px) {
+  .fs-style-menu__label {
+    display: none;
+  }
+}
+.fs-style-menu__chevron {
+  width: 14px;
+  height: 14px;
+  margin-left: var(--space-2);
+}
+.fs-style-menu__row {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.fs-style-menu__summary {
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+}
+.fs-style-menu__blank {
+  display: inline-block;
+  width: 16px;
+}
+
+/* The inspector's Plan style section. */
+.fs-plan-style {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  scroll-margin-top: var(--space-16);
+}
+.fs-plan-style__choices {
+  display: grid;
+  gap: var(--space-6);
+}
+.fs-plan-style__choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  color: var(--color-fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fs-plan-style__choice[aria-checked='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-muted);
+}
+.fs-plan-style__choice:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-plan-style__label {
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+.fs-plan-style__summary {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-plan-style__check {
+  position: absolute;
+  top: 50%;
+  right: var(--space-12);
+  width: 16px;
+  height: 16px;
+  color: var(--color-accent);
+  transform: translateY(-50%);
+}
+.fs-plan-style__head {
+  margin: var(--space-8) 0 0;
+}
+.fs-plan-style__still {
+  align-self: flex-start;
+  margin-top: var(--space-4);
+}

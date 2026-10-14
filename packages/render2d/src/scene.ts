@@ -28,6 +28,7 @@ const toPt = (p: readonly [bigint, bigint]): Pt => [Number(p[0]), Number(p[1])];
 import { columnRadius, newelOutline } from './symbols.js';
 import type { BoxFrame } from './plansymbols.js';
 import { landscapeOf, type SceneLandscape } from './landscape.js';
+import { finishSource, wallClassOf, type FinishSource, type WallClass } from './styles.js';
 
 export type Pt = readonly [number, number];
 
@@ -47,6 +48,12 @@ export interface SceneWall {
   /** Face offsets (Core 5.4), in base units: left (exterior) and right. */
   readonly a: number;
   readonly b: number;
+  /** Its wall type (Core 8.2), when it has one. */
+  readonly type?: string;
+  /** Outside or inside (FLR-T-18.5): by its type, else by whether a room is on both of its sides. */
+  readonly cls: WallClass;
+  /** Its junctions: which junction fills it shares. */
+  readonly ends: readonly [string, string];
 }
 
 export interface SceneSeparator {
@@ -85,6 +92,8 @@ export interface SceneRoom {
    * a vault's ridge points as the document declares them.
    */
   readonly ceiling: { readonly kind: 'flat' | 'tray' | 'vaulted'; readonly tray?: readonly (readonly Pt[])[]; readonly ridge?: readonly [Pt, Pt] } | undefined;
+  /** Its floor finish's material (Core 0.3, 18.6), when one resolves: what a colour plan draws it in. */
+  readonly floor?: FinishSource;
 }
 
 /** A slab (Core 6.7) as the engine derives its outline (Core 0.3, 15.7). */
@@ -93,6 +102,8 @@ export interface SceneSlab {
   /** Counter-clockwise from its least vertex. */
   readonly outline: readonly Pt[];
   readonly purpose: string | undefined;
+  /** Its material (Core 6.7), when it names one: a patio's pavers, a drive's concrete. */
+  readonly material?: FinishSource;
 }
 
 export interface SceneFace {
@@ -110,6 +121,8 @@ export interface SceneFallback {
   readonly footprint: readonly Pt[];
   /** What the element is, when its extension says: FS_furniture's `category`, FS_plumbing's `fixture`. */
   readonly category?: string;
+  /** Its catalogue entry, when it names one: a rug, a plant in a planter (FLR-T-18.5's colours). */
+  readonly catalogue?: string;
   /**
    * Its box in plan, corner by corner (FLR-T-12.24): the footprint's vertex at the frame's (min x, min y)
    * and the box's sides from it — which way its front faces, for its symbol or outline.
@@ -153,6 +166,17 @@ export interface Scene {
   readonly stairs: ReadonlyMap<string, SceneStair>;
   /** Stairs rising to this level from another, by ID: what is seen of them through the floor's well. */
   readonly stairsBelow: ReadonlyMap<string, SceneStair>;
+  /** The wall types this level's walls are, by ID (Core 8.2): name, class and definition — Construction's legend. */
+  readonly wallTypes: ReadonlyMap<string, SceneWallType>;
+  /** The document's materials (Core 8.5), as declared: what a wall type's colour comes from. */
+  readonly materials: Readonly<Record<string, unknown>>;
+}
+
+export interface SceneWallType {
+  readonly id: string;
+  readonly name: string;
+  readonly cls: WallClass;
+  readonly definition: unknown;
 }
 
 export interface SceneStair {
@@ -237,12 +261,21 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
   if (lid === undefined || !lvl || !Object.hasOwn(doc.levels ?? {}, lid)) throw new RangeError(`the document has no level ${level ?? ''}`.trim());
 
   const walls = new Map<string, SceneWall>();
+  const wallTypes = new Map<string, SceneWallType>();
+  const faced = derived.finishes?.walls;
   for (const [id, w] of entries(doc.walls)) {
     if (w.level !== lid) continue;
     const d = derived.walls[id]!;
     const o = analysis.offsets.get(id)!;
     const start = doc.junctions![w.start]!.position;
     const end = doc.junctions![w.end]!.position;
+    const typeId = typeof w.type === 'string' ? w.type : undefined;
+    const typeDef = typeId === undefined ? undefined : doc.types?.[typeId];
+    const sides = faced?.[id];
+    const oneRoom = (sides?.left?.room !== undefined) !== (sides?.right?.room !== undefined);
+    const cls: WallClass = wallClassOf(typeDef) ?? (oneRoom ? 'exterior' : 'interior');
+    if (typeId !== undefined && typeDef !== undefined && !wallTypes.has(typeId))
+      wallTypes.set(typeId, { id: typeId, name: typeof (typeDef as { name?: unknown }).name === 'string' ? (typeDef as { name: string }).name : typeId, cls, definition: typeDef });
     walls.set(id, {
       id,
       outline: dedupeCyclic([d.startRight, ...(d.right ?? []), d.endRight, d.endLeft, ...[...(d.left ?? [])].reverse(), d.startLeft]),
@@ -252,8 +285,13 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
       ...(w.arc === undefined ? {} : { sagitta: w.arc.sagitta }),
       a: Number(o.a2) / 2,
       b: Number(o.b2) / 2,
+      ...(typeId === undefined ? {} : { type: typeId }),
+      cls,
+      ends: [w.start, w.end],
     });
   }
+  const materials = (doc.materials ?? {}) as Readonly<Record<string, unknown>>;
+  const finishOf = (mid: unknown): FinishSource | undefined => (typeof mid === 'string' && Object.hasOwn(materials, mid) ? finishSource(mid, materials[mid]) : undefined);
 
   const fills = new Map<string, readonly Pt[]>();
   for (const [id, ring] of Object.entries(derived.junctionFills)) if (doc.junctions![id]!.level === lid) fills.set(id, ring);
@@ -284,6 +322,7 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     const p = derived.rooms[id]!;
     const c = derived.ceilings?.[id];
     const ridge = c?.kind === 'vaulted' && r.ceiling?.kind === 'vaulted' ? (r.ceiling.ridge as unknown as readonly [Pt, Pt]) : undefined;
+    const floor = finishOf(derived.finishes?.rooms[id]?.floor ?? (r as { floorFinish?: unknown }).floorFinish);
     rooms.set(id, {
       id,
       name: r.name,
@@ -292,6 +331,7 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
       holes: p.holes,
       area: p.area,
       ceiling: c === undefined ? undefined : { kind: c.kind, ...(c.tray === undefined ? {} : { tray: [c.tray.outer, ...c.tray.holes] }), ...(ridge === undefined ? {} : { ridge }) },
+      ...(floor === undefined ? {} : { floor }),
     });
   }
 
@@ -306,12 +346,14 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     const category = element === undefined ? undefined : categoryOf(element);
     const symbol = element === undefined ? undefined : symbolOf(doc, element);
     const landscape = element === undefined || fb.extension !== 'FS_landscape' ? undefined : landscapeOf(fb.collection, element, derived.placements?.[id]);
+    const catalogue = element !== undefined && typeof element['catalogue'] === 'string' ? element['catalogue'] : undefined;
     fallbacks.set(id, {
       id,
       extension: fb.extension,
       collection: fb.collection,
       footprint: fb.footprint,
       ...(category === undefined ? {} : { category }),
+      ...(catalogue === undefined ? {} : { catalogue }),
       ...(frame === undefined ? {} : { frame }),
       ...(symbol === undefined ? {} : { symbol }),
       ...(landscape === undefined ? {} : { landscape }),
@@ -324,7 +366,8 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
   const slabs = new Map<string, SceneSlab>();
   for (const [id, sl] of entries(doc.slabs)) {
     const d = derived.slabs?.[id];
-    if (sl.level === lid && d !== undefined) slabs.set(id, { id, outline: d.outline, purpose: sl.purpose });
+    const material = finishOf((sl as { material?: unknown }).material);
+    if (sl.level === lid && d !== undefined) slabs.set(id, { id, outline: d.outline, purpose: sl.purpose, ...(material === undefined ? {} : { material }) });
   }
 
   const roofs = new Map<string, DerivedRoof>();
@@ -359,6 +402,8 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     roofs: byId(roofs),
     stairs: byId(stairs),
     stairsBelow: byId(stairsBelow),
+    wallTypes: byId(wallTypes),
+    materials,
   };
 }
 

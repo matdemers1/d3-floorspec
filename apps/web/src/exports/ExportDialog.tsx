@@ -62,7 +62,18 @@ export interface ExportDialogProps {
    * modes; the one marked current is chosen first. None: the drawing of every layer, as before modes.
    */
   readonly modes?: readonly ModeChoice[] | undefined;
+  /** FLR-T-18.5: the plan style a PDF is drawn in first — the editor's export style; none for the construction drawing. */
+  readonly planStyle?: string | undefined;
 }
+
+/** The PDF's plan styles (FLR-T-18.5): the construction drawing, or one of render2d's four. */
+const PDF_STYLES = [
+  { value: 'none', label: 'Construction drawing' },
+  { value: 'colour', label: 'Colour' },
+  { value: 'presentation', label: 'Presentation' },
+  { value: 'technical', label: 'Technical' },
+  { value: 'blueprint', label: 'Blueprint' },
+];
 
 /** One drawing the dialog offers: what it is called, and what the request says. */
 export interface ModeChoice {
@@ -78,7 +89,7 @@ const currentOf = (modes: readonly ModeChoice[]): string => modes.find((m) => m.
 const NO_SETS: readonly DesignSet[] = [];
 const primaryOf = (sets: readonly DesignSet[]): Record<string, string> => Object.fromEntries(sets.map((s) => [s.id, s.primary]));
 
-export function ExportDialog({ open, onOpenChange, projectId, projectName, versionLabel, levels, initial = 'pdf', optionSets = NO_SETS, modes = NO_MODES }: ExportDialogProps) {
+export function ExportDialog({ open, onOpenChange, projectId, projectName, versionLabel, levels, initial = 'pdf', optionSets = NO_SETS, modes = NO_MODES, planStyle }: ExportDialogProps) {
   const toast = useToast();
   const [choice, setChoice] = useState<Choice>(initial);
   const [page, setPage] = useState<PageName>('tabloid');
@@ -86,6 +97,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
   const [level, setLevel] = useState<string>('all');
   const [design, setDesign] = useState<Record<string, string>>(() => primaryOf(optionSets));
   const [drawing, setDrawing] = useState<string>(() => currentOf(modes));
+  const [style, setStyle] = useState<string>(planStyle ?? 'none');
   const [job, setJob] = useState<ExportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -101,6 +113,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
       setChoice(initial);
       setDesign(primaryOf(optionSets));
       setDrawing(currentOf(modes));
+      setStyle(planStyle ?? 'none');
     }
     // The drawing chosen when it opens is the mode then; the choices moving while it is open keep the pick.
   }, [open, initial, optionSets]);
@@ -136,6 +149,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
         ...(chosenLevels === null || choice === 'ifc' ? {} : { levels: chosenLevels }),
         ...(choice === 'pdf' ? { page } : {}),
         ...(designed ? { design: chosenDesign } : {}),
+        ...(choice === 'pdf' && style !== 'none' ? { style } : {}),
         ...(moded ? { ...(drawingRequest.mode === undefined ? {} : { mode: drawingRequest.mode }), ...(drawingRequest.layers === undefined ? {} : { layers: { ...drawingRequest.layers } }) } : {}),
       });
       setJob(queued);
@@ -260,6 +274,12 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
             <label className="fs-export-dialog__option">
               <span>Drawing</span>
               <Select aria-label="Drawing" size="sm" value={drawing} disabled={busy} onValueChange={setDrawing} options={modes.map((m) => ({ value: m.value, label: m.label }))} />
+            </label>
+          ) : null}
+          {choice === 'pdf' ? (
+            <label className="fs-export-dialog__option">
+              <span>Style</span>
+              <Select aria-label="Plan style" size="sm" value={style} disabled={busy} onValueChange={setStyle} options={PDF_STYLES} />
             </label>
           ) : null}
           {choice === 'pdf' ? (

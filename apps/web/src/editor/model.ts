@@ -171,6 +171,8 @@ export interface FaceView {
   room: string | null;
   /** The base colour of the room's floor finish (Core 0.3, 18.6), when it has one with a colour: the plan's tint. */
   tint?: string;
+  /** Its floor finish's material ID, when one resolves: what a plan style draws it in (FLR-T-18.5). */
+  floor?: string;
   outer: Ring;
   holes: Ring[];
   area2: bigint;
@@ -513,7 +515,7 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
     view.rooms.push({ id, name: typeof r['name'] === 'string' ? r['name'] : id, anchor: r['anchor'] as Point, outer: d.outer, holes: d.holes, area2, ceiling, floorTop: derived.floors?.[id]?.top ?? null });
     const floor = derived.finishes?.rooms[id]?.floor;
     const tint = floor === undefined ? undefined : document.materials?.[floor]?.color;
-    view.faces.push({ room: id, outer: d.outer, holes: d.holes, area2, ...(tint === undefined ? {} : { tint }) });
+    view.faces.push({ room: id, outer: d.outer, holes: d.holes, area2, ...(tint === undefined ? {} : { tint }), ...(floor === undefined ? {} : { floor }) });
   }
   for (const device of deviceViews(document, derived)) views.get(device.level)?.devices.push(device);
   for (const [id, s] of entriesOf(document.slabs)) {

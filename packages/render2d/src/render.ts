@@ -16,6 +16,27 @@ import { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type SymbolPart
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
 import { landscapeLayers, type SceneLandscape } from './landscape.js';
 import { ALL_ON, layerOfElement, layerStates, type LayerState, type ModeId, type PlanLayer } from './modes.js';
+import {
+  ALL_DETAILS,
+  CONSTRUCTION_DOOR,
+  floorFinishOf,
+  floorPatternSvg,
+  furnitureTone,
+  gridPatternSvg,
+  hatchPatternSvg,
+  inkOn,
+  isPlant,
+  isRug,
+  materialTone,
+  mix,
+  patternId,
+  planTheme,
+  shadowFilterSvg,
+  wallTypeColour,
+  type PlanStyle,
+  type PlanTheme,
+  type StyleDetails,
+} from './styles.js';
 
 export interface RenderOptions {
   /** The level to draw. Default: the lowest by elevation, then by ID. */
@@ -65,6 +86,14 @@ export interface RenderOptions {
   readonly mode?: ModeId;
   /** Layer states over the mode's (or over every layer on, without one): a person's own preset. */
   readonly layers?: Readonly<Partial<Record<PlanLayer, LayerState>>>;
+  /**
+   * A plan style (FLR-T-18.5): Colour, Presentation, Technical or Blueprint, in `theme` — the same
+   * theme the editor draws its canvas from. Default: none, the plan as it was drawn before styles.
+   * In Construction mode a style draws the walls by type, with a legend.
+   */
+  readonly style?: PlanStyle;
+  /** A style's details turned off: its shadows, floor patterns, furniture colours, pills or landscape. */
+  readonly details?: Readonly<Partial<StyleDetails>>;
 }
 
 /** How faint a ghosted layer is drawn: grey, at this opacity (FLR-T-18.3). */
@@ -261,6 +290,10 @@ interface SymbolStyle {
   readonly inWall: string;
   readonly dash?: string;
   readonly opacity?: number;
+  /** A style's swing, when it is not the leaf's ink (FLR-T-18.5). */
+  readonly swing?: string;
+  /** A style's line weights, as a multiple of the screen plan's. */
+  readonly scale?: number;
 }
 
 /** How each kind of symbol line is drawn on the screen plan. */
@@ -274,10 +307,11 @@ const STROKES: Readonly<Record<SymbolStroke, { readonly width: number; readonly 
 };
 
 /** Symbol parts as SVG paths, one element each, in the order given. */
-function partsSvg(parts: readonly SymbolPart[], f: Frame, ink: (s: SymbolStroke) => string, st: { readonly dash?: string; readonly opacity?: number } = {}): string {
+function partsSvg(parts: readonly SymbolPart[], f: Frame, ink: (s: SymbolStroke) => string, st: { readonly dash?: string; readonly opacity?: number; readonly scale?: number } = {}): string {
   let out = '';
   for (const part of parts) {
-    const look = STROKES[part.stroke];
+    const base = STROKES[part.stroke];
+    const look = st.scale === undefined ? base : { ...base, width: base.width * st.scale };
     const common = { fill: 'none', 'stroke-dasharray': st.dash, opacity: st.opacity };
     if (part.kind === 'arc') {
       const [hx, hy] = f.P(part.centre);
@@ -312,14 +346,14 @@ function partsSvg(parts: readonly SymbolPart[], f: Frame, ink: (s: SymbolStroke)
 function openingSymbol(o: SceneOpening, w: SceneWall, f: Frame, st: SymbolStyle): string {
   const { n, len } = axes(o.start, o.end);
   if (len === 0) return '';
-  if (o.kind === 'door') return partsSvg(doorSymbol(o, w).parts, f, (k) => (k === 'inWall' ? st.inWall : st.stroke), st);
+  if (o.kind === 'door') return partsSvg(doorSymbol(o, w).parts, f, (k) => (k === 'inWall' ? st.inWall : k === 'swing' ? (st.swing ?? st.stroke) : st.stroke), st);
   if (o.kind === 'window') {
     const common = { fill: 'none', 'stroke-dasharray': st.dash, opacity: st.opacity };
     const T = w.a + w.b;
     const mid = (w.a - w.b) / 2;
     const g = T / 7;
     const lines = [w.a, -w.b, mid + g, mid - g].map((k) => linePath(f.P(add(o.start, n, k)), f.P(add(o.end, n, k)))).join('');
-    return el('path', { d: lines, stroke: st.window, 'stroke-width': 1, ...common });
+    return el('path', { d: lines, stroke: st.window, 'stroke-width': st.scale === undefined ? 1 : Math.max(0.5, st.scale * 0.8), ...common });
   }
   return '';
 }
@@ -352,12 +386,22 @@ interface LabelLine {
 /** An estimate of a line's width in pixels — enough to decide whether a label fits. */
 const lineWidth = (l: LabelLine): number => l.text.length * l.size * (l.mono ? 0.6 : 0.56) + (l.spacing ?? 0) * l.text.length;
 
-function labelBlock(lines: readonly LabelLine[], x: number, y: number, rotate: boolean, attrs: Record<string, string> = {}): string {
-  const gap = 3;
+/** How a style sets a room's label (FLR-T-18.5): on a pill, or haloed in the paper over a gridded floor. */
+interface LabelDeco {
+  readonly pill?: { readonly fill: string; readonly opacity: number; readonly stroke: string };
+  readonly halo?: string;
+}
+
+function labelBlock(lines: readonly LabelLine[], x: number, y: number, rotate: boolean, attrs: Record<string, string> = {}, deco: LabelDeco = {}): string {
+  const gap = deco.pill === undefined ? 3 : 1;
   const heights = lines.map((l) => l.size * 1.15);
   const total = heights.reduce((s, h) => s + h, 0) + gap * (lines.length - 1);
   let cursor = -total / 2;
   let body = '';
+  if (deco.pill !== undefined) {
+    const w = Math.max(...lines.map(lineWidth)) + 14;
+    body += el('rect', { 'data-pill': '', x: -w / 2, y: -total / 2 - 4, width: w, height: total + 8, rx: 5, fill: deco.pill.fill, 'fill-opacity': deco.pill.opacity, stroke: deco.pill.stroke, 'stroke-width': 0.75 });
+  }
   lines.forEach((l, i) => {
     const h = heights[i]!;
     cursor += h;
@@ -374,6 +418,7 @@ function labelBlock(lines: readonly LabelLine[], x: number, y: number, rotate: b
         'font-weight': l.weight,
         'letter-spacing': l.spacing,
         fill: l.color,
+        ...(deco.halo === undefined ? {} : { stroke: deco.halo, 'stroke-width': 3, 'stroke-linejoin': 'round', 'paint-order': 'stroke' }),
       },
       esc(l.text),
     );
@@ -403,14 +448,20 @@ export function renderPlan(document: string | Uint8Array | object, options: Rend
  */
 export function renderEvaluation(evaluation: Evaluation, options: EvaluationRenderOptions = {}): string {
   const scene = sceneOf(evaluation, options.level);
-  const pal = PALETTES[options.theme ?? 'light'];
+  // FLR-T-18.5: a style's theme is a palette too, so everything drawn from the palette follows it.
+  const sty: PlanTheme | null = options.style === undefined ? null : planTheme(options.style, options.theme ?? 'light');
+  const details: StyleDetails = { ...ALL_DETAILS, ...options.details };
+  const pal: Palette = sty === null ? PALETTES[options.theme ?? 'light'] : details.landscape ? sty : { ...sty, ...LINE_LANDSCAPE(sty) };
   const scale = options.scale ?? DEFAULT_SCALE;
   if (!(scale > 0) || !Number.isFinite(scale)) throw new RangeError('scale must be a positive number of pixels per foot');
   // FLR-T-18.3: the mode's layer states; without a mode or layers, every layer is drawn as it always was.
   const moded = options.mode !== undefined || options.layers !== undefined;
   const st = moded ? layerStates(options.mode, options.layers) : ALL_ON;
-  const showDims = (options.dimensions ?? true) && st.dimensions !== 'off';
+  // A colour plan is a picture: its overall dimensions are asked for; a technical one draws them.
+  const showDims = (options.dimensions ?? (sty === null || sty.linework)) && st.dimensions !== 'off';
   const showLabels = (options.labels ?? true) && st.rooms !== 'off';
+  // Construction mode draws the walls by type, each type in its colour, with a legend (FLR-T-18.3, 18.5).
+  const byType = sty !== null && options.mode === 'construction' && st.walls === 'on' && scene.wallTypes.size > 0;
 
   let before: Scene | undefined;
   let diff: SceneDiff | undefined;
@@ -461,8 +512,9 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
 
   const s = scale / BU_PER_FOOT;
   // The margin dimensions take is kept when a mode hides them, so every trade's plan has one frame.
-  const dimsRoom = options.dimensions ?? true;
-  const margin = { top: dimsRoom ? 64 : 32, left: dimsRoom ? 64 : 32, right: 32, bottom: 64 };
+  const dimsRoom = options.dimensions ?? (sty === null || sty.linework);
+  const legendRows = byType ? scene.wallTypes.size + 1 : 0;
+  const margin = { top: dimsRoom ? 64 : 32, left: dimsRoom ? 64 : 32, right: 32, bottom: 64 + (legendRows === 0 ? 0 : 18 * legendRows + 12) };
   const W = Math.ceil((ext.maxX - ext.minX) * s + margin.left + margin.right);
   const H = Math.ceil((ext.maxY - ext.minY) * s + margin.top + margin.bottom);
   const X = (x: number): number => margin.left + (x - ext.minX) * s;
@@ -474,6 +526,24 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   const parts: string[] = [];
   parts.push(el('title', {}, esc(title)));
   parts.push(el('rect', { width: W, height: H, fill: pal.paper }));
+  // ── a style's ground: Blueprint's 2 ft grid; a colour plan's lawn behind the house when the site has none of its own ──
+  if (sty !== null) {
+    const styleDefs: string[] = [];
+    if (sty.grid !== null) {
+      const g = sty.grid.every * s;
+      styleDefs.push(el('pattern', { id: 'fs-grid', patternUnits: 'userSpaceOnUse', width: g, height: g, patternTransform: `translate(${num(X(0))} ${num(Y(0))})` }, el('path', { d: `M0 0H${num(g)}M0 0V${num(g)}`, stroke: sty.grid.color, 'stroke-opacity': sty.grid.opacity, 'stroke-width': 0.75, fill: 'none' })));
+    }
+    if (sty.wallHatch !== null) styleDefs.push(hatchPatternSvg('fs-wall-hatch', 4, sty.wallHatch, sty.weights.hatch));
+    if (sty.shadow !== null && details.shadows) styleDefs.push(shadowFilterSvg('fs-shadow', sty));
+    if (sty.linework) styleDefs.push(hatchPatternSvg('fs-slab-hatch', 10, sty.hairline, sty.weights.hatch));
+    if (styleDefs.length) parts.push(el('defs', {}, styleDefs.join('')));
+    if (sty.grid !== null) parts.push(el('rect', { 'data-grid': '2ft', width: W, height: H, fill: 'url(#fs-grid)' }));
+    const lawned = [...scene.fallbacks.values()].some((fb) => fb.landscape?.kind === 'lawn');
+    if (sty.site !== null && details.landscape && !lawned && st.landscape !== 'off' && all !== undefined) {
+      const pad = 3 * BU_PER_FOOT;
+      parts.push(el('rect', { 'data-site': 'lawn', x: X(all.minX - pad), y: Y(all.maxY + pad), width: (all.maxX - all.minX + 2 * pad) * s, height: (all.maxY - all.minY + 2 * pad) * s, rx: 10, fill: sty.site }));
+    }
+  }
   // A layer's group as its state says: drawn, drawn as a grey ghost, or left out (FLR-T-18.3).
   const ghostly = PLAN_GHOSTS.some((l) => st[l] === 'ghost');
   if (ghostly) parts.push(el('defs', {}, GHOST_FILTER));
@@ -499,6 +569,45 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     ),
   );
 
+  // ── a colour plan's floors (FLR-T-18.5): each finish its colour and its pattern at true scale; Technical's wet rooms gridded ──
+  const floorFills = new Map<string, string>();
+  if (sty !== null) {
+    const frame = { k: s, origin: [X(0), Y(0)] as const };
+    let pats = '';
+    const fillOf = (src: SceneRoom['floor']): string => {
+      if (src === undefined) return sty.floorPlain;
+      const key = src.id;
+      const known = floorFills.get(key);
+      if (known !== undefined) return known;
+      const finish = floorFinishOf(src);
+      const tone = materialTone(finish.color, sty);
+      const id = patternId('fs-floor', key);
+      const def = details.patterns ? floorPatternSvg(id, finish, tone, frame, sty) : '';
+      pats += def;
+      const fill = def === '' ? tone : `url(#${id})`;
+      floorFills.set(key, fill);
+      return fill;
+    };
+    if (sty.colour) {
+      for (const r of scene.rooms.values()) fillOf(r.floor);
+      for (const sl of scene.slabs.values()) fillOf(sl.material);
+    } else {
+      for (const r of scene.rooms.values()) {
+        if (!WET.has(r.function)) continue;
+        const finish = r.floor === undefined ? undefined : floorFinishOf(r.floor);
+        const p = finish?.pattern;
+        const size: readonly [number, number] = p?.kind === 'tile' ? [p.w, p.h] : p?.kind === 'terrazzo' ? [p.tile, p.tile] : [BU_PER_FOOT, BU_PER_FOOT];
+        const id = patternId('fs-grid-room', r.id);
+        const def = gridPatternSvg(id, size, frame, sty, finish?.rotation ?? 0);
+        if (def !== '') {
+          pats += def;
+          floorFills.set(`grid:${r.id}`, `url(#${id})`);
+        }
+      }
+    }
+    if (pats !== '') parts.push(el('defs', {}, pats));
+  }
+
   // ── FS_landscape (FLR-T-13.5): lawns under the paving, beds and hardscape over it, plants on top ──
   const landscape = landscapeLayers(
     [...scene.fallbacks.values()].flatMap((fb): [string, SceneLandscape][] => (fb.landscape === undefined ? [] : [[fb.id, fb.landscape]])),
@@ -514,6 +623,13 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     for (const sl of scene.slabs.values()) {
       const d = ringsPath([P(sl.outline)]);
       const a = hi.has(sl.id);
+      if (sty !== null) {
+        // A colour plan's patio in its pavers, a drive in its concrete; a technical one's hatched.
+        const fill = a ? pal.accent : sty.colour ? (sl.material === undefined ? pal.paving : (floorFills.get(sl.material.id) ?? pal.paving)) : sty.paper;
+        slabs += el('path', { 'data-id': sl.id, ...(sl.purpose === undefined ? {} : { 'data-purpose': sl.purpose }), d, fill, 'fill-opacity': a ? 0.35 : undefined, stroke: sty.colour ? (sty.theme === 'dark' ? '#3a3c40' : '#b9b4aa') : sty.hairline, 'stroke-width': sty.colour ? 0.75 : sty.weights.hatch });
+        if (sty.linework) slabs += el('path', { d, fill: 'url(#fs-slab-hatch)' });
+        continue;
+      }
       slabs +=
         el('path', { 'data-id': sl.id, ...(sl.purpose === undefined ? {} : { 'data-purpose': sl.purpose }), d, fill: a ? pal.accent : pal.unanchored, 'fill-opacity': a ? 0.35 : 1, stroke: pal.faint, 'stroke-width': 1 }) +
         el('path', { d, fill: 'url(#fs-hatch)' });
@@ -524,14 +640,17 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   // ── floors ──
   let floors = '';
   for (const r of scene.rooms.values()) {
-    floors += el('path', { 'data-id': r.id, d: ringsPath([P(r.outer), ...r.holes.map(P)]), fill: pal.room, 'fill-rule': 'evenodd' });
+    const fill = sty === null ? pal.room : sty.colour ? (r.floor === undefined ? sty.floorPlain : (floorFills.get(r.floor.id) ?? sty.floorPlain)) : sty.paper;
+    floors += el('path', { 'data-id': r.id, ...(sty !== null && r.floor !== undefined ? { 'data-floor': r.floor.id } : {}), d: ringsPath([P(r.outer), ...r.holes.map(P)]), fill, 'fill-rule': 'evenodd' });
+    const grid = floorFills.get(`grid:${r.id}`);
+    if (grid !== undefined) floors += el('path', { 'data-grid': r.id, d: ringsPath([P(r.outer), ...r.holes.map(P)]), fill: grid, 'fill-rule': 'evenodd' });
     // Added and highlighted rooms are tinted; a room that only moved shows its old outline instead.
     if (hi.has(r.id) || diff?.rooms.changes.get(r.id) === 'added')
       floors += el('path', { d: ringsPath([P(r.outer), ...r.holes.map(P)]), fill: pal.accent, 'fill-opacity': 0.16, 'fill-rule': 'evenodd' });
   }
   // The floor runs through every opening: a door or window is cut through the wall to the floor.
   for (const o of scene.openings.values())
-    floors += el('path', { d: ringsPath([P(openingQuad(o, scene.walls.get(o.wall)!, 0))]), fill: pal.room });
+    floors += el('path', { d: ringsPath([P(openingQuad(o, scene.walls.get(o.wall)!, 0))]), fill: sty === null ? pal.room : o.kind === 'window' ? sty.glass : sty.threshold });
   for (const u of scene.unanchored) {
     const d = ringsPath([P(u.outer), ...u.holes.map(P)]);
     floors += el('path', { d, fill: pal.unanchored, 'fill-rule': 'evenodd' }) + el('path', { d, fill: 'url(#fs-hatch)', 'fill-rule': 'evenodd' });
@@ -565,7 +684,7 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
         g += el('path', {
           'data-step': step.landing ? 'landing' : step.winder ? 'winder' : 'tread',
           d: ringsPath([P(step.outline)]),
-          fill: step.landing ? pal.unanchored : step.winder ? pal.winder : 'none',
+          fill: step.landing ? (sty === null ? pal.unanchored : sty.tread) : step.winder ? pal.winder : sty === null ? 'none' : sty.tread,
           'fill-opacity': step.winder && !step.landing ? WINDER_TINT : undefined,
           stroke: ink,
           'stroke-width': 1,
@@ -634,18 +753,25 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     ...[...scene.walls.values()].map((w) => ({ id: w.id, ring: w.outline, acc: accented(w.id, diff?.walls) })),
     ...[...scene.fills].map(([id, ring]) => ({ id, ring, acc: accented(id, diff?.fills) })),
   ];
-  const outlineLayer = el(
-    'path',
-    { d: ringsPath(bodies.map((b) => P(b.ring))), fill: pal.poche, stroke: pal.poche, 'stroke-width': 2 * OUTLINE, 'stroke-linejoin': 'round' },
-  );
-  const plain = bodies.filter((b) => !b.acc);
-  const acc = bodies.filter((b) => b.acc);
-  let fillLayer = el('path', { d: ringsPath(plain.map((b) => P(b.ring))), fill: pal.poche, stroke: pal.poche, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
-  for (const b of acc)
-    fillLayer += el('path', { 'data-id': b.id, d: ringsPath([P(b.ring)]), fill: pal.accent, stroke: pal.accent, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
-  put('walls', el('g', { id: 'walls', mask: 'url(#fs-cuts)' }, outlineLayer + fillLayer));
+  if (sty !== null) put('walls', styledWalls(scene, bodies, sty, byType, P, details.shadows));
+  else {
+    const outlineLayer = el(
+      'path',
+      { d: ringsPath(bodies.map((b) => P(b.ring))), fill: pal.poche, stroke: pal.poche, 'stroke-width': 2 * OUTLINE, 'stroke-linejoin': 'round' },
+    );
+    const plain = bodies.filter((b) => !b.acc);
+    const acc = bodies.filter((b) => b.acc);
+    let fillLayer = el('path', { d: ringsPath(plain.map((b) => P(b.ring))), fill: pal.poche, stroke: pal.poche, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
+    for (const b of acc)
+      fillLayer += el('path', { 'data-id': b.id, d: ringsPath([P(b.ring)]), fill: pal.accent, stroke: pal.accent, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
+    put('walls', el('g', { id: 'walls', mask: 'url(#fs-cuts)' }, outlineLayer + fillLayer));
+  }
 
   // ── openings ──
+  // A style's doors: its door ink and swing — Construction's amber in Construction mode — at its door weight.
+  const amber = sty === null ? undefined : CONSTRUCTION_DOOR[sty.theme];
+  const doorLook: SymbolStyle | undefined =
+    sty === null ? undefined : { stroke: byType ? amber! : sty.door, swing: byType ? amber! : sty.swing, window: sty.window, inWall: sty.threshold, scale: sty.weights.door / 1.5 };
   let ops = '';
   for (const o of scene.openings.values()) {
     const w = scene.walls.get(o.wall)!;
@@ -653,8 +779,8 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     ops += el(
       'g',
       { 'data-id': o.id },
-      jambs(o, w, f, accented(o.wall, diff?.walls) ? pal.accent : pal.poche) +
-        openingSymbol(o, w, f, a ? { stroke: pal.accent, window: pal.accent, inWall: pal.accent } : { stroke: pal.faint, window: pal.window, inWall: pal.room }),
+      jambs(o, w, f, accented(o.wall, diff?.walls) ? pal.accent : sty === null ? pal.poche : sty.wallEdge) +
+        openingSymbol(o, w, f, a ? { stroke: pal.accent, window: pal.accent, inWall: pal.accent } : (doorLook ?? { stroke: pal.faint, window: pal.window, inWall: pal.room })),
     );
   }
   put('openings', el('g', { id: 'openings' }, ops));
@@ -663,9 +789,13 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   // kind's outline — a bed, a sofa, a toilet, a tub (FLR-T-12.24) — else their fallback boxes ──
   if (scene.fallbacks.size) {
     let fbs = '';
+    // FLR-T-18.5: a colour plan's rugs lie under the furniture standing on them.
+    let rugs = '';
     // FLR-T-18.3: each element by its trade's layer — drawn, ghosted, or left out.
     const ghosted = new Map<PlanLayer, string>();
     let inked = false;
+    // The ink filters of a colour plan's symbol images, by tone: white to the item's colour, black to its ink.
+    const toned = new Map<string, string>();
     for (const fb of scene.fallbacks.values()) {
       if (fb.landscape !== undefined) continue;
       const layer = layerOfElement(fb.extension, fb.collection);
@@ -673,7 +803,10 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       if (state === 'off') continue;
       let drawn: string;
       const a = hi.has(fb.id);
-      const image = symbolImage(fb, options.symbols, f);
+      const tone = sty !== null && sty.colour && details.furniture ? furnitureTone(fb.category, fb.collection, fb.catalogue, sty) : null;
+      const filter = tone === null ? undefined : `fs-ink-${tone.fill.slice(1)}`;
+      if (tone !== null && filter !== undefined && !toned.has(filter)) toned.set(filter, inkFilterOf(filter, tone.fill, tone.ink));
+      const image = symbolImage(fb, options.symbols, f, filter);
       const outline = image === null ? fixtureSymbol(fb) : null;
       const box = { 'data-id': fb.id, 'data-kind': `${fb.extension}:${fb.collection}`, d: ringsPath([P(fb.footprint)]) };
       if (image === null && outline === null) {
@@ -681,24 +814,39 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
         const featured = moded && state === 'on' && layer !== null && TRADES.has(layer) && !a;
         drawn = featured
           ? el('path', { ...box, fill: pal.room, stroke: pal.text, 'stroke-width': 1.5 })
-          : el('path', { ...box, fill: a ? pal.accent : pal.faint, 'fill-opacity': a ? 0.35 : 0.12, stroke: a ? pal.accent : pal.faint, 'stroke-width': 1 });
+          : tone !== null && !a
+            ? isPlant(fb.catalogue)
+              ? plantDisc(box, fb.footprint, f, tone)
+              : el('path', { ...box, fill: tone.fill, stroke: tone.ink, 'stroke-width': 0.5, 'stroke-opacity': 0.6 })
+            : sty !== null && sty.linework && !a
+              ? el('path', { ...box, fill: 'none', stroke: pal.faint, 'stroke-width': sty.weights.furniture })
+              : el('path', { ...box, fill: a ? pal.accent : pal.faint, 'fill-opacity': a ? 0.35 : sty !== null && sty.colour ? 0.08 : 0.12, stroke: a ? pal.accent : pal.faint, 'stroke-width': 1, ...(sty !== null && sty.colour && !a ? { 'stroke-opacity': 0.35 } : {}) });
         if (state === 'ghost' && layer !== null) ghosted.set(layer, (ghosted.get(layer) ?? '') + drawn);
+        else if (sty !== null && isRug(fb.catalogue)) rugs += drawn;
         else fbs += drawn;
         continue;
       }
       // The item stands on the floor: its box in the room's colour (tinted when highlighted), its symbol over it.
-      let g = el('path', { ...box, fill: a ? pal.accent : pal.room, 'fill-opacity': a ? 0.35 : undefined, stroke: image === null ? 'none' : a ? pal.accent : pal.faint, 'stroke-width': image === null ? undefined : 1 });
+      // In a colour plan its box is its own colour and its lines a darker shade of it; in a technical one, paper and ink.
+      const ground = tone?.fill ?? (sty !== null && sty.linework ? sty.paper : pal.room);
+      let g = el('path', { ...box, fill: a ? pal.accent : ground, 'fill-opacity': a ? 0.35 : undefined, stroke: image === null ? 'none' : a ? pal.accent : (tone?.ink ?? pal.faint), 'stroke-width': image === null ? undefined : 1 });
       if (image !== null) {
-        inked = true;
+        if (tone === null) inked = true;
         g += image;
-      } else if (outline !== null) g += partsSvg(outline, f, (k) => (a ? pal.accent : k === 'detail' ? pal.faint : pal.muted));
+      } else if (outline !== null) {
+        const ink = (k: SymbolStroke): string => (a ? pal.accent : tone !== null ? (k === 'detail' ? mix(tone.ink, tone.fill, 0.3) : tone.ink) : k === 'detail' ? pal.faint : pal.muted);
+        g += partsSvg(outline, f, ink, sty === null ? {} : { scale: sty.colour ? 0.85 : sty.weights.furniture });
+      }
       drawn = el('g', { 'data-symbol': fb.id }, g);
       if (state === 'ghost' && layer !== null) ghosted.set(layer, (ghosted.get(layer) ?? '') + drawn);
       else fbs += drawn;
     }
     if (inked) parts.push(el('defs', {}, inkFilter(pal)));
+    if (toned.size) parts.push(el('defs', {}, [...toned.values()].join('')));
     for (const [layer, svg] of ghosted) parts.push(ghostGroup(layer, el('g', { id: `fallbacks-${layer}` }, svg)));
-    parts.push(el('g', { id: 'fallbacks' }, fbs));
+    if (rugs !== '') parts.push(el('g', { id: 'rugs' }, rugs));
+    const shadowed = sty !== null && sty.shadow !== null && details.shadows;
+    parts.push(el('g', { id: 'fallbacks', ...(shadowed ? { filter: 'url(#fs-shadow)' } : {}) }, fbs));
   }
   if (landscape.plants !== '') put('landscape', el('g', { id: 'plants' }, landscape.plants));
 
@@ -790,7 +938,19 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
       ...[...scene.openings.values()].filter((o) => o.kind === 'door').map((o) => symbolReach(o, scene.walls.get(o.wall)!)),
       ...[...scene.fallbacks.values()].filter(standsInRoom).map((fb) => fb.footprint),
     ];
+    // A style's label: name and area, on a pill in a colour plan, in spaced capitals in a technical one.
+    const deco: LabelDeco = sty === null ? {} : sty.pill !== null && details.pills && sty.colour ? { pill: sty.pill } : { halo: sty.colour ? sty.room : sty.paper };
+    const nameInk = sty === null ? pal.text : deco.pill !== undefined ? inkOn(deco.pill.fill, sty) : sty.text;
     for (const r of scene.rooms.values()) {
+      if (sty !== null) {
+        const styled: LabelLine[] = [
+          { text: sty.caps ? roomTitle(r).toUpperCase() : roomTitle(r), size: sty.caps ? 12 : 15, mono: false, weight: 600, color: nameInk, ...(sty.caps ? { spacing: 0.7 } : {}) },
+          { text: `${wholeSquareFeet(r.area)} ft²`, size: 11, mono: true, color: deco.pill !== undefined ? (nameInk === sty.text ? pal.muted : sty.paper) : pal.muted },
+          ...(accented(r.id, diff?.rooms) ? [{ text: r.id, size: 9, mono: true, weight: 600, color: pal.accentInk, spacing: 0.6, pill: pal.accent }] : []),
+        ];
+        labels += placeLabel(r.id, styled, r.outer, r.holes, swings, f, deco);
+        continue;
+      }
       const rb = grow(undefined, r.outer)!;
       const lines: LabelLine[] = [
         { text: roomTitle(r), size: 13, mono: false, weight: 500, color: pal.text },
@@ -820,6 +980,9 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
     put('dimensions', el('g', { id: 'dimensions', stroke: pal.muted, 'font-family': MONO, 'font-size': 11 }, dimensions(body, f, pal)));
   }
 
+  // ── Construction's legend: each wall type in its colour, and the doors' amber ──
+  if (byType) parts.push(wallLegend(scene, sty, margin.left, H - 64 - 18 * legendRows));
+
   // ── title and north arrow ──
   parts.push(
     el('text', { x: margin.left, y: H - 24, 'font-size': 12, 'font-weight': 500, fill: pal.muted }, esc(title)) +
@@ -828,6 +991,101 @@ export function renderEvaluation(evaluation: Evaluation, options: EvaluationRend
   parts.push(northArrow(W - 30, H - 32, scene.trueNorth, pal));
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${SANS}">${parts.join('')}</svg>\n`;
+}
+
+/** A room's area to the whole square foot, as a sales plan gives it. */
+function wholeSquareFeet(area: string): string {
+  const v = Number(squareFeet(area));
+  return Number.isFinite(v) ? String(Math.round(v)) : squareFeet(area);
+}
+
+/** A plant in a planter, from above: a disc in its box, a ring of leaves round it. */
+function plantDisc(box: Record<string, string>, footprint: readonly Pt[], f: Frame, tone: { fill: string; ink: string }): string {
+  const pts = footprint.map(f.P);
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const r = Math.min(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) / 2;
+  return el('g', { 'data-id': box['data-id'], 'data-kind': box['data-kind'] }, el('circle', { cx, cy, r, fill: tone.fill, 'fill-opacity': 0.85, stroke: tone.ink, 'stroke-width': 0.6 }) + el('circle', { cx, cy, r: r * 0.45, fill: 'none', stroke: tone.ink, 'stroke-width': 0.5, 'stroke-opacity': 0.6 }));
+}
+
+/** The rooms Technical grids: wet rooms (FLR-T-18.5). */
+const WET: ReadonlySet<string> = new Set(['bath', 'laundry']);
+
+/** A style's landscape with its colours turned off: drawn in its lines, as Technical draws it. */
+const LINE_LANDSCAPE = (t: PlanTheme): Partial<Palette> => ({
+  lawn: t.room,
+  lawnEdge: t.hairline,
+  meadow: t.room,
+  bed: t.room,
+  paving: t.room,
+  edging: t.hairline,
+  gardenWall: t.hairline,
+  canopy: t.hairline,
+  canopyDark: t.hairline,
+  grassInk: t.hairline,
+});
+
+interface WallBody {
+  readonly id: string;
+  readonly ring: readonly Pt[];
+  readonly acc: boolean;
+}
+
+/**
+ * The walls in a style (FLR-T-18.5): one poché, its edge under it so pieces join without seams, then
+ * each kind of wall in its fill — Colour's one solid colour, Technical's exterior walls hatched over
+ * the paper and interior walls solid, or, in Construction mode, each wall type in its own colour. A
+ * junction's fill is drawn as an exterior wall meeting it is, else as an interior one.
+ */
+function styledWalls(scene: Scene, bodies: readonly WallBody[], t: PlanTheme, byType: boolean, P: (ring: readonly Pt[]) => XY[], shadows: boolean): string {
+  const atJunction = new Map<string, SceneWall>();
+  for (const w of scene.walls.values())
+    for (const j of w.ends) {
+      const cur = atJunction.get(j);
+      if (cur === undefined || (cur.cls === 'interior' && w.cls === 'exterior')) atJunction.set(j, w);
+    }
+  const groups = new Map<string, { fill: string; hatch: boolean; tag: Record<string, string>; rings: XY[][] }>();
+  for (const b of bodies) {
+    if (b.acc) continue;
+    const w = scene.walls.get(b.id) ?? atJunction.get(b.id);
+    const cls = w?.cls ?? 'interior';
+    const type = byType && w?.type !== undefined ? scene.wallTypes.get(w.type) : undefined;
+    const fill = type !== undefined ? wallTypeColour(type.definition, scene.materials, type.cls, t) : cls === 'exterior' ? t.wallExterior : t.wallInterior;
+    const hatch = type === undefined && t.wallHatch !== null && cls === 'exterior';
+    const key = type !== undefined ? `type:${type.id}` : cls;
+    let g = groups.get(key);
+    if (g === undefined) {
+      g = { fill, hatch, tag: type !== undefined ? { 'data-wall-type': type.id } : { 'data-wall-class': cls }, rings: [] };
+      groups.set(key, g);
+    }
+    g.rings.push(P(b.ring));
+  }
+  let out = el('path', { d: ringsPath(bodies.map((b) => P(b.ring))), fill: t.wallEdge, stroke: t.wallEdge, 'stroke-width': 2 * OUTLINE * t.weights.wall, 'stroke-linejoin': 'round' });
+  // Hatched walls first: a solid wall drawn over a seam with one covers it.
+  for (const g of [...groups.values()].sort((a, b) => Number(b.hatch) - Number(a.hatch))) {
+    const d = ringsPath(g.rings);
+    out += el('path', { ...g.tag, d, fill: g.fill, stroke: g.fill, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
+    if (g.hatch) out += el('path', { d, fill: 'url(#fs-wall-hatch)' });
+  }
+  for (const b of bodies.filter((x) => x.acc)) out += el('path', { 'data-id': b.id, d: ringsPath([P(b.ring)]), fill: t.accent, stroke: t.accent, 'stroke-width': 0.5, 'stroke-linejoin': 'round' });
+  const g = el('g', { id: 'walls', mask: 'url(#fs-cuts)' }, out);
+  return t.shadow !== null && shadows ? el('g', { 'data-shadow': 'walls', filter: 'url(#fs-shadow)' }, g) : g;
+}
+
+/** Construction's wall-type legend (FLR-T-18.3, 18.5): a swatch and a name for each type on the level, and the doors' amber. */
+function wallLegend(scene: Scene, t: PlanTheme, x: number, y: number): string {
+  let g = el('text', { x, y: y + 9, 'font-size': 9, 'font-weight': 600, 'letter-spacing': 0.8, fill: t.muted }, 'WALL TYPES');
+  let row = 1;
+  const swatch = (fill: string, label: string, id?: string): void => {
+    const yy = y + row * 18;
+    g += el('g', { ...(id === undefined ? {} : { 'data-wall-type': id }) }, el('rect', { x, y: yy, width: 18, height: 6, rx: 1, fill, stroke: t.wallEdge, 'stroke-width': 0.5 }) + el('text', { x: x + 26, y: yy + 6.5, 'font-size': 10, fill: t.text }, esc(label)));
+    row++;
+  };
+  for (const ty of scene.wallTypes.values()) swatch(wallTypeColour(ty.definition, scene.materials, ty.cls, t), ty.name, ty.id);
+  swatch(CONSTRUCTION_DOOR[t.theme], 'Door leaves and swings');
+  return el('g', { id: 'wall-legend' }, g);
 }
 
 /** The building systems: in their own mode their devices are drawn solid (FLR-T-18.3). */
@@ -895,6 +1153,7 @@ function placeLabel(
   holes: readonly (readonly Pt[])[],
   obstacles: readonly (readonly Pt[])[],
   f: Frame,
+  deco: LabelDeco = {},
 ): string {
   const lp = labelPoint(outer, holes, obstacles);
   const span = freeSpan(lp.x, lp.y, [outer, ...holes, ...obstacles]);
@@ -905,9 +1164,9 @@ function placeLabel(
   // Drop the least important lines until the block fits upright, or rotated in a tall room.
   let ls = lines;
   for (;;) {
-    if (blockW(ls) <= wPx && blockH(ls) <= hPx) return labelBlock(ls, f.X(lp.x), f.Y(lp.y), false, { 'data-id': id });
-    if (hPx > wPx && blockW(ls) <= hPx && blockH(ls) <= wPx) return labelBlock(ls, f.X(lp.x), f.Y(lp.y), true, { 'data-id': id });
-    if (ls.length <= 1) return labelBlock(ls, f.X(lp.x), f.Y(lp.y), hPx > wPx * 1.5, { 'data-id': id });
+    if (blockW(ls) <= wPx && blockH(ls) <= hPx) return labelBlock(ls, f.X(lp.x), f.Y(lp.y), false, { 'data-id': id }, deco);
+    if (hPx > wPx && blockW(ls) <= hPx && blockH(ls) <= wPx) return labelBlock(ls, f.X(lp.x), f.Y(lp.y), true, { 'data-id': id }, deco);
+    if (ls.length <= 1) return labelBlock(ls, f.X(lp.x), f.Y(lp.y), hPx > wPx * 1.5, { 'data-id': id }, deco);
     // Keep the title and the ID longest: drop dimensions, then area, then the ID.
     const drop = [2, 1, 3].find((i) => ls.includes(lines[i]!));
     ls = ls.filter((l) => l !== lines[drop ?? ls.length - 1]);
@@ -957,7 +1216,7 @@ function northArrow(cx: number, cy: number, trueNorth: number, pal: Palette): st
  * top right at (min x, max y), its bottom left at (max x, min y) — and drawn in the plan's ink through
  * the `fs-ink` filter. Null when there are no bytes for it, or it is not an image type.
  */
-function symbolImage(fb: SceneFallback, symbols: SymbolBytes | undefined, f: Frame): string | null {
+function symbolImage(fb: SceneFallback, symbols: SymbolBytes | undefined, f: Frame, filter = 'fs-ink'): string | null {
   if (symbols === undefined || fb.symbol === undefined || fb.frame === undefined) return null;
   const type = fb.symbol.mediaType;
   if (!SYMBOL_TYPES.has(type)) return null;
@@ -978,7 +1237,7 @@ function symbolImage(fb: SceneFallback, symbols: SymbolBytes | undefined, f: Fra
     height: h,
     preserveAspectRatio: 'none',
     transform: `matrix(${k((x1 - x0) / w)} ${k((y1 - y0) / w)} ${k((x2 - x0) / h)} ${k((y2 - y0) / h)} ${num(x0)} ${num(y0)})`,
-    filter: 'url(#fs-ink)',
+    filter: `url(#${filter})`,
   });
 }
 
@@ -988,13 +1247,18 @@ function symbolImage(fb: SceneFallback, symbols: SymbolBytes | undefined, f: Fra
  * white reads on the plan's palette in either theme.
  */
 function inkFilter(pal: Palette): string {
+  return inkFilterOf('fs-ink', pal.room, pal.muted);
+}
+
+/** An ink filter mapping an image's white to `paper` and its black to `ink`, channel by channel. */
+function inkFilterOf(id: string, paperHex: string, inkHex: string): string {
   const rgb = (hex: string): [number, number, number] => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
-  const paper = rgb(pal.room);
-  const ink = rgb(pal.muted);
+  const paper = rgb(paperHex);
+  const ink = rgb(inkHex);
   const row = (c: number): string => [0, 1, 2].map((j) => (j === c ? fixed4(paper[c]! - ink[c]!) : '0')).join(' ') + ` 0 ${fixed4(ink[c]!)}`;
   return el(
     'filter',
-    { id: 'fs-ink', 'color-interpolation-filters': 'sRGB', x: 0, y: 0, width: 1, height: 1 },
+    { id, 'color-interpolation-filters': 'sRGB', x: 0, y: 0, width: 1, height: 1 },
     el('feColorMatrix', { type: 'matrix', values: `${row(0)} ${row(1)} ${row(2)} 0 0 0 1 0` }),
   );
 }

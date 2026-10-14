@@ -7,7 +7,7 @@ import { exportIfc } from '../export/ifc/index.js';
 import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
 import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
 import { normalizeOn, type Lighting } from '@floorspec/mesh';
-import { isLayerState, isModeId, PLAN_LAYERS, type LayerState, type ModeId, type PlanLayer } from '@floorspec/render2d';
+import { isLayerState, isModeId, isPlanStyle, PLAN_LAYERS, type LayerState, type ModeId, type PlanLayer, type PlanStyle } from '@floorspec/render2d';
 import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type ShotSize, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
 import { renderSavedView, renderShots, type Shot } from '../pathtrace/views.js';
 import { storeZip } from '../export/gltf/zip.js';
@@ -57,6 +57,8 @@ export interface ExportParams {
   /** A drawing in a trade's view (FLR-T-18.3), and a person's own layer states over it. */
   readonly mode?: ModeId;
   readonly layers?: Partial<Record<PlanLayer, LayerState>>;
+  /** A PDF's plan style (FLR-T-18.5). */
+  readonly style?: PlanStyle;
 }
 
 /** Layer states from a job row (FLR-T-18.3): known layers with known states, or nothing. */
@@ -99,6 +101,7 @@ export function exportParams(raw: unknown): ExportParams {
   const lighting = lightingOf(p['lighting']);
   const mode = isModeId(p['mode']) ? p['mode'] : undefined;
   const layers = layersOf(p['layers']);
+  const style = isPlanStyle(p['style']) ? p['style'] : undefined;
   return {
     ...(levels === undefined ? {} : { levels }),
     ...(page === undefined ? {} : { page }),
@@ -109,6 +112,7 @@ export function exportParams(raw: unknown): ExportParams {
     ...(lighting === undefined ? {} : { lighting }),
     ...(mode === undefined ? {} : { mode }),
     ...(layers === undefined ? {} : { layers }),
+    ...(style === undefined ? {} : { style }),
   };
 }
 
@@ -299,6 +303,7 @@ function options(job: JobRow) {
     ...(p.design === undefined ? {} : { design: p.design }),
     ...(p.mode === undefined ? {} : { mode: p.mode }),
     ...(p.layers === undefined ? {} : { layers: p.layers }),
+    ...(p.style === undefined ? {} : { style: p.style }),
   };
 }
 

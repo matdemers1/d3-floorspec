@@ -10,6 +10,7 @@ import { membersFor, systemOfExtension, type DeviceKind, type ReceptacleOptions 
 import { compareIds } from './view';
 import { FIXTURE_CLASS, fixtureParts, SymbolParts } from '../plansymbols';
 import { landscapeLayers, landscapeOf, PALETTES, type SceneLandscape } from '@floorspec/render2d';
+import type { PlanLook } from '../planStyle';
 
 /**
  * The building systems on the plan (FLR-T-5.7): each device as its symbol — a receptacle's circle
@@ -223,7 +224,7 @@ export function homeRuns(document: FloorspecDocument, level: LevelView): { circu
 }
 
 /** The systems layer: clearances, home runs, devices, and panel callouts. */
-export function SystemsLayer({ view, level, document, derived, layers, selection }: { view: Viewport; level: LevelView; document: FloorspecDocument; derived: Derived | null; layers: Layers; selection: string | null }) {
+export function SystemsLayer({ view, level, document, derived, layers, selection, look = null }: { view: Viewport; level: LevelView; document: FloorspecDocument; derived: Derived | null; layers: Layers; selection: string | null; look?: PlanLook | null }) {
   const shown = level.devices.filter((d) => visible(d, layers));
   if (layers.coreOnly) {
     return (
@@ -251,7 +252,7 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
           <polyline key={r.circuit} className={`fs-run fs-run--${String(r.tone)}${selectedCircuit === r.circuit ? ' is-selected' : ''}`} points={r.points.map((p) => S(view, p).map(f1).join(',')).join(' ')} />
         ))}
       </g>
-      <LandscapeShapes view={view} devices={shown} selection={selection} />
+      <LandscapeShapes view={view} devices={shown} selection={selection} look={look} />
       {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx); FS_landscape its plants, beds, lawns and lines (above). */}
       {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape').map((d) => {
         // FLR-T-18.3: a load carries its circuit's tone, which the Electrical mode draws it in (modes.css).
@@ -273,7 +274,7 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
  * landscape layers), in the palette of the editor's theme. A landscape architect's colours have no
  * design-system token, so they are render2d's own, light and dark.
  */
-function LandscapeShapes({ view, devices, selection }: { view: Viewport; devices: readonly DeviceView[]; selection: string | null }) {
+function LandscapeShapes({ view, devices, selection, look }: { view: Viewport; devices: readonly DeviceView[]; selection: string | null; look: PlanLook | null }) {
   const items = devices.flatMap((d): [string, SceneLandscape][] => {
     if (d.extension !== 'FS_landscape') return [];
     const x = landscapeOf(d.collection, d.element, d.placement === null ? undefined : { point: d.placement.point, facing: d.placement.facing });
@@ -281,7 +282,9 @@ function LandscapeShapes({ view, devices, selection }: { view: Viewport; devices
   });
   if (items.length === 0) return null;
   const dark = typeof document !== 'undefined' && document.documentElement.dataset['theme'] === 'dark';
-  const { lawns, ground, plants } = landscapeLayers(items, { s: view.s, P: (p) => S(view, p) }, PALETTES[dark ? 'dark' : 'light'], (id) => id === selection);
+  // FLR-T-18.5: in the plan's style, its lawn and planting colours (or its lines, with the landscape detail off).
+  const palette = look === null ? PALETTES[dark ? 'dark' : 'light'] : look.details.landscape ? look.theme : { ...look.theme, lawn: look.theme.room, meadow: look.theme.room, bed: look.theme.room, paving: look.theme.room, canopy: look.theme.hairline, canopyDark: look.theme.hairline };
+  const { lawns, ground, plants } = landscapeLayers(items, { s: view.s, P: (p) => S(view, p) }, palette, (id) => id === selection);
   // render2d writes the SVG, the same text the plan render serves: markup of numbers and palette colours only
   return <g className="fs-landscape" dangerouslySetInnerHTML={{ __html: lawns + ground + plants }} />;
 }

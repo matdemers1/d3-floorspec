@@ -39,6 +39,7 @@ import type { PlanRoof } from './symbols.js';
 import { lengthText, unitsOf, type UnitSystem } from './units.js';
 import { storedZip } from './zip.js';
 import { modePlanName, shownPlan, splitPlan, statesOf, type DrawingMode } from './modes.js';
+import type { PlanStyle } from './styles.js';
 
 export { PAGES, DEFAULT_PAGE, type PageName, type Sheet } from './sheet.js';
 export { LAYER_DEFS, LAYERS, isNcsName, layerForDevice } from './layers.js';
@@ -78,6 +79,8 @@ export interface DrawingOptions extends DrawingMode {
    * official extension is drawn.
    */
   readonly reader?: ReaderOptions;
+  /** The plan's style (FLR-T-18.5): a colour sheet, a technical one, a blueprint. Default: the construction drawing. */
+  readonly style?: PlanStyle;
   // FLR-T-18.3 (DrawingMode): `mode`, a trade's view — an electrical plan, a furniture plan — and
   // `layers`, a person's own states over it. The other trades are screened under it or left out.
 }
@@ -269,6 +272,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
     sheetCount: count,
     ...(p.designText === undefined ? {} : { design: p.designText }),
     ...(planName === undefined ? {} : { planName }),
+    ...(options.style === undefined ? {} : { style: options.style }),
   };
   const top = p.all[p.all.length - 1]!;
   const sheets: Sheet[] = p.chosen.map((plan, i) => {

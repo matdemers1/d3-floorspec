@@ -57,6 +57,7 @@ import { SiteSection } from './three/sun/SiteFields';
 import { FurnitureBody } from '../furniture/Inspector';
 import { StagingSection } from './systems/Staging';
 import { ModeSummary } from './ModeSwitcher';
+import { PlanStyleSection } from './StylePanel';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -1027,6 +1028,7 @@ function ProjectPanel({ store, model, units, readOnly }: { store: EditorStore; m
           <CoreUpgradeNotice store={store} model={model} since="0.4" what="A winder's newel and a stair's design headroom" />
         ) : null}
       </Section>
+      <PlanStyleSection store={store} />
       <SiteSection store={store} model={model} readOnly={readOnly} />
       <SystemsSummary store={store} model={model} units={units} />
       <Section title="Findings">

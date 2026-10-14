@@ -18,6 +18,7 @@ import type { DimString, Side } from './dimensions.js';
 import type { Box, LevelPlan, Segment, XY } from './plan.js';
 import { pitchText, type PlanRoof, type PlanStair } from './symbols.js';
 import { areaText, BU_PER_INCH, IMPERIAL_SCALES, lengthText, METRIC_SCALES, type DrawingScale, type UnitSystem } from './units.js';
+import { BLUEPRINT, deviceLook, floorLook, patternJoints, sheetTheme, type PlanStyle } from './styles.js';
 
 // ── the display list ─────────────────────────────────────────────────────────
 
@@ -264,6 +265,8 @@ export interface SheetMeta {
   readonly design?: string;
   /** A trade's view (FLR-T-18.3): what the drawing is called — `Electrical plan`. */
   readonly planName?: string;
+  /** The plan's style (FLR-T-18.5): Colour, Presentation, Technical or Blueprint. Default: the construction drawing. */
+  readonly style?: PlanStyle;
 }
 
 interface Ctx {
@@ -299,6 +302,8 @@ export function composePlanSheet(
   const title = planTitle(meta.levelName, meta.planName);
 
   out.push({ t: 'path', d: rect(0, 0, page.width, page.height), fill: PAPER_FILL });
+  // Blueprint (FLR-T-18.5): the plan's area in blueprint blue.
+  if (meta.style === 'blueprint') out.push({ t: 'path', d: rect(layout.area.x, layout.area.y, layout.area.w, layout.area.h), fill: BLUEPRINT.paper });
   // A trade's view (FLR-T-18.3): the other trades' layers under it, screened — grey, as context.
   if (ghost !== null) {
     const under: Prim[] = [];
@@ -310,13 +315,15 @@ export function composePlanSheet(
     drawTags(g, ghost);
     out.push(...under.map(screened));
   }
-  drawPlan(c, plan);
+  const drawn = out.length;
+  drawPlan(c, plan, meta.style);
   drawStairs(c, plan.stairs);
   drawOverheadRoofs(c, plan.roofs);
   drawDimensions(c, plan, dims, meta.units);
   drawRoomLabels(c, plan, meta.units);
   drawTags(c, plan);
   drawViewTitle(c, layout, title, plan.trueNorth, meta);
+  if (meta.style === 'blueprint') out.splice(drawn, out.length - drawn, ...out.slice(drawn).map(blueprinted));
   if (layout.schedule !== null && layout.schedule !== 'sheet') drawSchedule(c, layout.schedule, rows, `${meta.levelName} — door and window schedule`);
   drawBorder(c, layout);
   const extra: LegendItem[] = [];
@@ -394,10 +401,46 @@ function screened(p: Prim): Prim {
   }
 }
 
-function drawPlan(c: Ctx, plan: LevelPlan): void {
+/** A prim of the plan in Blueprint (FLR-T-18.5): its inks to white and pale blues, its paper and light fills to the blue. */
+function blueprinted(p: Prim): Prim {
+  const ink = (c: string): string => (c === INK || c === POCHE ? BLUEPRINT.ink : c === GREY ? BLUEPRINT.grey : c === FAINT || c === HAIR ? BLUEPRINT.faint : c === WHITE || c === PAPER_FILL ? BLUEPRINT.paper : c);
+  const fill = (c: string): string => (c === WHITE || c === PAPER_FILL ? BLUEPRINT.paper : c === POCHE || c === INK ? BLUEPRINT.ink : c.startsWith('#e') || c.startsWith('#f') ? BLUEPRINT.fill : c);
+  switch (p.t) {
+    case 'path':
+      return { ...p, ...(p.stroke === undefined ? {} : { stroke: ink(p.stroke) }), ...(p.fill === undefined ? {} : { fill: fill(p.fill) }) };
+    case 'text':
+      return { ...p, color: ink(p.color) };
+    case 'clip':
+      return { ...p, children: p.children.map(blueprinted) };
+    case 'image':
+      return p;
+  }
+}
+
+/** Joints closer than this on the sheet, in points, are not drawn: the floor is its colour. */
+const FINEST_JOINT = 1.5;
+
+function drawPlan(c: Ctx, plan: LevelPlan, style?: PlanStyle): void {
   const { out, P } = c;
-  // Slabs: outlined, hatched.
+  const t = style === undefined ? null : sheetTheme(style);
+  const colour = t !== null && t.colour;
+  // A colour plan's floors (FLR-T-18.5): each room its finish's colour, its pattern's joints clipped to it.
+  const floor = (outer: readonly XY[], holes: readonly (readonly XY[])[], source: Parameters<typeof floorLook>[0]): void => {
+    if (t === null) return;
+    const look = floorLook(source, t);
+    const d = [outer, ...holes].map((r) => ring(r.map(P))).join('');
+    out.push({ t: 'path', d, fill: look.fill, evenOdd: true });
+    const joints = patternJoints(look.pattern, look.rotation, outer, FINEST_JOINT / c.k);
+    if (joints.length > 0) out.push({ t: 'clip', d, children: [{ t: 'path', d: joints.map(([a, b]) => line(P(a), P(b))).join(''), stroke: look.joint, width: 0.2 }] });
+  };
+  if (colour) for (const r of plan.rooms) floor(r.outer, r.holes, plan.scene.rooms.get(r.id)?.floor);
+  // Slabs: outlined, hatched — in a colour plan, in their material.
   for (const s of plan.slabs) {
+    if (colour) {
+      floor(s.outline, [], plan.scene.slabs.get(s.id)?.material);
+      out.push({ t: 'path', d: ring(s.outline.map(P)), stroke: FAINT, width: 0.4 });
+      continue;
+    }
     const d = ring(s.outline.map(P));
     out.push({ t: 'path', d, fill: '#f2f2f2' });
     out.push({ t: 'clip', d, children: [{ t: 'path', d: hatch(s.outline.map(P), 5), stroke: HAIR, width: 0.35 }] });
@@ -409,14 +452,28 @@ function drawPlan(c: Ctx, plan: LevelPlan): void {
   for (const [a, b] of plan.separators) out.push({ t: 'path', d: line(P(a), P(b)), stroke: GREY, width: 0.4, dash: [4, 2.5] });
   // Extension elements: furniture and fixtures as their outlines (FLR-T-12.24), anything else as its fallback box, light.
   for (const dv of plan.devices) {
-    if (dv.symbol === null) out.push({ t: 'path', d: ring(dv.footprint.map(P)), fill: '#ececec', stroke: GREY, width: 0.35 });
+    // A colour plan's furniture in its colours (FLR-T-18.5).
+    const tone = colour ? deviceLook(plan, dv.id, t) : null;
+    if (dv.symbol === null) out.push({ t: 'path', d: ring(dv.footprint.map(P)), fill: tone?.fill ?? '#ececec', stroke: tone?.ink ?? GREY, width: 0.35 });
     else {
-      out.push({ t: 'path', d: ring(dv.footprint.map(P)), fill: WHITE });
-      drawParts(c, dv.symbol);
+      out.push({ t: 'path', d: ring(dv.footprint.map(P)), fill: tone?.fill ?? WHITE });
+      drawParts(c, dv.symbol, tone?.ink);
     }
   }
-  // Walls: the poché, then the openings cut out of it, then the outline as drawn.
-  if (plan.pieces.length > 0) out.push({ t: 'path', d: plan.pieces.map((p) => ring(p.ring.map(P))).join(''), fill: POCHE, stroke: POCHE, width: 0.2, join: 'round' });
+  // Walls: the poché, then the openings cut out of it, then the outline as drawn. A colour plan's
+  // poché is its style's; Technical and Blueprint hatch the exterior walls over the paper.
+  const hatched = t !== null && t.linework ? plan.pieces.filter((p) => p.exterior) : [];
+  const solid = hatched.length > 0 ? plan.pieces.filter((p) => !p.exterior) : plan.pieces;
+  const poche = colour ? t.wallInterior : POCHE;
+  if (solid.length > 0) out.push({ t: 'path', d: solid.map((p) => ring(p.ring.map(P))).join(''), fill: poche, stroke: poche, width: 0.2, join: 'round' });
+  if (hatched.length > 0) {
+    const d = hatched.map((p) => ring(p.ring.map(P))).join('');
+    out.push({ t: 'path', d, fill: WHITE, stroke: WHITE, width: 0.2, join: 'round' });
+    for (const p of hatched) {
+      const pts = p.ring.map(P);
+      out.push({ t: 'clip', d: ring(pts), children: [{ t: 'path', d: hatch(pts, 1.6), stroke: INK, width: 0.25 }] });
+    }
+  }
   if (plan.cuts.length > 0) out.push({ t: 'path', d: plan.cuts.map((q) => ring(q.map(P))).join(''), fill: WHITE, stroke: WHITE, width: 0.6 });
   const ext = plan.wallLines.filter((s) => s.layer === 'A-WALL-EXTR');
   const int = plan.wallLines.filter((s) => s.layer !== 'A-WALL-EXTR');
@@ -446,11 +503,11 @@ const SHEET_STROKES: Readonly<Record<SymbolStroke, { readonly color: string; rea
 };
 
 /** Symbol parts (render2d's door and fixture symbols) on the sheet. */
-function drawParts(c: Ctx, parts: readonly SymbolPart[]): void {
+function drawParts(c: Ctx, parts: readonly SymbolPart[], tone?: string): void {
   const { out, P } = c;
   for (const part of parts) {
     const look = SHEET_STROKES[part.stroke];
-    const style = { stroke: look.color, width: look.width, ...(look.dash === undefined ? {} : { dash: look.dash }) };
+    const style = { stroke: tone !== undefined && look.color !== WHITE ? tone : look.color, width: look.width, ...(look.dash === undefined ? {} : { dash: look.dash }) };
     if (part.kind === 'arc') {
       const h = P(part.centre);
       const l = P(part.from);

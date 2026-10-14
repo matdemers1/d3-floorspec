@@ -25,6 +25,8 @@ import { RoofEdgeTags, RoofLayer, roofStairOutline, StairDraft, StairsLayer } fr
 import { DOOR_CLASS, doorParts, SymbolParts } from './plansymbols';
 import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
+import { levelPaint, planLook, useCurrentStyle, useDocumentTheme, usePlanStyles, type LevelPaint } from './planStyle';
+import { lookStyle, PlanStyleDefs, StyledRoomLabels, StyledWalls, WallTypeLegend } from './StylePanel';
 import { PrecisionHtml, PrecisionLayer } from './precision/Overlay';
 import { usePrecision } from './precision/state';
 import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
@@ -158,9 +160,15 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
   // A trade mode's ghosts (FLR-T-18.3): drawn grey and faint (modes.css), and not picked (tools.ts).
   const ghost = useModes(store, (s) => (s.ghost.length === 0 ? undefined : s.ghost.join(' ')));
   const trade = useModes(store, (s) => (s.mode === null ? undefined : (modesOf(store).tradeOf(s.mode) ?? undefined)));
+  // FLR-T-18.5: the plan's style in the page's theme — render2d's theme, so the canvas and the plan render agree.
+  const planStyle = useCurrentStyle(store);
+  const pageTheme = useDocumentTheme();
+  const details = usePlanStyles(store, (s) => s.details);
+  const look = useMemo(() => planLook(planStyle, pageTheme, details, trade === 'construction'), [planStyle, pageTheme, details, trade]);
+  const paint = useMemo(() => (view === null || level === undefined || model === null ? null : levelPaint(view, level, model, look)), [view, level, model, look]);
 
   return (
-    <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined} data-zooming={zooming ? 'on' : undefined} data-ghost={ghost} data-mode={trade}>
+    <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined} data-zooming={zooming ? 'on' : undefined} data-ghost={ghost} data-mode={trade} data-plan-style={look.style} data-plan-theme={pageTheme} style={lookStyle(look)}>
       {view !== null ? (
         <svg
           ref={svg}
@@ -187,19 +195,20 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
           onContextMenu={(e) => { e.preventDefault(); }}
         >
           <Grid view={view} units={units} />
+          {paint !== null ? <PlanStyleDefs paint={paint} /> : null}
           {model !== null && level !== undefined ? (
             <>
-              <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} />
+              <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} />
               {layers.dimensions ? <Dimensions view={view} level={level} units={units} /> : null}
-              <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} />
-              <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} />
+              <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} look={look} />
+              <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} look={look} />
               {electricalTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={model} units={units} /> : null}
               <DiffLayer store={store} view={view} levelId={level.id} />
               <RuleFindingsLayer store={store} view={view} level={level} />
               <Findings store={store} view={view} level={level} />
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
               {comparing ? null : <ArrangeLayer store={store} view={view} level={level} />}
-              {layers.rooms ? <RoomLabels view={view} level={level} document={model.document} units={units} /> : null}
+              {layers.rooms ? <StyledRoomLabels view={view} level={level} document={model.document} units={units} look={look} /> : null}
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
               {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={model} />}
@@ -217,6 +226,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       {view !== null && level !== undefined && !comparing ? <WandPrompt store={store} tools={tools} view={view} level={level} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={model} units={units} picking={tools.pickLevel} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
+      {paint !== null && layers.walls ? <WallTypeLegend paint={paint} /> : null}
       <DiffLegend store={store} />
       {layers.coreOnly ? (
         <div className="fs-core-note" role="status">
@@ -270,29 +280,41 @@ function wallMid(wall: WallView): Point {
 
 const polyPts = (view: Viewport, line: readonly Point[]): string => line.map((p) => S(view, p).map((n) => n.toFixed(1)).join(',')).join(' ');
 
-export function Plan({ view, level, document, layers, units, ghost = false, labels = true }: { view: Viewport; level: LevelView; document: FloorspecDocument; layers: Layers; units: UnitSystem; ghost?: boolean; labels?: boolean }) {
+export function Plan({ view, level, document, layers, units, ghost = false, labels = true, paint = null }: { view: Viewport; level: LevelView; document: FloorspecDocument; layers: Layers; units: UnitSystem; ghost?: boolean; labels?: boolean; paint?: LevelPaint | null }) {
   const walls = new Map(level.walls.map((w) => [w.id, w]));
   return (
     <g className={ghost ? 'fs-plan2 fs-plan2--ghost' : 'fs-plan2'} aria-hidden="true">
       {level.slabs.length > 0 ? (
         <g className="fs-plan2__slabs">
           {level.slabs.map((s) => (
-            <polygon key={s.id} points={pts(view, s.outline)} />
+            <g key={s.id}>
+              {/* FLR-T-18.5: a slab in its material (a colour plan), or hatched (a technical one). */}
+              <polygon points={pts(view, s.outline)} style={paint === null ? undefined : { fill: paint.slab(s.id) }} />
+              {paint?.look.theme.linework === true ? <polygon className="fs-plan2__slab-hatch" points={pts(view, s.outline)} fill="url(#fsx-slab-hatch)" /> : null}
+            </g>
           ))}
         </g>
       ) : null}
       {layers.rooms ? (
         <g className="fs-plan2__rooms">
-          {level.faces.map((f, i) => (
-            <path
-              key={f.room ?? `free-${String(i)}`}
-              className={f.room === null ? 'fs-plan2__face--free' : f.tint === undefined ? undefined : 'fs-plan2__face--tinted'}
-              // Core 0.3, 18.6: a room tinted by its floor finish's colour, faintly.
-              style={f.tint === undefined || ghost ? undefined : { fill: f.tint }}
-              d={pathOf(view, [f.outer, ...f.holes])}
-              fillRule="evenodd"
-            />
-          ))}
+          {level.faces.map((f, i) =>
+            paint !== null && f.room !== null ? (
+              // FLR-T-18.5: a room in its floor finish — its colour and pattern at true scale — or a wet room gridded.
+              <g key={f.room} style={{ fill: paint.floor(f.floor) }}>
+                <path data-floor={f.floor} d={pathOf(view, [f.outer, ...f.holes])} fillRule="evenodd" />
+                {paint.grid(f.room) === undefined ? null : <path data-grid={f.room} fill={paint.grid(f.room)} d={pathOf(view, [f.outer, ...f.holes])} fillRule="evenodd" />}
+              </g>
+            ) : (
+              <path
+                key={f.room ?? `free-${String(i)}`}
+                className={f.room === null ? 'fs-plan2__face--free' : f.tint === undefined ? undefined : 'fs-plan2__face--tinted'}
+                // Core 0.3, 18.6: a room tinted by its floor finish's colour, faintly.
+                style={f.tint === undefined || ghost ? undefined : { fill: f.tint }}
+                d={pathOf(view, [f.outer, ...f.holes])}
+                fillRule="evenodd"
+              />
+            ),
+          )}
         </g>
       ) : null}
       <g className="fs-plan2__separators">
@@ -300,7 +322,8 @@ export function Plan({ view, level, document, layers, units, ghost = false, labe
           <polyline key={s.id} points={polyPts(view, s.line)} fill="none" />
         ))}
       </g>
-      {layers.walls ? (
+      {layers.walls && paint !== null ? <StyledWalls view={view} level={level} paint={paint} /> : null}
+      {layers.walls && paint === null ? (
         <g className="fs-plan2__walls">
           {level.walls.map((w) => <polygon key={w.id} points={pts(view, w.ring)} />)}
           {level.fills.map((f) => <polygon key={f.id} points={pts(view, f.ring)} />)}

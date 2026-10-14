@@ -130,6 +130,8 @@ export interface ExportRequest {
   /** PDF and DXF (FLR-T-18.3): a trade's view — an electrical plan — and a person's own layer states over it. */
   mode?: string;
   layers?: Record<string, 'on' | 'ghost' | 'off'>;
+  /** PDF (FLR-T-18.5): the plan's style. */
+  style?: string;
 }
 
 /** The kinds made in one design: every export but the IFC model, which is of the primary. */
