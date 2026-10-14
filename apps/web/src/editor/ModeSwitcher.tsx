@@ -35,14 +35,13 @@ import {
   Wind,
   Zap,
 } from 'lucide-react';
-import { useEditor, type EditorStore } from './store';
+import { useEditor, type EditorStore, type Viewport } from './store';
 import type { ToolController } from './tools';
 import type { EditorModel, LevelView } from './model';
 import { AirIcon, DropIcon, EyeIcon, PlugIcon, SofaIcon } from './icons';
 import { LAYER_LABELS, MODE_IDS, MODES, PLAN_LAYERS, modesOf, useModes, type LayerState, type LayerStates, type ModeId, type PlanLayer } from './modes';
 import { Plan } from './Canvas';
 import { layerOfElement as layerOf } from '@floorspec/render2d';
-import { fit } from './viewport';
 import { formatArea, prettyLen, type UnitSystem } from './units';
 import { dist } from './geometry';
 import { ExportDialog, type ModeChoice } from '../exports/ExportDialog';
@@ -222,13 +221,21 @@ function ModeRow({ store, open, id, label, summary, trade, current, hint }: { st
 
 const THUMB = { w: 64, h: 44 };
 
+/** The whole level in a preview: framed 3 px in, at whatever scale that takes (the canvas's zoom limits are not a preview's). */
+function thumbView(level: LevelView): Viewport | null {
+  const b = level.bounds;
+  if (b === null || b.maxX <= b.minX || b.maxY <= b.minY) return null;
+  const s = Math.min((THUMB.w - 6) / (b.maxX - b.minX), (THUMB.h - 6) / (b.maxY - b.minY));
+  return { cx: (b.minX + b.maxX) / 2, cy: (b.minY + b.maxY) / 2, s, w: THUMB.w, h: THUMB.h };
+}
+
 /** A mode previewed on this level: its plan in the mode's layer states, at a glance. */
 function ModeThumb({ store, mode }: { store: EditorStore; mode: string }) {
   const model = useEditor(store, (s) => s.model);
   const level = useEditor(store, () => store.levelView);
   const units = useEditor(store, () => store.units);
   const states = modesOf(store).presetOf(mode);
-  const view = useMemo(() => (level === undefined ? null : fit(level.bounds, THUMB.w, THUMB.h, 4)), [level]);
+  const view = useMemo(() => (level === undefined ? null : thumbView(level)), [level]);
   if (model === null || level === undefined || view === null) return <span className="fs-mode-thumb" />;
   const layers = { ...store.get().layers, ...Object.fromEntries(PLAN_LAYERS.map((l) => [l, states[l] !== 'off'])) };
   return (
@@ -240,7 +247,7 @@ function ModeThumb({ store, mode }: { store: EditorStore; mode: string }) {
 }
 
 /** The extension elements in a preview: each a dot of its trade's colour, a ghost's grey and faint. */
-function ThumbDevices({ view, level, states }: { view: ReturnType<typeof fit>; level: LevelView; states: LayerStates }) {
+function ThumbDevices({ view, level, states }: { view: Viewport; level: LevelView; states: LayerStates }) {
   const shown = level.devices.flatMap((d) => {
     const layer = layerOf(d.extension, d.collection);
     if (layer === null || states[layer] === 'off') return [];

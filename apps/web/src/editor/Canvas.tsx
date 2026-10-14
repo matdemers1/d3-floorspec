@@ -23,7 +23,7 @@ import { anchorOf, circuitsOf } from './systems/view';
 import { RuleFindingLabels, RuleFindingsLayer } from '../findings/Overlay';
 import { RoofEdgeTags, RoofLayer, roofStairOutline, StairDraft, StairsLayer } from './RoofStairLayer';
 import { DOOR_CLASS, doorParts, SymbolParts } from './plansymbols';
-import { useModes } from './modes';
+import { modesOf, useModes } from './modes';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -140,9 +140,10 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
   const electricalTool = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.system === 'electrical');
   // A trade mode's ghosts (FLR-T-18.3): drawn grey and faint (modes.css), and not picked (tools.ts).
   const ghost = useModes(store, (s) => (s.ghost.length === 0 ? undefined : s.ghost.join(' ')));
+  const trade = useModes(store, (s) => (s.mode === null ? undefined : (modesOf(store).tradeOf(s.mode) ?? undefined)));
 
   return (
-    <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined} data-ghost={ghost}>
+    <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined} data-ghost={ghost} data-mode={trade}>
       {view !== null ? (
         <svg
           ref={svg}

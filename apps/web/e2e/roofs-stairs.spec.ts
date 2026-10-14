@@ -104,7 +104,7 @@ test('a hip roof over the walls and an L stair to the level above, as the model 
   await inspector.getByRole('button', { name: 'Roof over the walls' }).click();
   await expect.poll(async () => count((await modelOf(page, project)).roofs)).toBe(1);
   await settled(page);
-  await expect(page.getByRole('button', { name: 'Roof', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('radiogroup', { name: 'Stairs & roofs layer' }).getByRole('radio', { name: 'On' })).toHaveAttribute('aria-checked', 'true');
   await expect(svg.locator('.fs-plan2__roofs .fs-roof__line--ridge')).toHaveCount(1);
 
   // ── What the server holds, and what the engine derives from it.

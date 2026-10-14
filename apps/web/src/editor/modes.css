@@ -52,9 +52,9 @@
 /* ── The switcher: icon-only but the active mode; in full screen, the top drawer's second row with every name ── */
 .fs-modes {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: var(--space-4);
-  min-width: 0;
 }
 .fs-modes__overline {
   display: none;
@@ -120,7 +120,17 @@
 .fs-editor[data-chrome='full'] .fs-modes__label {
   display: inline;
 }
-@media (max-width: 1180px) {
+/* The switcher takes the room the links that are also commands leave: below 1560 px of top bar,
+   Schedules, Materials and Brief keep their icons (their names are still their accessible names
+   and their tooltips); below 1240 px they go to the palette (editor.css) and the active mode keeps
+   only its icon. */
+@container fs-top (max-width: 1559px) {
+  .fs-topbar .fs-topbar__brief {
+    gap: 0;
+    font-size: 0;
+  }
+}
+@container fs-top (max-width: 1239px) {
   .fs-editor:not([data-chrome='full']) .fs-modes__button[aria-pressed='true'] .fs-modes__label {
     display: none;
   }
@@ -326,4 +336,15 @@
   opacity: var(--fs-ghost-opacity);
   filter: grayscale(1);
   pointer-events: none;
+}
+
+/* ── Electrical: each device in its circuit's colour (the home runs' tones); its symbol says what it is ── */
+.fs-canvas[data-mode='electrical'] .fs-sym--electrical.fs-sym--tone-1 { stroke: var(--color-info); }
+.fs-canvas[data-mode='electrical'] .fs-sym--electrical.fs-sym--tone-2 { stroke: var(--color-success); }
+.fs-canvas[data-mode='electrical'] .fs-sym--electrical.fs-sym--tone-3 { stroke: var(--color-accent); }
+.fs-canvas[data-mode='electrical'] .fs-sym--electrical.fs-sym--tone-4 { stroke: var(--color-warning); }
+.fs-canvas[data-mode='electrical'] .fs-sym--electrical.fs-sym--tone-5 { stroke: var(--color-danger); }
+.fs-canvas[data-mode='electrical'] .fs-sym--electrical.fs-sym--tone-6 { stroke: var(--color-fg-muted); }
+.fs-canvas[data-mode='electrical'] .fs-sym--electrical {
+  stroke-width: 1.5;
 }
