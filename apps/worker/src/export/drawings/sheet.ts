@@ -289,6 +289,8 @@ export interface SheetMeta {
   readonly planName?: string;
   /** The plan's style (FLR-T-18.5): Colour, Presentation, Technical or Blueprint. Default: the construction drawing. */
   readonly style?: PlanStyle;
+  /** The area summary (FLR-T-18.11): the level's gross, net and finished, then the whole house's. */
+  readonly areas?: readonly (readonly [string, string])[];
 }
 
 interface Ctx {
@@ -975,6 +977,24 @@ function drawStrip(c: Ctx, layout: SetLayout, view: View3d, meta: SheetMeta, she
     y += 14;
     it.draw(x + 2, y - 2);
     out.push(text(x + 32, y, it.label, 'sans', 6.2, { color: INK }));
+  }
+
+  // The area (FLR-T-18.11): the level's gross, net and finished, and the whole house's, where there is room.
+  const room = (n: number): boolean => y + 16 + 14 + n * 9 <= bottom - factsH - 6;
+  // The whole house's rows go first when there is not room for all of them.
+  const all = meta.areas ?? [];
+  const areas = room(all.length) ? all : all.filter(([name]) => !name.startsWith('Whole house'));
+  if (areas.length > 0 && room(areas.length)) {
+    const top = y + 16;
+    out.push({ t: 'path', d: line([s.x, top - 6], [s.x + s.w, top - 6]), stroke: INK, width: 0.5 });
+    out.push(text(x, top + 6, 'AREA', 'sans-medium', 5.5, { color: FAINT }));
+    let ay = top + 8;
+    for (const [name, value] of areas) {
+      ay += 9;
+      out.push(text(x, ay, name, 'sans', 6.2));
+      out.push(text(x + w, ay, value, 'mono', 6, { anchor: 'end', color: GREY }));
+    }
+    y = ay;
   }
 
   // Rooms on this level, with their net areas, where the strip has room for them.

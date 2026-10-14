@@ -14,7 +14,7 @@
  * version's facts (hash, number, time): the same inputs give the same bytes, and nothing reads the
  * clock.
  */
-import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, openingDimensions, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
+import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, openingDimensions, z765, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
 import { sceneOf, type ReaderOptions, type Scene } from '@floorspec/render2d';
 import { buildSceneFrom as buildModel, type Scene as ModelScene } from '../gltf/scene.js';
 import { MAX_WIDTH, renderView } from '../../render3d/index.js';
@@ -37,7 +37,7 @@ import {
   type View3d,
 } from './sheet.js';
 import type { PlanRoof } from './symbols.js';
-import { lengthText, unitsOf, type UnitSystem } from './units.js';
+import { areaText, lengthText, roundHalfEven, twiceArea, unitsOf, type UnitSystem } from './units.js';
 import { storedZip } from './zip.js';
 import { modePlanName, shownPlan, splitPlan, statesOf, type DrawingMode } from './modes.js';
 import type { PlanStyle } from './styles.js';
@@ -212,6 +212,51 @@ function versionLabel(v: VersionFacts): string {
 
 const isoDate = (d: Date): string => d.toISOString().slice(0, 10);
 
+/** Square feet (whole) as the drawings print an area: `3,087 SF`, or m² to a tenth. */
+function sqftText(sqft: number, units: UnitSystem): string {
+  return units === 'metric' ? `${(sqft * 0.09290304).toFixed(1)} m²` : `${Math.round(sqft).toLocaleString('en-US')} SF`;
+}
+
+/**
+ * The area summary of each level (FLR-T-18.11): gross to the exterior faces and finished, after the
+ * engine's Z765 application measure, and net of the rooms; then the whole house's when it has more
+ * than one level. Nothing when the measure cannot be taken.
+ */
+function areaSummaries(p: Prepared): Map<string, [string, string][]> {
+  const out = new Map<string, [string, string][]>();
+  let z: ReturnType<typeof z765>;
+  try {
+    z = z765(p.doc);
+  } catch {
+    return out;
+  }
+  const levels = z.buildings.flatMap((b) => b.levels);
+  const netOf = (plan: LevelPlan): bigint => plan.rooms.reduce((s, r) => s + twiceArea(r.area), 0n);
+  const house: [string, string][] = [];
+  if (p.all.length > 1) {
+    const net = p.all.reduce((s, plan) => s + netOf(plan), 0n);
+    house.push(['Whole house, gross', sqftText(levels.reduce((s, l) => s + l.grossSqFt, 0), p.units)]);
+    house.push(['Whole house, net', netText(net, p.units)]);
+    house.push(['Whole house, finished', sqftText(z.buildings.reduce((s, b) => s + b.aboveGradeSqFt + b.belowGradeSqFt, 0), p.units)]);
+  }
+  for (const plan of p.chosen) {
+    const lv = levels.find((l) => l.level === plan.levelId);
+    const rows: [string, string][] = [];
+    if (lv !== undefined) rows.push(['Gross (to exterior faces)', sqftText(lv.grossSqFt, p.units)]);
+    if (plan.rooms.length > 0) rows.push(['Net (rooms)', netText(netOf(plan), p.units)]);
+    if (lv !== undefined) rows.push(['Finished (Z765)', sqftText(lv.finishedSqFt, p.units)]);
+    out.set(plan.levelId, [...rows, ...house]);
+  }
+  return out;
+}
+
+/** A net area (twice, square base units) as the summary prints it: whole square feet with commas, rounded once. */
+function netText(twice: bigint, units: UnitSystem): string {
+  if (units === 'metric') return areaText(`${(twice / 2n).toString()}${twice % 2n === 0n ? '' : '.5'}`, units);
+  const per = 2n * 390_144n * 390_144n;
+  return `${Number(roundHalfEven(twice, per)).toLocaleString('en-US')} SF`;
+}
+
 function scheduleRows(doc: FloorspecDocument, plan: LevelPlan, units: UnitSystem): ScheduleRow[] {
   const rows: ScheduleRow[] = [];
   const markOf = new Map([...plan.doors, ...plan.windows].map((o) => [o.id, o.mark]));
@@ -275,6 +320,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
     ...(options.style === undefined ? {} : { style: options.style }),
   };
   const top = p.all[p.all.length - 1]!;
+  const areas = areaSummaries(p);
   const sheets: Sheet[] = p.chosen.map((plan, i) => {
     const { on, ghost } = splitPlan(plan, states);
     return composePlanSheet(
@@ -283,7 +329,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
       states === null || states.dimensions === 'on' ? (p.dims.get(plan.levelId) ?? []) : [],
       views(plan.levelId),
       states === null || states.openings !== 'off' ? (rows.get(plan.levelId) ?? []) : [],
-      { ...common, levelName: plan.levelName, sheetNumber: `A-${String(101 + i)}`, sheetIndex: i, viewCaption: `Cut above ${plan.levelName}` },
+      { ...common, levelName: plan.levelName, sheetNumber: `A-${String(101 + i)}`, sheetIndex: i, viewCaption: `Cut above ${plan.levelName}`, ...(areas.has(plan.levelId) ? { areas: areas.get(plan.levelId)! } : {}) },
       pdf.measure,
       ghost,
     );

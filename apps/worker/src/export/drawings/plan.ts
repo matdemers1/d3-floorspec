@@ -348,7 +348,6 @@ export function planOf(scene: Scene, marks: ReadonlyMap<string, string>, context
     const { n, len } = axes(o.start, o.end);
     if (len === 0) continue;
     const mark = marks.get(o.id);
-    const mid: XY = [(o.start[0] + o.end[0]) / 2, (o.start[1] + o.end[1]) / 2];
     if (o.kind === 'door') {
       const sym = doorSymbol(o, w);
       doors.push({ id: o.id, mark, operation: sym.operation, parts: rounded(sym.parts) });
