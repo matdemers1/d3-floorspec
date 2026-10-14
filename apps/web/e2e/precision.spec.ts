@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { firstRunSetup, historyOf, password, settled } from './support.js';
+import { firstRunSetup, historyOf, IN, password, settled } from './support.js';
 
 /**
  * FLR-T-18.9: precision without effort, on the Courtyard House (the worker's fixture) imported as a
@@ -150,6 +150,18 @@ test('precision: a temporary dimension typed (Tab: face, centre, other face), th
   await expect(position.getByLabel('From north centre line')).toBeVisible();
   await position.getByRole('radiogroup', { name: 'Measured to' }).getByRole('radio', { name: 'Face', exact: true }).click();
   await axe(page, '[aria-label="Inspector"]');
+
+  // ── Smart guides while drawing: the wall tool over W12's middle — 11' up the 22' wall, measured
+  // from the 62" door's south edge where it now is — snaps to its midpoint and says so.
+  const gap = (await page.locator(`[data-opening="${DOOR}"] .fs-plan2__gap`).boundingBox())!;
+  const perInch = gap.height / 62;
+  const southEdge = (await offsetOf(page, project, DOOR)) / IN;
+  await page.locator('.fs-editor').focus();
+  await page.keyboard.press('w');
+  await page.mouse.move(gap.x + gap.width / 2 + 3, gap.y + gap.height - (132 - southEdge) * perInch + 2, { steps: 4 });
+  await expect(page.locator('.fs-guidetag')).toHaveText(/^Midpoint of (Wall )?W12$/);
+  await shoot(page, 'wall-tool-midpoint');
+  await page.keyboard.press('Escape');
 
   // ── The snap menu, from the status bar: what snaps is said there, and changes there.
   const snapButton = status.getByRole('button', { name: /^Snap: / });

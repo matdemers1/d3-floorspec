@@ -1270,7 +1270,7 @@ function KeyHints({ arc = false }: { arc?: boolean }) {
       <li><kbd>Enter</kbd> place the typed length, or finish</li>
       <li><kbd>Esc</kbd> finish the chain</li>
       <li><kbd>Shift</kbd> lock to 45°</li>
-      <li><kbd>Alt</kbd> no snapping</li>
+      <li><kbd>Alt</kbd> or <kbd>{/Mac|iPhone|iPad/.test(typeof navigator === 'undefined' ? '' : navigator.platform) ? '⌘' : 'Ctrl'}</kbd> no snapping</li>
     </ul>
   );
 }
