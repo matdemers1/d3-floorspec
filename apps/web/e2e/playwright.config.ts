@@ -48,6 +48,9 @@ import { defineConfig, devices } from '@playwright/test';
  *                   axe in both themes.
  *   - `presentation` — FLR-T-13.7: the 3D view's Presentation quality chosen from the chips, every pass
  *                   drawn, the same exposure as Draft, every program linked within 16 texture units.
+ *   - `panzoom`   — FLR-T-18.6: pan and zoom on the Courtyard House — ⇧1/⇧2/⇧0 animated (and at once
+ *                   under reduced motion), the editable zoom, the wheel setting, the hand, double click,
+ *                   the minimap, saved views, and the tree, the palette and a proposal moving the view.
  *   - `camera`    — FLR-T-13.10: the Camera panel — a saved view gone to, its lens and lens shift, a preset
  *                   lens, two-point off, exposure, a view saved, renamed and deleted as Ops — and a shot list.
  *
@@ -57,7 +60,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_camera_test`). E2E_PORT is the keyboard suite's port; the others take the next twenty-three.
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`). E2E_PORT is the keyboard suite's port; the others take the next twenty-four.
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -134,8 +137,10 @@ const SUITES: Suite[] = [
   { name: 'drawers', spec: 'drawers.spec.ts', port: PORT + 21, database: databaseFor('drawers'), setupToken: true, gl: true },
   // FLR-T-13.7: Presentation quality — its passes, its exposure against Draft's, its texture units with every lamp on.
   { name: 'presentation', spec: 'presentation.spec.ts', port: PORT + 22, database: databaseFor('presentation'), setupToken: true, gl: true },
+  // FLR-T-18.6: pan and zoom — keys, animation, the editable zoom, the wheel, the hand, the minimap, saved views, go-to.
+  { name: 'panzoom', spec: 'panzoom.spec.ts', port: PORT + 23, database: databaseFor('panzoom'), setupToken: true },
   // FLR-T-13.10: a camera for photographs — saved views, the lens, two-point, exposure, the frame, a shot list.
-  { name: 'camera', spec: 'camera.spec.ts', port: PORT + 23, database: databaseFor('camera'), setupToken: true, gl: true },
+  { name: 'camera', spec: 'camera.spec.ts', port: PORT + 24, database: databaseFor('camera'), setupToken: true, gl: true },
 ];
 
 /**

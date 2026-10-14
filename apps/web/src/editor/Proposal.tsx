@@ -8,6 +8,7 @@ import { diffModels, groupChanges, roomEffects } from './diff';
 import { accept, closeReview, needsRebase, openReview, reject, reviewTarget } from './review';
 import { timeAgo } from '../projects/model';
 import { proposerOf } from './api';
+import { goTo } from './panzoom';
 import { ImportReportList } from '../exports/ImportReport';
 
 /**
@@ -69,7 +70,7 @@ export function ProposalPanel({ store }: { store: EditorStore }) {
                   <span className="fs-review__els">
                     {' '}
                     {d.elements.map((id) => (
-                      <button key={id} type="button" className="fs-linkish" onClick={() => { store.select(id, { keepSide: true }); }}>
+                      <button key={id} type="button" className="fs-linkish" onClick={() => { goTo(store, id, { keepSide: true }); }}>
                         {name(id)}
                       </button>
                     ))}
@@ -120,7 +121,7 @@ export function ProposalPanel({ store }: { store: EditorStore }) {
           <ImportReportList
             report={review.report}
             onSelect={(id) => {
-              if (main.index.has(id)) store.select(id, { keepSide: true });
+              if (main.index.has(id)) goTo(store, id, { keepSide: true });
             }}
           />
         </section>
@@ -206,7 +207,7 @@ function Effect({ store, review, main, target, effects }: { store: EditorStore; 
           <ul>
             {g.changes.map((c) => (
               <li key={c.id}>
-                <button type="button" className="fs-linkish" disabled={g.kind === 'removed' || c.collection === 'project' || c.collection === 'adjacency'} onClick={() => { store.select(c.id, { keepSide: true }); }}>
+                <button type="button" className="fs-linkish" disabled={g.kind === 'removed' || c.collection === 'project' || c.collection === 'adjacency'} onClick={() => { goTo(store, c.id, { keepSide: true }); }}>
                   {c.label}
                 </button>
                 {c.detail === undefined ? null : <span className="fs-changes__detail">{c.detail}</span>}

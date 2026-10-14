@@ -5,6 +5,7 @@ import { CircleAlert, Info, Wrench, X } from 'lucide-react';
 import { useEditor, type EditorStore } from './store';
 import { labelOf, type EditorModel } from './model';
 import { describeFix } from './ops';
+import { goTo } from './panzoom';
 
 /**
  * Diagnostics in the editor (FLR-T-3.8). A rejected batch changes nothing; the banner says so,
@@ -119,7 +120,7 @@ function DiagnosticRows({ store, model, diagnostics }: { store: EditorStore; mod
             <p className="fs-diag__elements">
               {d.elements.map((id) =>
                 model.index.has(id) ? (
-                  <button key={id} type="button" className="fs-linkish" onClick={() => { store.select(id); }}>
+                  <button key={id} type="button" className="fs-linkish" onClick={() => { goTo(store, id); }}>
                     {labelOf(model, id)}
                   </button>
                 ) : (

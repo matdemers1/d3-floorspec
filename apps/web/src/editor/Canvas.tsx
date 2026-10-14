@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Diagnostic, FloorspecDocument } from '@floorspec/engine';
-import { Minus, Plus, Scan, ArrowUp } from 'lucide-react';
-import { IconButton } from '@d3cloud/ui';
+import { ArrowUp } from 'lucide-react';
 import { isChainDraft, useEditor, type EditorStore, type Layers, type Viewport } from './store';
 import type { ToolController, PointerInfo } from './tools';
 import type { LevelView, OpeningView, Point, Ring, WallView, EditorModel } from './model';
 import { arcInfo, labelOf } from './model';
 import { add, centroid, dist, inFace, leftNormal, scale, sub } from './geometry';
 import { arcPoints, pointAtStation } from './arcs';
-import { fit, gridSpacing, scaleBar, toScreen, zoomAt, zoomPercent } from './viewport';
+import { fit, gridSpacing, scaleBar, toScreen, zoomAt } from './viewport';
+import { navOf, useNav } from './panzoom';
+import { NavStack, ZoomBar } from './NavChrome';
 import { formatArea, formatLen, prettyLen, type UnitSystem } from './units';
 import { typeChoices } from './ops';
-import { commandById } from './commands';
 import { diffModels, type ModelDiff } from './diff';
 import { reviewDiagnostics, reviewTarget } from './review';
 import { DeviceGhost, DeviceOutline, SystemsLayer } from './systems/Symbols';
@@ -64,7 +64,9 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       const key = store.get().level ?? '';
       if (current === null || fitted.current !== key) {
         fitted.current = key;
-        store.set({ view: fit(store.levelView?.bounds ?? null, width, height) });
+        // A level arrived at by going to an element or a saved view keeps the view it was given (FLR-T-18.6).
+        if (current !== null && navOf(store).claim(key)) store.set({ view: { ...current, w: width, h: height } });
+        else store.set({ view: fit(store.levelView?.bounds ?? null, width, height) });
       } else {
         store.set({ view: { ...current, w: width, h: height } });
       }
@@ -76,6 +78,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
     const view = store.get().view;
     if (view !== null && fitted.current !== (levelId ?? '')) {
       fitted.current = levelId ?? '';
+      if (navOf(store).claim(levelId)) return;
       store.set({ view: fit(store.levelView?.bounds ?? null, view.w, view.h) });
     }
   }, [levelId, store]);
@@ -110,8 +113,13 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const r = el.getBoundingClientRect();
-      const mouseWheel = e.deltaMode === 1 || (e.deltaX === 0 && Math.abs(e.deltaY) >= 50 && Number.isInteger(e.deltaY));
-      tools.wheel({ x: e.clientX - r.left, y: e.clientY - r.top, dx: e.deltaX, dy: e.deltaY * (e.deltaMode === 1 ? 20 : 1), zoom: e.ctrlKey || e.metaKey || mouseWheel });
+      // FLR-T-18.6: zoom or pan by the zoom menu's setting and whether this is a trackpad or a mouse (panzoom.ts).
+      const legacy = (e as WheelEvent & { wheelDeltaY?: number }).wheelDeltaY;
+      tools.wheel({
+        x: e.clientX - r.left,
+        y: e.clientY - r.top,
+        sample: { deltaX: e.deltaX, deltaY: e.deltaY, deltaMode: e.deltaMode, ...(typeof legacy === 'number' ? { wheelDeltaY: legacy } : {}), ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey },
+      });
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => { el.removeEventListener('wheel', onWheel); };
@@ -133,13 +141,15 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
 
   const picking = useEditor(store, (s) => (s.picking === null ? null : 'ridge' in s.picking ? 'ridge' : 'switch'));
   const selection = useEditor(store, (s) => s.selection);
-  const cursor = picking === 'switch' ? 'copy' : tool === 'select' && picking === null ? 'default' : 'crosshair';
+  // The hand's cursor (grab, grabbing while pressed) is the stylesheet's.
+  const cursor = tool === 'hand' && picking === null ? undefined : picking === 'switch' ? 'copy' : tool === 'select' && picking === null ? 'default' : 'crosshair';
+  const zooming = useNav(store, (n) => n.animating);
   // The plan steps back while the systems are being worked on (the board's "23").
   const focusSystems = tool === 'device' || picking === 'switch';
   const electricalTool = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.system === 'electrical');
 
   return (
-    <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined}>
+    <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined} data-zooming={zooming ? 'on' : undefined}>
       {view !== null ? (
         <svg
           ref={svg}
@@ -965,7 +975,6 @@ function describeHover(model: EditorModel, level: LevelView, id: string, units: 
 
 function CanvasChrome({ store, view, units }: { store: EditorStore; view: Viewport; units: UnitSystem }) {
   const bar = scaleBar(view, units);
-  const run = (id: string) => () => commandById(id)?.run(store, undefined as never);
   return (
     <>
       {/* An image with a name: aria-label on a plain div is not announced (ARIA 1.2 prohibits it). */}
@@ -973,14 +982,9 @@ function CanvasChrome({ store, view, units }: { store: EditorStore; view: Viewpo
         <ArrowUp aria-hidden="true" />
         <span aria-hidden="true">N</span>
       </div>
-      <div className="fs-zoom">
-        <IconButton size="sm" label="Zoom out" icon={<Minus />} onClick={run('view.zoomOut')} />
-        <button type="button" className="fs-zoom__value" onClick={run('view.fit')} title="Zoom to fit">
-          {zoomPercent(view)}%
-        </button>
-        <IconButton size="sm" label="Zoom in" icon={<Plus />} onClick={run('view.zoomIn')} />
-        <IconButton size="sm" label="Zoom to fit" icon={<Scan />} onClick={run('view.fit')} />
-      </div>
+      {/* FLR-T-18.6: the zoom and navigation bar, the saved views and the minimap. */}
+      <ZoomBar store={store} view={view} />
+      <NavStack store={store} view={view} />
       <div className="fs-scalebar" aria-hidden="true">
         <span className="fs-scalebar__bar" style={{ width: bar.px }} />
         <span>{bar.label}</span>
