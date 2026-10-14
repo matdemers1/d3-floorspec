@@ -13,6 +13,7 @@ import { RENDER_PENDING, type PlanRenderer } from '../render.js';
 import { SHA256, type AssetStore } from '../assets/store.js';
 import { NO_PACKS, type InstalledPacks } from '../rules/packs.js';
 import { AT_PATTERN, SKIES } from '@d3-floorspec/worker/stills';
+import { MODE_IDS } from '@floorspec/render2d';
 import { sceneNamed, scenesOf } from '@floorspec/mesh';
 import { profileOfProject } from '../rules/profiles.js';
 
@@ -23,6 +24,8 @@ const RenderQuery = z.object({
   highlight: z.string().max(2000).optional(),
   width: z.coerce.number().int().min(64).max(4096).optional(),
   theme: z.enum(['light', 'dark']).optional(),
+  // FLR-T-18.3: a plan in a trade's view — construction, electrical, … — its other layers ghosted or left out.
+  mode: z.enum(MODE_IDS).optional(),
   // 3D (FLR-T-8.5): a named view, or a room to stand in; and the design.
   camera: z.enum(['sw', 'se', 'ne', 'nw', 'top']).optional(),
   room: z.string().min(1).max(128).optional(),
@@ -276,6 +279,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
       if (!options.success) throw new HttpError(400, 'the render options are not valid', { fields: options.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) });
       const etag = `"${hash}-${createHash('sha256').update(JSON.stringify(options.data)).digest('hex').slice(0, 16)}"`;
       if (view === '3d') {
+        if (options.data.mode !== undefined) throw new HttpError(400, 'a mode is a view of the plan: it is for view=plan');
         const png = await render3d(req, { hash, document }, options.data);
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('ETag', etag);
@@ -283,7 +287,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
         res.send(Buffer.from(png));
         return;
       }
-      const { level, highlight, width, theme } = options.data;
+      const { level, highlight, width, theme, mode } = options.data;
       // "all" is the 3D render's whole house (FLR-T-12.23); a plan is one level — unless the model has a level called "all".
       if (level === 'all' && !(isObject(document) && isObject(document['levels']) && Object.hasOwn(document['levels'], 'all')))
         throw new HttpError(400, 'a plan is drawn one level at a time: name a level, or omit it for the lowest ("all" is for view=3d)');
@@ -296,6 +300,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(highlight === undefined ? {} : { highlight: highlight.split(',').filter((id) => id.length > 0) }),
           ...(width === undefined ? {} : { width }),
           ...(theme === undefined ? {} : { theme }),
+          ...(mode === undefined ? {} : { mode }),
           ...(symbols.size === 0 ? {} : { symbols }),
           ...(base === null ? {} : { ghost: { before: base as object } }),
         });
