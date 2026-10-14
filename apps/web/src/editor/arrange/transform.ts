@@ -5,6 +5,7 @@ import { moveDevice, type HostRef } from '../systems/ops';
 import type { DeviceView } from '../systems/view';
 import type { Batch } from '../ops';
 import { boundsOfIds, type Rect } from './shapes';
+import { cornersOf, wallsOfRoom } from './rooms';
 
 /**
  * Moving, turning and mirroring many elements as one batch (FLR-T-18.8). Every edit here is a
@@ -89,20 +90,6 @@ const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null 
 const asPoint = (v: unknown): Point | null => (Array.isArray(v) && typeof v[0] === 'number' && typeof v[1] === 'number' ? [v[0], v[1]] : null);
 const lengthOf = (w: WallView): number => w.arc?.length ?? dist(w.a, w.b);
 
-/** The junctions at a room face's corners (Core 6.3: a face's vertices are junction positions). */
-function cornersOf(level: LevelView, room: string): string[] | null {
-  const face = level.faces.find((f) => f.room === room);
-  if (face === undefined) return null;
-  const at = new Map(level.junctions.map((j) => [`${String(j.position[0])},${String(j.position[1])}`, j.id]));
-  const ids: string[] = [];
-  for (const p of face.outer) {
-    const id = at.get(`${String(p[0])},${String(p[1])}`);
-    if (id === undefined) continue;
-    ids.push(id);
-  }
-  return ids;
-}
-
 /** The batch that applies `xf` to the elements `ids` on `level`. */
 export function transformBatch(model: EditorModel, level: LevelView, ids: readonly string[], xf: Xform): Transformed {
   const doc = model.document;
@@ -123,7 +110,7 @@ export function transformBatch(model: EditorModel, level: LevelView, ids: readon
       junctions.add(w.start);
       junctions.add(w.end);
     } else if (kind === 'room') {
-      for (const j of cornersOf(level, id) ?? []) junctions.add(j);
+      for (const j of cornersOf(level, id)) junctions.add(j);
     }
   }
   for (const j of level.junctions) {
@@ -138,13 +125,14 @@ export function transformBatch(model: EditorModel, level: LevelView, ids: readon
     const w = wallsById.get(id) as WallView;
     ops.push({ op: 'setProperty', id, path: '/start', value: w.end }, { op: 'setProperty', id, path: '/end', value: w.start });
   }
-  // Rooms carried along: every corner of the face moves (or the room itself is selected).
+  // Rooms carried along: every side's wall is carried whole (or the room itself is selected).
+  const rigidOrMoving = (w: WallView) => junctions.has(w.start) && junctions.has(w.end);
   const carriedRooms = new Set(
     level.rooms
       .filter((room) => {
         if (selected.has(room.id)) return true;
-        const corners = cornersOf(level, room.id);
-        return corners !== null && corners.length > 0 && corners.length === level.faces.find((f) => f.room === room.id)?.outer.length && corners.every((c) => junctions.has(c));
+        const sides = wallsOfRoom(level, room.id);
+        return sides.length > 0 && sides.length === level.faces.find((f) => f.room === room.id)?.outer.length && sides.every((s) => rigidOrMoving(s.wall));
       })
       .map((room) => room.id),
   );
@@ -178,7 +166,9 @@ export function transformBatch(model: EditorModel, level: LevelView, ids: readon
   for (const d of level.devices) {
     const host = d.host;
     const onTurnedWall = host?.['mode'] === 'wallFace' && turnedRound.has(String(host['wall']));
-    if (!selected.has(d.id) && !onTurnedWall) continue;
+    // What stands in a room that is carried goes with it: its furniture, fixtures and ceiling lights.
+    const inCarriedRoom = host?.['mode'] === 'surface' && carriedRooms.has(String(host['room']));
+    if (!selected.has(d.id) && !onTurnedWall && !inCarriedRoom) continue;
     const next = deviceHost(level, d, xf, { rigid, turnedRound, carriedRooms });
     if (next === 'none') {
       if (selected.has(d.id)) skipped.push({ id: d.id, why: 'it has no host to move' });

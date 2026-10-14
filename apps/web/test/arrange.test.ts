@@ -7,6 +7,8 @@ import { readModel, type EditorModel, type LevelView } from '../src/editor/model
 import type { Batch } from '../src/editor/ops';
 import { alignBatch, distributeBatch, middleOf, mirror, quarterTurn, transformBatch, translation } from '../src/editor/arrange/transform';
 import { marqueeHits, rectOf, selectableShapes } from '../src/editor/arrange/shapes';
+import { copyClip, pasteBatch, readClip } from '../src/editor/arrange/clipboard';
+import { wallsOfRoom } from '../src/editor/arrange/rooms';
 
 /**
  * FLR-T-18.8: arranging many elements of the Courtyard House at once, through the real applier as
@@ -39,14 +41,17 @@ describe('moving many at once', () => {
   it('moves a room with its walls, its openings and devices following', () => {
     const m = house();
     const level = L1(m);
-    const walls = level.walls.filter((w) => {
-      const f = level.faces.find((x) => x.room === 'R4')!;
-      return f.outer.some((p) => p[0] === w.a[0] && p[1] === w.a[1]) && f.outer.some((p) => p[0] === w.b[0] && p[1] === w.b[1]);
-    });
-    const t = transformBatch(m, level, ['R4', ...walls.map((w) => w.id)], translation([0, 32_512]));
+    expect(wallsOfRoom(level, 'R4').map((s) => s.wall.id).sort()).toEqual(['W13', 'W14', 'W30', 'W8']);
+    const t = transformBatch(m, level, ['R4'], translation([0, 32_512]));
     expect(t.skipped).toEqual([]);
-    const doc = commit(HOUSE, t.batch);
-    expect((JSON.parse(doc).rooms.R4 as { anchor: number[] }).anchor).toEqual([14435328, 1170432 + 32_512]);
+    expect(t.batch.filter((op) => op.op === 'moveJunction').length).toBe(4);
+    // Its toilet goes with it.
+    expect(t.batch.some((op) => op.op === 'moveElement' && (op as { element: string }).element === 'PWD-WC')).toBe(true);
+    // The guest bath next door shares a wall with it, and its toilet is backed onto that wall: the
+    // server refuses what would put it inside the wall, as it refuses any other edit that would.
+    const r = apply(HOUSE, { batch: t.batch }, OFFICIAL_READER);
+    expect(r.status).toBe('rejected');
+    if (r.status === 'rejected') expect(r.diagnostics.map((d) => d.elements).flat()).toContain('GBA-WC');
   });
 
   it('turns and mirrors a group of furniture about its middle', () => {
@@ -60,14 +65,22 @@ describe('moving many at once', () => {
     expect(host(flipped, 'GR-CW0')['rotation']).toBe(180_000_000);
   });
 
-  it('mirrors walls without turning their exteriors inside', () => {
+  it('mirrors a room standing on its own without turning its exterior inside', () => {
+    // A copy of the powder room out on the lawn, then mirrored north ↔ south about its middle.
     const m = house();
-    const level = L1(m);
-    const f = level.faces.find((x) => x.room === 'R4')!;
-    const walls = level.walls.filter((w) => f.outer.some((p) => p[0] === w.a[0] && p[1] === w.a[1]) && f.outer.some((p) => p[0] === w.b[0] && p[1] === w.b[1])).map((w) => w.id);
-    const ids = ['R4', ...walls];
-    const t = transformBatch(m, level, ids, mirror(middleOf(level, ids)!, 'v'));
-    commit(HOUSE, t.batch);
+    const clip = copyClip(m, L1(m), ['R4'], 'p')!;
+    const pasted = pasteBatch(m, L1(m), clip, { offsets: [[0, -8 * 390_144]], attempt: 0, sameProject: true });
+    const doc = commit(HOUSE, pasted.batch);
+    const m2 = readModel('m2', doc);
+    const level = L1(m2);
+    const ids = pasted.ids.filter((id) => m2.index.has(id));
+    const t = transformBatch(m2, level, ids, mirror(middleOf(level, ids)!, 'v'));
+    expect(t.batch.some((op) => op.op === 'setProperty' && op.path === '/start')).toBe(true);
+    const after = readModel('m3', commit(doc, t.batch));
+    // The exterior wall's exterior was south (its left, Core 5.4); mirrored, it is north.
+    const ext = L1(after).walls.find((w) => w.id === 'W30-2')!;
+    expect(ext.a[1]).toBeGreaterThan(-8 * 390_144);
+    expect(after.valid).toBe(true);
   });
 
   it('aligns and distributes', () => {
@@ -93,5 +106,73 @@ describe('the marquee', () => {
     expect(crossing).not.toContain('R7');
     // Wider, the crossing touches the table too.
     expect(marqueeHits(shapes, rectOf([16_300_000, 14_900_000], [16_900_000, 16_700_000]), true)).toContain('GR-TABLE');
+  });
+});
+
+describe('copy, paste, duplicate and array', () => {
+  const pasteInto = (doc: string, from: EditorModel, ids: string[], level: string, offsets: [number, number][], sameProject = true) => {
+    const clip = copyClip(from, from.levels.find((l) => l.id === (from.levels.find((l) => ids.some((id) => l.devices.some((d) => d.id === id) || l.walls.some((w) => w.id === id) || l.rooms.some((x) => x.id === id)))?.id ?? 'L1'))!, ids, 'p')!;
+    const target = readModel('t', doc);
+    const p = pasteBatch(target, target.levels.find((l) => l.id === level)!, clip, { offsets, attempt: 0, sameProject });
+    return { ...p, doc: commit(doc, p.batch), clip };
+  };
+
+  it('duplicates the west chairs beside themselves, named after them', () => {
+    const r = pasteInto(HOUSE, house(), ['GR-CW0', 'GR-CW1', 'GR-CW2'], 'L1', [[-390_144, 0]]);
+    expect(r.ids).toEqual(['GR-CW0-2', 'GR-CW1-2', 'GR-CW2-2']);
+    expect(host(r.doc, 'GR-CW0-2')).toMatchObject({ mode: 'surface', room: 'R7', position: [16336192 - 390_144, 15160832] });
+  });
+
+  it('copies a room with its walls and its door, and the copy is a room of its own', () => {
+    const r = pasteInto(HOUSE, house(), ['R4'], 'L1', [[0, -8 * 390_144]]);
+    expect(r.ids.some((id) => id.startsWith('R4-'))).toBe(true);
+    const m = readModel('x', r.doc);
+    expect(m.valid).toBe(true);
+    const copy = m.levels.find((l) => l.id === 'L1')!.rooms.find((x) => x.id === 'R4-2');
+    expect(copy?.name).toBe('Powder 2');
+  });
+
+  it('copies the entry light to the upper floor, ceiling to ceiling, into the room above', () => {
+    const r = pasteInto(HOUSE, house(), ['X95'], 'L2', [[0, 0]]);
+    const h = host(r.doc, 'X95-2');
+    expect(h).toMatchObject({ mode: 'surface', surface: 'ceiling', room: 'R13', position: [15768320, 4779264] });
+  });
+
+  it('leaves behind a ceiling light with no room above it', () => {
+    const m = house();
+    const clip = copyClip(m, L1(m), ['L-GR-R1'], 'p')!;
+    const up = m.levels.find((l) => l.id === 'L2')!;
+    const p = pasteBatch(m, up, clip, { offsets: [[0, 0]], attempt: 0, sameProject: true });
+    expect(p.skipped).toEqual(['L-GR-R1']);
+  });
+
+  it('arrays a recessed light along a line, keeping the copies on its circuit', () => {
+    const m = house();
+    const r = pasteInto(HOUSE, m, ['L-GR-R1'], 'L1', [[0, -1 * 6 * 390_144 / 2], [0, -2 * 6 * 390_144 / 2]]);
+    expect(r.ids).toEqual(['L-GR-R1-2', 'L-GR-R1-3']);
+    const circuit = Object.entries((JSON.parse(r.doc) as { extensions: { FS_electrical: { circuits: Record<string, { loads?: string[] }> } } }).extensions.FS_electrical.circuits).find(([, c]) => c.loads?.includes('L-GR-R1'));
+    if (circuit !== undefined) expect(circuit[1].loads).toEqual(expect.arrayContaining(['L-GR-R1-2', 'L-GR-R1-3']));
+  });
+
+  it('pastes outlets along their own wall', () => {
+    const m = house();
+    const outlet = L1(m).devices.find((d) => d.collection === 'receptacles' && d.host?.['mode'] === 'wallFace')!;
+    const r = pasteInto(HOUSE, m, [outlet.id], 'L1', [[32_512 * 12, 0]]);
+    expect(r.skipped).toEqual([]);
+    expect(host(r.doc, r.ids[0]!)['wall']).toBe(outlet.host!['wall']);
+  });
+
+  it('pastes into another project: its types, materials and assets come along, foreign references go', () => {
+    const other = readFileSync(new URL('../../../packages/mesh/test/fixtures/showcase.floorspec.json', import.meta.url), 'utf8');
+    const target = readModel('o', other);
+    const r = pasteInto(other, house(), ['GR-CW0', 'GR-TABLE', 'KIT-ISLAND'], target.levels[0]!.id, [[0, 0]], false);
+    expect(readModel('y', r.doc).valid).toBe(true);
+    expect(r.clip.dependencies.length).toBeGreaterThan(0);
+  });
+
+  it('the clip survives the clipboard as text', () => {
+    const clip = copyClip(house(), L1(house()), ['GR-CW0'], 'p')!;
+    expect(readClip(JSON.stringify(clip))).toEqual(clip);
+    expect(readClip('hello')).toBeNull();
   });
 });
