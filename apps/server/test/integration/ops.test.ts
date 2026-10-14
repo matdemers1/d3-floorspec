@@ -231,6 +231,46 @@ describe('versions and the op log', () => {
     expect((await operator.post(ops(), { batch: ONE_ROOM_HOUSE, context: { option: 7 } })).status).toBe(400);
   });
 
+  it('restores main to an earlier version as one new op, exactly that version, and undo takes it back (FLR-T-18.14)', async () => {
+    const built = (await operator.post(ops(), { batch: ONE_ROOM_HOUSE })).body as { hash: string; op: { seq: number } };
+    await operator.post(ops(), { batch: [{ op: 'setProperty', id: 'R1', path: '/name', value: 'Den' }] });
+    const removed = (await operator.post(ops(), { batch: [{ op: 'removeElement', id: 'W1' }] })).body as { hash: string };
+    const count = await db.opLog.count({ where: { projectId: project.id } });
+
+    const res = await operator.post(`/api/projects/${project.id}/restore`, { seq: built.op.seq });
+    expect(res.status, res.text).toBe(201);
+    expect(res.body).toMatchObject({ status: 'committed', head: 'main', hash: built.hash, restored: built.op.seq, op: { kind: 'apply' } });
+    expect(await mainOf()).toBe(built.hash);
+    // Appended, never rewound: one more op; W1 came back under its own ID.
+    expect(await db.opLog.count({ where: { projectId: project.id } })).toBe(count + 1);
+    expect((res.body as { created: string[] }).created).toContain('W1');
+    // Undo takes the restore back like any edit.
+    const undo = await operator.post(`/api/projects/${project.id}/undo`);
+    expect(undo.body).toMatchObject({ hash: removed.hash });
+
+    // Main at that version already, an unknown version, a malformed body.
+    const again = await operator.post(`/api/projects/${project.id}/restore`, { seq: count + 2 });
+    expect(again.status).toBe(409);
+    expect((await operator.post(`/api/projects/${project.id}/restore`, { seq: 999 })).status).toBe(404);
+    expect((await operator.post(`/api/projects/${project.id}/restore`, { seq: 'v2' })).status).toBe(400);
+  });
+
+  it('branches from an earlier version: a changeset at that version, main unmoved (FLR-T-18.14)', async () => {
+    const built = (await operator.post(ops(), { batch: ONE_ROOM_HOUSE })).body as { hash: string; op: { seq: number } };
+    const renamed = (await operator.post(ops(), { batch: [{ op: 'setProperty', id: 'R1', path: '/name', value: 'Den' }] })).body as { hash: string };
+    const res = await operator.post(`/api/projects/${project.id}/branch`, { seq: built.op.seq });
+    expect(res.status, res.text).toBe(201);
+    const body = res.body as { hash: string; from: number; changeset: { id: string; name: string; status: string } };
+    expect(body).toMatchObject({ hash: built.hash, from: built.op.seq, changeset: { name: `From v${String(built.op.seq)}`, status: 'pending' } });
+    expect(await mainOf()).toBe(renamed.hash);
+    // The same name again is refused while that changeset is pending.
+    expect((await operator.post(`/api/projects/${project.id}/branch`, { seq: built.op.seq })).status).toBe(409);
+    // Accepted, main goes to that version (a fast-forward: main has not moved).
+    const accepted = await operator.post(`/api/projects/${project.id}/changesets/${body.changeset.id}/accept`, {});
+    expect(accepted.status, accepted.text).toBe(200);
+    expect(await mainOf()).toBe(built.hash);
+  });
+
   it('serves only versions this project reached', async () => {
     const other = await createProjectAs(operator, 'Other');
     await operator.post(`/api/projects/${other.id}/ops`, { batch: ONE_ROOM_HOUSE });

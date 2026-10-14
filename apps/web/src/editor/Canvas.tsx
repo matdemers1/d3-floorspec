@@ -33,6 +33,8 @@ import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
 import { QuickAdd } from '../placing/QuickAdd';
 import { RoomDragGhost, RoomHandles, WandOverlay, WandPrompt } from './rooms/RoomLayer';
 import { ReferenceLayer, UnderlayCapture, UnderlayHtml, UnderlayImage } from './underlay/Layer';
+import { HaloHtml, HaloLayer, useHalos } from './halos/HaloLayer';
+import { HistoryScrubber } from './HistoryScrubber';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -51,8 +53,10 @@ const pathOf = (v: Viewport, rings: readonly Ring[]) => rings.map((r) => `M${pts
 export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolController }) {
   const host = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
-  // While two versions are compared, the canvas shows the newer of them, read-only (FLR-T-3.6).
-  const model = useEditor(store, (s) => (s.compare === null ? s.model : (s.compare.toModel ?? s.model)));
+  // While two versions are compared, the canvas shows the newer of them, read-only (FLR-T-3.6) —
+  // or, scrubbing the history back (FLR-T-18.14), the version scrubbed to.
+  const model = useEditor(store, (s) => (s.compare === null ? s.model : ((s.compare.scrub === true ? s.compare.fromModel : s.compare.toModel) ?? s.model)));
+  const historyOpen = useEditor(store, (s) => s.left === 'history' && s.log !== null);
   const comparing = useEditor(store, (s) => s.compare !== null);
   const levelId = useEditor(store, (s) => s.level);
   const view = useEditor(store, (s) => s.view);
@@ -167,6 +171,8 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
   const details = usePlanStyles(store, (s) => s.details);
   const look = useMemo(() => planLook(planStyle, pageTheme, details, trade === 'construction'), [planStyle, pageTheme, details, trade]);
   const paint = useMemo(() => (view === null || level === undefined || model === null ? null : levelPaint(view, level, model, look)), [view, level, model, look]);
+  // FLR-T-18.14: clearance halos of what is being dragged, resized, turned or placed, and of its neighbours.
+  const halos = useHalos(store, comparing ? undefined : level, model);
 
   return (
     <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined} data-zooming={zooming ? 'on' : undefined} data-ghost={ghost} data-mode={trade} data-plan-style={look.style} data-plan-theme={pageTheme} style={lookStyle(look)}>
@@ -213,6 +219,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
               {comparing ? null : <ArrangeLayer store={store} view={view} level={level} />}
               {layers.rooms ? <StyledRoomLabels view={view} level={level} document={model.document} units={units} look={look} /> : null}
+              <HaloLayer view={view} halos={halos} />
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
               {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={model} />}
@@ -231,6 +238,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       {view !== null && level !== undefined && !comparing ? <WandPrompt store={store} tools={tools} view={view} level={level} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={model} units={units} picking={tools.pickLevel} /> : null}
       {view !== null && level !== undefined && !comparing ? <UnderlayHtml store={store} view={view} level={level} units={units} /> : null}
+      {view !== null && model !== null ? <HaloHtml view={view} halos={halos} model={model} units={units} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
       {paint !== null && layers.walls ? <WallTypeLegend paint={paint} /> : null}
       <DiffLegend store={store} />
@@ -240,6 +248,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
         </div>
       ) : null}
       {view !== null ? <CanvasChrome store={store} view={view} units={units} /> : null}
+      {historyOpen ? <HistoryScrubber store={store} /> : null}
     </div>
   );
 }
@@ -623,6 +632,7 @@ export function useDiff(store: EditorStore): { from: EditorModel; to: EditorMode
  */
 function DiffLayer({ store, view, levelId }: { store: EditorStore; view: Viewport; levelId: string }) {
   const d = useDiff(store);
+  const scrubbing = useEditor(store, (s) => s.compare?.scrub === true);
   if (d === null) return null;
   const a = d.from.levels.find((l) => l.id === levelId);
   const b = d.to.levels.find((l) => l.id === levelId);
@@ -640,7 +650,7 @@ function DiffLayer({ store, view, levelId }: { store: EditorStore; view: Viewpor
   for (const id of d.diff.ids.added) if (b !== undefined && shown(id)) parts.push(<Outline key={`a-${id}`} view={view} level={b} id={id} className={`fs-diff fs-diff--${tone}`} />);
   for (const id of d.diff.ids.changed) if (b !== undefined && listed.has(id)) parts.push(<Outline key={`c-${id}`} view={view} level={b} id={id} className="fs-diff fs-diff--changed" />);
   return (
-    <g className="fs-diffs" aria-hidden="true">
+    <g className={scrubbing ? 'fs-diffs fs-diffs--scrub' : 'fs-diffs'} aria-hidden="true" data-testid="diffs">
       {parts}
     </g>
   );
@@ -648,7 +658,9 @@ function DiffLayer({ store, view, levelId }: { store: EditorStore; view: Viewpor
 
 function DiffLegend({ store }: { store: EditorStore }) {
   const d = useDiff(store);
-  if (d === null) return null;
+  // The history scrubber carries its own legend (FLR-T-18.14).
+  const scrubbing = useEditor(store, (s) => s.compare?.scrub === true);
+  if (d === null || scrubbing) return null;
   const c = d.diff.counts;
   const items: [string, string][] =
     d.mode === 'proposal'
