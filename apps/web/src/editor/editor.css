@@ -1431,8 +1431,9 @@ path.fs-hl--danger {
 }
 .fs-zoom {
   position: absolute;
-  left: var(--space-16);
-  bottom: var(--space-16);
+  right: var(--space-12);
+  bottom: var(--space-12);
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -1446,14 +1447,339 @@ path.fs-hl--danger {
   height: var(--icon-14) !important;
 }
 .fs-zoom__value {
-  min-width: 44px;
-  padding: 0 var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: 28px;
+  min-width: 56px;
+  padding: 0 var(--space-6) 0 var(--space-8);
   border: 0;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--color-fg-muted);
   font-family: var(--font-mono);
   font-size: var(--text-12);
   cursor: pointer;
+}
+.fs-zoom__value:hover,
+.fs-zoom__value[aria-expanded='true'] {
+  background: var(--color-surface-hover);
+  color: var(--color-fg);
+}
+.fs-zoom__value:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.fs-editor .fs-zoom__value svg {
+  width: 10px !important;
+  height: 10px !important;
+}
+.fs-zoom__rule {
+  width: 1px;
+  height: 18px;
+  margin: 0 var(--space-2);
+  background: var(--color-border);
+}
+
+/* FLR-T-18.6: the zoom menu, above the zoom bar. */
+.fs-zoommenu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-8));
+  width: 250px;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  font-size: var(--text-13);
+}
+.fs-zoommenu__type {
+  padding: var(--space-6) var(--space-8);
+}
+.fs-zoommenu__field {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--space-12);
+  border: 1px solid var(--color-border-field);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+.fs-zoommenu__field:focus-within {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+.fs-zoommenu__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-13);
+  outline: none;
+}
+.fs-zoommenu__unit {
+  color: var(--color-fg-faint);
+  font-family: var(--font-mono);
+}
+.fs-zoommenu__error {
+  margin: var(--space-4) 0 0;
+  color: var(--color-danger);
+  font-size: var(--text-12);
+}
+.fs-zoommenu__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-zoommenu__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 30px;
+  padding: 0 var(--space-8);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.fs-zoommenu__item > span {
+  flex: 1;
+}
+.fs-zoommenu__item:hover:not(:disabled),
+.fs-zoommenu__item:focus-visible {
+  background: var(--color-surface-hover);
+}
+.fs-zoommenu__item:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+.fs-zoommenu__item:disabled {
+  color: var(--color-fg-faint);
+  cursor: default;
+}
+.fs-zoommenu__wheel {
+  margin-top: var(--space-4);
+  padding: var(--space-8) var(--space-8) var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+.fs-zoommenu__label {
+  margin: 0 0 var(--space-6);
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+}
+.fs-zoommenu__help {
+  margin: var(--space-6) 0 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+
+/* FLR-T-18.6: the saved views and the minimap, stacked in the canvas's bottom-left corner. */
+.fs-navstack {
+  position: absolute;
+  left: var(--space-12);
+  bottom: var(--space-12);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 200px;
+}
+.fs-saved,
+.fs-minimap {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-float);
+}
+.fs-saved {
+  padding: var(--space-6);
+}
+.fs-saved__head,
+.fs-minimap__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: 30px;
+  padding: 0 var(--space-2) 0 var(--space-6);
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+}
+.fs-editor .fs-saved__head > svg {
+  width: 12px;
+  height: 12px;
+}
+.fs-saved__title {
+  margin: 0;
+  font: inherit;
+}
+.fs-saved__name {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+}
+.fs-saved__input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--color-border-field);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-size: var(--text-12);
+}
+.fs-saved__input:focus {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+.fs-saved__save {
+  height: 28px;
+  padding: 0 var(--space-8);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+.fs-saved__save:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.fs-saved__empty,
+.fs-minimap__empty {
+  margin: 0;
+  padding: var(--space-6) var(--space-8) var(--space-8);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-saved__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 220px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.fs-saved__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+}
+.fs-saved__row[data-current='on'] {
+  background: var(--color-accent-muted);
+}
+.fs-saved__row:hover:not([data-current='on']) {
+  background: var(--color-surface-hover);
+}
+.fs-saved__open {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--space-4) var(--space-8);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.fs-saved__open:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+.fs-saved__name-text {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--text-13);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-saved__meta {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-saved__delete {
+  opacity: 0;
+}
+.fs-saved__row:hover .fs-saved__delete,
+.fs-saved__row:focus-within .fs-saved__delete {
+  opacity: 1;
+}
+@media (pointer: coarse) {
+  .fs-saved__delete {
+    opacity: 1;
+  }
+}
+.fs-minimap {
+  overflow: hidden;
+}
+.fs-minimap__level {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-minimap__zoom {
+  font-family: var(--font-mono);
+}
+.fs-minimap__svg {
+  display: block;
+  margin: 0 var(--space-6) var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-sunken);
+  cursor: pointer;
+  touch-action: none;
+}
+.fs-minimap__svg:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.fs-minimap__view {
+  fill: var(--color-accent-muted);
+  fill-opacity: 0.35;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  cursor: grab;
+}
+.fs-minimap__svg:active .fs-minimap__view {
+  cursor: grabbing;
+}
+/* The minimap's plan: the plan's own colours, without its hairlines' weight. */
+.fs-minimap .fs-plan2__labels {
+  display: none;
+}
+
+/* FLR-T-18.6: in the editor a toast rises clear of the status bar and the zoom bar in the plan's
+   bottom-right corner, rather than sitting over its buttons. */
+body:has(.fs-editor) .d3-toast-region {
+  bottom: 88px;
+}
+
+/* FLR-T-18.6: the hand. */
+.fs-canvas[data-tool='hand'] .fs-canvas__svg {
+  cursor: grab;
+}
+.fs-canvas[data-tool='hand'] .fs-canvas__svg:active {
+  cursor: grabbing;
 }
 .fs-scalebar {
   position: absolute;
@@ -1696,6 +2022,7 @@ path.fs-hl--danger {
   .fs-scalebar {
     left: auto;
     right: 24px;
+    bottom: 64px;
   }
   .fs-hint--touch {
     display: flex;

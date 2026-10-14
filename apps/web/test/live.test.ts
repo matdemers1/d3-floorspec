@@ -11,7 +11,7 @@ import { nudgeBatch } from '../src/editor/nudge';
 import { interiorPoint } from '../src/editor/geometry';
 import { BASE_PER_FOOT, BASE_PER_INCH, parsePoint, parseSegment } from '../src/editor/units';
 import { EditorStore } from '../src/editor/store';
-import { COMMANDS, commandFor } from '../src/editor/commands';
+import { COMMANDS, commandFor, commandForCode } from '../src/editor/commands';
 import type { ChangesetLogEntry, HistoryEntry } from '../src/editor/api';
 import type { EventSourceLike } from '../src/lib/events';
 import type { Batch } from '../src/editor/ops';
@@ -199,12 +199,14 @@ describe('typed coordinates while drawing', () => {
 });
 
 describe('the command registry the palette lists', () => {
-  it('has every editor action, each with a unique ID, the palette on ⌘K and the history on H', () => {
+  it('has every editor action, each with a unique ID, the palette on ⌘K and the history on ⌥H', () => {
     const ids = COMMANDS.map((c) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of ['review.accept', 'review.reject', 'review.open', 'history.toggle', 'history.compareLast', 'edit.addDoor', 'edit.nameRoom', 'edit.rename', 'view.levelUp', 'model.newLevel', 'model.metric', 'edit.undo']) expect(ids).toContain(id);
     expect(commandFor('Mod+k')?.id).toBe('view.palette');
-    expect(commandFor('h')?.id).toBe('history.toggle');
+    // ⌥H since FLR-T-18.6: H is the hand.
+    expect(commandForCode('Alt+KeyH')?.id).toBe('history.toggle');
+    expect(commandFor('h')?.id).toBe('tool.hand');
     expect(commandFor('F2')?.id).toBe('edit.rename');
   });
 });

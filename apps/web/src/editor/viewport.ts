@@ -19,11 +19,25 @@ export const toWorld = (v: Viewport, q: Point): Point => [(q[0] - v.w / 2) / v.s
 /** Zoom as a percentage of the 100% scale, for the zoom control. */
 export const zoomPercent = (v: Viewport): number => Math.round((v.s * BASE_PER_FOOT * 100) / PX_PER_FOOT_AT_100);
 
-const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
+/** The scale a zoom percentage names, clamped to what the canvas allows (5% to 4000%). */
+export const scaleForPercent = (percent: number): number => clampScale((percent * PX_PER_FOOT_AT_100) / (BASE_PER_FOOT * 100));
+export const MIN_PERCENT = 5;
+export const MAX_PERCENT = 4000;
+
+export const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
+
+/** The world rectangle the view shows. */
+export function visibleRegion(v: Viewport): { minX: number; minY: number; maxX: number; maxY: number } {
+  return { minX: v.cx - v.w / 2 / v.s, maxX: v.cx + v.w / 2 / v.s, minY: v.cy - v.h / 2 / v.s, maxY: v.cy + v.h / 2 / v.s };
+}
+
+/** Set the scale to `s` keeping the world point under `at` (screen) where it is. */
+export const zoomToScaleAt = (v: Viewport, s: number, at: Point): Viewport => zoomAt(v, clampScale(s) / v.s, at);
 
 /** Zoom by `factor` keeping the world point under `at` (screen) where it is. */
 export function zoomAt(v: Viewport, factor: number, at: Point): Viewport {
   const s = clampScale(v.s * factor);
+  if (s === v.s) return v;
   const before = toWorld(v, at);
   const next = { ...v, s };
   const after = toWorld(next, at);
