@@ -66,6 +66,7 @@ function ReferencePlan({ view, level, layers }: { view: Viewport; level: LevelVi
     <>
       <g className="fs-reference__walls">
         {level.walls.map((w) => <polygon key={w.id} points={pts(w.ring)} />)}
+        {level.fills.map((f) => <polygon key={f.id} className="fs-reference__fill" points={pts(f.ring)} />)}
       </g>
       {layers.openings ? (
         <g className="fs-reference__openings">
@@ -216,7 +217,7 @@ export function UnderlayHtml({ store, view, level, units }: { store: EditorStore
         </Button>
       </div>
       {label !== undefined && at !== null ? (
-        <span className="fs-underlay-tag" style={{ left: at[0] + 12, top: at[1] + 12 }} aria-hidden="true">
+        <span className="fs-guidetag" style={{ left: at[0] + 12, top: at[1] + 12 }} aria-hidden="true">
           {label}
         </span>
       ) : null}

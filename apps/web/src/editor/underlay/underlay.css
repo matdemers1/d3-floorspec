@@ -20,6 +20,9 @@
   stroke-width: 1;
   stroke-dasharray: 5 3;
 }
+.fs-reference__walls .fs-reference__fill {
+  stroke: none;
+}
 .fs-reference__openings line {
   stroke: var(--fs-reference);
   stroke-width: 3;
@@ -55,7 +58,8 @@
 
 .fs-underlay-prompt {
   position: absolute;
-  top: var(--space-12);
+  /* Below the canvas's own top banner (an empty level's "Nothing drawn", the drawing hints). */
+  top: 72px;
   left: 50%;
   display: flex;
   align-items: center;
@@ -70,18 +74,6 @@
   color: var(--color-fg);
   font-size: var(--text-13);
   z-index: 20;
-}
-.fs-underlay-tag {
-  position: absolute;
-  padding: 2px var(--space-6);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-float);
-  color: var(--color-fg);
-  font-size: var(--text-12);
-  pointer-events: none;
-  white-space: nowrap;
-  z-index: 19;
 }
 .fs-underlay-length {
   position: absolute;
@@ -149,7 +141,11 @@
   color: var(--color-fg-muted);
   font-size: var(--text-12);
 }
+.fs-trace__note {
+  flex-wrap: nowrap;
+}
 .fs-trace__swatch {
+  flex: none;
   width: 14px;
   height: 0;
   border-top: 2px dashed var(--color-info);

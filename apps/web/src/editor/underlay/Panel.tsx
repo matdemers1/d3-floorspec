@@ -120,7 +120,7 @@ export function TraceLayers({ store }: { store: EditorStore }) {
       {shown !== 'off' ? (
         <p className="fs-trace__note">
           <span className="fs-trace__swatch" aria-hidden="true" />
-          {labelOf(model, (shown === 'below' ? below : above)?.id ?? level)} drawn for reference: snapped to, never edited.
+          <span>{labelOf(model, (shown === 'below' ? below : above)?.id ?? level)} drawn for reference: snapped to, never edited.</span>
         </p>
       ) : null}
 

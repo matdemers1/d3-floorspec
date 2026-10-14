@@ -224,6 +224,7 @@ export function referencePoints(store: EditorStore): { point: Point; label: stri
     out.push({ point: q, label });
   };
   for (const j of ref.junctions) add(j.position, `Junction on ${ref.name}`);
-  for (const w of ref.walls) for (const p of w.ring) add(p, `Wall corner on ${ref.name}`);
+  // A corner where walls meet may belong to the junction's fill rather than to either wall's outline.
+  for (const r of [...ref.walls, ...ref.fills]) for (const p of r.ring) add(p, `Wall corner on ${ref.name}`);
   return out;
 }
