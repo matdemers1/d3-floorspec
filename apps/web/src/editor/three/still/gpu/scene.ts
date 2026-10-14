@@ -24,6 +24,7 @@ import {
   type Material,
   type Object3D,
 } from 'three';
+import { PhysicalCamera } from 'three-gpu-pathtracer';
 import type { StillCamera } from './cameras';
 import { GRASS_TILE, grassTexture, type SkyField } from '@floorspec/mesh/sky';
 import { skyPixels, stillSun, TRACE_UNIT, type Vec3 } from './sky';
@@ -372,7 +373,11 @@ export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | n
 
 /** A still camera as three.js's, for a picture of this aspect. */
 export function perspectiveOf(c: StillCamera, aspect: number): PerspectiveCamera {
-  const camera = new PerspectiveCamera(c.fovY, aspect, c.near, 5000);
+  // A thin lens (FLR-T-13.10): three-gpu-pathtracer's physical camera, its film the 36 mm a focal length is given on — so its
+  // aperture is the focal length over the f-number, and its plane in focus is across the line of sight, as the CPU tracer's.
+  const camera = c.lens === undefined ? new PerspectiveCamera(c.fovY, aspect, c.near, 5000) : Object.assign(new PhysicalCamera(c.fovY, aspect, c.near, 5000), { filmGauge: 36, fStop: c.lens.fNumber, focusDistance: c.lens.focus, apertureBlades: 0 });
+  // A shift lens (two-point perspective): three.js's view offset moves the frustum up by `shift` half-heights.
+  if (c.shift !== undefined && c.shift !== 0) camera.setViewOffset(aspect, 1, 0, -c.shift / 2, aspect, 1);
   camera.position.set(...c.eye);
   camera.up.set(...c.up);
   camera.lookAt(...c.target);

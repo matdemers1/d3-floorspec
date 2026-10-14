@@ -256,14 +256,15 @@ export function similarKey(model: EditorModel, id: string, how: Similar): string
  * Select everything on the level like the selection (Figma's "select matching", Revit's "select all
  * instances"): the same catalogue item or type (`item`), the same kind (`kind`), or everything (`level`).
  */
-export function selectSimilar(store: EditorStore, how: Similar): number {
+export function selectSimilar(store: EditorStore, how: Similar, picking?: LevelView): number {
   const s = store.get();
   const model = s.model;
   const level = store.levelView;
   if (model === null || level === undefined) return 0;
   const keys = new Set(s.selected.map((id) => similarKey(model, id, how)).filter((k): k is string => k !== null));
   if (keys.size === 0 && how !== 'level') return 0;
-  const ids = selectableShapes(level, s.layers)
+  // A mode's ghosted layers are not selected (FLR-T-18.3): `picking` is the level as the plan picks from it.
+  const ids = selectableShapes(picking ?? level, s.layers)
     .map((x) => x.id)
     .filter((id) => how === 'level' || keys.has(similarKey(model, id, how) ?? ''));
   store.selectMany(ids, s.selection !== null && ids.includes(s.selection) ? { primary: s.selection } : {});

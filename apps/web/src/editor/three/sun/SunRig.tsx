@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { HouseMesh } from '@floorspec/mesh';
+import { exposureFactor, type HouseMesh } from '@floorspec/mesh';
+import { useThreeState } from '../mode';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { mapsFor, skyBounce, skyExposure, skyField, skyHarmonics, skyLight, sunDay, sunsetPlace, type SkyLight, type SkyPreset } from '@floorspec/mesh/sky';
@@ -138,7 +139,9 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false, ca
   const field = useMemo(() => (sky === null || maps === null ? null : skyField(sky, maps)), [sky, maps]);
   const sh = useMemo(() => (field === null ? null : skyHarmonics(field)), [field]);
   const exposure = lamps ? LIT_EXPOSURE : field === null || sky === null ? null : skyExposure(sky, field.maps);
-  const toneExposure = exposure === null ? 1 : toneMappingExposure(exposure);
+  // Exposure compensation (FLR-T-13.10): the camera's, on top of the sky's exposure.
+  const compensation = useThreeState(store, (s) => (s.shot === null || s.walking ? 0 : s.shot.exposure));
+  const toneExposure = (exposure === null ? 1 : toneMappingExposure(exposure)) * exposureFactor(compensation);
   const direct = sky?.direct ?? null;
   const bounce: { lux: number; color: [number, number, number] } = sky === null ? { lux: 0, color: [1, 1, 1] } : skyBounce(sky);
   // The sun casts shadows; the moon is too faint to.

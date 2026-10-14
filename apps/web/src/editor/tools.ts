@@ -30,6 +30,7 @@ import { kindOf, labelOf } from './model';
 import { requestRemove } from './actions';
 import { flipFromPlan } from './three/lighting/lighting';
 import { deviceAt } from './systems/hit';
+import { ghostsOf, pickable } from './modes';
 import { centredOn, dragHost, hoverFor, type DeviceHover } from './systems/placement';
 import { moveDevice, placeDevice, setMember } from './systems/ops';
 import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
@@ -105,6 +106,12 @@ export class ToolController {
 
   private get level(): LevelView | undefined {
     return this.store.levelView;
+  }
+
+  /** The level as a click picks from it: a mode's ghosts are not selectable (FLR-T-18.3). */
+  get pickLevel(): LevelView | undefined {
+    const level = this.level;
+    return level === undefined ? undefined : pickable(level, ghostsOf(this.store));
   }
 
   private world(p: PointerInfo): Point {
@@ -276,7 +283,7 @@ export class ToolController {
 
   /** The device under the pointer, when its layer is shown. */
   private deviceUnder(p: PointerInfo): DeviceView | null {
-    const level = this.level;
+    const level = this.pickLevel;
     const view = this.store.get().view;
     if (level === undefined || view === null) return null;
     return deviceAt(level, this.world(p), this.tol(p.type), view.s, this.store.get().layers);
@@ -311,7 +318,7 @@ export class ToolController {
     if (handle !== null) return handle;
     const device = this.deviceUnder(p);
     if (device !== null && (p.type !== 'touch' || this.store.get().selection === device.id)) return { kind: 'device', id: device.id };
-    const hit = hitTest(level, this.world(p), this.tol(p.type));
+    const hit = hitTest(this.pickLevel ?? level, this.world(p), this.tol(p.type));
     if (hit === null) return null;
     if (hit.kind === 'junction') return hit;
     // A finger drags a wall or an opening only once it is selected; otherwise it pans.
@@ -382,7 +389,7 @@ export class ToolController {
           return;
         }
         if (this.mode === 'idle' || this.mode === 'tool') {
-          const id = this.deviceUnder(p)?.id ?? hitTest(level, this.world(p), this.tol(p.type), { roofs: s.layers.roof })?.id ?? null;
+          const id = this.deviceUnder(p)?.id ?? hitTest(this.pickLevel ?? level, this.world(p), this.tol(p.type), { roofs: s.layers.roof })?.id ?? null;
           if (id !== s.hover) this.store.set({ hover: id });
         }
         return;
@@ -449,7 +456,7 @@ export class ToolController {
       this.dragStart = null;
       return;
     }
-    const under = this.deviceUnder(p) ?? hitTest(level, world, this.tol(p.type), { roofs: this.store.get().layers.roof });
+    const under = this.deviceUnder(p) ?? hitTest(this.pickLevel ?? level, world, this.tol(p.type), { roofs: this.store.get().layers.roof });
     const modifier = p.shift || p.meta === true;
     // FLR-T-18.8: ⇧- or ⌘-click toggles what is under the pointer; dragged, it is a marquee that adds (⇧) or toggles (⌘).
     if (modifier && p.type !== 'touch') {
@@ -504,7 +511,8 @@ export class ToolController {
     arrange.set({ marquee: null });
     const level = this.level;
     if (m === null || level === undefined) return;
-    const hits = marqueeHits(selectableShapes(level, this.store.get().layers), rectOf(m.from, m.to), m.crossing);
+    // A mode's ghosted layers are not picked by a marquee either (FLR-T-18.3).
+    const hits = marqueeHits(selectableShapes(this.pickLevel ?? level, this.store.get().layers), rectOf(m.from, m.to), m.crossing);
     if (m.how === 'replace') {
       if (hits.length === 0) this.store.select(null);
       else this.store.selectMany(hits);

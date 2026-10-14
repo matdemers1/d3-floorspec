@@ -1,0 +1,6 @@
+{
+  "description": "The house has a program with an item P1, and the hero shot is keyed by P1.",
+  "covers": [
+    "FS-VIEW-1.3.2"
+  ]
+}

@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { EditorStore, Viewport } from './store';
 import type { LevelView, Point } from './model';
 import { levelOfElement } from './model';
+import { modesOf } from './modes';
 import { boundsOf } from './geometry';
 import { fit, scaleForPercent, visibleRegion, zoomAt, zoomPercent } from './viewport';
 
@@ -531,6 +532,9 @@ export function openView(store: EditorStore, saved: SavedView): boolean {
   if (s.view === null || level === undefined) return false;
   const to = saved.fit ? fit(level.bounds, s.view.w, s.view.h) : fit(saved.region, s.view.w, s.view.h, 0);
   const nav = navOf(store);
+  // A view saved in a mode brings it back (FLR-T-18.3), if the mode is still there.
+  const modes = modesOf(store);
+  if (saved.mode !== null && saved.mode !== modes.get().mode && modes.knows(saved.mode)) modes.setMode(saved.mode);
   if (saved.level !== s.level) {
     nav.place(saved.level);
     store.setLevel(saved.level);

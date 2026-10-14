@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-VIEW-INV-003",
+      "severity": "error",
+      "elements": ["SV4"]
+    }
+  ]
+}

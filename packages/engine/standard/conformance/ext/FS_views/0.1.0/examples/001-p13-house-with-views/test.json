@@ -1,0 +1,17 @@
+{
+  "description": "The Phase 13 lit house with four saved views, read by an implementation of FS_views that knows it: a 24 mm two-point hero shot from the south-west on a June evening, a 20 mm two-point view of the Kitchen's island at f/2.8 with every light on, a two-point view from the garden at dusk with the lights as FS_lighting's \"Evening\" scene sets them - FS_lighting unknown to it, its scenes read as data - and a square view from high above with the roof and ceilings cut away above L1. It is valid, reports nothing, and derives each view's name, level, lights and scene.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-1.2.3",
+    "FS-VIEW-1.2.4",
+    "FS-VIEW-1.3.1",
+    "FS-VIEW-1.3.2",
+    "FS-VIEW-2.1.1",
+    "FS-VIEW-2.2.1",
+    "FS-VIEW-3.1.1",
+    "FS-VIEW-3.2.1",
+    "FS-VIEW-3.3.1",
+    "FS-VIEW-3.3.2",
+    "FS-VIEW-6.1.1"
+  ]
+}

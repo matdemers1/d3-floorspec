@@ -1,0 +1,9 @@
+{
+  "description": "Island options A and B as Core 0.3 design options (Core 19), and the island view keyed by X8, the ID of option B's linear pendant: FS_views is evaluated in each checked design, so B's design breaks 1.3.2, reported with `design` (Core 19.5.2); A's, without X8, does not.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-1.2.3",
+    "FS-VIEW-1.3.2",
+    "FS-CORE-19.3.1"
+  ]
+}

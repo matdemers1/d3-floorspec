@@ -1,0 +1,7 @@
+{
+  "description": "The hero shot's line of sight rises 1,000 units over 1,733 across: 3 x 1,000,000 < 3,003,289, just shallower than 30 degrees. No lint.",
+  "covers": [
+    "FS-VIEW-1.2.3",
+    "FS-VIEW-2.3.1"
+  ]
+}

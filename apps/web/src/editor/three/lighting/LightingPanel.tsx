@@ -72,7 +72,7 @@ export function LightingButton({ store }: { store: EditorStore }) {
         pressed={open}
         onClick={() => {
           if (!open) sunOf(store).set({ open: false, playing: false, lapse: false });
-          three.set({ lightingOpen: !open, ...(open ? {} : { lights: true }) });
+          three.set({ lightingOpen: !open, ...(open ? {} : { lights: true, cameraOpen: false }) });
         }}
       />
     </Tooltip>
@@ -96,7 +96,7 @@ export function LightingChip({ store, model }: { store: EditorStore; model: Edit
       className="fs-three__chip fs-lighting__chip"
       onClick={() => {
         sunOf(store).set({ open: false, playing: false, lapse: false });
-        three.set({ lightingOpen: true });
+        three.set({ lightingOpen: true, cameraOpen: false });
       }}
       aria-label={`${summary}. Open the lighting`}
     >

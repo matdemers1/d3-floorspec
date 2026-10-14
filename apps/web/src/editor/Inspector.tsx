@@ -54,6 +54,7 @@ import { ThreeSection } from './three/ThreeSection';
 import { SiteSection } from './three/sun/SiteFields';
 import { FurnitureBody } from '../furniture/Inspector';
 import { StagingSection } from './systems/Staging';
+import { ModeSummary } from './ModeSwitcher';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -996,6 +997,7 @@ function ProjectPanel({ store, model, units, readOnly }: { store: EditorStore; m
           <p>Project · nothing selected</p>
         </div>
       </div>
+      <ModeSummary store={store} model={model} units={units} />
       <Section title="Project">
         <TextField label="Name" value={project.name} disabled={readOnly} onCommit={(v) => {
           if (v !== '') edit('Rename the project', setProperty('$project', '/name', v));

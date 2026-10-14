@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_views/views/SV1/target",
+      "value": [-5120000, -8960000, 2048000]
+    }
+  ]
+}

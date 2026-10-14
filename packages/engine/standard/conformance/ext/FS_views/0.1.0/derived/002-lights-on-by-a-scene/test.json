@@ -1,0 +1,6 @@
+{
+  "description": "The dusk view says nothing of `lights` and shows a scene: its lights are on; the island view says \"on\" and shows no scene: on as well; the hero shot says \"off\": off.",
+  "covers": [
+    "FS-VIEW-6.1.1"
+  ]
+}

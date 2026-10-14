@@ -40,6 +40,8 @@ export interface DxfMeta {
   readonly units: UnitSystem;
   /** The design drawn, in words, when the model has design options. */
   readonly design?: string;
+  /** A trade's view (FLR-T-18.3): what the drawing is called — `Electrical plan`. */
+  readonly planName?: string;
 }
 
 /** The annotation scale text and dimension offsets are sized for: 1/4" = 1'-0" (48) or 1:50. */
@@ -357,9 +359,9 @@ function entities(e: Entities, plan: LevelPlan, dims: readonly DimString[], meta
     // The note, under the plan; the north arrow beside it.
     const below = ext.minY - P(22 + 3 * 15 + 30);
     const h = P(9);
-    textE(e, LAYERS.note, [Math.round((ext.minX + ext.maxX) / 2), below], h, `${planTitle(meta.levelName).toUpperCase()} - ${meta.projectName}`);
+    textE(e, LAYERS.note, [Math.round((ext.minX + ext.maxX) / 2), below], h, `${planTitle(meta.levelName, meta.planName).toUpperCase()} - ${meta.projectName}`);
     textE(e, LAYERS.note, [Math.round((ext.minX + ext.maxX) / 2), below - Math.round(h * 1.8)], P(12), 'NOT FOR CONSTRUCTION - NOT A PLAN REVIEW');
-    noteBlock(e, ext, planTitle(meta.levelName), plan.trueNorth, meta);
+    noteBlock(e, ext, planTitle(meta.levelName, meta.planName), plan.trueNorth, meta);
   }
 }
 

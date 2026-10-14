@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import type { EditorStore } from '../store';
 import { ALL_OFF, ALL_ON, ALL_ON_NAME, toggled, withLights, withSetting, type Lighting, type NamedScene, type SceneSetting } from '@floorspec/mesh';
+import type { Aperture, Aspect } from '@floorspec/mesh';
 import type { Orbit, PresetId } from './camera';
 import { softwareWebGL } from './software';
 
@@ -57,6 +58,28 @@ export interface WalkStart {
   level: string | null;
 }
 
+/**
+ * The camera's lens and frame (FLR-T-13.10, the board's "30 · Editor — 3D camera"): a focal length on
+ * a 36 mm long side, two-point perspective, depth of field, exposure compensation and the picture's
+ * shape, with framing guides. Null is the free view the 3D view has always had (45°, no frame).
+ * View state, like the orbit: a person keeps it in the document by saving a view (FS_views).
+ */
+export interface Shot {
+  readonly focalLength: number;
+  readonly twoPoint: boolean;
+  /** Depth of field: an f-stop, or null for everything sharp. Kept while it is off, so it comes back. */
+  readonly aperture: Aperture | null;
+  readonly dof: boolean;
+  /** Metres along the line of sight; null: at the target. */
+  readonly focus: number | null;
+  /** Tenths of a stop. */
+  readonly exposure: number;
+  readonly aspect: Aspect;
+  readonly guides: boolean;
+}
+
+export const DEFAULT_SHOT: Shot = { focalLength: 28, twoPoint: false, aperture: 'f/2.8', dof: false, focus: null, exposure: 0, aspect: '3:2', guides: true };
+
 export interface ThreeState {
   mode: ViewMode;
   /** First-person walkthrough: the 3D view fills the editor and the panels step aside. */
@@ -90,6 +113,12 @@ export interface ThreeState {
   lightingOpen: boolean;
   /** Draft or Presentation (FLR-T-13.7). */
   quality: Quality;
+  /** The camera's lens and frame (FLR-T-13.10); null: the free view. */
+  shot: Shot | null;
+  /** The Camera panel is open. */
+  cameraOpen: boolean;
+  /** The saved view (FS_views) last chosen, by ID; null once none is. */
+  savedView: string | null;
 }
 
 export const EYE_HEIGHTS = [1.2, 1.5, 1.6, 1.7, 1.8] as const;
@@ -157,6 +186,9 @@ export class ThreeStore {
       scene: { id: null, name: ALL_ON_NAME },
       lightingOpen: false,
       quality: readQuality(software),
+      shot: null,
+      cameraOpen: false,
+      savedView: null,
     };
   }
 
@@ -228,6 +260,21 @@ export class ThreeStore {
     } catch {
       // Storage refused (a private window): the choice lasts for this session.
     }
+  }
+
+  /** Change the lens or the frame (FLR-T-13.10), starting from the default lens when there is none. */
+  setShot(patch: Partial<Shot>): void {
+    this.set({ shot: { ...(this.state.shot ?? DEFAULT_SHOT), ...patch } });
+  }
+
+  /** Open or close the Camera panel; opening it puts the frame up. */
+  toggleCamera(open: boolean = !this.state.cameraOpen): void {
+    this.set(open ? { cameraOpen: true, shot: this.state.shot ?? DEFAULT_SHOT } : { cameraOpen: false });
+  }
+
+  /** Back to the free view: no lens, no frame, no saved view. */
+  clearShot(): void {
+    this.set({ shot: null, savedView: null, cameraOpen: false });
   }
 
   /** Draw in Draft or Presentation; remembered in this browser. */

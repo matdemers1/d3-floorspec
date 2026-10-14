@@ -8,7 +8,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Prisma } from '../../src/generated/prisma/client.js';
-import { KITCHEN_AS_WRITTEN, KITCHEN_OPTIONS, projectWithDocument, REQUIRES_ELECTRICAL } from './drawings-support.js';
+import { KITCHEN_AS_WRITTEN, KITCHEN_OPTIONS, projectWithDocument, REQUIRES_ELECTRICAL, WITH_VIEWS } from './drawings-support.js';
 import { upload, uploadStill, type UploadedAsset } from './assets-support.js';
 import { tilePng } from '../support/images.js';
 import { contentHash } from '@floorspec/engine';
@@ -172,6 +172,25 @@ describe('drawing exports', () => {
     expect(text).toContain('\r\nE-POWR-DEVC\r\n');
     expect(text).toContain('FAMILY ROOM');
     expect(text.endsWith('  0\r\nEOF\r\n')).toBe(true);
+  });
+
+  it('draws a trade’s view: an electrical plan as a PDF and a DXF, and refuses a mode for anything else (FLR-T-18.3)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    const pdf = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', levels: ['MAIN'], mode: 'electrical' }));
+    const dxf = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'dxf', levels: ['MAIN'], mode: 'electrical', layers: { walls: 'off' } }));
+    expect(pdf).toMatchObject({ mode: 'electrical' });
+    await drain.runOnce();
+    const drawn = view(await operator.get(`/api/projects/${id}/exports/${pdf.id}`));
+    expect(drawn.status, drawn.error ?? '').toBe('done');
+    expect(drawn.result?.name).toMatch(/-electrical-plans\.pdf$/);
+    expect(drawn.result?.sheets?.[0]?.title).toMatch(/electrical plan$/);
+    const file = view(await operator.get(`/api/projects/${id}/exports/${dxf.id}`));
+    const text = new TextDecoder().decode((await download(operator, `${running.url}${file.download ?? ''}`)).bytes);
+    expect(text).toContain('ELECTRICAL PLAN');
+    expect(text).not.toMatch(/\r\n {2}8\r\nA-WALL-EXTR\r\n {2}10/);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf', mode: 'electrical' })).status).toBe(400);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', mode: 'kitchen' })).status).toBe(400);
   });
 
   it('queues glTF and USDZ of the 3D model, and serves a .glb and an aligned .usdz (FLR-T-9.2)', async () => {
@@ -462,6 +481,59 @@ describe('path-traced stills (FLR-T-12.6)', () => {
     expect((await ask({ kind: 'still', still: { sun: { azimuth: 90, altitude: 0 } } })).status).toBe(400);
     expect((await ask({ kind: 'pdf', still: { size: 'small' } })).status).toBe(400);
     expect((await ask({ kind: 'still', levels: ['MAIN'] })).status).toBe(400);
+    expect(await db.job.count()).toBe(0);
+  });
+});
+
+describe('shot lists (FLR-T-13.10)', () => {
+  let running: Running;
+  let drain: Drain;
+
+  beforeAll(async () => {
+    running = await start();
+  });
+  afterAll(async () => {
+    await running.close();
+  });
+  beforeEach(async () => {
+    await reset(db);
+    drain = createDrain({ databaseUrl: TEST_ENV.DATABASE_URL, log: () => undefined });
+  });
+  afterEach(async () => {
+    await drain.stop();
+  });
+
+  it('queues the saved views asked for, renders them in one job, and serves a ZIP of their stills', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator, WITH_VIEWS, 'Ranch with views');
+    const asked = await operator.post(`/api/projects/${id}/exports`, { kind: 'shots', shots: { views: ['SV2'], size: 'small', quality: 'draft' } });
+    expect(asked.status, asked.text).toBe(202);
+    const queued = view(asked) as ExportView & { shots: unknown };
+    expect(queued).toMatchObject({ kind: 'shots', status: 'queued', version: hash, shots: { views: ['SV2'], size: 'small', quality: 'draft' } });
+    // One shot list (or still) at a time per project.
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'shots' })).status).toBe(429);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'still' })).status).toBe(429);
+
+    expect(await drain.runOnce()).toBe(1);
+    const done = view(await operator.get(`/api/projects/${id}/exports/${queued.id}`)) as ExportView & { result: Record<string, unknown> | null };
+    expect(done.status, done.error ?? '').toBe('done');
+    expect(done.result).toMatchObject({ contentType: 'application/zip', label: 'Shot list — every saved view, path-traced', size: 'small', quality: 'draft', shots: [{ file: '01-living-room.png', view: 'SV2', name: 'Living room', width: 960, height: 540, samples: 16 }] });
+    const file = await download(operator, `${running.url}${String(done.download)}`);
+    expect(file.status).toBe(200);
+    expect(file.type).toBe('application/zip');
+    expect(zipNames(file.bytes)).toEqual(['01-living-room.png']);
+  }, 300_000);
+
+  it('refuses a model with no saved views, a view it does not have, work over the budget, and shots options on another export', async () => {
+    const operator = await setupOperator(running);
+    const plain = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Plain ranch');
+    expect((await operator.post(`/api/projects/${plain.id}/exports`, { kind: 'shots' })).status).toBe(422);
+    const { id } = await projectWithDocument(db, operator, WITH_VIEWS, 'Ranch with views');
+    const ask = (body: object) => operator.post(`/api/projects/${id}/exports`, body);
+    expect((await ask({ kind: 'shots', shots: { views: ['SV9'] } })).status).toBe(400);
+    expect((await ask({ kind: 'shots', shots: { size: 'large', quality: 'high' } })).status).toBe(400);
+    expect((await ask({ kind: 'pdf', shots: { size: 'small' } })).status).toBe(400);
+    expect((await ask({ kind: 'shots', levels: ['MAIN'] })).status).toBe(400);
     expect(await db.job.count()).toBe(0);
   });
 });

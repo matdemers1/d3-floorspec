@@ -20,6 +20,22 @@ export function withinBudget(size: Size, quality: Quality): boolean {
   return w * h * QUALITIES[quality] <= MAX_WORK;
 }
 
+/** A saved view rendered for an agent (FLR-T-13.10, floorspec_render with `view`): its long side, pixels — the lit render's default and widest. */
+export const VIEW_WIDTH = 800;
+export const VIEW_MAX_WIDTH = 1280;
+
+/** A shot list's sizes (FLR-T-13.10), by the picture's long side in pixels: each view's frame sets the other side. */
+export const SHOT_SIZES = { small: 960, medium: 1440, large: 1920 } as const;
+export type ShotSize = keyof typeof SHOT_SIZES;
+/** The most views one shot list renders. */
+export const MAX_SHOTS = 24;
+
+/** Whether a shot list's size and quality are within a still's work budget for every frame (a square one is the most work). */
+export function shotWithinBudget(size: ShotSize, quality: Quality): boolean {
+  const long = SHOT_SIZES[size];
+  return long * long * QUALITIES[quality] <= MAX_WORK;
+}
+
 /** Degrees. Azimuth clockwise from true north; altitude above the horizon. */
 export interface SunInput {
   readonly azimuth: number;

@@ -107,12 +107,12 @@ export function ArrangeLayer({ store, view, level }: { store: EditorStore; view:
 }
 
 /** The HTML over the canvas: the selection toolbar, the array popover, the marquee's legend, the array's measures. */
-export function ArrangeHtml({ store, view, level, model, units }: { store: EditorStore; view: Viewport; level: LevelView; model: EditorModel; units: UnitSystem }) {
+export function ArrangeHtml({ store, view, level, model, units, picking }: { store: EditorStore; view: Viewport; level: LevelView; model: EditorModel; units: UnitSystem; picking?: LevelView | undefined }) {
   const marquee = useArrange(store, (a) => a.marquee);
   const array = useArrange(store, (a) => a.array);
   return (
     <>
-      <SelectionToolbar store={store} view={view} level={level} model={model} />
+      <SelectionToolbar store={store} view={view} level={level} model={model} picking={picking} />
       {array !== null ? <ArrayPopover store={store} level={level} model={model} units={units} spec={array} view={view} /> : null}
       {marquee !== null ? (
         <div className="fs-marquee-legend" role="status">
@@ -135,7 +135,7 @@ function wantsToolbar(level: LevelView, ids: readonly string[]): boolean {
   return ids.length > 1 || (ids.length === 1 && level.devices.some((d) => d.id === ids[0]));
 }
 
-function SelectionToolbar({ store, view, level, model }: { store: EditorStore; view: Viewport; level: LevelView; model: EditorModel }) {
+function SelectionToolbar({ store, view, level, model, picking }: { store: EditorStore; view: Viewport; level: LevelView; model: EditorModel; picking: LevelView | undefined }) {
   const bar = useRef<HTMLDivElement>(null);
   // Its width as laid out, so it is kept on the canvas however wide its count's label is.
   const [width, setWidth] = useState(520);
@@ -174,9 +174,9 @@ function SelectionToolbar({ store, view, level, model }: { store: EditorStore; v
           </Button>
         </MenuTrigger>
         <MenuContent align="start">
-          <MenuItem onSelect={() => { selectSimilar(store, 'item'); }}>Select similar — the same item (⇧⌘A)</MenuItem>
-          <MenuItem onSelect={() => { selectSimilar(store, 'kind'); }}>Select every one of this kind on the level</MenuItem>
-          <MenuItem onSelect={() => { selectSimilar(store, 'level'); }}>Select everything on the level (⌘A)</MenuItem>
+          <MenuItem onSelect={() => { selectSimilar(store, 'item', picking); }}>Select similar — the same item (⇧⌘A)</MenuItem>
+          <MenuItem onSelect={() => { selectSimilar(store, 'kind', picking); }}>Select every one of this kind on the level</MenuItem>
+          <MenuItem onSelect={() => { selectSimilar(store, 'level', picking); }}>Select everything on the level (⌘A)</MenuItem>
           <MenuSeparator />
           <MenuItem onSelect={() => { store.select(null); }}>Clear the selection (Esc)</MenuItem>
         </MenuContent>

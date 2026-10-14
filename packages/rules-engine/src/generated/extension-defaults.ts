@@ -69,7 +69,8 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
     "fixtures": {},
     "waterHeaters": {}
   },
-  "FS_structural": {}
+  "FS_structural": {},
+  "FS_views": {}
 };
 
 export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, unknown>>>>>> = {
@@ -99,5 +100,16 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
       "stack": "drainWasteVent"
     }
   },
-  "FS_structural": {}
+  "FS_structural": {},
+  "FS_views": {
+    "views": {
+      "aspect": "3:2",
+      "exposure": 0,
+      "focalLength": 35,
+      "levels": "cutaway",
+      "lights": "off",
+      "sky": "clear",
+      "twoPoint": false
+    }
+  }
 };

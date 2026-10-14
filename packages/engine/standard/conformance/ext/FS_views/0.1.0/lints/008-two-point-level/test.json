@@ -1,0 +1,7 @@
+{
+  "description": "The hero shot looks level, its eye and target at the same height. No lint.",
+  "covers": [
+    "FS-VIEW-1.2.3",
+    "FS-VIEW-2.3.1"
+  ]
+}

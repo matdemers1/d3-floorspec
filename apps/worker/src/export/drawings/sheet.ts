@@ -262,6 +262,8 @@ export interface SheetMeta {
   readonly viewCaption: string;
   /** The design drawn, in words, when the model has design options (Core 19). */
   readonly design?: string;
+  /** A trade's view (FLR-T-18.3): what the drawing is called — `Electrical plan`. */
+  readonly planName?: string;
 }
 
 interface Ctx {
@@ -271,8 +273,12 @@ interface Ctx {
   readonly P: (p: XY) => XY;
 }
 
-/** `Main floor` → `Main floor plan`; `Level 2` → `Level 2 floor plan`. */
-export function planTitle(levelName: string): string {
+/**
+ * `Main floor` → `Main floor plan`; `Level 2` → `Level 2 floor plan`. In a trade's view (FLR-T-18.3)
+ * the drawing's own name: `Main floor electrical plan`.
+ */
+export function planTitle(levelName: string, planName?: string): string {
+  if (planName !== undefined) return `${levelName.trim()} ${planName.toLowerCase()}`;
   return /\bfloor$/i.test(levelName.trim()) ? `${levelName.trim()} plan` : `${levelName.trim()} floor plan`;
 }
 
@@ -284,27 +290,41 @@ export function composePlanSheet(
   rows: readonly ScheduleRow[],
   meta: SheetMeta,
   measure: Measure,
+  ghost: LevelPlan | null = null,
 ): Sheet {
   const { page, k, frame, origin } = layout;
   const P = (p: XY): XY => [origin[0] + (p[0] - frame.minX) * k, origin[1] + (frame.maxY - p[1]) * k];
   const out: Prim[] = [];
   const c: Ctx = { out, measure, k, P };
+  const title = planTitle(meta.levelName, meta.planName);
 
   out.push({ t: 'path', d: rect(0, 0, page.width, page.height), fill: PAPER_FILL });
+  // A trade's view (FLR-T-18.3): the other trades' layers under it, screened — grey, as context.
+  if (ghost !== null) {
+    const under: Prim[] = [];
+    const g: Ctx = { ...c, out: under };
+    drawPlan(g, ghost);
+    drawStairs(g, ghost.stairs);
+    drawOverheadRoofs(g, ghost.roofs);
+    drawRoomLabels(g, ghost, meta.units);
+    drawTags(g, ghost);
+    out.push(...under.map(screened));
+  }
   drawPlan(c, plan);
   drawStairs(c, plan.stairs);
   drawOverheadRoofs(c, plan.roofs);
   drawDimensions(c, plan, dims, meta.units);
   drawRoomLabels(c, plan, meta.units);
   drawTags(c, plan);
-  drawViewTitle(c, layout, planTitle(plan.levelName), plan.trueNorth, meta);
+  drawViewTitle(c, layout, title, plan.trueNorth, meta);
   if (layout.schedule !== null && layout.schedule !== 'sheet') drawSchedule(c, layout.schedule, rows, `${meta.levelName} — door and window schedule`);
   drawBorder(c, layout);
   const extra: LegendItem[] = [];
   if (plan.stairs.length > 0) extra.push(...stairLegend(c, plan.stairs));
   if (plan.roofs.length > 0) extra.push({ label: 'Roof eave above (see roof plan)', draw: (cx, cy) => out.push({ t: 'path', d: line([cx, cy], [cx + 22, cy]), stroke: GREY, width: 0.5, dash: [5, 2.5] }) });
-  drawStrip(c, layout, view, meta, planTitle(meta.levelName), plan.rooms.map((r) => [r.title, areaText(r.area, meta.units)]), [...planLegend(c), ...extra]);
-  return { number: meta.sheetNumber, title: planTitle(meta.levelName), width: page.width, height: page.height, prims: out };
+  const rooms = plan.rooms.length > 0 || ghost === null ? plan.rooms : ghost.rooms;
+  drawStrip(c, layout, view, meta, title, rooms.map((r) => [r.title, areaText(r.area, meta.units)]), [...planLegend(c), ...extra]);
+  return { number: meta.sheetNumber, title, width: page.width, height: page.height, prims: out };
 }
 
 export const ROOF_PLAN_TITLE = 'Roof plan';
@@ -352,6 +372,28 @@ export function composeScheduleSheet(layout: SetLayout, groups: readonly { title
 
 // ── the plan ─────────────────────────────────────────────────────────────────
 
+/** A screened line's grey, and a screened fill's (FLR-T-18.3): what a ghosted layer is drawn in. */
+const SCREEN_INK = '#a3a3a3';
+const SCREEN_FILL = '#efefef';
+
+/** A primitive screened: every ink grey, every fill but the paper's pale. */
+function screened(p: Prim): Prim {
+  switch (p.t) {
+    case 'path':
+      return {
+        ...p,
+        ...(p.stroke === undefined || p.stroke === WHITE ? {} : { stroke: SCREEN_INK }),
+        ...(p.fill === undefined || p.fill === WHITE || p.fill === PAPER_FILL ? {} : { fill: SCREEN_FILL }),
+      };
+    case 'text':
+      return { ...p, color: SCREEN_INK };
+    case 'clip':
+      return { ...p, children: p.children.map(screened) };
+    case 'image':
+      return p;
+  }
+}
+
 function drawPlan(c: Ctx, plan: LevelPlan): void {
   const { out, P } = c;
   // Slabs: outlined, hatched.
@@ -374,7 +416,7 @@ function drawPlan(c: Ctx, plan: LevelPlan): void {
     }
   }
   // Walls: the poché, then the openings cut out of it, then the outline as drawn.
-  out.push({ t: 'path', d: plan.pieces.map((p) => ring(p.ring.map(P))).join(''), fill: POCHE, stroke: POCHE, width: 0.2, join: 'round' });
+  if (plan.pieces.length > 0) out.push({ t: 'path', d: plan.pieces.map((p) => ring(p.ring.map(P))).join(''), fill: POCHE, stroke: POCHE, width: 0.2, join: 'round' });
   if (plan.cuts.length > 0) out.push({ t: 'path', d: plan.cuts.map((q) => ring(q.map(P))).join(''), fill: WHITE, stroke: WHITE, width: 0.6 });
   const ext = plan.wallLines.filter((s) => s.layer === 'A-WALL-EXTR');
   const int = plan.wallLines.filter((s) => s.layer !== 'A-WALL-EXTR');

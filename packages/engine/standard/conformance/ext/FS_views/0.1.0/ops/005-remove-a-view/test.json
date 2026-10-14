@@ -1,0 +1,8 @@
+{
+  "description": "unsetProperty of $document /extensions/FS_views/views/SV4 removes the cutaway. It commits.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

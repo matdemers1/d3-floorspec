@@ -76,7 +76,7 @@ export const ARRANGE_COMMANDS: readonly Command[] = [
     keys: ['Mod+a'],
     hint: '⌘A',
     enabled: (store) => store.get().tool === 'select' && store.levelView !== undefined,
-    run: (store) => { selectSimilar(store, 'level'); },
+    run: (store, tools) => { selectSimilar(store, 'level', tools.pickLevel); },
   },
   {
     id: 'edit.selectSimilar',
@@ -86,7 +86,7 @@ export const ARRANGE_COMMANDS: readonly Command[] = [
     keys: ['Mod+Shift+a'],
     hint: '⇧⌘A',
     enabled: (store) => some(store),
-    run: (store) => { selectSimilar(store, 'item'); },
+    run: (store, tools) => { selectSimilar(store, 'item', tools.pickLevel); },
   },
   {
     id: 'edit.selectKind',
@@ -94,7 +94,7 @@ export const ARRANGE_COMMANDS: readonly Command[] = [
     group: 'Edit',
     keywords: 'similar matching all lights walls doors',
     enabled: (store) => some(store),
-    run: (store) => { selectSimilar(store, 'kind'); },
+    run: (store, tools) => { selectSimilar(store, 'kind', tools.pickLevel); },
   },
   {
     id: 'arrange.turnLeft',

@@ -1,0 +1,7 @@
+{
+  "description": "The dusk view shows LS2, the Night light: any scene of FS_lighting's data. Valid.",
+  "covers": [
+    "FS-VIEW-3.3.1",
+    "FS-VIEW-6.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "Lights \"dim\", which is neither \"off\" nor \"on\": a dimmed house is a scene of FS_lighting.",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

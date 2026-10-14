@@ -1,0 +1,6 @@
+{
+  "description": "An `at` at 24:00: the hours are 00 to 23.",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

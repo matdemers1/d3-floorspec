@@ -1,0 +1,6 @@
+{
+  "description": "FS_lighting's data breaks FS_lighting's own rules - a scene turns on the dimmer X10, and the Night light is named \"Evening\" - but this implementation does not implement FS_lighting: it reports nothing of FS_lighting, and reads its scenes as data, so the dusk view's scene is a scene. Valid.",
+  "covers": [
+    "FS-VIEW-3.3.1"
+  ]
+}

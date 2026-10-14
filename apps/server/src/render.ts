@@ -6,6 +6,7 @@
  * that requires an official extension draws as it validates.
  */
 import { OFFICIAL_READER } from '@floorspec/engine';
+import type { ModeId } from '@floorspec/render2d';
 
 export interface PlanRenderOptions {
   readonly level?: string;
@@ -21,6 +22,8 @@ export interface PlanRenderOptions {
    * drawn as its symbol; one without bytes is drawn as its kind's outline (FLR-T-12.24).
    */
   readonly symbols?: ReadonlyMap<string, Uint8Array>;
+  /** A trade's view (FLR-T-18.3): its layers drawn, ghosted in grey, or left out. */
+  readonly mode?: ModeId;
 }
 
 export interface PlanRenderer {

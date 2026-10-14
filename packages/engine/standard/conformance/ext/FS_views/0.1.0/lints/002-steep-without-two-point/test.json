@@ -1,0 +1,7 @@
+{
+  "description": "The cutaway looks down just as steeply, without two-point perspective: no lint.",
+  "covers": [
+    "FS-VIEW-1.2.3",
+    "FS-VIEW-2.3.1"
+  ]
+}

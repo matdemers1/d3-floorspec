@@ -1,0 +1,6 @@
+{
+  "description": "An `at` of a date alone, \"2026-06-21\": it is a date and a time.",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

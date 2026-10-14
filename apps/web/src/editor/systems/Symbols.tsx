@@ -193,6 +193,15 @@ export function DeviceShape({ view, d, className = 'fs-sym' }: { view: Viewport;
 /** Circuit colours: the categorical tones the design system has, in turn. */
 export const RUN_TONES = 6;
 
+/** Each load's circuit tone (FLR-T-18.3): the same tone, in the same turn, as its circuit's home run. */
+export function loadTones(document: FloorspecDocument): Map<string, number> {
+  const out = new Map<string, number>();
+  recordsOf(document, 'FS_electrical', 'circuits').forEach(([, c], index) => {
+    for (const l of Array.isArray(c['loads']) ? (c['loads'] as unknown[]) : []) if (typeof l === 'string') out.set(l, (index % RUN_TONES) + 1);
+  });
+  return out;
+}
+
 /** Each circuit's home run on this level: from its panel through its loads, nearest next. */
 export function homeRuns(document: FloorspecDocument, level: LevelView): { circuit: string; tone: number; points: Point[] }[] {
   const devices = new Map(level.devices.map((d) => [d.id, d]));
@@ -226,6 +235,7 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
   const overlapping = new Set((derived?.clearanceOverlaps ?? []).flatMap(([a, b]) => [`${a[0]}/${a[1]}`, `${b[0]}/${b[1]}`]));
   const runs = layers.electrical ? homeRuns(document, level) : [];
   const selectedCircuit = selection !== null && runs.some((r) => r.circuit === selection) ? selection : null;
+  const tones = layers.electrical ? loadTones(document) : new Map<string, number>();
   return (
     <g className="fs-systems" aria-hidden="true">
       {layers.clearances ? (
@@ -243,11 +253,15 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
       </g>
       <LandscapeShapes view={view} devices={shown} selection={selection} />
       {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx); FS_landscape its plants, beds, lawns and lines (above). */}
-      {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape').map((d) => (
-        <g key={d.id} data-device={d.id}>
-          <DeviceShape view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}`} />
-        </g>
-      ))}
+      {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape').map((d) => {
+        // FLR-T-18.3: a load carries its circuit's tone, which the Electrical mode draws it in (modes.css).
+        const tone = tones.get(d.id);
+        return (
+          <g key={d.id} data-device={d.id}>
+            <DeviceShape view={view} d={d} className={`fs-sym fs-sym--${d.system ?? 'other'}${tone === undefined ? '' : ` fs-sym--tone-${String(tone)}`}`} />
+          </g>
+        );
+      })}
       {layers.electrical ? <PanelCallouts view={view} level={level} /> : null}
     </g>
   );

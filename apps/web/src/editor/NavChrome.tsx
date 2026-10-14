@@ -3,6 +3,7 @@ import { IconButton, SegmentedControl, Tooltip } from '@d3cloud/ui';
 import { Bookmark, ChevronDown, Focus, Hand, Map as MapIcon, Plus, Scan, Trash2, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useEditor, type EditorStore, type Viewport } from './store';
 import { commandById } from './commands';
+import { modesOf } from './modes';
 import { Plan } from './Canvas';
 import { fit, MAX_PERCENT, MIN_PERCENT, panBy, toScreen, visibleRegion, zoomPercent } from './viewport';
 import {
@@ -228,7 +229,8 @@ export function NavStack({ store, view }: { store: EditorStore; view: Viewport }
 
 function viewMeta(store: EditorStore, v: SavedView): string {
   const level = store.get().model?.levels.find((l) => l.id === v.level)?.name ?? 'A level no longer here';
-  return [v.mode ?? level, v.fit ? 'fit' : `${String(v.zoom)}%`].join(' · ');
+  // The mode it was saved in (FLR-T-18.3), by name: "Main floor · Electrical · 74%".
+  return [level, v.mode === null ? null : modesOf(store).nameOf(v.mode), v.fit ? 'fit' : `${String(v.zoom)}%`].filter((x) => x !== null).join(' · ');
 }
 
 function SavedViews({ store }: { store: EditorStore }) {
@@ -270,7 +272,7 @@ function SavedViews({ store }: { store: EditorStore }) {
           className="fs-saved__name"
           onSubmit={(e) => {
             e.preventDefault();
-            const made = saveView(store, name);
+            const made = saveView(store, name, modesOf(store).get().mode);
             nav.setNaming(false);
             if (made !== null) setCurrent(made.id);
           }}

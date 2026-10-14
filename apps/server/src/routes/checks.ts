@@ -12,8 +12,9 @@ import { changesetHead } from '../domain/history.js';
 import { RENDER_PENDING, type PlanRenderer } from '../render.js';
 import { SHA256, type AssetStore } from '../assets/store.js';
 import { NO_PACKS, type InstalledPacks } from '../rules/packs.js';
-import { AT_PATTERN, SKIES } from '@d3-floorspec/worker/stills';
-import { sceneNamed, scenesOf } from '@floorspec/mesh';
+import { AT_PATTERN, SKIES, VIEW_MAX_WIDTH } from '@d3-floorspec/worker/stills';
+import { sceneNamed, scenesOf, savedViewNamed, savedViewsOf } from '@floorspec/mesh';
+import { MODE_IDS } from '@floorspec/render2d';
 import { profileOfProject } from '../rules/profiles.js';
 
 const RenderQuery = z.object({
@@ -23,6 +24,8 @@ const RenderQuery = z.object({
   highlight: z.string().max(2000).optional(),
   width: z.coerce.number().int().min(64).max(4096).optional(),
   theme: z.enum(['light', 'dark']).optional(),
+  // FLR-T-18.3: a plan in a trade's view — construction, electrical, … — its other layers ghosted or left out.
+  mode: z.enum(MODE_IDS).optional(),
   // 3D (FLR-T-8.5): a named view, or a room to stand in; and the design.
   camera: z.enum(['sw', 'se', 'ne', 'nw', 'top']).optional(),
   room: z.string().min(1).max(128).optional(),
@@ -38,6 +41,8 @@ const RenderQuery = z.object({
   // 3D (FLR-T-13.4): the sky it is seen under; (FLR-T-13.9) a date and time at the site, which places the sun.
   sky: z.enum(SKIES).optional(),
   at: z.string().regex(AT_PATTERN, 'at is a date and time at the site, such as 2026-06-21T19:30 or 2026-06-21T19:30-04:00').optional(),
+  // 3D (FLR-T-13.10): a saved view (FS_views), by its name or ID — path-traced as the photograph it describes.
+  savedView: z.string().trim().min(1).max(200).optional(),
 });
 
 /** The 3D render's widest picture: a software render, so its pixels are the worker's time. */
@@ -210,6 +215,11 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
     const project = req.project;
     if (project === undefined) throw new HttpError(404, 'project not found');
     if ((q.width ?? 0) > MAX_3D_WIDTH) throw new HttpError(400, `a 3D render is at most ${String(MAX_3D_WIDTH)} pixels wide`);
+    if (q.savedView !== undefined) {
+      const set = (['camera', 'room', 'level', 'lights', 'time', 'scene', 'sky', 'at', 'highlight'] as const).filter((k) => q[k] !== undefined);
+      if (set.length > 0) throw new HttpError(400, `a saved view sets its own camera, cutaway, sky, time and lights: drop ${set.join(', ')}`);
+      if ((q.width ?? 0) > VIEW_MAX_WIDTH) throw new HttpError(400, `a saved view is rendered at most ${String(VIEW_MAX_WIDTH)} pixels along its long side`);
+    }
     if (q.camera !== undefined && q.room !== undefined) throw new HttpError(400, 'a 3D render is from a named camera or from a room, not both');
     if (q.scene !== undefined && q.lights === 'off') throw new HttpError(400, 'a lighting scene says which lights are on: give a scene or lights "off", not both');
     // A scene is a render with its lights, as the scene sets them (FLR-T-13.12).
@@ -222,10 +232,17 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
     if (!ev.valid || ev.document === undefined)
       throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this model cannot be drawn in 3D', detail: 'The model is not valid. Run validate to see why.' });
     if (ev.view === undefined) throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this design cannot be drawn', detail: 'The design names no design of this model, or that design is not valid.' });
+    // FLR-T-13.10: a saved view, by name or ID — refused with the model's views when it has none of that name.
+    const saved = q.savedView === undefined ? undefined : savedViewNamed(ev.document, q.savedView);
+    if (q.savedView !== undefined && saved === undefined) {
+      const views = savedViewsOf(ev.document).map((v) => `"${v.name}"`);
+      throw new HttpError(400, `the model has no saved view "${q.savedView}"; ${views.length === 0 ? 'it has none (FS_views)' : `its views are ${views.join(', ')}`}`);
+    }
     const scene = q.scene === undefined ? undefined : sceneNamed(ev.document, q.scene);
     if (q.scene !== undefined && scene === undefined)
       throw new HttpError(400, `the model has no lighting scene "${q.scene}"; its scenes are ${scenesOf(ev.document).map((s) => `"${s.name}"`).join(', ')}`);
-    const pending = await db.job.count({ where: { projectId: project.id, kind: 'render.3d', status: { in: ['queued', 'running'] } } });
+    // A shot list (FLR-T-13.10) takes one of the project's render places.
+    const pending = await db.job.count({ where: { projectId: project.id, kind: { in: ['render.3d', 'export.shots'] }, status: { in: ['queued', 'running'] } } });
     if (pending >= MAX_PENDING_RENDERS) throw new HttpError(429, `this project already has ${String(pending)} 3D renders waiting; try again when one finishes`);
     const highlight = q.highlight?.split(',').filter((id) => id.length > 0);
     const job = await db.job.create({
@@ -233,6 +250,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
         projectId: project.id,
         kind: 'render.3d',
         params: {
+          ...(saved === undefined ? {} : { view: saved.id }),
           ...(q.camera === undefined ? {} : { camera: q.camera }),
           ...(q.room === undefined ? {} : { room: q.room }),
           ...(q.level === undefined ? {} : { level: q.level }),
@@ -252,7 +270,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
       },
     });
     // A path-traced render with its lights takes longer than a rasterized one.
-    const timeout = (wait.timeoutMs ?? 60_000) * (lights === undefined ? 1 : 3);
+    const timeout = (wait.timeoutMs ?? 60_000) * (lights === undefined && saved === undefined ? 1 : 3);
     const until = Date.now() + timeout;
     for (;;) {
       const now = await db.job.findUniqueOrThrow({ where: { id: job.id }, select: { status: true, error: true, output: { select: { bytes: true } } } });
@@ -276,6 +294,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
       if (!options.success) throw new HttpError(400, 'the render options are not valid', { fields: options.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) });
       const etag = `"${hash}-${createHash('sha256').update(JSON.stringify(options.data)).digest('hex').slice(0, 16)}"`;
       if (view === '3d') {
+        if (options.data.mode !== undefined) throw new HttpError(400, 'a mode is a view of the plan: it is for view=plan');
         const png = await render3d(req, { hash, document }, options.data);
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('ETag', etag);
@@ -283,7 +302,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
         res.send(Buffer.from(png));
         return;
       }
-      const { level, highlight, width, theme } = options.data;
+      const { level, highlight, width, theme, mode } = options.data;
       // "all" is the 3D render's whole house (FLR-T-12.23); a plan is one level — unless the model has a level called "all".
       if (level === 'all' && !(isObject(document) && isObject(document['levels']) && Object.hasOwn(document['levels'], 'all')))
         throw new HttpError(400, 'a plan is drawn one level at a time: name a level, or omit it for the lowest ("all" is for view=3d)');
@@ -296,6 +315,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(highlight === undefined ? {} : { highlight: highlight.split(',').filter((id) => id.length > 0) }),
           ...(width === undefined ? {} : { width }),
           ...(theme === undefined ? {} : { theme }),
+          ...(mode === undefined ? {} : { mode }),
           ...(symbols.size === 0 ? {} : { symbols }),
           ...(base === null ? {} : { ghost: { before: base as object } }),
         });

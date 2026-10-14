@@ -149,10 +149,10 @@ test('findings follow the jurisdiction profile, drawn on the plan, with the noti
   const spacing = canvas.locator('g[data-finding="e2e-overlays/SPACING/room:R2"]');
   await expect(spacing.locator('[data-kind="spacing"]').first()).toBeAttached();
   await expect(canvas.locator('g[data-finding="e2e-overlays/ESCAPE/room:R1"] [data-kind="room"]')).toHaveCount(1);
-  // The Findings layer turns them off.
-  await page.getByRole('button', { name: 'Findings', exact: true }).click();
+  // The Findings layer turns them off (FLR-T-18.3: On · Ghost · Off per layer).
+  await page.getByRole('radiogroup', { name: 'Findings layer' }).getByRole('radio', { name: 'Off' }).click();
   await expect(canvas.locator('g[data-finding]')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Findings', exact: true }).click();
+  await page.getByRole('radiogroup', { name: 'Findings layer' }).getByRole('radio', { name: 'On' }).click();
   await expect(canvas.locator('g[data-finding]').first()).toBeAttached();
 
   // ── 4. Change the profile — from elsewhere — and the open editor follows (Rules 10.7).

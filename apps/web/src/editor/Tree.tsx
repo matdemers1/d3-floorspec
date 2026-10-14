@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { IconButton, Switch } from '@d3cloud/ui';
+import { IconButton } from '@d3cloud/ui';
 import { ChevronDown, ChevronRight, House, Layers as LayersIcon, Palette, Plus } from 'lucide-react';
-import { useEditor, type EditorStore, type Layers } from './store';
+import { useEditor, type EditorStore } from './store';
 import { elementOf, labelOf, sortedLevels, type EditorModel } from './model';
 import { setOrUnset } from './ops';
 import { formatArea, formatLen } from './units';
-import { DoorIcon, EyeIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon, SlabIcon, StairIcon } from './icons';
+import { DoorIcon, JunctionIcon, RoofIcon, RoomIcon, SeparatorIcon, WallIcon, WindowIcon, SlabIcon, StairIcon } from './icons';
 import { newLevel } from './actions';
+import { ModeLayers } from './ModeSwitcher';
 import { goTo } from './panzoom';
 import { SYSTEMS } from './systems/catalog';
 import { SystemIcon } from './systems/Panels';
@@ -48,7 +49,6 @@ export function ProjectTree({ store }: { store: EditorStore }) {
   // FLR-T-18.8: every selected element's row is marked; ⇧- or ⌘-click a row to add or take it out.
   const many = useEditor(store, (s) => s.selected);
   const levelId = useEditor(store, (s) => s.level);
-  const layers = useEditor(store, (s) => s.layers);
   const readOnly = useEditor(store, (s) => s.readOnly);
   const renaming = useEditor(store, (s) => s.renaming);
   const units = useEditor(store, () => store.units);
@@ -274,7 +274,7 @@ export function ProjectTree({ store }: { store: EditorStore }) {
           );
         })}
       </div>
-      <LayerChips store={store} layers={layers} />
+      <ModeLayers store={store} />
     </nav>
   );
 }
@@ -308,65 +308,6 @@ function RenameInput({ initial, label, onDone }: { initial: string; label: strin
       }}
       onBlur={() => { finish(value); }}
     />
-  );
-}
-
-export function LayerChips({ store, layers }: { store: EditorStore; layers: Layers }) {
-  const chips: [Exclude<keyof Layers, 'coreOnly'>, string][] = [
-    ['walls', 'Walls'],
-    ['openings', 'Openings'],
-    ['rooms', 'Rooms'],
-    ['dimensions', 'Dimensions'],
-    ['electrical', 'Electrical'],
-    ['plumbing', 'Plumbing'],
-    ['mechanical', 'Mechanical'],
-    ['lowvoltage', 'Low-voltage'],
-  ];
-  const after: [Exclude<keyof Layers, 'coreOnly'>, string][] = [
-    ['roof', 'Roof'],
-    ['findings', 'Findings'],
-    ['clearances', 'Clearances'],
-  ];
-  const chip = ([key, label]: [Exclude<keyof Layers, 'coreOnly'>, string]) => (
-    <button
-      key={key}
-      type="button"
-      className={layers[key] ? 'fs-chip is-on' : 'fs-chip'}
-      aria-pressed={layers[key]}
-      onClick={() => { store.set({ layers: { ...layers, [key]: !layers[key] } }); }}
-    >
-      <EyeIcon />
-      {label}
-    </button>
-  );
-  return (
-    <div className="fs-layers">
-      <div className="fs-panel-head fs-panel-head--sub">
-        <span className="fs-overline">Layers</span>
-      </div>
-      <div className="fs-layers__chips">
-        {chips.map(chip)}
-        <button
-          type="button"
-          className={layers.furniture !== false ? 'fs-chip is-on' : 'fs-chip'}
-          aria-pressed={layers.furniture !== false}
-          onClick={() => { store.set({ layers: { ...layers, furniture: layers.furniture === false } }); }}
-        >
-          <EyeIcon />
-          Furniture
-        </button>
-        {after.map(chip)}
-      </div>
-      <div className="fs-layers__core">
-        <Switch
-          checked={layers.coreOnly}
-          onCheckedChange={(on) => { store.set({ layers: { ...layers, coreOnly: on } }); }}
-        >
-          Show as core-only
-        </Switch>
-        <p className="fs-note">What a reader without the building-system extensions draws: each element’s fallback box.</p>
-      </div>
-    </div>
   );
 }
 

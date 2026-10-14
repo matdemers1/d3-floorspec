@@ -1,0 +1,7 @@
+{
+  "description": "The dusk view shows the Evening scene and says its lights are \"on\": valid.",
+  "covers": [
+    "FS-VIEW-3.3.2",
+    "FS-VIEW-6.1.1"
+  ]
+}

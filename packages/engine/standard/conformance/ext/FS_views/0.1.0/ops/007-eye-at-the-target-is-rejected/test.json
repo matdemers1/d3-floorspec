@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_views/views/SV1/target to the hero shot's own eye: the result breaks 2.2.1, and the batch is rejected with FS-VIEW-INV-002.",
+  "covers": [
+    "FS-VIEW-2.2.1",
+    "FS-VIEW-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}
