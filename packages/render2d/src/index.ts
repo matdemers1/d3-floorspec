@@ -5,11 +5,47 @@
 export const PACKAGE_NAME = '@floorspec/render2d';
 
 export { renderPlan, renderEvaluation, labelPoint, DEFAULT_SCALE, ROOF_LINES, GHOST_OPACITY, type RenderOptions, type EvaluationRenderOptions, type SymbolBytes } from './render.js';
-export { buildScene, sceneOf, defaultLevel, boxFrame, categoryOf, DEFAULT_READER, type ReaderOptions, type Scene, type SceneWall, type SceneOpening, type SceneRoom, type SceneSeparator, type SceneFace, type SceneFallback, type SceneClearance, type SceneStair, type Pt, type OpeningKind } from './scene.js';
+export { buildScene, sceneOf, defaultLevel, boxFrame, categoryOf, DEFAULT_READER, type ReaderOptions, type Scene, type SceneWall, type SceneOpening, type SceneRoom, type SceneSeparator, type SceneFace, type SceneFallback, type SceneClearance, type SceneStair, type SceneWallType, type Pt, type OpeningKind } from './scene.js';
 export { roofSymbol, stairSymbol, upPlacement, columnRadius, newelOutline, CUT_HEIGHT, type RoofSymbol, type StairSymbol, type NewelSource } from './symbols.js';
 export { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type DoorSymbol, type DoorSource, type WallFaces, type BoxFrame, type FixtureSource, type SymbolPart, type SymbolPath, type SymbolArc, type SymbolStroke } from './plansymbols.js';
 export { diffScenes, type Change, type SceneDiff, type Diff } from './ghost.js';
 export { PALETTES, ACCENT, type Palette, type ThemeName } from './theme.js';
 export { landscapeOf, landscapeLayers, type SceneLandscape } from './landscape.js';
+export {
+  PLAN_STYLES,
+  STYLES,
+  ALL_DETAILS,
+  DARK_PULL,
+  CONSTRUCTION_DOOR,
+  isPlanStyle,
+  defaultStyle,
+  planTheme,
+  materialTone,
+  inkOn,
+  mix,
+  shade,
+  contrast,
+  luminance,
+  floorFinishOf,
+  finishSource,
+  floorPatternSvg,
+  gridPatternSvg,
+  hatchPatternSvg,
+  shadowFilterSvg,
+  patternId,
+  wallClassOf,
+  wallTypeColour,
+  furnitureTone,
+  isRug,
+  type PlanStyle,
+  type StyleDef,
+  type StyleDetails,
+  type PlanTheme,
+  type FloorPattern,
+  type FloorFinish,
+  type FinishSource,
+  type PatternFrame,
+  type WallClass,
+} from './styles.js';
 export { MODE_IDS, MODES, PLAN_LAYERS, LAYER_STATES, LAYER_LABELS, ALL_ON, isModeId, isLayerState, layerStates, layerOfElement, type ModeId, type ModeDef, type PlanLayer, type LayerState, type LayerStates } from './modes.js';
 export { feetInches, inches, squareFeet, num, BU_PER_FOOT, BU_PER_INCH, SQ_BU_PER_SQ_FT } from './format.js';
