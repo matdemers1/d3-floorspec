@@ -6,7 +6,7 @@
  * that requires an official extension draws as it validates.
  */
 import { OFFICIAL_READER } from '@floorspec/engine';
-import type { ModeId, PlanStyle } from '@floorspec/render2d';
+import type { ModeId, PlanStyle, RenovationFilter } from '@floorspec/render2d';
 
 export interface PlanRenderOptions {
   readonly level?: string;
@@ -26,6 +26,8 @@ export interface PlanRenderOptions {
   readonly mode?: ModeId;
   /** A plan style (FLR-T-18.5): Colour, Presentation, Technical or Blueprint. */
   readonly style?: PlanStyle;
+  /** A remodel's renovation plan (FLR-T-18.13): Existing, Demolition, Proposed or Combined. */
+  readonly renovation?: RenovationFilter;
 }
 
 export interface PlanRenderer {

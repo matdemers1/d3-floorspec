@@ -62,6 +62,8 @@ const PendingChangeset = ChangesetHandle.optional().describe('Pending, by name o
 const MODES = ['construction', 'decorator', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'] as const;
 /** FLR-T-18.5: the plan styles (@floorspec/render2d's PLAN_STYLES). */
 const PLAN_STYLES = ['colour', 'presentation', 'technical', 'blueprint'] as const;
+/** FLR-T-18.13: a remodel's renovation plans (@floorspec/render2d's RENOVATION_FILTERS). */
+const RENOVATION = ['existing', 'demolition', 'proposed', 'combined'] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface ServerOptions {
@@ -858,6 +860,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           at: z.string().max(32).optional().describe('3D: site date-time placing the sun, as 2026-06-21T19:30-04:00.'),
           mode: z.enum(MODES).optional().describe('Plan: a trade\'s view.'),
           style: z.enum(PLAN_STYLES).optional(),
+          renovation: z.enum(RENOVATION).optional(),
         }),
       ),
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -868,7 +871,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         const changeset = await changesetId(client, project.id, args.changeset);
         // One property for both (FLR-T-13.10): plan, 3d, or a saved view (FS_views) by name.
         const named = args.view !== undefined && args.view !== 'plan' && args.view !== '3d' ? args.view : undefined;
-        if (named !== undefined && [args.camera, args.level, args.highlight, args.scene, args.sky, args.at, args.mode, args.style].some((a) => a !== undefined))
+        if (named !== undefined && [args.camera, args.level, args.highlight, args.scene, args.sky, args.at, args.mode, args.style, args.renovation].some((a) => a !== undefined))
           throw new ToolError(`A saved view sets its own camera, cutaway, sky, time and lights: render "${named}" with width, doors or changeset only.`);
         const png = await client.render(project.id, {
           view: named === undefined ? ((args.view as 'plan' | '3d' | undefined) ?? 'plan') : '3d',
@@ -885,6 +888,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           ...(args.at === undefined ? {} : { at: args.at }),
           ...(args.mode === undefined ? {} : { mode: args.mode }),
           ...(args.style === undefined ? {} : { style: args.style }),
+          ...(args.renovation === undefined ? {} : { renovation: args.renovation }),
         });
         return { content: [{ type: 'image', data: Buffer.from(png).toString('base64'), mimeType: 'image/png' }] };
       } catch (error) {

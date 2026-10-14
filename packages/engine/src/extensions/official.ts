@@ -1,6 +1,6 @@
 /**
  * The official extensions the engine implements — FS_electrical, FS_plumbing, FS_mechanical,
- * FS_lowvoltage, FS_furniture, FS_structural (Draft), FS_landscape (Draft), FS_lighting (Draft, FLR-ADR-043), FS_views (Draft, FLR-ADR-046) and FS_annotation (Draft, FLR-ADR-047) 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
+ * FS_lowvoltage, FS_furniture, FS_structural (Draft), FS_landscape (Draft), FS_lighting (Draft, FLR-ADR-043), FS_views (Draft, FLR-ADR-046), FS_renovation (Draft, FLR-ADR-048) and FS_annotation (Draft, FLR-ADR-047) 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
  *
  * An extension is **evaluated** for a document when the reader implements it (its name is in
  * `ValidateOptions.extensions`), the document declares "0.2", "0.3" or "0.4" and uses it at a version equal to the
@@ -24,6 +24,7 @@ import { FS_STRUCTURAL, type DerivedStructural } from './fs/structural.js';
 import { FS_LANDSCAPE, type DerivedLandscape } from './fs/landscape.js';
 import { FS_LIGHTING, type DerivedLighting } from './fs/lighting.js';
 import { FS_VIEWS, type DerivedViews } from './fs/views.js';
+import { FS_RENOVATION, type DerivedRenovation } from './fs/renovation.js';
 import { FS_ANNOTATION, type DerivedAnnotation } from './fs/annotation.js';
 
 /**
@@ -51,7 +52,7 @@ export const OFFICIAL_EXTENSION_SCHEMAS: Readonly<Record<string, unknown>> = OFF
 
 /** Every extension implementation the engine has, by name. */
 export const IMPLEMENTATIONS: ReadonlyMap<string, ExtensionImplementation> = new Map(
-  ([FS_ELECTRICAL, FS_PLUMBING, FS_MECHANICAL, FS_LOWVOLTAGE, FS_FURNITURE, FS_STRUCTURAL, FS_LANDSCAPE, FS_LIGHTING, FS_VIEWS, FS_ANNOTATION] as ExtensionImplementation[]).map((x) => [x.name, x]),
+  ([FS_ELECTRICAL, FS_PLUMBING, FS_MECHANICAL, FS_LOWVOLTAGE, FS_FURNITURE, FS_STRUCTURAL, FS_LANDSCAPE, FS_LIGHTING, FS_VIEWS, FS_RENOVATION, FS_ANNOTATION] as ExtensionImplementation[]).map((x) => [x.name, x]),
 );
 
 /** The names of the official extensions the engine implements. */
@@ -68,6 +69,7 @@ export interface DerivedExtensions {
   FS_landscape?: DerivedLandscape;
   FS_lighting?: DerivedLighting;
   FS_views?: DerivedViews;
+  FS_renovation?: DerivedRenovation;
   FS_annotation?: DerivedAnnotation;
 }
 

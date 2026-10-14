@@ -1,5 +1,6 @@
 import { footprintsOverlap } from '@floorspec/engine';
 import type { EditorModel, LevelView, Point, Ring } from '../model';
+import { withRiders } from '../arrange/riders';
 
 /**
  * Clearance halos while editing (FLR-T-18.14, the board's "18.14 · Clearance halos while dragging").
@@ -300,9 +301,9 @@ function buildIndex(model: EditorModel, level: LevelView): HaloIndex {
 export function movingFrom(preview: EditorModel, levelId: string, ids: readonly string[]): Moving[] {
   const level = preview.levels.find((l) => l.id === levelId);
   if (level === undefined) return [];
-  const want = new Set(ids);
-  // What is with a moving item moves with it (FS_furniture 4.3: a cooktop set into an island).
-  for (const d of level.devices) if (typeof d.element['with'] === 'string' && want.has(d.element['with'])) want.add(d.id);
+  // What sits on a moving item moves with it (FLR-T-18.18, arrange/riders.ts): a cooktop set into an
+  // island (FS_furniture 4.3's `with`), the gas cooktop of FS_mechanical on its top.
+  const want = new Set(withRiders(level, ids));
   const clearances = preview.derived?.clearances ?? {};
   const out: Moving[] = [];
   for (const d of level.devices) {

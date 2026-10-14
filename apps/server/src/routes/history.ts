@@ -268,8 +268,10 @@ export function historyRoutes(db: Db, applier: Applier): Routes {
       const author = authorOf(req);
       await lockProject(tx, project.id);
       const { batch, target } = await restoreBatch(tx, project.id, body.seq);
-      const { changeset, opened } = await openChangeset(tx, project.id, body.name ?? `From v${String(body.seq)}`, author);
-      if (!opened) throw new HttpError(409, `a pending changeset is already called “${changeset.name}”`);
+      const { changeset: open, opened } = await openChangeset(tx, project.id, body.name ?? `From v${String(body.seq)}`, author);
+      if (!opened) throw new HttpError(409, `a pending changeset is already called “${open.name}”`);
+      // FLR-T-18.18: marked as a branch, so a replay makes its return again against main (domain/changesets.ts).
+      const changeset = await tx.changeset.update({ where: { id: open.id }, data: { branchedFrom: body.seq } });
       const head = changesetHead(changeset.id);
       const outcome = await applyToHead(tx, applier, {
         projectId: project.id,

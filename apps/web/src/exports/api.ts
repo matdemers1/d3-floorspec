@@ -132,6 +132,8 @@ export interface ExportRequest {
   layers?: Record<string, 'on' | 'ghost' | 'off'>;
   /** PDF (FLR-T-18.5): the plan's style. */
   style?: string;
+  /** PDF and DXF (FLR-T-18.13): a remodel's renovation plan. */
+  renovation?: string;
 }
 
 /** The kinds made in one design: every export but the IFC model, which is of the primary. */

@@ -14,6 +14,8 @@
  * version's facts (hash, number, time): the same inputs give the same bytes, and nothing reads the
  * clock.
  */
+import { dxfPlan, renovationSplit } from './renovation.js';
+import { RENOVATION_FILTER_LABELS, filteredDocument, renovationStyles, type RenovationFilter, type RenovationStyle } from '@floorspec/render2d';
 import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, openingDimensions, resolveAnnotations, z765, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
 import { sceneOf, type ReaderOptions, type Scene } from '@floorspec/render2d';
 import { buildSceneFrom as buildModel, type Scene as ModelScene } from '../gltf/scene.js';
@@ -82,6 +84,11 @@ export interface DrawingOptions extends DrawingMode {
   readonly reader?: ReaderOptions;
   /** The plan's style (FLR-T-18.5): a colour sheet, a technical one, a blueprint. Default: the construction drawing. */
   readonly style?: PlanStyle;
+  /**
+   * A remodel's renovation plan (FLR-T-18.13, FS_renovation 3.1): Existing, Demolition, Proposed or
+   * Combined. Default: none, the model as it is. A model that is not a remodel is drawn as it is.
+   */
+  readonly renovation?: RenovationFilter;
   // FLR-T-18.3 (DrawingMode): `mode`, a trade's view — an electrical plan, a furniture plan — and
   // `layers`, a person's own states over it. The other trades are screened under it or left out.
 }
@@ -122,6 +129,8 @@ interface Prepared {
   readonly design: Record<string, string> | null;
   /** The design in words for the title block: `Kitchen — B: open · Deck — Deck`. */
   readonly designText: string | undefined;
+  /** FLR-T-18.13: each element's style under the renovation filter asked for; null when there is none. */
+  readonly reno: ReadonlyMap<string, RenovationStyle> | null;
 }
 
 /** Levels by elevation, then ID. */
@@ -148,12 +157,16 @@ function designWords(original: FloorspecDocument, design: Readonly<Record<string
 
 function prepare(document: object, options: DrawingOptions): Prepared {
   const reader = options.reader ?? OFFICIAL_READER;
-  const ev = evaluate(document, options.design === undefined ? reader : { ...reader, design: options.design });
-  if (!ev.valid || !ev.document) throw new InvalidDocumentError(ev.diagnostics);
-  if (!ev.view || !ev.analysis) throw new RangeError('the model has no such design, or that design is not valid (Core 19.6.2)');
+  const asked = evaluate(document, options.design === undefined ? reader : { ...reader, design: options.design });
+  if (!asked.valid || !asked.document) throw new InvalidDocumentError(asked.diagnostics);
+  if (!asked.view || !asked.analysis) throw new RangeError('the model has no such design, or that design is not valid (Core 19.6.2)');
+  // FLR-T-18.13: a renovation plan is drawn from its state — checked as FS_renovation 2.4 checks it, without known extensions.
+  const reno = options.renovation === undefined ? null : renovationStyles(asked.view, options.renovation);
+  const stated = reno === null || options.renovation === undefined ? asked.view : filteredDocument(asked.view, options.renovation);
+  const ev = stated === asked.view ? asked : evaluate(stated, { ...reader, knownExtensions: [] });
+  if (!ev.valid || !ev.view || !ev.analysis) throw new InvalidDocumentError(ev.diagnostics);
   const doc = ev.view;
   const derived = deriveFrom(doc, ev.analysis);
-  const design = ev.design ?? null;
   const order = levelOrder(doc);
   if (order.length === 0) throw new RangeError('the model has no levels to draw');
   const wanted = options.levels ?? order;
@@ -173,7 +186,8 @@ function prepare(document: object, options: DrawingOptions): Prepared {
   );
   const roofs = chosen.flatMap((p) => p.roofs);
   const wallsBelow = chosen.filter((p) => p.roofs.length > 0).flatMap((p) => p.wallLines.filter((l) => l.layer === 'A-WALL-EXTR'));
-  return { ev, doc, units: unitsOf(doc), all, chosen, dims, notes, derived, roofs, wallsBelow, design: design === null ? null : { ...design }, designText: design === null ? undefined : designWords(ev.document, design) };
+  const designOf = asked.design ?? null;
+  return { ev, doc, units: unitsOf(doc), all, chosen, dims, notes, derived, roofs, wallsBelow, design: designOf === null ? null : { ...designOf }, designText: designOf === null ? undefined : designWords(asked.document, designOf), reno };
 }
 
 /**
@@ -289,6 +303,18 @@ function scheduleRows(doc: FloorspecDocument, plan: LevelPlan, units: UnitSystem
   return rows.sort((a, b) => (a.kind !== b.kind ? (a.kind === 'door' ? -1 : 1) : n(a.mark) - n(b.mark)));
 }
 
+/** FLR-T-18.13: a renovation plan's name — `Demolition plan` — for a remodel drawn under a filter. */
+function renovationName(options: DrawingOptions, p: Prepared): string | undefined {
+  return p.reno === null || options.renovation === undefined ? undefined : `${RENOVATION_FILTER_LABELS[options.renovation]} plan`;
+}
+
+/** A level's DXF; under a renovation filter, with its changes on their status layers. */
+function dxfOf(plan: LevelPlan, dims: readonly DimString[], meta: Parameters<typeof levelDxf>[2], options: DrawingOptions, p: Prepared, notes: PlanNotes = NO_NOTES): string {
+  if (p.reno === null || options.renovation === undefined) return levelDxf(plan, dims, meta, null, notes);
+  const r = dxfPlan(plan, options.renovation, p.reno);
+  return levelDxf(r.plan, dims, meta, { demolished: r.demolished, fresh: r.fresh }, notes);
+}
+
 /** The dimensioned PDF: a sheet per level (and a schedule sheet when one is needed). */
 export async function exportPdf(document: object, options: DrawingOptions): Promise<PdfResult> {
   const p = prepare(document, options);
@@ -313,7 +339,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
   const views = viewsOf(model, p.doc, options.viewDpi ?? 300);
   // A trade's view (FLR-T-18.3): its layers drawn, the rest screened or left out; a roof plan only when roofs are shown.
   const states = statesOf(options);
-  const planName = modePlanName(options);
+  const planName = renovationName(options, p) ?? modePlanName(options);
   const roofSheet = p.roofs.length > 0 && (states === null || states.roof !== 'off') ? 1 : 0;
   const extra = layout.schedule === 'sheet' ? 1 : 0;
   const count = p.chosen.length + roofSheet + extra;
@@ -326,11 +352,16 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
     ...(p.designText === undefined ? {} : { design: p.designText }),
     ...(planName === undefined ? {} : { planName }),
     ...(options.style === undefined ? {} : { style: options.style }),
+    ...(p.reno === null || options.renovation === undefined ? {} : { renovation: options.renovation }),
   };
   const top = p.all[p.all.length - 1]!;
   const areas = areaSummaries(p);
   const sheets: Sheet[] = p.chosen.map((plan, i) => {
-    const { on, ghost } = splitPlan(plan, states);
+    const moded = splitPlan(plan, states);
+    // FLR-T-18.13: a renovation plan screens existing work under new work, and draws what goes dashed over both.
+    const split = p.reno === null || options.renovation === undefined ? null : renovationSplit(moded.on, options.renovation, p.reno);
+    const on = split?.on ?? moded.on;
+    const ghost = split === null ? moded.ghost : split.ghost;
     return composePlanSheet(
       layout,
       on,
@@ -340,6 +371,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
       { ...common, levelName: plan.levelName, sheetNumber: `A-${String(101 + i)}`, sheetIndex: i, viewCaption: `Cut above ${plan.levelName}`, ...(areas.has(plan.levelId) ? { areas: areas.get(plan.levelId)! } : {}) },
       pdf.measure,
       ghost,
+      split?.demolished ?? null,
       states === null || states.dimensions === 'on' ? (p.notes.get(plan.levelId) ?? NO_NOTES) : NO_NOTES,
     );
   });
@@ -372,7 +404,7 @@ export function exportDxf(document: object, options: DrawingOptions): DxfResult 
   const enc = new TextEncoder();
   // A trade's view (FLR-T-18.3): what is off is left out; a ghost stays on its own NCS layer, for CAD to screen.
   const states = statesOf(options);
-  const planName = modePlanName(options);
+  const planName = renovationName(options, p) ?? modePlanName(options);
   const suffix = planName === undefined ? '' : `-${slug(planName)}`;
   const v = options.version.seq === undefined || options.version.seq === null ? options.version.hash.slice(0, 8) : `v${String(options.version.seq)}`;
   const meta = (levelName: string) => ({
@@ -387,14 +419,7 @@ export function exportDxf(document: object, options: DrawingOptions): DxfResult 
   const files: DrawingFile[] = p.chosen.map((plan) => ({
     name: `${slug(name)}-${v}-${slug(plan.levelName)}${suffix}.dxf`,
     contentType: 'image/vnd.dxf',
-    bytes: enc.encode(
-      levelDxf(
-        shownPlan(plan, states),
-        states === null || states.dimensions !== 'off' ? (p.dims.get(plan.levelId) ?? []) : [],
-        meta(plan.levelName),
-        states === null || states.dimensions !== 'off' ? (p.notes.get(plan.levelId) ?? NO_NOTES) : NO_NOTES,
-      ),
-    ),
+    bytes: enc.encode(dxfOf(shownPlan(plan, states), states === null || states.dimensions !== 'off' ? (p.dims.get(plan.levelId) ?? []) : [], meta(plan.levelName), options, p, states === null || states.dimensions !== 'off' ? (p.notes.get(plan.levelId) ?? NO_NOTES) : NO_NOTES)),
   }));
   if (p.roofs.length > 0 && (states === null || states.roof !== 'off'))
     files.push({ name: `${slug(name)}-${v}-roof-plan.dxf`, contentType: 'image/vnd.dxf', bytes: enc.encode(roofDxf(p.roofs, p.all[0]!.trueNorth, meta(ROOF_PLAN_TITLE))) });

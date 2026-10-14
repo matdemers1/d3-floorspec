@@ -50,6 +50,20 @@ export {
   type WallClass,
 } from './styles.js';
 export { MODE_IDS, MODES, PLAN_LAYERS, LAYER_STATES, LAYER_LABELS, ALL_ON, isModeId, isLayerState, layerStates, layerOfElement, type ModeId, type ModeDef, type PlanLayer, type LayerState, type LayerStates } from './modes.js';
+export {
+  RENOVATION_FILTERS,
+  RENOVATION_FILTER_LABELS,
+  RENOVATION_STATUS_LABELS,
+  RENOVATION_INK,
+  EXISTING_OPACITY,
+  DEMOLISH_DASH,
+  isRenovationFilter,
+  renovationStyles,
+  filteredDocument,
+  type RenovationFilter,
+  type RenovationStyle,
+  type RenovationStatus,
+} from './renovation.js';
 export { feetInches, inches, squareFeet, num, BU_PER_FOOT, BU_PER_INCH, SQ_BU_PER_SQ_FT } from './format.js';
 export { unionOutline, mergeCollinear, outlineLoops, outerLoops, insideRings, ccw, type OutlineEdge, type XY } from './outline.js';
 export {

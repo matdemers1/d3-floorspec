@@ -19,5 +19,6 @@ export { OPS_CATALOGUE, opsDiagnostic, OpsFailure, type OpsCode } from './diagno
 export { COLLECTIONS, EXTENSION_PREFIX, ITEMS, PREFIX, RESERVED_TARGETS } from './model/working.js';
 export { sideOf, SIDES } from './model/faces.js';
 export { INVERSE_ORDER } from './inverse.js';
+export { mergeThreeWay, patchBetween, restoreOnto } from './rebase.js';
 export type * from './types.js';
 export type { Rational } from './lib/rational.js';

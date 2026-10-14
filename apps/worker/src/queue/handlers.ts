@@ -2,6 +2,7 @@
  * What each kind of job does. Exports read one version and make one file; their parameters were
  * checked by the api when the job was queued, and are checked again here because a job row is data.
  */
+import { isRenovationFilter, type RenovationFilter } from '@floorspec/render2d';
 import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/index.js';
 import { exportIfc } from '../export/ifc/index.js';
 import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
@@ -59,6 +60,8 @@ export interface ExportParams {
   readonly layers?: Partial<Record<PlanLayer, LayerState>>;
   /** A PDF's plan style (FLR-T-18.5). */
   readonly style?: PlanStyle;
+  /** A PDF's or DXF's renovation plan (FLR-T-18.13). */
+  readonly renovation?: RenovationFilter;
 }
 
 /** Layer states from a job row (FLR-T-18.3): known layers with known states, or nothing. */
@@ -102,6 +105,7 @@ export function exportParams(raw: unknown): ExportParams {
   const mode = isModeId(p['mode']) ? p['mode'] : undefined;
   const layers = layersOf(p['layers']);
   const style = isPlanStyle(p['style']) ? p['style'] : undefined;
+  const renovation = isRenovationFilter(p['renovation']) ? p['renovation'] : undefined;
   return {
     ...(levels === undefined ? {} : { levels }),
     ...(page === undefined ? {} : { page }),
@@ -113,6 +117,7 @@ export function exportParams(raw: unknown): ExportParams {
     ...(mode === undefined ? {} : { mode }),
     ...(layers === undefined ? {} : { layers }),
     ...(style === undefined ? {} : { style }),
+    ...(renovation === undefined ? {} : { renovation }),
   };
 }
 
@@ -304,6 +309,7 @@ function options(job: JobRow) {
     ...(p.mode === undefined ? {} : { mode: p.mode }),
     ...(p.layers === undefined ? {} : { layers: p.layers }),
     ...(p.style === undefined ? {} : { style: p.style }),
+    ...(p.renovation === undefined ? {} : { renovation: p.renovation }),
   };
 }
 

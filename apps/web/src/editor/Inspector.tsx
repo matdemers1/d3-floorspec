@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { RenovationSection } from './renovation';
 import { PlacingPanel } from '../placing/PlacingPanel';
 import { Button, IconButton, SegmentedControl, Select, Switch } from '@d3cloud/ui';
 import { Trash2, X } from 'lucide-react';
@@ -135,6 +136,7 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
       {/* FLR-T-18.9: the temporary dimensions, as fields — the keyboard's way to them. */}
       <PositionSection store={store} />
       <OptionMembership store={store} model={model} id={selection} element={element} readOnly={ctx.readOnly} />
+      <RenovationSection store={store} model={model} id={selection} readOnly={ctx.readOnly} />
       <ThreeSection store={store} id={selection} kind={kind} />
       {!ctx.readOnly ? (
         <div className="fs-inspector__actions">

@@ -33,7 +33,8 @@ import { requestRemove } from './actions';
 import { flipFromPlan } from './three/lighting/lighting';
 import { deviceAt } from './systems/hit';
 import { ghostsOf, pickable } from './modes';
-import { centredOn, dragHost, hoverFor, type DeviceHover } from './systems/placement';
+import { pickableUnder, storeStyles } from './renovation';
+import { centredOn, dragHost, hoverFor, mountOf, type DeviceHover } from './systems/placement';
 import { moveDevice, placeDevice, setMember } from './systems/ops';
 import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
 import type { DeviceView } from './systems/view';
@@ -42,6 +43,8 @@ import { arrangeOf } from './arrange/state';
 import { cornersOf, wallsOfRoom } from './arrange/rooms';
 import { boundsOfIds, isCovering, marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
 import { transformBatch, translation } from './arrange/transform';
+import { withRiders } from './arrange/riders';
+import { frameOf } from './arrange/carry';
 import { deleteSelection, moveSelection } from './arrange/actions';
 import { moveGhost, placeHere } from '../placing/state';
 import { extentAcross, functionFromName, minRoom, moveRoom, resizeRoom, roomDrag, roomSides, sideDrag, wandCandidates, type Side } from './rooms/edit';
@@ -119,7 +122,8 @@ export class ToolController {
   /** The level as a click picks from it: a mode's ghosts are not selectable (FLR-T-18.3). */
   get pickLevel(): LevelView | undefined {
     const level = this.level;
-    return level === undefined ? undefined : pickable(level, ghostsOf(this.store));
+    // FLR-T-18.13: and what the renovation plan hides is not there to pick.
+    return level === undefined ? undefined : pickableUnder(pickable(level, ghostsOf(this.store)), storeStyles(this.store));
   }
 
   private world(p: PointerInfo): Point {
@@ -695,7 +699,10 @@ export class ToolController {
       }
       const handle = handlesOf(device).find((h) => h.side === start.side);
       if (handle === undefined) return;
-      const r = dragResize(device, handle, this.world(p), { free: p.shift && !start.side?.includes('-'), centre: p.alt, keepRatio: p.shift && start.side?.includes('-') === true });
+      // The handle follows the pointer from where it was grabbed (FLR-T-18.18), not from its middle.
+      const world = this.world(p);
+      const at: Point = [world[0] - (start.world[0] - handle.at[0]), world[1] - (start.world[1] - handle.at[1])];
+      const r = dragResize(device, handle, at, { free: p.shift && !start.side?.includes('-'), centre: p.alt, keepRatio: p.shift && start.side?.includes('-') === true });
       if (r === null) return;
       const rule = ruleFor(device);
       this.store.set({ draft: { tool: 'select', drag: { kind: 'resize', id: device.id, side: handle.side, anchor: r.anchor, size: r.size, hint: rule.stepLabel }, typed } });
@@ -705,16 +712,23 @@ export class ToolController {
     if (start.kind === 'device') {
       const device = level.devices.find((d) => d.id === start.target);
       if (device === undefined) return;
-      // Smart guides: the item's box, centred where the pointer is, lines up with walls and other items.
-      let at = this.world(p);
+      // FLR-T-18.18: the item keeps where it was grabbed — its host point moves by as much as the
+      // pointer has, not to the pointer — so grabbed off-centre, it does not jump.
+      const world = this.world(p);
+      const origin = frameOf(level, device.host)?.point ?? device.placement?.point ?? world;
+      const onWall = mountOf(device) === 'wall';
+      let d: Point = [world[0] - start.world[0], world[1] - start.world[1]];
+      // By the grid (a wall mount's offset snaps along its wall instead); ⌘ or ⌥ free.
+      if (!free && !onWall) d = [Math.round(d[0] / grid) * grid, Math.round(d[1] / grid) * grid];
+      // Smart guides: the item's box, moved as far, lines up with walls and other items — not with what it carries.
       const box = boundsOfIds(level, [device.id]);
       if (box !== null && !free) {
-        const c: Point = [(box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2];
-        const aligned = alignMove(level, box, [at[0] - c[0], at[1] - c[1]], { tol: this.tol(p.type), settings, excludeItems: new Set([device.id]), name: namer(this.store) });
-        if (aligned.guides.length > 0) at = [c[0] + aligned.d[0], c[1] + aligned.d[1]];
+        const aligned = alignMove(level, box, d, { tol: this.tol(p.type), settings, excludeItems: new Set(withRiders(level, [device.id])), name: namer(this.store) });
+        d = aligned.d;
         guide(aligned);
-      }
-      const hover = dragHost(level, device, at, { grid, tol: this.tol(p.type) });
+      } else guide(null);
+      const at: Point = [origin[0] + d[0], origin[1] + d[1]];
+      const hover = dragHost(level, device, at, { grid, tol: this.tol(p.type), pointGrid: 1 });
       if (hover === null || hover.problem !== undefined) {
         this.store.set({ draft: { tool: 'select', drag: null, typed } });
         this.store.preview(null);

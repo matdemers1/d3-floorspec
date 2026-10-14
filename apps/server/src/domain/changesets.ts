@@ -2,8 +2,9 @@ import type { Tx } from '../db.js';
 import type { Changeset, OpLog } from '../generated/prisma/client.js';
 import { HttpError } from '../http/errors.js';
 import { ProblemError } from '../http/problem.js';
+import { restoreOnto } from '@floorspec/ops';
 import type { Applier, Batch, Committed } from '../ops/applier.js';
-import { documentOf } from '../ops/applier.js';
+import { documentOf, idsNamedByAdds } from '../ops/applier.js';
 import { storeVersion, MAIN } from './projects.js';
 import {
   appendOp,
@@ -139,11 +140,21 @@ export async function acceptChangeset(
     const retired = await retiredFor(tx, input.projectId, { changesetId: changeset.id, ids: ops.flatMap((op) => op.created) });
     let document: unknown = main.document;
     let before = main.hash;
-    const results: { op: OpLog; result: Committed; before: string }[] = [];
+    const results: { op: OpLog; result: Committed; before: string; batch: Batch }[] = [];
+    const branch = await branchReturn(tx, changeset, ops[0]);
     for (const [index, op] of ops.entries()) {
-      const batch = op.ops as unknown as Batch;
+      // FLR-T-18.18: a branch's first op returns main to the version it was branched from. Recorded
+      // against main as it was then, it is stale on a main that moved since — it would re-add what
+      // main has already brought back — so it is made again against main as it is now: what going
+      // back changed, over main's later edits (@floorspec/ops restoreOnto). Its adds bring elements
+      // back under their own IDs, as a restore does.
+      const batch = index === 0 && branch !== null ? (restoreOnto(branch.base, branch.target, document as Record<string, unknown>) as unknown as Batch) : (op.ops as unknown as Batch);
+      // Main already is where going back would take it: nothing to merge for this op.
+      if (index === 0 && branch !== null && batch.length === 0) continue;
+      const again = index === 0 && branch !== null ? idsNamedByAdds(batch) : [];
+      const exempt = new Set(again);
       // Each batch in the design option it was drawn in (Ops 0.3, 2.8).
-      const result = runApplier(applier, document, batch, [...retired, ...results.flatMap((r) => r.result.created)], undefined, op.editOption);
+      const result = runApplier(applier, document, batch, [...retired.filter((id) => !exempt.has(id)), ...results.flatMap((r) => r.result.created)], undefined, op.editOption);
       if (result.status === 'rejected') {
         throw new ProblemError({
           status: 409,
@@ -158,11 +169,11 @@ export async function acceptChangeset(
           diagnostics: result.diagnostics,
         });
       }
-      results.push({ op, result, before });
+      results.push({ op, result, before, batch });
       document = documentOf(result);
       before = result.hash;
     }
-    for (const { op, result, before: from } of results) {
+    for (const { op, result, before: from, batch } of results) {
       const hash = await storeVersion(tx, documentOf(result) as never);
       if (hash !== result.hash) throw new Error(`the applier reported ${result.hash} but the document hashes to ${hash}`);
       merged.push(
@@ -171,7 +182,7 @@ export async function acceptChangeset(
           head: MAIN,
           kind: 'merge',
           author: authorOfOp(op),
-          batch: op.ops as unknown as Batch,
+          batch,
           option: op.editOption,
           resolved: result.resolved,
           inverse: result.inverse,
@@ -218,6 +229,21 @@ async function closeChangeset(
   return changeset;
 }
 
+/**
+ * A branch's return (FLR-T-18.18): main as the branch was opened on (its base) and the version its
+ * first op went back to — the two documents a replay rebases that op between. Null for any other
+ * changeset, or a branch whose first op is not the return.
+ */
+async function branchReturn(tx: Tx, changeset: Changeset, first: OpLog | undefined): Promise<{ base: Record<string, unknown>; target: Record<string, unknown> } | null> {
+  if (changeset.branchedFrom === null || first === undefined || first.beforeHash !== changeset.baseHash) return null;
+  const [base, target] = await Promise.all([
+    tx.version.findUnique({ where: { hash: changeset.baseHash }, select: { document: true } }),
+    tx.version.findUnique({ where: { hash: first.afterHash }, select: { document: true } }),
+  ]);
+  if (base === null || target === null) return null;
+  return { base: base.document as Record<string, unknown>, target: target.document as Record<string, unknown> };
+}
+
 /** The author an op was recorded with, carried onto main when it is merged. */
 function authorOfOp(op: OpLog): Author {
   return { kind: op.authorKind, accountId: op.authorAccountId, agent: op.authorAgent, tokenId: op.authorTokenId };
@@ -239,5 +265,7 @@ export function changesetView(changeset: Changeset, extra: { head?: string | nul
     closedBy: changeset.closedByAccountId,
     mergeMode: changeset.mergeMode === null ? null : changeset.mergeMode === 'fast_forward' ? 'fast-forward' : 'replay',
     mergedHash: changeset.mergedHash,
+    /** FLR-T-18.18: the version of main a branch was opened at; null for any other changeset. */
+    branchedFrom: changeset.branchedFrom,
   };
 }

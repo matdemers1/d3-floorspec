@@ -363,6 +363,10 @@ model Changeset {
   /// What made it, when that was an import (FLR-T-9.5): the file, and the report of every edit the
   /// import could not map. Null for a changeset an agent proposed.
   report            Json?
+  /// FLR-T-18.18: the version of main a branch (POST /branch, the history scrubber) was opened at —
+  /// its first op returns the base to it. Replayed after main moved, that op is made again against
+  /// main (a three-way merge, @floorspec/ops `restoreOnto`), never sent stale. Null otherwise.
+  branchedFrom      Int?       @map("branched_from")
 
   project        Project   @relation(fields: [projectId], references: [id], onDelete: Restrict)
   base           Version   @relation("ChangesetBase", fields: [baseHash], references: [hash], onDelete: Restrict)
