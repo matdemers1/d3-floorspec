@@ -1,0 +1,7 @@
+{
+  "description": "A collection `cameras` in FS_views's data: its registry entry names no kind, so Core 12.4.1 reports it (FS-INV-604), and FS_views is not evaluated.",
+  "covers": [
+    "FS-VIEW-1.2.2",
+    "FS-CORE-12.4.1"
+  ]
+}

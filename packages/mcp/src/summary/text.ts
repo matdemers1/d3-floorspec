@@ -235,6 +235,10 @@ export function summaryText(s: DocumentSummary): string {
       out.push(`- ${sc.id}${q(sc.name)}: ${on.length ? `on ${on.join(', ')}` : 'everything off'}; every other light off`);
     }
   }
+  if (s.views) {
+    out.push('', '## Saved views (FS_views; floorspec_render view: <name> renders one)');
+    for (const v of s.views) out.push(`- ${v.id}${q(v.name)}: ${v.lens}; ${v.level === undefined ? 'whole house' : `cut at ${v.level}`}; ${v.sky}${v.at === undefined ? '' : ` at ${v.at}`}; lights ${v.lights}`);
+  }
   if (s.circulation) {
     const c = s.circulation;
     out.push('', '## Circulation');

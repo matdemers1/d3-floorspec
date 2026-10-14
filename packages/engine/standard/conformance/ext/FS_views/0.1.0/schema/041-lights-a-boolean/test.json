@@ -1,0 +1,6 @@
+{
+  "description": "Lights true: they are \"off\" or \"on\".",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

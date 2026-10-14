@@ -1,0 +1,40 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-VIEW-INV-001",
+      "severity": "error",
+      "elements": ["X1"]
+    },
+    {
+      "code": "FS-VIEW-INV-002",
+      "severity": "error",
+      "elements": ["SV2"]
+    },
+    {
+      "code": "FS-VIEW-INV-003",
+      "severity": "error",
+      "elements": ["SV4"]
+    },
+    {
+      "code": "FS-VIEW-INV-004",
+      "severity": "error",
+      "elements": ["SV3"]
+    },
+    {
+      "code": "FS-VIEW-INV-005",
+      "severity": "error",
+      "elements": ["SV5"]
+    },
+    {
+      "code": "FS-VIEW-INV-006",
+      "severity": "error",
+      "elements": ["SV5", "SV6"]
+    },
+    {
+      "code": "FS-VIEW-INV-007",
+      "severity": "error",
+      "elements": ["SV5"]
+    }
+  ]
+}

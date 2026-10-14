@@ -1,0 +1,6 @@
+{
+  "description": "The house without FS_lighting, and the dusk view still showing LS1: a document without FS_lighting's data has no scenes (1.3).",
+  "covers": [
+    "FS-VIEW-3.3.1"
+  ]
+}

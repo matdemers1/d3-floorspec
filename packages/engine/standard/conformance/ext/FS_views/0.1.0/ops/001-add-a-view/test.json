@@ -1,0 +1,10 @@
+{
+  "description": "setProperty of $document /extensions/FS_views/views/SV5 adds a view \"Living room\" - a 16 mm portrait two-point view at night with the Night light on - with an ID Ops does not mint (1.3.2). It commits, valid under FS_views.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-1.3.2",
+    "FS-VIEW-3.3.1",
+    "FS-VIEW-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

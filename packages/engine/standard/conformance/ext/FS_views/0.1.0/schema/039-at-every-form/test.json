@@ -1,0 +1,7 @@
+{
+  "description": "An `at` in each form the schema allows - with seconds, with Z, and with seconds and an offset of -14:00 - and the bounds of a focal length, an exposure and a focus: 8 mm and 1,200 mm, -30 and 30, a focus of 1. Valid.",
+  "covers": [
+    "FS-VIEW-1.3.1",
+    "FS-VIEW-3.2.1"
+  ]
+}

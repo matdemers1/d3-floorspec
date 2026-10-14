@@ -1,0 +1,6 @@
+{
+  "description": "A view's name is 1 to 200 characters.",
+  "covers": [
+    "FS-VIEW-1.3.1"
+  ]
+}

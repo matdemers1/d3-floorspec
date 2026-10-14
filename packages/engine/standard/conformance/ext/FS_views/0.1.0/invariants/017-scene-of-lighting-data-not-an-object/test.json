@@ -1,0 +1,6 @@
+{
+  "description": "FS_lighting's data is a string, which no implementation of FS_views checks: it holds no scene, so LS1 names none.",
+  "covers": [
+    "FS-VIEW-3.3.1"
+  ]
+}

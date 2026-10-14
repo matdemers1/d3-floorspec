@@ -1,0 +1,9 @@
+{
+  "description": "The house declaring FS_views with no data of it yet: setProperty of $document /extensions/FS_views/views/SV1 creates FS_views's data, and its `views`, on the way (Ops 2.3) - the hero shot. It commits, valid under FS_views.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-1.3.1",
+    "FS-VIEW-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The cutaway and a straight-down view SV5 both two-point: each view once.",
+  "covers": [
+    "FS-VIEW-1.2.3",
+    "FS-VIEW-2.3.1"
+  ]
+}

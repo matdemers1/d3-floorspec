@@ -1,0 +1,10 @@
+{
+  "description": "setProperty of $document /extensions/FS_views/views/SV2 replaces the island view's record: a 35 mm view from the Kitchen's north-east corner, 3:2, everything in focus, with the Evening scene at dusk. It commits, and nothing of the old record is left.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-2.2.1",
+    "FS-VIEW-3.3.1",
+    "FS-VIEW-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

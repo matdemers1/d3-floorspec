@@ -1,0 +1,6 @@
+{
+  "description": "The cutaway is keyed by X2, a pendant's ID: a view's ID is in the document's one space of IDs.",
+  "covers": [
+    "FS-VIEW-1.3.2"
+  ]
+}

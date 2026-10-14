@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-VIEW-INV-006",
+      "severity": "error",
+      "elements": ["SV1", "SV4"]
+    }
+  ]
+}

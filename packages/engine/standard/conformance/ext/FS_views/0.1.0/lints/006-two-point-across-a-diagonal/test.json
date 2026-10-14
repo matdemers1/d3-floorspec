@@ -1,0 +1,7 @@
+{
+  "description": "The hero shot rises 1,000 units over 1,000 east and 1,000 north - 3,000,000 > 2,000,000 - and the island view falls 1,000 over 1,000 east and 1,500 north - 3,000,000 < 3,250,000: the horizontal distance counts both ways. One lint.",
+  "covers": [
+    "FS-VIEW-1.2.3",
+    "FS-VIEW-2.3.1"
+  ]
+}

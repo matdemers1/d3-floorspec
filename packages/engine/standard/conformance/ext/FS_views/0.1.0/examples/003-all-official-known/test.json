@@ -1,0 +1,7 @@
+{
+  "description": "The house read with every official entry known, by an implementation of FS_views alone: FS_electrical, FS_furniture and FS_lighting are checked only as Core 12 checks a known extension - FS_lighting's requirement of FS_electrical among them - and only FS_views is evaluated and derived.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-1.2.4"
+  ]
+}

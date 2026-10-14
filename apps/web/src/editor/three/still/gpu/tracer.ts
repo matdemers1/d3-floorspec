@@ -55,6 +55,8 @@ export interface TraceRequest {
   readonly radiance?: boolean;
   readonly onProgress?: (p: TraceProgress) => void;
   readonly signal?: AbortSignal;
+  /** Exposure compensation (FLR-T-13.10): a factor on the metered exposure. Default 1. */
+  readonly exposureScale?: number;
 }
 
 export interface TraceResult {
@@ -127,6 +129,7 @@ const nextFrame = (): Promise<void> => new Promise((resolve) => requestAnimation
 /** Path-trace a still on this device's GPU and give back its PNG. Rejects with TraceCancelled when `signal` aborts. */
 export async function traceStill(request: TraceRequest): Promise<TraceResult> {
   const { canvas, scene, camera, width, height, samples, time, signal } = request;
+  const scale = request.exposureScale ?? 1;
   const started = performance.now();
   const say = (p: TraceProgress): void => request.onProgress?.(p);
   say({ phase: 'preparing', samples: 0, target: samples, rate: null });
@@ -174,7 +177,7 @@ export async function traceStill(request: TraceRequest): Promise<TraceResult> {
           metered = true;
           const avg = await logAverage(renderer, readable(tracer.target), width, height, meterFloor(time) / TRACE_UNIT).catch(() => null);
           if (avg !== null) {
-            exposure = meteredExposure(avg * TRACE_UNIT, time);
+            exposure = meteredExposure(avg * TRACE_UNIT, time) * scale;
             renderer.toneMappingExposure = toneMappingExposure(exposure * TRACE_UNIT);
           }
         }
@@ -198,7 +201,7 @@ export async function traceStill(request: TraceRequest): Promise<TraceResult> {
     const avg = source === null ? null : await logAverage(renderer, source, width, height, meterFloor(time) / TRACE_UNIT).catch(() => null);
     copy?.dispose();
     if (avg !== null) {
-      exposure = meteredExposure(avg * TRACE_UNIT, time);
+      exposure = meteredExposure(avg * TRACE_UNIT, time) * scale;
       renderer.toneMappingExposure = toneMappingExposure(exposure * TRACE_UNIT);
     }
     // Shown once more, the denoised picture with its exposure, and read in the same task.

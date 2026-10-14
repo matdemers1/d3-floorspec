@@ -9,3 +9,5 @@ Skeleton. See FLR in Foreman for the tasks that fill this directory.
   health checks.
 - [lighting.md](lighting.md) — light levels: lumens per fixture and watts, inverse-square in
   metres, a fixture never shadowing itself, and the exposure every view shares (FLR-T-13.1).
+- [camera.md](camera.md) — saved views (FS_views), the lens on a 36 mm frame, two-point perspective
+  as a shift lens, depth of field, exposure compensation, framing guides and the shot list (FLR-T-13.10).

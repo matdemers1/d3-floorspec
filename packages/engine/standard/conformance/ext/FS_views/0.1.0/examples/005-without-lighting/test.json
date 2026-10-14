@@ -1,0 +1,9 @@
+{
+  "description": "The house without FS_lighting - neither its declaration nor its data - and the dusk view without a scene: FS_views requires no other extension, so the views are valid as they are, and the dusk view's lights are off.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-1.3.1",
+    "FS-VIEW-3.3.1",
+    "FS-VIEW-6.1.1"
+  ]
+}

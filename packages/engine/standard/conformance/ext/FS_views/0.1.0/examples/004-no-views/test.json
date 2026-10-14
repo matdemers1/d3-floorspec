@@ -1,0 +1,7 @@
+{
+  "description": "FS_views used with empty top-level data: valid, and no view derived.",
+  "covers": [
+    "FS-VIEW-1.3.1",
+    "FS-VIEW-6.1.1"
+  ]
+}

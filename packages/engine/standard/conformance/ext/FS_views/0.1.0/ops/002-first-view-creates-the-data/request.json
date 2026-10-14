@@ -1,0 +1,20 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_views/views/SV1",
+      "value": {
+        "name": "Hero exterior",
+        "eye": [-5120000, -8960000, 2048000],
+        "target": [3901440, 2341120, 1728000],
+        "focalLength": 24,
+        "twoPoint": true,
+        "aperture": "f/8",
+        "exposure": 3,
+        "sky": "clear",
+        "at": "2026-06-21T17:30"
+      }
+    }
+  ]
+}

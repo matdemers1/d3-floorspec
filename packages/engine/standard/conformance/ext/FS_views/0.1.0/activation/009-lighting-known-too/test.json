@@ -1,0 +1,9 @@
+{
+  "description": "The house read with FS_lighting's entry known as well as FS_views's, by an implementation of FS_views alone: FS_lighting is checked only as Core 12 checks a known extension, and FS_views is evaluated and derived exactly as with its own entry alone, reading the scenes as data.",
+  "covers": [
+    "FS-VIEW-1.2.1",
+    "FS-VIEW-1.2.4",
+    "FS-VIEW-3.3.1",
+    "FS-VIEW-6.1.1"
+  ]
+}

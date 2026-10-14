@@ -1,0 +1,6 @@
+{
+  "description": "A Core invariant breaks - the porch light's switch 13' along the 12' wall W2, FS-INV-501 - and so does FS_views's schema: Core's error is reported, and FS_views is not evaluated.",
+  "covers": [
+    "FS-VIEW-1.2.2"
+  ]
+}

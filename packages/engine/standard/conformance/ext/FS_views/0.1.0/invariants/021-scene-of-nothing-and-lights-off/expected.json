@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-VIEW-INV-004",
+      "severity": "error",
+      "elements": ["SV3"]
+    },
+    {
+      "code": "FS-VIEW-INV-005",
+      "severity": "error",
+      "elements": ["SV3"]
+    }
+  ]
+}

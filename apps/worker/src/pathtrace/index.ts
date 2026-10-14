@@ -80,6 +80,16 @@ export interface StillOptions {
   /** For `renderStill`: the sky preset (FLR-T-13.4) and a date and time at the site (FLR-T-13.9) that places the sun. */
   readonly sky?: SkyPreset;
   readonly at?: string;
+  /**
+   * A camera given whole (FLR-T-13.10, a saved view's: render3d/camera.ts `savedCamera`) in place of
+   * `camera` and `room`: its lens shift and thin lens with it. `inside` says whether it stands in a
+   * room — metered as a room is — or outside, exposed for the sky's light.
+   */
+  readonly shot?: { readonly camera: Camera; readonly inside: boolean };
+  /** One level alone: `level` without those below it (FLR-T-13.2). */
+  readonly only?: boolean;
+  /** Exposure compensation (FLR-T-13.10): a factor on the exposure the still is metered to. Default 1. */
+  readonly exposureScale?: number;
 }
 
 export interface StillResult {
@@ -179,9 +189,11 @@ export function lampsOf(scene: Scene, drawn: (level: string) => boolean = () => 
 }
 
 /** The scene's triangles as the tracer reads them, cut away above `level`, on a ground plate — with its lamps, when they are on. */
-export function ptScene(scene: Scene, options: { level?: string; textures?: ReadonlyMap<number, Texture | MaterialMaps>; lights?: Lights; plate?: boolean } = {}): PtScene & { readonly floor: number; readonly plate: boolean } {
+export function ptScene(scene: Scene, options: { level?: string; only?: boolean; textures?: ReadonlyMap<number, Texture | MaterialMaps>; lights?: Lights; plate?: boolean } = {}): PtScene & { readonly floor: number; readonly plate: boolean } {
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
   const cut = options.level === undefined ? undefined : order.get(options.level);
+  // One level alone (FLR-T-13.2, a saved view's `levels: "only"`): none below the cut either.
+  const alone = options.only === true && cut !== undefined;
   const pos: number[] = [];
   const mat: number[] = [];
   const uv: number[] = [];
@@ -211,6 +223,7 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
   for (const level of scene.levels) {
     const at = order.get(level.id)!;
     if (cut !== undefined && at > cut) continue;
+    if (alone && at < cut) continue;
     for (const node of level.nodes) {
       const owner = fixtures.get(node.id) ?? -1;
       for (const p of node.primitives) {
@@ -271,7 +284,7 @@ export function ptScene(scene: Scene, options: { level?: string; textures?: Read
     normals[3 * t + 1] = ny / l;
     normals[3 * t + 2] = nz / l;
   }
-  const lamps = options.lights === 'on' ? lampsOf(scene, (l) => cut === undefined || (order.get(l) ?? Infinity) <= cut) : [];
+  const lamps = options.lights === 'on' ? lampsOf(scene, (l) => cut === undefined || ((order.get(l) ?? Infinity) <= cut && (!alone || order.get(l) === cut))) : [];
   return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials, floor: Number.isFinite(min[1]) ? min[1] - 0.003 : 0, plate, ...(lamps.length === 0 ? {} : { lamps, owner: Int32Array.from(own) }) };
 }
 
@@ -355,8 +368,9 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 8 || height < 8 || width * height * samples > MAX_WORK) throw new RangeError('the still is too big');
   const maps = texturesOf(scene, withLibrary(options.images));
   const sky = options.skyLight;
-  const pt = ptScene(scene, { ...(options.room === undefined && options.level !== undefined ? { level: options.level } : {}), textures: maps.textures, ...(options.lights === undefined ? {} : { lights: options.lights }), plate: sky === undefined });
-  const camera = cameraFor(scene, pt, options, width / height);
+  const pt = ptScene(scene, { ...(options.room === undefined && options.level !== undefined ? { level: options.level, ...(options.only === true ? { only: true } : {}) } : {}), textures: maps.textures, ...(options.lights === undefined ? {} : { lights: options.lights }), plate: sky === undefined });
+  const camera = options.shot?.camera ?? cameraFor(scene, pt, options, width / height);
+  const inRoom = options.shot === undefined ? options.room !== undefined : options.shot.inside;
   const sunIn = options.sun ?? DEFAULT_SUN;
   // FLR-T-13.4: under a sky, its band is the time of day the still is exposed for.
   const time = sky !== undefined ? sky.light.band : (options.time ?? (options.lights === undefined ? 'day' : 'night'));
@@ -365,7 +379,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   const sun = sky !== undefined ? directOf(sky) : time === 'day' ? daylight : { ...daylight, irradiance: 0 };
   // Under a sky, an outside view is exposed as the editor's is — for the sky's own light (FLR-T-13.4),
   // so a lawn filling the frame does not open it up and burn the house out; a room is metered.
-  const outside = sky !== undefined && options.room === undefined && (sky.light.band === 'day' || options.lights === undefined) ? skyExposure(sky.light, sky.field.maps) * LUX_PER_UNIT : undefined;
+  const outside = sky !== undefined && !inRoom && (sky.light.band === 'day' || options.lights === undefined) ? skyExposure(sky.light, sky.field.maps) * LUX_PER_UNIT : undefined;
   const exposure = outside !== undefined ? outside : sky === undefined && options.lights === undefined && options.time === undefined ? undefined : EXPOSURE[time];
   const lit = options.lights !== undefined;
   const traced = await traceParallel(pt, {
@@ -383,8 +397,10 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     ...(options.onPass === undefined ? {} : { onPass: options.onPass }),
   });
   const hdr = options.denoise === false ? traced.color : denoise(traced.color, traced.features, width, height);
-  const png = encodePng(toneMap(hdr, width, height, exposure), width, height);
-  const exposed = exposure === undefined ? undefined : exposureOf(hdr, width, height, exposure);
+  // Exposure compensation (FLR-T-13.10) on top of what the still is metered to.
+  const scale = options.exposureScale ?? 1;
+  const exposed = exposure === undefined && scale === 1 ? undefined : exposureOf(hdr, width, height, exposure) * scale;
+  const png = encodePng(toneMap(hdr, width, height, exposed ?? exposure), width, height);
   return {
     png,
     width,

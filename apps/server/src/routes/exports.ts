@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { evaluate, OFFICIAL_READER } from '@floorspec/engine';
-import { QUALITIES, SIZES, SKIES, withinBudget, type Quality, type Size } from '@d3-floorspec/worker/stills';
+import { MAX_SHOTS, QUALITIES, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, withinBudget, type Quality, type ShotSize, type Size } from '@d3-floorspec/worker/stills';
+import { savedViewsOf } from '@floorspec/mesh';
 import type { Request } from 'express';
 import { z } from 'zod';
 import type { Db, Tx } from '../db.js';
@@ -11,6 +12,7 @@ import { ProblemError } from '../http/problem.js';
 import { MAIN } from '../domain/projects.js';
 import { MediaError, prepareImage } from '../assets/media.js';
 import { rawBody } from './assets.js';
+import { MAX_PENDING_RENDERS } from './checks.js';
 
 /**
  * Drawing exports (FLR-T-9.3): a dimensioned PDF sheet per level, or DXF drawings on NCS-pattern
@@ -33,7 +35,7 @@ import { rawBody } from './assets.js';
  * kept like one the worker rendered. Nothing is queued: the browser did the work.
  */
 
-const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still'] as const;
+const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still', 'shots'] as const;
 const VIEWS = ['sw', 'se', 'ne', 'nw', 'top'] as const;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 
@@ -50,6 +52,15 @@ const StillBody = z.strictObject({
   /** The sky it is seen under (FLR-T-13.4): the 3D view's preset. */
   sky: z.enum(SKIES).optional(),
 });
+/**
+ * A shot list (FLR-T-13.10): the saved views (FS_views) to render, by ID — default every one — at a
+ * size by the long side and a quality, each traced as a still, one after another in one job.
+ */
+const ShotsBody = z.strictObject({
+  views: z.array(z.string().regex(ID)).min(1).max(MAX_SHOTS).optional(),
+  size: z.enum(Object.keys(SHOT_SIZES) as [ShotSize, ...ShotSize[]]).default('medium'),
+  quality: z.enum(Object.keys(QUALITIES) as [Quality, ...Quality[]]).default('standard'),
+});
 export const PAGE_NAMES = ['tabloid', 'arch-c', 'arch-d', 'letter', 'a4', 'a3'] as const;
 
 const ExportBody = z.strictObject({
@@ -64,6 +75,8 @@ const ExportBody = z.strictObject({
   design: z.record(z.string().regex(ID), z.string().regex(ID)).optional(),
   /** A still: what to render (FLR-T-12.6). */
   still: StillBody.optional(),
+  /** A shot list: which saved views, how big and how clean (FLR-T-13.10). */
+  shots: ShotsBody.optional(),
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8) — the editor's GPU still asks for either (FLR-T-13.13). */
   doors: z.enum(['open', 'closed']).optional(),
   /**
@@ -79,6 +92,7 @@ const ExportBody = z.strictObject({
 
 /** How many exports a project may have waiting or running at once. */
 export const MAX_PENDING = 5;
+
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -107,6 +121,8 @@ type Params = {
   readonly sky?: string;
   readonly samples?: number;
   readonly device?: string;
+  /** A shot list: the saved views asked for, by ID (absent: every one). */
+  readonly views?: string[];
 };
 
 /** The largest still the editor may save: a 4K PNG with room to spare. */
@@ -163,6 +179,7 @@ export function exportView(projectId: string, job: Job) {
             ...(p.source === 'gpu' ? { view: p.view ?? null, samples: p.samples ?? null, lights: p.lights ?? null, scene: p.scene ?? null, time: p.time ?? null, device: p.device ?? null } : {}),
           }
         : null,
+    shots: job.kind === 'export.shots' ? { views: p.views ?? null, size: p.size ?? 'medium', quality: p.quality ?? 'standard' } : null,
     progress: job.status === 'running' ? (job.progress ?? null) : null,
     error: job.error,
     result: job.result,
@@ -226,6 +243,7 @@ export function exportRoutes(db: Db): Routes {
       if (levels.length === 0) throw new ProblemError({ status: 422, type: 'not-drawable', title: 'this version has no levels to draw' });
       if (body.kind === 'ifc' && body.levels !== undefined) throw new HttpError(400, 'an IFC export is of the whole model: it takes no levels');
       if (body.still !== undefined && body.kind !== 'still') throw new HttpError(400, 'only a still takes still options');
+      if (body.shots !== undefined && body.kind !== 'shots') throw new HttpError(400, 'only a shot list takes shots options');
       if (body.doors !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes doors');
       if (body.lighting !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes a lighting');
       const still = body.kind === 'still' ? StillBody.parse(body.still ?? {}) : undefined;
@@ -240,8 +258,23 @@ export function exportRoutes(db: Db): Routes {
           const known = Object.entries(view.rooms ?? {}).some(([rid, r]) => rid.toLowerCase() === key || r?.name?.toLowerCase() === key);
           if (!known) throw new HttpError(400, `the model has no room ${still.room}`);
         }
-        const rendering = await tx.job.count({ where: { projectId: project.id, kind: 'export.still', status: { in: ['queued', 'running'] } } });
-        if (rendering > 0) throw new HttpError(429, 'a still is already rendering for this project; wait for it to finish');
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.still', 'export.shots'] }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a still or a shot list is already rendering for this project; wait for it to finish');
+      }
+      const shots = body.kind === 'shots' ? ShotsBody.parse(body.shots ?? {}) : undefined;
+      if (shots !== undefined) {
+        if (body.levels !== undefined || body.page !== undefined) throw new HttpError(400, 'a shot list renders the saved views as they are: it takes no levels or page');
+        if (!shotWithinBudget(shots.size, shots.quality)) throw new HttpError(400, `a ${shots.size} shot at ${shots.quality} quality is more work than a still may take: choose a smaller size or a lower quality`);
+        const saved = savedViewsOf(ev.document);
+        if (saved.length === 0) throw new ProblemError({ status: 422, type: 'no-saved-views', title: 'this model has no saved views', detail: 'Save a view in the 3D view, or add one with setProperty of $document (FS_views), then render the shot list.' });
+        const unknown = (shots.views ?? []).filter((v) => !saved.some((s) => s.id === v));
+        if (unknown.length > 0) throw new HttpError(400, `the model has no saved view ${unknown.join(', ')}; its views are ${saved.map((v) => v.id).join(', ')}`);
+        if ((shots.views ?? saved).length > MAX_SHOTS) throw new HttpError(400, `a shot list renders at most ${String(MAX_SHOTS)} views`);
+        // One shot list at a time, and it takes one of the project's three render places (FLR-T-8.5).
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.shots', 'export.still'] }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a shot list or a still is already rendering for this project; wait for it to finish');
+        const renders = await tx.job.count({ where: { projectId: project.id, kind: 'render.3d', status: { in: ['queued', 'running'] } } });
+        if (renders >= MAX_PENDING_RENDERS) throw new HttpError(429, `this project already has ${String(renders)} 3D renders waiting; try again when one finishes`);
       }
       const missing = (body.levels ?? []).filter((l) => !levels.includes(l));
       if (missing.length > 0) throw new HttpError(400, `the model has no level ${missing.join(', ')}`);
@@ -253,6 +286,7 @@ export function exportRoutes(db: Db): Routes {
         ...(body.design === undefined ? {} : { design: body.design }),
         ...(body.doors === undefined ? {} : { doors: body.doors }),
         ...(body.lighting === undefined ? {} : { lighting: { on: Object.fromEntries(Object.entries(body.lighting.on).map(([id, s]) => [id, { ...(s.output === undefined ? {} : { output: s.output }), ...(s.cct === undefined ? {} : { cct: s.cct }) }])) } }),
+        ...(shots === undefined ? {} : { ...(shots.views === undefined ? {} : { views: [...new Set(shots.views)] }), size: shots.size, quality: shots.quality }),
         ...(still === undefined
           ? {}
           : {
@@ -279,7 +313,7 @@ export function exportRoutes(db: Db): Routes {
       });
       return {
         reply: (res) => res.status(202).location(`/api/projects/${project.id}/exports/${job.id}`).json({ export: exportView(project.id, job) }),
-        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }) } },
+        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }), ...(shots === undefined ? {} : { shots: { views: params.views ?? null, size: params.size, quality: params.quality } }) } },
       };
     },
     { token: 'read' },

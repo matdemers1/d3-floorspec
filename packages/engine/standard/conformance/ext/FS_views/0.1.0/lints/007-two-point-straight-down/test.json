@@ -1,0 +1,7 @@
+{
+  "description": "A two-point view SV5 straight down onto the island, its eye above its target: no level line of sight at all.",
+  "covers": [
+    "FS-VIEW-1.2.3",
+    "FS-VIEW-2.3.1"
+  ]
+}
