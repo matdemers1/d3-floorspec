@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { describe, expect, it } from 'vitest';
 import { apply } from '@floorspec/ops';
 import { addLevel, addRoom, drawChain, typeChoices, type Batch, type BatchBuilder, type ChainVertex } from '../src/editor/ops';
