@@ -244,9 +244,24 @@ export function itemPoints(device: { footprint: Ring; placement: { point: Point 
   return { points, centre: [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2] };
 }
 
-/** The midpoints, item points and ghosts the settings snap to. */
+// Keyed by the level's walls (a tool's level with its chain added keeps them), checked against its devices.
+const targetCache = new WeakMap<object, { key: string; devices: unknown; targets: SnapTarget[] }>();
+
+/** The midpoints, item points and ghosts the settings snap to — kept per level while nothing is excluded, as the pointer moves. */
 export function snapTargets(level: LevelView, o: Pick<SnapOptions, 'settings' | 'ghosts' | 'excludeItems' | 'excludeWalls' | 'name'>): SnapTarget[] {
   const s = o.settings ?? SNAP_DEFAULTS;
+  const cacheable = (o.excludeItems?.size ?? 0) === 0 && (o.excludeWalls?.size ?? 0) === 0;
+  const key = `${String(s.midpoints)}${String(s.items)}${String(s.ghosts)}:${(o.ghosts ?? []).map((p) => `${String(p[0])},${String(p[1])}`).join(';')}`;
+  if (cacheable) {
+    const hit = targetCache.get(level.walls);
+    if (hit?.key === key && hit.devices === level.devices) return hit.targets;
+  }
+  const targets = collectTargets(level, s, o);
+  if (cacheable) targetCache.set(level.walls, { key, devices: level.devices, targets });
+  return targets;
+}
+
+function collectTargets(level: LevelView, s: SnapSettings, o: Pick<SnapOptions, 'ghosts' | 'excludeItems' | 'excludeWalls' | 'name'>): SnapTarget[] {
   const name = o.name ?? ((id: string) => id);
   const out: SnapTarget[] = [];
   if (s.midpoints) {
