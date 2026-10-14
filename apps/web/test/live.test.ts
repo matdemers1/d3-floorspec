@@ -152,6 +152,26 @@ describe('replaying a changeset onto a main that moved', () => {
   });
 });
 
+describe('replaying a branch from an earlier version (FLR-T-18.18)', () => {
+  it('makes its return again against main, so it applies where main already brought back what it re-adds', () => {
+    const v1 = house();
+    const v2 = step(v1, [{ op: 'removeElement', id: 'KIT' }]).model;
+    // The branch from v1, opened at v2: its one op re-adds KIT.
+    const { log } = logOf(v2, [[{ op: 'addElement', collection: 'rooms', id: 'KIT', element: v1.document.rooms?.['KIT'] as unknown as Record<string, unknown> }]]);
+    // Main since: KIT back (an undo) and renamed.
+    const v3 = step(step(v2, [{ op: 'addElement', collection: 'rooms', id: 'KIT', element: v1.document.rooms?.['KIT'] as unknown as Record<string, unknown> }]).model, [{ op: 'setProperty', id: 'KIT', path: '/name', value: 'Pantry' }]).model;
+    // As sent, it no longer applies.
+    expect(replay(v3, log).status).toBe('failed');
+    const branch = { base: v2.document as unknown as Record<string, unknown>, target: v1.document as unknown as Record<string, unknown> };
+    const out = replay(v3, log, branch);
+    expect(out.status).toBe('ok');
+    if (out.status === 'ok') {
+      expect(out.model.document.rooms?.['KIT']?.name).toBe(v1.document.rooms?.['KIT']?.name);
+      expect(out.differs).toEqual([0]);
+    }
+  });
+});
+
 // ─── Nudging and typed coordinates (FLR-T-3.7) ───────────────────────────────────────────────
 
 describe('arrow-key nudges are the ops a drag would send', () => {

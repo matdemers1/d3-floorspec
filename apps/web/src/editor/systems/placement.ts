@@ -76,6 +76,11 @@ export interface HoverOptions {
   height: number;
   /** A floor or ceiling device's rotation, when it stands free of the walls. */
   rotation?: number;
+  /**
+   * What a point off the walls rounds to; the grid when absent. A drag passes 1: it has moved the
+   * point by a whole number of grid steps already (FLR-T-18.18), and rounding it again would jump it.
+   */
+  pointGrid?: number;
 }
 
 /** The host a device of `mount` would be placed on at `p`, or null when nothing is near. */
@@ -96,8 +101,8 @@ export function hoverFor(level: LevelView, mount: Mount, p: Point, o: HoverOptio
   }
   const room = faceAt(level, p)?.room ?? null;
   if (room === null) {
-    if (mount === 'ceiling') return { host: { mode: 'free', level: level.id, at: round(p, o.grid) }, point: round(p, o.grid), facing: [1, 0], problem: 'A ceiling device goes in a room: point inside one.' };
-    const at = round(p, o.grid);
+    if (mount === 'ceiling') return { host: { mode: 'free', level: level.id, at: round(p, o.pointGrid ?? o.grid) }, point: round(p, o.pointGrid ?? o.grid), facing: [1, 0], problem: 'A ceiling device goes in a room: point inside one.' };
+    const at = round(p, o.pointGrid ?? o.grid);
     return { host: { mode: 'free', level: level.id, at, ...(o.rotation === undefined ? {} : { rotation: o.rotation }) }, point: at, facing: [1, 0] };
   }
   if (mount === 'floorWall') {
@@ -112,7 +117,7 @@ export function hoverFor(level: LevelView, mount: Mount, p: Point, o: HoverOptio
       if (faceAt(level, at)?.room === room) return { host: { mode: 'surface', room, surface: 'floor', at, rotation: angleOf(inward) }, point: at, facing: inward };
     }
   }
-  const at = round(p, o.grid);
+  const at = round(p, o.pointGrid ?? o.grid);
   const rotation = o.rotation ?? 0;
   const rad = (rotation / 1_000_000) * (Math.PI / 180);
   return { host: { mode: 'surface', room, surface: mount === 'ceiling' ? 'ceiling' : 'floor', at, ...(rotation === 0 ? {} : { rotation }) }, point: at, facing: [Math.cos(rad), Math.sin(rad)] };

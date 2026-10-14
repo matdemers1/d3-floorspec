@@ -5,6 +5,7 @@ import type { DeviceView } from '../systems/view';
 import type { Batch } from '../ops';
 import { boundsOfIds, type Rect } from './shapes';
 import { cornersOf, wallsOfRoom } from './rooms';
+import { ridersOf } from './riders';
 
 /**
  * Moving, turning and mirroring many elements as one batch (FLR-T-18.8). Every edit here is a
@@ -89,13 +90,23 @@ const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null 
 const asPoint = (v: unknown): Point | null => (Array.isArray(v) && typeof v[0] === 'number' && typeof v[1] === 'number' ? [v[0], v[1]] : null);
 const lengthOf = (w: WallView): number => w.arc?.length ?? dist(w.a, w.b);
 
-/** The batch that applies `xf` to the elements `ids` on `level`. */
-export function transformBatch(model: EditorModel, level: LevelView, ids: readonly string[], xf: Xform): Transformed {
+export interface TransformOptions {
+  /**
+   * FLR-T-18.18: take what sits on the elements along (arrange/riders.ts) — a cooktop with its
+   * island. On by default; `except` are left out of it (moved by some other part of the same edit).
+   */
+  carry?: boolean;
+  except?: ReadonlySet<string>;
+}
+
+/** The batch that applies `xf` to the elements `ids` on `level` — and to what rides on them. */
+export function transformBatch(model: EditorModel, level: LevelView, ids: readonly string[], xf: Xform, o: TransformOptions = {}): Transformed {
   const doc = model.document;
   const ops: Batch = [];
   const moved: string[] = [];
   const skipped: { id: string; why: string }[] = [];
   const selected = new Set(ids);
+  const riders = new Set(o.carry === false ? [] : ridersOf(level, ids, o.except));
   const junctions = new Set<string>();
   const wallsById = new Map(level.walls.map((w) => [w.id, w]));
 
@@ -167,7 +178,7 @@ export function transformBatch(model: EditorModel, level: LevelView, ids: readon
     const onTurnedWall = host?.['mode'] === 'wallFace' && turnedRound.has(String(host['wall']));
     // What stands in a room that is carried goes with it: its furniture, fixtures and ceiling lights.
     const inCarriedRoom = host?.['mode'] === 'surface' && carriedRooms.has(String(host['room']));
-    if (!selected.has(d.id) && !onTurnedWall && !inCarriedRoom) continue;
+    if (!selected.has(d.id) && !riders.has(d.id) && !onTurnedWall && !inCarriedRoom) continue;
     const next = deviceHost(level, d, xf, { rigid, turnedRound, carriedRooms });
     if (next === 'none') {
       if (selected.has(d.id)) skipped.push({ id: d.id, why: 'it has no host to move' });
@@ -342,7 +353,8 @@ function eachBy(model: EditorModel, level: LevelView, ids: readonly string[], by
       out.moved.push(id);
       continue;
     }
-    const one = transformBatch(model, level, [id], translation(d));
+    // What rides on one goes with it — unless it is one of those aligned itself.
+    const one = transformBatch(model, level, [id], translation(d), { except: new Set(ids) });
     // A junction is moved once: a second element that shares it keeps where the first put it.
     const ops = one.batch.filter((op) => {
       if (op.op !== 'moveJunction') return true;

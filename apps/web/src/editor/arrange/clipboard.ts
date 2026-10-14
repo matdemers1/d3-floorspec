@@ -7,6 +7,7 @@ import { declarationOps, setRecordMember, usedIds } from '../systems/ops';
 import { recordsOf } from '../systems/view';
 import { boundsOfIds } from './shapes';
 import { wallsOfRoom } from './rooms';
+import { ridersOf } from './riders';
 
 /**
  * Copy, paste and duplicate (FLR-T-18.8). A copy is the selected elements as the document holds
@@ -51,6 +52,8 @@ export interface ClipItem {
   point?: Point;
   /** Members (as paths) that name another element or a record. */
   refs: Path[];
+  /** FLR-T-18.18: not picked, but copied with what it sits on (a cooktop with its island): not selected once pasted. */
+  rider?: boolean;
 }
 
 export interface Clip {
@@ -138,6 +141,9 @@ export function copyClip(model: EditorModel, level: LevelView, ids: readonly str
     }
   }
   const wallsById = new Map(level.walls.map((w) => [w.id, w]));
+  // FLR-T-18.18: what sits on a copied item is copied with it, grouped with the copy (its `with` rewritten below).
+  const riders = new Set(ridersOf(level, [...wanted]));
+  for (const id of riders) wanted.add(id);
   for (const id of wanted) {
     if (items.some((i) => i.id === id)) continue;
     const kind = kindOf(model, id);
@@ -169,7 +175,7 @@ export function copyClip(model: EditorModel, level: LevelView, ids: readonly str
     const own = OWN[item.kind];
     const refs: Path[] = [];
     refsIn(model, item.element, [], refs, (p) => p.length === 1 && own.includes(String(p[0])) || (item.kind === 'device' && p[0] === 'fallback' && p[1] === 'level'));
-    items.push({ ...item, refs });
+    items.push({ ...item, refs, ...(riders.has(id) ? { rider: true } : {}) });
   }
   if (items.length === 0) return null;
 
@@ -432,7 +438,7 @@ export function pasteBatch(model: EditorModel, level: LevelView, clip: Clip, o: 
         continue;
       }
       ops.push({ op: 'placeElement', extension: item.extension, collection: item.collection, id, host: placed, element } as unknown as Operation);
-      ids.push(id);
+      if (item.rider !== true) ids.push(id);
       // Its luminaire record, where the document reads FS_lighting.
       const record = clip.luminaires?.[item.id];
       if (record !== undefined && Object.hasOwn((doc as { extensionsUsed?: Record<string, unknown> }).extensionsUsed ?? {}, 'FS_lighting')) ops.push({ op: 'setProperty', id: '$document', path: `/extensions/FS_lighting/luminaires/${id}`, value: clone(record) });

@@ -286,7 +286,7 @@ export function copySelection(store: EditorStore): Clip | null {
   const clip = copyClip(s.model, level, selectedHere(store), store.projectId);
   if (clip !== null) {
     clips.set(store, clip);
-    store.set({ notice: { tone: 'info', text: `Copied ${describeMany(s.model, clip.items.map((i) => i.id))}. Paste with ⌘V here, on another level or in another project.` } });
+    store.set({ notice: { tone: 'info', text: `Copied ${describeMany(s.model, clip.items.filter((i) => i.rider !== true).map((i) => i.id))}. Paste with ⌘V here, on another level or in another project.` } });
   }
   return clip;
 }
@@ -312,7 +312,7 @@ export function pasteClip(store: EditorStore, clip: Clip, o: { level?: string; o
   const levelId = o.level ?? s.level;
   const offsets = o.offsets ?? [besideOffset(store, clip)];
   const sameProject = clip.project === store.projectId;
-  const count = clip.items.length;
+  const count = clip.items.filter((i) => i.rider !== true).length;
   let skipped: string[] = [];
   const label = o.label ?? `Paste ${String(count)} ${count === 1 ? 'element' : 'elements'}`;
   let named: string[] = [];
@@ -349,7 +349,7 @@ export function copyToLevel(store: EditorStore, level: string): void {
   if (s.model === null || here === undefined || !editable(s)) return;
   const clip = copyClip(s.model, here, selectedHere(store), store.projectId);
   if (clip === null) return;
-  void pasteClip(store, clip, { level, offsets: [[0, 0]], label: `Copy ${describeMany(s.model, clip.items.map((i) => i.id))} to ${labelOf(s.model, level)}` });
+  void pasteClip(store, clip, { level, offsets: [[0, 0]], label: `Copy ${describeMany(s.model, clip.items.filter((i) => i.rider !== true).map((i) => i.id))} to ${labelOf(s.model, level)}` });
 }
 
 /** The level a paste into another project lands on: the same name, else the same elevation, else the lowest. */

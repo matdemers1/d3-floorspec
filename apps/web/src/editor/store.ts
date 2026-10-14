@@ -27,6 +27,8 @@ import type { ResizeAnchor } from '@floorspec/ops';
 import type { HandleSide, Size } from '../furniture/resize';
 import type { Side as RoomSideName } from './rooms/edit';
 import type { ImportReport } from '../exports/ifcImport';
+import { carryRiders } from './arrange/carry';
+import { rigidPreview } from './rigid';
 
 /**
  * The editor's state and its one write path. Every edit is a batch handed to `apply`, which posts
@@ -90,7 +92,16 @@ export interface Rejection {
 export interface Preview {
   model: EditorModel | null;
   diagnostics: Diagnostic[];
+  /**
+   * FLR-T-18.18: the batch only moves and turns devices — nothing the ghost layer draws (walls,
+   * openings, slabs) changes. While the pointer moves, `model` is the rigid preview (rigid.ts), with
+   * no derive; `exact` once the full apply has run, the pointer at rest.
+   */
+  rigid?: { exact: boolean };
 }
+
+/** How long the pointer rests on a rigid preview before the full apply runs for its findings. */
+export const EXACT_AFTER_MS = 160;
 
 export type Draft =
   | ChainDraft
@@ -225,6 +236,17 @@ export interface Review {
   confirming: boolean;
   /** What an IFC import could not bring across, when the changeset is one (FLR-T-9.5). */
   report?: ImportReport | null;
+  /**
+   * FLR-T-18.18: a branch from an earlier version — main as it was opened on and the version its first
+   * op returns to — so a replay makes that return again against main, as the server's accept does.
+   */
+  branch?: ReplayBranch | null;
+}
+
+/** A branch's return: the two documents its first op is rebased between (review.ts `replay`). */
+export interface ReplayBranch {
+  base: Record<string, unknown>;
+  target: Record<string, unknown>;
 }
 
 /** Two versions compared on the canvas (FLR-T-3.6). */
@@ -397,6 +419,7 @@ export class EditorStore {
   private queue: Promise<unknown> = Promise.resolve();
   private previewFrame = 0;
   private previewBatch: Batch | null = null;
+  private exactTimer: ReturnType<typeof setTimeout> | null = null;
 
   /** A changeset to open for review once the model loads, instead of the newest proposal. */
   wanted: string | null = null;
@@ -509,7 +532,9 @@ export class EditorStore {
       try {
         for (let attempt = 0; attempt < 5; attempt++) {
           const built = typeof batch === 'function' ? batch(attempt) : batch;
-          const sent = this.batchFilters.reduce((b, f) => f(b), built);
+          // FLR-T-18.18: what sits on what the batch moves goes with it, in the same batch; then each view's rule
+          // for what it draws (FLR-T-18.13: what is drawn in the Proposed and Combined plans is new).
+          const sent = this.batchFilters.reduce((b, f) => f(b), carryRiders(this.state.model ?? model, built));
           if (sent.length === 0) return false;
           const option = this.state.editOption;
           const answer = await postBatch(this.projectId, this.state.model?.hash ?? model.hash, sent, option === null ? undefined : option);
@@ -637,9 +662,18 @@ export class EditorStore {
 
   // ─── Preview (the ghost layer) ───────────────────────────────────────────────────────────
 
-  /** Show what a batch would make, applied locally, at most once a frame. */
+  /**
+   * Show what a batch would make, at most once a frame. A batch that only moves and turns devices is
+   * previewed rigidly (rigid.ts: no apply, no derive) while it keeps changing, and applied in full
+   * once it has rested for EXACT_AFTER_MS — so its findings still show. Anything else is applied
+   * locally and derived, as the server would.
+   */
   preview(batch: Batch | null): void {
     this.previewBatch = batch;
+    if (this.exactTimer !== null) {
+      clearTimeout(this.exactTimer);
+      this.exactTimer = null;
+    }
     if (batch === null) {
       cancelAnimationFrame(this.previewFrame);
       this.previewFrame = 0;
@@ -652,11 +686,28 @@ export class EditorStore {
       const pending = this.previewBatch;
       const model = this.state.model;
       if (pending === null || model === null) return;
-      const option = this.state.editOption;
-      const result = applyLocally(model.document, { batch: pending, ...(option === null ? {} : { context: { option } }) }, OFFICIAL_READER);
-      if (result.status === 'committed') this.set({ preview: { model: readModel(result.hash, result.document, this.state.design), diagnostics: [] } });
-      else this.set({ preview: { model: null, diagnostics: result.diagnostics } });
+      const carried = carryRiders(model, pending);
+      const rigid = rigidPreview(model, carried);
+      if (rigid !== null) {
+        this.set({ preview: { model: rigid, diagnostics: [], rigid: { exact: false } } });
+        if (this.exactTimer !== null) clearTimeout(this.exactTimer);
+        this.exactTimer = setTimeout(() => {
+          this.exactTimer = null;
+          if (this.previewBatch !== pending || this.state.model !== model) return;
+          this.set({ preview: { ...this.applyPreview(model, carried), rigid: { exact: true } } });
+        }, EXACT_AFTER_MS);
+        return;
+      }
+      this.set({ preview: this.applyPreview(model, carried) });
     });
+  }
+
+  /** A batch applied locally by @floorspec/ops and derived: what the ghost draws, or why it would be refused. */
+  private applyPreview(model: EditorModel, batch: Batch): Preview {
+    const option = this.state.editOption;
+    const result = applyLocally(model.document, { batch, ...(option === null ? {} : { context: { option } }) }, OFFICIAL_READER);
+    if (result.status === 'committed') return { model: readModel(result.hash, result.document, this.state.design), diagnostics: [] };
+    return { model: null, diagnostics: result.diagnostics };
   }
 
   // ─── Selection and tools ─────────────────────────────────────────────────────────────────
