@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { CommandPalette, CommandPaletteHint, type CommandPaletteGroup, type CommandPaletteItem } from '@d3cloud/ui';
-import { ArrowRightLeft, Check, History, Layers, Move, Ruler, Search, Sparkles, X } from 'lucide-react';
+import { ArrowRightLeft, Bookmark, Check, Focus, Hand, History, Layers, Map as MapIcon, Move, Ruler, Scan, Search, Sparkles, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useEditor, type EditorStore } from './store';
 import type { ToolController } from './tools';
 import { COMMANDS, type Command } from './commands';
@@ -13,6 +13,7 @@ import { DEVICE_KINDS } from './systems/catalog';
 import { SystemIcon } from './systems/Panels';
 import { parsePlacement } from './systems/typed';
 import { placeDevice } from './systems/ops';
+import { goTo, navOf, openView } from './panzoom';
 
 /**
  * The command palette (FLR-T-3.7), ⌘K, the board's "07 · Editor — command palette": every command
@@ -32,6 +33,14 @@ type Step =
 
 const ICONS: Partial<Record<string, ReactNode>> = {
   'tool.select': <SelectIcon />,
+  'tool.hand': <Hand />,
+  'view.fit': <Scan />,
+  'view.zoomSelection': <Focus />,
+  'view.zoomIn': <ZoomIn />,
+  'view.zoomOut': <ZoomOut />,
+  'view.minimap': <MapIcon />,
+  'view.savedViews': <Bookmark />,
+  'view.saveView': <Bookmark />,
   'tool.wall': <WallIcon />,
   'tool.door': <DoorIcon />,
   'tool.window': <WindowIcon />,
@@ -144,6 +153,12 @@ export function Palette({ store, tools }: { store: EditorStore; tools: ToolContr
         .map((l): CommandPaletteItem => ({ id: `level.${l.id}`, label: `Go to ${l.name}`, description: `${formatLen(l.elevation, units)} · ${String(l.rooms.length)} rooms`, leading: <Layers />, disabled: l.id === state.level, onSelect: () => { store.setLevel(l.id); } }));
       if (levels.length > 0) out.push({ id: 'levels', label: 'Levels', items: levels });
 
+      // FLR-T-18.6: the project's saved views, each a place to go.
+      const views = navOf(store).get().saved
+        .filter((v) => matches(query, 'go to view saved', v.name))
+        .map((v): CommandPaletteItem => ({ id: `view.${v.id}`, label: `Go to the view ${v.name}`, leading: <Bookmark />, onSelect: () => { openView(store, v); } }));
+      if (views.length > 0) out.push({ id: 'views', label: 'Saved views', items: views });
+
       const spaces = state.compare === null && state.readOnly === null
         ? tools.unnamedSpaces().map((f, i): CommandPaletteItem => ({ id: `space.${String(i)}`, label: `Name a room in unnamed space ${String(i + 1)}`, description: formatArea(f.area2, units), leading: <RoomIcon />, onSelect: () => { tools.nameRoomIn(f); } })).filter((i) => matches(query, i.label, 'add room'))
         : [];
@@ -151,7 +166,7 @@ export function Palette({ store, tools }: { store: EditorStore; tools: ToolContr
 
       if (query.trim() !== '') {
         const found = elementsOnLevel(model, state.level).filter((e) => matches(query, e.label, e.id, e.kind)).slice(0, 12);
-        if (found.length > 0) out.push({ id: 'goto', label: 'Go to', items: found.map((e) => ({ id: `goto.${e.id}`, label: e.label, description: e.id, leading: <Search />, onSelect: () => { store.select(e.id); } })) });
+        if (found.length > 0) out.push({ id: 'goto', label: 'Go to', items: found.map((e) => ({ id: `goto.${e.id}`, label: e.label, description: e.id, leading: <Search />, onSelect: () => { goTo(store, e.id); } })) });
       }
     }
     return out;

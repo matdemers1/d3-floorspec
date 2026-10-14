@@ -80,9 +80,9 @@ test('multi-select and arrange: a crossing marquee, duplicate as one undo, a win
   await page.mouse.click(table.x + table.width / 2, table.y + table.height * 0.2);
   await expect(toolbar).toBeVisible();
   await toolbar.getByRole('button', { name: 'Zoom to selection' }).click();
+  await expect(page.locator('.fs-canvas[data-zooming]')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(toolbar).toHaveCount(0);
-  await page.waitForTimeout(300);
 
   // ── A crossing marquee, dragged leftwards over the west chairs' backs: the three chairs, not the table.
   const west = await boxAround(page, WEST);
@@ -157,14 +157,17 @@ test('multi-select and arrange: a crossing marquee, duplicate as one undo, a win
 
   // ── ⌥A on a recessed light in the great room: the array popover, the copies as ghosts, one batch.
   await page.keyboard.press('0');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(400);
+  await expect(page.locator('.fs-canvas[data-zooming]')).toHaveCount(0);
   const far = (await page.locator('[data-device="L-GR-R1"]').boundingBox())!;
   await page.mouse.click(far.x + far.width / 2, far.y + far.height / 2);
   await expect(toolbar).toBeVisible();
   // Framed with room around it for the row: the light, then zoomed back out a few steps.
   await toolbar.getByRole('button', { name: 'Zoom to selection' }).click();
+  await expect(page.locator('.fs-canvas[data-zooming]')).toHaveCount(0);
   for (let i = 0; i < 4; i++) await page.keyboard.press('-');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(400);
+  await expect(page.locator('.fs-canvas[data-zooming]')).toHaveCount(0);
   await expect(toolbar).toBeVisible();
   await page.keyboard.press('Alt+a');
   const popover = page.getByTestId('array-popover');

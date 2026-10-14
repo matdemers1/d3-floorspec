@@ -7,7 +7,6 @@ import { referenceCleanup } from '../systems/ops';
 import { formatLen } from '../units';
 import { assetUrl } from '../../lib/assets';
 import { uploadAsset } from '../../furniture/api';
-import { fit } from '../viewport';
 import { alignBatch, distributeBatch, middleOf, mirror, quarterTurn, transformBatch, translation, type Alignment, type Transformed } from './transform';
 import { copyClip, pasteBatch, readClip, type Clip } from './clipboard';
 import { boundsOfIds, selectableShapes } from './shapes';
@@ -271,15 +270,8 @@ export function selectSimilar(store: EditorStore, how: Similar): number {
   return ids.length;
 }
 
-/** Fit the view to the selection. */
-export function zoomToSelection(store: EditorStore): void {
-  const { view } = store.get();
-  const level = store.levelView;
-  const b = level === undefined ? null : boundsOfIds(level, selectedHere(store));
-  if (view === null || b === null) return;
-  const pad = 2 * FOOT;
-  store.set({ view: fit({ minX: b.minX - pad, minY: b.minY - pad, maxX: b.maxX + pad, maxY: b.maxY + pad }, view.w, view.h, 120) });
-}
+/** Fit the view to the selection: FLR-T-18.6's ⇧2, animated, framing every element selected. */
+export { zoomToSelection } from '../panzoom';
 
 // ─── Copy, paste, duplicate ─────────────────────────────────────────────────────────────────
 

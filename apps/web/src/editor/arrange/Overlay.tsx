@@ -201,7 +201,7 @@ function SelectionToolbar({ store, view, level, model }: { store: EditorStore; v
         </MenuContent>
       </Menu>
       {tip('Rotate 90° right  ]', <IconButton size="sm" label="Rotate 90° right" icon={<RotateCw />} disabled={off} onClick={() => { turnSelection(store, -1); }} />)}
-      {tip('Zoom to selection', <IconButton size="sm" label="Zoom to selection" icon={<Focus />} onClick={() => { zoomToSelection(store); }} />)}
+      {tip('Zoom to selection  ⇧2', <IconButton size="sm" label="Zoom to selection" icon={<Focus />} onClick={() => { zoomToSelection(store); }} />)}
       <span className="fs-seltool__sep" aria-hidden="true" />
       <Button variant="danger-ghost" size="sm" icon={<Trash2 />} disabled={off} onClick={() => { deleteSelection(store); }}>
         Delete
