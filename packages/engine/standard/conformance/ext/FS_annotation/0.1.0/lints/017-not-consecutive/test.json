@@ -1,0 +1,7 @@
+{
+  "description": "A string from J1 to J6 and back to J1: no two consecutive anchors at one position, so no lint; its total is from J1 to J1, 0.",
+  "covers": [
+    "FS-ANNO-2.3.1",
+    "FS-ANNO-6.1.1"
+  ]
+}

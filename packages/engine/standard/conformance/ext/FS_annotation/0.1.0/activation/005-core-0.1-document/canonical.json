@@ -1,0 +1,14 @@
+{
+  "extensions": {
+    "FS_annotation": {
+      "colour": "red"
+    }
+  },
+  "extensionsUsed": {
+    "FS_annotation": "0.1.0"
+  },
+  "floorspec": "0.1",
+  "project": {
+    "name": "Old"
+  }
+}

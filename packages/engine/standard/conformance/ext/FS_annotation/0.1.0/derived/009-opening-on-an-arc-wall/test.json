@@ -1,0 +1,7 @@
+{
+  "description": "The house as a Core 0.4 document with an arc north wall W3, a 3' window O2 in it 2' along it, and a string from J3 to O2's centre - the middle of its chord (Core 21.6) - to J4: the window's centre is measured - about 2' 11\" east of J3, since the window stands 2' to 5' along the arc's polyline, not its chord - and the total is exactly 8'.",
+  "covers": [
+    "FS-ANNO-6.1.1",
+    "FS-CORE-21.6.1"
+  ]
+}

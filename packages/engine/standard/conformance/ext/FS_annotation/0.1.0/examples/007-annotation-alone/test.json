@@ -1,0 +1,10 @@
+{
+  "description": "The house with FS_annotation the only extension it uses - no lights, no lamp, no scenes, no views - and the panel's note about nothing in particular: valid, and the four strings measured as before.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.2.4",
+    "FS-ANNO-1.3.1",
+    "FS-ANNO-3.1.1",
+    "FS-ANNO-6.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A dimension string of one anchor measures nothing: it has 2 to 64.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

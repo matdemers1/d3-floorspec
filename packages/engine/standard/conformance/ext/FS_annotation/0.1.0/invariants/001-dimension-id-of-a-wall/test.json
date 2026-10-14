@@ -1,0 +1,6 @@
+{
+  "description": "The overall string is keyed by W7, the south wall's ID: an annotation's ID is in the document's one space of IDs.",
+  "covers": [
+    "FS-ANNO-1.3.2"
+  ]
+}

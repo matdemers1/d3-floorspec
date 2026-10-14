@@ -15,8 +15,8 @@
  */
 import { DEMOLISH_INK, type Demolished } from './renovation.js';
 import type { RenovationFilter } from '@floorspec/render2d';
-import { num, type SymbolPart, type SymbolStroke } from '@floorspec/render2d';
-import type { DimString, Side } from './dimensions.js';
+import { layoutAnnotations, num, PDF_METRICS, SIDES, type AnnoPrim, type DimString, type Note, type Side, type SymbolPart, type SymbolStroke, type Tag } from '@floorspec/render2d';
+import { customStrings, NO_NOTES, roomDimensionStrings, type PlanNotes } from './dimensions.js';
 import type { Box, LevelPlan, Segment, XY } from './plan.js';
 import { pitchText, type PlanRoof, type PlanStair } from './symbols.js';
 import { areaText, BU_PER_INCH, IMPERIAL_SCALES, lengthText, METRIC_SCALES, type DrawingScale, type UnitSystem } from './units.js';
@@ -170,10 +170,6 @@ function wrap(s: string, width: number, font: FontName, size: number, measure: M
 
 // ── the set's layout ─────────────────────────────────────────────────────────
 
-/** Paper offset of the first dimension string from the drawing, and between strings (points). */
-const DIM_FIRST = 22;
-const DIM_STEP = 15;
-const DIM_TEXT = 6;
 const VIEW_TITLE = 48;
 
 export interface ScheduleRow {
@@ -203,33 +199,59 @@ export interface SetLayout {
 const SCHEDULE_W = 300;
 const ROW = 10.5;
 
-function dimMargin(tiers: number): number {
-  return tiers === 0 ? 10 : DIM_FIRST + (tiers - 1) * DIM_STEP + 2 * DIM_TEXT + 12;
+/**
+ * How far each side's exterior strings reach beyond the drawing at a scale (`k`, points per base
+ * unit) — the annotation layout run at that scale, so a string whose lengths take a second row is
+ * given the room for it.
+ */
+export type DepthAt = (k: number) => Readonly<Record<Side, number>>;
+
+/** The depths of every level's exterior strings, each side the deepest of them. */
+export function depthsOf(strings: readonly (readonly DimString[])[], measure: Measure, units: UnitSystem): DepthAt {
+  const format = (v: number): string => lengthText(v, units);
+  return (k) => {
+    const out: Record<Side, number> = { N: 0, S: 0, E: 0, W: 0 };
+    for (const list of strings) {
+      if (list.length === 0) continue;
+      const { depth } = layoutAnnotations({ strings: list }, { P: (p) => [p[0] * k, -p[1] * k], k }, PDF_METRICS, annoMeasure(measure), format);
+      for (const side of SIDES) out[side] = Math.max(out[side], depth[side]);
+    }
+    return out;
+  };
 }
+
+/** The sheet's measure, as the annotation layout asks for it. */
+export const annoMeasure = (measure: Measure) => (text: string, font: 'mono' | 'sans' | 'sans-medium', size: number): number => measure(text, font, size);
 
 /**
  * Choose one scale and one placement for the whole set: the largest architectural scale at which
  * every level, its dimension strings and its view title fit the drawing area (capped at 1/4" or
  * 1:50 — a house plan at a larger scale is a detail, not a plan).
  */
-export function layoutSet(page: PageSpec, frame: Box, dims: readonly DimString[], units: UnitSystem, scheduleRows: number): SetLayout {
+export function layoutSet(page: PageSpec, frame: Box, depthAt: DepthAt, units: UnitSystem, scheduleRows: number): SetLayout {
   const m = page.width >= 1700 ? 36 : 24;
   const stripW = Math.round(Math.min(260, Math.max(176, page.width * 0.19)));
   const strip = { x: page.width - m - stripW, y: m, w: stripW, h: page.height - 2 * m };
   const pad = 14;
   const area = { x: m + pad, y: m + pad, w: strip.x - m - 2 * pad, h: page.height - 2 * m - 2 * pad };
-  const tiers = (side: Side): number => dims.filter((d) => d.side === side).reduce((n, d) => Math.max(n, d.tier + 1), 0);
-  const margins: Record<Side, number> = { N: dimMargin(tiers('N')), S: dimMargin(tiers('S')), E: dimMargin(tiers('E')), W: dimMargin(tiers('W')) };
+  const marginsAt = (k: number): Record<Side, number> => {
+    const d = depthAt(k);
+    return { N: Math.max(10, d.N + 6), S: Math.max(10, d.S + 6), E: Math.max(10, d.E + 6), W: Math.max(10, d.W + 6) };
+  };
   const fw = frame.maxX - frame.minX;
   const fh = frame.maxY - frame.minY;
   const scales = units === 'metric' ? METRIC_SCALES : IMPERIAL_SCALES;
   const kOf = (s: DrawingScale): number => (units === 'metric' ? 72 / (25.4 * 1280 * s.ratio) : 72 / (BU_PER_INCH * s.ratio));
-  const blockOf = (k: number): { w: number; h: number } => ({ w: fw * k + margins.W + margins.E, h: fh * k + margins.N + margins.S + VIEW_TITLE });
+  const blockOf = (k: number): { w: number; h: number } => {
+    const mg = marginsAt(k);
+    return { w: fw * k + mg.W + mg.E, h: fh * k + mg.N + mg.S + VIEW_TITLE };
+  };
   const scale = scales.find((s) => {
     const b = blockOf(kOf(s));
     return b.w <= area.w && b.h <= area.h;
   }) ?? scales[scales.length - 1]!;
   const k = kOf(scale);
+  const margins = marginsAt(k);
   const block = blockOf(k);
   const tableH = (scheduleRows + 3) * ROW;
   let schedule: SetLayout['schedule'] = null;
@@ -269,6 +291,8 @@ export interface SheetMeta {
   readonly planName?: string;
   /** The plan's style (FLR-T-18.5): Colour, Presentation, Technical or Blueprint. Default: the construction drawing. */
   readonly style?: PlanStyle;
+  /** The area summary (FLR-T-18.11): the level's gross, net and finished, then the whole house's. */
+  readonly areas?: readonly (readonly [string, string])[];
   /** A remodel's renovation plan (FLR-T-18.13): its legend says what is existing, demolished and new. */
   readonly renovation?: RenovationFilter;
 }
@@ -299,6 +323,8 @@ export function composePlanSheet(
   measure: Measure,
   ghost: LevelPlan | null = null,
   demolished: Demolished | null = null,
+  notes: PlanNotes = NO_NOTES,
+  roomDimensions = true,
 ): Sheet {
   const { page, k, frame, origin } = layout;
   const P = (p: XY): XY => [origin[0] + (p[0] - frame.minX) * k, origin[1] + (frame.maxY - p[1]) * k];
@@ -316,8 +342,8 @@ export function composePlanSheet(
     drawPlan(g, ghost);
     drawStairs(g, ghost.stairs);
     drawOverheadRoofs(g, ghost.roofs);
-    drawRoomLabels(g, ghost, meta.units);
-    drawTags(g, ghost);
+    drawRoomLabels(g, roomLabels(g, ghost, meta.units, true));
+    drawAnnotation(g, { strings: [], tags: ghost.tags }, meta.units);
     out.push(...under.map(screened));
   }
   const drawn = out.length;
@@ -325,9 +351,12 @@ export function composePlanSheet(
   if (demolished !== null) drawDemolished(c, demolished);
   drawStairs(c, plan.stairs);
   drawOverheadRoofs(c, plan.roofs);
-  drawDimensions(c, plan, dims, meta.units);
-  drawRoomLabels(c, plan, meta.units);
-  drawTags(c, plan);
+  // Room strings only where the plan is dimensioned: beside the labels, which then leave out their size.
+  const roomDims = roomDimensions && dims.length > 0;
+  const labels = roomLabels(c, plan, meta.units, !roomDims);
+  const inside = roomDims ? roomDimensionStrings(plan, k, (r) => labels.get(r.id) ?? { halfW: 0, halfH: 0 }, PDF_METRICS.text + 4) : [];
+  drawAnnotation(c, { strings: [...dims, ...inside, ...customStrings(notes)], tags: plan.tags, notes: notes.notes }, meta.units);
+  drawRoomLabels(c, labels);
   drawViewTitle(c, layout, title, plan.trueNorth, meta);
   if (meta.style === 'blueprint') out.splice(drawn, out.length - drawn, ...out.slice(drawn).map(blueprinted));
   if (layout.schedule !== null && layout.schedule !== 'sheet') drawSchedule(c, layout.schedule, rows, `${meta.levelName} — door and window schedule`);
@@ -670,68 +699,64 @@ function drawRoof(c: Ctx, rf: PlanRoof, units: UnitSystem): void {
   }
 }
 
-// ── dimensions ───────────────────────────────────────────────────────────────
+// ── dimensions, tags and notes (FLR-T-18.11: render2d's one layout) ─────────
 
-function drawDimensions(c: Ctx, plan: LevelPlan, dims: readonly DimString[], units: UnitSystem): void {
-  const ext = plan.extent;
-  const body = plan.body;
-  if (ext === undefined || body === undefined) return;
-  const { out, P, measure } = c;
-  const SIZE = 6;
-  const lines: string[] = [];
-  const ticks: string[] = [];
-  const extLines: string[] = [];
-  for (const d of dims) {
-    const horizontal = d.side === 'N' || d.side === 'S';
-    // The string sits beyond everything drawn on that side, `DIM_FIRST + tier·DIM_STEP` out.
-    const off = DIM_FIRST + d.tier * DIM_STEP;
-    const edge = d.side === 'N' ? P([0, ext.maxY])[1] - off : d.side === 'S' ? P([0, ext.minY])[1] + off : d.side === 'E' ? P([ext.maxX, 0])[0] + off : P([ext.minX, 0])[0] - off;
-    const outward = d.side === 'N' || d.side === 'W' ? -1 : 1;
-    const at = (v: number): XY => (horizontal ? [P([v, 0])[0], edge] : [edge, P([0, v])[1]]);
-    const first = at(d.points[0]!);
-    const last = at(d.points[d.points.length - 1]!);
-    lines.push(horizontal ? line([first[0] - 4, edge], [last[0] + 4, edge]) : line([edge, first[1] + 4], [edge, last[1] - 4]));
-    let prevEnd = -Infinity;
-    d.points.forEach((v, i) => {
-      const p = at(v);
-      // Extension line: from a small gap off the feature to just past this string.
-      const r = d.reach[i] ?? d.base;
-      const from = horizontal ? P([0, r])[1] : P([r, 0])[0];
-      const gap = from + outward * 4;
-      extLines.push(horizontal ? line([p[0], gap], [p[0], edge + outward * 3]) : line([gap, p[1]], [edge + outward * 3, p[1]]));
-      ticks.push(line([p[0] - 2.6, p[1] + 2.6], [p[0] + 2.6, p[1] - 2.6]));
-      const next = d.points[i + 1];
-      if (next === undefined) return;
-      const q = at(next);
-      const label = lengthText(next - v, units);
-      const w = measure(label, 'mono', SIZE);
-      const span = horizontal ? q[0] - p[0] : p[1] - q[1];
-      const centre = horizontal ? (p[0] + q[0]) / 2 : (p[1] + q[1]) / 2;
-      // Text sits on the outer side of the line; a label too long for its span moves out one row.
-      const fits = w + 4 <= span;
-      let along = centre;
-      const row = fits ? 0 : 1;
-      if (!fits) {
-        const start = Math.max(centre - w / 2, prevEnd + 3);
-        along = start + w / 2;
-        prevEnd = start + w;
+const INK_OF: Readonly<Record<string, { stroke: string; width: number }>> = {
+  dim: { stroke: INK, width: 0.3 },
+  ext: { stroke: GREY, width: 0.25 },
+  tick: { stroke: INK, width: 0.9 },
+  leader: { stroke: INK, width: 0.3 },
+};
+
+function drawAnnotation(c: Ctx, input: { strings: readonly DimString[]; tags: readonly Tag[]; notes?: readonly Note[] }, units: UnitSystem): void {
+  const { out, P, k, measure } = c;
+  const { prims } = layoutAnnotations(input, { P, k }, PDF_METRICS, annoMeasure(measure), (v) => lengthText(v, units));
+  const lines = new Map<string, string[]>();
+  const later: Prim[] = [];
+  const draw = (p: AnnoPrim): void => {
+    switch (p.t) {
+      case 'line': {
+        const key = p.role;
+        lines.set(key, [...(lines.get(key) ?? []), line(p.a, p.b)]);
+        return;
       }
-      // Always on the outer side of the line, so a moved label never meets the next string in.
-      const lift = 2 + row * (SIZE + 2);
-      const cap = SIZE * 0.74;
-      if (horizontal) out.push(text(along, d.side === 'N' ? edge - lift : edge + lift + cap, label, 'mono', SIZE, { anchor: 'middle', color: INK }));
-      else out.push(text(d.side === 'W' ? edge - lift : edge + lift + cap, along, label, 'mono', SIZE, { anchor: 'middle', color: INK, rotate: -90 }));
-    });
+      case 'arrow':
+        later.push({ t: 'path', d: ring(p.pts), fill: INK });
+        return;
+      case 'tag':
+        later.push({ t: 'path', d: p.kind === 'door' ? circle(p.cx, p.cy, p.r) : hexagon(p.cx, p.cy, p.r), fill: WHITE, stroke: INK, width: 0.4 });
+        return;
+      case 'text':
+        later.push(text(p.x, p.y, p.text, p.font === 'mono' ? 'mono' : p.font, p.size, { anchor: p.anchor, color: INK, ...(p.rotate === 0 ? {} : { rotate: p.rotate }) }));
+        return;
+    }
+  };
+  for (const p of prims) draw(p);
+  for (const role of ['ext', 'dim', 'tick', 'leader']) {
+    const d = lines.get(role);
+    if (d !== undefined) out.push({ t: 'path', d: d.join(''), stroke: INK_OF[role]!.stroke, width: INK_OF[role]!.width });
   }
-  out.push({ t: 'path', d: extLines.join(''), stroke: GREY, width: 0.25 });
-  out.push({ t: 'path', d: lines.join(''), stroke: INK, width: 0.3 });
-  out.push({ t: 'path', d: ticks.join(''), stroke: INK, width: 0.9 });
+  out.push(...later);
 }
 
-// ── room labels and tags ─────────────────────────────────────────────────────
+// ── room labels ──────────────────────────────────────────────────────────────
 
-function drawRoomLabels(c: Ctx, plan: LevelPlan, units: UnitSystem): void {
-  const { out, P, measure, k } = c;
+interface RoomLabel {
+  readonly x: number;
+  readonly y: number;
+  readonly lines: readonly { s: string; font: FontName; size: number }[];
+  readonly halfW: number;
+  readonly halfH: number;
+}
+
+/**
+ * Each room's label as it fits the room: its name, net area and — when the room is not
+ * dimensioned by strings — its size; the least important line dropped until it fits, the name
+ * shrunk last.
+ */
+function roomLabels(c: Ctx, plan: LevelPlan, units: UnitSystem, withSize: boolean): Map<string, RoomLabel> {
+  const { P, measure, k } = c;
+  const labels = new Map<string, RoomLabel>();
   for (const r of plan.rooms) {
     const [x, y] = P(r.label);
     const span = freeSpan(r.label, [r.outer, ...r.holes]);
@@ -740,9 +765,8 @@ function drawRoomLabels(c: Ctx, plan: LevelPlan, units: UnitSystem): void {
     const lines: { s: string; font: FontName; size: number }[] = [
       { s: r.title.toUpperCase(), font: 'sans-bold', size: 7 },
       { s: areaText(r.area, units), font: 'mono', size: 6 },
-      { s: `${lengthText(r.width, units)} × ${lengthText(r.depth, units)}`, font: 'mono', size: 5.5 },
+      ...(withSize ? [{ s: `${lengthText(r.width, units)} × ${lengthText(r.depth, units)}`, font: 'mono' as const, size: 5.5 }] : []),
     ];
-    // Drop the least important line until the label fits the room; shrink the name last.
     let ls = lines;
     const fits = (set: typeof lines): boolean => Math.max(...set.map((l) => measure(l.s, l.font, l.size))) <= roomW && set.reduce((h, l) => h + l.size * 1.25, 0) <= roomH;
     while (!fits(ls) && ls.length > 1) ls = ls.slice(0, -1);
@@ -752,10 +776,17 @@ function drawRoomLabels(c: Ctx, plan: LevelPlan, units: UnitSystem): void {
       ls = [{ ...first, size: Math.min(first.size, size) }];
     }
     const total = ls.reduce((h, l) => h + l.size * 1.25, 0);
-    let yy = y - total / 2;
-    for (const l of ls) {
-      yy += l.size * 1.25;
-      out.push(text(x, yy - l.size * 0.25, l.s, l.font, l.size, { anchor: 'middle', color: l.font === 'sans-bold' ? INK : GREY }));
+    labels.set(r.id, { x, y, lines: ls, halfW: Math.max(...ls.map((l) => measure(l.s, l.font, l.size))) / 2, halfH: total / 2 });
+  }
+  return labels;
+}
+
+function drawRoomLabels(c: Ctx, labels: ReadonlyMap<string, RoomLabel>): void {
+  for (const l of labels.values()) {
+    let yy = l.y - l.halfH;
+    for (const line1 of l.lines) {
+      yy += line1.size * 1.25;
+      c.out.push(text(l.x, yy - line1.size * 0.25, line1.s, line1.font, line1.size, { anchor: 'middle', color: line1.font === 'sans-bold' ? INK : GREY }));
     }
   }
 }
@@ -783,19 +814,6 @@ function freeSpan(p: XY, rings: readonly (readonly XY[])[]): { h: number; v: num
       }
     }
   return { h: 2 * Math.min(left, right), v: 2 * Math.min(down, up) };
-}
-
-function drawTags(c: Ctx, plan: LevelPlan): void {
-  const { out, P } = c;
-  for (const t of plan.tags) {
-    const b = P(t.base);
-    // Model normal → paper (y flips).
-    const r = t.kind === 'door' ? 5.2 : 5.6;
-    const cx = b[0] + t.normal[0] * (r + 3);
-    const cy = b[1] - t.normal[1] * (r + 3);
-    out.push({ t: 'path', d: t.kind === 'door' ? circle(cx, cy, r) : hexagon(cx, cy, r), fill: WHITE, stroke: INK, width: 0.4 });
-    out.push(text(cx, cy + 1.9, t.mark, 'sans-medium', t.mark.length > 2 ? 4.2 : 5, { anchor: 'middle' }));
-  }
 }
 
 // ── view title, north arrow, scale bar ───────────────────────────────────────
@@ -994,6 +1012,24 @@ function drawStrip(c: Ctx, layout: SetLayout, view: View3d, meta: SheetMeta, she
     y += 14;
     it.draw(x + 2, y - 2);
     out.push(text(x + 32, y, it.label, 'sans', 6.2, { color: INK }));
+  }
+
+  // The area (FLR-T-18.11): the level's gross, net and finished, and the whole house's, where there is room.
+  const room = (n: number): boolean => y + 16 + 14 + n * 9 <= bottom - factsH - 6;
+  // The whole house's rows go first when there is not room for all of them.
+  const all = meta.areas ?? [];
+  const areas = room(all.length) ? all : all.filter(([name]) => !name.startsWith('Whole house'));
+  if (areas.length > 0 && room(areas.length)) {
+    const top = y + 16;
+    out.push({ t: 'path', d: line([s.x, top - 6], [s.x + s.w, top - 6]), stroke: INK, width: 0.5 });
+    out.push(text(x, top + 6, 'AREA', 'sans-medium', 5.5, { color: FAINT }));
+    let ay = top + 8;
+    for (const [name, value] of areas) {
+      ay += 9;
+      out.push(text(x, ay, name, 'sans', 6.2));
+      out.push(text(x + w, ay, value, 'mono', 6, { anchor: 'end', color: GREY }));
+    }
+    y = ay;
   }
 
   // Rooms on this level, with their net areas, where the strip has room for them.

@@ -1,0 +1,6 @@
+{
+  "description": "A string keyed by LS1, an FS_lighting scene's ID: a scene's ID is in the one space of IDs, read as data.",
+  "covers": [
+    "FS-ANNO-1.3.2"
+  ]
+}

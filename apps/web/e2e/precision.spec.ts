@@ -219,7 +219,8 @@ test('precision: a temporary dimension typed (Tab: face, centre, other face), th
   await expect(panel).toContainText('Area enclosed');
   await expect(panel).toContainText('Cooktop → kitchen sink');
   await expect(panel).toContainText(/work-triangle guideline/);
-  await expect(panel.getByRole('button', { name: 'Keep as a dimension' })).toBeDisabled();
+  // FLR-T-18.11 registers the hook: a measurement can now be kept as dimensions.
+  await expect(panel.getByRole('button', { name: 'Keep as a dimension' })).toBeEnabled();
   await shoot(page, 'measure-triangle');
   await axe(page, '[data-testid="measure-panel"]');
   await page.keyboard.press('Escape');

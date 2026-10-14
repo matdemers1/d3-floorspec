@@ -1,0 +1,6 @@
+{
+  "description": "A point written in millimetres as strings: a length is an integer of base units.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

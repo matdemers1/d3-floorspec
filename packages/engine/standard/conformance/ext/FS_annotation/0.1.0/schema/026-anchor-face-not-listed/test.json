@@ -1,0 +1,6 @@
+{
+  "description": "A wall anchor whose face is \"centre\": the faces are \"left\", \"right\" and \"location\".",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

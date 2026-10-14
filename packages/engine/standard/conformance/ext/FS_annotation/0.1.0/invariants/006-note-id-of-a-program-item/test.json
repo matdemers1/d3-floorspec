@@ -1,0 +1,6 @@
+{
+  "description": "The house has a program with an item P1, and a note is keyed by P1.",
+  "covers": [
+    "FS-ANNO-1.3.2"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "The house as a Core 0.4 document whose north wall over the Living room, W3, is an arc bulging 2' out: the north-south string through the Living room measures to its inside face, a curve, which FS_annotation 0.1 does not measure to.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.2",
+    "FS-ANNO-6.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "The house without FS_lighting and FS_views, and a note about LS1: there are no scenes.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-3.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "The west wall W1 justified \"interiorFace\": its location line is its inside face, and its outside face 100 mm west of it. The overall string grows by 50 mm, the Kitchen's clear width by 50 mm.",
+  "covers": [
+    "FS-ANNO-6.1.1"
+  ]
+}

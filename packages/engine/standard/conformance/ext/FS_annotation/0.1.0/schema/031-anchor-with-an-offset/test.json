@@ -1,0 +1,6 @@
+{
+  "description": "An anchor with a member no anchor defines, `offset`: an anchor measures to its feature, never to a point beside it.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

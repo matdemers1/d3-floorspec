@@ -1,0 +1,7 @@
+{
+  "description": "The wall W10 between the Living and Utility rooms made a room separator S1, and the north-south string measuring to S1 as a wall: a separator is no wall.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.1"
+  ]
+}

@@ -103,6 +103,17 @@ export * as landscape from './extensions/fs/landscape.js';
 export * as lighting from './extensions/fs/lighting.js';
 export * as views from './extensions/fs/views.js';
 export * as renovation from './extensions/fs/renovation.js';
+export * as annotation from './extensions/fs/annotation.js';
+export {
+  resolveAnnotations,
+  resolveAnnotationsOf,
+  measureDimension,
+  type ResolvedAnchor,
+  type ResolvedDimension,
+  type ResolvedNote,
+  type ResolvedAnnotations,
+  type DerivedAnnotation,
+} from './extensions/fs/annotation.js';
 export { extentsOk, footprintsOverlap, type Frame, type Footprint } from './derive/frames.js';
 export {
   extElements,

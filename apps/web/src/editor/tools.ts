@@ -49,6 +49,8 @@ import { deleteSelection, moveSelection } from './arrange/actions';
 import { moveGhost, placeHere } from '../placing/state';
 import { extentAcross, functionFromName, minRoom, moveRoom, resizeRoom, roomDrag, roomSides, sideDrag, wandCandidates, type Side } from './rooms/edit';
 import type { WandDraft } from './store';
+import { anchorAt, dimensionBack, dimensionDown, dimensionEnter, dimensionMove, noteDown, noteMove, noteUp } from './annotate/tools';
+import { annotateOf, EMPTY_DIMENSION } from './annotate/state';
 
 /**
  * Pointer and keyboard input on the plan (FLR-T-3.3). Pointer events throughout, so a mouse, a
@@ -418,6 +420,17 @@ export class ToolController {
         // FLR-T-18.7: the library's item where its ghost shows; the tool stays on for the next.
         void placeHere(this.store);
         return;
+      // FLR-T-18.11: the dimension tool picks what to measure, then where the string goes; the note tool its point and its text.
+      case 'dimension': {
+        const level = this.level;
+        if (level === undefined) return;
+        const snap = this.snapFor(p, undefined, [], true);
+        dimensionDown(this.store, anchorAt(level, this.world(p), this.tol(p.type), snap), snap.point);
+        return;
+      }
+      case 'note':
+        noteDown(this.store, this.snapFor(p, undefined, [], true).point);
+        return;
     }
   }
 
@@ -452,6 +465,14 @@ export class ToolController {
       }
       case 'place':
         moveGhost(this.store, this.world(p), this.tol(p.type), p.alt || p.meta === true);
+        return;
+      case 'dimension': {
+        const snap = this.snapFor(p, undefined, [], true);
+        dimensionMove(this.store, anchorAt(level, this.world(p), this.tol(p.type), snap), snap.point);
+        return;
+      }
+      case 'note':
+        noteMove(this.store, this.snapFor(p, undefined, [], true).point);
         return;
       case 'stair': {
         const draft = s.draft?.tool === 'stair' ? s.draft : { tool: 'stair' as const, foot: null, cursor: null };
@@ -498,6 +519,7 @@ export class ToolController {
     }
     // Drawing by dragging: press at one end, lift at the other.
     if (isChainTool(s.tool) && moved) this.chainDown(p, s.tool);
+    if (s.tool === 'note') noteUp(this.store, this.snapFor(p, undefined, [], true).point, moved);
   }
 
   // ── select ──
@@ -505,6 +527,8 @@ export class ToolController {
   private selectDown(p: PointerInfo): void {
     const level = this.level;
     if (level === undefined) return;
+    // An annotation picks itself (its own handler stops the event): a press anywhere else lets it go (FLR-T-18.11).
+    if (annotateOf(this.store).get().selected !== null) annotateOf(this.store).select(null);
     const world = this.world(p);
     const picking = this.store.get().picking;
     if (picking !== null && 'ridge' in picking) {
@@ -1159,6 +1183,7 @@ export class ToolController {
   /** Typed lengths while drawing or dragging. Returns true when the key was taken. */
   typeKey(key: string): boolean {
     if (key === 'Backspace' && this.store.get().tool === 'measure') return measureBack(this.store);
+    if (key === 'Backspace' && this.store.get().tool === 'dimension') return dimensionBack(this.store);
     const s = this.store.get();
     // Drawing from the keyboard: the wall tool takes a typed start point before any click.
     const draft =
@@ -1191,6 +1216,7 @@ export class ToolController {
   /** Enter: place the typed length, or finish a chain. */
   enter(): boolean {
     if (this.store.get().tool === 'measure') return measureEnd(this.store);
+    if (this.store.get().tool === 'dimension') return dimensionEnter(this.store);
     const s = this.store.get();
     const draft = s.draft;
     const units = this.store.units;
@@ -1328,6 +1354,16 @@ export class ToolController {
   escape(): void {
     const s = this.store.get();
     const draft = s.draft;
+    // FLR-T-18.11: a string or a note being made is dropped first; then an annotation selected lets go.
+    const anno = annotateOf(this.store);
+    if (anno.get().dimension.anchors.length > 0 || anno.get().note !== null) {
+      anno.set({ dimension: EMPTY_DIMENSION, note: null });
+      return;
+    }
+    if (anno.get().selected !== null) {
+      anno.select(null);
+      return;
+    }
     if (draft !== null && 'typed' in draft && draft.typed !== '') {
       this.store.set({ draft: { ...draft, typed: '' } });
       return;

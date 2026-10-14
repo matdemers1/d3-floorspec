@@ -1,0 +1,6 @@
+{
+  "description": "FS_annotation's top-level data is an array: Core allows any JSON there, FS_annotation's schema does not.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

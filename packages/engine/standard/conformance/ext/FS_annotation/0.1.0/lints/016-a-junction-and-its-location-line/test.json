@@ -1,0 +1,7 @@
+{
+  "description": "A string along [1, 0] from the location line of W1 to J2, a junction on it: two anchors at the same position.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.3.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_annotation/notes/NT3, a note on L2, which the house does not have: the result breaks 1.3.3, and the batch is rejected.",
+  "covers": [
+    "FS-ANNO-1.3.3",
+    "FS-ANNO-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

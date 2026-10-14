@@ -1,0 +1,7 @@
+{
+  "description": "A string along [3, 0] to the location line of W7, the south wall, which runs east-west.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.2"
+  ]
+}

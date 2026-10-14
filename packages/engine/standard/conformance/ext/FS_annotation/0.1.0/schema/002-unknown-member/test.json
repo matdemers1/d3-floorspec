@@ -1,0 +1,6 @@
+{
+  "description": "A top-level member FS_annotation does not define, `tags`: tags are derived, never stored.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "removeWall W10, keeping the Living room: the Utility room joins it, and the north-south string that measures to both faces of W10 names a wall the house no longer has. That is not an error of FS_annotation: the batch commits - a committed result carries no lints (Ops 1.2) - and the document it makes, validated, reports FS-ANNO-LINT-001 for the string, which derives no lengths until its owner mends it.",
+  "covers": [
+    "FS-ANNO-2.2.1",
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-6.1.1",
+    "FS-OPS-4.7.1"
+  ]
+}

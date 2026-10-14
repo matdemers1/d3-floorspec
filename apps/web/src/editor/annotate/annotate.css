@@ -1,0 +1,267 @@
+/*
+ * Dimensions and annotation on the plan (FLR-T-18.11): render2d's layout in the canvas's tokens, and in
+ * a plan style's ink (FLR-T-18.5). Every text has a halo of the paper it is drawn on, so a string
+ * crossing a floor's colour still reads at 4.5:1.
+ */
+
+.fs-annotation {
+  --anno-ink: var(--color-fg-faint);
+  --anno-text: var(--color-fg-muted);
+  --anno-strong: var(--color-fg);
+  --anno-paper: var(--color-bg-sunken);
+}
+.fs-canvas[data-plan-style] .fs-annotation {
+  --anno-ink: var(--fsx-muted);
+  --anno-text: var(--fsx-muted);
+  --anno-strong: var(--fsx-text);
+  --anno-paper: var(--fsx-paper);
+}
+
+.fs-anno__dim,
+.fs-anno__leader {
+  stroke: var(--anno-ink);
+  stroke-width: 0.8;
+}
+.fs-anno__ext {
+  stroke: var(--anno-ink);
+  stroke-width: 0.6;
+  stroke-opacity: 0.75;
+}
+.fs-anno__tick {
+  stroke: var(--anno-text);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+.fs-anno__arrow {
+  fill: var(--anno-text);
+}
+.fs-annotation .fs-dim__text {
+  fill: var(--anno-text);
+  stroke: var(--anno-paper);
+}
+
+/* Tags: a door's circle, a window's hexagon, the mark inside. */
+.fs-anno__tag {
+  fill: var(--anno-paper);
+  stroke: var(--anno-strong);
+  stroke-width: 0.9;
+}
+.fs-anno__tagtext {
+  fill: var(--anno-strong);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  stroke: var(--anno-paper);
+  stroke-width: 2px;
+  paint-order: stroke;
+}
+
+/* Notes. */
+.fs-anno__note {
+  fill: var(--anno-strong);
+  font-family: var(--font-sans);
+  stroke: var(--anno-paper);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+/* The person's own strings and notes are picked by the select tool: a wide, invisible stroke under them. */
+.fs-anno__hit :is(line, rect) {
+  stroke: transparent;
+  stroke-width: 10;
+  fill: transparent;
+  pointer-events: all;
+}
+.fs-anno--own {
+  cursor: pointer;
+}
+.fs-anno--own:hover :is(.fs-anno__dim, .fs-anno__leader, .fs-anno__tick) {
+  stroke: var(--color-accent);
+}
+.fs-anno--own.is-selected :is(.fs-anno__dim, .fs-anno__leader, .fs-anno__tick, .fs-anno__ext) {
+  stroke: var(--color-accent);
+  stroke-opacity: 1;
+}
+.fs-anno--own.is-selected .fs-anno__arrow {
+  fill: var(--color-accent);
+}
+.fs-anno--own.is-selected :is(.fs-dim__text, .fs-anno__note) {
+  fill: var(--color-accent);
+}
+
+/* The tools' drafts. */
+.fs-anno-draft__line {
+  stroke: var(--color-accent);
+  stroke-width: 1.2;
+  fill: none;
+}
+.fs-anno-draft__ext {
+  stroke: var(--color-accent);
+  stroke-width: 0.8;
+  stroke-dasharray: 3 3;
+}
+.fs-anno-draft__anchor {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+.fs-anno-draft__text {
+  fill: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  stroke: var(--color-bg-sunken);
+  stroke-width: 3px;
+  paint-order: stroke;
+}
+
+/* The construction summary: the show toggles and the schedule. */
+.fs-anno-show {
+  display: grid;
+  gap: var(--space-6);
+}
+.fs-mode-summary__title--sub {
+  margin-top: var(--space-8);
+}
+.fs-schedule-panel__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  text-align: left;
+}
+.fs-schedule-panel__toggle svg {
+  width: 14px;
+  height: 14px;
+}
+.fs-schedule-panel__toggle .fs-mode-summary__title {
+  margin: 0;
+  flex: 1;
+}
+.fs-schedule-panel__count {
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+.fs-schedule-panel__list {
+  display: grid;
+  gap: 0;
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-12);
+}
+.fs-schedule-panel__row {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.fs-schedule-panel__line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+.fs-schedule-panel__tags {
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+}
+.fs-schedule-panel__type {
+  color: var(--color-fg);
+}
+.fs-schedule-panel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-8);
+  color: var(--color-fg-muted);
+}
+.fs-schedule-panel__meta .fs-mono {
+  font-family: var(--font-mono);
+}
+
+/* A selected annotation's card, beside it on the plan. */
+.fs-anno-card {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  gap: var(--space-6);
+  width: 248px;
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-size: var(--text-12);
+}
+.fs-anno-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  font-weight: var(--weight-medium);
+}
+.fs-anno-card__lengths {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+}
+.fs-anno-card__actions {
+  display: flex;
+  gap: var(--space-4);
+}
+.fs-anno-card textarea,
+.fs-note-input textarea {
+  width: 100%;
+  min-height: 56px;
+  resize: vertical;
+  padding: var(--space-4) var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font: inherit;
+}
+.fs-note-input {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  gap: var(--space-4);
+  width: 240px;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+}
+.fs-note-input p {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+
+/* The tool's hint, under the top of the plan. */
+.fs-anno-hint {
+  position: absolute;
+  bottom: 72px;
+  left: 50%;
+  z-index: 5;
+  max-width: min(560px, calc(100% - 32px));
+  margin: 0;
+  padding: var(--space-4) var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-size: var(--text-12);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.fs-anno-hint__under {
+  color: var(--color-fg-muted);
+}

@@ -43,7 +43,8 @@ import { LAYER_LABELS, MODE_IDS, MODES, PLAN_LAYERS, modesOf, useModes, type Lay
 import { TraceLayers } from './underlay/Panel';
 import { Plan } from './Canvas';
 import { layerOfElement as layerOf } from '@floorspec/render2d';
-import { formatArea, prettyLen, type UnitSystem } from './units';
+import { prettyLen, type UnitSystem } from './units';
+import { AnnotationSummary } from './annotate/Summary';
 import { dist } from './geometry';
 import { ExportDialog, type ModeChoice } from '../exports/ExportDialog';
 
@@ -513,6 +514,7 @@ export function ModeSummary({ store, model, units }: { store: EditorStore; model
           )}
         </div>
       ))}
+      {trade === 'construction' ? <AnnotationSummary store={store} model={model} level={level} units={units} /> : null}
       <ExportPlan store={store} label={plan} />
     </section>
   );
@@ -545,11 +547,10 @@ function summaryRows(trade: ModeId, model: EditorModel, level: LevelView, units:
     }
     const doors = level.openings.filter((o) => o.kind === 'door').length;
     const windows = level.openings.filter((o) => o.kind === 'window').length;
-    const net = level.rooms.reduce((s, r) => s + r.area2, 0n);
     return [
       { title: 'Walls', empty: 'No walls on this level.', rows: [...byType].sort((a, b) => b[1].n - a[1].n).map(([name, t]) => [name, `${String(t.n)} · ${prettyLen(Math.round(t.length), units)}`]) },
       { title: 'Openings', empty: 'No openings.', rows: doors + windows === 0 ? [] : [['Doors', String(doors)], ['Windows', String(windows)], ['Other openings', String(level.openings.length - doors - windows)]] },
-      { title: 'Area', empty: 'No rooms yet.', rows: level.rooms.length === 0 ? [] : [['Net (rooms)', formatArea(net, units)], ['Rooms', String(level.rooms.length)]] },
+      // The area — gross, net, finished — the show toggles and the schedule follow (FLR-T-18.11, AnnotationSummary).
     ];
   }
   if (trade === 'decorator') {

@@ -110,7 +110,7 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   // FLR-T-18.7: what is being placed, with buttons to turn it (a finger has no R key).
   if (tool === 'place' && readOnly === null) return <PlacingPanel store={store} />;
   // The measure tool (FLR-T-18.9) draws nothing: the inspector stays on the selection.
-  if (tool !== 'select' && tool !== 'measure' && readOnly === null) return <DrawPanel store={store} model={model} />;
+  if (tool !== 'select' && tool !== 'measure' && tool !== 'dimension' && tool !== 'note' && readOnly === null) return <DrawPanel store={store} model={model} />;
   // FLR-T-18.8: several selected — the fields they share.
   if (many) return <MultiInspector store={store} />;
   const element = selection === null ? undefined : elementOf(model, selection);

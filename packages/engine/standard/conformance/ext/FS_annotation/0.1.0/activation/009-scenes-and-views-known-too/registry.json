@@ -1,0 +1,101 @@
+[
+  {
+    "name": "FS_electrical",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_electrical/0.1.0/electrical.schema.json",
+    "title": "Electrical",
+    "requires": {},
+    "kinds": {
+      "panels": {
+        "title": "Panel",
+        "fallback": {}
+      },
+      "receptacles": {
+        "title": "Receptacle",
+        "fallback": {}
+      },
+      "switches": {
+        "title": "Switch",
+        "fallback": {}
+      },
+      "lights": {
+        "title": "Light",
+        "fallback": {}
+      },
+      "alarms": {
+        "title": "Smoke, CO or heat alarm",
+        "fallback": {}
+      },
+      "evChargers": {
+        "title": "EV charger",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_lighting",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_lighting/0.1.0/lighting.schema.json",
+    "title": "Lighting: luminaires and scenes",
+    "requires": {
+      "FS_electrical": "^0.1.0"
+    },
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_views",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_views/0.1.0/views.schema.json",
+    "title": "Views: saved cameras",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_annotation",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_annotation/0.1.0/annotation.schema.json",
+    "title": "Annotation: dimension strings and notes",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  }
+]

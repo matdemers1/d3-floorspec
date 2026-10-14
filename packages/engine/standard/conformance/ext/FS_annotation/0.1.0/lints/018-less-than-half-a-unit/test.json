@@ -1,0 +1,7 @@
+{
+  "description": "A string along [1, 2] between the points (0, 0) and (1, 0), 1/sqrt(5) of a base unit apart along it: not of no length, though it is written 0. No lint.",
+  "covers": [
+    "FS-ANNO-2.3.1",
+    "FS-ANNO-6.1.1"
+  ]
+}

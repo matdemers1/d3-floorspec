@@ -1,0 +1,6 @@
+{
+  "description": "A dimension string always has a point its line passes through.",
+  "covers": [
+    "FS-ANNO-1.3.1"
+  ]
+}

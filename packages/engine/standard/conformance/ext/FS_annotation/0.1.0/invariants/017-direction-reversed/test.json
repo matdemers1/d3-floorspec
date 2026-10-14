@@ -1,0 +1,7 @@
+{
+  "description": "The overall string measured along [-2, 0]: the same direction as [1, 0], backwards and longer. Valid, and its lengths the same.",
+  "covers": [
+    "FS-ANNO-2.1.1",
+    "FS-ANNO-6.1.1"
+  ]
+}

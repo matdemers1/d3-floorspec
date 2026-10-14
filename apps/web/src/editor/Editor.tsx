@@ -2,7 +2,7 @@ import './editor.css';
 import { RenovationMenu, useRenovationFilter } from './renovation';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, Sparkles, SquareSlash, Table as TableIcon, TriangleAlert, Undo2, WandSparkles, Waypoints } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, RulerDimensionLine, Sparkles, SquareSlash, StickyNote, Table as TableIcon, TriangleAlert, Undo2, WandSparkles, Waypoints } from 'lucide-react';
 import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
 import { MaterialsModal } from './Materials';
 import { FurnitureLibrary } from '../furniture/Browser';
@@ -488,6 +488,7 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
         ))}
         <span className="fs-rail__rule" />
         <MeasureButton store={store} tools={tools} />
+        <AnnotateButtons store={store} tools={tools} />
         <span className="fs-spacer" />
         <span className="fs-rail__pin">
           <PinButton store={store} side="left" />
@@ -541,6 +542,7 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
       </Tooltip>
       <span className="fs-rail__rule" />
       <MeasureButton store={store} tools={tools} />
+      <AnnotateButtons store={store} tools={tools} />
       <span className="fs-spacer" />
       {/* The left drawer's pin (FLR-T-18.2): on the rail, the one part of the drawer every state shows. */}
       <span className="fs-rail__pin">
@@ -558,6 +560,22 @@ function MeasureButton({ store, tools }: { store: EditorStore; tools: ToolContro
     <Tooltip content={`Measure (${commandById('tool.measure')?.hint ?? ''})`} side="right">
       <IconButton label="Measure" icon={<MeasureIcon />} pressed={on} disabled={level === null} onClick={() => { tools.setTool(on ? 'select' : 'measure'); }} />
     </Tooltip>
+  );
+}
+
+/** The dimension and note tools (FLR-T-18.11, ⇧D and ⇧T): in every rail, as the measure tool is. */
+function AnnotateButtons({ store, tools }: { store: EditorStore; tools: ToolController }) {
+  const tool = useEditor(store, (s) => s.tool);
+  const can = useEditor(store, (s) => s.level !== null && s.readOnly === null && s.compare === null);
+  return (
+    <>
+      <Tooltip content={`Dimension (${commandById('tool.dimension')?.hint ?? ''})`} side="right">
+        <IconButton label="Dimension" icon={<RulerDimensionLine />} pressed={tool === 'dimension'} disabled={!can} onClick={() => { tools.setTool(tool === 'dimension' ? 'select' : 'dimension'); }} />
+      </Tooltip>
+      <Tooltip content={`Note (${commandById('tool.note')?.hint ?? ''})`} side="right">
+        <IconButton label="Note" icon={<StickyNote />} pressed={tool === 'note'} disabled={!can} onClick={() => { tools.setTool(tool === 'note' ? 'select' : 'note'); }} />
+      </Tooltip>
+    </>
   );
 }
 

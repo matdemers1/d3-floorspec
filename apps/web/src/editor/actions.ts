@@ -5,6 +5,7 @@ import { exteriorOutline } from '@floorspec/engine';
 import { addLevel, addRoof, DEFAULT_LEVEL_HEIGHT, removeOps, setUnits, type RemoveKind } from './ops';
 import type { UnitSystem } from './units';
 import { removeDevice, removeRecord } from './systems/ops';
+import { orphaned, removedWith } from './annotate/ops';
 
 /**
  * Edits that more than one surface starts — the keyboard, the inspector, the tree, the command
@@ -25,7 +26,7 @@ export function requestRemove(store: EditorStore, id: string): void {
       store.set({ prompt: { kind: 'keep', wall: id, rooms: [sides.left, sides.right] } });
       return;
     }
-    void store.apply(`Remove ${name}`, removeOps(id, 'wall'), { select: () => null });
+    void store.apply(`Remove ${name}`, [...removeOps(id, 'wall'), ...orphaned(model, removedWith(model, new Set([id])))], { select: () => null });
     return;
   }
   if (kind === 'extensionElement') {
@@ -62,7 +63,8 @@ export function requestRemove(store: EditorStore, id: string): void {
       : kind === 'wallType' || kind === 'doorType' || kind === 'windowType'
         ? 'type'
         : 'other';
-  void store.apply(`Remove ${name}`, removeOps(id, removeKind), { select: () => null });
+  // FLR-T-18.11: the person's strings that measured to it go with it.
+  void store.apply(`Remove ${name}`, [...removeOps(id, removeKind), ...orphaned(model, removedWith(model, new Set([id])))], { select: () => null });
 }
 
 /** Answer the prompt: remove the wall keeping one room, or remove the level or building. */
@@ -72,7 +74,7 @@ export function confirmPrompt(store: EditorStore, keep?: string): void {
   store.set({ prompt: null });
   if (prompt === null || model === null) return;
   if (prompt.kind === 'keep') {
-    void store.apply(`Remove ${labelOf(model, prompt.wall)}`, removeOps(prompt.wall, 'wall', keep), { select: () => keep ?? null });
+    void store.apply(`Remove ${labelOf(model, prompt.wall)}`, [...removeOps(prompt.wall, 'wall', keep), ...orphaned(model, removedWith(model, new Set([prompt.wall])))], { select: () => keep ?? null });
     return;
   }
   const kind = kindOf(model, prompt.id) === 'building' ? 'building' : 'level';

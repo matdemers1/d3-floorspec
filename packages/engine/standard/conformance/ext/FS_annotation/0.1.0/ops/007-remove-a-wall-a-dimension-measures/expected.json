@@ -1,0 +1,42 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "09ded29fbb7a1b43a9a4ea61348a81462e12304b95df8259004a5b682721226c",
+  "created": [],
+  "removed": ["R3", "W10"],
+  "resolved": [
+    {
+      "op": "removeElement",
+      "id": "R3"
+    },
+    {
+      "op": "removeElement",
+      "id": "W10",
+      "cascade": true
+    }
+  ],
+  "inverse": [
+    {
+      "op": "addElement",
+      "collection": "walls",
+      "id": "W10",
+      "element": {
+        "level": "L1",
+        "start": "J7",
+        "end": "J8",
+        "type": "WT"
+      }
+    },
+    {
+      "op": "addElement",
+      "collection": "rooms",
+      "id": "R3",
+      "element": {
+        "level": "L1",
+        "anchor": [6242304, 1170432],
+        "function": "mechanical",
+        "name": "Utility"
+      }
+    }
+  ]
+}

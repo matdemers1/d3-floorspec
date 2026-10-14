@@ -16,11 +16,11 @@
  */
 import { dxfPlan, renovationSplit } from './renovation.js';
 import { RENOVATION_FILTER_LABELS, filteredDocument, renovationStyles, type RenovationFilter, type RenovationStyle } from '@floorspec/render2d';
-import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, openingDimensions, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
+import { deriveFrom, evaluate, InvalidDocumentError, OFFICIAL_READER, openingDimensions, resolveAnnotations, z765, type Evaluation, type FloorspecDocument } from '@floorspec/engine';
 import { sceneOf, type ReaderOptions, type Scene } from '@floorspec/render2d';
 import { buildSceneFrom as buildModel, type Scene as ModelScene } from '../gltf/scene.js';
 import { MAX_WIDTH, renderView } from '../../render3d/index.js';
-import { dimensionStrings, type DimString } from './dimensions.js';
+import { dimensionStrings, NO_NOTES, type DimString, type PlanNotes } from './dimensions.js';
 import { levelDxf, roofDxf } from './dxf.js';
 import { openPdf } from './pdf.js';
 import { openingMarks, planOf, union, type Box, type LevelPlan, type Segment } from './plan.js';
@@ -29,6 +29,7 @@ import {
   composeRoofSheet,
   composeScheduleSheet,
   DEFAULT_PAGE,
+  depthsOf,
   layoutSet,
   PAGES,
   ROOF_PLAN_TITLE,
@@ -38,7 +39,7 @@ import {
   type View3d,
 } from './sheet.js';
 import type { PlanRoof } from './symbols.js';
-import { lengthText, unitsOf, type UnitSystem } from './units.js';
+import { areaText, lengthText, roundHalfEven, twiceArea, unitsOf, type UnitSystem } from './units.js';
 import { storedZip } from './zip.js';
 import { modePlanName, shownPlan, splitPlan, statesOf, type DrawingMode } from './modes.js';
 import type { PlanStyle } from './styles.js';
@@ -118,6 +119,8 @@ interface Prepared {
   readonly all: readonly LevelPlan[];
   readonly chosen: readonly LevelPlan[];
   readonly dims: ReadonlyMap<string, readonly DimString[]>;
+  /** The person's own strings and notes on each drawn level (FS_annotation, FLR-T-18.11), resolved from the model as it is. */
+  readonly notes: ReadonlyMap<string, PlanNotes>;
   readonly derived: ReturnType<typeof deriveFrom>;
   /** The roofs on the drawn levels: the roof plan, when there are any. */
   readonly roofs: readonly PlanRoof[];
@@ -175,10 +178,16 @@ function prepare(document: object, options: DrawingOptions): Prepared {
   const all = scenes.map((s) => planOf(s, marks, { doc, derived }));
   const chosen = all.filter((p) => wanted.includes(p.levelId));
   const dims = new Map(chosen.map((p) => [p.levelId, dimensionStrings(p)]));
+  const notes = new Map(
+    chosen.map((p): [string, PlanNotes] => {
+      const r = resolveAnnotations(doc, derived, p.levelId);
+      return [p.levelId, { custom: r.dimensions.map((d) => ({ id: d.id, direction: d.direction, anchors: d.anchors, lengths: d.lengths })), notes: r.notes.map((n) => ({ id: n.id, text: n.text, at: n.at, leader: n.leader })) }];
+    }),
+  );
   const roofs = chosen.flatMap((p) => p.roofs);
   const wallsBelow = chosen.filter((p) => p.roofs.length > 0).flatMap((p) => p.wallLines.filter((l) => l.layer === 'A-WALL-EXTR'));
   const designOf = asked.design ?? null;
-  return { ev, doc, units: unitsOf(doc), all, chosen, dims, derived, roofs, wallsBelow, design: designOf === null ? null : { ...designOf }, designText: designOf === null ? undefined : designWords(asked.document, designOf), reno };
+  return { ev, doc, units: unitsOf(doc), all, chosen, dims, notes, derived, roofs, wallsBelow, design: designOf === null ? null : { ...designOf }, designText: designOf === null ? undefined : designWords(asked.document, designOf), reno };
 }
 
 /**
@@ -225,6 +234,51 @@ function versionLabel(v: VersionFacts): string {
 
 const isoDate = (d: Date): string => d.toISOString().slice(0, 10);
 
+/** Square feet (whole) as the drawings print an area: `3,087 SF`, or m² to a tenth. */
+function sqftText(sqft: number, units: UnitSystem): string {
+  return units === 'metric' ? `${(sqft * 0.09290304).toFixed(1)} m²` : `${Math.round(sqft).toLocaleString('en-US')} SF`;
+}
+
+/**
+ * The area summary of each level (FLR-T-18.11): gross to the exterior faces and finished, after the
+ * engine's Z765 application measure, and net of the rooms; then the whole house's when it has more
+ * than one level. Nothing when the measure cannot be taken.
+ */
+function areaSummaries(p: Prepared): Map<string, [string, string][]> {
+  const out = new Map<string, [string, string][]>();
+  let z: ReturnType<typeof z765>;
+  try {
+    z = z765(p.doc);
+  } catch {
+    return out;
+  }
+  const levels = z.buildings.flatMap((b) => b.levels);
+  const netOf = (plan: LevelPlan): bigint => plan.rooms.reduce((s, r) => s + twiceArea(r.area), 0n);
+  const house: [string, string][] = [];
+  if (p.all.length > 1) {
+    const net = p.all.reduce((s, plan) => s + netOf(plan), 0n);
+    house.push(['Whole house, gross', sqftText(levels.reduce((s, l) => s + l.grossSqFt, 0), p.units)]);
+    house.push(['Whole house, net', netText(net, p.units)]);
+    house.push(['Whole house, finished', sqftText(z.buildings.reduce((s, b) => s + b.aboveGradeSqFt + b.belowGradeSqFt, 0), p.units)]);
+  }
+  for (const plan of p.chosen) {
+    const lv = levels.find((l) => l.level === plan.levelId);
+    const rows: [string, string][] = [];
+    if (lv !== undefined) rows.push(['Gross (to exterior faces)', sqftText(lv.grossSqFt, p.units)]);
+    if (plan.rooms.length > 0) rows.push(['Net (rooms)', netText(netOf(plan), p.units)]);
+    if (lv !== undefined) rows.push(['Finished (Z765)', sqftText(lv.finishedSqFt, p.units)]);
+    out.set(plan.levelId, [...rows, ...house]);
+  }
+  return out;
+}
+
+/** A net area (twice, square base units) as the summary prints it: whole square feet with commas, rounded once. */
+function netText(twice: bigint, units: UnitSystem): string {
+  if (units === 'metric') return areaText(`${(twice / 2n).toString()}${twice % 2n === 0n ? '' : '.5'}`, units);
+  const per = 2n * 390_144n * 390_144n;
+  return `${Number(roundHalfEven(twice, per)).toLocaleString('en-US')} SF`;
+}
+
 function scheduleRows(doc: FloorspecDocument, plan: LevelPlan, units: UnitSystem): ScheduleRow[] {
   const rows: ScheduleRow[] = [];
   const markOf = new Map([...plan.doors, ...plan.windows].map((o) => [o.id, o.mark]));
@@ -255,10 +309,10 @@ function renovationName(options: DrawingOptions, p: Prepared): string | undefine
 }
 
 /** A level's DXF; under a renovation filter, with its changes on their status layers. */
-function dxfOf(plan: LevelPlan, dims: readonly DimString[], meta: Parameters<typeof levelDxf>[2], options: DrawingOptions, p: Prepared): string {
-  if (p.reno === null || options.renovation === undefined) return levelDxf(plan, dims, meta);
+function dxfOf(plan: LevelPlan, dims: readonly DimString[], meta: Parameters<typeof levelDxf>[2], options: DrawingOptions, p: Prepared, notes: PlanNotes = NO_NOTES): string {
+  if (p.reno === null || options.renovation === undefined) return levelDxf(plan, dims, meta, null, notes);
   const r = dxfPlan(plan, options.renovation, p.reno);
-  return levelDxf(r.plan, dims, meta, { demolished: r.demolished, fresh: r.fresh });
+  return levelDxf(r.plan, dims, meta, { demolished: r.demolished, fresh: r.fresh }, notes);
 }
 
 /** The dimensioned PDF: a sheet per level (and a schedule sheet when one is needed). */
@@ -270,11 +324,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
   frame ??= { minX: 0, minY: 0, maxX: 3_901_440, maxY: 3_901_440 };
   const rows = new Map(p.chosen.map((plan) => [plan.levelId, scheduleRows(p.doc, plan, p.units)]));
   const maxRows = Math.max(0, ...[...rows.values()].map((r) => r.length));
-  const allDims = [...p.dims.values()].flat();
-  const layout = layoutSet(page, frame, allDims, p.units, maxRows);
   const name = p.doc.project.name;
-  const model = await buildModel(p.ev);
-  const views = viewsOf(model, p.doc, options.viewDpi ?? 300);
   const pdf = openPdf(
     {
       title: `${name} — floor plans`,
@@ -284,6 +334,9 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
     },
     options.fontDir,
   );
+  const layout = layoutSet(page, frame, depthsOf([...p.dims.values()], pdf.measure, p.units), p.units, maxRows);
+  const model = await buildModel(p.ev);
+  const views = viewsOf(model, p.doc, options.viewDpi ?? 300);
   // A trade's view (FLR-T-18.3): its layers drawn, the rest screened or left out; a roof plan only when roofs are shown.
   const states = statesOf(options);
   const planName = renovationName(options, p) ?? modePlanName(options);
@@ -302,6 +355,7 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
     ...(p.reno === null || options.renovation === undefined ? {} : { renovation: options.renovation }),
   };
   const top = p.all[p.all.length - 1]!;
+  const areas = areaSummaries(p);
   const sheets: Sheet[] = p.chosen.map((plan, i) => {
     const moded = splitPlan(plan, states);
     // FLR-T-18.13: a renovation plan screens existing work under new work, and draws what goes dashed over both.
@@ -314,10 +368,11 @@ export async function exportPdf(document: object, options: DrawingOptions): Prom
       states === null || states.dimensions === 'on' ? (p.dims.get(plan.levelId) ?? []) : [],
       views(plan.levelId),
       states === null || states.openings !== 'off' ? (rows.get(plan.levelId) ?? []) : [],
-      { ...common, levelName: plan.levelName, sheetNumber: `A-${String(101 + i)}`, sheetIndex: i, viewCaption: `Cut above ${plan.levelName}` },
+      { ...common, levelName: plan.levelName, sheetNumber: `A-${String(101 + i)}`, sheetIndex: i, viewCaption: `Cut above ${plan.levelName}`, ...(areas.has(plan.levelId) ? { areas: areas.get(plan.levelId)! } : {}) },
       pdf.measure,
       ghost,
       split?.demolished ?? null,
+      states === null || states.dimensions === 'on' ? (p.notes.get(plan.levelId) ?? NO_NOTES) : NO_NOTES,
     );
   });
   if (roofSheet === 1) {
@@ -364,7 +419,7 @@ export function exportDxf(document: object, options: DrawingOptions): DxfResult 
   const files: DrawingFile[] = p.chosen.map((plan) => ({
     name: `${slug(name)}-${v}-${slug(plan.levelName)}${suffix}.dxf`,
     contentType: 'image/vnd.dxf',
-    bytes: enc.encode(dxfOf(shownPlan(plan, states), states === null || states.dimensions !== 'off' ? (p.dims.get(plan.levelId) ?? []) : [], meta(plan.levelName), options, p)),
+    bytes: enc.encode(dxfOf(shownPlan(plan, states), states === null || states.dimensions !== 'off' ? (p.dims.get(plan.levelId) ?? []) : [], meta(plan.levelName), options, p, states === null || states.dimensions !== 'off' ? (p.notes.get(plan.levelId) ?? NO_NOTES) : NO_NOTES)),
   }));
   if (p.roofs.length > 0 && (states === null || states.roof !== 'off'))
     files.push({ name: `${slug(name)}-${v}-roof-plan.dxf`, contentType: 'image/vnd.dxf', bytes: enc.encode(roofDxf(p.roofs, p.all[0]!.trueNorth, meta(ROOF_PLAN_TITLE))) });

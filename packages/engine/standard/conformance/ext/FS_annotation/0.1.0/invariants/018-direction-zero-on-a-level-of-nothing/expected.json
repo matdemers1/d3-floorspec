@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-ANNO-INV-002",
+      "severity": "error",
+      "elements": ["DM3"]
+    },
+    {
+      "code": "FS-ANNO-INV-003",
+      "severity": "error",
+      "elements": ["DM3"]
+    }
+  ]
+}

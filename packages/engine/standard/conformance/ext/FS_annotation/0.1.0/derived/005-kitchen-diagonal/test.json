@@ -1,0 +1,6 @@
+{
+  "description": "A string along [1, 1] from J1 to J3, the Kitchen's diagonal: 12' x sqrt(2), irrational, rounded once.",
+  "covers": [
+    "FS-ANNO-6.1.1"
+  ]
+}

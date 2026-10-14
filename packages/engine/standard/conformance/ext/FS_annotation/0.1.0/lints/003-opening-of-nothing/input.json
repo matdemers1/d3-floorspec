@@ -1,0 +1,649 @@
+{
+  "floorspec": "0.2",
+  "project": {
+    "name": "Phase 13 lit house"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    },
+    "WN": {
+      "kind": "windowType",
+      "width": 1560576,
+      "height": 1560576,
+      "sill": 1170432
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 4681728]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [4681728, 4681728]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [7802880, 4681728]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [7802880, 0]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [4681728, 0]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [4681728, 2340864]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [7802880, 2340864]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J8",
+      "type": "WT"
+    },
+    "W5": {
+      "level": "L1",
+      "start": "J8",
+      "end": "J5",
+      "type": "WT"
+    },
+    "W6": {
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    },
+    "W7": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J1",
+      "type": "WT"
+    },
+    "W8": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J7",
+      "type": "WT"
+    },
+    "W9": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W10": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J8",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2340864, 2340864],
+      "name": "Kitchen",
+      "function": "kitchen"
+    },
+    "R2": {
+      "level": "L1",
+      "anchor": [6242304, 3511296],
+      "name": "Living",
+      "function": "living"
+    },
+    "R3": {
+      "level": "L1",
+      "anchor": [6242304, 1170432],
+      "name": "Utility",
+      "function": "mechanical"
+    }
+  },
+  "extensionsUsed": {
+    "FS_electrical": "0.1.0",
+    "FS_furniture": "0.1.0",
+    "FS_lighting": "0.1.0",
+    "FS_views": "0.1.0",
+    "FS_annotation": "0.1.0"
+  },
+  "extensions": {
+    "FS_electrical": {
+      "collections": {
+        "panels": {
+          "X1": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -256000, -512000],
+                "max": [128000, 256000, 512000]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W5",
+              "side": "right",
+              "offset": 1170432,
+              "height": 1536000
+            },
+            "name": "Main panel",
+            "volts": [120, 240],
+            "rating": 200,
+            "mainBreaker": 200,
+            "spaces": 40,
+            "clearances": {
+              "working": {
+                "purpose": "workingSpace",
+                "shape": "box",
+                "min": [0, -512000, -1536000],
+                "max": [1280000, 512000, 1024000]
+              }
+            }
+          }
+        },
+        "lights": {
+          "X2": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-192000, -192000, -1152000],
+                "max": [192000, 192000, 0]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R1",
+              "surface": "ceiling",
+              "position": [1950720, 2340864]
+            },
+            "fixture": "pendant",
+            "watts": 10,
+            "name": "Island pendant"
+          },
+          "X3": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-192000, -192000, -1152000],
+                "max": [192000, 192000, 0]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R1",
+              "surface": "ceiling",
+              "position": [2731008, 2340864]
+            },
+            "fixture": "pendant",
+            "watts": 10,
+            "name": "Island pendant"
+          },
+          "X4": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-128000, -128000, -192000],
+                "max": [128000, 128000, 0]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R1",
+              "surface": "ceiling",
+              "position": [1170432, 3511296]
+            },
+            "fixture": "recessed",
+            "watts": 12
+          },
+          "X5": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-128000, -128000, -192000],
+                "max": [128000, 128000, 0]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R1",
+              "surface": "ceiling",
+              "position": [3511296, 3511296]
+            },
+            "fixture": "recessed",
+            "watts": 12
+          },
+          "X6": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-128000, -128000, -192000],
+                "max": [128000, 128000, 0]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R2",
+              "surface": "ceiling",
+              "position": [6242304, 3511296]
+            },
+            "fixture": "recessed",
+            "watts": 12
+          },
+          "X7": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -128000, -192000],
+                "max": [192000, 128000, 192000]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W7",
+              "side": "left",
+              "offset": 2340864,
+              "height": 2560000
+            },
+            "fixture": "exterior",
+            "watts": 15,
+            "name": "Porch light"
+          }
+        },
+        "switches": {
+          "X10": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -51200, -76800],
+                "max": [32000, 51200, 76800]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W8",
+              "side": "left",
+              "offset": 390144,
+              "height": 1536000
+            },
+            "control": "dimmer",
+            "controls": ["X2", "X3"]
+          },
+          "X11": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -51200, -76800],
+                "max": [32000, 51200, 76800]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W8",
+              "side": "left",
+              "offset": 780288,
+              "height": 1536000
+            },
+            "control": "smart",
+            "controls": ["X4", "X5"]
+          },
+          "X12": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -51200, -76800],
+                "max": [32000, 51200, 76800]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W9",
+              "side": "right",
+              "offset": 390144,
+              "height": 1536000
+            },
+            "controls": ["X6"]
+          },
+          "X13": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -51200, -76800],
+                "max": [32000, 51200, 76800]
+              }
+            },
+            "host": {
+              "mode": "wallFace",
+              "wall": "W1",
+              "side": "right",
+              "offset": 780288,
+              "height": 1536000
+            },
+            "controls": ["X7"]
+          }
+        }
+      },
+      "circuits": {
+        "C1": {
+          "panel": "X1",
+          "breaker": 15,
+          "volts": 120,
+          "rating": 15,
+          "space": 1,
+          "protection": ["afci"],
+          "loads": ["X2", "X3", "X4", "X5", "X6", "X7"],
+          "name": "Lights"
+        }
+      }
+    },
+    "FS_furniture": {
+      "collections": {
+        "pieces": {
+          "X20": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [0, -230400, 0],
+                "max": [460800, 230400, 768000]
+              },
+              "asset": "M-lamp-table-600",
+              "symbol": "S-lamp-table-600"
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R2",
+              "surface": "floor",
+              "position": [7022592, 3901440]
+            },
+            "category": "other",
+            "catalogue": "lamp-table-600",
+            "name": "Table lamp"
+          }
+        }
+      }
+    },
+    "FS_lighting": {
+      "luminaires": {
+        "X2": {
+          "lumens": 450,
+          "cct": 2700,
+          "dimmable": true
+        },
+        "X3": {
+          "lumens": 450,
+          "cct": 2700,
+          "dimmable": true
+        },
+        "X4": {
+          "lumens": 800,
+          "cct": 3000,
+          "cctRange": [2700, 5000],
+          "dimmable": true
+        },
+        "X5": {
+          "lumens": 800,
+          "cct": 3000,
+          "cctRange": [2700, 5000],
+          "dimmable": true
+        },
+        "X6": {
+          "lumens": 800,
+          "cct": 2700,
+          "dimmable": false
+        },
+        "X7": {
+          "lumens": 600,
+          "cct": 3000
+        },
+        "X20": {
+          "lumens": 400,
+          "cct": 2700,
+          "dimmable": true
+        }
+      },
+      "scenes": {
+        "LS1": {
+          "name": "Evening",
+          "on": {
+            "X2": {
+              "output": 60
+            },
+            "X3": {
+              "output": 60
+            },
+            "X4": {
+              "output": 40,
+              "cct": 2700
+            },
+            "X5": {
+              "output": 40,
+              "cct": 2700
+            },
+            "X7": {},
+            "X20": {}
+          }
+        },
+        "LS2": {
+          "name": "Night light",
+          "on": {
+            "X3": {
+              "output": 10
+            },
+            "X20": {
+              "output": 20
+            }
+          }
+        }
+      }
+    },
+    "FS_views": {
+      "views": {
+        "SV1": {
+          "name": "Hero exterior",
+          "eye": [-5120000, -8960000, 2048000],
+          "target": [3901440, 2341120, 1728000],
+          "focalLength": 24,
+          "twoPoint": true,
+          "aperture": "f/8",
+          "exposure": 3,
+          "sky": "clear",
+          "at": "2026-06-21T17:30"
+        },
+        "SV2": {
+          "name": "Kitchen island",
+          "eye": [768000, 768000, 1920000],
+          "target": [2341120, 2341120, 1216000],
+          "focalLength": 20,
+          "twoPoint": true,
+          "aspect": "16:9",
+          "aperture": "f/2.8",
+          "focus": 2304000,
+          "sky": "overcast",
+          "lights": "on"
+        },
+        "SV3": {
+          "name": "Dusk from the garden",
+          "eye": [9600000, -3840000, 2176000],
+          "target": [3901440, 2341120, 1536000],
+          "twoPoint": true,
+          "exposure": -3,
+          "sky": "dusk",
+          "at": "2026-10-15T18:40-04:00",
+          "scene": "LS1"
+        },
+        "SV4": {
+          "name": "Cutaway",
+          "eye": [-3840000, -6400000, 11520000],
+          "target": [3901440, 2341120, 0],
+          "focalLength": 50,
+          "aspect": "1:1",
+          "level": "L1",
+          "levels": "cutaway",
+          "sky": "studio"
+        }
+      }
+    },
+    "FS_annotation": {
+      "dimensions": {
+        "DM1": {
+          "level": "L1",
+          "direction": [1, 0],
+          "through": [0, -1536000],
+          "anchors": [
+            {
+              "wall": "W1",
+              "face": "left"
+            },
+            {
+              "junction": "J6"
+            },
+            {
+              "wall": "W5",
+              "face": "left"
+            }
+          ],
+          "name": "Overall, south"
+        },
+        "DM2": {
+          "level": "L1",
+          "direction": [1, 0],
+          "through": [0, 6217728],
+          "anchors": [
+            {
+              "wall": "W1",
+              "face": "left"
+            },
+            {
+              "opening": "O2"
+            },
+            {
+              "junction": "J3"
+            }
+          ],
+          "name": "Kitchen window"
+        },
+        "DM3": {
+          "level": "L1",
+          "direction": [1, 0],
+          "through": [0, 1170432],
+          "anchors": [
+            {
+              "wall": "W1",
+              "face": "right"
+            },
+            {
+              "wall": "W8",
+              "face": "left"
+            }
+          ],
+          "name": "Kitchen, clear"
+        },
+        "DM4": {
+          "level": "L1",
+          "direction": [0, 1],
+          "through": [6242304, 0],
+          "anchors": [
+            {
+              "wall": "W6",
+              "face": "right"
+            },
+            {
+              "wall": "W10",
+              "face": "right"
+            },
+            {
+              "wall": "W10",
+              "face": "left"
+            },
+            {
+              "wall": "W3",
+              "face": "right"
+            }
+          ],
+          "name": "Utility and living, clear"
+        }
+      },
+      "notes": {
+        "NT1": {
+          "level": "L1",
+          "text": "Verify the rough opening on site\nbefore ordering the window.",
+          "at": [780288, 5852160],
+          "leader": [2340864, 4681728],
+          "about": "O1"
+        },
+        "NT2": {
+          "level": "L1",
+          "text": "Keep the panel's working space clear.",
+          "at": [5071872, 390144],
+          "leader": [7674880, 1170432],
+          "about": "X1"
+        }
+      }
+    }
+  },
+  "assets": {
+    "M-lamp-table-600": {
+      "path": "furniture/lamp-table-600.glb",
+      "sha256": "d7b827a6361af8e9bf2411232751ce63a2b6e2a417c942388fd7ddf9a0268bc6",
+      "mediaType": "model/gltf-binary"
+    },
+    "S-lamp-table-600": {
+      "path": "furniture/lamp-table-600.svg",
+      "sha256": "28e20a5c14a8b07acecce5f595650b7cc4d3cedbb9f206c45afae134a862c016",
+      "mediaType": "image/svg+xml"
+    }
+  },
+  "openings": {
+    "O1": {
+      "wall": "W2",
+      "offset": 1560576,
+      "fill": "WN",
+      "name": "Kitchen window"
+    }
+  }
+}

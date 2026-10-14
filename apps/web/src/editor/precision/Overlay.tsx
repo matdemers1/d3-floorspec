@@ -418,8 +418,7 @@ function MeasureHtml({ store, view, model, level, units }: { store: EditorStore;
             size="sm"
             variant="secondary"
             disabled={keep === null || measure.points.length < 2 || open}
-            title={keep === null ? 'Dimensions you keep arrive with FLR-T-18.11' : undefined}
-            onClick={() => { keep?.(store, measure.points.map((m) => m.point)); }}
+            onClick={() => { keep?.(store, measure.points, measure.closed); }}
           >
             Keep as a dimension
           </Button>

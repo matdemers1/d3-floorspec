@@ -1,0 +1,10 @@
+{
+  "description": "Every lint at once: a string of a missing junction, one along a parallel face, one of a segment of no length, and two notes about nothing - each once.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.1",
+    "FS-ANNO-2.2.2",
+    "FS-ANNO-2.3.1",
+    "FS-ANNO-3.1.1"
+  ]
+}

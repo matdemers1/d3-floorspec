@@ -1,0 +1,9 @@
+{
+  "description": "The same house read with no known extensions: FS_annotation is not evaluated, so nothing of it is derived (`derived.extensions` is empty) - only what Core derives from every extension element's fallback and host (Core 1.6.9), and the window; FS_annotation has no elements of its own.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.2.4",
+    "FS-CORE-1.6.9",
+    "FS-CORE-12.6.2"
+  ]
+}

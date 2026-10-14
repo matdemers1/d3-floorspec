@@ -1,0 +1,10 @@
+{
+  "description": "setProperty of $document /extensions/FS_annotation/dimensions/DM5 adds an overall string up the east side, from the south wall's outside face through J8 to the north wall's, with an ID Ops does not mint (1.3.2). It commits, valid under FS_annotation, and measures 6' and 50 mm twice.",
+  "covers": [
+    "FS-ANNO-1.2.1",
+    "FS-ANNO-1.3.2",
+    "FS-ANNO-2.2.1",
+    "FS-ANNO-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

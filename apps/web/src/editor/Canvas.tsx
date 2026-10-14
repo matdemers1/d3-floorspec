@@ -34,6 +34,8 @@ import { usePrecision } from './precision/state';
 import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
 import { QuickAdd } from '../placing/QuickAdd';
 import { RoomDragGhost, RoomHandles, WandOverlay, WandPrompt } from './rooms/RoomLayer';
+import { AnnotationLayer } from './annotate/Layer';
+import { AnnotationDraftLayer, AnnotationHtml } from './annotate/Overlay';
 import { ReferenceLayer, UnderlayCapture, UnderlayHtml, UnderlayImage } from './underlay/Layer';
 import { HaloHtml, HaloLayer, useHalos } from './halos/HaloLayer';
 import { HistoryScrubber } from './HistoryScrubber';
@@ -215,7 +217,6 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
             <>
               {/* FLR-T-18.12: the level's underlay, over the floors and under the walls. */}
               <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} reno={renoStyles} underlay={<UnderlayImage store={store} view={view} level={level.id} />} />
-              {layers.dimensions ? <Dimensions view={view} level={level} units={units} /> : null}
               <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} look={look} />
               <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} look={look} />
               {/* FLR-T-18.12: the level below or above, in the reference colour: snapped to, never picked. */}
@@ -226,11 +227,14 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <Findings store={store} view={view} level={level} />
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
               {comparing ? null : <ArrangeLayer store={store} view={view} level={level} />}
+              {/* FLR-T-18.11: dimensions, tags and notes — render2d's one layout, the PDF's and the plan render's. */}
+              <AnnotationLayer store={store} view={view} level={level} model={model} layers={layers} units={units} caps={look.theme.caps} />
               {layers.rooms ? <StyledRoomLabels view={view} level={level} document={model.document} units={units} look={look} reno={renoStyles} /> : null}
               <HaloLayer view={view} halos={halos} />
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={fullModel ?? model} />}
               {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={fullModel ?? model} />}
+              {comparing ? null : <AnnotationDraftLayer store={store} view={view} units={units} />}
               {comparing ? null : <PlacingLayer store={store} view={view} level={level} />}
               {comparing ? null : <RidgePick store={store} view={view} />}
               {comparing ? null : <UnderlayCapture store={store} view={view} level={level} />}
@@ -240,6 +244,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       ) : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <HtmlOverlays store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <PrecisionHtml store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
+      {view !== null && model !== null && level !== undefined && !comparing ? <AnnotationHtml store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
       {/* FLR-T-18.7: the ghost's distances and its sentence, and the quick-add bar at the pointer. */}
       {view !== null && level !== undefined && !comparing ? <PlacingLabels store={store} view={view} units={units} /> : null}
       {view !== null && level !== undefined && !comparing ? <QuickAdd store={store} view={view} level={level} /> : null}
@@ -448,64 +453,6 @@ function RoomLabels({ view, level, document, units }: { view: Viewport; level: L
       })}
     </g>
   );
-}
-
-// ─── Dimensions ──────────────────────────────────────────────────────────────────────────────
-
-/**
- * The exterior dimension strings the board draws: along the top, the distances between junctions
- * on the level's top line; down the left, between those on its left line; and the overall size.
- */
-function Dimensions({ view, level, units }: { view: Viewport; level: LevelView; units: UnitSystem }) {
-  if (level.junctions.length < 2) return null;
-  const xs = level.junctions.map((j) => j.position[0]);
-  const ys = level.junctions.map((j) => j.position[1]);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  if (maxX === minX || maxY === minY) return null;
-  const outerTop = level.bounds?.maxY ?? maxY;
-  const outerLeft = level.bounds?.minX ?? minX;
-  const top = [...new Set(level.junctions.filter((j) => j.position[1] === maxY).map((j) => j.position[0]))].sort((a, b) => a - b);
-  const left = [...new Set(level.junctions.filter((j) => j.position[0] === minX).map((j) => j.position[1]))].sort((a, b) => b - a);
-  const yLine = S(view, [0, outerTop])[1] - 26;
-  const xLine = S(view, [outerLeft, 0])[0] - 26;
-  const parts: ReactNode[] = [];
-  const chain = (values: number[], horizontal: boolean) => {
-    if (values.length < 2) return;
-    const first = values[0] as number;
-    const last = values[values.length - 1] as number;
-    const a = horizontal ? S(view, [first, 0])[0] : S(view, [0, first])[1];
-    const b = horizontal ? S(view, [last, 0])[0] : S(view, [0, last])[1];
-    parts.push(horizontal ? <line key="h" className="fs-dim__line" x1={a} y1={yLine} x2={b} y2={yLine} /> : <line key="v" className="fs-dim__line" x1={xLine} y1={a} x2={xLine} y2={b} />);
-    values.forEach((v, i) => {
-      const at = horizontal ? S(view, [v, 0])[0] : S(view, [0, v])[1];
-      parts.push(horizontal ? <line key={`ht${String(i)}`} className="fs-dim__tick" x1={at} y1={yLine - 4} x2={at} y2={yLine + 4} /> : <line key={`vt${String(i)}`} className="fs-dim__tick" x1={xLine - 4} y1={at} x2={xLine + 4} y2={at} />);
-      const next = values[i + 1];
-      if (next === undefined) return;
-      const nextAt = horizontal ? S(view, [next, 0])[0] : S(view, [0, next])[1];
-      if (Math.abs(nextAt - at) < 34) return;
-      const mid = (at + nextAt) / 2;
-      const text = formatLen(Math.abs(next - v), units);
-      parts.push(
-        horizontal ? (
-          <text key={`hl${String(i)}`} className="fs-dim__text" x={mid} y={yLine - 6} textAnchor="middle">{text}</text>
-        ) : (
-          <text key={`vl${String(i)}`} className="fs-dim__text" x={xLine - 6} y={mid} textAnchor="middle" transform={`rotate(-90 ${(xLine - 6).toFixed(1)} ${mid.toFixed(1)})`}>{text}</text>
-        ),
-      );
-    });
-  };
-  chain(top, true);
-  chain(left, false);
-  const corner = S(view, [level.bounds?.maxX ?? maxX, level.bounds?.minY ?? minY]);
-  parts.push(
-    <text key="overall" className="fs-dim__overall" x={corner[0]} y={corner[1] + 22} textAnchor="end">
-      {`${formatLen(maxX - minX, units)} × ${formatLen(maxY - minY, units)}`}
-    </text>,
-  );
-  return <g className="fs-dim" aria-hidden="true">{parts}</g>;
 }
 
 // ─── Findings, selection, hover ──────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import { orphaned, removedWith } from '../annotate/ops';
 import type { EditorState, EditorStore } from '../store';
 import { kindOf, labelOf, readModel, sortedLevels, type EditorModel, type Kind, type LevelView, type Point } from '../model';
 import { roomsBeside } from '../geometry';
@@ -224,6 +225,8 @@ export function removeBatch(model: EditorModel, ids: readonly string[]): Batch {
   for (const kind of ['slab', 'roof', 'stair'] as const) for (const id of of(kind)) ops.push(...removeOps(id, 'other'));
   // A junction last: a wall removed above may already have taken it.
   for (const id of of('junction')) if (!model.levels.some((l) => l.walls.some((w) => walls.has(w.id) && (w.start === id || w.end === id)))) ops.push(...removeOps(id, 'junction'));
+  // FLR-T-18.11: the person's strings that measured to what goes, with it.
+  ops.push(...orphaned(model, removedWith(model, gone)));
   return ops;
 }
 

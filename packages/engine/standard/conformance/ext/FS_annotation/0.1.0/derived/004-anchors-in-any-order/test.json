@@ -1,0 +1,6 @@
+{
+  "description": "A string from J6 to J1 to J5: segments are lengths, whichever way they run, and the total is from the first anchor to the last, J6 to J5 - 8'.",
+  "covers": [
+    "FS-ANNO-6.1.1"
+  ]
+}

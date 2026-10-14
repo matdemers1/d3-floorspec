@@ -1,0 +1,6 @@
+{
+  "description": "The window's string keyed by O1, the window it locates.",
+  "covers": [
+    "FS-ANNO-1.3.2"
+  ]
+}

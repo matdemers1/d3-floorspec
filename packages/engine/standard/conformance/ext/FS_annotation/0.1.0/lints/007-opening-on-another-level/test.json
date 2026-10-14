@@ -1,0 +1,7 @@
+{
+  "description": "A string DM5 on L2 from a point to the window's centre: the window is on its wall's level, L1.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-2.2.1"
+  ]
+}

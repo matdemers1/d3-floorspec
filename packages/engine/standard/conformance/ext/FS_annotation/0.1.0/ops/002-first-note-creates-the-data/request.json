@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_annotation/notes/NT1",
+      "value": {
+        "level": "L1",
+        "text": "Verify the rough opening on site\nbefore ordering the window.",
+        "at": [780288, 5852160],
+        "leader": [2340864, 4681728],
+        "about": "O1"
+      }
+    }
+  ]
+}

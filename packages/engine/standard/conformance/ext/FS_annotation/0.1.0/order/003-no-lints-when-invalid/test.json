@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too - the overall string measures to a junction J9 the house does not have: the document is invalid, so no lint is reported, FS_annotation's or Core's.",
+  "covers": [
+    "FS-ANNO-1.2.2",
+    "FS-ANNO-1.2.3"
+  ]
+}

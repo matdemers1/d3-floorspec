@@ -1,0 +1,9 @@
+{
+  "description": "Every invariant broken at once - a string keyed X1, the panel's ID; a note keyed DM3, a string's; a note on L9; and a string along [0, 0]: each reported once, naming its annotation.",
+  "covers": [
+    "FS-ANNO-1.2.3",
+    "FS-ANNO-1.3.2",
+    "FS-ANNO-1.3.3",
+    "FS-ANNO-2.1.1"
+  ]
+}

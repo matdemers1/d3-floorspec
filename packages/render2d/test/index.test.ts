@@ -87,7 +87,8 @@ describe('determinism', () => {
   it('writes no float noise: every number has at most two decimals', () => {
     const svg = renderPlan(load('l-shaped-house'));
     expect(svg).not.toMatch(/\d\.\d{3,}/);
-    expect(svg).not.toMatch(/NaN|Infinity|-0[^.\d]/);
+    // Numbers only: a dimension's text (`8'-0"`) is not one.
+    expect(svg.replace(/>[^<]*</g, '><')).not.toMatch(/NaN|Infinity|-0[^.\d]/);
   });
 });
 
@@ -137,8 +138,8 @@ describe('what a plan draws', () => {
   });
 
   it('dimensions the building overall in ft-in, and draws a north arrow turned to true north', () => {
-    expect(svg).toContain(`>36' 2-3/8"<`);
-    expect(svg).toContain(`>24' 2-3/8"<`);
+    expect(svg).toContain(`>36'-2 3/8"<`);
+    expect(svg).toContain(`>24'-2 3/8"<`);
     // trueNorth −12.5° (clockwise of project north): the arrow turns 12.5° clockwise.
     expect(svg).toMatch(/<g id="north" transform="translate\([\d.]+ [\d.]+\) rotate\(12.5\)">/);
   });
