@@ -291,6 +291,12 @@ describe('the MCP endpoint', () => {
     expect(images(electrical)[0]?.data).not.toBe(images(plan)[0]?.data);
     expect((await operator.get(`/api/projects/${project.id}/render?view=3d&mode=electrical`)).status).toBe(400);
     expect((await operator.get(`/api/projects/${project.id}/render?mode=kitchen`)).status).toBe(400);
+    // FLR-T-18.5: the plan in a style — its own picture; a style is for a plan only.
+    const colour = await mcp.callTool({ name: 'floorspec_render', arguments: { width: 512, style: 'colour' } });
+    expect(images(colour)).toHaveLength(1);
+    expect(images(colour)[0]?.data).not.toBe(images(plan)[0]?.data);
+    expect((await operator.get(`/api/projects/${project.id}/render?view=3d&style=colour`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${project.id}/render?style=sepia`)).status).toBe(400);
     const exported = await mcp.callTool({ name: 'floorspec_export', arguments: {} });
     expect((exported.content as { type: string; resource?: { text: string } }[]).find((c) => c.type === 'resource')?.resource?.text).toBe(
       (await operator.get(`/api/projects/${project.id}/model.json`)).text,

@@ -253,6 +253,8 @@ export interface RenderOptions {
   readonly at?: string;
   /** Plan (FLR-T-18.3): a trade's view — its layers drawn, the rest ghosted or left out. */
   readonly mode?: 'construction' | 'decorator' | 'electrical' | 'plumbing' | 'mechanical' | 'lowvoltage' | 'landscape';
+  /** Plan (FLR-T-18.5): its style — Colour, Presentation, Technical or Blueprint. */
+  readonly style?: 'colour' | 'presentation' | 'technical' | 'blueprint';
 }
 
 /** An answer from the API that is not a success: its status and its (problem+json) body. */
@@ -409,6 +411,7 @@ export class HttpFloorspecClient implements FloorspecClient {
     if (options.sky !== undefined) params.set('sky', options.sky);
     if (options.at !== undefined) params.set('at', options.at);
     if (options.mode !== undefined) params.set('mode', options.mode);
+    if (options.style !== undefined) params.set('style', options.style);
     if (options.savedView !== undefined) params.set('savedView', options.savedView);
     const res = await this.send('GET', this.project(projectId, `/render?${params.toString()}`), undefined, { accept: 'image/png' });
     return new Uint8Array(await res.arrayBuffer());

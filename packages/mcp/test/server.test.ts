@@ -334,7 +334,7 @@ describe('the MCP server', () => {
     // for the furniture catalogue and an opening's `at` (its near edge) by trimming other text, and
     // FLR-T-12.22 for floorspec_render's `lights` the same way (FLR-T-13.12 folded it into `scene`), and FLR-T-13.8 for its `doors`, and
     // FLR-T-13.4 and 13.9 for its `sky` and `at` (the shared project and changeset handles shortened),
-    // and FLR-T-13.11 for floorspec_propose's assistant "staging" (descriptions said shorter); FLR-T-18.3's `mode` is an enum alone.
+    // and FLR-T-13.11 for floorspec_propose's assistant "staging" (descriptions said shorter); FLR-T-18.3's `mode` and FLR-T-18.5's `style` are enums alone.
     // FLR-T-12.41 gave it room to grow, 25,992 → ~21,900, without moving the ceiling: the long
     // guidance moved to the design-partner prompt (and floorspec://guide), the project handle is said
     // once in the server's instructions, propose names apply's locks rather than repeating them, and
@@ -523,6 +523,10 @@ describe('the MCP server', () => {
     await mcp.callTool({ name: 'floorspec_render', arguments: { level: 'L1', mode: 'electrical' } });
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: 'plan', level: 'L1', mode: 'electrical' });
     expect((await mcp.callTool({ name: 'floorspec_render', arguments: { mode: 'kitchen' } })).isError).toBe(true);
+    // FLR-T-18.5: a plan style.
+    await mcp.callTool({ name: 'floorspec_render', arguments: { style: 'presentation' } });
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: 'plan', style: 'presentation' });
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { style: 'sepia' } })).isError).toBe(true);
     // FLR-T-13.10: a saved view by name in `view`, passed through for the api to resolve; it sets its own camera and sky.
     await mcp.callTool({ name: 'floorspec_render', arguments: { view: 'Hero exterior', width: 640 } });
     expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', savedView: 'Hero exterior', width: 640 });
@@ -657,7 +661,8 @@ describe('the MCP server', () => {
     const { tools } = await mcp.listTools();
     const params = (name: string) => tools.find((t) => t.name === name)?.inputSchema.properties ?? {};
     // floorspec_render: every RenderOptions member but view's default, a room (camera) and lights (scene).
-    expect(Object.keys(params('floorspec_render')).sort()).toEqual(['at', 'camera', 'changeset', 'doors', 'highlight', 'level', 'mode', 'project', 'scene', 'sky', 'view', 'width']);
+    expect(Object.keys(params('floorspec_render')).sort()).toEqual(['at', 'camera', 'changeset', 'doors', 'highlight', 'level', 'mode', 'project', 'scene', 'sky', 'style', 'view', 'width']);
+    expect(params('floorspec_render')['style']).toMatchObject({ enum: ['colour', 'presentation', 'technical', 'blueprint'] });
     expect(params('floorspec_render')['mode']).toMatchObject({ enum: ['construction', 'decorator', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'] });
     expect(params('floorspec_render')['sky']).toMatchObject({ enum: ['clear', 'overcast', 'dusk', 'night', 'studio'] });
     expect(params('floorspec_render')['doors']).toMatchObject({ enum: ['closed', 'open'] });
