@@ -32,6 +32,7 @@ import { usePrecision } from './precision/state';
 import { PlacingLabels, PlacingLayer } from '../placing/GhostLayer';
 import { QuickAdd } from '../placing/QuickAdd';
 import { RoomDragGhost, RoomHandles, WandOverlay, WandPrompt } from './rooms/RoomLayer';
+import { HaloHtml, HaloLayer, useHalos } from './halos/HaloLayer';
 
 /**
  * The plan canvas (FLR-T-3.3): the level as `@floorspec/engine` derived it — wall poché from the
@@ -166,6 +167,8 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
   const details = usePlanStyles(store, (s) => s.details);
   const look = useMemo(() => planLook(planStyle, pageTheme, details, trade === 'construction'), [planStyle, pageTheme, details, trade]);
   const paint = useMemo(() => (view === null || level === undefined || model === null ? null : levelPaint(view, level, model, look)), [view, level, model, look]);
+  // FLR-T-18.14: clearance halos of what is being dragged, resized, turned or placed, and of its neighbours.
+  const halos = useHalos(store, comparing ? undefined : level, model);
 
   return (
     <div className="fs-canvas" ref={host} data-tool={tool} data-systems={focusSystems ? 'focus' : undefined} data-zooming={zooming ? 'on' : undefined} data-ghost={ghost} data-mode={trade} data-plan-style={look.style} data-plan-theme={pageTheme} style={lookStyle(look)}>
@@ -209,6 +212,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               {comparing ? null : <Selection store={store} view={view} level={level} coarse={coarse} />}
               {comparing ? null : <ArrangeLayer store={store} view={view} level={level} />}
               {layers.rooms ? <StyledRoomLabels view={view} level={level} document={model.document} units={units} look={look} /> : null}
+              <HaloLayer view={view} halos={halos} />
               <Ghost store={store} view={view} levelId={level.id} layers={layers} units={units} />
               {comparing ? null : <ToolOverlay store={store} view={view} level={level} model={model} />}
               {comparing ? null : <PrecisionLayer store={store} view={view} level={level} model={model} />}
@@ -225,6 +229,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       {view !== null && level !== undefined && !comparing ? <QuickAdd store={store} view={view} level={level} /> : null}
       {view !== null && level !== undefined && !comparing ? <WandPrompt store={store} tools={tools} view={view} level={level} units={units} /> : null}
       {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={model} units={units} picking={tools.pickLevel} /> : null}
+      {view !== null && model !== null ? <HaloHtml view={view} halos={halos} model={model} units={units} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
       {paint !== null && layers.walls ? <WallTypeLegend paint={paint} /> : null}
       <DiffLegend store={store} />
