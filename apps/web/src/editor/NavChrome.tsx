@@ -253,10 +253,10 @@ function SavedViews({ store }: { store: EditorStore }) {
   }, [naming, store]);
 
   return (
-    <section className="fs-views" aria-labelledby={`${id}-title`}>
-      <div className="fs-views__head">
+    <section className="fs-saved" aria-labelledby={`${id}-title`}>
+      <div className="fs-saved__head">
         <Bookmark aria-hidden="true" />
-        <h2 className="fs-views__title" id={`${id}-title`}>
+        <h2 className="fs-saved__title" id={`${id}-title`}>
           Saved views
         </h2>
         <span className="fs-spacer" />
@@ -267,7 +267,7 @@ function SavedViews({ store }: { store: EditorStore }) {
       </div>
       {naming ? (
         <form
-          className="fs-views__name"
+          className="fs-saved__name"
           onSubmit={(e) => {
             e.preventDefault();
             const made = saveView(store, name);
@@ -278,7 +278,7 @@ function SavedViews({ store }: { store: EditorStore }) {
           <input
             ref={field}
             aria-label="Name this view"
-            className="fs-views__input"
+            className="fs-saved__input"
             value={name}
             autoComplete="off"
             onChange={(e) => { setName(e.target.value); }}
@@ -290,29 +290,29 @@ function SavedViews({ store }: { store: EditorStore }) {
               }
             }}
           />
-          <button type="submit" className="fs-views__save">
+          <button type="submit" className="fs-saved__save">
             Save
           </button>
         </form>
       ) : null}
-      {saved.length === 0 && !naming ? <p className="fs-views__empty">No saved views yet. Save this view to come back to it.</p> : null}
+      {saved.length === 0 && !naming ? <p className="fs-saved__empty">No saved views yet. Save this view to come back to it.</p> : null}
       {saved.length > 0 ? (
-        <ul className="fs-views__list">
+        <ul className="fs-saved__list">
           {saved.map((v) => (
-            <li key={v.id} className="fs-views__row" data-current={current === v.id ? 'on' : undefined}>
+            <li key={v.id} className="fs-saved__row" data-current={current === v.id ? 'on' : undefined}>
               <button
                 type="button"
-                className="fs-views__open"
+                className="fs-saved__open"
                 onClick={() => {
                   if (openView(store, v)) setCurrent(v.id);
                 }}
               >
-                <span className="fs-views__name-text">{v.name}</span>
-                <span className="fs-views__meta">{viewMeta(store, v)}</span>
+                <span className="fs-saved__name-text">{v.name}</span>
+                <span className="fs-saved__meta">{viewMeta(store, v)}</span>
               </button>
               <IconButton
                 size="sm"
-                className="fs-views__delete"
+                className="fs-saved__delete"
                 label={`Delete the view ${v.name}`}
                 icon={<Trash2 />}
                 onClick={() => {
@@ -423,6 +423,8 @@ function Minimap({ store, view }: { store: EditorStore; view: Viewport }) {
           className="fs-minimap__svg"
           width={MINI_W}
           height={height}
+          // Inline: the editor sizes every other svg as an icon.
+          style={{ width: MINI_W, height }}
           role="application"
           aria-roledescription="minimap"
           aria-label={`Minimap of ${level?.name ?? 'the level'}: drag the rectangle, or use the arrow keys, to pan`}

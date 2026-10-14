@@ -295,18 +295,19 @@ test('pan and zoom: keys, animation, the editable zoom, the wheel, the hand, dou
   await expect(name).toHaveValue(`Main floor · ${String(seating)}%`);
   await name.fill('Great room seating');
   await name.press('Enter');
-  await expect(views.getByRole('button', { name: /Great room seating/ })).toContainText(`Main floor · ${String(seating)}%`);
+  await expect(views.getByRole('button', { name: /^Great room seating/ })).toContainText(`Main floor · ${String(seating)}%`);
   await page.keyboard.press('Shift+Digit1');
+  await expect.poll(() => zoomOf(page)).toBe(fitted);
   await views.getByRole('button', { name: 'Save this view' }).click();
   await expect(name).toHaveValue('Main floor — whole level');
   await name.press('Enter');
-  await expect(views.getByRole('button', { name: /Main floor — whole level/ })).toContainText('Main floor · fit');
+  await expect(views.getByRole('button', { name: /^Main floor — whole level/ })).toContainText('Main floor · fit');
   await audit(page, 'minimap-saved-views');
   await page.reload();
   await settled(page);
   await page.keyboard.press('Shift+KeyV');
-  await expect(views.getByRole('button', { name: /Great room seating/ })).toBeVisible();
-  await views.getByRole('button', { name: /Great room seating/ }).click();
+  await expect(views.getByRole('button', { name: /^Great room seating/ })).toBeVisible();
+  await views.getByRole('button', { name: /^Great room seating/ }).click();
   await expect.poll(() => zoomOf(page)).toBe(seating);
   const back = await labelAt(page, 'Great room');
   expect(Math.abs(back.x - seatingAt.x)).toBeLessThan(3);
@@ -314,7 +315,7 @@ test('pan and zoom: keys, animation, the editable zoom, the wheel, the hand, dou
   // From another level, it goes back to its own.
   await page.keyboard.press('PageUp');
   await expect(page.getByRole('application', { name: 'Plan of Upper floor' })).toBeVisible();
-  await views.getByRole('button', { name: /Great room seating/ }).click();
+  await views.getByRole('button', { name: /^Great room seating/ }).click();
   await expect(page.getByRole('application', { name: 'Plan of Main floor' })).toBeVisible();
   await expect.poll(() => zoomOf(page)).toBe(seating);
   // The palette lists them.
@@ -323,7 +324,7 @@ test('pan and zoom: keys, animation, the editable zoom, the wheel, the hand, dou
   await page.getByRole('option', { name: 'Go to the view Main floor — whole level' }).click();
   await expect.poll(() => zoomOf(page)).toBe(fitted);
   await views.getByRole('button', { name: 'Delete the view Main floor — whole level' }).click();
-  await expect(views.getByRole('button', { name: /whole level/ })).toHaveCount(0);
+  await expect(views.getByRole('button', { name: /^Main floor — whole level/ })).toHaveCount(0);
 
   // ── In full screen the zoom bar steps aside; the minimap and the saved views stay, and their keys work.
   await page.keyboard.press('f');
@@ -353,6 +354,8 @@ test('pan and zoom: keys, animation, the editable zoom, the wheel, the hand, dou
   await panel.getByRole('button', { name: /bedroom/i }).first().click();
   await expect(page.getByRole('application', { name: 'Plan of Upper floor' })).toBeVisible();
   await expect.poll(() => selectedInView(page)).toBe(true);
+  // The "Claude is proposing" toast sits over the bar for a while: audit once it has gone.
+  await expect(page.locator('.d3-toast')).toHaveCount(0, { timeout: 15_000 });
   await audit(page, 'proposal-go-to');
   await agent.dispose();
 });
