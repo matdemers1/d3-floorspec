@@ -8,6 +8,7 @@ import {
   fetchVersion,
   HttpFailure,
   postBatch,
+  postRestore,
   postUndo,
   type ApplyAnswer,
   type ChangesetLogEntry,
@@ -234,6 +235,11 @@ export interface Compare {
   toModel: EditorModel | null;
   loading: boolean;
   error: string | null;
+  /**
+   * FLR-T-18.14: the history scrubber's comparison — the plan drawn at `from` (the version scrubbed
+   * to), what was added since green and what was removed since red, against `to`, main now.
+   */
+  scrub?: boolean;
 }
 
 /** A question the editor must ask before it can build a batch. */
@@ -574,6 +580,27 @@ export class EditorStore {
   }
 
   /**
+   * FLR-T-18.14: return main to the version after op `seq`, as one new op the server writes — the
+   * inverses of every op after it. History is appended to, never rewritten; undo takes it back.
+   */
+  restore(seq: number): Promise<boolean> {
+    const run = async (): Promise<boolean> => {
+      const { model, readOnly } = this.state;
+      if (model === null || readOnly !== null) return false;
+      const label = `Restore v${String(seq)}`;
+      this.set({ pending: label, notice: null, rejection: null });
+      try {
+        return await this.settle(await postRestore(this.projectId, this.state.model?.hash ?? model.hash, seq), label, [], {});
+      } finally {
+        this.set({ pending: null });
+      }
+    };
+    const next = this.queue.then(run, run);
+    this.queue = next.catch(() => undefined);
+    return next;
+  }
+
+  /**
    * Apply a diagnostic's fix. For a rejected batch the fix is about the document the batch tried
    * to make, so it is sent together with that batch — the edit and its repair as one transaction.
    * For one of the head's own findings, the fix is sent alone.
@@ -689,7 +716,7 @@ export class EditorStore {
   /** The model the canvas shows: main, or the newer version of a comparison. */
   get shown(): EditorModel | null {
     const { compare, model } = this.state;
-    return compare === null ? model : compare.toModel;
+    return compare === null ? model : compare.scrub === true ? compare.fromModel : compare.toModel;
   }
 
   // ─── Design options (Core 0.3, chapter 19; FLR-T-8.4) ───────────────────────────────────

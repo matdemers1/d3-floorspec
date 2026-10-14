@@ -61,6 +61,8 @@ function geometryOf(model: EditorModel): Map<string, { level: string; sig: strin
     // A room's boundary gains a vertex where a wall now meets it without changing shape: compare
     // the corners that turn, and the area.
     for (const r of level.rooms) out.set(r.id, { level: level.id, sig: `${String(r.area2)}|${corners(r.outer)}|${r.holes.map(corners).join('/')}` });
+    // FLR-T-18.14: an item whose footprint moved or turned is moved, not changed — the history scrubber's "Moved the island".
+    for (const d of level.devices) out.set(d.id, { level: level.id, sig: ring(d.footprint) });
   }
   return out;
 }
@@ -161,6 +163,21 @@ function detailOf(kind: ChangeKind, c: Place, id: string, from: EditorModel, to:
       return d > 0 ? `moved ${formatLen(d, units)}` : undefined;
     }
     return undefined;
+  }
+  if (c === 'extension' && kind === 'moved') {
+    const centre = (m: EditorModel) => {
+      for (const level of m.levels) {
+        const d = level.devices.find((x) => x.id === id);
+        if (d !== undefined) return d.footprint.reduce<Point>((s, q) => [s[0] + q[0] / d.footprint.length, s[1] + q[1] / d.footprint.length], [0, 0]);
+      }
+      return undefined;
+    };
+    const pa = centre(from);
+    const pb = centre(to);
+    if (pa !== undefined && pb !== undefined) {
+      const d = Math.round(dist(pa, pb));
+      return d > 0 ? `moved ${formatLen(d, units)}` : 'turned';
+    }
   }
   if (c === 'junctions' && kind === 'moved') {
     const pa = from.document.junctions?.[id]?.position as Point | undefined;

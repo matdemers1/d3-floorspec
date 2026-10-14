@@ -1,0 +1,204 @@
+/* The history scrubber (FLR-T-18.14). Tokens only (d3-check-usage). */
+
+.fs-scrubber {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-16);
+  z-index: 3;
+  transform: translateX(-50%);
+  width: min(790px, calc(100% - var(--space-32)));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+}
+.fs-scrubber__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+}
+.fs-scrubber__icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--color-fg-muted);
+}
+.fs-scrubber__v {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-14);
+}
+.fs-scrubber__what {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-fg-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fs-scrubber__legend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex: none;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-scrubber__key {
+  width: 10px;
+  height: 10px;
+  margin-left: var(--space-6);
+  border-radius: var(--radius-xs);
+}
+.fs-scrubber__key--added {
+  background: var(--color-success);
+}
+.fs-scrubber__key--removed {
+  background: var(--color-danger);
+}
+.fs-scrubber__track {
+  position: relative;
+  height: 32px;
+}
+.fs-scrubber__ticks {
+  position: absolute;
+  inset: 0 8px 10px;
+  pointer-events: none;
+}
+.fs-scrubber__tick {
+  position: absolute;
+  bottom: 4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: var(--radius-xs);
+  background: var(--color-fg-muted);
+}
+.fs-scrubber__tick.is-after {
+  background: var(--color-fg-faint);
+}
+.fs-scrubber__tick.is-current {
+  background: var(--color-accent);
+}
+.fs-scrubber__slider {
+  position: absolute;
+  inset: auto 0 0;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  background: transparent;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  appearance: none;
+}
+/* A thin line, the thumb a ring on it — the board's slider. */
+.fs-scrubber__slider::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+.fs-scrubber__slider::-moz-range-track {
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+.fs-scrubber__slider::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -7px;
+  border: 3px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  appearance: none;
+}
+.fs-scrubber__slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 3px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+}
+.fs-scrubber__slider:focus-visible {
+  outline: none;
+}
+.fs-scrubber__slider:focus-visible::-webkit-slider-thumb {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-scrubber__slider:focus-visible::-moz-range-thumb {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.fs-scrubber__scale {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-scrubber__here {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  color: var(--color-accent);
+  font-weight: var(--weight-medium);
+  pointer-events: none;
+}
+.fs-scrubber__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+.fs-scrubber__counts {
+  color: var(--color-fg-muted);
+}
+
+/* The comparison panel while scrubbing: every change since the version. */
+.fs-since__title {
+  margin: var(--space-8) 0 0;
+}
+.fs-since {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-13);
+}
+.fs-since__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+.fs-since__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-xs);
+  background: var(--color-fg-faint);
+}
+.fs-since__dot--added {
+  background: var(--color-success);
+}
+.fs-since__dot--removed {
+  background: var(--color-danger);
+}
+.fs-since__dot--moved {
+  background: var(--color-warning);
+}
+.fs-since__dot--changed {
+  background: var(--color-info);
+}
+
+/* Scrubbing, a moved element is amber where it is now, as the changes list marks it. */
+.fs-diffs--scrub .fs-diff--moved {
+  fill: var(--color-warning);
+  stroke: var(--color-warning);
+}

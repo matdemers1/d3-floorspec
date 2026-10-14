@@ -387,8 +387,8 @@ function judge(zone: Omit<Zone, 'box'> & { box: Box }, owner: { id: string; shap
 }
 
 /**
- * The halos of one frame: the moving parts' envelopes, and their neighbours' within NEAR — each
- * judged against the obstacles near it, the moving parts standing where the frame has them.
+ * The halos of one frame: the moving parts' envelopes, judged against every obstacle near them, and
+ * their neighbours' envelopes within NEAR, judged against the moving parts where the frame has them.
  */
 export function haloFrame(index: HaloIndex, moving: readonly Moving[]): Halo[] {
   if (moving.length === 0) return [];
@@ -410,7 +410,9 @@ export function haloFrame(index: HaloIndex, moving: readonly Moving[]): Halo[] {
     if (movingIds.has(o.id)) continue;
     near.push({ ...o, with: index.owners.get(o.id)?.with ?? null });
   }
-  for (const m of moving) if (m.footprint !== null) near.push({ id: m.id, kind: 'item', parts: [m.footprint], bottom: m.bottom, top: m.top, box: boxOf(m.footprint), with: m.with });
+  const movers: Candidate[] = [];
+  for (const m of moving) if (m.footprint !== null) movers.push({ id: m.id, kind: 'item', parts: [m.footprint], bottom: m.bottom, top: m.top, box: boxOf(m.footprint), with: m.with });
+  near.push(...movers);
   const halos: Halo[] = [];
   for (const m of moving)
     for (const z of m.zones) {
@@ -422,7 +424,8 @@ export function haloFrame(index: HaloIndex, moving: readonly Moving[]): Halo[] {
     if (movingIds.has(z.owner) || !meets(z.box, area)) continue;
     const owner = index.owners.get(z.owner);
     if (owner === undefined) continue;
-    halos.push({ owner: z.owner, name: z.name, purpose: z.purpose, ring: z.ring, moving: false, ...judge(z, owner, near) });
+    // A neighbour is judged against what moves: its standing conflicts are the findings' to list, not this drag's news.
+    halos.push({ owner: z.owner, name: z.name, purpose: z.purpose, ring: z.ring, moving: false, ...judge(z, owner, movers) });
   }
   return halos;
 }

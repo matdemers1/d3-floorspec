@@ -146,3 +146,13 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* What moves, where the frame has it: its footprint outlined over its halo. */
+.fs-halo-item {
+  fill: var(--color-accent);
+  fill-opacity: 0.12;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}

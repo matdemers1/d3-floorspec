@@ -1,15 +1,16 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Avatar, Badge, Button, IconButton, Select, Spinner } from '@d3cloud/ui';
-import { GitCompareArrows, Redo2, Undo2, X } from 'lucide-react';
+import { GitCompareArrows, History as HistoryIcon, Redo2, Undo2, X } from 'lucide-react';
 import { useEditor, type EditorStore } from './store';
 import type { HistoryEntry } from './api';
 import { optionTitle } from './optionOps';
 import { labelOf } from './model';
 import { summarizeBatch } from './describe';
 import { diffModels, groupChanges } from './diff';
-import { authorOf, closeHistory, compare, compareOp, endCompare, versionsOf } from './history';
+import { authorOf, closeHistory, compare, compareOp, endCompare, restoredFrom, versionsOf } from './history';
 import { timeAgo } from '../projects/model';
 import { useDiff } from './Canvas';
+import './scrubber.css';
 
 /**
  * The history (FLR-T-3.6), in the left column where the project tree is — the board's "10 ·
@@ -117,8 +118,11 @@ export function HistoryPanel({ store, you }: { store: EditorStore; you: string }
         {log.map((entry, i) => {
           const who = authorOf(entry, tokens);
           const kind = entry.kind === 'apply' ? null : entry.kind;
+          const back = restoredFrom(entry, log);
           const what =
-            entry.kind === 'create'
+            back !== null
+              ? `Returned the plan to v${String(back)}`
+              : entry.kind === 'create'
               ? 'Created the project'
               : entry.kind === 'undo'
                 ? `Undid v${String(entry.undoOf ?? '?')} — ${lowerFirst(summarizeBatch(entry.ops, units, name))}`
@@ -183,6 +187,46 @@ export function ComparePanel({ store }: { store: EditorStore }) {
     return e.seq > Math.min(lo, hi) && e.seq <= Math.max(lo, hi);
   }).map((e) => `${e.author.kind}:${e.author.name ?? e.author.token ?? ''}`));
   const options = versions.map((v) => ({ value: v.hash, label: v.label }));
+  if (cmp.scrub === true) {
+    // FLR-T-18.14: the scrubber's comparison — a version with now, every change since it.
+    const at = (log ?? []).find((e) => e.after === cmp.from);
+    const v = at === undefined ? label(cmp.from) : `v${String(at.seq)}`;
+    const nowLabel = log?.[0] === undefined ? 'now' : `v${String(log[0].seq)}`;
+    const tone = (k: string) => (k === 'added' ? 'added' : k === 'removed' ? 'removed' : k === 'moved' ? 'moved' : 'changed');
+    return (
+      <div className="fs-inspector__body fs-compare" role="group" aria-label="Changes since a version">
+        <div className="fs-inspector__head">
+          <span className="fs-inspector__icon">
+            <HistoryIcon />
+          </span>
+          <div className="fs-inspector__title">
+            <h2>
+              {v} → {nowLabel}
+            </h2>
+            <p>Comparing a version with now</p>
+          </div>
+          <IconButton size="sm" label="Back to now" icon={<X />} onClick={() => { endCompare(store); }} />
+        </div>
+        {cmp.loading ? <Spinner label={`Reading ${v}`} /> : null}
+        {cmp.error !== null ? <p className="fs-note">{cmp.error}</p> : null}
+        <h3 className="fs-overline fs-since__title">Changes since {v}</h3>
+        {d !== null && d.diff.changes.length === 0 ? <p className="fs-note">Nothing has changed since {v}.</p> : null}
+        <ul className="fs-since" data-testid="changes-since">
+          {(d?.diff.changes ?? []).map((c) => (
+            <li key={`${c.kind}-${c.id}`} className="fs-since__item">
+              <span className={`fs-since__dot fs-since__dot--${tone(c.kind)}`} aria-hidden="true" />
+              <span>
+                {c.kind === 'added' ? 'Added' : c.kind === 'removed' ? 'Removed' : c.kind === 'moved' ? 'Moved' : 'Changed'} {lowerFirst(c.label.split(',')[0] ?? c.label)}
+                {c.detail === undefined ? null : <span className="fs-changes__detail"> {c.kind === 'moved' ? c.detail.replace(/^moved /, '') : c.detail}</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="fs-note">The plan shows {v}: what has been added since is green, what has been removed since is red. Restore writes one new op that returns the plan to {v} — undo takes it back; Branch opens a changeset from it.</p>
+        {d === null ? null : <SummaryLine counts={d.diff.counts} />}
+      </div>
+    );
+  }
   return (
     <div className="fs-inspector__body fs-compare" role="group" aria-label="Compare versions">
       <div className="fs-inspector__head">

@@ -45,6 +45,8 @@ export interface HaloView {
   moving: ReadonlySet<string>;
   /** The moving parts' extent in plan, for the card. */
   extent: Ring;
+  /** The moving items' footprints where the frame has them, outlined over their halos. */
+  footprints: Ring[];
   /** Names to speak of, by ID. */
   name: (id: string) => string;
 }
@@ -103,8 +105,10 @@ export function useHalos(store: EditorStore, level: LevelView | undefined, model
     record(performance.now() - t0, halos, head);
     const extent = moving.flatMap((m) => [...m.shape, ...m.zones.flatMap((z) => z.ring)]);
     const label = ghostEntry?.name;
-    const name = (id: string) => (id === GHOST_ID ? (label ?? 'the item') : model.index.has(id) ? labelOf(model, id) : id);
-    return { halos, head, moving: ids2, extent, name };
+    // "Kitchen island", not "Kitchen island, 1800 mm": the card names things, the dimension says how far.
+    const name = (id: string) => (id === GHOST_ID ? (label ?? 'the item') : model.index.has(id) ? (labelOf(model, id).split(',')[0] ?? id) : id);
+    const footprints = moving.flatMap((m) => (m.footprint === null || m.id === GHOST_ID ? [] : [m.footprint]));
+    return { halos, head, moving: ids2, extent, name, footprints };
   }, [dragged, selected, preview, ghost, entryKey, model, level, store]);
 }
 
@@ -130,6 +134,9 @@ export function HaloLayer({ view, halos }: { view: Viewport; halos: HaloView | n
           data-tone={h.tone}
         />
       ))}
+      {halos.footprints.map((r, i) => (
+        <polygon key={`f${String(i)}`} className="fs-halo-item" points={pts(view, r)} />
+      ))}
       {A !== null && B !== null && a !== undefined && a.clear > 0 ? <line className={`fs-halo__dim fs-halo__dim--${head?.tone ?? 'clear'}`} x1={f1(A[0])} y1={f1(A[1])} x2={f1(B[0])} y2={f1(B[1])} /> : null}
     </g>
   );
@@ -153,10 +160,16 @@ export function HaloHtml({ view, halos, model, units }: { view: Viewport; halos:
     const other = halos.name(a.id);
     const between = `Between ${lowerFirst(owner)} and ${lowerFirst(other)}`;
     const note = head.tone === 'conflict' ? (furniture ? 'Release to place it anyway — it will be listed in Findings' : 'Advisory — release to place it anyway') : 'Advisory — it fits, with little to spare';
-    // To the right of what moves, else to its left; kept on the canvas.
-    const right = box.maxX + 16 + 340 < view.w;
-    const left = right ? box.maxX + 16 : Math.max(8, box.minX - 16 - 340);
-    const top = Math.min(Math.max(8, (box.minY + box.maxY) / 2 - 40), view.h - 120);
+    // Beside what moves — right, else left — else below it, else above; kept on the canvas.
+    const W = 340;
+    const H = 96;
+    const mid = Math.min(Math.max(8, (box.minY + box.maxY) / 2 - H / 2), view.h - H - 8);
+    const centre = Math.min(Math.max(8, (box.minX + box.maxX) / 2 - W / 2), view.w - W - 8);
+    const [left, top] =
+      box.maxX + 16 + W < view.w - 8 ? [box.maxX + 16, mid]
+        : box.minX - 16 - W > 8 ? [box.minX - 16 - W, mid]
+          : box.maxY + 16 + H < view.h - 8 ? [centre, box.maxY + 16]
+            : [centre, Math.max(8, box.minY - 16 - H)];
     card = (
       <div className={`fs-halo-card fs-halo-card--${head.tone}`} style={{ left, top }} data-testid="halo-card" data-tone={head.tone}>
         <p className="fs-halo-card__title">{title}</p>
