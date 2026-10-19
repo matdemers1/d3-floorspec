@@ -11,9 +11,9 @@ import { LightingButton, LightingChip, LightingPanel } from './lighting/Lighting
 import { controlsOf, houseLights, switchHint } from './lighting/lighting';
 import { useEditor, type EditorState, type EditorStore } from '../store';
 import { labelOf, type EditorModel, type LevelView } from '../model';
-import { formatLen } from '../units';
-import { compass, PRESET_ORDER, PRESETS, type PresetId } from './camera';
-import { FOV, ThreeController } from './controller';
+import { formatArea, formatLen, prettyLen, type UnitSystem } from '../units';
+import { compass, PRESET_ORDER, PRESETS, type Orbit, type PresetId } from './camera';
+import { AXO_STANDOFF, FOV, ThreeController } from './controller';
 import { useHouseMesh } from './meshing';
 import { threeOf, useThreeState, type LevelsShown, type Quality, type ThreeStore, type WalkStart } from './mode';
 import { castsShadow, describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, linear, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
@@ -31,6 +31,11 @@ import { softwareWebGL } from './software';
 import { PRESENTATION_SCENE_TEXTURE_UNITS, SCENE_TEXTURE_UNITS, shadowBudget, viewLights } from './lights';
 import { ACCUMULATE, StatsStore, useStats, type PresentationStats } from './presentation/stats';
 import { FurnitureScene, useFurnitureModels, visibleExtensionIds, withoutModelled } from '../../furniture/Furniture3D';
+import { SectionRig } from './section/rig';
+import { SectionScene } from './section/SectionScene';
+import { ExplodedOverlay, SectionOverlay, type Drawing, type LayerLabel } from './section/SectionOverlay';
+import { ExperiencesToolbar, ExplodedPanel, SectionPanel, toggleSection, type ExperienceContext } from './section/Experiences';
+import { defaultBox, defaultPlane, FACE_AXIS, layerOf, layersOf, levelsKept, unionBox, type Band, type Box as SectionBox, type ExplodeState, type SectionState } from './section/section';
 
 /**
  * The 3D view (FLR-T-7.5, FLR-REQ-113, 114), laid out as the board's "08 · Editor — 3D cutaway",
@@ -65,6 +70,9 @@ interface Tokens {
   accent: string;
   /** FLR-T-18.13: what is to be demolished, ghosted in it. */
   danger: string;
+  /** FLR-T-14.6: a cut face's cap, and its hatch (P14/Cut cap). */
+  fillQuiet: string;
+  fgMuted: string;
 }
 
 /** The design system's colours, read where the view sits — so the canvas follows the theme. */
@@ -76,9 +84,11 @@ function useTokens(host: { current: HTMLElement | null }): Tokens {
       background: style.getPropertyValue('--color-bg-sunken').trim() || 'black',
       accent: style.getPropertyValue('--color-accent').trim() || 'slateblue',
       danger: style.getPropertyValue('--color-danger').trim() || 'crimson',
+      fillQuiet: style.getPropertyValue('--color-fill-quiet').trim() || 'gainsboro',
+      fgMuted: style.getPropertyValue('--color-fg-muted').trim() || 'gray',
     };
   }, [host]);
-  const [tokens, setTokens] = useState<Tokens>({ background: 'black', accent: 'slateblue', danger: 'crimson' });
+  const [tokens, setTokens] = useState<Tokens>({ background: 'black', accent: 'slateblue', danger: 'crimson', fillQuiet: 'gainsboro', fgMuted: 'gray' });
   useEffect(() => {
     const update = () => { setTokens(read()); };
     update();
@@ -183,7 +193,17 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const lightsOn = useThreeState(store, (s) => s.lights);
   const lighting = useThreeState(store, (s) => s.lighting);
   const quality = useThreeState(store, (s) => s.quality);
-  const presenting = quality === 'presentation';
+  // FLR-T-14.6: the section box or plane, and the exploded axonometric.
+  const section = useThreeState(store, (s) => s.section);
+  const sectionOpen = useThreeState(store, (s) => s.sectionOpen);
+  const explode = useThreeState(store, (s) => s.explode);
+  const exploding = explode.active && !walking;
+  const sectionRig = useMemo(() => new SectionRig(), []);
+  const houseGroup = useRef<THREE.Group>(null);
+  const drawing = useRef<Drawing | null>(null);
+  const reduced = useReducedMotion();
+  // Presentation's passes are a perspective camera's: the exploded axonometric is drawn as Draft draws.
+  const presenting = quality === 'presentation' && !exploding;
   // What Presentation reports: whether its first full frame is drawn, and its frame rate moving.
   const stats = useMemo(() => new StatsStore(), []);
   const originRef = useRef<Vec3 | null>(null);
@@ -252,21 +272,32 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   }, [walking, walkFrom, ready, ctl, three, levelId]);
 
   const order = useMemo(() => (ready === null ? new Map<string, number>() : levelOrder(ready.model)), [ready]);
+  // Each level's band of height, metres about the mesh's origin, lowest first (FLR-T-14.6).
+  const bands = useMemo(() => (ready === null ? [] : bandsOf(ready.model, ready.mesh, order)), [ready, order]);
+  // In the exploded view: what the section keeps, by level (its height), when it is asked to.
+  const keptLevels = useMemo(() => (exploding && explode.keep ? keptByHeight(section, bands) : null), [exploding, explode.keep, section, bands]);
   const visible = useMemo(
-    () => built.filter((b) => isVisible(b.part, { walking, levels, roof, level: levelId, order })),
-    [built, walking, levels, roof, levelId, order],
+    () => built.filter((b) => (exploding ? explodedVisible(b.part, explode, keptLevels) : isVisible(b.part, { walking, levels, roof, level: levelId, order }))),
+    [built, walking, levels, roof, levelId, order, exploding, explode, keptLevels],
   );
+  // The exploded view's layers, bottom up: each level, and the roofs over it.
+  const layers = useMemo(() => {
+    const sorted = [...bands].map((b) => ({ id: b.id }));
+    const roofed = new Set(visible.filter((b) => layerOf(b.part).startsWith('roof:')).map((b) => b.part.level));
+    const shown = new Set(visible.map((b) => b.part.level));
+    return layersOf(sorted.filter((l) => shown.has(l.id)), roofed, explode.roofs);
+  }, [bands, visible, explode.roofs]);
   // FLR-T-12.22: the light fixtures as lamps, on the levels shown, when the Lights toggle is on.
   const lamps = useMemo(
     () => {
-      if (ready === null || !lightsOn) return [];
+      if (ready === null || !lightsOn || exploding) return [];
       // Presentation samples the sky's reflection map beside a surface's maps: one shadowed lamp fewer (FLR-T-13.7).
       const budget = shadowBudget(textureUnits, MATERIAL_TEXTURE_UNITS, presenting ? PRESENTATION_SCENE_TEXTURE_UNITS : SCENE_TEXTURE_UNITS);
       const lit = viewLights(ready.model, ready.mesh, { level: levelId, cutaway: levels !== 'house' && !walking, order }, lighting, budget);
       // One level alone (FLR-T-13.2): its own lamps only — the cutaway's, less those below it.
       return levels === 'only' && !walking ? lit.filter((l) => l.level === levelId) : lit;
     },
-    [ready, lightsOn, levelId, levels, walking, order, lighting, textureUnits, presenting],
+    [ready, lightsOn, levelId, levels, walking, order, lighting, textureUnits, presenting, exploding],
   );
   // FLR-T-13.12: every light of the house, and the lenses the lighting turns off, dims or recolours.
   const allLights = useMemo(() => (ready === null ? [] : houseLights(ready.model)), [ready]);
@@ -305,7 +336,75 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // What casts a shadow, as one value: a new one when the parts, the furniture or the lamps drawn change.
   const shadowKey = useMemo(() => ({ partsShown, drawn: furniture.drawn, lamps }), [partsShown, furniture.drawn, lamps]);
 
-  useTestHook(store, three, ctl, ready, host, built, visible, textures);
+  useTestHook(store, three, ctl, ready, host, built, visible, textures, sectionRig);
+
+  // FLR-T-14.6: what the Section and Exploded panels need of the view.
+  const units = useEditor(store, () => store.units);
+  // The house as the section measures it: its levels' walls in plan (not its lawn, paving and trees), its mesh's height.
+  const houseBox = useMemo<SectionBox | null>(() => (ready === null ? null : sectionBounds(ready.model, ready.mesh)), [ready]);
+  const levelName = useCallback((z: number): string | null => {
+    if (ready === null) return null;
+    const at = [...bands].reverse().find((b) => b.floor <= z + 0.05) ?? bands[0];
+    return at === undefined ? null : (ready.model.levels.find((l) => l.id === at.id)?.name ?? null);
+  }, [ready, bands]);
+  const selectionBox = useCallback((): { box: SectionBox; level: string } | null => {
+    const sel = store.get().selection;
+    let box: SectionBox | null = null;
+    let level: string | null = null;
+    for (const b of built) {
+      if (!partSelected(b.part, sel) || b.geometry.boundingBox === null) continue;
+      const g = b.geometry.boundingBox;
+      box = unionBox(box, { min: [g.min.x, g.min.y, g.min.z], max: [g.max.x, g.max.y, g.max.z] });
+      level ??= b.part.level;
+    }
+    return box === null || level === null ? null : { box, level };
+  }, [store, built]);
+  const ctx = useMemo<ExperienceContext | null>(() => {
+    if (ready === null || houseBox === null) return null;
+    const band = (id: string | null): Band | null => {
+      const b = bands.find((x) => x.id === id);
+      return b === undefined ? null : { bottom: b.bottom, top: b.top };
+    };
+    return {
+      store,
+      rig: sectionRig,
+      units,
+      project,
+      house: houseBox,
+      levelName,
+      drawing,
+      defaults: () => {
+        const sel = selectionBox();
+        const reset = defaultBox(houseBox, null, band(store.get().level ?? bands[0]?.id ?? null));
+        return {
+          box: sel === null ? reset : defaultBox(houseBox, sel.box, band(sel.level)),
+          reset,
+          plane: defaultPlane(houseBox, ctl.orbit?.azimuth ?? (-3 * Math.PI) / 4),
+        };
+      },
+      fit: () => {
+        const sel = selectionBox();
+        return sel === null ? null : defaultBox(houseBox, sel.box, band(sel.level));
+      },
+      frame: (box) => { ctl.reframe(box); },
+    };
+  }, [ready, houseBox, bands, store, sectionRig, units, project, levelName, selectionBox, ctl]);
+  // Into the exploded view, the camera frames the house lifted apart; out of it, it goes back to where it was.
+  const beforeExplode = useRef<Orbit | null>(null);
+  const tallest = layers.length;
+  useEffect(() => {
+    if (!exploding) {
+      if (beforeExplode.current !== null) ctl.setOrbit(beforeExplode.current);
+      beforeExplode.current = null;
+      return;
+    }
+    if (houseBox === null || beforeExplode.current !== null) return;
+    beforeExplode.current = ctl.orbit;
+    const lift = Math.max(0, tallest - 1) * three.get().explode.spread;
+    ctl.reframe({ min: houseBox.min, max: [houseBox.max[0], houseBox.max[1], houseBox.max[2] + lift] });
+  }, [exploding, houseBox, tallest, ctl, three]);
+  // The exploded view's leader labels: each layer's name, its area and height, pinned to its box.
+  const labels = useMemo(() => (ready === null ? [] : layerLabels(ready.model, ready.mesh, layers, visible, units)), [ready, layers, visible, units]);
 
   // ── Orbit: pointer, wheel and keys on the canvas.
   const pointers = useRef(new Map<number, { x: number; y: number; button: number; shift: boolean }>());
@@ -398,6 +497,15 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         return m !== undefined;
       }
       switch (e.key) {
+        // FLR-T-14.6: the section box's panel (X), and the exploded view's levels apart or together (Space).
+        case 'x': case 'X':
+          if (ctx === null || compact) return false;
+          toggleSection(ctx);
+          return true;
+        case ' ':
+          if (!explode.open) return false;
+          three.setExplode({ apart: !three.get().explode.apart });
+          return true;
         case 'Enter': return selection !== null && flip(selection);
         case 'ArrowLeft': ctl.orbitBy(step, 0); return true;
         case 'ArrowRight': ctl.orbitBy(-step, 0); return true;
@@ -490,7 +598,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const name = walking ? `Walkthrough of ${project}` : `3D view of ${project}`;
   const hint = walking
     ? 'W, A, S and D or the arrow keys walk and turn; drag to look around; Shift walks faster; Escape ends the walk.'
-    : 'Arrow keys orbit, Shift and the arrows pan, plus and minus zoom, Page Up and Page Down change the level, Home frames the house. Use the plan view for full keyboard editing.';
+    : 'Arrow keys orbit, Shift and the arrows pan, plus and minus zoom, Page Up and Page Down change the level, Home frames the house, X opens the section box. Use the plan view for full keyboard editing.';
 
   let body: ReactNode;
   if (model === null || state.status === 'loading') {
@@ -528,7 +636,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         frameloop={walking ? 'always' : 'demand'}
         dpr={[1, 2]}
         shadows={softwareWebGL() ? 'basic' : 'percentage'}
-        gl={{ antialias: true, powerPreference: 'high-performance' }}
+        // A stencil buffer: the section's caps are drawn where its planes pass through a solid (FLR-T-14.6).
+        gl={{ antialias: true, powerPreference: 'high-performance', stencil: true }}
         camera={{ fov: FOV, near: 0.05, far: 4000, position: [0, -20, 10], up: [0, 0, 1] }}
         onPointerMissed={(e: MouseEvent) => {
           if (!dragged() && !walking && e.type === 'click') store.select(null);
@@ -542,10 +651,27 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} lamps={lightsOn} casters={shadowKey} /> : null}
         <FixtureLights lights={lamps} />
         <Rig ctl={ctl} />
+        <AxoCamera on={exploding} ctl={ctl} />
         <SceneBridge />
-        <Parts visible={partsShown} reno={renoStyles} danger={tokens.danger} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
-        {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} /> : null}
-        {!walking ? <LabelTracker built={visible} selection={selection} el={label} /> : null}
+        <group ref={houseGroup}>
+          <Parts visible={partsShown} rig={sectionRig} reno={renoStyles} danger={tokens.danger} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
+          {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} /> : null}
+        </group>
+        <SectionScene
+          rig={sectionRig}
+          three={three}
+          parts={visible}
+          layers={layers}
+          layerOfPart={layerOf}
+          house={houseGroup}
+          section={section}
+          explode={explode}
+          walking={walking}
+          bounds={houseBox}
+          colours={{ fill: tokens.fillQuiet, hatch: tokens.fgMuted, ghost: tokens.fgMuted }}
+          reduced={reduced}
+        />
+        {!walking ? <LabelTracker built={visible} selection={selection} el={label} rig={sectionRig} /> : null}
         {presenting ? (
           <Suspense fallback={null}>
             <Presentation stats={stats} model={ready?.model ?? null} mesh={ready?.mesh ?? null} />
@@ -597,9 +723,18 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           {selectedLabel}
         </div>
       ) : null}
+      {ready !== null && !walking && !compact && houseBox !== null && sectionOpen && !exploding && section.mode !== 'off' ? (
+        <SectionOverlay rig={sectionRig} three={three} section={section} house={houseBox} units={units} levelName={levelName} />
+      ) : null}
+      {ready !== null && exploding ? <ExplodedOverlay rig={sectionRig} explode={explode} labels={labels} drawing={drawing} /> : null}
       {ready !== null && !walking && !compact ? (
         <>
-          <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} levels={levels} roof={roof} lights={lightsOn} />
+          <div className="fs-three__toolbars">
+            <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} levels={levels} roof={roof} lights={lightsOn} />
+            {ctx !== null ? <ExperiencesToolbar ctx={ctx} /> : null}
+          </div>
+          {ctx !== null ? <SectionPanel ctx={ctx} /> : null}
+          {ctx !== null ? <ExplodedPanel ctx={ctx} /> : null}
           <LevelsControl store={store} three={three} model={ready.model} order={order} levels={levels} level={levelId} />
           <ViewCube ctl={ctl} preset={preset} />
           <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} only={levels === 'only'} roof={roof} current={currentView} />
@@ -665,6 +800,145 @@ function startAt(world: World, mesh: HouseMesh, model: EditorModel, from: WalkSt
   return standAt(world, x, y, yaw, near);
 }
 
+// ─── The section box and the exploded view (FLR-T-14.6) ──────────────────────────────────────
+
+/** A level's band of height, metres about the mesh's origin: its floor, a little under it, and just under the next. */
+interface LevelBand {
+  id: string;
+  /** Where its floor is, and the next floor up (its floor-to-floor height). */
+  floor: number;
+  ceiling: number;
+  /** A box's bottom at this level: under its floor's structure — the ground's, under the lowest. */
+  bottom: number;
+  /** A box's top: the plan's cut height above its floor, so its walls and windows are cut and what is above comes off. */
+  top: number;
+}
+
+/** 4′-0″: where a plan cuts a level (the plan's convention), and where a new section box's top is. */
+const PLAN_CUT = 1.2192;
+
+function bandsOf(model: EditorModel, mesh: HouseMesh, order: ReadonlyMap<string, number>): LevelBand[] {
+  const k = mesh.unitsPerMetre;
+  const oz = mesh.origin[2];
+  const ground = mesh.bbox === null ? 0 : (mesh.bbox.min[2] - oz) / k;
+  return [...model.levels]
+    .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+    .map((l, i) => {
+      const floor = (l.elevation - oz) / k;
+      const height = Math.max(0.5, l.height / k);
+      return { id: l.id, floor, ceiling: floor + height, bottom: i === 0 ? Math.min(floor - 0.3, ground - 0.3) : floor - 0.3, top: floor + Math.min(PLAN_CUT, height - 0.15) };
+    });
+}
+
+/** The house's bounds for the section box, metres: its levels' plans across, its mesh from bottom to top; null when empty. */
+function sectionBounds(model: EditorModel, mesh: HouseMesh): SectionBox | null {
+  if (mesh.bbox === null) return null;
+  const all = metresBox(mesh, mesh.bbox);
+  const k = mesh.unitsPerMetre;
+  const [ox, oy] = mesh.origin;
+  let plan: [number, number, number, number] | null = null;
+  for (const l of model.levels) {
+    const b = l.bounds;
+    if (b === null) continue;
+    plan = plan === null ? [b.minX, b.minY, b.maxX, b.maxY] : [Math.min(plan[0], b.minX), Math.min(plan[1], b.minY), Math.max(plan[2], b.maxX), Math.max(plan[3], b.maxY)];
+  }
+  if (plan === null) return all;
+  return { min: [(plan[0] - ox) / k, (plan[1] - oy) / k, all.min[2]], max: [(plan[2] - ox) / k, (plan[3] - oy) / k, all.max[2]] };
+}
+
+/** The levels a section keeps by its height, for the exploded view of what it keeps; null keeps every level. */
+function keptByHeight(section: SectionState, bands: readonly LevelBand[]): ReadonlySet<string> | null {
+  const levels = bands.map((b) => ({ id: b.id, bottom: b.floor, top: b.ceiling }));
+  if (section.mode === 'box' && section.box !== null) return levelsKept(levels, section.box);
+  const p = section.plane;
+  if (section.mode !== 'plane' || p === null || FACE_AXIS[p.face].axis !== 2) return null;
+  return new Set(levels.filter((l) => (p.face === 'top' ? l.bottom < p.at : l.top > p.at)).map((l) => l.id));
+}
+
+/**
+ * What the exploded view shows: every level, open from above — no ceilings, doors closed — and the
+ * roofs when they are asked for, of the levels the section keeps when it is asked to.
+ */
+function explodedVisible(part: MeshPart, explode: ExplodeState, kept: ReadonlySet<string> | null): boolean {
+  if (part.state !== undefined && part.state !== 'closed') return false;
+  if (part.kind === 'ceiling') return false;
+  if (!explode.roofs && (part.kind === 'roof' || part.kind === 'roofGable')) return false;
+  return kept === null || kept.has(part.level);
+}
+
+/** A furniture model rises with its level in the exploded view. */
+function registerItem(rig: SectionRig, mesh: HouseMesh, id: string, g: THREE.Group | null): (() => void) | undefined {
+  if (g === null) return undefined;
+  const part = mesh.parts.find((p) => p.id === id);
+  rig.attach(g, layerOf({ kind: 'extension', level: part?.level ?? '' }));
+  return () => { rig.detach(g); };
+}
+
+/** Each layer's leader label: a level's name, its rooms' area and its height; the roofs' kind and ridge. */
+function layerLabels(model: EditorModel, mesh: HouseMesh, layers: readonly { key: string; level: string; roof: boolean }[], visible: readonly Built[], units: UnitSystem): LayerLabel[] {
+  const k = mesh.unitsPerMetre;
+  const out: LayerLabel[] = [];
+  for (const layer of layers) {
+    // Pinned to what the layer is built of — its walls, or its roofs — not the lawn and trees about it.
+    let box: SectionBox | null = null;
+    const pinned = (b: Built) => (layer.roof ? b.part.kind === 'roof' : b.part.kind === 'wall');
+    const mine = visible.filter((b) => layerOf(b.part) === layer.key);
+    for (const b of mine.some(pinned) ? mine.filter(pinned) : mine) {
+      if (b.geometry.boundingBox === null) continue;
+      const g = b.geometry.boundingBox;
+      box = unionBox(box, { min: [g.min.x, g.min.y, g.min.z], max: [g.max.x, g.max.y, g.max.z] });
+    }
+    const level = model.levels.find((l) => l.id === layer.level);
+    if (box === null || level === undefined) continue;
+    const signed = (base: number) => `${base > 0 ? '+' : ''}${prettyLen(base, units)}`;
+    if (layer.roof) {
+      const kinds = [...new Set(level.roofs.map((r) => r.derived.kind))];
+      const ridge = Math.round(box.max[2] * k + mesh.origin[2]);
+      out.push({ layer, title: layers.filter((l) => l.roof).length > 1 ? `Roof · ${level.name}` : 'Roof', sub: `${kinds.length === 0 ? 'roof' : kinds.join(', ')} · ridge ${signed(ridge)}`, box });
+    } else {
+      const area = level.rooms.reduce((n, r) => n + r.area2, 0n);
+      out.push({ layer, title: level.name, sub: `${formatArea(area, units)} · ${signed(level.elevation)}`, box });
+    }
+  }
+  return out;
+}
+
+/** Whether the viewer asks for less motion: the exploded view then moves at once. */
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(() => {
+    const q = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => { setReduced(q.matches); };
+    q.addEventListener('change', update);
+    return () => { q.removeEventListener('change', update); };
+  }, []);
+  return reduced;
+}
+
+/**
+ * The exploded view's axonometric camera (FLR-T-14.6): orthographic along the orbit's line of sight,
+ * made the scene's camera while the view is exploded, the perspective one given back after.
+ */
+function AxoCamera({ on, ctl }: { on: boolean; ctl: ThreeController }) {
+  const set = useThree((s) => s.set);
+  const get = useThree((s) => s.get);
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    if (!on) return;
+    const before = get().camera;
+    const axo = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, AXO_STANDOFF * 2.5);
+    axo.up.set(0, 0, 1);
+    set({ camera: axo });
+    ctl.invalidate();
+    invalidate();
+    return () => {
+      set({ camera: before });
+      invalidate();
+    };
+  }, [on, ctl, set, get, invalidate]);
+  return null;
+}
+
 // ─── Inside the canvas ───────────────────────────────────────────────────────────────────────
 
 function Rig({ ctl }: { ctl: ThreeController }) {
@@ -690,6 +964,7 @@ function Rig({ ctl }: { ctl: ThreeController }) {
 
 function Parts({
   visible,
+  rig,
   reno,
   danger,
   selection,
@@ -704,6 +979,8 @@ function Parts({
   onLeave,
 }: {
   visible: Built[];
+  /** FLR-T-14.6: what lifts each layer of the house in the exploded view. */
+  rig: SectionRig;
   /** FLR-T-18.13: each element's renovation style; a demolished one is ghosted in red. */
   reno: ReadonlyMap<string, RenovationStyle> | null;
   danger: string;
@@ -743,7 +1020,18 @@ function Parts({
   }, [accent, materials, textures, invalidate]);
 
   const selected = useMemo(() => visible.filter((b) => partSelected(b.part, selection)), [visible, selection]);
-  const outlines = useMemo(() => selected.map((b) => ({ key: b.part.key, geometry: new THREE.EdgesGeometry(b.geometry, 30) })), [selected]);
+  const outlines = useMemo(() => selected.map((b) => ({ key: b.part.key, layer: layerOf(b.part), geometry: new THREE.EdgesGeometry(b.geometry, 30) })), [selected]);
+  // FLR-T-14.6: the parts by the layer the exploded view lifts them with (a level, or its roofs).
+  const layered = useMemo(() => {
+    const m = new Map<string, Built[]>();
+    for (const b of visible) {
+      const k = layerOf(b.part);
+      const list = m.get(k);
+      if (list === undefined) m.set(k, [b]);
+      else list.push(b);
+    }
+    return [...m];
+  }, [visible]);
   useEffect(() => () => { for (const o of outlines) o.geometry.dispose(); }, [outlines]);
   useEffect(() => { invalidate(); }, [visible, selection, invalidate, materials]);
 
@@ -804,30 +1092,41 @@ function Parts({
 
   return (
     <group onClick={onClick} onDoubleClick={onDoubleClick} onPointerMove={onHover} onPointerOut={onLeave}>
-      {visible.map((b) => (
-        <mesh
-          key={b.part.key}
-          geometry={b.geometry}
-          material={b.slots === undefined ? materialOf(b, partSelected(b.part, selection)) : b.slots.map((m) => slotOf(b, m, partSelected(b.part, selection)))}
-          userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
-          castShadow={castsShadow(b.part, b.look)}
-          receiveShadow={b.look !== 'glass' && b.look !== 'pick'}
-          renderOrder={b.look === 'glass' || b.look === 'pick' ? 1 : 0}
-        />
-      ))}
-      {panes !== null
-        ? visible.filter(reflects).map((b) => (
+      {layered.map(([layer, list]) => (
+        <group
+          key={layer}
+          ref={(g) => {
+            if (g === null) return;
+            rig.attach(g, layer);
+            return () => { rig.detach(g); };
+          }}
+        >
+          {list.map((b) => (
             <mesh
-              key={`reflect:${b.part.key}`}
+              key={b.part.key}
               geometry={b.geometry}
-              material={b.slots === undefined ? (b.part.model !== undefined ? panes.model : panes.glass).reflect : b.slots.map((m) => (m?.glass === true || b.look === 'glass' ? panes.glass.reflect : HIDDEN))}
-              renderOrder={1.5}
-              raycast={noRaycast}
+              material={b.slots === undefined ? materialOf(b, partSelected(b.part, selection)) : b.slots.map((m) => slotOf(b, m, partSelected(b.part, selection)))}
+              userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
+              castShadow={castsShadow(b.part, b.look)}
+              receiveShadow={b.look !== 'glass' && b.look !== 'pick'}
+              renderOrder={b.look === 'glass' || b.look === 'pick' ? 1 : 0}
             />
-          ))
-        : null}
-      {outlines.map((o) => (
-        <lineSegments key={`edges:${o.key}`} geometry={o.geometry} material={materials.edges} renderOrder={2} raycast={noRaycast} />
+          ))}
+          {panes !== null
+            ? list.filter(reflects).map((b) => (
+                <mesh
+                  key={`reflect:${b.part.key}`}
+                  geometry={b.geometry}
+                  material={b.slots === undefined ? (b.part.model !== undefined ? panes.model : panes.glass).reflect : b.slots.map((m) => (m?.glass === true || b.look === 'glass' ? panes.glass.reflect : HIDDEN))}
+                  renderOrder={1.5}
+                  raycast={noRaycast}
+                />
+              ))
+            : null}
+          {outlines.filter((o) => o.layer === layer).map((o) => (
+            <lineSegments key={`edges:${o.key}`} geometry={o.geometry} material={materials.edges} renderOrder={2} raycast={noRaycast} />
+          ))}
+        </group>
       ))}
     </group>
   );
@@ -897,13 +1196,13 @@ function overlayMaterials() {
 const noRaycast = (): void => undefined;
 
 /** The selection's label, kept over the top of its parts as the camera moves. */
-function LabelTracker({ built, selection, el }: { built: Built[]; selection: string | null; el: { current: HTMLDivElement | null } }) {
+function LabelTracker({ built, selection, el, rig }: { built: Built[]; selection: string | null; el: { current: HTMLDivElement | null }; rig: SectionRig }) {
   const box = useMemo(() => {
     const parts = built.filter((b) => partSelected(b.part, selection));
     if (parts.length === 0) return null;
     const b = new THREE.Box3();
     for (const p of parts) if (p.geometry.boundingBox !== null) b.union(p.geometry.boundingBox);
-    return b;
+    return { box: b, layer: layerOf(parts[0]?.part ?? { kind: 'wall', level: '' }) };
   }, [built, selection]);
   const v = useMemo(() => new THREE.Vector3(), []);
   useFrame(({ camera, size }) => {
@@ -913,7 +1212,8 @@ function LabelTracker({ built, selection, el }: { built: Built[]; selection: str
       node.style.visibility = 'hidden';
       return;
     }
-    v.set((box.min.x + box.max.x) / 2, (box.min.y + box.max.y) / 2, box.max.z).project(camera);
+    const b = box.box;
+    v.set((b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, b.max.z + rig.liftOf(box.layer)).project(camera);
     const inView = v.z < 1 && Math.abs(v.x) <= 1.05 && Math.abs(v.y) <= 1.05;
     node.style.visibility = inView ? 'visible' : 'hidden';
     node.style.transform = `translate(${((v.x + 1) / 2) * size.width}px, ${((1 - v.y) / 2) * size.height}px) translate(-50%, calc(-100% - 8px))`;
@@ -1222,6 +1522,15 @@ interface Hook {
    * fails to link and three.js draws nothing with it.
    */
   programs: { units: number; list: { name: string; linked: boolean; samplers: number }[] };
+  /**
+   * FLR-T-14.6: the section — how it cuts, its box or plane (metres about the mesh's origin), the
+   * materials of the house it clips, the faces capped and whether the outside is ghosted.
+   */
+  section: { mode: string; box: SectionBox | null; plane: { face: string; at: number } | null; clipped: number; planes: number; caps: string[]; ghosts: number };
+  /** The share of the view the caps cover now (0–1): the scene drawn once with the caps in a colour of their own. */
+  capCoverage(): number;
+  /** FLR-T-14.6: the exploded view — how far apart (0–1), the camera, and each layer's lift now, metres. */
+  explode: { active: boolean; progress: number; camera: 'orthographic' | 'perspective' | null; lifts: Record<string, number> };
 }
 
 declare global {
@@ -1234,7 +1543,7 @@ declare global {
  * Under automation only (navigator.webdriver), the e2e suite reads the walker and asks where on
  * screen an element can be clicked. Nothing is exposed to a person's browser.
  */
-function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController, ready: { mesh: HouseMesh; world: World } | null, el: { current: HTMLDivElement | null }, built: readonly Built[], visible: readonly Built[], textures: TextureLibrary) {
+function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController, ready: { mesh: HouseMesh; world: World } | null, el: { current: HTMLDivElement | null }, built: readonly Built[], visible: readonly Built[], textures: TextureLibrary, rig: SectionRig) {
   useEffect(() => {
     if (!navigator.webdriver) return;
     const hook: Hook = {
@@ -1316,6 +1625,36 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
         });
         return { units: at.gl.capabilities.maxTextures, list };
       },
+      get section() {
+        const s = three.get().section;
+        const canvas = el.current?.querySelector('canvas');
+        const at = canvas === null || canvas === undefined ? undefined : sceneOf.get(canvas);
+        const clipped = new Set<THREE.Material>();
+        let planes = 0;
+        const caps: string[] = [];
+        let ghosts = 0;
+        at?.scene.traverse((o) => {
+          const u = o.userData as { cap?: string; ghost?: string };
+          if (u.cap !== undefined && o.visible) caps.push(u.cap);
+          if (u.ghost !== undefined) ghosts++;
+          const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+          for (const x of m === undefined ? [] : Array.isArray(m) ? m : [m]) {
+            if (x.clippingPlanes !== null && x.clippingPlanes.length > 0 && u.ghost === undefined && !x.stencilWrite) {
+              clipped.add(x);
+              planes = Math.max(planes, x.clippingPlanes.length);
+            }
+          }
+        });
+        return { mode: s.mode, box: s.box, plane: s.plane, clipped: clipped.size, planes, caps: caps.sort(), ghosts };
+      },
+      capCoverage: () => rig.probe?.() ?? 0,
+      get explode() {
+        const canvas = el.current?.querySelector('canvas');
+        const cam = canvas === null || canvas === undefined ? undefined : sceneOf.get(canvas)?.camera;
+        const lifts: Record<string, number> = {};
+        for (const k of rig.lifts.keys()) lifts[k] = rig.liftOf(k);
+        return { active: three.get().explode.active, progress: rig.progress, camera: cam === undefined ? null : cam instanceof THREE.OrthographicCamera ? ('orthographic' as const) : ('perspective' as const), lifts };
+      },
       walk: (from) => { three.walk(from); },
       face: (deg) => {
         if (ctl.walker !== null) ctl.walker = { ...ctl.walker, yaw: (deg * Math.PI) / 180 };
@@ -1343,7 +1682,7 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
     return () => {
       if (window.__floorspec3d === hook) delete window.__floorspec3d;
     };
-  }, [store, three, ctl, ready, el, built, visible, textures]);
+  }, [store, three, ctl, ready, el, built, visible, textures, rig]);
 }
 
 /** Registered by the scene: what screenPoint needs from inside the canvas. */

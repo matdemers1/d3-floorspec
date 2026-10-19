@@ -24,7 +24,23 @@ export interface CameraLike {
   updateProjectionMatrix?(): void;
   setViewOffset?(fullWidth: number, fullHeight: number, x: number, y: number, width: number, height: number): void;
   clearViewOffset?(): void;
+  /** An orthographic camera's (the exploded axonometric, FLR-T-14.6): its frustum, metres either side of its axis. */
+  isOrthographicCamera?: boolean;
+  left?: number;
+  right?: number;
+  top?: number;
+  bottom?: number;
 }
+
+/**
+ * Metres the axonometric camera stands back from the orbit's target (FLR-T-14.6): far enough that
+ * nothing of a house is behind it, whatever the zoom — an orthographic camera's zoom is its frustum,
+ * not where it stands.
+ */
+export const AXO_STANDOFF = 400;
+
+/** An orthographic frustum that frames at the target what the perspective one does: half its height, metres. */
+export const axoHalfHeight = (distance: number, fovDeg: number = FOV): number => distance * Math.tan((fovDeg * Math.PI) / 360);
 
 export class ThreeController {
   orbit: Orbit | null;
@@ -153,6 +169,23 @@ export class ThreeController {
     if (this.orbit === null) return;
     const o = this.orbit;
     const cos = Math.cos(o.elevation);
+    if (camera.isOrthographicCamera === true) {
+      // The exploded axonometric (FLR-T-14.6): parallel projection along the orbit's line of sight.
+      const d = AXO_STANDOFF;
+      camera.position.set(o.target[0] + d * cos * Math.cos(o.azimuth), o.target[1] + d * cos * Math.sin(o.azimuth), o.target[2] + d * Math.sin(o.elevation));
+      camera.lookAt(o.target[0], o.target[1], o.target[2]);
+      camera.updateMatrixWorld();
+      const half = axoHalfHeight(o.distance);
+      const aspect = this.size.width / Math.max(1, this.size.height);
+      if (camera.top !== half || camera.right !== half * aspect) {
+        camera.top = half;
+        camera.bottom = -half;
+        camera.right = half * aspect;
+        camera.left = -half * aspect;
+        camera.updateProjectionMatrix?.();
+      }
+      return;
+    }
     camera.position.set(o.target[0] + o.distance * cos * Math.cos(o.azimuth), o.target[1] + o.distance * cos * Math.sin(o.azimuth), o.target[2] + o.distance * Math.sin(o.elevation));
     // Through a lens (FLR-T-13.10): its field of view for the frame, looking level and shifted under two-point perspective.
     const shot = this.three.get().shot;

@@ -224,6 +224,7 @@ export function FurnitureScene({
   accent,
   clearances,
   onClick,
+  register,
 }: {
   furniture: { items: FurnitureModel[]; scenes: Map<string, THREE.Group> };
   mesh: HouseMesh;
@@ -232,6 +233,8 @@ export function FurnitureScene({
   accent: string;
   clearances: boolean;
   onClick: (e: ThreeEvent<MouseEvent>) => void;
+  /** FLR-T-14.6: each item's group, to rise with its level in the exploded view; its cleanup when it goes. */
+  register?: (id: string, group: THREE.Group | null) => (() => void) | undefined;
 }) {
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => { invalidate(); }, [furniture, selection, clearances, visibleIds, invalidate]);
@@ -243,7 +246,11 @@ export function FurnitureScene({
         const scene = furniture.scenes.get(item.sha256);
         if (scene === undefined || !visibleIds.has(item.id)) return null;
         const selected = selection !== null && (selection === item.id || (stands.get(item.id)?.includes(selection) ?? false));
-        return <Item key={item.id} item={item} scene={scene} mesh={mesh} selected={selected} accent={accent} clearances={clearances} onClick={onClick} />;
+        return (
+          <group key={item.id} ref={(g) => register?.(item.id, g)}>
+            <Item item={item} scene={scene} mesh={mesh} selected={selected} accent={accent} clearances={clearances} onClick={onClick} />
+          </group>
+        );
       })}
     </group>
   );

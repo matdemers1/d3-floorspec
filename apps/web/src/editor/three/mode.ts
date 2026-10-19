@@ -4,6 +4,7 @@ import { ALL_OFF, ALL_ON, ALL_ON_NAME, toggled, withLights, withSetting, type Li
 import type { Aperture, Aspect } from '@floorspec/mesh';
 import type { Orbit, PresetId } from './camera';
 import { softwareWebGL } from './software';
+import { DEFAULT_EXPLODE, DEFAULT_SECTION, type ExplodeState, type SectionState } from './section/section';
 
 /**
  * The 3D view's state (FLR-T-7.5, FLR-REQ-113, 114), beside the editor's store rather than in it:
@@ -119,6 +120,15 @@ export interface ThreeState {
   cameraOpen: boolean;
   /** The saved view (FS_views) last chosen, by ID; null once none is. */
   savedView: string | null;
+  /**
+   * The section box or plane (FLR-T-14.6): how the view is cut, kept between visits like the orbit.
+   * View state: it cuts what is drawn, never the document.
+   */
+  section: SectionState;
+  /** The Section panel is open. */
+  sectionOpen: boolean;
+  /** The exploded axonometric (FLR-T-14.6): whether it shows, and how. View state. */
+  explode: ExplodeState;
 }
 
 export const EYE_HEIGHTS = [1.2, 1.5, 1.6, 1.7, 1.8] as const;
@@ -189,6 +199,9 @@ export class ThreeStore {
       shot: null,
       cameraOpen: false,
       savedView: null,
+      section: DEFAULT_SECTION,
+      sectionOpen: false,
+      explode: DEFAULT_EXPLODE,
     };
   }
 
@@ -275,6 +288,25 @@ export class ThreeStore {
   /** Back to the free view: no lens, no frame, no saved view. */
   clearShot(): void {
     this.set({ shot: null, savedView: null, cameraOpen: false });
+  }
+
+  /** Change the section (FLR-T-14.6). */
+  setSection(patch: Partial<SectionState>): void {
+    this.set({ section: { ...this.state.section, ...patch } });
+  }
+
+  /** Change the exploded view (FLR-T-14.6). */
+  setExplode(patch: Partial<ExplodeState>): void {
+    this.set({ explode: { ...this.state.explode, ...patch } });
+  }
+
+  /**
+   * Open or close the exploded view: opening it lifts the levels apart under an axonometric camera;
+   * closing it lowers them, and the view goes back to its own camera once they are down (SectionScene).
+   */
+  toggleExplode(open: boolean = !this.state.explode.open): void {
+    if (open) this.set({ explode: { ...this.state.explode, active: true, open: true, apart: true }, sectionOpen: false, cameraOpen: false, lightingOpen: false, walking: false, walkFrom: null });
+    else this.setExplode({ open: false, apart: false });
   }
 
   /** Draw in Draft or Presentation; remembered in this browser. */
