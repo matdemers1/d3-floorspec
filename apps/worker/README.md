@@ -72,8 +72,10 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   each frame's instant at the site, the lights fading up after sunset), exposure eased over half a
   second. Frames are piped as raw RGB to **ffmpeg** (H.264 in MP4 with `+faststart`, VP9 in WebM),
   which the image installs from Debian and runs as its own process; `FFMPEG_PATH` points elsewhere.
-  Progress is frames done, the timelapse's clock and now and then a small preview; a cancelled job
-  stops at its next report.
+  Progress is frames done, the timelapse's clock and now and then a small preview. Frames are drawn
+  on a thread of their own (`film/thread.ts`), so the process holding the job keeps answering; the
+  drain looks at a running job every second, and a cancelled film's thread is ended mid-frame, its
+  ffmpeg killed and nothing stored (FLR-T-14.10).
 - `src/render/` — FLR-T-2.8: plan PNGs through resvg, with the bundled fonts only.
 - `src/alerts/` — FLR-T-12.2: alert email through the D3 Auth mail relay (`MAIL_RELAY_URL`,
   `MAIL_RELAY_TOKEN`, `ALERT_TO`; redacted, once an hour per kind, remembered in the `alerts` table),

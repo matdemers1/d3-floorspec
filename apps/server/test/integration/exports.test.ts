@@ -653,6 +653,28 @@ describe('films (FLR-T-14.1)', () => {
     const after = await db.job.findUniqueOrThrow({ where: { id: running2.id }, include: { output: true } });
     expect(after).toMatchObject({ status: 'failed', error: 'Cancelled.', output: null });
   }, 300_000);
+
+  it('stops a film mid-frame, on its thread, as soon as it is cancelled — the api answering throughout (FLR-T-14.10)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, WITH_FILM, 'Ranch with a film');
+    // A final at 720p: 128 samples a pixel, a frame far longer than this test waits for.
+    const queued = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'film', film: { quality: 'final', size: '720p', fps: 24 } }));
+    const draining = drain.runOnce();
+    await expect.poll(async () => (await db.job.findUniqueOrThrow({ where: { id: queued.id } })).status, { timeout: 60_000, interval: 100 }).toBe('running');
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // The api is not held up by the frame being drawn: the cancel lands at once, and says so.
+    const asked = Date.now();
+    const cancelled = await operator.post(`/api/projects/${id}/exports/${queued.id}/cancel`);
+    expect(cancelled.status).toBe(200);
+    expect(Date.now() - asked).toBeLessThan(2000);
+    expect(view(cancelled)).toMatchObject({ status: 'failed', cancelled: true });
+    // The worker sees it within a second or so and ends the thread mid-frame: no frame was finished.
+    const stopped = Date.now();
+    await draining;
+    expect(Date.now() - stopped).toBeLessThan(5000);
+    const after = await db.job.findUniqueOrThrow({ where: { id: queued.id }, include: { output: true } });
+    expect(after).toMatchObject({ status: 'failed', error: 'Cancelled.', output: null, progress: null });
+  }, 120_000);
 });
 
 describe('stills path-traced on the viewer’s GPU (FLR-T-13.13)', () => {

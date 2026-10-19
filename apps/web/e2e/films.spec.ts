@@ -71,6 +71,8 @@ const filmOf = async (page: Page, project: string) => Object.values(((await mode
 
 test('a film: keyframes from saved views, eased and held, played, and rendered day to night as an MP4', async ({ page }) => {
   test.setTimeout(420_000);
+  // Menus and cards without their animations: a busy runner settles them at once.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await firstRunSetup(page, DIRECTOR);
   // Larger than one batch may be: imported as a model.json, which the server builds as Ops (FLR-T-9.1).
   const imported = await page.request.post('/api/projects/import/floorspec', {
@@ -96,10 +98,14 @@ test('a film: keyframes from saved views, eased and held, played, and rendered d
   await expect(timeline.getByRole('button', { name: 'Render film…' })).toBeDisabled();
 
   // ── Two saved views added: the film is made in the document's extras, its keys 5 s apart.
-  for (const name of ['Hero exterior', 'Foyer']) {
-    await timeline.getByRole('button', { name: 'Add view' }).click();
-    await page.getByRole('menuitem', { name: new RegExp(`^${name} ·`) }).click();
-    await settled(page);
+  // The menu opened again if a busy runner lets it close before the pick lands: each view added once.
+  for (const [i, name] of ['Hero exterior', 'Foyer'].entries()) {
+    await expect(async () => {
+      if (((await filmOf(page, project))?.keys.length ?? 0) > i) return;
+      if (!(await page.getByRole('menuitem', { name: new RegExp(`^${name} ·`) }).isVisible())) await timeline.getByRole('button', { name: 'Add view' }).click({ timeout: 5000 });
+      await page.getByRole('menuitem', { name: new RegExp(`^${name} ·`) }).click({ timeout: 5000 });
+      await settled(page);
+    }).toPass({ timeout: 60_000 });
   }
   await expect.poll(async () => (await filmOf(page, project))?.keys.map((k) => [k.at, k.view])).toEqual([[0, 'SV1'], [5000, 'SV2']]);
   const keys = timeline.getByRole('group', { name: 'Camera keyframes' }).getByRole('button');
@@ -230,6 +236,7 @@ function withFilm(): Record<string, unknown> {
 test('the Courtyard walk-in: its keyframes over the house, a film rendering frame by frame, folded away and cancelled', async ({ page }) => {
   test.setTimeout(300_000);
   // The suite's database was set up by the test before: signed in with its account.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const signedIn = await page.request.post('/auth/login', { data: { email: DIRECTOR.email, password: DIRECTOR.password } });
   expect(signedIn.status(), await signedIn.text()).toBeLessThan(300);
   const imported = await page.request.post('/api/projects/import/floorspec', {

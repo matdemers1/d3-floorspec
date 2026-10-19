@@ -52,6 +52,9 @@ export class JobGone extends Error {
   }
 }
 
+/** How often a running job is looked at, to see that it is still this worker's (FLR-T-14.10). */
+const WATCH_EVERY_MS = 1000;
+
 /** What a person reads when a job fails: the error's own words, never a stack. */
 function reason(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -94,6 +97,14 @@ export function createDrain(options: DrainOptions): Drain {
 
   async function runJob(job: JobRow): Promise<void> {
     const handler = table[job.kind];
+    // A job cancelled while it runs (FLR-T-14.10): seen within a second, and its handler told at once.
+    const gone = new AbortController();
+    const watch = setInterval(() => {
+      pool
+        .query(`select 1 from jobs where id = $1 and locked_by = $2 and status = 'running'`, [job.id, workerId])
+        .then((r) => { if (r.rowCount === 0) gone.abort(); })
+        .catch(() => undefined);
+    }, WATCH_EVERY_MS);
     try {
       if (handler === undefined) throw new Error(`no worker knows how to run a ${job.kind} job`);
       const { rows } = await pool.query<{ document: unknown }>('select document from versions where hash = $1', [job.versionHash]);
@@ -111,7 +122,8 @@ export function createDrain(options: DrainOptions): Drain {
         const wrote = await pool.query(`update jobs set progress = $2, locked_at = now() where id = $1 and locked_by = $3 and status = 'running'`, [job.id, JSON.stringify(p), workerId]).catch(() => null);
         if (wrote !== null && wrote.rowCount === 0) throw new JobGone(job.id);
       };
-      const file = await handler(version.document as object, { ...job, claimed: new Set(claims.rows.map((r) => r.sha256)), progress });
+      const file = await handler(version.document as object, { ...job, claimed: new Set(claims.rows.map((r) => r.sha256)), progress, signal: gone.signal });
+      if (gone.signal.aborted) throw new JobGone(job.id);
       const sha256 = createHash('sha256').update(file.bytes).digest('hex');
       const client = await pool.connect();
       try {
@@ -134,12 +146,14 @@ export function createDrain(options: DrainOptions): Drain {
       }
       log(`job ${job.id} (${job.kind}) done: ${file.name}, ${String(file.bytes.byteLength)} bytes`);
     } catch (error) {
-      if (error instanceof JobGone) {
+      if (error instanceof JobGone || gone.signal.aborted) {
         log(`job ${job.id} (${job.kind}) stopped: it was cancelled`);
         return;
       }
       await pool.query(`update jobs set status = 'failed', error = $2, finished_at = now(), locked_by = null where id = $1`, [job.id, reason(error)]);
       log(`job ${job.id} (${job.kind}) failed: ${reason(error)}`);
+    } finally {
+      clearInterval(watch);
     }
   }
 
