@@ -13,8 +13,12 @@ export interface Rect {
   readonly y1: number;
 }
 
-/** A room (from the brief), a hall the solver adds for circulation, or a closet that fills a corner. */
-export type SpaceKind = 'room' | 'hall' | 'closet';
+/**
+ * A room (from the brief), a hall the solver adds for circulation, a closet that fills a corner, or
+ * a stair's well (FLR-T-12.16): the opening in an upper floor the stair rises through — a face with
+ * no room in it (Core 17.6), so it is drawn round but never named.
+ */
+export type SpaceKind = 'room' | 'hall' | 'closet' | 'well';
 
 export interface Space {
   readonly key: string;

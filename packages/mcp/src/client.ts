@@ -137,6 +137,19 @@ export interface LayoutCandidate {
   readonly rank: number;
   readonly label: string;
   readonly level: string;
+  /** Every level it lays out: the level, or (FLR-T-12.16) the lower and the upper one. */
+  readonly levels?: readonly string[];
+  /** A two-level candidate's stair, as the engine derives it: lengths in base units. */
+  readonly stair?: {
+    readonly id: string;
+    readonly footRoom: string;
+    readonly headRoom: string;
+    readonly risers: number;
+    readonly headroom: number;
+    readonly minHeadroom: number;
+    readonly clearAtFoot?: number;
+    readonly clearAtHead?: number;
+  };
   readonly footprint: { readonly width: number; readonly depth: number };
   readonly score: { readonly total: number; readonly briefFit: number; readonly circulation: number; readonly findings: number };
   readonly explanation: readonly string[];

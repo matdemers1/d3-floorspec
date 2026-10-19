@@ -216,6 +216,46 @@ describe('layout candidates', () => {
     });
   });
 
+  it('lays out a brief for two stacked levels on both, a stair between them, and accepting one leaves it as the engine wants it (FLR-T-12.16)', async () => {
+    const twoLevels = [
+      { op: 'addElement', collection: 'buildings', id: 'B1', element: { name: 'House' } },
+      { op: 'addLevel', id: 'L1', building: 'B1', elevation: 0, height: "9'", name: 'Main floor' },
+      { op: 'addLevel', id: 'L2', building: 'B1', above: 'L1', height: "9'", name: 'Upper floor' },
+      { op: 'addProgramItem', id: 'LIV', function: 'living', name: 'Living room', targetArea: '300 sq ft', level: 'L1' },
+      { op: 'addProgramItem', id: 'KIT', function: 'kitchen', name: 'Kitchen', targetArea: '170 sq ft', level: 'L1' },
+      { op: 'addProgramItem', id: 'DIN', function: 'dining', name: 'Dining', targetArea: '140 sq ft', level: 'L1' },
+      { op: 'addProgramItem', id: 'ENT', function: 'circulation', name: 'Foyer', targetArea: '70 sq ft', level: 'L1' },
+      { op: 'addProgramItem', id: 'PBR', function: 'sleeping', name: 'Primary bedroom', targetArea: '200 sq ft', level: 'L2' },
+      { op: 'addProgramItem', id: 'BED', function: 'sleeping', name: 'Bedroom', count: 2, targetArea: '130 sq ft', level: 'L2' },
+      { op: 'addProgramItem', id: 'BTH', function: 'bath', name: 'Bath', targetArea: '55 sq ft', level: 'L2' },
+      { op: 'setAdjacency', a: 'KIT', b: 'DIN', kind: 'required' },
+      { op: 'setAdjacency', a: 'ENT', b: 'LIV', kind: 'preferred' },
+    ];
+    const posted = await operator.post(path('/ops'), { batch: twoLevels });
+    expect(posted.status, posted.text).toBe(201);
+    const res = await operator.post(path('/layouts'), { count: 3 });
+    expect(res.status, res.text).toBe(201);
+    const body = res.body as Solved & { candidates: { levels: string[]; stair?: { id: string; headroom: number; minHeadroom: number } }[] };
+    expect(body.candidates.length).toBeGreaterThanOrEqual(3);
+    for (const c of body.candidates) {
+      expect(c.levels).toEqual(['L1', 'L2']);
+      expect(c.stair?.headroom).toBeGreaterThanOrEqual(c.stair?.minHeadroom ?? Infinity);
+    }
+    const [top] = body.candidates;
+    const accepted = await operator.post(path(`/changesets/${top?.changeset.id ?? ''}/accept`));
+    expect(accepted.status, accepted.text).toBe(200);
+    const doc = await model();
+    const result = check(doc);
+    expect(result.valid).toBe(true);
+    const codes = result.diagnostics.map((d) => d.code);
+    expect(codes).not.toContain('FS-LINT-019');
+    expect(codes.filter((c) => PROGRAM_LINTS.includes(c))).toEqual([]);
+    expect(Object.keys(doc['stairs'] as object)).toEqual([top?.stair?.id]);
+    const levels = new Set(Object.values(doc['rooms'] as Record<string, { level: string }>).map((r) => r.level));
+    expect(levels).toEqual(new Set(['L1', 'L2']));
+    for (const [id, room] of Object.entries(result.derived?.circulation ?? {})) expect(room.reachable, id).toBe(true);
+  });
+
   it('says why when there is nothing to lay out, and refuses a body it does not understand', async () => {
     const res = await operator.post(path('/layouts'), {});
     expect(res.status, res.text).toBe(422);

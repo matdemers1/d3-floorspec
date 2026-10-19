@@ -9,7 +9,8 @@
  */
 export const PACKAGE_NAME = '@floorspec/layout-solver';
 
-export { solve, type SolveOptions, type Candidate, type CandidateRoom } from './solve.js';
+export { solve, type SolveOptions, type Candidate, type CandidateRoom, type CandidateStair } from './solve.js';
+export { STAIR, LANDING_CLEAR, type Dir } from './stair.js';
 export { toChangesetProposals, MAX_BATCH, MAX_CHANGESET_NAME, type ChangesetProposal, type ProposalOptions } from './changesets.js';
 export { SolverError } from './document.js';
 export type { ScoreBreakdown, ScoreDetail } from './score.js';
