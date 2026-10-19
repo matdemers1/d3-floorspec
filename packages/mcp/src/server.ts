@@ -844,7 +844,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Render',
       description:
-        'PNG of a level\'s plan (a changeset ghosted on its base) or the 3D model. Look before describing a change.',
+        'PNG of a level\'s plan (a changeset ghosted on its base) or the 3D model. Look before describing a change. Or queue a film.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
@@ -861,6 +861,9 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           mode: z.enum(MODES).optional().describe('Plan: a trade\'s view.'),
           style: z.enum(PLAN_STYLES).optional(),
           renovation: z.enum(RENOVATION).optional(),
+          film: z.string().min(1).max(200).optional().describe('A film\'s name: queued as a video, not returned.'),
+          preset: z.enum(['day-to-night']).optional(),
+          quality: z.enum(['draft', 'final']).optional(),
         }),
       ),
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -868,6 +871,16 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
+        // FLR-T-14.1: a film is a job, not a picture — queued on main, with only its preset and quality.
+        if (args.film !== undefined) {
+          if ([args.changeset, args.view, args.camera, args.level, args.highlight, args.width, args.scene, args.doors, args.sky, args.at, args.mode, args.style, args.renovation].some((a) => a !== undefined))
+            throw new ToolError(`A film is its keyframes' views, rendered from main: ask for "${args.film}" with preset or quality only.`);
+          const job = await client.requestFilm(project.id, { film: args.film, ...(args.quality === undefined ? {} : { quality: args.quality }), ...(args.preset === undefined ? {} : { light: args.preset }) });
+          const f = job.film;
+          const light = f.timelapse === null || f.timelapse === undefined ? '' : `, day to night ${f.timelapse.from}–${f.timelapse.to} on ${f.timelapse.date}`;
+          return ok(`Queued the film "${f.name}": ${String(f.frames)} frames, ${f.size} at ${String(f.fps)} fps, ${f.quality}, ${f.format.toUpperCase()}${light}. It renders on the server and is listed under Exports (job ${job.id}); the video is at /api/projects/${project.id}/exports/${job.id}/file once it is done.`, { project: project.id, export: job });
+        }
+        if (args.preset !== undefined || args.quality !== undefined) throw new ToolError('preset and quality are a film\'s: name the film.');
         const changeset = await changesetId(client, project.id, args.changeset);
         // One property for both (FLR-T-13.10): plan, 3d, or a saved view (FS_views) by name.
         const named = args.view !== undefined && args.view !== 'plan' && args.view !== '3d' ? args.view : undefined;

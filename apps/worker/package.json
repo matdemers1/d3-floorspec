@@ -26,6 +26,10 @@
       "types": "./src/pathtrace/presets.ts",
       "default": "./dist/pathtrace/presets.js"
     },
+    "./films": {
+      "types": "./src/film/presets.ts",
+      "default": "./dist/film/presets.js"
+    },
     "./alerts": {
       "types": "./src/alerts/index.ts",
       "default": "./dist/alerts/index.js"

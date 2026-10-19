@@ -76,3 +76,22 @@ export const WITH_VIEWS = (() => {
     },
   } as unknown as Prisma.InputJsonObject;
 })();
+
+/**
+ * FLR-T-14.1: the ranch with its views and two films in its extras — a second's walk from "Front" to
+ * "Living room", and one naming a view it does not have.
+ */
+export const WITH_FILM = (() => {
+  const base = WITH_VIEWS as unknown as Record<string, unknown>;
+  return {
+    ...base,
+    extras: {
+      d3floorspec: {
+        films: {
+          F1: { name: 'Walk-in', keys: [{ at: 0, view: 'SV1' }, { at: 1000, view: 'SV2' }] },
+          F2: { name: 'Lost', keys: [{ at: 0, view: 'SV1' }, { at: 2000, view: 'SV9' }] },
+        },
+      },
+    },
+  } as unknown as Prisma.InputJsonObject;
+})();

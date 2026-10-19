@@ -218,6 +218,11 @@ export interface FloorspecClient {
   findings(projectId: string, changeset?: string): Promise<Findings>;
   render(projectId: string, options: RenderOptions): Promise<Uint8Array>;
   /**
+   * Queue a film (FLR-T-14.1): a film the model keeps, rendered on the job queue as a video —
+   * `POST /exports` with `kind: "film"`. Answers at once with the job; it is listed under Exports.
+   */
+  requestFilm(projectId: string, options: FilmRequest): Promise<FilmJob>;
+  /**
    * Upload a file into the project's asset store (`POST /assets?as=model|symbol`): stored by its
    * SHA-256, readable by the project. Uploading the same bytes again changes nothing.
    */
@@ -270,6 +275,20 @@ export interface RenderOptions {
   readonly style?: 'colour' | 'presentation' | 'technical' | 'blueprint';
   /** Plan (FLR-T-18.13): a remodel's renovation plan — the house as it stands, its demolition, as proposed, or all at once. */
   readonly renovation?: 'existing' | 'demolition' | 'proposed' | 'combined';
+}
+
+/** A film asked for over MCP (FLR-T-14.1): its name or ID, draft or final, and day to night. */
+export interface FilmRequest {
+  readonly film: string;
+  readonly quality?: 'draft' | 'final';
+  readonly light?: 'timeline' | 'day-to-night';
+}
+
+/** A queued film, as the exports route answers it. */
+export interface FilmJob {
+  readonly id: string;
+  readonly status: string;
+  readonly film: { readonly id: string; readonly name: string; readonly frames: number; readonly fps: number; readonly size: string; readonly format: string; readonly quality: string; readonly light: string; readonly timelapse?: { readonly date: string; readonly from: string; readonly to: string } | null };
 }
 
 /** An answer from the API that is not a success: its status and its (problem+json) body. */
@@ -431,6 +450,11 @@ export class HttpFloorspecClient implements FloorspecClient {
     if (options.savedView !== undefined) params.set('savedView', options.savedView);
     const res = await this.send('GET', this.project(projectId, `/render?${params.toString()}`), undefined, { accept: 'image/png' });
     return new Uint8Array(await res.arrayBuffer());
+  }
+
+  async requestFilm(projectId: string, options: FilmRequest): Promise<FilmJob> {
+    const body = { kind: 'film', film: { film: options.film, ...(options.quality === undefined ? {} : { quality: options.quality }), ...(options.light === undefined ? {} : { light: options.light }) } };
+    return (await this.json<{ export: FilmJob }>('POST', this.project(projectId, '/exports'), body)).export;
   }
 
   async uploadAsset(projectId: string, upload: AssetUpload): Promise<StoredAsset> {

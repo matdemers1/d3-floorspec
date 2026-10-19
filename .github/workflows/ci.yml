@@ -178,6 +178,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Films (FLR-T-14.1) are encoded by ffmpeg, as the worker image does: the worker's tests make a few.
+      - name: Install ffmpeg
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends ffmpeg
       - run: pnpm test
       - run: pnpm build
 
@@ -206,6 +209,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The exports suite renders a film on the queue (FLR-T-14.1): ffmpeg encodes it.
+      - name: Install ffmpeg
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends ffmpeg
       - name: Migration drift check — schema.prisma and migrations/ must agree
         working-directory: apps/server
         env:
@@ -257,7 +263,7 @@ jobs:
           - group: a11y
             suites: a11y
           - group: 3d
-            suites: three,sun,furniture,share,assets,lighting,resize,presentation,camera,arrange,rooms,precision,styles,feedback,renovation,section,edit3d
+            suites: three,sun,furniture,share,assets,lighting,resize,presentation,camera,arrange,rooms,precision,styles,feedback,renovation,section,films,edit3d
           - group: editor
             suites: moonshots,arcs,materials,findings,templates,roofs-stairs,package,exports,systems,program,options,main-path,keyboard,drawers,panzoom,modes,placing,trace,dimensions,phrases,keys
     services:
@@ -282,6 +288,10 @@ jobs:
       - run: pnpm build
       - name: Install Chromium for the editor's end-to-end tests
         run: pnpm --filter @d3-floorspec/web exec playwright install --with-deps chromium
+      # The films suite renders an MP4 on the inline job drain (FLR-T-14.1): ffmpeg encodes it.
+      - name: Install ffmpeg
+        if: matrix.group == '3d'
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends ffmpeg
       - name: Editor end to end — keyboard, main path, accessibility in both themes
         env:
           # The keyboard suite's database; main-path and a11y use floorspec_e2e_main_test and
