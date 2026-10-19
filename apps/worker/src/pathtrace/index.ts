@@ -90,6 +90,15 @@ export interface StillOptions {
   readonly only?: boolean;
   /** Exposure compensation (FLR-T-13.10): a factor on the exposure the still is metered to. Default 1. */
   readonly exposureScale?: number;
+  /**
+   * A film's frame (FLR-T-14.1): given the exposure the still would be metered to (the tracer's
+   * units), the one to use — so a film's exposure follows its frames smoothly rather than jumping.
+   */
+  readonly adapt?: (metered: number) => number;
+  /** How far up the lamps and their lenses are, 0–1 (a film's lights fading up at dusk). Default 1. */
+  readonly lampScale?: number;
+  /** Also give back the picture as eight-bit RGB, rows top to bottom (`StillResult.rgb`): a film's frame. */
+  readonly rgb?: boolean;
 }
 
 export interface StillResult {
@@ -114,6 +123,8 @@ export interface StillResult {
   readonly sky?: SkySummary;
   /** With `radiance`: the picture before it was exposed, linear RGB in cd/m², three floats a pixel. */
   readonly radiance?: Float32Array;
+  /** With `rgb`: the picture, eight bits a channel. */
+  readonly rgb?: Uint8Array;
   readonly ms: number;
 }
 
@@ -189,7 +200,8 @@ export function lampsOf(scene: Scene, drawn: (level: string) => boolean = () => 
 }
 
 /** The scene's triangles as the tracer reads them, cut away above `level`, on a ground plate — with its lamps, when they are on. */
-export function ptScene(scene: Scene, options: { level?: string; only?: boolean; textures?: ReadonlyMap<number, Texture | MaterialMaps>; lights?: Lights; plate?: boolean } = {}): PtScene & { readonly floor: number; readonly plate: boolean } {
+export function ptScene(scene: Scene, options: { level?: string; only?: boolean; textures?: ReadonlyMap<number, Texture | MaterialMaps>; lights?: Lights; plate?: boolean; lampScale?: number } = {}): PtScene & { readonly floor: number; readonly plate: boolean } {
+  const up = Math.min(1, Math.max(0, options.lampScale ?? 1));
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
   const cut = options.level === undefined ? undefined : order.get(options.level);
   // One level alone (FLR-T-13.2, a saved view's `levels: "only"`): none below the cut either.
@@ -215,7 +227,7 @@ export function ptScene(scene: Scene, options: { level?: string; only?: boolean;
       ...(maps.orm === undefined ? { roughness: m.roughness, metallic: m.metallic } : { orm: maps.orm, roughness: (m.declared.roughness ?? 1000) / 1000, metallic: (m.declared.metallic ?? 1000) / 1000 }),
       ...(maps.normal === undefined ? {} : { normalMap: maps.normal }),
       ...(m.emissive === undefined ? {} : { lens: true }),
-      ...(m.emissive === undefined || options.lights === 'off' ? {} : { emission: [m.emissive[0] * LENS, m.emissive[1] * LENS, m.emissive[2] * LENS] as Vec3 }),
+      ...(m.emissive === undefined || options.lights === 'off' || up <= 0 ? {} : { emission: [m.emissive[0] * LENS * up, m.emissive[1] * LENS * up, m.emissive[2] * LENS * up] as Vec3 }),
     };
   });
   const min: Vec3 = [Infinity, Infinity, Infinity];
@@ -284,7 +296,7 @@ export function ptScene(scene: Scene, options: { level?: string; only?: boolean;
     normals[3 * t + 1] = ny / l;
     normals[3 * t + 2] = nz / l;
   }
-  const lamps = options.lights === 'on' ? lampsOf(scene, (l) => cut === undefined || ((order.get(l) ?? Infinity) <= cut && (!alone || order.get(l) === cut))) : [];
+  const lamps = options.lights === 'on' && up > 0 ? lampsOf(scene, (l) => cut === undefined || ((order.get(l) ?? Infinity) <= cut && (!alone || order.get(l) === cut))).map((l) => (up === 1 ? l : { ...l, intensity: [l.intensity[0] * up, l.intensity[1] * up, l.intensity[2] * up] as Vec3 })) : [];
   return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials, floor: Number.isFinite(min[1]) ? min[1] - 0.003 : 0, plate, ...(lamps.length === 0 ? {} : { lamps, owner: Int32Array.from(own) }) };
 }
 
@@ -368,7 +380,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 8 || height < 8 || width * height * samples > MAX_WORK) throw new RangeError('the still is too big');
   const maps = texturesOf(scene, withLibrary(options.images));
   const sky = options.skyLight;
-  const pt = ptScene(scene, { ...(options.room === undefined && options.level !== undefined ? { level: options.level, ...(options.only === true ? { only: true } : {}) } : {}), textures: maps.textures, ...(options.lights === undefined ? {} : { lights: options.lights }), plate: sky === undefined });
+  const pt = ptScene(scene, { ...(options.room === undefined && options.level !== undefined ? { level: options.level, ...(options.only === true ? { only: true } : {}) } : {}), textures: maps.textures, ...(options.lights === undefined ? {} : { lights: options.lights }), ...(options.lampScale === undefined ? {} : { lampScale: options.lampScale }), plate: sky === undefined });
   const camera = options.shot?.camera ?? cameraFor(scene, pt, options, width / height);
   const inRoom = options.shot === undefined ? options.room !== undefined : options.shot.inside;
   const sunIn = options.sun ?? DEFAULT_SUN;
@@ -399,8 +411,11 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
   const hdr = options.denoise === false ? traced.color : denoise(traced.color, traced.features, width, height);
   // Exposure compensation (FLR-T-13.10) on top of what the still is metered to.
   const scale = options.exposureScale ?? 1;
-  const exposed = exposure === undefined && scale === 1 ? undefined : exposureOf(hdr, width, height, exposure) * scale;
-  const png = encodePng(toneMap(hdr, width, height, exposed ?? exposure), width, height);
+  // A film's frame (FLR-T-14.1) takes the exposure its film has come to, from what this one meters.
+  const adapted = options.adapt === undefined ? undefined : options.adapt(exposureOf(hdr, width, height, exposure));
+  const exposed = adapted !== undefined ? adapted * scale : exposure === undefined && scale === 1 ? undefined : exposureOf(hdr, width, height, exposure) * scale;
+  const rgb = toneMap(hdr, width, height, exposed ?? exposure);
+  const png = encodePng(rgb, width, height);
   return {
     png,
     width,
@@ -415,6 +430,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     ...(options.lights === undefined ? {} : { lit: { lights: options.lights, ...(options.scene === undefined ? {} : { scene: options.scene }), time, lamps: pt.lamps?.length ?? 0, ...(exposed === undefined ? {} : { exposure: Number((exposed / LUX_PER_UNIT).toPrecision(3)) }) } }),
     ...(sky === undefined ? {} : { sky: skySummary(sky, exposed === undefined ? undefined : Number((exposed / LUX_PER_UNIT).toPrecision(3))) }),
     ...(options.radiance === true ? { radiance: hdr.map((v) => v * LUX_PER_UNIT) } : {}),
+    ...(options.rgb === true ? { rgb } : {}),
     ms: Date.now() - started,
   };
 }

@@ -72,7 +72,51 @@ export interface RasterOptions {
   readonly lighting?: RasterSky;
   /** Exposure compensation (FLR-T-13.10): the light is multiplied by this before the tone curve. Default 1. */
   readonly exposureScale?: number;
+  /**
+   * Under a sky (FLR-T-14.1, a film's drafts): the house's lamps, each lighting what is in its own
+   * room — its floor, its walls' faces, what stands in it — by the inverse square and the angle it
+   * meets, unshadowed but kept to the room, so a lit room glows and its neighbour stays dark.
+   */
+  readonly lamps?: readonly RasterLamp[];
+  /** How far up the lamps and the lenses are, 0–1 (a film's lights fading up at dusk). Default 1. */
+  readonly glow?: number;
 }
+
+/** A lamp as the rasterizer lights with it (FLR-T-14.1): in the draw list's frame (metres, +Y up). */
+export interface RasterLamp {
+  readonly position: Vec3;
+  /** Candela per channel: lumens over the solid angle it shines into, times its colour. */
+  readonly intensity: Vec3;
+  /** A spot's direction and its cone's cosines. */
+  readonly spot?: { readonly dir: Vec3; readonly inner: number; readonly outer: number };
+  /** The room it lights: its outline in plan (x, and −z of this frame) and its floor's and ceiling's heights (+Y). */
+  readonly room: { readonly outer: readonly (readonly [number, number])[]; readonly floor: number; readonly ceiling: number };
+}
+
+/** How far a lamp's light is followed, metres: past it, a fixture's pool is lost in the room's own light. */
+const LAMP_RANGE = 14;
+/** How near a face may be to a lamp's room's outline and still be in it: a wall's face is on the line. */
+const ROOM_EDGE = 0.06;
+
+/** Whether a plan point is inside a ring, or within `edge` of it. */
+function inRoom(x: number, y: number, ring: readonly (readonly [number, number])[], edge: number): boolean {
+  let inside = false;
+  let near = Infinity;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i]!;
+    const [xj, yj] = ring[j]!;
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+    const dx = xj - xi;
+    const dy = yj - yi;
+    const l2 = dx * dx + dy * dy;
+    const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((x - xi) * dx + (y - yi) * dy) / l2));
+    near = Math.min(near, Math.hypot(x - (xi + t * dx), y - (yi + t * dy)));
+  }
+  return inside || near <= edge;
+}
+
+/** One shadow map per draw list and sun: a film's frames under one sun share it. */
+const shadowCache = new WeakMap<DrawList, { dir: Vec3; map: ShadowMap | null }>();
 
 export interface RasterSky {
   readonly field: SkyField;
@@ -163,6 +207,15 @@ function shadowMap(list: DrawList, toSun: Vec3, size = 2048): ShadowMap | null {
       }
   }
   return { size, a, b, l, u0, v0, scale, depth };
+}
+
+/** The shadow map for a draw list and a sun, made once while the sun stays put. */
+function cachedShadowMap(list: DrawList, toSun: Vec3): ShadowMap | null {
+  const hit = shadowCache.get(list);
+  if (hit !== undefined && hit.dir[0] === toSun[0] && hit.dir[1] === toSun[1] && hit.dir[2] === toSun[2]) return hit.map;
+  const map = shadowMap(list, toSun);
+  shadowCache.set(list, { dir: [toSun[0], toSun[1], toSun[2]], map });
+  return map;
 }
 
 /** 1 in the sun, 0 in shadow, between at a shadow's edge: four texels round the point. */
@@ -267,7 +320,9 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
   const depth = new Float32Array(W * H); // 1 / distance along the view: larger is nearer; 0 is the sky
   const key = new Int32Array(W * H).fill(-1);
   const sky = options.lighting;
-  const shadows = sky === undefined || sky.sun === null ? null : shadowMap(list, sky.sun.dir);
+  const shadows = sky === undefined || sky.sun === null ? null : cachedShadowMap(list, sky.sun.dir);
+  const glow = Math.min(1, Math.max(0, options.glow ?? 1));
+  const lamps = sky === undefined || glow <= 0 ? [] : (options.lamps ?? []);
   /** A subpixel's point in the world, from its place and its 1 / distance along the view. */
   const worldAt = (x: number, y: number, inv: number): Vec3 => {
     const w = 1 / inv;
@@ -355,7 +410,8 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
   const skyShade = (t: number): { ambient: Vec3; direct: Vec3; n: Vec3 } => {
     const rgb: Vec3 = [list.colors[3 * t]!, list.colors[3 * t + 1]!, list.colors[3 * t + 2]!];
     const k = sky!.exposure / Math.PI;
-    if (list.unlit?.[t] === 1) return { ambient: rgb, direct: [0, 0, 0], n: [0, 1, 0] };
+    const lens = list.unlit?.[t] === 1;
+    if (lens && glow >= 1) return { ambient: rgb, direct: [0, 0, 0], n: [0, 1, 0] };
     let n: Vec3 = [list.normals[3 * t]!, list.normals[3 * t + 1]!, list.normals[3 * t + 2]!];
     const toEye = sub(camera.eye, [P[9 * t]!, P[9 * t + 1]!, P[9 * t + 2]!]);
     if (dot(n, toEye) < 0) n = [-n[0], -n[1], -n[2]];
@@ -366,11 +422,22 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
     irr[2] = irr[2]! + fill[2];
     const sun = sky!.sun;
     const nl = sun === null ? 0 : Math.max(0, dot(n, sun.dir)) * sun.lux;
+    // A lens part of the way up (FLR-T-14.1): the lit surface it is when off, and its glow over that.
+    const off = lens ? 1 - glow : 1;
+    const on = lens ? glow : 0;
     return {
-      ambient: [rgb[0] * irr[0] * k, rgb[1] * irr[1] * k, rgb[2] * irr[2] * k],
-      direct: sun === null ? [0, 0, 0] : [rgb[0] * nl * sun.color[0] * k, rgb[1] * nl * sun.color[1] * k, rgb[2] * nl * sun.color[2] * k],
+      ambient: [rgb[0] * (irr[0] * k * off + on), rgb[1] * (irr[1] * k * off + on), rgb[2] * (irr[2] * k * off + on)],
+      direct: sun === null ? [0, 0, 0] : [rgb[0] * nl * sun.color[0] * k * off, rgb[1] * nl * sun.color[1] * k * off, rgb[2] * nl * sun.color[2] * k * off],
       n,
     };
+  };
+  /** The lamps whose room a triangle is in, and in their reach (FLR-T-14.1). */
+  const lampsFor = (t: number): RasterLamp[] => {
+    if (lamps.length === 0 || list.unlit?.[t] === 1) return [];
+    const cx = (P[9 * t]! + P[9 * t + 3]! + P[9 * t + 6]!) / 3;
+    const cy = (P[9 * t + 1]! + P[9 * t + 4]! + P[9 * t + 7]!) / 3;
+    const cz = (P[9 * t + 2]! + P[9 * t + 5]! + P[9 * t + 8]!) / 3;
+    return lamps.filter((l) => cy >= l.room.floor - 0.05 && cy <= l.room.ceiling + 0.05 && Math.hypot(l.position[0] - cx, l.position[1] - cy, l.position[2] - cz) <= LAMP_RANGE && inRoom(cx, -cz, l.room.outer, ROOM_EDGE));
   };
   const shadeOf = (t: number): Vec3 => {
     const rgb: Vec3 = [list.colors[3 * t]!, list.colors[3 * t + 1]!, list.colors[3 * t + 2]!];
@@ -493,14 +560,16 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
       }
       pane = { through: [through[0]!, through[1]!, through[2]!], reflected };
     }
+    const roomLamps = blend || lightOf === null ? [] : lampsFor(t);
+    const lampLight = roomLamps.length === 0 || lightOf === null ? null : { lamps: roomLamps, n: lightOf.n, base: [list.colors[3 * t]!, list.colors[3 * t + 1]!, list.colors[3 * t + 2]!] as Vec3, k: (sky!.exposure * glow) / Math.PI };
     for (let i = 1; i + 1 < screen.length; i++) {
       const tex = chain === undefined ? null : { albedo: albedoChain, relief: reliefChain, occlusion: occlusionChain, frame, lod, uv: [uvOut[0]!, uvOut[i]!, uvOut[i + 1]!] as const };
-      fill(screen[0]!, screen[i]!, screen[i + 1]!, c, alpha, k, blend, lift, direct, bias, tex);
+      fill(screen[0]!, screen[i]!, screen[i + 1]!, c, alpha, k, blend, lift, direct, bias, tex, lampLight);
     }
   };
 
   const texel = new Float64Array(3);
-  const fill = (a: readonly [number, number, number], b: readonly [number, number, number], c: readonly [number, number, number], rgb: Vec3, alpha: number, k: number, blend: boolean, lift: number, direct: Vec3 | null = null, bias = 0, tex: Mapped | null = null): void => {
+  const fill = (a: readonly [number, number, number], b: readonly [number, number, number], c: readonly [number, number, number], rgb: Vec3, alpha: number, k: number, blend: boolean, lift: number, direct: Vec3 | null = null, bias = 0, tex: Mapped | null = null, lampLight: { lamps: readonly RasterLamp[]; n: Vec3; base: Vec3; k: number } | null = null): void => {
     const area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
     if (Math.abs(area) < 1e-12) return;
     const minX = Math.max(0, Math.floor(Math.min(a[0], b[0], c[0])));
@@ -573,6 +642,38 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
           r0 += direct[0] * s;
           g0 += direct[1] * s;
           b0 += direct[2] * s;
+        }
+        if (lampLight !== null) {
+          // Each lamp of the room: I cos θ / d², lux, on the surface's own colour.
+          const p = worldAt(x, y, z / lift);
+          const n = lampLight.n;
+          let er = 0;
+          let eg = 0;
+          let eb = 0;
+          for (const l of lampLight.lamps) {
+            const lx = l.position[0] - p[0];
+            const ly = l.position[1] - p[1];
+            const lz = l.position[2] - p[2];
+            const d2 = Math.max(0.04, lx * lx + ly * ly + lz * lz);
+            const d = Math.sqrt(d2);
+            const cos = (n[0] * lx + n[1] * ly + n[2] * lz) / d;
+            if (cos <= 0) continue;
+            let w = cos / d2;
+            if (l.spot !== undefined) {
+              const along = -(l.spot.dir[0] * lx + l.spot.dir[1] * ly + l.spot.dir[2] * lz) / d;
+              const s = (along - l.spot.outer) / Math.max(1e-6, l.spot.inner - l.spot.outer);
+              const f = s <= 0 ? 0 : s >= 1 ? 1 : s * s * (3 - 2 * s);
+              if (f <= 0) continue;
+              w *= f;
+            }
+            er += l.intensity[0] * w;
+            eg += l.intensity[1] * w;
+            eb += l.intensity[2] * w;
+          }
+          const q = lampLight.k * ao;
+          r0 += lampLight.base[0] * er * q;
+          g0 += lampLight.base[1] * eg * q;
+          b0 += lampLight.base[2] * eb * q;
         }
         if (tex?.albedo !== undefined) {
           const za = w0 * a[2];

@@ -12,6 +12,8 @@ import { isLayerState, isModeId, isPlanStyle, PLAN_LAYERS, type LayerState, type
 import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type ShotSize, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
 import { renderSavedView, renderShots, type Shot } from '../pathtrace/views.js';
 import { storeZip } from '../export/gltf/zip.js';
+import { FILM_FORMATS, FILM_LIGHTS, FILM_QUALITIES, FILM_RATES, FILM_SIZES, renderFilm, type FilmFormat, type FilmLight, type FilmQuality, type FilmRate, type FilmSize } from '../film/index.js';
+import { timelapseProblem, type Timelapse } from '@floorspec/mesh/sky';
 
 export interface JobRow {
   readonly id: string;
@@ -241,6 +243,43 @@ export function shotsParams(raw: unknown): ShotsParams {
   return { ...(views === undefined ? {} : { views }), size, quality, ...(design === undefined ? {} : { design }) };
 }
 
+/** The parameters of a film (FLR-T-14.1), as the api writes them. */
+export interface FilmParams {
+  /** The film's ID (the api found it by ID or name). */
+  readonly film: string;
+  readonly quality: FilmQuality;
+  readonly format: FilmFormat;
+  readonly size: FilmSize;
+  readonly fps: FilmRate;
+  readonly light: FilmLight;
+  readonly timelapse?: Timelapse;
+  readonly design?: Record<string, string>;
+}
+
+export function filmParams(raw: unknown): FilmParams {
+  const p = (raw ?? {}) as Record<string, unknown>;
+  const pick = <T extends string | number>(v: unknown, of: readonly T[], d: T): T => ((of as readonly unknown[]).includes(v) ? (v as T) : d);
+  const film = typeof p['film'] === 'string' && p['film'] !== '' ? p['film'] : undefined;
+  if (film === undefined) throw new RangeError('a film job names its film');
+  const t = p['timelapse'];
+  let timelapse: Timelapse | undefined;
+  if (isRecord(t) && typeof t['date'] === 'string' && typeof t['from'] === 'string' && typeof t['to'] === 'string') {
+    const plan = { date: t['date'], from: t['from'], to: t['to'], lightsAtDusk: t['lightsAtDusk'] !== false };
+    if (timelapseProblem(plan) === null) timelapse = plan;
+  }
+  const design = designOf(p['design']);
+  return {
+    film,
+    quality: pick(p['quality'], FILM_QUALITIES, 'draft'),
+    format: pick(p['format'], FILM_FORMATS, 'mp4'),
+    size: pick(p['size'], Object.keys(FILM_SIZES) as FilmSize[], '1080p'),
+    fps: pick(p['fps'], FILM_RATES, 30),
+    light: pick(p['light'], FILM_LIGHTS, 'timeline'),
+    ...(timelapse === undefined ? {} : { timelapse }),
+    ...(design === undefined ? {} : { design }),
+  };
+}
+
 /**
  * A shot list's ZIP (FLR-T-13.10): each still a PNG named for its place and its view —
  * `01-hero-exterior.png` — and what each shot was, for the job's summary.
@@ -401,6 +440,42 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
         contentType: 'application/zip',
         bytes: zip.bytes,
         summary: { label: 'Shot list — every saved view, path-traced', size: p.size, quality: p.quality, shots: zip.shots, design: shots[0]?.still.design ?? null },
+      };
+    },
+    /**
+     * FLR-T-14.1: a film — the document's camera path, drawn (a draft) or path-traced (a final) frame
+     * by frame and encoded as MP4 or WebM. Reports the frames done, the clock in a timelapse, and now
+     * and then a small picture of the frame just made.
+     */
+    'export.film': async (document, job) => {
+      const p = filmParams(job.params);
+      const images = claimedOnly(job, store.images);
+      const r = await renderFilm(document, {
+        ...p,
+        ...(images === undefined ? {} : { images }),
+        ...(job.progress === undefined ? {} : { onFrame: (f) => job.progress?.({ ...f }) }),
+      });
+      return {
+        name: `film-${slug(r.film.name)}-${job.versionHash.slice(0, 8)}.${r.format}`,
+        contentType: r.contentType,
+        bytes: r.bytes,
+        summary: {
+          label: r.quality === 'final' ? 'Film — path-traced frame by frame, denoised' : 'Film — a draft, drawn by the rasterizer',
+          film: r.film,
+          quality: r.quality,
+          format: r.format,
+          width: r.width,
+          height: r.height,
+          fps: r.fps,
+          frames: r.frames,
+          seconds: r.seconds,
+          ...(r.samples === undefined ? {} : { samples: r.samples }),
+          light: r.light,
+          ...(r.timelapse === undefined ? {} : { timelapse: r.timelapse }),
+          ...(r.video === null ? {} : { codec: r.video.codec }),
+          design: r.design,
+          ms: r.ms,
+        },
       };
     },
     /**

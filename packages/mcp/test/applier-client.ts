@@ -70,6 +70,9 @@ export class ApplierClient implements FloorspecClient {
   render(): Promise<Uint8Array> {
     return Promise.reject(new FloorspecApiError(501, { error: 'no renderer here' }));
   }
+  requestFilm(): Promise<never> {
+    return Promise.reject(new FloorspecApiError(501, { error: 'no renderer here' }));
+  }
   uploadAsset(_projectId: string, upload: AssetUpload): Promise<StoredAsset> {
     this.uploads++;
     const sha256 = createHash('sha256').update(upload.bytes).digest('hex');

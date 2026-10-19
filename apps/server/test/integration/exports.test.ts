@@ -8,7 +8,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Prisma } from '../../src/generated/prisma/client.js';
-import { KITCHEN_AS_WRITTEN, KITCHEN_OPTIONS, projectWithDocument, REQUIRES_ELECTRICAL, WITH_VIEWS } from './drawings-support.js';
+import { KITCHEN_AS_WRITTEN, KITCHEN_OPTIONS, projectWithDocument, REQUIRES_ELECTRICAL, WITH_FILM, WITH_VIEWS } from './drawings-support.js';
 import { upload, uploadStill, type UploadedAsset } from './assets-support.js';
 import { tilePng } from '../support/images.js';
 import { contentHash } from '@floorspec/engine';
@@ -548,6 +548,111 @@ describe('shot lists (FLR-T-13.10)', () => {
     expect((await ask({ kind: 'shots', levels: ['MAIN'] })).status).toBe(400);
     expect(await db.job.count()).toBe(0);
   });
+});
+
+describe('films (FLR-T-14.1)', () => {
+  let running: Running;
+  let drain: Drain;
+
+  beforeAll(async () => {
+    running = await start();
+  });
+  afterAll(async () => {
+    await running.close();
+  });
+  beforeEach(async () => {
+    await reset(db);
+    drain = createDrain({ databaseUrl: TEST_ENV.DATABASE_URL, log: () => undefined });
+  });
+  afterEach(async () => {
+    await drain.stop();
+  });
+
+  type FilmView = ExportView & { film: Record<string, unknown> | null; cancelled: boolean; result: Record<string, unknown> | null };
+
+  it('queues a film by name, renders it on the queue frame by frame, and serves the video', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator, WITH_FILM, 'Ranch with a film');
+    const asked = await operator.post(`/api/projects/${id}/exports`, { kind: 'film', film: { film: 'walk-in', size: '720p', fps: 24, format: 'webm' } });
+    expect(asked.status, asked.text).toBe(202);
+    const queued = view(asked) as FilmView;
+    expect(queued).toMatchObject({ kind: 'film', status: 'queued', version: hash, film: { id: 'F1', name: 'Walk-in', quality: 'draft', format: 'webm', size: '720p', fps: 24, frames: 24, light: 'timeline', timelapse: null }, cancelled: false });
+    // One film, still or shot list at a time per project.
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'film' })).status).toBe(429);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'shots' })).status).toBe(429);
+
+    expect(await drain.runOnce()).toBe(1);
+    const done = view(await operator.get(`/api/projects/${id}/exports/${queued.id}`)) as FilmView;
+    expect(done.status, done.error ?? '').toBe('done');
+    expect(done.result).toMatchObject({ contentType: 'video/webm', name: `film-walk-in-${hash.slice(0, 8)}.webm`, film: { id: 'F1', name: 'Walk-in' }, quality: 'draft', format: 'webm', width: 1280, height: 720, fps: 24, frames: 24, seconds: 1, light: 'timeline', codec: 'vp9' });
+    const file = await download(operator, `${running.url}${String(done.download)}`);
+    expect(file.status).toBe(200);
+    expect(file.type).toBe('video/webm');
+    expect([...file.bytes.subarray(0, 4)]).toEqual([0x1a, 0x45, 0xdf, 0xa3]);
+  }, 300_000);
+
+  it('gives a day-to-night film its day and clocks round the site’s sunset, or those asked for', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, WITH_FILM, 'Ranch with a film');
+    const preset = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'film', film: { light: 'day-to-night', timelapse: { date: '2026-06-21' } } })) as FilmView;
+    expect(preset.film).toMatchObject({ id: 'F1', light: 'day-to-night', timelapse: { date: '2026-06-21', lightsAtDusk: true } });
+    const t = preset.film?.['timelapse'] as { from: string; to: string };
+    expect(t.from).toMatch(/^\d\d:(00|30)$/);
+    expect(t.to > t.from).toBe(true);
+    const cancelled = await operator.post(`/api/projects/${id}/exports/${preset.id}/cancel`);
+    expect(cancelled.status, cancelled.text).toBe(200);
+    const asked = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'film', film: { film: 'F1', quality: 'final', size: '1080p', light: 'day-to-night', timelapse: { date: '2026-12-21', from: '15:00', to: '18:30', lightsAtDusk: false } } })) as FilmView;
+    expect(asked.film).toMatchObject({ quality: 'final', samples: 64, timelapse: { date: '2026-12-21', from: '15:00', to: '18:30', lightsAtDusk: false } });
+  });
+
+  it('refuses a model with no films, a film it does not have or cannot render, a final at 4K, and film options elsewhere', async () => {
+    const operator = await setupOperator(running);
+    const plain = await projectWithDocument(db, operator, WITH_VIEWS, 'Ranch with views');
+    const none = await operator.post(`/api/projects/${plain.id}/exports`, { kind: 'film' });
+    expect(none.status).toBe(422);
+    expect(none.body).toMatchObject({ type: expect.stringMatching(/no-films$/) as unknown });
+    const { id } = await projectWithDocument(db, operator, WITH_FILM, 'Ranch with a film');
+    const ask = (body: object) => operator.post(`/api/projects/${id}/exports`, body);
+    const missing = await ask({ kind: 'film', film: { film: 'Garden' } });
+    expect(missing.status).toBe(400);
+    expect((missing.body as { error: string }).error).toMatch(/no film "Garden"; its films are "Walk-in", "Lost"/);
+    const lost = await ask({ kind: 'film', film: { film: 'Lost' } });
+    expect(lost.status).toBe(422);
+    expect(lost.text).toMatch(/SV9/);
+    expect((await ask({ kind: 'film', film: { quality: 'final', size: '4k' } })).status).toBe(400);
+    expect((await ask({ kind: 'film', film: { fps: 25 } })).status).toBe(400);
+    expect((await ask({ kind: 'film', film: { timelapse: { date: '2026-06-21' } } })).status).toBe(400);
+    expect((await ask({ kind: 'film', film: { light: 'day-to-night', timelapse: { date: '2026-02-30' } } })).status).toBe(400);
+    expect((await ask({ kind: 'pdf', film: {} })).status).toBe(400);
+    expect((await ask({ kind: 'film', levels: ['MAIN'] })).status).toBe(400);
+    expect(await db.job.count()).toBe(0);
+  });
+
+  it('cancels a queued export, which the drain then leaves alone, and stops a running film at its next frame', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, WITH_FILM, 'Ranch with a film');
+    const queued = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'film', film: { size: '720p', fps: 24 } }));
+    const cancelled = await operator.post(`/api/projects/${id}/exports/${queued.id}/cancel`);
+    expect(cancelled.status).toBe(200);
+    expect(view(cancelled)).toMatchObject({ status: 'failed', error: 'Cancelled.', cancelled: true });
+    // Already stopped: nothing to cancel.
+    expect((await operator.post(`/api/projects/${id}/exports/${queued.id}/cancel`)).status).toBe(409);
+    expect(await drain.runOnce()).toBe(0);
+    const audit = await db.auditLog.findFirst({ where: { action: 'export.cancel', targetId: queued.id } });
+    expect(audit?.detail).toMatchObject({ kind: 'film', was: 'queued' });
+
+    // A film the drain is rendering: cancelled after its first frames, it stops and stores nothing.
+    const running2 = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'film', film: { size: '1080p', fps: 60, light: 'day-to-night', timelapse: { date: '2026-06-21' } } }));
+    const draining = drain.runOnce();
+    await expect.poll(async () => (await db.job.findUniqueOrThrow({ where: { id: running2.id } })).progress, { timeout: 120_000, interval: 200 }).not.toBeNull();
+    const progress = (await db.job.findUniqueOrThrow({ where: { id: running2.id } })).progress as { frame: number; frames: number; clock: string };
+    expect(progress.frames).toBe(60);
+    expect(progress.clock).toMatch(/[ap]m$/);
+    expect((await operator.post(`/api/projects/${id}/exports/${running2.id}/cancel`)).status).toBe(200);
+    await draining;
+    const after = await db.job.findUniqueOrThrow({ where: { id: running2.id }, include: { output: true } });
+    expect(after).toMatchObject({ status: 'failed', error: 'Cancelled.', output: null });
+  }, 300_000);
 });
 
 describe('stills path-traced on the viewer’s GPU (FLR-T-13.13)', () => {

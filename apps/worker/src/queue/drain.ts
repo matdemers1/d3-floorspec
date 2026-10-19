@@ -40,6 +40,18 @@ export interface Drain {
   stop(): Promise<void>;
 }
 
+/**
+ * A job this worker no longer holds (FLR-T-14.1): cancelled by a person, or taken by another worker
+ * after this one was too slow to say how it was getting on. Thrown from the job's progress, so a long
+ * job stops at its next report; the row is not written again.
+ */
+export class JobGone extends Error {
+  constructor(id: string) {
+    super(`job ${id} is no longer this worker's: it was cancelled`);
+    this.name = 'JobGone';
+  }
+}
+
 /** What a person reads when a job fails: the error's own words, never a stack. */
 function reason(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -90,12 +102,14 @@ export function createDrain(options: DrainOptions): Drain {
       // What this project uploaded: the only asset bytes its exports may carry.
       const claims = await pool.query<{ sha256: string }>('select sha256 from project_assets where project_id = $1', [job.projectId]);
       // A long job says how far it has got: written at most once a second, while this worker holds it.
+      // A job it no longer holds — cancelled (FLR-T-14.1) — stops there.
       let said = 0;
       const progress = async (p: Record<string, unknown>): Promise<void> => {
         const now = Date.now();
         if (now - said < PROGRESS_EVERY_MS) return;
         said = now;
-        await pool.query(`update jobs set progress = $2, locked_at = now() where id = $1 and locked_by = $3 and status = 'running'`, [job.id, JSON.stringify(p), workerId]).catch(() => undefined);
+        const wrote = await pool.query(`update jobs set progress = $2, locked_at = now() where id = $1 and locked_by = $3 and status = 'running'`, [job.id, JSON.stringify(p), workerId]).catch(() => null);
+        if (wrote !== null && wrote.rowCount === 0) throw new JobGone(job.id);
       };
       const file = await handler(version.document as object, { ...job, claimed: new Set(claims.rows.map((r) => r.sha256)), progress });
       const sha256 = createHash('sha256').update(file.bytes).digest('hex');
@@ -108,7 +122,9 @@ export function createDrain(options: DrainOptions): Drain {
           [job.id, file.name, file.contentType, Buffer.from(file.bytes), sha256],
         );
         const result = { name: file.name, contentType: file.contentType, size: file.bytes.byteLength, sha256, ...file.summary };
-        await client.query(`update jobs set status = 'done', result = $2, finished_at = now(), locked_by = null where id = $1 and locked_by = $3`, [job.id, JSON.stringify(result), workerId]);
+        const done = await client.query(`update jobs set status = 'done', result = $2, finished_at = now(), locked_by = null where id = $1 and locked_by = $3`, [job.id, JSON.stringify(result), workerId]);
+        // Cancelled while its file was being stored: keep nothing.
+        if (done.rowCount === 0) throw new JobGone(job.id);
         await client.query('commit');
       } catch (error) {
         await client.query('rollback');
@@ -118,6 +134,10 @@ export function createDrain(options: DrainOptions): Drain {
       }
       log(`job ${job.id} (${job.kind}) done: ${file.name}, ${String(file.bytes.byteLength)} bytes`);
     } catch (error) {
+      if (error instanceof JobGone) {
+        log(`job ${job.id} (${job.kind}) stopped: it was cancelled`);
+        return;
+      }
       await pool.query(`update jobs set status = 'failed', error = $2, finished_at = now(), locked_by = null where id = $1`, [job.id, reason(error)]);
       log(`job ${job.id} (${job.kind}) failed: ${reason(error)}`);
     }

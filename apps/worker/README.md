@@ -63,6 +63,17 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   api's `GET /render?view=3d` queues a `render.3d` job and waits for it (60 s by default); MCP
   `floorspec_render` with `view: "3d"` and `camera` (a view's name, or a room's ID or name) calls it.
   `renderGlb` draws an exported .glb back through the same rasterizer — how the tests look at one.
+- `src/film/` — FLR-T-14.1 (FLR-ADR-051): **films**. A film is kept in the document's extras
+  (`extras.d3floorspec.films`, `@floorspec/mesh` `filmsOf`): keyframes that are saved views or
+  recorded cameras, reached with an easing and held. Job kind `export.film` renders every frame — a
+  draft by the rasterizer above (one sample a pixel; each lamp lighting its own room), a final by the
+  CPU path tracer (as many samples a pixel as a still's budget allows at its size: 128 at 720p, 64 at
+  1080p; 4K is drafts only) — in the light of its first saved view or **day to night** (the sun at
+  each frame's instant at the site, the lights fading up after sunset), exposure eased over half a
+  second. Frames are piped as raw RGB to **ffmpeg** (H.264 in MP4 with `+faststart`, VP9 in WebM),
+  which the image installs from Debian and runs as its own process; `FFMPEG_PATH` points elsewhere.
+  Progress is frames done, the timelapse's clock and now and then a small preview; a cancelled job
+  stops at its next report.
 - `src/render/` — FLR-T-2.8: plan PNGs through resvg, with the bundled fonts only.
 - `src/alerts/` — FLR-T-12.2: alert email through the D3 Auth mail relay (`MAIL_RELAY_URL`,
   `MAIL_RELAY_TOKEN`, `ALERT_TO`; redacted, once an hour per kind, remembered in the `alerts` table),
@@ -72,5 +83,5 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   failures in a row and one on recovery. See `docs/runbooks/restore.md`.
 
 ```bash
-pnpm --filter @d3-floorspec/worker test    # drawings, glTF/USDZ, 3D render, plan render, heartbeat, alerts, watchdog
+pnpm --filter @d3-floorspec/worker test    # drawings, glTF/USDZ, 3D render, plan render, films (needs ffmpeg), heartbeat, alerts, watchdog
 ```

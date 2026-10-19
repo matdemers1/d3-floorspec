@@ -2,11 +2,14 @@ import { createHash } from 'node:crypto';
 import { evaluate, OFFICIAL_READER } from '@floorspec/engine';
 import { LAYER_STATES, MODE_IDS, PLAN_LAYERS, PLAN_STYLES, RENOVATION_FILTERS } from '@floorspec/render2d';
 import { MAX_SHOTS, QUALITIES, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, withinBudget, type Quality, type ShotSize, type Size } from '@d3-floorspec/worker/stills';
-import { savedViewsOf } from '@floorspec/mesh';
+import { filmDuration, filmFrameCount, filmNamed, filmProblem, filmShots, filmsOf, savedViewsOf } from '@floorspec/mesh';
+import { midsummer, timelapseAround, timelapseProblem } from '@floorspec/mesh/sky';
+import { FILM_FORMATS, FILM_LIGHTS, FILM_QUALITIES, FILM_RATES, FILM_SIZES, filmChoiceProblem, finalSamples, type FilmSize } from '@d3-floorspec/worker/films';
 import type { Request } from 'express';
 import { z } from 'zod';
 import type { Db, Tx } from '../db.js';
 import type { Job } from '../generated/prisma/client.js';
+import { Prisma } from '../db.js';
 import { Routes } from '../http/routes.js';
 import { HttpError } from '../http/errors.js';
 import { ProblemError } from '../http/problem.js';
@@ -34,9 +37,16 @@ import { MAX_PENDING_RENDERS } from './checks.js';
  * the version it was rendered from (whose glTF export the editor traced), the view in words, the
  * samples — and records a finished `still` export with the file, so it is downloaded, listed and
  * kept like one the worker rendered. Nothing is queued: the browser did the work.
+ *
+ * A film (FLR-T-14.1, FLR-ADR-051) is asked for as `kind: "film"` with the film — one the document
+ * keeps in its extras, by ID or name — and its quality, size, frame rate, container and light in
+ * `film`: a day-to-night timelapse is given its day and clocks here, two hours before the site's
+ * sunset to an hour after unless the request says otherwise. It renders on the worker as a still
+ * does, one at a time per project, reporting its frames. Any export still queued or running can be
+ * cancelled (`POST …/exports/:jobId/cancel`): the worker stops at its next report.
  */
 
-const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still', 'shots'] as const;
+const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still', 'shots', 'film'] as const;
 const VIEWS = ['sw', 'se', 'ne', 'nw', 'top'] as const;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 
@@ -62,6 +72,29 @@ const ShotsBody = z.strictObject({
   size: z.enum(Object.keys(SHOT_SIZES) as [ShotSize, ...ShotSize[]]).default('medium'),
   quality: z.enum(Object.keys(QUALITIES) as [Quality, ...Quality[]]).default('standard'),
 });
+/**
+ * A film (FLR-T-14.1): which of the document's films — by ID or name, default the first — drawn as a
+ * draft or path-traced as a final, at a size and frame rate, as MP4 or WebM, in the light of its
+ * keyframes or day to night.
+ */
+const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
+const FilmBody = z.strictObject({
+  film: z.string().trim().min(1).max(200).optional(),
+  quality: z.enum(FILM_QUALITIES).default('draft'),
+  format: z.enum(FILM_FORMATS).default('mp4'),
+  size: z.enum(Object.keys(FILM_SIZES) as [FilmSize, ...FilmSize[]]).default('1080p'),
+  fps: z.union(FILM_RATES.map((r) => z.literal(r)) as unknown as [z.ZodLiteral<24>, z.ZodLiteral<30>, z.ZodLiteral<60>]).default(30),
+  light: z.enum(FILM_LIGHTS).default('timeline'),
+  /** Day to night: the day and the clocks at the site; what is left out is the preset's. */
+  timelapse: z
+    .strictObject({
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'a date is YYYY-MM-DD').optional(),
+      from: z.string().regex(CLOCK, 'a time is HH:MM').optional(),
+      to: z.string().regex(CLOCK, 'a time is HH:MM').optional(),
+      lightsAtDusk: z.boolean().optional(),
+    })
+    .optional(),
+});
 export const PAGE_NAMES = ['tabloid', 'arch-c', 'arch-d', 'letter', 'a4', 'a3'] as const;
 
 const ExportBody = z.strictObject({
@@ -85,6 +118,8 @@ const ExportBody = z.strictObject({
   renovation: z.enum(RENOVATION_FILTERS).optional(),
   /** A shot list: which saved views, how big and how clean (FLR-T-13.10). */
   shots: ShotsBody.optional(),
+  /** A film: which, how, and in what light (FLR-T-14.1). */
+  film: FilmBody.optional(),
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8) — the editor's GPU still asks for either (FLR-T-13.13). */
   doors: z.enum(['open', 'closed']).optional(),
   /**
@@ -135,6 +170,14 @@ type Params = {
   readonly device?: string;
   /** A shot list: the saved views asked for, by ID (absent: every one). */
   readonly views?: string[];
+  /** A film (FLR-T-14.1): its ID and name, and how it is made. */
+  readonly film?: string;
+  readonly filmName?: string;
+  readonly format?: string;
+  readonly fps?: number;
+  readonly frames?: number;
+  readonly light?: string;
+  readonly timelapse?: { date: string; from: string; to: string; lightsAtDusk: boolean };
 };
 
 /** The largest still the editor may save: a 4K PNG with room to spare. */
@@ -194,6 +237,12 @@ export function exportView(projectId: string, job: Job) {
           }
         : null,
     shots: job.kind === 'export.shots' ? { views: p.views ?? null, size: p.size ?? 'medium', quality: p.quality ?? 'standard' } : null,
+    film:
+      job.kind === 'export.film'
+        ? { id: p.film ?? null, name: p.filmName ?? p.film ?? null, quality: p.quality ?? 'draft', format: p.format ?? 'mp4', size: p.size ?? '1080p', fps: p.fps ?? 30, frames: p.frames ?? null, light: p.light ?? 'timeline', timelapse: p.timelapse ?? null, ...(p.samples === undefined ? {} : { samples: p.samples }) }
+        : null,
+    /** Stopped by a person (FLR-T-14.1) rather than failed. */
+    cancelled: job.status === 'failed' && (job.result as { cancelled?: unknown } | null)?.cancelled === true,
     progress: job.status === 'running' ? (job.progress ?? null) : null,
     error: job.error,
     result: job.result,
@@ -258,6 +307,7 @@ export function exportRoutes(db: Db): Routes {
       if (body.kind === 'ifc' && body.levels !== undefined) throw new HttpError(400, 'an IFC export is of the whole model: it takes no levels');
       if (body.still !== undefined && body.kind !== 'still') throw new HttpError(400, 'only a still takes still options');
       if (body.shots !== undefined && body.kind !== 'shots') throw new HttpError(400, 'only a shot list takes shots options');
+      if (body.film !== undefined && body.kind !== 'film') throw new HttpError(400, 'only a film takes film options');
       if (body.doors !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes doors');
       if (body.lighting !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes a lighting');
       if ((body.mode !== undefined || body.layers !== undefined) && body.kind !== 'pdf' && body.kind !== 'dxf') throw new HttpError(400, 'a mode is a view of the plan: only a PDF or DXF drawing takes one');
@@ -275,8 +325,8 @@ export function exportRoutes(db: Db): Routes {
           const known = Object.entries(view.rooms ?? {}).some(([rid, r]) => rid.toLowerCase() === key || r?.name?.toLowerCase() === key);
           if (!known) throw new HttpError(400, `the model has no room ${still.room}`);
         }
-        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.still', 'export.shots'] }, status: { in: ['queued', 'running'] } } });
-        if (rendering > 0) throw new HttpError(429, 'a still or a shot list is already rendering for this project; wait for it to finish');
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.still', 'export.shots', 'export.film'] }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a still, a shot list or a film is already rendering for this project; wait for it to finish');
       }
       const shots = body.kind === 'shots' ? ShotsBody.parse(body.shots ?? {}) : undefined;
       if (shots !== undefined) {
@@ -288,10 +338,47 @@ export function exportRoutes(db: Db): Routes {
         if (unknown.length > 0) throw new HttpError(400, `the model has no saved view ${unknown.join(', ')}; its views are ${saved.map((v) => v.id).join(', ')}`);
         if ((shots.views ?? saved).length > MAX_SHOTS) throw new HttpError(400, `a shot list renders at most ${String(MAX_SHOTS)} views`);
         // One shot list at a time, and it takes one of the project's three render places (FLR-T-8.5).
-        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.shots', 'export.still'] }, status: { in: ['queued', 'running'] } } });
-        if (rendering > 0) throw new HttpError(429, 'a shot list or a still is already rendering for this project; wait for it to finish');
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.shots', 'export.still', 'export.film'] }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a shot list, a still or a film is already rendering for this project; wait for it to finish');
         const renders = await tx.job.count({ where: { projectId: project.id, kind: 'render.3d', status: { in: ['queued', 'running'] } } });
         if (renders >= MAX_PENDING_RENDERS) throw new HttpError(429, `this project already has ${String(renders)} 3D renders waiting; try again when one finishes`);
+      }
+      const filmBody = body.kind === 'film' ? FilmBody.parse(body.film ?? {}) : undefined;
+      let film: { id: string; name: string; frames: number; samples?: number; timelapse?: { date: string; from: string; to: string; lightsAtDusk: boolean } } | undefined;
+      if (filmBody !== undefined) {
+        if (body.levels !== undefined || body.page !== undefined) throw new HttpError(400, 'a film is its keyframes’ views: it takes no levels or page');
+        const films = filmsOf(ev.document);
+        if (films.length === 0) throw new ProblemError({ status: 422, type: 'no-films', title: 'this model has no films', detail: 'Make a film from saved views in the 3D view’s Camera panel, or add one with setProperty of $document at /extras/d3floorspec/films/F1.' });
+        const found = filmBody.film === undefined ? films[0] : filmNamed(ev.document, filmBody.film);
+        if (found === undefined) throw new HttpError(400, `the model has no film "${filmBody.film ?? ''}"; its films are ${films.map((f) => `"${f.name}"`).join(', ')}`);
+        const problem = filmProblem(found);
+        if (problem !== null) throw new ProblemError({ status: 422, type: 'film-not-renderable', title: 'this film cannot be rendered', detail: `“${found.name}”: ${problem}.` });
+        const lacking = filmShots(found, savedViewsOf(ev.document)).missing;
+        if (lacking.length > 0) throw new ProblemError({ status: 422, type: 'film-not-renderable', title: 'this film cannot be rendered', detail: `“${found.name}” names saved views the model does not have: ${lacking.join(', ')}.` });
+        const frames = filmFrameCount(filmDuration(found), filmBody.fps);
+        const choice = filmChoiceProblem(filmBody.quality, filmBody.size, frames);
+        if (choice !== null) throw new HttpError(400, choice);
+        let timelapse: { date: string; from: string; to: string; lightsAtDusk: boolean } | undefined;
+        if (filmBody.light === 'day-to-night') {
+          const location = (ev.document as { site?: { location?: { latitude?: unknown; longitude?: unknown } } }).site?.location;
+          const site = typeof location?.latitude === 'number' && typeof location.longitude === 'number' ? { latitude: location.latitude / 1e6, longitude: location.longitude / 1e6 } : {};
+          const t = filmBody.timelapse ?? {};
+          const date = t.date ?? midsummer(new Date().getUTCFullYear());
+          let preset;
+          try {
+            preset = timelapseAround(date, site);
+          } catch {
+            throw new HttpError(400, 'the timelapse’s date is not a day of the calendar');
+          }
+          timelapse = { date, from: t.from ?? preset.from, to: t.to ?? preset.to, lightsAtDusk: t.lightsAtDusk ?? true };
+          const bad = timelapseProblem(timelapse);
+          if (bad !== null) throw new HttpError(400, `the timelapse is not valid: ${bad}`);
+        } else if (filmBody.timelapse !== undefined) throw new HttpError(400, 'a timelapse is for a film in the day-to-night light');
+        const samples = filmBody.quality === 'final' ? finalSamples(filmBody.size) : null;
+        film = { id: found.id, name: found.name, frames, ...(samples === null ? {} : { samples }), ...(timelapse === undefined ? {} : { timelapse }) };
+        // One film, still or shot list renders at a time per project: each takes the worker for a while.
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.film', 'export.still', 'export.shots'] }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a film, a still or a shot list is already rendering for this project; wait for it to finish, or cancel it');
       }
       const missing = (body.levels ?? []).filter((l) => !levels.includes(l));
       if (missing.length > 0) throw new HttpError(400, `the model has no level ${missing.join(', ')}`);
@@ -308,6 +395,9 @@ export function exportRoutes(db: Db): Routes {
         ...(body.doors === undefined ? {} : { doors: body.doors }),
         ...(body.lighting === undefined ? {} : { lighting: { on: Object.fromEntries(Object.entries(body.lighting.on).map(([id, s]) => [id, { ...(s.output === undefined ? {} : { output: s.output }), ...(s.cct === undefined ? {} : { cct: s.cct }) }])) } }),
         ...(shots === undefined ? {} : { ...(shots.views === undefined ? {} : { views: [...new Set(shots.views)] }), size: shots.size, quality: shots.quality }),
+        ...(filmBody === undefined || film === undefined
+          ? {}
+          : { film: film.id, filmName: film.name, quality: filmBody.quality, format: filmBody.format, size: filmBody.size, fps: filmBody.fps, frames: film.frames, light: filmBody.light, ...(film.samples === undefined ? {} : { samples: film.samples }), ...(film.timelapse === undefined ? {} : { timelapse: film.timelapse }) }),
         ...(still === undefined
           ? {}
           : {
@@ -334,7 +424,7 @@ export function exportRoutes(db: Db): Routes {
       });
       return {
         reply: (res) => res.status(202).location(`/api/projects/${project.id}/exports/${job.id}`).json({ export: exportView(project.id, job) }),
-        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.mode === undefined ? {} : { mode: params.mode }), ...(params.style === undefined ? {} : { style: params.style }), ...(params.renovation === undefined ? {} : { renovation: params.renovation }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }), ...(shots === undefined ? {} : { shots: { views: params.views ?? null, size: params.size, quality: params.quality } }) } },
+        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.mode === undefined ? {} : { mode: params.mode }), ...(params.style === undefined ? {} : { style: params.style }), ...(params.renovation === undefined ? {} : { renovation: params.renovation }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }), ...(shots === undefined ? {} : { shots: { views: params.views ?? null, size: params.size, quality: params.quality } }), ...(film === undefined ? {} : { film: { id: film.id, quality: params.quality, format: params.format, size: params.size, fps: params.fps, frames: film.frames, light: params.light } }) } },
       };
     },
     { token: 'read' },
@@ -436,6 +526,25 @@ export function exportRoutes(db: Db): Routes {
       };
     },
     { token: 'propose', before: [rawBody(STILL_MAX_BYTES)] },
+  );
+
+  /**
+   * Cancel an export still queued or running (FLR-T-14.1): it is marked failed, as cancelled, and a
+   * worker running it stops at its next report of progress. Anything else is already finished.
+   */
+  routes.mutate(
+    'POST',
+    '/:projectId/exports/:jobId/cancel',
+    async (req, tx) => {
+      const job = await jobOf(req);
+      if (job.status !== 'queued' && job.status !== 'running') throw new HttpError(409, `this export is already ${job.status === 'done' ? 'done' : 'stopped'}`);
+      const updated = await tx.job.update({ where: { id: job.id }, data: { status: 'failed', error: 'Cancelled.', result: { cancelled: true }, finishedAt: new Date(), lockedBy: null, progress: Prisma.DbNull } });
+      return {
+        reply: (res) => res.status(200).json({ export: exportView(job.projectId, updated) }),
+        audit: { action: 'export.cancel', targetType: 'job', targetId: job.id, detail: { projectId: job.projectId, kind: job.kind.replace(/^export\./, ''), was: job.status } },
+      };
+    },
+    { token: 'read' },
   );
 
   /** This project's exports, newest first. */
