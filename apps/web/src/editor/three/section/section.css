@@ -13,6 +13,11 @@
 .fs-three__toolbars > .fs-three__tools {
   position: static;
 }
+.fs-three__toolbars > .fs-three__levels {
+  position: static;
+  margin-top: 3px;
+  transform: none;
+}
 
 /* ─── The panels ────────────────────────────────────────────────────────────────────────────── */
 .fs-sun.fs-section {

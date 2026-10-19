@@ -36,6 +36,11 @@ import { SectionScene } from './section/SectionScene';
 import { ExplodedOverlay, SectionOverlay, type Drawing, type LayerLabel } from './section/SectionOverlay';
 import { ExperiencesToolbar, ExplodedPanel, SectionPanel, toggleSection, type ExperienceContext } from './section/Experiences';
 import { defaultBox, defaultPlane, FACE_AXIS, layerOf, layersOf, levelsKept, unionBox, type Band, type Box as SectionBox, type ExplodeState, type SectionState } from './section/section';
+import { MotionRig } from './edit/rig';
+import { movesBetween, type Motion } from './edit/motion';
+import { EditController, type PickHit } from './edit/controller';
+import { docMetres, EditOverlay } from './edit/EditOverlay';
+import { readingOf } from './edit/tape';
 
 /**
  * The 3D view (FLR-T-7.5, FLR-REQ-113, 114), laid out as the board's "08 · Editor — 3D cutaway",
@@ -60,9 +65,23 @@ const Presentation = lazy(() => import('./presentation/Presentation'));
 /** What the 3D view draws: the ghost of an edit in progress, a proposal under review, the newer side of a comparison, or main. */
 function shownModel(s: EditorState): EditorModel | null {
   if (s.preview?.model) return s.preview.model;
+  return underPreview(s);
+}
+
+function underPreview(s: EditorState): EditorModel | null {
   if (s.compare !== null) return s.compare.toModel ?? s.model;
   if (s.side === 'review' && s.review !== null) return s.review.rebased?.model ?? s.review.proposed ?? s.model;
   return s.model;
+}
+
+/**
+ * What the house is meshed from: what is shown, except that a rigid preview (items moved and turned,
+ * FLR-T-18.18) is not meshed again — its items' parts are moved instead (FLR-T-14.8, edit/motion.ts),
+ * so a drag in 3D or on the plan beside it stays smooth.
+ */
+function meshedModel(s: EditorState): EditorModel | null {
+  if (s.preview?.model && s.preview.rigid === undefined) return s.preview.model;
+  return underPreview(s);
 }
 
 interface Tokens {
@@ -176,7 +195,7 @@ function metresBox(mesh: HouseMesh, box: { min: Vec3; max: Vec3 }): { min: Vec3;
 
 export default function ThreeView({ store, compact = false }: { store: EditorStore; compact?: boolean }) {
   const three = threeOf(store);
-  const fullModel = useEditor(store, shownModel);
+  const fullModel = useEditor(store, meshedModel);
   // FLR-T-18.13: a remodel in 3D is its renovation plan's state — the house as it stands, or as it will be —
   // with what is to be demolished ghosted in red in the Demolition and Combined plans.
   const renoFilter = useRenovationFilter(store, fullModel);
@@ -199,6 +218,9 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const explode = useThreeState(store, (s) => s.explode);
   const exploding = explode.active && !walking;
   const sectionRig = useMemo(() => new SectionRig(), []);
+  // FLR-T-14.8: what is drawn moved from where the mesh has it (a drag), and Edit in 3D.
+  const motion = useMemo(() => new MotionRig(), []);
+  const editTool = useThreeState(store, (s) => s.edit);
   const houseGroup = useRef<THREE.Group>(null);
   const drawing = useRef<Drawing | null>(null);
   const reduced = useReducedMotion();
@@ -212,6 +234,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const label = useRef<HTMLDivElement>(null);
   const tokens = useTokens(host);
   const ctl = useMemo(() => new ThreeController(three), [three]);
+  useEffect(() => { motion.invalidate = () => { ctl.invalidate(); }; }, [motion, ctl]);
   const describedBy = useId();
   const night = useSunNight(store, model);
   // The GPU still's "view you are looking at" (FLR-T-13.13): the orbit now, in the glTF export's frame.
@@ -230,6 +253,36 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const [textureUnits, setTextureUnits] = useState(16);
   useEffect(() => () => { textures.dispose(); }, [textures]);
   useEffect(() => () => { for (const b of built) b.geometry.dispose(); }, [built]);
+
+  // ── Edit in 3D (FLR-T-14.8): picking, the parts of an element, the controller.
+  const readyRef = useRef(ready);
+  readyRef.current = ready;
+  const boxOf = useCallback((id: string): SectionBox | null => {
+    let box: SectionBox | null = null;
+    for (const b of built) {
+      if (b.part.id !== id || b.geometry.boundingBox === null) continue;
+      const g = b.geometry.boundingBox;
+      box = unionBox(box, { min: [g.min.x, g.min.y, g.min.z], max: [g.max.x, g.max.y, g.max.z] });
+    }
+    return box;
+  }, [built]);
+  const boxRef = useRef(boxOf);
+  boxRef.current = boxOf;
+  const pick = useCallback((x: number, y: number, seen = false): PickHit | null => pickAt(sectionRig, houseGroup.current, three.get().section, x, y, seen), [sectionRig, three]);
+  const edit = useMemo(
+    () => new EditController({
+      store,
+      three,
+      rig: sectionRig,
+      motion,
+      pick,
+      meshed: () => (readyRef.current === null ? null : { model: readyRef.current.model, mesh: readyRef.current.mesh }),
+      bounds: () => host.current?.querySelector('canvas')?.getBoundingClientRect() ?? null,
+      boxOf: (id) => boxRef.current(id),
+    }),
+    [store, three, sectionRig, motion, pick],
+  );
+  useEffect(() => () => { edit.dispose(); }, [edit]);
 
   // The physics follows the mesh; the first mesh frames the camera.
   useEffect(() => {
@@ -336,7 +389,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // What casts a shadow, as one value: a new one when the parts, the furniture or the lamps drawn change.
   const shadowKey = useMemo(() => ({ partsShown, drawn: furniture.drawn, lamps }), [partsShown, furniture.drawn, lamps]);
 
-  useTestHook(store, three, ctl, ready, host, built, visible, textures, sectionRig);
+  useTestHook(store, three, ctl, ready, host, built, visible, textures, sectionRig, motion, edit);
 
   // FLR-T-14.6: what the Section and Exploded panels need of the view.
   const units = useEditor(store, () => store.units);
@@ -412,12 +465,27 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const pinch = useRef<number | null>(null);
   const locked = useRef(false);
 
+  // FLR-T-14.8: with Edit in 3D on, a press on an item or an opening is the edit's, not the orbit's.
+  const editing = editTool !== null && !walking && !compact && !exploding;
+  const editPress = useRef<{ x: number; y: number } | null>(null);
   const onPointerDown = (e: React.PointerEvent) => {
+    if (editing && pointers.current.size === 0 && edit.down(e)) {
+      editPress.current = { x: e.clientX, y: e.clientY };
+      travelled.current = 0;
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      return;
+    }
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY, button: e.button, shift: e.shiftKey });
     if (pointers.current.size === 1) travelled.current = 0;
     pinch.current = null;
   };
   const onPointerMove = (e: React.PointerEvent) => {
+    if (editPress.current !== null) {
+      travelled.current = Math.max(travelled.current, Math.hypot(e.clientX - editPress.current.x, e.clientY - editPress.current.y));
+      edit.move(e);
+      return;
+    }
+    if (editing && pointers.current.size === 0) edit.move(e);
     if (locked.current) return;
     const p = pointers.current.get(e.pointerId);
     if (p === undefined) return;
@@ -447,6 +515,13 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     else ctl.rotate(dx, dy);
   };
   const onPointerUp = (e: React.PointerEvent) => {
+    if (editPress.current !== null) {
+      editPress.current = null;
+      edit.up();
+      return;
+    }
+    // The tape: a click (not a drag, which orbits) puts down a point.
+    if (editing && editTool === 'tape' && e.type === 'pointerup' && e.button === 0 && travelled.current < 5 && pointers.current.size === 1) edit.tapeClick(e);
     pointers.current.delete(e.pointerId);
     if (pointers.current.size < 2) pinch.current = null;
     // A click with a mouse while walking takes the pointer for mouse-look (Esc gives it back).
@@ -488,6 +563,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (walking || e.metaKey || e.ctrlKey || e.altKey) return;
     const step = Math.PI / 18;
+    // The shifted arrows pan; ⇧M is the tape's.
     const handled = (() => {
       if (e.shiftKey && e.key.startsWith('Arrow')) {
         const px = 40;
@@ -497,6 +573,20 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         return m !== undefined;
       }
       switch (e.key) {
+        // FLR-T-14.8: Edit in 3D (E) and the tape measure (⇧M); Esc finishes the tape, then puts the tool away.
+        case 'e': case 'E':
+          if (e.shiftKey || compact || exploding) return false;
+          three.setEdit(three.get().edit === 'move' ? null : 'move');
+          return true;
+        case 'M':
+          if (!e.shiftKey || compact || exploding) return false;
+          three.setEdit(three.get().edit === 'tape' ? null : 'tape');
+          return true;
+        case 'Escape':
+          if (edit.cancel() || edit.clearTape()) return true;
+          if (three.get().edit === null) return false;
+          three.setEdit(null);
+          return true;
         // FLR-T-14.6: the section box's panel (X), and the exploded view's levels apart or together (Space).
         case 'x': case 'X':
           if (ctx === null || compact) return false;
@@ -571,7 +661,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     const id = (e.object.userData as { id?: string }).id;
     // FLR-T-13.12: with the lights on, a switch turns its lights on or off, and a lamp itself — walking too.
     if (id !== undefined) flip(id);
-    if (walking) return;
+    if (walking || (editing && editTool === 'tape')) return;
     if (id !== undefined) store.select(id);
   };
   const onHover = (e: ThreeEvent<PointerEvent>) => {
@@ -598,7 +688,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const name = walking ? `Walkthrough of ${project}` : `3D view of ${project}`;
   const hint = walking
     ? 'W, A, S and D or the arrow keys walk and turn; drag to look around; Shift walks faster; Escape ends the walk.'
-    : 'Arrow keys orbit, Shift and the arrows pan, plus and minus zoom, Page Up and Page Down change the level, Home frames the house, X opens the section box. Use the plan view for full keyboard editing.';
+    : 'Arrow keys orbit, Shift and the arrows pan, plus and minus zoom, Page Up and Page Down change the level, Home frames the house, X opens the section box, E edits items and openings in 3D (Tab then reaches the selection’s move and rotate handles), Shift M measures. Use the plan view for full keyboard editing.';
 
   let body: ReactNode;
   if (model === null || state.status === 'loading') {
@@ -640,7 +730,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         gl={{ antialias: true, powerPreference: 'high-performance', stencil: true }}
         camera={{ fov: FOV, near: 0.05, far: 4000, position: [0, -20, 10], up: [0, 0, 1] }}
         onPointerMissed={(e: MouseEvent) => {
-          if (!dragged() && !walking && e.type === 'click') store.select(null);
+          if (!dragged() && !walking && e.type === 'click' && !(editing && editTool === 'tape')) store.select(null);
         }}
         onCreated={({ gl }) => {
           gl.domElement.setAttribute('aria-hidden', 'true');
@@ -654,8 +744,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <AxoCamera on={exploding} ctl={ctl} />
         <SceneBridge />
         <group ref={houseGroup}>
-          <Parts visible={partsShown} rig={sectionRig} reno={renoStyles} danger={tokens.danger} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
-          {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} /> : null}
+          <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} danger={tokens.danger} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
+          {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} move={(id, g) => motion.register(id, g)} /> : null}
         </group>
         <SectionScene
           rig={sectionRig}
@@ -671,7 +761,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           colours={{ fill: tokens.fillQuiet, hatch: tokens.fgMuted, ghost: tokens.fgMuted }}
           reduced={reduced}
         />
-        {!walking ? <LabelTracker built={visible} selection={selection} el={label} rig={sectionRig} /> : null}
+        {!walking ? <LabelTracker built={visible} selection={selection} el={label} rig={sectionRig} motion={motion} /> : null}
         {presenting ? (
           <Suspense fallback={null}>
             <Presentation stats={stats} model={ready?.model ?? null} mesh={ready?.mesh ?? null} />
@@ -684,7 +774,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const selectedLabel = selection === null || ready === null || !built.some((b) => partSelected(b.part, selection)) ? null : labelOf(ready.model, selection);
 
   return (
-    <div className="fs-three" ref={host} data-walking={walking ? 'on' : undefined} data-compact={compact ? 'on' : undefined}>
+    <div className="fs-three" ref={host} data-walking={walking ? 'on' : undefined} data-compact={compact ? 'on' : undefined} data-edit={editing ? editTool : undefined}>
       <div
         className="fs-three__gl"
         role="application"
@@ -727,15 +817,18 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <SectionOverlay rig={sectionRig} three={three} section={section} house={houseBox} units={units} levelName={levelName} />
       ) : null}
       {ready !== null && exploding ? <ExplodedOverlay rig={sectionRig} explode={explode} labels={labels} drawing={drawing} /> : null}
+      {ready !== null ? <Motions store={store} motion={motion} meshed={ready.model} origin={ready.mesh.origin} k={ready.mesh.unitsPerMetre} /> : null}
+      {ready !== null && editing ? <EditOverlay ctl={edit} store={store} rig={sectionRig} motion={motion} boxOf={boxOf} k={ready.mesh.unitsPerMetre} /> : null}
       {ready !== null && !walking && !compact ? (
         <>
           <div className="fs-three__toolbars">
             <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} levels={levels} roof={roof} lights={lightsOn} />
             {ctx !== null ? <ExperiencesToolbar ctx={ctx} /> : null}
+            {/* Beside the clusters, as the board's 3D frames have it (FLR-T-14.8): never under a longer cluster. */}
+            <LevelsControl store={store} three={three} model={ready.model} order={order} levels={levels} level={levelId} />
           </div>
           {ctx !== null ? <SectionPanel ctx={ctx} /> : null}
           {ctx !== null ? <ExplodedPanel ctx={ctx} /> : null}
-          <LevelsControl store={store} three={three} model={ready.model} order={order} levels={levels} level={levelId} />
           <ViewCube ctl={ctl} preset={preset} />
           <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} only={levels === 'only'} roof={roof} current={currentView} />
           <SunPanel store={store} model={ready.model} />
@@ -965,6 +1058,7 @@ function Rig({ ctl }: { ctl: ThreeController }) {
 function Parts({
   visible,
   rig,
+  motion,
   reno,
   danger,
   selection,
@@ -981,6 +1075,8 @@ function Parts({
   visible: Built[];
   /** FLR-T-14.6: what lifts each layer of the house in the exploded view. */
   rig: SectionRig;
+  /** FLR-T-14.8: what moves each element's parts while it is dragged. */
+  motion: MotionRig;
   /** FLR-T-18.13: each element's renovation style; a demolished one is ghosted in red. */
   reno: ReadonlyMap<string, RenovationStyle> | null;
   danger: string;
@@ -1020,7 +1116,7 @@ function Parts({
   }, [accent, materials, textures, invalidate]);
 
   const selected = useMemo(() => visible.filter((b) => partSelected(b.part, selection)), [visible, selection]);
-  const outlines = useMemo(() => selected.map((b) => ({ key: b.part.key, layer: layerOf(b.part), geometry: new THREE.EdgesGeometry(b.geometry, 30) })), [selected]);
+  const outlines = useMemo(() => selected.map((b) => ({ key: b.part.key, id: b.part.id, layer: layerOf(b.part), geometry: new THREE.EdgesGeometry(b.geometry, 30) })), [selected]);
   // FLR-T-14.6: the parts by the layer the exploded view lifts them with (a level, or its roofs).
   const layered = useMemo(() => {
     const m = new Map<string, Built[]>();
@@ -1107,6 +1203,7 @@ function Parts({
               geometry={b.geometry}
               material={b.slots === undefined ? materialOf(b, partSelected(b.part, selection)) : b.slots.map((m) => slotOf(b, m, partSelected(b.part, selection)))}
               userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
+              ref={(m) => (m === null ? undefined : motion.register(b.part.id, m))}
               castShadow={castsShadow(b.part, b.look)}
               receiveShadow={b.look !== 'glass' && b.look !== 'pick'}
               renderOrder={b.look === 'glass' || b.look === 'pick' ? 1 : 0}
@@ -1120,11 +1217,12 @@ function Parts({
                   material={b.slots === undefined ? (b.part.model !== undefined ? panes.model : panes.glass).reflect : b.slots.map((m) => (m?.glass === true || b.look === 'glass' ? panes.glass.reflect : HIDDEN))}
                   renderOrder={1.5}
                   raycast={noRaycast}
+                  ref={(m) => (m === null ? undefined : motion.register(b.part.id, m))}
                 />
               ))
             : null}
           {outlines.filter((o) => o.layer === layer).map((o) => (
-            <lineSegments key={`edges:${o.key}`} geometry={o.geometry} material={materials.edges} renderOrder={2} raycast={noRaycast} />
+            <lineSegments key={`edges:${o.key}`} geometry={o.geometry} material={materials.edges} renderOrder={2} raycast={noRaycast} ref={(l) => (l === null ? undefined : motion.register(o.id, l))} />
           ))}
         </group>
       ))}
@@ -1196,7 +1294,7 @@ function overlayMaterials() {
 const noRaycast = (): void => undefined;
 
 /** The selection's label, kept over the top of its parts as the camera moves. */
-function LabelTracker({ built, selection, el, rig }: { built: Built[]; selection: string | null; el: { current: HTMLDivElement | null }; rig: SectionRig }) {
+function LabelTracker({ built, selection, el, rig, motion }: { built: Built[]; selection: string | null; el: { current: HTMLDivElement | null }; rig: SectionRig; motion: MotionRig }) {
   const box = useMemo(() => {
     const parts = built.filter((b) => partSelected(b.part, selection));
     if (parts.length === 0) return null;
@@ -1213,7 +1311,10 @@ function LabelTracker({ built, selection, el, rig }: { built: Built[]; selection
       return;
     }
     const b = box.box;
-    v.set((b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, b.max.z + rig.liftOf(box.layer)).project(camera);
+    // Moved with its element while it is dragged (FLR-T-14.8).
+    const p = selection === null ? null : motion.at(selection, [(b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, b.max.z]);
+    if (p === null) return;
+    v.set(p[0], p[1], p[2] + rig.liftOf(box.layer)).project(camera);
     const inView = v.z < 1 && Math.abs(v.x) <= 1.05 && Math.abs(v.y) <= 1.05;
     node.style.visibility = inView ? 'visible' : 'hidden';
     node.style.transform = `translate(${((v.x + 1) / 2) * size.width}px, ${((1 - v.y) / 2) * size.height}px) translate(-50%, calc(-100% - 8px))`;
@@ -1489,6 +1590,55 @@ function MiniMap({ level, mesh, x, y, yaw, where }: { level: LevelView; mesh: Ho
   );
 }
 
+// ─── Edit in 3D (FLR-T-14.8) ─────────────────────────────────────────────────────────────────
+
+/**
+ * What the shown model has moved since the house was meshed — a drag's rigid preview, or a drop not
+ * yet meshed again — handed to the motion rig, which moves those parts. Its own component, so a drag
+ * re-renders this and nothing else.
+ */
+function Motions({ store, motion, meshed, origin, k }: { store: EditorStore; motion: MotionRig; meshed: EditorModel; origin: Vec3; k: number }) {
+  const shown = useEditor(store, shownModel);
+  useEffect(() => {
+    motion.setModel(shown === null ? new Map<string, Motion>() : movesBetween(meshed, shown, origin, k));
+  }, [motion, shown, meshed, origin, k]);
+  useEffect(() => () => { motion.setModel(new Map<string, Motion>()); }, [motion]);
+  return null;
+}
+
+/**
+ * The first part of the house under a point of the canvas (CSS pixels): the element it draws, the
+ * point hit and its triangle, metres in the mesh's frame. Inside a section box only what it keeps;
+ * `seen`, only what is drawn — not an opening's invisible pick target.
+ */
+function pickAt(rig: SectionRig, house: THREE.Group | null, section: SectionState, x: number, y: number, seen: boolean): PickHit | null {
+  const cam = rig.camera;
+  if (cam === null || house === null) return null;
+  const ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2((x / rig.size.width) * 2 - 1, 1 - (y / rig.size.height) * 2), cam);
+  const box = section.mode === 'box' ? section.box : null;
+  for (const h of ray.intersectObject(house, true)) {
+    const o = h.object;
+    if (!(o instanceof THREE.Mesh) || !o.visible) continue;
+    const material = o.material as THREE.Material | THREE.Material[];
+    if (seen && !Array.isArray(material) && !material.colorWrite) continue;
+    const p = h.point;
+    if (box !== null && (p.x < box.min[0] - 1e-3 || p.x > box.max[0] + 1e-3 || p.y < box.min[1] - 1e-3 || p.y > box.max[1] + 1e-3 || p.z < box.min[2] - 1e-3 || p.z > box.max[2] + 1e-3)) continue;
+    const id = (o.userData as { id?: string }).id ?? null;
+    let tri: PickHit['tri'] = null;
+    if (h.face !== null && h.face !== undefined) {
+      const pos = (o.geometry as THREE.BufferGeometry).getAttribute('position');
+      const corner = (i: number): Vec3 => {
+        const v = new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        return [v.x, v.y, v.z];
+      };
+      tri = [corner(h.face.a), corner(h.face.b), corner(h.face.c)];
+    }
+    return { id, point: [p.x, p.y, p.z], tri };
+  }
+  return null;
+}
+
 // ─── The test hook ───────────────────────────────────────────────────────────────────────────
 
 interface Hook {
@@ -1531,6 +1681,16 @@ interface Hook {
   capCoverage(): number;
   /** FLR-T-14.6: the exploded view — how far apart (0–1), the camera, and each layer's lift now, metres. */
   explode: { active: boolean; progress: number; camera: 'orthographic' | 'perspective' | null; lifts: Record<string, number> };
+  /**
+   * FLR-T-14.8: Edit in 3D — the tool, the element being dragged, the elements drawn moved from where
+   * the mesh has them, the tape's points (metres, the document's frame) and its last reading (base
+   * units), and what each drag move cost (ms).
+   */
+  edit: { tool: string | null; dragging: string | null; moved: string[]; tape: { points: Vec3[]; kinds: string[]; reading: { length: number; dx: number; dy: number; dz: number } | null }; stats: { moves: number; totalMs: number; maxMs: number } };
+  /** A point of the document (metres, its frame) on screen, client pixels; null behind the camera. */
+  screenOf(x: number, y: number, z: number): { x: number; y: number } | null;
+  /** FLR-T-14.8: the element Edit in 3D would take at a point on screen (client pixels). */
+  pickAt(x: number, y: number): string | null;
 }
 
 declare global {
@@ -1543,7 +1703,7 @@ declare global {
  * Under automation only (navigator.webdriver), the e2e suite reads the walker and asks where on
  * screen an element can be clicked. Nothing is exposed to a person's browser.
  */
-function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController, ready: { mesh: HouseMesh; world: World } | null, el: { current: HTMLDivElement | null }, built: readonly Built[], visible: readonly Built[], textures: TextureLibrary, rig: SectionRig) {
+function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController, ready: { mesh: HouseMesh; world: World } | null, el: { current: HTMLDivElement | null }, built: readonly Built[], visible: readonly Built[], textures: TextureLibrary, rig: SectionRig, motion: MotionRig, edit: EditController) {
   useEffect(() => {
     if (!navigator.webdriver) return;
     const hook: Hook = {
@@ -1655,6 +1815,34 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
         for (const k of rig.lifts.keys()) lifts[k] = rig.liftOf(k);
         return { active: three.get().explode.active, progress: rig.progress, camera: cam === undefined ? null : cam instanceof THREE.OrthographicCamera ? ('orthographic' as const) : ('perspective' as const), lifts };
       },
+      get edit() {
+        const k = ready?.mesh.unitsPerMetre ?? 1_280_000;
+        const origin = ready?.mesh.origin ?? [0, 0, 0];
+        const tape = three.get().tape;
+        const a = tape[tape.length - 2];
+        const b = tape[tape.length - 1];
+        return {
+          tool: three.get().edit,
+          dragging: edit.dragging,
+          moved: motion.ids(),
+          tape: { points: tape.map((t) => docMetres(t.at, origin, k)), kinds: tape.map((t) => t.kind), reading: a === undefined || b === undefined ? null : readingOf(a.at, b.at) },
+          stats: { ...edit.stats },
+        };
+      },
+      screenOf: (x, y, z) => {
+        const canvas = el.current?.querySelector('canvas');
+        if (ready === null || canvas === null || canvas === undefined) return null;
+        const k = ready.mesh.unitsPerMetre;
+        const o = ready.mesh.origin;
+        const p = rig.project([x - o[0] / k, y - o[1] / k, z - o[2] / k]);
+        if (!p.front) return null;
+        const r = canvas.getBoundingClientRect();
+        return { x: r.left + p.x, y: r.top + p.y };
+      },
+      pickAt: (x, y) => {
+        const r = el.current?.querySelector('canvas')?.getBoundingClientRect();
+        return r === undefined ? null : (edit.pickId(x - r.left, y - r.top));
+      },
       walk: (from) => { three.walk(from); },
       face: (deg) => {
         if (ctl.walker !== null) ctl.walker = { ...ctl.walker, yaw: (deg * Math.PI) / 180 };
@@ -1682,7 +1870,7 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
     return () => {
       if (window.__floorspec3d === hook) delete window.__floorspec3d;
     };
-  }, [store, three, ctl, ready, el, built, visible, textures, rig]);
+  }, [store, three, ctl, ready, el, built, visible, textures, rig, motion, edit]);
 }
 
 /** Registered by the scene: what screenPoint needs from inside the canvas. */

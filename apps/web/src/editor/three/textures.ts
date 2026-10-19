@@ -211,15 +211,17 @@ export class TextureLibrary {
     return tex;
   }
 
-  /** Call `done` once the map with this digest has arrived (now, if it has). */
-  private whenLoaded(sha256: string, kind: Kind, done: () => void): THREE.Texture {
+  /**
+   * Call `done` with the map with this digest once it has arrived — now, if it has (a material made
+   * after its maps arrived: a part selected once the house is drawn, FLR-T-14.8).
+   */
+  private whenLoaded(sha256: string, kind: Kind, done: (t: THREE.Texture) => void): void {
     const tex = this.texture(sha256, kind);
-    if (this.ready.has(`${kind}:${sha256}`)) done();
+    if (this.ready.has(`${kind}:${sha256}`)) done(tex);
     else {
       const key = `${kind}:${sha256}`;
-      this.waiting.set(key, [...(this.waiting.get(key) ?? []), done]);
+      this.waiting.set(key, [...(this.waiting.get(key) ?? []), () => { done(tex); }]);
     }
-    return tex;
   }
 
   /** The material that draws a part's maps in this look; `on` for the selected element. */
@@ -256,7 +258,7 @@ export class TextureLibrary {
       mat.needsUpdate = true;
     };
     if (ref.sha256 !== '') {
-      const t = this.whenLoaded(ref.sha256, 'albedo', () => {
+      this.whenLoaded(ref.sha256, 'albedo', (t) => {
         // The image has arrived: it is the colour now.
         mat.map = t;
         mat.color.set(0xffffff);
@@ -264,13 +266,13 @@ export class TextureLibrary {
       });
     }
     if (ref.normal !== undefined) {
-      const t = this.whenLoaded(ref.normal, 'data', () => {
+      this.whenLoaded(ref.normal, 'data', (t) => {
         mat.normalMap = t;
         changed();
       });
     }
     if (ref.orm !== undefined) {
-      const t = this.whenLoaded(ref.orm, 'data', () => {
+      this.whenLoaded(ref.orm, 'data', (t) => {
         // glTF's channels: occlusion red (when it is the occlusion map too), roughness green, metalness blue.
         mat.roughnessMap = t;
         mat.metalnessMap = t;
@@ -279,7 +281,7 @@ export class TextureLibrary {
       });
     }
     if (ref.occlusion !== undefined) {
-      const t = this.whenLoaded(ref.occlusion, 'data', () => {
+      this.whenLoaded(ref.occlusion, 'data', (t) => {
         mat.aoMap = t;
         changed();
       });

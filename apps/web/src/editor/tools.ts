@@ -3,7 +3,8 @@ import { sagittaFromRadius, sagittaToward } from './arcs';
 import { direction } from '@floorspec/engine';
 import type { LevelView, Point } from './model';
 import { dist, hitTest, faceAt, leftNormal, project, roomsBeside } from './geometry';
-import { alignMove, alignOpening, pointAtLength, snapOpeningOn, type Snap } from './snap';
+import { alignMove, pointAtLength, snapOpeningOn, type Snap } from './snap';
+import { dragDevice, dragOpening } from './drag';
 import { namer, precisionOf, snapAt, snapGridOf, snapSettingsOf } from './precision/state';
 import { measureBack, measureClick, measureEnd, measureMove } from './precision/measure';
 import { panBy, toWorld, zoomAt } from './viewport';
@@ -34,7 +35,7 @@ import { flipFromPlan } from './three/lighting/lighting';
 import { deviceAt } from './systems/hit';
 import { ghostsOf, pickable } from './modes';
 import { pickableUnder, storeStyles } from './renovation';
-import { centredOn, dragHost, hoverFor, mountOf, type DeviceHover } from './systems/placement';
+import { centredOn, hoverFor, type DeviceHover } from './systems/placement';
 import { moveDevice, placeDevice, setMember } from './systems/ops';
 import { defaultHeight, kindById, type DeviceKind } from './systems/catalog';
 import type { DeviceView } from './systems/view';
@@ -43,8 +44,6 @@ import { arrangeOf } from './arrange/state';
 import { cornersOf, wallsOfRoom } from './arrange/rooms';
 import { boundsOfIds, isCovering, marqueeHits, rectOf, selectableShapes } from './arrange/shapes';
 import { transformBatch, translation } from './arrange/transform';
-import { withRiders } from './arrange/riders';
-import { frameOf } from './arrange/carry';
 import { deleteSelection, moveSelection } from './arrange/actions';
 import { moveGhost, placeHere } from '../placing/state';
 import { extentAcross, functionFromName, minRoom, moveRoom, resizeRoom, roomDrag, roomSides, sideDrag, wandCandidates, type Side } from './rooms/edit';
@@ -712,30 +711,17 @@ export class ToolController {
     if (start.kind === 'device') {
       const device = level.devices.find((d) => d.id === start.target);
       if (device === undefined) return;
-      // FLR-T-18.18: the item keeps where it was grabbed — its host point moves by as much as the
-      // pointer has, not to the pointer — so grabbed off-centre, it does not jump.
+      // FLR-T-18.18: the item keeps where it was grabbed (drag.ts, shared with the 3D view's Edit in 3D).
       const world = this.world(p);
-      const origin = frameOf(level, device.host)?.point ?? device.placement?.point ?? world;
-      const onWall = mountOf(device) === 'wall';
-      let d: Point = [world[0] - start.world[0], world[1] - start.world[1]];
-      // By the grid (a wall mount's offset snaps along its wall instead); ⌘ or ⌥ free.
-      if (!free && !onWall) d = [Math.round(d[0] / grid) * grid, Math.round(d[1] / grid) * grid];
-      // Smart guides: the item's box, moved as far, lines up with walls and other items — not with what it carries.
-      const box = boundsOfIds(level, [device.id]);
-      if (box !== null && !free) {
-        const aligned = alignMove(level, box, d, { tol: this.tol(p.type), settings, excludeItems: new Set(withRiders(level, [device.id])), name: namer(this.store) });
-        d = aligned.d;
-        guide(aligned);
-      } else guide(null);
-      const at: Point = [origin[0] + d[0], origin[1] + d[1]];
-      const hover = dragHost(level, device, at, { grid, tol: this.tol(p.type), pointGrid: 1 });
-      if (hover === null || hover.problem !== undefined) {
+      const r = dragDevice(level, device, [world[0] - start.world[0], world[1] - start.world[1]], { grid, tol: this.tol(p.type), free, settings, name: namer(this.store), fallback: world });
+      guide(r.guide);
+      if (r.hover === null) {
         this.store.set({ draft: { tool: 'select', drag: null, typed } });
         this.store.preview(null);
         return;
       }
-      this.store.set({ draft: { tool: 'select', drag: { kind: 'device', id: device.id, hover }, typed } });
-      this.store.preview(moveDevice(device.id, hover.host));
+      this.store.set({ draft: { tool: 'select', drag: { kind: 'device', id: device.id, hover: r.hover }, typed } });
+      this.store.preview(moveDevice(device.id, r.hover.host));
       return;
     }
     if (start.kind === 'wall') {
@@ -768,13 +754,11 @@ export class ToolController {
     const opening = level.openings.find((o) => o.id === start.target);
     const wall = opening === undefined ? undefined : level.walls.find((w) => w.id === opening.wall);
     if (opening === undefined || wall === undefined) return;
-    const snap = snapOpeningOn(wall, opening.width, this.world(p), { tol: this.tol(p.type), grid });
-    // Smart guides: its centre or an edge in line with another opening's centre, a junction, an item.
-    const aligned = snap.centered || free ? null : alignOpening(level, wall, { id: opening.id, offset: snap.offset, width: opening.width }, { tol: this.tol(p.type), settings, name: namer(this.store) });
-    if (aligned !== null) snap.offset = aligned.offset;
-    guide(aligned);
-    this.store.set({ draft: { tool: 'select', drag: { kind: 'opening', id: opening.id, offset: snap.offset, centered: snap.centered }, typed } });
-    this.store.preview(moveOpening(opening.id, snap.centered ? 'centered' : snap.offset));
+    // Smart guides: its centre or an edge in line with another opening's centre, a junction, an item (drag.ts).
+    const slid = dragOpening(level, wall, opening, this.world(p), { tol: this.tol(p.type), grid, free, settings, name: namer(this.store) });
+    guide(slid.guide);
+    this.store.set({ draft: { tool: 'select', drag: { kind: 'opening', id: opening.id, offset: slid.offset, centered: slid.centered }, typed } });
+    this.store.preview(moveOpening(opening.id, slid.centered ? 'centered' : slid.offset));
   }
 
   private selectUp(p: PointerInfo, moved: boolean): void {
