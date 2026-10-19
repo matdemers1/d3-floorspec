@@ -22,10 +22,13 @@ import { EXPOSURE_BAND, meteredExposure, meterFloor, toneMappingExposure, TRACE_
  * first reading at 16; the tone curve is applied as the samples are shown, so neither meter changes
  * anything traced.
  *
- * The library is patched (patches/three-gpu-pathtracer@0.0.26.patch, patches/README.md): shadow rays
- * toward the sun and the lamps pass glass, dimmed by what it lets through; toward a lamp they pass
- * every lit luminaire's pieces (scene.ts `prepareHouse`); and a lit lens glows for the camera, in
- * mirrors and through glass but lights nothing — its lamp lights the room.
+ * The library is patched (patches/three-gpu-pathtracer@0.0.27.patch, patches/README.md): shadow rays
+ * toward the sun and the lamps pass glass, dimmed by what it lets through; and a lit lens glows for
+ * the camera, in mirrors and through glass but lights nothing — its lamp lights the room. Shadow rays
+ * pass every lit luminaire's pieces by the library's own `visibleToShadowRays` (scene.ts
+ * `prepareHouse`). Since 0.0.27 (FLR-T-13.15) next-event estimation picks a lamp by its estimated
+ * contribution at the point lit rather than uniformly among them all, which is what makes a night
+ * still with dozens of lamps clean up at the same samples.
  */
 
 export interface TraceProgress {

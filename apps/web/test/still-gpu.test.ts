@@ -183,15 +183,13 @@ describe('the GPU still’s scene (FLR-T-13.13)', () => {
     const house = prepareHouse(scene, { lights: true });
     // glTF's faces are one-sided; seen from behind, a gable let the sky in.
     for (const m of meshes(scene)) expect((m.material as MeshStandardMaterial).side).toBe(DoubleSide);
-    // The luminaire X1 (its lamp hangs under it): its pieces stop no lamp's shadow ray — the patched
-    // tracer reads the material's castShadow, three-gpu-pathtracer 0.0.27 the mesh's visibleToShadowRays.
+    // The luminaire X1 (its lamp hangs under it): its pieces stop no lamp's shadow ray — the
+    // tracer passes a mesh whose visibleToShadowRays is false (FLR-T-13.15).
     expect(house.fixtures).toBe(1);
     const piece = meshes(scene).find((m) => m.parent?.name === 'X1' || m.name === 'X1')!;
-    expect((piece.material as MeshStandardMaterial & { castShadow?: boolean }).castShadow).toBe(false);
     expect((piece as Mesh & { visibleToShadowRays?: boolean }).visibleToShadowRays).toBe(false);
     // Everything else still shadows.
     const room = meshes(scene).find((m) => partOf(m) === 'floor')!;
-    expect((room.material as MeshStandardMaterial & { castShadow?: boolean }).castShadow).toBeUndefined();
     expect((room as Mesh & { visibleToShadowRays?: boolean }).visibleToShadowRays).toBeUndefined();
     // The tracer samples a spot on a disc radius / tan(cone) ahead of the light: the light is set
     // back that far up its axis, so the disc is the lamp where the export put it (2.4 m up).

@@ -168,9 +168,9 @@ export const spotSetback = (radius: number, angle: number): number => radius / M
  * itself"):
  * - every surface is seen from both sides — glTF's single-sided faces, a gable from inside, would
  *   let the sky in from behind;
- * - no piece of a lit luminaire — canopy, trim, shade, lens — stands in a lamp's way (`castShadow`
- *   false, read by the patched tracer, and three-gpu-pathtracer 0.0.27's `visibleToShadowRays`), as
- *   the editor leaves them out of its shadow maps;
+ * - no piece of a lit luminaire — canopy, trim, shade, lens — stands in a lamp's way
+ *   (three-gpu-pathtracer's `visibleToShadowRays`, which the sun's shadow rays pass too), as the
+ *   editor leaves them out of its shadow maps;
  * - a spot lamp is set back along its axis by `spotSetback`, so the disc the tracer samples is the
  *   lamp where the export puts it, not that far ahead of it.
  */
@@ -270,25 +270,14 @@ export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: s
     }
     lamps++;
   }
-  // A lit luminaire's own pieces never stand in a lamp's way: their materials made afresh where the
-  // house shares them with anything else, so a brass knob still shadows.
-  const pieces = new Map<Material, Material>();
+  // A lit luminaire's own pieces never stand in a lamp's way: the tracer's shadow rays pass a mesh
+  // marked so (three-gpu-pathtracer's per-object flag), and a brass knob elsewhere sharing their
+  // material still shadows.
   let fixtures = 0;
   for (const fixture of lit)
     fixture.traverse((o) => {
       if (!(o instanceof Mesh)) return;
-      const mesh = o as Mesh;
-      const unshadowing = (m: Material): Material => {
-        let piece = pieces.get(m);
-        if (piece === undefined) {
-          piece = m.clone();
-          (piece as Material & { castShadow?: boolean }).castShadow = false;
-          pieces.set(m, piece);
-        }
-        return piece;
-      };
-      mesh.material = Array.isArray(mesh.material) ? mesh.material.map(unshadowing) : unshadowing(mesh.material);
-      (mesh as Mesh & { visibleToShadowRays?: boolean }).visibleToShadowRays = false;
+      o.visibleToShadowRays = false;
       fixtures++;
     });
   root.updateMatrixWorld(true);

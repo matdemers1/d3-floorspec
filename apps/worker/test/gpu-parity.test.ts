@@ -18,10 +18,10 @@ import type { SkyPreset } from '@floorspec/mesh/sky';
  * The views: rooms under an overcast sky, the house outside in the sun, and (FLR-T-13.18) a room by
  * a clear day's sun through its windows and a room at night by its lamps. The last two became
  * comparable when the GPU still was made to trace them as this tracer does (gpu/scene.ts
- * `prepareHouse` and patches/three-gpu-pathtracer@0.0.26.patch): shadow rays toward the sun and the
- * lamps pass glass by what it lets through, and toward a lamp pass the luminaires' own pieces; a lit
- * lens glows for the camera and lights nothing; every face is seen from both sides; a pane reflects
- * as two faces do.
+ * `prepareHouse` and patches/three-gpu-pathtracer@0.0.27.patch): shadow rays toward the sun and the
+ * lamps pass glass by what it lets through, and pass the lit luminaires' own pieces; a lit lens glows
+ * for the camera and lights nothing; every face is seen from both sides; a pane reflects as two faces
+ * do.
  */
 
 interface View {
