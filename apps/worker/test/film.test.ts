@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { UNITS_PER_METRE } from '@floorspec/mesh';
-import { Adaptation, describeVideo, ffmpegReady, filmChoiceProblem, finalSamples, renderFilm, type FilmProgress } from '../src/film/index.js';
+import { Adaptation, describeVideo, ffmpegReady, filmChoiceProblem, FilmStopped, finalSamples, renderFilm, type FilmProgress } from '../src/film/index.js';
 import { filmParams } from '../src/queue/handlers.js';
 import { rasterize, type DrawList, type RasterLamp } from '../src/render3d/raster.js';
 import { rasterSky } from '../src/render3d/index.js';
@@ -95,6 +95,28 @@ describe.runIf(encoding)('a film, rendered and encoded', () => {
     expect(r.frames).toBe(24);
     expect(r.video).toMatchObject({ container: 'mp4', codec: 'h264' });
   }, 120_000);
+
+  it('stops at once when its signal is aborted, between frames as well as at a report (FLR-T-14.10)', async () => {
+    const stop = new AbortController();
+    let n = 0;
+    const film = renderFilm(withFilm(), {
+      film: 'F1',
+      quality: 'draft',
+      format: 'mp4',
+      size: '720p',
+      fps: 24,
+      light: 'timeline',
+      pixels: { width: 32, height: 18 },
+      signal: stop.signal,
+      onFrame: () => {
+        if (++n === 2) stop.abort();
+      },
+    });
+    await expect(film).rejects.toBeInstanceOf(FilmStopped);
+    expect(n).toBe(2);
+    // Already aborted: nothing starts.
+    await expect(renderFilm(withFilm(), { film: 'F1', quality: 'draft', format: 'mp4', size: '720p', fps: 24, light: 'timeline', signal: AbortSignal.abort() })).rejects.toBeInstanceOf(FilmStopped);
+  });
 
   it('stops when told to, and keeps nothing', async () => {
     let n = 0;

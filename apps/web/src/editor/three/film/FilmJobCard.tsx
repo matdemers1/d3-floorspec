@@ -55,7 +55,12 @@ export function FilmJobCard({ store }: { store: EditorStore }) {
     let live = true;
     const timer = window.setInterval(() => {
       void getExport(store.projectId, id)
-        .then((j) => { if (live && films.get().job?.id === j.id) films.set({ job: j }); })
+        .then((j) => {
+          const now = films.get().job;
+          // A look that left before a cancel landed never puts a stopped film back to rendering.
+          const stale = now !== null && (now.status === 'done' || now.status === 'failed') && (j.status === 'queued' || j.status === 'running');
+          if (live && now?.id === j.id && !stale) films.set({ job: j });
+        })
         .catch(() => undefined);
     }, 1000);
     return () => {
