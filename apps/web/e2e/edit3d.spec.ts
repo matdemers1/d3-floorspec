@@ -60,11 +60,30 @@ async function shoot(page: Page, name: string): Promise<void> {
   }
 }
 
+/**
+ * The theme switched and settled: its colours ease in (the chrome's CSS transitions), and on a runner
+ * drawing a full-screen house in software a frame can hold the main thread long enough that a fixed
+ * wait ends before those transitions have even begun — axe then measures the chrome between themes.
+ * So: two frames after the switch, and no CSS transition still running.
+ */
+async function themeSettled(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => new Promise<boolean>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        resolve(document.getAnimations().every((a) => !(a instanceof CSSTransition) || a.playState !== 'running'));
+      }));
+    }),
+    undefined,
+    { timeout: 30_000, polling: 250 },
+  );
+}
+
 async function axe(page: Page, state: string): Promise<void> {
   for (const theme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: theme });
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     await page.waitForTimeout(800);
+    await themeSettled(page);
     const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.help} — ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`), `${state} (${theme})`).toEqual([]);
   }
