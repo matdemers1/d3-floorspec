@@ -90,6 +90,15 @@ export const CONTEXT_KEYS: readonly SheetGroup[] = [
     ],
   },
   {
+    id: 'three',
+    label: 'In the 3D view',
+    rows: [
+      { id: 'three.section', label: 'Open or close the section box', keys: 'X', words: 'section cut box plane' },
+      { id: 'three.sectionFace', label: 'On a section box handle: move the face out by a 3″ module, or in (⇧ four)', keys: '→ ↑  ← ↓', words: 'section box handle face' },
+      { id: 'three.explode', label: 'In the exploded view: the levels apart or together', keys: 'Space', words: 'exploded axonometric animate' },
+    ],
+  },
+  {
     id: 'panels',
     label: 'Drawers and lists',
     rows: [

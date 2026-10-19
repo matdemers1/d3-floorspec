@@ -90,6 +90,11 @@ import { defineConfig, devices } from '@playwright/test';
  *                   to the island's handles (→ a 3″ module, ⇧ four, Enter to its width, the rotate handle), a room's
  *                   side, ⌥1–⌥7, the drawers in full screen; axe on each in both themes; the mode menu as each kind
  *                   of colour blindness sees it.
+ *   - `section`   — FLR-T-14.6: the section box on the Courtyard House — opened from the Experiences cluster, its
+ *                   cut capped and hatched (a probe of the caps' pixels), its east face dragged and nudged by the
+ *                   keys, the plane, a PNG still; the exploded axonometric — levels and roof lifted under an
+ *                   orthographic camera, leader labels, Space in and out (at once under reduced motion), an SVG
+ *                   still; axe in both themes.
  *
  * Run with:
  *
@@ -97,7 +102,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; section, +50).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -202,6 +207,8 @@ const SUITES: Suite[] = [
   { name: 'phrases', spec: 'phrases.spec.ts', port: PORT + 47, database: databaseFor('phrases'), setupToken: true },
   // FLR-T-18.16: the P18 editor by keyboard and assistive technology — ?, the element list, handles, drawers, modes, axe.
   { name: 'keys', spec: 'keys.spec.ts', port: PORT + 48, database: databaseFor('keys'), setupToken: true },
+  // FLR-T-14.6: the section box and plane, capped and hatched cuts, handles by pointer and keys, the exploded axonometric, stills, axe.
+  { name: 'section', spec: 'section.spec.ts', port: PORT + 50, database: databaseFor('section'), setupToken: true, gl: true },
 ];
 
 /**
