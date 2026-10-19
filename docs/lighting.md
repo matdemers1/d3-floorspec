@@ -73,7 +73,9 @@ A luminaire's lamp sits just outside its model (under the lens, under a downligh
 a sconce), and on top of that no piece of a luminaire's own model — canopy, trim, shade, lens — ever
 blocks its lamp: the path tracer's shadow rays toward a lamp pass every triangle of that lamp's
 fixture (`PtScene.owner`), and the editor leaves every luminaire piece out of the shadow maps. The
-GPU still lets a lamp's shadow rays through every lit luminaire's pieces (FLR-T-13.18).
+GPU still lets shadow rays through every lit luminaire's pieces (FLR-T-13.18) — since
+three-gpu-pathtracer 0.0.27 by the library's per-object `visibleToShadowRays`, which passes the sun's
+shadow rays too, so a lit luminaire casts no sun shadow in a GPU still by day (FLR-T-13.15).
 
 A lit lens shows; it does not light. Its glow (31 250 cd/m²) is what the camera sees of it, directly,
 in a mirror or a polished face, or through glass. The light the room gets is its lamp's. In the GPU
@@ -131,12 +133,13 @@ bath under an overcast sky; the house outside in the sun; the great room on a cl
 the sun through its windows; and the kitchen at night with its lamps on.
 
 The last two agree because the GPU still was made to trace them as the CPU still does (FLR-T-13.18).
-Its library, three-gpu-pathtracer 0.0.26, is patched; `patches/README.md` says how, and what to do
-at 0.0.27. The scene side is in `gpu/scene.ts` `prepareHouse`. Together they make these changes:
+Its library, three-gpu-pathtracer 0.0.27, is patched; `patches/README.md` says how, and what to
+check at the next version. The scene side is in `gpu/scene.ts` `prepareHouse`. Together they make
+these changes:
 
 - Shadow rays toward the sun and the lamps pass glass, dimmed by what it lets through.
 - A pane's far-side lamps and sun are not sampled from the pane itself, so they are not counted twice.
-- A lamp's shadow rays pass lit luminaires' pieces.
+- Shadow rays pass lit luminaires' pieces (the library's `visibleToShadowRays`; the sun's too).
 - A lit lens lights nothing.
 - Every face is seen from both sides.
 - A pane is traced at the index whose one face reflects what its two faces do (`paneIor`): 7.7% face

@@ -5,9 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  three-gpu-pathtracer@0.0.26:
-    hash: da850b1a671d6228b28773c89587121a3e4e32ec5a515ec9e516c7f11d823bbd
-    path: patches/three-gpu-pathtracer@0.0.26.patch
+  three-gpu-pathtracer@0.0.27:
+    hash: 076432e8959c23b4da37f5b499c5b7686ab5d133f5f2176dc2e29fb6b027499f
+    path: patches/three-gpu-pathtracer@0.0.27.patch
 
 importers:
 
@@ -168,8 +168,8 @@ importers:
         specifier: ^1.44.0
         version: 1.48.0(react@19.3.0)
       oidn-web:
-        specifier: 0.4.0
-        version: 0.4.0
+        specifier: 0.5.0
+        version: 0.5.0
       pdfjs-dist:
         specifier: 6.4.299
         version: 6.4.299
@@ -186,11 +186,11 @@ importers:
         specifier: 0.186.1
         version: 0.186.1
       three-gpu-pathtracer:
-        specifier: 0.0.26
-        version: 0.0.26(patch_hash=da850b1a671d6228b28773c89587121a3e4e32ec5a515ec9e516c7f11d823bbd)(three-mesh-bvh@0.9.15(three@0.186.1))(three@0.186.1)(xatlas-web@0.1.0)
+        specifier: 0.0.27
+        version: 0.0.27(patch_hash=076432e8959c23b4da37f5b499c5b7686ab5d133f5f2176dc2e29fb6b027499f)(three-mesh-bvh@0.9.16(three@0.186.1))(three@0.186.1)(xatlas-web@0.1.0)
       three-mesh-bvh:
-        specifier: 0.9.15
-        version: 0.9.15(three@0.186.1)
+        specifier: 0.9.16
+        version: 0.9.16(three@0.186.1)
     devDependencies:
       '@axe-core/playwright':
         specifier: 4.13.0
@@ -2678,8 +2678,8 @@ packages:
   ohash@2.0.12:
     resolution: {integrity: sha512-65S/5gk9YSsaRjcyf7Nfa6h/d3E8/1gslpXfI4W7Dxn/oap8IKRuNT5VXkLQ1YFKIEg4apRY4Pj6aiwFzrDdmw==}
 
-  oidn-web@0.4.0:
-    resolution: {integrity: sha512-Qj1pH9Py74hH16bTPENxnpPt+mBcUg6pAYXisfbaZSkTRRIGaqtURKkyE79EWMs8nabP10sFH9EF90eK4qIaKw==}
+  oidn-web@0.5.0:
+    resolution: {integrity: sha512-IlX6RxLgFj88fGUDgztpm3hNhpHoSYufZQeHIqxP5zmE9BobKyqDAqlEQCSXd8cbY06Rf+R3q1sHkGOmh45wnQ==}
 
   on-exit-leak-free@2.1.2:
     resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
@@ -3102,15 +3102,15 @@ packages:
     resolution: {integrity: sha512-e2zZ96wSChazBsbENf/Pcm/4swHt2cEKQ92rhUjkL9GCKiTDJIaTBenjE/m9DXi0QBmTMDkFDdOomUy20A1tDQ==}
     engines: {node: '>=20'}
 
-  three-gpu-pathtracer@0.0.26:
-    resolution: {integrity: sha512-LtLnv7xu39HjwvH9JGD5a0PISLOBcPHBYp6BcxE2+Unp5xhUGxC0U0UWhlE3dZSk32fBN3K2BnjtNjHE7ayvkQ==}
+  three-gpu-pathtracer@0.0.27:
+    resolution: {integrity: sha512-NLUYnL9nSLcUFurIHHLHbnmpKLaXi8JbGqfTeWRSx4h+l7Ndpllwj2DK2uOYTSUaN5+PuZ1JRqv1ynHEB1XCwQ==}
     peerDependencies:
       three: '>=0.185.0'
       three-mesh-bvh: '>=0.9.15'
       xatlas-web: ^0.1.0
 
-  three-mesh-bvh@0.9.15:
-    resolution: {integrity: sha512-9xdEDkCzFoT8VPFH9DznwFSdbaIEjMvM106Iqq7TJurrIheUKDcdW4prfJTCxryih4XS/UxWs0H3K4MLMRFyOQ==}
+  three-mesh-bvh@0.9.16:
+    resolution: {integrity: sha512-2RK+5MJOaiHJhopURn2CUkOHiF3tFloD0uZBfhebV0CKB7mgVLpWUWaDpOyhNJRDkKKe7x4rRfTHZ32GwpXdkw==}
     peerDependencies:
       three: '>= 0.159.0'
 
@@ -5461,7 +5461,7 @@ snapshots:
 
   ohash@2.0.12: {}
 
-  oidn-web@0.4.0:
+  oidn-web@0.5.0:
     dependencies:
       '@petamoriken/float16': 3.9.3
 
@@ -5890,13 +5890,13 @@ snapshots:
     dependencies:
       real-require: 1.0.0
 
-  three-gpu-pathtracer@0.0.26(patch_hash=da850b1a671d6228b28773c89587121a3e4e32ec5a515ec9e516c7f11d823bbd)(three-mesh-bvh@0.9.15(three@0.186.1))(three@0.186.1)(xatlas-web@0.1.0):
+  three-gpu-pathtracer@0.0.27(patch_hash=076432e8959c23b4da37f5b499c5b7686ab5d133f5f2176dc2e29fb6b027499f)(three-mesh-bvh@0.9.16(three@0.186.1))(three@0.186.1)(xatlas-web@0.1.0):
     dependencies:
       three: 0.186.1
-      three-mesh-bvh: 0.9.15(three@0.186.1)
+      three-mesh-bvh: 0.9.16(three@0.186.1)
       xatlas-web: 0.1.0
 
-  three-mesh-bvh@0.9.15(three@0.186.1):
+  three-mesh-bvh@0.9.16(three@0.186.1):
     dependencies:
       three: 0.186.1
 
