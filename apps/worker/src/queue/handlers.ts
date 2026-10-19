@@ -32,6 +32,11 @@ export interface JobRow {
    * `progress`, where the api shows it. Absent: nobody is listening.
    */
   readonly progress?: (progress: Record<string, unknown>) => Promise<void>;
+  /**
+   * Aborted when the job is no longer this worker's — cancelled by a person (FLR-T-14.10) — which the
+   * drain notices within a second whether or not the job is reporting: a long job stops at once.
+   */
+  readonly signal?: AbortSignal;
 }
 
 export interface JobFile {
@@ -453,7 +458,10 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
       const r = await renderFilm(document, {
         ...p,
         ...(images === undefined ? {} : { images }),
+        // On the film thread the maps are read from the store again, still only those the project claimed.
+        ...(opts.assetDir === undefined ? {} : { assets: { dir: opts.assetDir, ...(job.claimed === undefined ? {} : { claimed: [...job.claimed] }) } }),
         ...(job.progress === undefined ? {} : { onFrame: (f) => job.progress?.({ ...f }) }),
+        ...(job.signal === undefined ? {} : { signal: job.signal }),
       });
       return {
         name: `film-${slug(r.film.name)}-${job.versionHash.slice(0, 8)}.${r.format}`,
