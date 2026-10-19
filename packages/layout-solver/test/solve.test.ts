@@ -124,8 +124,9 @@ describe('golden summaries (reviewed by looking at the rendered plans)', () => {
     });
   });
 
-  it('two-storey, ground floor only: the bedrooms are left for the upper floor', () => {
-    const cs = solve(SAMPLES['two-storey-ground']());
+  it('two-storey, the ground floor asked for: the bedrooms are left for the upper floor', () => {
+    // Asked for one level, the solver lays out that one; asked for none, it lays out both (two-levels.test.ts).
+    const cs = solve(SAMPLES['two-storey-ground'](), { level: 'L1' });
     expect(summary(cs[0]!)).toEqual({
       strategy: 'compact',
       footprint: "41' x 27.5'",

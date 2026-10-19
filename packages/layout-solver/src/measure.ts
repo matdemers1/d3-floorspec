@@ -17,7 +17,7 @@
  * Before any of that, every variant gets a quick estimate from its rectangles alone (`estimate`),
  * so that only the most promising few are applied and checked in full.
  */
-import { check, type Diagnostic } from '@floorspec/engine';
+import { check, type CheckResult, type Diagnostic } from '@floorspec/engine';
 import { apply, type Operation } from '@floorspec/ops';
 import type { Access } from './access.js';
 import { plannedPairs } from './access.js';
@@ -71,8 +71,42 @@ const TAKE = { exterior: 7.25 / 12, interior: 2.25 / 12, separator: 0 };
 
 /** The quick estimate: net areas from rectangles less their walls, adjacency and connection as planned. */
 export function estimate(layout: Layout, segs: readonly Seg[], access: Access, brief: Brief): Measures {
+  const { rooms, adjacent } = roughly(layout, segs, access);
+  return finish('estimate', layout, brief, rooms, adjacent, plannedPairs(access), []);
+}
+
+/** One level of several, for `estimateLevels`. */
+export interface LevelPart {
+  readonly layout: Layout;
+  readonly segs: readonly Seg[];
+  readonly access: Access;
+}
+
+/**
+ * The quick estimate of a house on several levels (FLR-T-12.16), as one: `merged` holds every
+ * level's rooms under distinct keys, and `links` are the pairs a stair joins — its foot room and
+ * its head room (Core 14.1).
+ */
+export function estimateLevels(parts: readonly LevelPart[], merged: Layout, brief: Brief, links: readonly (readonly [string, string])[]): Measures {
+  const rooms = new Map<string, RoomMeasure>();
+  const adjacent = new Set<string>();
+  const connected = new Set<string>();
+  for (const part of parts) {
+    const r = roughly(part.layout, part.segs, part.access);
+    for (const [k, v] of r.rooms) rooms.set(k, v);
+    for (const k of r.adjacent) adjacent.add(k);
+    for (const k of plannedPairs(part.access)) connected.add(k);
+  }
+  for (const [a, b] of links) connected.add(pairKey(a, b));
+  return finish('estimate', merged, brief, rooms, adjacent, connected, []);
+}
+
+/** Net areas from rectangles less their walls, and the pairs of rooms that share an edge; a well is not a room. */
+function roughly(layout: Layout, segs: readonly Seg[], access: Access): { rooms: Map<string, RoomMeasure>; adjacent: Set<string> } {
+  const wells = new Set(layout.spaces.filter((s) => s.kind === 'well').map((s) => s.key));
   const rooms = new Map<string, RoomMeasure>();
   for (const s of layout.spaces) {
+    if (s.kind === 'well') continue;
     const take = (pick: (seg: Seg) => boolean): number => {
       let t = 0;
       for (const seg of segs.filter(pick)) t = Math.max(t, isExterior(seg) ? TAKE.exterior : access.separators.has(seg) ? TAKE.separator : TAKE.interior);
@@ -86,8 +120,8 @@ export function estimate(layout: Layout, segs: readonly Seg[], access: Access, b
     rooms.set(s.key, { area: w * h, w, h });
   }
   const adjacent = new Set<string>();
-  for (const seg of segs) if (seg.left !== undefined && seg.right !== undefined) adjacent.add(pairKey(seg.left, seg.right));
-  return finish('estimate', layout, brief, rooms, adjacent, plannedPairs(access), []);
+  for (const seg of segs) if (seg.left !== undefined && seg.right !== undefined && !wells.has(seg.left) && !wells.has(seg.right)) adjacent.add(pairKey(seg.left, seg.right));
+  return { rooms, adjacent };
 }
 
 function finish(
@@ -136,7 +170,7 @@ function finish(
 }
 
 export type Applied =
-  | { readonly status: 'committed'; readonly document: string; readonly measures: Measures }
+  | { readonly status: 'committed'; readonly document: string; readonly measures: Measures; readonly derived: NonNullable<CheckResult['derived']>; readonly diagnostics: readonly Diagnostic[] }
   | { readonly status: 'rejected'; readonly stage: 'apply' | 'check' | 'probe'; readonly diagnostics: readonly Diagnostic[] };
 
 /** The probe view: one synthetic item per room on the level, every pair a preferred adjacency. */
@@ -214,6 +248,8 @@ export function measure(
     status: 'committed',
     document: result.document,
     measures: finish('engine', layout, brief, rooms, adjacent, connected, view.diagnostics, items, adjacency),
+    derived: view.derived,
+    diagnostics: view.diagnostics,
   };
 }
 

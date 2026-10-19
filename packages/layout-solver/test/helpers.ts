@@ -36,7 +36,8 @@ export function withBrief(committed: Doc, program: Program, c: Candidate): Doc {
  */
 export function connections(committed: Doc, roomIds: readonly string[]): { adjacent: Set<string>; connected: Set<string>; result: CheckResult } {
   const view = structuredClone(committed);
-  view['floorspec'] = '0.2';
+  // A program needs Core 0.2 or later: a 0.1 document is read as 0.2, a later one keeps its version.
+  if (view['floorspec'] === '0.1') view['floorspec'] = '0.2';
   const rooms = view['rooms'] as Coll;
   for (const room of Object.values(rooms)) delete room['brief'];
   const items: Record<string, unknown> = {};

@@ -42,7 +42,7 @@ export interface Target {
 
 export interface Emitted {
   readonly batch: Operation[];
-  /** Room ID of each space. */
+  /** Room ID of each space (a well has none). */
   readonly roomIds: ReadonlyMap<string, string>;
   /** Wall ID of each walled segment. */
   readonly wallIds: ReadonlyMap<Seg, string>;
@@ -61,7 +61,7 @@ const TYPES = {
   wideWindow: { kind: 'windowType', name: "Window 5'-0\" x 4'-0\"", width: inBu(60), height: inBu(48), sill: inBu(36) },
 } as const satisfies Record<string, Record<string, unknown>>;
 
-type TypeName = keyof typeof TYPES;
+export type TypeName = keyof typeof TYPES;
 
 const WINDOWED = new Set(['sleeping', 'living', 'dining', 'kitchen', 'office']);
 
@@ -90,6 +90,11 @@ export interface EmitOptions {
   readonly windows: boolean;
   /** Set each room's `brief` (Core 0.2, 11.3) in the batch — for an Ops 0.2 applier. */
   readonly brief: boolean;
+  /**
+   * The types an earlier part of the same batch added — the level below's, for an upper level
+   * (FLR-T-12.16) — reused rather than added again; the ones this part adds are added to it.
+   */
+  readonly types?: Map<TypeName, string>;
 }
 
 /** The batch that draws `layout` on the target level. */
@@ -98,12 +103,12 @@ export function emit(layout: Layout, segs: readonly Seg[], access: Access, targe
   const byKey = new Map(layout.spaces.map((s) => [s.key, s]));
   const used = new Set<TypeName>(['exterior']);
   if (segs.some((s) => !isExterior(s) && !access.separators.has(s))) used.add('interior');
-  used.add('entry');
+  if (access.entry.seg !== undefined) used.add('entry');
   for (const c of access.conns) if (c.kind === 'door') used.add(c.door === 'closet' ? 'closet' : 'passage');
   if (access.garageDoor !== undefined) used.add('garage');
 
   // Windows: one per outside wall of a habitable room long enough to take it, away from the doors.
-  const doorSegs = new Set<Seg>([access.entry.seg, ...(access.garageDoor ? [access.garageDoor.seg] : [])]);
+  const doorSegs = new Set<Seg>([...(access.entry.seg ? [access.entry.seg] : []), ...(access.garageDoor ? [access.garageDoor.seg] : [])]);
   const windows: { seg: Seg; type: 'window' | 'wideWindow' }[] = [];
   if (options.windows)
     for (const seg of segs) {
@@ -117,9 +122,9 @@ export function emit(layout: Layout, segs: readonly Seg[], access: Access, targe
     }
 
   const batch: Operation[] = [...target.prelude];
-  const typeId = new Map<TypeName, string>();
+  const typeId = options.types ?? new Map<TypeName, string>();
   for (const name of Object.keys(TYPES) as TypeName[]) {
-    if (!used.has(name)) continue;
+    if (!used.has(name) || typeId.has(name)) continue;
     const id = ids.mint('T');
     typeId.set(name, id);
     batch.push({ op: 'addElement', collection: 'types', id, element: { ...TYPES[name] } });
@@ -146,6 +151,7 @@ export function emit(layout: Layout, segs: readonly Seg[], access: Access, targe
 
   const roomIds = new Map<string, string>();
   for (const s of layout.spaces) {
+    if (s.kind === 'well') continue;
     const id = ids.mint('R');
     roomIds.set(s.key, id);
     const r = s.rect;
@@ -167,7 +173,7 @@ export function emit(layout: Layout, segs: readonly Seg[], access: Access, targe
     };
   };
   // The front door swings in; on an exterior wall drawn clockwise, inside is the right.
-  batch.push(door(access.entry.seg, 'entry', byKey.get(access.entry.space), true));
+  if (access.entry.seg !== undefined) batch.push(door(access.entry.seg, 'entry', byKey.get(access.entry.space), true));
   if (access.garageDoor !== undefined) {
     const seg = access.garageDoor.seg;
     const w = Math.min(DOOR_WIDTH.garage, Math.floor((seg.length * 6 - 24) / 12) * 12);

@@ -736,7 +736,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     {
       title: 'Propose layouts',
       description:
-        'Lay out the brief (program and adjacencies) on one empty level as ranked candidate plans, each a pending changeset carrying the brief\'s ops.',
+        'Lay out the brief (program and adjacencies) on one empty level as ranked candidate plans, each a pending changeset carrying the brief\'s ops. Items preferring two stacked empty levels: both, with a stair.',
       inputSchema: compactSchema(
         z.strictObject({
           project: ProjectHandle,
