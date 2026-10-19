@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 // The named export: under NodeNext the default resolves to the module namespace, not the class.
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { firstRunSetup, modelOf, password, settled } from './support.js';
+import { firstRunSetup, modelOf, settled } from './support.js';
 
 /**
  * FLR-T-14.1: films (the board's "14.1 · Film" frames). The Courtyard House (the worker's fixture)
@@ -65,7 +65,7 @@ async function axe(page: Page, state: string): Promise<void> {
 }
 
 /** The suite's one account: the first test sets it up, the second signs in with it. */
-const DIRECTOR = { name: 'Director', email: 'director@example.test', password: password('films') };
+const DIRECTOR = { name: 'Director', email: 'director@example.test', password: 'films-director-e2e-only' };
 
 const filmOf = async (page: Page, project: string) => Object.values(((await modelOf(page, project)) as unknown as Films).extras?.d3floorspec?.films ?? {})[0];
 

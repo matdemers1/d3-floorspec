@@ -71,10 +71,13 @@ function report(c: Candidate) {
     label: c.label,
     strategy: c.strategy,
     level: c.level,
+    // Every level the candidate lays out; a two-level candidate's stair, as the engine derives it (FLR-T-12.16).
+    levels: c.levels,
+    ...(c.stair === undefined ? {} : { stair: c.stair }),
     footprint: c.footprint,
     score: c.score,
     explanation: c.explanation,
-    rooms: c.rooms.map((r) => ({ id: r.id, name: r.name, function: r.function, ...(r.item === undefined ? {} : { item: r.item }), area: r.area })),
+    rooms: c.rooms.map((r) => ({ id: r.id, name: r.name, function: r.function, ...(r.item === undefined ? {} : { item: r.item }), area: r.area, level: r.level })),
     unplaced: c.unplaced,
     ops: c.batch.length,
   };
@@ -83,7 +86,8 @@ function report(c: Candidate) {
 /**
  * Layout candidates (FLR-T-4.3, FLR-REQ-074, FLR-REQ-075): run the non-normative solver
  * (`@floorspec/layout-solver`) on main's program and open one pending changeset per ranked
- * candidate. Nothing is written to main — opening a candidate never overwrites the model; a person
+ * candidate. A brief whose items prefer two empty levels, one above the other, is laid out on both,
+ * with a stair between them (FLR-T-12.16). Nothing is written to main — opening a candidate never overwrites the model; a person
  * accepts one (FLR-ADR-016). Accepting one makes the others stop applying: their walls would land
  * where the accepted one's are.
  *

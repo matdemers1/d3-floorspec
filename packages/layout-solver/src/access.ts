@@ -7,6 +7,11 @@
  * a bath en suite to its bedroom, a bedroom onto the hall, a laundry off the kitchen, a closet off
  * its bedroom. A bedroom never opens off another bedroom, and nothing but a closet is entered
  * through a bath. A layout in which some room cannot be reached from the front door is dropped.
+ *
+ * An upper level (FLR-T-12.16) has no front door: it is entered by the stair, at the hall the stair
+ * arrives in (`arrival`), and the side of the stair's well that the stair arrives at is left open —
+ * a separator, as a well's arrival side is (Core 17.6). The well is not a room: nothing opens into
+ * it and nothing is reached through it.
  */
 import { between, isExterior, insideOf, pairKey, type Layout, type Seg, type Space } from './layout.js';
 import { OPEN_FUNCTIONS } from './program.js';
@@ -30,7 +35,8 @@ export interface Conn {
 }
 
 export interface Access {
-  readonly entry: { readonly space: string; readonly seg: Seg };
+  /** The front door, and the room it opens into; on an upper level, the room the stair arrives in and no door (`seg` absent). */
+  readonly entry: { readonly space: string; readonly seg?: Seg };
   readonly garageDoor?: { readonly space: string; readonly seg: Seg };
   readonly conns: Conn[];
   /** Segments drawn as separators rather than walls. */
@@ -77,8 +83,8 @@ export const marginAt = (out: boolean): number => (out ? 9 : 4.5);
 /** Whether a segment takes an opening `inches` wide, clear of the joins at both ends. */
 export const fits = (seg: Seg, inches: number): boolean => seg.length * 6 >= inches + marginAt(seg.aOut) + marginAt(seg.bOut);
 
-const isHall = (s: Space): boolean => s.kind === 'hall' || s.fn === 'circulation';
-const isOpen = (s: Space): boolean => OPEN_FUNCTIONS.has(s.fn);
+const isHall = (s: Space): boolean => s.kind === 'hall' || (s.kind !== 'well' && s.fn === 'circulation');
+const isOpen = (s: Space): boolean => s.kind !== 'well' && OPEN_FUNCTIONS.has(s.fn);
 export const inNetwork = (s: Space): boolean => isHall(s) || isOpen(s);
 
 const NEVER = -1;
@@ -127,15 +133,21 @@ const ENTRY_PREFERENCE: Readonly<Record<string, number>> = { circulation: 100, l
 /** Rooms a front door may open into when the house has no living spaces at all. */
 const LAST_RESORT_ENTRY: ReadonlySet<string> = new Set(['office', 'utility', 'laundry', 'unspecified']);
 
+export interface AccessOptions {
+  /** An upper level's: the space its stair arrives in, entered from below rather than by a front door. */
+  readonly arrival?: string;
+}
+
 /** Plan the access of a layout over its segments. Undefined when some room cannot be reached. */
-export function planAccess(layout: Layout, segs: readonly Seg[]): Access | undefined {
+export function planAccess(layout: Layout, segs: readonly Seg[], options: AccessOptions = {}): Access | undefined {
   const byKey = new Map(layout.spaces.map((s) => [s.key, s]));
   const conns: Conn[] = [];
   const separators = new Set<Seg>();
   const shared = (p: string, q: string): Seg[] => between(segs, p, q);
   const neighbours = new Map<string, string[]>();
+  const wells = new Set(layout.spaces.filter((s) => s.kind === 'well').map((s) => s.key));
   for (const s of segs) {
-    if (s.left === undefined || s.right === undefined) continue;
+    if (s.left === undefined || s.right === undefined || wells.has(s.left) || wells.has(s.right)) continue;
     for (const [p, q] of [
       [s.left, s.right],
       [s.right, s.left],
@@ -147,9 +159,15 @@ export function planAccess(layout: Layout, segs: readonly Seg[]): Access | undef
   }
   for (const list of neighbours.values()) list.sort();
 
-  // The front door: on the south face if it can be, into an entry, else the living spaces.
-  let entry: { space: string; seg: Seg; score: number } | undefined;
-  for (const seg of segs) {
+  // The front door: on the south face if it can be, into an entry, else the living spaces. An upper
+  // level is entered where its stair arrives, through the open side of the well.
+  let entry: { space: string; seg?: Seg; score: number } | undefined;
+  if (options.arrival !== undefined) {
+    if (!byKey.has(options.arrival)) return undefined;
+    entry = { space: options.arrival, score: 0 };
+    for (const w of wells) for (const s of shared(w, options.arrival)) separators.add(s);
+  }
+  for (const seg of options.arrival === undefined ? segs : []) {
     if (!isExterior(seg) || !fits(seg, DOOR_WIDTH.entry)) continue;
     const space = byKey.get(insideOf(seg))!;
     const pref = space.kind === 'hall' ? 50 : (ENTRY_PREFERENCE[space.fn] ?? (LAST_RESORT_ENTRY.has(space.fn) ? 10 : undefined));
@@ -211,7 +229,7 @@ export function planAccess(layout: Layout, segs: readonly Seg[]): Access | undef
     }
   };
   flood(entry.space);
-  const leaves = layout.spaces.filter((s) => !inNetwork(s)).map((s) => s.key);
+  const leaves = layout.spaces.filter((s) => !inNetwork(s) && s.kind !== 'well').map((s) => s.key);
   for (;;) {
     let best: { leaf: string; nb: string; p: number; seg: Seg; door: DoorKind } | undefined;
     for (const lk of leaves) {
@@ -238,7 +256,7 @@ export function planAccess(layout: Layout, segs: readonly Seg[]): Access | undef
     link(best.nb, best.leaf);
     flood(best.leaf);
   }
-  if (layout.spaces.some((s) => !reached.has(s.key))) return undefined;
+  if (layout.spaces.some((s) => s.kind !== 'well' && !reached.has(s.key))) return undefined;
 
   // A garage gets its overhead door on its longest outside face, the front if it can.
   let garageDoor: { space: string; seg: Seg } | undefined;
@@ -248,7 +266,42 @@ export function planAccess(layout: Layout, segs: readonly Seg[]): Access | undef
     const seg = longestFitting(front.length > 0 ? front : outs, 96);
     if (seg !== undefined) garageDoor = { space: g.key, seg };
   }
-  return { entry: { space: entry.space, seg: entry.seg }, ...(garageDoor === undefined ? {} : { garageDoor }), conns, separators, names: names(layout, conns) };
+  return { entry: { space: entry.space, ...(entry.seg === undefined ? {} : { seg: entry.seg }) }, ...(garageDoor === undefined ? {} : { garageDoor }), conns, separators, names: names(layout, conns) };
+}
+
+/** An opening the plan puts in a segment: where along it, in base units from the segment's `a` end. */
+export interface OpeningSpan {
+  readonly seg: Seg;
+  readonly start: number;
+  readonly end: number;
+}
+
+const IN = 32_512;
+
+/**
+ * Where each door, cased opening, front door and garage door goes along its segment, as emit.ts
+ * places it: a door a join's margin from the segment's `a` end (an interior wall is drawn from `a`),
+ * everything else centred.
+ */
+export function openingSpans(access: Access): OpeningSpan[] {
+  const out: OpeningSpan[] = [];
+  const centred = (seg: Seg, inches: number): OpeningSpan => {
+    const len = seg.length * 6 * IN;
+    const w = Math.round(inches * IN);
+    const start = Math.floor((len - w) / 2);
+    return { seg, start, end: start + w };
+  };
+  if (access.entry.seg !== undefined) out.push(centred(access.entry.seg, DOOR_WIDTH.entry));
+  if (access.garageDoor !== undefined) out.push(centred(access.garageDoor.seg, Math.min(DOOR_WIDTH.garage, Math.floor((access.garageDoor.seg.length * 6 - 24) / 12) * 12)));
+  for (const c of access.conns) {
+    if (c.seg === undefined || c.kind === 'open') continue;
+    if (c.kind === 'cased') out.push(centred(c.seg, c.width!));
+    else {
+      const start = Math.round(marginAt(c.seg.aOut) * IN);
+      out.push({ seg: c.seg, start, end: start + Math.round(DOOR_WIDTH[c.door!] * IN) });
+    }
+  }
+  return out;
 }
 
 /** The connected pairs a plan intends (for the quick pre-score, before the engine measures them). */

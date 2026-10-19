@@ -22,7 +22,7 @@ export const HALL = ftG(4);
 /** The least depth of a closet the solver adds behind a small room. */
 const CLOSET_MIN = ftG(2.5);
 
-interface Spec {
+export interface Spec {
   readonly key: string;
   readonly name: string;
   readonly fn: string;
@@ -30,30 +30,31 @@ interface Spec {
   readonly req?: Req;
 }
 
-interface Cell {
+export interface Cell {
   readonly spec: Spec;
   size: number;
 }
 
 /** A column of a band: its width, and its cells from the band's inner edge (the hall side) outwards. */
-interface Column {
+export interface Column {
   width: number;
   readonly cells: Cell[];
 }
 
-const specOf = (r: Req): Spec => ({ key: r.key, name: r.name, fn: r.fn, kind: 'room', req: r });
+export const specOf = (r: Req): Spec => ({ key: r.key, name: r.name, fn: r.fn, kind: 'room', req: r });
 
-/** Mints the solver's own closets and halls with stable keys. */
+/** Mints the solver's own closets and halls with stable keys; an upper level's keys carry a prefix, so two levels' never meet. */
 export class Extras {
   private closets = 0;
   private halls = 0;
+  constructor(private readonly prefix = '') {}
   closet(): Spec {
     this.closets++;
-    return { key: `closet-${String(this.closets)}`, name: this.closets === 1 ? 'Closet' : `Closet ${String(this.closets)}`, fn: 'storage', kind: 'closet' };
+    return { key: `${this.prefix}closet-${String(this.closets)}`, name: this.closets === 1 ? 'Closet' : `Closet ${String(this.closets)}`, fn: 'storage', kind: 'closet' };
   }
-  hall(): Spec {
+  hall(name = 'Hall'): Spec {
     this.halls++;
-    return { key: `hall-${String(this.halls)}`, name: this.halls === 1 ? 'Hall' : `Hall ${String(this.halls)}`, fn: 'circulation', kind: 'hall' };
+    return { key: `${this.prefix}hall-${String(this.halls)}`, name: this.halls === 1 ? name : `${name} ${String(this.halls)}`, fn: 'circulation', kind: 'hall' };
   }
 }
 
@@ -101,7 +102,7 @@ function canStack(r: Req, s: Req, depth: number): boolean {
 const needsAccess = (r: Req): number => (r.host !== undefined ? 0 : r.fn === 'storage' || r.fn === 'mechanical' ? 1 : 2);
 
 /** The columns of a band of `depth`, rooms in order from west to east. */
-function bandColumns(order: readonly Req[], depth: number, extras: Extras): Column[] | undefined {
+export function bandColumns(order: readonly Req[], depth: number, extras: Extras): Column[] | undefined {
   const cols: Column[] = [];
   for (let i = 0; i < order.length; i++) {
     const r = order[i]!;
@@ -137,10 +138,10 @@ function bandColumns(order: readonly Req[], depth: number, extras: Extras): Colu
   return cols;
 }
 
-const widthOf = (cols: readonly Column[]): number => sum(cols.map((c) => c.width));
+export const widthOf = (cols: readonly Column[]): number => sum(cols.map((c) => c.width));
 
 /** Widen a band's columns to `width`, in proportion to their widths. Undefined if that stretches them too far. */
-function stretch(cols: Column[], width: number, limit: number): boolean {
+export function stretch(cols: Column[], width: number, limit: number): boolean {
   const have = widthOf(cols);
   if (have === width) return true;
   if (have > width || cols.length === 0) return cols.length === 0 && width === 0;
@@ -153,13 +154,13 @@ function stretch(cols: Column[], width: number, limit: number): boolean {
   return true;
 }
 
-interface Placed {
+export interface Placed {
   readonly spec: Spec;
   readonly rect: Rect;
 }
 
 /** Place a band's columns from x0, filling [y0, y1]; inner cells at the top when innerTop. */
-function placeBand(cols: readonly Column[], x0: number, y0: number, y1: number, innerTop: boolean): Placed[] {
+export function placeBand(cols: readonly Column[], x0: number, y0: number, y1: number, innerTop: boolean): Placed[] {
   const out: Placed[] = [];
   let x = x0;
   for (const c of cols) {
@@ -206,7 +207,7 @@ export function unitsOf(reqs: readonly Req[]): Unit[] {
  * between bedrooms; the largest bedroom at the far (east) end when `primaryFar`, its en-suite rooms
  * on the side towards the rest; leftover small rooms at the west end, nearest the living spaces.
  */
-function orderBand(units: readonly Unit[], primaryFar: boolean): Req[] {
+export function orderBand(units: readonly Unit[], primaryFar: boolean): Req[] {
   const beds = units.filter((u) => u.sleeping).sort((a, b) => (primaryFar ? a.area - b.area : b.area - a.area) || byKey(a.reqs[0]!, b.reqs[0]!));
   const singles = units.filter((u) => !u.sleeping).sort((a, b) => b.area - a.area || byKey(a.reqs[0]!, b.reqs[0]!));
   const seq: Req[] = [];

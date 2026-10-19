@@ -96,10 +96,12 @@ class Targets {
     readonly camera: THREE.PerspectiveCamera,
   ) {
     this.size = new THREE.Vector2(width, height);
-    // The scene's light, and in alpha what reflects (reflectors.ts); its depth a texture the passes read.
+    // The scene's light, and in alpha what reflects (reflectors.ts); its depth a texture the passes read,
+    // with a stencil beside it (24 + 8 bits) for the section box's caps (FLR-T-14.6).
     const depth = new THREE.DepthTexture(width, height);
-    depth.type = THREE.UnsignedIntType;
-    this.hdr = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: true, depthTexture: depth });
+    depth.format = THREE.DepthStencilFormat;
+    depth.type = THREE.UnsignedInt248Type;
+    this.hdr = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: true, stencilBuffer: true, depthTexture: depth });
     this.lit = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, depthBuffer: false });
     this.ldr = new THREE.WebGLRenderTarget(width, height, { type: THREE.UnsignedByteType, depthBuffer: false });
     this.accum = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, depthBuffer: false });
