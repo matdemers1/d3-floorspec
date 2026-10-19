@@ -10,7 +10,8 @@ import { buildScene, readGlb, type Scene, type SceneOptions, type Vec3 } from '.
 import { linear } from '../export/gltf/scene.js';
 import { findRoom, PRESETS, presetCamera, roomCamera, type Camera, type Preset } from './camera.js';
 import { encodePng } from './png.js';
-import { rasterize, type DrawList, type RasterSky } from './raster.js';
+import { rasterize, type DrawList, type RasterLamp, type RasterSky } from './raster.js';
+import type { ImageSource } from '../export/gltf/glb.js';
 import { skyBounce, skyExposure, skyHarmonics, type SkyPreset } from '@floorspec/mesh/sky';
 import { resolveSky, skySummary, type ResolvedSky, type SkySummary } from '../pathtrace/sky.js';
 import { texturesOf } from '../pathtrace/index.js';
@@ -18,7 +19,7 @@ import { mipChain, type Texture } from '../pathtrace/textures.js';
 import { withLibrary } from '../export/gltf/library.js';
 
 export { PRESETS, presetCamera, roomCamera, findRoom, centroid, type Camera, type Preset } from './camera.js';
-export { LIGHTS, rasterize, shoulder, tone, type DrawList, type RasterOptions, type RasterSky } from './raster.js';
+export { LIGHTS, rasterize, shoulder, tone, type DrawList, type RasterLamp, type RasterOptions, type RasterSky } from './raster.js';
 export { encodePng } from './png.js';
 
 export const DEFAULT_WIDTH = 1024;
@@ -272,23 +273,10 @@ export function rasterSky(sky: ResolvedSky, groundY: number): RasterSky {
   };
 }
 
-/** Render a scene: from a named view, or from inside a room. */
-export function renderScene(
-  scene: Scene,
-  options: Omit<Render3dOptions, 'design' | 'sky' | 'at'> & {
-    readonly skyLight?: ResolvedSky;
-    /** A camera given whole (FLR-T-13.10, a saved view's), in place of `camera` and `room`; and the picture's size. */
-    readonly shot?: { readonly camera: Camera; readonly width: number; readonly height: number };
-    /** `level` alone, without the levels below it. */
-    readonly only?: boolean;
-    /** Exposure compensation: a factor on the exposure. */
-    readonly exposureScale?: number;
-  } = {},
-): Render3dResult {
-  const { width, height } = options.shot === undefined ? sizeOf(options.width) : { width: options.shot.width, height: options.shot.height };
-  cutOf(scene, options.level);
+/** Each material's maps as the rasterizer draws them, decoded once: mip chains, and which a material uses. */
+function rasterMaps(scene: Scene, images: ImageSource | undefined): { chains: Texture[][]; maps: Map<number, RasterMaps> } {
   // FLR-T-13.6: each material's base colour map, the store's or the library's, as a mip chain.
-  const decoded = texturesOf(scene, withLibrary(options.images));
+  const decoded = texturesOf(scene, withLibrary(images));
   const chains: Texture[][] = [];
   const maps = new Map<number, RasterMaps>();
   const seen = new Map<Texture, number>();
@@ -307,6 +295,71 @@ export function renderScene(
     const occlusion = chainOf(m.orm);
     maps.set(material, { ...(albedo === undefined ? {} : { albedo }), ...(relief === undefined ? {} : { relief }), ...(occlusion === undefined ? {} : { occlusion }) });
   }
+  return { chains, maps };
+}
+
+/**
+ * A scene made ready to be drawn many times (FLR-T-14.1, a film's drafts): its maps decoded once, a
+ * draw list for each cutaway asked for, kept, and the lamps of the levels each one draws — each with
+ * the room it lights.
+ */
+export interface RasterStage {
+  /** The draw list of a cutaway (`level` and those below it, or it alone): the same object every time it is asked for. */
+  list(level?: string, only?: boolean): DrawList;
+  /** The lamps on the levels that cutaway draws, at full. */
+  lamps(level?: string, only?: boolean): RasterLamp[];
+  /** The ground's height under the house, metres (+Y). */
+  readonly groundY: number;
+}
+
+export function rasterStage(scene: Scene, images?: ImageSource): RasterStage {
+  const { chains, maps } = rasterMaps(scene, images);
+  const lists = new Map<string, DrawList>();
+  const order = new Map(scene.levels.map((l, i) => [l.id, i]));
+  const all = boundsOf(sceneTriangles(scene, { ground: false }));
+  const rooms = new Map(scene.rooms.map((r) => [r.id, r]));
+  return {
+    groundY: all.min[1] - 0.003,
+    list(level, only) {
+      const key = `${level ?? ''}|${only === true ? 'only' : ''}`;
+      let list = lists.get(key);
+      if (list === undefined) {
+        list = drawList(sceneTriangles(scene, { ...(level === undefined ? {} : { level, ...(only === true ? { only: true } : {}) }), ground: false, maps }), chains);
+        lists.set(key, list);
+      }
+      return list;
+    },
+    lamps(level, only) {
+      const cut = cutOf(scene, level);
+      return scene.lights.flatMap((l): RasterLamp[] => {
+        const at = order.get(l.level) ?? Infinity;
+        if (cut !== undefined && (at > cut || (only === true && at !== cut))) return [];
+        const room = l.room === null ? undefined : rooms.get(l.room);
+        if (room === undefined) return [];
+        const sr = l.spot === undefined ? 4 * Math.PI : 2 * Math.PI * (1 - (l.spot.inner + l.spot.outer) / 2);
+        const cd = l.lumens / sr;
+        return [{ position: l.position, intensity: [l.color[0] * cd, l.color[1] * cd, l.color[2] * cd], ...(l.spot === undefined ? {} : { spot: l.spot }), room: { outer: room.outer, floor: room.floor, ceiling: room.ceiling } }];
+      });
+    },
+  };
+}
+
+/** Render a scene: from a named view, or from inside a room. */
+export function renderScene(
+  scene: Scene,
+  options: Omit<Render3dOptions, 'design' | 'sky' | 'at'> & {
+    readonly skyLight?: ResolvedSky;
+    /** A camera given whole (FLR-T-13.10, a saved view's), in place of `camera` and `room`; and the picture's size. */
+    readonly shot?: { readonly camera: Camera; readonly width: number; readonly height: number };
+    /** `level` alone, without the levels below it. */
+    readonly only?: boolean;
+    /** Exposure compensation: a factor on the exposure. */
+    readonly exposureScale?: number;
+  } = {},
+): Render3dResult {
+  const { width, height } = options.shot === undefined ? sizeOf(options.width) : { width: options.shot.width, height: options.shot.height };
+  cutOf(scene, options.level);
+  const { chains, maps } = rasterMaps(scene, options.images);
   let camera: Camera;
   let tris: Tri[];
   if (options.shot !== undefined) {

@@ -21,6 +21,8 @@ export {
   type Model,
   type ProjectSummary,
   type RenderOptions,
+  type FilmJob,
+  type FilmRequest,
   type StoredAsset,
   type Validation,
 } from './client.js';

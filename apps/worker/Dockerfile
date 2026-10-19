@@ -21,6 +21,11 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm --filter @d3-floorspec/worker deploy --prod --config.minimum-release-age=0 --config.inject-workspace-packages=true /out
 
 FROM ${NODE_IMAGE} AS runtime
+# Films (FLR-T-14.1, FLR-ADR-051): Debian's ffmpeg encodes their frames — H.264 in MP4, VP9 in WebM —
+# in a process of its own (GPL, aggregated rather than linked, as IfcOpenShell is kept in its worker).
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
 # ASSET_DIR: the api's asset volume, mounted read-only (deploy/compose.yml), for the maps a 3D export embeds.
 ENV NODE_ENV=production WORKER_HEARTBEAT_FILE=/tmp/worker-heartbeat ASSET_DIR=/assets
 WORKDIR /app

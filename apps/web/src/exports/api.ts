@@ -6,7 +6,7 @@ import { api, ApiError } from '../lib/api';
  * attachment` — so the page stays put and the browser names it.
  */
 
-export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz' | 'still' | 'shots';
+export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz' | 'still' | 'shots' | 'film';
 
 /**
  * A still's sizes and qualities, as the worker offers them (apps/worker/src/pathtrace/presets.ts) —
@@ -46,6 +46,50 @@ export interface ShotsRequest {
   quality: StillQuality;
 }
 
+/**
+ * A film's choices (FLR-T-14.1, apps/worker/src/film/presets.ts): repeated here so the editor does not
+ * load the worker; the api refuses anything else. A final frame takes as many samples a pixel as a
+ * still's budget allows at its size; 4K is drafts only.
+ */
+export const FILM_SIZES = { '720p': [1280, 720], '1080p': [1920, 1080], '4k': [3840, 2160] } as const;
+export type FilmSize = keyof typeof FILM_SIZES;
+export const FILM_RATES = [24, 30, 60] as const;
+export type FilmRate = (typeof FILM_RATES)[number];
+export type FilmFormat = 'mp4' | 'webm';
+export type FilmQuality = 'draft' | 'final';
+export type FilmLight = 'timeline' | 'day-to-night';
+export const MAX_FILM_FRAMES = 3600;
+export function filmFinalSamples(size: FilmSize): number | null {
+  const [w, h] = FILM_SIZES[size];
+  const samples = 2 ** Math.floor(Math.log2(Math.min(256, MAX_WORK / (w * h))));
+  return samples < 32 ? null : samples;
+}
+
+/** A film's request (FLR-T-14.1). */
+export interface FilmRequest {
+  film?: string;
+  quality: FilmQuality;
+  format: FilmFormat;
+  size: FilmSize;
+  fps: FilmRate;
+  light: FilmLight;
+  timelapse?: { date?: string; from?: string; to?: string; lightsAtDusk?: boolean };
+}
+
+/** A film job's facts, as the api shows them. */
+export interface FilmFacts {
+  id: string | null;
+  name: string | null;
+  quality: FilmQuality;
+  format: FilmFormat;
+  size: FilmSize;
+  fps: number;
+  frames: number | null;
+  light: FilmLight;
+  timelapse: { date: string; from: string; to: string; lightsAtDusk: boolean } | null;
+  samples?: number;
+}
+
 export type PageName = 'tabloid' | 'arch-c' | 'arch-d' | 'letter' | 'a4' | 'a3';
 
 export interface ExportJob {
@@ -78,7 +122,15 @@ export interface ExportJob {
     | null;
   /** A shot list's options (FLR-T-13.10); null for any other export. */
   shots?: { views: string[] | null; size: ShotSize; quality: StillQuality } | null;
-  /** While a still renders: the passes done and in all; a shot list adds the shot it is on, and how many. */
+  /** A film's (FLR-T-14.1); null for any other export. */
+  film?: FilmFacts | null;
+  /** Stopped by a person rather than failed (FLR-T-14.1). */
+  cancelled?: boolean;
+  /**
+   * While a still renders: the passes done and in all; a shot list adds the shot it is on, and how
+   * many. A film reports instead the frames done and in all, the clock at the site in a timelapse,
+   * and now and then the frame just made, small (a PNG data URL): `filmProgress` reads them.
+   */
   progress?: { pass: number; passes: number; shot?: number; shots?: number } | null;
   error: string | null;
   result: {
@@ -96,6 +148,11 @@ export interface ExportJob {
     camera?: string;
     sun?: { azimuth: number; altitude: number; source: 'yours' | 'default' };
     ms?: number;
+    /** A film's: its frames, frame rate and length, and its codec. */
+    frames?: number;
+    fps?: number;
+    seconds?: number;
+    codec?: string;
     /** A shot list's: each still in its ZIP. */
     shots?: { file: string; view: string; name: string; width: number; height: number; samples: number; ms: number }[];
   } | null;
@@ -123,6 +180,8 @@ export interface ExportRequest {
   still?: StillRequest;
   /** A shot list's (FLR-T-13.10). */
   shots?: ShotsRequest;
+  /** A film's (FLR-T-14.1). */
+  film?: FilmRequest;
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8). */
   doors?: 'open' | 'closed';
   /** glTF and USDZ (FLR-T-13.12): the lights on, each at an output and colour temperature; default every one at full. */
@@ -191,6 +250,18 @@ export async function requestExport(projectId: string, body: ExportRequest): Pro
   return (await api.post<{ export: ExportJob }>(`/api/projects/${projectId}/exports`, body)).export;
 }
 
+/** A film job's progress (FLR-T-14.1): frames done and in all, the timelapse's clock, the last preview. */
+export function filmProgress(job: ExportJob): { frame: number; frames: number; clock: string | null; preview: string | null } | null {
+  const p = job.progress as Record<string, unknown> | null | undefined;
+  if (p === null || p === undefined || typeof p['frame'] !== 'number' || typeof p['frames'] !== 'number') return null;
+  return { frame: p['frame'], frames: p['frames'], clock: typeof p['clock'] === 'string' ? p['clock'] : null, preview: typeof p['preview'] === 'string' && p['preview'].startsWith('data:image/png;base64,') ? p['preview'] : null };
+}
+
+/** Cancel an export still queued or running (FLR-T-14.1). */
+export async function cancelExport(projectId: string, id: string): Promise<ExportJob> {
+  return (await api.post<{ export: ExportJob }>(`/api/projects/${projectId}/exports/${id}/cancel`, {})).export;
+}
+
 export async function listExports(projectId: string): Promise<ExportJob[]> {
   return (await api.get<{ exports: ExportJob[] }>(`/api/projects/${projectId}/exports`)).exports;
 }
@@ -221,22 +292,27 @@ export function describeJob(job: ExportJob, sets: readonly DesignSet[] = []): st
 }
 
 function describeStatus(job: ExportJob): string {
-  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ', still: 'Still', shots: 'Shot list' }[job.kind];
+  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ', still: 'Still', shots: 'Shot list', film: 'Film' }[job.kind];
   switch (job.status) {
     case 'queued':
-      return job.kind === 'ifc' ? `${what} waiting to be written` : job.kind === 'still' || job.kind === 'shots' ? `${what} waiting to be rendered` : `${what} waiting to be drawn`;
+      return job.kind === 'ifc' ? `${what} waiting to be written` : job.kind === 'still' || job.kind === 'shots' || job.kind === 'film' ? `${what} waiting to be rendered` : `${what} waiting to be drawn`;
     case 'running':
+      if (job.kind === 'film') {
+        const f = filmProgress(job);
+        return f === null ? 'Rendering the film…' : `Rendering the film… frame ${String(f.frame)} of ${String(f.frames)}`;
+      }
       if (job.kind === 'shots') return job.progress?.shot !== undefined ? `Rendering the shot list… shot ${String(job.progress.shot)} of ${String(job.progress.shots ?? 0)}` : 'Rendering the shot list…';
       if (job.kind === 'still') return job.progress ? `Rendering the still… pass ${String(job.progress.pass)} of ${String(job.progress.passes)}` : 'Rendering the still…';
       return job.kind === 'ifc' ? `Writing the ${what}…` : `Drawing the ${what}…`;
     case 'failed':
-      return `${what} failed: ${job.error ?? 'no reason was recorded'}`;
+      return job.cancelled === true ? `${what} cancelled` : `${what} failed: ${job.error ?? 'no reason was recorded'}`;
     case 'done': {
       const r = job.result;
       if (r?.sheets !== undefined) return `${r.name} · ${String(r.sheets.length)} ${r.sheets.length === 1 ? 'sheet' : 'sheets'}`;
       if (r?.files !== undefined) return `${r.name} · ${String(r.files.length)} ${r.files.length === 1 ? 'file' : 'files'}`;
       if (r?.shots !== undefined) return `${r.name} · ${String(r.shots.length)} ${r.shots.length === 1 ? 'shot' : 'shots'}`;
       if (r?.elements !== undefined) return `${r.name} · ${String(r.elements)} ${r.elements === 1 ? 'element' : 'elements'}`;
+      if (job.kind === 'film' && r?.frames !== undefined && r.height !== undefined) return `${r.name} · ${String(r.frames)} frames · ${String(r.height)}p`;
       return r?.name ?? what;
     }
   }

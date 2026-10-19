@@ -19,13 +19,18 @@ import { threeOf, useThreeState, type LevelsShown, type Quality, type ThreeStore
 import { castsShadow, describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, linear, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
 import { isSurfacePart, mappedPartBuffers, surfaceBuffers, type MapRef } from './surfaces';
 import { EDITOR_METALNESS_MAX, MATERIAL_TEXTURE_UNITS, paneMaterial, presentationPane, TextureLibrary } from './textures';
-import { blocked, entryOf, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
+import { blocked, entryOf, eyeAt, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
 import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
 import { StillButton } from './still/StillDialog';
 import { orbitCamera } from './still/gpu/cameras';
 import { SunRig } from './sun/SunRig';
 import { CameraButton, CameraChip, CameraPanel, Framing, type CameraRig } from './shot/CameraPanel';
 import { FixtureLights } from './FixtureLights';
+import { FilmTimeline } from './film/FilmTimeline';
+import { FilmJobCard } from './film/FilmJobCard';
+import { FilmMarks, FilmMarksTracker, FilmPathLine, useFilmPath } from './film/FilmPath';
+import { useFilmState } from './film/films';
+import { eyeOf } from './camera';
 import { glow } from './highlight';
 import { softwareWebGL } from './software';
 import { PRESENTATION_SCENE_TEXTURE_UNITS, SCENE_TEXTURE_UNITS, shadowBudget, viewLights } from './lights';
@@ -217,13 +222,33 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // The GPU still's "view you are looking at" (FLR-T-13.13): the orbit now, in the glTF export's frame.
   const currentView = useCallback(() => (ctl.orbit === null || originRef.current === null ? null : orbitCamera(ctl.orbit, originRef.current, FOV)), [ctl]);
   // FLR-T-13.10: where the camera is, for saving a view, and going to a saved one.
-  const rig = useMemo<CameraRig>(() => ({ current: () => (ctl.orbit === null || originRef.current === null ? null : { orbit: ctl.orbit, origin: originRef.current }), goTo: (o) => { ctl.setOrbit(o); } }), [ctl]);
+  const rig = useMemo<CameraRig>(
+    () => ({
+      current: () => (ctl.orbit === null || originRef.current === null ? null : { orbit: ctl.orbit, origin: originRef.current }),
+      goTo: (o) => { ctl.setOrbit(o); },
+      // FLR-T-14.1: the camera as a film's keyframe — the walker's eye and a point 3 m ahead of it while walking.
+      look: () => {
+        const w = ctl.walker;
+        if (three.get().walking && w !== null) {
+          const [x, y, z] = eyeAt(w, three.get().eyeHeight);
+          const c = Math.cos(w.pitch);
+          return { eye: [x, y, z], target: [x + 3 * c * Math.cos(w.yaw), y + 3 * c * Math.sin(w.yaw), z + 3 * Math.sin(w.pitch)] };
+        }
+        return ctl.orbit === null ? null : { eye: eyeOf(ctl.orbit), target: [...ctl.orbit.target] };
+      },
+    }),
+    [ctl, three],
+  );
   const size = useSize(host);
   // The lens and frame changed (FLR-T-13.10): draw again, so the camera takes them up.
   const shot = useThreeState(store, (s) => s.shot);
   useEffect(() => { ctl.invalidate(); }, [shot, ctl]);
 
   const ready = state.status === 'ready' ? state : null;
+  // FLR-T-14.1: the film's timeline, and its path and keyframes drawn over the view while it is open.
+  const filmOpen = useFilmState(store, (s) => s.open);
+  const filmPath = useFilmPath(store, ready?.model ?? null, ready?.mesh.origin ?? null);
+  const filmMarks = useRef<HTMLDivElement>(null);
   const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);
   const textures = useMemo(() => new TextureLibrary(store.projectId, () => { ctl.invalidate(); }), [store, ctl]);
   // The texture units a fragment shader may sample on this GPU: 16 on most, and what decides how many lamps cast shadows.
@@ -672,6 +697,12 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           reduced={reduced}
         />
         {!walking ? <LabelTracker built={visible} selection={selection} el={label} rig={sectionRig} /> : null}
+        {!walking && filmPath !== null ? (
+          <>
+            <FilmPathLine points={filmPath.points} color={tokens.accent} />
+            <FilmMarksTracker marks={filmPath.marks} el={filmMarks} />
+          </>
+        ) : null}
         {presenting ? (
           <Suspense fallback={null}>
             <Presentation stats={stats} model={ready?.model ?? null} mesh={ready?.mesh ?? null} />
@@ -718,6 +749,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         </div>
       ) : null}
       {ready !== null && !walking ? <Framing store={store} model={ready.model} width={size.width} height={size.height} /> : null}
+      {ready !== null && !walking && filmPath !== null ? <FilmMarks store={store} marks={filmPath.marks} el={filmMarks} /> : null}
       {ready !== null && !walking && selectedLabel !== null ? (
         <div className="fs-three__label" ref={label} aria-hidden="true">
           {selectedLabel}
@@ -742,14 +774,18 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           <LightingPanel store={store} model={ready.model} />
           <CameraPanel store={store} model={ready.model} rig={rig} />
           <SunChip store={store} />
-          <div className="fs-three__chips-left">
-            <QualityControl three={three} quality={quality} />
-            <StatsChip quality={quality} stats={stats} parts={visible.length} triangles={triangles} />
-            <LightingChip store={store} model={ready.model} />
-            <CameraChip store={store} model={ready.model} />
-          </div>
+          {!filmOpen ? (
+            <div className="fs-three__chips-left">
+              <QualityControl three={three} quality={quality} />
+              <StatsChip quality={quality} stats={stats} parts={visible.length} triangles={triangles} />
+              <LightingChip store={store} model={ready.model} />
+              <CameraChip store={store} model={ready.model} />
+            </div>
+          ) : null}
+          <FilmJobCard store={store} />
         </>
       ) : null}
+      {ready !== null && !compact ? <FilmTimeline store={store} model={ready.model} rig={rig} /> : null}
       {ready !== null && !walking && compact ? (
         <>
           <div className="fs-three__chip fs-three__pane-label" role="note">

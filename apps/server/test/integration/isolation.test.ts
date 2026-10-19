@@ -62,6 +62,8 @@ const CALLS: Record<string, Call> = {
   'GET /api/projects/:projectId/exports/:jobId': { ownerStatus: 200 },
   // Answered, by a route that works: A's export is still queued.
   'GET /api/projects/:projectId/exports/:jobId/file': { ownerStatus: 409 },
+  // A's export, still queued, cancelled (FLR-T-14.1).
+  'POST /api/projects/:projectId/exports/:jobId/cancel': { body: {}, ownerStatus: 200 },
   // Sharing (FLR-T-9.6): A's links and the comments made through them.
   'GET /api/projects/:projectId/shares': { ownerStatus: 200 },
   'POST /api/projects/:projectId/shares': { body: { label: 'Builder' }, ownerStatus: 201 },

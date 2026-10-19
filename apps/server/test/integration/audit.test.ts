@@ -217,6 +217,12 @@ const EXERCISES: Record<string, Exercise> = {
     const { id } = await projectWithDocument(running.db, operator);
     return { reply: await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' }), action: 'export.request' };
   },
+  'POST /api/projects/:projectId/exports/:jobId/cancel': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(running.db, operator);
+    const queued = (await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf' })).body as { export: { id: string } };
+    return { reply: await operator.post(`/api/projects/${id}/exports/${queued.export.id}/cancel`), action: 'export.cancel' };
+  },
   'POST /api/projects/:projectId/exports/stills': async ({ running }) => {
     const operator = await setupOperator(running);
     const { id, hash } = await projectWithDocument(running.db, operator);

@@ -10,6 +10,7 @@ import { sunOf } from '../sun/study';
 import { houseLights, panelScenes, unchanged } from '../lighting/lighting';
 import { FOCAL_SLIDER, focalToSlider, focusToSlider, frameRect, orbitOfView, shotOfView, sliderToFocal, sliderToFocus } from './lens';
 import { cannotSaveViews, clockOfAt, deleteView, renameView, saveNewView, updateView, viewFromState, viewMeta, viewNameProblem, viewsOf } from './views';
+import { FilmButton } from '../film/FilmTimeline';
 import './camera.css';
 
 /**
@@ -28,6 +29,11 @@ const ShotListDialog = lazy(() => import('./ShotListDialog'));
 export interface CameraRig {
   readonly current: () => { orbit: Orbit; origin: readonly [number, number, number] } | null;
   readonly goTo: (orbit: Orbit) => void;
+  /**
+   * Where the camera is and what it looks at, metres about the origin — the orbit's eye and target,
+   * or while walking the walker's eye and a point ahead of it (FLR-T-14.1, a film's keyframes).
+   */
+  readonly look: () => { eye: [number, number, number]; target: [number, number, number] } | null;
 }
 
 const PRESET_LENSES = [16, 24, 35, 50, 85] as const;
@@ -458,7 +464,8 @@ export function CameraPanel({ store, model, rig }: { store: EditorStore; model: 
           <Button size="sm" variant="primary" icon={<Images />} disabled={views.length === 0} onClick={() => { setShots(true); }}>
             Shot list…
           </Button>
-          <span className="fs-caption">Renders every saved view</span>
+          <FilmButton store={store} />
+          <span className="fs-caption">Stills, or a film</span>
         </footer>
       </section>
       {shots ? (

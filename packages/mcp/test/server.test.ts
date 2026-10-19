@@ -17,6 +17,8 @@ import {
   TOOL_NAMES,
   type Committed,
   type AssetUpload,
+  type FilmJob,
+  type FilmRequest,
   type FloorspecClient,
   type StoredAsset,
   type LayoutsInput,
@@ -198,6 +200,12 @@ class MemoryClient implements FloorspecClient {
     if (!this.renderable) return Promise.reject(new FloorspecApiError(501, { error: 'rendering arrives with FLR-T-2.8' }));
     return Promise.resolve(new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
   }
+  requestFilm(projectId: string, options: FilmRequest): Promise<FilmJob> {
+    this.record('requestFilm', projectId, options);
+    if (options.film === 'Garden') return Promise.reject(new FloorspecApiError(400, { error: 'the model has no film "Garden"; its films are "Courtyard walk-in"' }));
+    const dusk = options.light === 'day-to-night';
+    return Promise.resolve({ id: 'job-1', status: 'queued', film: { id: 'F1', name: 'Courtyard walk-in', frames: 900, fps: 30, size: '1080p', format: 'mp4', quality: options.quality ?? 'draft', light: options.light ?? 'timeline', timelapse: dusk ? { date: '2026-06-21', from: '16:30', to: '20:00' } : null } });
+  }
   uploadAsset(projectId: string, upload: AssetUpload): Promise<StoredAsset> {
     this.record('uploadAsset', projectId, upload.name, upload.as);
     return Promise.reject(new FloorspecApiError(503, { title: 'this instance has no asset store' }));
@@ -338,7 +346,8 @@ describe('the MCP server', () => {
     // FLR-T-12.41 gave it room to grow, 25,992 → ~21,900, without moving the ceiling: the long
     // guidance moved to the design-partner prompt (and floorspec://guide), the project handle is said
     // once in the server's instructions, propose names apply's locks rather than repeating them, and
-    // closed unions are said once (tool-schema.ts). The ~4 KB under the ceiling is for new params.
+    // closed unions are said once (tool-schema.ts). The ~4 KB under the ceiling is for new params;
+    // FLR-T-14.1's film, preset and quality on floorspec_render took ~250 bytes of it (~23,300).
     expect(size).toBeLessThan(26_000);
   });
 
@@ -538,6 +547,26 @@ describe('the MCP server', () => {
     expect(texts(missing)).toContain('this 3D view cannot be drawn');
   });
 
+  it('queues a film by name — draft or final, day to night — and says where it lands without waiting (FLR-T-14.1)', async () => {
+    const client = new MemoryClient();
+    const mcp = await connect(client);
+    const queued = await mcp.callTool({ name: 'floorspec_render', arguments: { film: 'Courtyard walk-in', preset: 'day-to-night' } });
+    expect(queued.isError).toBeFalsy();
+    expect(client.calls.filter((c) => c.method === 'requestFilm').at(-1)?.args[1]).toEqual({ film: 'Courtyard walk-in', light: 'day-to-night' });
+    expect(texts(queued)).toContain('Queued the film "Courtyard walk-in": 900 frames, 1080p at 30 fps, draft, MP4, day to night 16:30–20:00 on 2026-06-21.');
+    expect(texts(queued)).toContain('/exports/job-1/file');
+    expect(client.calls.some((c) => c.method === 'render')).toBe(false);
+    await mcp.callTool({ name: 'floorspec_render', arguments: { film: 'F1', quality: 'final' } });
+    expect(client.calls.filter((c) => c.method === 'requestFilm').at(-1)?.args[1]).toEqual({ film: 'F1', quality: 'final' });
+    // A film is its keyframes' views, from main: nothing else goes with it; and its preset needs a film.
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { film: 'F1', camera: 'sw' } })).isError).toBe(true);
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', preset: 'day-to-night' } })).isError).toBe(true);
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { film: 'F1', preset: 'sunrise' } })).isError).toBe(true);
+    const unknown = await mcp.callTool({ name: 'floorspec_render', arguments: { film: 'Garden' } });
+    expect(unknown.isError).toBe(true);
+    expect(texts(unknown)).toContain('no film "Garden"');
+  });
+
   it('relays a refused accept as an error', async () => {
     const mcp = await connect(new MemoryClient());
     const result = await mcp.callTool({ name: 'floorspec_accept', arguments: { changeset: CHANGESET.id } });
@@ -660,8 +689,10 @@ describe('the MCP server', () => {
     const mcp = await connect(new MemoryClient());
     const { tools } = await mcp.listTools();
     const params = (name: string) => tools.find((t) => t.name === name)?.inputSchema.properties ?? {};
-    // floorspec_render: every RenderOptions member but view's default, a room (camera) and lights (scene).
-    expect(Object.keys(params('floorspec_render')).sort()).toEqual(['at', 'camera', 'changeset', 'doors', 'highlight', 'level', 'mode', 'project', 'renovation', 'scene', 'sky', 'style', 'view', 'width']);
+    // floorspec_render: every RenderOptions member but view's default, a room (camera) and lights (scene) — and a film (FLR-T-14.1).
+    expect(Object.keys(params('floorspec_render')).sort()).toEqual(['at', 'camera', 'changeset', 'doors', 'film', 'highlight', 'level', 'mode', 'preset', 'project', 'quality', 'renovation', 'scene', 'sky', 'style', 'view', 'width']);
+    expect(params('floorspec_render')['preset']).toMatchObject({ enum: ['day-to-night'] });
+    expect(params('floorspec_render')['quality']).toMatchObject({ enum: ['draft', 'final'] });
     expect(params('floorspec_render')['style']).toMatchObject({ enum: ['colour', 'presentation', 'technical', 'blueprint'] });
     expect(params('floorspec_render')['mode']).toMatchObject({ enum: ['construction', 'decorator', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'] });
     expect(params('floorspec_render')['sky']).toMatchObject({ enum: ['clear', 'overcast', 'dusk', 'night', 'studio'] });

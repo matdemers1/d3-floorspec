@@ -34,7 +34,7 @@ export function viewOf(document: object, key: string): SavedView {
 }
 
 /** Whether a point (metres, the document's frame) stands in one of the scene's rooms, between its floor and ceiling. */
-function inARoom(scene: Scene, p: readonly [number, number, number]): boolean {
+export function inARoom(scene: Scene, p: readonly [number, number, number]): boolean {
   return scene.rooms.some((r) => p[2] >= r.floor - 0.01 && p[2] <= r.ceiling + 0.01 && inside([p[0], p[1]], r.outer));
 }
 
