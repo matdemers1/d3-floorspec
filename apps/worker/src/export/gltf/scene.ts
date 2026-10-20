@@ -883,7 +883,7 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
       position: [l.position[0] / M, l.position[2] / M, -l.position[1] / M],
       radius: l.radius / M,
       // Straight down, or along an exterior light's aim (FLR-T-15.5): the document's z up is this frame's +Y.
-      ...(l.cone === undefined ? {} : { spot: { dir: (l.aim === undefined ? [0, -1, 0] : [l.aim[0], l.aim[2], -l.aim[1]]) as Vec3, inner: l.cone.inner, outer: l.cone.outer } }),
+      ...(l.cone === undefined ? {} : { spot: { dir: (l.aim === undefined ? [0, -1, 0] : [l.aim[0], l.aim[2], -l.aim[1]]), inner: l.cone.inner, outer: l.cone.outer } }),
       lumens: l.lumens,
       color: l.color,
       room: l.room,

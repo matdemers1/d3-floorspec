@@ -43,17 +43,17 @@ export function exteriorLamps(ext: ExteriorData, min: readonly number[], max: re
   const bottom = min[2] ?? 0;
   switch (ext.kind) {
     case 'path':
-      // Under the cap: down and out to a little under the horizontal.
-      return [{ local: [Math.round(cx), Math.round(cy), Math.round(top - 30 * MM)], aim: [0, 0, -1], cone: { inner: 0.5, outer: 0.0349 }, share: 1, radius: 20 * MM }];
+      // Under the cap, shielded: down and out to 65°, the pool the plan draws (about 1.6 times its height).
+      return [{ local: [Math.round(cx), Math.round(cy), Math.round(top - 30 * MM)], aim: [0, 0, -1], cone: { inner: 0.7071, outer: 0.4226 }, share: 1, radius: 20 * MM }];
     case 'uplight': {
       const r = Math.max(1, ext.reach);
       const l = Math.hypot(r, CANOPY);
       return [{ local: [Math.round(cx), Math.round(cy), Math.round(top + 15 * MM)], aim: [Number((r / l).toFixed(4)), 0, Number((CANOPY / l).toFixed(4))], cone: coneOf(ext.beam), share: 1, radius: 15 * MM }];
     }
     case 'wallWash': {
-      // Down the wall, tipped out a quarter: the wall lit under it and the ground before it.
-      const l = Math.hypot(0.45, 1);
-      return [{ local: [Math.round((max[0] ?? 0) + 15 * MM), Math.round(cy), Math.round((top + bottom) / 2)], aim: [Number((0.45 / l).toFixed(4)), 0, Number((-1 / l).toFixed(4))], cone: coneOf(ext.beam), share: 1, radius: 15 * MM }];
+      // Down its wall, tipped out a little: scallops of light down the face under it, and the ground at its foot.
+      const l = Math.sqrt(0.2 * 0.2 + 1);
+      return [{ local: [Math.round((max[0] ?? 0) + 15 * MM), Math.round(cy), Math.round((top + bottom) / 2)], aim: [Number((0.2 / l).toFixed(4)), 0, Number((-1 / l).toFixed(4))], cone: coneOf(ext.beam), share: 1, radius: 15 * MM }];
     }
     case 'step': {
       const l = Math.hypot(1, 1.2);
