@@ -1,11 +1,13 @@
 /**
  * @floorspec/mesh/sky — the sun, the sky and the lawn every view of a house shares (FLR-T-13.4,
  * FLR-T-13.9): the NOAA solar position, the sky presets over CC0 HDRI maps, image-based light as
- * spherical harmonics, the exposure a sky is seen at, and the procedural lawn. Isomorphic.
+ * spherical harmonics, the exposure a sky is seen at, and the procedural lawn; and (FLR-T-15.4) the
+ * seasons and weathers a house is seen in. Isomorphic.
  */
 export * from './solar.js';
 export * from './sky.js';
 export * from './grass.js';
+export * from './weather.js';
 export { decodeHdr, encodeHdr, type HdrImage } from './hdr.js';
 
 /** The file each map is kept in, beside this package's `sky/` (`@floorspec/mesh/sky/<file>`). */

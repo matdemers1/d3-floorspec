@@ -324,7 +324,7 @@ jobs:
           - group: a11y
             suites: a11y
           - group: 3d
-            suites: three,sun,furniture,share,assets,lighting,resize,presentation,camera,arrange,rooms,precision,styles,feedback,renovation,section,films,edit3d,compare,xray,daylight,tour,xr
+            suites: three,sun,furniture,share,assets,lighting,resize,presentation,camera,arrange,rooms,precision,styles,feedback,renovation,section,films,edit3d,compare,xray,daylight,tour,xr,seasons
           - group: editor
             suites: moonshots,arcs,materials,findings,templates,roofs-stairs,package,exports,systems,program,options,main-path,keyboard,drawers,panzoom,modes,placing,trace,dimensions,phrases,keys,site
     services:

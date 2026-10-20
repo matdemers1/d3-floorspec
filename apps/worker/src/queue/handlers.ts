@@ -10,11 +10,11 @@ import { PRESETS, render3dCompare, render3dPng, type Preset } from '../render3d/
 import { renderPair } from '../pathtrace/pair.js';
 import { normalizeOn, type Lighting } from '@floorspec/mesh';
 import { isLayerState, isModeId, isPlanStyle, PLAN_LAYERS, type LayerState, type ModeId, type PlanLayer, type PlanStyle } from '@floorspec/render2d';
-import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type ShotSize, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
+import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SEASON_NAMES, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, TIMES, WEATHER_NAMES, withinBudget, type Lights, type Quality, type ShotSize, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
 import { renderSavedView, renderShots, type Shot } from '../pathtrace/views.js';
 import { storeZip } from '../export/gltf/zip.js';
 import { FILM_FORMATS, FILM_LIGHTS, FILM_QUALITIES, FILM_RATES, FILM_SIZES, renderFilm, type FilmFormat, type FilmLight, type FilmQuality, type FilmRate, type FilmSize } from '../film/index.js';
-import { timelapseProblem, type Timelapse } from '@floorspec/mesh/sky';
+import { timelapseProblem, type LookRequest, type LookSeason, type Timelapse, type Weather } from '@floorspec/mesh/sky';
 import { DEFAULT_EYE_HEIGHT, linkedDoorways, MAX_EYE_HEIGHT, MAX_TOUR_ROOMS, MIN_EYE_HEIGHT, TOUR_QUALITIES, TOUR_SIZES, tourAt, type TourQuality, type TourSize } from '@floorspec/mesh';
 import { renderTour, type TourStop } from '../tour/index.js';
 import { daylightStudy, DAYLIGHT_SKIES, type DaylightSky } from '../pathtrace/daylight.js';
@@ -86,6 +86,15 @@ export interface ExportParams {
   readonly renovation?: RenovationFilter;
   /** A USDZ for AR Quick Look (FLR-T-14.3): true scale or 1:50, and what it includes. */
   readonly ar?: ArOptions;
+  /** FLR-T-15.4: a 3D model in a season and a weather — what the editor's GPU still traces. */
+  readonly look?: LookRequest;
+}
+
+/** A job's season and weather (FLR-T-15.4), when it names either: `{ look }`, or nothing. */
+export function lookParams(p: Record<string, unknown>): { look?: LookRequest } {
+  const season = (SEASON_NAMES as readonly unknown[]).includes(p['season']) ? (p['season'] as LookSeason) : undefined;
+  const weather = (WEATHER_NAMES as readonly unknown[]).includes(p['weather']) ? (p['weather'] as Weather) : undefined;
+  return season === undefined && weather === undefined ? {} : { look: { ...(season === undefined ? {} : { season }), ...(weather === undefined ? {} : { weather }) } };
 }
 
 /** A USDZ's AR options from a job row (FLR-T-14.3): a known scale and booleans, or nothing. */
@@ -153,6 +162,7 @@ export function exportParams(raw: unknown): ExportParams {
     ...(style === undefined ? {} : { style }),
     ...(renovation === undefined ? {} : { renovation }),
     ...(ar === undefined ? {} : { ar }),
+    ...lookParams(p),
   };
 }
 
@@ -182,6 +192,8 @@ export interface Render3dParams {
    * both rasterized through one camera and set side by side, B's changes lit.
    */
   readonly compare?: { readonly hash: string; readonly design?: Record<string, string> };
+  /** FLR-T-15.4: the season and the weather it is seen in. */
+  readonly look?: LookRequest;
 }
 
 /** A job's sky and date and time, when they are one of the presets and a date and time. */
@@ -224,6 +236,7 @@ export function render3dParams(raw: unknown): Render3dParams {
     ...(time === undefined ? {} : { time }),
     ...(doors === undefined ? {} : { doors }),
     ...skyParams(p),
+    ...lookParams(p),
   };
 }
 
@@ -240,6 +253,7 @@ export interface StillParams {
   readonly design?: Record<string, string>;
   readonly sky?: Sky;
   readonly at?: string;
+  readonly look?: LookRequest;
 }
 
 export function stillParams(raw: unknown): StillParams {
@@ -263,6 +277,7 @@ export function stillParams(raw: unknown): StillParams {
     ...(sun === undefined ? {} : { sun }),
     ...(design === undefined ? {} : { design }),
     ...skyParams(p),
+    ...lookParams(p),
   };
 }
 
@@ -273,6 +288,8 @@ export interface ShotsParams {
   readonly size: ShotSize;
   readonly quality: Quality;
   readonly design?: Record<string, string>;
+  /** FLR-T-15.4: every view in a season and a weather. */
+  readonly look?: LookRequest;
 }
 
 export function shotsParams(raw: unknown): ShotsParams {
@@ -282,7 +299,7 @@ export function shotsParams(raw: unknown): ShotsParams {
   const quality = typeof p['quality'] === 'string' && Object.hasOwn(QUALITIES, p['quality']) ? (p['quality'] as Quality) : 'standard';
   if (!shotWithinBudget(size, quality)) throw new RangeError(`a ${size} shot at ${quality} quality is more work than a still may take`);
   const design = designOf(p['design']);
-  return { ...(views === undefined ? {} : { views }), size, quality, ...(design === undefined ? {} : { design }) };
+  return { ...(views === undefined ? {} : { views }), size, quality, ...(design === undefined ? {} : { design }), ...lookParams(p) };
 }
 
 /** The parameters of a matched pair (FLR-T-14.4), as the api writes them: B, the camera, the size and quality. */
@@ -295,6 +312,7 @@ export interface PairParams {
   readonly shot?: Record<string, unknown>;
   readonly size: ShotSize;
   readonly quality: Quality;
+  readonly look?: LookRequest;
 }
 
 export function pairParams(raw: unknown): PairParams {
@@ -318,6 +336,7 @@ export function pairParams(raw: unknown): PairParams {
     ...(shot === undefined ? {} : { shot }),
     size,
     quality,
+    ...lookParams(p),
   };
 }
 
@@ -332,6 +351,7 @@ export interface FilmParams {
   readonly light: FilmLight;
   readonly timelapse?: Timelapse;
   readonly design?: Record<string, string>;
+  readonly look?: LookRequest;
 }
 
 export function filmParams(raw: unknown): FilmParams {
@@ -355,6 +375,7 @@ export function filmParams(raw: unknown): FilmParams {
     light: pick(p['light'], FILM_LIGHTS, 'timeline'),
     ...(timelapse === undefined ? {} : { timelapse }),
     ...(design === undefined ? {} : { design }),
+    ...lookParams(p),
   };
 }
 
@@ -440,6 +461,7 @@ function modelOptions(job: JobRow, store: { images: ImageSource | undefined; mod
     ...(p.doors === undefined ? {} : { doors: p.doors }),
     ...(p.lighting === undefined ? {} : { lighting: p.lighting }),
     ...(p.ar === undefined ? {} : { ar: p.ar }),
+    ...(p.look === undefined ? {} : { look: p.look }),
     ...(images === undefined ? {} : { images }),
     ...(models === undefined ? {} : { models }),
   };
@@ -579,6 +601,7 @@ function inlineHandlers(opts: HandlerOptions): Readonly<Record<string, Handler>>
         size: p.size,
         quality: p.quality,
         ...(p.design === undefined ? {} : { design: p.design }),
+        ...(p.look === undefined ? {} : { look: p.look }),
         ...(images === undefined ? {} : { images }),
         ...(job.progress === undefined ? {} : { onShot: (shot: number, of: number, pass: number, passes: number) => job.progress?.({ shot: shot + 1, shots: of, pass, passes }) }),
       });
@@ -608,6 +631,7 @@ function inlineHandlers(opts: HandlerOptions): Readonly<Record<string, Handler>>
           ...(p.camera === undefined ? {} : { camera: p.camera }),
           size: p.size,
           quality: p.quality,
+          ...(p.look === undefined ? {} : { look: p.look }),
           ...(images === undefined ? {} : { images }),
           ...(job.progress === undefined ? {} : { onShot: (shot: number, of: number, pass: number, passes: number) => job.progress?.({ shot: shot + 1, shots: of, pass, passes }) }),
         },
@@ -756,6 +780,7 @@ function inlineHandlers(opts: HandlerOptions): Readonly<Record<string, Handler>>
             ...(p.doors === undefined ? {} : { doors: p.doors }),
             ...(p.sky === undefined ? {} : { sky: p.sky }),
             ...(p.at === undefined ? {} : { at: p.at }),
+            ...(p.look === undefined ? {} : { look: p.look }),
             ...(images === undefined ? {} : { images }),
           },
         );
@@ -767,6 +792,7 @@ function inlineHandlers(opts: HandlerOptions): Readonly<Record<string, Handler>>
           ...(p.width === undefined ? {} : { width: p.width }),
           ...(p.design === undefined ? {} : { design: p.design }),
           ...(p.doors === undefined ? {} : { doors: p.doors }),
+          ...(p.look === undefined ? {} : { look: p.look }),
           ...(images === undefined ? {} : { images }),
         });
         return { name: `render-${slug(shot.view.name)}-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: shot.png, summary: { width: shot.width, height: shot.height, camera: shot.camera, view: { id: shot.view.id, name: shot.view.name }, design: shot.design, ...(shot.lit === undefined ? {} : { lit: shot.lit }), ...(shot.sky === undefined ? {} : { sky: shot.sky }), ms: shot.ms } };
@@ -785,6 +811,7 @@ function inlineHandlers(opts: HandlerOptions): Readonly<Record<string, Handler>>
           ...(p.doors === undefined ? {} : { doors: p.doors }),
           ...(p.lighting === undefined ? {} : { lighting: p.lighting }),
           ...(p.scene === undefined ? {} : { scene: p.scene }),
+          ...(p.look === undefined ? {} : { look: p.look }),
           ...(images === undefined ? {} : { images }),
         });
         return { name: `render-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: lit.png, summary: { width: lit.width, height: lit.height, camera: lit.camera, design: lit.design, ...(lit.lit === undefined ? {} : { lit: lit.lit }), ...(lit.sky === undefined ? {} : { sky: lit.sky }), ms: lit.ms } };

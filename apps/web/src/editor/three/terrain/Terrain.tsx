@@ -13,6 +13,7 @@ import { benchmarkOf, FT, heightText } from '../../site/ops';
 import { threeOf } from '../mode';
 import { sunOf } from '../sun/study';
 import { lawnMap } from '../sky/SkyScene';
+import { useGroundLook } from './ground';
 import { softwareWebGL } from '../software';
 import '../sun/sun.css';
 import '../../site/site.css';
@@ -55,6 +56,9 @@ export function TerrainScene({ store, model, origin }: { store: EditorStore; mod
   const invalidate = useThree((s) => s.invalidate);
   const gl = useThree((s) => s.gl);
   const t = terrainOf(model, origin, interval);
+  // FLR-T-15.4: the season's ground, as the lawn beyond wears it — a tint on the grass, or snow.
+  const look = useGroundLook(store);
+  const snow = look !== null && !look.grass;
   const geometry = useMemo(() => {
     if (t === null) return null;
     const g = new THREE.BufferGeometry();
@@ -72,7 +76,7 @@ export function TerrainScene({ store, model, origin }: { store: EditorStore; mod
     const col = geometry.getAttribute('color') as THREE.BufferAttribute;
     const c = new THREE.Color();
     for (let i = 0; i < t.shade.length; i++) {
-      const base = settings.lawn ? (t.shade[i] ?? 1) : 1;
+      const base = settings.lawn && !snow ? (t.shade[i] ?? 1) : 1;
       c.setRGB(base, base, base);
       const dz = t.change[i] ?? 0;
       if (settings.tint && Math.abs(dz) > 0.02) c.lerp(dz < 0 ? CUT : FILL, Math.min(0.85, 0.35 + Math.abs(dz) * 0.6));
@@ -80,14 +84,14 @@ export function TerrainScene({ store, model, origin }: { store: EditorStore; mod
     }
     col.needsUpdate = true;
     invalidate();
-  }, [geometry, t, settings.tint, settings.lawn, invalidate]);
-  const material = useMemo(
-    () =>
-      settings.lawn
-        ? new THREE.MeshLambertMaterial({ map: lawnMap(softwareWebGL() ? 1 : Math.min(8, gl.capabilities.getMaxAnisotropy())), vertexColors: true })
-        : new THREE.MeshLambertMaterial({ color: PLAIN, vertexColors: true }),
-    [settings.lawn, gl],
-  );
+  }, [geometry, t, settings.tint, settings.lawn, snow, invalidate]);
+  const material = useMemo(() => {
+    if (!settings.lawn) return new THREE.MeshLambertMaterial({ color: PLAIN, vertexColors: true });
+    if (look !== null && !look.grass) return new THREE.MeshLambertMaterial({ color: new THREE.Color(look.albedo[0], look.albedo[1], look.albedo[2]), vertexColors: true });
+    const m = new THREE.MeshLambertMaterial({ map: lawnMap(softwareWebGL() ? 1 : Math.min(8, gl.capabilities.getMaxAnisotropy())), vertexColors: true });
+    if (look !== null) m.color.setRGB(look.tint[0], look.tint[1], look.tint[2]);
+    return m;
+  }, [settings.lawn, gl, look]);
   const lines = useMemo(() => {
     if (t === null) return null;
     const minor = new THREE.BufferGeometry();
@@ -104,16 +108,16 @@ export function TerrainScene({ store, model, origin }: { store: EditorStore; mod
   useEffect(() => {
     if (t === null) return;
     const w = window as unknown as { __floorspecTerrain?: unknown };
-    const hook = { triangles: t.indices.length / 3, low: t.low, high: t.high, cut: t.change.some((c) => c < -0.02), fill: t.change.some((c) => c > 0.02), contours: settings.contours ? (t.contours.length + t.majors.length) / 6 : 0, exaggeration: settings.exaggeration };
+    const hook = { triangles: t.indices.length / 3, low: t.low, high: t.high, cut: t.change.some((c) => c < -0.02), fill: t.change.some((c) => c > 0.02), snow, contours: settings.contours ? (t.contours.length + t.majors.length) / 6 : 0, exaggeration: settings.exaggeration };
     w.__floorspecTerrain = hook;
     return () => {
       if (w.__floorspecTerrain === hook) delete w.__floorspecTerrain;
     };
-  }, [t, settings.contours, settings.exaggeration]);
+  }, [t, settings.contours, settings.exaggeration, snow]);
   if (geometry === null || lines === null) return null;
   return (
     <group scale={[1, 1, settings.exaggeration]} userData={{ terrain: true }}>
-      <mesh geometry={geometry} material={material} receiveShadow castShadow={false} raycast={noRaycast} userData={{ ground: true, terrain: true }} />
+      <mesh geometry={geometry} material={material} receiveShadow castShadow={false} raycast={noRaycast} userData={{ ground: true, terrain: true, snow }} />
       {settings.contours ? (
         <>
           <lineSegments geometry={lines.minor} raycast={noRaycast}>

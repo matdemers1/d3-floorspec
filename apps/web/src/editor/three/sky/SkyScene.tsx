@@ -278,11 +278,21 @@ export function Lawn({ centre, ground, field }: { centre: THREE.Vector3; ground:
     haze.hazeColor.value.set(...field.horizon);
     haze.hazeNear.value = field.light.haze.near;
     haze.hazeFar.value = field.light.haze.far;
+    // FLR-T-15.4: the lawn in its season, darker when it rains (a multiplier on the grass, linear RGB) —
+    // or under light snow, a plain field of it, the grass's map set aside.
+    const g = field.light.ground;
+    const map = g.grass ? lawnMap(softwareWebGL() ? 1 : Math.min(8, gl.capabilities.getMaxAnisotropy())) : null;
+    if (material.map !== map) {
+      material.map = map;
+      material.needsUpdate = true;
+    }
+    const c = g.grass ? g.tint : g.albedo;
+    material.color.setRGB(c[0], c[1], c[2]);
     invalidate();
-  }, [field, haze, invalidate]);
+  }, [field, haze, invalidate, material, gl]);
   useEffect(() => () => { geometry.dispose(); }, [geometry]);
   useEffect(() => () => { material.dispose(); }, [material]);
-  return <mesh geometry={geometry} material={material} position={[cx, cy, ground]} receiveShadow raycast={noRaycast} userData={{ ground: true, lawn: true }} renderOrder={1} />;
+  return <mesh geometry={geometry} material={material} position={[cx, cy, ground]} receiveShadow raycast={noRaycast} userData={{ ground: true, lawn: true, snow: !field.light.ground.grass }} renderOrder={1} />;
 }
 
 // ─── The tone curve ──────────────────────────────────────────────────────────────────────────

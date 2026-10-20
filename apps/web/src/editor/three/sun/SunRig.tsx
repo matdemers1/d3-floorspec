@@ -1,3 +1,4 @@
+import { setGroundLook } from '../terrain/ground';
 import { siteDrawingOf } from '../../site/Layer';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
@@ -6,8 +7,8 @@ import { exposureFactor, type HouseMesh } from '@floorspec/mesh';
 import { useThreeState } from '../mode';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
-import { mapsFor, skyBounce, skyExposure, skyField, skyHarmonics, skyLight, sunDay, sunsetPlace, type SkyLight, type SkyPreset } from '@floorspec/mesh/sky';
-import { placedSite, shadowMapSize, siteOf, studyOf, sunOf, useSunState, type Study } from './study';
+import { mapsFor, skyBounce, skyExposure, skyField, skyHarmonics, skyLight, sunDay, sunsetPlace, type Look, type SkyLight, type SkyPreset } from '@floorspec/mesh/sky';
+import { placedSite, shadowMapSize, siteOf, studyOf, sunOf, useLook, useSunState, weatherUnder, type Study } from './study';
 import { instantOfClock, midnightOf } from './clock';
 import { BOUNCE_LUX, LIT_EXPOSURE, toneMappingExposure } from '../lights';
 import { useSkyMaps } from '../sky/maps';
@@ -112,10 +113,14 @@ export function probeOf(store: EditorStore): SunProbe {
  * renderer draws, the studio's even dome included. `override` asks for another preset at the same
  * date and time (the GPU still's choice).
  */
-export function useSkyLight(store: EditorStore, model: EditorModel | null, lamps: boolean, override?: SkyPreset): { light: SkyLight | null; full: SkyLight; study: Study | null; preset: SkyPreset } {
+export function useSkyLight(store: EditorStore, model: EditorModel | null, lamps: boolean, override?: SkyPreset): { light: SkyLight | null; full: SkyLight; study: Study | null; preset: SkyPreset; look: Look } {
   const chosen = useSunState(store, (s) => s.sky);
   const sky = override ?? chosen;
   const clock = useSunState(store, (s) => s.clock);
+  // FLR-T-15.4: the season and the weather — the weather the sky drawn is seen in (rain and snow over an overcast one).
+  const picked = useLook(store, model);
+  const weather = weatherUnder(lamps ? chosen : sky, picked.weather);
+  const season = picked.season;
   const site = placedSite(siteOf(model));
   // The light fixtures on (FLR-T-12.22): dusk, so the pools of light the lamps make read — unless it is night.
   const preset: SkyPreset = lamps ? (sky === 'night' ? 'night' : 'dusk') : sky;
@@ -123,15 +128,16 @@ export function useSkyLight(store: EditorStore, model: EditorModel | null, lamps
   const minute = instantOfClock(clock);
   const midnight = midnightOf(clock);
   return useMemo(() => {
-    if (preset === 'studio') return { light: null, full: skyLight('studio', null, site.trueNorth), study: null, preset };
+    const look: Look = { season, weather };
+    if (preset === 'studio') return { light: null, full: skyLight('studio', null, site.trueNorth, look), study: null, preset, look };
     const study = studyOf(site, clock);
     const lat = site.latitude ?? 0;
     const lon = site.longitude ?? 0;
     const place = preset === 'dusk' ? (sunsetPlace(sunDay(midnight, lat, lon), lat, lon) ?? null) : study === null ? null : { azimuth: study.position.azimuth, altitude: study.position.altitude };
-    const light = skyLight(preset, place, site.trueNorth);
-    return { light, full: light, study, preset };
+    const light = skyLight(preset, place, site.trueNorth, look);
+    return { light, full: light, study, preset, look };
     // The site by its key and the clock by its minute: a new model with the same site keeps the same sky.
-  }, [preset, key, minute, midnight]);
+  }, [preset, key, minute, midnight, season, weather]);
 }
 
 export function SunRig({ store, model, mesh, compact, walking, lamps = false, casters }: { store: EditorStore; model: EditorModel; mesh: HouseMesh; compact: boolean; walking: boolean; lamps?: boolean; casters?: unknown }) {
@@ -143,6 +149,10 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false, ca
   const maps = useSkyMaps(sky === null ? [] : mapsFor(sky));
   const field = useMemo(() => (sky === null || maps === null ? null : skyField(sky, maps)), [sky, maps]);
   const sh = useMemo(() => (field === null ? null : skyHarmonics(field)), [field]);
+  // FLR-T-15.1: the site's terrain wears the lawn's ground — its season's tint, or snow.
+  const groundLook = field?.light.ground ?? null;
+  useEffect(() => { setGroundLook(store, groundLook); }, [store, groundLook]);
+  useEffect(() => () => { setGroundLook(store, null); }, [store]);
   const exposure = lamps ? LIT_EXPOSURE : field === null || sky === null ? null : skyExposure(sky, field.maps);
   // Exposure compensation (FLR-T-13.10): the camera's, on top of the sky's exposure.
   const compensation = useThreeState(store, (s) => (s.shot === null || s.walking ? 0 : s.shot.exposure));
@@ -284,7 +294,7 @@ export interface SunHook {
   /** The document records the site's location (otherwise the sky is placed from an assumed one). */
   located: boolean;
   /** The sky preset drawn (null in the studio), its band, and the exposure the view is given per cd/m². */
-  sky: { preset: SkyPreset; band: 'day' | 'dusk' | 'night'; direct: 'sun' | 'moon' | null; exposure: number | null; dome: boolean; lawn: boolean; ibl: number | null } | null;
+  sky: { preset: SkyPreset; band: 'day' | 'dusk' | 'night'; direct: 'sun' | 'moon' | null; exposure: number | null; dome: boolean; lawn: boolean; ibl: number | null; look: Look; snow: boolean; lawnColor: [number, number, number] | null } | null;
   /** What the solar module computed: degrees, and the unit vector towards the sun in the project's frame. */
   study: { azimuth: number; altitude: number; vector: [number, number, number]; night: boolean; instant: string } | null;
   /** The directional light as three.js has it: towards the light from its target, unit length. */
@@ -325,16 +335,23 @@ function useSunTestHook(store: EditorStore) {
         if (s === null) return null;
         let dome = false;
         let lawn = false;
+        let snow = false;
+        let lawnColor: [number, number, number] | null = null;
         probe.scene?.traverse((o) => {
-          const u = o.userData as { sky?: boolean; lawn?: boolean };
+          const u = o.userData as { sky?: boolean; lawn?: boolean; snow?: boolean };
           if (u.sky === true) dome = true;
-          if (u.lawn === true) lawn = true;
+          if (u.lawn === true) {
+            lawn = true;
+            snow = u.snow === true;
+            const m = (o as THREE.Mesh).material as THREE.MeshLambertMaterial;
+            lawnColor = [m.color.r, m.color.g, m.color.b];
+          }
         });
         let ibl: number | null = null;
         probe.scene?.traverse((o) => {
           if (o instanceof THREE.LightProbe) ibl = (o.sh.coefficients[0]?.y ?? 0) * o.intensity;
         });
-        return { preset: s.preset, band: s.band, direct: s.direct?.kind ?? null, exposure: probe.exposure, dome, lawn, ibl };
+        return { preset: s.preset, band: s.band, direct: s.direct?.kind ?? null, exposure: probe.exposure, dome, lawn, ibl, look: s.look, snow, lawnColor };
       },
       get study() {
         const s = probe.study;

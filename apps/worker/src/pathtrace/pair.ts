@@ -15,7 +15,8 @@ import { pictureSize, readView, type SavedView } from '@floorspec/mesh';
 import { presetCamera, type Preset } from '../render3d/camera.js';
 import { encodePng } from '../render3d/png.js';
 import { sideBySideComposite, swipeComposite } from '../render3d/composite.js';
-import { ptScene, renderSceneStill, type StillResult } from './index.js';
+import { lookOption, ptScene, renderSceneStill, type StillResult } from './index.js';
+import type { LookRequest } from '@floorspec/mesh/sky';
 import { BUDGET_MS, QUALITIES, SHOT_SIZES, shotWithinBudget, type Quality, type ShotSize } from './presets.js';
 import { resolveSky } from './sky.js';
 import { sceneFor, shoot, viewOf } from './views.js';
@@ -39,6 +40,8 @@ export interface PairOptions {
   readonly size?: ShotSize;
   readonly quality?: Quality;
   readonly images?: ImageSource;
+  /** FLR-T-15.4: the season and the weather both sides are seen in. */
+  readonly look?: LookRequest;
   /** Override the long side and the samples a pixel (tests). */
   readonly long?: number;
   readonly samples?: number;
@@ -110,13 +113,13 @@ export async function renderPair(a: PairSide, b: PairSide, options: PairOptions 
   const stills: StillResult[] = [];
   if (view !== undefined) {
     for (const [i, side] of sides.entries()) {
-      const opts = { ...(side.design === undefined ? {} : { design: side.design }), ...(options.images === undefined ? {} : { images: options.images }) };
+      const opts = { ...(side.design === undefined ? {} : { design: side.design }), ...(options.images === undefined ? {} : { images: options.images }), ...lookOption(options.look) };
       const scene = await sceneFor(side.document, view, opts);
       await options.onShot?.(i, 2, 0, samples);
       stills.push(await shoot(side.document, scene, view, long, samples, BUDGET_MS, { ...opts, rgb: true, onPass: (done, total) => options.onShot?.(i, 2, done, total) }));
     }
   } else {
-    const scenes = await Promise.all(sides.map((s) => buildScene(s.document, { ...(s.design === undefined ? {} : { design: s.design }), ...(options.images === undefined ? {} : { images: options.images }) })));
+    const scenes = await Promise.all(sides.map((s) => buildScene(s.document, { ...(s.design === undefined ? {} : { design: s.design }), ...(options.images === undefined ? {} : { images: options.images }), ...lookOption(options.look) })));
     // One camera framed on both houses together: what either adds stays in the picture.
     const boxes = scenes.map(boxOf).filter((x) => x !== null);
     const box = boxes.length === 0 ? { min: [0, 0, 0] as [number, number, number], max: [0, 0, 0] as [number, number, number] } : boxes.reduce((u, x) => ({ min: [Math.min(u.min[0], x.min[0]), Math.min(u.min[1], x.min[1]), Math.min(u.min[2], x.min[2])], max: [Math.max(u.max[0], x.max[0]), Math.max(u.max[1], x.max[1]), Math.max(u.max[2], x.max[2])] }));
@@ -124,7 +127,7 @@ export async function renderPair(a: PairSide, b: PairSide, options: PairOptions 
     const camera = presetCamera(options.camera ?? 'sw', box, width / height);
     const site = (a.document as { site?: { trueNorth?: unknown } }).site;
     const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
-    const skyLight = resolveSky(a.document, {});
+    const skyLight = resolveSky(a.document, { ...options.look });
     for (const [i, scene] of scenes.entries()) {
       await options.onShot?.(i, 2, 0, samples);
       stills.push(

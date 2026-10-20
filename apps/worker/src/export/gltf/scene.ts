@@ -25,7 +25,8 @@
 import { deriveEvaluation, evaluate, extElements, facingVector, furniture, InvalidDocumentError, OFFICIAL_READER, type Derived, type Evaluation, type FloorspecDocument, type ValidateOptions } from '@floorspec/engine';
 import { appearanceOf, decorFamily, DEFAULT_COLOURS, libraryItemOf, lightsOf, loadMesher, ROLE_LOOKS, surfaceGroups, swatch, UNITS_PER_METRE, type MeshPart, type Mesher, type ModelRole, type PartKind, type Swatch, type DoorState } from '@floorspec/mesh';
 import { assetIdOf, isLibraryGlass, LIBRARY_FILES, packagePathOf, roleMaterial, textureMembers } from '@floorspec/mesh/materials';
-import { ALL_ON, isSlope, lensGlows, paneTransmission, slopeST, type Lighting } from '@floorspec/mesh';
+import { ALL_ON, fullLook, isSlope, lensGlows, lookMesh, paneTransmission, slopeST, wetPart, type Lighting } from '@floorspec/mesh';
+import { wetten, type LookRequest } from '@floorspec/mesh/sky';
 import { relight } from './relight.js';
 import { decodeTexture } from '../../pathtrace/textures.js';
 import type { ImageSource } from './glb.js';
@@ -242,6 +243,13 @@ export interface SceneOptions {
    * scene's `lights` and its lenses. Default every one at full.
    */
   readonly lighting?: Lighting;
+  /**
+   * The season and the weather it is seen in (FLR-T-15.4, @floorspec/mesh `lookMesh`): a deciduous
+   * plant bare in winter or coloured in autumn, a lawn through the year, light snow on what faces up
+   * outside, and in rain what stands outside wet — darker and glossier. Default summer, dry: the scene
+   * as it was.
+   */
+  readonly look?: LookRequest;
 }
 
 const M = UNITS_PER_METRE;
@@ -397,6 +405,28 @@ class Materials {
       declared: { ...(metallic === undefined ? {} : { metallic }), ...(roughness === undefined ? {} : { roughness }) },
       blend: glass,
       ...(texture === undefined ? {} : { texture }),
+    });
+  }
+
+  /**
+   * A material made wet (FLR-T-15.4, rain): `<key>:wet`, its base colour darker and its surface
+   * glossier (@floorspec/mesh `wetten`) — its maps kept, the colour a factor on them, its roughness
+   * declared so a map's no longer shows through.
+   */
+  wet(i: number): number {
+    const m = this.list[i]!;
+    if (m.blend || m.emissive !== undefined) return i;
+    const key = `${m.key}:wet`;
+    const at = this.index.get(key);
+    if (at !== undefined) return at;
+    const w = wetten([m.baseColor[0], m.baseColor[1], m.baseColor[2]], m.roughness);
+    return this.add({
+      ...m,
+      key,
+      name: `${m.name} (wet)`,
+      baseColor: [w.color[0], w.color[1], w.color[2], m.baseColor[3]],
+      roughness: w.roughness,
+      declared: { ...m.declared, roughness: Math.round(w.roughness * 1000) },
     });
   }
 
@@ -658,19 +688,21 @@ export async function buildScene(document: object, options: SceneOptions = {}): 
  * chose), without validating it again: the drawings' 3D views use the evaluation their plans were
  * drawn from. `options.design` and `options.reader` are the evaluation's and are not read.
  */
-export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions, 'levels' | 'images' | 'doors' | 'lighting'> = {}): Promise<Scene> {
+export async function buildSceneFrom(ev: Evaluation, options: Pick<SceneOptions, 'levels' | 'images' | 'doors' | 'lighting' | 'look'> = {}): Promise<Scene> {
   if (!ev.valid || ev.document === undefined) throw new InvalidDocumentError(ev.diagnostics);
   const derived = deriveEvaluation(ev);
   const doc = ev.view ?? ev.document;
   const mesher = await getMesher();
   const levelIds = Object.keys(doc.levels ?? {});
   for (const l of options.levels ?? []) if (!levelIds.includes(l)) throw new RangeError(`the model has no level ${l}`);
-  const house = mesher.meshDerived(doc, derived, { ...(options.levels === undefined ? {} : { levels: options.levels }), ...(options.doors === undefined ? {} : { doors: options.doors }) });
-  return sceneOf(doc, derived, house.parts, ev.design ?? null, mapAverages(doc, options.images), options.lighting);
+  const meshed = mesher.meshDerived(doc, derived, { ...(options.levels === undefined ? {} : { levels: options.levels }), ...(options.doors === undefined ? {} : { doors: options.doors }) });
+  // FLR-T-15.4: the season and the snow on the parts; the rain on their materials (sceneOf).
+  const house = lookMesh(meshed, doc, options.look);
+  return sceneOf(doc, derived, house.parts, ev.design ?? null, mapAverages(doc, options.images), options.lighting, fullLook(options.look).weather === 'rain');
 }
 
 /** The scene of meshed parts: exported for tests that mesh once and build several ways. */
-export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonly MeshPart[], design: Readonly<Record<string, string>> | null, average?: MapAverage, lighting: Lighting = ALL_ON): Scene {
+export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonly MeshPart[], design: Readonly<Record<string, string>> | null, average?: MapAverage, lighting: Lighting = ALL_ON, wet = false): Scene {
   const materials = new Materials(doc, average);
   const look = appearanceOf(doc, derived);
   const builders = new Map<string, { node: Omit<SceneNode, 'primitives' | 'parts'>; b: NodeBuilder }>();
@@ -711,6 +743,8 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
     }
     const b = entry.b;
     if (!b.parts.includes(part.kind)) b.parts.push(part.kind);
+    // FLR-T-15.4: in rain, what stands outside is drawn in its material made wet.
+    const wetted = (m: number): number => (wet && wetPart(part) ? materials.wet(m) : m);
 
     // A floor drawn down to the ceiling below (FLR-T-12.32) is laid out by surface, as a threshold is.
     switch (part.kind === 'floor' && part.plenum !== undefined ? 'threshold' : part.kind) {
@@ -769,14 +803,14 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
         // Clad as the wall it stands on (FLR-T-12.38): that wall's outside face's material, else its
         // default; with no wall under it, the gable's own.
         const c = part.cladding;
-        const material = materials.of(c?.material, c === undefined ? swatch('gable') : look.face(c.wall, c.side));
+        const material = wetted(materials.of(c?.material, c === undefined ? swatch('gable') : look.face(c.wall, c.side)));
         for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, boxProjection(n));
         break;
       }
       default: {
         const fallback = swatch(part.kind === 'slab' ? 'slab' : part.kind === 'roof' ? 'roof' : part.kind === 'extension' ? 'extension' : 'stair');
         // A piece of a model or of an opening's joinery takes its role's look; a fallback box the quiet default.
-        const material = part.model !== undefined ? materials.role(part.model.role) : materials.of(part.material, fallback);
+        const material = wetted(part.model !== undefined ? materials.role(part.model.role) : materials.of(part.material, fallback));
         const smooth = part.model?.smooth === true;
         // A roof's slopes are laid along them (FLR-T-13.6, @floorspec/mesh texcoords): a seam runs down the slope at its true width.
         for (const { tri, n } of triangles(part)) b.add(part.kind, material, tri, n, part.kind === 'roof' && isSlope(n) ? slopeProjection(n) : boxProjection(n), smooth);

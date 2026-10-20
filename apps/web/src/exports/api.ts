@@ -277,6 +277,18 @@ export interface ExportRequest {
   style?: string;
   /** PDF and DXF (FLR-T-18.13): a remodel's renovation plan. */
   renovation?: string;
+  /** A still, a shot list, a film, a pair, a glTF or a USDZ (FLR-T-15.4): the season and the weather it is seen in. */
+  season?: 'spring' | 'summer' | 'autumn' | 'winter';
+  weather?: 'clear' | 'overcast' | 'rain' | 'snow';
+}
+
+/**
+ * A render's season and weather, as an export asks for them (FLR-T-15.4): only what a render would
+ * not draw anyway — a season other than summer, and rain or snow. A clear or an overcast weather is
+ * the sky the render already names (or each saved view its own), so it is left to that.
+ */
+export function lookRequest(look: { readonly season: 'spring' | 'summer' | 'autumn' | 'winter'; readonly weather: 'clear' | 'overcast' | 'rain' | 'snow' }): Pick<ExportRequest, 'season' | 'weather'> {
+  return { ...(look.season === 'summer' ? {} : { season: look.season }), ...(look.weather === 'rain' || look.weather === 'snow' ? { weather: look.weather } : {}) };
 }
 
 /** The kinds made in one design: every export but the IFC model, which is of the primary. */
@@ -433,6 +445,9 @@ export interface GpuStillFacts {
   /** The GPU, as the browser names it. */
   readonly device?: string;
   readonly design?: Record<string, string>;
+  /** The season and the weather it was seen in (FLR-T-15.4). */
+  readonly season?: 'spring' | 'summer' | 'autumn' | 'winter';
+  readonly weather?: 'clear' | 'overcast' | 'rain' | 'snow';
 }
 
 /** Save a still the editor path-traced on this device's GPU to the version's exports (FLR-T-13.13). */
@@ -446,6 +461,8 @@ export async function uploadStill(projectId: string, png: Blob, facts: GpuStillF
     ...(facts.scene === undefined ? {} : { scene: facts.scene.slice(0, 200) }),
     time: facts.time,
     ...(facts.sky === undefined ? {} : { sky: facts.sky }),
+    ...(facts.season === undefined ? {} : { season: facts.season }),
+    ...(facts.weather === undefined ? {} : { weather: facts.weather }),
     ...(facts.device === undefined || facts.device === '' ? {} : { device: facts.device.slice(0, 200) }),
     ...(facts.design === undefined || Object.keys(facts.design).length === 0 ? {} : { design: JSON.stringify(facts.design) }),
   });

@@ -13,8 +13,9 @@ import { encodePng } from './png.js';
 import { sideBySideComposite } from './composite.js';
 import { rasterize, type DrawList, type RasterLamp, type RasterSky } from './raster.js';
 import type { ImageSource } from '../export/gltf/glb.js';
-import { skyBounce, skyExposure, skyHarmonics, type SkyPreset } from '@floorspec/mesh/sky';
-import { resolveSky, skySummary, type ResolvedSky, type SkySummary } from '../pathtrace/sky.js';
+import { skyBounce, skyExposure, skyHarmonics, type LookRequest, type SkyPreset } from '@floorspec/mesh/sky';
+import { lookOption } from '../pathtrace/index.js';
+import { lawnTinted, resolveSky, skySummary, type ResolvedSky, type SkySummary } from '../pathtrace/sky.js';
 import { texturesOf } from '../pathtrace/index.js';
 import { mipChain, type Texture } from '../pathtrace/textures.js';
 import { withLibrary } from '../export/gltf/library.js';
@@ -43,6 +44,8 @@ export interface Render3dOptions extends Omit<SceneOptions, 'levels'> {
    */
   readonly sky?: SkyPreset;
   readonly at?: string;
+  /** FLR-T-15.4: the season and the weather it is seen in — under a sky (a clear one, when none is named). */
+  readonly look?: LookRequest;
 }
 
 export interface Render3dResult {
@@ -268,7 +271,7 @@ export function rasterSky(sky: ResolvedSky, groundY: number): RasterSky {
     exposure: skyExposure(sky.light, sky.field.maps),
     sun: d === null ? null : { dir: [d.dir[0], d.dir[2], -d.dir[1]], lux: d.lux, color: d.color },
     groundY,
-    ...(sky.light.ground.grass ? {} : { floor: sky.light.ground.albedo }),
+    ...(sky.light.ground.grass ? (lawnTinted(sky.light) ? { lawnTint: sky.light.ground.tint } : {}) : { floor: sky.light.ground.albedo }),
     bounce: (() => {
       const b = skyBounce(sky.light);
       return [b.lux * b.color[0], b.lux * b.color[1], b.lux * b.color[2]] as Vec3;
@@ -426,6 +429,7 @@ export async function render3dCompare(a: ComparedSide, b: ComparedSide, options:
       ...(options.images === undefined ? {} : { images: options.images }),
       ...(options.doors === undefined ? {} : { doors: options.doors }),
       ...(options.lighting === undefined ? {} : { lighting: options.lighting }),
+      ...lookOption(options.look),
     });
   const [sa, sb] = await Promise.all([build(a), build(b)]);
   const { width, height } = sizeOf(options.width);
@@ -445,7 +449,8 @@ export async function render3dCompare(a: ComparedSide, b: ComparedSide, options:
     camera = presetCamera(options.camera ?? 'sw', { min: [Math.min(ba.min[0], bb.min[0]), Math.min(ba.min[1], bb.min[1]), Math.min(ba.min[2], bb.min[2])], max: [Math.max(ba.max[0], bb.max[0]), Math.max(ba.max[1], bb.max[1]), Math.max(ba.max[2], bb.max[2])] }, width / height);
   }
   const { sky, at } = options;
-  const skyLight = sky === undefined && at === undefined ? undefined : resolveSky(a.document, { ...(sky === undefined ? {} : { sky }), ...(at === undefined ? {} : { at }) });
+  const look = lookOption(options.look).look;
+  const skyLight = sky === undefined && at === undefined && look === undefined ? undefined : resolveSky(a.document, { ...(sky === undefined ? {} : { sky }), ...(at === undefined ? {} : { at }), ...look });
   const draw = (scene: Scene, side: ComparedSide) =>
     renderScene(scene, {
       shot: { camera, width, height },
@@ -500,9 +505,11 @@ export async function render3dPng(document: object, options: Render3dOptions = {
     ...(options.images === undefined ? {} : { images: options.images }),
     ...(options.doors === undefined ? {} : { doors: options.doors }),
     ...(options.lighting === undefined ? {} : { lighting: options.lighting }),
+    ...lookOption(options.look),
   });
-  const { sky, at, ...rest } = options;
-  const skyLight = sky === undefined && at === undefined ? undefined : resolveSky(document, { ...(sky === undefined ? {} : { sky }), ...(at === undefined ? {} : { at }) });
+  const { sky, at, look: asked, ...rest } = options;
+  const look = lookOption(asked).look;
+  const skyLight = sky === undefined && at === undefined && look === undefined ? undefined : resolveSky(document, { ...(sky === undefined ? {} : { sky }), ...(at === undefined ? {} : { at }), ...look });
   return renderScene(scene, { ...rest, ...(skyLight === undefined ? {} : { skyLight }) });
 }
 

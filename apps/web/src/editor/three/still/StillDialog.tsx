@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, FormField, Modal, Select, useToast } from '@d3cloud/ui';
 import { Download, Sparkles } from 'lucide-react';
 import { messageOf } from '../../../lib/api';
-import { QUALITIES, requestExport, SIZES, startDownload, stillWithinBudget as withinBudget, untilFinished, type ExportJob, type StillQuality as Quality, type StillRequest, type StillSize as Size } from '../../../exports/api';
+import { lookRequest, QUALITIES, requestExport, SIZES, startDownload, stillWithinBudget as withinBudget, untilFinished, type ExportJob, type StillQuality as Quality, type StillRequest, type StillSize as Size } from '../../../exports/api';
 import { useEditor, type EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { PRESET_ORDER, PRESETS, type PresetId } from '../camera';
@@ -87,7 +87,7 @@ function StillDialog({ store, preset, level, only, roof, current, onClose }: { s
 function ServerStillDialog({ store, preset, level, onClose, fallback = false }: { store: EditorStore; preset: PresetId | null; level: string | null; onClose: () => void; fallback?: boolean }) {
   const model = useEditor(store, (s) => s.model);
   const skyPreset = useSunState(store, (s) => s.sky);
-  const { full: sky } = useSkyLight(store, model, false);
+  const { full: sky, look } = useSkyLight(store, model, false);
   const toast = useToast();
   const [view, setView] = useState<string>(preset ?? 'sw');
   const [size, setSize] = useState<Size>('medium');
@@ -122,7 +122,7 @@ function ServerStillDialog({ store, preset, level, onClose, fallback = false }: 
     };
     const design = Object.keys(model.design).length > 0 ? { design: { ...model.design } } : {};
     try {
-      const job = await requestExport(store.projectId, { kind: 'still', still, ...design });
+      const job = await requestExport(store.projectId, { kind: 'still', still, ...design, ...lookRequest(look) });
       const started = Date.now();
       setPhase({ kind: 'rendering', job, started });
       stop.current = new AbortController();

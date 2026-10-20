@@ -99,6 +99,7 @@ export async function renderFilm(document: object, options: FilmOptions): Promis
     ...(options.design === undefined ? {} : { design: options.design }),
     ...(options.pixels === undefined ? {} : { pixels: options.pixels }),
     ...(options.samples === undefined ? {} : { samples: options.samples }),
+    ...(options.look === undefined ? {} : { look: options.look }),
   };
   /** One frame taken: into ffmpeg, then reported. */
   const take = async (rgb: Uint8Array, progress: FilmProgress): Promise<void> => {

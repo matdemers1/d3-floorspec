@@ -192,6 +192,8 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
     return out;
   };
   const rooms = model.document.rooms as Record<string, Json | undefined> | undefined;
+  // A piece in a role of its own — a model's, or a look's snow on a roof (FLR-T-15.4) — in its role's colour.
+  if (part.model !== undefined) return one(ROLE_LOOKS[part.model.role].color);
   switch (part.kind) {
     case 'wall': {
       const wall = walls.get(part.id);
@@ -254,8 +256,8 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
       return one(materialColour(model, rooms?.[part.threshold?.room ?? '']?.['floorFinish'] as string | undefined) ?? (part.threshold === undefined ? DEFAULTS.floor : appearance(model).floor(part.threshold.room).color));
     case 'extension':
     case 'joinery':
-      // A model's piece, or an opening's joinery, in its role's colour (FLR-T-12.21, FLR-T-13.8), the worker's render and export alike.
-      return one(part.model === undefined ? DEFAULTS.extension : ROLE_LOOKS[part.model.role].color);
+      // A model's piece, or an opening's joinery, is in its role's colour (above: FLR-T-12.21, FLR-T-13.8), the worker's render and export alike.
+      return one(DEFAULTS.extension);
     case 'opening':
       return one(DEFAULTS.interior);
   }

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, FormField, Modal, Select, Switch, useToast } from '@d3cloud/ui';
 import { Download, Sparkles, X } from 'lucide-react';
 import { messageOf } from '../../../lib/api';
-import { requestExport, startDownload, untilFinished, uploadStill, type ExportJob } from '../../../exports/api';
+import { lookRequest, requestExport, startDownload, untilFinished, uploadStill, type ExportJob } from '../../../exports/api';
 import { useEditor, type EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { PRESET_ORDER, PRESETS, type PresetId } from '../camera';
@@ -129,7 +129,9 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
       setPhase({ kind: 'exporting', job: null });
       const levels = cut === null ? undefined : only ? [cut] : levelsUpTo(model, cut);
       const lit = lights && !('all' in viewLighting) ? { lighting: { on: Object.fromEntries(Object.entries(viewLighting.on).map(([id, s]) => [id, { ...s }])) } } : {};
-      const queued = await requestExport(store.projectId, { kind: 'gltf', doors, ...lit, ...(levels === undefined ? {} : { levels }), ...(design === undefined ? {} : { design }) });
+      // FLR-T-15.4: in the season and the weather the still's sky is seen in — bare trees, snow on the roofs, wet paving.
+      const look = lookRequest(pickedSky.look);
+      const queued = await requestExport(store.projectId, { kind: 'gltf', doors, ...lit, ...(levels === undefined ? {} : { levels }), ...(design === undefined ? {} : { design }), ...look });
       setPhase({ kind: 'exporting', job: queued });
       const exported = await untilFinished(store.projectId, queued, (j) => { setPhase({ kind: 'exporting', job: j }); }, controller.signal);
       if (controller.signal.aborted) return;
@@ -192,7 +194,7 @@ export default function GpuStillDialog({ store, preset, level, only, roof, curre
       let job: ExportJob | null = null;
       let saveError: string | null = null;
       try {
-        job = await uploadStill(store.projectId, traced.png, { version: exported.version, view: chosen.label, samples, ms: traced.ms, lights: lights ? 'on' : 'off', ...(lights ? { scene: sceneName } : {}), time, sky: skyChoice, device, ...(design === undefined ? {} : { design }) });
+        job = await uploadStill(store.projectId, traced.png, { version: exported.version, view: chosen.label, samples, ms: traced.ms, lights: lights ? 'on' : 'off', ...(lights ? { scene: sceneName } : {}), time, sky: skyChoice, device, ...(design === undefined ? {} : { design }), ...look });
       } catch (caught) {
         saveError = messageOf(caught);
       }
