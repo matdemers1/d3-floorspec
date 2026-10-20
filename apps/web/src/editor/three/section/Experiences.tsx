@@ -1,6 +1,6 @@
 import { useEffect, useId, type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 import { Button, IconButton, Menu, MenuContent, MenuItem, MenuTrigger, Switch, Tooltip, useToast } from '@d3cloud/ui';
-import { Camera, Crop, Crosshair, Pause, Play, UnfoldVertical, X } from 'lucide-react';
+import { Camera, Crop, Crosshair, Move, Pause, Play, Ruler, UnfoldVertical, X } from 'lucide-react';
 import type { EditorStore } from '../../store';
 import { prettyLen, type UnitSystem } from '../../units';
 import { sunOf, useSunState } from '../sun/study';
@@ -53,7 +53,9 @@ interface Experience {
 
 const EXPERIENCES: readonly Experience[] = [
   { id: 'section', Button: SectionButton },
-  // FLR-T-14.5 X-ray, FLR-T-14.7 Daylight, FLR-T-14.4 Compare, FLR-T-14.8 Edit in 3D and the tape measure come here.
+  // FLR-T-14.5 X-ray, FLR-T-14.7 Daylight and FLR-T-14.4 Compare come here.
+  { id: 'edit', Button: EditButton },
+  { id: 'tape', Button: TapeButton },
 ];
 
 export function ExperiencesToolbar({ ctx }: { ctx: ExperienceContext }) {
@@ -107,6 +109,30 @@ function SectionButton({ ctx }: { ctx: ExperienceContext }) {
   return (
     <Tooltip content={open ? 'Close the section (X)' : 'Section box: cut the house anywhere (X)'}>
       <IconButton label="Section box" icon={<Crop />} size="sm" pressed={open || on} onClick={() => { toggleSection(ctx); }} />
+    </Tooltip>
+  );
+}
+
+/** FLR-T-14.8: Edit in 3D (E) — drag items on their host and openings along their walls. */
+function EditButton({ ctx }: { ctx: ExperienceContext }) {
+  const three = threeOf(ctx.store);
+  const on = useThreeState(ctx.store, (s) => s.edit === 'move');
+  const exploded = useThreeState(ctx.store, (s) => s.explode.open);
+  return (
+    <Tooltip content={on ? 'Stop editing in 3D (E)' : 'Edit in 3D: drag furniture, fixtures and openings (E)'}>
+      <IconButton label="Edit in 3D" icon={<Move />} size="sm" pressed={on} disabled={exploded} aria-keyshortcuts="E" onClick={() => { three.setEdit(on ? null : 'move'); }} />
+    </Tooltip>
+  );
+}
+
+/** FLR-T-14.8: the tape measure (⇧M) — click points on the house to measure between them. */
+function TapeButton({ ctx }: { ctx: ExperienceContext }) {
+  const three = threeOf(ctx.store);
+  const on = useThreeState(ctx.store, (s) => s.edit === 'tape');
+  const exploded = useThreeState(ctx.store, (s) => s.explode.open);
+  return (
+    <Tooltip content={on ? 'Put the tape away (⇧M)' : 'Tape measure: click two points on the house (⇧M)'}>
+      <IconButton label="Tape measure" icon={<Ruler />} size="sm" pressed={on} disabled={exploded} aria-keyshortcuts="Shift+M" onClick={() => { three.setEdit(on ? null : 'tape'); }} />
     </Tooltip>
   );
 }

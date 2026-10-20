@@ -5,6 +5,7 @@ import type { Aperture, Aspect } from '@floorspec/mesh';
 import type { Orbit, PresetId } from './camera';
 import { softwareWebGL } from './software';
 import { DEFAULT_EXPLODE, DEFAULT_SECTION, type ExplodeState, type SectionState } from './section/section';
+import type { TapePoint } from './edit/tape';
 
 /**
  * The 3D view's state (FLR-T-7.5, FLR-REQ-113, 114), beside the editor's store rather than in it:
@@ -129,7 +130,17 @@ export interface ThreeState {
   sectionOpen: boolean;
   /** The exploded axonometric (FLR-T-14.6): whether it shows, and how. View state. */
   explode: ExplodeState;
+  /**
+   * Edit in 3D (FLR-T-14.8): `move` drags items on their host and openings along their walls,
+   * `tape` measures; null orbits and selects as the view always has.
+   */
+  edit: EditTool | null;
+  /** The tape measure's points, chained, metres in the mesh's frame (FLR-T-14.8). View state. */
+  tape: readonly TapePoint[];
 }
+
+/** Edit in 3D's tools (FLR-T-14.8). */
+export type EditTool = 'move' | 'tape';
 
 export const EYE_HEIGHTS = [1.2, 1.5, 1.6, 1.7, 1.8] as const;
 const EYE_KEY = 'floorspec.eyeHeight';
@@ -202,6 +213,8 @@ export class ThreeStore {
       section: DEFAULT_SECTION,
       sectionOpen: false,
       explode: DEFAULT_EXPLODE,
+      edit: null,
+      tape: [],
     };
   }
 
@@ -305,8 +318,14 @@ export class ThreeStore {
    * closing it lowers them, and the view goes back to its own camera once they are down (SectionScene).
    */
   toggleExplode(open: boolean = !this.state.explode.open): void {
-    if (open) this.set({ explode: { ...this.state.explode, active: true, open: true, apart: true }, sectionOpen: false, cameraOpen: false, lightingOpen: false, walking: false, walkFrom: null });
+    if (open) this.set({ explode: { ...this.state.explode, active: true, open: true, apart: true }, sectionOpen: false, cameraOpen: false, lightingOpen: false, walking: false, walkFrom: null, edit: null, tape: [] });
     else this.setExplode({ open: false, apart: false });
+  }
+
+  /** Edit in 3D (FLR-T-14.8): a tool on, or off (null); turning the tape off clears what it measured. */
+  setEdit(tool: EditTool | null): void {
+    if (tool === this.state.edit) return;
+    this.set(tool === 'tape' ? { edit: tool } : { edit: tool, tape: [] });
   }
 
   /** Draw in Draft or Presentation; remembered in this browser. */

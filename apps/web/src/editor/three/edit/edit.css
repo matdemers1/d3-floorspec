@@ -1,0 +1,218 @@
+/* Edit in 3D (FLR-T-14.8): the gizmo, the guides and tags, the hints and the tape over the 3D view. */
+
+.fs-edit3d {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fs-edit3d__lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ─── What a drag draws ─────────────────────────────────────────────────────────────────────── */
+.fs-edit3d__ghost {
+  fill: none;
+  stroke: var(--color-fg-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+.fs-edit3d__guide {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+.fs-edit3d__leader {
+  fill: none;
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+}
+.fs-edit3d__leader--warning {
+  stroke: var(--color-warning);
+}
+.fs-edit3d__leader--danger {
+  stroke: var(--color-danger);
+}
+.fs-edit3d__arrow {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.fs-edit3d__arc {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+.fs-edit3d__stem {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1;
+}
+
+.fs-edit3d__tag,
+.fs-edit3d__guide-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  margin: -10px 0 0 0;
+  padding: 0 var(--space-6);
+  border: 1.5px solid var(--color-accent);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  white-space: nowrap;
+  translate: -50% 0;
+}
+.fs-edit3d__tag--warning {
+  border-color: var(--color-warning);
+}
+.fs-edit3d__tag--danger {
+  border-color: var(--color-danger);
+}
+.fs-edit3d__guide-pill {
+  height: 24px;
+  margin: -12px 0 0 var(--space-8);
+  padding: 0 var(--space-8);
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  translate: 0 0;
+  visibility: hidden;
+}
+.fs-edit3d__guide-pill:not([data-on='true']) {
+  display: none;
+}
+
+/* ─── The handles ───────────────────────────────────────────────────────────────────────────── */
+.fs-edit3d__handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+.fs-edit3d__handle[data-active='true'] {
+  cursor: grabbing;
+}
+.fs-edit3d__handle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+.fs-edit3d__knob {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+}
+.fs-edit3d__handle[data-active='true'] .fs-edit3d__knob,
+.fs-edit3d__handle:focus-visible .fs-edit3d__knob {
+  background: var(--color-accent);
+}
+.fs-edit3d__knob--rotate {
+  width: 14px;
+  height: 14px;
+}
+
+/* ─── Hints ─────────────────────────────────────────────────────────────────────────────────── */
+.fs-edit3d__hint {
+  /* Above the chips along the bottom (quality, stats). */
+  bottom: calc(var(--space-16) + 44px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--color-fg-muted);
+  pointer-events: none;
+}
+.fs-edit3d__hint--top {
+  top: 72px;
+  bottom: auto;
+}
+.fs-edit3d__doing {
+  color: var(--color-fg);
+  font-weight: var(--weight-medium);
+}
+.fs-edit3d__hint kbd {
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-11);
+}
+
+/* ─── The tape ──────────────────────────────────────────────────────────────────────────────── */
+.fs-edit3d__tape {
+  fill: none;
+  stroke: var(--color-warning);
+  stroke-width: 2;
+}
+.fs-edit3d__tape--next {
+  stroke-dasharray: 4 4;
+}
+.fs-edit3d__point {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-warning);
+  stroke-width: 2;
+}
+.fs-edit3d__point--hover {
+  fill: var(--color-warning);
+}
+.fs-edit3d__point--face {
+  fill: var(--color-surface-raised);
+}
+.fs-edit3d__readout {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-12);
+  border: 1.5px solid var(--color-warning);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  translate: -50% calc(-100% - 12px);
+  white-space: nowrap;
+}
+.fs-edit3d__length {
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-14);
+  font-weight: var(--weight-semibold);
+}
+.fs-edit3d__deltas {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+
+/* The tape takes points where the pointer is: a crosshair over the view. */
+.fs-three[data-edit='tape'] .fs-three__gl {
+  cursor: crosshair;
+}
