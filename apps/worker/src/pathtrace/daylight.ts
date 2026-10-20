@@ -347,7 +347,7 @@ export async function daylightStudy(document: object, options: DaylightOptions):
     const columns = Math.max(1, Math.ceil((maxX - x0) / spacing));
     const rows = Math.max(1, Math.ceil((maxY - y0) / spacing));
     const g = grids.length;
-    grids.push({ level: level.id, elevation: level.elevation, x0, y0, columns, rows });
+    grids.push({ level: level.id, elevation: Math.max(...on.map(({ r }) => r.floor)), x0, y0, columns, rows });
     for (let j = 0; j < rows; j++)
       for (let i = 0; i < columns; i++) {
         const x = x0 + (i + 0.5) * spacing;

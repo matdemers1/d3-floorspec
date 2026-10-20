@@ -177,7 +177,7 @@ export interface DaylightGrid {
   readonly spacing: number;
   readonly columns: number;
   readonly rows: number;
-  /** The level's floor, metres above the document's datum: where the overlay is drawn. */
+  /** The highest floor top of the level's rooms, metres above the document's datum: where an overlay is drawn. */
   readonly elevation: number;
   /** Illuminance on the work plane at the chosen time, lux, whole numbers. */
   readonly lux: readonly number[];

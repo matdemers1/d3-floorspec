@@ -59,6 +59,7 @@ import { FurnitureBody } from '../furniture/Inspector';
 import { StagingSection } from './systems/Staging';
 import { ModeSummary } from './ModeSwitcher';
 import { PlanStyleSection } from './StylePanel';
+import { DaylightRoomSection } from './daylight/Daylight';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -132,6 +133,8 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   return (
     <div className="fs-inspector__body">
       <Header ctx={ctx} kind={kind} />
+      {/* FLR-T-14.7: the room's daylight while the study shows. */}
+      {kind === 'room' ? <DaylightRoomSection store={store} room={selection} /> : null}
       {body}
       {/* FLR-T-18.9: the temporary dimensions, as fields — the keyboard's way to them. */}
       <PositionSection store={store} />
