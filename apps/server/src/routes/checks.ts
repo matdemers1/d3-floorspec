@@ -51,6 +51,14 @@ const RenderQuery = z.object({
   compare: z.enum(['main']).optional(),
 });
 
+/** A daylight study's question (FLR-T-14.7): a date and time at the site, a sky, a design. */
+const DaylightQuery = z.object({
+  at: z.string().regex(AT_PATTERN, 'at is a date and time at the site, such as 2026-06-21T15:00 or 2026-06-21T15:00-04:00'),
+  sky: z.enum(['clear', 'overcast']).default('clear'),
+  changeset: z.string().optional(),
+  design: z.string().optional(),
+});
+
 /** The 3D render's widest picture: a software render, so its pixels are the worker's time. */
 export const MAX_3D_WIDTH = 2048;
 /** A render with its lights is path-traced: narrower, and waited for longer. */
@@ -315,6 +323,73 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
       await new Promise((resolve) => setTimeout(resolve, wait.pollMs ?? 100));
     }
   }
+
+  /**
+   * A daylight study (FLR-T-14.7): illuminance on every floor's work plane at a date and time,
+   * sun-hours that day and in a year, and glare at desks and beds — path-traced by the worker as an
+   * `analysis.daylight` job while the request waits, and kept: the same version, time, sky and
+   * design answer from the study already made, while the worker keeps its output. A read: no audit
+   * row. Advisory (FLR-ADR-011): it describes the light and never passes or fails a room.
+   */
+  routes.read(
+    '/:projectId/daylight',
+    async (req, res) => {
+      const project = req.project;
+      if (project === undefined) throw new HttpError(404, 'project not found');
+      const q = DaylightQuery.safeParse(req.query);
+      if (!q.success) throw new HttpError(400, 'a daylight study needs a date and time at the site (at=2026-06-21T15:00, or with an offset, at=2026-06-21T15:00-04:00) and a sky, clear or overcast', { fields: q.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) });
+      const { head, hash, document } = await documentAt(req);
+      const design = designQuery(q.data.design);
+      const ev = evaluate(document as object, { ...OFFICIAL_READER, ...(design === undefined ? {} : { design }) });
+      if (!ev.valid || ev.document === undefined || ev.view === undefined)
+        throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this model cannot be studied', detail: 'The model, or the design asked for, is not valid. Run validate to see why.' });
+      const params = { at: q.data.at, sky: q.data.sky, ...(design === undefined ? {} : { design }) };
+      const send = (bytes: Uint8Array): void => {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('ETag', `"${hash}-${createHash('sha256').update(JSON.stringify(params)).digest('hex').slice(0, 16)}"`);
+        res.setHeader('Cache-Control', 'private, no-cache');
+        res.send(`{"head":${JSON.stringify(head)},"hash":${JSON.stringify(hash)},${Buffer.from(bytes).toString('utf8').slice(1)}`);
+      };
+      // The study already made, or being made, for this version, time, sky and design.
+      const same = { projectId: project.id, kind: 'analysis.daylight', versionHash: hash, params: { equals: params } };
+      const made = await db.job.findFirst({ where: { ...same, status: 'done', output: { isNot: null } }, orderBy: { createdAt: 'desc' }, select: { output: { select: { bytes: true } } } });
+      if (made !== null && made.output !== null) {
+        send(new Uint8Array(made.output.bytes));
+        return;
+      }
+      let job = await db.job.findFirst({ where: { ...same, status: { in: ['queued', 'running'] } }, select: { id: true } });
+      if (job === null) {
+        const pending = await db.job.count({ where: { projectId: project.id, kind: 'analysis.daylight', status: { in: ['queued', 'running'] } } });
+        if (pending >= MAX_PENDING_RENDERS) throw new HttpError(429, `this project already has ${String(pending)} daylight studies waiting; try again when one finishes`);
+        job = await db.job.create({
+          data: {
+            projectId: project.id,
+            kind: 'analysis.daylight',
+            params,
+            versionHash: hash,
+            requestedByAccountId: req.auth?.accountId ?? req.token?.accountId ?? null,
+            requestedByTokenId: req.auth === undefined ? (req.token?.tokenId ?? null) : null,
+          },
+          select: { id: true },
+        });
+      }
+      const timeout = (wait.timeoutMs ?? 60_000) * 2;
+      const until = Date.now() + timeout;
+      for (;;) {
+        const now = await db.job.findUniqueOrThrow({ where: { id: job.id }, select: { status: true, error: true, output: { select: { bytes: true } } } });
+        if (now.status === 'done' && now.output !== null) {
+          send(new Uint8Array(now.output.bytes));
+          return;
+        }
+        if (now.status === 'failed')
+          throw new ProblemError({ status: 422, type: 'not-renderable', title: 'this daylight study could not be made', detail: `${now.error ?? 'The study failed.'} Run validate if the model may be the reason.` });
+        if (Date.now() > until)
+          throw new ProblemError({ status: 503, type: 'render-timeout', title: 'the daylight study did not finish in time', detail: `No worker made it within ${String(Math.round(timeout / 1000))} s; it stays queued. Try again shortly.` });
+        await new Promise((resolve) => setTimeout(resolve, wait.pollMs ?? 100));
+      }
+    },
+    { token: 'read' },
+  );
 
   /** A render as PNG: the plan (FLR-T-2.8), or the 3D model drawn by the worker (FLR-T-8.5). */
   routes.read(

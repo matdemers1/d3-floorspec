@@ -1,5 +1,5 @@
 import { McpServer, ResourceTemplate, type CallToolResult } from '@modelcontextprotocol/server';
-import { describeEstimate, estimateEnergy, EstimateError } from '@floorspec/analysis';
+import { describeDaylight, describeEstimate, estimateEnergy, EstimateError } from '@floorspec/analysis';
 import { z } from 'zod';
 import { FloorspecApiError, type ApplyInput, type Committed, type FloorspecClient, type Layouts, type Op, type ProjectSummary, type RenderOptions } from './client.js';
 import { embedOps, libraryText, missingLibraryTypes, namesLibraryTypes, references, US_STARTER } from './library.js';
@@ -993,6 +993,34 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     },
   );
 
+  // FLR-T-14.7: daylight — illuminance in four bands on every floor's work plane at a date and time,
+  // sun-hours, and glare at desks and beds — as a resource, as the energy estimate is, so the tool
+  // list an agent reads every session stays as it is. Path-traced by the worker; advisory.
+  server.registerResource(
+    'daylight',
+    new ResourceTemplate('floorspec://{project}/daylight{?at}', { list: undefined }),
+    {
+      title: 'Daylight (advisory)',
+      description:
+        'Daylight at a date and time at the site (?at=2026-12-21T15:00, an offset optional): each room\'s median lux and its share in four bands — dim < 100, needs a lamp 100–300, useful 300–3,000, bright > 3,000 — on the work plane 2′-6″ up, sun-hours that day and a year, and the desks and beds direct sun reaches, with the hours. Clear sky. Advisory: it describes the light, never passes or fails a room.',
+      mimeType: 'text/plain',
+    },
+    async (uri, variables) => {
+      const project = String(variables['project']);
+      const raw = variables['at'];
+      const at = decodeURIComponent(String(Array.isArray(raw) ? raw[0] : (raw ?? '')));
+      if (client.daylight === undefined) return { contents: [{ uri: uri.href, mimeType: 'text/plain', text: 'No daylight study: this server does not make them.' }] };
+      let body: string;
+      try {
+        body = describeDaylight(await client.daylight(project, { at }));
+      } catch (error) {
+        if (!(error instanceof FloorspecApiError)) throw error;
+        body = `No daylight study: ${error.message}`;
+      }
+      return { contents: [{ uri: uri.href, mimeType: 'text/plain', text: body }] };
+    },
+  );
+
   // FLR-T-12.41: the design-partner text as a resource too, for a client that reads resources but
   // never offers prompts. It is where guidance too long for a tool description lives.
   server.registerResource(
@@ -1030,6 +1058,11 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
 
 /** The design-partner guidance as a resource (FLR-T-12.41). */
 export const GUIDE_URI = 'floorspec://guide';
+
+/** A daylight study's resource (FLR-T-14.7) at a date and time at the site. */
+export function daylightUri(projectId: string, at: string): string {
+  return `floorspec://${projectId}/daylight?at=${encodeURIComponent(at)}`;
+}
 
 export function energyUri(projectId: string): string {
   return `floorspec://${projectId}/energy`;

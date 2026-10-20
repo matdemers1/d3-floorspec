@@ -50,6 +50,7 @@ import { useThreeState } from './three/mode';
 import { FindingsPanel, openAtFinding } from '../findings/Panel';
 import { findingsSource, useFindings } from '../findings/source';
 import { CommentsButton, EditorComments, OwnerPins, ShareButton, useCommentsOpen } from '../share/editor';
+import { useDaylightSync } from './daylight/state';
 import {
   AirIcon,
   DataIcon,
@@ -95,8 +96,15 @@ export default function Editor({ id, you }: { id: string; you: string }) {
   return (
     <TooltipProvider>
       <EditorFrame store={store} tools={tools} you={you} />
+      <DaylightSync store={store} />
     </TooltipProvider>
   );
+}
+
+/** FLR-T-14.7: keeps the daylight study in step with the version, the clock and the sky — apart, so a clock dragged re-renders nothing else. */
+function DaylightSync({ store }: { store: EditorStore }) {
+  useDaylightSync(store);
+  return null;
 }
 
 function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolController; you: string }) {
