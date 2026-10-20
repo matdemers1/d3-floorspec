@@ -249,7 +249,65 @@ function lawnGeometry(cx: number, cy: number): THREE.BufferGeometry {
 
 const noRaycast = (): void => undefined;
 
-export function Lawn({ centre, ground, field }: { centre: THREE.Vector3; ground: number; field: SkyField }) {
+/**
+ * FLR-T-15.2: where the lawn opens for a sunken pool. Each hole is drawn into one bit of the stencil
+ * just before the lawn (and that bit cleared just after it, so the section caps' stencil, FLR-T-14.6, is
+ * untouched); the lawn is not drawn where the bit is set. The hole and the lawn lie in one plane, so the
+ * hole's picture on the screen is exactly the lawn inside it: through it, the pool's coping, water and
+ * basin are seen.
+ */
+const HOLE_BIT = 0x80;
+
+function holeMaterial(set: boolean): THREE.MeshBasicMaterial {
+  return new THREE.MeshBasicMaterial({
+    side: THREE.DoubleSide,
+    colorWrite: false,
+    depthWrite: false,
+    depthTest: false,
+    stencilWrite: true,
+    stencilRef: set ? HOLE_BIT : 0,
+    stencilWriteMask: HOLE_BIT,
+    stencilFunc: THREE.AlwaysStencilFunc,
+    stencilFail: THREE.ReplaceStencilOp,
+    stencilZFail: THREE.ReplaceStencilOp,
+    stencilZPass: THREE.ReplaceStencilOp,
+  });
+}
+
+function holeGeometry(holes: readonly (readonly (readonly [number, number])[])[], ground: number): THREE.BufferGeometry | null {
+  const pos: number[] = [];
+  for (const ring of holes) {
+    const first = ring[0];
+    if (first === undefined) continue;
+    for (let i = 1; i + 1 < ring.length; i++) {
+      const b = ring[i] ?? first;
+      const c = ring[i + 1] ?? first;
+      pos.push(first[0], first[1], ground, b[0], b[1], ground, c[0], c[1], ground);
+    }
+  }
+  if (pos.length === 0) return null;
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeBoundingSphere();
+  return g;
+}
+
+function LawnHoles({ holes, ground }: { holes: readonly (readonly (readonly [number, number])[])[]; ground: number }) {
+  const geometry = useMemo(() => holeGeometry(holes, ground), [holes, ground]);
+  const set = useMemo(() => holeMaterial(true), []);
+  const clear = useMemo(() => holeMaterial(false), []);
+  useEffect(() => () => { geometry?.dispose(); }, [geometry]);
+  useEffect(() => () => { set.dispose(); clear.dispose(); }, [set, clear]);
+  if (geometry === null) return null;
+  return (
+    <>
+      <mesh geometry={geometry} material={set} renderOrder={0.5} raycast={noRaycast} frustumCulled={false} userData={{ lawnHole: true }} />
+      <mesh geometry={geometry} material={clear} renderOrder={1.5} raycast={noRaycast} frustumCulled={false} userData={{ lawnHole: true }} />
+    </>
+  );
+}
+
+export function Lawn({ centre, ground, field, holes = [] }: { centre: THREE.Vector3; ground: number; field: SkyField; holes?: readonly (readonly (readonly [number, number])[])[] }) {
   const gl = useThree((s) => s.gl);
   const invalidate = useThree((s) => s.invalidate);
   // Rebuilt only when the house moves by a tile or more: the lawn's pattern belongs to the site.
@@ -272,6 +330,12 @@ export function Lawn({ centre, ground, field }: { centre: THREE.Vector3; ground:
         .replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor.rgb = mix( gl_FragColor.rgb, hazeColor, smoothstep( hazeNear, hazeFar, vHazeDistance ) );');
     };
     m.customProgramCacheKey = () => 'floorspec-lawn-haze';
+    // FLR-T-15.2: not drawn where a sunken pool's hole set the stencil's bit (LawnHoles); it writes none.
+    m.stencilWrite = true;
+    m.stencilWriteMask = 0;
+    m.stencilRef = HOLE_BIT;
+    m.stencilFuncMask = HOLE_BIT;
+    m.stencilFunc = THREE.NotEqualStencilFunc;
     return m;
   }, [gl, haze]);
   useLayoutEffect(() => {
@@ -292,7 +356,12 @@ export function Lawn({ centre, ground, field }: { centre: THREE.Vector3; ground:
   }, [field, haze, invalidate, material, gl]);
   useEffect(() => () => { geometry.dispose(); }, [geometry]);
   useEffect(() => () => { material.dispose(); }, [material]);
-  return <mesh geometry={geometry} material={material} position={[cx, cy, ground]} receiveShadow raycast={noRaycast} userData={{ ground: true, lawn: true, snow: !field.light.ground.grass }} renderOrder={1} />;
+  return (
+    <>
+      <LawnHoles holes={holes} ground={ground} />
+      <mesh geometry={geometry} material={material} position={[cx, cy, ground]} receiveShadow raycast={noRaycast} userData={{ ground: true, lawn: true, snow: !field.light.ground.grass }} renderOrder={1} />
+    </>
+  );
 }
 
 // ─── The tone curve ──────────────────────────────────────────────────────────────────────────

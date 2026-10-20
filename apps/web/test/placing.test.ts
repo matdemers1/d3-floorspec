@@ -44,11 +44,21 @@ describe('the library (FLR-T-18.7)', () => {
   const all = entriesFor(MODEL.document);
   it('holds the furniture, the devices, the document’s door and window types and the garden', () => {
     const kinds = new Set(all.map((e) => e.source.kind));
-    expect([...kinds].sort()).toEqual(['device', 'furniture', 'landscape', 'opening']);
+    expect([...kinds].sort()).toEqual(['device', 'furniture', 'landscape', 'opening', 'outdoor']);
     expect(new Set(all.map((e) => e.key)).size).toBe(all.length);
     expect(all.filter((e) => e.groups.includes('outdoor')).length).toBeGreaterThanOrEqual(16);
     expect(all.some((e) => e.key === 'window:window-casement-30x48')).toBe(true);
     expect(all.some((e) => e.key === 'door:door-interior-swing-32x80')).toBe(true);
+  });
+
+  it('holds FS_outdoor\'s rooms on the Outdoor shelf, placed free on the level in one op (FLR-T-15.2)', () => {
+    const rooms = all.filter((e) => e.source.kind === 'outdoor');
+    // eleven placed items: three pools, three shelters, two kitchens, three fires — the fences are drawn
+    expect(rooms.length).toBe(11);
+    expect(rooms.every((e) => e.groups.includes('outdoor') && e.placement === 'level')).toBe(true);
+    const pool = entry('outdoor:plunge-pool-8x14');
+    expect(pool.box.max[0] - pool.box.min[0]).toBe(8 * 12 * 32_512);
+    expect(search(all, 'plunge')[0]?.key).toBe('outdoor:plunge-pool-8x14');
   });
 
   it('places by kind: a sofa backs onto a wall, a table stands free, a receptacle is a device, a tree is free on the level', () => {

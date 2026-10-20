@@ -3,7 +3,7 @@ import { siteDrawingOf } from '../../site/Layer';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { exposureFactor, type HouseMesh } from '@floorspec/mesh';
+import { exposureFactor, sunkenOutlines, type HouseMesh } from '@floorspec/mesh';
 import { useThreeState } from '../mode';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
@@ -43,6 +43,8 @@ interface Frame {
   radius: number;
   /** The ground plane's height, metres in the mesh's frame: just under the lowest level. */
   ground: number;
+  /** FLR-T-15.2: where the lawn opens for a sunken pool — each one's outline, metres in the mesh's frame. */
+  holes: [number, number][][];
 }
 
 function frameOf(model: EditorModel, mesh: HouseMesh): Frame | null {
@@ -59,20 +61,25 @@ function frameOf(model: EditorModel, mesh: HouseMesh): Frame | null {
   // FLR-T-15.1: on a surveyed site the lawn runs on beyond the terrain at its lowest ground.
   const terrain = siteDrawingOf(model);
   const low = terrain.surface === null ? null : Math.min(terrain.surface.low, ...terrain.graded.map((g) => g.elevation));
-  const grade = gradeOf(mesh, floor);
-  return { centre, radius, ground: (low === null ? grade : Math.min(grade, (low - o[2]) / k - 0.05)) - 0.005 };
+  // FLR-T-15.2: a sunken pool's floor is not the ground, and the lawn opens over it.
+  const sunken = sunkenOutlines(model.document, model.derived);
+  const grade = gradeOf(mesh, floor, new Set(sunken.map((s) => s.id)));
+  const holes = sunken.map((s) => s.ring.map((p): [number, number] => [(p[0] - o[0]) / k, (p[1] - o[1]) / k]));
+  return { centre, radius, ground: (low === null ? grade : Math.min(grade, (low - o[2]) / k - 0.05)) - 0.005, holes };
 }
 
 /**
  * Where the lawn lies (FLR-T-13.4), metres in the view's frame: at the lowest floor — or under
  * whatever is laid at grade a little below it, a slab, a patio, FS_landscape's lawns, beds and
  * pavers (FLR-T-13.5, whose tops sit a few centimetres under the floor) — so the lawn never covers
- * them. Only tops within 0.6 m under the floor count: a basement's is not the ground.
+ * them. Only tops within 0.6 m under the floor count: a basement's is not the ground — nor a sunken
+ * pool's water (`skip`, FLR-T-15.2), which the lawn opens for instead.
  */
-export function gradeOf(mesh: HouseMesh, floor: number): number {
+export function gradeOf(mesh: HouseMesh, floor: number, skip: ReadonlySet<string> = new Set()): number {
   let grade = floor;
   for (const part of mesh.parts) {
     if (part.kind !== 'slab' && part.kind !== 'extension') continue;
+    if (skip.has(part.id)) continue;
     const p = part.mesh.positions;
     let top = -Infinity;
     for (let i = 2; i < p.length; i += 3) top = Math.max(top, p[i] ?? -Infinity);
@@ -282,7 +289,7 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false, ca
         castShadow={casting}
         target={target}
       />
-      <Lawn centre={frame.centre} ground={frame.ground} field={field} />
+      <Lawn centre={frame.centre} ground={frame.ground} field={field} holes={frame.holes} />
     </>
   );
 }

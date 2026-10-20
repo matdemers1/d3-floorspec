@@ -10,6 +10,7 @@ import { buildScene, readGlb, type Scene, type SceneOptions, type Vec3 } from '.
 import { linear } from '../export/gltf/scene.js';
 import { findRoom, PRESETS, presetCamera, roomCamera, type Camera, type Preset } from './camera.js';
 import { encodePng } from './png.js';
+import { GroundGatherer, platePoints, type Hole } from './sunken.js';
 import { sideBySideComposite } from './composite.js';
 import { rasterize, type DrawList, type RasterLamp, type RasterSky } from './raster.js';
 import type { ImageSource } from '../export/gltf/glb.js';
@@ -174,22 +175,29 @@ const mix = (c: readonly [number, number, number], d: readonly [number, number, 
   c[2] + (d[2] - c[2]) * k,
 ];
 
-/** A big ground plate under the house, out to the horizon. */
-function ground(bounds: { min: Vec3; max: Vec3 }): Tri[] {
+/**
+ * A big ground plate under the house, out to the horizon: under everything but a sunken pool, and open
+ * over one (FLR-T-15.2, sunken.ts).
+ */
+function ground(bounds: { min: Vec3; max: Vec3; ground: number; holes: readonly Hole[] }): Tri[] {
   const cx = (bounds.min[0] + bounds.max[0]) / 2;
   const cz = (bounds.min[2] + bounds.max[2]) / 2;
   const r = 40 * Math.max(5, Math.hypot(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2]));
-  const y = bounds.min[1] - 0.003;
-  const p: Vec3[] = [
-    [cx - r, y, cz + r],
-    [cx + r, y, cz + r],
-    [cx + r, y, cz - r],
-    [cx - r, y, cz - r],
-  ];
-  return [
-    { a: p[0]!, b: p[1]!, c: p[2]!, rgb: GROUND, alpha: 1, twoSided: false, key: -2 },
-    { a: p[0]!, b: p[2]!, c: p[3]!, rgb: GROUND, alpha: 1, twoSided: false, key: -2 },
-  ];
+  return platePoints(cx, cz, r, bounds.ground - 0.003, bounds.holes).map(([a, b, c]) => ({ a: a!, b: b!, c: c!, rgb: GROUND, alpha: 1, twoSided: false, key: -2 }));
+}
+
+/** What is drawn of a scene — every level, or those a cutaway draws — gathered for its ground (sunken.ts). */
+export function groundOfScene(scene: Scene, keep: (level: string) => boolean = () => true): GroundGatherer {
+  const g = new GroundGatherer();
+  for (const level of scene.levels) {
+    if (!keep(level.id)) continue;
+    for (const node of level.nodes)
+      for (const p of node.primitives) {
+        const P = p.positions;
+        for (let i = 0; i + 2 < P.length; i += 3) g.add(node, P[i]!, P[i + 1]!, P[i + 2]!);
+      }
+  }
+  return g;
 }
 
 /** The scene's triangles as drawn: cut away above `level`, highlighted, with a ground under them. */
@@ -200,8 +208,7 @@ export function sceneTriangles(scene: Scene, options: { level?: string; only?: b
   const alone = options.only === true && cut !== undefined;
   const lit = new Set(options.highlight ?? []);
   const tris: Tri[] = [];
-  const min: Vec3 = [Infinity, Infinity, Infinity];
-  const max: Vec3 = [-Infinity, -Infinity, -Infinity];
+  const gathered = new GroundGatherer();
   // A round piece's facets share one outline key, past every plane's (drawList), so ink is drawn only round it.
   let round = SMOOTH_KEYS;
   for (const level of scene.levels) {
@@ -227,18 +234,14 @@ export function sceneTriangles(scene: Scene, options: { level?: string; only?: b
           const a = at3(p.indices[k]!);
           const b = at3(p.indices[k + 1]!);
           const c = at3(p.indices[k + 2]!);
-          for (const q of [a, b, c])
-            for (let j = 0; j < 3; j++) {
-              min[j] = Math.min(min[j]!, q[j]!);
-              max[j] = Math.max(max[j]!, q[j]!);
-            }
+          for (const q of [a, b, c]) gathered.add(node, q[0], q[1], q[2]);
           const uv = map === undefined || UV === null ? undefined : ([0, 1, 2].flatMap((j) => [UV[2 * p.indices[k + j]!]!, UV[2 * p.indices[k + j]! + 1]!]) as unknown as Tri['uv']);
           tris.push({ a, b, c, rgb, alpha: m.baseColor[3], twoSided: m.blend, bias, ...(key === undefined ? {} : { key }), ...(m.emissive === undefined ? {} : { unlit: true }), ...(map === undefined || uv === undefined ? {} : { uv, ...(map.albedo === undefined ? {} : { map: map.albedo }), ...(map.relief === undefined ? {} : { relief: map.relief }), ...(map.occlusion === undefined ? {} : { occlusion: map.occlusion }) }) });
         }
       }
     }
   }
-  if (options.ground !== false && Number.isFinite(min[0])) tris.push(...ground({ min, max }));
+  if (options.ground !== false && Number.isFinite(gathered.min[0])) tris.push(...ground({ min: gathered.min, max: gathered.max, ground: gathered.ground, holes: gathered.holes }));
   return tris;
 }
 
@@ -322,10 +325,11 @@ export function rasterStage(scene: Scene, images?: ImageSource): RasterStage {
   const { chains, maps } = rasterMaps(scene, images);
   const lists = new Map<string, DrawList>();
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
-  const all = boundsOf(sceneTriangles(scene, { ground: false }));
+  // FLR-T-15.2: the ground under everything but a sunken pool.
+  const all = groundOfScene(scene);
   const rooms = new Map(scene.rooms.map((r) => [r.id, r]));
   return {
-    groundY: all.min[1] - 0.003,
+    groundY: (Number.isFinite(all.ground) ? all.ground : 0) - 0.003,
     list(level, only) {
       const key = `${level ?? ''}|${only === true ? 'only' : ''}`;
       let list = lists.get(key);
@@ -403,8 +407,9 @@ export function renderScene(
     });
     camera = presetCamera(options.camera ?? 'sw', boundsOf(tris), width / height);
   }
-  const all = boundsOf(sceneTriangles(scene, { ground: false }));
-  const lighting = options.skyLight === undefined ? undefined : rasterSky(options.skyLight, all.min[1] - 0.003);
+  // FLR-T-15.2: the sky's ground under everything but a sunken pool (sunken.ts).
+  const all = groundOfScene(scene);
+  const lighting = options.skyLight === undefined ? undefined : rasterSky(options.skyLight, (Number.isFinite(all.ground) ? all.ground : 0) - 0.003);
   const rgb = rasterize(drawList(tris, chains), camera, { width, height, supersample: 2, ...(lighting === undefined ? {} : { lighting }), ...(options.exposureScale === undefined ? {} : { exposureScale: options.exposureScale }) });
   return { png: encodePng(rgb, width, height), width, height, camera: camera.label, design: scene.design, ...(options.skyLight === undefined || lighting === undefined ? {} : { sky: skySummary(options.skyLight, Number(lighting.exposure.toPrecision(3))) }), ...(options.rgb === true ? { rgb } : {}) };
 }
@@ -608,7 +613,7 @@ export function renderGlb(bytes: Uint8Array, options: { camera?: Preset; width?:
   const { width, height } = sizeOf(options.width);
   const tris = glbTriangles(bytes, options.highlight === undefined ? {} : { highlight: options.highlight });
   const box = boundsOf(tris);
-  tris.push(...ground(box));
+  tris.push(...ground({ ...box, ground: box.min[1], holes: [] }));
   const camera = presetCamera(options.camera ?? 'sw', box, width / height);
   const rgb = rasterize(drawList(tris), camera, { width, height, supersample: 2 });
   return { png: encodePng(rgb, width, height), width, height, camera: camera.label, design: null };

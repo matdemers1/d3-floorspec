@@ -12,6 +12,9 @@ import {
   MeshStandardMaterial,
   PerspectiveCamera,
   PlaneGeometry,
+  Shape,
+  ShapeGeometry,
+  Path,
   RepeatWrapping,
   RGBAFormat,
   Scene,
@@ -19,6 +22,7 @@ import {
   SRGBColorSpace,
   UnsignedByteType,
   LinearMipmapLinearFilter,
+  Vector2,
   Vector3,
   type Light,
   type Material,
@@ -112,7 +116,37 @@ export interface PreparedHouse {
   /** Meshes of the luminaires whose lamps are lit: what no lamp's shadow ray stops at. */
   readonly fixtures: number;
   /** Of what is drawn, metres; null when nothing is. */
-  readonly bounds: { min: Vec3; max: Vec3 } | null;
+  readonly bounds: StillBounds | null;
+}
+
+/**
+ * What is drawn, metres (+Y up), and — FLR-T-15.2 — where its ground lies: under everything but a
+ * sunken pool (FS_outdoor), whose floor is not the ground; and each sunken pool's outline in plan,
+ * `[x, z]` world, which the ground plate opens for.
+ */
+export interface StillBounds {
+  min: Vec3;
+  max: Vec3;
+  ground?: number;
+  holes?: [number, number][][];
+}
+
+/** The convex hull of points, counter-clockwise (Andrew's monotone chain). */
+function hull(points: [number, number][]): [number, number][] {
+  const p = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (p.length < 3) return p;
+  const cross = (o: [number, number], a: [number, number], b: [number, number]) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower: [number, number][] = [];
+  for (const q of p) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2] ?? q, lower[lower.length - 1] ?? q, q) <= 0) lower.pop();
+    lower.push(q);
+  }
+  const upper: [number, number][] = [];
+  for (const q of [...p].reverse()) {
+    while (upper.length >= 2 && cross(upper[upper.length - 2] ?? q, upper[upper.length - 1] ?? q, q) <= 0) upper.pop();
+    upper.push(q);
+  }
+  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
 }
 
 /** The levels of an exported house, lowest first, by their nodes' `extras.floorspec`. */
@@ -282,12 +316,36 @@ export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: s
     });
   root.updateMatrixWorld(true);
   const box = new Box3();
+  // FLR-T-15.2: everything but FS_outdoor's pools sets the ground; a pool below it is a hole in it.
+  const rest = new Box3();
+  const pools = new Map<Object3D, { box: Box3; xz: [number, number][] }>();
+  const v = new Vector3();
   root.traverse((o) => {
     if (!(o instanceof Mesh)) return;
     for (let p: Object3D | null = o; p !== null; p = p.parent) if (!p.visible) return;
     box.expandByObject(o);
+    let pool: Object3D | null = null;
+    for (let p: Object3D | null = o; p !== null && pool === null; p = p.parent) {
+      const f = floorspecOf(p);
+      if (f?.['extension'] === 'FS_outdoor' && f['collection'] === 'pools') pool = p;
+    }
+    if (pool === null) {
+      rest.expandByObject(o);
+      return;
+    }
+    const entry = pools.get(pool) ?? { box: new Box3(), xz: [] };
+    entry.box.expandByObject(o);
+    const pos = (o as Mesh).geometry.getAttribute('position');
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+      entry.xz.push([v.x, v.z]);
+    }
+    pools.set(pool, entry);
   });
-  return { lamps, glass, lenses, fixtures, bounds: box.isEmpty() ? null : { min: box.min.toArray(), max: box.max.toArray() } };
+  if (box.isEmpty()) return { lamps, glass, lenses, fixtures, bounds: null };
+  const ground = rest.isEmpty() ? box.min.y : rest.min.y;
+  const holes = [...pools.values()].filter((p) => p.box.min.y < ground - 1e-3).map((p) => hull(p.xz));
+  return { lamps, glass, lenses, fixtures, bounds: { min: box.min.toArray(), max: box.max.toArray(), ground, ...(holes.length === 0 ? {} : { holes }) } };
 }
 
 /**
@@ -299,7 +357,7 @@ export function prepareHouse(root: Object3D, options: { lights: boolean; cut?: s
  * (an indirect path's at 10). In cd/m² the clamp would cut the daylight that comes in through the
  * windows to nothing. The tracer exposes the picture back in cd/m² (tracer.ts).
  */
-export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | null, lighting: StillLighting): { scene: Scene; dispose: () => void } {
+export function stillScene(house: Object3D, bounds: StillBounds | null, lighting: StillLighting): { scene: Scene; dispose: () => void } {
   const scene = new Scene();
   house.traverse((o) => {
     const light = o as Partial<Light>;
@@ -333,7 +391,20 @@ export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | n
     const cx = (bounds.min[0] + bounds.max[0]) / 2;
     const cz = (bounds.min[2] + bounds.max[2]) / 2;
     const r = 40 * Math.max(5, Math.hypot(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2]));
-    const geometry = new PlaneGeometry(2 * r, 2 * r);
+    const y = (bounds.ground ?? bounds.min[1]) - 0.003;
+    // FLR-T-15.2: the plate opens over a sunken pool — a shape with a hole for each, its UVs in metres.
+    const holes = bounds.holes ?? [];
+    const plate = (): ShapeGeometry => {
+      // the plate is laid flat by turning it a quarter about x: its local (x, y) is the world's (x − cx, cz − z)
+      const shape = new Shape([new Vector2(-r, -r), new Vector2(r, -r), new Vector2(r, r), new Vector2(-r, r)]);
+      for (const h of holes) shape.holes.push(new Path(h.map(([x, z]) => new Vector2(x - cx, cz - z))));
+      const g = new ShapeGeometry(shape);
+      const uv = g.getAttribute('uv');
+      // ShapeGeometry's UVs are its local coordinates: shifted to 0 … 2r, as the plane's run 0 … 1
+      for (let i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) + r) / (2 * r), (uv.getY(i) + r) / (2 * r));
+      return g;
+    };
+    const geometry = holes.length === 0 ? new PlaneGeometry(2 * r, 2 * r) : plate();
     const floor = lighting.sky.light.ground;
     const map = floor.grass ? lawnTexture() : null;
     if (map !== null) {
@@ -345,14 +416,14 @@ export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | n
     const ground = new Mesh(geometry, material);
     ground.name = 'ground';
     ground.rotation.x = -Math.PI / 2;
-    ground.position.set(cx, bounds.min[1] - 0.003, cz);
+    ground.position.set(cx, y, cz);
     scene.add(ground);
     disposables.push(geometry, material);
   }
   if (sun !== null) {
     const light = new DirectionalLight(new Color(...sun.color), sun.lux / TRACE_UNIT);
     light.name = 'sun';
-    const target = bounds === null ? new Vector3() : new Vector3((bounds.min[0] + bounds.max[0]) / 2, bounds.min[1], (bounds.min[2] + bounds.max[2]) / 2);
+    const target = bounds === null ? new Vector3() : new Vector3((bounds.min[0] + bounds.max[0]) / 2, bounds.ground ?? bounds.min[1], (bounds.min[2] + bounds.max[2]) / 2);
     light.position.copy(target).addScaledVector(new Vector3(...sun.dir), 100);
     light.target.position.copy(target);
     scene.add(light, light.target);
