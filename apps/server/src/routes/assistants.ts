@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { parseLength } from '@floorspec/ops';
-import { PlanError, proposeElectrical, type ElectricalProposal } from '@floorspec/assistant-electrical';
+import { PlanError, proposeElectrical, proposeExterior, type ElectricalProposal, type ExteriorReading } from '@floorspec/assistant-electrical';
 import { proposeStaging, type StagingProposal } from '@floorspec/assistant-staging';
 import { libraryFileBytes } from '@floorspec/mcp';
 import type { AssetStore } from '../assets/store.js';
@@ -32,8 +32,14 @@ export const ElectricalBody = z.strictObject({
   include: z
     .strictObject({ receptacles: z.boolean().optional(), switches: z.boolean().optional(), lights: z.boolean().optional(), circuits: z.boolean().optional(), panel: z.boolean().optional() })
     .optional(),
-  /** Floorspec's default receptacle spacing along a wall run, overridden. */
+  /** Floorspec's default receptacle spacing along a wall run, overridden — or, with `exterior`, the path lights' along a walk. */
   spacing: Length.optional(),
+  /**
+   * FLR-T-15.5: propose the grounds' lighting instead — path lights along the walks and the drive,
+   * step lights on exterior steps, a wall-washer at each unlit entry, a landscape transformer, its
+   * control and an "Evening exterior" scene. Not with `rooms` or `include`.
+   */
+  exterior: z.boolean().optional(),
   /**
    * A pending changeset, by ID or name, whose plan to read instead of main's: an agent's plan is in
    * its changeset (FLR-ADR-016). The proposal then carries that changeset's operations ahead of its
@@ -102,8 +108,9 @@ async function storeLibraryFiles(tx: Tx, store: AssetStore | null, projectId: st
 }
 
 /** What the answer says of a proposal besides its changeset. */
-export function proposalView(p: ElectricalProposal) {
+export function proposalView(p: ElectricalProposal & { exterior?: ExteriorReading }) {
   return {
+    ...(p.exterior === undefined ? {} : { exterior: p.exterior }),
     name: p.name,
     explanation: p.explanation,
     added: p.added,
@@ -163,7 +170,7 @@ export function assistantRoutes(db: Db, applier: Applier, store: AssetStore | nu
       if (proposal.batch.length === 0) {
         return {
           reply: (res) => res.status(200).json({ main: main.hash, changeset: null, proposal: view }),
-          audit: { action: 'assistants.staging.propose', targetType: 'project', targetId: project.id, detail: { project: project.id, main: main.hash, changeset: null, ops: 0 } },
+          audit: { action: 'assistants.staging.propose', targetType: 'project', targetId: project.id, detail: { project: project.id, main: main.hash, changeset: null, ops: 0, ...(body.exterior === true ? { exterior: true } : {}) } },
         };
       }
       const stored = await storeLibraryFiles(tx, store, project.id, req, proposal.files);
@@ -235,9 +242,18 @@ export function assistantRoutes(db: Db, applier: Applier, store: AssetStore | nu
         }
         return named[0]?.[0] as string;
       });
+      if (body.exterior === true && (body.rooms !== undefined || body.include !== undefined)) {
+        throw new HttpError(400, 'the request body is not valid', { fields: [{ path: 'exterior', message: 'exterior lighting is proposed for the grounds: not with rooms or include' }] });
+      }
       let proposal: ElectricalProposal;
       try {
-        proposal = proposeElectrical(plan.document as object, {
+        proposal = body.exterior === true
+          ? proposeExterior(plan.document as object, {
+              retired: await retiredFor(tx, project.id),
+              ...(body.level === undefined ? {} : { level: body.level }),
+              ...(spacing === undefined ? {} : { defaults: { walkSpacing: spacing } }),
+            })
+          : proposeElectrical(plan.document as object, {
           retired: await retiredFor(tx, project.id),
           ...(body.level === undefined ? {} : { level: body.level }),
           ...(rooms === undefined ? {} : { rooms }),
