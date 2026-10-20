@@ -8,6 +8,7 @@ import { LIBRARY_FILES, LIBRARY_MATERIALS } from '@floorspec/mesh/materials';
 import { CatalogueError, fillFurniture, FS_FURNITURE, furnitureText, libraryFileBytes, namesFurniture, type FurnitureFill, type LibraryFile } from './furniture.js';
 import { fillLandscape, FS_LANDSCAPE, LandscapeError, namesLandscape } from './landscape.js';
 import { fillOutdoor, FS_OUTDOOR, namesOutdoor, OutdoorError } from './outdoor.js';
+import { ContextError, fillContext, namesContext } from './context.js';
 import { wells } from './stairwell.js';
 import { Batch, Lock, LOCK_BY_REFERENCE, OP_BY_NAME_ONLY } from './ops-schema.js';
 import { hintsFor } from './hints.js';
@@ -161,6 +162,8 @@ interface Prepared {
   readonly landscape: { readonly items: readonly string[]; readonly boxed: readonly string[] };
   /** The FS_outdoor starter items placed by their catalogue ID, and the fences boxed round their line. */
   readonly outdoor: { readonly items: readonly string[]; readonly boxed: readonly string[] };
+  /** FLR-T-15.3: the context generateContext wrote — streets, neighbours, trees — and how many generated records it replaced. */
+  readonly context?: { readonly streets: number; readonly neighbours: number; readonly trees: number; readonly replaced: number };
   /** Anything the agent should know about the embedding: a library file the store did not take. */
   readonly notes: readonly string[];
 }
@@ -186,7 +189,8 @@ async function prepare(client: FloorspecClient, projectId: string, changeset: st
   const outdoors = namesOutdoor(batch);
   const materials = namesLibraryMaterials(batch);
   const handFiles = libraryFilesAdded(batch);
-  if (!types && !furnished && !landscaped && !outdoors && !materials && handFiles.length === 0) return { batch, prefix: [], own: batch, embedded: [], furniture: [], landscape: { items: [], boxed: [] }, outdoor: { items: [], boxed: [] }, notes: [] };
+  const contexted = namesContext(batch);
+  if (!types && !furnished && !landscaped && !outdoors && !materials && !contexted && handFiles.length === 0) return { batch, prefix: [], own: batch, embedded: [], furniture: [], landscape: { items: [], boxed: [] }, outdoor: { items: [], boxed: [] }, notes: [] };
   let head: string | undefined;
   if (changeset !== undefined) {
     try {
@@ -223,13 +227,23 @@ async function prepare(client: FloorspecClient, projectId: string, changeset: st
       throw error;
     }
   }
-  const own = built.batch;
+  // FLR-T-15.3: generateContext, expanded from the lot's street edge and setbacks into FS_context's records.
+  let ctx: ReturnType<typeof fillContext> = { prefix: [], batch: [...built.batch], generated: { streets: 0, neighbours: 0, trees: 0, replaced: 0 } };
+  if (contexted) {
+    try {
+      ctx = fillContext(model.document, built.batch);
+    } catch (error) {
+      if (error instanceof ContextError) throw new ToolError(error.message);
+      throw error;
+    }
+  }
+  const own = ctx.batch;
   const ids = types ? missingLibraryTypes(model.document, own) : [];
   // FLR-T-13.6: the material library's materials the batch names, embedded with their maps' assets.
   const mats = materials ? missingLibraryMaterials(model.document, own) : [];
-  const prefix = [...(ids.length === 0 ? [] : embedOps(model.document, own, ids)), ...(mats.length === 0 ? [] : embedMaterialOps(model.document, mats)), ...placed.prefix, ...planted.prefix, ...built.prefix];
+  const prefix = [...(ids.length === 0 ? [] : embedOps(model.document, own, ids)), ...(mats.length === 0 ? [] : embedMaterialOps(model.document, mats)), ...placed.prefix, ...planted.prefix, ...built.prefix, ...ctx.prefix];
   const notes = [...(await storeLibraryFiles(client, projectId, placed.files)), ...(await storeMaterialFiles(client, projectId, libraryFilesAdded([...prefix, ...own])))];
-  return { batch: [...prefix, ...own], prefix, own, embedded: [...ids, ...mats], furniture: placed.items, landscape: { items: planted.items, boxed: planted.boxed }, outdoor: { items: built.items, boxed: built.boxed }, notes };
+  return { batch: [...prefix, ...own], prefix, own, embedded: [...ids, ...mats], furniture: placed.items, landscape: { items: planted.items, boxed: planted.boxed }, outdoor: { items: built.items, boxed: built.boxed }, ...(contexted ? { context: ctx.generated } : {}), notes };
 }
 
 /**
@@ -377,6 +391,7 @@ function embeddedText(prepared: Prepared): string {
     prepared.landscape.boxed.length === 0 ? '' : ` Boxed round their geometry (FS_landscape 3.3): ${prepared.landscape.boxed.join(', ')}.`,
     prepared.outdoor.items.length === 0 ? '' : ` Filled in from the FS_outdoor ${FS_OUTDOOR.version} starter library (members, name, box): ${prepared.outdoor.items.join(', ')}.`,
     prepared.outdoor.boxed.length === 0 ? '' : ` Fences boxed round their line (FS_outdoor 3.3): ${prepared.outdoor.boxed.join(', ')}.`,
+    prepared.context === undefined ? '' : ` Context generated from the street side and setbacks (FS_context, never part of the design): ${String(prepared.context.streets)} street, ${String(prepared.context.neighbours)} neighbours, ${String(prepared.context.trees)} trees${prepared.context.replaced > 0 ? `, replacing ${String(prepared.context.replaced)} generated before` : ''}.`,
     ...prepared.notes.map((n) => ` ${n}`),
   ].join('');
 }

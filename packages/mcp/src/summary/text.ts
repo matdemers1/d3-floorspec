@@ -261,6 +261,13 @@ export function summaryText(s: DocumentSummary): string {
     for (const k of o.kitchens) out.push(`- kitchen ${k.id}${q(k.name)}: ${k.run} run${k.appliances.length === 0 ? '' : ` — ${k.appliances.join(', ')}`}${inRoom(k.room)}`);
     for (const f of o.fires) out.push(`- fire ${f.id}${q(f.name)}: ${f.form}${inRoom(f.room)}`);
   }
+  if (s.context) {
+    const c = s.context;
+    out.push('', '## Context (FS_context: beyond the lot — never part of the design, never in quantities, schedules, rules or findings; it casts shade)');
+    for (const st of c.streets) out.push(`- street ${st.id}${q(st.name)}: ${st.width} overall, ${st.length} long${st.generated ? ' (generated)' : ''}`);
+    for (const n of c.neighbours) out.push(`- neighbour ${n.id}${q(n.name)}: ${n.roof} roof, ${String(n.storeys)} storey${n.storeys === 1 ? '' : 's'}, ${n.footprint.toLocaleString('en-US')} sq ft footprint, eaves ${n.eaves}, ridge ${n.ridge} above the floor${n.generated ? ' (generated)' : ''}`);
+    if (c.trees.ids.length > 0) out.push(`- trees beyond the lot: ${String(c.trees.deciduous)} deciduous, ${String(c.trees.evergreen)} evergreen`);
+  }
   if (s.circulation) {
     const c = s.circulation;
     out.push('', '## Circulation');

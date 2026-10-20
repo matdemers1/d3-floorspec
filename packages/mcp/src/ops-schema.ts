@@ -355,12 +355,25 @@ export const ResizeElement = z.strictObject({
   limits: z.strictObject({ width: Limit.optional(), depth: Limit.optional(), height: Limit.optional() }).optional(),
 }).describe('Resizes an item\'s box from anchor: width its y, depth its x; clearances and items with it follow.');
 
+/** FLR-T-15.3: not an Ops operation — the tools expand it into FS_context's records (context.ts) before applying. */
+export const GenerateContext = z.strictObject({
+  op: z.literal('generateContext'),
+  side: z.enum(['north', 'east', 'south', 'west']).optional(),
+  street: Length.optional(),
+  sidewalk: Length.optional(),
+  strip: Length.optional(),
+  name: Name.optional(),
+  neighbours: z.boolean().optional(),
+  trees: z.enum(['none', 'few', 'some', 'many']).optional(),
+  seed: z.int().min(1).optional(),
+}).describe('FS_context: street (curb to curb), neighbours, trees beyond the lot, from its street edge and setbacks; replaces generated context.');
+
 /** Every operation Floorspec Ops 0.4 defines — one `$defs` entry per tool, referenced by the batch. */
 export const OpUnion = shared(
   z.discriminatedUnion('op', [
     AddElement, AddJunction, AddWall, AddSeparator, RemoveElement, SetProperty, UnsetProperty, MoveJunction, SetAdjacency, RemoveAdjacency,
     DrawWall, DrawSeparator, MoveWall, MoveRoom, ResizeRoom, AddOpening, MoveOpening, AddRoom, SetRoomFinish, SetRoomBrief, RemoveWall, AddLevel,
-    AddProgramItem, PlaceElement, MoveElement, ResizeElement,
+    AddProgramItem, PlaceElement, MoveElement, ResizeElement, GenerateContext,
   ]),
   'Op',
 );
