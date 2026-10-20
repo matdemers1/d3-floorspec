@@ -12,7 +12,7 @@ import { changesetHead } from '../domain/history.js';
 import { RENDER_PENDING, type PlanRenderer } from '../render.js';
 import { SHA256, type AssetStore } from '../assets/store.js';
 import { NO_PACKS, type InstalledPacks } from '../rules/packs.js';
-import { AT_PATTERN, SKIES, VIEW_MAX_WIDTH } from '@d3-floorspec/worker/stills';
+import { AT_PATTERN, SEASON_NAMES, SKIES, VIEW_MAX_WIDTH, WEATHER_NAMES } from '@d3-floorspec/worker/stills';
 import { sceneNamed, scenesOf, savedViewNamed, savedViewsOf } from '@floorspec/mesh';
 import { MODE_IDS, PLAN_STYLES, RENOVATION_FILTERS } from '@floorspec/render2d';
 import { profileOfProject } from '../rules/profiles.js';
@@ -49,6 +49,9 @@ const RenderQuery = z.object({
   savedView: z.string().trim().min(1).max(200).optional(),
   // 3D with a changeset (FLR-T-14.4): main beside the changeset from one camera, side by side.
   compare: z.enum(['main']).optional(),
+  // 3D (FLR-T-15.4): the season and the weather it is seen in — looks, never the model's; a saved view takes them too.
+  season: z.enum(SEASON_NAMES).optional(),
+  weather: z.enum(WEATHER_NAMES).optional(),
 });
 
 /** A daylight study's question (FLR-T-14.7): a date and time at the site, a sky, a design. */
@@ -303,6 +306,8 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(q.doors === undefined ? {} : { doors: q.doors }),
           ...(q.sky === undefined ? {} : { sky: q.sky }),
           ...(q.at === undefined ? {} : { at: q.at }),
+          ...(q.season === undefined ? {} : { season: q.season }),
+          ...(q.weather === undefined ? {} : { weather: q.weather }),
           ...(compare === undefined ? {} : { compare: { hash: compare.hash, ...(design === undefined ? {} : { design }) } }),
         },
         versionHash: at.hash,
@@ -413,6 +418,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
         return;
       }
       if (options.data.compare !== undefined) throw new HttpError(400, 'compare is for view=3d: main beside a changeset, from one camera');
+      if (options.data.season !== undefined || options.data.weather !== undefined) throw new HttpError(400, 'a season and a weather are how the 3D model is seen: they are for view=3d');
       const { level, highlight, width, theme, mode, renovation } = options.data;
       const style = options.data.style ?? (mode === 'construction' ? 'technical' : undefined);
       // "all" is the 3D render's whole house (FLR-T-12.23); a plan is one level — unless the model has a level called "all".

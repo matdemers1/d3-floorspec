@@ -128,8 +128,10 @@ export interface RasterSky {
   readonly sun: { readonly dir: Vec3; readonly lux: number; readonly color: Vec3 } | null;
   /** The ground plane's height, metres. */
   readonly groundY: number;
-  /** The studio's floor (linear RGB) instead of the lawn. */
+  /** The studio's floor (linear RGB), or light snow (FLR-T-15.4), instead of the lawn. */
   readonly floor?: Vec3;
+  /** FLR-T-15.4: the lawn's season and wetness, a multiplier on it (linear RGB); absent, as it is. */
+  readonly lawnTint?: Vec3;
   /** An even fill for the light the house and the lawn bounce (@floorspec/mesh `skyBounce`), lux, linear RGB. */
   readonly bounce?: Vec3;
   readonly areas?: readonly GroundArea[];
@@ -376,8 +378,10 @@ export function rasterize(list: DrawList, camera: Camera, options: RasterOptions
           const p: Vec3 = [camera.eye[0] + wx * t, sky.groundY, camera.eye[2] + wz * t];
           // A subpixel's footprint on the ground: its angle times the distance, stretched at a glancing view.
           const foot = ((t * len) / (f * H * 0.5)) / Math.max(0.05, -wy / len);
-          if (sky.floor === undefined) groundAt(p[0], -p[2], sky.areas ?? [], alb, foot);
-          else alb.set(sky.floor);
+          if (sky.floor === undefined) {
+            groundAt(p[0], -p[2], sky.areas ?? [], alb, foot);
+            if (sky.lawnTint !== undefined) for (let c = 0; c < 3; c++) alb[c] = alb[c]! * sky.lawnTint[c]!;
+          } else alb.set(sky.floor);
           const s = sun === null || shadows === null ? 1 : lit(shadows, p, 0.04);
           const h = hazeAt(sky.field.light, t * len);
           for (let c = 0; c < 3; c++) {

@@ -290,6 +290,9 @@ export interface RenderOptions {
   readonly renovation?: 'existing' | 'demolition' | 'proposed' | 'combined';
   /** 3D with a changeset (FLR-T-14.4): main and the changeset side by side, from one camera, its changes lit. */
   readonly compare?: 'main';
+  /** 3D (FLR-T-15.4): the season and the weather it is seen in — looks, never the model's. */
+  readonly season?: 'spring' | 'summer' | 'autumn' | 'winter';
+  readonly weather?: 'clear' | 'overcast' | 'rain' | 'snow';
 }
 
 /** A film asked for over MCP (FLR-T-14.1): its name or ID, draft or final, and day to night. */
@@ -297,6 +300,9 @@ export interface FilmRequest {
   readonly film: string;
   readonly quality?: 'draft' | 'final';
   readonly light?: 'timeline' | 'day-to-night';
+  /** FLR-T-15.4: the season and the weather it is filmed in. */
+  readonly season?: 'spring' | 'summer' | 'autumn' | 'winter';
+  readonly weather?: 'clear' | 'overcast' | 'rain' | 'snow';
 }
 
 /** A queued film, as the exports route answers it. */
@@ -464,12 +470,14 @@ export class HttpFloorspecClient implements FloorspecClient {
     if (options.renovation !== undefined) params.set('renovation', options.renovation);
     if (options.savedView !== undefined) params.set('savedView', options.savedView);
     if (options.compare !== undefined) params.set('compare', options.compare);
+    if (options.season !== undefined) params.set('season', options.season);
+    if (options.weather !== undefined) params.set('weather', options.weather);
     const res = await this.send('GET', this.project(projectId, `/render?${params.toString()}`), undefined, { accept: 'image/png' });
     return new Uint8Array(await res.arrayBuffer());
   }
 
   async requestFilm(projectId: string, options: FilmRequest): Promise<FilmJob> {
-    const body = { kind: 'film', film: { film: options.film, ...(options.quality === undefined ? {} : { quality: options.quality }), ...(options.light === undefined ? {} : { light: options.light }) } };
+    const body = { kind: 'film', film: { film: options.film, ...(options.quality === undefined ? {} : { quality: options.quality }), ...(options.light === undefined ? {} : { light: options.light }) }, ...(options.season === undefined ? {} : { season: options.season }), ...(options.weather === undefined ? {} : { weather: options.weather }) };
     return (await this.json<{ export: FilmJob }>('POST', this.project(projectId, '/exports'), body)).export;
   }
 

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { evaluate, OFFICIAL_READER } from '@floorspec/engine';
 import { LAYER_STATES, MODE_IDS, PLAN_LAYERS, PLAN_STYLES, RENOVATION_FILTERS } from '@floorspec/render2d';
-import { MAX_SHOTS, QUALITIES, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, withinBudget, type Quality, type ShotSize, type Size } from '@d3-floorspec/worker/stills';
+import { MAX_SHOTS, QUALITIES, SEASON_NAMES, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, WEATHER_NAMES, withinBudget, type Quality, type ShotSize, type Size } from '@d3-floorspec/worker/stills';
 import { DEFAULT_EYE_HEIGHT, filmDuration, filmFrameCount, filmNamed, filmProblem, filmShots, filmsOf, MAX_EYE_HEIGHT, MAX_TOUR_ROOMS, MIN_EYE_HEIGHT, readView, savedViewNamed, savedViewsOf, TOUR_QUALITIES, TOUR_SIZES, tourAt, tourRoomsByDefault, tourWithinBudget, type TourQuality, type TourSize } from '@floorspec/mesh';
 import { storeZip } from '@d3-floorspec/worker/zip';
 import { midsummer, timelapseAround, timelapseProblem } from '@floorspec/mesh/sky';
@@ -204,6 +204,21 @@ const ExportBody = z.strictObject({
     .optional(),
   /** USDZ (FLR-T-14.3): for AR Quick Look — true scale or 1:50, and what it includes. */
   ar: ArBody.optional(),
+  /**
+   * A still, a shot list, a film, a pair, a glTF or a USDZ (FLR-T-15.4): the season and the weather the
+   * house is seen in — looks, never the model's. Default summer, and each view's own sky.
+   */
+  season: z.enum(SEASON_NAMES).optional(),
+  weather: z.enum(WEATHER_NAMES).optional(),
+});
+
+/** The kinds a season and a weather change (FLR-T-15.4): everything that draws the house in 3D but a tour. */
+const LOOKED: readonly string[] = ['still', 'shots', 'film', 'pair', 'gltf', 'usdz'];
+
+/** A request's season and weather as a job's params: only what it names. */
+const lookParamsOf = (b: { season?: string | undefined; weather?: string | undefined }): { season?: string; weather?: string } => ({
+  ...(b.season === undefined ? {} : { season: b.season }),
+  ...(b.weather === undefined ? {} : { weather: b.weather }),
 });
 
 /** How many exports a project may have waiting or running at once. */
@@ -261,6 +276,9 @@ type Params = {
   readonly at?: string;
   /** A USDZ for AR Quick Look (FLR-T-14.3). */
   readonly ar?: { scale: 'true' | 'table'; roofs?: boolean; furniture?: boolean; fixtures?: boolean; site?: boolean };
+  /** FLR-T-15.4: the season and the weather it is seen in. */
+  readonly season?: string;
+  readonly weather?: string;
 };
 
 /** The largest still the editor may save: a 4K PNG with room to spare. */
@@ -286,6 +304,9 @@ const StillUpload = z.strictObject({
   sky: z.enum(SKIES).optional(),
   /** The GPU it was traced on, as the browser names it: GPU stills are repeatable per machine, not across machines. */
   device: z.string().trim().max(200).optional(),
+  /** The season and the weather it was seen in (FLR-T-15.4). */
+  season: z.enum(SEASON_NAMES).optional(),
+  weather: z.enum(WEATHER_NAMES).optional(),
   /** The design (Core 19.6), as JSON: option set → option. */
   design: z.string().max(4000).optional(),
 });
@@ -305,6 +326,8 @@ export function exportView(projectId: string, job: Job) {
     design: p.design ?? null,
     mode: p.mode ?? null,
     style: p.style ?? null,
+    // FLR-T-15.4: the season and the weather, for a render that named either.
+    ...(p.season === undefined && p.weather === undefined ? {} : { look: { season: p.season ?? null, weather: p.weather ?? null } }),
     still:
       job.kind === 'export.still'
         ? {
@@ -463,6 +486,7 @@ export function exportRoutes(db: Db): Routes {
       ...(pair.shot === undefined ? {} : { shot: pair.shot as Prisma.InputJsonObject }),
       size: pair.size,
       quality: pair.quality,
+      ...lookParamsOf(body),
       versionSeq: a.version.seq,
       versionAt: a.version.at.toISOString(),
     };
@@ -520,6 +544,7 @@ export function exportRoutes(db: Db): Routes {
       if (body.doors !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes doors');
       if (body.lighting !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes a lighting');
       if (body.ar !== undefined && body.kind !== 'usdz') throw new HttpError(400, 'only a USDZ is made for AR Quick Look: only it takes ar options');
+      if ((body.season !== undefined || body.weather !== undefined) && !LOOKED.includes(body.kind)) throw new HttpError(400, 'a season and a weather are how the house is seen in 3D: only a still, a shot list, a film, a pair, a glTF or a USDZ takes them');
       if ((body.mode !== undefined || body.layers !== undefined) && body.kind !== 'pdf' && body.kind !== 'dxf') throw new HttpError(400, 'a mode is a view of the plan: only a PDF or DXF drawing takes one');
       if (body.renovation !== undefined && body.kind !== 'pdf' && body.kind !== 'dxf') throw new HttpError(400, 'a renovation plan is a drawing: only a PDF or DXF takes one');
       if (body.style !== undefined && body.kind !== 'pdf') throw new HttpError(400, 'a plan style is how a sheet is drawn: only a PDF takes one');
@@ -634,6 +659,7 @@ export function exportRoutes(db: Db): Routes {
         ...(body.style === undefined ? {} : { style: body.style }),
         ...(body.renovation === undefined ? {} : { renovation: body.renovation }),
         ...(body.doors === undefined ? {} : { doors: body.doors }),
+        ...lookParamsOf(body),
         ...(body.ar === undefined ? {} : { ar: { scale: body.ar.scale, ...(body.ar.roofs === undefined ? {} : { roofs: body.ar.roofs }), ...(body.ar.furniture === undefined ? {} : { furniture: body.ar.furniture }), ...(body.ar.fixtures === undefined ? {} : { fixtures: body.ar.fixtures }), ...(body.ar.site === undefined ? {} : { site: body.ar.site }) } }),
         ...(body.lighting === undefined ? {} : { lighting: { on: Object.fromEntries(Object.entries(body.lighting.on).map(([id, s]) => [id, { ...(s.output === undefined ? {} : { output: s.output }), ...(s.cct === undefined ? {} : { cct: s.cct }) }])) } }),
         ...(shots === undefined ? {} : { ...(shots.views === undefined ? {} : { views: [...new Set(shots.views)] }), size: shots.size, quality: shots.quality }),
@@ -725,6 +751,7 @@ export function exportRoutes(db: Db): Routes {
         ...(meta.scene === undefined ? {} : { scene: meta.scene }),
         ...(meta.time === undefined ? {} : { time: meta.time }),
         ...(meta.device === undefined || meta.device === '' ? {} : { device: meta.device }),
+        ...lookParamsOf(meta),
         ...(design === undefined ? {} : { design }),
         versionSeq: version.seq,
         versionAt: version.at.toISOString(),
@@ -745,6 +772,7 @@ export function exportRoutes(db: Db): Routes {
         ...(meta.scene === undefined ? {} : { scene: meta.scene }),
         ...(meta.time === undefined ? {} : { time: meta.time }),
         ...(meta.device === undefined || meta.device === '' ? {} : { device: meta.device }),
+        ...lookParamsOf(meta),
         design: design ?? null,
       };
       const now = new Date();
