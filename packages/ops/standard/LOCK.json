@@ -1,7 +1,7 @@
 {
   "$comment": "Written by scripts/sync-standard.ts. CI checks out matdemers1/floorspec at `commit` and diffs `paths` against this directory.",
   "repository": "matdemers1/floorspec",
-  "commit": "8b4ba164ee832675c156f87664b78af9bd5d729f",
+  "commit": "1e35a97cbfcdb2b832d9d8e40652bb3214ff3bce",
   "dirty": false,
   "paths": [
     "schema/ops/0.1",
