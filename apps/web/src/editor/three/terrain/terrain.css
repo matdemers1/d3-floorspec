@@ -1,0 +1,84 @@
+/* FLR-T-15.1: the Terrain panel over the 3D view, beside the sky's. Tokens, and the site's cut and fill
+   (site/site.css: amber and blue, each with its own pattern, so colour is never the only cue). */
+
+.fs-terrain__switches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-terrain__scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  font-size: var(--text-13);
+}
+.fs-terrain__section {
+  margin: 0;
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+}
+.fs-terrain__section figcaption {
+  font-size: var(--text-12);
+  color: var(--color-fg);
+  margin-bottom: var(--space-4);
+}
+.fs-terrain__section svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.fs-terrain__natural {
+  fill: none;
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.fs-terrain__graded {
+  fill: none;
+  stroke: var(--color-fg);
+  stroke-width: 1.5;
+}
+.fs-terrain__house {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-fg-muted);
+  stroke-width: 1;
+}
+.fs-terrain__cut {
+  fill: var(--fs-site-cut);
+  fill-opacity: 0.55;
+}
+.fs-terrain__fill {
+  fill: var(--fs-site-fill);
+  fill-opacity: 0.4;
+}
+.fs-terrain__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-12);
+  color: var(--color-fg-muted);
+}
+.fs-terrain__key {
+  display: inline-block;
+  width: 14px;
+  height: 8px;
+  margin-left: var(--space-8);
+}
+.fs-terrain__key:first-child {
+  margin-left: 0;
+}
+.fs-terrain__key--natural {
+  border-top: 1px dashed var(--color-fg-muted);
+  height: 0;
+}
+.fs-terrain__key--cut {
+  background: repeating-linear-gradient(45deg, var(--fs-site-cut) 0 2px, transparent 2px 5px);
+}
+.fs-terrain__key--fill {
+  background: repeating-linear-gradient(90deg, var(--fs-site-fill) 0 4px, transparent 4px 7px);
+}

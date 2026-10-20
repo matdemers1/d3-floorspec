@@ -1,3 +1,4 @@
+import { TerrainButton, TerrainPanel, TerrainScene } from './terrain/Terrain';
 import './three.css';
 import { filteredModel, useRenovationFilter, useRenovationStyles } from '../renovation';
 import type { RenovationStyle } from '@floorspec/render2d';
@@ -945,6 +946,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       >
         <color attach="background" args={[walking ? (night || lightsOn ? NIGHT : SKY) : tokens.background]} />
         {ready !== null ? <SunRig store={store} model={ready.model} mesh={ready.mesh} compact={compact} walking={walking} lamps={lightsOn} casters={shadowKey} /> : null}
+        {/* FLR-T-15.1: the site's ground — the survey's surface, graded under the house and its paving. */}
+        {ready !== null && !comparing ? <TerrainScene store={store} model={ready.model} origin={ready.mesh.origin} /> : null}
         <FixtureLights lights={lamps} />
         <Rig ctl={ctl} />
         <AxoCamera on={exploding} ctl={ctl} />
@@ -1051,7 +1054,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       {ready !== null && !walking && !compact ? (
         <>
           <div className="fs-three__toolbars">
-            <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} levels={levels} roof={roof} lights={lightsOn} />
+            <Toolbar store={store} three={three} ctl={ctl} mesh={ready.mesh} model={ready.model} levels={levels} roof={roof} lights={lightsOn} />
             {ctx !== null ? <ExperiencesToolbar ctx={ctx} /> : null}
             {/* Beside the clusters, as the board's 3D frames have it (FLR-T-14.8): never under a longer cluster. */}
             <LevelsControl store={store} three={three} model={ready.model} order={order} levels={levels} level={levelId} />
@@ -1069,6 +1072,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           <ViewCube ctl={ctl} preset={preset} />
           <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} only={levels === 'only'} roof={roof} current={currentView} />
           <SunPanel store={store} model={ready.model} />
+          <TerrainPanel store={store} model={ready.model} />
           <LightingPanel store={store} model={ready.model} />
           <CameraPanel store={store} model={ready.model} rig={rig} />
           {/* The Compare bar holds the bottom of the view (FLR-T-14.4): the sun's chip steps aside. */}
@@ -1647,7 +1651,7 @@ function LabelTracker({ built, selection, el, rig, motion }: { built: Built[]; s
 
 // ─── Overlays ────────────────────────────────────────────────────────────────────────────────
 
-function Toolbar({ store, three, ctl, mesh, levels, roof, lights }: { store: EditorStore; three: ThreeStore; ctl: ThreeController; mesh: HouseMesh; levels: LevelsShown; roof: boolean; lights: boolean }) {
+function Toolbar({ store, three, ctl, mesh, model, levels, roof, lights }: { store: EditorStore; three: ThreeStore; ctl: ThreeController; mesh: HouseMesh; model: EditorModel; levels: LevelsShown; roof: boolean; lights: boolean }) {
   const whole = levels === 'house';
   const selection = useEditor(store, (s) => s.selection);
   return (
@@ -1662,6 +1666,7 @@ function Toolbar({ store, three, ctl, mesh, levels, roof, lights }: { store: Edi
         <IconButton label="Walk through" icon={<Footprints />} size="sm" onClick={() => { three.walk(null); }} />
       </Tooltip>
       <SunButton store={store} />
+      <TerrainButton store={store} model={model} />
       <Tooltip content={lights ? 'Turn the lights off' : 'Turn the lights on: each light fixture lights its room, at dusk'}>
         <IconButton label="Lights" icon={<Lightbulb />} size="sm" pressed={lights} onClick={() => { three.toggleLights(); }} />
       </Tooltip>
