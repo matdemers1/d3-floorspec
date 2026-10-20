@@ -24,6 +24,7 @@ export { discriminant, elementKind } from './models/kinds.js';
 export { decorFamily, libraryItemOf, LAMP_SHADES } from './models/decor.js';
 export { islandBays } from './models/furniture.js';
 export { gableCladding } from './cladding.js';
+export { terrainMesh, type TerrainMesh, type TerrainOptions } from './terrain.js';
 export { PART_KINDS, UNITS_PER_METRE, type Box3, type Cladding, type HouseMesh, type MeshOptions, type MeshPart, type PartKind, type PartMesh, type PartStats, type Vec3, type DoorState } from './types.js';
 export { ENVELOPE, envelope, openEnvelope, openingFrame, type LocalBox, type OpeningFrame } from './joinery.js';
 export { DEFAULT_LUMENS, EXPOSURE_PER_NIT, kelvinColor, LAMP_LUMENS, lensGlows, lightsOf, LUMENS_PER_WATT, WHITE_BALANCE, type FixtureLight, type LensGlow } from './lights.js';
