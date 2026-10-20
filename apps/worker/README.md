@@ -2,11 +2,22 @@
 
 The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
 
-- `src/queue/` — claims queued jobs from `jobs` with `FOR UPDATE SKIP LOCKED`, woken by NOTIFY on
+- `src/queue/` — claims queued jobs from `jobs` with `FOR NO KEY UPDATE SKIP LOCKED` (a share link
+  being made for the job holds it for key share, which must not hide it), woken by NOTIFY on
   `floorspec_jobs` and a five-second poll; retakes a job whose lock is ten minutes stale (three
   attempts at most); stores each file in `job_outputs` for seven days. Started by `src/index.ts`
   when `DATABASE_URL` is set; the api runs the same drain in-process when `JOB_DRAIN=inline` (the
-  default outside production).
+  default outside production). **Every job but a film runs on a thread of its own**
+  (`queue/offthread.ts`, `queue/thread.ts`, FLR-T-14.12): the thread runs the same handler the
+  process would (so the file is byte for byte the same), reports its progress and asks for another
+  version over its port; the process only orchestrates and stores. Measured on the Courtyard House,
+  every kind held the event loop for 0.25–5.5 s in-process — enough to stall the api for seconds
+  when it drains inline — and none holds it for more than ~15 ms on a thread. A cancelled job's
+  thread is ended at once, with any tracing threads it started. Run from sources (the unit tests),
+  where no compiled thread exists, jobs run in-process.
+- `src/threads/` — FLR-T-14.12: the one helper for work on a thread (`runThread` and the thread's
+  `serve`): the job thread, a film's frames and a still's row shares all speak it. An abort ends the
+  thread at once; a refusal crosses as a RangeError.
 - `src/export/drawings/` — FLR-T-9.3: `exportPdf` (a dimensioned sheet per level, a 3D view, the
   NOT FOR CONSTRUCTION mark; PDFKit, fonts embedded) and `exportDxf` (AutoCAD 2000 DXF per level in
   millimetres on NCS-pattern layers; a ZIP for several). Both are pure functions of the document

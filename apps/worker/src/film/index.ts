@@ -19,11 +19,9 @@
  * answering — the api drains inline in development and the tests — and a cancelled film is stopped
  * at once, mid-frame, its ffmpeg killed and nothing kept.
  */
-import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { Worker } from 'node:worker_threads';
 import type { Timelapse } from '@floorspec/mesh/sky';
 import type { ImageSource } from '../export/gltf/glb.js';
+import { canThread, runThread } from '../threads/index.js';
 import { describeVideo, startEncoder, type Encoder, type VideoFacts } from './encode.js';
 import { planFilm, renderFrames, type FilmChoice, type FilmProgress } from './frames.js';
 import { FILM_CONTENT_TYPES, MAX_FILM_BYTES, type FilmFormat, type FilmLight, type FilmQuality } from './presets.js';
@@ -42,7 +40,7 @@ export class FilmStopped extends Error {
 
 const THREAD = new URL('./thread.js', import.meta.url);
 /** Whether the compiled film thread exists to start (it does not when running from sources). */
-export const canFilmThread = (): boolean => existsSync(fileURLToPath(THREAD));
+export const canFilmThread = (): boolean => canThread(THREAD);
 
 export interface FilmOptions extends FilmChoice {
   /** The maps, in-process; a thread reads them from `assets` instead (a function cannot be handed to one). */
@@ -157,28 +155,15 @@ async function inProcess(document: object, choice: FilmChoice, plan: ReturnType<
  * the thread at once, wherever it is in a frame.
  */
 function onThread(document: object, choice: FilmChoice, assets: FilmOptions['assets'], take: (rgb: Uint8Array, p: FilmProgress) => Promise<void>, signal: AbortSignal | undefined): Promise<Record<string, string> | null> {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(THREAD, { workerData: { document, choice, ...(assets === undefined ? {} : { assets }) } });
-    let settled = false;
-    const end = (fn: () => void) => {
-      if (settled) return;
-      settled = true;
-      signal?.removeEventListener('abort', stop);
-      void worker.terminate();
-      fn();
-    };
-    const stop = () => { end(() => { reject(new FilmStopped()); }); };
-    signal?.addEventListener('abort', stop, { once: true });
-    worker.on('message', (m: { type: 'frame'; rgb: Uint8Array; progress: FilmProgress } | { type: 'done'; design: Record<string, string> | null } | { type: 'error'; message: string; range: boolean }) => {
-      if (m.type === 'frame')
-        take(m.rgb, m.progress).then(
-          () => { if (!settled) worker.postMessage({ type: 'next' }); },
-          (error: unknown) => { end(() => { reject(error instanceof Error ? error : new Error(String(error))); }); },
-        );
-      else if (m.type === 'done') end(() => { resolve(m.design); });
-      else end(() => { reject(m.range ? new RangeError(m.message) : new Error(m.message)); });
-    });
-    worker.on('error', (error) => { end(() => { reject(error); }); });
-    worker.on('exit', (code) => { end(() => { reject(new Error(`the film thread stopped (${String(code)})`)); }); });
+  return runThread<Record<string, string> | null>(THREAD, { document, choice, ...(assets === undefined ? {} : { assets }) }, {
+    name: 'the film thread',
+    ...(signal === undefined ? {} : { signal }),
+    stopped: () => new FilmStopped(),
+    onMessage: async (message, post) => {
+      const m = message as { type: 'frame'; rgb: Uint8Array; progress: FilmProgress } | { type?: undefined };
+      if (m.type !== 'frame') return;
+      await take(m.rgb, m.progress);
+      post({ type: 'next' });
+    },
   });
 }

@@ -88,7 +88,9 @@ export function createDrain(options: DrainOptions): Drain {
          select id from jobs
          where status = 'queued' or (status = 'running' and locked_at < now() - ${STALE_AFTER} and attempts < $2)
          order by created_at, id
-         for update skip locked
+         -- No key update: a share link made for the job at that moment (FLR-T-14.2) holds the row
+         -- for key share, which a plain FOR UPDATE would skip past (FLR-T-14.12).
+         for no key update skip locked
          limit 1)
        returning id, project_id as "projectId", kind, params, version_hash as "versionHash"`,
       [workerId, MAX_ATTEMPTS],
