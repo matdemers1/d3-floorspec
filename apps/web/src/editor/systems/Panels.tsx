@@ -57,6 +57,9 @@ const MOUNT_NOTE: Record<DeviceKind['mount'], string> = {
   floorWall: 'Stands on the room’s floor, backed onto the nearest wall face when put near one.',
   floor: 'Stands on the room’s floor where it is put; outside a room it stands free on the level.',
   ceiling: 'On the room’s ceiling where it is put.',
+  ground: 'Stands free on the ground: near a walk it snaps to the walk’s edge at the spacing from the one before it, near a tree into its canopy, near a wall up its face.',
+  step: 'Set in the riser of a stair it is pointed at, lighting the tread below it; elsewhere it stands on the ground.',
+  string: 'Strung between two points, 8′ up with a foot of sag: click where the run starts, then where it ends.',
 };
 
 export function DevicePanel({ store, tools, model }: { store: EditorStore; tools: ToolController; model: EditorModel }) {

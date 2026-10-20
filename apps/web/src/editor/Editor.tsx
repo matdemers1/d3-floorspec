@@ -509,7 +509,7 @@ function ToolRail({ store, tools }: { store: EditorStore; tools: ToolController 
     return (
       <nav className="fs-rail" aria-label="Tools">
         {rail.map((item) => (
-          <RailButton key={'tool' in item ? item.tool : 'device' in item ? item.device : 'library' in item ? 'library' : 'quick'} store={store} tools={tools} item={item} canDraw={canDraw} />
+          <RailButton key={'tool' in item ? item.tool : 'device' in item ? item.device : 'library' in item ? 'library' : 'rule' in item ? `rule:${item.rule}` : 'quick'} store={store} tools={tools} item={item} canDraw={canDraw} />
         ))}
         <span className="fs-rail__rule" />
         <MeasureButton store={store} tools={tools} />
@@ -609,6 +609,8 @@ function RailButton({ store, tools, item, canDraw }: { store: EditorStore; tools
   const tool = useEditor(store, (s) => s.tool);
   const device = useEditor(store, (s) => s.draw.device);
   const libraryOpen = usePlacing(store, (p) => p.panel);
+  // A rule between a rail's groups (FLR-T-15.5: the Electrical rail's exterior lights), named for a reader.
+  if ('rule' in item) return <span className="fs-rail__rule" role="separator" aria-label={item.rule} />;
   if ('library' in item) {
     return (
       <Tooltip content={withKeys('Insert from the library', 'tool.furniture')} side="right">

@@ -115,7 +115,7 @@ export type Draft =
   | WandDraft
   /** The stair tool (Core 0.3, 17): its foot clicked, then the direction it rises in. */
   | { tool: 'stair'; foot: Point | null; cursor: Point | null }
-  | { tool: 'device'; hover: DeviceHover | null; typed: string }
+  | { tool: 'device'; hover: DeviceHover | null; typed: string; /** A string light's first point (FLR-T-15.5), once chosen. */ from?: Point | null }
   | {
       tool: 'select';
       drag:
@@ -188,6 +188,8 @@ export interface Layers {
   /** FLR-T-18.3: FS_furniture's casework and appliances, and FS_landscape's garden; absent: shown. */
   casework?: boolean;
   landscape?: boolean;
+  /** FLR-T-15.5: where exterior lights' light lands, drawn under them; absent: shown. */
+  beams?: boolean;
 }
 
 export interface DrawSettings {

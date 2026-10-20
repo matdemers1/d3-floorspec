@@ -34,6 +34,11 @@ import {
   Utensils,
   Wind,
   Zap,
+  Ellipsis,
+  Flashlight,
+  Footprints,
+  LampFloor,
+  LampWallDown,
 } from 'lucide-react';
 import { useEditor, type EditorStore, type Viewport } from './store';
 import type { ToolController } from './tools';
@@ -103,6 +108,12 @@ export const DEVICE_ICONS: Readonly<Record<string, ReactNode>> = {
   dataOutlet: <Network />,
   coaxOutlet: <Tv />,
   headEnd: <Server />,
+  // FLR-T-15.5: the exterior lights, the Electrical rail's second group.
+  pathLight: <LampFloor />,
+  uplight: <Flashlight />,
+  wallWash: <LampWallDown />,
+  stepLight: <Footprints />,
+  stringLight: <Ellipsis />,
 };
 
 /** A mode's keys, from the command registry (⌥1–⌥7): written once, in modes.ts's MODE_COMMANDS. */

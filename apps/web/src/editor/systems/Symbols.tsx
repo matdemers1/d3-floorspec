@@ -9,8 +9,10 @@ import { angleOf, type DeviceHover } from './placement';
 import { membersFor, systemOfExtension, type DeviceKind, type ReceptacleOptions } from './catalog';
 import { compareIds } from './view';
 import { FIXTURE_CLASS, fixtureParts, SymbolParts } from '../plansymbols';
-import { landscapeLayers, landscapeOf, PALETTES, type SceneLandscape } from '@floorspec/render2d';
+import { beamOf, exteriorMembers, exteriorOf, landscapeLayers, landscapeOf, PALETTES, type Beam, type SceneLandscape } from '@floorspec/render2d';
 import type { PlanLook } from '../planStyle';
+import type { UnitSystem } from '../units';
+import { beamLabel } from './exterior';
 
 /**
  * The building systems on the plan (FLR-T-5.7): each device as its symbol — a receptacle's circle
@@ -84,6 +86,18 @@ function Glyph({ view, d, className }: { view: Viewport; d: DeviceView; classNam
     case 'alarm':
       parts.push(<circle key="c" cx={x} cy={y} r={r} />, <circle key="i" cx={x} cy={y} r={r * 0.45} />);
       break;
+    case 'exterior': {
+      // FLR-T-15.5: a path light a ringed dot, an uplight a triangle aimed along its facing, a
+      // wall-washer a half-disc off its wall, a step light a bar, a string a dotted run.
+      const kind = exteriorOf(d.element)?.kind;
+      const fx = Math.cos(facing);
+      const fy = -Math.sin(facing);
+      if (kind === 'uplight') parts.push(<path key="p" d={`M${f1(x + fx * r)},${f1(y + fy * r)}L${f1(x - fx * r * 0.7 + tx * r * 0.8)},${f1(y - fy * r * 0.7 + ty * r * 0.8)}L${f1(x - fx * r * 0.7 - tx * r * 0.8)},${f1(y - fy * r * 0.7 - ty * r * 0.8)}Z`} />);
+      else if (kind === 'wallWash') parts.push(<path key="p" d={`M${f1(x + tx * r)},${f1(y + ty * r)}A${f1(r)},${f1(r)} 0 0 1 ${f1(x - tx * r)},${f1(y - ty * r)}Z`} />);
+      else if (kind === 'step') parts.push(<rect key="r" x={x - r} y={y - r * 0.45} width={r * 2} height={r * 0.9} rx={1.5} transform={`rotate(${f1((-facing * 180) / Math.PI + 90)} ${f1(x)} ${f1(y)})`} />);
+      else parts.push(<circle key="c" cx={x} cy={y} r={r * 0.85} />, <circle key="i" className="fs-sym__dot" cx={x} cy={y} r={r * 0.32} />);
+      break;
+    }
     case 'data':
       parts.push(<path key="p" d={`M${f1(x)},${f1(y - r)}L${f1(x + r)},${f1(y + r * 0.75)}L${f1(x - r)},${f1(y + r * 0.75)}Z`} />);
       break;
@@ -175,6 +189,17 @@ function Outlined({ view, d, className }: { view: Viewport; d: DeviceView; class
       case 'equipment':
         label(ABBREVIATION[String(d.element['equipment'])] ?? 'M');
         break;
+      case 'exterior': {
+        // A string's run: its cable, a bulb every 2' (FLR-T-15.5).
+        parts[0] = <g key="o" />;
+        line(at(x0, cy), at(x1, cy), 'cable');
+        const n = Math.max(2, Math.round(dx / (2 * 390_144)));
+        for (let i = 0; i < n; i++) {
+          const p = S(view, at(x0 + (dx * (i + 0.5)) / n, cy));
+          parts.push(<circle key={`b${String(i)}`} className="fs-sym__bulb" cx={f1(p[0])} cy={f1(p[1])} r={2.6} />);
+        }
+        break;
+      }
       case 'panel':
       case 'headEnd':
       case 'ev':
@@ -224,7 +249,7 @@ export function homeRuns(document: FloorspecDocument, level: LevelView): { circu
 }
 
 /** The systems layer: clearances, home runs, devices, and panel callouts. */
-export function SystemsLayer({ view, level, document, derived, layers, selection, look = null }: { view: Viewport; level: LevelView; document: FloorspecDocument; derived: Derived | null; layers: Layers; selection: string | null; look?: PlanLook | null }) {
+export function SystemsLayer({ view, level, document, derived, layers, selection, look = null, units = 'imperial' }: { view: Viewport; level: LevelView; document: FloorspecDocument; derived: Derived | null; layers: Layers; selection: string | null; look?: PlanLook | null; units?: UnitSystem }) {
   const shown = level.devices.filter((d) => visible(d, layers));
   if (layers.coreOnly) {
     return (
@@ -253,6 +278,7 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
         ))}
       </g>
       <LandscapeShapes view={view} devices={shown} selection={selection} look={look} />
+      {layers.electrical && layers.beams !== false ? <Beams view={view} devices={shown} selection={selection} units={units} /> : null}
       {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx); FS_landscape its plants, beds, lawns and lines (above). */}
       {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape').map((d) => {
         // FLR-T-18.3: a load carries its circuit's tone, which the Electrical mode draws it in (modes.css).
@@ -289,6 +315,51 @@ function LandscapeShapes({ view, devices, selection, look }: { view: Viewport; d
   return <g className="fs-landscape" dangerouslySetInnerHTML={{ __html: lawns + ground + plants }} />;
 }
 
+/** An exterior light's beam, from its element and where it stands (render2d's `beamOf`). */
+export function beamOfDevice(d: DeviceView): Beam | null {
+  if (d.extension !== 'FS_electrical' || d.collection !== 'lights' || d.placement === null) return null;
+  return beamOf(d.id, d.element, { point: d.placement.point, facing: d.placement.facing });
+}
+
+/**
+ * Where the exterior lights' light lands (FLR-T-15.5, the board's P15/Beam): a pool, a cone, a fan, a
+ * half-disc, a run of bulbs — in one warm tint with a dashed edge, under the devices. A picture of
+ * each fixture, not a lighting calculation; the selected light's beam a little stronger.
+ */
+export function Beams({ view, devices, selection, units }: { view: Viewport; devices: readonly DeviceView[]; selection: string | null; units: UnitSystem }) {
+  const beams = devices.flatMap((d) => {
+    const b = beamOfDevice(d);
+    return b === null ? [] : [b];
+  });
+  if (beams.length === 0) return null;
+  const chosen = beams.find((b) => b.id === selection);
+  // The selected light's beam, said by it: "Uplight · 25° flood", "Path light · 6′ ⌀ pool".
+  const tag = chosen === undefined ? null : (() => {
+    const xs = chosen.ring.map((p) => S(view, p));
+    const right = Math.max(...xs.map((p) => p[0]));
+    const top = Math.min(...xs.map((p) => p[1]));
+    return <GhostTag x={right + 8} y={top + 16} text={beamLabel(chosen.kind, chosen.spread, chosen.size, units)} accent={false} />;
+  })();
+  return (
+    <g className="fs-beams" data-beams={beams.length}>
+      {beams.map((b) => <BeamShape key={b.id} view={view} beam={b} selected={b.id === selection} />)}
+      {tag}
+    </g>
+  );
+}
+
+export function BeamShape({ view, beam, selected = false, ghost = false }: { view: Viewport; beam: Beam; selected?: boolean; ghost?: boolean }) {
+  return (
+    <g className={`fs-beam fs-beam--${beam.shape}${selected ? ' is-selected' : ''}${ghost ? ' fs-beam--ghost' : ''}`} data-beam={beam.id} data-shape={beam.shape}>
+      <polygon points={pts(view, beam.ring)} />
+      {beam.bulbs?.map((p, i) => {
+        const q = S(view, p);
+        return <circle key={i} className="fs-beam__bulb" cx={f1(q[0])} cy={f1(q[1])} r={2.4} />;
+      })}
+    </g>
+  );
+}
+
 function PanelCallouts({ view, level }: { view: Viewport; level: LevelView }) {
   return (
     <g className="fs-callouts">
@@ -316,7 +387,7 @@ export function DeviceGhost({ view, level, hover, kind, receptacle }: { view: Vi
   const facing = angleOf(hover.facing);
   const u = facingVector(facing);
   const at = (x: number, y: number): Point => [hover.point[0] + x * u[0] - y * u[1], hover.point[1] + x * u[1] + y * u[0]];
-  const b = kind.box;
+  const b = hover.box ?? kind.box;
   const footprint: Point[] = [at(b.min[0], b.min[1]), at(b.max[0], b.min[1]), at(b.max[0], b.max[1]), at(b.min[0], b.max[1])];
   const d: DeviceView = {
     id: '~ghost',
@@ -325,7 +396,7 @@ export function DeviceGhost({ view, level, hover, kind, receptacle }: { view: Vi
     system: systemOfExtension(kind.extension),
     kind,
     kindLabel: kind.label,
-    element: { ...membersFor(kind, receptacle), fallback: { box: b } },
+    element: { ...(kind.exterior === undefined ? membersFor(kind, receptacle) : exteriorMembers(kind.exterior, hover.patch ?? {})), fallback: { box: b } },
     level,
     footprint,
     bottom: 0,
@@ -334,7 +405,29 @@ export function DeviceGhost({ view, level, hover, kind, receptacle }: { view: Vi
     host: { mode: hover.host.mode },
     clearances: [],
   };
-  return <DeviceShape view={view} d={d} className={hover.problem === undefined ? 'fs-sym fs-sym--ghost' : 'fs-sym fs-sym--ghost fs-sym--bad'} />;
+  const shape = <DeviceShape view={view} d={d} className={hover.problem === undefined ? 'fs-sym fs-sym--ghost' : 'fs-sym fs-sym--ghost fs-sym--bad'} />;
+  if (kind.exterior === undefined) return shape;
+  // FLR-T-15.5: an exterior light's ghost shows its beam where it would land, and what it snapped to.
+  const beam = beamOf('~ghost', d.element, { point: hover.point, facing });
+  const tagAt = S(view, hover.point);
+  return (
+    <>
+      {beam === null ? null : <BeamShape view={view} beam={beam} ghost />}
+      {shape}
+      {hover.tag === undefined ? null : <GhostTag x={tagAt[0] + 14} y={tagAt[1] + 4} text={hover.tag} />}
+    </>
+  );
+}
+
+/** A short tag by a ghost or a beam: "8′-0″ to X12", "Uplight · 25° flood". */
+export function GhostTag({ x, y, text, accent = true }: { x: number; y: number; text: string; accent?: boolean }) {
+  const w = text.length * 6.4 + 14;
+  return (
+    <g className={accent ? 'fs-ext-tag fs-ext-tag--accent' : 'fs-ext-tag'}>
+      <rect x={f1(x)} y={f1(y - 15)} width={f1(w)} height={20} rx={4} />
+      <text x={f1(x + 7)} y={f1(y - 1)}>{text}</text>
+    </g>
+  );
 }
 
 /** A device's highlight: a ring around its glyph, or its outline. */

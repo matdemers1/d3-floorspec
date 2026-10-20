@@ -1,6 +1,6 @@
 import type { LevelView, Point, WallView } from '../model';
 import { add, cross, dist, faceAt, leftNormal, project, scale, sub } from '../geometry';
-import type { DeviceKind, Mount } from './catalog';
+import type { Box, DeviceKind, Mount } from './catalog';
 import type { HostRef } from './ops';
 import type { DeviceView } from './view';
 
@@ -15,6 +15,12 @@ import type { DeviceView } from './view';
 
 export interface DeviceHover {
   host: HostRef;
+  /** FLR-T-15.5: an exterior light's own box (a step light's at its riser, a string's run) and its record's beam, reach and bulbs. */
+  box?: Box;
+  patch?: { beam?: number; reach?: number; bulbs?: number };
+  /** What the tool says while it snaps (the status line), and a short tag by the ghost. */
+  hint?: string;
+  tag?: string;
   /** Where to draw the marker, in plan, and which way the device would face. */
   point: Point;
   facing: Point;
@@ -99,6 +105,11 @@ export function hoverFor(level: LevelView, mount: Mount, p: Point, o: HoverOptio
       nearer: offset <= L / 2 ? 'start' : 'end',
     };
   }
+  // FLR-T-15.5: an exterior light stands free on the level wherever it is put (exterior.ts snaps it first).
+  if (mount === 'ground' || mount === 'step' || mount === 'string') {
+    const at = round(p, o.pointGrid ?? o.grid);
+    return { host: { mode: 'free', level: level.id, at, ...(o.rotation === undefined || o.rotation === 0 ? {} : { rotation: o.rotation }) }, point: at, facing: [Math.cos(((o.rotation ?? 0) / 1_000_000) * (Math.PI / 180)), Math.sin(((o.rotation ?? 0) / 1_000_000) * (Math.PI / 180))] };
+  }
   const room = faceAt(level, p)?.room ?? null;
   if (room === null) {
     if (mount === 'ceiling') return { host: { mode: 'free', level: level.id, at: round(p, o.pointGrid ?? o.grid) }, point: round(p, o.pointGrid ?? o.grid), facing: [1, 0], problem: 'A ceiling device goes in a room: point inside one.' };
@@ -129,6 +140,8 @@ const round = (p: Point, grid: number): [number, number] => [Math.round(p[0] / g
 export function mountOf(device: DeviceView): Mount {
   const host = device.host;
   if (host?.['mode'] === 'wallFace') return 'wall';
+  // An exterior light standing free stays free when it is dragged (FLR-T-15.5).
+  if (device.kind?.exterior !== undefined && host?.['mode'] === 'free') return 'ground';
   if (host?.['mode'] === 'surface' && host['surface'] === 'ceiling') return 'ceiling';
   if (device.kind?.mount === 'floorWall') return 'floorWall';
   return 'floor';

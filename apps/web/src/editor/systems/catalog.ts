@@ -1,5 +1,6 @@
 import { OFFICIAL_EXTENSIONS } from '@floorspec/engine';
 import { discriminant as memberOf } from '@floorspec/mesh';
+import { EXTERIOR_DEFS, exteriorMembers, exteriorOf, type ExteriorKind } from '@floorspec/render2d';
 import type { UnitSystem } from '../units';
 
 /**
@@ -33,16 +34,19 @@ export function extensionVersion(extension: string): string {
  * - `wall`: on a wall face, at a mounting height (a receptacle, a switch, a panel);
  * - `floorWall`: on the floor, backed against the nearest wall face when near one (a toilet, a tub);
  * - `floor`: on the floor where it is put (a water heater, a floor drain);
- * - `ceiling`: on the ceiling where it is put (a light, an alarm).
+ * - `ceiling`: on the ceiling where it is put (a light, an alarm);
+ * - `ground`, `step`, `string` (FLR-T-15.5): an exterior light standing free on the level — on the
+ *   ground (snapped to a walk's edge or a tree's canopy), in a stair's riser, or strung between two points.
  */
-export type Mount = 'wall' | 'floorWall' | 'floor' | 'ceiling';
+export type Mount = 'wall' | 'floorWall' | 'floor' | 'ceiling' | 'ground' | 'step' | 'string';
 
 /** The plan symbol a kind is drawn with (Symbols.tsx). */
 export type SymbolId =
   | 'panel' | 'receptacle' | 'switch' | 'light' | 'alarm' | 'ev'
   | 'toilet' | 'basin' | 'shower' | 'tub' | 'heater' | 'drain' | 'cleanout'
   | 'equipment' | 'supply' | 'return' | 'exhaust' | 'range'
-  | 'data' | 'headEnd' | 'lowvoltage';
+  | 'data' | 'headEnd' | 'lowvoltage'
+  | 'exterior';
 
 type Triple = [number, number, number];
 export interface Box {
@@ -67,6 +71,8 @@ export interface DeviceKind {
   /** The extension's own members a new one starts with. */
   members: Record<string, unknown>;
   symbol: SymbolId;
+  /** An exterior light's kind (FLR-T-15.5): its catalogue entry, `@floorspec/render2d`'s exterior.ts. */
+  exterior?: ExteriorKind;
 }
 
 const IN = 32_512;
@@ -88,6 +94,32 @@ export const DEVICE_KINDS: readonly DeviceKind[] = [
   { id: 'light', label: 'Ceiling light', aliases: ['light', 'luminaire', 'fixture light'], system: 'electrical', extension: 'FS_electrical', collection: 'lights', mount: 'ceiling', box: box([-128_000, -128_000, -192_000], [128_000, 128_000, 0]), members: { fixture: 'ceiling' }, symbol: 'light' },
   { id: 'alarm', label: 'Smoke/CO alarm', aliases: ['smoke alarm', 'smoke detector', 'co alarm', 'alarm'], system: 'electrical', extension: 'FS_electrical', collection: 'alarms', mount: 'ceiling', box: box([-96_000, -96_000, -64_000], [96_000, 96_000, 0]), members: { detects: ['smoke', 'carbonMonoxide'] }, symbol: 'alarm' },
   { id: 'evCharger', label: 'EV charger', aliases: ['ev', 'charger', 'evse'], system: 'electrical', extension: 'FS_electrical', collection: 'evChargers', mount: 'wall', box: box([0, -192_000, -256_000], [128_000, 192_000, 256_000]), height: h(48, 1200), members: { amps: 40, connector: 'j1772' }, symbol: 'ev' },
+  // FS_electrical exterior lights (FLR-T-15.5): each an `exterior` light of a kind, 12 V, from the exterior catalogue.
+  ...(['path', 'uplight', 'wallWash', 'step', 'string'] as const).map((k): DeviceKind => {
+    const def = EXTERIOR_DEFS[k];
+    const id = k === 'path' ? 'pathLight' : k === 'step' ? 'stepLight' : k === 'string' ? 'stringLight' : k;
+    const aliases: Readonly<Record<ExteriorKind, readonly string[]>> = {
+      path: ['path light', 'bollard', 'landscape light', 'walk light'],
+      uplight: ['uplight', 'tree light', 'spotlight', 'accent light'],
+      wallWash: ['wall wash', 'wall washer', 'wall-washer', 'downlight outside'],
+      step: ['step light', 'stair light', 'riser light'],
+      string: ['string lights', 'festoon', 'bistro lights', 'cafe lights'],
+    };
+    return {
+      id,
+      label: def.label,
+      aliases: aliases[k],
+      system: 'electrical',
+      extension: 'FS_electrical',
+      collection: 'lights',
+      mount: def.mount === 'wall' ? 'wall' : def.mount,
+      box: { min: [...def.box.min], max: [...def.box.max] },
+      ...(def.height === undefined ? {} : { height: h(72, 1830) }),
+      members: exteriorMembers(k),
+      symbol: 'exterior',
+      exterior: k,
+    };
+  }),
   // FS_plumbing
   { id: 'toilet', label: 'Toilet', aliases: ['water closet', 'wc'], system: 'plumbing', extension: 'FS_plumbing', collection: 'fixtures', mount: 'floorWall', box: box([0, -243_200, 0], [896_000, 243_200, 1_024_000]), members: { fixture: 'waterCloset', supply: ['cold'] }, symbol: 'toilet' },
   // A basin's frame is at its rim (its height); its box reaches above the rim for its tap.
@@ -146,7 +178,12 @@ type Json = Record<string, unknown>;
  * extension the editor does not know.
  */
 export function kindOfElement(extension: string, collection: string, element: Json): DeviceKind | null {
-  const candidates = DEVICE_KINDS.filter((k) => k.extension === extension && k.collection === collection);
+  // FLR-T-15.5: an exterior light of a kind is that kind; one without (a lantern) a light as it always was.
+  if (extension === 'FS_electrical' && collection === 'lights' && element['fixture'] === 'exterior') {
+    const ext = exteriorOf(element);
+    return DEVICE_KINDS.find((k) => (ext === null ? k.id === 'light' : k.exterior === ext.kind)) ?? null;
+  }
+  const candidates = DEVICE_KINDS.filter((k) => k.extension === extension && k.collection === collection && k.exterior === undefined);
   if (candidates.length === 0) return null;
   const member = memberOf(extension, collection);
   const discriminant = member !== undefined && element[member] !== undefined ? member : undefined;
@@ -168,6 +205,7 @@ export function kindLabel(extension: string, collection: string, element: Json):
   if (extension === 'FS_furniture' && typeof element['category'] === 'string') return words(element['category']);
   const kind = kindOfElement(extension, collection, element);
   if (kind === null) return collection;
+  if (collection === 'lights' && element['fixture'] === 'exterior' && kind.exterior === undefined) return 'Exterior light';
   if (collection === 'fixtures' && typeof element['fixture'] === 'string' && kind.members['fixture'] !== element['fixture']) return words(element['fixture']);
   if (collection === 'equipment' && typeof element['equipment'] === 'string' && kind.members['equipment'] !== element['equipment']) return words(element['equipment']);
   return kind.label;

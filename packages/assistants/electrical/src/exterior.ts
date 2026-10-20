@@ -190,8 +190,11 @@ function slabLine(ring: readonly Pt[]): { line: Pt[]; halfWidth: number } | null
   return { line: [at(a0), at(a1)], halfWidth: (b1 - b0) / 2 };
 }
 
+/** What a reading of the walks needs: the document and what the engine derived of it (a PlanReading has both). */
+export type WalkSource = Pick<PlanReading, 'document' | 'derived'>;
+
 /** The walks and drives of a level: Core slabs by purpose, FS_landscape hardscape by form. */
-export function walksOf(plan: PlanReading, d: ExteriorDefaults, level?: string): Walk[] {
+export function walksOf(plan: WalkSource, d: ExteriorDefaults = EXTERIOR_DEFAULTS, level?: string): Walk[] {
   const doc = plan.document;
   const out: Walk[] = [];
   const house = houseCentre(plan, level);
@@ -231,7 +234,7 @@ export function walksOf(plan: PlanReading, d: ExteriorDefaults, level?: string):
 }
 
 /** The middle of the house's rooms on a level: which side of a drive the house is on. */
-function houseCentre(plan: PlanReading, level?: string): Pt | null {
+function houseCentre(plan: WalkSource, level?: string): Pt | null {
   const pts: Pt[] = [];
   for (const [rid, r] of Object.entries(plan.derived.rooms)) {
     if (level !== undefined && plan.document.rooms?.[rid]?.level !== level) continue;
