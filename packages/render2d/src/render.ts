@@ -8,9 +8,10 @@
  */
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
-import { deriveFrom, evaluate, resolveAnnotations, type Evaluation } from '@floorspec/engine';
+import { deriveFrom, evaluate, resolveAnnotations, siteDrawing, type Evaluation, type SiteDrawing } from '@floorspec/engine';
+import { siteExtent, siteLayers } from './site.js';
 import { DEMOLISH_DASH, EXISTING_OPACITY, RENOVATION_FILTER_LABELS, RENOVATION_INK, RENOVATION_STATUS_LABELS, filteredDocument, renovationStyles, type RenovationFilter, type RenovationStyle } from './renovation.js';
-import { DEFAULT_READER, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneFallback, type SceneOpening, type SceneRoom, type SceneStair, type SceneWall } from './scene.js';
+import { DEFAULT_READER, defaultLevel, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneFallback, type SceneOpening, type SceneRoom, type SceneStair, type SceneWall } from './scene.js';
 import { base64, el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
 import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
 import { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type SymbolPart, type SymbolStroke } from './plansymbols.js';
@@ -118,6 +119,12 @@ export interface RenderOptions {
    * legend. Default: none, the document as it is. A document without FS_renovation draws as it is.
    */
   readonly renovation?: RenovationFilter;
+  /**
+   * The site (FS_site, FLR-T-15.1), drawn on the lowest level: the contour interval in base units of
+   * the survey's datum (default 1′) and every how many is a major one (default 5). The lot, contours,
+   * cut and fill and spots follow the `site`, `contours`, `grading` and `spots` layers.
+   */
+  readonly site?: { readonly interval?: number; readonly majorEvery?: number };
 }
 
 /** How faint a ghosted layer is drawn: grey, at this opacity (FLR-T-18.3). */
@@ -518,6 +525,11 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
     return hi.has(id) || c === 'added' || c === 'moved';
   };
 
+  // ── FS_site (FLR-T-15.1): drawn on the lowest level, under the house and around it ──
+  const siteShown = (['site', 'contours', 'grading', 'spots'] as const).some((l) => st[l] !== 'off');
+  const drawnSite: SiteDrawing | null = siteShown && evaluation.view !== undefined && defaultLevel(evaluation.view) === scene.levelId ? siteDrawing(evaluation.view) : null;
+  const site = drawnSite !== null && (drawnSite.lot !== null || drawnSite.surface !== null || drawnSite.spots.length > 0 || drawnSite.contours.length > 0) ? drawnSite : null;
+
   // ── extent ──
   let body: Box | undefined;
   for (const w of scene.walls.values()) body = grow(body, w.outline);
@@ -531,6 +543,10 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   const showRoof = (options.roof ?? (moded && st.roof !== 'off')) && st.roof !== 'off';
   if (showRoof) for (const rf of scene.roofs.values()) all = grow(all, rf.outline);
   for (const fb of scene.fallbacks.values()) all = grow(all, fb.footprint);
+  if (site !== null) {
+    const pts = siteExtent(site);
+    if (pts.length) all = grow(all, pts);
+  }
   const showClearances = options.clearances ?? false;
   if (showClearances) for (const c of scene.clearances) all = grow(all, c.footprint);
   if (diff) {
@@ -674,6 +690,11 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
     (id) => hi.has(id),
   );
   if (landscape.lawns !== '') put('landscape', el('g', { id: 'lawns' }, landscape.lawns));
+  const siteSvg = site === null ? null : siteLayers(site, f, pal, { ...options.site, idPrefix: 'fs-site' });
+  if (siteSvg !== null) {
+    if (siteSvg.grading !== '') parts.push(el('defs', {}, siteSvg.defs));
+    if (siteSvg.contours !== '') put('contours', el('g', { id: 'contours' }, siteSvg.contours));
+  }
 
   // ── slabs (Core 6.7): authored floors outside the rooms, drawn first and hatched ──
   if (scene.slabs.size) {
@@ -725,6 +746,7 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   }
   put('rooms', el('g', { id: 'floors' }, floors));
   if (landscape.ground !== '') put('landscape', el('g', { id: 'landscape' }, landscape.ground));
+  if (siteSvg !== null && siteSvg.grading !== '') put('grading', el('g', { id: 'grading' }, siteSvg.grading));
 
   // ── ceilings that are not flat (Core 0.3, 15.3, 15.4): a tray's centre dashed, a vault's ridge dash-dotted ──
   let ceilings = '';
@@ -953,6 +975,8 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
     parts.push(el('g', { id: 'fallbacks', ...(shadowed ? { filter: 'url(#fs-shadow)' } : {}) }, fbs));
   }
   if (landscape.plants !== '') put('landscape', el('g', { id: 'plants' }, landscape.plants));
+  if (siteSvg !== null && siteSvg.spots !== '') put('spots', el('g', { id: 'spots' }, siteSvg.spots));
+  if (siteSvg !== null && siteSvg.lot !== '') put('site', el('g', { id: 'lot' }, siteSvg.lot));
 
   // ── clearance envelopes (Core 0.2, 13.5), when asked for ──
   if (showClearances && scene.clearances.length) {
@@ -1252,7 +1276,7 @@ function renovationLegend(filter: RenovationFilter, x: number, y: number, pal: P
 const TRADES: ReadonlySet<PlanLayer> = new Set(['electrical', 'plumbing', 'mechanical', 'lowvoltage']);
 
 /** The layers whose ghosts the filter greys. */
-const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'];
+const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape'];
 
 /** A ghost is grey: every colour desaturated, then faded (FLR-T-18.3). */
 const GHOST_FILTER = el('filter', { id: 'fs-ghost', 'color-interpolation-filters': 'sRGB' }, el('feColorMatrix', { type: 'saturate', values: 0 }));

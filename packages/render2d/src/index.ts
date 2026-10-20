@@ -11,6 +11,7 @@ export { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type DoorSymbol
 export { diffScenes, type Change, type SceneDiff, type Diff } from './ghost.js';
 export { PALETTES, ACCENT, type Palette, type ThemeName } from './theme.js';
 export { landscapeOf, landscapeLayers, type SceneLandscape } from './landscape.js';
+export { siteLayers, siteExtent, surveyHeight, type SiteLayers, type SiteDrawOptions } from './site.js';
 export {
   PLAN_STYLES,
   STYLES,

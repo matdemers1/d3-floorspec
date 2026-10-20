@@ -243,6 +243,12 @@ function lineTheme(style: 'technical' | 'blueprint', theme: ThemeName): PlanThem
     bed: paper,
     edging: hair,
     paving: paper,
+    // The site in the drawing's inks: contours in hairline, the lot in ink.
+    siteInk: muted,
+    contour: hair,
+    contourMajor: faint,
+    lotLine: ink,
+    setback: faint,
     // Planting in hairline over the paper: a technical plan is about the building.
     canopy: hair,
     canopyDark: hair,
