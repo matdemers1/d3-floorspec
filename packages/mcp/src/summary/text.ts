@@ -148,6 +148,18 @@ export function summaryText(s: DocumentSummary): string {
       `Site: plan north faces ${f.north.compass} (${f.north.bearing}°), east ${f.east.compass} (${f.east.bearing}°), south ${f.south.compass} (${f.south.bearing}°), west ${f.west.compass} (${f.west.bearing}°) — a window on a side looks that way` +
         (s.site.latitude !== undefined && s.site.longitude !== undefined ? `; location ${s.site.latitude.toFixed(4)}°, ${s.site.longitude.toFixed(4)}°.` : '; no location.'),
     );
+    // FLR-T-15.1: the lot and FS_site's survey and grading.
+    const lot = s.site.lot;
+    if (lot !== undefined)
+      out.push(`Lot: ${String(lot.areaSqFt)} ft² (${String(lot.acres)} ac); edges ${lot.edges.map((e, i) => `${String(i)} ${e.kind ?? 'edge'} ${e.length.ftIn}${e.setback === null ? '' : ` (setback ${e.setback.ftIn})`}`).join(', ')}.`);
+    const t = s.site.terrain;
+    if (t !== undefined)
+      out.push(
+        `Terrain (FS_site; heights in the survey's feet, first floor at ${String(t.benchmark)}'): ${String(t.spots)} spots, ${String(t.contours)} contour lines` +
+          (t.surface === null ? ', no surface yet' : `, surface ${String(t.surface.lowFt)}'–${String(t.surface.highFt)}' (${String(t.surface.triangles)} triangles)`) +
+          (t.cutYd3 === null ? '.' : `; cut ${String(t.cutYd3)} yd³, fill ${String(t.fillYd3)} yd³ (estimates: ${Object.entries(t.grading).map(([id, g]) => `${id} ${g.kind} at ${String(g.elevationFt)}' cut ${String(g.cutYd3)} fill ${String(g.fillYd3)}`).join('; ')}).`) +
+          (t.inSetbacks.length === 0 ? '' : ` In a setback (advisory): ${t.inSetbacks.join(', ')}.`),
+      );
   }
   if (!s.valid) out.push('', 'The document is NOT valid: fix the error diagnostics below first; geometry is reported only where it can be derived.');
   if (s.options?.length) {

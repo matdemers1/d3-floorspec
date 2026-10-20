@@ -12,7 +12,7 @@
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
 import { landings } from '../stairwell.js';
 import { describeLens, savedViewsOf } from '@floorspec/mesh';
-import { analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { type DerivedSite, analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -309,6 +309,21 @@ export interface SiteSummary {
   /** Degrees, WGS 84, when the site has a location. */
   readonly latitude?: number;
   readonly longitude?: number;
+  /** FLR-T-15.1: the lot (Core's site boundary) with FS_site's edges and setbacks, when it has one. */
+  readonly lot?: { readonly areaSqFt: number; readonly acres: number; readonly edges: readonly { readonly kind: string | null; readonly length: Length; readonly setback: Length | null }[] };
+  /** FS_site's survey and grading, when the document uses it: heights in the survey's datum (benchmark + elevation), volumes in cubic yards — estimates. */
+  readonly terrain?: {
+    readonly benchmark: number;
+    readonly spots: number;
+    readonly contours: number;
+    readonly pads: readonly string[];
+    readonly surface: { readonly points: number; readonly triangles: number; readonly lowFt: number; readonly highFt: number } | null;
+    readonly grading: Readonly<Record<string, { readonly kind: string; readonly elevationFt: number; readonly cutYd3: number | null; readonly fillYd3: number | null }>>;
+    readonly cutYd3: number | null;
+    readonly fillYd3: number | null;
+    /** What is not clear of the setbacks (FS-SITE-LINT-003): advisory. */
+    readonly inSetbacks: readonly string[];
+  };
 }
 
 export interface DocumentSummary {
@@ -1064,7 +1079,7 @@ export function describeJson(document: string | Uint8Array | object, options: De
     diags = diagnostics.filter((d) => (d.level !== undefined ? d.level === lid : d.elements.length === 0 || d.elements.some((e) => onLevel.has(e))));
   }
   const area = ev.valid && options.room === undefined ? z765(doc).buildings.map((b) => ({ building: b.building, aboveGradeSqFt: b.aboveGradeSqFt, belowGradeSqFt: b.belowGradeSqFt })) : undefined;
-  const site = siteSummary(doc);
+  const site = siteSummary(doc, (derived?.extensions as { FS_site?: DerivedSite } | undefined)?.FS_site, diagnostics);
   const scenes = options.room === undefined && options.level === undefined ? sceneSummaries(doc) : undefined;
   const views = options.room === undefined && options.level === undefined ? viewSummaries(doc) : undefined;
   return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), diagnostics: diags };
@@ -1074,8 +1089,8 @@ const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', '
 const SIDE_BEARING: Readonly<Record<Side, number>> = { north: 0, east: 90, south: 180, west: 270 };
 
 /** The site's orientation and location (SiteSummary); undefined when the document has no site. */
-export function siteSummary(doc: FloorspecDocument): SiteSummary | undefined {
-  const site = doc.site;
+export function siteSummary(doc: FloorspecDocument, fsSite?: DerivedSite, diagnostics: readonly Pick<Diagnostic, 'code' | 'elements'>[] = []): SiteSummary | undefined {
+  const site = doc.site ?? (fsSite === undefined ? undefined : {});
   if (site === undefined) return undefined;
   const trueNorth = site.trueNorth ?? 0;
   const facing = {} as Record<Side, { bearing: number; compass: string }>;
@@ -1089,6 +1104,37 @@ export function siteSummary(doc: FloorspecDocument): SiteSummary | undefined {
     trueNorth,
     facing,
     ...(site.location !== undefined && { latitude: site.location.latitude / 1_000_000, longitude: site.location.longitude / 1_000_000 }),
+    ...(fsSite?.lot && {
+      lot: {
+        areaSqFt: Math.round(Number(fsSite.lot.area.replace(/\.5$/, '')) / FT2),
+        acres: Math.round((Number(fsSite.lot.area.replace(/\.5$/, '')) / FT2 / 43_560) * 100) / 100,
+        edges: fsSite.lot.edges.map((e) => ({ kind: e.kind, length: length(BigInt(e.length)), setback: e.setback === null ? null : length(BigInt(e.setback)) })),
+      },
+    }),
+    ...(fsSite !== undefined && { terrain: terrainSummary(doc, fsSite, diagnostics) }),
+  };
+}
+
+const FT = 390_144;
+const FT2 = FT * FT;
+const YD3 = 1_170_432 ** 3;
+const yd3 = (v: string | null): number | null => (v === null ? null : Math.round((Number(BigInt(v) / 1_000_000n) / (YD3 / 1e6)) * 10) / 10);
+
+/** FS_site's survey and grading, as an agent wants it: counts, heights in the survey's feet, volumes in cubic yards. */
+function terrainSummary(doc: FloorspecDocument, x: DerivedSite, diagnostics: readonly Pick<Diagnostic, 'code' | 'elements'>[]): NonNullable<SiteSummary['terrain']> {
+  const data = (doc.extensions as Record<string, { benchmark?: number; spots?: object; contours?: object; pads?: object } | undefined> | undefined)?.['FS_site'] ?? {};
+  const bench = typeof data.benchmark === 'number' ? data.benchmark : 0;
+  const ft = (z: number) => Math.round(((bench + z) / FT) * 100) / 100;
+  return {
+    benchmark: ft(0),
+    spots: Object.keys(data.spots ?? {}).length,
+    contours: Object.keys(data.contours ?? {}).length,
+    pads: Object.keys(data.pads ?? {}).sort(),
+    surface: x.surface === null ? null : { points: x.surface.points.length, triangles: x.surface.triangles.length, lowFt: ft(x.surface.low), highFt: ft(x.surface.high) },
+    grading: Object.fromEntries(Object.entries(x.grading).map(([id, g]) => [id, { kind: g.kind, elevationFt: ft(g.elevation), cutYd3: yd3(g.cut), fillYd3: yd3(g.fill) }])),
+    cutYd3: yd3(x.cut),
+    fillYd3: yd3(x.fill),
+    inSetbacks: diagnostics.filter((d) => d.code === 'FS-SITE-LINT-003').flatMap((d) => d.elements).sort(),
   };
 }
 
