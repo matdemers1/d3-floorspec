@@ -125,6 +125,10 @@ import { defineConfig, devices } from '@playwright/test';
  *                   device), the pill, its panel, a session from the entry, a look-and-pinch teleport, a level
  *                   switch and Exit VR; Export ▸ View in AR… at table and true scale (aligned, the scale in the
  *                   USDZ's metadata), its QR code and link opened on a phone; axe in both themes.
+ *   - `site`      — FLR-T-15.1: terrain and grading on the Courtyard House in Landscape mode — the lot drawn (⇧B),
+ *                   the street set (⇧K), five spots and a contour at 813′ typed and clicked, contours and cut and
+ *                   fill on the plan, the house set on a pad, the cut and fill as estimates; the ground in 3D, the
+ *                   Terrain panel and its view-only vertical scale; axe in both themes; test-results/site-*.png.
  *
  * Run with:
  *
@@ -132,7 +136,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`, `…_xray_test`, `…_daylight_test`, `…_tour_test`, `…_xr_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52; daylight, +53; xray, +54; tour, +55; xr, +56).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`, `…_xray_test`, `…_daylight_test`, `…_tour_test`, `…_xr_test`, `…_site_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52; daylight, +53; xray, +54; tour, +55; xr, +56; site, +57).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -253,6 +257,8 @@ const SUITES: Suite[] = [
   { name: 'tour', spec: 'tour.spec.ts', port: PORT + 55, database: databaseFor('tour'), setupToken: true, gl: true },
   // FLR-T-14.3: walk it in VR (a stand-in headset, fixtures/webxr-mock.js) and the USDZ for AR Quick Look at two scales, sent to a phone.
   { name: 'xr', spec: 'xr.spec.ts', port: PORT + 56, database: databaseFor('xr'), setupToken: true, gl: true },
+  // FLR-T-15.1: terrain and grading — the lot drawn, the street set, spots and a contour, contours and cut and fill, the house on a pad, the ground in 3D, axe.
+  { name: 'site', spec: 'site.spec.ts', port: PORT + 57, database: databaseFor('site'), setupToken: true, gl: true },
 ];
 
 /**

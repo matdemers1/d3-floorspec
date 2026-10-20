@@ -25,10 +25,11 @@
   color: var(--color-fg);
   margin-bottom: var(--space-4);
 }
-.fs-terrain__section svg {
+.fs-sun.fs-terrain .fs-terrain__section svg {
   display: block;
   width: 100%;
   height: auto;
+  aspect-ratio: 260 / 84;
 }
 .fs-terrain__natural {
   fill: none;

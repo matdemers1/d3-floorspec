@@ -100,6 +100,16 @@ export function TerrainScene({ store, model, origin }: { store: EditorStore; mod
   useEffect(() => () => { material.dispose(); }, [material]);
   useEffect(() => () => { lines?.minor.dispose(); lines?.major.dispose(); }, [lines]);
   useEffect(() => { invalidate(); }, [settings.exaggeration, settings.contours, invalidate]);
+  // The test hook (e2e/site.spec.ts): what the 3D view draws of the ground.
+  useEffect(() => {
+    if (t === null) return;
+    const w = window as unknown as { __floorspecTerrain?: unknown };
+    const hook = { triangles: t.indices.length / 3, low: t.low, high: t.high, cut: t.change.some((c) => c < -0.02), fill: t.change.some((c) => c > 0.02), contours: settings.contours ? (t.contours.length + t.majors.length) / 6 : 0, exaggeration: settings.exaggeration };
+    w.__floorspecTerrain = hook;
+    return () => {
+      if (w.__floorspecTerrain === hook) delete w.__floorspecTerrain;
+    };
+  }, [t, settings.contours, settings.exaggeration]);
   if (geometry === null || lines === null) return null;
   return (
     <group scale={[1, 1, settings.exaggeration]} userData={{ terrain: true }}>
@@ -178,8 +188,9 @@ function SectionAA({ model }: { model: EditorModel }) {
   });
   const zs = samples.flatMap((p) => [p.natural, p.graded]).filter((z): z is number => z !== undefined);
   if (zs.length === 0) return null;
+  const floorZ = model.document.levels !== undefined ? Math.min(...Object.values(model.document.levels).map((l) => l?.elevation ?? 0)) : 0;
   const zlo = Math.min(...zs) - 0.5 * FT;
-  const zhi = Math.max(...zs) + 3 * FT;
+  const zhi = Math.max(...zs, floorZ + 10 * FT) + FT;
   const W = 260;
   const H = 84;
   const X = (i: number) => (i / N) * W;
@@ -198,11 +209,10 @@ function SectionAA({ model }: { model: EditorModel }) {
   const houseRun = samples.map((p, i) => (p.house ? i : -1)).filter((i) => i >= 0);
   const houseFrom = houseRun[0];
   const houseTo = houseRun[houseRun.length - 1];
-  const floorZ = model.document.levels !== undefined ? Math.min(...Object.values(model.document.levels).map((l) => l?.elevation ?? 0)) : 0;
   return (
     <figure className="fs-terrain__section">
       <figcaption>Section A–A · north to south, through the house</figcaption>
-      <svg viewBox={`0 0 ${String(W)} ${String(H)}`} role="img" aria-label={`Section through the site: cut ${yd3(derived?.cut)}, fill ${yd3(derived?.fill)}`}>
+      <svg viewBox={`0 0 ${String(W)} ${String(H)}`} width={W} height={H} role="img" aria-label={`Section through the site: cut ${yd3(derived?.cut)}, fill ${yd3(derived?.fill)}`}>
         <path className="fs-terrain__cut" d={band(true)} />
         <path className="fs-terrain__fill" d={band(false)} />
         {houseFrom !== undefined && houseTo !== undefined && houseTo > houseFrom ? <rect className="fs-terrain__house" x={X(houseFrom)} y={Y(floorZ + 10 * FT)} width={X(houseTo) - X(houseFrom)} height={Y(floorZ) - Y(floorZ + 10 * FT)} /> : null}
@@ -227,7 +237,7 @@ export function TerrainPanel({ store, model }: { store: EditorStore; model: Edit
   return (
     <section
       className="fs-sun fs-terrain"
-      aria-label="Terrain"
+      aria-label="Terrain view"
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
           e.preventDefault();

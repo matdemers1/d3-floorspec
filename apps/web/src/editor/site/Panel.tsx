@@ -61,7 +61,8 @@ function HeightField({ label, value, placeholder, onCommit, disabled, hint }: { 
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            commit();
+            // committed on blur: the plan's keys work again at once
+            (e.target as HTMLInputElement).blur();
           } else if (e.key === 'Escape') {
             editing.current = false;
             setText(value);
@@ -139,7 +140,7 @@ export function SitePanel({ store, model, level, units, readOnly, tool }: { stor
   const setback = (kind: SetbackKind, value: number | null) => { edit(`Set the ${kind} setback`, setSetback(model, kind, value)); };
 
   return (
-    <section className="fs-site-panel" aria-label="Site">
+    <section className="fs-site-panel" aria-label="Lot and terrain">
       <div className="fs-inspector__head">
         <span className="fs-inspector__icon">
           <LandPlot />

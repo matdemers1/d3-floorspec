@@ -77,17 +77,40 @@ function distance(x: number, y: number, ring: readonly XY[]): number {
   return best;
 }
 
-/** The surveyed ground at a point, base units: the surface over its hull, the nearest survey point's beyond it. */
-function natural(s: DrawSurface, x: number, y: number): number {
+/** The hull's edges as pairs of points with their heights: the triangles' edges no other triangle shares. */
+function hullOf(s: DrawSurface): [readonly [number, number, number], readonly [number, number, number]][] {
+  const directed = new Set<string>();
+  for (const t of s.triangles) for (let i = 0; i < 3; i++) directed.add(`${String(t[i])},${String(t[(i + 1) % 3])}`);
+  const out: [readonly [number, number, number], readonly [number, number, number]][] = [];
+  for (const t of s.triangles)
+    for (let i = 0; i < 3; i++) {
+      const a = t[i] ?? 0;
+      const b = t[(i + 1) % 3] ?? 0;
+      const pa = s.points[a];
+      const pb = s.points[b];
+      if (pa !== undefined && pb !== undefined && !directed.has(`${String(b)},${String(a)}`)) out.push([pa, pb]);
+    }
+  return out;
+}
+
+/**
+ * The surveyed ground at a point, base units: the surface over its hull; beyond it, the ground at the
+ * nearest point of the hull's edge — carried out level, so the ground runs on without a step.
+ */
+function natural(s: DrawSurface, hull: ReturnType<typeof hullOf>, x: number, y: number): number {
   const z = gradeAt(s, x, y);
   if (z !== undefined) return z;
   let best = Infinity;
-  let h = s.points[0]![2];
-  for (const p of s.points) {
-    const d = (p[0] - x) ** 2 + (p[1] - y) ** 2;
+  let h = s.points[0]?.[2] ?? 0;
+  for (const [a, b] of hull) {
+    const vx = b[0] - a[0];
+    const vy = b[1] - a[1];
+    const l = vx * vx + vy * vy;
+    const t = l === 0 ? 0 : Math.max(0, Math.min(1, ((x - a[0]) * vx + (y - a[1]) * vy) / l));
+    const d = (x - a[0] - t * vx) ** 2 + (y - a[1] - t * vy) ** 2;
     if (d < best) {
       best = d;
-      h = p[2];
+      h = a[2] + t * (b[2] - a[2]);
     }
   }
   return h;
@@ -111,6 +134,7 @@ export function terrainMesh(site: SiteDrawing, options: TerrainOptions): Terrain
   y0 = Math.round(y0);
   const graded = site.graded.map((g) => ({ ...g, box: [Math.min(...g.ring.map((p) => p[0])), Math.min(...g.ring.map((p) => p[1])), Math.max(...g.ring.map((p) => p[0])), Math.max(...g.ring.map((p) => p[1]))] as const }));
   const [ox, oy, oz] = options.origin;
+  const hull = hullOf(s);
   const W = nx + 1;
   const H = ny + 1;
   const z = new Float64Array(W * H);
@@ -119,7 +143,7 @@ export function terrainMesh(site: SiteDrawing, options: TerrainOptions): Terrain
     for (let i = 0; i < W; i++) {
       const x = x0 + i * cell;
       const y = y0 + j * cell;
-      const n = natural(s, x, y);
+      const n = natural(s, hull, x, y);
       let h = n;
       let held = false;
       // inside an outline: its elevation; beyond it, the nearest outline's grading back to the ground at 1:batter
