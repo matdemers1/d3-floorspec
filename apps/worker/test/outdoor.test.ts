@@ -36,7 +36,7 @@ describe('the back terrace', () => {
 
   it('opens the ground over the pool in the path tracer, and keeps the ground at the floor', () => {
     const pt = ptScene(scene, {});
-    expect(pt.holes?.length ?? 0).toBeGreaterThan(0);
+    expect(pt.holes.length).toBeGreaterThan(0);
     // the house's own lowest ground (its front walk steps down 1'), never the pool's floor, 5' 6" down
     expect(pt.floor).toBeGreaterThan(-0.6);
   });
