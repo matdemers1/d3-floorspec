@@ -105,6 +105,35 @@ describe('the electrical assistant', () => {
     expect(new Set(derived?.panels['P1']?.circuits)).toEqual(new Set(body.proposal.circuits.map((c) => c.id)));
   });
 
+  it('proposes the grounds’ lighting with exterior: path lights along a walk, a transformer fed from the panel, an evening scene (FLR-T-15.5)', async () => {
+    const setup = await operator.post(path('/ops'), {
+      batch: [
+        { op: 'setProperty', id: '$document', path: '/extensionsUsed/FS_electrical', value: '0.1.0' },
+        { op: 'placeElement', extension: 'FS_electrical', collection: 'panels', id: 'P1', host: { mode: 'wallFace', wall: 'west wall of Kitchen', toward: 'Kitchen', at: "4'", height: "5'" }, element: { fallback: { box: { min: [0, -256000, -512000], max: [128000, 256000, 512000] } }, volts: [120, 240], rating: 100, spaces: 20 } },
+        // A 4'-wide walk running 24' south from the kitchen's south wall.
+        { op: 'addElement', collection: 'slabs', id: 'SW', element: { level: 'L1', name: 'Front walk', purpose: 'walkway', thickness: 128000, boundary: [[6 * FT, -24 * FT], [10 * FT, -24 * FT], [10 * FT, -FT], [6 * FT, -FT]] } },
+      ],
+    });
+    expect(setup.status, setup.text).toBe(201);
+    const before = await main();
+    const res = await operator.post(path('/assistants/electrical'), { exterior: true });
+    expect(res.status, res.text).toBe(201);
+    const body = res.body as Proposed & { proposal: { exterior: { stretches: { walk: string }[]; transformer: { id: string; watts: number } | null; scene: { name: string } | null } } };
+    expect(await main()).toBe(before);
+    expect(body.changeset).toMatchObject({ status: 'pending', name: 'Exterior lighting: front walk' });
+    expect(body.proposal.exterior.stretches.map((x) => x.walk)).toEqual(['SW']);
+    expect(body.proposal.added.lights.length).toBeGreaterThanOrEqual(2);
+    expect(body.proposal.exterior.transformer?.watts).toBe(300);
+    expect(body.proposal.exterior.scene?.name).toBe('Evening exterior');
+    const said = body.proposal.explanation.join(' ');
+    expect(said).toContain('no code is checked or cited');
+    expect(said).not.toMatch(/complian/i);
+    const model = await operator.get(path(`/changesets/${body.changeset?.id ?? ''}/model.json`));
+    expect(check(model.text, OFFICIAL_READER).valid).toBe(true);
+    // The grounds and the rooms are asked for apart.
+    expect((await operator.post(path('/assistants/electrical'), { exterior: true, rooms: ['Kitchen'] })).status).toBe(400);
+  });
+
   it('takes a spacing, and refuses what it cannot use', async () => {
     const tight = (await operator.post(path('/assistants/electrical'), {})).body as Proposed;
     const loose = (await operator.post(path('/assistants/electrical'), { spacing: "20'" })).body as Proposed;

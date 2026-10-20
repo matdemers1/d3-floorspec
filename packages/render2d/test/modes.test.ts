@@ -60,12 +60,13 @@ describe('trade modes (FLR-T-18.3)', { timeout: 60_000 }, () => {
     expect(ghostOf(svg, 'openings')).toBe(true);
     expect(ghostOf(svg, 'furniture')).toBe(true);
     expect(svg).toContain(`opacity="${String(GHOST_OPACITY)}"`);
-    // Its own devices are in the plain fallbacks group; plumbing fixtures and the garden are gone.
+    // Its own devices are in the plain fallbacks group; plumbing fixtures are gone, and the garden is
+    // ghosted — the grounds its exterior lights stand in (FLR-T-15.5).
     expect(svg).toContain('FS_electrical:receptacles');
     expect(has(svg, 'fallbacks-electrical')).toBe(false);
     expect(has(svg, 'fallbacks-furniture')).toBe(true);
     expect(svg).not.toContain('FS_plumbing:fixtures');
-    expect(has(svg, 'plants')).toBe(false);
+    expect(ghostOf(svg, 'landscape')).toBe(true);
     expect(has(svg, 'dimensions')).toBe(false);
   });
 

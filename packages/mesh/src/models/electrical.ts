@@ -7,6 +7,7 @@
 import { SIN, COS } from './circle.js';
 import { max, min, MM, type Model } from './common.js';
 import type { Sketch } from './sketch.js';
+import { exteriorOf, type ExteriorKind } from '@floorspec/render2d/exterior';
 
 /** An outlet face: the face, its two slots and its ground hole, centred on (y, z). */
 function outletFace(s: Sketch, x: number, y: number, z: number, w: number, h: number): void {
@@ -217,6 +218,90 @@ export const lantern: Model = (s) => {
   s.cylinder('bulb', 'lens', 'z', [x0 + w / 2, Y / 2], w * 0.14, Z * 0.32, Z * 0.6);
 };
 
+// ─── Exterior lights (FLR-T-15.5) ────────────────────────────────────────────────────────────
+
+/** A path light: a stake, a post, a shallow cap and the lamp's lens under it. */
+const pathLight: Model = (s) => {
+  const { X, Y, Z } = s;
+  const c = [X / 2, Y / 2] as const;
+  const R = min(X, Y) / 2;
+  const capH = min(25 * MM, Z * 0.08);
+  const lensH = min(45 * MM, Z * 0.12);
+  s.cylinder('post', 'darkMetal', 'z', c, min(12 * MM, R * 0.18), 0, Z - capH - lensH);
+  s.cylinder('lens', 'lens', 'z', c, R * 0.42, Z - capH - lensH, Z - capH);
+  s.lathe('cap', 'darkMetal', 'z', c, [
+    [0, Z - capH],
+    [R, Z - capH],
+    [R * 0.5, Z],
+    [0, Z],
+  ]);
+};
+
+/** An uplight: a canister on a knuckle, its lens at its top. */
+const uplight: Model = (s) => {
+  const { X, Y, Z } = s;
+  const c = [X / 2, Y / 2] as const;
+  const R = min(X, Y) / 2;
+  s.cylinder('stake', 'darkMetal', 'z', c, R * 0.25, 0, Z * 0.35);
+  s.cylinder('canister', 'darkMetal', 'z', c, R * 0.9, Z * 0.35, Z - min(6 * MM, Z * 0.05));
+  s.cylinder('lens', 'lens', 'z', c, R * 0.7, Z - min(6 * MM, Z * 0.05), Z);
+};
+
+/** A wall-washer: a short arm off its plate and a hood with its lens under it. */
+const wallWash: Model = (s) => {
+  const { X, Y, Z } = s;
+  const pt = min(10 * MM, X * 0.12);
+  s.box('plate', 'darkMetal', 0, Y * 0.3, Z * 0.2, pt, Y * 0.7, Z * 0.8);
+  s.box('hood', 'darkMetal', pt, 0, Z * 0.45, X, Y, Z);
+  s.box('lens', 'lens', pt + (X - pt) * 0.1, Y * 0.06, Z * 0.38, X * 0.96, Y * 0.94, Z * 0.45);
+};
+
+/** A step light: a plate in the riser, a louvre across its lens. */
+const stepLight: Model = (s) => {
+  const { X, Y, Z } = s;
+  s.box('plate', 'darkMetal', 0, 0, 0, X * 0.5, Y, Z);
+  s.box('lens', 'lens', X * 0.5, Y * 0.08, Z * 0.12, X * 0.8, Y * 0.92, Z * 0.6);
+  s.box('louvre', 'darkMetal', X * 0.5, Y * 0.04, Z * 0.6, X, Y * 0.96, Z * 0.88);
+};
+
+/** String lights: a cable hung in a catenary along x, a bulb every 2', at the box's top at either end. */
+const stringLights: Model = (s) => {
+  const { X, Y, Z } = s;
+  const n = max(2, Math.round(X / (2 * 304.8 * MM)));
+  const r = min(30 * MM, Y * 0.45, Z * 0.2);
+  const cable = min(4 * MM, Y * 0.08);
+  const sag = Z - 2 * r - cable;
+  const zAt = (t: number) => Z - cable - sag * (1 - (2 * t - 1) * (2 * t - 1));
+  // The cable, in pieces between the bulbs.
+  const pts = n * 2;
+  for (let i = 0; i < pts; i++) {
+    const t0 = i / pts;
+    const t1 = (i + 1) / pts;
+    const z0 = zAt((t0 + t1) / 2);
+    s.box(`cable${String(i)}`, 'darkMetal', X * t0, Y / 2 - cable / 2, z0, X * t1, Y / 2 + cable / 2, z0 + cable);
+  }
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n;
+    const z = zAt(t);
+    s.cylinder(`socket${String(i)}`, 'darkMetal', 'z', [X * t, Y / 2], r * 0.45, z - r * 0.5, z);
+    s.lathe(`bulb${String(i)}`, 'lens', 'z', [X * t, Y / 2], [
+      [0, z - r * 2],
+      [r * 0.7, z - r * 1.7],
+      [r, z - r * 1.1],
+      [r * 0.5, z - r * 0.5],
+      [0, z - r * 0.5],
+    ]);
+  }
+};
+
+const EXTERIOR_MODELS: Readonly<Record<ExteriorKind, Model>> = { path: pathLight, uplight, wallWash, step: stepLight, string: stringLights };
+
+/** An exterior light: its kind's model, or the lantern an exterior light without one has always been. */
+const exterior: Model = (s, el, ctx) => {
+  const ext = exteriorOf(el);
+  (ext === null ? lantern : EXTERIOR_MODELS[ext.kind])(s, el, ctx);
+};
+
 /** FS_electrical 2.4: a luminaire by its `fixture`. */
 export const LIGHTS: Readonly<Record<string, Model>> = {
   ceiling: ceilingLight,
@@ -226,6 +311,6 @@ export const LIGHTS: Readonly<Record<string, Model>> = {
   track,
   underCabinet,
   fan,
-  exterior: lantern,
+  exterior,
 };
 

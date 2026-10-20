@@ -77,7 +77,7 @@ function read(projectId: string): Saved | null {
 const drawn = (layers: Layers, l: PlanLayer): boolean => layers[l] !== false;
 
 /** The tools a mode's rail offers (FLR-T-18.3): drawing tools, device kinds, the library, quick add (FLR-T-18.7). */
-export type RailItem = { tool: ToolId } | { device: string } | { library: true } | { quick: true };
+export type RailItem = { tool: ToolId } | { device: string } | { library: true } | { quick: true } | { rule: string };
 
 const SELECT: RailItem = { tool: 'select' };
 /** The hand (FLR-T-18.6), under Select in every rail. */
@@ -85,7 +85,8 @@ const HAND: RailItem = { tool: 'hand' };
 export const RAILS: Readonly<Record<ModeId, readonly RailItem[]>> = {
   construction: [SELECT, HAND, { tool: 'wall' }, { tool: 'arc' }, { tool: 'door' }, { tool: 'window' }, { tool: 'room' }, { tool: 'wand' }, { tool: 'separator' }, { tool: 'slab' }, { tool: 'stair' }, { tool: 'roof' }],
   decorator: [SELECT, HAND, { library: true }, { quick: true }, { tool: 'room' }],
-  electrical: [SELECT, HAND, { device: 'receptacle' }, { device: 'switch' }, { device: 'light' }, { device: 'alarm' }, { device: 'panel' }, { device: 'evCharger' }],
+  // FLR-T-15.5: the exterior lights are FS_electrical devices too — a group of their own under a rule.
+  electrical: [SELECT, HAND, { device: 'receptacle' }, { device: 'switch' }, { device: 'light' }, { device: 'alarm' }, { device: 'panel' }, { device: 'evCharger' }, { rule: 'Exterior lights' }, { device: 'pathLight' }, { device: 'uplight' }, { device: 'wallWash' }, { device: 'stepLight' }, { device: 'stringLight' }],
   plumbing: [SELECT, HAND, { device: 'toilet' }, { device: 'lavatory' }, { device: 'kitchenSink' }, { device: 'shower' }, { device: 'bathtub' }, { device: 'floorDrain' }, { device: 'waterHeater' }],
   mechanical: [SELECT, HAND, { device: 'furnace' }, { device: 'airHandler' }, { device: 'supply' }, { device: 'return' }, { device: 'exhaustFan' }, { device: 'gasRange' }],
   lowvoltage: [SELECT, HAND, { device: 'dataOutlet' }, { device: 'coaxOutlet' }, { device: 'headEnd' }],

@@ -28,6 +28,7 @@ const toPt = (p: readonly [bigint, bigint]): Pt => [Number(p[0]), Number(p[1])];
 import { columnRadius, newelOutline } from './symbols.js';
 import type { BoxFrame } from './plansymbols.js';
 import { landscapeOf, type SceneLandscape } from './landscape.js';
+import { beamOf, type Beam } from './exterior.js';
 import { finishSource, wallClassOf, type FinishSource, type WallClass } from './styles.js';
 
 export type Pt = readonly [number, number];
@@ -132,6 +133,8 @@ export interface SceneFallback {
   readonly symbol?: { readonly id: string; readonly sha256: string; readonly mediaType: string };
   /** An FS_landscape element's own geometry in plan (FLR-T-13.5): a plant's canopy, an outline, a line. */
   readonly landscape?: SceneLandscape;
+  /** An exterior light's beam (FLR-T-15.5): where its light lands, a picture of the fixture. */
+  readonly beam?: Beam;
 }
 
 /** A clearance envelope in plan (Core 0.2, 13.5), by owner — an opening or an extension element — and name. */
@@ -347,6 +350,7 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     const symbol = element === undefined ? undefined : symbolOf(doc, element);
     const landscape = element === undefined || fb.extension !== 'FS_landscape' ? undefined : landscapeOf(fb.collection, element, derived.placements?.[id]);
     const catalogue = element !== undefined && typeof element['catalogue'] === 'string' ? element['catalogue'] : undefined;
+    const beam = element === undefined || fb.extension !== 'FS_electrical' || fb.collection !== 'lights' ? null : beamOf(id, element, derived.placements?.[id]);
     fallbacks.set(id, {
       id,
       extension: fb.extension,
@@ -357,6 +361,7 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
       ...(frame === undefined ? {} : { frame }),
       ...(symbol === undefined ? {} : { symbol }),
       ...(landscape === undefined ? {} : { landscape }),
+      ...(beam === null ? {} : { beam }),
     });
   }
   const clearances: SceneClearance[] = [];

@@ -33,6 +33,7 @@ import { kindOf, labelOf } from './model';
 import { requestRemove } from './actions';
 import { flipFromPlan } from './three/lighting/lighting';
 import { deviceAt } from './systems/hit';
+import { exteriorHover } from './systems/exterior';
 import { ghostsOf, pickable } from './modes';
 import { pickableUnder, storeStyles } from './renovation';
 import { centredOn, hoverFor, type DeviceHover } from './systems/placement';
@@ -1379,6 +1380,11 @@ export class ToolController {
       this.store.set({ draft: { tool: 'stair', foot: null, cursor: null } });
       return;
     }
+    // FLR-T-15.5: a string light's first point is let go first.
+    if (draft?.tool === 'device' && (draft.from ?? null) !== null) {
+      this.store.set({ draft: { ...draft, from: null } });
+      return;
+    }
     if (isChainDraft(draft) && draft.chain.length > 0) {
       if (draft.chain.length >= (isOutlineTool(draft.tool) ? 3 : 2)) this.finishChain();
       else this.store.set({ draft: { ...draft, chain: [] } });
@@ -1456,8 +1462,11 @@ export class ToolController {
     const s = this.store.get();
     if (level === undefined || kind === undefined) return;
     const typed = s.draft?.tool === 'device' ? s.draft.typed : '';
-    const hover = hoverFor(level, kind.mount, this.world(p), { grid: snapGridOf(this.store), tol: this.tol(p.type), height: this.deviceHeight(kind) });
-    this.store.set({ draft: { tool: 'device', hover, typed } });
+    const from = s.draft?.tool === 'device' ? (s.draft.from ?? null) : null;
+    // FLR-T-15.5: an exterior light snaps to a walk's edge, a tree's canopy, a stair's riser, or runs from its first point.
+    const outside = s.model === null ? null : exteriorHover(s.model, level, kind, this.world(p), { grid: snapGridOf(this.store), tol: this.tol(p.type), units: this.store.units, from });
+    const hover = outside ?? hoverFor(level, kind.mount, this.world(p), { grid: snapGridOf(this.store), tol: this.tol(p.type), height: this.deviceHeight(kind) });
+    this.store.set({ draft: { tool: 'device', hover, typed, ...(from === null ? {} : { from }) } });
   }
 
   /** Aim the device tool at a wall: centred on its room-side face, so Enter places it there. */
@@ -1480,11 +1489,20 @@ export class ToolController {
       this.store.set({ notice: { tone: 'info', text: hover.problem } });
       return;
     }
+    // A string light's first click chooses where its run starts (FLR-T-15.5); the second places it.
+    if (kind.mount === 'string' && (draft.from ?? null) === null) {
+      this.store.set({ draft: { ...draft, from: hover.point, typed: '' } });
+      return;
+    }
+    if (kind.mount === 'string' && hover.box === undefined) {
+      this.store.set({ notice: { tone: 'info', text: hover.hint ?? 'Click where the run ends.' } });
+      return;
+    }
     const host = at !== undefined && hover.host.mode === 'wallFace' ? { ...hover.host, at } : hover.host;
-    void this.store.apply(`Place ${kind.label.toLowerCase()}`, placeDevice(s.model.document, kind, host, { receptacle: s.draw.receptacle }), {
+    void this.store.apply(`Place ${kind.label.toLowerCase()}`, placeDevice(s.model.document, kind, host, { receptacle: s.draw.receptacle, ...(hover.box === undefined ? {} : { box: hover.box }), ...(hover.patch === undefined ? {} : { patch: hover.patch }) }), {
       select: (created) => created.find((id) => s.model?.index.get(id) === undefined && /^X\d+$/.test(id)) ?? null,
     });
-    this.store.set({ draft: { ...draft, typed: '' } });
+    this.store.set({ draft: { ...draft, typed: '', from: null } });
   }
 
   /** Picking what a switch controls: a click on a light, a receptacle or another system's device toggles it. */

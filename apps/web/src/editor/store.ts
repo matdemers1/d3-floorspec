@@ -117,7 +117,7 @@ export type Draft =
   | WandDraft
   /** The stair tool (Core 0.3, 17): its foot clicked, then the direction it rises in. */
   | { tool: 'stair'; foot: Point | null; cursor: Point | null }
-  | { tool: 'device'; hover: DeviceHover | null; typed: string }
+  | { tool: 'device'; hover: DeviceHover | null; typed: string; /** A string light's first point (FLR-T-15.5), once chosen. */ from?: Point | null }
   | {
       tool: 'select';
       drag:
@@ -195,6 +195,8 @@ export interface Layers {
   contours?: boolean;
   grading?: boolean;
   spots?: boolean;
+  /** FLR-T-15.5: where exterior lights' light lands, drawn under them; absent: shown. */
+  beams?: boolean;
 }
 
 export interface DrawSettings {
@@ -312,6 +314,8 @@ export interface EditorState {
   /** Panels shown on narrow screens. */
   treeOpen: boolean;
   findingsOpen: boolean;
+  /** FLR-T-15.5: the exterior assistant's path-light spacing along a walk, base units; absent, Floorspec's default. */
+  exteriorSpacing?: number;
   prompt: Prompt | null;
   /** The live event stream (FLR-T-3.5). */
   live: 'connecting' | 'live' | 'reconnecting';

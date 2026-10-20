@@ -19,7 +19,7 @@ import { reviewDiagnostics, reviewTarget } from './review';
 import { DeviceGhost, DeviceOutline, SystemsLayer } from './systems/Symbols';
 import { FurnitureLayer } from '../furniture/Plan';
 import { ResizeGhost, ResizeHandles, resizableOn } from '../furniture/Handles';
-import { GapMarkers } from './systems/Assistant';
+import { ExteriorStretchMarkers, GapMarkers } from './systems/Assistant';
 import { kindById } from './systems/catalog';
 import { anchorOf, circuitsOf } from './systems/view';
 import { RuleFindingLabels, RuleFindingsLayer } from '../findings/Overlay';
@@ -174,6 +174,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
   // The plan steps back while the systems are being worked on (the board's "23").
   const focusSystems = tool === 'device' || picking === 'switch';
   const electricalTool = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.system === 'electrical');
+  const exteriorTool = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.exterior !== undefined);
   // A trade mode's ghosts (FLR-T-18.3): drawn grey and faint (modes.css), and not picked (tools.ts).
   const ghost = useModes(store, (s) => (s.ghost.length === 0 ? undefined : s.ghost.join(' ')));
   const trade = useModes(store, (s) => (s.mode === null ? undefined : (modesOf(store).tradeOf(s.mode) ?? undefined)));
@@ -227,10 +228,11 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} look={look} />
               {/* FLR-T-14.7: the daylight study on the floors, under the systems, labels and handles. */}
               {comparing ? null : <DaylightLayer store={store} view={view} level={level} />}
-              <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} look={look} />
+              <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} look={look} units={units} />
               {/* FLR-T-18.12: the level below or above, in the reference colour: snapped to, never picked. */}
               <ReferenceLayer store={store} view={view} level={level.id} layers={layers} />
-              {electricalTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
+              {electricalTool && !exteriorTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
+              {exteriorTool && layers.electrical && !layers.coreOnly && !comparing ? <ExteriorStretchMarkers store={store} view={view} model={fullModel ?? model} units={units} /> : null}
               <DiffLayer store={store} view={view} levelId={level.id} />
               <RuleFindingsLayer store={store} view={view} level={level} />
               <Findings store={store} view={view} level={level} />
@@ -784,7 +786,13 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
     return (
       <g className="fs-draw" aria-hidden="true">
         {draft.hover.host.mode === 'wallFace' ? <polygon className="fs-hl fs-hl--hover" points={pts(view, level.walls.find((w) => w.id === (draft.hover?.host as { wall: string }).wall)?.ring ?? [])} /> : null}
+        {/* FLR-T-15.5: a string light's run from its first point. */}
+        {kind.mount === 'string' && (draft.from ?? null) !== null ? (() => {
+          const a = S(view, draft.from as Point);
+          return <circle className="fs-ext-anchor" cx={a[0]} cy={a[1]} r={5} />;
+        })() : null}
         <DeviceGhost view={view} level={level.id} hover={draft.hover} kind={kind} receptacle={draw.receptacle} />
+        {draft.hover.hint === undefined ? null : <ExteriorHint view={view} text={draft.hover.hint} />}
       </g>
     );
   }
@@ -829,6 +837,19 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
     );
   }
   return null;
+}
+
+/** What the exterior-light tool is doing (FLR-T-15.5): a pill at the foot of the plan, "Along the walk · 8′-0″ apart · alternating sides". */
+function ExteriorHint({ view, text }: { view: Viewport; text: string }) {
+  const w = Math.min(view.w - 24, text.length * 6.6 + 28);
+  const x = view.w / 2 - w / 2;
+  const y = view.h - 92;
+  return (
+    <g className="fs-ext-hint" data-hint={text}>
+      <rect x={x} y={y} width={w} height={26} rx={13} />
+      <text x={view.w / 2} y={y + 17} textAnchor="middle">{text}</text>
+    </g>
+  );
 }
 
 function SnapMarker({ view, snap }: { view: Viewport; snap: { point: Point; kind: string } }) {

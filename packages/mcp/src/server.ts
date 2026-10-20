@@ -618,6 +618,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           batch: Batch.optional(),
           locks: z.array(Lock).max(200).optional(),
           assistant: z.enum(['electrical', 'staging']).optional().describe('Not with name/batch. electrical: receptacles, lights, circuits; staging: decor.'),
+          exterior: z.boolean().optional().describe('electrical: light the grounds instead — path lights along walks, step lights, entries, transformer, scene.'),
           rooms: z.array(z.string().min(1).max(200)).max(200).optional().describe('The assistant\'s rooms; default all.'),
           changeset: ChangesetHandle.optional().describe('Assistant: the changeset whose plan to read.'),
           render: z.boolean().optional(),
@@ -630,6 +631,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
     async (args) => {
       try {
         const project = await resolveProject(client, args.project);
+        if (args.exterior === true && args.assistant !== 'electrical') throw new ToolError('exterior goes with assistant "electrical".');
         if (args.assistant === 'staging') {
           if (args.batch !== undefined) throw new ToolError('Send either a batch or an assistant, not both.');
           const source = args.changeset === undefined ? undefined : await resolveChangeset(client, project.id, args.changeset);
@@ -650,7 +652,9 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         if (args.assistant === 'electrical') {
           if (args.batch !== undefined) throw new ToolError('Send either a batch or an assistant, not both.');
           const source = args.changeset === undefined ? undefined : await resolveChangeset(client, project.id, args.changeset);
+          if (args.exterior === true && args.rooms !== undefined) throw new ToolError('Exterior lighting is for the grounds: send it without rooms.');
           const result = await client.proposeElectrical(project.id, {
+            ...(args.exterior === true ? { exterior: true } : {}),
             ...(args.rooms === undefined ? {} : { rooms: args.rooms }),
             ...(source === undefined ? {} : { changeset: source.id }),
           });

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Button } from '@d3cloud/ui';
+import { Button, Select } from '@d3cloud/ui';
 import { GitPullRequestArrow, Sparkles } from 'lucide-react';
-import { analyseGaps, proposeElectrical, DEFAULTS, type Gap } from '@floorspec/assistant-electrical';
+import { analyseGaps, proposeElectrical, proposeExterior, DEFAULTS, EXTERIOR_DEFAULTS, type ExteriorGroup, type Gap } from '@floorspec/assistant-electrical';
 import type { EditorStore } from '../store';
 import { useEditor } from '../store';
 import type { EditorModel, LevelView, Point } from '../model';
@@ -146,6 +146,158 @@ export function GapMarkers({ store, view, level, model, units }: { store: Editor
           </g>
         );
       })()}
+    </g>
+  );
+}
+
+// ─── Exterior lighting (FLR-T-15.5) ─────────────────────────────────────────────────────────────
+
+interface ExteriorReading {
+  proposal: ReturnType<typeof proposeExterior> | null;
+  error: string | null;
+}
+
+/** What the assistant would light on the level's grounds; recomputed when the model or the spacing moves. */
+export function useExteriorAssistant(model: EditorModel | null, level: string | null, spacing: number): ExteriorReading | null {
+  return useMemo(() => {
+    if (model === null || !model.valid || level === null) return null;
+    try {
+      return { proposal: proposeExterior(model.document, { level, defaults: { walkSpacing: spacing } }), error: null };
+    } catch (error) {
+      return { proposal: null, error: error instanceof Error ? error.message : 'the assistant could not read this plan' };
+    }
+  }, [model, level, spacing]);
+}
+
+const SPACINGS = [6, 8, 10, 12].map((f) => f * 12 * 32_512);
+
+/** Each group of the proposal in the card's words: "6 path lights · front walk". */
+function groupWords(g: ExteriorGroup): string {
+  const n = g.count;
+  switch (g.kind) {
+    case 'path':
+      return `${plural(n, 'path light')} · ${g.where}`;
+    case 'step':
+      return `${plural(n, 'step light')} · ${g.where}`;
+    case 'wallWash':
+      return `${plural(n, 'wall-wash', 'wall-washes')} · ${g.where}`;
+    case 'transformer':
+      return `1 transformer · ${g.where}`;
+    case 'control':
+      return `1 control · ${g.where}`;
+    case 'scene':
+      return `1 scene · ${g.where}`;
+    default:
+      return `${plural(n, g.kind)} · ${g.where}`;
+  }
+}
+
+/**
+ * The electrical assistant for the grounds (FLR-T-15.5, the board's "15.5 · Electrical assistant —
+ * proposing exterior lighting"): the stretches of walk that are dark after dusk, drawn on the plan,
+ * and what it would add, said here; "Review as changeset" opens it as a pending changeset that never
+ * touches main until it is accepted (FLR-ADR-016). From Floorspec's spacing defaults, and it says so:
+ * no code is checked or cited.
+ */
+export function ExteriorAssistantCard({ store, model, units }: { store: EditorStore; model: EditorModel; units: UnitSystem }) {
+  const level = useEditor(store, (s) => s.level);
+  const readOnly = useEditor(store, (s) => s.readOnly !== null);
+  const spacing = useEditor(store, (s) => s.exteriorSpacing ?? EXTERIOR_DEFAULTS.walkSpacing);
+  const reading = useExteriorAssistant(model, level, spacing);
+  const [busy, setBusy] = useState(false);
+  if (reading === null) return null;
+  const p = reading.proposal;
+  const review = async () => {
+    setBusy(true);
+    try {
+      const answer = await api.post<{ changeset: { id: string } | null }>(`/api/projects/${store.projectId}/assistants/electrical`, { exterior: true, level, spacing });
+      if (answer.changeset === null) store.set({ notice: { tone: 'info', text: 'Nothing to propose: every walk and entry already has a light.' } });
+      else {
+        await refreshProposals(store);
+        await openReview(store, answer.changeset.id);
+      }
+    } catch (error) {
+      store.set({ notice: { tone: 'danger', text: messageOf(error) } });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const dark = p?.exterior.stretches ?? [];
+  const lights = p?.added.lights.length ?? 0;
+  const taps = (p?.circuits.length ?? 1) - 1;
+  return (
+    <section className="fs-assistant fs-assistant--exterior" aria-label="Electrical assistant · exterior">
+      <h3 className="fs-assistant__title">
+        <Sparkles aria-hidden="true" />
+        Electrical assistant · exterior
+      </h3>
+      {reading.error !== null || p === null ? (
+        <p>{(reading.error ?? '').charAt(0).toUpperCase() + (reading.error ?? '').slice(1)}.</p>
+      ) : (
+        <>
+          <p>
+            {dark.length === 0 && lights === 0
+              ? 'Every walk and entry on this level already has a light within Floorspec’s spacing defaults.'
+              : `Dark after dusk: ${dark.length === 0 ? 'an entry' : [...new Set(dark.map((d) => d.name))].join(', ')}. It would add:`}
+          </p>
+          {p.exterior.groups.length > 0 ? (
+            <ul className="fs-assistant__list">
+              {p.exterior.groups.map((g, i) => (
+                <li key={i}>
+                  <span>{groupWords(g)}</span>
+                  <span className="fs-assistant__detail">{g.detail}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {lights > 0 ? <p className="fs-assistant__sum">{plural(lights, 'fixture')} · {plural(Math.max(0, taps), 'landscape circuit')} · {String(p.exterior.watts)} W</p> : null}
+          <p className="fs-assistant__note">From Floorspec’s spacing defaults — path lights {formatLen(spacing, units)} apart along a walk. No code is checked or cited; the beams are a picture of the fixtures, not a calculation.</p>
+          <div className="fs-assistant__actions">
+            {readOnly ? null : (
+              <Button size="sm" variant="primary" icon={<GitPullRequestArrow />} loading={busy} disabled={p.batch.length === 0} onClick={() => void review()}>
+                Review as changeset
+              </Button>
+            )}
+            <Select
+              aria-label="Path light spacing"
+              appearance="filled"
+              size="sm"
+              options={SPACINGS.map((v) => ({ value: String(v), label: `${formatLen(v, units)} apart` }))}
+              value={String(spacing)}
+              onValueChange={(v) => { store.set({ exteriorSpacing: Number(v) }); }}
+            />
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+/** The dark stretches of the walks on the plan, each a dashed run along its centre line, the longest labelled. */
+export function ExteriorStretchMarkers({ store, view, model, units }: { store: EditorStore; view: Viewport; model: EditorModel; units: UnitSystem }) {
+  const level = useEditor(store, (s) => s.level);
+  const spacing = useEditor(store, (s) => s.exteriorSpacing ?? EXTERIOR_DEFAULTS.walkSpacing);
+  const reading = useExteriorAssistant(model, level, spacing);
+  const stretches = reading?.proposal?.exterior.stretches ?? [];
+  if (stretches.length === 0) return null;
+  return (
+    <g className="fs-gaps fs-gaps--exterior" aria-hidden="true">
+      {stretches.map((st, i) => {
+        const a = toScreen(view, st.from);
+        const b = toScreen(view, st.to);
+        const text = `${st.name.charAt(0).toUpperCase()}${st.name.slice(1)} · ${formatLen(st.length, units)} unlit`;
+        const w = text.length * 6.6 + 14;
+        const mid: Point = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        return (
+          <g key={i} data-stretch={st.walk}>
+            <line className="fs-gap fs-gap--dark" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
+            <rect className="fs-gap__tag" x={mid[0] - w / 2} y={mid[1] - 26} width={w} height={20} rx={4} />
+            <text className="fs-gap__text" x={mid[0]} y={mid[1] - 12} textAnchor="middle">
+              {text}
+            </text>
+          </g>
+        );
+      })}
     </g>
   );
 }

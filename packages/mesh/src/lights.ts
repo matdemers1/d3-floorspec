@@ -40,6 +40,8 @@ import { ceilingDome } from './models/electrical.js';
 import { corners } from './models/sketch.js';
 import { elementKind } from './models/kinds.js';
 import { ALL_ON, luminairesOf, settingOf, type Lighting } from './scenes.js';
+import { bulbCount, EXTERIOR_DEFS, exteriorOf } from '@floorspec/render2d/exterior';
+import { exteriorLamps } from './exterior.js';
 import type { Vec3 } from './types.js';
 
 /** One luminaire's light. */
@@ -55,10 +57,15 @@ export interface FixtureLight {
   readonly radius: number;
   /**
    * `down`: a spot, pointing straight down (−z), lit fully inside `cone.inner` and fading to dark
-   * at `cone.outer` (each the cosine of the angle from straight down); `omni`: every way.
+   * at `cone.outer` (each the cosine of the angle from straight down); `aimed`: a spot along `aim`
+   * (an exterior light's, FLR-T-15.5), its cone's cosines from that axis; `omni`: every way.
    */
-  readonly direction: 'down' | 'omni';
+  readonly direction: 'down' | 'aimed' | 'omni';
   readonly cone?: { readonly inner: number; readonly outer: number };
+  /** An aimed spot's axis: a unit vector in the document's frame (z up). */
+  readonly aim?: Vec3;
+  /** Which of a light's lamps this is, for a light with more than one (a string light's bulbs); absent for one. */
+  readonly part?: number;
   /** Luminous flux: the light it gives, in lumens — at its output. */
   readonly lumens: number;
   /** What it gives at full output, lumens: FS_lighting's `lumens`, else its watts', else a typical lamp's. */
@@ -210,6 +217,12 @@ export function lightsOf(doc: FloorspecDocument, derived: Derived, lighting: Lig
     if (f === undefined || f.top <= f.bottom) continue;
     const element = e.element as unknown as Record<string, unknown>;
     const fixture = elementKind(e.extension, e.collection, element);
+    // FLR-T-15.5: an exterior light of a kind — a path light, an uplight, a wall-washer, a step light, a string.
+    const ext = exteriorOf(element);
+    if (ext !== null) {
+      out.push(...exteriorLights(e.id, element, ext, f, derived, own.get(e.id), lighting, roomOf.get(e.id) ?? null, [...(electrical?.controls[e.id] ?? [])].sort()));
+      continue;
+    }
     const ring = f.footprint;
     const cx = (ring[0]![0] + ring[1]![0] + ring[2]![0] + ring[3]![0]) / 4;
     const cy = (ring[0]![1] + ring[1]![1] + ring[2]![1] + ring[3]![1]) / 4;
@@ -285,6 +298,62 @@ export function lightsOf(doc: FloorspecDocument, derived: Derived, lighting: Lig
     });
   }
   return out;
+}
+
+/** An exterior light's lamps (FLR-T-15.5): its kind's, carried from its frame to the plan, sharing its light. */
+function exteriorLights(
+  id: string,
+  element: Record<string, unknown>,
+  ext: NonNullable<ReturnType<typeof exteriorOf>>,
+  f: { level: string; top: number; bottom: number },
+  derived: Derived,
+  lum: ReturnType<ReturnType<typeof luminairesOf>['get']>,
+  lighting: Lighting,
+  room: string | null,
+  switches: string[],
+): FixtureLight[] {
+  const def = EXTERIOR_DEFS[ext.kind];
+  const box = (element['fallback'] as { box?: { min?: number[]; max?: number[] } } | undefined)?.box;
+  const min = Array.isArray(box?.min) ? box.min : [...def.box.min];
+  const max = Array.isArray(box?.max) ? box.max : [...def.box.max];
+  const pl = derived.placements?.[id];
+  const o = pl?.point ?? [0, 0, f.bottom - (min[2] ?? 0)];
+  const [ux, uy] = (() => {
+    const rad = ((pl?.facing ?? 0) / 1_000_000) * (Math.PI / 180);
+    return [Math.cos(rad), Math.sin(rad)];
+  })();
+  const toPlan = (x: number, y: number): [number, number] => [x * ux - y * uy, x * uy + y * ux];
+  // A string's light is its bulbs'; the rest one lamp's.
+  const bulbs = ext.kind === 'string' ? bulbCount((max[0] ?? 0) - (min[0] ?? 0)) : 1;
+  const full = lum?.lumens ?? def.lumens * bulbs;
+  const lit = asLit(lighting, id, full, ownCct(lum, def.cct));
+  if (lit === null) return [];
+  const lamps = exteriorLamps(ext, min, max);
+  return lamps.map((lamp, i): FixtureLight => {
+    const [px, py] = toPlan(lamp.local[0], lamp.local[1]);
+    const position: Vec3 = [Math.round(o[0] + px), Math.round(o[1] + py), Math.round(o[2] + lamp.local[2])];
+    const aim = lamp.aim === undefined ? undefined : ((): Vec3 => {
+      const [ax, ay] = toPlan(lamp.aim[0], lamp.aim[1]);
+      return [Number(ax.toFixed(4)), Number(ay.toFixed(4)), lamp.aim[2]];
+    })();
+    const share = (n: number) => Math.max(1, Math.round(n * lamp.share));
+    return {
+      id,
+      level: f.level,
+      fixture: 'exterior',
+      position,
+      radius: lamp.radius,
+      direction: aim === undefined ? 'omni' : 'aimed',
+      ...(lamp.cone === undefined ? {} : { cone: lamp.cone }),
+      ...(aim === undefined ? {} : { aim }),
+      ...(lamps.length > 1 ? { part: i } : {}),
+      ...lit,
+      lumens: share(lit.lumens),
+      fullLumens: share(lit.fullLumens),
+      room,
+      switches,
+    };
+  });
 }
 
 /** How a fixture's glowing pieces (a lens, a shade) are drawn under a lighting: off (null), or scaled per channel. */
