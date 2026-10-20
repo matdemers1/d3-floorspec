@@ -332,6 +332,13 @@ const isLandscape = (p: Pick<MeshPart, 'extension'>, collection?: string): boole
  * outdoor rooms' tops — a pergola's slats, a porch's roof, a coping, a counter — but never water or embers.
  */
 export function snowHold(part: Pick<MeshPart, 'kind' | 'key' | 'extension' | 'model'>): number | null {
+  // FS_context (FLR-T-15.3): a neighbour's roof as a roof, an evergreen's crown, the curbs, strips and sidewalks; the street is ploughed
+  if (part.kind === 'context') {
+    const role = part.model?.role;
+    if (role === 'contextRoof') return Math.cos(((55 + 10 * rand(seedOf(part.key), 3)) * Math.PI) / 180);
+    if (role === 'contextConifer') return 0.68;
+    return role === 'contextCurb' || role === 'contextVerge' || role === 'contextWalk' ? 0.5 : null;
+  }
   if (part.kind === 'roof') return Math.cos(((55 + 10 * rand(seedOf(part.key), 3)) * Math.PI) / 180);
   // FS_outdoor (FLR-T-15.2): a pergola's slats and a porch's roof, a coping, a counter, a fence's cap hold it; water and embers never
   if (part.extension?.name === 'FS_outdoor') return part.model === undefined || part.model.role === 'water' || part.model.role === 'ember' || part.model.role === 'snow' ? null : 0.5;
@@ -343,7 +350,7 @@ export function snowHold(part: Pick<MeshPart, 'kind' | 'key' | 'extension' | 'mo
 }
 
 /** Whether rain wets a part: what stands outside — a roof and its gable ends, and everything FS_landscape draws. */
-export const wetPart = (part: Pick<MeshPart, 'kind' | 'extension'>): boolean => part.kind === 'roof' || part.kind === 'roofGable' || isLandscape(part) || part.extension?.name === 'FS_outdoor';
+export const wetPart = (part: Pick<MeshPart, 'kind' | 'extension'>): boolean => part.kind === 'context' || part.kind === 'roof' || part.kind === 'roofGable' || isLandscape(part) || part.extension?.name === 'FS_outdoor';
 
 /** A part with its upward faces laid in snow: [what is left, the snow] — either may be absent. */
 export function snowSplit(part: MeshPart, hold: number, origin: Vec3): MeshPart[] {
@@ -423,8 +430,25 @@ function seasonParts(house: HouseMesh, doc: FloorspecDocument | object, season: 
   // Each deciduous plant's crown (its leaves' box), trunk and first piece: what winter and autumn add parts from.
   const crowns = new Map<string, { crown?: Box3; trunk?: MeshPart; first: MeshPart; form: string }>();
   const out: MeshPart[] = [];
+  // FS_context's deciduous trees beyond the lot (FLR-T-15.3): a warm grey in autumn, bare in winter — still in the context style
+  const contextCrowns = new Map<string, { crown?: MeshPart; trunk?: MeshPart }>();
   for (const part of house.parts) {
     const role = part.model?.role;
+    if (part.kind === 'context' && part.model?.kind === 'tree' && (role === 'contextCrown' || role === 'contextTrunk')) {
+      if (role === 'contextTrunk') {
+        const c = contextCrowns.get(part.id);
+        if (c) c.trunk = part;
+        else contextCrowns.set(part.id, { trunk: part });
+        out.push(part);
+        continue;
+      }
+      const c = contextCrowns.get(part.id);
+      if (c) c.crown = part;
+      else contextCrowns.set(part.id, { crown: part });
+      if (season === 'autumn') out.push({ ...part, model: { ...part.model, role: 'contextAutumn' } });
+      else if (season !== 'winter') out.push(part);
+      continue;
+    }
     if (role !== undefined && isLandscape(part, 'lawns')) {
       const next = lawnRole(role, season);
       out.push(next === role ? part : { ...part, model: { ...part.model!, role: next } });
@@ -444,6 +468,12 @@ function seasonParts(house: HouseMesh, doc: FloorspecDocument | object, season: 
     if (next === null) continue;
     out.push(next === role ? part : { ...part, model: { ...part.model!, role: next } });
   }
+  if (season === 'winter')
+    for (const [id, c] of [...contextCrowns].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
+      if (c.crown === undefined) continue;
+      const mesh = bareCrown(id, 'tree', metres(c.crown.bbox, origin), c.trunk === undefined ? null : metres(c.trunk.bbox, origin));
+      if (mesh.indices.length > 0) out.push({ key: `${c.crown.key}:bare`, id, kind: 'context', level: c.crown.level, closed: true, ...(c.crown.extension === undefined ? {} : { extension: c.crown.extension }), model: { kind: 'tree', role: 'contextTrunk' }, mesh, bbox: boxOf(mesh.positions, mesh.indices, origin) });
+    }
   if (season !== 'winter' && season !== 'autumn') return out;
   // The beds and lawns autumn's leaves fall on: their tops, in metres.
   const grounds = season === 'autumn' ? house.parts.filter((p) => isLandscape(p, 'lawns') || isLandscape(p, 'beds')).map((p) => metres(p.bbox, origin)) : [];

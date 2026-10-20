@@ -770,6 +770,11 @@ function expected(doc: FloorspecDocument, d: Derived, p: MeshPart): Expected {
       if (p.model !== undefined) return { within: f };
       return { volume6: prism6(ring2(f.footprint), f.top - f.bottom), box: planBox(f.footprint, f.bottom, f.top), genus: 0 };
     }
+    case 'context': {
+      // FS_context (FLR-T-15.3): one solid each — a curb, a footprint's massing, its roof, a trunk, a crown — inside its own box
+      const b = p.bbox;
+      return { within: { footprint: [[b.min[0], b.min[1]], [b.max[0], b.min[1]], [b.max[0], b.max[1]], [b.min[0], b.max[1]]], bottom: b.min[2], top: b.max[2] } };
+    }
     case 'joinery': {
       const frame = openingAxes(doc, d, p.id);
       const o = own(doc.openings, p.id);

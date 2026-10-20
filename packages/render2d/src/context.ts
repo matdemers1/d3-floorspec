@@ -96,7 +96,7 @@ export function contextLayers(ctx: ContextDrawing, f: Draw, pal: Palette, option
     for (const c of s.curbs) g += el('path', { 'data-curb': '', d: ringsPath([ring(c)]), fill: pal.contextFill, stroke: 'none' });
     for (const w of s.sidewalks) g += el('path', { 'data-sidewalk': '', d: ringsPath([ring(w)]), fill: pal.contextFill, 'fill-opacity': 0.6, stroke: 'none' });
     for (const l of s.curbLines) g += el('path', { d: polylinePath(l.map(f.P)), ...line, 'stroke-width': 1 });
-    for (const st of s.strips) g += el('path', { 'data-strip': '', d: ringsPath([ring(st)]), ...line, 'stroke-dasharray': '1 3', 'stroke-linecap': 'round' });
+    for (const st of s.strips) g += el('path', { 'data-strip': '', d: ringsPath([ring(st)]), fill: pal.contextFill, 'fill-opacity': 0.3, stroke: pal.context, 'stroke-width': 0.8, 'stroke-dasharray': '1 3', 'stroke-linecap': 'round' });
     for (const l of s.backLines) g += el('path', { d: polylinePath(l.map(f.P)), ...line });
     g += el('path', { 'data-centreline': '', d: polylinePath(s.centreline.map(f.P)), ...line, 'stroke-width': 0.9, 'stroke-dasharray': '14 8' });
     ground += el('g', { 'data-context': 'street', 'data-id': s.id, ...(hi(s.id) ? { 'data-selected': '' } : {}) }, g);

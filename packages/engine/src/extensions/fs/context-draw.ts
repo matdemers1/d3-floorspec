@@ -417,7 +417,7 @@ export function generateContext(doc: FloorspecDocument, options: GenerateContext
           const at: XY = [p0[0] + t[0] * s - o[0] * toStrip, p0[1] + t[1] * s - o[1] * toStrip];
           const tid = nextId('TR');
           const h = snap((28 + rand() * 14) * FT);
-          trees[tid] = { at: round(at), height: h, spread: snap(h * (0.6 + rand() * 0.2)), elevation: groundNear(at), extras: { d3floorspec: { generated: true } } };
+          trees[tid] = { at: round(at), height: h, spread: snap(Math.min(26 * FT, h * (0.5 + rand() * 0.15))), elevation: groundNear(at), extras: { d3floorspec: { generated: true } } };
           avoid.push({ c: at, r: 6 * FT });
         }
       }
