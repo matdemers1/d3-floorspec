@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileS
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { evaluate, facingVector, OFFICIAL_READER } from '@floorspec/engine';
-import { CONTEXT_ROLES, DECOR_ROLES, LANDSCAPE_ROLES, LOOK_ROLES, MODEL_ROLES, OUTDOOR_ROLES, paneTransmission, ROLE_LOOKS } from '@floorspec/mesh';
+import { CONTEXT_ROLES, SOLAR_ROLES, DECOR_ROLES, LANDSCAPE_ROLES, LOOK_ROLES, MODEL_ROLES, OUTDOOR_ROLES, paneTransmission, ROLE_LOOKS } from '@floorspec/mesh';
 import { roleMaterial } from '@floorspec/mesh/materials';
 import { validateBytes } from 'gltf-validator';
 import { describe, expect, it } from 'vitest';
@@ -384,7 +384,7 @@ describe('glTF export', () => {
     // Every role but the ones only an opening's joinery is made of (FLR-T-13.8) — the showcase has no
     // openings — the landscape's (FLR-T-13.5), which it has no garden for, decor's (FLR-T-13.11), which it has none of,
     // and the outdoor rooms' (FLR-T-15.2), which it has none of either.
-    expect([...byRole.keys()].sort()).toEqual(MODEL_ROLES.filter((r) => r !== 'door' && r !== 'frame' && r !== 'millwork' && !LANDSCAPE_ROLES.includes(r) && !DECOR_ROLES.includes(r) && !LOOK_ROLES.includes(r) && !OUTDOOR_ROLES.includes(r) && !CONTEXT_ROLES.includes(r)).sort());
+    expect([...byRole.keys()].sort()).toEqual(MODEL_ROLES.filter((r) => r !== 'door' && r !== 'frame' && r !== 'millwork' && !LANDSCAPE_ROLES.includes(r) && !DECOR_ROLES.includes(r) && !LOOK_ROLES.includes(r) && !OUTDOOR_ROLES.includes(r) && !CONTEXT_ROLES.includes(r) && !SOLAR_ROLES.includes(r)).sort());
     for (const [role, m] of byRole) {
       const look = ROLE_LOOKS[role as keyof typeof ROLE_LOOKS];
       // Glass's base colour is what the pane lets through (FLR-T-13.17, glass.ts); every other look's its colour.
