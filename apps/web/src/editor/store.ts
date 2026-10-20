@@ -489,12 +489,45 @@ export class EditorStore {
   }
 
   private adopting = 0;
+  /** The newest read of a version: the model the editor is becoming. */
+  private reading: Reading | null = null;
   /** Called after the model moves, by whoever needs to follow it (the review, the history). */
   onModel: (() => void) | null = null;
 
-  /** Read a committed version and make it the editor's model. The newest request wins. */
-  private async adopt(hash: string): Promise<void> {
+  /**
+   * Read a committed version and make it the editor's model. The newest request wins — and none
+   * returns before the newest has landed. An edit's own commit is read twice over: by `settle`, and by
+   * `follow` on the live stream's word of it. When the stream's word comes second its read supersedes
+   * the edit's, and if the edit's read returned there, the queue would send the next edit against the
+   * head before the commit and the server would refuse it as stale (412): a key press on a handle,
+   * pressed while the one before it was still being read back, lost (FLR-T-18.19). So a read already
+   * under way for the same version is joined rather than repeated, and a superseded one waits for the
+   * read that superseded it.
+   */
+  private adopt(hash: string): Promise<void> {
+    const under = this.reading;
+    if (under !== null && !under.done && under.hash === hash) return this.landed(under);
     const ticket = ++this.adopting;
+    const read = this.read(hash, ticket);
+    const reading: Reading = { hash, done: false, finished: read.then(() => undefined, () => undefined) };
+    void reading.finished.then(() => {
+      reading.done = true;
+    });
+    this.reading = reading;
+    return read.then(() => this.landed(reading));
+  }
+
+  /** Once `from` has finished, and every read that superseded it. */
+  private async landed(from: Reading): Promise<void> {
+    let at = from;
+    await at.finished;
+    while (this.reading !== null && this.reading !== at) {
+      at = this.reading;
+      await at.finished;
+    }
+  }
+
+  private async read(hash: string, ticket: number): Promise<void> {
     const text = await fetchVersion(this.projectId, hash);
     const model = readModel(hash, text, this.state.design);
     const history = await fetchHistory(this.projectId).catch(() => this.state.history);
@@ -857,4 +890,13 @@ export function useEditor<T>(store: EditorStore, selector: (s: EditorState) => T
   const snapshot = (): T => selector(store.get());
   // The same snapshot server-side, so an inspector section renders to markup in a unit test.
   return useSyncExternalStore(store.subscribe, snapshot, snapshot);
+}
+
+/** A read of a committed version under way (EditorStore.adopt). */
+interface Reading {
+  hash: string;
+  /** Finished, either way. */
+  done: boolean;
+  /** Resolves when it has finished, never rejects. */
+  finished: Promise<void>;
 }

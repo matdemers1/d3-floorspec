@@ -8,7 +8,8 @@ import { CONTEXT_KEYS, ariaKeys, keyHint, sheetGroups, spokenKeys, withKeys } fr
 import { planElements, pickableIds } from '../src/editor/elements';
 import { readModel } from '../src/editor/model';
 import type { Batch } from '../src/editor/ops';
-import type { Layers } from '../src/editor/store';
+import { EditorStore, type Layers } from '../src/editor/store';
+import { pressResize, pressTurn } from '../src/editor/KeyHandles';
 import type { DeviceView } from '../src/editor/systems/view';
 import { boxOf, IN, keyResize, keyRotate, resizeBatch, ruleFor, sizeOf, turnBatch } from '../src/furniture/resize';
 
@@ -199,5 +200,98 @@ describe('handles from the keyboard', () => {
     const turned = deviceIn(commit(HOUSE, turnBatch(free, cw)), free.id);
     expect(turned.host?.['rotation'] ?? 0).toBe(cw);
     expect(keyRotate(island, 1, false) === null || island.host?.['mode'] !== 'wallFace').toBe(true);
+  });
+});
+
+/**
+ * FLR-T-18.19: every press lands, in order. A fake server keeps main and refuses a write against any
+ * other head (412, as the real one does); its live stream's word of each commit reaches the editor a
+ * moment after the commit's own answer, and the editor's second read of that version is the slow one
+ * — the order that, on a busy CI runner, let the edit's own read be superseded, so the next press was
+ * sent against the head before the commit and refused: keys.spec's turn, lost.
+ */
+describe('every press on a handle lands, in order', () => {
+  const P = '01a10000-0000-7000-8000-0000000000aa';
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  interface Server { head: string; seq: number; docs: Map<string, string>; reads: Map<string, number>; refused: number; posted: string[] }
+  let server: Server;
+  let store: EditorStore;
+
+  beforeEach(async () => {
+    server = { head: 'v1', seq: 1, docs: new Map([['v1', HOUSE]]), reads: new Map(), refused: 0, posted: [] };
+    store = new EditorStore(P);
+    const json = (body: unknown, status = 200, headers: Record<string, string> = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...headers } });
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
+      const path = url.replace(`/api/projects/${P}`, '');
+      if (url === `/api/projects/${P}`) return json({ id: P, name: 'Courtyard', head: server.head, ops: server.seq });
+      if (path === '/model.json') return new Response(server.docs.get(server.head), { headers: { etag: `"${server.head}"` } });
+      if (path.startsWith('/history')) return json({ head: server.head, undo: server.seq, redo: null, ops: [{ seq: server.seq }] });
+      if (path.startsWith('/versions/')) {
+        const hash = path.slice('/versions/'.length);
+        const n = (server.reads.get(hash) ?? 0) + 1;
+        server.reads.set(hash, n);
+        // The commit's own read back is quick; a second read of the same version, slow.
+        await sleep(n === 1 ? 20 : 150);
+        return new Response(server.docs.get(hash));
+      }
+      if (path === '/ops' && init?.method === 'POST') {
+        const ifMatch = new Headers(init.headers).get('if-match')?.replace(/"/g, '');
+        server.posted.push(ifMatch ?? '');
+        if (ifMatch !== server.head) {
+          server.refused++;
+          return json({ title: 'the head has moved since you read it', hash: server.head }, 412);
+        }
+        const r = apply(server.docs.get(server.head)!, { batch: (JSON.parse(init.body as string) as { batch: Batch }).batch }, OFFICIAL_READER);
+        if (r.status !== 'committed') return json({ diagnostics: r.diagnostics }, 422);
+        server.head = r.hash;
+        server.seq++;
+        server.docs.set(r.hash, r.document);
+        const [hash, seq] = [r.hash, server.seq];
+        // The live stream's 'head' event, a moment after the answer (live.ts → store.follow).
+        setTimeout(() => void store.follow(hash, seq), 5);
+        return json({ status: 'committed', hash, created: r.created, op: { seq } }, 201);
+      }
+      return json({ error: `unrouted ${url}` }, 404);
+    }));
+    await store.load();
+    const level = store.get().model!.levels.find((l) => l.devices.some((d) => d.id === 'KIT-ISLAND'))!;
+    store.set({ level: level.id, selection: 'KIT-ISLAND' });
+  });
+
+  const islandOnServer = (): DeviceView => readModel(server.head, server.docs.get(server.head)!).levels.flatMap((l) => l.devices).find((d) => d.id === 'KIT-ISLAND')!;
+  const rotationOf = (d: DeviceView): number => (typeof d.host?.['rotation'] === 'number' ? d.host['rotation'] : 0);
+
+  it('turns 15° for each of two presses, the second pressed before the first is read back', async () => {
+    const was = rotationOf(islandOnServer());
+    const first = pressTurn(store, 'KIT-ISLAND', 1, false);
+    const second = pressTurn(store, 'KIT-ISLAND', 1, false);
+    const said = await Promise.all([first, second]);
+    expect(server.refused).toBe(0);
+    expect(rotationOf(islandOnServer())).toBe(was - 30_000_000);
+    expect(said.every((t) => t !== null && t.includes('turned'))).toBe(true);
+    // And the editor's model is the server's head, not a version behind it.
+    expect(store.get().model?.hash).toBe(server.head);
+  });
+
+  it('turns after a resize still being read back: the next press is sent against the resize’s head', async () => {
+    const was = rotationOf(islandOnServer());
+    const resized = pressResize(store, 'KIT-ISLAND', 'left', 1, false);
+    const turned = pressTurn(store, 'KIT-ISLAND', 1, false);
+    await Promise.all([resized, turned]);
+    expect(server.refused).toBe(0);
+    expect(sizeOf(boxOf(islandOnServer().element)!).width).toBe(72 * IN);
+    expect(rotationOf(islandOnServer())).toBe(was - 15_000_000);
+  });
+
+  it('says why a press made no change, rather than nothing', async () => {
+    // Another tab moved main: this editor's next press is refused as stale, and the live region says so.
+    const moved = apply(server.docs.get(server.head)!, { batch: [{ op: 'setProperty', id: 'KIT-ISLAND', path: '/name', value: 'Island' }] }, OFFICIAL_READER);
+    if (moved.status !== 'committed') throw new Error('rejected');
+    server.docs.set(moved.hash, moved.document);
+    server.head = moved.hash;
+    server.seq++;
+    const said = await pressTurn(store, 'KIT-ISLAND', 1, false);
+    expect(server.refused).toBe(1);
+    expect(said).toMatch(/was not turned: The model changed since you last read it/);
   });
 });

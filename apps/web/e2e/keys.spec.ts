@@ -208,9 +208,12 @@ test('the P18 editor by keyboard and assistive technology: shortcuts, the elemen
   await axe(page, '.fs-editor__canvas');
   await page.keyboard.press('Shift+ArrowLeft');
   await expect.poll(async () => widthOf(await docOf(page, project), 'KIT-ISLAND')).toBe(60 * IN);
-  // Enter: the typed width in the inspector.
+  // Enter: the typed width in the inspector — the width the press made, even when the editor is still
+  // reading it back as the field takes the focus (FLR-T-18.19) — and leaving it changes nothing.
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('textbox', { name: 'Width', exact: true })).toBeFocused();
+  const typedWidth = page.getByRole('textbox', { name: 'Width', exact: true });
+  await expect(typedWidth).toBeFocused();
+  await expect(typedWidth).toHaveValue(`5'-0"`);
   await frame(page).focus();
   // ⇧Tab from the plan: the last handle, the rotate handle — → turns the island 15° clockwise.
   await page.keyboard.press('Shift+Tab');
@@ -219,6 +222,7 @@ test('the P18 editor by keyboard and assistive technology: shortcuts, the elemen
   await page.keyboard.press('ArrowRight');
   await expect.poll(async () => itemOf(await docOf(page, project), 'KIT-ISLAND').host!.rotation).toBe(turned - 15_000_000);
   await expect(page.locator('.fs-keyhandles__live')).toContainText('turned');
+  expect(widthOf(await docOf(page, project), 'KIT-ISLAND')).toBe(60 * IN);
   // Esc from a handle: the plan.
   await page.keyboard.press('Escape');
   await expect(frame(page)).toBeFocused();

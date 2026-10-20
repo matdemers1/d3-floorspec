@@ -102,13 +102,6 @@ export function KeyHandles({ store, view, level }: { store: EditorStore; view: V
   const say = (text: string) => {
     saidOf(store).say(text);
   };
-  const sizeText = (d: DeviceView | undefined) => {
-    const b = d === undefined ? null : boxOf(d.element);
-    if (b === null) return '';
-    const s = sizeOf(b);
-    return `${prettyLen(s.width, units)} wide × ${prettyLen(s.depth, units)} deep`;
-  };
-  const deviceNow = (id: string) => store.levelView?.devices.find((d) => d.id === id);
 
   const common = (e: KeyboardEvent<SVGElement>): 1 | -1 | 'enter' | 'escape' | null => {
     if (e.metaKey || e.ctrlKey || e.altKey) return null;
@@ -143,15 +136,7 @@ export function KeyHandles({ store, view, level }: { store: EditorStore; view: V
           typeSize(store, axis === 'width' ? 'Width' : 'Depth');
           return;
         }
-        const now = deviceNow(d.id) ?? d;
-        const next = keyResize(now, h.side, k, e.shiftKey);
-        if (next === null) {
-          say(`${name} is as ${k > 0 ? 'large' : 'small'} as it goes that way: ${sizeText(now)}`);
-          return;
-        }
-        void store.apply(`Resize ${name}`, resizeBatch(d.id, next.anchor, next.size, ruleFor(now)), { select: () => d.id }).then((ok) => {
-          if (ok) say(`${name}: ${sizeText(deviceNow(d.id))}`);
-        });
+        void pressResize(store, d.id, h.side, k, e.shiftKey).then(say);
       };
       return (
         <circle
@@ -206,13 +191,8 @@ export function KeyHandles({ store, view, level }: { store: EditorStore; view: V
               focusCanvas();
               return;
             }
-            const current = deviceNow(d.id) ?? d;
-            const rotation = keyRotate(current, k, e.shiftKey);
-            if (rotation === null) return;
-            void store.apply(`Turn ${name}`, turnBatch(current, rotation), { select: () => d.id }).then((ok) => {
-              if (!ok) return;
-              const deg = -Math.round(rotation / 1_000_000);
-              say(`${name}: turned ${deg === 0 ? 'back as drawn' : `${String(Math.abs(deg))}° ${deg > 0 ? 'right' : 'left'}`}`);
+            void pressTurn(store, d.id, k, e.shiftKey).then((text) => {
+              if (text !== null) say(text);
             });
           }}
         />,
@@ -251,18 +231,7 @@ export function KeyHandles({ store, view, level }: { store: EditorStore; view: V
                 focusCanvas();
                 return;
               }
-              const step = gridStepOf(store) * (e.shiftKey ? 4 : 1);
-              const lv = store.levelView;
-              if (lv === undefined) return;
-              const now = extentAcross(lv, room, s.side);
-              if (k < 0 && now - step < minRoom(store.units)) {
-                say(`${name} is as small as a handle makes a room across that way.`);
-                return;
-              }
-              void store.apply(`Resize ${name} ${s.side} ${formatLen(step, store.units)} ${k > 0 ? 'out' : 'in'}`, resizeRoom(room, s.side, k * step), { select: () => room }).then((ok) => {
-                const after = store.levelView;
-                if (ok && after !== undefined) say(`${name}: ${prettyLen(Math.round(extentAcross(after, room, s.side)), store.units)} ${axisWords(s.side)}`);
-              });
+              void pressRoomSide(store, room, s.side, k, e.shiftKey).then(say);
             }}
           />
         );
@@ -273,6 +242,89 @@ export function KeyHandles({ store, view, level }: { store: EditorStore; view: V
       {handles}
     </g>
   );
+}
+
+// ─── A press ─────────────────────────────────────────────────────────────────────────────────
+//
+// Each press is one apply on the store's queue, its batch built when its turn comes — from the model
+// the press before it made, as the plan's nudges are (nudge.ts) — so presses quicker than the server
+// land one after another, each from where the last left the item, and none is sent against a model
+// that is about to change under it (FLR-T-18.19). Each says what it made, or why it made nothing.
+
+const deviceIn = (store: EditorStore, id: string): DeviceView | undefined => store.levelView?.devices.find((d) => d.id === id);
+const nameOf = (store: EditorStore, id: string): string => {
+  const model = store.get().model;
+  return model === null ? id : labelOf(model, id);
+};
+function sizeText(store: EditorStore, d: DeviceView | undefined): string {
+  const b = d === undefined ? null : boxOf(d.element);
+  if (b === null) return '';
+  const s = sizeOf(b);
+  return `${prettyLen(s.width, store.units)} wide × ${prettyLen(s.depth, store.units)} deep`;
+}
+
+/** An item's resize handle: a snap step out (`dir` 1) or in, ⇧ four. What to say once it has landed. */
+export async function pressResize(store: EditorStore, id: string, side: HandleSide, dir: 1 | -1, coarse: boolean): Promise<string> {
+  const name = nameOf(store, id);
+  // What the batch, built later, found: written by the builder, read once the press has landed.
+  const found: { limit: string | null } = { limit: null };
+  const ok = await store.apply(`Resize ${name}`, () => {
+    const now = deviceIn(store, id);
+    if (now === undefined) return [];
+    const next = keyResize(now, side, dir, coarse);
+    if (next === null) {
+      found.limit = `${name} is as ${dir > 0 ? 'large' : 'small'} as it goes that way: ${sizeText(store, now)}`;
+      return [];
+    }
+    return resizeBatch(id, next.anchor, next.size, ruleFor(now));
+  }, { select: () => id });
+  return ok ? `${name}: ${sizeText(store, deviceIn(store, id))}` : (found.limit ?? refusal(store, `${name} was not resized`));
+}
+
+/** An item's rotate handle: 15° clockwise (`dir` 1) or back, ⇧ 1°. Null for an item that does not turn. */
+export async function pressTurn(store: EditorStore, id: string, dir: 1 | -1, fine: boolean): Promise<string | null> {
+  const name = nameOf(store, id);
+  const found: { rotation: number | null } = { rotation: null };
+  const ok = await store.apply(`Turn ${name}`, () => {
+    const now = deviceIn(store, id);
+    const rotation = now === undefined ? null : keyRotate(now, dir, fine);
+    found.rotation = rotation;
+    return now === undefined || rotation === null ? [] : turnBatch(now, rotation);
+  }, { select: () => id });
+  const rotation = found.rotation;
+  if (rotation === null) return null;
+  if (!ok) return refusal(store, `${name} was not turned`);
+  const deg = -Math.round(rotation / 1_000_000);
+  return `${name}: turned ${deg === 0 ? 'back as drawn' : `${String(Math.abs(deg))}° ${deg > 0 ? 'right' : 'left'}`}`;
+}
+
+/** A room's side: a grid step out (`dir` 1) or in, ⇧ four — one resizeRoom. */
+export async function pressRoomSide(store: EditorStore, room: string, side: Side, dir: 1 | -1, coarse: boolean): Promise<string> {
+  const name = nameOf(store, room);
+  const step = gridStepOf(store) * (coarse ? 4 : 1);
+  const found: { limit: string | null } = { limit: null };
+  const ok = await store.apply(`Resize ${name} ${side} ${formatLen(step, store.units)} ${dir > 0 ? 'out' : 'in'}`, () => {
+    const lv = store.levelView;
+    if (lv === undefined) return [];
+    if (dir < 0 && extentAcross(lv, room, side) - step < minRoom(store.units)) {
+      found.limit = `${name} is as small as a handle makes a room across that way.`;
+      return [];
+    }
+    return resizeRoom(room, side, dir * step);
+  }, { select: () => room });
+  const after = store.levelView;
+  if (ok && after !== undefined) return `${name}: ${prettyLen(Math.round(extentAcross(after, room, side)), store.units)} ${axisWords(side)}`;
+  return found.limit ?? refusal(store, `${name} was not resized`);
+}
+
+/**
+ * Why a press made no change, for the live region: the store's notice (a stale head, nothing to do,
+ * a failure) or the rejection's first finding — said, not swallowed (FLR-T-18.19).
+ */
+function refusal(store: EditorStore, what: string): string {
+  const { notice, rejection } = store.get();
+  const why = notice?.text ?? rejection?.diagnostics[0]?.message;
+  return why === undefined ? `${what}.` : `${what}: ${why}`;
 }
 
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
