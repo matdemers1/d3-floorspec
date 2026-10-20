@@ -1,7 +1,7 @@
 import { useId, useMemo, useRef, useState } from 'react';
 import { Badge, Button, IconButton, Input, Menu, MenuContent, MenuItem, MenuTrigger, Switch, Tooltip } from '@d3cloud/ui';
-import { Ellipsis, LampCeiling, Lightbulb, LightbulbOff, X } from 'lucide-react';
-import { kelvinColor, settingOf, type FixtureLight, type NamedScene } from '@floorspec/mesh';
+import { Ellipsis, LampCeiling, Lightbulb, LightbulbOff, Moon, X } from 'lucide-react';
+import { ALL_OFF, kelvinColor, settingOf, withLights, type FixtureLight, type NamedScene } from '@floorspec/mesh';
 import { useEditor, type EditorStore } from '../../store';
 import { labelOf, type EditorModel } from '../../model';
 import { sunOf } from '../sun/study';
@@ -52,6 +52,11 @@ function kelvinHex(k: number): string {
   const s = (x: number) => Math.round(255 * Math.min(1, (x / m) ** (1 / 2.2)));
   return `#${[s(c[0]), s(c[1]), s(c[2])].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
+
+/** The look a night exterior is shown in (FLR-T-15.5), and the scenes that light it, best first. */
+const NIGHT_EXTERIOR = 'Night exterior';
+const nightScene = (scenes: readonly NamedScene[]): NamedScene | undefined =>
+  [NIGHT_EXTERIOR, 'Evening exterior'].map((n) => scenes.find((s) => s.id !== null && s.name.toLowerCase() === n.toLowerCase())).find((s) => s !== undefined);
 
 /** The scene the view was last set to, among the panel's. */
 function chosenOf(scenes: readonly NamedScene[], scene: { id: string | null; name: string }): NamedScene | undefined {
@@ -128,6 +133,10 @@ export function LightingPanel({ store, model }: { store: EditorStore; model: Edi
 
   const chosen = chosenOf(scenes, scene);
   const changed = lightsOn && !unchanged(lighting, chosen, all);
+  const exterior = all.filter((l) => l.room === null && l.fixture === 'exterior');
+  const onIds = new Set(all.filter((l) => lightsOn && settingOf(lighting, l.id) !== null).map((l) => l.id));
+  const onOutside = new Set(exterior.filter((l) => onIds.has(l.id)).map((l) => l.id)).size;
+  const onInside = new Set(all.filter((l) => l.room !== null && onIds.has(l.id)).map((l) => l.id)).size;
   const count = census(lightsOn ? lighting : { on: {} }, all);
   const blocked = cannotSave(model);
   const close = () => {
@@ -249,6 +258,26 @@ export function LightingPanel({ store, model }: { store: EditorStore; model: Edi
           );
         })}
       </div>
+
+      {/* FLR-T-15.5: the grounds after dusk — the night sky, and the scene that lights the exterior. */}
+      {exterior.length > 0 ? (
+        <div className="fs-lighting__night">
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<Moon />}
+            onClick={() => {
+              sunOf(store).setSky('night');
+              const named = nightScene(scenes);
+              if (named !== undefined) choose(named);
+              else three.set({ lights: true, lighting: withLights(ALL_OFF, ids, exterior.map((l) => l.id), true), scene: { id: null, name: NIGHT_EXTERIOR } });
+            }}
+          >
+            Night exterior
+          </Button>
+          <span className="fs-lighting__hint">{`${String(onOutside)} exterior on · ${String(onInside)} interior on`}</span>
+        </div>
+      ) : null}
 
       {!readOnly && all.length > 0 ? (
         naming === null ? (
