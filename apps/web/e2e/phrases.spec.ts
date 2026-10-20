@@ -50,6 +50,48 @@ async function axe(page: Page, selector: string): Promise<void> {
   await page.emulateMedia({ colorScheme: 'light' });
 }
 
+type Held = { __held?: Set<number>; __release?: () => void };
+
+/**
+ * Hold every zero-delay timeout the page sets from now on for 150 ms, as a busy main thread may: a
+ * frame (and a requestAnimationFrame) then comes before it. The palette's dialog hands the focus back
+ * in such a timeout once it has unmounted.
+ */
+async function holdZeroTimeouts(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const w = window as unknown as Held & Window;
+    const set = w.setTimeout.bind(w);
+    const clear = w.clearTimeout.bind(w);
+    const held = new Set<number>();
+    w.__held = held;
+    w.setTimeout = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => {
+      if (typeof fn !== 'function' || (ms ?? 0) > 0) return set(fn, ms, ...args);
+      const id = set(() => {
+        held.delete(id);
+        (fn as (...a: unknown[]) => void)(...args);
+      }, 150);
+      held.add(id);
+      return id;
+    }) as typeof w.setTimeout;
+    // A held timeout cleared before it runs is no longer held.
+    w.clearTimeout = (id?: number) => {
+      if (id !== undefined) held.delete(id);
+      clear(id);
+    };
+    w.__release = () => {
+      w.setTimeout = set;
+    };
+  });
+}
+
+/** Stop holding zero-delay timeouts, and wait for every one held to have run (or been cleared). */
+async function releaseZeroTimeouts(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    (window as unknown as Held).__release?.();
+  });
+  await expect.poll(() => page.evaluate(() => (window as unknown as Held).__held?.size ?? 0)).toBe(0);
+}
+
 /** Open the phrase bar with ⌘/ and wait for its field to take the focus before typing into it. */
 async function openBar(page: Page): Promise<void> {
   await page.locator('.fs-editor').focus();
@@ -87,10 +129,16 @@ test('say it on the plan: a phrase previewed as a ghost, accepted as one op, rej
   await expect(palette).toBeFocused();
   await palette.fill('push the island 6 inches north');
   await expect(page.getByRole('option', { name: /Say it: “push the island 6 inches north”/ })).toBeVisible();
+  // FLR-T-18.20: the palette hands the focus back to the plan in a task of its own once it has gone, and
+  // a busy page can draw a frame before that task runs. Hold that hand-back, so it lands after the bar
+  // could have opened: the bar must wait for it, not open and then lose its focus — and close — to it.
+  await holdZeroTimeouts(page);
   await page.keyboard.press('Enter');
 
   // The bar, its phrase read: the island ghosted 6″ north, the cooktop riding with it, nothing applied.
   const bar = page.getByTestId('phrase-bar');
+  await expect(bar).toBeVisible();
+  await releaseZeroTimeouts(page);
   await expect(bar).toBeVisible();
   await expect(page.getByTestId('phrase-input')).toBeFocused();
   await expect(page.getByTestId('phrase-input')).toHaveValue('push the island 6 inches north');
