@@ -94,6 +94,12 @@ renderPlan(doc, { reader: { extensions: ['FS_electrical'], knownExtensions } });
   rafters (a porch's roof, a sail) dashed, overhead. One plan layer, `outdoor`, on in Landscape mode and
   ghosted in the Decorator and Electrical modes; `outdoorOf` and `outdoorLayers` are exported so the
   editor's canvas draws the same SVG.
+- **Context (FLR-T-15.3, FS_context)** — the street, the neighbours and the trees beyond the lot — is drawn
+  on the lowest level in one neutral style of its own, never the design's: the carriageway tinted between
+  its curb lines, the strips dotted and the sidewalks' backs in thin grey, the centreline dashed and the
+  street named along it; each neighbour's footprint hatched and dashed with its ridge (and hips); each tree
+  a dashed crown. A dashed "Context · …" tag sits by each kind. One plan layer, `context`, on in Landscape
+  mode and off in every other; `contextLayers` is exported so the editor's canvas draws the same SVG.
 
 PNG output lives in the worker (`apps/worker/src/render`): `renderPlanPng(doc, { width, ...opts })`
 rasterises with resvg and the bundled Inter / JetBrains Mono, never the host's fonts.
