@@ -29,7 +29,7 @@
  * Deterministic: every point's paths draw from their own seeded stream (rng.ts), so a version, a time
  * and a sky always give the same study. Advisory, always (FLR-ADR-011).
  */
-import { evaluate, OFFICIAL_READER, type ValidateOptions } from '@floorspec/engine';
+import { evaluate, OFFICIAL_READER, type Evaluation, type ValidateOptions } from '@floorspec/engine';
 import {
   bandShares,
   DAY_STEP_MINUTES,
@@ -52,6 +52,7 @@ import { buildSceneFrom, type Scene, type Vec3 } from '../export/gltf/scene.js';
 import { paneAbsorption, thinPane } from './brdf.js';
 import { Bvh, type Hit } from './bvh.js';
 import { ptScene } from './index.js';
+import { parseAt } from './presets.js';
 import { hash32, Rng } from './rng.js';
 import { resolveSky } from './sky.js';
 import type { PtScene } from './trace.js';
@@ -308,20 +309,42 @@ const check = (signal: AbortSignal | undefined): void => {
  * `at` or sky, and the scene's own error for a model that does not validate.
  */
 export async function daylightStudy(document: object, options: DaylightOptions): Promise<DaylightStudy> {
+  // A request it cannot read is refused before the house is meshed.
+  if (!(DAYLIGHT_SKIES as readonly string[]).includes(options.sky ?? 'clear')) throw new RangeError('sky is clear or overcast');
+  if (parseAt(options.at, 0) === null) throw new RangeError('at is a date and time at the site, such as 2026-06-21T15:00');
+  return studyHouse(await prepareHouse(document, options), options);
+}
+
+/** A house ready to study: evaluated in its design, meshed, and its architecture as the tracer reads it. */
+export interface PreparedHouse {
+  readonly document: object;
+  readonly ev: Evaluation;
+  readonly scene: Scene;
+  readonly pt: PtScene;
+}
+
+/** Evaluate and mesh a version once, for as many studies of it as are asked for. */
+export async function prepareHouse(document: object, options: Pick<DaylightOptions, 'design' | 'reader'> = {}): Promise<PreparedHouse> {
+  const reader = options.reader ?? OFFICIAL_READER;
+  const ev = evaluate(document, options.design === undefined ? reader : { ...reader, design: options.design });
+  const scene = await buildSceneFrom(ev);
+  return { document, ev, scene, pt: architecture(scene) };
+}
+
+/** A daylight study of a prepared house (its design is the one it was prepared in). */
+export async function studyHouse(house: PreparedHouse, options: Omit<DaylightOptions, 'design' | 'reader'>): Promise<DaylightStudy> {
   const started = Date.now();
   const skyName = options.sky ?? 'clear';
   if (!(DAYLIGHT_SKIES as readonly string[]).includes(skyName)) throw new RangeError('sky is clear or overcast');
   const samples = options.samples ?? DAYLIGHT_SAMPLES;
   const spacing = options.spacing ?? GRID_SPACING;
-  const reader = options.reader ?? OFFICIAL_READER;
-  const ev = evaluate(document, options.design === undefined ? reader : { ...reader, design: options.design });
-  const scene = await buildSceneFrom(ev);
+  const { ev, scene } = house;
   const doc = (ev.view ?? ev.document) as unknown as { rooms?: Record<string, { function?: string; name?: string }> };
-  const sky = resolveSky(document, { sky: skyName, at: options.at });
+  const sky = resolveSky(house.document, { sky: skyName, at: options.at });
   const at = sky.at;
   if (at === null) throw new RangeError('at is a date and time at the site, such as 2026-06-21T15:00');
   const site = sky.site;
-  const probe = new DaylightProbe({ pt: architecture(scene), sky: fieldSky(sky.field) });
+  const probe = new DaylightProbe({ pt: house.pt, sky: fieldSky(sky.field) });
   check(options.signal);
 
   // The sun now: its direction, and its illuminance square to it.

@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
-import { glareZones, WORK_PLANE } from '@floorspec/analysis';
-import { architecture, daylightStudy, DaylightProbe, fieldSky } from '../src/pathtrace/daylight.js';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { glareZones, WORK_PLANE, type DaylightStudy } from '@floorspec/analysis';
+import { architecture, daylightStudy, DaylightProbe, fieldSky, prepareHouse, studyHouse, type PreparedHouse } from '../src/pathtrace/daylight.js';
 import { paneAbsorption, thinPane } from '../src/pathtrace/brdf.js';
-import { buildScene } from '../src/export/gltf/scene.js';
 import { Rng } from '../src/pathtrace/rng.js';
 import { resolveSky } from '../src/pathtrace/sky.js';
 import type { PtScene } from '../src/pathtrace/trace.js';
@@ -156,15 +155,23 @@ describe('a room with one window, by hand', () => {
 
 describe('the Courtyard House', () => {
   const doc = JSON.parse(readFileSync(new URL('./fixtures/courtyard-house.json', import.meta.url), 'utf8')) as object;
-  const june = daylightStudy(doc, { at: '2026-06-21T15:00-04:00' });
-  const december = daylightStudy(doc, { at: '2026-12-21T15:00-05:00' });
+  // Meshed once for every test here, and studied on a two-foot grid with 16 paths a point: the
+  // method is the same as the api's one-foot, 64-path study, at a sixteenth of the cost.
+  const QUICK = { samples: 16, spacing: 0.6096 } as const;
+  let house: PreparedHouse;
+  let june: DaylightStudy;
+  let december: DaylightStudy;
+  beforeAll(async () => {
+    house = await prepareHouse(doc);
+    june = await studyHouse(house, { at: '2026-06-21T15:00-04:00', ...QUICK });
+    december = await studyHouse(house, { at: '2026-12-21T15:00-05:00', ...QUICK });
+  }, 120_000);
 
-  it("its desks' and beds' zones lie on the pieces the scene draws", async () => {
-    const scene = await buildScene(doc);
+  it("its desks' and beds' zones lie on the pieces the scene draws", () => {
     const zones = glareZones(doc);
     expect(zones.map((z) => z.id)).toEqual(expect.arrayContaining(['DEN-DESK', 'PB-BED']));
     for (const z of zones) {
-      const o = scene.obstacles.find((x) => x.id === z.id)!;
+      const o = house.scene.obstacles.find((x) => x.id === z.id)!;
       const xs = o.footprint.map((p) => p[0]);
       const ys = o.footprint.map((p) => p[1]);
       for (const [x, y] of z.corners) {
@@ -176,12 +183,12 @@ describe('the Courtyard House', () => {
     }
   });
 
-  it('a June and a December afternoon: the den and the primary bedroom in bands, with sun-hours', async () => {
-    for (const s of [await june, await december]) {
+  it('a June and a December afternoon: the den and the primary bedroom in bands, with sun-hours', () => {
+    for (const s of [june, december]) {
       expect(s.levels.map((l) => l.level)).toEqual(['L1', 'L2']);
       for (const id of ['R6', 'R17']) {
         const r = s.rooms.find((x) => x.id === id)!;
-        expect(r.cells).toBeGreaterThan(50);
+        expect(r.cells).toBeGreaterThan(20);
         expect(r.shares.bright + r.shares.useful + r.shares.lamp + r.shares.dim).toBeCloseTo(1, 2);
         expect(r.median).toBeGreaterThan(100);
         expect(r.sunYear).toBeGreaterThan(r.sunToday);
@@ -191,16 +198,14 @@ describe('the Courtyard House', () => {
       // No roof deck: an exterior room is not studied.
       expect(s.rooms.some((x) => x.id === 'R20')).toBe(false);
     }
-    const j = await june;
-    const d = await december;
     // The sun is higher in June: more light outside, the same sky model.
-    expect(j.outside.sun).toBeGreaterThan(d.outside.sun);
-    expect(j.sun!.altitude).toBeGreaterThan(60);
-    expect(d.sun!.altitude).toBeLessThan(30);
+    expect(june.outside.sun).toBeGreaterThan(december.outside.sun);
+    expect(june.sun!.altitude).toBeGreaterThan(60);
+    expect(december.sun!.altitude).toBeLessThan(30);
   });
 
-  it("flags the den's desk and the primary bed when direct sun reaches them, with the hours", async () => {
-    for (const s of [await june, await december]) {
+  it("flags the den's desk and the primary bed when direct sun reaches them, with the hours", () => {
+    for (const s of [june, december]) {
       const desk = s.glare.find((g) => g.id === 'DEN-DESK')!;
       const bed = s.glare.find((g) => g.id === 'PB-BED')!;
       expect(desk.roomName).toBe('Den');
@@ -214,22 +219,21 @@ describe('the Courtyard House', () => {
   });
 
   it('is the same study every time', async () => {
-    const again = await daylightStudy(doc, { at: '2026-12-21T15:00-05:00' });
-    const first = await december;
-    expect(again.levels).toEqual(first.levels);
-    expect(again.rooms).toEqual(first.rooms);
-    expect(again.glare).toEqual(first.glare);
+    const again = await studyHouse(house, { at: '2026-12-21T15:00-05:00', ...QUICK });
+    expect(again.levels).toEqual(december.levels);
+    expect(again.rooms).toEqual(december.rooms);
+    expect(again.glare).toEqual(december.glare);
   });
 
   it('under an overcast sky: no sun, no glare, less light', async () => {
-    const s = await daylightStudy(doc, { at: '2026-06-21T15:00-04:00', sky: 'overcast', year: false });
+    const s = await studyHouse(house, { at: '2026-06-21T15:00-04:00', sky: 'overcast', year: false, ...QUICK });
     expect(s.glare).toEqual([]);
     const den = s.rooms.find((r) => r.id === 'R6')!;
-    expect(den.median).toBeLessThan((await june).rooms.find((r) => r.id === 'R6')!.median);
+    expect(den.median).toBeLessThan(june.rooms.find((r) => r.id === 'R6')!.median);
     expect(s.outside.sun).toBe(0);
   });
 
-  it('refuses a time it cannot read and a sky it does not study', async () => {
+  it('refuses a time it cannot read and a sky it does not study, before meshing anything', async () => {
     await expect(daylightStudy(doc, { at: 'June 21' })).rejects.toThrow(RangeError);
     await expect(daylightStudy(doc, { at: '2026-06-21T15:00', sky: 'night' as 'clear' })).rejects.toThrow(/clear or overcast/);
   });
@@ -244,9 +248,9 @@ describe('the Courtyard House', () => {
     expect(along(0, -1, 0)).toBeLessThan((sun.lux * sun.dir[2] + 25_000) / Math.PI);
   });
 
-  it('studies the architecture only: no furniture in the way', async () => {
-    const scene = await buildScene(doc);
-    const all = scene.levels.flatMap((l) => l.nodes).reduce((s, n) => s + n.primitives.reduce((t, p) => t + p.indices.length / 3, 0), 0);
-    expect(architecture(scene).count).toBeLessThan(all);
+  it('studies the architecture only: no furniture in the way', () => {
+    const all = house.scene.levels.flatMap((l) => l.nodes).reduce((s, n) => s + n.primitives.reduce((t, p) => t + p.indices.length / 3, 0), 0);
+    expect(architecture(house.scene).count).toBeLessThan(all);
+    expect(house.pt.count).toBe(architecture(house.scene).count);
   });
 });
