@@ -496,11 +496,12 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     if (!compare.linked) ctlB.orbit = ctl.orbit;
     ctl.invalidate();
   }, [compare.linked, ctl, ctlB]);
-  // Side by side: framed once for a half's shape, so the house fits each half.
+  // Side by side: framed once for a half's shape, so the house fits each half; and for the whole view again after.
   const sideBySide = comparing && compare.mode === 'side';
   const framedSide = useRef(false);
   useEffect(() => {
     if (!sideBySide) {
+      if (framedSide.current && houseBox !== null) ctl.reframe(houseBox);
       framedSide.current = false;
       return;
     }
@@ -982,7 +983,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           <SunPanel store={store} model={ready.model} />
           <LightingPanel store={store} model={ready.model} />
           <CameraPanel store={store} model={ready.model} rig={rig} />
-          <SunChip store={store} />
+          {/* The Compare bar holds the bottom of the view (FLR-T-14.4): the sun's chip steps aside. */}
+          {!compareShown ? <SunChip store={store} /> : null}
           {!filmOpen && !compareShown ? (
             <div className="fs-three__chips-left">
               <QualityControl three={three} quality={quality} />

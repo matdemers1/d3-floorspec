@@ -111,8 +111,9 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
     s.compare !== null ? 'compare' : s.optionCompare !== null ? 'optionCompare' : s.side === 'review' && s.review !== null ? 'review' : s.findingsOpen ? 'findings' : s.side === 'options' ? 'options' : 'inspector',
   );
   const optionCompare = useEditor(store, (s) => s.optionCompare !== null);
-  // FLR-T-14.4: Compare in 3D takes the inspector's place while it is open in the 3D view.
-  const compare3d = useThreeState(store, (s) => s.compare.open && s.mode === '3d' && !s.walking) && right === 'inspector';
+  // FLR-T-14.4: Compare in 3D takes the inspector's — or a proposal's — place while it is open in the 3D view; its
+  // Open in Review closes it, and the proposal is there again.
+  const compare3d = useThreeState(store, (s) => s.compare.open && s.mode === '3d' && !s.walking) && (right === 'inspector' || right === 'review');
   const toast = useToast();
   const viewMode = useThreeState(store, (s) => s.mode);
   const walking = useThreeState(store, (s) => s.walking);

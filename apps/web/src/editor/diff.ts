@@ -165,18 +165,28 @@ function detailOf(kind: ChangeKind, c: Place, id: string, from: EditorModel, to:
     return undefined;
   }
   if (c === 'extension' && kind === 'moved') {
-    const centre = (m: EditorModel) => {
+    const footprint = (m: EditorModel) => {
       for (const level of m.levels) {
         const d = level.devices.find((x) => x.id === id);
-        if (d !== undefined) return d.footprint.reduce<Point>((s, q) => [s[0] + q[0] / d.footprint.length, s[1] + q[1] / d.footprint.length], [0, 0]);
+        if (d !== undefined) return d.footprint;
       }
       return undefined;
     };
-    const pa = centre(from);
-    const pb = centre(to);
-    if (pa !== undefined && pb !== undefined) {
-      const d = Math.round(dist(pa, pb));
-      return d > 0 ? `moved ${formatLen(d, units)}` : 'turned';
+    const centre = (f: readonly Point[]): Point => f.reduce<Point>((s, q) => [s[0] + q[0] / f.length, s[1] + q[1] / f.length], [0, 0]);
+    // FLR-T-14.4: its sides, longest first — a resize from its middle neither moves nor turns it.
+    const sides = (f: readonly Point[]): number[] => {
+      const n = f.length;
+      const all = f.map((p, i) => Math.round(dist(p, f[(i + 1) % n] as Point)));
+      return [...new Set(all)].sort((x, y) => y - x).slice(0, 2);
+    };
+    const fa = footprint(from);
+    const fb = footprint(to);
+    if (fa !== undefined && fb !== undefined) {
+      const d = Math.round(dist(centre(fa), centre(fb)));
+      if (d > 0) return `moved ${formatLen(d, units)}`;
+      const [la, lb] = [sides(fa), sides(fb)];
+      if (la.join() !== lb.join() && la[0] !== undefined && lb[0] !== undefined) return `${formatLen(la[0], units)} → ${formatLen(lb[0], units)} long`;
+      return 'turned';
     }
   }
   if (c === 'junctions' && kind === 'moved') {
