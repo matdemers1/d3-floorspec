@@ -1,0 +1,373 @@
+{
+  "library": "FS_outdoor starter library",
+  "extension": "FS_outdoor",
+  "version": "0.1.0",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "description": "Pools, shelters, outdoor kitchens and fire features as FS_outdoor 0.1.0 elements ready to place, and fence and wall styles ready to draw (a fence item has no points, and its box is its height alone until it is drawn): lengths in base units (1/1280 mm), boxes in the convention of spec.md 3.3, at grade. Written by tools/outdoor-library.ts.",
+  "items": {
+    "plunge-pool-8x14": {
+      "kind": "pools",
+      "element": {
+        "form": "plunge",
+        "coping": 390144,
+        "waterLine": 195072,
+        "copingMaterial": "stone",
+        "interior": "plaster",
+        "heated": true,
+        "catalogue": "plunge-pool-8x14",
+        "name": "Plunge pool, 8′ × 14′",
+        "fallback": {
+          "box": {
+            "min": [
+              -1560576,
+              -2731008,
+              -2145792
+            ],
+            "max": [
+              1560576,
+              2731008,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "pool-16x32": {
+      "kind": "pools",
+      "element": {
+        "form": "pool",
+        "coping": 390144,
+        "waterLine": 195072,
+        "copingMaterial": "concrete",
+        "interior": "plaster",
+        "catalogue": "pool-16x32",
+        "name": "Pool, 16′ × 32′",
+        "fallback": {
+          "box": {
+            "min": [
+              -3121152,
+              -6242304,
+              -2340864
+            ],
+            "max": [
+              3121152,
+              6242304,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "spa-7x7": {
+      "kind": "pools",
+      "element": {
+        "form": "spa",
+        "coping": 195072,
+        "waterLine": 130048,
+        "copingMaterial": "stone",
+        "interior": "tile",
+        "heated": true,
+        "catalogue": "spa-7x7",
+        "name": "Spa, 7′ × 7′",
+        "fallback": {
+          "box": {
+            "min": [
+              -1365504,
+              -1365504,
+              -780288
+            ],
+            "max": [
+              1365504,
+              1365504,
+              585216
+            ]
+          }
+        }
+      }
+    },
+    "pergola-12x16": {
+      "kind": "shelters",
+      "element": {
+        "top": "slats",
+        "material": "timber",
+        "postSize": 195072,
+        "postSpacing": 3121152,
+        "rafterSpacing": 780288,
+        "clearHeight": 3121152,
+        "catalogue": "pergola-12x16",
+        "name": "Pergola, 12′ × 16′",
+        "fallback": {
+          "box": {
+            "min": [
+              -2340864,
+              -3121152,
+              0
+            ],
+            "max": [
+              2340864,
+              3121152,
+              3706368
+            ]
+          }
+        }
+      }
+    },
+    "porch-10x16": {
+      "kind": "shelters",
+      "element": {
+        "top": "solid",
+        "material": "timber",
+        "postSize": 195072,
+        "postSpacing": 3121152,
+        "rafterSpacing": 520192,
+        "clearHeight": 3316224,
+        "attached": true,
+        "catalogue": "porch-10x16",
+        "name": "Covered porch, 10′ × 16′",
+        "fallback": {
+          "box": {
+            "min": [
+              -1950720,
+              -3121152,
+              0
+            ],
+            "max": [
+              1950720,
+              3121152,
+              4291584
+            ]
+          }
+        }
+      }
+    },
+    "shade-sail-12x12": {
+      "kind": "shelters",
+      "element": {
+        "top": "sail",
+        "material": "steel",
+        "postSize": 130048,
+        "postSpacing": 4681728,
+        "clearHeight": 3121152,
+        "catalogue": "shade-sail-12x12",
+        "name": "Shade sail, 12′ × 12′",
+        "fallback": {
+          "box": {
+            "min": [
+              -2340864,
+              -2340864,
+              0
+            ],
+            "max": [
+              2340864,
+              2340864,
+              3901440
+            ]
+          }
+        }
+      }
+    },
+    "kitchen-10": {
+      "kind": "kitchens",
+      "element": {
+        "appliances": [
+          "grill",
+          "sink",
+          "refrigerator"
+        ],
+        "counter": "stone",
+        "fuel": "gas",
+        "catalogue": "kitchen-10",
+        "name": "Outdoor kitchen, 10′ run",
+        "fallback": {
+          "box": {
+            "min": [
+              -487680,
+              -1950720,
+              0
+            ],
+            "max": [
+              487680,
+              1950720,
+              1170432
+            ]
+          }
+        }
+      }
+    },
+    "kitchen-6": {
+      "kind": "kitchens",
+      "element": {
+        "appliances": [
+          "grill",
+          "sideBurner"
+        ],
+        "counter": "concrete",
+        "fuel": "propane",
+        "catalogue": "kitchen-6",
+        "name": "Grill station, 6′ run",
+        "fallback": {
+          "box": {
+            "min": [
+              -487680,
+              -1170432,
+              0
+            ],
+            "max": [
+              487680,
+              1170432,
+              1170432
+            ]
+          }
+        }
+      }
+    },
+    "fire-pit-4": {
+      "kind": "fires",
+      "element": {
+        "form": "pit",
+        "fuel": "gas",
+        "catalogue": "fire-pit-4",
+        "name": "Fire pit, 4′",
+        "fallback": {
+          "box": {
+            "min": [
+              -780288,
+              -780288,
+              0
+            ],
+            "max": [
+              780288,
+              780288,
+              585216
+            ]
+          }
+        }
+      }
+    },
+    "fire-table-5": {
+      "kind": "fires",
+      "element": {
+        "form": "table",
+        "fuel": "propane",
+        "catalogue": "fire-table-5",
+        "name": "Fire table, 5′ × 2′ 6″",
+        "fallback": {
+          "box": {
+            "min": [
+              -487680,
+              -975360,
+              0
+            ],
+            "max": [
+              487680,
+              975360,
+              780288
+            ]
+          }
+        }
+      }
+    },
+    "fireplace-6": {
+      "kind": "fires",
+      "element": {
+        "form": "fireplace",
+        "fuel": "wood",
+        "catalogue": "fireplace-6",
+        "name": "Outdoor fireplace, 6′",
+        "fallback": {
+          "box": {
+            "min": [
+              -585216,
+              -1170432,
+              0
+            ],
+            "max": [
+              585216,
+              1170432,
+              3901440
+            ]
+          }
+        }
+      }
+    },
+    "fence-privacy-6": {
+      "kind": "fences",
+      "element": {
+        "form": "fence",
+        "width": 130048,
+        "style": "privacy",
+        "material": "timber",
+        "postSpacing": 3121152,
+        "catalogue": "fence-privacy-6",
+        "name": "Privacy fence, 6′",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              0,
+              0
+            ],
+            "max": [
+              0,
+              0,
+              2340864
+            ]
+          }
+        }
+      }
+    },
+    "fence-picket-4": {
+      "kind": "fences",
+      "element": {
+        "form": "fence",
+        "width": 97536,
+        "style": "picket",
+        "material": "timber",
+        "postSpacing": 3121152,
+        "catalogue": "fence-picket-4",
+        "name": "Picket fence, 4′",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              0,
+              0
+            ],
+            "max": [
+              0,
+              0,
+              1560576
+            ]
+          }
+        }
+      }
+    },
+    "wall-garden-3": {
+      "kind": "fences",
+      "element": {
+        "form": "wall",
+        "width": 260096,
+        "style": "solid",
+        "material": "brick",
+        "postSpacing": 3901440,
+        "catalogue": "wall-garden-3",
+        "name": "Garden wall, 3′",
+        "fallback": {
+          "box": {
+            "min": [
+              0,
+              0,
+              0
+            ],
+            "max": [
+              0,
+              0,
+              1170432
+            ]
+          }
+        }
+      }
+    }
+  }
+}

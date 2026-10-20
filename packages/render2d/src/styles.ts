@@ -254,6 +254,13 @@ function lineTheme(style: 'technical' | 'blueprint', theme: ThemeName): PlanThem
     canopyDark: hair,
     grassInk: hair,
     gardenWall: hair,
+    // Outdoor rooms in the drawing's lines: water and coping paper, timber and what is overhead in hairline.
+    water: paper,
+    waterEdge: faint,
+    coping: paper,
+    timber: faint,
+    overhead: faint,
+    flame: faint,
     wallExterior: paper,
     wallInterior: ink,
     wallEdge: ink,

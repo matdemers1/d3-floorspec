@@ -328,10 +328,13 @@ const isLandscape = (p: Pick<MeshPart, 'extension'>, collection?: string): boole
  * How steep a face of a part may be and still hold a light snow, as the least upward component of
  * its normal — or null for a part that holds none: a roof's slopes up to about 60° (55–65°, by a hash
  * of the part's key), a lawn's and a bed's tops, the caps of an evergreen's crown, a grass's tufts;
- * never a walk or a drive (FS_landscape hardscape, cleared), a trunk, a wall, or anything indoors.
+ * never a walk or a drive (FS_landscape hardscape, cleared), a trunk, a wall, or anything indoors; FS_outdoor's
+ * outdoor rooms' tops — a pergola's slats, a porch's roof, a coping, a counter — but never water or embers.
  */
 export function snowHold(part: Pick<MeshPart, 'kind' | 'key' | 'extension' | 'model'>): number | null {
   if (part.kind === 'roof') return Math.cos(((55 + 10 * rand(seedOf(part.key), 3)) * Math.PI) / 180);
+  // FS_outdoor (FLR-T-15.2): a pergola's slats and a porch's roof, a coping, a counter, a fence's cap hold it; water and embers never
+  if (part.extension?.name === 'FS_outdoor') return part.model === undefined || part.model.role === 'water' || part.model.role === 'ember' || part.model.role === 'snow' ? null : 0.5;
   if (!isLandscape(part) || part.extension?.collection === 'hardscape') return null;
   const role = part.model?.role;
   if (role === undefined || role === 'trunk' || role === 'snow') return null;
@@ -340,7 +343,7 @@ export function snowHold(part: Pick<MeshPart, 'kind' | 'key' | 'extension' | 'mo
 }
 
 /** Whether rain wets a part: what stands outside — a roof and its gable ends, and everything FS_landscape draws. */
-export const wetPart = (part: Pick<MeshPart, 'kind' | 'extension'>): boolean => part.kind === 'roof' || part.kind === 'roofGable' || isLandscape(part);
+export const wetPart = (part: Pick<MeshPart, 'kind' | 'extension'>): boolean => part.kind === 'roof' || part.kind === 'roofGable' || isLandscape(part) || part.extension?.name === 'FS_outdoor';
 
 /** A part with its upward faces laid in snow: [what is left, the snow] — either may be absent. */
 export function snowSplit(part: MeshPart, hold: number, origin: Vec3): MeshPart[] {

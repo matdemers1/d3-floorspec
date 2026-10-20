@@ -17,6 +17,7 @@ import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
 import { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type SymbolPart, type SymbolStroke } from './plansymbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
 import { landscapeLayers, type SceneLandscape } from './landscape.js';
+import { outdoorLayers, type SceneOutdoor } from './outdoor.js';
 import type { Beam } from './exterior.js';
 import { annoSourceOf, approxMeasure, customString, exteriorStrings, layoutAnnotations, openingMarks, roomStrings, scaleBarOf, SCREEN_METRICS, tagsOf, type AnnoPrim, type CustomDimension, type DimString, type Note, type SideDepths } from './annotate.js';
 import { ALL_ON, layerOfElement, layerStates, type LayerState, type ModeId, type PlanLayer } from './modes.js';
@@ -620,7 +621,7 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   const ghostly = PLAN_GHOSTS.some((l) => st[l] === 'ghost');
   if (ghostly) parts.push(el('defs', {}, GHOST_FILTER));
   // FLR-T-18.13: beside what a remodel changes, the grounds, stairs and roof are existing work too.
-  const SUBDUED: ReadonlySet<PlanLayer> = new Set(['landscape', 'roof']);
+  const SUBDUED: ReadonlySet<PlanLayer> = new Set(['landscape', 'outdoor', 'roof']);
   const put = (layer: PlanLayer, svg: string): void => {
     const state = st[layer];
     if (state === 'on' && legendFilter !== undefined && SUBDUED.has(layer)) parts.push(el('g', { 'data-renovation': 'existing', opacity: EXISTING_OPACITY }, svg));
@@ -691,6 +692,13 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
     (id) => hi.has(id),
   );
   if (landscape.lawns !== '') put('landscape', el('g', { id: 'lawns' }, landscape.lawns));
+  // ── FS_outdoor (FLR-T-15.2): pools, fences, kitchens and fires over the paving; shelters overhead, last ──
+  const outdoors = outdoorLayers(
+    [...scene.fallbacks.values()].flatMap((fb): [string, SceneOutdoor][] => (fb.outdoor === undefined ? [] : [[fb.id, fb.outdoor]])),
+    f,
+    pal,
+    (id) => hi.has(id),
+  );
   const siteSvg = site === null ? null : siteLayers(site, f, pal, { ...options.site, idPrefix: 'fs-site' });
   if (siteSvg !== null) {
     if (siteSvg.grading !== '') parts.push(el('defs', {}, siteSvg.defs));
@@ -747,6 +755,7 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   }
   put('rooms', el('g', { id: 'floors' }, floors));
   if (landscape.ground !== '') put('landscape', el('g', { id: 'landscape' }, landscape.ground));
+  if (outdoors.ground !== '') put('outdoor', el('g', { id: 'outdoor' }, outdoors.ground));
   if (siteSvg !== null && siteSvg.grading !== '') put('grading', el('g', { id: 'grading' }, siteSvg.grading));
 
   // ── ceilings that are not flat (Core 0.3, 15.3, 15.4): a tray's centre dashed, a vault's ridge dash-dotted ──
@@ -928,7 +937,7 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
       return renoWrap(id, drawn);
     };
     for (const fb of scene.fallbacks.values()) {
-      if (fb.landscape !== undefined) continue;
+      if (fb.landscape !== undefined || fb.outdoor !== undefined) continue;
       const layer = layerOfElement(fb.extension, fb.collection);
       const state = layer === null ? 'on' : st[layer];
       if (state === 'off') continue;
@@ -981,6 +990,7 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
     parts.push(el('g', { id: 'fallbacks', ...(shadowed ? { filter: 'url(#fs-shadow)' } : {}) }, fbs));
   }
   if (landscape.plants !== '') put('landscape', el('g', { id: 'plants' }, landscape.plants));
+  if (outdoors.overhead !== '') put('outdoor', el('g', { id: 'overhead' }, outdoors.overhead));
   if (siteSvg !== null && siteSvg.spots !== '') put('spots', el('g', { id: 'spots' }, siteSvg.spots));
   if (siteSvg !== null && siteSvg.lot !== '') put('site', el('g', { id: 'lot' }, siteSvg.lot));
 
@@ -1196,6 +1206,12 @@ const LINE_LANDSCAPE = (t: PlanTheme): Partial<Palette> => ({
   canopy: t.hairline,
   canopyDark: t.hairline,
   grassInk: t.hairline,
+  water: t.room,
+  waterEdge: t.hairline,
+  coping: t.room,
+  timber: t.hairline,
+  overhead: t.hairline,
+  flame: t.hairline,
 });
 
 interface WallBody {
@@ -1311,7 +1327,7 @@ function beamsSvg(beams: readonly Beam[], P: (ring: readonly Pt[]) => XY[], them
 const TRADES: ReadonlySet<PlanLayer> = new Set(['electrical', 'plumbing', 'mechanical', 'lowvoltage']);
 
 /** The layers whose ghosts the filter greys. */
-const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape'];
+const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'outdoor'];
 
 /** A ghost is grey: every colour desaturated, then faded (FLR-T-18.3). */
 const GHOST_FILTER = el('filter', { id: 'fs-ghost', 'color-interpolation-filters': 'sRGB' }, el('feColorMatrix', { type: 'saturate', values: 0 }));

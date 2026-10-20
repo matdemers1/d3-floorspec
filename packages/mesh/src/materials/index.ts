@@ -299,6 +299,10 @@ export const ROLE_LIBRARY: Readonly<Partial<Record<ModelRole, string>>> = {
   paver: 'bluestone-pavers',
   brick: 'brick-red-running',
   concrete: 'concrete-smooth',
+  // FS_outdoor (FLR-T-15.2): no new maps — the library's cedar boards, a stone-look tile for the coping, standing seam
+  cedar: 'cedar-tongue-groove',
+  coping: 'porcelain-warm-stone',
+  roofing: 'standing-seam',
 };
 
 /** The library item a model's piece of this role is drawn in, or undefined. */

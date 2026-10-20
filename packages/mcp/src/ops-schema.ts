@@ -333,7 +333,7 @@ export const PlaceElement = z.strictObject({
   collection: ExtCollection,
   host: Host,
   element: describe(Obj, 'Its members besides host: fallback.box, the extension\'s own.'),
-}).describe('A device, fixture or piece on a host. element {"catalogue":"sofa-2100"} fills in a library item.');
+}).describe('A device, fixture or piece on a host. element {"catalogue":"sofa-2100"} fills in a library item (FS_outdoor too: "plunge-pool-8x14").');
 
 export const MoveElement = z.strictObject({
   op: z.literal('moveElement'),

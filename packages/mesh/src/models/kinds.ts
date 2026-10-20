@@ -15,6 +15,7 @@ const MEMBERS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   FS_lowvoltage: { outlets: 'media', doorbells: 'part', security: 'device', speakers: 'speaker', headEnds: 'headEnd' },
   FS_furniture: { pieces: 'category', appliances: 'category', casework: 'category' },
   FS_landscape: { plants: 'form', hardscape: 'form' },
+  FS_outdoor: { pools: 'form', fences: 'form', shelters: 'top', fires: 'form' },
 };
 
 /** The member that says what an element of a collection is, or undefined for a collection without one. */

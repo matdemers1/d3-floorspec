@@ -36,6 +36,9 @@ export const MODEL_ROLES = [
   // colours and the leaves it drops, a lawn and a meadow through the year, and a light snow.
   'leafSpring', 'leafSpringLight', 'blossom', 'autumnGold', 'autumnOrange', 'autumnRed', 'autumnBrown',
   'lawnSpring', 'lawnAutumn', 'lawnWinter', 'meadowSpring', 'meadowAutumn', 'meadowWinter', 'snow',
+  // FS_outdoor (FLR-T-15.2): a pergola's and a fence's cedar, a pool's coping, its basin's plaster and its
+  // water, a shade sail, a porch's metal roof, a fire's embers.
+  'cedar', 'coping', 'poolInterior', 'water', 'sail', 'roofing', 'ember',
 ] as const;
 
 /**
@@ -48,6 +51,9 @@ export const LANDSCAPE_ROLES: readonly ModelRole[] = ['foliage', 'foliageLight',
 /** The roles only decor is made of (FLR-T-13.11), and the foliage its plants share with the landscape: a house without the starter library's decor has none of them. */
 export const DECOR_ROLES: readonly ModelRole[] = ['rug', 'rugBorder', 'foliage', 'ceramic', 'terracotta', 'canvas', 'clay', 'ochre', 'sage', 'slate', 'shade', 'brass', 'screen', 'mirror'];
 export type ModelRole = (typeof MODEL_ROLES)[number];
+
+/** The roles only FS_outdoor's models are made of (FLR-T-15.2): a house without outdoor rooms has none of them. */
+export const OUTDOOR_ROLES: readonly ModelRole[] = ['cedar', 'coping', 'poolInterior', 'water', 'sail', 'roofing', 'ember'];
 
 /**
  * The roles only a season or a weather draws (FLR-T-15.4, looks.ts): no model is made of them — a look
@@ -183,4 +189,22 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   meadowWinter: { color: tinted('#98a35b', LAWN_TINT.winter), metallic: 0, roughness: 0.95 },
   /** A light snow on what faces up outside (SNOW_ALBEDO, in sRGB). */
   snow: { color: tinted('#ffffff', SNOW_ALBEDO), metallic: 0, roughness: 0.85 },
+  // ─── FS_outdoor (FLR-T-15.2) ───
+  /** Western red cedar: a pergola's posts and beams, a fence's boards, a gate. */
+  cedar: { color: '#a8714a', metallic: 0, roughness: 0.7 },
+  /** A pool's coping: honed travertine. */
+  coping: { color: '#d8ccb6', metallic: 0, roughness: 0.6 },
+  /** A pool's basin: pale blue plaster, what gives clear water its colour. */
+  poolInterior: { color: '#a9d4df', metallic: 0, roughness: 0.55 },
+  /**
+   * A pool's water: clear, a faint blue-green, very smooth. Drawn see-through as glass is (glass.ts), so
+   * the basin's plaster shows through it and the sky is reflected off it at a slant.
+   */
+  water: { color: '#bfe3e6', metallic: 0, roughness: 0.02, opacity: 0.3 },
+  /** A shade sail's fabric: off-white canvas. */
+  sail: { color: '#ece6d6', metallic: 0, roughness: 0.9 },
+  /** A covered porch's roof: standing-seam steel. */
+  roofing: { color: '#4a5058', metallic: 0.5, roughness: 0.45 },
+  /** A fire's embers and flame bed: glowing, as a lens is. */
+  ember: { color: '#f08a3c', metallic: 0, roughness: 0.8, emissive: true },
 };

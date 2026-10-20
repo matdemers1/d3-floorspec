@@ -4,7 +4,8 @@
  * context, and not selectable in the editor) or Off. Construction, Decorator, Electrical, Plumbing,
  * Mechanical, Low-voltage and Landscape, after Revit's disciplines and Chief Architect's layer sets.
  * `beams` (FLR-T-15.5) is where exterior lights' light lands — a picture, not a calculation — on in
- * the Electrical and Landscape modes.
+ * the Electrical and Landscape modes. `outdoor` (FLR-T-15.2) is FS_outdoor's rooms outdoors: on in Landscape mode,
+ * ghosted in the Decorator and Electrical modes as the garden is.
  *
  * One table for every place a plan is drawn, so a mode means the same thing everywhere: the editor's
  * canvas and its switcher, `renderPlan` (floorspec_render's `mode`), and the PDF and DXF drawings
@@ -15,7 +16,7 @@ export const MODE_IDS = ['construction', 'decorator', 'electrical', 'plumbing', 
 export type ModeId = (typeof MODE_IDS)[number];
 
 /** The plan's layers a mode sets, in the order the Layers drawer lists them. */
-export const PLAN_LAYERS = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'findings'] as const;
+export const PLAN_LAYERS = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'outdoor', 'findings'] as const;
 export type PlanLayer = (typeof PLAN_LAYERS)[number];
 
 export const LAYER_STATES = ['on', 'ghost', 'off'] as const;
@@ -40,6 +41,7 @@ export const LAYER_LABELS: Readonly<Record<PlanLayer, string>> = {
   grading: 'Cut and fill',
   spots: 'Spot levels',
   landscape: 'Landscape',
+  outdoor: 'Outdoor',
   findings: 'Findings',
 };
 
@@ -69,14 +71,14 @@ export const MODES: Readonly<Record<ModeId, ModeDef>> = {
     label: 'Decorator',
     summary: 'Floors in colour, furniture, finishes, rugs',
     plan: 'Furniture plan',
-    layers: states(['openings', 'rooms', 'furniture', 'casework', 'findings'], ['walls', 'plumbing', 'landscape']),
+    layers: states(['openings', 'rooms', 'furniture', 'casework', 'findings'], ['walls', 'plumbing', 'landscape', 'outdoor']),
   },
   electrical: {
     id: 'electrical',
     label: 'Electrical',
     summary: 'Devices, circuits by colour, switch legs, beams',
     plan: 'Electrical plan',
-    layers: states(['electrical', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'furniture', 'casework', 'landscape']),
+    layers: states(['electrical', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'furniture', 'casework', 'landscape', 'outdoor']),
   },
   plumbing: {
     id: 'plumbing',
@@ -104,7 +106,7 @@ export const MODES: Readonly<Record<ModeId, ModeDef>> = {
     label: 'Landscape',
     summary: 'Site, paving, lawn, planting, exterior lights',
     plan: 'Landscape plan',
-    layers: states(['site', 'contours', 'grading', 'spots', 'landscape', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'roof']),
+    layers: states(['site', 'contours', 'grading', 'spots', 'landscape', 'outdoor', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'roof']),
   },
 };
 
@@ -144,6 +146,9 @@ export function layerOfElement(extension: string, collection: string): PlanLayer
       return 'lowvoltage';
     case 'FS_landscape':
       return 'landscape';
+    // FS_outdoor (FLR-T-15.2): pools, fences, shelters, kitchens and fires — the Outdoor layer.
+    case 'FS_outdoor':
+      return 'outdoor';
     // FS_site has no elements; its drawing is the site, contours, grading and spots layers.
     case 'FS_furniture':
       return collection === 'casework' || collection === 'appliances' ? 'casework' : 'furniture';

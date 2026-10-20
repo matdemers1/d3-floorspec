@@ -251,6 +251,16 @@ export function summaryText(s: DocumentSummary): string {
     out.push('', '## Saved views (FS_views; floorspec_render view: <name> renders one)');
     for (const v of s.views) out.push(`- ${v.id}${q(v.name)}: ${v.lens}; ${v.level === undefined ? 'whole house' : `cut at ${v.level}`}; ${v.sky}${v.at === undefined ? '' : ` at ${v.at}`}; lights ${v.lights}`);
   }
+  if (s.outdoor) {
+    const o = s.outdoor;
+    const inRoom = (r: string | undefined) => (r === undefined ? '' : `; in ${r}`);
+    out.push('', '## Outdoor rooms (FS_outdoor; a pool barrier or a fence\'s height is a rule pack\'s finding, advisory)');
+    for (const p of o.pools) out.push(`- pool ${p.id}${q(p.name)}: ${p.form}, basin ${p.basin[0]} × ${p.basin[1]}, water ${p.waterDepth} deep, ≈ ${p.gallons.toLocaleString('en-US')} gal (≈ ${p.litres.toLocaleString('en-US')} L, estimates)${inRoom(p.room)}`);
+    for (const f of o.fences) out.push(`- ${f.form} ${f.id}${q(f.name)}: ${f.length} long, ${String(f.posts)} posts${f.gates.length === 0 ? '' : `, gate${f.gates.length === 1 ? '' : 's'} ${f.gates.map((g) => `${g[0]}–${g[1]}`).join(', ')} along it`}`);
+    for (const h of o.shelters) out.push(`- shelter ${h.id}${q(h.name)}: ${h.top} top, ${String(h.bays[0])} × ${String(h.bays[1])} bays at ${h.spacing[0]} × ${h.spacing[1]}, ${String(h.posts)} posts (derived: resizeElement re-spaces them)${inRoom(h.room)}`);
+    for (const k of o.kitchens) out.push(`- kitchen ${k.id}${q(k.name)}: ${k.run} run${k.appliances.length === 0 ? '' : ` — ${k.appliances.join(', ')}`}${inRoom(k.room)}`);
+    for (const f of o.fires) out.push(`- fire ${f.id}${q(f.name)}: ${f.form}${inRoom(f.room)}`);
+  }
   if (s.circulation) {
     const c = s.circulation;
     out.push('', '## Circulation');
