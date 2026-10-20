@@ -17,7 +17,7 @@ import { outdoorOf, useOutdoor } from './state';
  * fence's height is a rule pack's finding, never this panel's (FLR-ADR-011).
  */
 
-const BARRIER = 'A pool barrier is a rule for a rules pack — nothing here checks one, and nothing here says “compliant”.';
+const BARRIER = 'A pool barrier is a rule for a rules pack — nothing here checks one.';
 
 export function FencePanel({ store, readOnly }: { store: EditorStore; readOnly: boolean }) {
   const styleId = useOutdoor(store, (s) => s.fenceStyle);

@@ -238,6 +238,8 @@ test('outdoor rooms: drop a plunge pool, draw a fence with a gate, stretch a per
   await page.goto(`/projects/${project}/editor?view=3d`);
   await settled(page);
   await page.waitForFunction(() => (window as unknown as Hook).__floorspec3d?.ready === true, undefined, { timeout: 120_000 });
+  // from the south-east, where the terrace, the pool and the kitchen face the camera
+  await page.getByRole('button', { name: /Step to SE iso/ }).click();
   await page.waitForTimeout(2_000);
   await shoot(page, '3d');
   await axe(page, 'the 3D view with the back terrace');
