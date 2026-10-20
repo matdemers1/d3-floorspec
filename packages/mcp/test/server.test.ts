@@ -3,11 +3,13 @@ import { join } from 'node:path';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { AjvJsonSchemaValidator } from '@modelcontextprotocol/server/validators/ajv';
 import { describe, expect, it } from 'vitest';
+import type { DaylightStudy } from '@floorspec/analysis';
 import { ROOM_FUNCTIONS } from '../src/vocabulary.js';
 import {
   createFloorspecMcpHandler,
   CRITIQUE_CATEGORIES,
   critiquePrompt,
+  daylightUri,
   DESIGN_PARTNER_PROMPT,
   FloorspecApiError,
   GUIDE_URI,
@@ -683,6 +685,38 @@ describe('the MCP server', () => {
     expect(body).toContain('An estimate to compare options — not an energy-code calculation.');
     expect(body).toMatch(/Design loads: heating [\d.,]+–[\d.,]+ kBtu\/h/);
     expect(body).not.toMatch(/complian/i);
+  });
+
+  it('offers daylight at a date and time as a resource: rooms in four bands, glare at desks and beds, advisory (FLR-T-14.7)', async () => {
+    const client = new MemoryClient();
+    const asked: { project: string; at: string }[] = [];
+    const study: DaylightStudy = {
+      at: '2026-12-21T15:00',
+      offset: -300,
+      sky: 'clear',
+      sun: { azimuth: 216, altitude: 23 },
+      site: { latitude: 33.7, longitude: -84.4, assumed: false },
+      outside: { sky: 12_000, sun: 27_000 },
+      workPlane: 0.762,
+      spacing: 0.3048,
+      samples: 64,
+      levels: [],
+      rooms: [{ id: 'R6', name: 'Den', level: 'L1', cells: 90, median: 441, mean: 800, shares: { bright: 0.06, useful: 0.6, lamp: 0.29, dim: 0.05 }, sunToday: 9.8, sunYear: 3403 }],
+      glare: [{ id: 'DEN-DESK', name: 'Desk', kind: 'desk', room: 'R6', roomName: 'Den', level: 'L1', at: [1, 1], z: 0.75, hours: [{ from: 960, to: 980 }], now: false, low: true }],
+      advisory: 'Advisory, not a compliance check.',
+      ms: 1,
+    };
+    Object.assign(client, { daylight: (project: string, options: { at: string }) => { asked.push({ project, at: options.at }); return Promise.resolve(study); } });
+    const mcp = await connect(client);
+    const { resourceTemplates } = await mcp.listResourceTemplates();
+    expect(resourceTemplates.map((t) => t.uriTemplate)).toContain('floorspec://{project}/daylight{?at}');
+    const read = await mcp.readResource({ uri: daylightUri(PROJECT.id, '2026-12-21T15:00-05:00') });
+    const body = (read.contents[0] as { text: string }).text;
+    expect(asked).toEqual([{ project: PROJECT.id, at: '2026-12-21T15:00-05:00' }]);
+    expect(body).toContain('Advisory, not a compliance check.');
+    expect(body).toContain('Den (R6, L1): median 441 lx');
+    expect(body).toContain('Glare: Desk (DEN-DESK, Den) — low sun 4:00–4:20 pm');
+    expect(body).not.toMatch(/\bcompliant\b/i);
   });
 
   it('advertises every parameter the tools take, so a client that caches the listing can send them', async () => {

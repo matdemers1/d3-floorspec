@@ -324,7 +324,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
       // The study already made, or being made, for this version, time, sky and design.
       const same = { projectId: project.id, kind: 'analysis.daylight', versionHash: hash, params: { equals: params } };
       const made = await db.job.findFirst({ where: { ...same, status: 'done', output: { isNot: null } }, orderBy: { createdAt: 'desc' }, select: { output: { select: { bytes: true } } } });
-      if (made?.output != null) {
+      if (made !== null && made.output !== null) {
         send(new Uint8Array(made.output.bytes));
         return;
       }
