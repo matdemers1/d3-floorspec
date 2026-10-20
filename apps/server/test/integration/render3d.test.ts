@@ -187,6 +187,32 @@ describe('3D render-back', () => {
     expect(plan.text).toContain('one level at a time');
   });
 
+  it('sets main beside a changeset from one camera, side by side, what it touched lit (FLR-T-14.4)', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator, L_STAIR, 'Stair house');
+    const proposed = await operator.post(`/api/projects/${id}/changesets`, { name: 'Rename the kitchen', batch: [{ op: 'setProperty', id: 'KIT', path: '/name', value: 'Big kitchen' }] });
+    expect(proposed.status, proposed.text).toBe(201);
+    const changeset = (proposed.body as { changeset: { id: string; head: string } }).changeset;
+    const r = await fetch(`${running.url}/api/projects/${id}/render?view=3d&changeset=${changeset.id}&compare=main&camera=ne&width=256`, { headers: { cookie: cookieOf(operator) } });
+    expect(r.status, await r.clone().text()).toBe(200);
+    // Each side 256 × 192, eight pixels between them.
+    expect(pngSize(new Uint8Array(await r.arrayBuffer()))).toEqual({ width: 520, height: 192 });
+    const job = (await db.job.findMany({ where: { projectId: id }, orderBy: { createdAt: 'asc' } })).at(-1);
+    expect(job?.versionHash).toBe(changeset.head);
+    expect(job?.params).toMatchObject({ compare: { hash }, camera: 'ne', width: 256, highlight: ['KIT'] });
+    expect(job?.result).toMatchObject({ camera: 'NE iso', width: 256, height: 192 });
+    // A room of main's to stand in.
+    const room = await fetch(`${running.url}/api/projects/${id}/render?view=3d&changeset=${changeset.id}&compare=main&room=Kitchen&width=128`, { headers: { cookie: cookieOf(operator) } });
+    expect(room.status, await room.clone().text()).toBe(200);
+    expect(pngSize(new Uint8Array(await room.arrayBuffer()))).toEqual({ width: 264, height: 96 });
+    // Main against itself, a plan, a path-traced render, a side too wide.
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&compare=main`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?changeset=${changeset.id}&compare=main`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&changeset=${changeset.id}&compare=main&lights=on`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&changeset=${changeset.id}&compare=main&width=1500`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&changeset=${changeset.id}&compare=other`)).status).toBe(400);
+  }, 120_000);
+
   it('says why it could not draw: no such room, both a camera and a room, too wide', async () => {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(db, operator, L_STAIR, 'Stair house');
