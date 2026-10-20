@@ -26,7 +26,7 @@ import type { PartKind } from './types.js';
  * (FS_context 6.2). The board decided yes; the owner may want a toggle later, and this is the one flag a
  * view reads to leave context out of its shadows.
  */
-export const CONTEXT_CASTS_SHADE = true;
+export const CONTEXT_CASTS_SHADE: boolean = true;
 
 const R = (v: number): number => Math.round(v) + 0;
 const ccw = (r: readonly P2[]): P2[] => {

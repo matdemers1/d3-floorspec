@@ -122,7 +122,7 @@ export function contextLayers(ctx: ContextDrawing, f: Draw, pal: Palette, option
     if (labels && s === ctx.streets[0]) {
       const c = s.centreline.map(f.P);
       const m = c.length === 2 ? [(c[0]![0] + c[1]![0]) / 2, (c[0]![1] + c[1]![1]) / 2] : c[Math.floor(c.length / 2)]!;
-      tags += contextTag([m[0]!, m[1]! + 12], CONTEXT_TAGS.streets, pal, 'streets');
+      tags += contextTag([m[0], m[1] + 12], CONTEXT_TAGS.streets, pal, 'streets');
     }
   }
 
@@ -135,7 +135,7 @@ export function contextLayers(ctx: ContextDrawing, f: Draw, pal: Palette, option
       g += el('path', { 'data-ridge': '', d: polylinePath(n.ridgeLine.map(f.P)), ...line, 'stroke-dasharray': '10 3 2 3' });
       // hips: the ridge's ends to the corners
       if (n.roof === 'hip') {
-        const [r0, r1] = n.ridgeLine.map(f.P) as [XY, XY];
+        const [r0 = [0, 0], r1 = [0, 0]] = n.ridgeLine.map(f.P);
         const d = ring.map((p) => {
           const d0 = Math.hypot(p[0] - r0[0], p[1] - r0[1]);
           const d1 = Math.hypot(p[0] - r1[0], p[1] - r1[1]);

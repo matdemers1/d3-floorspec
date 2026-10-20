@@ -50,9 +50,8 @@ describe('FS_context: never the design (1.5)', () => {
     const a = check(d, every);
     expect(a.valid).toBe(true);
     expect(a.diagnostics.map((x) => [x.code, x.elements])).toContainEqual(['FS-CTXT-LINT-001', ['NB3']]);
-    const { extensions: _a, ...ra } = a.derived!;
-    const { extensions: _b, ...rb } = check(withoutContext(d), every).derived!;
-    expect(ra).toEqual(rb);
+    const b = check(withoutContext(d), every).derived!;
+    expect({ ...a.derived!, extensions: undefined }).toEqual({ ...b, extensions: undefined });
   });
 });
 
@@ -114,7 +113,7 @@ describe('FS_context: generating context from the street side (6.3)', () => {
   });
 
   it('says why there is nothing to generate without a lot', () => {
-    const d = onItsSlope() as FloorspecDocument & { site?: unknown };
+    const d = onItsSlope();
     delete d.site;
     expect(generateContext(d).reason).toMatch(/lot/);
   });
@@ -137,7 +136,7 @@ describe('FS_context: drawing', () => {
     const nb1 = d.neighbours.find((n) => n.id === 'NB1')!;
     expect(nb1.ridgeLine).toHaveLength(2);
     const [p, q] = nb1.ridgeLine!;
-    expect(p![0]).toBeCloseTo(q![0]!, 6); // 30' x 35': the ridge runs north-south
+    expect(p![0]).toBeCloseTo(q![0], 6); // 30' x 35': the ridge runs north-south
     expect(nb1.gables).toHaveLength(2);
     const nb2 = d.neighbours.find((n) => n.id === 'NB2')!;
     expect(nb2.ridgeLine).toHaveLength(1);

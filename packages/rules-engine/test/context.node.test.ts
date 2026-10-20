@@ -13,7 +13,7 @@ const pack = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'standard',
 const street = join(import.meta.dirname, '..', '..', 'engine', 'standard', 'conformance', 'ext', 'FS_context', '0.1.0', 'examples', '001-p15-garden-on-its-street', 'input.json');
 type Json = Record<string, unknown>;
 
-const adopts = [...new Map(Object.values(pack.rules).map((r) => [`${r.citation.code} ${r.citation.edition}`, { code: r.citation.code, edition: r.citation.edition }])).values()];
+const adopts = [...new Map(Object.values(pack.rules).flatMap((r) => (r === undefined ? [] : [[`${r.citation.code} ${r.citation.edition}`, { code: r.citation.code, edition: r.citation.edition }] as const]))).values()];
 const run = (doc: Json) =>
   evaluate(JSON.stringify(doc), { floorspecRules: '0.2', packs: [pack], profile: { floorspecRules: '0.2', name: 'Every example rule', adopts } }, { knownExtensions: [...OFFICIAL_EXTENSIONS] });
 
