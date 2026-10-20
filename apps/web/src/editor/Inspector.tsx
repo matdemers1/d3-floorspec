@@ -54,6 +54,9 @@ import {
   type ClearOpening,
 } from './openings';
 import { ThreeSection } from './three/ThreeSection';
+import { SeasonsPanel } from './three/sun/SeasonsPanel';
+import { useSunState } from './three/sun/study';
+import { useThreeState } from './three/mode';
 import { XraySection } from './three/xray/XraySection';
 import { SiteSection } from './three/sun/SiteFields';
 import { FurnitureBody } from '../furniture/Inspector';
@@ -107,6 +110,9 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   const focus = useEditor(store, (s) => s.focus);
   const levelId = useEditor(store, (s) => s.level);
   const units = useEditor(store, () => store.units);
+  const sunOpen = useSunState(store, (s) => s.open);
+  const threeMode = useThreeState(store, (s) => s.mode);
+  const seasons = sunOpen && threeMode !== 'plan';
   if (model === null) return null;
   if (tool === 'device' && readOnly === null) return <DevicePanel store={store} tools={tools} model={model} />;
   // FLR-T-18.7: what is being placed, with buttons to turn it (a finger has no R key).
@@ -117,6 +123,8 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   if (many) return <MultiInspector store={store} />;
   const element = selection === null ? undefined : elementOf(model, selection);
   const kind = selection === null ? null : kindOf(model, selection);
+  // FLR-T-15.4: beside the Sky and sun panel, with nothing selected — the plants through the year.
+  if ((selection === null || element === undefined || kind === null) && seasons) return <SeasonsPanel store={store} model={model} />;
   if (selection === null || element === undefined || kind === null) return <ProjectPanel store={store} model={model} units={units} readOnly={readOnly !== null} />;
   const ctx: Ctx = {
     store,

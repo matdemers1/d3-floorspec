@@ -5,7 +5,8 @@ import { Clapperboard, Clock, Moon, Sparkles, Square } from 'lucide-react';
 import { filmClock, filmDuration, filmFrameCount } from '@floorspec/mesh';
 import { midsummer, timelapseAround, timelapseProblem, timelapseSchedule } from '@floorspec/mesh/sky';
 import { messageOf } from '../../../lib/api';
-import { FILM_RATES, FILM_SIZES, filmFinalSamples, MAX_FILM_FRAMES, requestExport, type FilmFormat, type FilmLight, type FilmQuality, type FilmRate, type FilmSize } from '../../../exports/api';
+import { FILM_RATES, FILM_SIZES, filmFinalSamples, lookRequest, MAX_FILM_FRAMES, requestExport, type FilmFormat, type FilmLight, type FilmQuality, type FilmRate, type FilmSize } from '../../../exports/api';
+import { useLook } from '../sun/study';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { viewsOf } from '../shot/views';
@@ -75,6 +76,8 @@ export default function FilmDialog({ store, model }: { store: EditorStore; model
   const film = useMemo(() => theFilm(model), [model]);
   const views = useMemo(() => viewsOf(model), [model]);
   const site = useMemo(() => siteOfModel(model), [model]);
+  // FLR-T-15.4: filmed in the Sky and sun panel's season, and its rain or snow.
+  const look = lookRequest(useLook(store, model));
   const last = films.get();
   const [quality, setQuality] = useState<FilmQuality>('draft');
   const [format, setFormat] = useState<FilmFormat>('mp4');
@@ -99,7 +102,7 @@ export default function FilmDialog({ store, model }: { store: EditorStore; model
   const schedule = planProblem === null && light === 'day-to-night' ? timelapseSchedule(plan, site) : null;
   const bands = schedule === null ? null : timelapseBands(plan, site);
   const tooBig = quality === 'final' && samples === null ? '4K is for drafts: a final is path-traced frame by frame — choose 1080p or 720p.' : frames > MAX_FILM_FRAMES ? `A film is at most ${String(MAX_FILM_FRAMES)} frames: choose a lower frame rate.` : null;
-  const mcp = `floorspec_render { film: "${film.name}"${light === 'day-to-night' ? ', preset: "day-to-night"' : ''}${quality === 'final' ? ', quality: "final"' : ''} }`;
+  const mcp = `floorspec_render { film: "${film.name}"${light === 'day-to-night' ? ', preset: "day-to-night"' : ''}${quality === 'final' ? ', quality: "final"' : ''}${look.season === undefined ? '' : `, season: "${look.season}"`}${look.weather === undefined ? '' : `, weather: "${look.weather}"`} }`;
 
   async function render() {
     if (film === null || tooBig !== null || planProblem !== null) return;
@@ -110,6 +113,7 @@ export default function FilmDialog({ store, model }: { store: EditorStore; model
         kind: 'film',
         film: { film: film.id, quality, format, size, fps, light, ...(light === 'day-to-night' ? { timelapse: { ...plan } } : {}) },
         ...(Object.keys(model.design).length > 0 ? { design: { ...model.design } } : {}),
+        ...look,
       });
       films.set({ job, folded: false, dialog: false, light, timelapse: light === 'day-to-night' ? { ...plan } : last.timelapse });
     } catch (caught) {

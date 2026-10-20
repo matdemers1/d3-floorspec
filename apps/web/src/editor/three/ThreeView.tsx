@@ -4,7 +4,8 @@ import type { RenovationStyle } from '@floorspec/render2d';
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
-import { DEFAULT_COLOURS, flatShaded, lensGlows, lightsOf, ROLE_LOOKS, settingOf, type HouseMesh, type LensGlow, type MeshPart, type Vec3 } from '@floorspec/mesh';
+import { DEFAULT_COLOURS, flatShaded, lensGlows, lightsOf, lookMesh, ROLE_LOOKS, settingOf, wetPart, type HouseMesh, type LensGlow, type MeshPart, type Vec3 } from '@floorspec/mesh';
+import { WET, type Look as ViewLook } from '@floorspec/mesh/sky';
 import { Button, EmptyState, IconButton, SegmentedControl, Select, Spinner, Tooltip } from '@d3cloud/ui';
 import { Box, Footprints, House, Lightbulb, Orbit as OrbitIcon, RotateCcw, X } from 'lucide-react';
 import { LightingButton, LightingChip, LightingPanel } from './lighting/LightingPanel';
@@ -21,6 +22,7 @@ import { isSurfacePart, mappedPartBuffers, surfaceBuffers, type MapRef } from '.
 import { EDITOR_METALNESS_MAX, MATERIAL_TEXTURE_UNITS, paneMaterial, presentationPane, TextureLibrary } from './textures';
 import { blocked, entryOf, eyeAt, groundAt, placeAt, roomAt, standAt, WALK, type World } from './walk';
 import { SunButton, SunChip, SunPanel, useSunNight } from './sun/SunPanel';
+import { useViewLook } from './sun/study';
 import { StillButton } from './still/StillDialog';
 import { orbitCamera } from './still/gpu/cameras';
 import { SunRig } from './sun/SunRig';
@@ -169,9 +171,31 @@ interface Built {
    * where `null`, a texture's map otherwise. Absent: one material for the whole part.
    */
   slots?: (MapRef | null)[];
+  /** FLR-T-15.4: wet in the rain — darker (its colours) and, in Presentation, glossy. */
+  wet?: true;
 }
 
-function buildParts(model: EditorModel, mesh: HouseMesh): Built[] {
+/**
+ * The parts drawn, in the season and the weather the view is seen in (FLR-T-15.4, @floorspec/mesh
+ * `lookMesh`): a deciduous tree bare in winter or coloured in autumn, a lawn through the year, light
+ * snow on what faces up outside — and in the rain, what stands outside darker (its colours, which
+ * scale a textured surface's map too).
+ */
+function buildParts(model: EditorModel, house: HouseMesh, look?: ViewLook): Built[] {
+  const mesh = look === undefined ? house : lookMesh(house, model.view, look);
+  const wet = look?.weather === 'rain';
+  return buildLooked(model, mesh).map((b) => {
+    if (!wet || !wetPart(b.part)) return b;
+    const colour = b.geometry.getAttribute('color') as THREE.BufferAttribute | undefined;
+    if (colour !== undefined) {
+      const c = colour.array as Float32Array;
+      c.forEach((v, i) => { c[i] = v * WET.darken; });
+    }
+    return { ...b, wet: true as const };
+  });
+}
+
+function buildLooked(model: EditorModel, mesh: HouseMesh): Built[] {
   const walls = new Map(model.levels.flatMap((l) => l.walls.map((w) => [w.id, w] as const)));
   return mesh.parts.map((part) => {
     const look = lookOf(part);
@@ -283,6 +307,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   useEffect(() => { motion.invalidate = () => { ctl.invalidate(); }; }, [motion, ctl]);
   const describedBy = useId();
   const night = useSunNight(store, model);
+  // FLR-T-15.4: the season and the weather the house is drawn in — a look, never the model's.
+  const look = useViewLook(store, model);
   // The GPU still's "view you are looking at" (FLR-T-13.13): the orbit now, in the glTF export's frame.
   const currentView = useCallback(() => (ctl.orbit === null || originRef.current === null ? null : orbitCamera(ctl.orbit, originRef.current, FOV)), [ctl]);
   // FLR-T-13.10: where the camera is, for saving a view, and going to a saved one.
@@ -313,7 +339,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const filmOpen = useFilmState(store, (s) => s.open);
   const filmPath = useFilmPath(store, ready?.model ?? null, ready?.mesh.origin ?? null);
   const filmMarks = useRef<HTMLDivElement>(null);
-  const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);
+  const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh, look)), [ready, look]);
   const textures = useMemo(() => new TextureLibrary(store.projectId, () => { ctl.invalidate(); }), [store, ctl]);
   // The texture units a fragment shader may sample on this GPU: 16 on most, and what decides how many lamps cast shadows.
   const [textureUnits, setTextureUnits] = useState(16);
@@ -957,10 +983,10 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           {/* FLR-T-14.5: inside the house's group, so the section box cuts it as it cuts the house. */}
           {ready !== null && xrayShown ? <XrayScene plan={xrayed} origin={ready.mesh.origin} state={xray} levels={shownLevels} fade={mainGroup} colours={tokens.xray} /> : null}
           {comparing && compare.a.kind !== 'main' && aModel !== null ? (
-            <CompareModel key={`a:${sourceKey(compare.a)}`} side="a" model={aModel} originRef={originRef} setGroup={setCompareGroup} levels={levels} roof={roof} level={levelId} accent={tokens.accent} danger={tokens.danger} textures={textures} lit={lightsOn} glows={glows} outlined={undefined} focus={compare.focus} projectId={store.projectId} onState={onCompareState} />
+            <CompareModel key={`a:${sourceKey(compare.a)}`} side="a" model={aModel} originRef={originRef} setGroup={setCompareGroup} levels={levels} roof={roof} level={levelId} accent={tokens.accent} danger={tokens.danger} textures={textures} lit={lightsOn} glows={glows} outlined={undefined} focus={compare.focus} projectId={store.projectId} onState={onCompareState} look={look} />
           ) : null}
           {comparing && compare.b.kind !== 'main' && bModel !== null ? (
-            <CompareModel key={`b:${sourceKey(compare.b)}`} side="b" model={bModel} originRef={originRef} setGroup={setCompareGroup} levels={levels} roof={roof} level={levelId} accent={tokens.accent} danger={tokens.danger} textures={textures} lit={lightsOn} glows={glows} outlined={changed} focus={compare.focus} projectId={store.projectId} onState={onCompareState} />
+            <CompareModel key={`b:${sourceKey(compare.b)}`} side="b" model={bModel} originRef={originRef} setGroup={setCompareGroup} levels={levels} roof={roof} level={levelId} accent={tokens.accent} danger={tokens.danger} textures={textures} lit={lightsOn} glows={glows} outlined={changed} focus={compare.focus} projectId={store.projectId} onState={onCompareState} look={look} />
           ) : null}
         </group>
         {comparing ? <CompareRender state={compare} groupOf={groupOf} houses={houses} main={mainHouse} ctlB={ctlB} /> : null}
@@ -1411,12 +1437,14 @@ function Parts({
   useEffect(() => { invalidate(); }, [glows, invalidate]);
   const roleMaterial = (b: Built): THREE.Material => {
     const role = b.part.model?.role;
-    if (!presenting || role === undefined) return materials.solid;
-    let m = roles.get(role);
+    if (!presenting || (role === undefined && b.wet !== true)) return materials.solid;
+    // FLR-T-15.4: wet in the rain, a glossy film that mirrors the sky.
+    const key = `${role ?? 'solid'}${b.wet === true ? ':wet' : ''}`;
+    let m = roles.get(key);
     if (m === undefined) {
-      const look = ROLE_LOOKS[role];
-      m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: look.roughness, metalness: Math.min(EDITOR_METALNESS_MAX, look.metallic) });
-      roles.set(role, m);
+      const look = role === undefined ? { roughness: 0.85, metallic: 0 } : ROLE_LOOKS[role];
+      m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: b.wet === true ? Math.min(look.roughness, WET.roughness) : look.roughness, metalness: Math.min(EDITOR_METALNESS_MAX, look.metallic) });
+      roles.set(key, m);
     }
     return m;
   };
@@ -1574,6 +1602,7 @@ function CompareModel({
   focus,
   projectId,
   onState,
+  look,
 }: {
   side: Side;
   model: EditorModel;
@@ -1591,10 +1620,12 @@ function CompareModel({
   focus: string | null;
   projectId: string;
   onState: (side: Side, status: string, parts: number) => void;
+  /** FLR-T-15.4: the season and the weather, as the view's own house is drawn in. */
+  look: ViewLook;
 }) {
   const state = useHouseMesh(model, originRef);
   const ready = state.status === 'ready' ? state : null;
-  const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);
+  const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh, look)), [ready, look]);
   useEffect(() => () => { for (const b of built) b.geometry.dispose(); }, [built]);
   const order = useMemo(() => (ready === null ? new Map<string, number>() : levelOrder(ready.model)), [ready]);
   const visible = useMemo(() => built.filter((b) => isVisible(b.part, { walking: false, levels, roof, level, order })), [built, levels, roof, level, order]);

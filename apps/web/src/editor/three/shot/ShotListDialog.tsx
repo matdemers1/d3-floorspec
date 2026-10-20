@@ -5,11 +5,12 @@ import { Alert, Badge, Button, Checkbox, FormField, Modal, SegmentedControl, Sel
 import { Check, Download, Images, X } from 'lucide-react';
 import { pictureSize, type SavedView } from '@floorspec/mesh';
 import { messageOf } from '../../../lib/api';
-import { QUALITIES, requestExport, SHOT_SIZES, shotWithinBudget, startDownload, untilFinished, type ExportJob, type ShotSize, type StillQuality } from '../../../exports/api';
+import { lookRequest, QUALITIES, requestExport, SHOT_SIZES, shotWithinBudget, startDownload, untilFinished, type ExportJob, type ShotSize, type StillQuality } from '../../../exports/api';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { webGpuDevice } from '../still/gpu/probe';
 import { shootOnGpu } from './gpuShot';
+import { useLook } from '../sun/study';
 import { viewMeta, viewsOf } from './views';
 import { readStoredZip, storedZip } from './zip';
 
@@ -39,6 +40,8 @@ const formatSeconds = (s: number): string => (s < 90 ? `${String(s)} s` : `${Str
 export default function ShotListDialog({ store, model, onClose }: { store: EditorStore; model: EditorModel; onClose: () => void }) {
   const toast = useToast();
   const views = useMemo(() => viewsOf(model), [model]);
+  // FLR-T-15.4: every view in the Sky and sun panel's season, and its rain or snow (each view keeps its own sky otherwise).
+  const look = lookRequest(useLook(store, model));
   const [ticked, setTicked] = useState<ReadonlySet<string>>(() => new Set(views.map((v) => v.id)));
   // undefined while asking the browser; null when it has no usable WebGPU.
   const [device, setDevice] = useState<string | null | undefined>(undefined);
@@ -74,7 +77,7 @@ export default function ShotListDialog({ store, model, onClose }: { store: Edito
   async function onServer(list: readonly SavedView[]) {
     const all = list.length === views.length;
     const design = Object.keys(model.design).length > 0 ? { design: { ...model.design } } : {};
-    const job = await requestExport(store.projectId, { kind: 'shots', shots: { ...(all ? {} : { views: list.map((v) => v.id) }), size, quality }, ...design });
+    const job = await requestExport(store.projectId, { kind: 'shots', shots: { ...(all ? {} : { views: list.map((v) => v.id) }), size, quality }, ...design, ...look });
     const started = Date.now();
     const rows = (j: ExportJob): Row[] => list.map((_, i) => {
       const p = j.progress ?? null;
@@ -135,6 +138,7 @@ export default function ShotListDialog({ store, model, onClose }: { store: Edito
           device,
           signal: controller.signal,
           exports,
+          look,
           onProgress: (p) => {
             rows[i] = { status: 'rendering', done: p.target === 0 ? 0 : p.samples / p.target };
             show();
