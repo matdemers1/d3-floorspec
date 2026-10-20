@@ -42,6 +42,12 @@ export function useLossColours(): LossColours {
 
 const noRaycast = (): void => undefined;
 
+const bandCounts = (bands: readonly string[]): Record<string, number> => {
+  const out: Record<string, number> = {};
+  for (const b of bands) out[b] = (out[b] ?? 0) + 1;
+  return out;
+};
+
 export function HeatLossScene({ store, origin, levels }: { store: EditorStore; origin: Vec3; levels: ReadonlySet<string> }) {
   const on = useEnvelope(store, (s) => s.on);
   const env = useEnvelopeEstimate(store);
@@ -81,8 +87,14 @@ export function HeatLossScene({ store, origin, levels }: { store: EditorStore; o
   }, [on, env, model, origin, colours, levels]);
   useEffect(() => {
     invalidate();
+    // A test hook, as the 3D view's own: what the map draws now — its triangles, and how many of each band.
+    const w = window as unknown as { __floorspecHeatLoss?: { triangles: number; bands: Record<string, number> } };
+    if (geometry !== null) {
+      const col = geometry.getAttribute('position').count / 3;
+      w.__floorspecHeatLoss = { triangles: col, bands: bandCounts(env?.status === 'ok' ? env.estimate.surfaces.map((x) => x.band) : []) };
+    } else delete w.__floorspecHeatLoss;
     return () => { geometry?.dispose(); };
-  }, [geometry, invalidate]);
+  }, [geometry, invalidate, env]);
   if (geometry === null) return null;
   return (
     <mesh geometry={geometry} renderOrder={4} raycast={noRaycast} userData={{ heatLoss: true }} name="heat-loss-map">

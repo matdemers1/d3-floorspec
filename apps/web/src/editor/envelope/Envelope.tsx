@@ -215,7 +215,7 @@ export function WallTypeThermalSection({ store, model, id, units, readOnly, edit
           </>
         )}
         <p className="fs-note">
-          {a.method}.{a.framing ? ` Framing: ${a.framing.text}.` : ''} Conductivity, density and heat capacity come from each material{a.fromDocument ? '' : ', or the CC0 thermal library where a material states none'}, cited on the material. For comparing assemblies — never a code compliance form.
+          {a.method}.{a.framing ? ` Framing: ${a.framing.text}.` : ''} Conductivity, density and heat capacity come from each material{a.fromDocument ? '' : ', or the CC0 thermal library where a material states none'}, cited on the material. For comparing assemblies — never a code check.
         </p>
         {!readOnly ? (
           <Row label="Framing">
@@ -383,7 +383,7 @@ export function RoomHeatLossSection({ store, room, units }: { store: EditorStore
         <Parts parts={r.heatingParts} units={units} total={r.heating} label="Heating, this room" testId="room-heating" />
         <span className="fs-overline">Cooling · Jul 21, {hourText(r.coolingHour)}</span>
         <Parts parts={r.coolingParts} units={units} total={r.cooling} label="Cooling, this room" testId="room-cooling" />
-        <p className="fs-note">{ROOM_METHOD} {e.thermal ? 'From the plan’s own assemblies (FS_thermal).' : 'From the climate zone’s typical assemblies: the plan states none.'} Advisory: never “compliant”, and not a sizing report.</p>
+        <p className="fs-note">{ROOM_METHOD} {e.thermal ? 'From the plan’s own assemblies (FS_thermal).' : 'From the climate zone’s typical assemblies: the plan states none.'} Advisory: an estimate to compare options, not a sizing report.</p>
         <Button size="sm" variant="secondary" onClick={() => { threeOf(store).setMode('3d'); envelopeOf(store).toggle(true); }}>
           See the heat-loss map in 3D
         </Button>

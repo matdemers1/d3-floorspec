@@ -474,6 +474,12 @@ function WallBody({ ctx }: { ctx: Ctx }) {
       <Section title="Type">
         <TypePicker ctx={ctx} kind="wallType" value={str(element['type'])} label="Wall type" path="/type" allowNone={own ? 'Own layers only' : undefined} />
         <p className="fs-note">{describeLayers(layers, units)}{own ? ' · own layers' : ''}</p>
+        {/* FLR-T-16.4: the wall's type, layer by layer — its R and U, its paths, its thermal mass. */}
+        {str(element['type']) !== undefined && !own ? (
+          <Button size="sm" variant="secondary" onClick={() => { ctx.store.select(str(element['type']) ?? null); }}>
+            Wall type, layer by layer
+          </Button>
+        ) : null}
       </Section>
       <Section title="Geometry">
         <LengthField
