@@ -6,6 +6,8 @@ import type { Orbit, PresetId } from './camera';
 import { softwareWebGL } from './software';
 import { DEFAULT_EXPLODE, DEFAULT_SECTION, type ExplodeState, type SectionState } from './section/section';
 import type { TapePoint } from './edit/tape';
+import { DEFAULT_COMPARE, type CompareState } from './compare/compare';
+import { DEFAULT_XRAY, type XrayState } from './xray/xray';
 
 /**
  * The 3D view's state (FLR-T-7.5, FLR-REQ-113, 114), beside the editor's store rather than in it:
@@ -137,6 +139,16 @@ export interface ThreeState {
   edit: EditTool | null;
   /** The tape measure's points, chained, metres in the mesh's frame (FLR-T-14.8). View state. */
   tape: readonly TapePoint[];
+  /**
+   * Compare in 3D (FLR-T-14.4): A and B — main, a pending changeset, another design option or an
+   * earlier version — drawn from one camera, with a swipe divider or side by side. View state.
+   */
+  compare: CompareState;
+  /**
+   * X-ray (FLR-T-14.5): the finishes faded and what is inside the walls drawn — framing, insulation,
+   * plumbing, wiring, ducts — each system toggled. View state: it draws, never changes the document.
+   */
+  xray: XrayState;
 }
 
 /** Edit in 3D's tools (FLR-T-14.8). */
@@ -215,6 +227,8 @@ export class ThreeStore {
       explode: DEFAULT_EXPLODE,
       edit: null,
       tape: [],
+      compare: DEFAULT_COMPARE,
+      xray: DEFAULT_XRAY,
     };
   }
 
@@ -318,7 +332,7 @@ export class ThreeStore {
    * closing it lowers them, and the view goes back to its own camera once they are down (SectionScene).
    */
   toggleExplode(open: boolean = !this.state.explode.open): void {
-    if (open) this.set({ explode: { ...this.state.explode, active: true, open: true, apart: true }, sectionOpen: false, cameraOpen: false, lightingOpen: false, walking: false, walkFrom: null, edit: null, tape: [] });
+    if (open) this.set({ explode: { ...this.state.explode, active: true, open: true, apart: true }, sectionOpen: false, cameraOpen: false, lightingOpen: false, walking: false, walkFrom: null, edit: null, tape: [], compare: { ...this.state.compare, open: false }, xray: { ...this.state.xray, on: false } });
     else this.setExplode({ open: false, apart: false });
   }
 
@@ -326,6 +340,44 @@ export class ThreeStore {
   setEdit(tool: EditTool | null): void {
     if (tool === this.state.edit) return;
     this.set(tool === 'tape' ? { edit: tool } : { edit: tool, tape: [] });
+  }
+
+  /** Change the comparison (FLR-T-14.4). */
+  setCompare(patch: Partial<CompareState>): void {
+    this.set({ compare: { ...this.state.compare, ...patch } });
+  }
+
+  /**
+   * Open or close Compare (FLR-T-14.4). Opening it puts away what shares the view with it — the
+   * exploded view, Edit in 3D and the tape, the section's panel — and keeps the sides chosen last.
+   */
+  toggleCompare(open: boolean = !this.state.compare.open): void {
+    if (open === this.state.compare.open) return;
+    if (!open) {
+      this.set({ compare: { ...this.state.compare, open: false, focus: null } });
+      return;
+    }
+    const explode = this.state.explode.open ? { explode: { ...this.state.explode, open: false, apart: false } } : {};
+    this.set({ ...explode, compare: { ...this.state.compare, open: true }, edit: null, tape: [], sectionOpen: false, cameraOpen: false, lightingOpen: false, xray: { ...this.state.xray, on: false } });
+  }
+
+  /** Change X-ray (FLR-T-14.5): the fade, a system on or off. */
+  setXray(patch: Partial<XrayState>): void {
+    this.set({ xray: { ...this.state.xray, ...patch } });
+  }
+
+  /**
+   * X-ray on or off (FLR-T-14.5). Not with the exploded view or a comparison open: X-ray draws main's
+   * house where it stands, so turning it on closes them.
+   */
+  toggleXray(on: boolean = !this.state.xray.on): void {
+    if (on === this.state.xray.on) return;
+    if (!on) {
+      this.setXray({ on: false });
+      return;
+    }
+    const explode = this.state.explode.open ? { explode: { ...this.state.explode, open: false, apart: false } } : {};
+    this.set({ ...explode, compare: { ...this.state.compare, open: false, focus: null }, xray: { ...this.state.xray, on: true } });
   }
 
   /** Draw in Draft or Presentation; remembered in this browser. */

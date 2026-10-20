@@ -118,7 +118,11 @@ export function toggleDaylightPanel(store: EditorStore): void {
   }
   // The panels share one place over the view: the others step aside.
   sunOf(store).set({ open: false, playing: false, lapse: false });
-  threeOf(store).set({ lightingOpen: false, cameraOpen: false, sectionOpen: false });
+  const three = threeOf(store);
+  three.set({ lightingOpen: false, cameraOpen: false, sectionOpen: false });
+  // X-ray fades the house and Compare draws two: daylight is studied on the house as it stands.
+  three.toggleXray(false);
+  three.toggleCompare(false);
   d.set({ on: true, open: true });
 }
 
@@ -163,7 +167,7 @@ export function DaylightPanel({ store }: { store: EditorStore }) {
   const clock = useSunState(store, (s) => s.clock);
   const ids = { title: useId(), date: useId(), time: useId() };
   // The panels share one place over the view: another opened, this one goes (the overlay stays).
-  const other = useThreeState(store, (s) => s.cameraOpen || s.lightingOpen || s.sectionOpen);
+  const other = useThreeState(store, (s) => s.cameraOpen || s.lightingOpen || s.sectionOpen || s.xray.on || s.compare.open);
   const sunOpen = useSunState(store, (s) => s.open);
   useEffect(() => {
     if (other || sunOpen) d.set({ open: false });

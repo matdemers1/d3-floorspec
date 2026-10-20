@@ -78,6 +78,26 @@ export function FilmTimeline({ store, model, rig }: { store: EditorStore; model:
   const [naming, setNaming] = useState<string | null>(null);
   const [drag, setDrag] = useState<{ index: number; at: number; moved: boolean } | null>(null);
   const [status, setStatus] = useState('');
+  /**
+   * The Add view menu's open state, held here (FLR-T-14.11). Picking a view meshes the house again on
+   * the main thread, which holds up the menu's exit animation, so Add view pressed soon after lands
+   * while the last menu is still mounted and closing. That press toggles the menu open — and the
+   * closing menu, still listening for presses outside it, dismisses it in the same event: it closed
+   * under the pointer and the pick missed. A close asked for in the event that opened the menu is
+   * that stale dismissal, and is ignored.
+   */
+  const [adding, setAdding] = useState(false);
+  const opening = useRef(false);
+  const onAdding = useCallback((next: boolean) => {
+    if (next) {
+      opening.current = true;
+      // Once the press has been dispatched to every listener.
+      window.setTimeout(() => { opening.current = false; }, 0);
+    } else if (opening.current) return;
+    setAdding(next);
+  }, []);
+  // Never open again by itself when the timeline comes back, or edits are allowed again.
+  if (adding && (!open || readOnly)) setAdding(false);
 
   /**
    * Change the film as it is when the change is sent — edits are sent one after another, each against
@@ -319,7 +339,7 @@ export function FilmTimeline({ store, model, rig }: { store: EditorStore; model:
           <span className="fs-spacer" />
           {!readOnly ? (
             <>
-              <Menu>
+              <Menu open={adding} onOpenChange={onAdding}>
                 <MenuTrigger>
                   <Button size="sm" variant="ghost" icon={<Diamond />} disabled={recording !== null || (film?.keys.length ?? 0) >= MAX_FILM_KEYS}>
                     Add view

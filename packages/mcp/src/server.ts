@@ -861,6 +861,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           mode: z.enum(MODES).optional().describe('Plan: a trade\'s view.'),
           style: z.enum(PLAN_STYLES).optional(),
           renovation: z.enum(RENOVATION).optional(),
+          compare: z.enum(['main']).optional().describe('3D, with changeset: main | changeset, one camera.'),
           film: z.string().min(1).max(200).optional().describe('A film\'s name: queued as a video, not returned.'),
           preset: z.enum(['day-to-night']).optional(),
           quality: z.enum(['draft', 'final']).optional(),
@@ -884,10 +885,17 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         const changeset = await changesetId(client, project.id, args.changeset);
         // One property for both (FLR-T-13.10): plan, 3d, or a saved view (FS_views) by name.
         const named = args.view !== undefined && args.view !== 'plan' && args.view !== '3d' ? args.view : undefined;
+        // FLR-T-14.4: a changeset against main, side by side from one camera — rasterized, B's changes lit.
+        if (args.compare !== undefined) {
+          if (changeset === undefined) throw new ToolError('compare puts main beside a changeset: name the changeset.');
+          if (named !== undefined || args.view === 'plan' || [args.scene, args.mode, args.style, args.renovation].some((a) => a !== undefined))
+            throw new ToolError('A comparison is the 3D view from a named camera or a room: drop view, scene, mode, style and renovation (a matched pair of saved views is an export, kind "pair").');
+        }
         if (named !== undefined && [args.camera, args.level, args.highlight, args.scene, args.sky, args.at, args.mode, args.style, args.renovation].some((a) => a !== undefined))
           throw new ToolError(`A saved view sets its own camera, cutaway, sky, time and lights: render "${named}" with width, doors or changeset only.`);
         const png = await client.render(project.id, {
-          view: named === undefined ? ((args.view as 'plan' | '3d' | undefined) ?? 'plan') : '3d',
+          view: named === undefined ? (args.compare !== undefined ? '3d' : ((args.view as 'plan' | '3d' | undefined) ?? 'plan')) : '3d',
+          ...(args.compare === undefined ? {} : { compare: args.compare }),
           ...(named === undefined ? {} : { savedView: named }),
           // One property for both, to fit the listing's budget: a named view, else a room.
           ...(args.camera === undefined ? {} : CAMERAS.includes(args.camera) ? { camera: args.camera as Camera } : { room: args.camera }),
@@ -903,7 +911,9 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           ...(args.style === undefined ? {} : { style: args.style }),
           ...(args.renovation === undefined ? {} : { renovation: args.renovation }),
         });
-        return { content: [{ type: 'image', data: Buffer.from(png).toString('base64'), mimeType: 'image/png' }] };
+        const image = { type: 'image' as const, data: Buffer.from(png).toString('base64'), mimeType: 'image/png' };
+        if (args.compare !== undefined) return { content: [text('Left: main as it is now. Right: the changeset, its changes in the accent colour. One camera for both.'), image] };
+        return { content: [image] };
       } catch (error) {
         return failure(error);
       }

@@ -123,7 +123,7 @@ const boxOf = (d: DeviceView): { min: number[]; max: number[] } | null => {
  * The models, loading: which elements' models are drawn (so their fallback boxes can be left out),
  * re-read as each file arrives.
  */
-export function useFurnitureModels(projectId: string, model: EditorModel | null): { items: FurnitureModel[]; scenes: Map<string, THREE.Group>; drawn: Set<string> } {
+export function useFurnitureModels(projectId: string, model: EditorModel | null, options: { hook?: boolean } = {}): { items: FurnitureModel[]; scenes: Map<string, THREE.Group>; drawn: Set<string> } {
   const items = useMemo(() => (model === null ? [] : furnitureModels(model)), [model]);
   const [scenes, setScenes] = useState(() => new Map<string, THREE.Group>());
   useEffect(() => {
@@ -144,7 +144,8 @@ export function useFurnitureModels(projectId: string, model: EditorModel | null)
     };
   }, [items, projectId, scenes]);
   const drawn = useMemo(() => new Set(items.filter((i) => scenes.has(i.sha256)).map((i) => i.id)), [items, scenes]);
-  useTestHook(projectId, model, items, drawn);
+  // A compared model's furniture (FLR-T-14.4) is not the editor's: the test hook stays the house's.
+  useTestHook(projectId, model, items, drawn, options.hook !== false);
   return { items, scenes, drawn };
 }
 
@@ -280,9 +281,9 @@ declare global {
 }
 
 /** Under automation only (navigator.webdriver): which models are drawn. Nothing is exposed to a person's browser. */
-function useTestHook(projectId: string, model: EditorModel | null, items: FurnitureModel[], drawn: Set<string>): void {
+function useTestHook(projectId: string, model: EditorModel | null, items: FurnitureModel[], drawn: Set<string>, on: boolean): void {
   useEffect(() => {
-    if (!navigator.webdriver) return;
+    if (!navigator.webdriver || !on) return;
     const hook: Hook = {
       drawn: [...drawn].sort(),
       items: items.map((i) => i.id).sort(),
@@ -293,7 +294,7 @@ function useTestHook(projectId: string, model: EditorModel | null, items: Furnit
     return () => {
       if (window.__floorspecFurniture3d === hook) delete window.__floorspecFurniture3d;
     };
-  }, [projectId, model, items, drawn]);
+  }, [projectId, model, items, drawn, on]);
 }
 
 /** Leave out the fallback boxes the mesher drew for elements whose model is drawn instead. */

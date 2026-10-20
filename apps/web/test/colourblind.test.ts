@@ -7,6 +7,7 @@ import { createElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { MODE_IDS, MODES, type ModeId } from '../src/editor/modes';
 import { ModeIcon } from '../src/editor/ModeSwitcher';
+import { colourVar, XRAY_LOOKS, XRAY_SYSTEMS } from '../src/editor/three/xray/xray';
 
 /**
  * FLR-T-18.16: the trade modes' colours (modes.css, Okabe-Ito based) stay apart for colour-blind
@@ -15,6 +16,12 @@ import { ModeIcon } from '../src/editor/ModeSwitcher';
  * of modes must still differ by at least MIN_DE in CIEDE2000, as they must for normal vision. Each
  * colour also holds 3:1 (WCAG 1.4.11, a graphic) on every surface @d3cloud/ui puts an icon on, and
  * every mode has an icon to go with its colour: colour is never the only cue.
+ *
+ * FLR-T-14.5: X-ray's systems in 3D take the same colours — each its trade's (framing Construction's,
+ * plumbing's supply and drain Plumbing's, wiring Electrical's, ducts Mechanical's; insulation the
+ * reddish purple) — so the set they make is held to the same test, on the 3D view's background, and
+ * the two that share a colour (supply and drain, both plumbing) are told apart by their pattern: a
+ * drain's dashes alternate its blue with fg-muted, which must itself stand apart from the blue.
  */
 
 /** The least CIEDE2000 difference between any two modes, under any simulation, in either theme. */
@@ -126,9 +133,13 @@ const THEMES = { light: colours(':root'), dark: colours("[data-theme='dark']") }
 const ui = dirname(createRequire(import.meta.url).resolve('@d3cloud/ui/package.json'));
 /** Where a mode's icon sits: the switcher's sunken well, panels, menus, hover rows, the page. */
 const SURFACES = ['bg', 'bg-sunken', 'surface', 'surface-raised', 'surface-card', 'surface-hover'] as const;
-function surfaces(theme: 'light' | 'dark'): Record<string, string> {
+/** A semantic colour token, as @d3cloud/ui resolves it in a theme. */
+function token(theme: 'light' | 'dark', name: string): string {
   const tokens = JSON.parse(readFileSync(join(ui, 'src/tokens', `color.semantic.${theme}.json`), 'utf8')) as { color: Record<string, { $extensions?: { 'd3.resolved'?: string } }> };
-  return Object.fromEntries(SURFACES.map((s) => [s, tokens.color[s]?.$extensions?.['d3.resolved'] ?? '']));
+  return tokens.color[name]?.$extensions?.['d3.resolved'] ?? '';
+}
+function surfaces(theme: 'light' | 'dark'): Record<string, string> {
+  return Object.fromEntries(SURFACES.map((s) => [s, token(theme, s)]));
 }
 
 describe('mode colours for colour-blind people (FLR-T-18.16)', () => {
@@ -180,4 +191,54 @@ describe('mode colours for colour-blind people (FLR-T-18.16)', () => {
       expect(html, id).toMatch(/<svg[\s>]/);
     }
   });
+});
+
+describe('X-ray’s systems for colour-blind people (FLR-T-14.5)', () => {
+  it('draws each system in its trade’s colour from modes.css: one colour per system in 2D and 3D', () => {
+    for (const system of XRAY_SYSTEMS) {
+      const { trade } = XRAY_LOOKS[system];
+      expect(MODE_IDS, system).toContain(trade);
+      expect(colourVar(system)).toBe(`--fs-mode-${trade}`);
+    }
+    expect(XRAY_LOOKS.framing.trade).toBe('construction');
+    expect(XRAY_LOOKS.supply.trade).toBe('plumbing');
+    expect(XRAY_LOOKS.drain.trade).toBe('plumbing');
+    expect(XRAY_LOOKS.electrical.trade).toBe('electrical');
+    expect(XRAY_LOOKS.ducts.trade).toBe('mechanical');
+  });
+
+  it('gives every system a pattern of its own: colour is never the only cue', () => {
+    const patterns = XRAY_SYSTEMS.map((s) => XRAY_LOOKS[s].pattern);
+    expect(new Set(patterns).size).toBe(patterns.length);
+    // The two that share a colour are told apart by line and dashes.
+    expect([XRAY_LOOKS.supply.pattern, XRAY_LOOKS.drain.pattern]).toEqual(['line', 'dash']);
+  });
+
+  for (const [theme, set] of Object.entries(THEMES)) {
+    const colourOf = (system: (typeof XRAY_SYSTEMS)[number]) => set[XRAY_LOOKS[system].trade] ?? '#000000';
+    const trades = [...new Set(XRAY_SYSTEMS.map((s) => XRAY_LOOKS[s].trade))];
+    for (const [name, matrix] of Object.entries(SIMULATIONS)) {
+      it(`keeps X-ray’s colours apart in the ${theme} theme, seen with ${name}, a drain’s dashes too`, () => {
+        const seen = trades.map((t) => lab(simulate(toLinear(hexRgb(set[t] ?? '#000000')), matrix)));
+        const close: string[] = [];
+        for (let i = 0; i < trades.length; i++)
+          for (let j = i + 1; j < trades.length; j++) {
+            const d = ciede2000(seen[i]!, seen[j]!);
+            if (d < MIN_DE) close.push(`${trades[i]!} and ${trades[j]!}: ΔE ${d.toFixed(1)}`);
+          }
+        expect(close).toEqual([]);
+        // The dashes: plumbing's blue against fg-muted.
+        const muted = token(theme as 'light' | 'dark', 'fg-muted');
+        expect(muted).toMatch(/^#[0-9a-f]{6}$/i);
+        const d = ciede2000(lab(simulate(toLinear(hexRgb(colourOf('drain'))), matrix)), lab(simulate(toLinear(hexRgb(muted)), matrix)));
+        expect(d, `drain dashes ΔE ${d.toFixed(1)}`).toBeGreaterThanOrEqual(MIN_DE);
+      });
+    }
+
+    it(`holds 3:1 on the 3D view’s background in the ${theme} theme`, () => {
+      const ground = token(theme as 'light' | 'dark', 'bg-sunken');
+      const low = XRAY_SYSTEMS.filter((s) => contrast(colourOf(s), ground) < 3).map((s) => `${s}: ${contrast(colourOf(s), ground).toFixed(2)}:1`);
+      expect(low).toEqual([]);
+    });
+  }
 });

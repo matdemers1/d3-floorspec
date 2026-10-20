@@ -2,10 +2,10 @@ import { createHash } from 'node:crypto';
 import { evaluate, OFFICIAL_READER } from '@floorspec/engine';
 import { LAYER_STATES, MODE_IDS, PLAN_LAYERS, PLAN_STYLES, RENOVATION_FILTERS } from '@floorspec/render2d';
 import { MAX_SHOTS, QUALITIES, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, withinBudget, type Quality, type ShotSize, type Size } from '@d3-floorspec/worker/stills';
-import { filmDuration, filmFrameCount, filmNamed, filmProblem, filmShots, filmsOf, savedViewsOf } from '@floorspec/mesh';
+import { filmDuration, filmFrameCount, filmNamed, filmProblem, filmShots, filmsOf, readView, savedViewNamed, savedViewsOf } from '@floorspec/mesh';
 import { midsummer, timelapseAround, timelapseProblem } from '@floorspec/mesh/sky';
 import { FILM_FORMATS, FILM_LIGHTS, FILM_QUALITIES, FILM_RATES, FILM_SIZES, filmChoiceProblem, finalSamples, type FilmSize } from '@d3-floorspec/worker/films';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
 import type { Db, Tx } from '../db.js';
 import type { Job } from '../generated/prisma/client.js';
@@ -14,6 +14,7 @@ import { Routes } from '../http/routes.js';
 import { HttpError } from '../http/errors.js';
 import { ProblemError } from '../http/problem.js';
 import { MAIN } from '../domain/projects.js';
+import { changesetHead } from '../domain/history.js';
 import { MediaError, prepareImage } from '../assets/media.js';
 import { rawBody } from './assets.js';
 import { MAX_PENDING_RENDERS } from './checks.js';
@@ -44,9 +45,18 @@ import { MAX_PENDING_RENDERS } from './checks.js';
  * sunset to an hour after unless the request says otherwise. It renders on the worker as a still
  * does, one at a time per project, reporting its frames. Any export still queued or running can be
  * cancelled (`POST …/exports/:jobId/cancel`): the worker stops at its next report.
+ *
+ * A matched pair (FLR-T-14.4, FLR-ADR-054) is `kind: "pair"`: two sides — A (main's head unless
+ * another is named) and B, each a pending changeset, a version or main, in a design — path-traced
+ * from one camera (a saved view, a named view, or `shot`: a view as FS_views records one — the
+ * editor's camera as it is) into a ZIP of the two pictures and their swipe and side-by-side
+ * composites. The job reads A's version; B's version and design travel in its parameters. It takes
+ * a render place as a shot list does: one still, shot list, film or pair renders at a time.
  */
 
-const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still', 'shots', 'film'] as const;
+const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still', 'shots', 'film', 'pair'] as const;
+/** The kinds that render on the worker for a while: one at a time per project. */
+const RENDERING = ['export.still', 'export.shots', 'export.film', 'export.pair'];
 const VIEWS = ['sw', 'se', 'ne', 'nw', 'top'] as const;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 
@@ -95,6 +105,29 @@ const FilmBody = z.strictObject({
     })
     .optional(),
 });
+const HASH = /^[0-9a-f]{64}$/;
+const UUID_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** A side of a matched pair (FLR-T-14.4): main's head, a pending changeset or a version — in a design. */
+const PairSide = z
+  .strictObject({
+    changeset: z.string().regex(UUID_ID, 'a changeset is its ID').optional(),
+    version: z.string().regex(HASH, 'a version is its 64-character hash').optional(),
+    design: z.record(z.string().regex(ID), z.string().regex(ID)).optional(),
+  })
+  .refine((s) => s.changeset === undefined || s.version === undefined, 'a side is a changeset or a version, not both');
+/**
+ * A matched pair (FLR-T-14.4): A (default main's head) and B, from one camera — a saved view by ID or
+ * name, a named view, or `shot`, a view as FS_views records one — at a shot list's size and quality.
+ */
+const PairBody = z.strictObject({
+  a: PairSide.optional(),
+  b: PairSide,
+  view: z.string().trim().min(1).max(200).optional(),
+  camera: z.enum(VIEWS).optional(),
+  shot: z.record(z.string(), z.unknown()).optional(),
+  size: z.enum(Object.keys(SHOT_SIZES) as [ShotSize, ...ShotSize[]]).default('small'),
+  quality: z.enum(Object.keys(QUALITIES) as [Quality, ...Quality[]]).default('draft'),
+});
 export const PAGE_NAMES = ['tabloid', 'arch-c', 'arch-d', 'letter', 'a4', 'a3'] as const;
 
 const ExportBody = z.strictObject({
@@ -120,6 +153,8 @@ const ExportBody = z.strictObject({
   shots: ShotsBody.optional(),
   /** A film: which, how, and in what light (FLR-T-14.1). */
   film: FilmBody.optional(),
+  /** A matched pair: its two sides, its camera, how big and how clean (FLR-T-14.4). */
+  pair: z.unknown().optional(),
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8) — the editor's GPU still asks for either (FLR-T-13.13). */
   doors: z.enum(['open', 'closed']).optional(),
   /**
@@ -178,6 +213,10 @@ type Params = {
   readonly frames?: number;
   readonly light?: string;
   readonly timelapse?: { date: string; from: string; to: string; lightsAtDusk: boolean };
+  /** A matched pair (FLR-T-14.4): what A is, in words; B's version, design and words; the camera given whole. */
+  readonly aLabel?: string;
+  readonly pair?: { hash: string; seq: number | null; label: string; design?: Record<string, string> };
+  readonly shot?: Prisma.InputJsonObject;
 };
 
 /** The largest still the editor may save: a 4K PNG with room to spare. */
@@ -237,6 +276,18 @@ export function exportView(projectId: string, job: Job) {
           }
         : null,
     shots: job.kind === 'export.shots' ? { views: p.views ?? null, size: p.size ?? 'medium', quality: p.quality ?? 'standard' } : null,
+    pair:
+      job.kind === 'export.pair'
+        ? {
+            a: { label: p.aLabel ?? null, version: job.versionHash, design: p.design ?? null },
+            b: { label: p.pair?.label ?? null, version: p.pair?.hash ?? null, design: p.pair?.design ?? null },
+            view: p.view ?? null,
+            camera: p.camera ?? null,
+            shot: p.shot !== undefined,
+            size: p.size ?? 'small',
+            quality: p.quality ?? 'draft',
+          }
+        : null,
     film:
       job.kind === 'export.film'
         ? { id: p.film ?? null, name: p.filmName ?? p.film ?? null, quality: p.quality ?? 'draft', format: p.format ?? 'mp4', size: p.size ?? '1080p', fps: p.fps ?? 30, frames: p.frames ?? null, light: p.light ?? 'timeline', timelapse: p.timelapse ?? null, ...(p.samples === undefined ? {} : { samples: p.samples }) }
@@ -281,6 +332,111 @@ export function exportRoutes(db: Db): Routes {
     return { hash: target, seq: made?.seq ?? null, at: made?.createdAt ?? version.createdAt, document: version.document };
   }
 
+  /** "Kitchen · Option B": a design in the words its document gives it. */
+  function designWords(document: unknown, design: Record<string, string>): string {
+    const d = (document ?? {}) as { optionSets?: Record<string, { name?: string } | undefined>; options?: Record<string, { name?: string } | undefined> };
+    return Object.entries(design)
+      .sort(([a], [b]) => (a < b ? -1 : 1))
+      .map(([set, option]) => `${d.optionSets?.[set]?.name ?? set} · ${d.options?.[option]?.name ?? option}`)
+      .join(', ');
+  }
+
+  /** A side of a pair (FLR-T-14.4): its version, in its design, checked drawable, and what it is in words. */
+  async function pairSide(tx: Tx, projectId: string, side: z.infer<typeof PairSide> | undefined, which: 'A' | 'B') {
+    let version: Awaited<ReturnType<typeof versionFor>>;
+    let label: string;
+    if (side?.changeset !== undefined) {
+      const id = side.changeset.toLowerCase();
+      const head = await tx.head.findUnique({ where: { projectId_name: { projectId, name: changesetHead(id) } } });
+      const changeset = head === null ? null : await tx.changeset.findFirst({ where: { id, projectId }, select: { name: true } });
+      if (head === null || changeset === null) throw new HttpError(404, `${which}'s changeset was not found, or is no longer pending`);
+      version = await versionFor(tx, projectId, head.versionHash);
+      label = `Changeset · ${changeset.name}`;
+    } else if (side?.version !== undefined) {
+      version = await versionFor(tx, projectId, side.version);
+      label = version.seq === null ? `Version ${version.hash.slice(0, 8)}` : `v${String(version.seq)}`;
+    } else {
+      version = await versionFor(tx, projectId, undefined);
+      label = version.seq === null ? 'Main' : `Main v${String(version.seq)}`;
+    }
+    const design = side?.design;
+    const ev = evaluate(version.document as object, design === undefined ? OFFICIAL_READER : { ...OFFICIAL_READER, design });
+    if (!ev.valid || ev.document === undefined)
+      throw new ProblemError({ status: 422, type: 'not-drawable', title: `${which} cannot be drawn`, detail: 'Its model is not valid. Run validate to see why.' });
+    if (design !== undefined && (ev.design === null || ev.view === undefined))
+      throw new ProblemError({ status: 422, type: 'not-drawable', title: `${which}'s design cannot be drawn`, detail: 'The design names no design of that model, or that design is not valid.' });
+    if (design !== undefined && Object.keys(design).length > 0) label = `${label} · ${designWords(version.document, design)}`;
+    return { version, design, label, document: ev.document };
+  }
+
+  /** Queue a matched pair (FLR-T-14.4): both sides checked, the camera found, a render place free. */
+  async function queuePair(req: Request, tx: Tx, body: z.infer<typeof ExportBody>) {
+    const project = req.project;
+    if (project === undefined) throw new HttpError(404, 'project not found');
+    const extra = (['version', 'design', 'levels', 'page', 'still', 'shots', 'film', 'doors', 'lighting', 'mode', 'layers', 'style', 'renovation'] as const).filter((k) => body[k] !== undefined);
+    if (extra.length > 0) throw new HttpError(400, `a pair names its sides in pair.a and pair.b, and takes nothing else: drop ${extra.join(', ')}`);
+    const parsed = PairBody.safeParse(body.pair ?? {});
+    if (!parsed.success) throw new HttpError(400, 'the pair is not valid', { fields: parsed.error.issues.map((i) => ({ path: ['pair', ...i.path].join('.'), message: i.message })) });
+    const pair = parsed.data;
+    const cameras = [pair.view, pair.camera, pair.shot].filter((c) => c !== undefined).length;
+    if (cameras > 1) throw new HttpError(400, 'a pair is seen through one camera: a saved view, a named camera or a shot');
+    if (!shotWithinBudget(pair.size, pair.quality)) throw new HttpError(400, `a ${pair.size} pair at ${pair.quality} quality is more work than a still may take: choose a smaller size or a lower quality`);
+    const a = await pairSide(tx, project.id, pair.a, 'A');
+    const b = await pairSide(tx, project.id, pair.b, 'B');
+    if (a.version.hash === b.version.hash && JSON.stringify(a.design ?? {}) === JSON.stringify(b.design ?? {})) throw new HttpError(400, 'A and B are the same design: compare two different ones');
+    // The camera: a saved view of A's (or B's) document, a named view, or the editor's as a view record.
+    let view: string | undefined;
+    if (pair.view !== undefined) {
+      const saved = savedViewNamed(a.document, pair.view) ?? savedViewNamed(b.document, pair.view);
+      if (saved === undefined) {
+        const views = savedViewsOf(a.document).map((v) => `"${v.name}"`);
+        throw new HttpError(400, `the model has no saved view "${pair.view}"; ${views.length === 0 ? 'it has none (FS_views)' : `its views are ${views.join(', ')}`}`);
+      }
+      view = saved.id;
+    }
+    if (pair.shot !== undefined) {
+      if (JSON.stringify(pair.shot).length > 4000) throw new HttpError(400, 'the shot is too long to be a view');
+      if (readView('shot', pair.shot) === undefined) throw new HttpError(400, 'a shot is a view as FS_views records one: a name, an eye and a target in base units, and its lens');
+    }
+    const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: RENDERING }, status: { in: ['queued', 'running'] } } });
+    if (rendering > 0) throw new HttpError(429, 'a pair, a still, a shot list or a film is already rendering for this project; wait for it to finish');
+    const renders = await tx.job.count({ where: { projectId: project.id, kind: 'render.3d', status: { in: ['queued', 'running'] } } });
+    if (renders >= MAX_PENDING_RENDERS) throw new HttpError(429, `this project already has ${String(renders)} 3D renders waiting; try again when one finishes`);
+    const pending = await tx.job.count({ where: { projectId: project.id, kind: { startsWith: 'export.' }, status: { in: ['queued', 'running'] } } });
+    if (pending >= MAX_PENDING) throw new HttpError(429, `this project already has ${String(pending)} exports waiting; try again when one finishes`);
+    const params: Params = {
+      ...(a.design === undefined ? {} : { design: a.design }),
+      aLabel: a.label,
+      pair: { hash: b.version.hash, seq: b.version.seq, label: b.label, ...(b.design === undefined ? {} : { design: b.design }) },
+      ...(view === undefined ? {} : { view }),
+      ...(pair.camera === undefined ? {} : { camera: pair.camera }),
+      ...(pair.shot === undefined ? {} : { shot: pair.shot as Prisma.InputJsonObject }),
+      size: pair.size,
+      quality: pair.quality,
+      versionSeq: a.version.seq,
+      versionAt: a.version.at.toISOString(),
+    };
+    const job = await tx.job.create({
+      data: {
+        projectId: project.id,
+        kind: 'export.pair',
+        params,
+        versionHash: a.version.hash,
+        requestedByAccountId: req.auth?.accountId ?? req.token?.accountId ?? null,
+        requestedByTokenId: req.auth === undefined ? (req.token?.tokenId ?? null) : null,
+      },
+    });
+    return {
+      reply: (res: Response) => res.status(202).location(`/api/projects/${project.id}/exports/${job.id}`).json({ export: exportView(project.id, job) }),
+      audit: {
+        action: 'export.request',
+        targetType: 'job',
+        targetId: job.id,
+        detail: { projectId: project.id, kind: 'pair', version: a.version.hash, ...(a.design === undefined ? {} : { design: a.design }), pair: { b: b.version.hash, ...(b.design === undefined ? {} : { design: b.design }), view: view ?? null, camera: pair.camera ?? null, shot: pair.shot !== undefined, size: pair.size, quality: pair.quality } },
+      },
+    };
+  }
+
   /** Queue an export. */
   routes.mutate(
     'POST',
@@ -291,6 +447,8 @@ export function exportRoutes(db: Db): Routes {
       const parsed = ExportBody.safeParse(req.body ?? {});
       if (!parsed.success) throw new HttpError(400, 'the export request is not valid', { fields: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) });
       const body = parsed.data;
+      if (body.kind === 'pair') return queuePair(req, tx, body);
+      if (body.pair !== undefined) throw new HttpError(400, 'only a pair takes pair options');
       const version = await versionFor(tx, project.id, body.version);
       if (body.design !== undefined && body.kind === 'ifc') throw new HttpError(400, 'a design is chosen for a drawing or a 3D model, not an IFC export');
       // Drawn only from geometry the engine can derive: an invalid model is refused now, not as a failed job.
@@ -325,8 +483,8 @@ export function exportRoutes(db: Db): Routes {
           const known = Object.entries(view.rooms ?? {}).some(([rid, r]) => rid.toLowerCase() === key || r?.name?.toLowerCase() === key);
           if (!known) throw new HttpError(400, `the model has no room ${still.room}`);
         }
-        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.still', 'export.shots', 'export.film'] }, status: { in: ['queued', 'running'] } } });
-        if (rendering > 0) throw new HttpError(429, 'a still, a shot list or a film is already rendering for this project; wait for it to finish');
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: RENDERING }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a still, a shot list, a film or a pair is already rendering for this project; wait for it to finish');
       }
       const shots = body.kind === 'shots' ? ShotsBody.parse(body.shots ?? {}) : undefined;
       if (shots !== undefined) {
@@ -338,8 +496,8 @@ export function exportRoutes(db: Db): Routes {
         if (unknown.length > 0) throw new HttpError(400, `the model has no saved view ${unknown.join(', ')}; its views are ${saved.map((v) => v.id).join(', ')}`);
         if ((shots.views ?? saved).length > MAX_SHOTS) throw new HttpError(400, `a shot list renders at most ${String(MAX_SHOTS)} views`);
         // One shot list at a time, and it takes one of the project's three render places (FLR-T-8.5).
-        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.shots', 'export.still', 'export.film'] }, status: { in: ['queued', 'running'] } } });
-        if (rendering > 0) throw new HttpError(429, 'a shot list, a still or a film is already rendering for this project; wait for it to finish');
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: RENDERING }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a shot list, a still, a film or a pair is already rendering for this project; wait for it to finish');
         const renders = await tx.job.count({ where: { projectId: project.id, kind: 'render.3d', status: { in: ['queued', 'running'] } } });
         if (renders >= MAX_PENDING_RENDERS) throw new HttpError(429, `this project already has ${String(renders)} 3D renders waiting; try again when one finishes`);
       }
@@ -377,8 +535,8 @@ export function exportRoutes(db: Db): Routes {
         const samples = filmBody.quality === 'final' ? finalSamples(filmBody.size) : null;
         film = { id: found.id, name: found.name, frames, ...(samples === null ? {} : { samples }), ...(timelapse === undefined ? {} : { timelapse }) };
         // One film, still or shot list renders at a time per project: each takes the worker for a while.
-        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: ['export.film', 'export.still', 'export.shots'] }, status: { in: ['queued', 'running'] } } });
-        if (rendering > 0) throw new HttpError(429, 'a film, a still or a shot list is already rendering for this project; wait for it to finish, or cancel it');
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: RENDERING }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a film, a still, a shot list or a pair is already rendering for this project; wait for it to finish, or cancel it');
       }
       const missing = (body.levels ?? []).filter((l) => !levels.includes(l));
       if (missing.length > 0) throw new HttpError(400, `the model has no level ${missing.join(', ')}`);

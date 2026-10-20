@@ -5,6 +5,7 @@ import type { MeshPart } from '@floorspec/mesh';
 import type { Look } from '../parts';
 import type { ThreeStore } from '../mode';
 import type { SectionRig } from './rig';
+import { SECTION_ROOT } from '../compare/compare';
 import {
   EXPLODE_MS,
   FACE_AXIS,
@@ -460,7 +461,7 @@ export function SectionScene({ rig, three, parts, layers, layerOfPart, house, se
   const capped = planes.map((p, i) => ({ p, i })).filter(({ p }) => capping && bounds !== null && cuts(bounds, p));
 
   return (
-    <group ref={sectionRoot}>
+    <group ref={sectionRoot} name={SECTION_ROOT}>
       {[...new Set([...solids.map((s) => s.key), ...ghosts.map((g) => g.key)])].map((key) => {
         const solid = solids.find((s) => s.key === key)?.geometry ?? null;
         const shade = ghosts.find((g) => g.key === key)?.geometry ?? null;

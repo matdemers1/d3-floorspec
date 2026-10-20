@@ -1,0 +1,125 @@
+/* X-ray (FLR-T-14.5): the board's frame "14.5 · X-ray — inside the kitchen wall" and its P14/System row.
+   Tokens only (d3-check-usage); each system's colour is its trade mode's (modes.css), always beside its
+   pattern and its name. */
+
+/* The panel: under the toolbars, on the left, as the exploded view's is. */
+.fs-sun.fs-xray {
+  left: var(--space-16);
+  right: auto;
+  top: 64px;
+  width: 316px;
+  max-height: calc(100% - 64px - 60px);
+}
+
+.fs-xray__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-xray__row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: calc(var(--space-8) + var(--space-2));
+  min-height: 28px;
+}
+.fs-xray__name {
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-xray__count {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  white-space: nowrap;
+}
+.fs-xray__note {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+
+/* A system's swatch: its colour in its pattern. */
+.fs-xray__swatch {
+  flex: none;
+  overflow: visible;
+  color: var(--fs-xray-colour, var(--color-fg-muted));
+}
+.fs-xray__swatch * {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fs-xray__swatch rect {
+  fill: currentColor;
+  stroke-width: 1;
+}
+
+/* The inspector's X-ray section: the selected wall's layers to scale, outside → inside. */
+.fs-xray-layers__bar {
+  display: flex;
+  height: 24px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+}
+.fs-xray-layers__bar > span {
+  display: block;
+  min-width: 2px;
+  height: 100%;
+}
+.fs-xray-layers__bar > span + span {
+  border-left: 1px solid var(--color-border);
+}
+.fs-xray-layers__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-xray-layers__list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-xray-layers__chip {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--color-border-float);
+  border-radius: 2px;
+}
+.fs-xray-layers__in {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-6) var(--space-12);
+  margin: var(--space-8) 0 0;
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-xray-layers__in dt {
+  color: var(--color-fg-muted);
+}
+.fs-xray-layers__in dd {
+  margin: 0;
+  text-align: right;
+}
+
+/* The callouts over the view: the exploded view's leader labels (section.css), shorter leaders. */
+.fs-xray__overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fs-xray__overlay .fs-explode__leader {
+  height: 20px;
+}

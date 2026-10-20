@@ -6,7 +6,8 @@ import { isRenovationFilter, type RenovationFilter } from '@floorspec/render2d';
 import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/index.js';
 import { exportIfc } from '../export/ifc/index.js';
 import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
-import { PRESETS, render3dPng, type Preset } from '../render3d/index.js';
+import { PRESETS, render3dCompare, render3dPng, type Preset } from '../render3d/index.js';
+import { renderPair } from '../pathtrace/pair.js';
 import { normalizeOn, type Lighting } from '@floorspec/mesh';
 import { isLayerState, isModeId, isPlanStyle, PLAN_LAYERS, type LayerState, type ModeId, type PlanLayer, type PlanStyle } from '@floorspec/render2d';
 import { AT_PATTERN, LIGHTS, QUALITIES, renderLit, renderStill, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, TIMES, withinBudget, type Lights, type Quality, type ShotSize, type Size, type Sky, type SunInput, type TimeOfDay } from '../pathtrace/index.js';
@@ -38,6 +39,11 @@ export interface JobRow {
    * drain notices within a second whether or not the job is reporting: a long job stops at once.
    */
   readonly signal?: AbortSignal;
+  /**
+   * Another version's document, by its hash (FLR-T-14.4): a matched pair's B, a comparison's A. The
+   * api checked the hash is one this job's project reached; the drain reads it from the store.
+   */
+  readonly load?: (hash: string) => Promise<object>;
 }
 
 export interface JobFile {
@@ -150,6 +156,11 @@ export interface Render3dParams {
   readonly lighting?: Lighting;
   /** FLR-T-13.10: a saved view (FS_views), by its ID or name — path-traced as the photograph it describes. */
   readonly view?: string;
+  /**
+   * FLR-T-14.4: a comparison — the job's version is B (a changeset's head), this is A (main's head):
+   * both rasterized through one camera and set side by side, B's changes lit.
+   */
+  readonly compare?: { readonly hash: string; readonly design?: Record<string, string> };
 }
 
 /** A job's sky and date and time, when they are one of the presets and a date and time. */
@@ -174,7 +185,11 @@ export function render3dParams(raw: unknown): Render3dParams {
   const scene = str('scene');
   const lighting = lightingOf(p['lighting']);
   const view = str('view');
+  const c = p['compare'];
+  const compareHash = isRecord(c) && typeof c['hash'] === 'string' && /^[0-9a-f]{64}$/.test(c['hash']) ? c['hash'] : undefined;
+  const compareDesign = isRecord(c) ? designOf(c['design']) : undefined;
   return {
+    ...(compareHash === undefined ? {} : { compare: { hash: compareHash, ...(compareDesign === undefined ? {} : { design: compareDesign }) } }),
     ...(view === undefined ? {} : { view }),
     ...(scene === undefined ? {} : { scene }),
     ...(lighting === undefined ? {} : { lighting }),
@@ -247,6 +262,42 @@ export function shotsParams(raw: unknown): ShotsParams {
   if (!shotWithinBudget(size, quality)) throw new RangeError(`a ${size} shot at ${quality} quality is more work than a still may take`);
   const design = designOf(p['design']);
   return { ...(views === undefined ? {} : { views }), size, quality, ...(design === undefined ? {} : { design }) };
+}
+
+/** The parameters of a matched pair (FLR-T-14.4), as the api writes them: B, the camera, the size and quality. */
+export interface PairParams {
+  readonly design?: Record<string, string>;
+  readonly aLabel: string;
+  readonly b: { readonly hash: string; readonly label: string; readonly design?: Record<string, string> };
+  readonly view?: string;
+  readonly camera?: Preset;
+  readonly shot?: Record<string, unknown>;
+  readonly size: ShotSize;
+  readonly quality: Quality;
+}
+
+export function pairParams(raw: unknown): PairParams {
+  const p = (raw ?? {}) as Record<string, unknown>;
+  const b = p['pair'];
+  if (!isRecord(b) || typeof b['hash'] !== 'string' || !/^[0-9a-f]{64}$/.test(b['hash'])) throw new RangeError('a pair job names its B');
+  const size = typeof p['size'] === 'string' && Object.hasOwn(SHOT_SIZES, p['size']) ? (p['size'] as ShotSize) : 'small';
+  const quality = typeof p['quality'] === 'string' && Object.hasOwn(QUALITIES, p['quality']) ? (p['quality'] as Quality) : 'draft';
+  if (!shotWithinBudget(size, quality)) throw new RangeError(`a ${size} pair at ${quality} quality is more work than a still may take`);
+  const camera = typeof p['camera'] === 'string' && (PRESETS as readonly string[]).includes(p['camera']) ? (p['camera'] as Preset) : undefined;
+  const view = typeof p['view'] === 'string' && p['view'] !== '' ? p['view'] : undefined;
+  const shot = isRecord(p['shot']) ? p['shot'] : undefined;
+  const design = designOf(p['design']);
+  const bDesign = designOf(b['design']);
+  return {
+    ...(design === undefined ? {} : { design }),
+    aLabel: typeof p['aLabel'] === 'string' ? p['aLabel'] : 'A',
+    b: { hash: b['hash'], label: typeof b['label'] === 'string' ? b['label'] : 'B', ...(bDesign === undefined ? {} : { design: bDesign }) },
+    ...(view === undefined ? {} : { view }),
+    ...(camera === undefined ? {} : { camera }),
+    ...(shot === undefined ? {} : { shot }),
+    size,
+    quality,
+  };
 }
 
 /** The parameters of a film (FLR-T-14.1), as the api writes them. */
@@ -466,6 +517,50 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
       };
     },
     /**
+     * FLR-T-14.4: a matched pair — A (the job's version) and B (another, read from the store) in their
+     * designs, path-traced through one camera, as one ZIP: both pictures, swiped and side by side.
+     */
+    'export.pair': async (document, job) => {
+      const p = pairParams(job.params);
+      if (job.load === undefined) throw new Error('this worker cannot read B\'s version');
+      const other = await job.load(p.b.hash);
+      const images = claimedOnly(job, store.images);
+      const r = await renderPair(
+        { document, label: p.aLabel, ...(p.design === undefined ? {} : { design: p.design }) },
+        { document: other, label: p.b.label, ...(p.b.design === undefined ? {} : { design: p.b.design }) },
+        {
+          ...(p.view === undefined ? {} : { view: p.view }),
+          ...(p.shot === undefined ? {} : { shot: p.shot }),
+          ...(p.camera === undefined ? {} : { camera: p.camera }),
+          size: p.size,
+          quality: p.quality,
+          ...(images === undefined ? {} : { images }),
+          ...(job.progress === undefined ? {} : { onShot: (shot: number, of: number, pass: number, passes: number) => job.progress?.({ shot: shot + 1, shots: of, pass, passes }) }),
+        },
+      );
+      const files = { a: `a-${slug(p.aLabel)}.png`, b: `b-${slug(p.b.label)}.png`, swipe: 'swipe.png', sideBySide: 'side-by-side.png' };
+      return {
+        name: `pair-${slug(p.aLabel)}-vs-${slug(p.b.label)}-${job.versionHash.slice(0, 8)}.zip`,
+        contentType: 'application/zip',
+        bytes: storeZip([
+          { name: files.a, bytes: r.a.png },
+          { name: files.b, bytes: r.b.png },
+          { name: files.swipe, bytes: r.swipe },
+          { name: files.sideBySide, bytes: r.sideBySide },
+        ]),
+        summary: {
+          label: 'Matched pair — A and B path-traced from one camera',
+          pair: { a: { label: p.aLabel, file: files.a, design: r.a.design }, b: { label: p.b.label, file: files.b, design: r.b.design }, swipe: files.swipe, sideBySide: files.sideBySide, camera: r.camera },
+          width: r.width,
+          height: r.height,
+          samples: r.a.samples,
+          size: p.size,
+          quality: p.quality,
+          ms: r.ms,
+        },
+      };
+    },
+    /**
      * FLR-T-14.1: a film — the document's camera path, drawn (a draft) or path-traced (a final) frame
      * by frame and encoded as MP4 or WebM. Reports the frames done, the clock in a timelapse, and now
      * and then a small picture of the frame just made.
@@ -526,6 +621,26 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
     'render.3d': async (document, job) => {
       const p = render3dParams(job.params);
       const images = claimedOnly(job, store.images);
+      // FLR-T-14.4: a changeset (the job's version) against main, side by side from one camera.
+      if (p.compare !== undefined) {
+        if (job.load === undefined) throw new Error('this worker cannot read main\'s version');
+        const main = await job.load(p.compare.hash);
+        const c = await render3dCompare(
+          { document: main, ...(p.compare.design === undefined ? {} : { design: p.compare.design }) },
+          { document, ...(p.design === undefined ? {} : { design: p.design }), ...(p.highlight === undefined ? {} : { highlight: p.highlight }) },
+          {
+            ...(p.camera === undefined ? {} : { camera: p.camera }),
+            ...(p.room === undefined ? {} : { room: p.room }),
+            ...(p.level === undefined ? {} : { level: p.level }),
+            ...(p.width === undefined ? {} : { width: p.width }),
+            ...(p.doors === undefined ? {} : { doors: p.doors }),
+            ...(p.sky === undefined ? {} : { sky: p.sky }),
+            ...(p.at === undefined ? {} : { at: p.at }),
+            ...(images === undefined ? {} : { images }),
+          },
+        );
+        return { name: `compare-${job.versionHash.slice(0, 8)}.png`, contentType: 'image/png', bytes: c.png, summary: { width: c.width, height: c.height, camera: c.camera, design: c.design } };
+      }
       // FLR-T-13.10: a saved view, as the photograph it describes.
       if (p.view !== undefined) {
         const shot = await renderSavedView(document, p.view, {

@@ -23,6 +23,8 @@ export interface ViewRenderOptions {
   readonly images?: ImageSource;
   readonly doors?: SceneOptions['doors'];
   readonly onPass?: (done: number, total: number) => void | Promise<void>;
+  /** Also give back the picture as eight-bit RGB (a matched pair's composites, FLR-T-14.4). */
+  readonly rgb?: boolean;
 }
 
 /** The view, or a RangeError naming the views the document has. */
@@ -39,7 +41,7 @@ export function inARoom(scene: Scene, p: readonly [number, number, number]): boo
 }
 
 /** The scene a view is built from: its design, its doors and — with a document scene — its lighting. */
-async function sceneFor(document: object, view: SavedView, options: ViewRenderOptions): Promise<Scene> {
+export async function sceneFor(document: object, view: SavedView, options: ViewRenderOptions): Promise<Scene> {
   const lighting = view.scene === undefined ? undefined : documentScenes(document as FloorspecDocument).find((s) => s.id === view.scene)?.lighting;
   return buildScene(document, {
     ...(options.design === undefined ? {} : { design: options.design }),
@@ -51,7 +53,7 @@ async function sceneFor(document: object, view: SavedView, options: ViewRenderOp
 }
 
 /** Path-trace one view of a built scene at a long side and a number of samples a pixel. */
-async function shoot(document: object, scene: Scene, view: SavedView, long: number, samples: number | 'lit', budgetMs: number, options: ViewRenderOptions): Promise<StillResult> {
+export async function shoot(document: object, scene: Scene, view: SavedView, long: number, samples: number | 'lit', budgetMs: number, options: ViewRenderOptions): Promise<StillResult> {
   if (view.level !== undefined && !scene.levels.some((l) => l.id === view.level)) throw new RangeError(`the view "${view.name}" cuts away at the level ${view.level}, which the model does not draw`);
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
@@ -72,6 +74,7 @@ async function shoot(document: object, scene: Scene, view: SavedView, long: numb
     exposureScale: cam.exposure,
     ...(options.images === undefined ? {} : { images: options.images }),
     ...(options.onPass === undefined ? {} : { onPass: options.onPass }),
+    ...(options.rgb === true ? { rgb: true } : {}),
   });
 }
 
