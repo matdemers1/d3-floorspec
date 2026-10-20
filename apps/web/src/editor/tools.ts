@@ -53,6 +53,7 @@ import { anchorAt, dimensionBack, dimensionDown, dimensionEnter, dimensionMove, 
 import { annotateOf, EMPTY_DIMENSION } from './annotate/state';
 import { finishSiteChain, setbackDown, spotDown } from './site/tools';
 import { contextDown, contextMove, contextUp, finishContextChain, treeDown } from './context/tools';
+import { solarDown } from './solar/tools';
 import { finishFence } from './outdoor/tools';
 
 /**
@@ -412,6 +413,10 @@ export class ToolController {
         return;
       case 'tree':
         treeDown(this.store, this.snapFor(p, undefined, []).point);
+        return;
+      // FLR-T-16.1: solar — pick an array, or the roof face to lay one on.
+      case 'solar':
+        solarDown(this.store, this.world(p));
         return;
       case 'spot':
         spotDown(this.store, this.snapFor(p, undefined, []).point);

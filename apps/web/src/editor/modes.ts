@@ -86,7 +86,7 @@ export const RAILS: Readonly<Record<ModeId, readonly RailItem[]>> = {
   construction: [SELECT, HAND, { tool: 'wall' }, { tool: 'arc' }, { tool: 'door' }, { tool: 'window' }, { tool: 'room' }, { tool: 'wand' }, { tool: 'separator' }, { tool: 'slab' }, { tool: 'stair' }, { tool: 'roof' }],
   decorator: [SELECT, HAND, { library: true }, { quick: true }, { tool: 'room' }],
   // FLR-T-15.5: the exterior lights are FS_electrical devices too — a group of their own under a rule.
-  electrical: [SELECT, HAND, { device: 'receptacle' }, { device: 'switch' }, { device: 'light' }, { device: 'alarm' }, { device: 'panel' }, { device: 'evCharger' }, { rule: 'Exterior lights' }, { device: 'pathLight' }, { device: 'uplight' }, { device: 'wallWash' }, { device: 'stepLight' }, { device: 'stringLight' }],
+  electrical: [SELECT, HAND, { device: 'receptacle' }, { device: 'switch' }, { device: 'light' }, { device: 'alarm' }, { device: 'panel' }, { device: 'evCharger' }, { tool: 'solar' }, { rule: 'Exterior lights' }, { device: 'pathLight' }, { device: 'uplight' }, { device: 'wallWash' }, { device: 'stepLight' }, { device: 'stringLight' }],
   plumbing: [SELECT, HAND, { device: 'toilet' }, { device: 'lavatory' }, { device: 'kitchenSink' }, { device: 'shower' }, { device: 'bathtub' }, { device: 'floorDrain' }, { device: 'waterHeater' }],
   mechanical: [SELECT, HAND, { device: 'furnace' }, { device: 'airHandler' }, { device: 'supply' }, { device: 'return' }, { device: 'exhaustFan' }, { device: 'gasRange' }],
   lowvoltage: [SELECT, HAND, { device: 'dataOutlet' }, { device: 'coaxOutlet' }, { device: 'headEnd' }],

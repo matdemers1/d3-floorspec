@@ -280,7 +280,8 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
       <LandscapeShapes view={view} devices={shown} selection={selection} look={look} />
       {layers.electrical && layers.beams !== false ? <Beams view={view} devices={shown} selection={selection} units={units} /> : null}
       {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx); FS_landscape its plants, beds, lawns and lines, and FS_outdoor its outdoor rooms (above). */}
-      {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape' && d.extension !== 'FS_outdoor').map((d) => {
+      {/* FS_energy's arrays are the Solar layer's (solar/Layer.tsx): their modules, never their box. */}
+      {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape' && d.extension !== 'FS_outdoor' && !(d.extension === 'FS_energy' && d.collection === 'pvArrays')).map((d) => {
         // FLR-T-18.3: a load carries its circuit's tone, which the Electrical mode draws it in (modes.css).
         const tone = tones.get(d.id);
         return (

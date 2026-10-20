@@ -2,7 +2,7 @@ import './editor.css';
 import { RenovationMenu, useRenovationFilter } from './renovation';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, RulerDimensionLine, Sparkles, SquareSlash, StickyNote, Table as TableIcon, TriangleAlert, Undo2, WandSparkles, Waypoints, LandPlot, SquareDashed, LocateFixed, Spline, Shovel, Fence, Building2 } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, RulerDimensionLine, Sparkles, SquareSlash, StickyNote, Table as TableIcon, TriangleAlert, Undo2, WandSparkles, Waypoints, LandPlot, SquareDashed, LocateFixed, Spline, Shovel, Fence, Building2, Sun } from 'lucide-react';
 import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
 import { MaterialsModal } from './Materials';
 import { FurnitureLibrary } from '../furniture/Browser';
@@ -490,6 +490,8 @@ const RAIL: { tool?: ToolId; label: string; icon: ReactNode; later?: string }[] 
   { tool: 'fence', label: 'Draw a fence', icon: <Fence /> },
   // FLR-T-15.3: the street, the neighbours and the trees beyond the lot.
   { tool: 'context', label: 'Context (⇧X)', icon: <Building2 /> },
+  // FLR-T-16.1: solar arrays on the roof faces, in Electrical mode's rail.
+  { tool: 'solar', label: 'Solar (⇧P)', icon: <Sun /> },
 ];
 /** The building systems below the rule (FLR-T-5.7): each starts the device tool with that system's first kind. */
 const RAIL_SYSTEMS: { system: SystemId; label: string; icon: ReactNode; first: string }[] = [

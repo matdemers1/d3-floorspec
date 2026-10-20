@@ -962,6 +962,8 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
     };
     for (const fb of scene.fallbacks.values()) {
       if (fb.landscape !== undefined || fb.outdoor !== undefined) continue;
+      // FS_energy's arrays (FLR-T-16.1) are the Solar layer's: their modules, never their box.
+      if (fb.extension === 'FS_energy' && fb.collection === 'pvArrays') continue;
       const layer = layerOfElement(fb.extension, fb.collection);
       const state = layer === null ? 'on' : st[layer];
       if (state === 'off') continue;

@@ -29,6 +29,7 @@ import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
 import { SiteOverLayer, SiteUnderLayer } from './site/Layer';
 import { ContextOverLayer, ContextUnderLayer } from './context/Layer';
+import { SolarLayer } from './solar/Layer';
 import { levelPaint, planLook, useCurrentStyle, useDocumentTheme, usePlanStyles, type LevelPaint } from './planStyle';
 import { lookStyle, PlanStyleDefs, StyledRoomLabels, StyledWalls, WallTypeLegend } from './StylePanel';
 import { PrecisionHtml, PrecisionLayer } from './precision/Overlay';
@@ -229,6 +230,8 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} reno={renoStyles} underlay={<UnderlayImage store={store} view={view} level={level.id} />} />
               <SiteOverLayer store={store} view={view} level={level} model={model} layers={layers} look={look} />
               <ContextOverLayer store={store} view={view} level={level} model={model} layers={layers} look={look} />
+              {/* FLR-T-16.1: the solar arrays on this level's roofs, over the plan. */}
+              <SolarLayer store={store} view={view} level={level} model={model} layers={layers} look={look} />
               <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} look={look} />
               {/* FLR-T-14.7: the daylight study on the floors, under the systems, labels and handles. */}
               {comparing ? null : <DaylightLayer store={store} view={view} level={level} />}

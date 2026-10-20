@@ -1,6 +1,7 @@
 import { FencePanel } from './outdoor/Panel';
 import { SitePanel } from './site/Panel';
 import { ContextPanel } from './context/Panel';
+import { ArrayBody, SolarPanel } from './solar/Panel';
 import type { ReactNode } from 'react';
 import { RenovationSection } from './renovation';
 import { PlacingPanel } from '../placing/PlacingPanel';
@@ -132,6 +133,16 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
         <ContextPanel store={store} model={model} units={units} readOnly={readOnly !== null} tool={tool} tools={tools} />
       </div>
     );
+  // FLR-T-16.1: the solar tool draws with the Solar panel beside it — and a picked array's estimate under it.
+  if (tool === 'solar') {
+    const picked = selection !== null && model.ext.get(selection)?.extension === 'FS_energy' && model.ext.get(selection)?.collection === 'pvArrays' ? selection : null;
+    return (
+      <div className="fs-inspector__body">
+        {picked !== null ? <ArrayBody store={store} model={model} id={picked} units={units} readOnly={readOnly !== null} /> : null}
+        <SolarPanel store={store} model={model} units={units} readOnly={readOnly !== null} />
+      </div>
+    );
+  }
   if ((tool === 'lot' || tool === 'setback' || tool === 'spot' || tool === 'contour' || tool === 'pad') && readOnly === null && lvl !== undefined)
     return (
       <div className="fs-inspector__body">
@@ -313,6 +324,8 @@ function bodyFor(kind: Kind, ctx: Ctx, focus: string | null): ReactNode {
       return <MaterialBody ctx={ctx} />;
     case 'extensionElement':
       // FS_furniture has an inspector of its own (FLR-T-8.3).
+      // FS_energy's arrays (FLR-T-16.1): their panels, face, shade, year and circuits.
+      if (ctx.model.ext.get(ctx.id)?.extension === 'FS_energy' && ctx.model.ext.get(ctx.id)?.collection === 'pvArrays') return <ArrayBody store={ctx.store} model={ctx.model} id={ctx.id} units={ctx.units} readOnly={ctx.readOnly} />;
       if (ctx.model.ext.get(ctx.id)?.extension === 'FS_furniture') return <FurnitureBody ctx={ctx} device={ctx.model.levels.flatMap((l) => l.devices).find((d) => d.id === ctx.id)} />;
       return <DeviceBody ctx={ctx} device={ctx.model.levels.flatMap((l) => l.devices).find((d) => d.id === ctx.id)} />;
     case 'circuit':

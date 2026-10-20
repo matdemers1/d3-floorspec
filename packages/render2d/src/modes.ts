@@ -157,6 +157,9 @@ export function layerOfElement(extension: string, collection: string): PlanLayer
     // FS_site has no elements; its drawing is the site, contours, grading and spots layers.
     case 'FS_furniture':
       return collection === 'casework' || collection === 'appliances' ? 'casework' : 'furniture';
+    // FS_energy (FLR-T-16.1): an array is the Solar layer's; an inverter and an initiator stand on a wall with the electrical.
+    case 'FS_energy':
+      return collection === 'pvArrays' ? 'solar' : 'electrical';
     default:
       return null;
   }
