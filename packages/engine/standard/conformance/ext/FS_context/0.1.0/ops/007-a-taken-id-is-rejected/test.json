@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_context/trees/GP1 adds a tree keyed by the ID of FS_site's pad: the result breaks 1.3.2, and the batch is rejected.",
+  "covers": [
+    "FS-CTXT-1.3.2",
+    "FS-CTXT-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

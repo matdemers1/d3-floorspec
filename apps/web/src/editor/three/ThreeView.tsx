@@ -12,6 +12,9 @@ import { Box, Footprints, House, Lightbulb, Orbit as OrbitIcon, RotateCcw, X } f
 import { LightingButton, LightingChip, LightingPanel } from './lighting/LightingPanel';
 import { controlsOf, houseLights, switchHint } from './lighting/lighting';
 import { useEditor, type EditorState, type EditorStore } from '../store';
+import { useContextShown } from '../context/Layer';
+import { recordOf } from '../context/ops';
+import { contextOf } from '../context/state';
 import { labelOf, type EditorModel, type LevelView } from '../model';
 import { formatArea, formatLen, prettyLen, type UnitSystem } from '../units';
 import { compass, PRESET_ORDER, PRESETS, type Orbit, type PresetId } from './camera';
@@ -257,6 +260,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // with what is to be demolished ghosted in red in the Demolition and Combined plans.
   const renoFilter = useRenovationFilter(store, fullModel);
   const renoStyles = useRenovationStyles(fullModel, renoFilter);
+  // FLR-T-15.3: the street, the neighbours and the trees beyond the lot, as the plan's Context layer shows them.
+  const contextShown = useContextShown(store);
   const model = useMemo(() => (fullModel === null ? null : filteredModel(fullModel, renoFilter)), [fullModel, renoFilter]);
   const project = useEditor(store, (s) => s.model?.document.project.name ?? s.project?.name ?? 'the house');
   const selection = useEditor(store, (s) => s.selection);
@@ -427,9 +432,9 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       built.filter((b) =>
         exploding
           ? explodedVisible(b.part, explode, keptLevels)
-          : isVisible(b.part, { walking, levels, roof, level: levelId, order }) && !(inXr && !xrRoofs && (b.part.kind === 'roof' || b.part.kind === 'roofGable')),
+          : isVisible(b.part, { walking, levels, roof, level: levelId, order, context: contextShown }) && !(inXr && !xrRoofs && (b.part.kind === 'roof' || b.part.kind === 'roofGable')),
       ),
-    [built, walking, levels, roof, levelId, order, exploding, explode, keptLevels, inXr, xrRoofs],
+    [built, walking, levels, roof, levelId, order, exploding, explode, keptLevels, inXr, xrRoofs, contextShown],
   );
   // FLR-T-14.7: the levels whose floors the daylight study is laid on — the level cut at, or every
   // level in the whole house and on a walk; none in the exploded view.
@@ -893,6 +898,16 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     // FLR-T-13.12: with the lights on, a switch turns its lights on or off, and a lamp itself — walking too.
     if (id !== undefined) flip(id);
     if (walking || (editing && editTool === 'tape')) return;
+    // FLR-T-15.3: a street, a neighbour or a tree is context, not an element: picked in the Context panel.
+    if (id !== undefined && (e.object.userData as { kind?: string }).kind === 'context' && ready !== null) {
+      const member = (['streets', 'neighbours', 'trees'] as const).find((m) => recordOf(ready.model, m, id) !== undefined);
+      if (member !== undefined) {
+        store.select(null);
+        contextOf(store).set({ selected: { member, id } });
+        if (store.get().readOnly === null) store.setTool('context');
+      }
+      return;
+    }
     if (id !== undefined) store.select(id);
   };
   const onHover = (e: ThreeEvent<PointerEvent>) => {
@@ -980,7 +995,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <SceneBridge />
         <group ref={houseGroup}>
           <group ref={mainGroup}>
-            <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} danger={tokens.danger} selection={walking ? null : comparing && compare.focus !== null ? compare.focus : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={comparing || inXr ? 'draft' : quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} outlined={comparing && compare.b.kind === 'main' ? changed : undefined} />
+            <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} contextGhost={contextShown === 'ghost'} danger={tokens.danger} selection={walking ? null : comparing && compare.focus !== null ? compare.focus : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={comparing || inXr ? 'draft' : quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} outlined={comparing && compare.b.kind === 'main' ? changed : undefined} />
             {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} move={(id, g) => motion.register(id, g)} /> : null}
           </group>
           {/* FLR-T-14.5: inside the house's group, so the section box cuts it as it cuts the house. */}
@@ -1349,8 +1364,11 @@ function Parts({
   onLeave,
   interactive = true,
   outlined,
+  contextGhost = false,
 }: {
   visible: Built[];
+  /** FLR-T-15.3: the Context layer is ghosted — context drawn see-through, as a reference. */
+  contextGhost?: boolean;
   /** FLR-T-14.6: what lifts each layer of the house in the exploded view. */
   rig: SectionRig;
   /** FLR-T-14.8: what moves each element's parts while it is dragged. */
@@ -1456,8 +1474,12 @@ function Parts({
   useEffect(() => () => { demolished.dispose(); }, [demolished]);
   useEffect(() => { demolished.color.set(danger); }, [demolished, danger]);
   const ghosted = (b: Built, on: boolean): boolean => !on && reno?.get(b.part.id) === 'demolished';
+  // FLR-T-15.3: ghosted context — its own colours, see-through, writing no depth.
+  const contextFaint = useMemo(() => new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.32, depthWrite: false }), []);
+  useEffect(() => () => { contextFaint.dispose(); }, [contextFaint]);
   const materialOf = (b: Built, on: boolean) => {
     if (ghosted(b, on)) return demolished;
+    if (contextGhost && b.part.kind === 'context') return contextFaint;
     if (b.look === 'glass') return on ? materials.glassOn : panes !== null ? (b.part.model !== undefined ? panes.model : panes.glass).transmit : b.part.model !== undefined ? materials.modelGlass : materials.glass;
     if (b.look === 'lens') return on ? materials.lensOn : lit ? lensOf(b.part.id) : materials.lensOff;
     if (b.look === 'pick') return on ? materials.pickOn : materials.pick;

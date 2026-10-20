@@ -1,0 +1,6 @@
+{
+  "description": "A carriageway is at least one base unit wide.",
+  "covers": [
+    "FS-CTXT-1.3.1"
+  ]
+}

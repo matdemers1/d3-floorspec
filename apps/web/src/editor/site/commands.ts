@@ -33,4 +33,6 @@ export const SITE_COMMANDS: readonly Command[] = [
   siteTool('pad', 'Grade pad — ground set to one height, cut and filled', 'G', 'pad grade grading cut fill earthwork'),
   // FLR-T-15.2: a fence or a garden wall (FS_outdoor), drawn as a wall is, its gates openings along it.
   siteTool('fence', 'Fence — a fence or a garden wall, drawn point to point', 'F', 'fence wall gate garden yard outdoor'),
+  // FLR-T-15.3: context — the street, the neighbours and the trees beyond the lot (FS_context), never the design.
+  siteTool('context', 'Context — the street, neighbours and trees beyond the lot', 'X', 'context street curb sidewalk neighbour neighbor massing trees beyond surroundings'),
 ];

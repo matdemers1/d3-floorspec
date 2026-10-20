@@ -49,6 +49,7 @@ import {
 } from '@floorspec/analysis';
 import { GLASS_IOR, placeVector, skyIlluminance, skyRadiance, sunPlaceAt, type SkyField } from '@floorspec/mesh/sky';
 import { buildSceneFrom, type Scene, type Vec3 } from '../export/gltf/scene.js';
+import { CONTEXT_CASTS_SHADE } from '@floorspec/mesh';
 import { paneAbsorption, thinPane } from './brdf.js';
 import { Bvh, type Hit } from './bvh.js';
 import { ptScene } from './index.js';
@@ -262,9 +263,13 @@ export function fieldSky(field: SkyField): DaylightScene['sky'] {
   };
 }
 
-/** The house's architecture as the tracer reads it: no extension elements (furniture, fixtures, planting), no lamps, no ground plate. */
+/**
+ * The house's architecture as the tracer reads it: no extension elements (furniture, fixtures, planting), no lamps, no
+ * ground plate — and its context (FS_context, FLR-T-15.3): the neighbours, the street and the trees beyond the lot shade
+ * the rooms as they will, unless CONTEXT_CASTS_SHADE says otherwise.
+ */
 export function architecture(scene: Scene): PtScene {
-  const bare: Scene = { ...scene, lights: [], levels: scene.levels.map((l) => ({ ...l, nodes: l.nodes.filter((n) => n.kind !== 'extension') })) };
+  const bare: Scene = { ...scene, lights: [], levels: scene.levels.map((l) => ({ ...l, nodes: l.nodes.filter((n) => n.kind !== 'extension' && (CONTEXT_CASTS_SHADE || n.kind !== 'context')) })) };
   return ptScene(bare, { plate: false });
 }
 

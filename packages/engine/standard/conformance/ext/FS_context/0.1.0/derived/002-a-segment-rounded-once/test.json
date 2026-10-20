@@ -1,0 +1,6 @@
+{
+  "description": "A street with two diagonal segments, each 1 base unit by 1: each is rounded once, to 1, and the length is 2 - not the round of their exact sum, 2.83.",
+  "covers": [
+    "FS-CTXT-8.1.1"
+  ]
+}

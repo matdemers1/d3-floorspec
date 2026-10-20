@@ -1,0 +1,6 @@
+{
+  "description": "A sidewalk's width is a distance: at least 0.",
+  "covers": [
+    "FS-CTXT-1.3.1"
+  ]
+}

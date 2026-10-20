@@ -1,0 +1,7 @@
+{
+  "description": "A neighbour drawn over the house's Kitchen and a tree in its courtyard - context where the design is: the lints say so, and nothing Core derives changes - no room's area, no slab, no quantity counts them (1.5).",
+  "covers": [
+    "FS-CTXT-1.5.1",
+    "FS-CTXT-8.1.1"
+  ]
+}

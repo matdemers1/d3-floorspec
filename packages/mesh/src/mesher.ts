@@ -6,6 +6,7 @@ import { deriveEvaluation, evaluate, type Derived, type FloorspecDocument, type 
 import { closureParts } from './closures.js';
 import { extensionParts } from './extensions.js';
 import { joineryParts } from './joinery.js';
+import { contextParts } from './context.js';
 import { loadKernel, type Kernel, type KernelOptions } from './kernel.js';
 import type { RawPart } from './part.js';
 import { roofParts } from './roofs.js';
@@ -72,6 +73,7 @@ function meshWith(kernel: Kernel, doc: FloorspecDocument, derived: Derived, opti
       ...stairParts(kernel, doc, derived, want),
       ...extensionParts(kernel, doc, derived, want, options.models !== false),
       ...joineryParts(kernel, doc, derived, want, options.doors ?? 'closed'),
+      ...contextParts(kernel, doc, want),
     );
     const parts: MeshPart[] = [];
     for (const r of raw) {

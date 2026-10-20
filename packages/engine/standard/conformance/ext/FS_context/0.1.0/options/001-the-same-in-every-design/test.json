@@ -1,0 +1,8 @@
+{
+  "description": "Patio options A and B as Core 0.3 design options (Core 19): FS_context is evaluated in each checked design, reports nothing, and its derived values are the document's.",
+  "covers": [
+    "FS-CTXT-1.2.1",
+    "FS-CTXT-1.2.4",
+    "FS-CTXT-8.1.1"
+  ]
+}

@@ -1,0 +1,322 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "7a32a086355f1dbcbbfa826c2be944f72492538ca06cbf69ea48f4403aa74ee3",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/trees/TR1/at",
+      "value": [3901440, 17556480]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions",
+      "value": {
+        "FS_context": {
+          "neighbours": {
+            "NB1": {
+              "boundary": [[-25359360, -5852160], [-13655040, -5852160], [-13655040, 7802880], [-25359360, 7802880]],
+              "elevation": -1560576,
+              "height": 3901440,
+              "name": "Neighbour, west",
+              "rise": 2340864,
+              "roof": "gable"
+            },
+            "NB2": {
+              "boundary": [[17556480, -5852160], [29260800, -5852160], [29260800, 5852160], [17556480, 5852160]],
+              "elevation": -1170432,
+              "height": 7412736,
+              "name": "Neighbour, east",
+              "rise": 1950720,
+              "roof": "hip"
+            },
+            "NB3": {
+              "boundary": [[-7802880, -42915840], [7802880, -42915840], [7802880, -35112960], [-7802880, -35112960]],
+              "elevation": -2340864,
+              "height": 4681728,
+              "name": "Across the street"
+            }
+          },
+          "streets": {
+            "ST1": {
+              "name": "Garden Lane",
+              "points": [[-23408640, -25164288], [27310080, -25164288]],
+              "sidewalk": 1950720,
+              "strip": 1560576,
+              "width": 11704320
+            }
+          },
+          "trees": {
+            "TR1": {
+              "at": [0, 17556480],
+              "height": 15605760,
+              "spread": 11704320
+            },
+            "TR2": {
+              "at": [11704320, 15605760],
+              "elevation": 780288,
+              "form": "evergreen",
+              "height": 11704320,
+              "spread": 5462016
+            }
+          }
+        },
+        "FS_landscape": {
+          "collections": {
+            "beds": {
+              "X10": {
+                "boundary": [[-1560576, -1560576], [780288, -1560576], [780288, -390144], [-390144, -390144], [-390144, 4681728], [-1560576, 4681728]],
+                "cover": "bark",
+                "edging": "steel",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [780288, 4681728, 32000],
+                    "min": [-1560576, -1560576, -128000]
+                  }
+                }
+              },
+              "X11": {
+                "boundary": [[3121152, -3511296], [4291584, -3511296], [4291584, -2340864], [3121152, -2340864]],
+                "cover": "soil",
+                "edging": "concrete",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [4291584, -2340864, 576000],
+                    "min": [3121152, -3511296, 0]
+                  }
+                },
+                "name": "Patio planter"
+              },
+              "X12": {
+                "boundary": [[-1170432, -1170432], [1170432, -1170432], [1170432, 1170432], [-1170432, 1170432]],
+                "edging": "stone",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [1170432, 1170432, 32000],
+                    "min": [-1170432, -1170432, -128000]
+                  }
+                },
+                "host": {
+                  "position": [9363456, 2340864],
+                  "mode": "surface",
+                  "room": "R4",
+                  "surface": "floor"
+                }
+              }
+            },
+            "hardscape": {
+              "X15": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [1164288, -1956864, 19200],
+                    "min": [-3505152, -3505152, -38400]
+                  }
+                },
+                "form": "steppingStones",
+                "material": "stone",
+                "points": [[780288, -2340864], [-780288, -3121152], [-3121152, -3121152]],
+                "width": 768000
+              },
+              "X16": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [4873728, -4099584, 576000],
+                    "min": [588288, -4483584, 0]
+                  }
+                },
+                "form": "wall",
+                "material": "concrete",
+                "name": "Seat wall",
+                "points": [[780288, -4291584], [4681728, -4291584]],
+                "width": 384000
+              }
+            },
+            "lawns": {
+              "X20": {
+                "boundary": [[-9363456, -9363456], [11704320, -9363456], [11704320, -4681728], [-1560576, -4681728], [-1560576, 7022592], [-9363456, 7022592]],
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [11704320, 7022592, 12800],
+                    "min": [-9363456, -9363456, -64000]
+                  }
+                }
+              }
+            },
+            "plants": {
+              "X1": {
+                "catalogue": "tree-medium",
+                "clearHeight": 2816000,
+                "commonName": "Red maple",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [5120000, 5120000, 14080000],
+                    "min": [-5120000, -5120000, 0]
+                  }
+                },
+                "foliage": "deciduous",
+                "form": "tree",
+                "habit": "spreading",
+                "host": {
+                  "level": "L1",
+                  "position": [-5462016, -2340864],
+                  "mode": "free"
+                },
+                "species": "Acer rubrum"
+              },
+              "X2": {
+                "catalogue": "shrub-medium",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [768000, 768000, 1536000],
+                    "min": [-768000, -768000, 0]
+                  }
+                },
+                "foliage": "evergreen",
+                "form": "shrub",
+                "host": {
+                  "level": "L1",
+                  "position": [-975360, 2340864],
+                  "mode": "free"
+                }
+              },
+              "X3": {
+                "catalogue": "shrub-small",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [384000, 384000, 640000],
+                    "min": [-384000, -384000, 0]
+                  }
+                },
+                "form": "shrub",
+                "host": {
+                  "level": "L1",
+                  "position": [-975360, 780288],
+                  "mode": "free"
+                }
+              },
+              "X4": {
+                "catalogue": "grass-medium",
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [576000, 576000, 1664000],
+                    "min": [-576000, -576000, 512000]
+                  }
+                },
+                "form": "grass",
+                "host": {
+                  "level": "L1",
+                  "position": [3706368, -2926080],
+                  "mode": "free"
+                }
+              },
+              "X5": {
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [576000, 576000, 256000],
+                    "min": [-576000, -576000, 0]
+                  }
+                },
+                "form": "groundcover",
+                "host": {
+                  "level": "L1",
+                  "position": [195072, -975360],
+                  "mode": "free"
+                }
+              },
+              "X6": {
+                "clearHeight": 1920000,
+                "fallback": {
+                  "level": "L1",
+                  "box": {
+                    "max": [2880000, 2880000, 7680000],
+                    "min": [-2880000, -2880000, 0]
+                  }
+                },
+                "form": "tree",
+                "habit": "rounded",
+                "host": {
+                  "position": [9363456, 2340864],
+                  "mode": "surface",
+                  "room": "R4",
+                  "surface": "floor"
+                },
+                "name": "Courtyard tree"
+              }
+            }
+          }
+        },
+        "FS_site": {
+          "benchmark": 317772288,
+          "contours": {
+            "CT1": {
+              "elevation": -585216,
+              "name": "813'",
+              "points": [[-11704320, -3121152], [0, -2340864], [15605760, -3901440]]
+            },
+            "CT2": {
+              "elevation": 195072,
+              "name": "815'",
+              "points": [[-11704320, 6242304], [3901440, 7022592], [15605760, 5462016]]
+            }
+          },
+          "pads": {
+            "GP1": {
+              "boundary": [[-390144, -390144], [11314176, -390144], [11314176, 5071872], [-390144, 5071872]],
+              "elevation": -260096,
+              "name": "House"
+            }
+          },
+          "setbacks": {
+            "front": 9753600,
+            "rear": 3901440,
+            "side": 1950720,
+            "street": [0]
+          },
+          "spots": {
+            "SP1": {
+              "at": [-11704320, 11704320],
+              "elevation": 975360,
+              "name": "NW corner"
+            },
+            "SP2": {
+              "at": [15605760, 11704320],
+              "elevation": 780288,
+              "name": "NE corner"
+            },
+            "SP3": {
+              "at": [15605760, -15605760],
+              "elevation": -1950720,
+              "name": "SE corner"
+            },
+            "SP4": {
+              "at": [-11704320, -15605760],
+              "elevation": -1755648,
+              "name": "SW corner"
+            },
+            "SP5": {
+              "at": [1950720, 2340864],
+              "elevation": -195072
+            }
+          }
+        }
+      }
+    }
+  ]
+}

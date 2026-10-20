@@ -1,0 +1,7 @@
+{
+  "description": "\"0.1\" equals 0.1.0 (Core 12.3), so FS_context is evaluated: its data breaks the schema, FS-CTXT-SCH-001.",
+  "covers": [
+    "FS-CTXT-1.2.1",
+    "FS-CTXT-1.3.1"
+  ]
+}

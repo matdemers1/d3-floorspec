@@ -261,6 +261,11 @@ function lineTheme(style: 'technical' | 'blueprint', theme: ThemeName): PlanThem
     timber: faint,
     overhead: faint,
     flame: faint,
+    // Context (FLR-T-15.3) stays neutral in every style: the drawing's faint line, paper fills.
+    context: faint,
+    contextFill: paper,
+    contextPave: paper,
+    contextInk: muted,
     wallExterior: paper,
     wallInterior: ink,
     wallEdge: ink,

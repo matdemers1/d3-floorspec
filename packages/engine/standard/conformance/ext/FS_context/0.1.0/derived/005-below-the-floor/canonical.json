@@ -1,0 +1,920 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "extensions": {
+    "FS_context": {
+      "neighbours": {
+        "NB1": {
+          "boundary": [
+            [
+              -25359360,
+              -5852160
+            ],
+            [
+              -13655040,
+              -5852160
+            ],
+            [
+              -13655040,
+              7802880
+            ],
+            [
+              -25359360,
+              7802880
+            ]
+          ],
+          "elevation": -1560576,
+          "height": 3901440,
+          "name": "Neighbour, west",
+          "rise": 2340864,
+          "roof": "gable"
+        },
+        "NB2": {
+          "boundary": [
+            [
+              17556480,
+              -5852160
+            ],
+            [
+              29260800,
+              -5852160
+            ],
+            [
+              29260800,
+              5852160
+            ],
+            [
+              17556480,
+              5852160
+            ]
+          ],
+          "elevation": -1170432,
+          "height": 7412736,
+          "name": "Neighbour, east",
+          "rise": 1950720,
+          "roof": "hip"
+        },
+        "NB3": {
+          "boundary": [
+            [
+              -7802880,
+              -42915840
+            ],
+            [
+              7802880,
+              -42915840
+            ],
+            [
+              7802880,
+              -35112960
+            ],
+            [
+              -7802880,
+              -35112960
+            ]
+          ],
+          "elevation": -2340864,
+          "height": 4681728,
+          "name": "Across the street"
+        }
+      },
+      "streets": {
+        "ST1": {
+          "elevation": -3121152,
+          "name": "Garden Lane",
+          "points": [
+            [
+              -23408640,
+              -25164288
+            ],
+            [
+              27310080,
+              -25164288
+            ]
+          ],
+          "sidewalk": 1950720,
+          "strip": 1560576,
+          "width": 11704320
+        }
+      },
+      "trees": {
+        "TR1": {
+          "at": [
+            0,
+            17556480
+          ],
+          "elevation": -19507200,
+          "height": 15605760,
+          "spread": 11704320
+        },
+        "TR2": {
+          "at": [
+            11704320,
+            15605760
+          ],
+          "elevation": 780288,
+          "form": "evergreen",
+          "height": 11704320,
+          "spread": 5462016
+        }
+      }
+    },
+    "FS_landscape": {
+      "collections": {
+        "beds": {
+          "X10": {
+            "boundary": [
+              [
+                -1560576,
+                -1560576
+              ],
+              [
+                780288,
+                -1560576
+              ],
+              [
+                780288,
+                -390144
+              ],
+              [
+                -390144,
+                -390144
+              ],
+              [
+                -390144,
+                4681728
+              ],
+              [
+                -1560576,
+                4681728
+              ]
+            ],
+            "cover": "bark",
+            "edging": "steel",
+            "fallback": {
+              "box": {
+                "max": [
+                  780288,
+                  4681728,
+                  32000
+                ],
+                "min": [
+                  -1560576,
+                  -1560576,
+                  -128000
+                ]
+              },
+              "level": "L1"
+            }
+          },
+          "X11": {
+            "boundary": [
+              [
+                3121152,
+                -3511296
+              ],
+              [
+                4291584,
+                -3511296
+              ],
+              [
+                4291584,
+                -2340864
+              ],
+              [
+                3121152,
+                -2340864
+              ]
+            ],
+            "cover": "soil",
+            "edging": "concrete",
+            "fallback": {
+              "box": {
+                "max": [
+                  4291584,
+                  -2340864,
+                  576000
+                ],
+                "min": [
+                  3121152,
+                  -3511296,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "name": "Patio planter"
+          },
+          "X12": {
+            "boundary": [
+              [
+                -1170432,
+                -1170432
+              ],
+              [
+                1170432,
+                -1170432
+              ],
+              [
+                1170432,
+                1170432
+              ],
+              [
+                -1170432,
+                1170432
+              ]
+            ],
+            "edging": "stone",
+            "fallback": {
+              "box": {
+                "max": [
+                  1170432,
+                  1170432,
+                  32000
+                ],
+                "min": [
+                  -1170432,
+                  -1170432,
+                  -128000
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "mode": "surface",
+              "position": [
+                9363456,
+                2340864
+              ],
+              "room": "R4",
+              "surface": "floor"
+            }
+          }
+        },
+        "hardscape": {
+          "X15": {
+            "fallback": {
+              "box": {
+                "max": [
+                  1164288,
+                  -1956864,
+                  19200
+                ],
+                "min": [
+                  -3505152,
+                  -3505152,
+                  -38400
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "steppingStones",
+            "material": "stone",
+            "points": [
+              [
+                780288,
+                -2340864
+              ],
+              [
+                -780288,
+                -3121152
+              ],
+              [
+                -3121152,
+                -3121152
+              ]
+            ],
+            "width": 768000
+          },
+          "X16": {
+            "fallback": {
+              "box": {
+                "max": [
+                  4873728,
+                  -4099584,
+                  576000
+                ],
+                "min": [
+                  588288,
+                  -4483584,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "wall",
+            "material": "concrete",
+            "name": "Seat wall",
+            "points": [
+              [
+                780288,
+                -4291584
+              ],
+              [
+                4681728,
+                -4291584
+              ]
+            ],
+            "width": 384000
+          }
+        },
+        "lawns": {
+          "X20": {
+            "boundary": [
+              [
+                -9363456,
+                -9363456
+              ],
+              [
+                11704320,
+                -9363456
+              ],
+              [
+                11704320,
+                -4681728
+              ],
+              [
+                -1560576,
+                -4681728
+              ],
+              [
+                -1560576,
+                7022592
+              ],
+              [
+                -9363456,
+                7022592
+              ]
+            ],
+            "fallback": {
+              "box": {
+                "max": [
+                  11704320,
+                  7022592,
+                  12800
+                ],
+                "min": [
+                  -9363456,
+                  -9363456,
+                  -64000
+                ]
+              },
+              "level": "L1"
+            }
+          }
+        },
+        "plants": {
+          "X1": {
+            "catalogue": "tree-medium",
+            "clearHeight": 2816000,
+            "commonName": "Red maple",
+            "fallback": {
+              "box": {
+                "max": [
+                  5120000,
+                  5120000,
+                  14080000
+                ],
+                "min": [
+                  -5120000,
+                  -5120000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "foliage": "deciduous",
+            "form": "tree",
+            "habit": "spreading",
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                -5462016,
+                -2340864
+              ]
+            },
+            "species": "Acer rubrum"
+          },
+          "X2": {
+            "catalogue": "shrub-medium",
+            "fallback": {
+              "box": {
+                "max": [
+                  768000,
+                  768000,
+                  1536000
+                ],
+                "min": [
+                  -768000,
+                  -768000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "foliage": "evergreen",
+            "form": "shrub",
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                -975360,
+                2340864
+              ]
+            }
+          },
+          "X3": {
+            "catalogue": "shrub-small",
+            "fallback": {
+              "box": {
+                "max": [
+                  384000,
+                  384000,
+                  640000
+                ],
+                "min": [
+                  -384000,
+                  -384000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "shrub",
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                -975360,
+                780288
+              ]
+            }
+          },
+          "X4": {
+            "catalogue": "grass-medium",
+            "fallback": {
+              "box": {
+                "max": [
+                  576000,
+                  576000,
+                  1664000
+                ],
+                "min": [
+                  -576000,
+                  -576000,
+                  512000
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "grass",
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                3706368,
+                -2926080
+              ]
+            }
+          },
+          "X5": {
+            "fallback": {
+              "box": {
+                "max": [
+                  576000,
+                  576000,
+                  256000
+                ],
+                "min": [
+                  -576000,
+                  -576000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "groundcover",
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                195072,
+                -975360
+              ]
+            }
+          },
+          "X6": {
+            "clearHeight": 1920000,
+            "fallback": {
+              "box": {
+                "max": [
+                  2880000,
+                  2880000,
+                  7680000
+                ],
+                "min": [
+                  -2880000,
+                  -2880000,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "tree",
+            "habit": "rounded",
+            "host": {
+              "mode": "surface",
+              "position": [
+                9363456,
+                2340864
+              ],
+              "room": "R4",
+              "surface": "floor"
+            },
+            "name": "Courtyard tree"
+          }
+        }
+      }
+    },
+    "FS_site": {
+      "benchmark": 317772288,
+      "contours": {
+        "CT1": {
+          "elevation": -585216,
+          "name": "813'",
+          "points": [
+            [
+              -11704320,
+              -3121152
+            ],
+            [
+              0,
+              -2340864
+            ],
+            [
+              15605760,
+              -3901440
+            ]
+          ]
+        },
+        "CT2": {
+          "elevation": 195072,
+          "name": "815'",
+          "points": [
+            [
+              -11704320,
+              6242304
+            ],
+            [
+              3901440,
+              7022592
+            ],
+            [
+              15605760,
+              5462016
+            ]
+          ]
+        }
+      },
+      "pads": {
+        "GP1": {
+          "boundary": [
+            [
+              -390144,
+              -390144
+            ],
+            [
+              11314176,
+              -390144
+            ],
+            [
+              11314176,
+              5071872
+            ],
+            [
+              -390144,
+              5071872
+            ]
+          ],
+          "elevation": -260096,
+          "name": "House"
+        }
+      },
+      "setbacks": {
+        "front": 9753600,
+        "rear": 3901440,
+        "side": 1950720,
+        "street": [
+          0
+        ]
+      },
+      "spots": {
+        "SP1": {
+          "at": [
+            -11704320,
+            11704320
+          ],
+          "elevation": 975360,
+          "name": "NW corner"
+        },
+        "SP2": {
+          "at": [
+            15605760,
+            11704320
+          ],
+          "elevation": 780288,
+          "name": "NE corner"
+        },
+        "SP3": {
+          "at": [
+            15605760,
+            -15605760
+          ],
+          "elevation": -1950720,
+          "name": "SE corner"
+        },
+        "SP4": {
+          "at": [
+            -11704320,
+            -15605760
+          ],
+          "elevation": -1755648,
+          "name": "SW corner"
+        },
+        "SP5": {
+          "at": [
+            1950720,
+            2340864
+          ],
+          "elevation": -195072
+        }
+      }
+    }
+  },
+  "extensionsUsed": {
+    "FS_context": "0.1.0",
+    "FS_landscape": "0.1.0",
+    "FS_site": "0.1.0"
+  },
+  "floorspec": "0.4",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [
+        10924032,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        4681728
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        4681728,
+        4681728
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        7802880,
+        4681728
+      ]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [
+        7802880,
+        0
+      ]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [
+        4681728,
+        0
+      ]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [
+        4681728,
+        2340864
+      ]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [
+        7802880,
+        2340864
+      ]
+    },
+    "J9": {
+      "level": "L1",
+      "position": [
+        10924032,
+        4681728
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Phase 15 garden on its street"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2340864,
+        2340864
+      ],
+      "function": "kitchen",
+      "level": "L1",
+      "name": "Kitchen"
+    },
+    "R2": {
+      "anchor": [
+        6242304,
+        3511296
+      ],
+      "function": "bath",
+      "level": "L1",
+      "name": "Bath"
+    },
+    "R3": {
+      "anchor": [
+        6242304,
+        1170432
+      ],
+      "function": "mechanical",
+      "level": "L1",
+      "name": "Utility"
+    },
+    "R4": {
+      "anchor": [
+        9363456,
+        2340864
+      ],
+      "function": "exterior",
+      "level": "L1",
+      "name": "Courtyard"
+    }
+  },
+  "site": {
+    "boundary": [
+      [
+        -11704320,
+        -15605760
+      ],
+      [
+        15605760,
+        -15605760
+      ],
+      [
+        15605760,
+        11704320
+      ],
+      [
+        -11704320,
+        11704320
+      ]
+    ]
+  },
+  "slabs": {
+    "S1": {
+      "boundary": [
+        [
+          780288,
+          -3901440
+        ],
+        [
+          4681728,
+          -3901440
+        ],
+        [
+          4681728,
+          -390144
+        ],
+        [
+          780288,
+          -390144
+        ]
+      ],
+      "level": "L1",
+      "name": "Patio",
+      "offset": -195072,
+      "purpose": "patio",
+      "thickness": 128000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W10": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    },
+    "W11": {
+      "end": "J9",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    },
+    "W12": {
+      "end": "J10",
+      "level": "L1",
+      "start": "J9",
+      "type": "WT"
+    },
+    "W13": {
+      "end": "J5",
+      "level": "L1",
+      "start": "J10",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    },
+    "W5": {
+      "end": "J5",
+      "level": "L1",
+      "start": "J8",
+      "type": "WT"
+    },
+    "W6": {
+      "end": "J6",
+      "level": "L1",
+      "start": "J5",
+      "type": "WT"
+    },
+    "W7": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J6",
+      "type": "WT"
+    },
+    "W8": {
+      "end": "J7",
+      "level": "L1",
+      "start": "J6",
+      "type": "WT"
+    },
+    "W9": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    }
+  }
+}

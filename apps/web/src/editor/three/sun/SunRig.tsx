@@ -48,7 +48,7 @@ interface Frame {
 }
 
 function frameOf(model: EditorModel, mesh: HouseMesh): Frame | null {
-  const box = mesh.bbox;
+  const box = shadedBox(mesh);
   if (box === null) return null;
   const k = mesh.unitsPerMetre;
   const o = mesh.origin;
@@ -66,6 +66,21 @@ function frameOf(model: EditorModel, mesh: HouseMesh): Frame | null {
   const grade = gradeOf(mesh, floor, new Set(sunken.map((s) => s.id)));
   const holes = sunken.map((s) => s.ring.map((p): [number, number] => [(p[0] - o[0]) / k, (p[1] - o[1]) / k]));
   return { centre, radius, ground: (low === null ? grade : Math.min(grade, (low - o[2]) / k - 0.05)) - 0.005, holes };
+}
+
+/**
+ * What the shadow map covers: every part but a street's (FLR-T-15.3) — a street runs on past the
+ * neighbours' lots and casts no shade worth a texel, while the neighbours and the trees beyond the lot
+ * shade the house and stay inside it.
+ */
+export function shadedBox(mesh: HouseMesh): HouseMesh['bbox'] {
+  let out: HouseMesh['bbox'] = null;
+  for (const p of mesh.parts) {
+    if (p.kind === 'context' && p.model?.kind === 'street') continue;
+    const b = p.bbox;
+    out = out === null ? { min: [...b.min], max: [...b.max] } : { min: [Math.min(out.min[0], b.min[0]), Math.min(out.min[1], b.min[1]), Math.min(out.min[2], b.min[2])], max: [Math.max(out.max[0], b.max[0]), Math.max(out.max[1], b.max[1]), Math.max(out.max[2], b.max[2])] };
+  }
+  return out;
 }
 
 /**

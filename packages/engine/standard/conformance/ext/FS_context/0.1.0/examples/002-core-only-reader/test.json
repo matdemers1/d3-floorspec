@@ -1,0 +1,8 @@
+{
+  "description": "The same garden read with no known extensions: FS_context is not evaluated, so nothing of it is derived (`derived.extensions` is empty), and nothing else changes - a reader without FS_context finds nothing of it to draw.",
+  "covers": [
+    "FS-CTXT-1.2.1",
+    "FS-CTXT-1.2.4",
+    "FS-CORE-1.6.9"
+  ]
+}

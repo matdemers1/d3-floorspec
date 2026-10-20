@@ -1,0 +1,6 @@
+{
+  "description": "A hip roof on a footprint whose north-east corner is one base unit east of square: the corner is tested exactly, FS-CTXT-INV-004.",
+  "covers": [
+    "FS-CTXT-3.2.1"
+  ]
+}

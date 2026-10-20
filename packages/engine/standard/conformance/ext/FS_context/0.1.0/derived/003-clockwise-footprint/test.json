@@ -1,0 +1,6 @@
+{
+  "description": "The west neighbour's footprint written clockwise: its area is the same, positive.",
+  "covers": [
+    "FS-CTXT-8.1.1"
+  ]
+}

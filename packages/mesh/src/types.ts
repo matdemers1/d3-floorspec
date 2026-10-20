@@ -37,6 +37,7 @@ export interface Box3 {
  * | `stairBlock` | stair | solid placeholder: the stair's box (17.4), for a winder or spiral stair whose steps are not derived (as a Core 0.3 reader reads it) |
  * | `extension` | extension element | solid: its fallback box (12.6) — or, for an element this reader models, each piece of its model (`model`), inside that box. None for an element an FS_furniture appliance stands for (`standsFor`, FLR-T-12.34) |
  * | `threshold` | opening | a door's or an empty opening's sill where it is its wall's base: the plan its cut removes, each side of the location line, as the floor of the room on that side — solid between its top and bottom, a surface facing up without a thickness, and drawn down as that floor is (`plenum`) (see thresholds.ts) |
+ * | `context` | FS_context record | solid: what surrounds the lot, never the design (FLR-T-15.3, context.ts) — a street's carriageway (a surface facing up), curbs, strips and sidewalks; a neighbour's massing and its roof; a tree's trunk and crown — each piece with its `model` (`street`, `neighbour` or `tree`, and its neutral role), its `extension` FS_context's and the record's member; on the lowest level |
  * | `joinery` | opening | solid: one piece of what fills it (FLR-T-13.8) — the jambs lining it and its casings; a door's slabs with their hinges and handles, by its operation; a window's frame, sashes and glass, its stool, apron and sill — each with its `model` (the operation and what the piece is made of) and, for a piece that moves, the doors `state` it is drawn in (see joinery.ts) |
  */
 export type PartKind =
@@ -54,7 +55,8 @@ export type PartKind =
   | 'stairBlock'
   | 'extension'
   | 'threshold'
-  | 'joinery';
+  | 'joinery'
+  | 'context';
 
 export const PART_KINDS: readonly PartKind[] = [
   'wall',
@@ -72,6 +74,7 @@ export const PART_KINDS: readonly PartKind[] = [
   'extension',
   'threshold',
   'joinery',
+  'context',
 ];
 
 /**

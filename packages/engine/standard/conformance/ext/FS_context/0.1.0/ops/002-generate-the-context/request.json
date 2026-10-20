@@ -1,0 +1,75 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/streets/ST1",
+      "value": {
+        "name": "Garden Lane",
+        "points": [[-23408640, -25164288], [27310080, -25164288]],
+        "width": 11704320,
+        "strip": 1560576,
+        "sidewalk": 1950720
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/neighbours/NB1",
+      "value": {
+        "name": "Neighbour, west",
+        "boundary": [[-25359360, -5852160], [-13655040, -5852160], [-13655040, 7802880], [-25359360, 7802880]],
+        "height": 3901440,
+        "roof": "gable",
+        "rise": 2340864,
+        "elevation": -1560576
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/neighbours/NB2",
+      "value": {
+        "name": "Neighbour, east",
+        "boundary": [[17556480, -5852160], [29260800, -5852160], [29260800, 5852160], [17556480, 5852160]],
+        "height": 7412736,
+        "roof": "hip",
+        "rise": 1950720,
+        "elevation": -1170432
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/neighbours/NB3",
+      "value": {
+        "name": "Across the street",
+        "boundary": [[-7802880, -42915840], [7802880, -42915840], [7802880, -35112960], [-7802880, -35112960]],
+        "height": 4681728,
+        "elevation": -2340864
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/trees/TR1",
+      "value": {
+        "at": [0, 17556480],
+        "height": 15605760,
+        "spread": 11704320
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/trees/TR2",
+      "value": {
+        "at": [11704320, 15605760],
+        "height": 11704320,
+        "spread": 5462016,
+        "form": "evergreen",
+        "elevation": 780288
+      }
+    }
+  ]
+}

@@ -5,7 +5,8 @@
  * Mechanical, Low-voltage and Landscape, after Revit's disciplines and Chief Architect's layer sets.
  * `beams` (FLR-T-15.5) is where exterior lights' light lands — a picture, not a calculation — on in
  * the Electrical and Landscape modes. `outdoor` (FLR-T-15.2) is FS_outdoor's rooms outdoors: on in Landscape mode,
- * ghosted in the Decorator and Electrical modes as the garden is.
+ * ghosted in the Decorator and Electrical modes as the garden is. `context` (FLR-T-15.3) is FS_context's street,
+ * neighbours and trees beyond the lot, in its neutral style: on in Landscape mode, off in every other.
  *
  * One table for every place a plan is drawn, so a mode means the same thing everywhere: the editor's
  * canvas and its switcher, `renderPlan` (floorspec_render's `mode`), and the PDF and DXF drawings
@@ -16,7 +17,7 @@ export const MODE_IDS = ['construction', 'decorator', 'electrical', 'plumbing', 
 export type ModeId = (typeof MODE_IDS)[number];
 
 /** The plan's layers a mode sets, in the order the Layers drawer lists them. */
-export const PLAN_LAYERS = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'outdoor', 'findings'] as const;
+export const PLAN_LAYERS = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'outdoor', 'context', 'findings'] as const;
 export type PlanLayer = (typeof PLAN_LAYERS)[number];
 
 export const LAYER_STATES = ['on', 'ghost', 'off'] as const;
@@ -42,6 +43,7 @@ export const LAYER_LABELS: Readonly<Record<PlanLayer, string>> = {
   spots: 'Spot levels',
   landscape: 'Landscape',
   outdoor: 'Outdoor',
+  context: 'Context',
   findings: 'Findings',
 };
 
@@ -106,7 +108,7 @@ export const MODES: Readonly<Record<ModeId, ModeDef>> = {
     label: 'Landscape',
     summary: 'Site, paving, lawn, planting, exterior lights',
     plan: 'Landscape plan',
-    layers: states(['site', 'contours', 'grading', 'spots', 'landscape', 'outdoor', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'roof']),
+    layers: states(['site', 'contours', 'grading', 'spots', 'landscape', 'outdoor', 'context', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'roof']),
   },
 };
 

@@ -107,6 +107,30 @@ export * as renovation from './extensions/fs/renovation.js';
 export * as annotation from './extensions/fs/annotation.js';
 export * as site from './extensions/fs/site.js';
 export * as outdoor from './extensions/fs/outdoor.js';
+export * as context from './extensions/fs/context.js';
+export { type DerivedContext, contextData, contextRecords, usesContext, streetMeasures, neighbourHeights } from './extensions/fs/context.js';
+export {
+  contextDrawing,
+  generateContext,
+  generatedIds,
+  documentIds,
+  isGenerated,
+  offsetPolyline,
+  band,
+  roofOf,
+  pitchOf,
+  sideOfEdge,
+  seeded,
+  exactRectangle,
+  type ContextDrawing,
+  type DrawStreet,
+  type DrawNeighbour,
+  type DrawContextTree,
+  type GenerateContextOptions,
+  type GeneratedContext,
+  type StreetSide,
+  type TreeDensity,
+} from './extensions/fs/context-draw.js';
 export { type DerivedOutdoor } from './extensions/fs/outdoor.js';
 export { type DerivedSite, type DerivedGrading } from './extensions/fs/site.js';
 export {

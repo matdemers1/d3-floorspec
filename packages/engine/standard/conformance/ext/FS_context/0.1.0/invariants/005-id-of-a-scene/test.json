@@ -1,0 +1,6 @@
+{
+  "description": "A street keyed by SC1, the ID of a scene in FS_lighting's data, read as data: FS-CTXT-INV-001.",
+  "covers": [
+    "FS-CTXT-1.3.2"
+  ]
+}

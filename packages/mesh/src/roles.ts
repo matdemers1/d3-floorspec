@@ -39,6 +39,8 @@ export const MODEL_ROLES = [
   // FS_outdoor (FLR-T-15.2): a pergola's and a fence's cedar, a pool's coping, its basin's plaster and its
   // water, a shade sail, a porch's metal roof, a fire's embers.
   'cedar', 'coping', 'poolInterior', 'water', 'sail', 'roofing', 'ember',
+  // FS_context (FLR-T-15.3): one neutral, matte context style — never a material of the design.
+  'contextMass', 'contextRoof', 'contextPave', 'contextCurb', 'contextWalk', 'contextVerge', 'contextTrunk', 'contextCrown', 'contextConifer', 'contextAutumn',
 ] as const;
 
 /**
@@ -51,6 +53,9 @@ export const LANDSCAPE_ROLES: readonly ModelRole[] = ['foliage', 'foliageLight',
 /** The roles only decor is made of (FLR-T-13.11), and the foliage its plants share with the landscape: a house without the starter library's decor has none of them. */
 export const DECOR_ROLES: readonly ModelRole[] = ['rug', 'rugBorder', 'foliage', 'ceramic', 'terracotta', 'canvas', 'clay', 'ochre', 'sage', 'slate', 'shade', 'brass', 'screen', 'mirror'];
 export type ModelRole = (typeof MODEL_ROLES)[number];
+
+/** The roles only FS_context's context is drawn in (FLR-T-15.3): neutral and matte, so a street and a neighbour never read as the design. */
+export const CONTEXT_ROLES: readonly ModelRole[] = ['contextMass', 'contextRoof', 'contextPave', 'contextCurb', 'contextWalk', 'contextVerge', 'contextTrunk', 'contextCrown', 'contextConifer', 'contextAutumn'];
 
 /** The roles only FS_outdoor's models are made of (FLR-T-15.2): a house without outdoor rooms has none of them. */
 export const OUTDOOR_ROLES: readonly ModelRole[] = ['cedar', 'coping', 'poolInterior', 'water', 'sail', 'roofing', 'ember'];
@@ -207,4 +212,25 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   roofing: { color: '#4a5058', metallic: 0.5, roughness: 0.45 },
   /** A fire's embers and flame bed: glowing, as a lens is. */
   ember: { color: '#f08a3c', metallic: 0, roughness: 0.8, emissive: true },
+  // ─── FS_context (FLR-T-15.3): one neutral matte style, greys a step apart, no material of the design ───
+  /** A neighbour's walls: pale neutral massing. */
+  contextMass: { color: '#d4d6dc', metallic: 0, roughness: 1 },
+  /** A neighbour's roof: a step darker, so its form reads. */
+  contextRoof: { color: '#9a9ea8', metallic: 0, roughness: 1 },
+  /** A street's carriageway. */
+  contextPave: { color: '#6e727c', metallic: 0, roughness: 1 },
+  /** A street's curbs. */
+  contextCurb: { color: '#b9bcc4', metallic: 0, roughness: 1 },
+  /** A street's sidewalks. */
+  contextWalk: { color: '#c6c8ce', metallic: 0, roughness: 1 },
+  /** A street's planting strips: a grey with the faintest green, never the design's lawn. */
+  contextVerge: { color: '#a3aaa0', metallic: 0, roughness: 1 },
+  /** A tree beyond the lot: its trunk, and its bare limbs in winter. */
+  contextTrunk: { color: '#8a8580', metallic: 0, roughness: 1 },
+  /** A deciduous tree's crown: a soft grey-green. */
+  contextCrown: { color: '#9aa493', metallic: 0, roughness: 1 },
+  /** An evergreen's crown: a step darker. */
+  contextConifer: { color: '#7c877a', metallic: 0, roughness: 1 },
+  /** A deciduous tree's crown in autumn: a warm grey, still neutral. */
+  contextAutumn: { color: '#a99d89', metallic: 0, roughness: 1 },
 };

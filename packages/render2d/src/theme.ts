@@ -67,6 +67,11 @@ export interface Palette {
   readonly timber: string;
   readonly overhead: string;
   readonly flame: string;
+  /** FS_context (FLR-T-15.3): one neutral style, never the design's — its lines, its massing's tint, the street's paving, its tags' words. */
+  readonly context: string;
+  readonly contextFill: string;
+  readonly contextPave: string;
+  readonly contextInk: string;
 }
 
 /** The Floorspec accent, the same in both themes. */
@@ -112,6 +117,10 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     timber: '#8a6a55',
     overhead: '#6b543f',
     flame: '#c8641e',
+    context: '#8a8e9b',
+    contextFill: '#dfe1e7',
+    contextPave: '#e6e8ee',
+    contextInk: '#515563',
   },
   dark: {
     paper: '#101117',
@@ -152,5 +161,9 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     timber: '#a07c62',
     overhead: '#c9a98a',
     flame: '#e7934d',
+    context: '#747888',
+    contextFill: '#2a2d36',
+    contextPave: '#1b1d24',
+    contextInk: '#b9bdcb',
   },
 };

@@ -1,0 +1,8 @@
+{
+  "description": "The same options, the derived values asked for B's design (Core 19.6): the context is the same.",
+  "covers": [
+    "FS-CTXT-1.2.4",
+    "FS-CTXT-8.1.1",
+    "FS-CORE-19.6.1"
+  ]
+}

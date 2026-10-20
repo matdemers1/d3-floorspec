@@ -350,6 +350,7 @@
 [data-ghost~='contours'] .fs-site-contours,
 [data-ghost~='grading'] .fs-site-grading,
 [data-ghost~='spots'] .fs-site-spots,
+[data-ghost~='context'] .fs-context,
 [data-ghost~='findings'] :is(.fs-findings, .fs-rule-findings, .fs-rf-labels) {
   opacity: var(--fs-ghost-opacity);
   filter: grayscale(1);

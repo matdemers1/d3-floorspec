@@ -1,0 +1,16 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/neighbours/NB4",
+      "value": {
+        "name": "Neighbour, north",
+        "boundary": [[-7802880, 15605760], [7802880, 15605760], [7802880, 27310080], [-7802880, 27310080]],
+        "height": 3901440,
+        "roof": "gable",
+        "rise": 2731008
+      }
+    }
+  ]
+}

@@ -12,7 +12,7 @@
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
 import { landings } from '../stairwell.js';
 import { describeLens, savedViewsOf } from '@floorspec/mesh';
-import { type DerivedOutdoor, type DerivedSite, analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { type DerivedContext, type DerivedOutdoor, type DerivedSite, analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -349,7 +349,42 @@ export interface DocumentSummary {
   readonly views?: readonly SavedViewSummary[];
   /** FS_outdoor's outdoor rooms (FLR-T-15.2), as the extension derives them; absent when it has none. */
   readonly outdoor?: OutdoorSummary;
+  /** FS_context's street, neighbours and trees beyond the lot (FLR-T-15.3); absent when it has none. Never part of the design. */
+  readonly context?: ContextSummary;
   readonly diagnostics: readonly DiagnosticSummary[];
+}
+
+/**
+ * FS_context (chapter 8), as an agent reads it: what surrounds the lot — never part of the design, never
+ * in a quantity, a schedule, a rule or a finding; it does cast shade on the design.
+ */
+export interface ContextSummary {
+  readonly streets: readonly { readonly id: string; readonly name?: string; readonly length: string; readonly width: string; readonly generated: boolean }[];
+  readonly neighbours: readonly { readonly id: string; readonly name?: string; readonly roof: string; readonly footprint: number; readonly eaves: string; readonly ridge: string; readonly storeys: number; readonly generated: boolean }[];
+  readonly trees: { readonly deciduous: number; readonly evergreen: number; readonly ids: readonly string[] };
+}
+
+/** FS_context's derived values, summarised; undefined when it derived nothing. */
+export function contextSummary(doc: FloorspecDocument, x: DerivedContext | undefined): ContextSummary | undefined {
+  if (x === undefined) return undefined;
+  const data = ((doc.extensions as Record<string, Record<string, Record<string, { name?: unknown; extras?: { d3floorspec?: { generated?: unknown } }; height?: unknown }> | undefined>> | undefined)?.['FS_context']) ?? {};
+  const rec = (m: string, id: string) => data[m]?.[id];
+  const named = (m: string, id: string): { id: string; name?: string } => {
+    const n = rec(m, id)?.name;
+    return typeof n === 'string' ? { id, name: n } : { id };
+  };
+  const generated = (m: string, id: string): boolean => rec(m, id)?.extras?.d3floorspec?.generated === true;
+  const ft = (v: number): string => length(BigInt(v)).ftIn;
+  const FT = 390_144;
+  const out: ContextSummary = {
+    streets: Object.entries(x.streets).map(([id, s]) => ({ ...named('streets', id), length: ft(s.length), width: ft(s.width), generated: generated('streets', id) })),
+    neighbours: Object.entries(x.neighbours).map(([id, n]) => {
+      const height = rec('neighbours', id)?.height;
+      return { ...named('neighbours', id), roof: n.roof, footprint: Math.round(Number(n.area.replace(/\.5$/, '')) / (FT * FT)), eaves: ft(n.eaves), ridge: ft(n.ridge), storeys: Math.max(1, Math.round((typeof height === 'number' ? height : 0) / (9.5 * FT))), generated: generated('neighbours', id) };
+    }),
+    trees: { deciduous: Object.values(x.trees).filter((t) => t.form === 'deciduous').length, evergreen: Object.values(x.trees).filter((t) => t.form === 'evergreen').length, ids: Object.keys(x.trees) },
+  };
+  return out.streets.length + out.neighbours.length + out.trees.ids.length > 0 ? out : undefined;
 }
 
 /**
@@ -1122,7 +1157,8 @@ export function describeJson(document: string | Uint8Array | object, options: De
   const scenes = options.room === undefined && options.level === undefined ? sceneSummaries(doc) : undefined;
   const views = options.room === undefined && options.level === undefined ? viewSummaries(doc) : undefined;
   const outdoor = options.room === undefined && options.level === undefined ? outdoorSummary(doc, (derived?.extensions as { FS_outdoor?: DerivedOutdoor } | undefined)?.FS_outdoor) : undefined;
-  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), ...(outdoor && { outdoor }), diagnostics: diags };
+  const context = options.room === undefined && options.level === undefined ? contextSummary(doc, (derived?.extensions as { FS_context?: DerivedContext } | undefined)?.FS_context) : undefined;
+  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), ...(outdoor && { outdoor }), ...(context && { context }), diagnostics: diags };
 }
 
 const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'] as const;

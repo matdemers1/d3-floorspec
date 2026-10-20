@@ -1,0 +1,6 @@
+{
+  "description": "The street moved 10' north: its carriageway and sidewalk now reach over the lot line, but its centreline is still beyond it - only the centreline is tested (5.2), so nothing is reported.",
+  "covers": [
+    "FS-CTXT-1.2.3"
+  ]
+}

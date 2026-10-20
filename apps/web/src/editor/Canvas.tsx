@@ -28,6 +28,7 @@ import { DOOR_CLASS, doorParts, SymbolParts } from './plansymbols';
 import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
 import { SiteOverLayer, SiteUnderLayer } from './site/Layer';
+import { ContextOverLayer, ContextUnderLayer } from './context/Layer';
 import { levelPaint, planLook, useCurrentStyle, useDocumentTheme, usePlanStyles, type LevelPaint } from './planStyle';
 import { lookStyle, PlanStyleDefs, StyledRoomLabels, StyledWalls, WallTypeLegend } from './StylePanel';
 import { PrecisionHtml, PrecisionLayer } from './precision/Overlay';
@@ -222,9 +223,12 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
             <>
               {/* FLR-T-18.12: the level's underlay, over the floors and under the walls. */}
               {/* FLR-T-15.1: the site's contours under the floors; cut and fill, spots and the lot over them. */}
+              {/* FLR-T-15.3: the street and the neighbours under everything; the trees beyond the lot and the tags over the site. */}
+              <ContextUnderLayer store={store} view={view} level={level} model={model} layers={layers} look={look} />
               <SiteUnderLayer store={store} view={view} level={level} model={model} layers={layers} look={look} />
               <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} reno={renoStyles} underlay={<UnderlayImage store={store} view={view} level={level.id} />} />
               <SiteOverLayer store={store} view={view} level={level} model={model} layers={layers} look={look} />
+              <ContextOverLayer store={store} view={view} level={level} model={model} layers={layers} look={look} />
               <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} look={look} />
               {/* FLR-T-14.7: the daylight study on the floors, under the systems, labels and handles. */}
               {comparing ? null : <DaylightLayer store={store} view={view} level={level} />}

@@ -1,5 +1,6 @@
 import { FencePanel } from './outdoor/Panel';
 import { SitePanel } from './site/Panel';
+import { ContextPanel } from './context/Panel';
 import type { ReactNode } from 'react';
 import { RenovationSection } from './renovation';
 import { PlacingPanel } from '../placing/PlacingPanel';
@@ -124,6 +125,13 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   const lvl = model.levels.find((l) => l.id === levelId);
   // FLR-T-15.2: the fence tool draws with its style beside it.
   if (tool === 'fence' && readOnly === null) return <FencePanel store={store} readOnly={false} />;
+  // FLR-T-15.3: the context tools draw with the Context panel beside them: generate, draw by hand, show.
+  if (tool === 'context' || tool === 'tree' || tool === 'neighbour' || tool === 'street')
+    return (
+      <div className="fs-inspector__body">
+        <ContextPanel store={store} model={model} units={units} readOnly={readOnly !== null} tool={tool} tools={tools} />
+      </div>
+    );
   if ((tool === 'lot' || tool === 'setback' || tool === 'spot' || tool === 'contour' || tool === 'pad') && readOnly === null && lvl !== undefined)
     return (
       <div className="fs-inspector__body">

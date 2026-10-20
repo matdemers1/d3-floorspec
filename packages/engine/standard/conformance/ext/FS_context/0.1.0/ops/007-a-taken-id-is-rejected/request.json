@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/trees/GP1",
+      "value": {
+        "at": [-7802880, 17556480],
+        "height": 11704320,
+        "spread": 7802880
+      }
+    }
+  ]
+}

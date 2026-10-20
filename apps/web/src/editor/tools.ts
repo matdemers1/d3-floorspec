@@ -52,6 +52,7 @@ import type { WandDraft } from './store';
 import { anchorAt, dimensionBack, dimensionDown, dimensionEnter, dimensionMove, noteDown, noteMove, noteUp } from './annotate/tools';
 import { annotateOf, EMPTY_DIMENSION } from './annotate/state';
 import { finishSiteChain, setbackDown, spotDown } from './site/tools';
+import { contextDown, contextMove, contextUp, finishContextChain, treeDown } from './context/tools';
 import { finishFence } from './outdoor/tools';
 
 /**
@@ -401,7 +402,16 @@ export class ToolController {
       case 'pad':
       case 'contour':
       case 'fence':
+      case 'neighbour':
+      case 'street':
         this.chainDown(p, s.tool);
+        return;
+      // FLR-T-15.3: context — pick and drag a street, a neighbour or a tree; plant a tree at a click.
+      case 'context':
+        contextDown(this.store, this.world(p), this.tol(p.type));
+        return;
+      case 'tree':
+        treeDown(this.store, this.snapFor(p, undefined, []).point);
         return;
       case 'spot':
         spotDown(this.store, this.snapFor(p, undefined, []).point);
@@ -451,6 +461,9 @@ export class ToolController {
     const level = this.level;
     if (level === undefined) return;
     switch (s.tool) {
+      case 'context':
+        if (dragging) contextMove(this.store, this.world(p));
+        return;
       case 'select': {
         if (dragging && this.dragStart !== null) {
           this.selectDrag(p);
@@ -498,7 +511,9 @@ export class ToolController {
       case 'lot':
       case 'pad':
       case 'contour':
-      case 'fence': {
+      case 'fence':
+      case 'neighbour':
+      case 'street': {
         const draft = isChainDraft(s.draft) && s.draft.tool === s.tool ? s.draft : { tool: s.tool, chain: [], cursor: null, typed: '' };
         const last = draft.chain[draft.chain.length - 1];
         const cursor = this.snapFor(p, last?.point, draft.chain.map((v) => v.point));
@@ -529,6 +544,10 @@ export class ToolController {
 
   private toolUp(p: PointerInfo, moved: boolean): void {
     const s = this.store.get();
+    if (s.tool === 'context') {
+      contextUp(this.store, this.tol(p.type));
+      return;
+    }
     if (s.tool === 'select') {
       this.selectUp(p, moved);
       return;
@@ -893,6 +912,12 @@ export class ToolController {
     if (draft.tool === 'fence') {
       // FLR-T-15.2: a fence or a garden wall (FS_outdoor), drawn as a wall is.
       finishFence(this.store, draft.chain.map((v) => v.point), s.level);
+      return;
+    }
+    if (draft.tool === 'neighbour' || draft.tool === 'street') {
+      // FLR-T-15.3: a neighbour's footprint, or a street's centreline (FS_context).
+      const points = isClosed(draft.chain) && draft.tool === 'neighbour' ? draft.chain.slice(0, -1) : draft.chain;
+      finishContextChain(this.store, draft.tool, points.map((v) => v.point));
       return;
     }
     if (draft.tool === 'lot' || draft.tool === 'pad' || draft.tool === 'contour') {

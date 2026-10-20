@@ -47,8 +47,8 @@ function local(m: HouseMesh, p: MeshPart, f: OpeningAxes): { min: V3; max: V3 } 
 }
 
 describe('joinery', () => {
-  it('is a kind of part of its own, after every other', () => {
-    expect(PART_KINDS[PART_KINDS.length - 1]).toBe('joinery');
+  it('is a kind of part of its own, after every other of the house (only context, which is never the house, comes after it)', () => {
+    expect(PART_KINDS.slice(-2)).toEqual(['joinery', 'context']);
     const m = mesher.meshDerived(doc, derived, { include: ['joinery'] });
     expect(new Set(m.parts.map((p) => p.kind))).toEqual(new Set(['joinery']));
   });

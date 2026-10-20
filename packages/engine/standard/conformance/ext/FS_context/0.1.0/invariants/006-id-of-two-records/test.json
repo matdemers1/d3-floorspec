@@ -1,0 +1,6 @@
+{
+  "description": "A neighbour and a tree both keyed TR1: the ID is reported once.",
+  "covers": [
+    "FS-CTXT-1.3.2"
+  ]
+}

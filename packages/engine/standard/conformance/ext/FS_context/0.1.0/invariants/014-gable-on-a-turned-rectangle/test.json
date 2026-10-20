@@ -1,0 +1,7 @@
+{
+  "description": "A gable roof on a rectangle turned off the axes - its sides along (3, 4) and (-4, 3), 25' and 35' long: every corner is a right angle, so it is valid, and its area exact.",
+  "covers": [
+    "FS-CTXT-3.2.1",
+    "FS-CTXT-8.1.1"
+  ]
+}

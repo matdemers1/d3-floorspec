@@ -1,0 +1,8 @@
+{
+  "description": "unsetProperty of $document /extensions/FS_context/streets/ST1 removes the street. It commits, with no street derived.",
+  "covers": [
+    "FS-CTXT-1.2.1",
+    "FS-CTXT-8.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

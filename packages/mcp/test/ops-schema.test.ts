@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { z } from 'zod';
-import { Host, OP_NAMES, OpUnion } from '../src/ops-schema.js';
+import { Host, OP_NAMES, OpUnion, TOOL_OPS } from '../src/ops-schema.js';
 import { ROOM_FUNCTIONS } from '../src/vocabulary.js';
 
 /**
@@ -22,6 +22,8 @@ const references = JSON.parse(readFileSync(join(SCHEMA, 'reference.schema.json')
 describe('the Ops input schema', () => {
   for (const option of OpUnion.options) {
     const op = option.shape.op.value;
+    // generateContext (FLR-T-15.3) is the tools' own, expanded into setProperty ops before the applier sees it (test/context.test.ts)
+    if (TOOL_OPS.includes(op)) continue;
     it(`${op} has the members of the vendored schema`, () => {
       const def = schema.$defs[op];
       expect(def?.properties, `the vendored schema defines ${op}`).toBeDefined();
@@ -33,7 +35,7 @@ describe('the Ops input schema', () => {
 
   it('has every operation the vendored schema defines', () => {
     const vendored = Object.values(schema.$defs).flatMap((d) => (typeof d.properties?.['op']?.const === 'string' ? [d.properties['op'].const] : []));
-    expect([...OP_NAMES].sort()).toEqual(vendored.sort());
+    expect([...OP_NAMES].filter((o) => !TOOL_OPS.includes(o)).sort()).toEqual(vendored.sort());
   });
 
   it('moves an opening toward exactly the directions the vendored schema allows', () => {
