@@ -130,7 +130,7 @@ export function materialThermal(doc: FloorspecDocument, material: string | undef
   if (material === undefined) return undefined;
   const mats = doc.materials as Record<string, unknown> | undefined;
   if (!mats || !Object.hasOwn(mats, material)) return undefined;
-  return (thermalOf(mats[material]) ?? {}) as MaterialThermal;
+  return (thermalOf(mats[material]) ?? {});
 }
 
 /** 3.1: a layer of `thickness` (base units) made of `material`: its resistance and heat capacity. */
@@ -173,7 +173,7 @@ export function thermalAssemblies(doc: FloorspecDocument): ThermalAssembly[] {
   for (const [id, t] of entries(doc.types))
     if (t.kind === 'wallType') {
       const f = thermalOf(t)?.['framing'] as ThermalFraming | undefined;
-      out.push({ section: 'wallTypes', id, layers: t.layers as readonly ThermalLayer[], ...(f === undefined ? {} : { framing: f }) });
+      out.push({ section: 'wallTypes', id, layers: t.layers, ...(f === undefined ? {} : { framing: f }) });
     }
   for (const [id, r] of entries(doc.roofs as Record<string, unknown> | undefined)) {
     const v = thermalOf(r);
