@@ -64,6 +64,13 @@ export const SKIES = ['clear', 'overcast', 'dusk', 'night', 'studio'] as const;
 export type Sky = (typeof SKIES)[number];
 
 /**
+ * The seasons and weathers a render is seen in (FLR-T-15.4): @floorspec/mesh's looks (sky/weather.ts
+ * `LOOK_SEASONS`, `WEATHERS`, which the worker's tests hold these lists to), as plain names for the api.
+ */
+export const SEASON_NAMES = ['spring', 'summer', 'autumn', 'winter'] as const;
+export const WEATHER_NAMES = ['clear', 'overcast', 'rain', 'snow'] as const;
+
+/**
  * A date and time at the site (FLR-T-13.9): ISO 8601, `2026-06-21T19:30`, seconds optional, with
  * `Z` or an offset (`-04:00`) — or without, read in the site's zone by its longitude (15° an hour,
  * no daylight saving), since Floorspec records no time zone.

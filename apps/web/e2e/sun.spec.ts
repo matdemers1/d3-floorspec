@@ -76,11 +76,25 @@ async function shoot(page: Page, name: string): Promise<void> {
   }
 }
 
+/** The theme switched and settled: two frames after it, no CSS transition still running (as edit3d.spec.ts). */
+async function themeSettled(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => new Promise<boolean>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        resolve(document.getAnimations().every((a) => !(a instanceof CSSTransition) || a.playState !== 'running'));
+      }));
+    }),
+    undefined,
+    { timeout: 30_000, polling: 250 },
+  );
+}
+
 async function axe(page: Page, state: string): Promise<void> {
   for (const theme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: theme });
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(800);
+    await themeSettled(page);
     const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.help} — ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`), `${state} (${theme})`).toEqual([]);
   }
@@ -125,8 +139,9 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   await expect(panel).toBeVisible();
   const status = panel.getByRole('status');
   await expect(status).toContainText('The site has no location yet, so the sun is placed as if at 40° N, 75° W: add its latitude and longitude for its own.');
-  const skies = panel.getByRole('radiogroup', { name: 'Sky' });
-  await expect(skies.getByRole('radio', { name: 'Clear day' })).toHaveAttribute('aria-checked', 'true');
+  // FLR-T-15.4: the sky tiles are the weather now — dusk and night are times, the studio a backdrop.
+  const skies = panel.getByRole('radiogroup', { name: 'Weather' });
+  await expect(skies.getByRole('radio', { name: 'Clear' })).toHaveAttribute('aria-checked', 'true');
   await axe(page, 'sky and sun panel, no site location');
 
   // The site's place, typed: latitude waits for longitude, then both land as one Op on $site.
@@ -260,23 +275,31 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   for (let i = 0; i < 15; i++) await slider.press('PageUp');
   await expect(slider).toHaveAttribute('aria-valuetext', '3:00 pm');
 
-  // ── FLR-T-13.4: the other skies. Overcast: no direct sun; dusk and night: no time of day to set.
+  // ── FLR-T-13.4: the other skies. Overcast: no direct sun; FLR-T-15.4: the arrow keys move on to
+  // rain, still the overcast sky. Dusk and night are the clear sky's after sunset: times, not tiles.
   await skies.getByRole('radio', { name: 'Overcast' }).click();
   await expect.poll(async () => (await sunHook(page))?.sky?.preset).toBe('overcast');
   expect((await sunHook(page))!.sky).toMatchObject({ band: 'day', direct: null, dome: true, lawn: true });
+  await expect(status).toContainText('Overcast: the sun is behind cloud');
   await shoot(page, 'overcast');
   await skies.getByRole('radio', { name: 'Overcast' }).press('ArrowRight');
-  await expect(skies.getByRole('radio', { name: 'Dusk' })).toHaveAttribute('aria-checked', 'true');
+  await expect(skies.getByRole('radio', { name: 'Rain-wet' })).toHaveAttribute('aria-checked', 'true');
+  await expect.poll(async () => (await sunHook(page))?.sky?.preset).toBe('overcast');
+  await skies.getByRole('radio', { name: 'Clear' }).click();
+  await expect.poll(async () => (await sunHook(page))?.sky?.preset).toBe('clear');
+  // Just after sunset (6:21 pm EDT on Oct 4 in Boston): the clear sky's dusk.
+  for (let i = 0; i < 4; i++) await slider.press('PageUp');
+  await slider.press('ArrowLeft');
+  await expect(slider).toHaveAttribute('aria-valuetext', '6:45 pm');
   await expect.poll(async () => (await sunHook(page))?.sky?.band).toBe('dusk');
-  await expect(status).toContainText('Dusk: just after sunset on Oct 4');
-  await expect(slider).toBeHidden();
   await shoot(page, 'dusk');
-  await skies.getByRole('radio', { name: 'Night' }).click();
+  await slider.press('End');
   await expect.poll(async () => (await sunHook(page))?.sky?.band).toBe('night');
-  await expect(status).toHaveText('Night: moonlight, no sun.');
+  await expect(status).toContainText('Night: the sun is');
   await shoot(page, 'night-sky');
   await axe(page, 'sky and sun panel, night');
-  await skies.getByRole('radio', { name: 'Clear day' }).click();
+  await slider.press('Home');
+  for (let i = 0; i < 15; i++) await slider.press('PageUp');
   await expect(slider).toHaveAttribute('aria-valuetext', '3:00 pm');
 
   // ── Closed, the panel is a chip; the inspector's 3D section says what the view is seen under.
@@ -309,12 +332,15 @@ test('the sun and shadow study: site, date and time place the sun and cast shado
   await expect(site.getByLabel('True north')).toHaveValue('-12.5°');
 
   // ── The studio: the even light again, no sky and no lawn — and remembered for the project.
-  await sunButton.click();
-  await expect(sunButton).toHaveAttribute('aria-pressed', 'true');
-  await skies.getByRole('radio', { name: 'Studio' }).click();
-  await expect(status).toContainText('Studio light');
-  await panel.getByRole('button', { name: 'Close the sky and sun' }).click();
+  // FLR-T-15.4: the Camera panel's backdrop now.
+  const cameraButton = page.getByRole('toolbar', { name: '3D view' }).getByRole('button', { name: 'Camera' });
+  await cameraButton.click();
+  await page.getByRole('region', { name: 'Camera' }).getByRole('radiogroup', { name: 'Backdrop' }).getByRole('radio', { name: 'Studio' }).click();
+  await cameraButton.click();
   await expect(chip).toBeHidden();
+  await sunButton.click();
+  await expect(status).toContainText('Studio backdrop');
+  await panel.getByRole('button', { name: 'Close the sky and sun' }).click();
   await expect.poll(async () => (await sunHook(page))?.light ?? null).toBeNull();
   expect((await sunHook(page))!.sky).toBeNull();
   await page.reload();

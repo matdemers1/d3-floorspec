@@ -204,3 +204,86 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* FLR-T-15.4: the season's "Follow the date", and where the season and the weather go besides the view. */
+/* The panel scrolls rather than squeezing what is in it (the season's segmented control would collapse). */
+.fs-sun > * {
+  flex-shrink: 0;
+}
+.fs-sun__follow {
+  font-size: var(--text-12);
+}
+.fs-sun__uses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4);
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-sun__uses code {
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+
+/* FLR-T-15.4: "Plants through the year", the inspector beside the Sky and sun panel. */
+.fs-seasons__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16) 0;
+}
+.fs-editor .fs-seasons__head svg.lucide {
+  flex: none;
+  width: var(--icon-16);
+  height: var(--icon-16);
+  margin-top: 2px;
+  color: var(--color-fg-muted);
+}
+.fs-seasons__title {
+  margin: 0;
+  font-size: var(--text-14);
+  font-weight: var(--weight-semibold);
+  color: var(--color-fg);
+}
+.fs-seasons__sub {
+  margin: 0;
+  font-size: var(--text-12);
+  color: var(--color-fg-muted);
+}
+.fs-seasons__mcp {
+  margin: 0;
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-fill-quiet);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  white-space: pre-wrap;
+}
+.fs-seasons > .fs-note {
+  padding: 0 var(--space-16);
+}
+.fs-seasons__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+}
+.fs-seasons__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-12);
+  font-size: var(--text-13);
+}
+.fs-seasons__item dt {
+  color: var(--color-fg-muted);
+}
+.fs-seasons__item dd {
+  margin: 0;
+  color: var(--color-fg);
+  text-align: right;
+}

@@ -22,8 +22,8 @@ import { decodeTexture, type Texture } from './textures.js';
 import { EXPOSURE_PER_NIT, type Lighting } from '@floorspec/mesh';
 import { exposureOf, toneMap, type ExposureBand, type PtLamp, type PtMaterial, type PtScene, type Sun } from './trace.js';
 import { traceParallel } from './threads.js';
-import { resolveSky, skySummary, type ResolvedSky, type SkySummary } from './sky.js';
-import { GLASS_IOR, skyExposure, type SkyPreset } from '@floorspec/mesh/sky';
+import { groundOf, resolveSky, skySummary, type ResolvedSky, type SkySummary } from './sky.js';
+import { GLASS_IOR, skyExposure, type LookRequest, type SkyPreset } from '@floorspec/mesh/sky';
 
 export { trace, toneMap, meter, exposureOf, skyRadiance, type ExposureBand, type PtLamp, type PtScene, type PtMaterial, type Sun, type TraceOptions } from './trace.js';
 export { Bvh, type Hit } from './bvh.js';
@@ -32,7 +32,7 @@ export * as brdf from './brdf.js';
 export { decodeTexture, imageSize, sample, type Texture } from './textures.js';
 export { denoise, type Features } from './denoise.js';
 export { traceParallel, stillThreads, canThread } from './threads.js';
-export { resolveSky, siteOf, loadSkyMap, skySummary, type ResolvedSky, type Site, type SkyRequest, type SkySummary } from './sky.js';
+export { groundOf, lawnTinted, resolveSky, siteOf, loadSkyMap, skySummary, type ResolvedSky, type Site, type SkyRequest, type SkySummary } from './sky.js';
 export * from './presets.js';
 
 /** The seed every still is traced with: the picture depends on the version and the options alone. */
@@ -80,6 +80,8 @@ export interface StillOptions {
   /** For `renderStill`: the sky preset (FLR-T-13.4) and a date and time at the site (FLR-T-13.9) that places the sun. */
   readonly sky?: SkyPreset;
   readonly at?: string;
+  /** For `renderStill`: the season and the weather it is seen in (FLR-T-15.4). Default summer, and the sky's weather. */
+  readonly look?: LookRequest;
   /**
    * A camera given whole (FLR-T-13.10, a saved view's: render3d/camera.ts `savedCamera`) in place of
    * `camera` and `room`: its lens shift and thin lens with it. `inside` says whether it stands in a
@@ -402,7 +404,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     sun,
     seed: SEED,
     budgetMs: options.budgetMs ?? BUDGET_MS,
-    ...(sky !== undefined ? { field: { sky: sky.field, unit: LUX_PER_UNIT }, ground: { y: pt.floor, ...(sky.light.ground.grass ? {} : { floor: sky.light.ground.albedo }) } } : time === 'day' ? {} : { sky: SKY[time] }),
+    ...(sky !== undefined ? { field: { sky: sky.field, unit: LUX_PER_UNIT }, ground: { y: pt.floor, ...groundOf(sky.light) } } : time === 'day' ? {} : { sky: SKY[time] }),
     // A firefly's cap, in what the picture shows: the same after the least exposure by day and by night.
     ...(exposure === undefined ? {} : { clamp: 12 * (EXPOSURE.day.min / (typeof exposure === 'number' ? exposure : exposure.min)) }),
     ...(lit ? { bounces: LIT_BOUNCES } : {}),
@@ -437,11 +439,16 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
 
 /** Path-trace a still of a version (FLR-REQ-154). Throws for an invalid model, an unknown room or level, or work over the budget. */
 export async function renderStill(document: object, options: StillOptions = {}): Promise<StillResult> {
-  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }) });
+  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }), ...lookOption(options.look) });
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
-  const skyLight = resolveSky(document, { ...(options.sky === undefined ? {} : { sky: options.sky }), ...(options.at === undefined ? {} : { at: options.at }), ...(options.sun === undefined ? {} : { sun: options.sun }), ...(options.time === undefined ? {} : { time: options.time }) });
+  const skyLight = resolveSky(document, { ...(options.sky === undefined ? {} : { sky: options.sky }), ...(options.at === undefined ? {} : { at: options.at }), ...(options.sun === undefined ? {} : { sun: options.sun }), ...(options.time === undefined ? {} : { time: options.time }), ...options.look });
   return renderSceneStill(scene, { ...options, trueNorth, skyLight });
+}
+
+/** A scene's `look` option (FLR-T-15.4), when a request names a season or a weather. */
+export function lookOption(look: LookRequest | undefined): { look?: LookRequest } {
+  return look === undefined || (look.season === undefined && look.weather === undefined) ? {} : { look };
 }
 
 /** A lit render's samples a pixel (FLR-T-12.22): few, smoothed by the denoiser, so an agent's render returns while it waits. */
@@ -481,6 +488,8 @@ export interface LitOptions {
   /** The sky (FLR-T-13.4) and a date and time at the site (FLR-T-13.9); `time` maps to a sky when no `sky` is given. */
   readonly sky?: SkyPreset;
   readonly at?: string;
+  /** The season and the weather (FLR-T-15.4); a weather is a daytime sky's when no `time` is given. */
+  readonly look?: LookRequest;
   readonly onPass?: (done: number, total: number) => void | Promise<void>;
 }
 
@@ -492,10 +501,10 @@ export interface LitOptions {
 export async function renderLit(document: object, options: LitOptions): Promise<StillResult> {
   const w = options.width ?? LIT_WIDTH;
   if (!Number.isInteger(w) || w < 64 || w > LIT_MAX_WIDTH) throw new RangeError(`a render with lights is 64 to ${String(LIT_MAX_WIDTH)} pixels wide`);
-  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }), ...(options.doors === undefined ? {} : { doors: options.doors }), ...(options.lighting === undefined || options.lights !== 'on' ? {} : { lighting: options.lighting }) });
+  const scene = await buildScene(document, { ...(options.design === undefined ? {} : { design: options.design }), ...(options.reader === undefined ? {} : { reader: options.reader }), ...(options.doors === undefined ? {} : { doors: options.doors }), ...(options.lighting === undefined || options.lights !== 'on' ? {} : { lighting: options.lighting }), ...lookOption(options.look) });
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
-  const skyLight = resolveSky(document, { ...(options.sky === undefined ? {} : { sky: options.sky }), ...(options.at === undefined ? {} : { at: options.at }), time: options.time ?? (options.sky === undefined && options.at === undefined ? 'night' : 'day') });
+  const skyLight = resolveSky(document, { ...(options.sky === undefined ? {} : { sky: options.sky }), ...(options.at === undefined ? {} : { at: options.at }), time: options.time ?? (options.sky === undefined && options.at === undefined && options.look?.weather === undefined ? 'night' : 'day'), ...options.look });
   const level = options.level ?? (options.room === undefined ? scene.levels[0]?.id : undefined);
   const day = skyLight.light.band === 'day';
   return renderSceneStill(scene, {

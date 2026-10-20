@@ -350,7 +350,7 @@ describe('the MCP server', () => {
     // once in the server's instructions, propose names apply's locks rather than repeating them, and
     // closed unions are said once (tool-schema.ts). The ~4 KB under the ceiling is for new params;
     // FLR-T-14.1's film, preset and quality on floorspec_render took ~250 bytes of it (~23,300);
-    // FLR-T-14.4's `compare` ~130 more (~23,450).
+    // FLR-T-14.4's `compare` ~130 more (~23,450); FLR-T-15.4's `season` and `weather` ~400 more.
     expect(size).toBeLessThan(26_000);
   });
 
@@ -548,6 +548,29 @@ describe('the MCP server', () => {
     const missing = await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'Attic' } });
     expect(missing.isError).toBe(true);
     expect(texts(missing)).toContain('this 3D view cannot be drawn');
+  });
+
+  it('takes a season and a weather for the 3D model and a saved view, never for a plan (FLR-T-15.4)', async () => {
+    const client = new MemoryClient();
+    client.renderable = true;
+    const mcp = await connect(client);
+    const last = () => client.calls.filter((c) => c.method === 'render').at(-1)?.args[1];
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', camera: 'sw', season: 'autumn', weather: 'overcast' } });
+    expect(last()).toEqual({ view: '3d', camera: 'sw', season: 'autumn', weather: 'overcast' });
+    // The board's own example: a saved view in autumn under an overcast sky — the view's camera kept.
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: 'hero', season: 'autumn', weather: 'overcast' } });
+    expect(last()).toEqual({ view: '3d', savedView: 'hero', season: 'autumn', weather: 'overcast' });
+    await mcp.callTool({ name: 'floorspec_render', arguments: { view: '3d', season: 'winter', weather: 'snow', at: '2026-01-15T13:00' } });
+    expect(last()).toEqual({ view: '3d', season: 'winter', weather: 'snow', at: '2026-01-15T13:00' });
+    const calls = client.calls.length;
+    const plan = await mcp.callTool({ name: 'floorspec_render', arguments: { level: 'L1', season: 'winter' } });
+    expect(plan.isError).toBe(true);
+    expect(texts(plan)).toContain('how the house is seen in 3D');
+    expect(client.calls.filter((c) => c.method === 'render').length).toBe(client.calls.slice(0, calls).filter((c) => c.method === 'render').length);
+    for (const bad of [{ view: '3d', season: 'fall' }, { view: '3d', weather: 'hail' }]) expect((await mcp.callTool({ name: 'floorspec_render', arguments: bad })).isError).toBe(true);
+    // A film takes them too.
+    await mcp.callTool({ name: 'floorspec_render', arguments: { film: 'F1', season: 'winter', weather: 'snow' } });
+    expect(client.calls.filter((c) => c.method === 'requestFilm').at(-1)?.args[1]).toEqual({ film: 'F1', season: 'winter', weather: 'snow' });
   });
 
   it('queues a film by name — draft or final, day to night — and says where it lands without waiting (FLR-T-14.1)', async () => {
@@ -748,7 +771,9 @@ describe('the MCP server', () => {
     const { tools } = await mcp.listTools();
     const params = (name: string) => tools.find((t) => t.name === name)?.inputSchema.properties ?? {};
     // floorspec_render: every RenderOptions member but view's default, a room (camera) and lights (scene) — and a film (FLR-T-14.1).
-    expect(Object.keys(params('floorspec_render')).sort()).toEqual(['at', 'camera', 'changeset', 'compare', 'doors', 'film', 'highlight', 'level', 'mode', 'preset', 'project', 'quality', 'renovation', 'scene', 'sky', 'style', 'view', 'width']);
+    expect(Object.keys(params('floorspec_render')).sort()).toEqual(['at', 'camera', 'changeset', 'compare', 'doors', 'film', 'highlight', 'level', 'mode', 'preset', 'project', 'quality', 'renovation', 'scene', 'season', 'sky', 'style', 'view', 'weather', 'width']);
+    expect(params('floorspec_render')['season']).toMatchObject({ enum: ['spring', 'summer', 'autumn', 'winter'] });
+    expect(params('floorspec_render')['weather']).toMatchObject({ enum: ['clear', 'overcast', 'rain', 'snow'] });
     expect(params('floorspec_render')['compare']).toMatchObject({ enum: ['main'] });
     expect(params('floorspec_render')['preset']).toMatchObject({ enum: ['day-to-night'] });
     expect(params('floorspec_render')['quality']).toMatchObject({ enum: ['draft', 'final'] });

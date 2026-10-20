@@ -25,6 +25,11 @@ import {
   type SkyMaps,
   type SkyPlace,
   type SkyPreset,
+  plainLook,
+  resolveLook,
+  type Look,
+  type LookSeason,
+  type Weather,
 } from '@floorspec/mesh/sky';
 import { parseAt, type At, type TimeOfDay } from './presets.js';
 
@@ -69,6 +74,12 @@ export interface SkyRequest {
   readonly sun?: SkyPlace;
   /** The old way of asking (FLR-T-12.22): day, dusk or night, when no `sky` is given. */
   readonly time?: TimeOfDay;
+  /**
+   * FLR-T-15.4: the season and the weather it is seen in. A weather sets the sky it is seen under
+   * (overcast, rain and snow an overcast one; clear a clear one, keeping dusk and night), over `sky`.
+   */
+  readonly season?: LookSeason | undefined;
+  readonly weather?: Weather | undefined;
 }
 
 export interface ResolvedSky {
@@ -85,7 +96,8 @@ const FROM_TIME: Readonly<Record<TimeOfDay, SkyPreset>> = { day: 'clear', dusk: 
 /** The sky for a document and a request: its preset, its sun, and its maps loaded. Throws a RangeError for a bad request. */
 export function resolveSky(document: object, request: SkyRequest): ResolvedSky {
   if (request.sky !== undefined && !isSkyPreset(request.sky)) throw new RangeError('sky is one of clear, overcast, dusk, night, studio');
-  const preset: SkyPreset = request.sky ?? (request.time === undefined ? DEFAULT_SKY : FROM_TIME[request.time]);
+  const asked: SkyPreset = request.sky ?? (request.time === undefined ? DEFAULT_SKY : FROM_TIME[request.time]);
+  const { sky: preset, look } = resolveLook(asked, { season: request.season, weather: request.weather });
   const site = siteOf(document);
   let at: At | null = null;
   let sun: ResolvedSky['sun'] = null;
@@ -95,7 +107,7 @@ export function resolveSky(document: object, request: SkyRequest): ResolvedSky {
     const place = preset === 'dusk' ? sunsetPlace(sunDay(at.midnight, site.latitude, site.longitude), site.latitude, site.longitude) : null;
     sun = { ...(place ?? sunPlaceAt(at.ms, site.latitude, site.longitude)), source: 'at' };
   } else if (request.sun !== undefined) sun = { ...request.sun, source: 'yours' };
-  const light = skyLight(preset, sun, site.trueNorth);
+  const light = skyLight(preset, sun, site.trueNorth, look);
   const maps: SkyMaps = {};
   for (const id of mapsFor(light)) maps[id] = loadSkyMap(id);
   return { light, field: skyField(light, maps), site, at, sun: sun ?? (light.sun === null ? null : { ...light.sun, source: 'default' }) };
@@ -103,6 +115,8 @@ export function resolveSky(document: object, request: SkyRequest): ResolvedSky {
 
 export interface SkySummary {
   readonly preset: SkyPreset;
+  /** FLR-T-15.4: the season and the weather, when either is not what the sky was before seasons (summer, dry). */
+  readonly look?: Look;
   readonly sun: { readonly azimuth: number; readonly altitude: number; readonly source: 'at' | 'yours' | 'default' } | null;
   readonly at: string | null;
   readonly site: { readonly latitude: number; readonly longitude: number; readonly assumed: boolean };
@@ -115,6 +129,7 @@ export function skySummary(sky: ResolvedSky, exposure?: number): SkySummary {
   const at = sky.at === null ? null : new Date(sky.at.ms + sky.at.offset * 60_000).toISOString().slice(0, 16) + offsetText(sky.at.offset);
   return {
     preset: sky.light.preset,
+    ...(plainLook(sky.light.look) ? {} : { look: sky.light.look }),
     sun: sky.sun === null ? null : { azimuth: r(sky.sun.azimuth), altitude: r(sky.sun.altitude), source: sky.sun.source },
     at,
     site: { latitude: sky.site.latitude, longitude: sky.site.longitude, assumed: sky.site.assumed },
@@ -125,4 +140,13 @@ export function skySummary(sky: ResolvedSky, exposure?: number): SkySummary {
 function offsetText(minutes: number): string {
   const a = Math.abs(minutes);
   return `${minutes < 0 ? '-' : '+'}${String(Math.floor(a / 60)).padStart(2, '0')}:${String(a % 60).padStart(2, '0')}`;
+}
+
+/** Whether a sky's lawn is tinted for its look (FLR-T-15.4): any season but summer, or rain. */
+export const lawnTinted = (light: SkyLight): boolean => light.ground.grass && light.ground.tint.some((k) => k !== 1);
+
+/** A tracer's ground under a sky: a plain floor — the studio's, or light snow — or the lawn, tinted for its look. */
+export function groundOf(light: SkyLight): { floor?: [number, number, number]; tint?: [number, number, number] } {
+  if (!light.ground.grass) return { floor: light.ground.albedo };
+  return lawnTinted(light) ? { tint: light.ground.tint } : {};
 }

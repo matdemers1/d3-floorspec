@@ -140,7 +140,14 @@ export interface TraceOptions {
    * The ground (FLR-T-13.4): a level plane at height `y` out to the horizon, the lawn (or what
    * `areas` lay on it) under the sun and sky, lost in the haze with distance.
    */
-  readonly ground?: { readonly y: number; readonly areas?: readonly GroundArea[]; /** The studio's floor instead of the lawn. */ readonly floor?: Vec3 };
+  readonly ground?: {
+    readonly y: number;
+    readonly areas?: readonly GroundArea[];
+    /** The studio's floor, or light snow (FLR-T-15.4), instead of the lawn. */
+    readonly floor?: Vec3;
+    /** FLR-T-15.4: the lawn's season and wetness, a multiplier on it (linear RGB); absent, as it is. */
+    readonly tint?: Vec3;
+  };
   /**
    * The most the light a single sample gathers past its first bounce may add to a pixel, in
    * luminance (what the camera's first surface shows lit directly is never clamped, FLR-T-13.16).
@@ -665,6 +672,12 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
             ar = tex[0]!;
             ag = tex[1]!;
             ab = tex[2]!;
+            const k = ground!.tint;
+            if (k !== undefined) {
+              ar *= k[0];
+              ag *= k[1];
+              ab *= k[2];
+            }
           }
           // FLR-T-13.6: the surface's maps — its colour, how rough and metallic it is, and its relief.
           let snx = nx;

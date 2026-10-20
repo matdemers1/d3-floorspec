@@ -16,7 +16,7 @@ import type { ImageSource } from '../export/gltf/glb.js';
 import { withLibrary } from '../export/gltf/library.js';
 import { directOf, EXPOSURE, LUX_PER_UNIT, ptScene, SEED, texturesOf } from '../pathtrace/index.js';
 import { BUDGET_MS } from '../pathtrace/presets.js';
-import { resolveSky, skySummary, type SkySummary } from '../pathtrace/sky.js';
+import { groundOf, resolveSky, skySummary, type SkySummary } from '../pathtrace/sky.js';
 import { findRoom } from '../render3d/camera.js';
 import { encodeJpeg } from './jpeg.js';
 import { renderPano } from './pano.js';
@@ -157,7 +157,7 @@ export async function renderTour(document: object, options: TourOptions): Promis
     seed: SEED,
     budgetMs: BUDGET_MS,
     field: { sky: sky.field, unit: LUX_PER_UNIT },
-    ground: { y: pt.floor, ...(sky.light.ground.grass ? {} : { floor: sky.light.ground.albedo }) },
+    ground: { y: pt.floor, ...groundOf(sky.light) },
     clamp: 12 * (EXPOSURE.day.min / band.min),
   };
   const face = options.face ?? tourFace(size);

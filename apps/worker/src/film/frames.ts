@@ -6,7 +6,7 @@
  * is stopped mid-frame; run from TypeScript sources (the tests) it runs in-process.
  */
 import { documentScenes, filmCameraAt, filmDuration, filmFrameCount, filmNamed, filmProblem, filmShots, filmsOf, filmViewOf, savedViewsOf, viewCamera, type Film, type FilmShot, type Lighting, type SavedView } from '@floorspec/mesh';
-import { midsummer, skyExposure, timelapseAround, timelapseSchedule, type Timelapse, type TimelapseSchedule } from '@floorspec/mesh/sky';
+import { midsummer, skyExposure, timelapseAround, timelapseSchedule, type LookRequest, type Timelapse, type TimelapseSchedule } from '@floorspec/mesh/sky';
 import type { FloorspecDocument } from '@floorspec/engine';
 import { buildScene, type Scene } from '../export/gltf/scene.js';
 import type { ImageSource } from '../export/gltf/glb.js';
@@ -14,7 +14,7 @@ import { savedCamera } from '../render3d/camera.js';
 import { encodePng } from '../render3d/png.js';
 import { rasterize } from '../render3d/raster.js';
 import { rasterSky, rasterStage } from '../render3d/index.js';
-import { LUX_PER_UNIT, renderSceneStill } from '../pathtrace/index.js';
+import { lookOption, LUX_PER_UNIT, renderSceneStill } from '../pathtrace/index.js';
 import { resolveSky, siteOf, type ResolvedSky } from '../pathtrace/sky.js';
 import { inARoom } from '../pathtrace/views.js';
 import { FILM_SIZES, FINAL_FRAME_BUDGET_MS, filmChoiceProblem, finalSamples, type FilmFormat, type FilmLight, type FilmQuality, type FilmRate, type FilmSize } from './presets.js';
@@ -35,6 +35,11 @@ export interface FilmChoice {
   readonly pixels?: { readonly width: number; readonly height: number };
   /** Override a final frame's samples a pixel (tests). */
   readonly samples?: number;
+  /**
+   * The season and the weather it is filmed in (FLR-T-15.4): looks over every frame. A weather sets
+   * each frame's sky (rain and snow an overcast one); without one, each keyframe's own.
+   */
+  readonly look?: LookRequest;
 }
 
 export interface FilmProgress {
@@ -168,7 +173,7 @@ export async function renderFrames(
   const site = siteOf(document);
   const lampsOn = timelapse !== undefined ? timelapse.lightsAtDusk : first?.lights === 'on';
   const lighting = lightingOf(document, first);
-  const fixed: ResolvedSky | undefined = schedule === undefined ? resolveSky(document, { sky: first?.sky ?? 'clear', ...(first?.at === undefined ? {} : { at: first.at }) }) : undefined;
+  const fixed: ResolvedSky | undefined = schedule === undefined ? resolveSky(document, { sky: first?.sky ?? 'clear', ...(first?.at === undefined ? {} : { at: first.at }), ...choice.look }) : undefined;
   const images = options.images;
   // The doors open: a film walks through the house.
   const scene: Scene = await buildScene(document, {
@@ -176,6 +181,7 @@ export async function renderFrames(
     ...(choice.design === undefined ? {} : { design: choice.design }),
     ...(images === undefined ? {} : { images }),
     ...(lighting === undefined ? {} : { lighting }),
+    ...lookOption(choice.look),
   });
   const stage = choice.quality === 'draft' ? rasterStage(scene, images) : null;
   const adapt = new Adaptation();
@@ -185,7 +191,7 @@ export async function renderFrames(
     if (options.stopped?.() === true) break;
     const t = f * step;
     const moment = schedule?.at(duration <= 0 ? 0 : t / duration);
-    const sky = fixed ?? resolveSky(document, { sky: 'clear', ...(moment === undefined ? {} : { at: moment.at }) });
+    const sky = fixed ?? resolveSky(document, { sky: 'clear', ...(moment === undefined ? {} : { at: moment.at }), ...choice.look });
     const up = lampsOn ? (moment === undefined ? 1 : moment.lamps) : 0;
     const cam = filmCameraAt(shots, t);
     const vc = viewCamera(filmViewOf(cam));

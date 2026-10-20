@@ -16,6 +16,8 @@ import type { FloorspecDocument } from '@floorspec/engine';
 import { renderSceneStill, LIT_BUDGET_MS, LIT_DAY_SAMPLES, LIT_SAMPLES, type StillResult } from './index.js';
 import { BUDGET_MS, MAX_SHOTS, QUALITIES, SHOT_SIZES, shotWithinBudget, VIEW_MAX_WIDTH, VIEW_WIDTH, type Quality, type ShotSize } from './presets.js';
 import { resolveSky } from './sky.js';
+import { lookOption } from './index.js';
+import type { LookRequest } from '@floorspec/mesh/sky';
 
 export interface ViewRenderOptions {
   readonly design?: Record<string, string>;
@@ -25,6 +27,11 @@ export interface ViewRenderOptions {
   readonly onPass?: (done: number, total: number) => void | Promise<void>;
   /** Also give back the picture as eight-bit RGB (a matched pair's composites, FLR-T-14.4). */
   readonly rgb?: boolean;
+  /**
+   * The season and the weather (FLR-T-15.4): looks over the view, which FS_views does not record. A
+   * weather sets the sky (rain and snow an overcast one) over the view's own; without one, the view's sky.
+   */
+  readonly look?: LookRequest;
 }
 
 /** The view, or a RangeError naming the views the document has. */
@@ -49,6 +56,7 @@ export async function sceneFor(document: object, view: SavedView, options: ViewR
     ...(options.images === undefined ? {} : { images: options.images }),
     ...(options.doors === undefined ? {} : { doors: options.doors }),
     ...(lighting === undefined ? {} : { lighting }),
+    ...lookOption(options.look),
   });
 }
 
@@ -57,7 +65,7 @@ export async function shoot(document: object, scene: Scene, view: SavedView, lon
   if (view.level !== undefined && !scene.levels.some((l) => l.id === view.level)) throw new RangeError(`the view "${view.name}" cuts away at the level ${view.level}, which the model does not draw`);
   const site = (document as { site?: { trueNorth?: unknown } }).site;
   const trueNorth = typeof site?.trueNorth === 'number' ? site.trueNorth / 1e6 : 0;
-  const skyLight = resolveSky(document, { sky: view.sky, ...(view.at === undefined ? {} : { at: view.at }) });
+  const skyLight = resolveSky(document, { sky: view.sky, ...(view.at === undefined ? {} : { at: view.at }), ...options.look });
   const cam = viewCamera(view);
   const [width, height] = pictureSize(long, view.aspect);
   const day = skyLight.light.band === 'day';

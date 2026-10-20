@@ -6,7 +6,7 @@ import { useEditor, type EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { eyeOf, type Orbit } from '../camera';
 import { threeOf, useThreeState, DEFAULT_SHOT, type Shot } from '../mode';
-import { sunOf } from '../sun/study';
+import { sunOf, useSunState } from '../sun/study';
 import { houseLights, panelScenes, unchanged } from '../lighting/lighting';
 import { FOCAL_SLIDER, focalToSlider, focusToSlider, frameRect, orbitOfView, shotOfView, sliderToFocal, sliderToFocus } from './lens';
 import { cannotSaveViews, clockOfAt, deleteView, renameView, saveNewView, updateView, viewFromState, viewMeta, viewNameProblem, viewsOf } from './views';
@@ -458,6 +458,10 @@ export function CameraPanel({ store, model, rig }: { store: EditorStore; model: 
             Framing guides
           </Switch>
           <p className="fs-lighting__hint">Rule of thirds and a centre mark; outside the frame is dimmed.</p>
+
+          <hr className="fs-camera__rule" />
+          <span className="fs-overline">Backdrop</span>
+          <BackdropControl store={store} />
         </div>
 
         <footer className="fs-camera__foot">
@@ -477,3 +481,27 @@ export function CameraPanel({ store, model, rig }: { store: EditorStore; model: 
   );
 }
 
+
+/**
+ * The backdrop (FLR-T-15.4): the site — its sky, the sun and the lawn, in the Sky and sun panel's
+ * season and weather — or the studio, an even light on a pale floor for reading the model rather than
+ * the light. FLR-T-13.4's "Studio" sky tile, moved here when its tiles became the weather.
+ */
+function BackdropControl({ store }: { store: EditorStore }) {
+  const studio = useSunState(store, (s) => s.sky === 'studio');
+  return (
+    <>
+      <SegmentedControl
+        aria-label="Backdrop"
+        size="sm"
+        value={studio ? 'studio' : 'site'}
+        items={[
+          { value: 'site', label: 'Site' },
+          { value: 'studio', label: 'Studio' },
+        ]}
+        onValueChange={(v) => { sunOf(store).setBackdrop(v === 'studio' ? 'studio' : 'site'); }}
+      />
+      <p className="fs-lighting__hint">{studio ? 'Even light, no sun, sky or lawn: the model, not the light.' : 'The sky, the sun and the lawn, in the season and weather of Sky and sun.'}</p>
+    </>
+  );
+}

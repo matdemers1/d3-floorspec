@@ -205,6 +205,22 @@ describe('drawing exports', () => {
     expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', style: 'sepia' })).status).toBe(400);
   });
 
+  it('makes a glTF in a season and a weather, for the GPU still, and refuses them for a drawing (FLR-T-15.4)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator);
+    const gltf = view(await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf', season: 'winter', weather: 'snow' }));
+    expect(gltf).toMatchObject({ kind: 'gltf', look: { season: 'winter', weather: 'snow' } });
+    const job = await db.job.findUniqueOrThrow({ where: { id: gltf.id } });
+    expect(job.params).toMatchObject({ season: 'winter', weather: 'snow' });
+    await drain.runOnce();
+    expect(view(await operator.get(`/api/projects/${id}/exports/${gltf.id}`)).status).toBe('done');
+    // An export that names neither says nothing of a look.
+    expect(view(await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf' }))).not.toHaveProperty('look');
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pdf', season: 'winter' })).status).toBe(400);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'gltf', weather: 'hail' })).status).toBe(400);
+    await drain.runOnce();
+  });
+
   it('queues glTF and USDZ of the 3D model, and serves a .glb and an aligned .usdz (FLR-T-9.2)', async () => {
     const operator = await setupOperator(running);
     const { id, hash } = await projectWithDocument(db, operator);

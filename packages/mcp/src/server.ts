@@ -858,6 +858,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           doors: z.enum(['closed', 'open']).optional(),
           sky: z.enum(['clear', 'overcast', 'dusk', 'night', 'studio']).optional().describe('3D: under a sky, on a lawn.'),
           at: z.string().max(32).optional().describe('3D: site date-time placing the sun, as 2026-06-21T19:30-04:00.'),
+          season: z.enum(['spring', 'summer', 'autumn', 'winter']).optional().describe('3D, a saved view or a film: foliage by each plant\'s FS_landscape foliage, lawn, sky. Default summer.'),
+          weather: z.enum(['clear', 'overcast', 'rain', 'snow']).optional().describe('Sets the sky; rain wets, snow lies on roofs and lawns. A look: the model is unchanged.'),
           mode: z.enum(MODES).optional().describe('Plan: a trade\'s view.'),
           style: z.enum(PLAN_STYLES).optional(),
           renovation: z.enum(RENOVATION).optional(),
@@ -875,8 +877,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         // FLR-T-14.1: a film is a job, not a picture — queued on main, with only its preset and quality.
         if (args.film !== undefined) {
           if ([args.changeset, args.view, args.camera, args.level, args.highlight, args.width, args.scene, args.doors, args.sky, args.at, args.mode, args.style, args.renovation].some((a) => a !== undefined))
-            throw new ToolError(`A film is its keyframes' views, rendered from main: ask for "${args.film}" with preset or quality only.`);
-          const job = await client.requestFilm(project.id, { film: args.film, ...(args.quality === undefined ? {} : { quality: args.quality }), ...(args.preset === undefined ? {} : { light: args.preset }) });
+            throw new ToolError(`A film is its keyframes' views, rendered from main: ask for "${args.film}" with preset, quality, season or weather only.`);
+          const job = await client.requestFilm(project.id, { film: args.film, ...(args.quality === undefined ? {} : { quality: args.quality }), ...(args.preset === undefined ? {} : { light: args.preset }), ...(args.season === undefined ? {} : { season: args.season }), ...(args.weather === undefined ? {} : { weather: args.weather }) });
           const f = job.film;
           const light = f.timelapse === null || f.timelapse === undefined ? '' : `, day to night ${f.timelapse.from}–${f.timelapse.to} on ${f.timelapse.date}`;
           return ok(`Queued the film "${f.name}": ${String(f.frames)} frames, ${f.size} at ${String(f.fps)} fps, ${f.quality}, ${f.format.toUpperCase()}${light}. It renders on the server and is listed under Exports (job ${job.id}); the video is at /api/projects/${project.id}/exports/${job.id}/file once it is done.`, { project: project.id, export: job });
@@ -885,6 +887,9 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
         const changeset = await changesetId(client, project.id, args.changeset);
         // One property for both (FLR-T-13.10): plan, 3d, or a saved view (FS_views) by name.
         const named = args.view !== undefined && args.view !== 'plan' && args.view !== '3d' ? args.view : undefined;
+        // FLR-T-15.4: a season and a weather are looks of the 3D model — a saved view takes them too.
+        if ((args.season !== undefined || args.weather !== undefined) && named === undefined && args.compare === undefined && (args.view ?? 'plan') === 'plan')
+          throw new ToolError('A season and a weather are how the house is seen in 3D: render view "3d" or a saved view with them.');
         // FLR-T-14.4: a changeset against main, side by side from one camera — rasterized, B's changes lit.
         if (args.compare !== undefined) {
           if (changeset === undefined) throw new ToolError('compare puts main beside a changeset: name the changeset.');
@@ -892,7 +897,7 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
             throw new ToolError('A comparison is the 3D view from a named camera or a room: drop view, scene, mode, style and renovation (a matched pair of saved views is an export, kind "pair").');
         }
         if (named !== undefined && [args.camera, args.level, args.highlight, args.scene, args.sky, args.at, args.mode, args.style, args.renovation].some((a) => a !== undefined))
-          throw new ToolError(`A saved view sets its own camera, cutaway, sky, time and lights: render "${named}" with width, doors or changeset only.`);
+          throw new ToolError(`A saved view sets its own camera, cutaway, sky, time and lights: render "${named}" with width, doors, season, weather or changeset only.`);
         const png = await client.render(project.id, {
           view: named === undefined ? (args.compare !== undefined ? '3d' : ((args.view as 'plan' | '3d' | undefined) ?? 'plan')) : '3d',
           ...(args.compare === undefined ? {} : { compare: args.compare }),
@@ -907,6 +912,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           ...(args.doors === undefined ? {} : { doors: args.doors }),
           ...(args.sky === undefined ? {} : { sky: args.sky }),
           ...(args.at === undefined ? {} : { at: args.at }),
+          ...(args.season === undefined ? {} : { season: args.season }),
+          ...(args.weather === undefined ? {} : { weather: args.weather }),
           ...(args.mode === undefined ? {} : { mode: args.mode }),
           ...(args.style === undefined ? {} : { style: args.style }),
           ...(args.renovation === undefined ? {} : { renovation: args.renovation }),

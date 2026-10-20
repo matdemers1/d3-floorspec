@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, FormField, Modal, Select } from '@d3cloud/ui';
 import { Camera, Download } from 'lucide-react';
 import { messageOf } from '../../../lib/api';
-import { QUALITIES, requestExport, SHOT_SIZES, shotWithinBudget, startDownload, untilFinished, type ExportJob, type ShotSize, type StillQuality } from '../../../exports/api';
+import { lookRequest, QUALITIES, requestExport, SHOT_SIZES, shotWithinBudget, startDownload, untilFinished, type ExportJob, type ShotSize, type StillQuality } from '../../../exports/api';
+import { useLook } from '../sun/study';
 import { useEditor, type EditorStore } from '../../store';
 import { viewsOf } from '../shot/views';
 import { readStoredZip } from '../shot/zip';
@@ -25,6 +26,8 @@ const THIS_VIEW = '__view';
 
 export default function PairDialog({ store, a, b, labels, onClose }: { store: EditorStore; a: CompareSource; b: CompareSource; labels: { a: string; b: string }; onClose: () => void }) {
   const model = useEditor(store, (s) => s.model);
+  // FLR-T-15.4: both sides in the Sky and sun panel's season, and its rain or snow.
+  const look = lookRequest(useLook(store, model));
   const views = useMemo(() => (model === null ? [] : viewsOf(model)), [model]);
   const [camera, setCamera] = useState<string>(THIS_VIEW);
   const [size, setSize] = useState<ShotSize>('small');
@@ -46,7 +49,7 @@ export default function PairDialog({ store, a, b, labels, onClose }: { store: Ed
       return;
     }
     try {
-      const job = await requestExport(store.projectId, { kind: 'pair', pair: pairRequest({ a, b, main: model, camera: shot === null ? { view: camera } : { shot }, size, quality }) });
+      const job = await requestExport(store.projectId, { kind: 'pair', pair: pairRequest({ a, b, main: model, camera: shot === null ? { view: camera } : { shot }, size, quality }), ...look });
       setPhase({ kind: 'rendering', job });
       stop.current = new AbortController();
       const done = await untilFinished(store.projectId, job, (j) => { setPhase((p) => (p.kind === 'rendering' ? { ...p, job: j } : p)); }, stop.current.signal, 1000);

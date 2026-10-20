@@ -27,6 +27,7 @@ import { EXPOSURE_PER_NIT } from '../exposure.js';
 import { lawnAlbedo, type Rgb } from './grass.js';
 import { decodeHdr, type HdrImage } from './hdr.js';
 import { sunAt, sunDay, type SunDay } from './solar.js';
+import { DEFAULT_SEASON, groundLook, lookSkyTint, weatherOfSky, WEATHER_SKY, type Look, type LookRequest } from './weather.js';
 
 export type Vec3 = [number, number, number];
 
@@ -206,8 +207,14 @@ export interface SkyLight {
   readonly layers: readonly SkyLayer[];
   /** Studio: an even dome (cd/m² at the zenith) instead of maps. */
   readonly studio: number | null;
-  /** What lies on the ground: the lawn, or the studio's pale floor (linear RGB). */
-  readonly ground: { readonly grass: boolean; readonly albedo: Vec3 };
+  /**
+   * What lies on the ground: the lawn — `tint` a multiplier on its grass (linear RGB) for the look's
+   * season and wetness, `albedo` its average — or a plain floor (`grass` false): the studio's pale
+   * one, or light snow (FLR-T-15.4).
+   */
+  readonly ground: { readonly grass: boolean; readonly albedo: Vec3; readonly tint: Vec3 };
+  /** The season and the weather it is seen in (FLR-T-15.4): a look, never the model's. */
+  readonly look: Look;
   /**
    * The haze, metres: nothing is lost in it nearer than `near`, everything past `far`, smoothly
    * between — so the house is clear and the lawn fades into the horizon's colour well before its edge.
@@ -275,9 +282,15 @@ function layer(map: SkyMapId, weight: number, lux: number, azimuth: number): Sky
  * - `night`: moonlight, the moon opposite the sun.
  * - `studio`: an even bright dome, a soft key from the south-west, a pale floor.
  */
-export function skyLight(preset: SkyPreset, sun: SkyPlace | null, trueNorth = 0): SkyLight {
-  const lawn = { grass: true, albedo: lawnAlbedo() };
-  const base = { preset, trueNorth, haze: HAZE, ground: lawn, studio: null } as const;
+export function skyLight(preset: SkyPreset, sun: SkyPlace | null, trueNorth = 0, request: LookRequest = {}): SkyLight {
+  // FLR-T-15.4: the season and the weather; by default summer and the weather the preset is, which
+  // change nothing — every multiplier below is exactly 1 — so a view that names neither is as it was.
+  const look: Look = { season: request.season ?? DEFAULT_SEASON, weather: request.weather ?? weatherOfSky(preset) };
+  const weather = WEATHER_SKY[look.weather];
+  const tint = lookSkyTint(look);
+  const lawn = groundLook(look, lawnAlbedo());
+  const base = { preset, trueNorth, haze: weather.haze ?? HAZE, ground: lawn, studio: null, look } as const;
+  const tinted = (l: SkyLayer): SkyLayer => ({ ...l, tint: [l.tint[0] * tint[0], l.tint[1] * tint[1], l.tint[2] * tint[2]] });
   const moonFor = (s: SkyPlace, weight: number): DirectLight | null => {
     if (weight <= 0) return null;
     const place = { azimuth: (s.azimuth + 180) % 360, altitude: 35 };
@@ -287,15 +300,15 @@ export function skyLight(preset: SkyPreset, sun: SkyPlace | null, trueNorth = 0)
   switch (preset) {
     case 'studio': {
       const dir = placeVector(STUDIO_KEY, trueNorth);
-      return { ...base, ground: { grass: false, albedo: STUDIO_FLOOR }, studio: STUDIO_ZENITH, band: 'day', sun: null, layers: [], direct: { kind: 'sun', place: STUDIO_KEY, dir, lux: STUDIO_KEY_LUX, color: [1, 1, 1], radius: 8 * RAD } };
+      return { ...base, haze: HAZE, ground: { grass: false, albedo: STUDIO_FLOOR, tint: [1, 1, 1] }, studio: STUDIO_ZENITH, band: 'day', sun: null, layers: [], direct: { kind: 'sun', place: STUDIO_KEY, dir, lux: STUDIO_KEY_LUX, color: [1, 1, 1], radius: 8 * RAD } };
     }
     case 'night': {
       const s = sun ?? DEFAULT_SUN;
-      return { ...base, band: 'night', sun: s, direct: moonFor(s, 1), layers: [night(s, 1)] };
+      return { ...base, band: 'night', sun: s, direct: moonFor(s, 1), layers: [night(s, 1)].map(tinted) };
     }
     case 'dusk': {
       const s = { azimuth: (sun ?? DEFAULT_DUSK).azimuth, altitude: DEFAULT_DUSK.altitude };
-      return { ...base, band: 'dusk', sun: s, direct: null, layers: [layer('dusk', 1, twilightLux(s.altitude), s.azimuth)] };
+      return { ...base, band: 'dusk', sun: s, direct: null, layers: [layer('dusk', 1, twilightLux(s.altitude), s.azimuth)].map(tinted) };
     }
     case 'overcast':
     case 'clear': {
@@ -311,14 +324,15 @@ export function skyLight(preset: SkyPreset, sun: SkyPlace | null, trueNorth = 0)
         if (duskW > 0) layers.push(layer('dusk', duskW, twilightLux(Math.min(a, 0)), s.azimuth));
       } else {
         const overcast = dayW + duskW;
-        if (overcast > 0) layers.push(layer('overcast', overcast, a > 0 ? overcastLux(a) : 0.5 * twilightLux(a), s.azimuth));
+        // Rain's cloud is darker than an overcast day's, snow's a little brighter (WEATHER_SKY).
+        if (overcast > 0) layers.push(layer('overcast', overcast, (a > 0 ? overcastLux(a) : 0.5 * twilightLux(a)) * weather.lux, s.azimuth));
       }
       if (darkW > 0) layers.push(night(s, darkW));
       const light = preset === 'clear' ? sunlight(a) : { lux: 0, color: [1, 1, 1] as Vec3 };
       const direct: DirectLight | null =
         light.lux > 0 ? { kind: 'sun', place: s, dir: placeVector(s, trueNorth), lux: light.lux, color: light.color, radius: 0.27 * RAD } : moonFor(s, darkW);
       const band = a > 0 ? 'day' : a > -10 ? 'dusk' : 'night';
-      return { ...base, band, sun: s, direct, layers };
+      return { ...base, band, sun: s, direct, layers: layers.map(tinted) };
     }
   }
 }
@@ -554,8 +568,9 @@ export function skyExposure(light: SkyLight, maps: SkyMaps): number {
   const e = skyIlluminance(light, maps);
   const nits = (0.2 * (e.sky + e.direct)) / Math.PI;
   const band = light.band === 'day' ? exposureBand(light) : { min: EXPOSURE_PER_NIT.night, max: NIGHT_SKY_EXPOSURE_MAX };
-  // After dark, a stop and more under the day's key: dusk and night read as dusk and night.
-  const key = light.band === 'day' ? 0.18 : 0.08;
+  // After dark, a stop and more under the day's key: dusk and night read as dusk and night. Rain
+  // reads darker than a meter would make it, snow brighter (FLR-T-15.4); exactly the key otherwise.
+  const key = (light.band === 'day' ? 0.18 : 0.08) * (light.look.weather === 'rain' ? 0.72 : light.look.weather === 'snow' ? 1.3 : 1);
   return Math.min(band.max, Math.max(band.min, key / Math.max(1e-9, nits)));
 }
 

@@ -329,7 +329,7 @@ export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | n
   const disposables: { dispose: () => void }[] = [sky];
   if (bounds !== null) {
     // The ground under the house, out toward the horizon: the lawn at true scale (a tile every
-    // GRASS_TILE metres), or the studio's floor.
+    // GRASS_TILE metres), or the studio's floor, or light snow.
     const cx = (bounds.min[0] + bounds.max[0]) / 2;
     const cz = (bounds.min[2] + bounds.max[2]) / 2;
     const r = 40 * Math.max(5, Math.hypot(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2]));
@@ -340,7 +340,8 @@ export function stillScene(house: Object3D, bounds: { min: Vec3; max: Vec3 } | n
       map.repeat.set((2 * r) / GRASS_TILE, (2 * r) / GRASS_TILE);
       disposables.push(map);
     }
-    const material = new MeshStandardMaterial({ color: map === null ? new Color(...floor.albedo) : new Color(1, 1, 1), map, roughness: 1, metalness: 0 });
+    // FLR-T-15.4: the lawn in its season and wet in the rain (a tint on the grass), or a field of light snow.
+    const material = new MeshStandardMaterial({ color: map === null ? new Color(...floor.albedo) : new Color(...floor.tint), map, roughness: 1, metalness: 0 });
     const ground = new Mesh(geometry, material);
     ground.name = 'ground';
     ground.rotation.x = -Math.PI / 2;
