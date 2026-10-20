@@ -381,6 +381,9 @@ export type OpInput = z.infer<typeof OpUnion>;
 
 export const OP_NAMES = OpUnion.options.map((o) => o.shape.op.value);
 
+/** The ops the tools expand before the batch is applied, which no Ops draft defines (FLR-T-15.3: generateContext). */
+export const TOOL_OPS: readonly string[] = [GenerateContext.shape.op.value];
+
 /**
  * The operation union as `floorspec_propose` advertises it: the op names, with the members left to
  * `floorspec_apply`'s schema, so the 25-way union is spelled out once in `tools/list` rather than
