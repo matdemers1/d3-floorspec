@@ -45,6 +45,9 @@ import { MotionRig } from './edit/rig';
 import { movesBetween, type Motion } from './edit/motion';
 import { EditController, type PickHit } from './edit/controller';
 import { docMetres, EditOverlay } from './edit/EditOverlay';
+import { DaylightPanel, Legend } from '../daylight/Daylight';
+import { DaylightScene, GlareMarks, GlareTracker, useGlareFlags } from '../daylight/DaylightScene';
+import { useDaylight } from '../daylight/state';
 import { readingOf } from './edit/tape';
 import { sideAspect, sideAt, sourceKey, type CompareSource, type CompareState, type Side, type SideStatus } from './compare/compare';
 import { CompareRender } from './compare/CompareRender';
@@ -388,6 +391,18 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     () => built.filter((b) => (exploding ? explodedVisible(b.part, explode, keptLevels) : isVisible(b.part, { walking, levels, roof, level: levelId, order }))),
     [built, walking, levels, roof, levelId, order, exploding, explode, keptLevels],
   );
+  // FLR-T-14.7: the levels whose floors the daylight study is laid on — the level cut at, or every
+  // level in the whole house and on a walk; none in the exploded view.
+  const daylightLevels = useMemo<ReadonlySet<string>>(() => {
+    if (ready === null || exploding) return new Set<string>();
+    if (walking || levels === 'house' || levelId === null) return new Set(order.keys());
+    return new Set([levelId]);
+  }, [ready, exploding, walking, levels, levelId, order]);
+  const glareFlags = useGlareFlags(store, daylightLevels);
+  const glareMarks = useRef<HTMLDivElement>(null);
+  const daylightOn = useDaylight(store, (s) => s.on);
+  const daylightOpen = useDaylight(store, (s) => s.open);
+  const daylightMeasure = useDaylight(store, (s) => s.measure);
   // The exploded view's layers, bottom up: each level, and the roofs over it.
   const layers = useMemo(() => {
     const sorted = [...bands].map((b) => ({ id: b.id }));
@@ -948,6 +963,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           colours={{ fill: tokens.fillQuiet, hatch: tokens.fgMuted, ghost: tokens.fgMuted }}
           reduced={reduced}
         />
+        {ready !== null ? <DaylightScene store={store} levels={daylightLevels} origin={ready.mesh.origin} k={ready.mesh.unitsPerMetre} /> : null}
+        {ready !== null && glareFlags.length > 0 ? <GlareTracker flags={glareFlags} el={glareMarks} origin={ready.mesh.origin} k={ready.mesh.unitsPerMetre} /> : null}
         {!walking && !sideBySide ? <LabelTracker built={visible} selection={selection} el={label} rig={sectionRig} motion={motion} /> : null}
         {!walking && filmPath !== null ? (
           <>
@@ -1001,6 +1018,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         </div>
       ) : null}
       {ready !== null && !walking ? <Framing store={store} model={ready.model} width={size.width} height={size.height} /> : null}
+      {ready !== null && glareFlags.length > 0 ? <GlareMarks flags={glareFlags} el={glareMarks} /> : null}
       {ready !== null && !walking && filmPath !== null ? <FilmMarks store={store} marks={filmPath.marks} el={filmMarks} /> : null}
       {ready !== null && !walking && !sideBySide && selectedLabel !== null ? (
         <div className="fs-three__label" ref={label} aria-hidden="true">
@@ -1025,6 +1043,12 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           {ctx !== null ? <SectionPanel ctx={ctx} /> : null}
           {ctx !== null ? <ExplodedPanel ctx={ctx} /> : null}
           {ctx !== null ? <XrayPanel ctx={ctx} plan={xrayed} /> : null}
+          <DaylightPanel store={store} />
+          {daylightOn && !daylightOpen && !exploding ? (
+            <div className="fs-daylight__plan-legend">
+              <Legend measure={daylightMeasure} title={daylightMeasure === 'illuminance' ? 'Work plane 2′-6″ · advisory' : 'Direct sun a year · advisory'} />
+            </div>
+          ) : null}
           <ViewCube ctl={ctl} preset={preset} />
           <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} only={levels === 'only'} roof={roof} current={currentView} />
           <SunPanel store={store} model={ready.model} />

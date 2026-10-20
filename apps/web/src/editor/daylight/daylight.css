@@ -1,0 +1,368 @@
+/*
+ * Daylight you can see (FLR-T-14.7): the board's frames "14.7 · Daylight in 3D" and "14.7 · Daylight on
+ * the plan", the P14/Legend band and P14/Glare flag components.
+ *
+ * The four bands are the board's: bright the warning colour, useful the success colour, and the two
+ * blues. @d3cloud/ui 1.5 has semantic tokens for the first two and no categorical tokens at all, so
+ * — as the trade modes' colours do (modes.css, FLR-T-18.16) — "needs a lamp" and "dim" are the board's
+ * blues as raw hex, the design system's own blue-400 and blue-800, the one place here that uses
+ * hex. Colour is never the only cue: the brightest band is hatched and the dimmest dotted in the
+ * overlay and in every swatch, and each band has its name and range beside it.
+ */
+:root {
+  --fs-daylight-bright: var(--color-warning);
+  --fs-daylight-useful: var(--color-success);
+  --fs-daylight-lamp: #4ea4f3; /* d3-allow: the board's "needs a lamp" band, @d3cloud/ui blue-400; no categorical token (FLR-T-14.7) */
+  --fs-daylight-dim: #00294b; /* d3-allow: the board's "dim" band, @d3cloud/ui blue-800; no categorical token (FLR-T-14.7) */
+}
+
+/* ─── The panel over the 3D view: anchored under the experiences cluster ─────────────────────── */
+.fs-sun.fs-daylight {
+  left: var(--space-16);
+  right: auto;
+  top: 64px;
+  width: 300px;
+  max-height: calc(100% - 64px - 60px);
+  gap: calc(var(--space-8) + var(--space-2));
+  padding: var(--space-12) calc(var(--space-12) + var(--space-2)) calc(var(--space-12) + var(--space-2));
+}
+.fs-daylight__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.fs-daylight__when {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-daylight__when > :first-child {
+  flex: 0 1 150px;
+  min-width: 0;
+}
+.fs-daylight__clock {
+  flex: 1 1 auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-13);
+  color: var(--color-fg);
+  white-space: nowrap;
+}
+.fs-daylight__days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.fs-sun__slider.fs-daylight__slider {
+  width: 100%;
+  margin: 0;
+}
+.fs-daylight__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.fs-daylight__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+
+/* ─── The legend: P14/Legend band ───────────────────────────────────────────────────────────── */
+.fs-daylight__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-daylight__bands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-daylight__band {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-daylight__swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+.fs-daylight__band-label {
+  color: var(--color-fg);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-daylight__band-range {
+  color: var(--color-fg-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+/* Each band's colour, with the overlay's second cue: hatched bright, dotted dim. */
+.fs-daylight__swatch--bright {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 3px, var(--color-surface-raised) 3px 4px),
+    var(--fs-daylight-bright);
+}
+.fs-daylight__swatch--useful {
+  background: var(--fs-daylight-useful);
+}
+.fs-daylight__swatch--lamp {
+  background: var(--fs-daylight-lamp);
+}
+.fs-daylight__swatch--dim {
+  background:
+    radial-gradient(circle, var(--fs-daylight-lamp) 1px, transparent 1.5px) 0 0 / 5px 5px,
+    var(--fs-daylight-dim);
+}
+
+/* ─── A glare flag: P14/Glare flag ──────────────────────────────────────────────────────────── */
+.fs-daylight__flag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) calc(var(--space-8) + var(--space-2)) var(--space-4) var(--space-8);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-full);
+  background: var(--color-danger-muted);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+.fs-editor .fs-daylight__flag svg {
+  width: var(--icon-14, 14px);
+  height: var(--icon-14, 14px);
+  color: var(--color-danger);
+}
+/* Sun on it at the time shown: a heavier edge. */
+.fs-daylight__flag[data-now='on'] {
+  border-width: 2px;
+}
+
+/* ─── A room's bands as a bar ───────────────────────────────────────────────────────────────── */
+.fs-daylight__bar {
+  display: flex;
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-fill-quiet);
+}
+.fs-daylight__bar-part {
+  flex: 0 1 0;
+  min-width: 2px;
+  height: 100%;
+  border-radius: 0;
+}
+
+/* ─── On the plan ───────────────────────────────────────────────────────────────────────────── */
+.fs-daylight-layer image {
+  pointer-events: none;
+}
+.fs-daylight__chip {
+  position: absolute;
+  top: var(--space-12);
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 32px;
+  padding: 0 var(--space-4) 0 var(--space-12);
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+.fs-editor .fs-daylight__chip svg {
+  color: var(--color-accent-contrast);
+}
+.fs-daylight__chip button {
+  color: var(--color-accent-contrast);
+}
+.fs-daylight__plan-legend {
+  position: absolute;
+  left: var(--space-16);
+  bottom: calc(var(--space-24) + var(--space-16));
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+}
+.fs-three .fs-daylight__plan-legend {
+  bottom: 64px;
+}
+.fs-daylight__plan-error {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  max-width: 420px;
+}
+.fs-daylight__flags {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* A pin: its dot on the desk or the pillow, its pill above it — lifted (--lift) clear of the others, on a leader. */
+.fs-daylight__pin {
+  --lift: 0px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+}
+.fs-daylight__dot {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--color-surface-raised);
+  border-radius: var(--radius-full);
+  background: var(--color-danger);
+}
+.fs-daylight__leader {
+  position: absolute;
+  left: -0.5px;
+  bottom: 0;
+  width: 1px;
+  height: calc(var(--lift) + 6px);
+  background: var(--color-danger);
+}
+.fs-daylight__pin > .fs-daylight__flag {
+  position: absolute;
+  left: 0;
+  bottom: calc(6px + var(--lift));
+  transform: translateX(-50%);
+}
+.fs-daylight__plan-compare {
+  position: absolute;
+  top: 56px;
+  right: var(--space-16);
+  z-index: 3;
+}
+.fs-daylight__compare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 440px;
+  max-width: calc(100vw - 2 * var(--space-16));
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+}
+.fs-daylight__compare-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.fs-daylight__compare-head h3 {
+  margin: 0;
+  font-size: var(--text-14);
+  line-height: var(--leading-14);
+  font-weight: var(--weight-semibold);
+}
+.fs-daylight__compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.fs-daylight__compare-table th,
+.fs-daylight__compare-table td {
+  padding: var(--space-4) var(--space-4) var(--space-8);
+  text-align: left;
+  vertical-align: top;
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-daylight__compare-table thead th {
+  color: var(--color-fg-faint);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.fs-daylight__compare-table tbody th {
+  width: 30%;
+  color: var(--color-fg);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-13);
+}
+.fs-daylight__compare-line {
+  display: block;
+  margin-top: var(--space-4);
+  color: var(--color-fg-muted);
+}
+
+/* ─── In 3D: the flags over the view ────────────────────────────────────────────────────────── */
+.fs-daylight__marks {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ─── The room inspector ────────────────────────────────────────────────────────────────────── */
+.fs-daylight__room {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.fs-daylight__room-title {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  font-weight: var(--weight-regular);
+}
+.fs-daylight__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  font-size: var(--text-13);
+  line-height: var(--leading-13);
+}
+.fs-daylight__row-key {
+  color: var(--color-fg-muted);
+}
+.fs-daylight__row-value {
+  color: var(--color-fg);
+  text-align: right;
+}

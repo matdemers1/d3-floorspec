@@ -6,6 +6,7 @@
  * therefore passes the same guards, the same isolation and the same audit as the REST API, and
  * there is no second authorisation surface for a check to be missing from. (Foreman's pattern.)
  */
+import type { DaylightStudy } from '@floorspec/analysis';
 
 /** A Floorspec Op as the tools send it; the applier is the judge of its members. */
 export interface Op {
@@ -227,6 +228,18 @@ export interface FloorspecClient {
    * SHA-256, readable by the project. Uploading the same bytes again changes nothing.
    */
   uploadAsset(projectId: string, upload: AssetUpload): Promise<StoredAsset>;
+  /**
+   * A daylight study (FLR-T-14.7): `GET /daylight?at=` — illuminance on every floor's work plane,
+   * sun-hours and glare at desks and beds, path-traced by the worker while the request waits.
+   */
+  daylight?(projectId: string, options: DaylightOptions): Promise<DaylightStudy>;
+}
+
+export interface DaylightOptions {
+  /** A date and time at the site (ISO 8601, an offset optional). */
+  readonly at: string;
+  readonly sky?: 'clear' | 'overcast';
+  readonly changeset?: string;
 }
 
 export interface AssetUpload {
@@ -458,6 +471,13 @@ export class HttpFloorspecClient implements FloorspecClient {
   async requestFilm(projectId: string, options: FilmRequest): Promise<FilmJob> {
     const body = { kind: 'film', film: { film: options.film, ...(options.quality === undefined ? {} : { quality: options.quality }), ...(options.light === undefined ? {} : { light: options.light }) } };
     return (await this.json<{ export: FilmJob }>('POST', this.project(projectId, '/exports'), body)).export;
+  }
+
+  daylight(projectId: string, options: DaylightOptions): Promise<DaylightStudy> {
+    const params = new URLSearchParams({ at: options.at });
+    if (options.sky !== undefined) params.set('sky', options.sky);
+    if (options.changeset !== undefined) params.set('changeset', options.changeset);
+    return this.json<DaylightStudy>('GET', this.project(projectId, `/daylight?${params.toString()}`));
   }
 
   async uploadAsset(projectId: string, upload: AssetUpload): Promise<StoredAsset> {

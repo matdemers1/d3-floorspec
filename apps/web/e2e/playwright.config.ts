@@ -112,6 +112,10 @@ import { defineConfig, devices } from '@playwright/test';
  *                   faded, every system drawn and counted, each switched off and on, ⌥X, Fade finishes by the keys,
  *                   the kitchen's north wall's studs, pipes and circuits, its layers in the inspector, "Section box
  *                   here" cutting the systems too; axe in both themes.
+ *   - `daylight`  — FLR-T-14.7: daylight on the Courtyard House — Daylight on the Experiences cluster, Jun 21 and
+ *                   Dec 21 at 3 pm (America/New_York): the four bands' legend, the advisory alert, the study
+ *                   path-traced by the inline drain, glare flags at the den's desk and the primary bed, the overlay on
+ *                   the plan with its chip, legend and June-against-December card; axe in both themes.
  *   - `tour`      — FLR-T-14.2: a virtual tour of the Courtyard House — Share ▸ Virtual tour…, three rooms as a small
  *                   draft (one from its saved view), the job card and its link; opened on a phone (iPhone 15) with no
  *                   account: dragged, a hotspot tapped into the next room, the map, the plan sheet's room list, the
@@ -123,7 +127,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`, `…_xray_test`, `…_tour_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52; xray, +54; tour, +55).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`, `…_xray_test`, `…_daylight_test`, `…_tour_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52; daylight, +53; xray, +54; tour, +55).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -238,6 +242,8 @@ const SUITES: Suite[] = [
   { name: 'compare', spec: 'compare.spec.ts', port: PORT + 52, database: databaseFor('compare'), setupToken: true, gl: true },
   // FLR-T-14.5: X-ray — the finishes faded, each system drawn and toggled, the kitchen wall's studs, pipes and circuits, a section box into it, axe.
   { name: 'xray', spec: 'xray.spec.ts', port: PORT + 54, database: databaseFor('xray'), setupToken: true, gl: true },
+  // FLR-T-14.7: daylight — Jun 21 and Dec 21 at 3 pm on the Courtyard House: the bands, the advisory, glare at the den's desk and the primary bed, the plan, axe.
+  { name: 'daylight', spec: 'daylight.spec.ts', port: PORT + 53, database: databaseFor('daylight'), setupToken: true, gl: true },
   // FLR-T-14.2: a virtual tour — made in the editor, rendered on the inline drain, walked on a phone with no account.
   { name: 'tour', spec: 'tour.spec.ts', port: PORT + 55, database: databaseFor('tour'), setupToken: true, gl: true },
 ];

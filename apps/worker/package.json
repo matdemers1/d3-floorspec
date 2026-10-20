@@ -47,6 +47,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@floorspec/analysis": "workspace:*",
     "@floorspec/engine": "workspace:*",
     "@floorspec/mesh": "workspace:*",
     "@floorspec/ops": "workspace:*",

@@ -225,6 +225,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@floorspec/analysis':
+        specifier: workspace:*
+        version: link:../../packages/analysis
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../../packages/engine

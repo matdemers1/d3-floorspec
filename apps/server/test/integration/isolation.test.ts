@@ -40,6 +40,8 @@ const CALLS: Record<string, Call> = {
   'PUT /api/projects/:projectId/profile': { body: { profileId: null }, ownerStatus: 200 },
   // Answered, by a route that works: plan rendering is wired in with FLR-T-2.8.
   'GET /api/projects/:projectId/render': { ownerStatus: 501 },
+  // Answered, by a route that works: a daylight study needs a date and time (FLR-T-14.7).
+  'GET /api/projects/:projectId/daylight': { ownerStatus: 400 },
   'GET /api/projects/:projectId/changesets': { ownerStatus: 200 },
   'POST /api/projects/:projectId/changesets': { body: { name: 'Another idea' }, ownerStatus: 201 },
   'GET /api/projects/:projectId/changesets/:changesetId': { ownerStatus: 200 },
