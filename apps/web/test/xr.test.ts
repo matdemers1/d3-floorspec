@@ -127,7 +127,7 @@ describe('levels', () => {
 
 describe('the rig', () => {
   const rig: Rig = { x: 1, y: 2, floor: 0, yaw: 0, lift: 0 };
-  const close = (a: Vec3, b: Vec3) => a.forEach((v, i) => { expect(v).toBeCloseTo(b[i]!, 9); });
+  const close = (a: Vec3, b: Vec3) => { a.forEach((v, i) => { expect(v).toBeCloseTo(b[i]!, 9); }); };
 
   it('stands the headset’s space on the floor, y up made z up, ahead made the heading', () => {
     close(toHouse(rig, [0, 1.6, 0]), [1, 2, 1.6]);

@@ -143,7 +143,7 @@ export function VrPanel({ store, model, world, mesh }: { store: EditorStore; mod
           <dt>Turn</dt>
           <dd>{s.snap ? 'Stick left/right (snap) · or turn your body' : 'Stick left/right (smooth) · or turn your body'}</dd>
           <dt>Level</dt>
-          <dd>The menu at your side · Level 1 / Level 2 · or teleport up a stair</dd>
+          <dd>{`The menu at your side · ${[...world.levels].sort((m, n) => m.elevation - n.elevation).map((l) => l.name).join(' / ')} · or teleport up a stair`}</dd>
           <dt>Exit</dt>
           <dd>Exit VR on the menu · or take the headset off</dd>
         </dl>

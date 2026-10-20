@@ -67,6 +67,9 @@ export function ArDialog({ open, onOpenChange, projectId, projectName, levels }:
     abort.current = new AbortController();
     setBusy(true);
     setError(null);
+    // The model made before is not this one: its code and file go until the new one is made.
+    setMade(null);
+    setAsked(null);
     try {
       const all = chosen.size === levels.length;
       const job = await requestExport(projectId, { kind: 'usdz', ar: request, ...(all ? {} : { levels: levels.filter((l) => chosen.has(l.id)).map((l) => l.id) }) });

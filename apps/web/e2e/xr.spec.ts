@@ -210,6 +210,7 @@ test('walk it in VR and place it on the lot in AR: Enter VR only with a headset,
   await expect(status).toContainText('Upper floor', { timeout: 30_000 });
   await expect(status.getByRole('button', { name: 'Upper floor' })).toHaveAttribute('aria-pressed', 'true');
   await expect.poll(async () => (await vr.evaluate(() => (window as unknown as Hook).__xr!.head()))![2], { timeout: 30_000 }).toBeGreaterThan(3.5);
+  await vr.waitForTimeout(1_500);
   await vr.screenshot({ path: 'test-results/xr-headset-level2.png' });
 
   // ── Exit VR: the session ends, the orbit and Enter VR come back.
