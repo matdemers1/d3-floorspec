@@ -1,0 +1,7 @@
+{
+  "description": "A garage slab - the floor of a garage that is not a room's - grades the ground.",
+  "covers": [
+    "FS-SITE-4.1.1",
+    "FS-SITE-7.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A spot keyed by W1, the ID of a wall: FS-SITE-INV-001.",
+  "covers": [
+    "FS-SITE-1.3.2"
+  ]
+}

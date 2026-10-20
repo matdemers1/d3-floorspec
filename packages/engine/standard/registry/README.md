@@ -150,7 +150,7 @@ see; they make sure nothing is merged that the lifecycle forbids.
 Every kind an extension adds carries a fallback — a box, and optionally a glTF model and a 2D
 symbol — so that a reader without the extension still shows that something is there. An extension
 never changes what core data means (Core 12.7). Building systems — electrical, plumbing,
-mechanical, low-voltage, structural, furniture, lighting — the landscape around a house, the views it is meant to be seen
+mechanical, low-voltage, structural, furniture, lighting — the landscape around a house and the ground it stands on, the views it is meant to be seen
 from, a remodel's existing, demolished and new work, and the dimensions and notes drawn on its plans, ship as first-party `FS_` extensions (FLR-ADR-001).
 
 ## Official extensions
@@ -167,21 +167,22 @@ from, a remodel's existing, demolished and new work, and the dimensions and note
 | [`FS_lighting`](FS_lighting/spec.md) | 0.1.0 | Draft | what each light gives — its lumens, its colour temperature or tunable-white range, whether it dims — over FS_electrical's lights and other extensions' lamps, and the house's named lighting scenes: the luminaires each turns on, at what output and colour temperature; it requires FS_electrical and adds no kind of element | `FS-LGHT-` |
 | [`FS_renovation`](FS_renovation/spec.md) | 0.1.0 | Draft | a remodel: each element's renovation status - existing, to be demolished, or new - and the house's two states, as it stands and when the work is done, each a valid Core view; the existing, demolition, proposed and combined filters and their drafting conventions; quantities and the rooms' areas before and after; it requires nothing and adds no kind of element | `FS-RENO-` |
 | [`FS_annotation`](FS_annotation/spec.md) | 0.1.0 | Draft | the drawing annotation its owner keeps: dimension strings associated with the junctions, wall faces and opening centres they measure — their lengths derived exactly, every time, so they follow the walls — and notes with leaders, about what they point at; it requires nothing and adds no kind of element | `FS-ANNO-` |
+| [`FS_site`](FS_site/spec.md) | 0.1.0 | Draft | the ground a house stands on: setbacks drawn from Core's lot line, the terrain a survey's spot elevations and contour lines make — one triangulated surface, defined uniquely — and the grading: patios, walks and drives on the ground and pads under a house, each with its cut and fill, exact estimates, never an engineered grading plan; it requires nothing and adds no kind of element | `FS-SITE-` |
 | [`FS_views`](FS_views/spec.md) | 0.1.0 | Draft | the house's saved views: named cameras — where each stands and what it looks at, its lens, two-point perspective, picture shape, depth of field and exposure — and what each shows: the whole house or a level cut away, the sky, the date and time that place the sun, and the lights, all on or as an FS_lighting scene sets them; it requires nothing and adds no kind of element | `FS-VIEW-` |
 
 The first six list one implementation, D3 Floorspec's engine, with evidence of its passing their
-suites at e5fd4ca in a public CI run (`<NAME>/evidence/`); FS_landscape, FS_lighting, FS_views, FS_renovation and FS_annotation,
-Drafts, list the engine too, and have no evidence yet. Each Release Candidate stays one until a
+suites at e5fd4ca in a public CI run (`<NAME>/evidence/`); FS_landscape, FS_lighting, FS_views, FS_renovation, FS_annotation and
+FS_site, Drafts, list the engine too, and have no evidence yet. Each Release Candidate stays one until a
 second, independent implementation passes its suite (FLR-REQ-092). FS_structural is a Draft whose
-suite the engine passes; it becomes a Release Candidate by its own pull request, which freezes it, and so do FS_landscape, FS_lighting, FS_views, FS_renovation and
-FS_annotation. The conformance oracle in `tools/oracle/ext/` implements all eleven, and is evidence for none.
+suite the engine passes; it becomes a Release Candidate by its own pull request, which freezes it, and so do FS_landscape, FS_lighting, FS_views, FS_renovation,
+FS_annotation and FS_site. The conformance oracle in `tools/oracle/ext/` implements all twelve, and is evidence for none.
 
 Every official extension follows the same conventions, each stated in its own specification's
-chapter 1: its rules apply to a document of a Core draft it lists — all eleven list Core 0.2, 0.3
+chapter 1: its rules apply to a document of a Core draft it lists — all twelve list Core 0.2, 0.3
 and 0.4 — that uses it at a version a validator both implements and knows; its diagnostics are `FS-<CODE>-SCH-`, `-INV-` and `-LINT-`, evaluated after
 Core's invariants and never with a Core error; its errors make a document invalid; and what it
 derives is `extensions.<NAME>` of the derived values. Records that are not elements — circuits,
-stacks, gas sources, lighting scenes, saved views, dimension strings and notes — share the document's one space of IDs, so diagnostics can name them. Data an
+stacks, gas sources, lighting scenes, saved views, dimension strings and notes, survey points' spots and contour lines, grading pads — share the document's one space of IDs, so diagnostics can name them. Data an
 extension records on core elements (FS_structural's, on walls, openings, slabs, rooms and roofs; FS_renovation's status) is
 each element's own `extensions.<NAME>`, defined by the schema's `#/$defs/coreElements`, and checked
 with the top-level data as the schema tier. Default

@@ -1,0 +1,8 @@
+{
+  "description": "unsetProperty of $document /site removes the site, and its lot, while setbacks remain: the result breaks 2.2.1, and the batch is rejected.",
+  "covers": [
+    "FS-SITE-2.2.1",
+    "FS-SITE-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

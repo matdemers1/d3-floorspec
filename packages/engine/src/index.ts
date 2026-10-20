@@ -105,6 +105,22 @@ export * as lighting from './extensions/fs/lighting.js';
 export * as views from './extensions/fs/views.js';
 export * as renovation from './extensions/fs/renovation.js';
 export * as annotation from './extensions/fs/annotation.js';
+export * as site from './extensions/fs/site.js';
+export { type DerivedSite, type DerivedGrading } from './extensions/fs/site.js';
+export {
+  siteDrawing,
+  contoursOf,
+  cutFillOf,
+  gradeAt,
+  bearingOf,
+  setbackPolygon,
+  type SiteDrawing,
+  type DrawSurface,
+  type DrawEdge,
+  type DrawGraded,
+  type Contour,
+  type CutFill,
+} from './extensions/fs/site-draw.js';
 export {
   resolveAnnotations,
   resolveAnnotationsOf,

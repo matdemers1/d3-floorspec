@@ -1,0 +1,7 @@
+{
+  "description": "A driveway and a front walk from the house to the street, across the 25' front setback: a walkway or a driveway reaches the street by design, so neither is tested (2.3) - nothing is reported.",
+  "covers": [
+    "FS-SITE-1.2.3",
+    "FS-SITE-2.3.1"
+  ]
+}

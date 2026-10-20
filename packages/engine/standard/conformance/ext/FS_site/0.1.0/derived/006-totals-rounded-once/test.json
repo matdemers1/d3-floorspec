@@ -1,0 +1,7 @@
+{
+  "description": "The plane and three pads at 0, each one base unit wide and three long, running north from the zero line: each cuts 9/20 of a cubic unit, rounded to 0; the three together cut 27/20, rounded once to 1. The total is not the sum of the rounded volumes.",
+  "covers": [
+    "FS-SITE-4.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

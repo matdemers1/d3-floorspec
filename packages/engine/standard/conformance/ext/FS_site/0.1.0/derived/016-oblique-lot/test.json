@@ -1,0 +1,7 @@
+{
+  "description": "A lot of five edges, its street edge 0 along the south and its north-east side oblique: edges 1 and 4, which meet the street edge, are its sides, and 2 and 3 its rear; the oblique edge is 50' long (a 30-40-50 triangle) and the others as written. Its rear setback, drawn from the oblique edge, reaches the house's north-east corner - FS-SITE-LINT-003 for three junctions and the pad - and the lot runs beyond the survey.",
+  "covers": [
+    "FS-SITE-2.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

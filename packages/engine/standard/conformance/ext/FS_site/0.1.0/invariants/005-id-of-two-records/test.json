@@ -1,0 +1,6 @@
+{
+  "description": "A spot and a pad both keyed GP1: the ID is reported once.",
+  "covers": [
+    "FS-SITE-1.3.2"
+  ]
+}

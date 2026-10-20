@@ -31,6 +31,7 @@ export {
   type ExteriorMount,
 } from './exterior.js';
 export { landscapeOf, landscapeLayers, type SceneLandscape } from './landscape.js';
+export { siteLayers, siteExtent, surveyHeight, type SiteLayers, type SiteDrawOptions } from './site.js';
 export {
   PLAN_STYLES,
   STYLES,

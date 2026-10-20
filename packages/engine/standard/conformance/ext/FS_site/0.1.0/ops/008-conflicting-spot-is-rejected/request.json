@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_site/spots/SP6",
+      "value": {
+        "at": [3901440, 7022592],
+        "elevation": 585216
+      }
+    }
+  ]
+}

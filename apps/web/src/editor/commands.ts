@@ -1,3 +1,4 @@
+import { SITE_COMMANDS } from './site/commands';
 import type { EditorStore, ToolId } from './store';
 import type { ToolController } from './tools';
 import { newLevel, roofOverLevel, switchUnits } from './actions';
@@ -665,6 +666,8 @@ export const COMMANDS: readonly Command[] = [
   ...PRECISION_COMMANDS,
   // FLR-T-18.11: the dimension and note tools (⇧D, ⇧T), and what the plan shows of the annotation.
   ...ANNOTATE_COMMANDS,
+  // FLR-T-15.1: the site's tools (⇧B, ⇧K, ⇧E, ⇧C, ⇧G), in Landscape mode's rail.
+  ...SITE_COMMANDS,
 ];
 
 /** The level `dir` steps above (1) or below (-1) the current one, by elevation. */

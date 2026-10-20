@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_site/spots/SP6 at the 815' contour line's middle vertex, 1' higher than it: the result breaks 3.1.2, and an applier that implements FS_site and knows it rejects the batch (Ops 1.2.3).",
+  "covers": [
+    "FS-SITE-3.1.2",
+    "FS-SITE-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

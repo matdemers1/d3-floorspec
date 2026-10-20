@@ -27,6 +27,7 @@ import { RoofEdgeTags, RoofLayer, roofStairOutline, StairDraft, StairsLayer } fr
 import { DOOR_CLASS, doorParts, SymbolParts } from './plansymbols';
 import { ArrangeHtml, ArrangeLayer } from './arrange/Overlay';
 import { modesOf, useModes } from './modes';
+import { SiteOverLayer, SiteUnderLayer } from './site/Layer';
 import { levelPaint, planLook, useCurrentStyle, useDocumentTheme, usePlanStyles, type LevelPaint } from './planStyle';
 import { lookStyle, PlanStyleDefs, StyledRoomLabels, StyledWalls, WallTypeLegend } from './StylePanel';
 import { PrecisionHtml, PrecisionLayer } from './precision/Overlay';
@@ -220,7 +221,10 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
           {model !== null && level !== undefined ? (
             <>
               {/* FLR-T-18.12: the level's underlay, over the floors and under the walls. */}
+              {/* FLR-T-15.1: the site's contours under the floors; cut and fill, spots and the lot over them. */}
+              <SiteUnderLayer store={store} view={view} level={level} model={model} layers={layers} look={look} />
               <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} reno={renoStyles} underlay={<UnderlayImage store={store} view={view} level={level.id} />} />
+              <SiteOverLayer store={store} view={view} level={level} model={model} layers={layers} look={look} />
               <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} look={look} />
               {/* FLR-T-14.7: the daylight study on the floors, under the systems, labels and handles. */}
               {comparing ? null : <DaylightLayer store={store} view={view} level={level} />}
@@ -679,14 +683,14 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
   if (draft.tool === 'wand') return <WandOverlay store={store} view={view} level={level} />;
   if ('drag' in draft && (draft.drag?.kind === 'roomSide' || draft.drag?.kind === 'room')) return <RoomDragGhost store={store} view={view} level={level} units={store.units} />;
   if (draft.tool === 'stair') return <StairDraft view={view} foot={draft.foot} cursor={draft.cursor} />;
-  if (draft.tool === 'slab' || draft.tool === 'roof') {
+  if (draft.tool === 'slab' || draft.tool === 'roof' || draft.tool === 'lot' || draft.tool === 'pad' || draft.tool === 'contour') {
     const chain = draft.chain.map((v) => v.point);
     const cursor = draft.cursor;
     const all = cursor !== null && chain.length > 0 ? [...chain, cursor.point] : chain;
     const screen = all.map((p) => S(view, p));
     return (
       <g className="fs-draw" aria-hidden="true">
-        {screen.length > 2 ? <polygon className="fs-draw__slab" points={screen.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')} /> : null}
+        {screen.length > 2 && draft.tool !== 'contour' ? <polygon className="fs-draw__slab" points={screen.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')} /> : null}
         {screen.length > 1 ? <polyline className="fs-draw__line" points={screen.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')} /> : null}
         {chain.map((p, i) => {
           const q = S(view, p);

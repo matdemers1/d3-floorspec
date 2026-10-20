@@ -1,0 +1,7 @@
+{
+  "description": "A front setback of 30' and one base unit: the patio is 1/1280 mm inside it, FS-SITE-LINT-003 for the slab.",
+  "covers": [
+    "FS-SITE-1.2.3",
+    "FS-SITE-2.3.1"
+  ]
+}

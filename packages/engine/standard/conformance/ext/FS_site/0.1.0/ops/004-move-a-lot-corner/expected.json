@@ -1,0 +1,23 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "5ae11e41412c69ea6224cd9b6bdc85fad10837119429908a621ef8a7bc4b37f5",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "$site",
+      "path": "/boundary",
+      "value": [[-11704320, -15605760], [15605760, -15605760], [19507200, 11704320], [-11704320, 11704320]]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "$site",
+      "path": "/boundary",
+      "value": [[-11704320, -15605760], [15605760, -15605760], [15605760, 11704320], [-11704320, 11704320]]
+    }
+  ]
+}

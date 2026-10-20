@@ -90,7 +90,8 @@ export const RAILS: Readonly<Record<ModeId, readonly RailItem[]>> = {
   plumbing: [SELECT, HAND, { device: 'toilet' }, { device: 'lavatory' }, { device: 'kitchenSink' }, { device: 'shower' }, { device: 'bathtub' }, { device: 'floorDrain' }, { device: 'waterHeater' }],
   mechanical: [SELECT, HAND, { device: 'furnace' }, { device: 'airHandler' }, { device: 'supply' }, { device: 'return' }, { device: 'exhaustFan' }, { device: 'gasRange' }],
   lowvoltage: [SELECT, HAND, { device: 'dataOutlet' }, { device: 'coaxOutlet' }, { device: 'headEnd' }],
-  landscape: [SELECT, HAND, { tool: 'slab' }, { library: true }],
+  // FLR-T-15.1: the site — the lot, its setbacks, spots, contours and grade pads — then paving and planting.
+  landscape: [SELECT, HAND, { tool: 'lot' }, { tool: 'setback' }, { tool: 'spot' }, { tool: 'contour' }, { tool: 'pad' }, { tool: 'slab' }, { library: true }],
 };
 
 export class ModesStore {

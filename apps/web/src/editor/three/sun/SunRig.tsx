@@ -1,3 +1,5 @@
+import { setGroundLook } from '../terrain/ground';
+import { siteDrawingOf } from '../../site/Layer';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -54,7 +56,11 @@ function frameOf(model: EditorModel, mesh: HouseMesh): Frame | null {
   const radius = Math.max(1, min.distanceTo(max) / 2);
   const lowest = model.levels.reduce((z, l) => Math.min(z, l.elevation), Infinity);
   const floor = Number.isFinite(lowest) ? (lowest - o[2]) / k : min.z;
-  return { centre, radius, ground: gradeOf(mesh, floor) - 0.005 };
+  // FLR-T-15.1: on a surveyed site the lawn runs on beyond the terrain at its lowest ground.
+  const terrain = siteDrawingOf(model);
+  const low = terrain.surface === null ? null : Math.min(terrain.surface.low, ...terrain.graded.map((g) => g.elevation));
+  const grade = gradeOf(mesh, floor);
+  return { centre, radius, ground: (low === null ? grade : Math.min(grade, (low - o[2]) / k - 0.05)) - 0.005 };
 }
 
 /**
@@ -143,6 +149,10 @@ export function SunRig({ store, model, mesh, compact, walking, lamps = false, ca
   const maps = useSkyMaps(sky === null ? [] : mapsFor(sky));
   const field = useMemo(() => (sky === null || maps === null ? null : skyField(sky, maps)), [sky, maps]);
   const sh = useMemo(() => (field === null ? null : skyHarmonics(field)), [field]);
+  // FLR-T-15.1: the site's terrain wears the lawn's ground — its season's tint, or snow.
+  const groundLook = field?.light.ground ?? null;
+  useEffect(() => { setGroundLook(store, groundLook); }, [store, groundLook]);
+  useEffect(() => () => { setGroundLook(store, null); }, [store]);
   const exposure = lamps ? LIT_EXPOSURE : field === null || sky === null ? null : skyExposure(sky, field.maps);
   // Exposure compensation (FLR-T-13.10): the camera's, on top of the sky's exposure.
   const compensation = useThreeState(store, (s) => (s.shot === null || s.walking ? 0 : s.shot.exposure));

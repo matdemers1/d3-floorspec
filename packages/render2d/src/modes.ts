@@ -15,7 +15,7 @@ export const MODE_IDS = ['construction', 'decorator', 'electrical', 'plumbing', 
 export type ModeId = (typeof MODE_IDS)[number];
 
 /** The plan's layers a mode sets, in the order the Layers drawer lists them. */
-export const PLAN_LAYERS = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'landscape', 'findings'] as const;
+export const PLAN_LAYERS = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'findings'] as const;
 export type PlanLayer = (typeof PLAN_LAYERS)[number];
 
 export const LAYER_STATES = ['on', 'ghost', 'off'] as const;
@@ -35,6 +35,10 @@ export const LAYER_LABELS: Readonly<Record<PlanLayer, string>> = {
   plumbing: 'Plumbing',
   mechanical: 'Mechanical',
   lowvoltage: 'Low-voltage',
+  site: 'Boundary',
+  contours: 'Contours',
+  grading: 'Cut and fill',
+  spots: 'Spot levels',
   landscape: 'Landscape',
   findings: 'Findings',
 };
@@ -100,7 +104,7 @@ export const MODES: Readonly<Record<ModeId, ModeDef>> = {
     label: 'Landscape',
     summary: 'Site, paving, lawn, planting, exterior lights',
     plan: 'Landscape plan',
-    layers: states(['landscape', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'roof']),
+    layers: states(['site', 'contours', 'grading', 'spots', 'landscape', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'roof']),
   },
 };
 
@@ -140,6 +144,7 @@ export function layerOfElement(extension: string, collection: string): PlanLayer
       return 'lowvoltage';
     case 'FS_landscape':
       return 'landscape';
+    // FS_site has no elements; its drawing is the site, contours, grading and spots layers.
     case 'FS_furniture':
       return collection === 'casework' || collection === 'appliances' ? 'casework' : 'furniture';
     default:

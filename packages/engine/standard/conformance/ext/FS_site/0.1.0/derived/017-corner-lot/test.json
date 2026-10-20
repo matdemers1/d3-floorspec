@@ -1,0 +1,7 @@
+{
+  "description": "A corner lot, its south and east edges both on streets, with a front setback of 10': both are front edges, the two that meet them sides, and none is a rear.",
+  "covers": [
+    "FS-SITE-2.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

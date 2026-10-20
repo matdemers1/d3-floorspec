@@ -1,0 +1,8 @@
+{
+  "description": "The same garden read with no known extensions: FS_site is not evaluated, so nothing of it is derived (`derived.extensions` is empty); FS_site has no elements of its own, and Core derives the patio slab as ever.",
+  "covers": [
+    "FS-SITE-1.2.1",
+    "FS-SITE-1.2.4",
+    "FS-CORE-1.6.9"
+  ]
+}

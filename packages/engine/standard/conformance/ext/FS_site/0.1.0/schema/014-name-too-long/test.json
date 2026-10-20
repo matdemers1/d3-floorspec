@@ -1,0 +1,6 @@
+{
+  "description": "A record's name is 1 to 200 characters.",
+  "covers": [
+    "FS-SITE-1.3.1"
+  ]
+}

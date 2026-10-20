@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-SITE-INV-001",
+      "severity": "error",
+      "elements": ["DM1"]
+    }
+  ]
+}

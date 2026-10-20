@@ -1,0 +1,9 @@
+{
+  "description": "The garden on its slope declaring Core \"0.2\", a draft FS_site 0.1.0 lists (1.1): FS_site is evaluated and reports nothing. A Core 0.2 slab has no purpose, so the patio grades nothing: only the pad is measured (4.1).",
+  "covers": [
+    "FS-SITE-1.2.1",
+    "FS-SITE-1.2.3",
+    "FS-SITE-1.2.4",
+    "FS-SITE-7.1.1"
+  ]
+}

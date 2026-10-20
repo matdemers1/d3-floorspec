@@ -1,0 +1,7 @@
+{
+  "description": "Setbacks giving the front alone: the side and rear edges have no setback.",
+  "covers": [
+    "FS-SITE-2.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

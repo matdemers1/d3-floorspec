@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "$document",
+      "path": "/extensions/FS_site/pads/GP1"
+    }
+  ]
+}

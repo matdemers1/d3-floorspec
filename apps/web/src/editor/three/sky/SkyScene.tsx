@@ -169,7 +169,7 @@ export function SkyProbe({ sh }: { sh: Float64Array }) {
 let lawnTexture: THREE.DataTexture | null = null;
 
 /** The lawn's tile as an sRGB texture with mipmaps, so the far lawn is its mean and does not shimmer. */
-function lawnMap(anisotropy: number): THREE.DataTexture {
+export function lawnMap(anisotropy: number): THREE.DataTexture {
   if (lawnTexture !== null) return lawnTexture;
   const g = grassTexture();
   const n = g.width * g.height;

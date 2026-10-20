@@ -52,6 +52,14 @@ export interface Palette {
   readonly canopy: string;
   readonly canopyDark: string;
   readonly grassInk: string;
+  /** FS_site (FLR-T-15.1): the site's labels; minor and major contours; cut (amber, hatched) and fill (blue, dashed); the lot line and the setback line. */
+  readonly siteInk: string;
+  readonly contour: string;
+  readonly contourMajor: string;
+  readonly cut: string;
+  readonly fill: string;
+  readonly lotLine: string;
+  readonly setback: string;
 }
 
 /** The Floorspec accent, the same in both themes. */
@@ -84,6 +92,13 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     canopy: '#6f8f4e',
     canopyDark: '#3f5d3a',
     grassInk: '#8c8a58',
+    siteInk: '#2c303b',
+    contour: '#9aa58a',
+    contourMajor: '#5d6e47',
+    cut: '#a86a00',
+    fill: '#2f6fb0',
+    lotLine: '#5432be',
+    setback: '#8a5a00',
   },
   dark: {
     paper: '#101117',
@@ -111,5 +126,12 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     canopy: '#8fb06a',
     canopyDark: '#6c9465',
     grassInk: '#b9b67a',
+    siteInk: '#d6d9e1',
+    contour: '#56684a',
+    contourMajor: '#93b37a',
+    cut: '#e7b45d',
+    fill: '#87c3ff',
+    lotLine: '#a99dff',
+    setback: '#e7b45d',
   },
 };

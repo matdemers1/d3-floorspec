@@ -16,6 +16,7 @@ renderPlan(doc, {
   annotation: { rooms: true, tags: true, custom, notes }, // room strings, door/window tags, FS_annotation
   labels: true,               // room name (or function), net ft², ft-in size, ID
   roof: false,                // the roof layer: eave outline dashed, ridges, hips, valleys, gable ends
+  site: { interval: 390144 },  // FS_site's contours every foot of the survey's datum (FLR-T-15.1)
   symbols: bytesBySha256,     // fallback symbol bytes (Core 12.6): Map<sha256, Uint8Array> or (sha256) => bytes
 }); // → a standalone SVG string
 ```
@@ -79,6 +80,13 @@ renderPlan(doc, { reader: { extensions: ['FS_electrical'], knownExtensions } });
   `SCREEN_METRICS`): exterior strings stacked outward, a length too long for its span on a row of its
   own with a leader, the strings beyond it moved out by that row, and the depth each side reaches
   returned for the margins. `scaleBarOf` is the graphic scale every drawing prints.
+
+- **The site (FLR-T-15.1, FS_site)** is drawn on the lowest level from the engine's `siteDrawing`:
+  contours every foot of the survey's datum under the floors (`site: { interval, majorEvery }`), the
+  survey's own contour lines dashed, cut hatched in amber and fill in rows of blue dashes over the
+  paving (never colour alone), the spots with their heights, and the lot with each edge's bearing and
+  length and the setback line — four plan layers, `site`, `contours`, `grading` and `spots`, on in
+  Landscape mode. `siteLayers` is exported so the editor's canvas draws the same SVG.
 
 PNG output lives in the worker (`apps/worker/src/render`): `renderPlanPng(doc, { width, ...opts })`
 rasterises with resvg and the bundled Inter / JetBrains Mono, never the host's fonts.

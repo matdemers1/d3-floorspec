@@ -1,0 +1,6 @@
+{
+  "description": "The lot's north-east corner moved 1' north, beyond the survey: its east edge is 71' and its north edge sqrt(70^2 + 1^2) feet, rounded once.",
+  "covers": [
+    "FS-SITE-7.1.1"
+  ]
+}
