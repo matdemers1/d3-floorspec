@@ -6,7 +6,7 @@ import { api, ApiError } from '../lib/api';
  * attachment` — so the page stays put and the browser names it.
  */
 
-export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz' | 'still' | 'shots' | 'film';
+export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz' | 'still' | 'shots' | 'film' | 'pair';
 
 /**
  * A still's sizes and qualities, as the worker offers them (apps/worker/src/pathtrace/presets.ts) —
@@ -44,6 +44,38 @@ export interface ShotsRequest {
   views?: string[];
   size: ShotSize;
   quality: StillQuality;
+}
+
+/**
+ * A side of a matched pair (FLR-T-14.4): main's head unless a pending changeset or a version is named,
+ * in a design (Core 19.6) when one is given.
+ */
+export interface PairSideRequest {
+  changeset?: string;
+  version?: string;
+  design?: Record<string, string>;
+}
+
+/**
+ * A matched pair (FLR-T-14.4): A and B path-traced from one camera — a saved view by ID or name, or
+ * `shot`, a view as FS_views records one (the editor's camera now) — at a shot list's size and quality.
+ */
+export interface PairRequest {
+  a?: PairSideRequest;
+  b: PairSideRequest;
+  view?: string;
+  shot?: Record<string, unknown>;
+  size: ShotSize;
+  quality: StillQuality;
+}
+
+/** A finished pair's files and what each side was (the job's result). */
+export interface PairFacts {
+  a: { label: string; file: string };
+  b: { label: string; file: string };
+  swipe: string;
+  sideBySide: string;
+  camera: string;
 }
 
 /**
@@ -155,6 +187,8 @@ export interface ExportJob {
     codec?: string;
     /** A shot list's: each still in its ZIP. */
     shots?: { file: string; view: string; name: string; width: number; height: number; samples: number; ms: number }[];
+    /** A matched pair's (FLR-T-14.4): its four pictures and what each side was. */
+    pair?: PairFacts;
   } | null;
   createdAt: string;
   finishedAt: string | null;
@@ -182,6 +216,8 @@ export interface ExportRequest {
   shots?: ShotsRequest;
   /** A film's (FLR-T-14.1). */
   film?: FilmRequest;
+  /** A matched pair's (FLR-T-14.4). */
+  pair?: PairRequest;
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8). */
   doors?: 'open' | 'closed';
   /** glTF and USDZ (FLR-T-13.12): the lights on, each at an output and colour temperature; default every one at full. */
@@ -292,10 +328,10 @@ export function describeJob(job: ExportJob, sets: readonly DesignSet[] = []): st
 }
 
 function describeStatus(job: ExportJob): string {
-  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ', still: 'Still', shots: 'Shot list', film: 'Film' }[job.kind];
+  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ', still: 'Still', shots: 'Shot list', film: 'Film', pair: 'Matched pair' }[job.kind];
   switch (job.status) {
     case 'queued':
-      return job.kind === 'ifc' ? `${what} waiting to be written` : job.kind === 'still' || job.kind === 'shots' || job.kind === 'film' ? `${what} waiting to be rendered` : `${what} waiting to be drawn`;
+      return job.kind === 'ifc' ? `${what} waiting to be written` : job.kind === 'still' || job.kind === 'shots' || job.kind === 'film' || job.kind === 'pair' ? `${what} waiting to be rendered` : `${what} waiting to be drawn`;
     case 'running':
       if (job.kind === 'film') {
         const f = filmProgress(job);
@@ -303,6 +339,7 @@ function describeStatus(job: ExportJob): string {
       }
       if (job.kind === 'shots') return job.progress?.shot !== undefined ? `Rendering the shot list… shot ${String(job.progress.shot)} of ${String(job.progress.shots ?? 0)}` : 'Rendering the shot list…';
       if (job.kind === 'still') return job.progress ? `Rendering the still… pass ${String(job.progress.pass)} of ${String(job.progress.passes)}` : 'Rendering the still…';
+      if (job.kind === 'pair') return job.progress?.shot !== undefined ? `Rendering the pair… ${job.progress.shot === 1 ? 'A' : 'B'}, pass ${String(job.progress.pass)} of ${String(job.progress.passes)}` : 'Rendering the pair…';
       return job.kind === 'ifc' ? `Writing the ${what}…` : `Drawing the ${what}…`;
     case 'failed':
       return job.cancelled === true ? `${what} cancelled` : `${what} failed: ${job.error ?? 'no reason was recorded'}`;
@@ -313,6 +350,7 @@ function describeStatus(job: ExportJob): string {
       if (r?.shots !== undefined) return `${r.name} · ${String(r.shots.length)} ${r.shots.length === 1 ? 'shot' : 'shots'}`;
       if (r?.elements !== undefined) return `${r.name} · ${String(r.elements)} ${r.elements === 1 ? 'element' : 'elements'}`;
       if (job.kind === 'film' && r?.frames !== undefined && r.height !== undefined) return `${r.name} · ${String(r.frames)} frames · ${String(r.height)}p`;
+      if (r?.pair !== undefined) return `${r.name} · A ${r.pair.a.label} and B ${r.pair.b.label}`;
       return r?.name ?? what;
     }
   }

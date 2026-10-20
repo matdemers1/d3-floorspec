@@ -47,12 +47,16 @@ const RenderQuery = z.object({
   at: z.string().regex(AT_PATTERN, 'at is a date and time at the site, such as 2026-06-21T19:30 or 2026-06-21T19:30-04:00').optional(),
   // 3D (FLR-T-13.10): a saved view (FS_views), by its name or ID — path-traced as the photograph it describes.
   savedView: z.string().trim().min(1).max(200).optional(),
+  // 3D with a changeset (FLR-T-14.4): main beside the changeset from one camera, side by side.
+  compare: z.enum(['main']).optional(),
 });
 
 /** The 3D render's widest picture: a software render, so its pixels are the worker's time. */
 export const MAX_3D_WIDTH = 2048;
 /** A render with its lights is path-traced: narrower, and waited for longer. */
 export const MAX_LIT_WIDTH = 1280;
+/** A comparison's widest side (FLR-T-14.4): two of them side by side are one 3D render's widest picture. */
+export const MAX_COMPARE_WIDTH = MAX_3D_WIDTH / 2;
 /** How many 3D renders a project may have waiting at once. */
 export const MAX_PENDING_RENDERS = 3;
 
@@ -215,10 +219,34 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
    * waits for it. The job row records who asked; like the plan render, a render is a read, so no
    * audit row is written.
    */
-  async function render3d(req: Request, at: { hash: string; document: unknown }, q: z.infer<typeof RenderQuery>): Promise<Uint8Array> {
+  async function render3d(req: Request, at: { head: string; hash: string; document: unknown }, q: z.infer<typeof RenderQuery>): Promise<Uint8Array> {
     const project = req.project;
     if (project === undefined) throw new HttpError(404, 'project not found');
     if ((q.width ?? 0) > MAX_3D_WIDTH) throw new HttpError(400, `a 3D render is at most ${String(MAX_3D_WIDTH)} pixels wide`);
+    // FLR-T-14.4: a changeset against main, from one camera, side by side — rasterized, so it comes back while asked for.
+    let compare: { hash: string; highlight: string[] } | undefined;
+    if (q.compare !== undefined) {
+      if (at.head === MAIN) throw new HttpError(400, 'compare is a changeset against main: name the changeset');
+      const set = (['savedView', 'lights', 'scene', 'time'] as const).filter((k) => q[k] !== undefined);
+      if (set.length > 0) throw new HttpError(400, `a comparison is rasterized from a named camera or a room: drop ${set.join(', ')} (a matched pair of saved views is an export, kind "pair")`);
+      if ((q.width ?? 0) > MAX_COMPARE_WIDTH) throw new HttpError(400, `each side of a comparison is at most ${String(MAX_COMPARE_WIDTH)} pixels wide`);
+      const main = await db.head.findUnique({ where: { projectId_name: { projectId: project.id, name: MAIN } } });
+      if (main === null) throw new HttpError(404, 'this project has no model yet');
+      // What the changeset touched, lit in B unless the request says what to light.
+      const log = await db.opLog.findMany({ where: { projectId: project.id, head: at.head }, select: { ops: true, resolved: true, created: true } });
+      const touched = new Set<string>();
+      for (const entry of log) {
+        for (const id of entry.created) touched.add(id);
+        for (const op of [...(Array.isArray(entry.ops) ? entry.ops : []), ...(Array.isArray(entry.resolved) ? entry.resolved : [])]) {
+          if (!isObject(op)) continue;
+          if (typeof op['id'] === 'string') touched.add(op['id']);
+          const el = op['element'];
+          if (isObject(el) && typeof el['id'] === 'string') touched.add(el['id']);
+        }
+      }
+      touched.delete('$document');
+      compare = { hash: main.versionHash, highlight: [...touched].sort().slice(0, 200) };
+    }
     if (q.savedView !== undefined) {
       const set = (['camera', 'room', 'level', 'lights', 'time', 'scene', 'sky', 'at', 'highlight'] as const).filter((k) => q[k] !== undefined);
       if (set.length > 0) throw new HttpError(400, `a saved view sets its own camera, cutaway, sky, time and lights: drop ${set.join(', ')}`);
@@ -248,7 +276,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
     // A shot list (FLR-T-13.10) takes one of the project's render places.
     const pending = await db.job.count({ where: { projectId: project.id, kind: { in: ['render.3d', 'export.shots'] }, status: { in: ['queued', 'running'] } } });
     if (pending >= MAX_PENDING_RENDERS) throw new HttpError(429, `this project already has ${String(pending)} 3D renders waiting; try again when one finishes`);
-    const highlight = q.highlight?.split(',').filter((id) => id.length > 0);
+    const highlight = q.highlight?.split(',').filter((id) => id.length > 0) ?? compare?.highlight;
     const job = await db.job.create({
       data: {
         projectId: project.id,
@@ -267,6 +295,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
           ...(q.doors === undefined ? {} : { doors: q.doors }),
           ...(q.sky === undefined ? {} : { sky: q.sky }),
           ...(q.at === undefined ? {} : { at: q.at }),
+          ...(compare === undefined ? {} : { compare: { hash: compare.hash, ...(design === undefined ? {} : { design }) } }),
         },
         versionHash: at.hash,
         requestedByAccountId: req.auth?.accountId ?? req.token?.accountId ?? null,
@@ -293,7 +322,7 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
     async (req, res) => {
       const view = req.query['view'] ?? 'plan';
       if (view !== 'plan' && view !== '3d') throw new HttpError(400, 'view is "plan" or "3d"');
-      const { hash, document, base } = await documentAt(req);
+      const { head, hash, document, base } = await documentAt(req);
       const options = RenderQuery.safeParse(req.query);
       if (!options.success) throw new HttpError(400, 'the render options are not valid', { fields: options.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) });
       const etag = `"${hash}-${createHash('sha256').update(JSON.stringify(options.data)).digest('hex').slice(0, 16)}"`;
@@ -301,13 +330,14 @@ export function checkRoutes(db: Db, renderer: PlanRenderer | null, rules: Instal
         if (options.data.mode !== undefined) throw new HttpError(400, 'a mode is a view of the plan: it is for view=plan');
         if (options.data.style !== undefined) throw new HttpError(400, 'a style is a way of drawing the plan: it is for view=plan');
         if (options.data.renovation !== undefined) throw new HttpError(400, 'a renovation plan is a drawing of the plan: it is for view=plan');
-        const png = await render3d(req, { hash, document }, options.data);
+        const png = await render3d(req, { head, hash, document }, options.data);
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('ETag', etag);
         res.setHeader('Cache-Control', 'private, no-cache');
         res.send(Buffer.from(png));
         return;
       }
+      if (options.data.compare !== undefined) throw new HttpError(400, 'compare is for view=3d: main beside a changeset, from one camera');
       const { level, highlight, width, theme, mode, renovation } = options.data;
       const style = options.data.style ?? (mode === 'construction' ? 'technical' : undefined);
       // "all" is the 3D render's whole house (FLR-T-12.23); a plan is one level — unless the model has a level called "all".

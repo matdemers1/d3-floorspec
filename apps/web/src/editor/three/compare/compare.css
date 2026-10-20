@@ -1,0 +1,276 @@
+/* Compare in 3D (FLR-T-14.4): the board's "14.4 · Compare in 3D" frames. Tokens only. */
+
+.fs-compare3d {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.fs-compare3d > * {
+  pointer-events: auto;
+}
+
+/* ─── What each side shows ─────────────────────────────────────────────────────────────────── */
+.fs-compare3d__chip {
+  position: absolute;
+  top: 72px;
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  max-width: 45%;
+  padding: 0 var(--space-12);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.fs-compare3d__chip--b {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+/* ─── The divider ──────────────────────────────────────────────────────────────────────────── */
+.fs-compare3d__line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  margin-left: -7px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.fs-compare3d__line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 4px;
+  border-right: 1px solid var(--color-surface);
+  border-left: 1px solid var(--color-surface);
+  background: var(--color-fg);
+}
+.fs-compare3d__line--fixed {
+  cursor: default;
+  pointer-events: none;
+}
+.fs-compare3d__handle {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 2px solid var(--color-fg);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  box-shadow: var(--shadow-float);
+  cursor: ew-resize;
+  touch-action: none;
+}
+.fs-compare3d__handle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-editor .fs-three .fs-compare3d__handle svg.lucide {
+  width: var(--icon-16);
+  height: var(--icon-16);
+}
+.fs-compare3d__linked {
+  position: absolute;
+  left: 50%;
+  bottom: 76px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 30px;
+  padding: 0 var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ─── What is on its way ───────────────────────────────────────────────────────────────────── */
+.fs-compare3d__status {
+  position: absolute;
+  left: 50%;
+  top: 112px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  pointer-events: none;
+}
+.fs-compare3d__status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: 30px;
+  max-width: 420px;
+  padding: var(--space-4) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-12);
+}
+.fs-compare3d__status-item--error {
+  border-color: var(--color-warning);
+}
+
+/* ─── The bar ──────────────────────────────────────────────────────────────────────────────── */
+.fs-compare3d__bar {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-16);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: calc(100% - 2 * var(--space-16));
+  padding: var(--space-6) var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-float);
+  font-family: var(--font-sans);
+}
+.fs-compare3d__icon {
+  flex: none;
+  color: var(--color-fg-muted);
+}
+.fs-compare3d__letter {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+}
+.fs-compare3d__source {
+  min-width: 0;
+  max-width: 220px;
+}
+.fs-compare3d__source-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ─── The picker ───────────────────────────────────────────────────────────────────────────── */
+.fs-compare3d__menu {
+  min-width: 280px;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+}
+.fs-compare3d__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-compare3d__item-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+.fs-compare3d__item-label {
+  color: var(--color-fg);
+}
+.fs-compare3d__item-detail {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-compare3d__tick {
+  flex: none;
+  color: var(--color-accent);
+}
+.fs-compare3d__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ─── The Comparing panel (the right column) ──────────────────────────────────────────────── */
+.fs-comparing__pair {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-comparing__changes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-comparing__change {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) 0 var(--space-2) var(--space-12);
+  border: 0;
+  border-left: 2px solid var(--color-accent);
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+.fs-comparing__change:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-comparing__change[aria-pressed='true'] {
+  background: var(--color-surface-hover);
+}
+.fs-comparing__change-detail {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-comparing__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+/* ─── The pair dialog ─────────────────────────────────────────────────────────────────────── */
+.fs-pair__pictures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+}
+.fs-pair__picture {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-pair__picture img {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}

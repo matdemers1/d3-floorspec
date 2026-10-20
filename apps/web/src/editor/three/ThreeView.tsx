@@ -15,7 +15,7 @@ import { formatArea, formatLen, prettyLen, type UnitSystem } from '../units';
 import { compass, PRESET_ORDER, PRESETS, type Orbit, type PresetId } from './camera';
 import { AXO_STANDOFF, FOV, ThreeController } from './controller';
 import { useHouseMesh } from './meshing';
-import { threeOf, useThreeState, type LevelsShown, type Quality, type ThreeStore, type WalkStart } from './mode';
+import { threeOf, ThreeStore, useThreeState, type LevelsShown, type Quality, type WalkStart } from './mode';
 import { castsShadow, describeScene, faceColours, isVisible, levelChoiceOf, levelChoices, levelOrder, linear, lookOf, parseLevelChoice, partSelected, type Look } from './parts';
 import { isSurfacePart, mappedPartBuffers, surfaceBuffers, type MapRef } from './surfaces';
 import { EDITOR_METALNESS_MAX, MATERIAL_TEXTURE_UNITS, paneMaterial, presentationPane, TextureLibrary } from './textures';
@@ -46,6 +46,13 @@ import { movesBetween, type Motion } from './edit/motion';
 import { EditController, type PickHit } from './edit/controller';
 import { docMetres, EditOverlay } from './edit/EditOverlay';
 import { readingOf } from './edit/tape';
+import { sideAspect, sideAt, sourceKey, type CompareSource, type CompareState, type Side, type SideStatus } from './compare/compare';
+import { CompareRender } from './compare/CompareRender';
+import { CompareOverlay, toggleCompare, useCompareChoices } from './compare/CompareOverlay';
+import { changedInB, comparisonDiff, compareModels, useSourceModel } from './compare/sources';
+import { setPairCamera } from './compare/pair';
+import { viewFromState } from './shot/views';
+import { sunOf } from './sun/study';
 
 /**
  * The 3D view (FLR-T-7.5, FLR-REQ-113, 114), laid out as the board's "08 · Editor — 3D cutaway",
@@ -222,6 +229,11 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const sectionOpen = useThreeState(store, (s) => s.sectionOpen);
   const explode = useThreeState(store, (s) => s.explode);
   const exploding = explode.active && !walking;
+  // FLR-T-14.4: Compare — A and B from one camera, swiped or side by side, in the full 3D view.
+  const compare = useThreeState(store, (s) => s.compare);
+  const compareShown = compare.open && !walking && !compact && !exploding;
+  const comparing = compareShown && compare.b !== null;
+  const compareChoices = useCompareChoices(store);
   const sectionRig = useMemo(() => new SectionRig(), []);
   // FLR-T-14.8: what is drawn moved from where the mesh has it (a drag), and Edit in 3D.
   const motion = useMemo(() => new MotionRig(), []);
@@ -230,7 +242,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const drawing = useRef<Drawing | null>(null);
   const reduced = useReducedMotion();
   // Presentation's passes are a perspective camera's: the exploded axonometric is drawn as Draft draws.
-  const presenting = quality === 'presentation' && !exploding;
+  // Compare draws its two pictures as Draft does (CompareRender): Presentation's passes are one picture's.
+  const presenting = quality === 'presentation' && !exploding && !comparing;
   // What Presentation reports: whether its first full frame is drawn, and its frame rate moving.
   const stats = useMemo(() => new StatsStore(), []);
   const originRef = useRef<Vec3 | null>(null);
@@ -467,6 +480,75 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       frame: (box) => { ctl.reframe(box); },
     };
   }, [ready, houseBox, bands, store, sectionRig, units, project, levelName, selectionBox, ctl]);
+  // ── Compare (FLR-T-14.4): each side's model, what B changes, and B's own camera when the cameras are unlinked.
+  const ctlB = useMemo(() => new ThreeController(new ThreeStore(null)), []);
+  useEffect(() => { ctlB.invalidate = () => { ctl.invalidate(); }; }, [ctl, ctlB]);
+  const aRead = useSourceModel(store, comparing ? compare.a : null);
+  const bRead = useSourceModel(store, comparing ? compare.b : null);
+  const aModel = aRead?.status === 'ready' ? aRead.model : null;
+  const bModel = bRead?.status === 'ready' ? bRead.model : null;
+  const diff = useMemo(() => (aModel === null || bModel === null ? null : comparisonDiff(aModel, bModel, units)), [aModel, bModel, units]);
+  const changed = useMemo(() => (diff === null ? undefined : changedInB(diff)), [diff]);
+  // The models read for a comparison are let go when it closes.
+  useEffect(() => { if (!compare.open) compareModels(store).clear(); }, [compare.open, store]);
+  // Unlinked, B's camera starts where A's is; linked again, one camera drives both.
+  useEffect(() => {
+    if (!compare.linked) ctlB.orbit = ctl.orbit;
+    ctl.invalidate();
+  }, [compare.linked, ctl, ctlB]);
+  // Side by side: framed once for a half's shape, so the house fits each half; and for the whole view again after.
+  const sideBySide = comparing && compare.mode === 'side';
+  const framedSide = useRef(false);
+  useEffect(() => {
+    if (!sideBySide) {
+      if (framedSide.current && houseBox !== null) ctl.reframe(houseBox);
+      framedSide.current = false;
+      return;
+    }
+    if (framedSide.current || houseBox === null) return;
+    framedSide.current = true;
+    ctl.reframe(houseBox, sideAspect('side', ctl.size.width, ctl.size.height));
+    if (!three.get().compare.linked) ctlB.orbit = ctl.orbit;
+  }, [sideBySide, houseBox, ctl, ctlB, three]);
+  // The house groups each pass draws: main's parts, and each compared side's.
+  const mainGroup = useRef<THREE.Group>(null);
+  const compareGroups = useRef<Record<Side, THREE.Group | null>>({ a: null, b: null });
+  const setCompareGroup = useCallback((side: Side, g: THREE.Group | null) => { compareGroups.current[side] = g; ctl.invalidate(); }, [ctl]);
+  const groupOf = useCallback((side: Side): THREE.Object3D | null => {
+    const src = side === 'a' ? compare.a : compare.b;
+    if (src === null) return null;
+    return src.kind === 'main' ? mainGroup.current : compareGroups.current[side];
+  }, [compare.a, compare.b]);
+  const houses = useCallback(() => [mainGroup.current, compareGroups.current.a, compareGroups.current.b].filter((g): g is THREE.Group => g !== null), []);
+  const mainHouse = useCallback(() => mainGroup.current, []);
+  // Each compared side's house as it is built: loading, ready (and its parts), or why not.
+  const [meshed, setMeshed] = useState<Partial<Record<Side, { status: string; parts: number }>>>({});
+  const onCompareState = useCallback((side: Side, status: string, parts: number) => {
+    setMeshed((m) => (m[side]?.status === status && m[side].parts === parts ? m : { ...m, [side]: { status, parts } }));
+  }, []);
+  const sideStatus = (src: CompareSource | null, read: ReturnType<typeof useSourceModel>, side: Side): SideStatus => {
+    if (src === null) return { status: 'none' };
+    if (src.kind === 'main') return { status: 'ready' };
+    if (read === null || read.status === 'loading') return { status: 'loading', doing: 'Reading' };
+    if (read.status === 'error') return { status: 'error', message: read.message };
+    const m = meshed[side];
+    if (m === undefined || m.status === 'loading') return { status: 'loading', doing: 'Building' };
+    if (m.status === 'ready') return { status: 'ready' };
+    return { status: 'error', message: m.status === 'invalid' ? 'This design does not validate, so nothing of it is built in 3D.' : m.status === 'empty' ? 'There is nothing in it to draw in 3D.' : 'It could not be built in 3D.' };
+  };
+  const statuses: Record<Side, SideStatus> = { a: sideStatus(comparing ? compare.a : null, aRead, 'a'), b: sideStatus(comparing ? compare.b : null, bRead, 'b') };
+  // What the pair export renders from (FLR-T-14.4): the view as it is now, as a saved view would record it.
+  useEffect(() => {
+    setPairCamera(store, () => {
+      const at = rig.current();
+      if (at === null) return null;
+      const t = three.get();
+      return viewFromState({ name: 'The view in the editor', orbit: at.orbit, origin: at.origin, three: t, level: store.get().level, sun: sunOf(store).get(), sceneUnchanged: false });
+    });
+    return () => { setPairCamera(store, null); };
+  }, [store, rig, three]);
+  useCompareHook(three, compare, groupOf, changed, meshed);
+
   // Into the exploded view, the camera frames the house lifted apart; out of it, it goes back to where it was.
   const beforeExplode = useRef<Orbit | null>(null);
   const tallest = layers.length;
@@ -485,7 +567,24 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const labels = useMemo(() => (ready === null ? [] : layerLabels(ready.model, ready.mesh, layers, visible, units)), [ready, layers, visible, units]);
 
   // ── Orbit: pointer, wheel and keys on the canvas.
-  const pointers = useRef(new Map<number, { x: number; y: number; button: number; shift: boolean }>());
+  const pointers = useRef(new Map<number, { x: number; y: number; button: number; shift: boolean; cam: ThreeController }>());
+  // FLR-T-14.4: side by side with the cameras unlinked, a gesture on B's half orbits B's camera.
+  const cameraAt = (clientX: number): ThreeController => {
+    const c = three.get().compare;
+    if (!comparing || c.mode !== 'side' || c.linked) return ctl;
+    const r = host.current?.getBoundingClientRect();
+    return r !== undefined && sideAt(c, clientX - r.left, r.width) === 'b' ? ctlB : ctl;
+  };
+  // While comparing, only what main draws is picked: the left of a swipe's divider when main is there.
+  const pickable = (clientX: number): boolean => {
+    const c = three.get().compare;
+    if (!comparing) return true;
+    if (c.mode === 'side') return false;
+    const r = host.current?.getBoundingClientRect();
+    if (r === undefined) return false;
+    const side = sideAt(c, clientX - r.left, r.width);
+    return (side === 'a' ? c.a : c.b)?.kind === 'main';
+  };
   const travelled = useRef(0);
   const pinch = useRef<number | null>(null);
   const locked = useRef(false);
@@ -500,7 +599,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       return;
     }
-    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY, button: e.button, shift: e.shiftKey });
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY, button: e.button, shift: e.shiftKey, cam: cameraAt(e.clientX) });
     if (pointers.current.size === 1) travelled.current = 0;
     pinch.current = null;
   };
@@ -526,18 +625,18 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         p.x = e.clientX;
         p.y = e.clientY;
         const after = Math.hypot(a.x - b.x, a.y - b.y);
-        if (pinch.current !== null && before > 0 && after > 0 && !walking) ctl.zoom(before / after);
+        if (pinch.current !== null && before > 0 && after > 0 && !walking) a.cam.zoom(before / after);
         pinch.current = after;
         if (walking) ctl.lookBy(dx / 2, dy / 2);
-        else ctl.pan(dx / 2, dy / 2);
+        else a.cam.pan(dx / 2, dy / 2);
       }
       return;
     }
     p.x = e.clientX;
     p.y = e.clientY;
     if (walking) ctl.lookBy(dx, dy);
-    else if (p.button === 2 || p.button === 1 || p.shift || e.shiftKey) ctl.pan(dx, dy);
-    else ctl.rotate(dx, dy);
+    else if (p.button === 2 || p.button === 1 || p.shift || e.shiftKey) p.cam.pan(dx, dy);
+    else p.cam.rotate(dx, dy);
   };
   const onPointerUp = (e: React.PointerEvent) => {
     if (editPress.current !== null) {
@@ -561,13 +660,15 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     }
   };
   const dragged = () => travelled.current > 5;
+  const cameraAtRef = useRef(cameraAt);
+  cameraAtRef.current = cameraAt;
 
   useEffect(() => {
     const el = host.current?.querySelector<HTMLElement>('.fs-three__gl');
     if (el === null || el === undefined) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (!three.get().walking) ctl.zoom(Math.exp((e.deltaY * (e.deltaMode === 1 ? 20 : 1)) * 0.0015));
+      if (!three.get().walking) cameraAtRef.current(e.clientX).zoom(Math.exp((e.deltaY * (e.deltaMode === 1 ? 20 : 1)) * 0.0015));
     };
     const onLock = () => {
       locked.current = document.pointerLockElement !== null && el.contains(document.pointerLockElement);
@@ -586,6 +687,13 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   }, [ctl, three, ready]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // FLR-T-14.4: ⌥C, Compare.
+    if (e.altKey && !e.metaKey && !e.ctrlKey && e.code === 'KeyC' && !walking && !compact && !exploding) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleCompare(store, compareChoices);
+      return;
+    }
     if (walking || e.metaKey || e.ctrlKey || e.altKey) return;
     const step = Math.PI / 18;
     // The shifted arrows pan; ⇧M is the tape's.
@@ -600,11 +708,11 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       switch (e.key) {
         // FLR-T-14.8: Edit in 3D (E) and the tape measure (⇧M); Esc finishes the tape, then puts the tool away.
         case 'e': case 'E':
-          if (e.shiftKey || compact || exploding) return false;
+          if (e.shiftKey || compact || exploding || compareShown) return false;
           three.setEdit(three.get().edit === 'move' ? null : 'move');
           return true;
         case 'M':
-          if (!e.shiftKey || compact || exploding) return false;
+          if (!e.shiftKey || compact || exploding || compareShown) return false;
           three.setEdit(three.get().edit === 'tape' ? null : 'tape');
           return true;
         case 'Escape':
@@ -682,7 +790,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // ── Picking.
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    if (dragged()) return;
+    if (dragged() || !pickable(e.nativeEvent.clientX)) return;
     const id = (e.object.userData as { id?: string }).id;
     // FLR-T-13.12: with the lights on, a switch turns its lights on or off, and a lamp itself — walking too.
     if (id !== undefined) flip(id);
@@ -690,7 +798,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     if (id !== undefined) store.select(id);
   };
   const onHover = (e: ThreeEvent<PointerEvent>) => {
-    const id = (e.object.userData as { id?: string }).id;
+    const id = pickable(e.nativeEvent.clientX) ? (e.object.userData as { id?: string }).id : undefined;
     const controls = ready === null || id === undefined || !lightsOn ? null : controlsOf(ready.model, id, allLights);
     const box = host.current?.getBoundingClientRect();
     if (controls === null || id === undefined || ready === null || box === undefined) {
@@ -702,7 +810,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   };
   const onDoubleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    if (ready === null || walking) return;
+    if (ready === null || walking || comparing) return;
     const kind = (e.object.userData as { kind?: string }).kind;
     if (kind !== 'floor' && kind !== 'slab' && kind !== 'stairFlight' && kind !== 'stairLanding') return;
     const yaw = ctl.orbit === null ? 0 : ctl.orbit.azimuth + Math.PI;
@@ -769,9 +877,18 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <AxoCamera on={exploding} ctl={ctl} />
         <SceneBridge />
         <group ref={houseGroup}>
-          <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} danger={tokens.danger} selection={walking ? null : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} />
-          {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} move={(id, g) => motion.register(id, g)} /> : null}
+          <group ref={mainGroup}>
+            <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} danger={tokens.danger} selection={walking ? null : comparing && compare.focus !== null ? compare.focus : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={comparing ? 'draft' : quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} outlined={comparing && compare.b.kind === 'main' ? changed : undefined} />
+            {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} move={(id, g) => motion.register(id, g)} /> : null}
+          </group>
+          {comparing && compare.a.kind !== 'main' && aModel !== null ? (
+            <CompareModel key={`a:${sourceKey(compare.a)}`} side="a" model={aModel} originRef={originRef} setGroup={setCompareGroup} levels={levels} roof={roof} level={levelId} accent={tokens.accent} danger={tokens.danger} textures={textures} lit={lightsOn} glows={glows} outlined={undefined} focus={compare.focus} projectId={store.projectId} onState={onCompareState} />
+          ) : null}
+          {comparing && compare.b.kind !== 'main' && bModel !== null ? (
+            <CompareModel key={`b:${sourceKey(compare.b)}`} side="b" model={bModel} originRef={originRef} setGroup={setCompareGroup} levels={levels} roof={roof} level={levelId} accent={tokens.accent} danger={tokens.danger} textures={textures} lit={lightsOn} glows={glows} outlined={changed} focus={compare.focus} projectId={store.projectId} onState={onCompareState} />
+          ) : null}
         </group>
+        {comparing ? <CompareRender state={compare} groupOf={groupOf} houses={houses} main={mainHouse} ctlB={ctlB} /> : null}
         <SectionScene
           rig={sectionRig}
           three={three}
@@ -786,7 +903,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           colours={{ fill: tokens.fillQuiet, hatch: tokens.fgMuted, ghost: tokens.fgMuted }}
           reduced={reduced}
         />
-        {!walking ? <LabelTracker built={visible} selection={selection} el={label} rig={sectionRig} motion={motion} /> : null}
+        {!walking && !sideBySide ? <LabelTracker built={visible} selection={selection} el={label} rig={sectionRig} motion={motion} /> : null}
         {!walking && filmPath !== null ? (
           <>
             <FilmPathLine points={filmPath.points} color={tokens.accent} />
@@ -840,7 +957,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       ) : null}
       {ready !== null && !walking ? <Framing store={store} model={ready.model} width={size.width} height={size.height} /> : null}
       {ready !== null && !walking && filmPath !== null ? <FilmMarks store={store} marks={filmPath.marks} el={filmMarks} /> : null}
-      {ready !== null && !walking && selectedLabel !== null ? (
+      {ready !== null && !walking && !sideBySide && selectedLabel !== null ? (
         <div className="fs-three__label" ref={label} aria-hidden="true">
           {selectedLabel}
         </div>
@@ -866,8 +983,9 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           <SunPanel store={store} model={ready.model} />
           <LightingPanel store={store} model={ready.model} />
           <CameraPanel store={store} model={ready.model} rig={rig} />
-          <SunChip store={store} />
-          {!filmOpen ? (
+          {/* The Compare bar holds the bottom of the view (FLR-T-14.4): the sun's chip steps aside. */}
+          {!compareShown ? <SunChip store={store} /> : null}
+          {!filmOpen && !compareShown ? (
             <div className="fs-three__chips-left">
               <QualityControl three={three} quality={quality} />
               <StatsChip quality={quality} stats={stats} parts={visible.length} triangles={triangles} />
@@ -876,6 +994,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
             </div>
           ) : null}
           <FilmJobCard store={store} />
+          {compareShown ? <CompareOverlay store={store} choices={compareChoices} width={size.width} height={size.height} statuses={statuses} /> : null}
         </>
       ) : null}
       {ready !== null && !compact ? <FilmTimeline store={store} model={ready.model} rig={rig} /> : null}
@@ -1107,6 +1226,8 @@ function Parts({
   onDoubleClick,
   onHover,
   onLeave,
+  interactive = true,
+  outlined,
 }: {
   visible: Built[];
   /** FLR-T-14.6: what lifts each layer of the house in the exploded view. */
@@ -1128,6 +1249,13 @@ function Parts({
   onDoubleClick: (e: ThreeEvent<MouseEvent>) => void;
   onHover: (e: ThreeEvent<PointerEvent>) => void;
   onLeave: () => void;
+  /**
+   * FLR-T-14.4: false for a compared model's house — nothing of it is picked, and its parts carry no
+   * element ID for anything that looks for the editor's own parts by one.
+   */
+  interactive?: boolean;
+  /** FLR-T-14.4: elements outlined as the selection is — what B changes, in a comparison. */
+  outlined?: ReadonlySet<string> | undefined;
 }) {
   const presenting = quality === 'presentation';
   const materials = useMemo(() => (presenting ? presentationMaterials() : draftMaterials()), [presenting]);
@@ -1151,7 +1279,7 @@ function Parts({
     invalidate();
   }, [accent, materials, textures, invalidate]);
 
-  const selected = useMemo(() => visible.filter((b) => partSelected(b.part, selection)), [visible, selection]);
+  const selected = useMemo(() => visible.filter((b) => partSelected(b.part, selection) || outlined?.has(b.part.id) === true), [visible, selection, outlined]);
   const outlines = useMemo(() => selected.map((b) => ({ key: b.part.key, id: b.part.id, layer: layerOf(b.part), geometry: new THREE.EdgesGeometry(b.geometry, 30) })), [selected]);
   // FLR-T-14.6: the parts by the layer the exploded view lifts them with (a level, or its roofs).
   const layered = useMemo(() => {
@@ -1223,7 +1351,7 @@ function Parts({
   const reflects = (b: Built): boolean => panes !== null && !partSelected(b.part, selection) && (b.look === 'glass' || (b.slots ?? []).some((m) => m?.glass === true));
 
   return (
-    <group onClick={onClick} onDoubleClick={onDoubleClick} onPointerMove={onHover} onPointerOut={onLeave}>
+    <group {...(interactive ? { onClick, onDoubleClick, onPointerMove: onHover, onPointerOut: onLeave } : {})}>
       {layered.map(([layer, list]) => (
         <group
           key={layer}
@@ -1238,7 +1366,8 @@ function Parts({
               key={b.part.key}
               geometry={b.geometry}
               material={b.slots === undefined ? materialOf(b, partSelected(b.part, selection)) : b.slots.map((m) => slotOf(b, m, partSelected(b.part, selection)))}
-              userData={{ id: b.part.id, kind: b.part.kind, key: b.part.key }}
+              userData={interactive ? { id: b.part.id, kind: b.part.kind, key: b.part.key } : { compared: b.part.id }}
+              {...(interactive ? {} : { raycast: noRaycast })}
               ref={(m) => (m === null ? undefined : motion.register(b.part.id, m))}
               castShadow={castsShadow(b.part, b.look)}
               receiveShadow={b.look !== 'glass' && b.look !== 'pick'}
@@ -1328,6 +1457,73 @@ function overlayMaterials() {
 
 /** Outlines are drawn over the house, not picked through it. */
 const noRaycast = (): void => undefined;
+
+const ignore = (): void => undefined;
+
+/**
+ * A compared model's house (FLR-T-14.4): a side of the comparison that is not main, meshed about the
+ * view's own origin so it stands exactly where main's does, drawn as the view draws — the same
+ * levels, roofs, textures and lens glows, its furniture's models — but picked by nothing. What B
+ * changes is outlined in it. Its geometry is let go when it goes: a closed comparison keeps no house.
+ */
+function CompareModel({
+  side,
+  model,
+  originRef,
+  setGroup,
+  levels,
+  roof,
+  level,
+  accent,
+  danger,
+  textures,
+  lit,
+  glows,
+  outlined,
+  focus,
+  projectId,
+  onState,
+}: {
+  side: Side;
+  model: EditorModel;
+  originRef: { current: Vec3 | null };
+  setGroup: (side: Side, g: THREE.Group | null) => void;
+  levels: LevelsShown;
+  roof: boolean;
+  level: string | null;
+  accent: string;
+  danger: string;
+  textures: TextureLibrary;
+  lit: boolean;
+  glows: ReadonlyMap<string, LensGlow>;
+  outlined: ReadonlySet<string> | undefined;
+  focus: string | null;
+  projectId: string;
+  onState: (side: Side, status: string, parts: number) => void;
+}) {
+  const state = useHouseMesh(model, originRef);
+  const ready = state.status === 'ready' ? state : null;
+  const built = useMemo(() => (ready === null ? [] : buildParts(ready.model, ready.mesh)), [ready]);
+  useEffect(() => () => { for (const b of built) b.geometry.dispose(); }, [built]);
+  const order = useMemo(() => (ready === null ? new Map<string, number>() : levelOrder(ready.model)), [ready]);
+  const visible = useMemo(() => built.filter((b) => isVisible(b.part, { walking: false, levels, roof, level, order })), [built, levels, roof, level, order]);
+  const furniture = useFurnitureModels(projectId, ready?.model ?? null, { hook: false });
+  const shown = useMemo(() => withoutModelled(visible, furniture.drawn), [visible, furniture.drawn]);
+  const ids = useMemo(() => visibleExtensionIds(visible), [visible]);
+  // Its own rigs: nothing lifts or drags a compared house.
+  const rig = useMemo(() => new SectionRig(), []);
+  const motion = useMemo(() => new MotionRig(), []);
+  useEffect(() => { onState(side, state.status, shown.length); }, [side, state.status, shown.length, onState]);
+  useEffect(() => () => { onState(side, 'loading', 0); }, [side, onState]);
+  const ref = useCallback((g: THREE.Group | null) => { setGroup(side, g); }, [side, setGroup]);
+  if (ready === null) return null;
+  return (
+    <group ref={ref} userData={{ compare: side }}>
+      <Parts visible={shown} rig={rig} motion={motion} reno={null} danger={danger} selection={focus} accent={accent} textures={textures} lit={lit} glows={glows} quality="draft" onClick={ignore} onDoubleClick={ignore} onHover={ignore} onLeave={ignore} interactive={false} outlined={outlined} />
+      <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={ids} selection={focus} accent={accent} clearances={false} onClick={ignore} />
+    </group>
+  );
+}
 
 /** The selection's label, kept over the top of its parts as the camera moves. */
 function LabelTracker({ built, selection, el, rig, motion }: { built: Built[]; selection: string | null; el: { current: HTMLDivElement | null }; rig: SectionRig; motion: MotionRig }) {
@@ -1907,6 +2103,59 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
       if (window.__floorspec3d === hook) delete window.__floorspec3d;
     };
   }, [store, three, ctl, ready, el, built, visible, textures, rig, motion, edit]);
+}
+
+/** FLR-T-14.4: the comparison as the view draws it — its state, each side's house and what B changes. */
+interface CompareHook {
+  open: boolean;
+  mode: string;
+  divider: number;
+  flipped: boolean;
+  linked: boolean;
+  a: string;
+  b: string | null;
+  /** Whether each side has a house drawn, and its meshes. */
+  drawn: Record<Side, boolean>;
+  meshes: Record<Side, number>;
+  /** Each compared (not main) side's house as it is built, and its parts. */
+  built: Partial<Record<Side, { status: string; parts: number }>>;
+  /** The elements outlined in B: what B adds, moves or changes. */
+  changed: string[];
+}
+
+declare global {
+  interface Window {
+    __floorspecCompare?: CompareHook;
+  }
+}
+
+/** Under automation only (navigator.webdriver): the comparison, for the compare e2e suite. */
+function useCompareHook(three: ThreeStore, compare: CompareState, groupOf: (side: Side) => THREE.Object3D | null, changed: ReadonlySet<string> | undefined, built: Partial<Record<Side, { status: string; parts: number }>>) {
+  useEffect(() => {
+    if (!navigator.webdriver) return;
+    const meshes = (g: THREE.Object3D | null): number => {
+      let n = 0;
+      g?.traverse((o) => { if (o instanceof THREE.Mesh) n++; });
+      return n;
+    };
+    const hook: CompareHook = {
+      get open() { return three.get().compare.open; },
+      get mode() { return three.get().compare.mode; },
+      get divider() { return three.get().compare.divider; },
+      get flipped() { return three.get().compare.flipped; },
+      get linked() { return three.get().compare.linked; },
+      a: sourceKey(compare.a),
+      b: compare.b === null ? null : sourceKey(compare.b),
+      get drawn() { return { a: groupOf('a') !== null, b: groupOf('b') !== null }; },
+      get meshes() { return { a: meshes(groupOf('a')), b: meshes(groupOf('b')) }; },
+      built,
+      changed: changed === undefined ? [] : [...changed].sort(),
+    };
+    window.__floorspecCompare = hook;
+    return () => {
+      if (window.__floorspecCompare === hook) delete window.__floorspecCompare;
+    };
+  }, [three, compare.a, compare.b, groupOf, changed, built]);
 }
 
 /** Registered by the scene: what screenPoint needs from inside the canvas. */

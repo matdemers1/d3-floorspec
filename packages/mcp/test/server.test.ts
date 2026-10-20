@@ -347,7 +347,8 @@ describe('the MCP server', () => {
     // guidance moved to the design-partner prompt (and floorspec://guide), the project handle is said
     // once in the server's instructions, propose names apply's locks rather than repeating them, and
     // closed unions are said once (tool-schema.ts). The ~4 KB under the ceiling is for new params;
-    // FLR-T-14.1's film, preset and quality on floorspec_render took ~250 bytes of it (~23,300).
+    // FLR-T-14.1's film, preset and quality on floorspec_render took ~250 bytes of it (~23,300);
+    // FLR-T-14.4's `compare` ~130 more (~23,450).
     expect(size).toBeLessThan(26_000);
   });
 
@@ -567,6 +568,29 @@ describe('the MCP server', () => {
     expect(texts(unknown)).toContain('no film "Garden"');
   });
 
+  it('compares a changeset with main in 3D, side by side from one camera (FLR-T-14.4)', async () => {
+    const client = new MemoryClient();
+    client.renderable = true;
+    const mcp = await connect(client);
+    const result = await mcp.callTool({ name: 'floorspec_render', arguments: { changeset: CHANGESET.id, compare: 'main', camera: 'ne' } });
+    expect(result.isError).toBeFalsy();
+    const content = result.content as Content[];
+    expect(content.some((c) => c.type === 'image' && c.mimeType === 'image/png')).toBe(true);
+    expect(texts(result)).toContain('Left: main as it is now. Right: the changeset');
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', compare: 'main', camera: 'ne', changeset: CHANGESET.id });
+    // A room to stand in, and a cutaway, go with it.
+    await mcp.callTool({ name: 'floorspec_render', arguments: { changeset: CHANGESET.id, compare: 'main', camera: 'Kitchen', level: 'L1' } });
+    expect(client.calls.filter((c) => c.method === 'render').at(-1)?.args[1]).toEqual({ view: '3d', compare: 'main', room: 'Kitchen', level: 'L1', changeset: CHANGESET.id });
+    // Main against itself is nothing: a changeset is named. A saved view, a plan or a scene is not a comparison's.
+    const none = await mcp.callTool({ name: 'floorspec_render', arguments: { compare: 'main' } });
+    expect(none.isError).toBe(true);
+    expect(texts(none)).toContain('name the changeset');
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { changeset: CHANGESET.id, compare: 'main', view: 'Hero exterior' } })).isError).toBe(true);
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { changeset: CHANGESET.id, compare: 'main', view: 'plan' } })).isError).toBe(true);
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { changeset: CHANGESET.id, compare: 'main', scene: 'Evening' } })).isError).toBe(true);
+    expect((await mcp.callTool({ name: 'floorspec_render', arguments: { changeset: CHANGESET.id, compare: 'version' } })).isError).toBe(true);
+  });
+
   it('relays a refused accept as an error', async () => {
     const mcp = await connect(new MemoryClient());
     const result = await mcp.callTool({ name: 'floorspec_accept', arguments: { changeset: CHANGESET.id } });
@@ -690,7 +714,8 @@ describe('the MCP server', () => {
     const { tools } = await mcp.listTools();
     const params = (name: string) => tools.find((t) => t.name === name)?.inputSchema.properties ?? {};
     // floorspec_render: every RenderOptions member but view's default, a room (camera) and lights (scene) — and a film (FLR-T-14.1).
-    expect(Object.keys(params('floorspec_render')).sort()).toEqual(['at', 'camera', 'changeset', 'doors', 'film', 'highlight', 'level', 'mode', 'preset', 'project', 'quality', 'renovation', 'scene', 'sky', 'style', 'view', 'width']);
+    expect(Object.keys(params('floorspec_render')).sort()).toEqual(['at', 'camera', 'changeset', 'compare', 'doors', 'film', 'highlight', 'level', 'mode', 'preset', 'project', 'quality', 'renovation', 'scene', 'sky', 'style', 'view', 'width']);
+    expect(params('floorspec_render')['compare']).toMatchObject({ enum: ['main'] });
     expect(params('floorspec_render')['preset']).toMatchObject({ enum: ['day-to-night'] });
     expect(params('floorspec_render')['quality']).toMatchObject({ enum: ['draft', 'final'] });
     expect(params('floorspec_render')['style']).toMatchObject({ enum: ['colour', 'presentation', 'technical', 'blueprint'] });

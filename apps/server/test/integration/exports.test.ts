@@ -550,6 +550,98 @@ describe('shot lists (FLR-T-13.10)', () => {
   });
 });
 
+describe('matched pairs (FLR-T-14.4)', () => {
+  let running: Running;
+  let drain: Drain;
+
+  beforeAll(async () => {
+    running = await start();
+  });
+  afterAll(async () => {
+    await running.close();
+  });
+  beforeEach(async () => {
+    await reset(db);
+    drain = createDrain({ databaseUrl: TEST_ENV.DATABASE_URL, log: () => undefined });
+  });
+  afterEach(async () => {
+    await drain.stop();
+  });
+
+  type PairView = ExportView & { pair: { a: { label: string; version: string; design: Record<string, string> | null }; b: { label: string; version: string; design: Record<string, string> | null }; view: string | null; camera: string | null; shot: boolean; size: string; quality: string } | null };
+
+  it('queues main against a pending changeset through a saved view, renders both in one job, and serves the pair and its composites', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator, WITH_VIEWS, 'Ranch with views');
+    const proposed = await operator.post(`/api/projects/${id}/changesets`, { name: 'Taller living room', batch: [{ op: 'setProperty', id: 'LIV', path: '/name', value: 'Great room' }] });
+    expect(proposed.status, proposed.text).toBe(201);
+    const changeset = (proposed.body as { changeset: { id: string; head: string } }).changeset;
+    const asked = await operator.post(`/api/projects/${id}/exports`, { kind: 'pair', pair: { b: { changeset: changeset.id }, view: 'living room', size: 'small', quality: 'draft' } });
+    expect(asked.status, asked.text).toBe(202);
+    const queued = view(asked) as PairView;
+    expect(queued).toMatchObject({ kind: 'pair', status: 'queued', version: hash, pair: { a: { label: 'Main', version: hash, design: null }, b: { label: 'Changeset · Taller living room', version: changeset.head }, view: 'SV2', camera: null, shot: false, size: 'small', quality: 'draft' } });
+    // One render at a time: a pair takes the place a still, a shot list or a film would.
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'shots' })).status).toBe(429);
+    expect((await operator.post(`/api/projects/${id}/exports`, { kind: 'pair', pair: { b: { changeset: changeset.id } } })).status).toBe(429);
+
+    expect(await drain.runOnce()).toBe(1);
+    const done = view(await operator.get(`/api/projects/${id}/exports/${queued.id}`)) as ExportView & { result: Record<string, unknown> | null };
+    expect(done.status, done.error ?? '').toBe('done');
+    expect(done.result).toMatchObject({
+      contentType: 'application/zip',
+      label: 'Matched pair — A and B path-traced from one camera',
+      pair: { a: { label: 'Main', file: 'a-main.png' }, b: { label: 'Changeset · Taller living room', file: 'b-changeset-taller-living-room.png' }, swipe: 'swipe.png', sideBySide: 'side-by-side.png', camera: 'Living room' },
+      width: 960,
+      height: 540,
+      samples: 16,
+    });
+    const file = await download(operator, `${running.url}${String(done.download)}`);
+    expect(file.status).toBe(200);
+    expect(file.type).toBe('application/zip');
+    expect(zipNames(file.bytes)).toEqual(['a-main.png', 'b-changeset-taller-living-room.png', 'swipe.png', 'side-by-side.png']);
+    const audit = await db.auditLog.findFirst({ where: { action: 'export.request', targetId: queued.id } });
+    expect(audit?.detail).toMatchObject({ kind: 'pair', version: hash, pair: { b: changeset.head, view: 'SV2', size: 'small', quality: 'draft' } });
+  }, 300_000);
+
+  it('pairs two options of an option set, each side named in its words, through the editor’s camera', async () => {
+    const operator = await setupOperator(running);
+    const { id, hash } = await projectWithDocument(db, operator, KITCHEN_OPTIONS, 'Kitchen options');
+    const M = 1_280_000;
+    const shot = { name: 'The view in the editor', eye: [-8 * M, -8 * M, 6 * M], target: [2 * M, 2 * M, 1 * M], focalLength: 28 };
+    const asked = await operator.post(`/api/projects/${id}/exports`, { kind: 'pair', pair: { a: { design: { KS: 'KA' } }, b: { design: { KS: 'KB' } }, shot } });
+    expect(asked.status, asked.text).toBe(202);
+    const queued = view(asked) as PairView;
+    expect(queued.pair).toMatchObject({ a: { version: hash, design: { KS: 'KA' } }, b: { version: hash, design: { KS: 'KB' } }, shot: true, size: 'small', quality: 'draft' });
+    expect(queued.pair?.a.label).toMatch(/^Main · .+ · .+/);
+    expect(queued.pair?.b.label).not.toBe(queued.pair?.a.label);
+    expect(queued.design).toEqual({ KS: 'KA' });
+  });
+
+  it('refuses a pair that is not one: no B, the same design twice, a view or a shot it cannot see through, too much work, and anything else', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, WITH_VIEWS, 'Ranch with views');
+    const ask = (body: object) => operator.post(`/api/projects/${id}/exports`, body);
+    const B = '0'.repeat(64);
+    expect((await ask({ kind: 'pair' })).status).toBe(400);
+    expect((await ask({ kind: 'pair', pair: { b: { changeset: '0190d6a4-0000-7000-8000-000000000000', version: B } } })).status).toBe(400);
+    expect((await ask({ kind: 'pair', pair: { b: { changeset: '0190d6a4-0000-7000-8000-000000000000' } } })).status).toBe(404);
+    expect((await ask({ kind: 'pair', pair: { b: { version: B } } })).status).toBe(404);
+    expect((await ask({ kind: 'pair', pair: { b: { design: { KS: 'KB' } } } })).status).toBe(422);
+    const same = await ask({ kind: 'pair', pair: { b: {} } });
+    expect(same.status).toBe(400);
+    expect(same.text).toContain('the same design');
+    const proposed = await operator.post(`/api/projects/${id}/changesets`, { name: 'Rename', batch: [{ op: 'setProperty', id: 'LIV', path: '/name', value: 'Great room' }] });
+    const cs = (proposed.body as { changeset: { id: string } }).changeset.id;
+    expect((await ask({ kind: 'pair', pair: { b: { changeset: cs }, view: 'Garden' } })).status).toBe(400);
+    expect((await ask({ kind: 'pair', pair: { b: { changeset: cs }, shot: { name: 'No eye' } } })).status).toBe(400);
+    expect((await ask({ kind: 'pair', pair: { b: { changeset: cs }, view: 'Front', camera: 'sw' } })).status).toBe(400);
+    expect((await ask({ kind: 'pair', pair: { b: { changeset: cs }, size: 'large', quality: 'high' } })).status).toBe(400);
+    expect((await ask({ kind: 'pair', version: B, pair: { b: { changeset: cs } } })).status).toBe(400);
+    expect((await ask({ kind: 'pdf', pair: { b: { changeset: cs } } })).status).toBe(400);
+    expect(await db.job.count()).toBe(0);
+  });
+});
+
 describe('films (FLR-T-14.1)', () => {
   let running: Running;
   let drain: Drain;

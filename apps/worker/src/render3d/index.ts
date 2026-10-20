@@ -10,6 +10,7 @@ import { buildScene, readGlb, type Scene, type SceneOptions, type Vec3 } from '.
 import { linear } from '../export/gltf/scene.js';
 import { findRoom, PRESETS, presetCamera, roomCamera, type Camera, type Preset } from './camera.js';
 import { encodePng } from './png.js';
+import { sideBySideComposite } from './composite.js';
 import { rasterize, type DrawList, type RasterLamp, type RasterSky } from './raster.js';
 import type { ImageSource } from '../export/gltf/glb.js';
 import { skyBounce, skyExposure, skyHarmonics, type SkyPreset } from '@floorspec/mesh/sky';
@@ -53,6 +54,8 @@ export interface Render3dResult {
   readonly design: Record<string, string> | null;
   /** Under a sky: which, where the sun was, and the site. */
   readonly sky?: SkySummary;
+  /** With `rgb`: the picture, eight bits a channel, rows top to bottom. */
+  readonly rgb?: Uint8Array;
 }
 
 /** The accent a highlighted element is drawn in (linear RGB). */
@@ -355,6 +358,8 @@ export function renderScene(
     readonly only?: boolean;
     /** Exposure compensation: a factor on the exposure. */
     readonly exposureScale?: number;
+    /** Also give back the picture as eight-bit RGB (a comparison's composite, FLR-T-14.4). */
+    readonly rgb?: boolean;
   } = {},
 ): Render3dResult {
   const { width, height } = options.shot === undefined ? sizeOf(options.width) : { width: options.shot.width, height: options.shot.height };
@@ -386,7 +391,75 @@ export function renderScene(
   const all = boundsOf(sceneTriangles(scene, { ground: false }));
   const lighting = options.skyLight === undefined ? undefined : rasterSky(options.skyLight, all.min[1] - 0.003);
   const rgb = rasterize(drawList(tris, chains), camera, { width, height, supersample: 2, ...(lighting === undefined ? {} : { lighting }), ...(options.exposureScale === undefined ? {} : { exposureScale: options.exposureScale }) });
-  return { png: encodePng(rgb, width, height), width, height, camera: camera.label, design: scene.design, ...(options.skyLight === undefined || lighting === undefined ? {} : { sky: skySummary(options.skyLight, Number(lighting.exposure.toPrecision(3))) }) };
+  return { png: encodePng(rgb, width, height), width, height, camera: camera.label, design: scene.design, ...(options.skyLight === undefined || lighting === undefined ? {} : { sky: skySummary(options.skyLight, Number(lighting.exposure.toPrecision(3))) }), ...(options.rgb === true ? { rgb } : {}) };
+}
+
+/** A side of a rasterized comparison (FLR-T-14.4): its document, its design, what is lit in it. */
+export interface ComparedSide {
+  readonly document: object;
+  readonly design?: Record<string, string>;
+  /** Element IDs drawn in the accent colour: what B changes. */
+  readonly highlight?: readonly string[];
+}
+
+export interface CompareResult {
+  /** A and B side by side, a gap between. */
+  readonly png: Uint8Array;
+  /** Each side's picture. */
+  readonly width: number;
+  readonly height: number;
+  readonly camera: string;
+  readonly design: { readonly a: Record<string, string> | null; readonly b: Record<string, string> | null };
+}
+
+/**
+ * A comparison an agent asks for (FLR-T-14.4, `floorspec_render` with `compare`): A and B rasterized
+ * through one camera — a named view framed on both houses together, or a room of A's — and set side
+ * by side, B's changes lit in the accent colour. `width` is each side's.
+ */
+export async function render3dCompare(a: ComparedSide, b: ComparedSide, options: Omit<Render3dOptions, 'design' | 'highlight'> = {}): Promise<CompareResult> {
+  if (options.camera !== undefined && !PRESETS.includes(options.camera)) throw new RangeError(`camera is one of ${PRESETS.join(', ')}`);
+  const build = (s: ComparedSide) =>
+    buildScene(s.document, {
+      ...(s.design === undefined ? {} : { design: s.design }),
+      ...(options.reader === undefined ? {} : { reader: options.reader }),
+      ...(options.images === undefined ? {} : { images: options.images }),
+      ...(options.doors === undefined ? {} : { doors: options.doors }),
+      ...(options.lighting === undefined ? {} : { lighting: options.lighting }),
+    });
+  const [sa, sb] = await Promise.all([build(a), build(b)]);
+  const { width, height } = sizeOf(options.width);
+  cutOf(sa, options.level);
+  let camera: Camera;
+  if (options.room !== undefined) {
+    const room = findRoom(sa.rooms, options.room);
+    if (room === undefined) {
+      const known = sa.rooms.map((r) => (r.name === undefined ? r.id : `${r.id} (${r.name})`));
+      throw new RangeError(`the model has no room ${options.room}${known.length === 0 ? '' : `; its rooms are ${known.slice(0, 20).join(', ')}`}`);
+    }
+    camera = roomCamera(room, sa.doors, sa.obstacles);
+  } else {
+    const cut = options.level === undefined ? {} : { level: options.level };
+    const ba = boundsOf(sceneTriangles(sa, { ...cut, ground: false }));
+    const bb = boundsOf(sceneTriangles(sb, { ...cut, ground: false }));
+    camera = presetCamera(options.camera ?? 'sw', { min: [Math.min(ba.min[0], bb.min[0]), Math.min(ba.min[1], bb.min[1]), Math.min(ba.min[2], bb.min[2])], max: [Math.max(ba.max[0], bb.max[0]), Math.max(ba.max[1], bb.max[1]), Math.max(ba.max[2], bb.max[2])] }, width / height);
+  }
+  const { sky, at } = options;
+  const skyLight = sky === undefined && at === undefined ? undefined : resolveSky(a.document, { ...(sky === undefined ? {} : { sky }), ...(at === undefined ? {} : { at }) });
+  const draw = (scene: Scene, side: ComparedSide) =>
+    renderScene(scene, {
+      shot: { camera, width, height },
+      ...(options.level === undefined ? {} : { level: options.level }),
+      ...(side.highlight === undefined ? {} : { highlight: side.highlight }),
+      ...(options.images === undefined ? {} : { images: options.images }),
+      ...(skyLight === undefined ? {} : { skyLight }),
+      rgb: true,
+    });
+  const ra = draw(sa, a);
+  const rb = draw(sb, b);
+  if (ra.rgb === undefined || rb.rgb === undefined) throw new Error('the comparison was not drawn');
+  const both = sideBySideComposite(ra.rgb, rb.rgb, width, height);
+  return { png: encodePng(both.rgb, both.width, both.height), width, height, camera: camera.label, design: { a: sa.design, b: sb.design } };
 }
 
 export interface ViewOptions {
