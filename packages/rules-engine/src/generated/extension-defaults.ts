@@ -71,6 +71,7 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
     "waterHeaters": {}
   },
   "FS_renovation": {},
+  "FS_site": {},
   "FS_structural": {},
   "FS_views": {}
 };
@@ -108,6 +109,13 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
   },
   "FS_renovation": {
     "elements": {}
+  },
+  "FS_site": {
+    "benchmark": {},
+    "contours": {},
+    "pads": {},
+    "setbacks": {},
+    "spots": {}
   },
   "FS_structural": {},
   "FS_views": {

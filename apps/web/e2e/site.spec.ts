@@ -20,6 +20,8 @@ import { FT, IN, firstRunSetup, password, settled } from './support.js';
  */
 
 const HOUSE = JSON.parse(readFileSync(new URL('../../worker/test/fixtures/courtyard-house.json', import.meta.url), 'utf8')) as Record<string, unknown>;
+/** The Courtyard House on its gently sloping Georgia lot (make/courtyard-on-its-lot.mjs). */
+const ON_ITS_LOT = JSON.parse(readFileSync(new URL('../../worker/test/fixtures/courtyard-house-on-its-lot.json', import.meta.url), 'utf8')) as Record<string, unknown>;
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const ft = (x: number, y: number): [number, number] => [Math.round(x * FT), Math.round(y * FT)];
 /** The lot: the street on the west, where the drive and the front walk meet it. */
@@ -228,4 +230,30 @@ test('terrain and grading: draw the lot, set the street, survey spots and a cont
   await terrainPanel.getByRole('switch', { name: 'Contours on the ground' }).click();
   await expect.poll(async () => (await terrain()).contours).toBe(0);
   expect(await docOf(page, project)).toEqual(before);
+  await terrainPanel.getByRole('switch', { name: 'Contours on the ground' }).click();
+
+  // ── The Courtyard House on its lot: lot 14, Laurel Ridge Drive, falling to the street — plan and 3D.
+  const lotProject = await page.request.post('/api/projects/import/floorspec', {
+    headers: { 'content-type': 'application/octet-stream', 'x-project-name': encodeURIComponent('Courtyard House on its lot') },
+    data: Buffer.from(JSON.stringify(ON_ITS_LOT)),
+  });
+  expect(lotProject.status(), await lotProject.text()).toBe(201);
+  const onLot = ((await lotProject.json()) as { id: string }).id;
+  await page.goto(`/projects/${onLot}/editor`);
+  await settled(page);
+  await page.getByRole('group', { name: 'Mode' }).getByRole('button', { name: 'Landscape mode' }).click();
+  const lotPanel = inspector.getByRole('region', { name: 'Lot and terrain' });
+  await expect(lotPanel).toContainText('0.41 ac');
+  await expect(lotPanel.getByTestId('setback-status')).toContainText('inside the setbacks');
+  await expect(lotPanel.getByTestId('cut-total')).toHaveText(/^\d+\.\d yd³$/);
+  await expect(page.getByTestId('site-spots').locator('[data-spot]')).toHaveCount(14);
+  await shoot(page, 'courtyard-on-its-lot-plan');
+  await page.goto(`/projects/${onLot}/editor?view=3d`);
+  await settled(page);
+  await page.waitForFunction(() => (window as unknown as Hook).__floorspec3d?.ready === true, undefined, { timeout: 120_000 });
+  await page.waitForFunction(() => (window as unknown as Hook).__floorspecTerrain !== undefined, undefined, { timeout: 60_000 });
+  await page.getByRole('toolbar', { name: '3D view' }).getByRole('button', { name: 'Terrain' }).click();
+  await expect(page.getByRole('region', { name: 'Terrain view' })).toBeVisible();
+  await page.waitForTimeout(1_500);
+  await shoot(page, 'courtyard-on-its-lot-3d');
 });
