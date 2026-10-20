@@ -1,4 +1,4 @@
-import { isArcDraft, isChainDraft, isChainTool, isOutlineTool, type ArcDraft, type ChainTool, type EditorStore, type ToolId } from './store';
+import { isArcDraft, isChainDraft, isChainTool, isOutlineTool, keepsChaining, type ArcDraft, type ChainTool, type EditorStore, type ToolId } from './store';
 import { sagittaFromRadius, sagittaToward } from './arcs';
 import { direction } from '@floorspec/engine';
 import type { LevelView, Point } from './model';
@@ -50,6 +50,7 @@ import { extentAcross, functionFromName, minRoom, moveRoom, resizeRoom, roomDrag
 import type { WandDraft } from './store';
 import { anchorAt, dimensionBack, dimensionDown, dimensionEnter, dimensionMove, noteDown, noteMove, noteUp } from './annotate/tools';
 import { annotateOf, EMPTY_DIMENSION } from './annotate/state';
+import { finishSiteChain, setbackDown, spotDown } from './site/tools';
 
 /**
  * Pointer and keyboard input on the plan (FLR-T-3.3). Pointer events throughout, so a mouse, a
@@ -394,7 +395,16 @@ export class ToolController {
       case 'separator':
       case 'slab':
       case 'roof':
+      case 'lot':
+      case 'pad':
+      case 'contour':
         this.chainDown(p, s.tool);
+        return;
+      case 'spot':
+        spotDown(this.store, this.snapFor(p, undefined, []).point);
+        return;
+      case 'setback':
+        setbackDown(this.store, this.world(p), this.tol(p.type));
         return;
       case 'arc':
         this.arcDown(p);
@@ -481,7 +491,10 @@ export class ToolController {
       case 'wall':
       case 'separator':
       case 'slab':
-      case 'roof': {
+      case 'roof':
+      case 'lot':
+      case 'pad':
+      case 'contour': {
         const draft = isChainDraft(s.draft) && s.draft.tool === s.tool ? s.draft : { tool: s.tool, chain: [], cursor: null, typed: '' };
         const last = draft.chain[draft.chain.length - 1];
         const cursor = this.snapFor(p, last?.point, draft.chain.map((v) => v.point));
@@ -864,7 +877,7 @@ export class ToolController {
     }
     const chain = [...draft.chain, vertex];
     this.store.set({ draft: { ...draft, chain, cursor: snap, typed: '' } });
-    if (isClosed(chain) || (!isOutlineTool(tool) && !s.draw.chain && chain.length >= 2)) this.finishChain();
+    if (isClosed(chain) || (!keepsChaining(tool) && !s.draw.chain && chain.length >= 2)) this.finishChain();
   }
 
   /** Commit the chain drawn so far as one batch of drawWall (or drawSeparator) composites, or as one slab. */
@@ -873,6 +886,12 @@ export class ToolController {
     const draft = s.draft;
     if (!isChainDraft(draft) || s.model === null || s.level === null) return;
     this.store.set({ draft: { ...draft, chain: [], typed: '' } });
+    if (draft.tool === 'lot' || draft.tool === 'pad' || draft.tool === 'contour') {
+      // FLR-T-15.1: the lot (Core's site boundary), a grading pad, a contour line (FS_site).
+      const points = isClosed(draft.chain) && draft.tool !== 'contour' ? draft.chain.slice(0, -1) : draft.chain;
+      finishSiteChain(this.store, draft.tool, points.map((v) => v.point), s.level);
+      return;
+    }
     if (draft.tool === 'slab') {
       // A slab's outline is the chain's points, closed or not: at least three (Core 6.7).
       const points = isClosed(draft.chain) ? draft.chain.slice(0, -1) : draft.chain;
@@ -1255,7 +1274,7 @@ export class ToolController {
       const junction = this.level?.junctions.find((j) => j.position[0] === point[0] && j.position[1] === point[1])?.id;
       const chain = [...draft.chain, { point, junction }];
       this.store.set({ draft: { ...draft, chain, typed: '', cursor: { point, kind: 'angle', guides: [], angle } } });
-      if (isClosed(chain) || (!isOutlineTool(draft.tool) && !s.draw.chain && chain.length >= 2)) this.finishChain();
+      if (isClosed(chain) || (!keepsChaining(draft.tool) && !s.draw.chain && chain.length >= 2)) this.finishChain();
       return true;
     }
     if (draft.tool === 'door' || draft.tool === 'window') {

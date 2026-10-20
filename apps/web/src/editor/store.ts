@@ -48,16 +48,18 @@ export type StairForm = 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral'
  * places the library's item under the pointer, click after click (FLR-T-18.7); `measure` measures the
  * plan, point to point, chained, an area (FLR-T-18.9).
  */
-export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'wand' | 'device' | 'place' | 'measure' | 'dimension' | 'note';
+export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'wand' | 'device' | 'place' | 'measure' | 'dimension' | 'note' | 'lot' | 'setback' | 'spot' | 'contour' | 'pad';
 
 /**
  * The tools that draw a chain of points: walls and separators (a polyline), and the outlines of a
  * slab (Core 0.3, 6.7) and a roof's footprint (Core 0.3, 16.1).
  */
-export type ChainTool = 'wall' | 'separator' | 'slab' | 'roof';
-export const isChainTool = (t: unknown): t is ChainTool => t === 'wall' || t === 'separator' || t === 'slab' || t === 'roof';
+export type ChainTool = 'wall' | 'separator' | 'slab' | 'roof' | 'lot' | 'pad' | 'contour';
+export const isChainTool = (t: unknown): t is ChainTool => t === 'wall' || t === 'separator' || t === 'slab' || t === 'roof' || t === 'lot' || t === 'pad' || t === 'contour';
 /** The chain tools that draw a closed outline (at least three corners) rather than a polyline. */
-export const isOutlineTool = (t: unknown): t is 'slab' | 'roof' => t === 'slab' || t === 'roof';
+export const isOutlineTool = (t: unknown): t is 'slab' | 'roof' | 'lot' | 'pad' => t === 'slab' || t === 'roof' || t === 'lot' || t === 'pad';
+/** FLR-T-15.1: a contour line is a polyline that goes on until it is finished, whatever the chain setting. */
+export const keepsChaining = (t: unknown): boolean => isOutlineTool(t) || t === 'contour';
 
 export type ChainDraft = { tool: ChainTool; chain: ChainVertex[]; cursor: Snap | null; typed: string };
 
@@ -188,6 +190,11 @@ export interface Layers {
   /** FLR-T-18.3: FS_furniture's casework and appliances, and FS_landscape's garden; absent: shown. */
   casework?: boolean;
   landscape?: boolean;
+  /** FLR-T-15.1, FS_site: the lot and its setbacks, the contours, cut and fill, and the spot elevations; absent: shown. */
+  site?: boolean;
+  contours?: boolean;
+  grading?: boolean;
+  spots?: boolean;
 }
 
 export interface DrawSettings {

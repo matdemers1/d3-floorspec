@@ -541,8 +541,11 @@ function levelViews(document: FloorspecDocument, derived: Derived): LevelView[] 
   for (const free of derived.unanchored) {
     views.get(free.level)?.faces.push({ room: null, outer: free.outer, holes: free.holes, area2: twiceArea(free.area) });
   }
+  // FLR-T-15.1: the lot (Core's site boundary) belongs to the lowest level's frame, where the site is drawn.
+  const lot = Array.isArray(document.site?.boundary) ? document.site.boundary.map((p) => [p[0], p[1]] as Point) : [];
+  const lowest = [...views.values()].sort((a, b) => (document.levels?.[a.id]?.elevation ?? 0) - (document.levels?.[b.id]?.elevation ?? 0) || (a.id < b.id ? -1 : 1))[0];
   for (const view of views.values()) {
-    const pts: Point[] = [...view.junctions.map((j) => j.position), ...view.walls.flatMap((w) => w.ring), ...view.slabs.flatMap((s) => s.outline), ...view.stairs.flatMap((s): Point[] => [[s.derived.box.min[0], s.derived.box.min[1]], [s.derived.box.max[0], s.derived.box.max[1]]])];
+    const pts: Point[] = [...view.junctions.map((j) => j.position), ...view.walls.flatMap((w) => w.ring), ...view.slabs.flatMap((s) => s.outline), ...view.stairs.flatMap((s): Point[] => [[s.derived.box.min[0], s.derived.box.min[1]], [s.derived.box.max[0], s.derived.box.max[1]]]), ...(view === lowest ? lot : [])];
     if (pts.length > 0) {
       const xs = pts.map((p) => p[0]);
       const ys = pts.map((p) => p[1]);
