@@ -297,7 +297,7 @@ export function seeded(seed: number): () => number {
 const DEFAULT_SETBACKS = { front: 30 * FT, side: 10 * FT, rear: 25 * FT };
 const DIRS: Record<StreetSide, XY> = { north: [0, 1], east: [1, 0], south: [0, -1], west: [-1, 0] };
 const TREE_COUNT: Record<TreeDensity, number> = { none: 0, few: 3, some: 8, many: 14 };
-const round = (p: XY): [number, number] => [Math.round(p[0]), Math.round(p[1])];
+const round = (p: XY): [number, number] => [Math.round(p[0]) + 0, Math.round(p[1]) + 0];
 const snap = (v: number, step = FT / 2): number => Math.round(v / step) * step;
 
 /** The compass side an edge of a lot faces (its outward normal's nearest). */
