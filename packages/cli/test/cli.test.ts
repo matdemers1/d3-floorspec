@@ -2,7 +2,7 @@
  * The built `floorspec` binary, run as a process against the conformance suite vendored in
  * packages/engine/standard (FLR-T-1.11).
  */
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFile, execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -31,6 +31,20 @@ const all03 = existsSync(suite03) ? cases(suite03).filter((_, i) => i % 4 === 0)
 const all02 = existsSync(suite02) ? cases(suite02).filter((_, i) => i % 4 === 0) : [];
 const all01 = existsSync(suite01) ? cases(suite01).filter((_, i) => i % 4 === 0) : [];
 const floorspec = (...args: string[]) => spawnSync(process.execPath, [bin, ...args], { encoding: 'utf8' });
+/**
+ * The same, without blocking. Each per-case test below is a process of its own, well over a thousand
+ * of them, so they run concurrently (FLR-T-12.47): one after another, their start-ups alone took
+ * minutes on a two-core runner.
+ */
+const floorspecAsync = (...args: string[]) =>
+  new Promise<{ status: number | null; stdout: string; stderr: string }>((resolve, reject) => {
+    execFile(process.execPath, [bin, ...args], { encoding: 'utf8', maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
+      // A non-zero exit is an answer, not an error: its code is the exit status. Anything else
+      // (the process could not start, was killed, overflowed the buffer) fails the test.
+      if (err && typeof err.code !== 'number') reject(new Error(`floorspec ${args.join(' ')}: ${err.message}`, { cause: err }));
+      else resolve({ status: err ? (err.code as number) : 0, stdout, stderr });
+    });
+  });
 /** A case's registry.json, when it has one, as --registry. */
 const registryArgs = (dir: string): string[] => [
   ...(existsSync(join(dir, 'registry.json')) ? ['--registry', join(dir, 'registry.json')] : []),
@@ -45,14 +59,14 @@ describe.each([
   ['Core 0.2, --core 0.2', suite02, all02, ['--core', '0.2']],
   ['Core 0.1, --core 0.1', suite01, all01, ['--core', '0.1']],
 ] as const)('floorspec validate --json (%s)', (_s, root, list, extra) => {
-  it.each(list.map((d) => [relative(root, d), d]))('%s', (_n, dir) => {
+  it.concurrent.for(list.map((d) => [relative(root, d), d] as const))('%s', async ([_n, dir], { expect }) => {
     const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as {
       valid: boolean;
       diagnostics: { code: string; severity: string; elements: string[]; design?: string }[];
       hash?: string;
       derived?: unknown;
     };
-    const p = floorspec('validate', join(dir, 'input.json'), '--json', ...extra, ...registryArgs(dir));
+    const p = await floorspecAsync('validate', join(dir, 'input.json'), '--json', ...extra, ...registryArgs(dir));
     expect(p.status).toBe(expected.valid ? 0 : 1);
     const got = JSON.parse(p.stdout) as typeof expected;
     expect(got.valid).toBe(expected.valid);
@@ -66,12 +80,14 @@ describe.each([
 
 describe('floorspec canonicalize, hash, derive', () => {
   const valid = all.filter((d) => existsSync(join(d, 'canonical.json'))).filter((_, i) => i % 4 === 0);
-  it.each(valid.map((d) => [relative(suite, d), d]))('%s', (_n, dir) => {
+  it.concurrent.for(valid.map((d) => [relative(suite, d), d] as const))('%s', async ([_n, dir], { expect }) => {
     const input = join(dir, 'input.json');
     const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as { hash: string; derived?: unknown };
-    expect(execFileSync(process.execPath, [bin, 'canonicalize', input], { encoding: 'utf8' })).toBe(readFileSync(join(dir, 'canonical.json'), 'utf8'));
-    expect(execFileSync(process.execPath, [bin, 'hash', input], { encoding: 'utf8' })).toBe(`${expected.hash}\n`);
-    const derived = floorspec('derive', input, ...registryArgs(dir));
+    const [canonical, hash, derived] = await Promise.all([floorspecAsync('canonicalize', input), floorspecAsync('hash', input), floorspecAsync('derive', input, ...registryArgs(dir))]);
+    expect(canonical.status).toBe(0);
+    expect(canonical.stdout).toBe(readFileSync(join(dir, 'canonical.json'), 'utf8'));
+    expect(hash.status).toBe(0);
+    expect(hash.stdout).toBe(`${expected.hash}\n`);
     // A design Core derives nothing for (19.6.2): exit 1, nothing printed.
     if (expected.derived === undefined) expect(derived.status).toBe(1);
     else expect(JSON.parse(derived.stdout)).toEqual(expected.derived);
@@ -157,12 +173,12 @@ describe('floorspec migrate', () => {
     expect(mcases.length).toBeGreaterThan(20);
   });
 
-  it.each(mcases.map((d) => [relative(msuite, d), d]))('%s', (_name, dir) => {
+  it.concurrent.for(mcases.map((d) => [relative(msuite, d), d] as const))('%s', async ([_name, dir], { expect }) => {
     const { to } = JSON.parse(readFileSync(join(dir, 'request.json'), 'utf8')) as { to: unknown };
     // A target that is not a string cannot be given on a command line, where every argument is one.
     if (typeof to !== 'string') return;
     const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as { status: string; diagnostics: { code: string }[] };
-    const p = floorspec('migrate', join(dir, 'input.json'), '--to', to);
+    const p = await floorspecAsync('migrate', join(dir, 'input.json'), '--to', to);
     if (expected.status === 'migrated') {
       expect(p.status).toBe(0);
       expect(p.stdout).toBe(readFileSync(join(dir, 'output.json'), 'utf8'));
