@@ -168,8 +168,36 @@ jobs:
       - name: Mesh property tests in the browser, and its meshes byte for byte against Node's
         run: pnpm turbo run build --filter='@floorspec/mesh^...' && pnpm --filter @floorspec/mesh test:browser
 
-  unit:
+  # Unit tests, split across runners by package (FLR-T-12.47): `pnpm test` ran every package's
+  # Vitest at once on one two-core runner, so each new heavy suite slowed every other one into its
+  # timeouts. The heavy packages run alone; the light ones share a runner, which also builds every
+  # package as the one job did. Turbo builds what each group's packages depend on. A package with a
+  # `test` script must be in exactly one group — `unit` below fails a run that leaves one out.
+  #
+  # The second reporter prints each package's slowest tests against their own timeouts, and warns
+  # on any that took more than half of one.
+  unit-groups:
+    name: unit (${{ matrix.group }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: cli
+            packages: '@floorspec/cli'
+          - group: worker
+            packages: '@d3-floorspec/worker'
+          - group: mesh
+            packages: '@floorspec/mesh'
+          - group: web
+            packages: '@d3-floorspec/web'
+          - group: render2d
+            packages: '@floorspec/render2d'
+          - group: solvers
+            packages: '@floorspec/layout-solver,@floorspec/dsl,@floorspec/migrate'
+          - group: rest
+            packages: '@floorspec/engine,@floorspec/ops,@floorspec/rules-engine,@floorspec/mcp,@floorspec/mcp-stdio,@floorspec/package,@floorspec/analysis,@floorspec/assistant-electrical,@floorspec/assistant-staging,@d3-floorspec/server,@d3-floorspec/agent-eval'
+            build: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
@@ -180,9 +208,42 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Films (FLR-T-14.1) are encoded by ffmpeg, as the worker image does: the worker's tests make a few.
       - name: Install ffmpeg
+        if: matrix.group == 'worker'
         run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends ffmpeg
-      - run: pnpm test
-      - run: pnpm build
+      - name: Unit tests — ${{ matrix.packages }}
+        env:
+          PACKAGES: ${{ matrix.packages }}
+        run: |
+          filters=()
+          IFS=',' read -ra names <<< "$PACKAGES"
+          for n in "${names[@]}"; do filters+=("--filter=$n"); done
+          pnpm turbo run test "${filters[@]}" -- --reporter=default --reporter="$GITHUB_WORKSPACE/.github/vitest-timeouts.mjs"
+      - if: matrix.build
+        run: pnpm build
+
+  # The one `unit` check branch protection requires: green only when every group above passed, and
+  # when the groups between them test every workspace package that has a `test` script, once.
+  unit:
+    needs: unit-groups
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Every package with tests belongs to exactly one group
+        run: |
+          declared=$(for glob in $(yq '.packages[]' pnpm-workspace.yaml); do
+            for f in $glob/package.json; do
+              [ -f "$f" ] && jq -r 'select(.scripts.test != null) | .name' "$f"
+            done
+          done | sort)
+          grouped=$(yq '.jobs["unit-groups"].strategy.matrix.include[].packages' .github/workflows/ci.yml | tr ',' '\n' | sort)
+          if [ -z "$declared" ] || [ "$declared" != "$grouped" ]; then
+            echo "::error::the unit groups in ci.yml do not test exactly the workspace packages that have a test script, once each"
+            diff <(echo "$declared") <(echo "$grouped") || true
+            exit 1
+          fi
+      - name: Every group passed
+        run: test "${{ needs.unit-groups.result }}" = success
 
   integration:
     runs-on: ubuntu-latest

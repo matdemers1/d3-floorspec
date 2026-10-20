@@ -54,10 +54,15 @@ describe('renovation filters', () => {
     expect(count(svg, 'data-renovation="new"')).toBeGreaterThan(5);
   });
 
-  it('draws all three in the combined plan, and every filter is deterministic', () => {
+  it('draws all three in the combined plan', () => {
     const svg = renderPlan(remodel, { renovation: 'combined' });
     for (const k of ['existing', 'demolished', 'new']) expect(svg).toContain(`data-renovation="${k}"`);
-    for (const f of RENOVATION_FILTERS) expect(renderPlan(remodel, { renovation: f })).toBe(renderPlan(remodel, { renovation: f }));
+  });
+
+  // One test per filter, each two whole plans: as one test, eight plans and the combined one
+  // took most of its timeout on a busy runner (FLR-T-12.47).
+  it.each(RENOVATION_FILTERS)('draws the %s plan the same every time', (f) => {
+    expect(renderPlan(remodel, { renovation: f })).toBe(renderPlan(remodel, { renovation: f }));
   });
 
   it('draws a document without FS_renovation as it is under every filter', () => {
