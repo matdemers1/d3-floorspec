@@ -5,7 +5,7 @@ import { FOV, type ThreeController } from '../controller';
 import { passes, SECTION_ROOT, type CompareState, type Side } from './compare';
 
 /**
- * Compare in 3D, inside the canvas (FLR-T-14.4): the frame drawn in two passes from one scene. Each
+ * Compare in 3D, inside the canvas (FLR-T-14.4, FLR-ADR-054): the frame drawn in two passes from one scene. Each
  * pass shows one side's house — main's parts, or a compared model's — and hides the other's, then
  * draws through the scissor (and, side by side, the viewport) compare.ts `passes` gives it. One
  * camera drives both: in a swipe, the view's own camera draws both pictures, so every pixel of A and

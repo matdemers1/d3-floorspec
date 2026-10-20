@@ -1,5 +1,5 @@
 /**
- * Matched pairs (FLR-T-14.4, FLR-ADR-055): two designs — A and B: main and a pending changeset,
+ * Matched pairs (FLR-T-14.4, FLR-ADR-054): two designs — A and B: main and a pending changeset,
  * two options of an option set, two versions — path-traced through one camera, so every pixel of
  * one lines up with the same place in the other, and composited two ways: swiped at the middle (A's
  * left half beside B's right half, a divider between) and side by side.

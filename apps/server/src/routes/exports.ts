@@ -46,7 +46,7 @@ import { MAX_PENDING_RENDERS } from './checks.js';
  * does, one at a time per project, reporting its frames. Any export still queued or running can be
  * cancelled (`POST …/exports/:jobId/cancel`): the worker stops at its next report.
  *
- * A matched pair (FLR-T-14.4, FLR-ADR-055) is `kind: "pair"`: two sides — A (main's head unless
+ * A matched pair (FLR-T-14.4, FLR-ADR-054) is `kind: "pair"`: two sides — A (main's head unless
  * another is named) and B, each a pending changeset, a version or main, in a design — path-traced
  * from one camera (a saved view, a named view, or `shot`: a view as FS_views records one — the
  * editor's camera as it is) into a ZIP of the two pictures and their swipe and side-by-side
