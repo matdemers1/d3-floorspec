@@ -14958,22 +14958,22 @@
               -14671728
             ],
             [
-              17861275,
-              -15057893
+              14350675,
+              -14987681
             ],
             [
-              17557024,
-              -30270443
+              14104933,
+              -27274781
             ],
             [
-              -1751226,
-              -29884278
+              -1692717,
+              -26958828
             ]
           ],
           "height": 7412736,
-          "roof": "gable",
-          "rise": 4486656,
-          "elevation": -983396,
+          "roof": "hip",
+          "rise": 2535936,
+          "elevation": -1074125,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -14988,22 +14988,22 @@
               39913507
             ],
             [
-              15369573,
-              40085162
+              16930073,
+              40100767
             ],
             [
-              15260338,
-              51008662
+              16813036,
+              51804467
             ],
             [
-              -1905162,
-              50837007
+              -1912964,
+              51617207
             ]
           ],
-          "height": 3901440,
-          "roof": "hip",
-          "rise": 2243328,
-          "elevation": -1067264,
+          "height": 7412736,
+          "roof": "gable",
+          "rise": 3901440,
+          "elevation": -1026532,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15014,11 +15014,11 @@
       "trees": {
         "TR1": {
           "at": [
-            -16337177,
-            53279666
+            -16305980,
+            49567261
           ],
           "height": 13264896,
-          "spread": 9363456,
+          "spread": 6632448,
           "elevation": -2126285,
           "extras": {
             "d3floorspec": {
@@ -15028,11 +15028,11 @@
         },
         "TR2": {
           "at": [
-            -16211790,
-            38358671
+            -16133574,
+            29050892
           ],
           "height": 11899392,
-          "spread": 8193024,
+          "spread": 5852160,
           "elevation": -2126285,
           "extras": {
             "d3floorspec": {
@@ -15042,12 +15042,12 @@
         },
         "TR3": {
           "at": [
-            -16073879,
-            21947269
+            -15943946,
+            6485214
           ],
           "height": 10924032,
-          "spread": 8583168,
-          "elevation": -1365504,
+          "spread": 5852160,
+          "elevation": -1658112,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15056,12 +15056,12 @@
         },
         "TR4": {
           "at": [
-            -15927958,
-            4582621
+            -15743304,
+            -17391176
           ],
           "height": 12874752,
-          "spread": 7802880,
-          "elevation": -1658112,
+          "spread": 5852160,
+          "elevation": -2087270,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15070,12 +15070,12 @@
         },
         "TR5": {
           "at": [
-            -15786618,
-            -12236826
+            -29984191,
+            52267264
           ],
-          "height": 10924032,
-          "spread": 6827520,
-          "elevation": -2087270,
+          "height": 11899392,
+          "spread": 5852160,
+          "elevation": -2126285,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15084,12 +15084,12 @@
         },
         "TR6": {
           "at": [
-            -15661901,
-            -27078108
+            -29807912,
+            31290045
           ],
-          "height": 13264896,
-          "spread": 10338816,
-          "elevation": -2087270,
+          "height": 15995904,
+          "spread": 7217664,
+          "elevation": -2126285,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15098,12 +15098,12 @@
         },
         "TR7": {
           "at": [
-            -29984008,
-            52245489
+            -29619791,
+            8903664
           ],
           "height": 12289536,
-          "spread": 9363456,
-          "elevation": -2126285,
+          "spread": 6437376,
+          "elevation": -1658112,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15112,12 +15112,12 @@
         },
         "TR8": {
           "at": [
-            -29857111,
-            37144759
+            -29445308,
+            -11859841
           ],
           "height": 16190976,
-          "spread": 11899392,
-          "elevation": -2126285,
+          "spread": 8388096,
+          "elevation": -2087270,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15126,12 +15126,12 @@
         },
         "TR9": {
           "at": [
-            -29709742,
-            19607753
+            58784666,
+            23242865
           ],
-          "height": 12289536,
-          "spread": 7997952,
-          "elevation": -1658112,
+          "height": 17751552,
+          "spread": 12679680,
+          "elevation": 877824,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15140,12 +15140,13 @@
         },
         "TR10": {
           "at": [
-            -29596289,
-            6106895
+            56429528,
+            8776303
           ],
-          "height": 14435328,
-          "spread": 9363456,
-          "elevation": -1658112,
+          "height": 15605760,
+          "spread": 6437376,
+          "form": "evergreen",
+          "elevation": 838810,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15154,11 +15155,11 @@
         },
         "TR11": {
           "at": [
-            -29478750,
-            -7880269
+            -10386409,
+            -19884877
           ],
-          "height": 14045184,
-          "spread": 9168384,
+          "height": 13069824,
+          "spread": 9363456,
           "elevation": -2087270,
           "extras": {
             "d3floorspec": {
@@ -15168,12 +15169,12 @@
         },
         "TR12": {
           "at": [
-            -29365257,
-            -21385890
+            51970673,
+            -2600632
           ],
-          "height": 16190976,
-          "spread": 11509248,
-          "elevation": -2087270,
+          "height": 20287488,
+          "spread": 15410688,
+          "elevation": 897331,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15182,12 +15183,12 @@
         },
         "TR13": {
           "at": [
-            49760163,
-            -3785757
+            48269235,
+            18958114
           ],
-          "height": 12679680,
-          "spread": 9168384,
-          "elevation": 897331,
+          "height": 16581120,
+          "spread": 12289536,
+          "elevation": 838810,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15196,12 +15197,13 @@
         },
         "TR14": {
           "at": [
-            49377704,
-            11405971
+            50558387,
+            34802814
           ],
-          "height": 16190976,
-          "spread": 11704320,
-          "elevation": 838810,
+          "height": 16971264,
+          "spread": 7217664,
+          "form": "evergreen",
+          "elevation": 877824,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15210,13 +15212,12 @@
         },
         "TR15": {
           "at": [
-            58085127,
-            16646486
+            42363942,
+            45405951
           ],
-          "height": 15605760,
-          "spread": 5266944,
-          "form": "evergreen",
-          "elevation": 838810,
+          "height": 15020544,
+          "spread": 9753600,
+          "elevation": 877824,
           "extras": {
             "d3floorspec": {
               "generated": true
@@ -15225,70 +15226,12 @@
         },
         "TR16": {
           "at": [
-            23306789,
-            53793130
+            32506150,
+            -21450173
           ],
-          "height": 13069824,
-          "spread": 8973312,
-          "elevation": 195072,
-          "extras": {
-            "d3floorspec": {
-              "generated": true
-            }
-          }
-        },
-        "TR17": {
-          "at": [
-            60619267,
-            9808803
-          ],
-          "height": 17361408,
-          "spread": 11899392,
-          "elevation": 838810,
-          "extras": {
-            "d3floorspec": {
-              "generated": true
-            }
-          }
-        },
-        "TR18": {
-          "at": [
-            35073206,
-            -22888385
-          ],
-          "height": 17556480,
-          "spread": 12679680,
+          "height": 18336768,
+          "spread": 12289536,
           "elevation": 585216,
-          "extras": {
-            "d3floorspec": {
-              "generated": true
-            }
-          }
-        },
-        "TR19": {
-          "at": [
-            52594516,
-            24789064
-          ],
-          "height": 14435328,
-          "spread": 5266944,
-          "form": "evergreen",
-          "elevation": 877824,
-          "extras": {
-            "d3floorspec": {
-              "generated": true
-            }
-          }
-        },
-        "TR20": {
-          "at": [
-            60084001,
-            20611998
-          ],
-          "height": 14045184,
-          "spread": 6047232,
-          "form": "evergreen",
-          "elevation": 877824,
           "extras": {
             "d3floorspec": {
               "generated": true

@@ -406,10 +406,10 @@ export function generateContext(doc: FloorspecDocument, options: GenerateContext
       elevation: groundNear(mid0) - CURB,
       extras: { d3floorspec: { generated: true } },
     };
-    // street trees in each planting strip, every 40′ or so, on the near side and the far
+    // street trees in each planting strip, every 55′ or so, on the near side and the far
     if (strip >= 3 * FT && (options.trees ?? 'some') !== 'none') {
       const along = len(p0, p1);
-      const spacing = 40 * FT;
+      const spacing = 55 * FT;
       for (const k of [1, -1]) {
         const toStrip = k * (width / 2 + CURB + strip / 2); // from the centreline towards the lot (k = 1) or away
         for (let s = spacing / 2 + rand() * spacing * 0.3; s < along - spacing / 4; s += spacing * (0.85 + rand() * 0.3)) {
@@ -417,7 +417,7 @@ export function generateContext(doc: FloorspecDocument, options: GenerateContext
           const at: XY = [p0[0] + t[0] * s - o[0] * toStrip, p0[1] + t[1] * s - o[1] * toStrip];
           const tid = nextId('TR');
           const h = snap((28 + rand() * 14) * FT);
-          trees[tid] = { at: round(at), height: h, spread: snap(Math.min(26 * FT, h * (0.5 + rand() * 0.15))), elevation: groundNear(at), extras: { d3floorspec: { generated: true } } };
+          trees[tid] = { at: round(at), height: h, spread: snap(Math.min(22 * FT, h * (0.45 + rand() * 0.1))), elevation: groundNear(at), extras: { d3floorspec: { generated: true } } };
           avoid.push({ c: at, r: 6 * FT });
         }
       }

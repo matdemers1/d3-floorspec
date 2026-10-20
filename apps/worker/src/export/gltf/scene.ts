@@ -87,7 +87,8 @@ export interface ScenePrimitive {
 }
 
 /** What a node's element is: the Floorspec collection it is in, singular. */
-export type ElementKind = 'wall' | 'junction' | 'opening' | 'room' | 'slab' | 'roof' | 'stair' | 'extension';
+/** `context` (FLR-T-15.3): an FS_context record — a street, a neighbour, a tree beyond the lot — never the design, on a layer of its own. */
+export type ElementKind = 'wall' | 'junction' | 'opening' | 'room' | 'slab' | 'roof' | 'stair' | 'extension' | 'context';
 
 export interface SceneNode {
   readonly id: string;
@@ -626,9 +627,10 @@ const ELEMENT_KIND: Record<PartKind, ElementKind> = {
   extension: 'extension',
   threshold: 'opening',
   joinery: 'opening',
+  context: 'context',
 };
 
-const COLLECTION: Record<Exclude<ElementKind, 'extension'>, keyof FloorspecDocument> = {
+const COLLECTION: Record<Exclude<ElementKind, 'extension' | 'context'>, keyof FloorspecDocument> = {
   wall: 'walls',
   junction: 'junctions',
   opening: 'openings',
@@ -716,7 +718,8 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
 
   const ext = new Map(extElements(doc).map((e) => [e.id, e]));
   const nameOf = (kind: ElementKind, id: string): string | undefined => {
-    const el = kind === 'extension' ? (ext.get(id)?.element as Json | undefined) : ((doc[COLLECTION[kind]] as Record<string, Json> | undefined)?.[id]);
+    const ctx = (doc.extensions as Record<string, Record<string, Record<string, Json> | undefined> | undefined> | undefined)?.['FS_context'];
+    const el = kind === 'extension' ? (ext.get(id)?.element as Json | undefined) : kind === 'context' ? (ctx?.['streets']?.[id] ?? ctx?.['neighbours']?.[id] ?? ctx?.['trees']?.[id]) : ((doc[COLLECTION[kind]] as Record<string, Json> | undefined)?.[id]);
     const n = el?.['name'];
     return typeof n === 'string' ? n : undefined;
   };

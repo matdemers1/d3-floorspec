@@ -228,9 +228,9 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   /** A tree beyond the lot: its trunk, and its bare limbs in winter. */
   contextTrunk: { color: '#8a8580', metallic: 0, roughness: 1 },
   /** A deciduous tree's crown: a soft grey-green. */
-  contextCrown: { color: '#aab4a6', metallic: 0, roughness: 1 },
+  contextCrown: { color: '#9aa493', metallic: 0, roughness: 1 },
   /** An evergreen's crown: a step darker. */
-  contextConifer: { color: '#8e998c', metallic: 0, roughness: 1 },
+  contextConifer: { color: '#7c877a', metallic: 0, roughness: 1 },
   /** A deciduous tree's crown in autumn: a warm grey, still neutral. */
-  contextAutumn: { color: '#b9ad9a', metallic: 0, roughness: 1 },
+  contextAutumn: { color: '#a99d89', metallic: 0, roughness: 1 },
 };
