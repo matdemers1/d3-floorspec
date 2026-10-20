@@ -141,7 +141,7 @@ function SectionDrawing({ a, model, outside, inside, units }: { a: AssemblyTherm
   }
   return (
     <figure className="fs-envelope__section">
-      <svg viewBox={`0 0 ${String(W)} ${String(H)}`} role="img" aria-label={`Section through ${a.label}, outside on the left: ${a.layers.length} layers`}>
+      <svg className="fs-envelope__drawing" viewBox={`0 0 ${String(W)} ${String(H)}`} preserveAspectRatio="none" role="img" aria-label={`Section through ${a.label}, outside on the left: ${a.layers.length} layers`}>
         {rects.map((r) => (
           <rect key={r.l.index} x={r.x} y={0} width={r.w} height={H} fill={r.colour} stroke="var(--color-border)" strokeWidth={0.5} />
         ))}

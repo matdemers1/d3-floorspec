@@ -89,7 +89,9 @@ test('the envelope: the kitchen wall type layer by layer, brick tried in the sid
   await expect(layers.getByRole('listitem')).toHaveCount(5);
   await expect(layers.getByRole('listitem').first()).toContainText('Fibre-cement lap siding');
   await expect(layers.getByRole('listitem').first()).toContainText(/R-0\.\d/);
-  await expect(type.getByRole('img', { name: /^Section through 2x6 exterior wall, fibre-cement siding/ })).toBeVisible();
+  const drawing = type.getByRole('img', { name: /^Section through 2x6 exterior wall, fibre-cement siding/ });
+  await expect(drawing).toBeVisible();
+  expect((await drawing.boundingBox())!.width).toBeGreaterThan(200);
   await expect(type.getByText(/Through the cavity · 77%/)).toBeVisible();
   await expect(type.getByText(/Through the framing · 23%/)).toBeVisible();
   await expect(type.getByTestId('wall-type-effective')).toContainText(/R-\d+ · U-0\.0\d+/);

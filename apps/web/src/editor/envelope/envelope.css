@@ -111,7 +111,8 @@
   flex-direction: column;
   gap: var(--space-4);
 }
-.fs-envelope .fs-envelope__section svg {
+/* Over the editor's icon rule (.fs-editor svg:not(.fs-canvas__svg)): a drawing, not an icon. */
+.fs-envelope .fs-envelope__section svg.fs-envelope__drawing {
   display: block;
   width: 100%;
   height: 96px;
