@@ -19,7 +19,7 @@ import {
   yawPitch,
 } from '../src/index.js';
 
-const close = (a: number, b: number, eps = 1e-9) => expect(Math.abs(a - b)).toBeLessThan(eps);
+const close = (a: number, b: number, eps = 1e-9) => { expect(Math.abs(a - b)).toBeLessThan(eps); };
 
 describe('the equirectangular projection', () => {
   it('puts north in the middle, east a quarter to the right, the zenith on the top row', () => {

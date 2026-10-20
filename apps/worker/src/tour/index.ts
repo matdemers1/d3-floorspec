@@ -1,5 +1,5 @@
 /**
- * A virtual tour (FLR-T-14.2, FLR-ADR-055): a 360° panorama of every toured room, path-traced at eye
+ * A virtual tour (FLR-T-14.2, FLR-ADR-057): a 360° panorama of every toured room, path-traced at eye
  * height from the room's visual centre or a saved view's eye (pano.ts, place.ts), each an
  * equirectangular JPEG; a hotspot at each doorway to the next toured room; each level's plan in both
  * themes for the viewer's map; and the manifest that ties them together (@floorspec/mesh tour.ts).

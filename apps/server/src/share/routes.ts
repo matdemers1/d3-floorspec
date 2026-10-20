@@ -45,7 +45,7 @@ import { digestsNamed, reachableFiles, sendAssetBytes } from '../assets/access.j
  * **`/api/projects/:projectId/shares` and `/comments`** — the owner's side: make, list and revoke
  * links, and read, answer, resolve and moderate every comment, guarded like every project route.
  *
- * A virtual tour (FLR-T-14.2, FLR-ADR-055) is shared through a link of its own: one that names the
+ * A virtual tour (FLR-T-14.2, FLR-ADR-057) is shared through a link of its own: one that names the
  * tour's export job and shows that tour and nothing else — no model, plan, findings or comments to
  * reach — view only and revocable like any link. `/api/share/:token/tour` answers the tour's state
  * (rendering, with its progress, until its panoramas are made) and then its manifest, and

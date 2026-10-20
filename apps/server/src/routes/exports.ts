@@ -54,7 +54,7 @@ import { MAX_PENDING_RENDERS } from './checks.js';
  * composites. The job reads A's version; B's version and design travel in its parameters. It takes
  * a render place as a shot list does: one still, shot list, film or pair renders at a time.
  *
- * A virtual tour (FLR-T-14.2, FLR-ADR-055) is `kind: "tour"`: the rooms in its order (the first opens
+ * A virtual tour (FLR-T-14.2, FLR-ADR-057) is `kind: "tour"`: the rooms in its order (the first opens
  * it; default every room but garages, closets and the outdoors), each seen from its centre or a saved
  * view's eye, at an eye height, a panorama size and a quality — each panorama within a still's work
  * budget. It takes a render place as a film does. Its file is the tour's manifest, and its panoramas

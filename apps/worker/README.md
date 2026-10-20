@@ -76,6 +76,16 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   on a thread of their own (`film/thread.ts`), so the process holding the job keeps answering; the
   drain looks at a running job every second, and a cancelled film's thread is ended mid-frame, its
   ffmpeg killed and nothing stored (FLR-T-14.10).
+- `src/tour/` — FLR-T-14.2 (FLR-ADR-057): **virtual tours**. Job kind `export.tour` path-traces a
+  360° panorama of each toured room — six cube faces by the still's tracer, metered together and
+  resampled into an equirectangular JPEG (`@floorspec/mesh` `tour.ts`: north in the middle, the
+  zenith on the top row) — from the room's visual centre at eye height (5'-3" unless asked) or a
+  saved view's eye, under one light (a clear sky at 15:00 on 21 June at the site, lamps off, doors
+  open). Hotspots point at the threshold of each door, empty opening and separator to another toured
+  room. Each level's colour plan (light and dark, render2d) is drawn for the viewer's map. The
+  manifest is the job's file; the panoramas and plans are its assets (`job_assets`), kept as long as
+  a live share link shows the tour. Progress is the panorama, its face and pass; a cancel ends the
+  face's threads at once. 4096 × 2048 at 16 samples is about three minutes a room on four threads.
 - `src/render/` — FLR-T-2.8: plan PNGs through resvg, with the bundled fonts only.
 - `src/alerts/` — FLR-T-12.2: alert email through the D3 Auth mail relay (`MAIL_RELAY_URL`,
   `MAIL_RELAY_TOKEN`, `ALERT_TO`; redacted, once an hour per kind, remembered in the `alerts` table),
@@ -85,5 +95,5 @@ The Postgres job-queue drain (FLR in Foreman for the tasks behind it).
   failures in a row and one on recovery. See `docs/runbooks/restore.md`.
 
 ```bash
-pnpm --filter @d3-floorspec/worker test    # drawings, glTF/USDZ, 3D render, plan render, films (needs ffmpeg), heartbeat, alerts, watchdog
+pnpm --filter @d3-floorspec/worker test    # drawings, glTF/USDZ, 3D render, plan render, films (needs ffmpeg), tours, heartbeat, alerts, watchdog
 ```
