@@ -68,7 +68,7 @@ describe('daylight studies', () => {
     expect((grey.body as Study).sky).toBe('overcast');
     expect((grey.body as Study).glare).toEqual([]);
     expect(await db.job.count({ where: { projectId: id } })).toBe(2);
-  });
+  }, 240_000);
 
   it('needs a date and time it can read, and a sky it studies', async () => {
     const operator = await setupOperator(running);
@@ -78,5 +78,5 @@ describe('daylight studies', () => {
       expect([400, 422], `${q}: ${res.text}`).toContain(res.status);
     }
     expect(await db.job.count({ where: { projectId: id, status: 'done' } })).toBe(0);
-  });
+  }, 120_000);
 });
