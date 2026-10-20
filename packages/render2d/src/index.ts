@@ -32,6 +32,7 @@ export {
 } from './exterior.js';
 export { landscapeOf, landscapeLayers, type SceneLandscape } from './landscape.js';
 export { outdoorOf, outdoorLayers, type SceneOutdoor, type SceneGate } from './outdoor.js';
+export { contextLayers, contextExtent, contextTag, CONTEXT_TAGS, type ContextLayers, type ContextDrawOptions } from './context.js';
 export { siteLayers, siteExtent, surveyHeight, type SiteLayers, type SiteDrawOptions } from './site.js';
 export {
   PLAN_STYLES,

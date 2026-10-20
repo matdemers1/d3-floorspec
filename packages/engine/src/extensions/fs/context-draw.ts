@@ -9,7 +9,7 @@
  * Floating point is fine here: nothing drawn is normative, and the generator rounds what it writes to
  * base units. Context is never the design (1.5): nothing here is read by quantities, schedules or rules.
  */
-import type { FloorspecDocument } from '../../model/document.js';
+import { COLLECTIONS, entries, extElements, programItems, type FloorspecDocument } from '../../model/document.js';
 import { contextData, CURB, type ContextTree, type Neighbour, type RoofForm, type Street, type TreeForm } from './context.js';
 import { gradeAt, siteDrawing } from './site-draw.js';
 import { siteData, type Setbacks } from './site.js';
@@ -80,6 +80,17 @@ export interface ContextDrawing {
   readonly trees: readonly DrawContextTree[];
   /** Whether there is anything to draw. */
   readonly empty: boolean;
+}
+
+/** Every ID a document uses: elements, program items, extension elements, and every extension's records (each member that maps IDs to objects). */
+export function documentIds(doc: FloorspecDocument): Set<string> {
+  const out = new Set<string>();
+  for (const c of COLLECTIONS) for (const [id] of entries(doc[c] as Record<string, unknown> | undefined)) out.add(id);
+  for (const [id] of programItems(doc)) out.add(id);
+  for (const x of extElements(doc)) out.add(x.id);
+  const ext = isObject(doc.extensions) ? doc.extensions : {};
+  for (const data of Object.values(ext)) if (isObject(data)) for (const m of Object.values(data)) if (isObject(m)) for (const [id, v] of Object.entries(m)) if (isObject(v)) out.add(id);
+  return out;
 }
 
 /** Was this record written by the generator (extras.d3floorspec.generated)? */
@@ -324,7 +335,7 @@ export function sideOfEdge(lot: readonly XY[], i: number): StreetSide {
  * edge, its sidewalk's back on the lot line; a neighbour on each side lot at the lot's own side setback
  * from the shared line and its front setback from the street, one or two storeys with a gable or a hip;
  * trees beyond the rear and sides, and street trees in the planting strip. Deterministic for one lot and
- * one seed. IDs are the next free `ST<n>`, `NB<n>`, `TR<n>` past `taken`.
+ * one seed. IDs are the next free `ST<n>`, `NB<n>`, `TR<n>`: free in the document and not in `taken`.
  */
 export function generateContext(doc: FloorspecDocument, options: GenerateContextOptions = {}, taken: ReadonlySet<string> = new Set()): GeneratedContext {
   const site = siteDrawing(doc);
@@ -343,7 +354,7 @@ export function generateContext(doc: FloorspecDocument, options: GenerateContext
   else if (Array.isArray(sb.street) && sb.street.length > 0) streetEdges = sb.street.filter((i) => isInt(i) && i < n);
   else streetEdges = [Array.from({ length: n }, (_, i) => i).find((i) => sideOfEdge(lot, i) === 'south') ?? 0];
 
-  const used = new Set(taken);
+  const used = new Set([...documentIds(doc), ...taken]);
   const nextId = (prefix: string): string => {
     let k = 1;
     while (used.has(`${prefix}${String(k)}`)) k++;
@@ -487,27 +498,28 @@ export function generateContext(doc: FloorspecDocument, options: GenerateContext
   return { streets, neighbours, trees, streetEdges };
 }
 
-/** Four corners of a rectangle as integers whose corners are exactly right angles (FS_context 3.2). */
+/**
+ * Four corners of a rectangle as integers whose corners are exactly right angles (FS_context 3.2): its sides
+ * along an integer direction D = (p, q) close to the first side's — within a thousandth of a radian — and its
+ * perpendicular (-q, p), each a whole multiple of D, so every corner's dot product is exactly 0.
+ */
 export function exactRectangle(c: readonly XY[]): [number, number][] {
   const p0 = round(c[0]!);
   const ux = c[1]![0] - c[0]![0];
   const uy = c[1]![1] - c[0]![1];
   const vx = c[3]![0] - c[0]![0];
   const vy = c[3]![1] - c[0]![1];
-  // integer side vectors u = (ux, uy) and v = k·(-uy, ux): exactly perpendicular
-  const U: [number, number] = [Math.round(ux), Math.round(uy)];
+  const lu = Math.hypot(ux, uy) || 1;
   const lv = Math.hypot(vx, vy);
-  const sgn = U[0] * vy - U[1] * vx >= 0 ? 1 : -1;
-  if (U[0] === 0 || U[1] === 0) {
-    const V: [number, number] = U[0] === 0 ? [Math.round(vx), 0] : [0, Math.round(vy)];
-    return [p0, [p0[0] + U[0], p0[1] + U[1]], [p0[0] + U[0] + V[0], p0[1] + U[1] + V[1]], [p0[0] + V[0], p0[1] + V[1]]];
-  }
-  // a turned rectangle: v along (-uy, ux) reduced by their gcd, times the integer k nearest its length
-  const g = gcd(Math.abs(U[0]), Math.abs(U[1]));
-  const ex = -U[1] / g;
-  const ey = U[0] / g;
-  const k = Math.max(1, Math.round(lv / Math.hypot(ex, ey))) * sgn;
-  const V: [number, number] = [ex * k, ey * k];
+  let D: [number, number] = [Math.round((ux / lu) * 1000), Math.round((uy / lu) * 1000)];
+  const g = gcd(Math.abs(D[0]), Math.abs(D[1]));
+  D = [D[0] / g + 0, D[1] / g + 0];
+  const ld = Math.hypot(D[0], D[1]);
+  const sgn = ux * vy - uy * vx >= 0 ? 1 : -1;
+  const ku = Math.max(1, Math.round(lu / ld));
+  const kv = Math.max(1, Math.round(lv / ld)) * sgn;
+  const U: [number, number] = [D[0] * ku, D[1] * ku];
+  const V: [number, number] = [-D[1] * kv + 0, D[0] * kv + 0];
   return [p0, [p0[0] + U[0], p0[1] + U[1]], [p0[0] + U[0] + V[0], p0[1] + U[1] + V[1]], [p0[0] + V[0], p0[1] + V[1]]];
 }
 

@@ -8,8 +8,9 @@
  */
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
-import { deriveFrom, evaluate, resolveAnnotations, siteDrawing, type Evaluation, type SiteDrawing } from '@floorspec/engine';
+import { contextDrawing, deriveFrom, evaluate, resolveAnnotations, siteDrawing, type ContextDrawing, type Evaluation, type SiteDrawing } from '@floorspec/engine';
 import { siteExtent, siteLayers } from './site.js';
+import { contextExtent, contextLayers } from './context.js';
 import { DEMOLISH_DASH, EXISTING_OPACITY, RENOVATION_FILTER_LABELS, RENOVATION_INK, RENOVATION_STATUS_LABELS, filteredDocument, renovationStyles, type RenovationFilter, type RenovationStyle } from './renovation.js';
 import { DEFAULT_READER, defaultLevel, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneFallback, type SceneOpening, type SceneRoom, type SceneStair, type SceneWall } from './scene.js';
 import { base64, el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
@@ -531,6 +532,9 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   const siteShown = (['site', 'contours', 'grading', 'spots'] as const).some((l) => st[l] !== 'off');
   const drawnSite: SiteDrawing | null = siteShown && evaluation.view !== undefined && defaultLevel(evaluation.view) === scene.levelId ? siteDrawing(evaluation.view) : null;
   const site = drawnSite !== null && (drawnSite.lot !== null || drawnSite.surface !== null || drawnSite.spots.length > 0 || drawnSite.contours.length > 0) ? drawnSite : null;
+  // ── FS_context (FLR-T-15.3): the street, neighbours and trees beyond the lot, on the lowest level too ──
+  const drawnContext: ContextDrawing | null = st.context !== 'off' && evaluation.view !== undefined && defaultLevel(evaluation.view) === scene.levelId ? contextDrawing(evaluation.view) : null;
+  const context = drawnContext !== null && !drawnContext.empty ? drawnContext : null;
 
   // ── extent ──
   let body: Box | undefined;
@@ -547,6 +551,10 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   for (const fb of scene.fallbacks.values()) all = grow(all, fb.footprint);
   if (site !== null) {
     const pts = siteExtent(site);
+    if (pts.length) all = grow(all, pts);
+  }
+  if (context !== null) {
+    const pts = contextExtent(context);
     if (pts.length) all = grow(all, pts);
   }
   const showClearances = options.clearances ?? false;
@@ -691,6 +699,13 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
     pal,
     (id) => hi.has(id),
   );
+  // ── FS_context (FLR-T-15.3): the street and the neighbours under everything, in their neutral style ──
+  const contextSvg = context === null ? null : contextLayers(context, f, pal, { idPrefix: 'fs-context', highlight: (id) => hi.has(id) });
+  if (contextSvg !== null) {
+    if (contextSvg.massing !== '') parts.push(el('defs', {}, contextSvg.defs));
+    if (contextSvg.ground !== '') put('context', el('g', { id: 'context-streets' }, contextSvg.ground));
+    if (contextSvg.massing !== '') put('context', el('g', { id: 'context-neighbours' }, contextSvg.massing));
+  }
   if (landscape.lawns !== '') put('landscape', el('g', { id: 'lawns' }, landscape.lawns));
   // ── FS_outdoor (FLR-T-15.2): pools, fences, kitchens and fires over the paving; shelters overhead, last ──
   const outdoors = outdoorLayers(
@@ -993,6 +1008,8 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   if (outdoors.overhead !== '') put('outdoor', el('g', { id: 'overhead' }, outdoors.overhead));
   if (siteSvg !== null && siteSvg.spots !== '') put('spots', el('g', { id: 'spots' }, siteSvg.spots));
   if (siteSvg !== null && siteSvg.lot !== '') put('site', el('g', { id: 'lot' }, siteSvg.lot));
+  if (contextSvg !== null && contextSvg.trees !== '') put('context', el('g', { id: 'context-trees' }, contextSvg.trees));
+  if (contextSvg !== null && contextSvg.tags !== '') put('context', el('g', { id: 'context-tags' }, contextSvg.tags));
 
   // ── clearance envelopes (Core 0.2, 13.5), when asked for ──
   if (showClearances && scene.clearances.length) {
@@ -1327,7 +1344,7 @@ function beamsSvg(beams: readonly Beam[], P: (ring: readonly Pt[]) => XY[], them
 const TRADES: ReadonlySet<PlanLayer> = new Set(['electrical', 'plumbing', 'mechanical', 'lowvoltage']);
 
 /** The layers whose ghosts the filter greys. */
-const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'outdoor'];
+const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'outdoor', 'context'];
 
 /** A ghost is grey: every colour desaturated, then faded (FLR-T-18.3). */
 const GHOST_FILTER = el('filter', { id: 'fs-ghost', 'color-interpolation-filters': 'sRGB' }, el('feColorMatrix', { type: 'saturate', values: 0 }));

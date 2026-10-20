@@ -113,6 +113,7 @@ export {
   contextDrawing,
   generateContext,
   generatedIds,
+  documentIds,
   isGenerated,
   offsetPolyline,
   band,
