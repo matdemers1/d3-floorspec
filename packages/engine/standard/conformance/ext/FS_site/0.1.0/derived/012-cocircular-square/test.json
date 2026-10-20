@@ -1,0 +1,7 @@
+{
+  "description": "A survey of four spots at the corners of a square, all on one circle: the Delaunay face is the square, divided by the diagonal from its least vertex, the south-west corner - never the other diagonal.",
+  "covers": [
+    "FS-SITE-3.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

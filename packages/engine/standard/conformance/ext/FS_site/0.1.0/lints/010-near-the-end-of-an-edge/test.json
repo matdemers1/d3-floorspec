@@ -1,0 +1,7 @@
+{
+  "description": "The lot notched at its north-east corner (six edges; the notch's two are rear edges), a rear setback of 7' and a shed's pad near the notch's inner corner, (30', 20'): the shed's corner (26', 16') is beyond the ends of both of the notch's edges, so its distance to them is to that corner, sqrt(32) feet - FS-SITE-LINT-003 for the shed's pad.",
+  "covers": [
+    "FS-SITE-1.2.3",
+    "FS-SITE-2.3.1"
+  ]
+}

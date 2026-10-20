@@ -1,0 +1,8 @@
+{
+  "description": "FS_site used with empty top-level data: valid. The lot is Core's, so its area and edges are derived - each edge of no kind and no setback, since there are no setbacks - but there is no surface, and the patio, still a grading slab, has nothing to be measured against: its low, high, cut and fill are null, and so are the totals.",
+  "covers": [
+    "FS-SITE-1.3.1",
+    "FS-SITE-2.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

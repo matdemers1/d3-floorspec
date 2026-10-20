@@ -1,0 +1,7 @@
+{
+  "description": "A setback of 0 is allowed: the lot line itself.",
+  "covers": [
+    "FS-SITE-1.3.1",
+    "FS-SITE-7.1.1"
+  ]
+}

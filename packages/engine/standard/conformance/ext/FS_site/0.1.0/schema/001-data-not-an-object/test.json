@@ -1,0 +1,6 @@
+{
+  "description": "FS_site's top-level data is an array: Core allows any JSON there, FS_site's schema does not.",
+  "covers": [
+    "FS-SITE-1.3.1"
+  ]
+}

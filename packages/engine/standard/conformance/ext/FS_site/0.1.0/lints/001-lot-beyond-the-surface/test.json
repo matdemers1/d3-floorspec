@@ -1,0 +1,6 @@
+{
+  "description": "The south-west corner's spot removed: the lot's corner is outside the surface's hull, FS-SITE-LINT-001 (info), and nothing graded is.",
+  "covers": [
+    "FS-SITE-1.2.3"
+  ]
+}

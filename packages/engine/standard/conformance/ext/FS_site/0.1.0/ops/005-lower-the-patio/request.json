@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "S1",
+      "path": "/offset",
+      "value": -390144
+    }
+  ]
+}

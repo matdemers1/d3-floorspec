@@ -45,7 +45,7 @@ const suites = OFFICIAL_EXTENSION_NAMES.map((name) => {
 
 /**
  * The reader a test is read by: one that implements that one extension, of the Core draft the test's
- * document declares — Core 0.3 for "0.3", Core 0.2 for every other (conformance/README.md).
+ * document declares — Core 0.3 or 0.4 for "0.3" or "0.4", Core 0.2 for every other (conformance/README.md).
  */
 function options(name: string, dir: string): ValidateOptions {
   const registry = join(dir, 'registry.json');
@@ -113,8 +113,8 @@ describe('the official extensions', () => {
       .map((s) => JSON.parse(readFileSync(join(standard, 'registry', s.name, 'extension.json'), 'utf8')) as unknown);
     expect(OFFICIAL_EXTENSIONS).toEqual(vendored);
     for (const e of OFFICIAL_EXTENSIONS) {
-      // FS_structural, FS_landscape, FS_lighting, FS_views, FS_renovation and FS_annotation 0.1.0 are Drafts; the others are Release Candidates.
-      expect(e.status).toBe(['FS_structural', 'FS_landscape', 'FS_lighting', 'FS_views', 'FS_renovation', 'FS_annotation'].includes(e.name) ? 'draft' : 'releaseCandidate');
+      // FS_structural, FS_landscape, FS_lighting, FS_views, FS_renovation, FS_annotation and FS_site 0.1.0 are Drafts; the others are Release Candidates.
+      expect(e.status).toBe(['FS_structural', 'FS_landscape', 'FS_lighting', 'FS_views', 'FS_renovation', 'FS_annotation', 'FS_site'].includes(e.name) ? 'draft' : 'releaseCandidate');
       expect(EXTENSION_IMPLEMENTATIONS.get(e.name)?.version).toBe(e.version);
     }
   });

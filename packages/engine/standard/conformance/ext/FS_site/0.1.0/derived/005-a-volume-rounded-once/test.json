@@ -1,0 +1,7 @@
+{
+  "description": "The plane and a pad one base unit square at 0, just north of the zero line: it cuts 1/20 of a cubic unit, which rounds to 0, and the ground under it rises to 1/10 of a unit, which rounds to 0 too.",
+  "covers": [
+    "FS-SITE-4.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

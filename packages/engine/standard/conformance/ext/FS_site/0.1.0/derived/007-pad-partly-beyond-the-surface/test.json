@@ -1,0 +1,8 @@
+{
+  "description": "The plane, its survey cut back to the north half of the lot - from the zero line - and the square pad across it: only its north half is over the surface, so only it is measured, 100 cubic feet cut and nothing filled; FS-SITE-LINT-002 says so, and the lot is beyond the surface too.",
+  "covers": [
+    "FS-SITE-1.2.3",
+    "FS-SITE-4.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

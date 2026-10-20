@@ -1,0 +1,7 @@
+{
+  "description": "The garden read with every official entry known, by an implementation of FS_site alone: FS_landscape is checked only as Core 12 checks a known extension, and only FS_site is evaluated and derived.",
+  "covers": [
+    "FS-SITE-1.2.1",
+    "FS-SITE-1.2.4"
+  ]
+}

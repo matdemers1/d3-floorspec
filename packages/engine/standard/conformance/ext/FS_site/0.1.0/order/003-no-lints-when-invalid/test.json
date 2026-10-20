@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too - the rear setback is 20', which the house's north wall is nearer than: the document is invalid, so no lint is reported, FS_site's or Core's.",
+  "covers": [
+    "FS-SITE-1.2.2",
+    "FS-SITE-1.2.3"
+  ]
+}

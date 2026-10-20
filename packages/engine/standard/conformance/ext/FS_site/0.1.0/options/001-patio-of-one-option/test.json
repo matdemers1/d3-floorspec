@@ -1,0 +1,8 @@
+{
+  "description": "Patio options A and B as Core 0.3 design options (Core 19): FS_site is evaluated in each checked design and reports nothing, and the primary design grades A's patio.",
+  "covers": [
+    "FS-SITE-1.2.1",
+    "FS-SITE-1.2.4",
+    "FS-SITE-7.1.1"
+  ]
+}

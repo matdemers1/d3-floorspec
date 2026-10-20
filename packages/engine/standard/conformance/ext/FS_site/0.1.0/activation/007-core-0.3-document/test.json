@@ -1,0 +1,9 @@
+{
+  "description": "The garden on its slope declaring Core \"0.3\", a draft FS_site 0.1.0 lists (1.1): FS_site is evaluated, reports nothing, and derives exactly what it derives for the garden declaring \"0.4\".",
+  "covers": [
+    "FS-SITE-1.2.1",
+    "FS-SITE-1.2.3",
+    "FS-SITE-1.2.4",
+    "FS-SITE-7.1.1"
+  ]
+}

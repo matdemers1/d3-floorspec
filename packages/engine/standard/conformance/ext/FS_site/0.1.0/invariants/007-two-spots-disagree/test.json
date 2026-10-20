@@ -1,0 +1,6 @@
+{
+  "description": "Two spots at the Kitchen's spot's position, one at its elevation and one 1\" higher: one diagnostic for the position, naming all three.",
+  "covers": [
+    "FS-SITE-3.1.2"
+  ]
+}

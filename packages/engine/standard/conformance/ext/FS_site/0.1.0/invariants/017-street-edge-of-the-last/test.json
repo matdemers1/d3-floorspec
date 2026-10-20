@@ -1,0 +1,7 @@
+{
+  "description": "Edge 3, the last, from the north-west corner back to the first vertex: valid, and the lot's west edge is its front.",
+  "covers": [
+    "FS-SITE-2.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

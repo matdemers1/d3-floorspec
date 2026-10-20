@@ -1,0 +1,7 @@
+{
+  "description": "The same plane and an L-shaped pad at 0, north of the zero line - 20' x 10' and 10' x 10' above it - all cut: 20 x 10 x 0.5' + 10 x 10 x 1.5' = 250 cubic feet, nothing filled. The clipping keeps every point of the outline, which is not convex.",
+  "covers": [
+    "FS-SITE-4.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A spot's position has three numbers, which FS_site's schema does not allow, but no extension is known: nothing of it is evaluated, and the document is valid.",
+  "covers": [
+    "FS-SITE-1.2.1"
+  ]
+}

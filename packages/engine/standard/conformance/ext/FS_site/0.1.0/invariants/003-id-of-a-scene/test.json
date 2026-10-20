@@ -1,0 +1,6 @@
+{
+  "description": "A contour line keyed by SC1, the ID of a scene in FS_lighting's data, which an implementation of FS_site reads as data without knowing FS_lighting: FS-SITE-INV-001.",
+  "covers": [
+    "FS-SITE-1.3.2"
+  ]
+}

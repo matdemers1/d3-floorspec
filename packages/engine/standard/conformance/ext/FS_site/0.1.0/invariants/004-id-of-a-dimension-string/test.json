@@ -1,0 +1,6 @@
+{
+  "description": "A spot keyed by DM1, the ID of a dimension string in FS_annotation's data, read as data: FS-SITE-INV-001.",
+  "covers": [
+    "FS-SITE-1.3.2"
+  ]
+}

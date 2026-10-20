@@ -1,0 +1,8 @@
+{
+  "description": "A closed contour line - a knoll at 816' - that repeats its first point last: its consecutive points differ, so it is valid; its first and last vertex are one survey point.",
+  "covers": [
+    "FS-SITE-3.1.1",
+    "FS-SITE-3.1.2",
+    "FS-SITE-7.1.1"
+  ]
+}

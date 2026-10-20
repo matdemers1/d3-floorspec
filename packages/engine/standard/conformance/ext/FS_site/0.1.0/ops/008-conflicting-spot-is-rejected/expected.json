@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-SITE-INV-002",
+      "severity": "error",
+      "elements": ["CT2", "SP6"]
+    }
+  ]
+}

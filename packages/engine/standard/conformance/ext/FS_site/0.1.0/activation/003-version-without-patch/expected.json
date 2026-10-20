@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-SITE-SCH-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

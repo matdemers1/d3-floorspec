@@ -1,0 +1,8 @@
+{
+  "description": "Ground on one plane, rising 1' for every 10' north, and one pad 20' wide from 10' south to 10' north of where the ground is at 0, graded to 0: the north half is cut by 1' at its edge, the south half filled by as much - each 20' x 10' x 1' / 2 = 100 cubic feet, exactly - and the ground under it runs from -1' to 1'. The lot's four corners are cocircular, so the surface is two triangles, fanned from the least corner.",
+  "covers": [
+    "FS-SITE-3.2.1",
+    "FS-SITE-4.2.1",
+    "FS-SITE-7.1.1"
+  ]
+}

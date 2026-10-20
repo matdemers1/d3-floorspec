@@ -1,0 +1,6 @@
+{
+  "description": "A pad whose three points are on one line: FS-SITE-INV-004.",
+  "covers": [
+    "FS-SITE-4.1.1"
+  ]
+}

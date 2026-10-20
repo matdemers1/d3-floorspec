@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $site /boundary moves the lot's north-east corner 10' east: a Core edit of the site, which FS_site's lot follows - its area and its east and north edges change. It commits.",
+  "covers": [
+    "FS-SITE-2.2.1",
+    "FS-SITE-7.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

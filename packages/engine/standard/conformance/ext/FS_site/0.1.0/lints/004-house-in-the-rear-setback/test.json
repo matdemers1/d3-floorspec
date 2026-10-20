@@ -1,0 +1,7 @@
+{
+  "description": "A rear setback of 20': the north wall's junctions, 18' from the rear lot line, and the pad, 17' from it, are in it - FS-SITE-LINT-003 (info) for each, once.",
+  "covers": [
+    "FS-SITE-1.2.3",
+    "FS-SITE-2.3.1"
+  ]
+}

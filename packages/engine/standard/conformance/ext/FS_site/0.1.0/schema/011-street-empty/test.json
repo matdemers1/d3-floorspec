@@ -1,0 +1,6 @@
+{
+  "description": "At least one edge is on the street.",
+  "covers": [
+    "FS-SITE-1.3.1"
+  ]
+}

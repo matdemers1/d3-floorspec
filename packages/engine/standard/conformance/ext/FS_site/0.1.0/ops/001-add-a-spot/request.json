@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_site/spots/SP6",
+      "value": {
+        "at": [-3901440, 9363456],
+        "elevation": 780288,
+        "name": "Top of bank"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "Setbacks of 0, and a shed's pad over the east lot line: a point outside the lot is never clear, whatever the setbacks - FS-SITE-LINT-003 for the pad.",
+  "covers": [
+    "FS-SITE-1.2.3",
+    "FS-SITE-2.3.1"
+  ]
+}

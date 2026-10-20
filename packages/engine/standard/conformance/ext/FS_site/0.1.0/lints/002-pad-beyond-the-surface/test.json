@@ -1,0 +1,6 @@
+{
+  "description": "Every spot north of the house removed and the contour line at 815' too: the surface stops at the 813' line and the Kitchen's spot, and the house's pad runs off it - FS-SITE-LINT-002 for the pad, and FS-SITE-LINT-001 for the lot.",
+  "covers": [
+    "FS-SITE-1.2.3"
+  ]
+}
